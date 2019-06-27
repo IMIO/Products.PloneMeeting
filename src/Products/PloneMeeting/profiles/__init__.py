@@ -518,6 +518,8 @@ class MeetingConfigDescriptor(Descriptor):
         # Do you want to use Organizations as categories ? In this case, you
         # do not need to define categories anymore.
         self.useGroupsAsCategories = True
+        self.orderedAssociatedOrganizations = []
+        self.orderedGroupsInCharge = []
         # Must the "toDiscuss" value be set when inserting an item into a
         # meeting ? If no, the user having permission to write the item will be
         # able to set this value, as soon as on item creation.
@@ -698,7 +700,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.itemAdviceViewStates = []
         # List of item states when it is possible for 'Budget impact reviewers' to edit the budgetInfos
         self.itemBudgetInfosStates = []
-        self.itemGroupInChargeStates = []
+        self.itemGroupsInChargeStates = []
         # List of Organization uids to consider as Power advisers
         self.powerAdvisersGroups = []
         # List of item and meeting states the users in the MeetingConfig

@@ -1,5 +1,6 @@
 # encoding: utf-8
 
+from collective.contact.plonegroup.config import get_registry_organizations
 from collective.contact.plonegroup.utils import get_organization
 from collective.contact.plonegroup.utils import get_organizations
 from collective.documentgenerator.content.vocabulary import ExistingPODTemplateFactory
@@ -28,6 +29,7 @@ from Products.PloneMeeting.indexes import DELAYAWARE_ROW_ID_PATTERN
 from Products.PloneMeeting.indexes import REAL_ORG_UID_PATTERN
 from Products.PloneMeeting.interfaces import IMeetingConfig
 from Products.PloneMeeting.utils import get_context_with_request
+from zope.component import queryUtility
 from zope.globalrequest import getRequest
 from zope.i18n import translate
 from zope.interface import implements
@@ -1106,6 +1108,8 @@ class HeldPositionUsagesVocabulary(object):
             SimpleTerm('assemblyMember', 'assemblyMember', _('assemblyMember')))
         res.append(
             SimpleTerm('asker', 'asker', _('asker')))
+        res.append(
+            SimpleTerm('associated', 'associated', _('associated')))
         return SimpleVocabulary(res)
 
 
@@ -1240,7 +1244,15 @@ class BaseHeldPositionsVocabulary(object):
     """ """
     implements(IVocabularyFactory)
 
-    def __call__(self, context, usage=None, uids=[], highlight_missing=False):
+    def __call__(self,
+                 context,
+                 usage=None,
+                 uids=[],
+                 highlight_missing=False,
+                 include_usages=True,
+                 include_defaults=True,
+                 include_signature_number=True,
+                 pattern=u"{0}"):
         catalog = api.portal.get_tool('portal_catalog')
         query = {'portal_type': 'held_position',
                  'sort_on': 'sortable_title'}
@@ -1249,12 +1261,11 @@ class BaseHeldPositionsVocabulary(object):
         brains = catalog(**query)
         res = []
         highlight = False
-        pattern = u"{0}"
         # highlight person_label in title when displayed in the MeetingConfig view
         if IMeetingConfig.providedBy(context) and 'base_edit' not in context.REQUEST.getURL():
             highlight = True
             if highlight_missing:
-                pattern = u"<span class='highlight-red'>{0}</span>"
+                pattern = u"<span class='highlight-red'>{0}</span>".format(pattern)
         for brain in brains:
             held_position = brain.getObject()
             if held_position.usages and (not usage or usage in held_position.usages):
@@ -1264,9 +1275,9 @@ class BaseHeldPositionsVocabulary(object):
                         brain.UID,
                         pattern.format(
                             held_position.get_short_title(
-                                include_usages=True,
-                                include_defaults=True,
-                                include_signature_number=True,
+                                include_usages=include_usages,
+                                include_defaults=include_defaults,
+                                include_signature_number=include_signature_number,
                                 highlight=highlight))))
         return SimpleVocabulary(res)
 
@@ -1293,8 +1304,6 @@ SelectableAssemblyMembersVocabularyFactory = SelectableAssemblyMembersVocabulary
 
 class SelectableItemInitiatorsVocabulary(BaseHeldPositionsVocabulary):
     """ """
-    implements(IVocabularyFactory)
-
     def __call__(self, context):
         res = super(SelectableItemInitiatorsVocabulary, self).__call__(context, usage='asker')
         if IMeetingConfig.providedBy(context):
@@ -1313,3 +1322,25 @@ class SelectableItemInitiatorsVocabulary(BaseHeldPositionsVocabulary):
 
 
 SelectableItemInitiatorsVocabularyFactory = SelectableItemInitiatorsVocabulary()
+
+
+class SelectableAssociatedOrganizationsVocabulary(object):
+    """Use u'collective.contact.plonegroup.organization_services' and adapt title
+       of the terms to show organizations that are in plonegroup and others that are not."""
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """ """
+        vocab = queryUtility(IVocabularyFactory, u'collective.contact.plonegroup.organization_services')
+        terms = vocab(None)
+        selected_orgs = get_registry_organizations()
+        for term in terms:
+            if term.value not in selected_orgs:
+                term.title = translate(msgid=u'${term_title} (Not selected in plonegroup)',
+                                       domain='PloneMeeting',
+                                       mapping={'term_title': term.title, },
+                                       context=context.REQUEST)
+        return SimpleVocabulary(terms)
+
+
+SelectableAssociatedOrganizationsVocabularyFactory = SelectableAssociatedOrganizationsVocabulary()

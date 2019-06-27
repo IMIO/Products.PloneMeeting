@@ -369,9 +369,9 @@ class MeetingInsertingMethodsHelpMsgView(BrowserView):
         """Depending on used inserting methods, display relevant fields."""
         res = []
         for method in self.cfg.getInsertingMethodsOnAddItem():
-            if self.inserting_methods_fields_mapping[method['insertingMethod']] and \
-               self.inserting_methods_fields_mapping[method['insertingMethod']].startswith('field_'):
-                res.append(self.inserting_methods_fields_mapping[method['insertingMethod']][6:])
+            for mapping in self.inserting_methods_fields_mapping[method['insertingMethod']]:
+                if mapping.startswith('field_'):
+                    res.append(mapping[6:])
         return res
 
     def orderedOrgs(self):
@@ -379,7 +379,7 @@ class MeetingInsertingMethodsHelpMsgView(BrowserView):
         orgs = []
         orgs_inserting_methods = [
             method['insertingMethod'] for method in self.cfg.getInsertingMethodsOnAddItem()
-            if self.inserting_methods_fields_mapping[method['insertingMethod']] == 'organization']
+            if 'organization' in self.inserting_methods_fields_mapping[method['insertingMethod']]]
         if orgs_inserting_methods:
             orgs = get_organizations(only_selected=True)
         return orgs
@@ -389,7 +389,7 @@ class MeetingInsertingMethodsHelpMsgView(BrowserView):
         categories = []
         categories_inserting_methods = [
             method['insertingMethod'] for method in self.cfg.getInsertingMethodsOnAddItem()
-            if self.inserting_methods_fields_mapping[method['insertingMethod']] == 'category']
+            if 'category' in self.inserting_methods_fields_mapping[method['insertingMethod']]]
         if categories_inserting_methods:
             categories = self.cfg.getCategories()
         return categories

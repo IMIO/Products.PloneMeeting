@@ -277,16 +277,22 @@ class ToolInitializer:
             selectableOrderedContacts = cfg.getField('orderedContacts').Vocabulary(cfg).keys()
             cfg.setOrderedContacts(selectableOrderedContacts)
 
-        if data.orderedContacts:
-            # turn hp path to uid
-            hp_uids = []
-            for hp_path in data.orderedContacts:
-                try:
-                    hp_uid = self.portal.contacts.restrictedTraverse(hp_path).UID()
-                    hp_uids.append(hp_uid)
-                except KeyError:
-                    logger.warning('While computing orderedContacts, could not get contact at {0}'.format(hp_path))
-            cfg.setOrderedContacts(hp_uids)
+        # turn contact path to uid
+        for org_storing_field in ('orderedContacts',
+                                  'orderedItemInitiators',
+                                  'orderedAssociatedOrganizations',
+                                  'orderedGroupsInCharge'):
+            org_storing_data = getattr(data, org_storing_field, [])
+            if org_storing_data:
+                contact_uids = []
+                for contact_path in org_storing_data:
+                    try:
+                        contact_uid = self.portal.contacts.restrictedTraverse(contact_path).UID()
+                        contact_uids.append(contact_uid)
+                    except KeyError:
+                        logger.warning('While computing "{0}", could not get contact at "{1}"'.format(
+                            org_storing_field, contact_path))
+                cfg.getField(org_storing_field).set(cfg, contact_uids)
 
         # set default labels
         if data.defaultLabels:
@@ -463,8 +469,8 @@ class ToolInitializer:
         # adapt org related values as we have org id on descriptor and we need to set org UID
         if item.proposingGroup:
             item.setProposingGroup(org_id_to_uid(item.proposingGroup))
-        if item.groupInCharge:
-            item.setGroupInCharge(org_id_to_uid(item.groupInCharge))
+        if item.groupsInCharge:
+            item.setGroupsInCharge([org_id_to_uid(grp_in_charge) for grp_in_charge in item.groupsInCharge])
         if item.proposingGroupWithGroupInCharge:
             proposingGroupId, groupInChargeId = item.proposingGroupWithGroupInCharge.split('__groupincharge__')
             item.proposingGroupWithGroupInCharge = '{0}__groupincharge__{1}'.format(

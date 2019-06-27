@@ -40,6 +40,7 @@
         <td>
             <metal:field use-macro="python:here.widget('proposingGroup', mode='edit')"/>
             <metal:field use-macro="python:here.widget('proposingGroupWithGroupInCharge', mode='edit')"/>
+            <metal:field use-macro="python:here.widget('groupsInCharge', mode='edit')"/>
         </td>
         <td><metal:field use-macro="python:here.widget('classifier', mode='edit')"/></td>
         <td><metal:field use-macro="python:here.widget('category', mode='edit')"/></td>

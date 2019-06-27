@@ -1269,7 +1269,11 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
 
     def _insert_order_cache_cfg_attrs(self, cfg):
         '''See doc in interfaces.py.'''
-        return ['insertingMethodsOnAddItem', 'listTypes', 'selectablePrivacies', 'usedPollTypes']
+        return ['insertingMethodsOnAddItem',
+                'listTypes',
+                'selectablePrivacies',
+                'usedPollTypes',
+                'orderedAssociatedOrganizations']
 
     def _init_insert_order_cache(self, cfg):
         '''See doc in interfaces.py.'''

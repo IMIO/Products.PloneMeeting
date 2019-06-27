@@ -199,13 +199,13 @@ class testAnnexes(PloneMeetingTestCase):
             annexNotConfidential, annexConfidential = self._setupConfidentialityOnItemAnnexes()
 
         proposingGroup = item.getProposingGroup(theObject=True)
-        cfg.setItemGroupInChargeStates(item_initial_state)
+        cfg.setItemGroupsInChargeStates([item_initial_state])
 
         # does not fail in no group in charge
         self.assertFalse(proposingGroup.groups_in_charge)
         cfg.setItemAnnexConfidentialVisibleFor(('reader_groupincharge', ))
         update_all_categorized_elements(item)
-        self._setUpGroupInCharge(item)
+        self._setUpGroupsInCharge(item)
 
         self.changeUser('pmReviewer2')
         self._checkElementConfidentialAnnexAccess(cfg, item, annexNotConfidential, annexConfidential,
@@ -420,13 +420,13 @@ class testAnnexes(PloneMeetingTestCase):
             annexNotConfidential, annexConfidential = self._setupConfidentialityOnAdviceAnnexes()
 
         proposingGroup = item.getProposingGroup(theObject=True)
-        cfg.setItemGroupInChargeStates(item_initial_state)
+        cfg.setItemGroupsInChargeStates([item_initial_state])
 
         # does not fail in no group in charge
         self.assertFalse(proposingGroup.groups_in_charge)
         cfg.setAdviceAnnexConfidentialVisibleFor(('reader_groupincharge', ))
         update_all_categorized_elements(item)
-        self._setUpGroupInCharge(item)
+        self._setUpGroupsInCharge(item)
         item.updateLocalRoles()
 
         self.changeUser('pmReviewer2')

@@ -535,6 +535,40 @@ schema = Schema((
         schemata="data",
         write_permission="PloneMeeting: Write risky config",
     ),
+    LinesField(
+        name='orderedAssociatedOrganizations',
+        widget=InAndOutWidget(
+            description="OrderedAssociatedOrganizations",
+            description_msgid="ordered_associated_organizations_descr",
+            label='Orderedassociatedorganizations',
+            label_msgid='PloneMeeting_label_orderedAssociatedOrganizations',
+            i18n_domain='PloneMeeting',
+            size='20',
+        ),
+        schemata="data",
+        multiValued=1,
+        vocabulary_factory='Products.PloneMeeting.vocabularies.selectableassociatedorganizationsvocabulary',
+        default=defValues.orderedAssociatedOrganizations,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    LinesField(
+        name='orderedGroupsInCharge',
+        widget=InAndOutWidget(
+            description="OrderedGroupsInCharge",
+            description_msgid="ordered_groups_in_charge_descr",
+            label='Orderedgroupsincharge',
+            label_msgid='PloneMeeting_label_orderedGroupsInCharge',
+            i18n_domain='PloneMeeting',
+            size='20',
+        ),
+        schemata="data",
+        multiValued=1,
+        vocabulary_factory='collective.contact.plonegroup.selected_organization_services',
+        default=defValues.orderedGroupsInCharge,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
     BooleanField(
         name='toDiscussSetOnItemInsert',
         default=defValues.toDiscussSetOnItemInsert,
@@ -1942,19 +1976,19 @@ schema = Schema((
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
-        name='itemGroupInChargeStates',
+        name='itemGroupsInChargeStates',
         widget=MultiSelectionWidget(
-            description="ItemGroupInChargeStates",
-            description_msgid="item_group_in_charge_states_descr",
+            description="ItemGroupsInChargeStates",
+            description_msgid="item_groups_in_charge_states_descr",
             format="checkbox",
-            label='Itemgroupinchargestates',
-            label_msgid='PloneMeeting_label_itemGroupInChargeStates',
+            label='Itemgroupsinchargestates',
+            label_msgid='PloneMeeting_label_itemGroupsInChargeStates',
             i18n_domain='PloneMeeting',
         ),
         schemata="advices",
         multiValued=1,
         vocabulary='listItemStates',
-        default=defValues.itemGroupInChargeStates,
+        default=defValues.itemGroupsInChargeStates,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
@@ -3001,6 +3035,40 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             res = [brain.getObject() for brain in brains]
         return res
 
+    security.declarePublic('getOrderedAssociatedOrganizations')
+
+    def getOrderedAssociatedOrganizations(self, theObjects=False, **kwargs):
+        '''Overrides the field 'orderedAssociatedOrganizations' acessor to manage theObjects.'''
+        res = self.getField('orderedAssociatedOrganizations').get(self, **kwargs)
+        if theObjects:
+            catalog = api.portal.get_tool('portal_catalog')
+            brains = catalog(UID=res)
+
+            # make sure we have correct order because query was not sorted
+            # we need to sort found brains according to uids
+            def getKey(item):
+                return res.index(item.UID)
+            brains = sorted(brains, key=getKey)
+            res = [brain.getObject() for brain in brains]
+        return res
+
+    security.declarePublic('getOrderedAssociatedOrganizations')
+
+    def getOrderedGroupsInCharge(self, theObjects=False, **kwargs):
+        '''Overrides the field 'orderedGroupsInCharge' acessor to manage theObjects.'''
+        res = self.getField('orderedGroupsInCharge').get(self, **kwargs)
+        if theObjects:
+            catalog = api.portal.get_tool('portal_catalog')
+            brains = catalog(UID=res)
+
+            # make sure we have correct order because query was not sorted
+            # we need to sort found brains according to uids
+            def getKey(item):
+                return res.index(item.UID)
+            brains = sorted(brains, key=getKey)
+            res = [brain.getObject() for brain in brains]
+        return res
+
     security.declarePublic('getMaxShownListings')
 
     def getMaxShownListings(self, **kwargs):
@@ -3597,6 +3665,18 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                                          'column_old_data': v, },
                                                 context=self.REQUEST)
 
+    security.declarePrivate('validate_usedItemAttributes')
+
+    def validate_usedItemAttributes(self, newValue):
+        '''Some attributes on an item are mutually exclusive. This validator
+           ensures that wrong combinations aren't used.'''
+        pm = 'PloneMeeting'
+        # Prevent combined use of "proposingGroupWithGroupInCharge" and "groupsInCharge"
+        if ('proposingGroupWithGroupInCharge' in newValue) and ('groupsInCharge' in newValue):
+            return translate('no_proposingGroupWithGroupInCharge_and_groupsInCharge',
+                             domain=pm,
+                             context=self.REQUEST)
+
     security.declarePrivate('validate_usedMeetingAttributes')
 
     def validate_usedMeetingAttributes(self, newValue):
@@ -4160,10 +4240,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 translate("header_getProposingGroup", domain=d, context=self.REQUEST)),
             ("proposing_group_acronym",
                 translate("header_proposing_group_acronym", domain=d, context=self.REQUEST)),
-            ("getGroupInCharge",
-                translate("header_getGroupInCharge", domain=d, context=self.REQUEST)),
-            ("group_in_charge_acronym",
-                translate("header_group_in_charge_acronym", domain=d, context=self.REQUEST)),
+            ("getGroupsInCharge",
+                translate("header_getGroupsInCharge", domain=d, context=self.REQUEST)),
+            ("groups_in_charge_acronym",
+                translate("header_groups_in_charge_acronym", domain=d, context=self.REQUEST)),
             ("privacy",
                 translate("header_privacy", domain=d, context=self.REQUEST)),
             ("pollType",

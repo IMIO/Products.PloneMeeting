@@ -153,7 +153,7 @@ READER_USECASES = {
     'advices': 'Reader',
     'powerobservers': 'Reader',
     'itemtemplatesmanagers': 'Reader',
-    'groupincharge': 'Reader',
+    'groupsincharge': 'Reader',
     'confidentialannex': 'AnnexReader',
 }
 
@@ -200,7 +200,7 @@ ITEM_NO_PREFERRED_MEETING_VALUE = "whatever"
 # default fields kept when an item is cloned
 DEFAULT_COPIED_FIELDS = ['title', 'description', 'detailedDescription', 'motivation',
                          'decision', 'budgetInfos', 'budgetRelated', 'sendToAuthority',
-                         'groupInCharge', 'proposingGroupWithGroupInCharge']
+                         'groupsInCharge', 'proposingGroupWithGroupInCharge']
 # extra fields kept when an item is cloned in the same meeting config,
 # so not the case when sent to another meeting config
 EXTRA_COPIED_FIELDS_SAME_MC = ['associatedGroups', 'copyGroups', 'classifier', 'category',
@@ -286,28 +286,38 @@ DUPLICATE_AND_KEEP_LINK_EVENT_ACTION = 'Duplicate and keep link'
 # of the field managing values to compute it if any
 ITEM_INSERT_METHODS = OrderedDict((
     # at the end of meetings;
-    ('at_the_end', None),
+    ('at_the_end', []),
     # depending on the item's listType, by default 'normal' or 'late';
-    ('on_list_type', 'field_listTypes'),
+    ('on_list_type', ['field_listTypes']),
     # according to category order;
-    ('on_categories', 'category'),
+    ('on_categories', ['category']),
     # according to proposing group order;
-    ('on_proposing_groups', 'organization'),
+    ('on_proposing_groups', ['organization']),
     # according to all groups (among proposing group AND
     # associated groups). Similar to the previous sort method, with this
     # difference: the group taken into consideration is the group among all
     # groups that comes first in the order.
-    ('on_all_groups', 'organization'),
+    ('on_all_groups', ['organization']),
     # according to the groupInCharge of the proposingGroup used for the item
-    ('on_groups_in_charge', 'organization'),
+    ('on_groups_in_charge', ['organization']),
+    # according to the associatedGroups selected on the item
+    # taking into account every selected associatedGroups
+    # computing will generate following order :
+    # items having associated group 1 only
+    # items having associated group 1 and associated group 2
+    # items having associated group 1 and associated group 2 and associated group 3
+    # items having associated group 1 and associated group 2 and associated group 3 and associated group 4
+    # items having associated group 1 and associated group 3
+    # items having associated group 1 and associated group 3 and associated group 4
+    ('on_all_associated_groups', ['field_orderedAssociatedOrganizations', 'organization']),
     # according to the item privacy;
-    ('on_privacy', 'field_selectablePrivacies'),
+    ('on_privacy', ['field_selectablePrivacies']),
     # according to the item toDiscuss;
-    ('on_to_discuss', None),
+    ('on_to_discuss', []),
     # according to items that need to be sent to another meeting config;
-    ('on_other_mc_to_clone_to', 'field_meetingConfigsToCloneTo'),
+    ('on_other_mc_to_clone_to', ['field_meetingConfigsToCloneTo']),
     # according to poll type;
-    ('on_poll_type', 'field_usedPollTypes'),
+    ('on_poll_type', ['field_usedPollTypes']),
 ))
 
 ITEM_TRANSITION_WHEN_RETURNED_FROM_PROPOSING_GROUP_AFTER_CORRECTION = 'accept'
