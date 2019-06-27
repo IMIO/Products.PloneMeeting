@@ -5852,10 +5852,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # iterate a copy of fieldsToCopy as we change it in the loop
         for field in list(fieldsToCopy):
             if field in optionalFields and field not in destUsedItemAttributes:
+                # special case for 'groupsInCharge' that works alone or
+                # together with 'proposingGroupWithGroupInCharge'
+                if field == 'groupsInCharge' and \
+                   'proposingGroupWithGroupInCharge' in destUsedItemAttributes:
+                    continue
                 fieldsToCopy.remove(field)
                 # special case for 'budgetRelated' that works together with 'budgetInfos'
                 if field == 'budgetInfos':
                     fieldsToCopy.remove('budgetRelated')
+
         contentsKeptOnSentToOtherMC = cfg.getContentsKeptOnSentToOtherMC()
         keepAdvices = 'advices' in contentsKeptOnSentToOtherMC
         keptAdvices = keepAdvices and cfg.getAdvicesKeptOnSentToOtherMC(as_org_uids=True, item=self) or []
