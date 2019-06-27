@@ -1550,14 +1550,25 @@ class testViews(PloneMeetingTestCase):
             {'held_position': person.held_pos1,
              'held_position_label': u'Assembly member 1',
              'held_position_prefixed_label': u'Assembly member 1',
+             'held_position_prefixed_label_by': u'Assembly member 1',
+             'held_position_prefixed_label_to': u'Assembly member 1',
+             'label_prefix': '',
+             'label_prefix_by': '',
+             'label_prefix_to': '',
              'person': person,
              'person_fullname': u'Person1FirstName Person1LastName',
              'person_title': u'Monsieur Person1FirstName Person1LastName'})
+
         self.assertEqual(
             helper.get_contact_infos(['default'], 'pmManager'),
             {'held_position': person.held_pos1,
              'held_position_label': u'Assembly member 1',
              'held_position_prefixed_label': u'Assembly member 1',
+             'held_position_prefixed_label_by': u'Assembly member 1',
+             'held_position_prefixed_label_to': u'Assembly member 1',
+             'label_prefix': '',
+             'label_prefix_by': '',
+             'label_prefix_to': '',
              'person': person,
              'person_fullname': u'Person1FirstName Person1LastName',
              'person_title': u'Monsieur Person1FirstName Person1LastName'})
@@ -1566,6 +1577,11 @@ class testViews(PloneMeetingTestCase):
             {'held_position': newhp,
              'held_position_label': u'New held position',
              'held_position_prefixed_label': u'New held position',
+             'held_position_prefixed_label_by': u'New held position',
+             'held_position_prefixed_label_to': u'New held position',
+             'label_prefix': '',
+             'label_prefix_by': '',
+             'label_prefix_to': '',
              'person': person,
              'person_fullname': u'Person1FirstName Person1LastName',
              'person_title': u'Monsieur Person1FirstName Person1LastName'})
@@ -1576,6 +1592,25 @@ class testViews(PloneMeetingTestCase):
             {'held_position': newhp,
              'held_position_label': u'Default2A',
              'held_position_prefixed_label': u'Le Default2A',
+             'held_position_prefixed_label_by': u'du Default2A',
+             'held_position_prefixed_label_to': u'au Default2A',
+             'label_prefix': u'Le ',
+             'label_prefix_by': u'du ',
+             'label_prefix_to': u'au ',
+             'person': person,
+             'person_fullname': u'Person1FirstName Person1LastName',
+             'person_title': u'Monsieur Person1FirstName Person1LastName'})
+        # for female
+        self.assertEqual(
+            helper.get_contact_infos(['default2'], 'pmManager'),
+            {'held_position': newhp,
+             'held_position_label': u'Default2C',
+             'held_position_prefixed_label': u'La Default2C',
+             'held_position_prefixed_label_by': u'de la Default2C',
+             'held_position_prefixed_label_to': u'\xe0 la Default2C',
+             'label_prefix': u'La ',
+             'label_prefix_by': u'de la ',
+             'label_prefix_to': u'\xe0 la ',
              'person': person,
              'person_fullname': u'Person1FirstName Person1LastName',
              'person_title': u'Monsieur Person1FirstName Person1LastName'})

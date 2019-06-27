@@ -181,16 +181,54 @@ class PMHeldPosition(HeldPosition):
                    'FP': values[0]}
         return res
 
-    def get_prefix_for_gender_and_number(self, value=None, include_value=False):
+    def get_prefix_for_gender_and_number(self, value=None, include_value=False, use_by=False, use_to=False):
         """Get prefix to use depending on given value."""
         value_starting_vowel = {'MS': u'L\'',
                                 'MP': u'Les ',
                                 'FS': u'L\'',
-                                'FP': u'Les '}
+                                'FP': u'Les ',
+
+                                # by male singular
+                                'BMS': u'de l\' ',
+                                # by male plural
+                                'BMP': u'des ',
+                                # by female singular
+                                'BFS': u'de l\' ',
+                                # by female plural
+                                'BFP': u'des ',
+
+                                # to male singular
+                                'TMS': u'à l\' ',
+                                # from male plural
+                                'TMP': u'aux ',
+                                # from female singular
+                                'TFS': u'à l\' ',
+                                # from female plural
+                                'TFP': u'aux ',
+                                }
         value_starting_consonant = {'MS': u'Le ',
                                     'MP': u'Les ',
                                     'FS': u'La ',
-                                    'FP': u'Les '}
+                                    'FP': u'Les ',
+
+                                    # by male singular
+                                    'BMS': u'du ',
+                                    # by male plural
+                                    'BMP': u'des ',
+                                    # by female singular
+                                    'BFS': u'de la ',
+                                    # by female plural
+                                    'BFP': u'des ',
+
+                                    # to male singular
+                                    'TMS': u'au ',
+                                    # from male plural
+                                    'TMP': u'aux ',
+                                    # from female singular
+                                    'TFS': u'à la ',
+                                    # from female plural
+                                    'TFP': u'aux ',
+                                    }
 
         if not value:
             value = self.get_label()
@@ -204,7 +242,8 @@ class PMHeldPosition(HeldPosition):
             mappings = value_starting_consonant
         values = {k: v for k, v in self.gender_and_number_from_position_type().items()
                   if v == value}
-        res = values and mappings.get(get_gender_and_number([self.get_person()]), '') or ''
+        res = values and mappings.get(get_gender_and_number(
+            [self.get_person()], use_by=use_by, use_to=use_to), '') or ''
         if include_value:
             res = u'{0}{1}'.format(res, value)
         return res

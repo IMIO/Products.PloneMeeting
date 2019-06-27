@@ -140,15 +140,6 @@ def setupCatalogMultiplex(context):
         atool.setCatalogsByType(meta_type, list(current_catalogs))
 
 
-def updateRoleMappings(context):
-    """after workflow changed update the roles mapping. this is like pressing
-    the button 'Update Security Setting' and portal_workflow"""
-    if isNotPloneMeetingProfile(context):
-        return
-    wft = api.portal.get_tool('portal_workflow')
-    wft.updateRoleMappings()
-
-
 def postInstall(context):
     """Called at the end of the setup process. """
     if isNotPloneMeetingProfile(context):

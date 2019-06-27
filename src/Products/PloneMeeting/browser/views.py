@@ -710,7 +710,12 @@ class BaseDGHV(object):
                  'person_fullname': None,
                  'held_position': None,
                  'held_position_label': None,
+                 'label_prefix': None,
                  'held_position_prefixed_label': None,
+                 'label_prefix_by': None,
+                 'held_position_prefixed_label_by': None,
+                 'label_prefix_to': None,
+                 'held_position_prefixed_label_to': None,
                  }
         person = get_person_from_userid(userid or self.context.Creator())
         if person:
@@ -727,7 +732,17 @@ class BaseDGHV(object):
             if hp:
                 infos['held_position'] = hp
                 infos['held_position_label'] = hp.get_label()
-                infos['held_position_prefixed_label'] = hp.get_prefix_for_gender_and_number(include_value=True)
+                infos['label_prefix'] = hp.get_prefix_for_gender_and_number(include_value=False)
+                infos['held_position_prefixed_label'] = \
+                    hp.get_prefix_for_gender_and_number(include_value=True)
+                infos['label_prefix_by'] = \
+                    hp.get_prefix_for_gender_and_number(include_value=False, use_by=True)
+                infos['held_position_prefixed_label_by'] = \
+                    hp.get_prefix_for_gender_and_number(include_value=True, use_by=True)
+                infos['label_prefix_to'] = \
+                    hp.get_prefix_for_gender_and_number(include_value=False, use_to=True)
+                infos['held_position_prefixed_label_to'] = \
+                    hp.get_prefix_for_gender_and_number(include_value=True, use_to=True)
         return infos
 
     def printAdvicesInfos(self,

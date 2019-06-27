@@ -26,6 +26,9 @@ Changelog
 - Moved MeetingItem.groupInCharge to MeetingItem.groupsInCharge : make the field editable on item and rely on selected organizations in plonegroup or
   on organizations selected in the MeetingConfig.orderedGroupsInCharge field.  Adapted inserting method 'on_groups_in_charge' to take into account every
   groups in charge and not only the first ordered group in charge
+- Remove import_step calling setuphandlers.updateRoleMappings
+- Added new parameters 'use_by' and 'use_to' to held_position.get_prefix_for_gender_and_number that will return extra values to manage sentence like
+  'advice asked to Mister X' and 'advice given by Mister X'.  BaseDGHV.get_contact_infos will include every possible values
 
 4.1rc3 (2019-06-14)
 -------------------
