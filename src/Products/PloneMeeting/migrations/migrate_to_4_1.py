@@ -8,6 +8,7 @@ from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_own_organization
 from collective.contact.plonegroup.utils import get_plone_group
 from collective.contact.plonegroup.utils import get_plone_group_id
+from collective.documentgenerator.utils import update_oo_config
 from collective.eeafaceted.batchactions.interfaces import IBatchActionsMarker
 from copy import deepcopy
 from DateTime import DateTime
@@ -1114,6 +1115,9 @@ class Migrate_To_4_1(Migrator):
         self.reinstall(profiles=['profile-Products.PloneMeeting:default', ],
                        ignore_dependencies=False,
                        dependency_strategy=DEPENDENCY_STRATEGY_NEW)
+
+        # Reload documentgenerator configuration from file
+        update_oo_config()
 
         # power observers are now defined in MeetingConfig.powerObservers
         self._migratePowerObservers()
