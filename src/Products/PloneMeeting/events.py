@@ -234,6 +234,7 @@ def onOrgModified(org, event):
 def onOrgWillBeRemoved(current_org, event):
     '''Checks if the organization can be deleted:
       - it can not be linked to an existing MeetingItem;
+      - it can not be used in a existing ItemTemplate.templateUsingGroups;
       - it can not be referenced in an existing MeetingConfig;
       - it can not be used in an existing MeetingCategory.usingGroups;
       - it can not be used as groupInCharge of another organization;
@@ -291,18 +292,8 @@ def onOrgWillBeRemoved(current_org, event):
                                                   mapping={'member_id': plone_group.getGroupMembers()[0]},
                                                   domain="plone",
                                                   context=request))
-    # And finally, check that organization is not linked to an existing item.
-    # In the configuration
-    for cfg in tool.objectValues('MeetingConfig'):
-        for item in (cfg.recurringitems.objectValues('MeetingItem') +
-                     cfg.itemtemplates.objectValues('MeetingItem')):
-            if item.getProposingGroup() == current_org_uid or \
-               current_org_uid in item.getAssociatedGroups():
-                raise BeforeDeleteException(
-                    translate("can_not_delete_organization_config_meetingitem",
-                              domain="plone",
-                              mapping={'url': item.absolute_url()},
-                              context=request))
+    catalog = api.portal.get_tool('portal_catalog')
+
     # In the application
     # most of times, the real groupId is stored, but for MeetingItem.copyGroups, we
     # store suffixed elements of the group, so compute suffixed elements for config and compare
@@ -310,17 +301,21 @@ def onOrgWillBeRemoved(current_org, event):
     for suffix in get_all_suffixes():
         plone_group_id = get_plone_group_id(current_org_uid, suffix)
         suffixedGroups.add(plone_group_id)
-    catalog = api.portal.get_tool('portal_catalog')
     for brain in catalog(meta_type="MeetingItem"):
         item = brain.getObject()
         if (item.getProposingGroup() == current_org_uid) or \
            (current_org_uid in item.getAssociatedGroups()) or \
            (current_org_uid in item.getGroupsInCharge()) or \
            (current_org_uid in item.adviceIndex) or \
+           (current_org_uid in item.getTemplateUsingGroups()) or \
            set(item.getCopyGroups()).intersection(suffixedGroups):
             # The organization is linked to an existing item, we can not delete it.
+            if item.isDefinedInTool():
+                msg = "can_not_delete_organization_config_meetingitem"
+            else:
+                msg = "can_not_delete_organization_meetingitem"
             raise BeforeDeleteException(
-                translate("can_not_delete_organization_meetingitem",
+                translate(msg,
                           mapping={'item_url': item.absolute_url()},
                           domain="plone",
                           context=request))

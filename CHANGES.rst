@@ -5,8 +5,9 @@ Changelog
 4.1rc5 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- Make sure an organization can not be removed if used in MeetingItem.templateUsingGroups
+- Redefine imio.prettylink cachekey for IMeetingAdvice to invalidate cache to getLink if item title changed
+- Include etag parentmodified for folderView so etags are invalidated when an advice parent (item) is modified
 
 4.1rc4 (2019-06-28)
 -------------------

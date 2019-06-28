@@ -56,6 +56,29 @@ class ContextModified(object):
         return 'cm_' + _modified(context)
 
 
+class ParentModified(object):
+    """The ``parentmodified`` etag component, returning the most recent
+       between modified date or _p_mtime of context's parent
+       Usefull to reload advice view if item modified.
+    """
+
+    implements(IETagValue)
+    adapts(Interface, Interface)
+
+    def __init__(self, published, request):
+        self.published = published
+        self.request = request
+
+    def __call__(self):
+        context = getContext(self.published)
+        tool = api.portal.get_tool('portal_plonemeeting')
+        res = 'pm_0'
+        if context.portal_type in tool.getAdvicePortalTypes(as_ids=True):
+            parent = context.aq_inner.aq_parent
+            res = 'pm_' + _modified(parent)
+        return res
+
+
 class LinkedMeetingModified(object):
     """The ``linkedmeetingmodified`` etag component, returning the modified
        date of linked meeting for MeetingItem

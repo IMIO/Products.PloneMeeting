@@ -193,10 +193,24 @@ class OrgContentDeletableAdapter(APContentDeletableAdapter):
         return True
 
 
+class AdvicePrettyLinkAdapter(PrettyLinkAdapter):
+    """ """
+
+    def getLink_cachekey(method, self):
+        '''As item title is displayed on advice, invalidate cache if item title changed.'''
+        res = super(AdvicePrettyLinkAdapter, self).getLink_cachekey(self)
+        item = self.context.aq_inner.aq_parent
+        item_title = item.Title()
+        return res + (item_title, )
+
+    @ram.cache(getLink_cachekey)
+    def getLink(self):
+        """Necessary to be able to override the cachekey."""
+        return self._getLink()
+
+
 class ItemPrettyLinkAdapter(PrettyLinkAdapter):
-    """
-      Override to take into account PloneMeeting use cases...
-    """
+    """Override to take into account PloneMeeting use cases..."""
 
     def getLink_cachekey(method, self):
         '''cachekey method for self.getLink.'''

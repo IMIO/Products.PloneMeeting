@@ -759,7 +759,9 @@ class Migrate_To_4_1(Migrator):
                 adapted_templateUsingGroups = []
                 for mGroupId in templateUsingGroups:
                     org = own_org.get(mGroupId)
-                    adapted_templateUsingGroups.append(org.UID())
+                    # templateUsingGroup could contains removed MeetingGroups
+                    if org:
+                        adapted_templateUsingGroups.append(org.UID())
                 item.setTemplateUsingGroups(adapted_templateUsingGroups)
 
             # adapt contained advices

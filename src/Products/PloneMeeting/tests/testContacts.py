@@ -726,11 +726,23 @@ class testContacts(PloneMeetingTestCase):
         self.assertEquals(cm.exception.message,
                           translate('can_not_delete_organization_config_meetingitem',
                                     domain='plone',
-                                    mapping={'url': cfg.itemtemplates.template2.absolute_url()},
+                                    mapping={'item_url': cfg.itemtemplates.template2.absolute_url()},
                                     context=self.portal.REQUEST))
-        # so remove the item in the config (it could work by changing the proposingGroup too...)
-        cfg.itemtemplates.manage_delObjects(['template2', ])
+        # change proposingGroup but use org in templateUsingGroups
+        cfg.itemtemplates.template2.setProposingGroup(self.developers_uid)
+        cfg.itemtemplates.template2.setTemplateUsingGroups((self.vendors_uid, ))
+        transaction.commit()
+        with self.assertRaises(BeforeDeleteException) as cm:
+            self.portal.restrictedTraverse('@@delete_givenuid')(
+                self.vendors_uid, catch_before_delete_exception=False)
+        self.assertEquals(cm.exception.message,
+                          translate('can_not_delete_organization_config_meetingitem',
+                                    domain='plone',
+                                    mapping={'item_url': cfg.itemtemplates.template2.absolute_url()},
+                                    context=self.portal.REQUEST))
+
         # unselect organizations from plonegroup configuration so it works...
+        cfg.itemtemplates.template2.setTemplateUsingGroups(())
         self._select_organization(self.vendors_uid, remove=True)
         # now it works...
         self.portal.restrictedTraverse('@@delete_givenuid')(

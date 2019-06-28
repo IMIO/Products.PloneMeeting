@@ -221,6 +221,9 @@
     />
 
   <!-- IPrettyLink -->
+  <adapter for="Products.PloneMeeting.content.advice.IMeetingAdvice"
+           factory=".adapters.AdvicePrettyLinkAdapter"
+           provides="imio.prettylink.interfaces.IPrettyLink" />
   <adapter for="Products.PloneMeeting.interfaces.IMeetingItem"
            factory=".adapters.ItemPrettyLinkAdapter"
            provides="imio.prettylink.interfaces.IPrettyLink" />
@@ -336,6 +339,8 @@
            name="usergroups" />
   <adapter factory=".etags.ContextModified"
            name="contextmodified" />
+  <adapter factory=".etags.ParentModified"
+           name="parentmodified" />
   <adapter factory=".etags.LinkedMeetingModified"
            name="linkedmeetingmodified" />
   <adapter factory=".etags.ConfigModified"
