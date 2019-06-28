@@ -29,6 +29,8 @@ Changelog
 - Remove import_step calling setuphandlers.updateRoleMappings
 - Added new parameters 'use_by' and 'use_to' to held_position.get_prefix_for_gender_and_number that will return extra values to manage sentence like
   'advice asked to Mister X' and 'advice given by Mister X'.  BaseDGHV.get_contact_infos will include every possible values
+- Added possibility to define "Plone user id" while importing person contacts using persons.csv
+- In migration to v4.1, create criteria c23 and c24 as it seems that some old v4.0 did not have these 2 criteria
 
 4.1rc3 (2019-06-14)
 -------------------
