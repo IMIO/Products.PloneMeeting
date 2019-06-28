@@ -112,14 +112,28 @@ class Migrate_To_4_1(Migrator):
             cfg.updateCollectionColumns()
         logger.info('Done.')
 
-    def _renameItemGroupsInChargeStates(self):
-        '''Field MeetingConfig.itemGroupInChargeStates was renamed to MeetingConfig.itemGroupsInChargeStates.'''
-        logger.info("Updating renamed MeetingConfig fields...")
+    def _migrateGroupsInChargeAttributes(self):
+        '''Field MeetingConfig.itemGroupInChargeStates was renamed to MeetingConfig.itemGroupsInChargeStates.
+           Value reader_groupincharge is now reader_groupsincharge.'''
+        logger.info("Updating attributes for groupsInCharge...")
         for cfg in self.tool.objectValues('MeetingConfig'):
             if hasattr(cfg, 'itemGroupInChargeStates'):
                 itemGroupInChargeStates = cfg.itemGroupInChargeStates
                 cfg.setItemGroupsInChargeStates(itemGroupInChargeStates)
                 delattr(cfg, 'itemGroupInChargeStates')
+            # itemAnnexConfidentialVisibleFor
+            itemAnnexConfidentialVisibleFor = list(cfg.getItemAnnexConfidentialVisibleFor())
+            if 'reader_groupincharge' in itemAnnexConfidentialVisibleFor:
+                itemAnnexConfidentialVisibleFor.remove('reader_groupincharge')
+                itemAnnexConfidentialVisibleFor.append('reader_groupsincharge')
+            cfg.setItemAnnexConfidentialVisibleFor(itemAnnexConfidentialVisibleFor)
+            # adviceAnnexConfidentialVisibleFor
+            adviceAnnexConfidentialVisibleFor = list(cfg.getAdviceAnnexConfidentialVisibleFor())
+            if 'reader_groupincharge' in adviceAnnexConfidentialVisibleFor:
+                adviceAnnexConfidentialVisibleFor.remove('reader_groupincharge')
+                adviceAnnexConfidentialVisibleFor.append('reader_groupsincharge')
+            cfg.setAdviceAnnexConfidentialVisibleFor(adviceAnnexConfidentialVisibleFor)
+
         logger.info('Done.')
 
     def _markSearchesFoldersWithIBatchActionsMarker(self):
@@ -1090,7 +1104,7 @@ class Migrate_To_4_1(Migrator):
         self._upgradeImioDashboard()
 
         self._updateCatalogsByTypes()
-        self._renameItemGroupsInChargeStates()
+        self._migrateGroupsInChargeAttributes()
 
         # omit Products.PloneMeeting for now or it creates infinite loop as we are
         # in a Products.PloneMeeting upgrade step...
