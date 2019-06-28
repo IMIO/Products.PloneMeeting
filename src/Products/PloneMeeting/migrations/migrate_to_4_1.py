@@ -27,6 +27,7 @@ from Products.PloneMeeting.config import TOOL_FOLDER_POD_TEMPLATES
 from Products.PloneMeeting.indexes import DELAYAWARE_ROW_ID_PATTERN
 from Products.PloneMeeting.indexes import REAL_ORG_UID_PATTERN
 from Products.PloneMeeting.interfaces import IConfigElement
+from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator
 from Products.PloneMeeting.profiles import MeetingConfigDescriptor
 from Products.PloneMeeting.utils import get_public_url
@@ -37,15 +38,10 @@ from zope.i18n import translate
 from zope.interface import alsoProvides
 from zope.intid.interfaces import IIntIds
 
-import logging
 import mimetypes
 import os
 
 
-logger = logging.getLogger('PloneMeeting')
-
-
-# The migration class ----------------------------------------------------------
 class Migrate_To_4_1(Migrator):
 
     def _updateFacetedFilters(self):
@@ -239,9 +235,7 @@ class Migrate_To_4_1(Migrator):
                     "MeetingConfig.contentsKeptOnSentToOtherMC...")
         for cfg in self.tool.objectValues('MeetingConfig'):
             if not base_hasattr(cfg, 'keepAdvicesOnSentToOtherMC'):
-                # already migrated
-                logger.info('Already migrated ...')
-                logger.info('Done.')
+                self._already_migrated()
                 return
 
             keepAdvicesOnSentToOtherMC = cfg.keepAdvicesOnSentToOtherMC
@@ -380,8 +374,7 @@ class Migrate_To_4_1(Migrator):
             # give local_roles to relevant groups on contacts
             cfg._createOrUpdateAllPloneGroups(force_update_access=True)
             if not hasattr(cfg, 'useUserReplacements'):
-                # already migrated
-                logger.info('Already migrated ...')
+                self._already_migrated(False)
                 break
             delattr(cfg, 'useUserReplacements')
             # first migrate MeetingUsers
@@ -408,8 +401,7 @@ class Migrate_To_4_1(Migrator):
             for brain in brains:
                 meeting = brain.getObject()
                 if hasattr(meeting, 'orderedContacts'):
-                    # already migrated
-                    logger.info('Already migrated ...')
+                    self._already_migrated(False)
                     break
                 meeting.orderedContacts = OrderedDict()
                 meeting.itemAbsents = PersistentMapping()
@@ -452,8 +444,7 @@ class Migrate_To_4_1(Migrator):
             for brain in brains:
                 item = brain.getObject()
                 if not hasattr(item, 'itemAbsents'):
-                    # already migrated
-                    logger.info('Already migrated ...')
+                    self._already_migrated(False)
                     break
                 # migrate MeetingUsers related fields
                 itemInitiators = item.getItemInitiator()
@@ -493,9 +484,7 @@ class Migrate_To_4_1(Migrator):
         logger.info('Adapting application for plonegroup...')
         own_org = get_own_organization()
         if own_org.objectValues():
-            # already migrated
-            logger.info('Already migrated ...')
-            logger.info('Done.')
+            self._already_migrated()
             return
 
         logger.info('Migrating MeetingGroups...')
@@ -865,8 +854,7 @@ class Migrate_To_4_1(Migrator):
                     '"MeetingConfig.groupsHiddenInDashboardFilter"...')
         for cfg in self.tool.objectValues('MeetingConfig'):
             if not hasattr(cfg, 'groupsShownInDashboardFilter'):
-                # already migrated
-                logger.info('Already migrated ...')
+                self._already_migrated(False)
                 break
             # if groupsShownInDashboardFilter was empty, it meants, we show every groups
             groupsShownInDashboardFilter = cfg.groupsShownInDashboardFilter
@@ -1012,8 +1000,7 @@ class Migrate_To_4_1(Migrator):
             for brain in brains:
                 item = brain.getObject()
                 if IConfigElement.providedBy(item):
-                    # already migrated
-                    logger.info('Already migrated ...')
+                    self._already_migrated(False)
                     break
                 alsoProvides(item, IConfigElement)
         logger.info('Done.')
@@ -1184,10 +1171,14 @@ class Migrate_To_4_1(Migrator):
         self._adaptShowHolidaysMessage()
         self._migrateMeetingConfigDefaultAdviceHiddenDuringRedaction()
         self.tool.invalidateAllCache()
-        # too many indexes to update, rebuild the portal_catalog
-        meeting_wf_ids = self.getWorkflows(meta_types=['Meeting'])
-        self.refreshDatabase(workflows=True,
-                             workflowsToUpdate=['plonemeeting_onestate_workflow'] + meeting_wf_ids)
+        if self.already_migrated is False:
+            # too many indexes to update, rebuild the portal_catalog
+            meeting_wf_ids = self.getWorkflows(meta_types=['Meeting'])
+            self.refreshDatabase(workflows=True,
+                                 workflowsToUpdate=['plonemeeting_onestate_workflow'] + meeting_wf_ids)
+        else:
+            self.warn(logger,
+                      'Bypassing workflows and portal_catalog update because application was already migrated.')
 
 
 # The migration function -------------------------------------------------------
@@ -1195,40 +1186,45 @@ def migrate(context):
     '''This migration function will:
 
        1) Upgrade imio.dashboard;
-       2) Upgrade all others packages;
-       3) Reinstall PloneMeeting and upgrade dependencies;
-       4) Migrate powerobservers;
-       5) Enable 'refused' WF adaptation;
-       6) Reinstall plugin if not PloneMeeting;
-       7) Run common upgrades (dependencies, clean registries, holidays, reindexes);
-       8) Add new faceted filters;
-       9) Add '_itemtemplatesmanagers' groups;
-       10) Update collections columns as column 'check_box_item' was renamed to 'select_row';
-       11) Synch searches to mark searches sub folders with the IBatchActionsMarker;
-       12) Remove MeetingConfig tabs from portal_actions portal_tabs;
-       13) Migrate MeetingConfig.keepAdvicesOnSentToOtherMC to MeetingConfig.contentsKeptOnSentToOtherMC;
-       14) Fix annex mimetype in case there was a problem with old annexes using uncomplete mimetypes_registry;
-       15) Fix POD template mimetype because we need it to be correct for the styles template;
-       16) Make sure workflow_history stored on items is a PersistentMapping;
-       17) Migrate MeetingConfig.toDoListSearches as it is no more a ReferenceField;
-       18) Adapt application for Contacts;
-       19) Update MeetingConfig.usedItemAttributes, select 'description' and unselect 'itemAssembly';
-       20) Migrate MeetingConfig.groupsShownInDashboardFilter to MeetingConfig.groupsHiddenInDashboardFilter;
-       21) Configure MeetingConfig podtemplates folder to accept style templates;
-       22) Clean MeetingConfigs from removed attributes;
-       23) Fix meeting related DashboardCollections query;
-       24) Remove global roles for every users, roles are only given thru groups;
-       25) Update keys stored in MeetingConfig related to static infos displayed in dashboards;
-       26) Adapt link to images to be sure to use resolveuid;
-       27) Migrate contact person klass to use PMPerson for users of beta versions...;
-       28) Disable votes functionnality;
-       29) Removed no more used portal_types;
-       30) Migrate 'searchitemstoprevalidate' query;
-       31) Migrate items in MeetingConfig so it provides IConfigElement;
-       32) Initialize personal labels if found in FTW_LABELS_PERSONAL_LABELS env variable;
-       33) Adapt 'Show holidays warning' condition to not evaluate it if user is
+       2) Make sure MeetingConfig is taken into account by portal_catalog;
+       3) Rename MeetingConfig.itemGroupInChargeStates to MeetingConfig.itemGroupsInChargeStates;
+       4) Upgrade all others packages;
+       5) Reinstall PloneMeeting and upgrade dependencies;
+       6) Make sure collective.documentgenerator OO parameters are correct;
+       7) Migrate powerobservers;
+       8) Enable 'refused' WF adaptation;
+       9) Reinstall plugin if not PloneMeeting;
+       10) Run common upgrades (dependencies, clean registries, holidays, reindexes);
+       11) Add new faceted filters;
+       12) Add '_itemtemplatesmanagers' groups;
+       13) Update collections columns as column 'check_box_item' was renamed to 'select_row';
+       14) Synch searches to mark searches sub folders with the IBatchActionsMarker;
+       15) Remove MeetingConfig tabs from portal_actions portal_tabs;
+       16) Migrate MeetingConfig.keepAdvicesOnSentToOtherMC to MeetingConfig.contentsKeptOnSentToOtherMC;
+       17) Fix annex mimetype in case there was a problem with old annexes using uncomplete mimetypes_registry;
+       18) Fix POD template mimetype because we need it to be correct for the styles template;
+       19) Make sure workflow_history stored on items is a PersistentMapping;
+       20) Migrate MeetingConfig.toDoListSearches as it is no more a ReferenceField;
+       21) Adapt application for Contacts;
+       22) Update MeetingConfig.usedItemAttributes, select 'description' and unselect 'itemAssembly';
+       23) Migrate MeetingConfig.groupsShownInDashboardFilter to MeetingConfig.groupsHiddenInDashboardFilter;
+       24) Configure MeetingConfig podtemplates folder to accept style templates;
+       25) Clean MeetingConfigs from removed attributes;
+       26) Fix meeting related DashboardCollections query;
+       27) Remove global roles for every users, roles are only given thru groups;
+       28) Update keys stored in MeetingConfig related to static infos displayed in dashboards;
+       29) Adapt link to images to be sure to use resolveuid;
+       30) Migrate contact person klass to use PMPerson for users of beta versions...;
+       31) Disable votes functionnality;
+       32) Removed no more used portal_types;
+       33) Migrate 'searchitemstoprevalidate' query;
+       34) Migrate items in MeetingConfig so it provides IConfigElement;
+       35) Initialize personal labels if found in FTW_LABELS_PERSONAL_LABELS env variable;
+       36) Adapt 'Show holidays warning' condition to not evaluate it if user is
            Anonymous because access to tool is no more granted to Anonymous;
-       34) Refresh catalog and types using workflows of plonemeeting_onestate_workflow
+       37) Migrate MeetingConfig.defaultAdviceHiddenDuringRedaction (bool to list);
+       38) Invalidate all cache before cataloging and returning to application
+       39) Refresh catalog and types using workflows of plonemeeting_onestate_workflow
           (no more access to Anonymous) and Meeting workflows (MeetingManager have 'Review portal content'
           in state 'closed').
     '''

@@ -28,6 +28,9 @@ logger = logging.getLogger('PloneMeeting')
 
 class Migrator(BaseMigrator):
     '''Abstract class for creating a migrator.'''
+
+    already_migrated = False
+
     def __init__(self, context):
         BaseMigrator.__init__(self, context, disable_linkintegrity_checks=True)
         self.tool = api.portal.get_tool('portal_plonemeeting')
@@ -164,6 +167,13 @@ class Migrator(BaseMigrator):
             if base_hasattr(self.tool, field_name):
                 delattr(self.tool, field_name)
         logger.info('Done.')
+
+    def _already_migrated(self, done=True):
+        """Called when a migration is executed several times..."""
+        self.already_migrated = True
+        logger.info('Already migrated ...')
+        if done:
+            logger.info('Done.')
 
     def run(self):
         '''Must be overridden. This method does the migration job.'''
