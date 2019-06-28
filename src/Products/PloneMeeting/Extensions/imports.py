@@ -243,7 +243,7 @@ def import_contacts(self, dochange=True, ownorg='Mon organisation', only='ORGS|P
     if lines:
         data = lines.pop(0)
         lendata = len(data)
-        if lendata < 21 or data[20] != 'UID':
+        if lendata < 22 or data[21] != 'UID':
             return "Problem decoding first line: bad columns in persons.csv ?"
     persons = {}
     out.append("\n## PERSONS ##\n")
@@ -252,7 +252,7 @@ def import_contacts(self, dochange=True, ownorg='Mon organisation', only='ORGS|P
         if len(data) != lendata:
             return "!! PERS: problem line %d, invalid column number %d <> %d: %s" % (i, lendata, len(data),
                                                                                      ['%s' % cell for cell in data])
-        id, name, fname, inum, uid = data[0], data[1], data[2], data[19], data[20]
+        id, name, fname, inum, plone_user_id, uid = data[0], data[1], data[2], data[19], data[20], data[21]
         errors = []
         try:
             upa = data[6] and int(data[6]) or ''
@@ -311,7 +311,8 @@ def import_contacts(self, dochange=True, ownorg='Mon organisation', only='ORGS|P
                                          zip_code=zipc, city=safe_unicode(data[11]),
                                          phone=phone, cell_phone=cell_phone, fax=fax, email=safe_unicode(data[15]),
                                          website=safe_unicode(data[16]), region=safe_unicode(data[17]),
-                                         country=safe_unicode(data[18]), use_parent_address=bool(upa))
+                                         country=safe_unicode(data[18]), use_parent_address=bool(upa),
+                                         userid=plone_user_id)
                 if inum and IInternalNumberBehavior.providedBy(obj):
                     obj.internal_number = inum
                     obj.reindexObject(idxs=['internal_number', 'SearchableText'])
