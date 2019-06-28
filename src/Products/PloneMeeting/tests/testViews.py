@@ -1601,6 +1601,7 @@ class testViews(PloneMeetingTestCase):
              'person_fullname': u'Person1FirstName Person1LastName',
              'person_title': u'Monsieur Person1FirstName Person1LastName'})
         # for female
+        person.gender = u'F'
         self.assertEqual(
             helper.get_contact_infos(['default2'], 'pmManager'),
             {'held_position': newhp,
