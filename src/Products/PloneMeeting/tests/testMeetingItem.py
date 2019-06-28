@@ -4252,7 +4252,7 @@ class testMeetingItem(PloneMeetingTestCase):
             'predecessor', 'preferredMeeting', 'proposingGroup',
             'takenOverBy', 'templateUsingGroups',
             'toDiscuss', 'votesAreSecret', 'otherMeetingConfigsClonableToEmergency',
-            'internalNotes', 'externalIdentifier']
+            'internalNotes', 'externalIdentifier', 'isAcceptableOutOfMeeting']
         NEUTRAL_FIELDS += self._extraNeutralFields()
         # neutral + default + extra + getExtraFieldsToCopyWhenCloning(True) +
         # getExtraFieldsToCopyWhenCloning(False) should equal itemFields
