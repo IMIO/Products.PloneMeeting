@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.1rc4 (unreleased)
+4.1rc4 (2019-06-28)
 -------------------
 
 - Display items navigation widget correctly, fixed CSS
