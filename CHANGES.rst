@@ -31,6 +31,7 @@ Changelog
   'advice asked to Mister X' and 'advice given by Mister X'.  BaseDGHV.get_contact_infos will include every possible values
 - Added possibility to define "Plone user id" while importing person contacts using persons.csv
 - In migration to v4.1, create criteria c23 and c24 as it seems that some old v4.0 did not have these 2 criteria
+- MeetingItem.getItemAssembly does not support parameter 'striked=True', use MeetingItem.displayStrikedItemAssembly
 
 4.1rc3 (2019-06-14)
 -------------------

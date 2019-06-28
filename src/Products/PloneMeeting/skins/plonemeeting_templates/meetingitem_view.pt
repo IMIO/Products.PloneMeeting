@@ -156,7 +156,7 @@
                                       tal:attributes="class python: 'assembly' in redefinedItemAssemblies and 'item_attribute_label highlightValue' or 'item_attribute_label'"
                                       i18n:translate="attendees_for_item"></span>:&nbsp;&nbsp;
                             </tal:displayAssemblyLabel>
-                            <span tal:replace="structure python: context.getItemAssembly(striked=True) or '-'">Assembly</span>
+                            <span tal:replace="structure python: context.displayStrikedItemAssembly() or '-'">Assembly</span>
                         </div>
                         <div tal:condition="python: 'assemblyExcused' in usedMeetingAttrs or 'assemblyExcused' in redefinedItemAssemblies">
                             <span class="item_attribute_label"
