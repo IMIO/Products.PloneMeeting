@@ -32,7 +32,7 @@ Changelog
 - Added possibility to define "Plone user id" while importing person contacts using persons.csv
 - In migration to v4.1, create criteria c23 and c24 as it seems that some old v4.0 did not have these 2 criteria
 - MeetingItem.getItemAssembly does not support parameter 'striked=True', use MeetingItem.displayStrikedItemAssembly
-- Kept "isAcceptableOutOfMeeting" field when using templates.
+- Keep field "isAcceptableOutOfMeeting" when creating item from item template
 
 4.1rc3 (2019-06-14)
 -------------------
