@@ -2930,10 +2930,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             groups_in_charge = proposingGroup.get_groups_in_charge()
             if groups_in_charge:
                 res = groups_in_charge
-        if res and theObjects:
+        # avoid getting every organizations if first=True
+        if res and first and theObjects:
+            res = [res[0]]
+
+        if theObjects:
             res = [get_organization(org_uid) for org_uid in res]
+
         if res and first:
             res = res[0]
+
         return res
 
     security.declarePublic('fieldIsEmpty')
