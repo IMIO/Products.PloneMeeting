@@ -2,6 +2,12 @@ Changelog
 =========
 
 
+4.1rc6 (unreleased)
+-------------------
+
+- Nothing changed yet.
+
+
 4.1rc5 (2019-06-30)
 -------------------
 
