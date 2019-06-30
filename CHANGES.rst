@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.1rc5 (unreleased)
+4.1rc5 (2019-06-30)
 -------------------
 
 - Make sure an organization can not be removed if used in MeetingItem.templateUsingGroups
