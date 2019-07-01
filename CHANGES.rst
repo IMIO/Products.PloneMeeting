@@ -5,8 +5,7 @@ Changelog
 4.1rc6 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- Fixed meetingitem_view when displaying groupsInCharge
 
 4.1rc5 (2019-06-30)
 -------------------
