@@ -59,7 +59,7 @@
 
             <tal:comment replace="nothing">Groups in charge</tal:comment>
             <div class="discreet" tal:condition="python: 'groupsInCharge' in usedAttrs"
-                                  tal:define="associatedGroups context/getGroupsInCharge;">
+                                  tal:define="groupsInCharge context/getGroupsInCharge;">
                 <span class="item_attribute_label"
                       i18n:translate="PloneMeeting_label_groupsInCharge"></span>:&nbsp;&nbsp;
                 <tal:displayGroupsInCharge condition="groupsInCharge">
