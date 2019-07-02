@@ -2,6 +2,12 @@ Changelog
 =========
 
 
+4.1rc7 (unreleased)
+-------------------
+
+- Nothing changed yet.
+
+
 4.1rc6 (2019-07-02)
 -------------------
 
