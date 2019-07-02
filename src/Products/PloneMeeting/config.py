@@ -208,7 +208,8 @@ EXTRA_COPIED_FIELDS_SAME_MC = ['associatedGroups', 'copyGroups', 'classifier', '
                                'otherMeetingConfigsClonableToPrivacy', 'oralQuestion',
                                'toDiscuss', 'privacy', 'pollType', 'textCheckList']
 
-EXTRA_COPIED_FIELDS_FROM_ITEM_TEMPLATE = ['observations', 'inAndOutMoves', 'notes', 'internalNotes', 'isAcceptableOutOfMeeting']
+EXTRA_COPIED_FIELDS_FROM_ITEM_TEMPLATE = ['observations', 'inAndOutMoves', 'notes',
+                                          'internalNotes', 'isAcceptableOutOfMeeting']
 
 # to differenciate items of different meeting configs,
 # use a different icon color (MeetingConfig.itemIconColor)
@@ -299,7 +300,7 @@ ITEM_INSERT_METHODS = OrderedDict((
     # groups that comes first in the order.
     ('on_all_groups', ['organization']),
     # according to the groupInCharge of the proposingGroup used for the item
-    ('on_groups_in_charge', ['organization']),
+    ('on_groups_in_charge', ['field_orderedGroupsInCharge', 'organization']),
     # according to the associatedGroups selected on the item
     # taking into account every selected associatedGroups
     # computing will generate following order :
