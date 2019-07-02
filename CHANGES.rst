@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.1rc6 (unreleased)
+4.1rc6 (2019-07-02)
 -------------------
 
 - Fixed meetingitem_view when displaying groupsInCharge
