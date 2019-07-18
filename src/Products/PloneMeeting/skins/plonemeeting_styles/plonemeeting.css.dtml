@@ -979,6 +979,7 @@ div[id^="archetypes-fieldname-customAdvisers-"] label.formQuestion {
 div#archetypes-fieldname-associatedGroups,
 div#archetypes-fieldname-categoryMappingsWhenCloningToOtherMC,
 div#archetypes-fieldname-copyGroups,
+div#archetypes-fieldname-groupsInCharge,
 div#archetypes-fieldname-optionalAdvisers,
 div#archetypes-fieldname-itemInitiator,
 div#archetypes-fieldname-otherMCCorrespondences,
@@ -1362,6 +1363,19 @@ body.portaltype-dashboardcollection.section-portal_plonemeeting div#formfield-fo
     text-decoration: underline;
 }
 
+div.item-send-to-other-mc {
+   display: inline-block;
+}
+div.item-send-to-other-mc div.field {
+   padding-top: 0.5em;
+   padding-left: 0.5em;
+   padding-right: 0.5em;
+}
+div.item-send-to-other-mc-multiple-fields {
+   border: 1px solid lightgrey;
+   min-width: 600px;
+}
+
 #archetypes-fieldname-otherMeetingConfigsClonableTo {
     display: inline;
     float: left;
@@ -1627,14 +1641,6 @@ span.signatory-replacer {
     content: "\f00d";
     color: red;
     font-size: 120%;
-}
-
-div.item-send-to-other-mc {
-   display: inline-block;
-}
-div.item-send-to-other-mc-multiple-fields {
-   border: 1px solid lightgrey;
-   min-width: 600px;
 }
 
 /* hide downloard vcard link on contacts */
