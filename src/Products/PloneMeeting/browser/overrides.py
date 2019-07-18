@@ -211,6 +211,17 @@ class PMConfigActionsPanelViewlet(ActionsPanelViewlet):
                                                                       showActions=showActions,
                                                                       showAddContent=showAddContent)
 
+    def _findRootSubfolder(self, folder):
+        '''Find the root subfolder in the MeetingConfig.
+           This is necessary when having subfolders in a subfolder of the MeetingConfig,
+           like for item templates for example.'''
+        previous = folder
+        parent = folder.aq_inner.aq_parent
+        while not parent.portal_type == 'MeetingConfig':
+            previous = parent
+            parent = parent.aq_inner.aq_parent
+        return previous
+
     def getBackUrl(self):
         '''Computes the URL for "back" links in the tool or in a config.'''
         url = ''
@@ -225,7 +236,8 @@ class PMConfigActionsPanelViewlet(ActionsPanelViewlet):
             url = '{0}?pageName=gui#searches'.format(cfg_url)
         elif parent.meta_type == 'ATFolder':
             # p_context is a sub-object in a sub-folder within a config
-            folderName = parent.getId()
+            root_subfolder = self._findRootSubfolder(parent)
+            folderName = root_subfolder.getId()
             url = '{0}?pageName={1}#{2}'.format(cfg_url, self.backPages[folderName], folderName)
         elif self.context.portal_type in ('ContentCategoryConfiguration',
                                           'ContentCategoryGroup',

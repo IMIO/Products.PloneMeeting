@@ -13,6 +13,8 @@ Changelog
 - When cloning an item, in ToolPloneMeeting.pasteItem, make sure _at_rename_after_creation is set to True (default) so item id is correctly recomputed
   because item templates and recurring items stored in the configuration are created with _at_rename_after_creation=False
 - For the 'usergroups' etag, return the CRC32 result of user groups to avoid too long etag that may crash the browser and to limit used bandwidth
+- Fix bug when displaying actionspanel on an item template, make computation of back url aware that current item template may be stored in a subfolder and not
+  directly in the 'itemtemplates' folder
 
 4.1rc6 (2019-07-02)
 -------------------
