@@ -6,6 +6,8 @@ Changelog
 -------------------
 
 - Display field MeetingConfig.orderedGroupsInCharge in the @@display-inserting-methods-helper-msg view when using the 'on_groups_in_charge' inserting method
+- Fix bug in img selectbox displayed in the portlet_plonemeeting to have different JS ids or clicking on the second box (decided meetings)
+  was opening the first box (meetings)
 
 4.1rc6 (2019-07-02)
 -------------------
