@@ -41,10 +41,11 @@ from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.Five import zcml
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
-from Products.PloneMeeting.etags import ContextModified
 from Products.PloneMeeting.etags import ConfigModified
+from Products.PloneMeeting.etags import ContextModified
 from Products.PloneMeeting.etags import LinkedMeetingModified
 from Products.PloneMeeting.etags import ToolModified
+from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.tests.PloneMeetingTestCase import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.utils import get_annexes
@@ -116,9 +117,7 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(pmFolder.objectValues('MeetingItem')[0].getId(), itemTemplate.getId)
 
     def test_pm_CreateItemFromTemplate(self):
-        '''
-          Test the createItemFromTemplate functionnality triggered from the plonemeeting portlet.
-        '''
+        '''Test the createItemFromTemplate functionnality triggered from the plonemeeting portlet.'''
         cfg = self.meetingConfig
         self.changeUser('pmCreator1')
         self.getMeetingFolder()
@@ -159,6 +158,8 @@ class testViews(PloneMeetingTestCase):
         # use this template
         self.changeUser('pmCreator1')
         newItem2 = itemTemplateView.createItemFromTemplate(itemTemplateUID)
+        # _at_rename_after_creation is correct
+        self.assertEqual(newItem2._at_rename_after_creation, MeetingItem._at_rename_after_creation)
         self.assertEqual(newItem2.portal_type, cfg.getItemTypeName())
         # item has been created with a filled proposing group
         # and privacy is still ok

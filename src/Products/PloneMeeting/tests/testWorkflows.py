@@ -35,6 +35,7 @@ from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.PloneMeeting.config import AddAnnex
 from Products.PloneMeeting.config import AddAnnexDecision
 from Products.PloneMeeting.config import WriteItemMeetingManagerFields
+from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
@@ -406,8 +407,10 @@ class testWorkflows(PloneMeetingTestCase):
         self.changeUser('pmManager')
         meeting = self.create('Meeting', date='2007/12/11 09:00:00')
         # The recurring items must have as owner the meeting creator
+        # Moreover, _at_rename_after_creation is correct
         for item in meeting.getItems():
             self.assertEquals(item.getOwner().getId(), 'pmManager')
+            self.assertEqual(item._at_rename_after_creation, MeetingItem._at_rename_after_creation)
         # 1 recurring item is inserted at meeting creation
         self.failIf(len(meeting.getItems()) != 3)
         # meeting has not already been frozen, so when publishing, the added recurring

@@ -703,16 +703,22 @@ $(document).ready(function () {
 
 });
 
-
 function updatePortletTodo() {
   var url = $("link[rel='canonical']").attr('href') + '/@@portlet-todo-update';
   var tag = $('dl.portlet.portletTodo');
   if (tag.length) {
-    $.get(url, async=false, function (data) {
+  $.ajax({
+    url: url,
+    cache: false,
+    async: false,
+    success: function(data) {
         tag[0].parentNode.innerHTML = data;
-      });
-  }
-}
+    },
+    error: function(jqXHR, textStatus, errorThrown) {
+      tag.innerHTML = "Error loading, error was : " + errorThrown;
+      }
+  });
+}}
 
 // called on each faceted table change to update the portlet_todo
 $(document).ready(function () {
@@ -758,7 +764,7 @@ function update_search_term(tag){
     },
     error: function(jqXHR, textStatus, errorThrown) {
       /*console.log(textStatus);*/
-      window.location.href = window.location.href;
+      tag.innerHTML = "Error loading, error was : " + errorThrown;
       }
   });
 }

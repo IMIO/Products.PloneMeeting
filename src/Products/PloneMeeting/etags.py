@@ -14,6 +14,7 @@ from plone.app.caching.operations.utils import getContext
 from zope.component import adapts
 from zope.interface import implements
 from zope.interface import Interface
+import zlib
 
 
 def _modified(obj):
@@ -36,7 +37,12 @@ class UserGroups(object):
 
     def __call__(self):
         tool = api.portal.get_tool('portal_plonemeeting')
-        return 'ug_' + '_'.join(tool.get_plone_groups_for_user())
+        res = '_'.join(tool.get_plone_groups_for_user())
+        # as this list can be very long, we only returns it's crc32
+        # indeed, if we return a too long value, it crashes the browser etags...
+        # moreover, short etag save bandwidth
+        res = zlib.crc32(res)
+        return 'ug_' + str(res)
 
 
 class ContextModified(object):

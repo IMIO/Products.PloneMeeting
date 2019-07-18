@@ -73,6 +73,7 @@ from Products.PloneMeeting.config import PROJECTNAME
 from Products.PloneMeeting.config import PY_DATETIME_WEEKDAYS
 from Products.PloneMeeting.config import ROOT_FOLDER
 from Products.PloneMeeting.config import SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY
+from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.model.adaptations import performModelAdaptations
 from Products.PloneMeeting.profiles import PloneMeetingConfiguration
 from Products.PloneMeeting.utils import get_annexes
@@ -1019,6 +1020,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             newOwnerId = loggedUserId
         wftool = api.portal.get_tool('portal_workflow')
         newItem = getattr(destFolder, pasteResult[0]['new_id'])
+        # original item _at_rename_after_creation may have been changed
+        newItem._at_rename_after_creation = MeetingItem._at_rename_after_creation
         # Get the copied item, we will need information from it
         copiedItem = None
         copiedId = CopySupport._cb_decode(copiedData)[1][0]

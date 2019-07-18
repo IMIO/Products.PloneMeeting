@@ -8,6 +8,11 @@ Changelog
 - Display field MeetingConfig.orderedGroupsInCharge in the @@display-inserting-methods-helper-msg view when using the 'on_groups_in_charge' inserting method
 - Fix bug in img selectbox displayed in the portlet_plonemeeting to have different JS ids or clicking on the second box (decided meetings)
   was opening the first box (meetings)
+- Fix bug when an Ad blocker is blocking current page because URL contains a word like 'advertising', do not reload page or it reloads indefinitely,
+  because JS doing XHR calls reload page when an error occured, instead, display the XHR response error (by default, it displays "NetworkError: A network error occurred.")
+- When cloning an item, in ToolPloneMeeting.pasteItem, make sure _at_rename_after_creation is set to True (default) so item id is correctly recomputed
+  because item templates and recurring items stored in the configuration are created with _at_rename_after_creation=False
+- For the 'usergroups' etag, return the CRC32 result of user groups to avoid too long etag that may crash the browser and to limit used bandwidth
 
 4.1rc6 (2019-07-02)
 -------------------
