@@ -345,7 +345,7 @@ class testMeetingConfig(PloneMeetingTestCase):
     def test_pm_Validate_customAdvisersCanNotChangeUsedConfig(self):
         '''Test the MeetingConfig.customAdvisers validate method.
            This validates that if a configuration is already in use, logical data can
-           not be changed anymore, only basic data can be changed (.'''
+           not be changed anymore, only basic data can be changed.'''
         # create an item
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
@@ -430,7 +430,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         originalCustomAdvisers['for_item_created_until'] = ''
         self.failUnless(cfg.validate_customAdvisers([originalCustomAdvisers, ]))
 
-        # we can not remove a used row
+        # we can not remove an used row
         can_not_remove_msg = translate('custom_adviser_can_not_remove_used_row',
                                        domain='PloneMeeting',
                                        mapping={'item_url': item.absolute_url(),
@@ -765,12 +765,36 @@ class testMeetingConfig(PloneMeetingTestCase):
                                        mapping={'item_url': item.absolute_url(),
                                                 'adviser_group': 'Vendors', },
                                        context=self.portal.REQUEST)
-        self.assertEquals(cfg.validate_customAdvisers(customAdvisers),
-                          can_not_remove_msg)
+        self.assertEquals(cfg.validate_customAdvisers(customAdvisers), can_not_remove_msg)
         customAdvisers.insert(2, thirdRow)
-        # we can remove the last row, chained but unused
+        # we can remove the before last row, chained but unused
         customAdvisers.pop(3)
+        cfg.setCustomAdvisers(customAdvisers)
         self.failIf(cfg.validate_customAdvisers(cfg.getCustomAdvisers()))
+
+        # check that a non delay aware auto asked row may not be removed when used
+        extra_row = {'row_id': 'unique_id_1213',
+                     'org': self.developers_uid,
+                     'gives_auto_advice_on': 'python: True',
+                     'for_item_created_from': '2012/12/31',
+                     'for_item_created_until': '',
+                     'gives_auto_advice_on_help_message': '',
+                     'delay': '',
+                     'delay_left_alert': '',
+                     'delay_label': '',
+                     'available_on': '',
+                     'is_linked_to_previous_row': '0'}
+        customAdvisers.insert(99, extra_row)
+        cfg.setCustomAdvisers(customAdvisers)
+        item._update_after_edit()
+        self.assertTrue(item.adviceIndex[self.developers_uid]['row_id'] == customAdvisers[-1]['row_id'])
+        customAdvisers.pop(-1)
+        can_not_remove_msg = translate('custom_adviser_can_not_remove_used_row',
+                                       domain='PloneMeeting',
+                                       mapping={'item_url': item.absolute_url(),
+                                                'adviser_group': 'Developers', },
+                                       context=self.portal.REQUEST)
+        self.assertEquals(cfg.validate_customAdvisers(customAdvisers), can_not_remove_msg)
 
     def test_pm_Validate_transitionsForPresentingAnItem(self):
         '''Test the MeetingConfig.transitionsForPresentingAnItem validation.

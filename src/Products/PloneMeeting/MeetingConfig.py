@@ -3536,9 +3536,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # we are setting another field, it is not permitted if
             # the rule is in use, check every items if the rule is used
             catalog = api.portal.get_tool('portal_catalog')
+            org_uid = self._dataForCustomAdviserRowId(row_id)['org']
             brains = catalog(portal_type=self.getItemTypeName(),
                              indexAdvisers=[DELAYAWARE_ROW_ID_PATTERN.format(row_id),
-                                            REAL_ORG_UID_PATTERN.format(row_id)])
+                                            REAL_ORG_UID_PATTERN.format(org_uid)])
             if brains:
                 item = brains[0].getObject()
                 return item.absolute_url()

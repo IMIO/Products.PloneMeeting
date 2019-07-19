@@ -5,8 +5,7 @@ Changelog
 4.1rc8 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- Fixed MeetingConfig.validate_customAdvisers that failed to detect a removed row in use when it was a non delay aware row asked automatically
 
 4.1rc7 (2019-07-19)
 -------------------
