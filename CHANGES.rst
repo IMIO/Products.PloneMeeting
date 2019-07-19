@@ -15,6 +15,8 @@ Changelog
 - For the 'usergroups' etag, return the CRC32 result of user groups to avoid too long etag that may crash the browser and to limit used bandwidth
 - Fix bug when displaying actionspanel on an item template, make computation of back url aware that current item template may be stored in a subfolder and not
   directly in the 'itemtemplates' folder
+- Fixed migration when a MeetingUser was existing in several MeetingConfigs, the migration was creating it again leading to an error of type
+  'BadRequest: The id "xxx" is invalid - it is already in use.'.  Now if existing, we reuse the already created person/held_position.
 
 4.1rc6 (2019-07-02)
 -------------------

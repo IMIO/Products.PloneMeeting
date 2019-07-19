@@ -405,8 +405,12 @@ class Migrate_To_4_1(Migrator):
                     'label': unicode(mu.getDuty(), 'utf-8'),
                     'usages': [usage for usage in mu.getUsages() if usage in ['assemblyMember', 'asker']],
                     'signature_number': 'signer' in mu.getUsages() and '1' or None}
-                person = api.content.create(container=contacts, type='person', **person_data)
-                hp = api.content.create(container=person, type='held_position', **hp_data)
+                # person may already exist as MeetingUsers were created on a per MeetingConfig basis
+                if person_data['id'] not in contacts.objectIds():
+                    person = api.content.create(container=contacts, type='person', **person_data)
+                    hp = api.content.create(container=person, type='held_position', **hp_data)
+                else:
+                    hp = contacts.get(person_data['id']).get(hp_data['id'])
                 mu_hp_mappings[mu.getId()] = hp.UID()
 
             # migrate Meetings
