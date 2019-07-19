@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.1rc7 (unreleased)
+4.1rc7 (2019-07-19)
 -------------------
 
 - Display field MeetingConfig.orderedGroupsInCharge in the @@display-inserting-methods-helper-msg view when using the 'on_groups_in_charge' inserting method
