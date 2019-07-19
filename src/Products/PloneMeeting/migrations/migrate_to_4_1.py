@@ -1109,6 +1109,7 @@ class Migrate_To_4_1(Migrator):
         # profiles in particular order
         self._upgradeImioDashboard()
 
+        self._migrateMeetingConfigDefaultAdviceHiddenDuringRedaction()
         self._updateCatalogsByTypes()
         self._migrateGroupsInChargeAttributes()
 
@@ -1189,7 +1190,6 @@ class Migrate_To_4_1(Migrator):
         self._migrateItemsInConfig()
         self._initFTWLabels()
         self._adaptShowHolidaysMessage()
-        self._migrateMeetingConfigDefaultAdviceHiddenDuringRedaction()
         self.tool.invalidateAllCache()
         if self.already_migrated is False:
             # too many indexes to update, rebuild the portal_catalog

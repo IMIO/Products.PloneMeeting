@@ -17,6 +17,8 @@ Changelog
   directly in the 'itemtemplates' folder
 - Fixed migration when a MeetingUser was existing in several MeetingConfigs, the migration was creating it again leading to an error of type
   'BadRequest: The id "xxx" is invalid - it is already in use.'.  Now if existing, we reuse the already created person/held_position.
+- Fixed migration, run _migrateMeetingConfigDefaultAdviceHiddenDuringRedaction before _updateCatalogsByTypes because MeetingConfigs may be reindexed in the second
+  method and we need first the MeetingConfig.defaultAdviceHiddenDuringRedaction format to be updated from boolean to list
 
 4.1rc6 (2019-07-02)
 -------------------
