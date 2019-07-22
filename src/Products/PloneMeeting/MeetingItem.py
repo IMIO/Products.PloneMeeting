@@ -140,13 +140,13 @@ logger = logging.getLogger('PloneMeeting')
 ITEM_REF_ERROR = 'There was an error in the TAL expression for defining the ' \
     'format of an item reference. Please check this in your meeting config. ' \
     'Original exception: %s'
-AUTOMATIC_ADVICE_CONDITION_ERROR = "There was an error in the TAL expression '{0}'" \
+AUTOMATIC_ADVICE_CONDITION_ERROR = "There was an error in the TAL expression '{0}' " \
     "defining if the advice of the group must be automatically asked for '{1}'. " \
     "Original exception : {2}"
 ADVICE_AVAILABLE_ON_CONDITION_ERROR = "There was an error in the TAL expression " \
     "'{0} defined in the \'Available on\' column of the MeetingConfig.customAdvisers " \
     "evaluated on {1}. Original exception : {2}"
-AS_COPYGROUP_CONDITION_ERROR = "There was an error in the TAL expression '{0}'" \
+AS_COPYGROUP_CONDITION_ERROR = "There was an error in the TAL expression '{0}' " \
     "defining if the a group must be set as copyGroup for item at '{1}'. " \
     "Original exception : {2}"
 AS_COPYGROUP_RES_ERROR = "While setting automatically added copyGroups, the Plone group suffix '{0}' " \
