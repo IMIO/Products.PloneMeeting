@@ -384,29 +384,30 @@ class testFaceted(PloneMeetingTestCase):
         vocab = queryUtility(IVocabularyFactory, "Products.PloneMeeting.vocabularies.groupsinchargevocabulary")
 
         # for now, no group in charge
-        self.assertEqual(len(vocab(self.portal)), 0)
+        meetingFolder = self.getMeetingFolder()
+        self.assertEqual(len(vocab(meetingFolder)), 0)
         # define some group in charge, vocabulary is invalidated when an org is modified
         self.vendors.groups_in_charge = (org1uid,)
         notify(ObjectModifiedEvent(self.vendors))
         self.developers.groups_in_charge = (org2uid,)
         notify(ObjectModifiedEvent(self.developers))
-        self.assertEqual([term.title for term in vocab(self.portal)], ['Org 1', 'Org 2'])
+        self.assertEqual([term.title for term in vocab(meetingFolder)], ['Org 1', 'Org 2'])
 
         # create an new org with a groupInCharge directly
         org4 = self.create('organization', id='org4', title='Org 4',
                            acronym='Org4', groups_in_charge=(org3uid,))
         org4_uid = org4.UID()
-        self.assertEqual([term.title for term in vocab(self.portal)], ['Org 1', 'Org 2', 'Org 3'])
+        self.assertEqual([term.title for term in vocab(meetingFolder)], ['Org 1', 'Org 2', 'Org 3'])
 
         # change a group in charge
         self.vendors.groups_in_charge = (org4_uid,)
         notify(ObjectModifiedEvent(self.vendors))
-        self.assertEqual([term.title for term in vocab(self.portal)], ['Org 2', 'Org 3', 'Org 4'])
+        self.assertEqual([term.title for term in vocab(meetingFolder)], ['Org 2', 'Org 3', 'Org 4'])
 
         # unselect a group in charge
         self.vendors.groups_in_charge = ()
         notify(ObjectModifiedEvent(self.vendors))
-        self.assertEqual([term.title for term in vocab(self.portal)], ['Org 2', 'Org 3'])
+        self.assertEqual([term.title for term in vocab(meetingFolder)], ['Org 2', 'Org 3'])
 
     def test_pm_CreatorsVocabulary(self):
         '''Test the "Products.PloneMeeting.vocabularies.creatorsvocabulary"

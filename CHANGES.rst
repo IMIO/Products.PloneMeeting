@@ -8,6 +8,8 @@ Changelog
 - Fixed MeetingConfig.validate_customAdvisers that failed to detect a removed row in use when it was a non delay aware row asked automatically
 - Display 'Groups in charge' and 'Acronym of groups in charge' columns correctly
 - When editing MeetingConfig or using the 'Invalidate all cache' action on the tool, invalidate every cached vocabularies
+- Simplified MeetingItem._getInsertOrder by removing the MeetingItem._findOneLevelFor method, only rely on computed _findOrderFor for each inserting method
+  and compare the tuples of orders to find the lowest value
 
 4.1rc7 (2019-07-19)
 -------------------

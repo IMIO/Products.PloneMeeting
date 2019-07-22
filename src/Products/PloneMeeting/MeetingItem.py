@@ -87,7 +87,6 @@ from Products.PloneMeeting.config import MEETINGROLES
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
 from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
-from Products.PloneMeeting.config import PloneMeetingError
 from Products.PloneMeeting.config import PROJECTNAME
 from Products.PloneMeeting.config import READER_USECASES
 from Products.PloneMeeting.config import SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY
@@ -3409,96 +3408,17 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            According to this "order", the item will be inserted at the right place.
            This method receives the p_cfg.
         '''
-        res = None
+        res = []
         item = self.getSelf()
 
         insertMethods = cfg.getInsertingMethodsOnAddItem()
-        # we need to compute len of relevant levels
-        # we take largest level +1 and we make a list with powes of this largest level
-        # so if we have 2 insertingMethods and largest level is 9, we will have
-        # [1000, 100, 10]
-        # first find largest level
-        largestLevelValue = 0
-        oneLevels = []
         for insertMethod in insertMethods:
-            levelValue = item._findOneLevelFor(insertMethod['insertingMethod'])
-            oneLevels.append(levelValue)
-            if levelValue > largestLevelValue:
-                largestLevelValue = levelValue + 1
-        # now build the list of levels values
-        levels = []
-        lastLevel = 1
-        for insertMethod in insertMethods:
-            levels.append((lastLevel * largestLevelValue))
-            lastLevel = lastLevel * largestLevelValue
-        levels.reverse()
-
-        for insertMethod in insertMethods:
-            if not res:
-                res = 0
             order = item._findOrderFor(insertMethod['insertingMethod'])
-            # check if we need to reverse order
             if insertMethod['reverse'] == '1':
-                halfOneLevel = levels[insertMethods.index(insertMethod)] / 2
-                halfOneLevelDiff = halfOneLevel - order
-                order = int(halfOneLevel + halfOneLevelDiff)
-            res = res + levels[insertMethods.index(insertMethod)] * order
-
-        if res is None:
-            raise PloneMeetingError(INSERT_ITEM_ERROR)
-        res = res * 100
+                order = - order
+            res.append(order)
+        logger.info(res)
         return res
-
-    def _findOneLevelFor_cachekey(method, self, insertMethod):
-        '''cachekey method for self._findOneLevelFor.'''
-        return (insertMethod, str(self.REQUEST._debug))
-
-    @ram.cache(_findOneLevelFor_cachekey)
-    def _findOneLevelFor(self, insertMethod):
-        '''
-          Find the size of a complete set of given p_insertMethod.
-          We use it in the algorythm that calculate item order
-          when inserting it in a meeting.
-        '''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self)
-        if insertMethod == 'on_list_type':
-            # 2 default listTypes, 'normal' and 'late' and
-            # extraListTypes defined in the MeetingConfig
-            # only keep listTypes for which 'used_in_inserting_method' == '1'
-            listTypes = cfg.getListTypes()
-            return len([listType for listType in listTypes if listType['used_in_inserting_method'] == '1'])
-        elif insertMethod == 'on_categories':
-            return len(cfg.getCategories(onlySelectable=False))
-        elif insertMethod in ('on_proposing_groups',
-                              'on_all_groups',
-                              'on_groups_in_charge',
-                              'on_all_associated_groups'):
-            # for any insertion method regarding orgs, for efficiency, we return len of every organizations
-            return len(get_organizations(only_selected=False))
-        elif insertMethod == 'on_privacy':
-            return len(cfg.getSelectablePrivacies())
-        elif insertMethod == 'on_to_discuss':
-            # either 'toDiscuss' is True or False
-            return 2
-        elif insertMethod == 'on_other_mc_to_clone_to':
-            # list every other MC the items of this MC
-            # can be sent to + the fact that an item is not
-            # to send to another MC
-            return len(self.listOtherMeetingConfigsClonableTo()) + 1
-        elif insertMethod == 'on_poll_type':
-            factory = queryUtility(IVocabularyFactory,
-                                   'Products.PloneMeeting.vocabularies.polltypesvocabulary')
-            return len(factory(self))
-        else:
-            return self.adapted()._findCustomOneLevelFor(insertMethod)
-
-    def _findCustomOneLevelFor(self, insertMethod):
-        '''
-          Adaptable method when defining our own insertMethod.
-          This is made to be overrided.
-        '''
-        raise NotImplementedError
 
     def _findOrderFor(self, insertMethod):
         '''

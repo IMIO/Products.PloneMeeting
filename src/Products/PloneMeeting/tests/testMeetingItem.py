@@ -4601,7 +4601,6 @@ class testMeetingItem(PloneMeetingTestCase):
         '''
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
-        self.assertRaises(NotImplementedError, item._findOneLevelFor, 'my_custom_inserting_method')
         self.assertRaises(NotImplementedError, item._findOrderFor, 'my_custom_inserting_method')
 
     def test_pm_EmptyLinesAreHighlighted(self):

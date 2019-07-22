@@ -1,9 +1,5 @@
 # -*- coding: utf-8 -*-
 #
-# File: testMeeting.py
-#
-# Copyright (c) 2015 by Imio.be
-#
 # GNU General Public License (GPL)
 #
 # This program is free software; you can redistribute it and/or
@@ -75,10 +71,10 @@ class testMeeting(PloneMeetingTestCase):
             if meetingConfig == self.meetingConfig.getId():
                 # There are 2 recurring items in self.meetingConfig
                 expected = ['recItem1', 'recItem2', 'o3', 'o5', 'o2', 'o4', 'o6']
-                expectedInsertOrderIndexes = [400, 400, 400, 400, 800, 800, 800]
+                expectedInsertOrderIndexes = [[1], [1], [1], [1], [2], [2], [2]]
             else:
                 expected = ['o3', 'o4', 'o5', 'o6', 'o2']
-                expectedInsertOrderIndexes = [1800, 1800, 2700, 2700, 3600]
+                expectedInsertOrderIndexes = [[2], [2], [3], [3], [4]]
             self.setMeetingConfig(meetingConfig)
             meeting = self._createMeetingWithItems()
             self.assertEquals([item.getId() for item in meeting.getItems(ordered=True)],
