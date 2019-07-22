@@ -64,7 +64,7 @@ class ItemGroupsInChargeAcronymColumn(AbbrColumn):
     """A column that display the groupsInCharge acronym."""
     attrName = 'getGroupsInCharge'
     vocabulary = u'Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary'
-    full_vocabulary = u'Products.PloneMeeting.vocabularies.proposinggroupsvocabulary'
+    full_vocabulary = u'Products.PloneMeeting.vocabularies.groupsinchargevocabulary'
 
 
 class ItemAdvicesColumn(BrowserViewCallColumn):

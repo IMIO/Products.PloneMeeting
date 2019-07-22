@@ -29,6 +29,7 @@ from eea.facetednavigation.interfaces import ICriteria
 from eea.facetednavigation.widgets.resultsperpage.widget import Widget as ResultsPerPageWidget
 from ftw.labels.interfaces import ILabeling
 from imio.helpers.cache import cleanRamCache
+from imio.helpers.cache import cleanVocabularyCacheFor
 from persistent.list import PersistentList
 from plone import api
 from plone.app.portlets.portlets import navigation
@@ -5119,6 +5120,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         ''' '''
         # invalidateAll ram.cache
         cleanRamCache()
+        # invalidate cache of every vocabularies
+        cleanVocabularyCacheFor()
         # Update title of every linked Plone groups
         self._createOrUpdateAllPloneGroups()
         # Update portal types

@@ -6,6 +6,8 @@ Changelog
 -------------------
 
 - Fixed MeetingConfig.validate_customAdvisers that failed to detect a removed row in use when it was a non delay aware row asked automatically
+- Display 'Groups in charge' and 'Acronym of groups in charge' columns correctly
+- When editing MeetingConfig or using the 'Invalidate all cache' action on the tool, invalidate every cached vocabularies
 
 4.1rc7 (2019-07-19)
 -------------------

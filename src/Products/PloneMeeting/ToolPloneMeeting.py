@@ -33,6 +33,7 @@ from datetime import datetime
 from ftw.labels.labeling import ANNOTATION_KEY as FTW_LABELS_ANNOTATION_KEY
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.helpers.cache import cleanRamCache
+from imio.helpers.cache import cleanVocabularyCacheFor
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import invalidate_cachekey_volatile_for
 from imio.helpers.content import disable_link_integrity_checks
@@ -1475,6 +1476,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     def invalidateAllCache(self):
         """Invalidate RAM cache and just notifyModified so etag toolmodified invalidate all brower cache."""
         cleanRamCache()
+        cleanVocabularyCacheFor()
         self.notifyModified()
         logger.info('All cache was invalidated.')
         api.portal.show_message('Done.', request=self.REQUEST)

@@ -253,20 +253,33 @@ class GroupsInChargeVocabulary(object):
 
     @ram.cache(__call___cachekey)
     def __call__(self, context):
-        """ """
-        orgs = get_organizations(only_selected=False)
+        """List groups in charge :
+           - if groupsInCharge in MeetingConfig.usedItemAttributes,
+             list MeetingConfig.orderedGroupsInCharge;
+           - else, list groups_in_charge selected on organizations."""
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
         res = []
-        for org in orgs:
-            for group_in_charge_uid in (org.groups_in_charge or []):
-                # manage duplicates
-                group_in_charge = get_organization(group_in_charge_uid)
-                if group_in_charge and group_in_charge not in res:
-                    res.append(group_in_charge)
+        # groups in charge are defined on organizations
+        if 'groupsInCharge' not in cfg.getUsedItemAttributes():
+            orgs = get_organizations(only_selected=False)
+            for org in orgs:
+                for group_in_charge_uid in (org.groups_in_charge or []):
+                    group_in_charge = get_organization(group_in_charge_uid)
+                    # manage duplicates
+                    if group_in_charge and group_in_charge not in res:
+                        res.append(group_in_charge)
+        else:
+            # groups in charge are selected on the items
+            kept_org_uids = cfg.getOrderedGroupsInCharge()
+            res = get_organizations(only_selected=False, kept_org_uids=kept_org_uids)
+
         res = [SimpleTerm(gic.UID(),
                           gic.UID(),
                           safe_unicode(gic.get_full_title(first_index=1)))
                for gic in res]
         res = realsorted(res, key=attrgetter('title'))
+
         return SimpleVocabulary(res)
 
 
