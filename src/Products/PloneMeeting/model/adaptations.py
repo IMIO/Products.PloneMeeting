@@ -78,6 +78,7 @@ RETURN_TO_PROPOSING_GROUP_VALIDATION_STATES = ('proposed', )
 
 viewPermissions = (View, AccessContentsInformation)
 WF_APPLIED = 'Workflow adaptation "%s" applied for meetingConfig "%s".'
+WF_APPLIED_CUSTOM = 'Custom Workflow adaptation "%s" applied for meetingConfig "%s".'
 WF_DOES_NOT_EXIST_WARNING = "Could not apply workflow adaptations because the workflow '%s' does not exist."
 
 # list of states the creator can no more edit the item even while using the 'creator_edits_unless_closed' wfAdaptation
@@ -683,8 +684,9 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
             raise Exception('ToolPloneMeeting.performCustomWFAdaptations must return a boolean value!')
         # if performCustomWFAdaptations managed wfAdaptation, continue with next one
         if applied:
-            logger.info(WF_APPLIED % (wfAdaptation, meetingConfig.getId()))
+            logger.info(WF_APPLIED_CUSTOM % (wfAdaptation, meetingConfig.getId()))
             continue
+
         # "no_publication" removes state 'published' in the meeting workflow and
         # corresponding state 'itempublished' in the item workflow. The standard
         # meeting publication process has 2 steps: (1) publish (2) freeze.
