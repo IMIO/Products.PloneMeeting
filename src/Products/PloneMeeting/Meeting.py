@@ -1273,7 +1273,8 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
                 'listTypes',
                 'selectablePrivacies',
                 'usedPollTypes',
-                'orderedAssociatedOrganizations']
+                'orderedAssociatedOrganizations',
+                'orderedGroupsInCharge']
 
     def _init_insert_order_cache(self, cfg):
         '''See doc in interfaces.py.'''
@@ -1300,7 +1301,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         if check_cache:
             self.adapted()._check_insert_order_cache(cfg)
         insert_order = self._insert_order_cache['items'].get(item.UID(), None)
-        if insert_order is None:
+        if insert_order is None or not isinstance(insert_order, list):
             insert_order = item.adapted()._getInsertOrder(cfg)
             self._insert_order_cache['items'][item.UID()] = insert_order
         return insert_order

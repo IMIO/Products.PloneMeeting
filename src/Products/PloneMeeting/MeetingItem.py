@@ -3417,14 +3417,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             if insertMethod['reverse'] == '1':
                 order = - order
             res.append(order)
-        logger.info(res)
         return res
 
     def _findOrderFor(self, insertMethod):
         '''
           Find the order of given p_insertMethod.
         '''
-        res = ''
+        res = None
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         if insertMethod == 'on_list_type':
@@ -3436,9 +3435,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # return 0 so elements using this listType will always have
             # a lower index and will be passed
             if currentListType not in keptListTypes:
-                return 0
+                res = 0
             else:
-                return keptListTypes.index(currentListType) + 1
+                res = keptListTypes.index(currentListType) + 1
         elif insertMethod == 'on_categories':
             # get the category order, pass onlySelectable to False so disabled categories
             # are taken into account also, so we avoid problems with freshly disabled categories
@@ -3451,23 +3450,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             org = self.getProposingGroup(True)
             res = org.get_order(associated_org_uids=self.getAssociatedGroups(), cfg=cfg)
         elif insertMethod == 'on_groups_in_charge':
-            groupInCharge = self.getGroupsInCharge(True)
-            if not groupInCharge:
-                res = 0
-                api.portal.show_message(
-                    _("No valid groupsInCharge defined for item at ${item_url}, "
-                      "item was inserted at the beginning.",
-                      mapping={'item_url': self.absolute_url()},),
-                    request=self.REQUEST,
-                    type='warning')
-            else:
-                res = self._computeOrderOnGroupsInCharge(cfg)
-            logger.info(self.Title())
-            logger.info(res)
-            return res
+            res = self._computeOrderOnGroupsInCharge(cfg)
         elif insertMethod == 'on_all_associated_groups':
             res = self._computeOrderOnAllAssociatedGroups(cfg)
-            return res
         elif insertMethod == 'on_privacy':
             privacy = self.getPrivacy()
             privacies = cfg.getSelectablePrivacies()
@@ -3482,9 +3467,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             toCloneTo = self.getOtherMeetingConfigsClonableTo()
             values = self.listOtherMeetingConfigsClonableTo().keys()
             if not toCloneTo:
-                return len(values) + 1
+                res = len(values) + 1
             else:
-                return values.index(toCloneTo[0])
+                res = values.index(toCloneTo[0])
         elif insertMethod == 'on_poll_type':
             pollType = self.getPollType()
             factory = queryUtility(IVocabularyFactory,

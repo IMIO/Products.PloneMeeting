@@ -1257,19 +1257,19 @@ class testMeeting(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         self.presentItem(item)
         self.assertEqual(item.getProposingGroup(), self.developers_uid)
-        self.assertEqual(meeting.getItemInsertOrder(item, cfg), 400)
+        self.assertEqual(meeting.getItemInsertOrder(item, cfg), [1])
         # editing an item invalidates cache
         item.setProposingGroup(self.vendors_uid)
         item._update_after_edit()
-        self.assertEqual(meeting.getItemInsertOrder(item, cfg), 800)
+        self.assertEqual(meeting.getItemInsertOrder(item, cfg), [2])
         # change groups order
         set_registry_organizations([self.vendors_uid, self.developers_uid])
         self.cleanMemoize()
-        self.assertEqual(meeting.getItemInsertOrder(item, cfg), 400)
+        self.assertEqual(meeting.getItemInsertOrder(item, cfg), [1])
         # edit MeetingConfig
         item.setProposingGroup(self.developers_uid)
         cfg.setSelectablePrivacies(('secret', 'public', ))
-        self.assertEqual(meeting.getItemInsertOrder(item, cfg), 800)
+        self.assertEqual(meeting.getItemInsertOrder(item, cfg), [2])
         # remove item from meeting
         self.backToState(item, 'validated')
         self.assertFalse(item.UID() in meeting._insert_order_cache['items'])
@@ -1295,28 +1295,28 @@ class testMeeting(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         self.presentItem(item)
         self.assertEqual(item.getCategory(), 'development')
-        self.assertEqual(meeting.getItemInsertOrder(item, cfg), 0)
+        self.assertEqual(meeting.getItemInsertOrder(item, cfg), [0])
         # editing an item invalidates cache
         item.setCategory('events')
         item._update_after_edit()
-        self.assertEqual(meeting.getItemInsertOrder(item, cfg), 800)
+        self.assertEqual(meeting.getItemInsertOrder(item, cfg), [2])
         # change categories order
         self.changeUser('siteadmin')
         cfg.categories.folder_position(position='up', id=item.getCategory())
-        self.assertEqual(meeting.getItemInsertOrder(item, cfg), 400)
+        self.assertEqual(meeting.getItemInsertOrder(item, cfg), [1])
         # disable category, it does not change because for performance reasons,
         # we consider every categories when computing insert order, but the cache was cleaned
         self.do(cfg.categories.development, 'deactivate')
         # the cache is invalidated
         self.assertTrue(meeting._check_insert_order_cache(cfg))
-        self.assertEqual(meeting.getItemInsertOrder(item, cfg), 400)
+        self.assertEqual(meeting.getItemInsertOrder(item, cfg), [1])
         # remove a category
         self.deleteAsManager(cfg.categories.development.UID())
-        self.assertEqual(meeting.getItemInsertOrder(item, cfg), 0)
+        self.assertEqual(meeting.getItemInsertOrder(item, cfg), [0])
         # edit MeetingConfig
         item.setCategory('research')
         cfg.setSelectablePrivacies(('secret', 'public', ))
-        self.assertEqual(meeting.getItemInsertOrder(item, cfg), 400)
+        self.assertEqual(meeting.getItemInsertOrder(item, cfg), [1])
 
     def test_pm_GetItemInsertOrderByOrderedAssociatedOrganizations(self):
         """Test the Meeting.getItemInsertOrder method caching when using order
@@ -1332,17 +1332,43 @@ class testMeeting(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         item.setAssociatedGroups((self.developers_uid, ))
         self.presentItem(item)
-        self.assertEqual(meeting.getItemInsertOrder(item, cfg), 400.0)
+        self.assertEqual(meeting.getItemInsertOrder(item, cfg), [1.0])
         # editing an item invalidates cache
         item.setAssociatedGroups((self.vendors_uid, ))
         item._update_after_edit()
-        self.assertEqual(meeting.getItemInsertOrder(item, cfg), 800.0)
+        self.assertEqual(meeting.getItemInsertOrder(item, cfg), [2.0])
         # change MeetingConfig.orderedAssociatedOrganizations
         self.changeUser('siteadmin')
         cfg.setOrderedAssociatedOrganizations((self.vendors_uid, self.developers_uid))
         # cache was automatically invalidated
         self.assertTrue(meeting._check_insert_order_cache(cfg))
-        self.assertEqual(meeting.getItemInsertOrder(item, cfg), 400.0)
+        self.assertEqual(meeting.getItemInsertOrder(item, cfg), [1.0])
+
+    def test_pm_GetItemInsertOrderByOrderedGroupsInCharge(self):
+        """Test the Meeting.getItemInsertOrder method caching when using order
+           depending on associated organizations and using the
+           MeetingConfig.orderedGroupsInCharge field."""
+        self.changeUser('pmManager')
+        cfg = self.meetingConfig
+        cfg.setOrderedGroupsInCharge((self.developers_uid, self.vendors_uid))
+        cfg.setInsertingMethodsOnAddItem(
+            ({'insertingMethod': 'on_groups_in_charge',
+              'reverse': '0'}, ))
+        meeting = self.create('Meeting', date=DateTime('2019/05/26'))
+        item = self.create('MeetingItem')
+        item.setGroupsInCharge((self.developers_uid, ))
+        self.presentItem(item)
+        self.assertEqual(meeting.getItemInsertOrder(item, cfg), [1.0])
+        # editing an item invalidates cache
+        item.setGroupsInCharge((self.vendors_uid, ))
+        item._update_after_edit()
+        self.assertEqual(meeting.getItemInsertOrder(item, cfg), [2.0])
+        # change MeetingConfig.orderedGroupsInCharge
+        self.changeUser('siteadmin')
+        cfg.setOrderedGroupsInCharge((self.vendors_uid, self.developers_uid))
+        # cache was automatically invalidated
+        self.assertTrue(meeting._check_insert_order_cache(cfg))
+        self.assertEqual(meeting.getItemInsertOrder(item, cfg), [1.0])
 
     def test_pm_NormalAndLateItem(self):
         """Test the normal/late mechanism when presenting items in a meeting."""
