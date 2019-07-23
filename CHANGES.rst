@@ -10,6 +10,7 @@ Changelog
 - When editing MeetingConfig or using the 'Invalidate all cache' action on the tool, invalidate every cached vocabularies
 - Simplified MeetingItem._getInsertOrder by removing the MeetingItem._findOneLevelFor method, only rely on computed _findOrderFor for each inserting method
   and compare the tuples of orders to find the lowest value
+- Use proposinggroups vocabularies to manage groupsInCharge columns so we are sure that we have every organizations in the vocabulary
 
 4.1rc7 (2019-07-19)
 -------------------

@@ -301,11 +301,13 @@ class ItemProposingGroupAcronymsVocabulary(object):
         res = []
         for org in orgs:
             org_uid = org.UID()
-            res.append(SimpleTerm(org_uid,
-                                  org_uid,
-                                  safe_unicode(org.acronym)
-                                  )
-                       )
+            res.append(
+                SimpleTerm(org_uid,
+                           org_uid,
+                           safe_unicode(
+                               org.acronym or
+                               translate("None", domain="PloneMeeting", context=context.REQUEST))
+                           ))
         res = realsorted(res, key=attrgetter('title'))
         return SimpleVocabulary(res)
 

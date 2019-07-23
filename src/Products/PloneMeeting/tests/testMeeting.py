@@ -1157,20 +1157,24 @@ class testMeeting(PloneMeetingTestCase):
     def test_pm_InsertItemOnCategoriesThenOnToOtherMCToCloneTo(self):
         '''Sort method tested here is "on_categories" then "on_other_mc_to_clone_to".'''
         # use meetingConfig2 for wich categories are configured
-        self.meetingConfig2.setMeetingConfigsToCloneTo(
-            ({'meeting_config': self.meetingConfig.getId(),
+        cfg = self.meetingConfig
+        cfg1Id = cfg.getId()
+        cfg2 = self.meetingConfig2
+        cfg2Id = cfg2.getId()
+        cfg2.setMeetingConfigsToCloneTo(
+            ({'meeting_config': cfg1Id,
               'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL}, ))
-        self.meetingConfig2.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_categories',
-                                                           'reverse': '0'},
-                                                          {'insertingMethod': 'on_other_mc_to_clone_to',
-                                                           'reverse': '0'}, ))
-        self.setMeetingConfig(self.meetingConfig2.getId())
-        cfg1Id = self.meetingConfig.getId()
-        self.assertTrue(self.meetingConfig2.getMeetingConfigsToCloneTo(),
+        cfg2.setInsertingMethodsOnAddItem(
+            ({'insertingMethod': 'on_categories',
+              'reverse': '0'},
+             {'insertingMethod': 'on_other_mc_to_clone_to',
+              'reverse': '0'}, ))
+        self.setMeetingConfig(cfg2Id)
+        self.assertTrue(cfg2.getMeetingConfigsToCloneTo(),
                         ({'meeting_config': cfg1Id,
                           'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL}, ))
         self.changeUser('pmManager')
-        self._removeConfigObjectsFor(self.meetingConfig)
+        self._removeConfigObjectsFor(cfg)
         meeting = self.create('Meeting', date=DateTime('2014/01/01'))
         data = ({'otherMeetingConfigsClonableTo': (cfg1Id, ),
                  'category': 'events'},
@@ -1198,20 +1202,202 @@ class testMeeting(PloneMeetingTestCase):
             self.presentItem(item)
         # items are correctly sorted first by category, then within a category,
         # by other meeting config to clone to
-        self.assertEquals([(anItem.getCategory(), anItem.getOtherMeetingConfigsClonableTo()) for
-                           anItem in meeting.getItems(ordered=True)],
-                          [('deployment', (cfg1Id, )),
-                           ('deployment', (cfg1Id, )),
-                           ('deployment', (cfg1Id, )),
-                           ('deployment', ()),
-                           ('deployment', ()),
-                           ('events', (cfg1Id, )),
-                           ('events', (cfg1Id, )),
-                           ('events', ()),
-                           ('events', ()),
-                           ('marketing', (cfg1Id, )),
-                           ('marketing', ())]
-                          )
+        self.assertEqual([(anItem.getCategory(), anItem.getOtherMeetingConfigsClonableTo()) for
+                          anItem in meeting.getItems(ordered=True)],
+                         [('deployment', (cfg1Id, )),
+                          ('deployment', (cfg1Id, )),
+                          ('deployment', (cfg1Id, )),
+                          ('deployment', ()),
+                          ('deployment', ()),
+                          ('events', (cfg1Id, )),
+                          ('events', (cfg1Id, )),
+                          ('events', ()),
+                          ('events', ()),
+                          ('marketing', (cfg1Id, )),
+                          ('marketing', ())]
+                         )
+
+    def test_pm_InsertItemOnSeveralMethods(self):
+        '''Test when inserting following :
+           - groups in charge;
+           - category;
+           - associated groups;
+           - proposing groups.'''
+        cfg = self.meetingConfig
+        self.changeUser('siteadmin')
+        cfg.setInsertingMethodsOnAddItem(
+            ({'insertingMethod': 'on_groups_in_charge',
+             'reverse': '0'},
+             {'insertingMethod': 'on_categories',
+              'reverse': '0'},
+             {'insertingMethod': 'on_all_associated_groups',
+              'reverse': '0'},
+             {'insertingMethod': 'on_proposing_groups',
+              'reverse': '0'}, ))
+        cfg.setUseGroupsAsCategories(False)
+        # groups in charge
+        gic1 = self.create(
+            'organization',
+            id='groupincharge1',
+            Title='Group in charge 1',
+            acronym='GIC1')
+        gic1_uid = gic1.UID()
+        self._select_organization(gic1_uid)
+        gic2 = self.create(
+            'organization',
+            id='groupincharge2',
+            Title='Group in charge 2',
+            acronym='GIC2')
+        gic2_uid = gic2.UID()
+        self._select_organization(gic2_uid)
+        gic3 = self.create(
+            'organization',
+            id='groupincharge3',
+            Title='Group in charge 3',
+            acronym='GIC3')
+        gic3_uid = gic3.UID()
+        self._select_organization(gic3_uid)
+        gic4 = self.create(
+            'organization',
+            id='groupincharge4',
+            Title='Group in charge 4',
+            acronym='GIC4')
+        gic4_uid = gic4.UID()
+        self._select_organization(gic4_uid)
+        cfg.setOrderedGroupsInCharge((gic1_uid, gic2_uid, gic3_uid, gic4_uid))
+        # associated groups
+        ag1 = self.create(
+            'organization',
+            id='ag1',
+            Title='Associated group 1',
+            acronym='AG1')
+        ag1_uid = ag1.UID()
+        ag2 = self.create(
+            'organization',
+            id='ag2',
+            Title='Associated group 2',
+            acronym='AG2')
+        ag2_uid = ag2.UID()
+        ag3 = self.create(
+            'organization',
+            id='ag3',
+            Title='Associated group 3',
+            acronym='AG3')
+        ag3_uid = ag3.UID()
+        ag4 = self.create(
+            'organization',
+            id='ag4',
+            Title='Associated group 4',
+            acronym='AG4')
+        ag4_uid = ag4.UID()
+        cfg.setOrderedAssociatedOrganizations((ag1_uid, ag2_uid, ag3_uid, ag4_uid))
+
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime('2014/01/01'))
+        data = ({'title': 'Item 1',
+                 'proposingGroup': self.developers_uid,
+                 'category': 'research',
+                 'groupsInCharge': [gic1_uid],
+                 'associatedGroups': [ag1_uid]},
+                {'title': 'Item 2',
+                 'proposingGroup': self.vendors_uid,
+                 'category': 'development',
+                 'groupsInCharge': [gic2_uid],
+                 'associatedGroups': [ag2_uid]},
+                {'title': 'Item 3',
+                 'proposingGroup': self.vendors_uid,
+                 'category': 'events',
+                 'groupsInCharge': [gic1_uid],
+                 'associatedGroups': [ag2_uid]},
+                {'title': 'Item 4',
+                 'proposingGroup': self.developers_uid,
+                 'category': 'events',
+                 'groupsInCharge': [gic1_uid, gic3_uid],
+                 'associatedGroups': [ag4_uid]},
+                {'title': 'Item 5',
+                 'proposingGroup': self.developers_uid,
+                 'category': 'development',
+                 'groupsInCharge': [gic3_uid],
+                 'associatedGroups': [ag3_uid]},
+                {'title': 'Item 6',
+                 'proposingGroup': self.vendors_uid,
+                 'category': 'development',
+                 'groupsInCharge': [gic1_uid, gic2_uid],
+                 'associatedGroups': []},
+                {'title': 'Item 7',
+                 'proposingGroup': self.developers_uid,
+                 'category': 'events',
+                 'groupsInCharge': [gic4_uid],
+                 'associatedGroups': []},
+                {'title': 'Item 8',
+                 'proposingGroup': self.vendors_uid,
+                 'category': 'events',
+                 'groupsInCharge': [gic3_uid, gic4_uid],
+                 'associatedGroups': []},
+                {'title': 'Item 9',
+                 'proposingGroup': self.developers_uid,
+                 'category': 'events',
+                 'groupsInCharge': [gic1_uid, gic4_uid],
+                 'associatedGroups': [ag3_uid, ag4_uid]},
+                {'title': 'Item 10',
+                 'proposingGroup': self.vendors_uid,
+                 'category': 'research',
+                 'groupsInCharge': [],
+                 'associatedGroups': []},
+                {'title': 'Item 11',
+                 'proposingGroup': self.vendors_uid,
+                 'category': 'research',
+                 'groupsInCharge': [],
+                 'associatedGroups': [ag2_uid]},
+                {'title': 'Item 12',
+                 'proposingGroup': self.vendors_uid,
+                 'category': 'events',
+                 'groupsInCharge': [gic3_uid],
+                 'associatedGroups': [ag1_uid, ag2_uid, ag3_uid, ag4_uid]},
+                {'title': 'Item 13',
+                 'proposingGroup': self.developers_uid,
+                 'category': 'events',
+                 'groupsInCharge': [gic4_uid],
+                 'associatedGroups': [ag4_uid]}, )
+        for itemData in data:
+            item = self.create('MeetingItem', **itemData)
+            self.presentItem(item)
+
+        ordered_items = meeting.getItems(ordered=True)
+        self.assertEqual(
+            [(anItem.getGroupsInCharge(),
+              anItem.getCategory(),
+              anItem.getAssociatedGroups(),
+              anItem.getProposingGroup()) for
+             anItem in ordered_items],
+            [((), 'research', (), self.vendors_uid),
+             ((), 'research', (ag2_uid,), self.vendors_uid),
+             ((gic1_uid,), 'research', (ag1_uid,), self.developers_uid),
+             ((gic1_uid,), 'events', (ag2_uid,), self.vendors_uid),
+             ((gic1_uid, gic2_uid), 'development', (), self.vendors_uid),
+             ((gic1_uid, gic3_uid), 'events', (ag4_uid,), self.developers_uid),
+             ((gic1_uid, gic4_uid), 'events', (ag3_uid, ag4_uid), self.developers_uid),
+             ((gic2_uid,), 'development', (ag2_uid,), self.vendors_uid),
+             ((gic3_uid,), 'development', (ag3_uid,), self.developers_uid),
+             ((gic3_uid,), 'events', (ag1_uid, ag2_uid, ag3_uid, ag4_uid), self.vendors_uid),
+             ((gic3_uid, gic4_uid), 'events', (), self.vendors_uid),
+             ((gic4_uid,), 'events', (), self.developers_uid),
+             ((gic4_uid,), 'events', (ag4_uid,), self.developers_uid)])
+        self.assertEqual(
+            [anItem.adapted()._getInsertOrder(cfg) for anItem in ordered_items],
+            [[0.0, 1, 0.0, 2],
+             [0.0, 1, 2.0, 2],
+             [1.0, 1, 1.0, 1],
+             [1.0, 2, 2.0, 2],
+             [1.002, 0, 0.0, 2],
+             [1.003, 2, 4.0, 1],
+             [1.004, 2, 3.004, 1],
+             [2.0, 0, 2.0, 2],
+             [3.0, 0, 3.0, 1],
+             [3.0, 2, 1.002003004, 2],
+             [3.004, 2, 0.0, 2],
+             [4.0, 2, 0.0, 1],
+             [4.0, 2, 4.0, 1]])
 
     def test_pm_InsertItemForceNormal(self):
         '''Test that we may insert an item in a frozen meeting among normal items.'''
