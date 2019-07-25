@@ -40,7 +40,7 @@ class IPMHeldPosition(IHeldPosition):
         description=_("Select a position type, correct label will be taken from this list "
                       "depending on person gender and context. If you need to add new position types, "
                       "it is defined on the directory at the root of contacts configuration "
-                      "(element <a href='../../edit' target='_blank'>\"edit contacts\"</a>)."),
+                      "(element <a href='../../contacts/edit' target='_blank'>\"edit contacts\"</a>)."),
         vocabulary="PositionTypes",
         required=True,
     )
