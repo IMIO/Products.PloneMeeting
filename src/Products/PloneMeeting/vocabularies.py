@@ -1123,8 +1123,6 @@ class HeldPositionUsagesVocabulary(object):
             SimpleTerm('assemblyMember', 'assemblyMember', _('assemblyMember')))
         res.append(
             SimpleTerm('asker', 'asker', _('asker')))
-        res.append(
-            SimpleTerm('associated', 'associated', _('associated')))
         return SimpleVocabulary(res)
 
 

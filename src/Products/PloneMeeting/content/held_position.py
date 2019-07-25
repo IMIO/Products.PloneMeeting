@@ -116,7 +116,7 @@ class PMHeldPosition(HeldPosition):
         person_label = self.get_person_title()
         held_position_label = self.get_label() or translate(
             'No label defined on held position',
-            domain='collective.contact.core',
+            domain='PloneMeeting',
             context=getRequest(),
             default='No label defined on held position')
         if highlight:
