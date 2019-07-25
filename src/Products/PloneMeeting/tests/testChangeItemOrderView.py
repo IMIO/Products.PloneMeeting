@@ -46,7 +46,7 @@ class testChangeItemOrderView(PloneMeetingTestCase):
         item7 = items[6]
         return meeting, item1, item2, item3, item4, item5, item6, item7
 
-    def test_pm_ChanteItemOrderSetup(self):
+    def test_pm_ChangeItemOrderSetup(self):
         """As self._setupOrderedItems is used in several test methods, we added a test for it."""
         self.changeUser('pmManager')
         meeting, item1, item2, item3, item4, item5, item6, item7 = self._setupOrderedItems()
@@ -59,6 +59,37 @@ class testChangeItemOrderView(PloneMeetingTestCase):
         self.assertEquals(item7.getItemNumber(), 700)
         self.assertEquals([item.getItemNumber() for item in meeting.getItems(ordered=True)],
                           [100, 200, 300, 400, 500, 600, 700])
+
+    def test_pm_ChangeItemOrderIllegalMove(self):
+        '''Illegal moves are :
+           - moving < 1 or > last item;
+           - valid number, like 4 or 4.1 or 4.13, no 4.123;
+           - moving to existing subnumber, previous exist, so 2.3 needs 2.2;
+           - master must exist for a subnumber, so moving to 12.1 needs 12;'''
+        # create a meetingWithItems and play
+        self.changeUser('pmManager')
+        meeting, item1, item2, item3, item4, item5, item6, item7 = self._setupOrderedItems()
+        view = item1.restrictedTraverse('@@change-item-order')
+        # view returns False if not moved
+        self.assertFalse(view('number', '0'))
+        self.assertFalse(view('number', '0.1'))
+        self.assertFalse(view('number', '9'))
+        self.assertFalse(view('number', '8.1'))
+        self.assertFalse(view('number', '2.2'))
+        self.assertFalse(view('number', '2.23'))
+        # move item to 2.1 so it exists then item2 to 1.3
+        # (moving item 1 to 2.1 will make it have 1.1 number)
+        view('number', '2.1')
+        self.assertEqual(item1.getItemNumber(), 101)
+        view = item5.restrictedTraverse('@@change-item-order')
+        self.assertFalse(view('number', '1.3'))
+        # moving last item to a too large number will not work
+        self.assertEqual(item7.getItemNumber(), 600)
+        view = item7.restrictedTraverse('@@change-item-order')
+        self.assertFalse(view('number', '8'))
+        # moving item 1.1 to 7 will work
+        view = item7.restrictedTraverse('@@change-item-order')
+        self.assertFalse(view('number', '8'))
 
     def test_pm_ChangeItemOrderMoveUpDown(self):
         '''Test the ChangeItemOrderView :
@@ -542,9 +573,9 @@ class testChangeItemOrderView(PloneMeetingTestCase):
         view('number', None)
         # nothing changed
         self.assertEquals(item2.getItemNumber(), 200)
-        # move one position to far
+        # move 2 positions to far
         self.assertEqual(len(meeting.getItems()), 7)
-        view('number', '8')
+        view('number', '9')
         # nothing changed
         self.assertEquals(item2.getItemNumber(), 200)
         # move one of the last items upper
@@ -649,6 +680,42 @@ class testChangeItemOrderView(PloneMeetingTestCase):
                     # order will raise an Unauthorized
                     self.assertRaises(Unauthorized, view, 'up')
                     self.assertRaises(Unauthorized, view, 'down')
+
+    def test_pm_ChangeItemOrderMoveToLastPosition(self):
+        '''Move item to last position :
+           - from 3 to last position or last position + 1;
+           - from 3.1 to last position or last position + 1;
+           - from 3.1 to 4.2;'''
+        # create a meetingWithItems and play
+        self.changeUser('pmManager')
+        meeting, item1, item2, item3, item4, item5, item6, item7 = self._setupOrderedItems()
+        view = item1.restrictedTraverse('@@change-item-order')
+        # integer to integer
+        view('number', '7')
+        self.assertEqual(item1.getItemNumber(), 700)
+        view('number', '1')
+        view('number', '8')
+        self.assertEqual(item1.getItemNumber(), 700)
+
+        # integer to subnumber
+        # move 1 to 7.1
+        view('number', '1')
+        view('number', '7.1')
+        self.assertEqual(item1.getItemNumber(), 601)
+
+        # subnumber to subnumber
+        view = item4.restrictedTraverse('@@change-item-order')
+        view('number', '2.1')
+        view('number', '5.2')
+        self.assertEqual(item4.getItemNumber(), 502)
+
+        # integer to integer with subnumber as last item
+        view = item5.restrictedTraverse('@@change-item-order')
+        view('number', '6')
+        self.assertEqual(item5.getItemNumber(), 500)
+        view('number', '2.1')
+        # will not move if too far
+        self.assertFalse(view('number', '6'))
 
 
 def test_suite():

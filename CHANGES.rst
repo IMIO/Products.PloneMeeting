@@ -11,6 +11,7 @@ Changelog
 - Simplified MeetingItem._getInsertOrder by removing the MeetingItem._findOneLevelFor method, only rely on computed _findOrderFor for each inserting method
   and compare the tuples of orders to find the lowest value
 - Use proposinggroups vocabularies to manage groupsInCharge columns so we are sure that we have every organizations in the vocabulary
+- Fixed bug in the @@change-item-order, it was possible to set an item number > last item number when changing position of last item of the meeting
 
 4.1rc7 (2019-07-19)
 -------------------
@@ -118,7 +119,7 @@ Changelog
 - Display the advice review_state in the advice infos tooltipster popup
 - Override meetingadvice 'view' class to raise Unauthorized if current user tries to access it and advice is not viewable
 - Added adaptable method MeetingItem._adviceDelayMayBeStarted to be able to add a condition to really start an advice delay (set the 'advice_started_on' date)
-- Fixed bug when changing item position on a meeting from subnumber to subnumber (same integer or not)
+- Fixed bug in the @@change-item-order view when changing item position on a meeting from subnumber to subnumber (same integer or not)
 - Do not display an empty tooltipster 'change advice delay' if nothing to display, hide the 'change advice delay' action
 
 4.1b17 (2019-05-16)

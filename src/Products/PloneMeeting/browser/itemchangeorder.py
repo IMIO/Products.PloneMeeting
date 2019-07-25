@@ -80,7 +80,7 @@ class ChangeItemOrderView(BrowserView):
                               domain='PloneMeeting',
                               context=self.request),
                     type='warning')
-                return
+                return False
 
         nbOfItems = len(meeting.getRawItems())
         items = meeting.getItems(ordered=True)
@@ -97,16 +97,16 @@ class ChangeItemOrderView(BrowserView):
                               domain='PloneMeeting',
                               context=self.request),
                     type='warning')
-                return
+                return False
             # check that moveNumber is not < 1 or not > next possible item
             # check that the moveNumber is valid, aka integer (4) or max 2 decimal number (4.1 or 4.13)
             # check also that if we use a subnumber, the previous exists (22.2 exists if we specified 22.3)
             # check finally that if we are moving an item to a subnumber,
             # the master exists (moving to 12.1, 12 has to exist)
             last_item = items[-1]
-            moving_last_item = self.context == last_item
+            last_item_number = last_item.getItemNumber()
             if (moveNumber < 100) or \
-               (not moving_last_item and moveNumber > _to_integer(last_item.getItemNumber()) + 99) or \
+               (moveNumber > _to_integer(last_item_number + 100)) or \
                (not moveNumberIsInteger and len(wishedNumber.split('.')[1]) > 2) or \
                (not moveNumberIsInteger and
                 (not meeting.getItemByNumber(moveNumber - 1) or
@@ -116,7 +116,7 @@ class ChangeItemOrderView(BrowserView):
                               domain='PloneMeeting',
                               context=self.request),
                     type='warning')
-                return
+                return False
         else:
             # down, must not be last
             # up, must not be first
@@ -127,25 +127,25 @@ class ChangeItemOrderView(BrowserView):
                               domain='PloneMeeting',
                               context=self.request),
                     type='warning')
-                return
+                return False
             # 'down' or 'up' may not switch an integer and a subnumber
             currentIsInteger = _is_integer(self.context.getItemNumber())
-            illegal_swtich = False
+            illegal_switch = False
             if moveType == 'down':
                 nextIsInteger = _is_integer(self.context.getSiblingItem('next'))
                 if (currentIsInteger and not nextIsInteger) or (not currentIsInteger and nextIsInteger):
-                    illegal_swtich = True
+                    illegal_switch = True
             elif moveType == 'up':
                 previousIsInteger = _is_integer(self.context.getSiblingItem('previous'))
                 if (currentIsInteger and not previousIsInteger) or (not currentIsInteger and previousIsInteger):
-                    illegal_swtich = True
-            if illegal_swtich:
+                    illegal_switch = True
+            if illegal_switch:
                 plone_utils.addPortalMessage(
                     translate(msgid='item_illegal_switch',
                               domain='PloneMeeting',
                               context=self.request),
                     type='warning')
-                return
+                return False
 
         # Move the item
         if nbOfItems >= 2:
@@ -156,7 +156,7 @@ class ChangeItemOrderView(BrowserView):
                         # moving first item 'up', does not change anything
                         # actually it is not possible in the UI because the 'up'
                         # icon is not displayed on the first item
-                        return
+                        return False
                     otherNumber = self.context.getSiblingItem('previous')
                 else:
                     # moveType == 'down'
@@ -254,7 +254,9 @@ class ChangeItemOrderView(BrowserView):
                         if item == self.context:
                             # moving 2 to 4
                             if (oldIndexIsInteger and moveNumberIsInteger):
-                                pass
+                                # if moving to last position, we need to remove 100 if > last_item_number
+                                if moveNumber > last_item_number:
+                                    item.setItemNumber(moveNumber - 100)
                             # moving 2.1 to 4
                             elif (not oldIndexIsInteger and moveNumberIsInteger):
                                 pass
@@ -342,3 +344,4 @@ class ChangeItemOrderView(BrowserView):
 
         # update item references starting from minus between oldIndex and new itemNumber
         meeting.updateItemReferences(startNumber=min(oldIndex, self.context.getItemNumber()))
+        return True
