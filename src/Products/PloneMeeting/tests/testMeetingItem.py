@@ -2483,10 +2483,11 @@ class testMeetingItem(PloneMeetingTestCase):
         self.validateItem(lateItem)
         # for now, it is considered as late
         self.failUnless(lateItem.wfConditions().isLateFor(meeting))
+        late_state = meeting.adapted().getLateState()
         for tr in self.TRANSITIONS_FOR_CLOSING_MEETING_2:
             if tr in self.transitions(meeting):
                 self.do(meeting, tr)
-            if meeting.queryState() not in meeting.getStatesBefore('frozen'):
+            if meeting.queryState() not in meeting.getStatesBefore(late_state):
                 self.failUnless(lateItem.wfConditions().isLateFor(meeting))
             else:
                 self.failIf(lateItem.wfConditions().isLateFor(meeting))

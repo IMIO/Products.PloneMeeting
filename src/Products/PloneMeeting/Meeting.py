@@ -814,8 +814,9 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
                 'v': 'validated'},
                ]
 
-        # before frozen state, accept items having any preferred meeting
-        if meeting.queryState() in self.getStatesBefore('frozen'):
+        # before late state, accept items having any preferred meeting
+        late_state = self.adapted().getLateState()
+        if meeting.queryState() in self.getStatesBefore(late_state):
             # Get meetings accepting items for which the date is lower or
             # equal to the date of this meeting (self)
             catalog = api.portal.get_tool('portal_catalog')
@@ -828,7 +829,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
                         'o': 'plone.app.querystring.operation.selection.is',
                         'v': meetingUids})
         else:
-            # after frozen state, only query items for which preferred meeting is self
+            # after late state, only query items for which preferred meeting is self
             res.append({'i': 'getPreferredMeeting',
                         'o': 'plone.app.querystring.operation.selection.is',
                         'v': meeting.UID()})
@@ -1233,6 +1234,10 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         if not brains:
             return None
         return brains[0].getObject()
+
+    def getLateState(self):
+        '''See doc in interfaces.py.'''
+        return 'frozen'
 
     def getStatesBefore_cachekey(method, self, review_state):
         '''cachekey method for self.getStatesBefore.'''

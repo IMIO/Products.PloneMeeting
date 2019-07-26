@@ -12,6 +12,9 @@ Changelog
   and compare the tuples of orders to find the lowest value
 - Use proposinggroups vocabularies to manage groupsInCharge columns so we are sure that we have every organizations in the vocabulary
 - Fixed bug in the @@change-item-order, it was possible to set an item number > last item number when changing position of last item of the meeting
+- Make it easier to override the meeting state from which an item is considered late:
+    - By default nothing changed, adaptable method Meeting.getLateState returns 'frozen' by default;
+    - The MeetingItemWorkflowActions._freezePresentedItem was replaced by MeetingItemWorkflowActions._latePresentedItem.
 
 4.1rc7 (2019-07-19)
 -------------------

@@ -48,6 +48,11 @@ class ForceInsertNormal(ViewletBase):
         """ """
         return displaying_available_items(self.context) and self.view.brains
 
+    def enabled(self):
+        """Is the checkbox enabled?  Only necessary if meeting is in a late state."""
+        late_state = self.context.adapted().getLateState()
+        return self.context.queryState() not in self.context.getStatesBefore(late_state)
+
     def render(self):
         if self.available():
             return self.index()

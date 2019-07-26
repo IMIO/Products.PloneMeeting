@@ -4,7 +4,7 @@
     createCookie('pmForceInsertNormal', false);
   </script>
   <input onclick="javascript:changeForceInsertNormalCookie(this)"
-         tal:define="enabled python: context.queryState() not in context.getStatesBefore('frozen')"
+         tal:define="enabled view/enabled"
          tal:attributes="disabled python: enabled and default or 'disabled'"
          type="checkbox"
          id="forceInsertNormal"

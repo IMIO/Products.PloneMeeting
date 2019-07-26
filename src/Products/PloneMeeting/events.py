@@ -152,11 +152,12 @@ def onMeetingTransition(meeting, event):
     transitionId = event.transition.id
     action = 'do%s%s' % (transitionId[0].upper(), transitionId[1:])
     do(action, event)
-    # update items references if meeting is going from beforeFrozen state
-    # to frozen state or the other way round
-    beforeFrozenStates = meeting.getStatesBefore('frozen')
-    if (event.old_state.id in beforeFrozenStates and event.new_state.id not in beforeFrozenStates) or \
-       (event.old_state.id not in beforeFrozenStates and event.new_state.id in beforeFrozenStates):
+    # update items references if meeting is going from before late state
+    # to late state or the other way round
+    late_state = meeting.adapted().getLateState()
+    beforeLateStates = meeting.getStatesBefore(late_state)
+    if (event.old_state.id in beforeLateStates and event.new_state.id not in beforeLateStates) or \
+       (event.old_state.id not in beforeLateStates and event.new_state.id in beforeLateStates):
         meeting.updateItemReferences()
 
     # invalidate last meeting modified

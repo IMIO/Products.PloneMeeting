@@ -332,7 +332,7 @@ class MeetingItemWorkflowConditions(object):
         res = False
         if _checkPermission(ReviewPortalContent, self.context):
             meeting = self.context.hasMeeting() and self.context.getMeeting() or None
-            if meeting and not meeting.queryState() in meeting.getStatesBefore('frozen'):
+            if meeting and meeting.queryState() not in meeting.getStatesBefore('frozen'):
                 res = True
         return res
 
@@ -358,9 +358,11 @@ class MeetingItemWorkflowConditions(object):
 
     def isLateFor(self, meeting):
         '''See doc in interfaces.py.'''
-        if meeting and (not meeting.queryState() in meeting.getStatesBefore('frozen')) and \
-           (meeting.UID() == self.context.getPreferredMeeting()):
-            return True
+        if meeting:
+            late_state = meeting.adapted().getLateState()
+            if (meeting.queryState() not in meeting.getStatesBefore(late_state)) and \
+               (meeting.UID() == self.context.getPreferredMeeting()):
+                return True
         return False
 
     def _hasAdvicesToGive(self, destination_state):
@@ -521,16 +523,18 @@ class MeetingItemWorkflowActions(object):
         """ """
         self.context.REQUEST.set('currentlyInsertedItem', self.context)
         meeting.insertItem(self.context, forceNormal=self._forceInsertNormal())
-        # If the meeting is already frozen and this item is a "late" item,
-        # I must set automatically the item to "itemfrozen".
-        before_frozen_states = meeting.getStatesBefore('frozen')
-        if before_frozen_states and meeting.queryState() not in before_frozen_states:
-            self._freezePresentedItem()
+        # If the meeting is already in a late state and this item is a "late" item,
+        # I must set automatically the item to the first "late state" (itemfrozen by default).
+        late_state = meeting.adapted().getLateState()
+        before_late_states = meeting.getStatesBefore(late_state)
+        if before_late_states and meeting.queryState() not in before_late_states:
+            self._latePresentedItem()
 
-    def _freezePresentedItem(self):
-        """Freeze presented item, this is done to be easy to override in case
-           WF transitions to freeze an item is different, without redefining
-           the entire doPresent."""
+    def _latePresentedItem(self):
+        """Set presented item in a late state, this is done to be easy to override in case
+           WF transitions to set an item late item is different, without redefining
+           the entire doPresent.
+           By default, this will freeze the item."""
         wTool = api.portal.get_tool('portal_workflow')
         try:
             wTool.doActionFor(self.context, 'itempublish')
@@ -2395,8 +2399,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # in case meeting is frozen, make sure current item isLateFor(meeting)
             # also in case no meetingStates, a closed meeting could be returned, check
             # that current user may edit returned meeting
+            late_state = meeting.adapted().getLateState()
             if meeting.wfConditions().mayAcceptItems() and (
-                    meeting.queryState() in meeting.getStatesBefore('frozen') or
+                    meeting.queryState() in meeting.getStatesBefore(late_state) or
                     self.wfConditions().isLateFor(meeting)):
                 return meeting
         return None
@@ -3018,15 +3023,18 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''See docstring in interfaces.py.'''
         item = self.getSelf()
         meeting = item.getMeeting()
+        late_state = None
+        if meeting:
+            late_state = meeting.adapted().getLateState()
         return bool(
-            meeting and meeting.queryState() not in meeting.getStatesBefore('frozen'))
+            meeting and meeting.queryState() not in meeting.getStatesBefore(late_state))
 
     security.declarePublic('updateItemReference')
 
     def updateItemReference(self):
         '''Update the item reference, recompute it,
            stores it and reindex 'getItemReference'.
-           This expect item to be in a meeting that is at least frozen.'''
+           This rely on _mayUpdateItemReference.'''
         res = ''
         item = self.getSelf()
         meeting = item.getMeeting()
