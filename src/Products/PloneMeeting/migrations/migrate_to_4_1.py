@@ -798,14 +798,15 @@ class Migrate_To_4_1(Migrator):
                             logger.info('Could not find version_id {0} for advice version of {1}!'.format(
                                 vc_info.version_id, advice.absolute_url_path()))
 
+        # MeetingGroups and organizations coexist, call hook
+        self._hook_after_mgroups_to_orgs()
+
         # update every items local roles when every items have been updated because
         # linked items (predecessor) may be updated during this process and we have
         # to make sure their values were already updated
         # + update local roles will also fix 'delay_when_stopped' on advice with delay
         self.tool.updateAllLocalRoles(meta_type=('MeetingItem', ))
 
-        # MeetingGroups and organizations coexist, call hook
-        self._hook_after_mgroups_to_orgs()
         # remove MeetingGroup objects and portal_type
         m_group_ids = [mGroup.getId() for mGroup in self.tool.objectValues('MeetingGroup')]
         self.tool.manage_delObjects(ids=m_group_ids)

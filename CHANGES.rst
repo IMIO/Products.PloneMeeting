@@ -15,6 +15,8 @@ Changelog
 - Make it easier to override the meeting state from which an item is considered late:
     - By default nothing changed, adaptable method Meeting.getLateState returns 'frozen' by default;
     - The MeetingItemWorkflowActions._freezePresentedItem was replaced by MeetingItemWorkflowActions._latePresentedItem.
+- Fix migration _adaptForPlonegroup, call _hook_after_mgroups_to_orgs before tool.updateAllLocalRoles as there could be changes
+  done in the hook necessary for local roles update
 
 4.1rc7 (2019-07-19)
 -------------------
