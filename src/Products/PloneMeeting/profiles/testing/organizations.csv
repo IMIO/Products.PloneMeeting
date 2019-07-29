@@ -1,7 +1,7 @@
-"ID","ID Parent","Intitulé","Description","Type","Util adr parent","Rue","Numéro","Complément d'adresse","Code postal","Localité","Tél","Tél portable","Fax","Courriel","Site web","Région","Pays","UID"
-1,,"Groupe Communes",,,,,,,,,,,,,,,,
-2,,"Groupe Intercommunales",,,,,,,,,,,,,,,,
-3,,"Groupe Privés",,,,,,,,,,,,,,,,
-4,,"Groupe Province",,,,,,,,,,,,,,,,
-5,,"Équipe de Direction",,,,,,,,,,,,,,,,
-6,,"Mon organisation",,,,,,,,,,,,,,,,
+"ID","ID Parent","Intitulé","Acronyme","Description","Type","Util adr parent","Rue","Numéro","Complément d'adresse","Code postal","Localité","Tél","Tél portable","Fax","Courriel","Site web","Région","Pays","UID"
+1,,"Groupe Communes","GComm",,,,,,,,,,,,,,,,
+2,,"Groupe Intercommunales","GIntercomm",,,,,,,,,,,,,,,,
+3,,"Groupe Privés","GPriv",,,,,,,,,,,,,,,,
+4,,"Groupe Province","GProv",,,,,,,,,,,,,,,,
+5,,"Équipe de Direction","Dir",,,,,,,,,,,,,,,,
+6,,"Mon organisation","OwnOrg",,,,,,,,,,,,,,,,

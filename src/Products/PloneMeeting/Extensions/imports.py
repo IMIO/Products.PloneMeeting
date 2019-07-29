@@ -47,7 +47,7 @@ def get_organizations(self, obj=False):
 def import_contacts(self, dochange=True, ownorg='Mon organisation', only='ORGS|PERS|HP', path=''):
     """
         Import contacts from several files in 'Extensions'
-        * organizations.csv:    ID;ID Parent;Intitulé;Description;Type;Adr par;Rue;Numéro;Comp adr;
+        * organizations.csv:    ID;ID Parent;Intitulé;Acronyme;Description;Type;Adr par;Rue;Numéro;Comp adr;
                                 CP;Localité;Tél;Gsm;Fax;Courriel;Site;Région;Pays;UID
         * persons.csv:  ID;Nom;Prénom;Genre;Civilité;Naissance;Adr par;Rue;Numéro;Comp adr;
                         CP;Localité;Tél;Gsm;Fax;Courriel;Site;Région;Pays;Num int;UID
@@ -114,7 +114,7 @@ def import_contacts(self, dochange=True, ownorg='Mon organisation', only='ORGS|P
     if lines:
         data = lines.pop(0)
         lendata = len(data)
-        if lendata < 19 or data[18] != 'UID':
+        if lendata < 20 or data[19] != 'UID':
             return "!! Problem decoding first line: bad columns in organizations.csv ?"
     orgs = OrderedDict()
     uids = {}
@@ -125,7 +125,7 @@ def import_contacts(self, dochange=True, ownorg='Mon organisation', only='ORGS|P
         if len(data) != lendata:
             return "!! ORGS: problem line %d, invalid column number %d <> %d: %s" % (i, lendata, len(data),
                                                                                      ['%s' % cell for cell in data])
-        id, idp, uid = data[0], data[1], data[18]
+        id, idp, uid = data[0], data[1], data[19]
         if not id or id in orgs:
             return "!! ORGS: problem line %d, invalid id: %s" % (i, id)
         if uid in uids:
@@ -134,20 +134,21 @@ def import_contacts(self, dochange=True, ownorg='Mon organisation', only='ORGS|P
             uids[uid] = 'orgs: %d' % i
         # ID;ID Par;Intitulé;Description;Type;Use par adr,Rue;Numéro;Comp adr;CP;Localité;Tél;Gsm;Fax;Courriel;Site;
         # Région;Pays;UID
-        orgs[id] = {'lev': 1, 'prt': idp, 'tit': data[2], 'desc': data[3], 'upa': data[5] and int(data[5]) or '',
-                    'st': data[6], 'nb': data[7], 'box': data[8], 'zip': is_zip(data[9], i, 'ORGS', data[17]),
-                    'loc': data[10], 'tel': check_phone(digit(data[11]), i, 'ORGS', data[17]),
-                    'mob': check_phone(digit(data[12]), i, 'ORGS', data[17]),
-                    'fax': check_phone(digit(data[13]), i, 'ORGS', data[17]), 'eml': data[14],
-                    'www': data[15], 'dep': data[16], 'cty': data[17], 'uid': uid}
+        orgs[id] = {'lev': 1, 'prt': idp, 'tit': data[2], 'acronym': data[3],
+                    'desc': data[4], 'upa': data[6] and int(data[6]) or '',
+                    'st': data[7], 'nb': data[8], 'box': data[9], 'zip': is_zip(data[10], i, 'ORGS', data[18]),
+                    'loc': data[11], 'tel': check_phone(digit(data[12]), i, 'ORGS', data[18]),
+                    'mob': check_phone(digit(data[13]), i, 'ORGS', data[18]),
+                    'fax': check_phone(digit(data[14]), i, 'ORGS', data[18]), 'eml': data[15],
+                    'www': data[16], 'dep': data[17], 'cty': data[18], 'uid': uid}
         typ = 'types'
         if idp:
             typ = 'levels'
             if idp not in childs:
                 childs[idp] = []
             childs[idp].append(id)
-        if data[4]:
-            utyp = safe_unicode(data[4])
+        if data[5]:
+            utyp = safe_unicode(data[5])
             if utyp not in org_infos[typ]:
                 org_infos[typ][utyp] = idnormalizer.normalize(utyp)
             orgs[id]['typ'] = org_infos[typ][utyp]
@@ -190,6 +191,7 @@ def import_contacts(self, dochange=True, ownorg='Mon organisation', only='ORGS|P
         if action == 'create':
             if doit:
                 obj = api.content.create(container=cont, type='organization', title=safe_unicode(det['tit']),
+                                         acronym=safe_unicode(det['acronym']),
                                          description=safe_unicode(det['desc']), organization_type=det['typ'],
                                          street=safe_unicode(det['st']), number=safe_unicode(det['nb']),
                                          additional_address_details=safe_unicode(det['box']),
@@ -204,7 +206,7 @@ def import_contacts(self, dochange=True, ownorg='Mon organisation', only='ORGS|P
                 out.append("%04d org: new orga '%s' will be created in %s" % (i, safe_encode(det['tit']),
                                                                               safe_encode(cont)))
         elif action == 'update':
-            attrs = {'title': 'tit', 'description': 'desc', 'street': 'st', 'number': 'nb',
+            attrs = {'title': 'tit', 'description': 'desc', 'acronym': 'acronym', 'street': 'st', 'number': 'nb',
                      'additional_address_details': 'box', 'zip_code': 'zip', 'city': 'loc', 'phone': 'tel',
                      'cell_phone': 'mob', 'fax': 'fax', 'email': 'eml', 'website': 'www', 'region': 'dep',
                      'country': 'cty', 'organization_type': det['typ'], 'use_parent_address': bool(det['upa'])}

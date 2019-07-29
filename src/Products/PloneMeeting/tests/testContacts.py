@@ -1000,24 +1000,34 @@ class testContacts(PloneMeetingTestCase):
 
     def test_pm_ImportContactsCSV(self):
         """ """
+        contacts = self.portal.contacts
         # initialy, we have 4 persons and 4 held_positions
-        self.assertEqual(len(api.content.find(context=self.portal.contacts, portal_type='person')), 4)
-        self.assertEqual(len(api.content.find(context=self.portal.contacts, portal_type='held_position')), 4)
+        own_org = get_own_organization()
+        self.assertIsNone(own_org.acronym)
+        self.assertEqual(len(api.content.find(context=contacts, portal_type='organization')), 4)
+        self.assertEqual(len(api.content.find(context=contacts, portal_type='person')), 4)
+        self.assertEqual(len(api.content.find(context=contacts, portal_type='held_position')), 4)
         path = os.path.join(os.path.dirname(Products.PloneMeeting.__file__), 'profiles/testing')
         output = import_contacts(self.portal, path=path)
         self.assertEqual(output, 'You must be a zope manager to run this script')
         self.changeUser('siteadmin')
         output = import_contacts(self.portal, path=path)
         self.assertEqual(output, 'You must be a zope manager to run this script')
+
         # import contacts as Zope admin
         self.changeUser('admin')
         import_contacts(self.portal, path=path)
-        # we imported 15 persons/held_positions
-        self.assertEqual(len(api.content.find(context=self.portal.contacts, portal_type='person')), 19)
-        self.assertEqual(len(api.content.find(context=self.portal.contacts, portal_type='held_position')), 19)
+        # we imported 5 organizations and 15 persons/held_positions
+        self.assertEqual(len(api.content.find(context=contacts, portal_type='organization')), 9)
+        self.assertEqual(len(api.content.find(context=contacts, portal_type='person')), 19)
+        self.assertEqual(len(api.content.find(context=contacts, portal_type='held_position')), 19)
+        # organizations are imported with an acronym
+        self.assertEqual(own_org.acronym, u'OwnOrg')
+        org_gc = contacts.get('groupe-communes')
+        self.assertEqual(org_gc.acronym, u'GComm')
         # hp of agent-interne is correctly linked to plonegroup-organization
         own_org = get_own_organization()
-        agent_interne_hp = self.portal.contacts.get('agent-interne').objectValues()[0]
+        agent_interne_hp = contacts.get('agent-interne').objectValues()[0]
         self.assertEqual(agent_interne_hp.portal_type, 'held_position')
         self.assertEqual(agent_interne_hp.get_organization(), own_org)
 

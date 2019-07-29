@@ -17,6 +17,7 @@ Changelog
     - The MeetingItemWorkflowActions._freezePresentedItem was replaced by MeetingItemWorkflowActions._latePresentedItem.
 - Fix migration _adaptForPlonegroup, call _hook_after_mgroups_to_orgs before tool.updateAllLocalRoles as there could be changes
   done in the hook necessary for local roles update
+- While importing contacts thru the CSV files, support attribute "Acronym" in organizations.csv
 
 4.1rc7 (2019-07-19)
 -------------------
