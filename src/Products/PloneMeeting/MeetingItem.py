@@ -892,7 +892,7 @@ schema = Schema((
         ),
         optional=True,
         multiValued=1,
-        vocabulary='listAssociatedGroups',
+        vocabulary_factory='Products.PloneMeeting.vocabularies.associatedgroupsvocabulary',
     ),
     StringField(
         name='listType',
@@ -2728,43 +2728,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             method for method in cfg.getInsertingMethodsOnAddItem()
             if method['insertingMethod'] in ('on_groups_in_charge', )]
         if not groups_in_charge_inserting_methods:
-            res = res.sortedByValue()
-
-        return res
-
-    security.declarePrivate('listAssociatedGroups')
-
-    def listAssociatedGroups(self):
-        '''Lists the organizations that are associated with this item.
-           If organizations are selected in MeetingConfig.orderedAssociatedOrganizations,
-           we only display these ones, else, we display every organizations selected in plonegroup.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self)
-        orderedAssociatedOrganizations = cfg.getOrderedAssociatedOrganizations()
-        if orderedAssociatedOrganizations:
-            orgs = list(cfg.getOrderedAssociatedOrganizations(theObjects=True))
-        else:
-            orgs = get_organizations()
-
-        # missing terms, selected on item but removed from orderedAssociatedOrganizations or from plonegroup
-        stored_terms = self.getAssociatedGroups()
-        org_uids = [org.UID() for org in orgs]
-        missing_term_uids = [uid for uid in stored_terms
-                             if uid not in org_uids]
-        if missing_term_uids:
-            missing_terms = uuidsToObjects(missing_term_uids, ordered=False)
-            orgs += missing_terms
-
-        res = []
-        for org in orgs:
-            res.append((org.UID(), org.get_full_title()))
-        res = DisplayList(res)
-
-        # if associatedGroups is not used as item inserting method, we display it alphabetically
-        associated_groups_inserting_methods = [
-            method for method in cfg.getInsertingMethodsOnAddItem()
-            if method['insertingMethod'] in ('on_all_groups', 'on_all_associated_groups')]
-        if not associated_groups_inserting_methods:
             res = res.sortedByValue()
 
         return res

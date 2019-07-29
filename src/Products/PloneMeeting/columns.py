@@ -50,7 +50,7 @@ class ItemProposingGroupColumn(VocabularyColumn):
 class ItemProposingGroupAcronymColumn(AbbrColumn):
     """A column that display the MeetingItem.proposingGroup acronym."""
     attrName = 'getProposingGroup'
-    vocabulary = u'Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary'
+    vocabulary = u'Products.PloneMeeting.vocabularies.everyorganizationsacronymsvocabulary'
     full_vocabulary = u'Products.PloneMeeting.vocabularies.proposinggroupsvocabulary'
 
 
@@ -63,8 +63,21 @@ class ItemGroupsInChargeColumn(VocabularyColumn):
 class ItemGroupsInChargeAcronymColumn(AbbrColumn):
     """A column that display the groupsInCharge acronym."""
     attrName = 'getGroupsInCharge'
-    vocabulary = u'Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary'
+    vocabulary = u'Products.PloneMeeting.vocabularies.everyorganizationsacronymsvocabulary'
     full_vocabulary = u'Products.PloneMeeting.vocabularies.proposinggroupsvocabulary'
+
+
+class ItemAssociatedGroupsColumn(VocabularyColumn):
+    """A column that display the associatedGroups."""
+    attrName = 'getAssociatedGroups'
+    vocabulary = u'collective.contact.plonegroup.organization_services'
+
+
+class ItemAssociatedGroupsAcronymColumn(AbbrColumn):
+    """A column that display the associatedGroups acronym."""
+    attrName = 'getAssociatedGroups'
+    vocabulary = u'Products.PloneMeeting.vocabularies.everyorganizationsacronymsvocabulary'
+    full_vocabulary = u'collective.contact.plonegroup.organization_services'
 
 
 class ItemAdvicesColumn(BrowserViewCallColumn):

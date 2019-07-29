@@ -111,6 +111,7 @@ class ToolInitializer:
         pp = self.profilePath
         if not pp:
             return
+        import ipdb; ipdb.set_trace()
         profileModule = pp[pp.rfind(self.productname.replace('.', '/')):].replace('/', '.')
         profileModule = profileModule.replace('\\', '.')
         data = ''

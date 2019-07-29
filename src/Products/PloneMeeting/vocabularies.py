@@ -15,6 +15,7 @@ from collective.iconifiedcategory.vocabularies import CategoryVocabulary
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from imio.annex.content.annex import IAnnex
 from imio.helpers.cache import get_cachekey_volatile
+from imio.helpers.content import uuidsToObjects
 from natsort import realsorted
 from operator import attrgetter
 from plone import api
@@ -286,12 +287,12 @@ class GroupsInChargeVocabulary(object):
 GroupsInChargeVocabularyFactory = GroupsInChargeVocabulary()
 
 
-class ItemProposingGroupAcronymsVocabulary(object):
+class EveryOrganizationsAcronymsVocabulary(object):
     implements(IVocabularyFactory)
 
     def __call___cachekey(method, self, context):
         '''cachekey method for self.__call__.'''
-        date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary')
+        date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.everyorganizationsacronymsvocabulary')
         return date
 
     @ram.cache(__call___cachekey)
@@ -312,7 +313,7 @@ class ItemProposingGroupAcronymsVocabulary(object):
         return SimpleVocabulary(res)
 
 
-ItemProposingGroupAcronymsVocabularyFactory = ItemProposingGroupAcronymsVocabulary()
+EveryOrganizationsAcronymsVocabularyFactory = EveryOrganizationsAcronymsVocabulary()
 
 
 class MeetingReviewStatesVocabulary(object):
@@ -1357,3 +1358,56 @@ class SelectableAssociatedOrganizationsVocabulary(object):
 
 
 SelectableAssociatedOrganizationsVocabularyFactory = SelectableAssociatedOrganizationsVocabulary()
+
+
+class AssociatedGroupsVocabulary(object):
+    """ """
+    implements(IVocabularyFactory)
+
+    def __call___cachekey(method, self, context):
+        '''cachekey method for self.__call__.'''
+        date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.associatedgroupsvocabulary')
+        return date
+
+    def __call__(self, context):
+        """ """
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        orderedAssociatedOrganizations = cfg.getOrderedAssociatedOrganizations()
+        if orderedAssociatedOrganizations:
+            orgs = list(cfg.getOrderedAssociatedOrganizations(theObjects=True))
+        else:
+            orgs = get_organizations()
+
+        # when used on an item, manage missing terms, selected on item
+        # but removed from orderedAssociatedOrganizations or from plonegroup
+        if context.meta_type == 'MeetingItem':
+            stored_terms = context.getAssociatedGroups()
+            org_uids = [org.UID() for org in orgs]
+            missing_term_uids = [uid for uid in stored_terms
+                                 if uid not in org_uids]
+            if missing_term_uids:
+                missing_terms = uuidsToObjects(missing_term_uids, ordered=False)
+                orgs += missing_terms
+
+        terms = []
+        for org in orgs:
+            org_uid = org.UID()
+            terms.append(SimpleTerm(org_uid, org_uid, org.get_full_title()))
+
+        # when displayed on an item, if associatedGroups is not used
+        # as item inserting method, we display it alphabetically
+        display_alphabetically = True
+        if context.meta_type == 'MeetingItem':
+            associated_groups_inserting_methods = [
+                method for method in cfg.getInsertingMethodsOnAddItem()
+                if method['insertingMethod'] in ('on_all_groups', 'on_all_associated_groups')]
+            if associated_groups_inserting_methods:
+                display_alphabetically = False
+        if display_alphabetically:
+            terms = realsorted(terms, key=attrgetter('title'))
+
+        return SimpleVocabulary(terms)
+
+
+AssociatedGroupsVocabularyFactory = AssociatedGroupsVocabulary()

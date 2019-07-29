@@ -77,7 +77,8 @@ indexInfos = {
     # Indexes used by every portal_types
     'getConfigId': ('FieldIndex', {}), }
 # Metadata to create in portal_catalog
-columnInfos = ('getDate', 'getProposingGroup', 'getGroupsInCharge',
+columnInfos = ('getDate',
+               'getProposingGroup', 'getGroupsInCharge', 'getAssociatedGroups',
                'getPreferredMeeting', 'getPreferredMeetingDate',
                'linkedMeetingDate', 'linkedMeetingUID',
                'getItemIsSigned', 'title_or_id', 'toDiscuss',

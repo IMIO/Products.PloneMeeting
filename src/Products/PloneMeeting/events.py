@@ -216,7 +216,8 @@ def onMeetingBeforeTransition(meeting, event):
 def _invalidateOrgRelatedCachedVocabularies():
     '''Clean cache for vocabularies using organizations.'''
     invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.proposinggroupsvocabulary")
-    invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary")
+    invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.associatedgroupsvocabulary")
+    invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.everyorganizationsacronymsvocabulary")
     invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.proposinggroupsforfacetedfiltervocabulary")
     invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.groupsinchargevocabulary")
     invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.askedadvicesvocabulary")

@@ -21,6 +21,10 @@ Changelog
 - When using categories, validate category of a recurring item so it can not be created in the configuration without a selected category or
   it fails to be inserted when creating a new meeting.  Added warning on the MeetingConfig.useGroupsAsCategories to explain that when enabling
   categories, some checks have to be done in the application
+- Added columns "Associated groups" and "Associated groups acronym", needed to add new portal_catalog column "getAssociatedGroups"
+- Added faceted filter "Associated groups" selectable on item related dashboards
+- Moved u'Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary' vocabulary to u'Products.PloneMeeting.vocabularies.everyorganizationsacronymsvocabulary'
+  so it is easier to reuse in other context without naming problem
 
 4.1rc7 (2019-07-19)
 -------------------

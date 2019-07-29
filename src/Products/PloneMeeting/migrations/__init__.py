@@ -16,9 +16,13 @@
    portal_setup.'''
 
 from DateTime import DateTime
+from imio.helpers.catalog import addOrUpdateColumns
+from imio.helpers.catalog import addOrUpdateIndexes
 from imio.migrator.migrator import Migrator as BaseMigrator
 from plone import api
 from Products.CMFPlone.utils import base_hasattr
+from Products.PloneMeeting.setuphandlers import columnInfos
+from Products.PloneMeeting.setuphandlers import indexInfos
 
 import logging
 
@@ -115,6 +119,13 @@ class Migrator(BaseMigrator):
         wf_ids = [self.wfTool.getWorkflowsFor(portal_type)[0].getId()
                   for portal_type in portal_types]
         return wf_ids
+
+    def addCatalogIndexesAndColumns(self, indexes=True, columns=True):
+        """ """
+        if indexes:
+            addOrUpdateIndexes(self.portal, indexInfos)
+        if columns:
+            addOrUpdateColumns(self.portal, columnInfos)
 
     def updateTALConditions(self, old_word, new_word):
         """Update every elements having a tal_condition, replace given old_word by new_word."""

@@ -10,8 +10,7 @@
           collective.eeafaceted.z3ctable.interfaces.IFacetedTable"
      factory=".columns.ItemProposingGroupColumn"
      provides="collective.eeafaceted.z3ctable.interfaces.IFacetedColumn"
-     name="getProposingGroup"
-  />
+     name="getProposingGroup" />
 
   <adapter
      for="zope.interface.Interface
@@ -19,8 +18,23 @@
           collective.eeafaceted.z3ctable.interfaces.IFacetedTable"
      factory=".columns.ItemProposingGroupAcronymColumn"
      provides="collective.eeafaceted.z3ctable.interfaces.IFacetedColumn"
-     name="proposing_group_acronym"
-  />
+     name="proposing_group_acronym" />
+
+  <adapter
+     for="zope.interface.Interface
+          zope.publisher.interfaces.browser.IBrowserRequest
+          collective.eeafaceted.z3ctable.interfaces.IFacetedTable"
+     factory=".columns.ItemAssociatedGroupsColumn"
+     provides="collective.eeafaceted.z3ctable.interfaces.IFacetedColumn"
+     name="getAssociatedGroups" />
+
+  <adapter
+     for="zope.interface.Interface
+          zope.publisher.interfaces.browser.IBrowserRequest
+          collective.eeafaceted.z3ctable.interfaces.IFacetedTable"
+     factory=".columns.ItemAssociatedGroupsAcronymColumn"
+     provides="collective.eeafaceted.z3ctable.interfaces.IFacetedColumn"
+     name="associated_groups_acronym" />
 
   <adapter
      for="zope.interface.Interface
@@ -28,8 +42,7 @@
           collective.eeafaceted.z3ctable.interfaces.IFacetedTable"
      factory=".columns.ItemGroupsInChargeColumn"
      provides="collective.eeafaceted.z3ctable.interfaces.IFacetedColumn"
-     name="getGroupsInCharge"
-  />
+     name="getGroupsInCharge" />
 
   <adapter
      for="zope.interface.Interface
@@ -37,8 +50,7 @@
           collective.eeafaceted.z3ctable.interfaces.IFacetedTable"
      factory=".columns.ItemGroupsInChargeAcronymColumn"
      provides="collective.eeafaceted.z3ctable.interfaces.IFacetedColumn"
-     name="groups_in_charge_acronym"
-  />
+     name="groups_in_charge_acronym" />
 
   <adapter
      for="zope.interface.Interface
@@ -46,8 +58,7 @@
           collective.eeafaceted.z3ctable.interfaces.IFacetedTable"
      factory=".columns.ItemCategoryColumn"
      provides="collective.eeafaceted.z3ctable.interfaces.IFacetedColumn"
-     name="getCategory"
-  />
+     name="getCategory" />
 
   <adapter
      for="zope.interface.Interface
@@ -55,8 +66,7 @@
           collective.eeafaceted.z3ctable.interfaces.IFacetedTable"
      factory=".columns.ItemClassifierColumn"
      provides="collective.eeafaceted.z3ctable.interfaces.IFacetedColumn"
-     name="getRawClassifier"
-  />
+     name="getRawClassifier" />
 
   <adapter
      for="zope.interface.Interface
@@ -64,8 +74,7 @@
           collective.eeafaceted.z3ctable.interfaces.IFacetedTable"
      factory=".columns.ItemLinkedMeetingColumn"
      provides="collective.eeafaceted.z3ctable.interfaces.IFacetedColumn"
-     name="linkedMeetingDate"
-  />
+     name="linkedMeetingDate" />
 
   <adapter
      for="zope.interface.Interface
@@ -73,8 +82,7 @@
           collective.eeafaceted.z3ctable.interfaces.IFacetedTable"
      factory=".columns.ItemPreferredMeetingColumn"
      provides="collective.eeafaceted.z3ctable.interfaces.IFacetedColumn"
-     name="getPreferredMeetingDate"
-  />
+     name="getPreferredMeetingDate" />
 
   <adapter
      for="zope.interface.Interface
@@ -82,8 +90,7 @@
           collective.eeafaceted.z3ctable.interfaces.IFacetedTable"
      factory=".columns.ItemAdvicesColumn"
      provides="collective.eeafaceted.z3ctable.interfaces.IFacetedColumn"
-     name="advices"
-  />
+     name="advices" />
 
   <adapter
      for="zope.interface.Interface
@@ -91,8 +98,7 @@
           collective.eeafaceted.z3ctable.interfaces.IFacetedTable"
      factory=".columns.ItemToDiscussColumn"
      provides="collective.eeafaceted.z3ctable.interfaces.IFacetedColumn"
-     name="toDiscuss"
-  />
+     name="toDiscuss" />
 
   <adapter
      for="zope.interface.Interface
@@ -100,8 +106,7 @@
           collective.eeafaceted.z3ctable.interfaces.IFacetedTable"
      factory=".columns.ItemIsSignedColumn"
      provides="collective.eeafaceted.z3ctable.interfaces.IFacetedColumn"
-     name="getItemIsSigned"
-  />
+     name="getItemIsSigned" />
 
   <adapter
      for="zope.interface.Interface
@@ -109,8 +114,7 @@
           collective.eeafaceted.z3ctable.interfaces.IFacetedTable"
      factory=".columns.ItemPrivacyColumn"
      provides="collective.eeafaceted.z3ctable.interfaces.IFacetedColumn"
-     name="privacy"
-  />
+     name="privacy" />
 
   <adapter
      for="zope.interface.Interface
@@ -118,8 +122,7 @@
           collective.eeafaceted.z3ctable.interfaces.IFacetedTable"
      factory=".columns.ItemPollTypeColumn"
      provides="collective.eeafaceted.z3ctable.interfaces.IFacetedColumn"
-     name="pollType"
-  />
+     name="pollType" />
 
   <adapter
      for="zope.interface.Interface
@@ -127,8 +130,7 @@
           collective.eeafaceted.z3ctable.interfaces.IFacetedTable"
      factory=".columns.ItemNumberColumn"
      provides="collective.eeafaceted.z3ctable.interfaces.IFacetedColumn"
-     name="getItemNumber"
-  />
+     name="getItemNumber" />
 
   <adapter
      for="zope.interface.Interface
@@ -136,8 +138,7 @@
           collective.eeafaceted.z3ctable.interfaces.IFacetedTable"
      factory=".columns.ItemListTypeColumn"
      provides="collective.eeafaceted.z3ctable.interfaces.IFacetedColumn"
-     name="listType"
-  />
+     name="listType" />
 
   <!-- Action column for the annexes table -->
   <adapter
@@ -146,8 +147,7 @@
          zope.interface.Interface
          collective.iconifiedcategory.interfaces.ICategorizedTable"
     provides="z3c.table.interfaces.IColumn"
-    factory=".columns.PMAnnexActionsColumn"
-    />
+    factory=".columns.PMAnnexActionsColumn" />
 
   <adapter
      for="zope.interface.Interface
@@ -155,8 +155,7 @@
           collective.eeafaceted.z3ctable.interfaces.IFacetedTable"
      factory=".columns.ReviewStateTitle"
      provides="collective.eeafaceted.z3ctable.interfaces.IFacetedColumn"
-     name="review_state_title"
-  />
+     name="review_state_title" />
 
   <!-- Override title column of organization suborganizations table -->
   <adapter
