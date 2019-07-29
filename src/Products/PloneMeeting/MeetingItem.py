@@ -1577,14 +1577,18 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('validate_category')
 
     def validate_category(self, value):
-        '''Checks that, if we do not use groups as categories, a category is
-           specified.'''
+        '''Checks that, if we use categories, a category is specified.
+           The category will not be validated when editing an item template.'''
+
+        # bypass for itemtemplates
+        if self.isDefinedInTool(item_type='itemtemplate'):
+            return
+
         tool = api.portal.get_tool('portal_plonemeeting')
-        meetingConfig = tool.getMeetingConfig(self)
+        cfg = tool.getMeetingConfig(self)
         # Value could be '_none_' if it was displayed as listbox or None if
         # it was displayed as radio buttons...  Category use 'flex' format
-        if (not self.isDefinedInTool()) and \
-           (not meetingConfig.getUseGroupsAsCategories()) and \
+        if (not cfg.getUseGroupsAsCategories()) and \
            (value == '_none_' or not value):
             return translate('category_required', domain='PloneMeeting', context=self.REQUEST)
 

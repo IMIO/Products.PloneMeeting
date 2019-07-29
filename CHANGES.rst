@@ -18,6 +18,9 @@ Changelog
 - Fix migration _adaptForPlonegroup, call _hook_after_mgroups_to_orgs before tool.updateAllLocalRoles as there could be changes
   done in the hook necessary for local roles update
 - While importing contacts thru the CSV files, support attribute "Acronym" in organizations.csv
+- When using categories, validate category of a recurring item so it can not be created in the configuration without a selected category or
+  it fails to be inserted when creating a new meeting.  Added warning on the MeetingConfig.useGroupsAsCategories to explain that when enabling
+  categories, some checks have to be done in the application
 
 4.1rc7 (2019-07-19)
 -------------------

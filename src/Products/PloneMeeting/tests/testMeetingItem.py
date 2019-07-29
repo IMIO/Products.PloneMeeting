@@ -3315,9 +3315,12 @@ class testMeetingItem(PloneMeetingTestCase):
 
     def test_pm_Validate_category(self):
         '''MeetingItem.category is mandatory if categories are used.'''
+        cfg = self.meetingConfig
+        cfg.setUseGroupsAsCategories(False)
+        cfg2 = self.meetingConfig2
+        cfg2.setUseGroupsAsCategories(False)
         # make sure we use categories
-        self.setMeetingConfig(self.meetingConfig2.getId())
-        self.assertTrue(not self.meetingConfig2.getUseGroupsAsCategories())
+        self.setMeetingConfig(cfg2.getId())
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
         # categories are used
@@ -3325,14 +3328,17 @@ class testMeetingItem(PloneMeetingTestCase):
         cat_required_msg = translate('category_required',
                                      domain='PloneMeeting',
                                      context=self.portal.REQUEST)
-        self.assertTrue(item.validate_category('') == cat_required_msg)
+        self.assertEqual(item.validate_category(''), cat_required_msg)
         # if a category is given, it does validate
-        aCategoryId = self.meetingConfig2.getCategories()[0].getId()
+        aCategoryId = cfg2.getCategories()[0].getId()
         self.failIf(item.validate_category(aCategoryId))
 
-        # if item isDefinedInTool, the category is not required
-        itemInTool = self.meetingConfig2.getItemTemplates(as_brains=False)[0]
-        self.failIf(itemInTool.validate_category(''))
+        # if item is an item template, the category is not required
+        itemTemplate = cfg2.getItemTemplates(as_brains=False)[0]
+        self.failIf(itemTemplate.validate_category(''))
+        # but it is validated for recurring items
+        recurringItem = cfg.recurringitems.objectValues()[0]
+        self.assertEqual(recurringItem.validate_category(''), cat_required_msg)
 
     def test_pm_Validate_proposingGroup(self):
         '''MeetingItem.proposingGroup is mandatory excepted for item templates.'''
