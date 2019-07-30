@@ -2965,29 +2965,28 @@ class testMeetingItem(PloneMeetingTestCase):
                           'Vendors (Observers) [auto]',
                           'Vendors (Reviewers)'])
 
-    def test_pm_ListAssociatedGroups(self):
+    def test_pm_AssociatedGroupsVocabulary(self):
         '''
-          This is the vocabulary for the field "associatedGroups".
           Check that we still have the stored value in the vocabulary, aka if the stored value
           is no more in the vocabulary, it is still in it tough ;-)
         '''
         self.changeUser('pmManager')
         # create an item to test the vocabulary
         item = self.create('MeetingItem')
-        self.assertEquals(item.listAssociatedGroups().keys(), [self.developers_uid, self.vendors_uid])
+        self.assertEquals(item.Vocabulary('associatedGroups')[0].keys(), [self.developers_uid, self.vendors_uid])
         # now select the 'developers' as associatedGroup for the item
         item.setAssociatedGroups((self.developers_uid, ))
         # still the complete vocabulary
-        self.assertEquals(item.listAssociatedGroups().keys(), [self.developers_uid, self.vendors_uid])
+        self.assertEquals(item.Vocabulary('associatedGroups')[0].keys(), [self.developers_uid, self.vendors_uid])
         # disable developers organization
         self.changeUser('admin')
         self._select_organization(self.developers_uid, remove=True)
         self.changeUser('pmManager')
         # still in the vocabulary because selected on the item
-        self.assertEquals(item.listAssociatedGroups().keys(), [self.developers_uid, self.vendors_uid])
+        self.assertEquals(item.Vocabulary('associatedGroups')[0].keys(), [self.developers_uid, self.vendors_uid])
         # unselect 'developers' on the item, it will not appear anymore in the vocabulary
         item.setAssociatedGroups(())
-        self.assertEquals(item.listAssociatedGroups().keys(), [self.vendors_uid, ])
+        self.assertEquals(item.Vocabulary('associatedGroups')[0].keys(), [self.vendors_uid, ])
 
     def test_pm_ListCategoriesContainsDisabledStoredValue(self):
         '''

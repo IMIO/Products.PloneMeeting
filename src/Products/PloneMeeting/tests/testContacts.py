@@ -800,7 +800,7 @@ class testContacts(PloneMeetingTestCase):
         self.changeUser('pmManager')
         # create an item so we can test vocabularies
         item = self.create('MeetingItem')
-        self.assertTrue(self.developers_uid in item.listAssociatedGroups())
+        self.assertTrue(self.developers_uid in item.Vocabulary('associatedGroups')[0])
         self.assertTrue(self.developers_uid in item.listProposingGroups())
         self.assertTrue(self.developers_reviewers in item.listCopyGroups())
         self.assertTrue(self.developers_uid in item.listOptionalAdvisers())
@@ -809,7 +809,7 @@ class testContacts(PloneMeetingTestCase):
         self.changeUser('admin')
         self._select_organization(self.developers_uid, remove=True)
         self.changeUser('pmManager')
-        self.assertFalse(self.developers_uid in item.listAssociatedGroups())
+        self.assertFalse(self.developers_uid in item.Vocabulary('associatedGroups')[0])
         # remove proposingGroup or it will appear in the vocabulary as 'developers' is currently used...
         item.setProposingGroup('')
         self.assertFalse(self.developers_uid in item.listProposingGroups())

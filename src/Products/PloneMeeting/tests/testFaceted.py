@@ -273,10 +273,7 @@ class testFaceted(PloneMeetingTestCase):
         self.assertNotEqual(terms_cfg1, terms_cfg2)
 
     def test_pm_ProposingGroupsVocabularies(self):
-        '''Test the "Products.PloneMeeting.vocabularies.proposinggroupsvocabulary",
-           "Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary" and
-           "Products.PloneMeeting.vocabularies.proposinggroupsforfacetedfiltervocabulary"
-           vocabularies, especially because it is cached.'''
+        '''Test proposingGroup related cached vocabularies.'''
         self.changeUser('siteadmin')
         pmFolder = self.getMeetingFolder()
         vocab1 = queryUtility(
@@ -284,7 +281,7 @@ class testFaceted(PloneMeetingTestCase):
             "Products.PloneMeeting.vocabularies.proposinggroupsvocabulary")
         vocab2 = queryUtility(
             IVocabularyFactory,
-            "Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary")
+            "Products.PloneMeeting.vocabularies.everyorganizationsacronymsvocabulary")
         vocab3 = queryUtility(
             IVocabularyFactory,
             "Products.PloneMeeting.vocabularies.proposinggroupsforfacetedfiltervocabulary")
