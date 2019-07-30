@@ -822,6 +822,7 @@ table.listing th.th_header_toDiscuss,
 table.listing th.th_header_getItemIsSigned,
 table.listing th.th_header_proposing_group_acronym,
 table.listing th.th_header_groups_in_charge_acronym,
+table.listing th.th_header_associated_groups_acronym,
 .pm_meeting_listing_th_checkBoxes {
     width: 1%;
 }
@@ -1740,9 +1741,11 @@ div#formfield-form-widgets-certified_signatures td select.select-widget {
    width: 100%;   
 }
 
-a.portlet_pm_dashboard_link {
+a.portlet_pm_dashboard_link:first-of-type {
    margin-top: 1em;
-   font-weight: bold;
+}
+a.portlet_pm_dashboard_link {
+   line-height: 2em;
 }
 
 /* add some margin under fieldsets displayed in base_edit forms */
