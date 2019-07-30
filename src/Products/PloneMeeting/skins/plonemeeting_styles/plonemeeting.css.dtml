@@ -1773,6 +1773,11 @@ div#held_position_back_refs {
    padding-bottom: 0.5em;
 }
 
+/* hide link 'Add contact' on organization view */
+#content a.addnewcontactfromorganization.link-overlay {
+   display: none !important;
+}
+
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */
