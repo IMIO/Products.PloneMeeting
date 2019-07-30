@@ -25,6 +25,7 @@ Changelog
 - Added faceted filter "Associated groups" selectable on item related dashboards
 - Moved u'Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary' vocabulary to u'Products.PloneMeeting.vocabularies.everyorganizationsacronymsvocabulary'
   so it is easier to reuse in other context without naming problem
+- Do not display DashboardPODTemplates on meeting faceted (available/presented items)
 
 4.1rc7 (2019-07-19)
 -------------------

@@ -343,6 +343,15 @@ class PMDashboardDocumentGeneratorLinksViewlet(DashboardDocumentGeneratorLinksVi
 
     render = ViewPageTemplateFile('templates/generationlinks.pt')
 
+    def available(self):
+        """
+            Do not display it on Meeting faceted (available/presented items)
+        """
+        res = False
+        if not IMeeting.providedBy(self.context):
+            res = super(PMDashboardDocumentGeneratorLinksViewlet, self).available()
+        return res
+
     def get_all_pod_templates(self):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
