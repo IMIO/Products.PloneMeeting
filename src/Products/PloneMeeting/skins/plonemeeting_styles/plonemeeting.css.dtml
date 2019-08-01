@@ -1350,6 +1350,12 @@ body.template-versions_history_form[class*="portaltype-meetingadvice"] #content-
     margin-top: 1em;
 }
 
+/* display table with align="center"... centered... */
+table[align="center"] {
+   margin-left: auto;
+   margin-right: auto;
+}
+
 /* hide the customViewFields on the DashboardCollection
    added to a MeetingConfig as it is managed by the MeetingConfig */
 body.portaltype-dashboardcollection.section-portal_plonemeeting div#formfield-form-widgets-ICollection-customViewFields {
