@@ -152,7 +152,6 @@ def addState(wf_id,
     new_state_id, new_state_title = new_state_id.split('|')[0], safe_unicode(new_state_id.split('|')[-1])
     wf.states.addState(new_state_id)
     new_state = wf.states[new_state_id]
-    import ipdb; ipdb.set_trace()
     new_state.setProperties(title=new_state_title, description='')
     # clone permissions
     clone_permissions(wf_id, permissions_cloned_state_id, new_state_id)
@@ -203,15 +202,24 @@ def addState(wf_id,
             props={'guard_expr': 'python:here.wfConditions().{0}()'.format(guard_name)})
 
     # CONNECT STATES AND TRANSITIONS
-    # new_state_id
     new_state.transitions = tuple([transition_id for transition_id in
                                   [leaving_transition_id] + existing_leaving_transition_ids
                                   if transition_id])
 
     # UPDATE connection between old origin state and new state
+    # update also back transition between leaving_to_state_id
     if old_origin_state_id:
         old_origin_state = wf.states[old_origin_state_id]
         old_origin_state.transitions = [leading_transition_id]
+        # remove transition to old_origin_state
+        # and add this transition on the new created state
+        leaving_to_state = wf.states[leaving_to_state_id]
+        for transition_id in leaving_to_state.transitions:
+            transition = wf.transitions[transition_id]
+            if transition.new_state_id == old_origin_state_id:
+                leaving_to_state_transition_ids = list(leaving_to_state.transitions)
+                leaving_to_state_transition_ids.remove(transition_id)
+                leaving_to_state.transitions = tuple(leaving_to_state_transition_ids)
 
     # existing_back_transitions
     for existing_back_transition_id in existing_back_transition_ids:
@@ -832,31 +840,35 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
             levels = []
             previous = None
             first = True
-            for level in meetingConfig.getItemWFValidationLevels():
+            item_validation_levels = list(meetingConfig.getItemWFValidationLevels())
+            # build thing reversed as workflows work with leading transitions
+            # so we need to create transitions leading to a new state
+            item_validation_levels.reverse()
+            for level in item_validation_levels:
                 if level['enabled'] == '1':
                     data = {}
                     data['new_state_id'] = level['state']
                     data['permissions_cloned_state_id'] = 'itemcreated'
                     data['leading_transition_id'] = level['leading_transition']
                     data['back_transition'] = level['back_transition']
+                    # every state are inserted between "itemcreated" and previous one (if several) or "validated"
+                    data['existing_leaving_transition_ids'] = ['backToItemCreated']
+                    data['old_origin_state_id'] = 'itemcreated'
                     if first:
                         first = False
-                        data['existing_back_transition_ids'] = ['backToItemCreated']
-                        data['old_origin_state_id'] = 'itemcreated'
+                        data['back_transitions'] = {data['back_transition']: 'validated'}
+                        data['existing_leaving_transition_ids'].append('validate')
+                        data['leaving_to_state_id'] = 'validated'
                     if previous:
-                        previous['back_transitions'] = {previous.pop('back_transition'): data['new_state_id'].split('|')[0]}
-                        previous['existing_leaving_transition_ids'] = [data['leading_transition_id'].split('|')[0]]
-                        previous['leaving_to_state_id'] = data['new_state_id'].split('|')[0]
+                        data['back_transitions'] = {data['back_transition']: previous['new_state_id'].split('|')[0]}
+                        data['existing_leaving_transition_ids'].append(previous['leading_transition_id'].split('|')[0])
+                        data['leaving_to_state_id'] = previous['new_state_id'].split('|')[0]
                     previous = data
                     levels.append(data)
-            # update last validation level to lead to "validated"
-            data['back_transitions'] = {data['back_transition']: 'validated'}
-            data['existing_leaving_transition_ids'] = ['validate']
-            data['leaving_to_state_id'] = 'validated'
             # remove unneeded 'back_transition' key, not used by addState
-            data.pop('back_transition')
-            levels.reverse()
+            import ipdb; ipdb.set_trace()
             for level in levels:
+                level.pop('back_transition')
                 addState(itemWorkflow.id, **level)
 
         # "reviewers_take_back_validated_item" give the ability to reviewers to
