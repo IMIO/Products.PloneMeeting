@@ -26,6 +26,7 @@ Changelog
 - Moved u'Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary' vocabulary to u'Products.PloneMeeting.vocabularies.everyorganizationsacronymsvocabulary'
   so it is easier to reuse in other context without naming problem
 - Do not display DashboardPODTemplates on meeting faceted (available/presented items)
+- Display <table> with align="center" centered in the browser
 
 4.1rc7 (2019-07-19)
 -------------------
