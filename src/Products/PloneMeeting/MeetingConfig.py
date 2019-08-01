@@ -345,7 +345,7 @@ schema = Schema((
             columns={'signatureNumber':
                         SelectColumn(
                             _("Certified signatures signature number"),
-                            vocabulary="listSignatureNumbers",
+                            vocabulary="listNumbers",
                             col_description=_("Select the signature number, keep signatures ordered by number."), ),
                      'name':
                         Column(_("Certified signatures signatory name"),
@@ -1173,6 +1173,47 @@ schema = Schema((
         default=defValues.workflowAdaptations,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
+    ),
+    DataGridField(
+        name='itemWFValidationLevels',
+        widget=DataGridField._properties['widget'](
+            description="ItemWFValidationLevels",
+            description_msgid="item_wf_validation_levels_descr",
+            columns={'number':
+                        SelectColumn("Item WF validation levels number",
+                                     vocabulary="listValidationLevelsNumbers",
+                                     col_description="Item WF validation levels number description."),
+                     'state':
+                        Column("Item WF validation levels state",
+                               col_description="Item WF validation levels state description."),
+                     'leading_transition':
+                        Column("Item WF validation levels leading transition",
+                               col_description="Item WF validation levels leading transition description."),
+                     'back_transition':
+                        Column("Item WF validation levels back transition",
+                               col_description="Item WF validation levels back transition description."),
+                     'suffixes':
+                        MultiSelectColumn(
+                            "Item WF validation levels suffixes",
+                            vocabulary_factory=u'collective.contact.plonegroup.functions',
+                            col_description="Item WF validation levels suffixes description."),
+                     'enabled':
+                        SelectColumn("Item WF validation levels enabled",
+                                     vocabulary="listBooleanVocabulary",
+                                     col_description="Item WF validation levels enabled description.",
+                                     default='1'),
+
+                     },
+            label='Itemwfvalidationlevels',
+            label_msgid='PloneMeeting_label_itemWFValidationLevels',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="workflow",
+        default=defValues.itemWFValidationLevels,
+        allow_oddeven=True,
+        write_permission="PloneMeeting: Write risky config",
+        columns=('number', 'state', 'leading_transition', 'back_transition', 'suffixes', 'enabled'),
+        allow_empty_rows=False,
     ),
     LinesField(
         name='transitionsToConfirm',
@@ -2426,7 +2467,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                      'accepted_out_of_meeting', 'accepted_out_of_meeting_and_duplicated',
                      'accepted_out_of_meeting_emergency', 'accepted_out_of_meeting_emergency_and_duplicated',
                      'postpone_next_meeting', 'mark_not_applicable',
-                     'removed', 'removed_and_duplicated', 'refused')
+                     'removed', 'removed_and_duplicated', 'refused',
+                     'apply_item_validation_levels')
 
     def _searchesInfo(self):
         """Informations used to create DashboardCollections in the searches."""
@@ -4149,10 +4191,19 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             res.append((adaptation, title))
         return DisplayList(tuple(res))
 
-    security.declarePrivate('listSignatureNumbers')
+    security.declarePrivate('listValidationLevelsNumbers')
 
-    def listSignatureNumbers(self):
-        '''Vocabulary for column 'signatureNumber' of MeetingConfig.certifiedSignatures.'''
+    def listValidationLevelsNumbers(self):
+        '''Vocabulary for the itemWFValidationLevels.listValidationLevelsNumbers column.'''
+        # insert a "custom" option at the end of numbers 1 to 10
+        res = self.listNumbers()
+        res.add('custom', _('Custom validation level'))
+        return res
+
+    security.declarePrivate('listNumbers')
+
+    def listNumbers(self):
+        '''Vocabulary that returns a list of number from 1 to 10.'''
         res = []
         for number in range(1, 11):
             res.append((str(number), str(number)))

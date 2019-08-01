@@ -428,7 +428,8 @@ class MeetingConfigDescriptor(Descriptor):
                          'itemColumns', 'meetingColumns', 'toDoListSearches',
                          'dashboardItemsListingsFilters', 'dashboardMeetingAvailableItemsFilters',
                          'dashboardMeetingLinkedItemsFilters', 'groupsHiddenInDashboardFilter',
-                         'usersHiddenInDashboardFilter', 'workflowAdaptations', 'transitionsToConfirm',
+                         'usersHiddenInDashboardFilter', 'workflowAdaptations',
+                         'itemWFValidationLevels', 'transitionsToConfirm',
                          'transitionsForPresentingAnItem', 'onTransitionFieldTransforms',
                          'onMeetingTransitionItemTransitionToTrigger', 'meetingPresentItemWhenNoCurrentMeetingStates',
                          'itemAutoSentToOtherMCStates', 'itemManualSentToOtherMCStates', 'advicesKeptOnSentToOtherMC',
@@ -602,6 +603,7 @@ class MeetingConfigDescriptor(Descriptor):
         # Workflow adaptations are sets of changes that can be applied to
         # default PloneMeeting workflows.
         self.workflowAdaptations = []
+        self.itemWFValidationLevels = []
         # "Transitions to confirm" are Meeting or Item-related transitions for
         # which, in the user interface, a click on the corresponding icon or
         # button will show a confirmation popup. In this popup, the user will

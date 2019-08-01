@@ -14,6 +14,7 @@ from Products.CMFCore.permissions import DeleteObjects
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import ReviewPortalContent
 from Products.CMFCore.permissions import View
+from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting import logger
 from Products.PloneMeeting.config import ReadDecision
 from Products.PloneMeeting.config import WriteDecision
@@ -138,7 +139,8 @@ def addState(wf_id,
              leaving_to_state_id=None,
              existing_leaving_transition_ids=[],
              existing_back_transition_ids=[],
-             new_initial_state=False):
+             new_initial_state=False,
+             old_origin_state_id=None):
     """ """
     wfTool = api.portal.get_tool('portal_workflow')
     wf = wfTool.getWorkflowById(wf_id)
@@ -146,9 +148,12 @@ def addState(wf_id,
         return
 
     # ADD NEW STATE
+    # new_state_id may be 'validated' or 'validated|Validated', id or id|title
+    new_state_id, new_state_title = new_state_id.split('|')[0], safe_unicode(new_state_id.split('|')[-1])
     wf.states.addState(new_state_id)
     new_state = wf.states[new_state_id]
-    new_state.setProperties(title=new_state_id, description='')
+    import ipdb; ipdb.set_trace()
+    new_state.setProperties(title=new_state_title, description='')
     # clone permissions
     clone_permissions(wf_id, permissions_cloned_state_id, new_state_id)
     # initial_state
@@ -158,21 +163,25 @@ def addState(wf_id,
     # ADD NEW TRANSITIONS
     # leading_transition_id
     if leading_transition_id:
+        leading_transition_id, leading_transition_title = leading_transition_id.split('|')[0], \
+            safe_unicode(leading_transition_id.split('|')[-1])
         wf.transitions.addTransition(leading_transition_id)
         transition = wf.transitions.get(leading_transition_id)
         guard_name = 'may{0}{1}'.format(leading_transition_id[0].upper(), leading_transition_id[1:])
         transition.setProperties(
-            title=leading_transition_id,
+            title=leading_transition_title,
             new_state_id=new_state_id, trigger_type=1, script_name='',
             actbox_name=leading_transition_id, actbox_url='',
             actbox_icon='%(portal_url)s/{0}.png'.format(leading_transition_id), actbox_category='workflow',
             props={'guard_expr': 'python:here.wfConditions().{0}()'.format(guard_name)})
     # back_transition_id
     for back_transition_id, back_from_state_id in back_transitions.items():
+        back_transition_id, back_transition_title = back_transition_id.split('|')[0], \
+            safe_unicode(back_transition_id.split('|')[-1])
         wf.transitions.addTransition(back_transition_id)
         back_transition = wf.transitions.get(back_transition_id)
         back_transition.setProperties(
-            title=back_transition_id,
+            title=back_transition_title,
             new_state_id=new_state_id, trigger_type=1, script_name='',
             actbox_name=back_transition_id, actbox_url='',
             actbox_icon='%(portal_url)s/{0}.png'.format(back_transition_id), actbox_category='workflow',
@@ -198,6 +207,11 @@ def addState(wf_id,
     new_state.transitions = tuple([transition_id for transition_id in
                                   [leaving_transition_id] + existing_leaving_transition_ids
                                   if transition_id])
+
+    # UPDATE connection between old origin state and new state
+    if old_origin_state_id:
+        old_origin_state = wf.states[old_origin_state_id]
+        old_origin_state.transitions = [leading_transition_id]
 
     # existing_back_transitions
     for existing_back_transition_id in existing_back_transition_ids:
@@ -809,6 +823,42 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                 if st in wf.states:
                     wf.states.deleteStates([st])
 
+        # build item validation levels based on MeetingConfig.itemWFValidationLevels values
+        elif wfAdaptation == 'apply_item_validation_levels':
+            wf = itemWorkflow
+            # build a list of dict with relevant informations so
+            # we will be able to call addState.  Indeed we need "back transitions" ids
+            # for example and we need to get this on the next validation level
+            levels = []
+            previous = None
+            first = True
+            for level in meetingConfig.getItemWFValidationLevels():
+                if level['enabled'] == '1':
+                    data = {}
+                    data['new_state_id'] = level['state']
+                    data['permissions_cloned_state_id'] = 'itemcreated'
+                    data['leading_transition_id'] = level['leading_transition']
+                    data['back_transition'] = level['back_transition']
+                    if first:
+                        first = False
+                        data['existing_back_transition_ids'] = ['backToItemCreated']
+                        data['old_origin_state_id'] = 'itemcreated'
+                    if previous:
+                        previous['back_transitions'] = {previous.pop('back_transition'): data['new_state_id'].split('|')[0]}
+                        previous['existing_leaving_transition_ids'] = [data['leading_transition_id'].split('|')[0]]
+                        previous['leaving_to_state_id'] = data['new_state_id'].split('|')[0]
+                    previous = data
+                    levels.append(data)
+            # update last validation level to lead to "validated"
+            data['back_transitions'] = {data['back_transition']: 'validated'}
+            data['existing_leaving_transition_ids'] = ['validate']
+            data['leaving_to_state_id'] = 'validated'
+            # remove unneeded 'back_transition' key, not used by addState
+            data.pop('back_transition')
+            levels.reverse()
+            for level in levels:
+                addState(itemWorkflow.id, **level)
+
         # "reviewers_take_back_validated_item" give the ability to reviewers to
         # take back an item that is validated.  To do so, this wfAdaptation will
         # extend roles having the 'Review portal content' permission in state 'validated'
@@ -1146,6 +1196,7 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                 presented = wf.states.presented
                 if 'backToProposed' not in presented.transitions:
                     presented.transitions = presented.transitions + ('backToProposed', )
+
         logger.info(WF_APPLIED % (wfAdaptation, meetingConfig.getId()))
 
 
