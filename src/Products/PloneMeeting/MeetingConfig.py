@@ -12,7 +12,6 @@
 from AccessControl import ClassSecurityInfo
 from AccessControl import Unauthorized
 from collections import OrderedDict
-from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_organization
 from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_plone_groups
@@ -76,7 +75,6 @@ from Products.PloneMeeting.config import ITEM_INSERT_METHODS
 from Products.PloneMeeting.config import ITEMTEMPLATESMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import MEETING_CONFIG
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
-from Products.PloneMeeting.config import MEETINGROLES
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
 from Products.PloneMeeting.config import PROJECTNAME
 from Products.PloneMeeting.config import READER_USECASES
@@ -109,6 +107,7 @@ from Products.PloneMeeting.utils import createOrUpdatePloneGroup
 from Products.PloneMeeting.utils import duplicate_workflow
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
 from Products.PloneMeeting.utils import get_annexes
+from Products.PloneMeeting.utils import get_item_validation_wf_suffixes
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getCustomSchemaFields
 from Products.PloneMeeting.utils import getFieldContent
@@ -4588,11 +4587,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     confidential_profiles.append('{0}{1}'.format(CONFIGGROUPPREFIX, po_infos['row_id']))
             else:
                 confidential_profiles.append('{0}{1}'.format(READERPREFIX, suffix))
-        for suffix in get_all_suffixes():
-            # bypass suffixes that do not give a role, like it is the case for groupSuffix 'advisers'
-            # ignore also extra suffixes that are not giving an extra role
-            if not MEETINGROLES.get(suffix):
-                continue
+        for suffix in get_item_validation_wf_suffixes(self):
             confidential_profiles.append('{0}{1}'.format(PROPOSINGGROUPPREFIX, suffix))
 
         res = []
@@ -4649,10 +4644,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     confidential_profiles.append('{0}{1}'.format(CONFIGGROUPPREFIX, po_infos['row_id']))
             else:
                 confidential_profiles.append('{0}{1}'.format(READERPREFIX, suffix))
-        for suffix in get_all_suffixes():
-            # bypass suffixes that do not give a role, like it is the case for groupSuffix 'advisers'
-            if not MEETINGROLES.get(suffix):
-                continue
+        for suffix in get_item_validation_wf_suffixes(self):
             confidential_profiles.append('{0}{1}'.format(PROPOSINGGROUPPREFIX, suffix))
 
         res = []
@@ -4700,10 +4692,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''
         confidential_profiles = ['{0}{1}'.format(CONFIGGROUPPREFIX, po_infos['row_id'])
                                  for po_infos in self.getPowerObservers()]
-        for suffix in get_all_suffixes():
-            # bypass suffixes that do not give a role, like it is the case for groupSuffix 'advisers'
-            if not MEETINGROLES.get(suffix):
-                continue
+        for suffix in get_item_validation_wf_suffixes(self):
             confidential_profiles.append('{0}{1}'.format(SUFFIXPROFILEPREFIX, suffix))
 
         res = []
@@ -5545,6 +5534,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             ("itemDelayed", translate('event_item_delayed',
                                       domain=d,
                                       context=self.REQUEST)),
+            ("itemPostponedNextMeeting", translate('event_item_postponed_next_meeing',
+                                                   domain=d,
+                                                   context=self.REQUEST)),
             ("annexAdded", translate('event_add_annex',
                                      domain=d,
                                      context=self.REQUEST)),

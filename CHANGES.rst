@@ -29,6 +29,11 @@ Changelog
 - Display <table> with align="center" centered in the browser
 - Use separated vocabularies for faceted and item to manage MeetingItem.associatedGroups and MeetingItem.groupsInCharge : the faceted vocabulary is cached and the item
   related vocabulary is calling the cached vocabulary and managing missing terms
+- Item validation workflow is now designed in the MeetingConfig.itemWFValidationLevels, tThis imply :
+    - to no longer rely on MEETINGROLES and MEETINGREVIEWERS constants;
+    - reviewer levels and mapping between review_state and organization suffix that manage the item is computed from the MeetingConfig;
+    - item validation specific roles (MeetingMember, MeetingReviewer, MeetingPreReviewer are removed from item workflows, local roles are dynamically given and
+      we only use common roles (Reader, Editor, Reviewer and Contributor)  
 
 4.1rc7 (2019-07-19)
 -------------------

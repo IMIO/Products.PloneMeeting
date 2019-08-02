@@ -24,7 +24,9 @@ from AccessControl.Permission import Permission
 from appy.shared.diff import HtmlDiff
 from bs4 import BeautifulSoup
 from collective.behavior.talcondition.utils import _evaluateExpression
+from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_own_organization
+from collective.contact.plonegroup.utils import get_plone_group
 from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.excelexport.exportables.dexterityfields import get_exportable_for_fieldname
 from collective.iconifiedcategory.interfaces import IIconifiedInfos
@@ -92,6 +94,7 @@ from zope.i18n import translate
 from zope.interface import implements
 from zope.security.interfaces import IPermission
 
+import itertools
 import logging
 import os
 import os.path
@@ -517,14 +520,14 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
         logger.warn(str(ee))
 
 
-def sendMailIfRelevant(obj, event, permissionOrRole, isRole=False,
+def sendMailIfRelevant(obj, event, permissionOrSuffix, isSuffix=False,
                        customEvent=False, mapping={}):
     '''An p_event just occurred on meeting or item p_obj. If the corresponding
        meeting config specifies that a mail needs to be sent, this function
        will send a mail. The mail subject and body are defined from i18n labels
-       that derive from the event name. if p_isRole is True, p_permissionOrRole
-       is a role, and the mail will be sent to every user having this role. If
-       p_isRole is False, p_permissionOrRole is a permission and the mail will
+       that derive from the event name. if p_isSuffix is True, p_permissionOrSuffix
+       is a suffix, and the mail will be sent to every members of this sufixed group (relevant for item).
+       If p_isSuffix is False, p_permissionOrSuffix is a permission and the mail will
        be sent to everyone having this permission.  Some mapping can be received
        and used afterward in mail subject and mail body translations.
 
@@ -548,8 +551,15 @@ def sendMailIfRelevant(obj, event, permissionOrRole, isRole=False,
     # Ok, send a mail. Who are the recipients ?
     recipients = []
     adap = obj.adapted()
-    if isRole and (permissionOrRole == 'Owner'):
-        userIds = [obj.Creator()]
+    userIds = []
+    if isSuffix:
+        org = obj.adapted()._getGroupManagingItem(obj.queryState())
+        plone_group = get_plone_group(org.UID(), permissionOrSuffix)
+        if not plone_group:
+            # maybe the suffix is a MeetingConfig related suffix, like _meetingmanagers
+            plone_group = get_plone_group(cfg.getId(), permissionOrSuffix)
+        if plone_group:
+            userIds = plone_group.getGroupMemberIds()
     else:
         userIds = membershipTool.listMemberIds()
         # When using the LDAP plugin, this method does not return all
@@ -562,11 +572,8 @@ def sendMailIfRelevant(obj, event, permissionOrRole, isRole=False,
         if not user.getProperty('email'):
             continue
         # Does the user have the corresponding permission on p_obj ?
-        if isRole:
-            if not user.has_role(permissionOrRole, obj):
-                continue
-        else:
-            if not api.user.has_permission(permission=permissionOrRole, obj=obj, user=user):
+        if not isSuffix:
+            if not api.user.has_permission(permission=permissionOrSuffix, obj=obj, user=user):
                 continue
 
         recipient = tool.getMailRecipient(user)
@@ -1624,6 +1631,64 @@ def duplicate_portal_type(portalTypeName, duplicatedPortalTypeId):
     duplicatedPortalType.add_view_expr = duplicatedPortalType.add_view_expr.replace(
         portalTypeName, duplicatedPortalTypeId)
     return duplicatedPortalType
+
+
+def get_item_validation_wf_suffixes(cfg, org=None):
+    """Returns suffixes related to MeetingItem validation WF,
+       so the 'creators', 'observers' and suffixes managed by
+       MeetingConfig.itemWFValidationLevels.
+       If p_org is given, we only return available suffixes."""
+    base_suffixes = [u'creators', u'observers']
+    item_val_levels = cfg.getItemWFValidationLevels()
+    # level['suffixes'] is a list of suffixes
+    config_suffixes = [level['suffixes'] for level in item_val_levels]
+    config_suffixes = list(itertools.chain.from_iterable(config_suffixes))
+    suffixes = base_suffixes + config_suffixes
+    if org:
+        # only return suffixes that are available for p_org
+        available_suffixes = set(get_all_suffixes(org.UID()))
+        suffixes = list(available_suffixes.intersection(set(suffixes)))
+    return suffixes
+
+
+def compute_item_roles_to_assign_to_suffixes(cfg, item_state, org=None):
+    """ """
+    item_val_levels = cfg.getItemWFValidationLevels()
+    item_val_levels_states = [level['state'] for level in item_val_levels]
+    # by default, observers may View in every states
+    suffix_roles = {'observers': ['Reader']}
+
+    # itemcreated, first state, '_creators' are Editors
+    if item_state in ['itemcreated', 'returned_to_proposing_group']:
+        suffix_roles['creators'] = ['Editor', 'Reader', 'Reviewer']
+
+    # MeetingConfig.itemWFValidationLevels
+    elif item_state in item_val_levels_states:
+        # find Editor suffixes
+        # walk every defined validation levels so we give 'Reader'
+        # to levels already behind us
+        for level in item_val_levels:
+            suffixes = level['suffixes']
+            for suffix in suffixes:
+                if suffix not in suffix_roles:
+                    suffix_roles[suffix] = []
+                given_roles = ['Reader']
+                # we are on the current state
+                if level['state'] == item_state:
+                    given_roles.append('Editor')
+                    given_roles.append('Reviewer')
+                for role in given_roles:
+                    if role not in suffix_roles[suffix]:
+                        suffix_roles[suffix].append(role)
+            if level['state'] == item_state:
+                break
+
+    # states out of item validation (validated and following states)
+    else:
+        # every item validation suffixes get View access
+        for suffix in get_item_validation_wf_suffixes(cfg, org):
+            suffix_roles[suffix] = ['Reader']
+    return suffix_roles
 
 
 def org_id_to_uid(org_info, raise_on_error=True):

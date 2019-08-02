@@ -645,7 +645,7 @@ def onAdviceAdded(advice, event):
     item.reindexObject()
 
     # Send mail if relevant
-    item.sendMailIfRelevant('adviceEdited', 'MeetingMember', isRole=True)
+    item.sendMailIfRelevant('adviceEdited', 'creators', isSuffix=True)
 
 
 def onAdviceModified(advice, event):
@@ -725,7 +725,7 @@ def onAnnexAdded(annex, event):
                 parent.updateLocalRoles(invalidate=True)
 
             # Potentially I must notify MeetingManagers through email.
-            parent.sendMailIfRelevant('annexAdded', 'MeetingManager', isRole=True)
+            parent.sendMailIfRelevant('annexAdded', 'meetingmanagers', isSuffix=True)
 
         # update modificationDate, it is used for caching and co
         parent.notifyModified()

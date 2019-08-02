@@ -20,7 +20,6 @@
    <permission-role>Manager</permission-role>
    <permission-role>MeetingManager</permission-role>
    <permission-role>MeetingObserverGlobal</permission-role>
-   <permission-role>MeetingArchiveObserver</permission-role>
    <permission-role>Reader</permission-role>
   </permission-map>
   <permission-map name="Delete objects"
@@ -44,7 +43,6 @@
    <permission-role>Manager</permission-role>
    <permission-role>MeetingManager</permission-role>
    <permission-role>MeetingObserverGlobal</permission-role>
-   <permission-role>MeetingArchiveObserver</permission-role>
    <permission-role>Reader</permission-role>
   </permission-map>
  </state>
@@ -94,7 +92,6 @@
                   acquired="False">
    <permission-role>Manager</permission-role>
    <permission-role>MeetingManager</permission-role>
-   <permission-role>MeetingObserverUnpublished</permission-role>
    <permission-role>Reader</permission-role>
   </permission-map>
   <permission-map name="Delete objects"
@@ -121,7 +118,6 @@
                   acquired="False">
    <permission-role>Manager</permission-role>
    <permission-role>MeetingManager</permission-role>
-   <permission-role>MeetingObserverUnpublished</permission-role>
    <permission-role>Reader</permission-role>
   </permission-map>
  </state>

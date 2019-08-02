@@ -40,7 +40,6 @@ from Products.PloneMeeting.config import DUPLICATE_AND_KEEP_LINK_EVENT_ACTION
 from Products.PloneMeeting.config import DUPLICATE_EVENT_ACTION
 from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
-from Products.PloneMeeting.config import MEETINGROLES
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import READER_USECASES
 from Products.PloneMeeting.interfaces import IMeeting
@@ -48,6 +47,7 @@ from Products.PloneMeeting.MeetingConfig import CONFIGGROUPPREFIX
 from Products.PloneMeeting.MeetingConfig import PROPOSINGGROUPPREFIX
 from Products.PloneMeeting.MeetingConfig import READERPREFIX
 from Products.PloneMeeting.MeetingConfig import SUFFIXPROFILEPREFIX
+from Products.PloneMeeting.utils import compute_item_roles_to_assign_to_suffixes
 from Products.PloneMeeting.utils import displaying_available_items
 from Products.PloneMeeting.utils import findNewValue
 from Products.PloneMeeting.utils import getCurrentMeetingObject
@@ -1099,12 +1099,19 @@ class BaseItemsToCorrectAdapter(CompoundCriterionBaseAdapter):
         reviewProcessInfos = []
         for review_state in review_states:
             if review_state in itemWF.states:
-                roles = itemWF.states[review_state].permission_roles[ModifyPortalContent]
-                suffixes = [suffix for suffix, role in MEETINGROLES.items() if role in roles]
+                # roles that may edit
+                edit_roles = itemWF.states[review_state].permission_roles[ModifyPortalContent]
+                # suffixes information for review_state
+                roles_of_suffixes = compute_item_roles_to_assign_to_suffixes(self.cfg, review_state)
+                # keep suffixes having relevant roles
+                suffixes = []
+                for suffix, roles in roles_of_suffixes.items():
+                    if set(edit_roles).intersection(set(roles)):
+                        suffixes.append(suffix)
+                # we have suffixes to keep, now find suffixed orgs for current user
                 userOrgIds = [org.UID() for org in self.tool.get_orgs_for_user(suffixes=suffixes)]
-                if userOrgIds:
-                    for userOrgId in userOrgIds:
-                        reviewProcessInfos.append('%s__reviewprocess__%s' % (userOrgId, review_state))
+                for userOrgId in userOrgIds:
+                    reviewProcessInfos.append('%s__reviewprocess__%s' % (userOrgId, review_state))
         if not reviewProcessInfos:
             return _find_nothing_query(self.cfg.getItemTypeName())
         # Create query parameters

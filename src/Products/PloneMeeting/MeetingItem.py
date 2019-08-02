@@ -30,7 +30,6 @@ from copy import deepcopy
 from DateTime import DateTime
 from datetime import datetime
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
-from imio.helpers.content import uuidsToObjects
 from imio.history.utils import getLastWFAction
 from imio.prettylink.interfaces import IPrettyLink
 from natsort import realsorted
@@ -83,6 +82,7 @@ from Products.PloneMeeting.config import ITEM_COMPLETENESS_ASKERS
 from Products.PloneMeeting.config import ITEM_COMPLETENESS_EVALUATORS
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import ITEM_STATES_NOT_LINKED_TO_MEETING
+from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
 from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
@@ -100,6 +100,7 @@ from Products.PloneMeeting.utils import _storedItemNumber_to_itemNumber
 from Products.PloneMeeting.utils import addDataChange
 from Products.PloneMeeting.utils import AdvicesUpdatedEvent
 from Products.PloneMeeting.utils import cleanMemoize
+from Products.PloneMeeting.utils import compute_item_roles_to_assign_to_suffixes
 from Products.PloneMeeting.utils import fieldIsEmpty
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
 from Products.PloneMeeting.utils import getCurrentMeetingObject
@@ -212,7 +213,7 @@ class MeetingItemWorkflowConditions(object):
         if not self.context.getCategory(theObject=True):
             return No(_('required_category_ko'))
         # only MeetingManagers may present an item, the 'Review portal content'
-        # permission is not enough as MeetingReviewer may have the 'Review portal content'
+        # permission is not enough as an item reviewer may have the 'Review portal content'
         # when using the 'reviewers_take_back_validated_item' wfAdaptation
         tool = api.portal.get_tool('portal_plonemeeting')
         if not _checkPermission(ReviewPortalContent, self.context) or \
@@ -495,7 +496,7 @@ class MeetingItemWorkflowActions(object):
                 meeting = brains[0].getObject()
                 if self.context.wfConditions().isLateFor(meeting):
                     sendMailIfRelevant(self.context, 'lateItem',
-                                       'MeetingManager', isRole=True)
+                                       'meetingmanagers', isSuffix=True)
 
     def _forceInsertNormal(self):
         """ """
@@ -516,7 +517,7 @@ class MeetingItemWorkflowActions(object):
         # insert the item into the meeting
         self._insertItem(meeting)
         # We may have to send a mail.
-        self.context.sendMailIfRelevant('itemPresented', 'MeetingMember', isRole=True)
+        self.context.sendMailIfRelevant('itemPresented', 'creators', isSuffix=True)
 
     def _insertItem(self, meeting):
         """ """
@@ -632,7 +633,7 @@ class MeetingItemWorkflowActions(object):
            the copy is automatically validated and will be linked to this one.'''
         clonedItem = self._duplicateAndValidate(cloneEventAction='create_from_postponed_next_meeting')
         # Send, if configured, a mail to the person who created the item
-        clonedItem.sendMailIfRelevant('itemPostponedNextMeeting', 'Owner', isRole=True)
+        clonedItem.sendMailIfRelevant('itemPostponedNextMeeting', 'creators', isSuffix=True)
 
     security.declarePrivate('doDelay')
 
@@ -647,7 +648,7 @@ class MeetingItemWorkflowActions(object):
                                         keepProposingGroup=True,
                                         setCurrentAsPredecessor=True)
         # Send, if configured, a mail to the person who created the item
-        clonedItem.sendMailIfRelevant('itemDelayed', 'MeetingMember', isRole=True)
+        clonedItem.sendMailIfRelevant('itemDelayed', 'creators', isSuffix=True)
 
     security.declarePrivate('doCorrect')
 
@@ -660,7 +661,7 @@ class MeetingItemWorkflowActions(object):
         # Remove item from meeting if necessary when going to a state where item is not linked to a meeting
         if stateChange.new_state.id in ITEM_STATES_NOT_LINKED_TO_MEETING and self.context.hasMeeting():
             # We may have to send a mail
-            self.context.sendMailIfRelevant('itemUnpresented', 'MeetingMember', isRole=True)
+            self.context.sendMailIfRelevant('itemUnpresented', 'creators', isSuffix=True)
             # remove the item from the meeting
             self.context.getMeeting().removeItem(self.context)
         # if an item was returned to proposing group for corrections and that
@@ -668,7 +669,7 @@ class MeetingItemWorkflowActions(object):
         # send an email to warn the MeetingManagers if relevant
         if stateChange.old_state.id.startswith("returned_to_proposing_group"):
             # We may have to send a mail.
-            self.context.sendMailIfRelevant('returnedToMeetingManagers', 'MeetingManager', isRole=True)
+            self.context.sendMailIfRelevant('returnedToMeetingManagers', 'meetingmanagers', isSuffix=True)
 
         if 'decide_item_when_back_to_meeting_from_returned_to_proposing_group' in self.cfg.getWorkflowAdaptations() \
                 and stateChange.transition.getId() == 'backTo_itemfrozen_from_returned_to_proposing_group' \
@@ -692,7 +693,7 @@ class MeetingItemWorkflowActions(object):
 
     def doReturn_to_proposing_group(self, stateChange):
         '''Send an email when returned to proposing group if relevant...'''
-        self.context.sendMailIfRelevant('returnedToProposingGroup', 'MeetingMember', isRole=True)
+        self.context.sendMailIfRelevant('returnedToProposingGroup', 'creators', isSuffix=True)
 
     security.declarePrivate('doGoTo_returned_to_proposing_group_proposed')
 
@@ -2694,7 +2695,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                         get_organization(current_groupInChargeUid).get_full_title()))
         return res.sortedByValue()
 
-
     security.declarePrivate('listItemTags')
 
     def listItemTags(self):
@@ -3498,8 +3498,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('sendMailIfRelevant')
 
-    def sendMailIfRelevant(self, event, permissionOrRole, isRole=False, customEvent=False, mapping={}):
-        return sendMailIfRelevant(self, event, permissionOrRole, isRole,
+    def sendMailIfRelevant(self, event, permissionOrSuffix, isSuffix=False, customEvent=False, mapping={}):
+        return sendMailIfRelevant(self, event, permissionOrSuffix, isSuffix,
                                   customEvent, mapping)
 
     def sendStateDependingMailIfRelevant(self, old_review_state, new_review_state):
@@ -5183,51 +5183,36 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             res.append(proposingGroup)
         return res
 
-    def _get_item_related_suffixes(self):
-        """Returns suffixes related to MeetingItem."""
-        return ['creators', 'prereviewers', 'reviewers', 'observers']
-
-    def _assign_roles_to_group_suffixes(self,
-                                        organization):
+    def _assign_roles_to_group_suffixes(self):
         """Method that do the work of assigning relevant roles to
            suffixed groups of an organization depending on current state :
            - suffix '_observers' will have 'Reader' role in every cases;
            - state 'itemcreated', _creators is 'Editor';
            - states managed by MeetingConfig.itemWFValidationLevels"""
+        # Add the local roles corresponding to the group managing the item
+        item_state = self.queryState()
+        org = self.adapted()._getGroupManagingItem(item_state)
+        # in some case like ItemTemplate, we have no proposing group
+        if not org:
+            return
+
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        item_val_levels = cfg.getItemWFValidationLevels()
-        item_val_levels_states = [level['state'] for level in item_val_levels]
-        org_uid = organization.UID()
-        suffix_roles = {}
-
-        # itemcreated, '_creators' are Editors
-        item_state = self.queryState()
-        if item_state in ['itemcreated', 'returned_to_proposing_group']:
-            suffix_roles['creators'] = ['Editor', 'Reader', 'Reviewer']
-
-        # MeetingConfig.itemWFValidationLevels
-        elif item_state in item_val_levels_states:
-            # find Editor suffixes
-            suffixes = [level['suffixes'] for level in item_val_levels
-                        if level['state'] == item_state][0]
-            for suffix in suffixes:
-                if suffix not in suffix_roles:
-                    suffix_roles[suffix] = []
-                for role in ['Editor', 'Reader', 'Reviewer']:
-                    if role not in suffix_roles[suffix]:
-                        suffix_roles[suffix].append(role)
-
-        # states out of item validation (validated and following states)
-        else:
-            for suffix in self._get_item_related_suffixes():
-                suffix_roles[suffix] = ['Reader']
+        suffix_roles = compute_item_roles_to_assign_to_suffixes(cfg, item_state, org)
 
         # apply local roles to computed suffixes
         for suffix, roles in suffix_roles.items():
-            plone_group_id = get_plone_group_id(org_uid, suffix)
+            plone_group_id = get_plone_group_id(org.UID(), suffix)
             if plone_group_id:
                 self.manage_addLocalRoles(plone_group_id, tuple(roles))
+
+        # MeetingManagers get full access if item at least validated and not decided
+        if item_state == 'validated' or self.hasMeeting():
+            mmanagers_group_id = "{0}_{1}".format(cfg.getId(), MEETINGMANAGERS_GROUP_SUFFIX)
+            mmanagers_roles = ['Reader', 'Reviewer', 'Contributor']
+            if item_state not in cfg.getItemDecidedStates():
+                mmanagers_roles.append('Editor')
+            self.manage_addLocalRoles(mmanagers_group_id, tuple(mmanagers_roles))
 
     security.declareProtected(ModifyPortalContent, 'updateLocalRoles')
 
@@ -5246,11 +5231,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # add 'Owner' local role
         self.manage_addLocalRoles(self.owner_info()['id'], ('Owner',))
 
-        # Add the local roles corresponding to the group managing the item
-        org = self.adapted()._getGroupManagingItem(self.queryState())
-        # in some case like ItemTemplate, we have no proposing group
-        if org:
-            self._assign_roles_to_group_suffixes(org)
+        # update suffixes related local roles
+        self._assign_roles_to_group_suffixes()
 
         # update local roles regarding copyGroups
         isCreated = kwargs.get('isCreated', None)
@@ -5863,7 +5845,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # Send an email to the user being able to modify the new item if relevant
         mapping = {'meetingConfigTitle': destMeetingConfig.Title(), }
         newItem.sendMailIfRelevant('itemClonedToThisMC', ModifyPortalContent,
-                                   isRole=False, mapping=mapping)
+                                   isSuffix=False, mapping=mapping)
         plone_utils.addPortalMessage(
             translate('sendto_success',
                       mapping={'cfgTitle': safe_unicode(destMeetingConfig.Title())},

@@ -2246,7 +2246,7 @@ class testMeetingItem(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         item.setCategory('development')
         item.setDecision('<p>My decision</p>', mimetype='text/html')
-        # MeetingMember can not setItemIsSigned
+        # creators can not setItemIsSigned
         self.assertEquals(item.maySignItem(), False)
         self.assertRaises(Unauthorized, item.setItemIsSigned, True)
         # Manager maySignItem when necessary
@@ -3381,7 +3381,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEquals([m.id for m in cfg.getMeetingsAcceptingItems()], [m1.id, m2.id, m3.id])
         cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
         # getMeetingsAcceptingItems should only return meetings
-        # that are 'created' or 'frozen' for the meetingMember
+        # that are 'created' or 'frozen' for the creators
         self.changeUser('pmCreator1')
         self.assertEquals([m.id for m in cfg.getMeetingsAcceptingItems()], [m1.id, m2.id])
 
@@ -4829,7 +4829,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertFalse(recurringItem.adapted().mayAskCompletenessEvalAgain())
         self.assertFalse(templateItem.adapted().mayAskCompletenessEvalAgain())
 
-        # by default, a MeetingMember can not evaluate completeness
+        # by default, a creator can not evaluate completeness
         # user must have role ITEM_COMPLETENESS_EVALUATORS, like MeetingManager
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
