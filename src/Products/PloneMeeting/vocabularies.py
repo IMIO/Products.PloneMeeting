@@ -287,6 +287,31 @@ class GroupsInChargeVocabulary(object):
 GroupsInChargeVocabularyFactory = GroupsInChargeVocabulary()
 
 
+class ItemGroupsInChargeVocabulary(GroupsInChargeVocabulary):
+    """Manage missing terms if context is a MeetingItem."""
+
+    def __call__(self, context):
+        """ """
+        terms = super(ItemGroupsInChargeVocabulary, self).__call__(context)._terms
+
+        # when used on an item, manage missing terms, selected on item
+        # but removed from orderedGroupsInCharge or from plonegroup
+        stored_terms = context.getGroupsInCharge()
+        term_uids = [term.token for term in terms]
+        missing_term_uids = [uid for uid in stored_terms
+                             if uid not in term_uids]
+        if missing_term_uids:
+            missing_terms = uuidsToObjects(missing_term_uids, ordered=False)
+            for org in missing_terms:
+                org_uid = org.UID()
+                terms.append(SimpleTerm(org_uid, org_uid, org.get_full_title()))
+
+        return SimpleVocabulary(terms)
+
+
+ItemGroupsInChargeVocabularyFactory = ItemGroupsInChargeVocabulary()
+
+
 class EveryOrganizationsAcronymsVocabulary(object):
     implements(IVocabularyFactory)
 
@@ -485,13 +510,6 @@ class AskedAdvicesVocabulary(object):
         res = list(set(res))
         return res
 
-    def __call___cachekey(method, self, context):
-        '''cachekey method for self.__call__.'''
-        date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.askedadvicesvocabulary')
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(context)
-        return date, cfg
-
     def adviser_term_title(self, adviser):
         """ """
         termTitle = None
@@ -523,6 +541,13 @@ class AskedAdvicesVocabulary(object):
                                       default='${group_name} - ${delay} day(s)',
                                       context=self.request)
         return termTitle
+
+    def __call___cachekey(method, self, context):
+        '''cachekey method for self.__call__.'''
+        date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.askedadvicesvocabulary')
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        return date, cfg
 
     @ram.cache(__call___cachekey)
     def __call__(self, context):
@@ -1369,6 +1394,7 @@ class AssociatedGroupsVocabulary(object):
         date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.associatedgroupsvocabulary')
         return date
 
+    @ram.cache(__call___cachekey)
     def __call__(self, context):
         """ """
         tool = api.portal.get_tool('portal_plonemeeting')
@@ -1379,35 +1405,38 @@ class AssociatedGroupsVocabulary(object):
         else:
             orgs = get_organizations()
 
-        # when used on an item, manage missing terms, selected on item
-        # but removed from orderedAssociatedOrganizations or from plonegroup
-        if context.meta_type == 'MeetingItem':
-            stored_terms = context.getAssociatedGroups()
-            org_uids = [org.UID() for org in orgs]
-            missing_term_uids = [uid for uid in stored_terms
-                                 if uid not in org_uids]
-            if missing_term_uids:
-                missing_terms = uuidsToObjects(missing_term_uids, ordered=False)
-                orgs += missing_terms
-
         terms = []
         for org in orgs:
             org_uid = org.UID()
             terms.append(SimpleTerm(org_uid, org_uid, org.get_full_title()))
 
-        # when displayed on an item, if associatedGroups is not used
-        # as item inserting method, we display it alphabetically
-        display_alphabetically = True
-        if context.meta_type == 'MeetingItem':
-            associated_groups_inserting_methods = [
-                method for method in cfg.getInsertingMethodsOnAddItem()
-                if method['insertingMethod'] in ('on_all_groups', 'on_all_associated_groups')]
-            if associated_groups_inserting_methods:
-                display_alphabetically = False
-        if display_alphabetically:
-            terms = realsorted(terms, key=attrgetter('title'))
-
+        terms = realsorted(terms, key=attrgetter('title'))
         return SimpleVocabulary(terms)
 
 
 AssociatedGroupsVocabularyFactory = AssociatedGroupsVocabulary()
+
+
+class ItemAssociatedGroupsVocabulary(AssociatedGroupsVocabulary):
+    """Manage missing terms if context is a MeetingItem."""
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """ """
+        terms = super(ItemAssociatedGroupsVocabulary, self).__call__(context)._terms
+        # when used on an item, manage missing terms, selected on item
+        # but removed from orderedAssociatedOrganizations or from plonegroup
+        stored_terms = context.getAssociatedGroups()
+        term_uids = [term.token for term in terms]
+        missing_term_uids = [uid for uid in stored_terms
+                             if uid not in term_uids]
+        if missing_term_uids:
+            missing_terms = uuidsToObjects(missing_term_uids, ordered=False)
+            for org in missing_terms:
+                org_uid = org.UID()
+                terms.append(SimpleTerm(org_uid, org_uid, org.get_full_title()))
+
+        return SimpleVocabulary(terms)
+
+
+ItemAssociatedGroupsVocabularyFactory = ItemAssociatedGroupsVocabulary()
