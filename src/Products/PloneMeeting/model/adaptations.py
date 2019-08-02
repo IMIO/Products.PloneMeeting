@@ -866,7 +866,6 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                     previous = data
                     levels.append(data)
             # remove unneeded 'back_transition' key, not used by addState
-            import ipdb; ipdb.set_trace()
             for level in levels:
                 level.pop('back_transition')
                 addState(itemWorkflow.id, **level)

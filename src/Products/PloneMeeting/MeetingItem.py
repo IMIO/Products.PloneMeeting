@@ -83,7 +83,6 @@ from Products.PloneMeeting.config import ITEM_COMPLETENESS_ASKERS
 from Products.PloneMeeting.config import ITEM_COMPLETENESS_EVALUATORS
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import ITEM_STATES_NOT_LINKED_TO_MEETING
-from Products.PloneMeeting.config import MEETINGROLES
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
 from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
@@ -5220,20 +5219,51 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             res.append(proposingGroup)
         return res
 
+    def _get_item_related_suffixes(self):
+        """Returns suffixes related to MeetingItem."""
+        return ['creators', 'prereviewers', 'reviewers', 'observers']
+
     def _assign_roles_to_group_suffixes(self,
-                                        organization,
-                                        roles=MEETINGROLES):
-        """Method that do the work of assigning roles to every suffixed group of an organization."""
+                                        organization):
+        """Method that do the work of assigning relevant roles to
+           suffixed groups of an organization depending on current state :
+           - suffix '_observers' will have 'Reader' role in every cases;
+           - state 'itemcreated', _creators is 'Editor';
+           - states managed by MeetingConfig.itemWFValidationLevels"""
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        item_val_levels = cfg.getItemWFValidationLevels()
+        item_val_levels_states = [level['state'] for level in item_val_levels]
         org_uid = organization.UID()
-        for suffix in get_all_suffixes(org_uid):
-            # like it is the case by default for suffix 'advisers'
-            if not roles.get(suffix, None):
-                continue
-            # if we have a Plone group related to this suffix, apply a local role for it
+        suffix_roles = {}
+
+        # itemcreated, '_creators' are Editors
+        item_state = self.queryState()
+        if item_state in ['itemcreated', 'returned_to_proposing_group']:
+            suffix_roles['creators'] = ['Editor', 'Reader', 'Reviewer']
+
+        # MeetingConfig.itemWFValidationLevels
+        elif item_state in item_val_levels_states:
+            # find Editor suffixes
+            suffixes = [level['suffixes'] for level in item_val_levels
+                        if level['state'] == item_state][0]
+            for suffix in suffixes:
+                if suffix not in suffix_roles:
+                    suffix_roles[suffix] = []
+                for role in ['Editor', 'Reader', 'Reviewer']:
+                    if role not in suffix_roles[suffix]:
+                        suffix_roles[suffix].append(role)
+
+        # states out of item validation (validated and following states)
+        else:
+            for suffix in self._get_item_related_suffixes():
+                suffix_roles[suffix] = ['Reader']
+
+        # apply local roles to computed suffixes
+        for suffix, roles in suffix_roles.items():
             plone_group_id = get_plone_group_id(org_uid, suffix)
-            role = roles.get(suffix)
-            if role:
-                self.manage_addLocalRoles(plone_group_id, (role, ))
+            if plone_group_id:
+                self.manage_addLocalRoles(plone_group_id, tuple(roles))
 
     security.declareProtected(ModifyPortalContent, 'updateLocalRoles')
 

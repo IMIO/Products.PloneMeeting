@@ -544,7 +544,7 @@ def onItemAdded(item, event):
        item. In item.at_post_create_script we will remove this temp local
        role.'''
     user = api.user.get_current()
-    item.manage_addLocalRoles(user.getId(), ('MeetingMember',))
+    item.manage_addLocalRoles(user.getId(), ('Editor', 'Reader'))
     # Add a place to store adviceIndex
     item.adviceIndex = PersistentMapping()
     # Add a place to store emergency changes history
