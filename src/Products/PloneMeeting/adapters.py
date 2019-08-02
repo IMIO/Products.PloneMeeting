@@ -1304,6 +1304,28 @@ class DecidedItemsAdapter(CompoundCriterionBaseAdapter):
     query = query_decideditems
 
 
+class PersonalLabelsAdapter(CompoundCriterionBaseAdapter):
+
+    @property
+    @ram.cache(query_user_groups_cachekey)
+    def query_personal_labels(self):
+        '''Special query that will get personal labels defined in DashboardCollection
+           query and turn it into ftw.labels compliant personal labels.'''
+        if not self.cfg:
+            return {}
+        # get personal labels to make current user aware and to negativate
+        labels = [value for value in self.context.query if value[u'i'] == u'labels']
+        if labels:
+            member_id = api.user.get_current().getId()
+            labels = labels[0][u'v']
+            personal_labels = ['{0}:{1}'.format(member_id, label) for label in labels]
+        return {'portal_type': {'query': self.cfg.getItemTypeName()},
+                'labels': {'query': personal_labels}, }
+
+    # we may not ram.cache methods in same file with same name...
+    query = query_personal_labels
+
+
 class NegativePersonalLabelsAdapter(CompoundCriterionBaseAdapter):
 
     @property
