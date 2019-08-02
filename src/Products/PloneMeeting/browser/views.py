@@ -1454,7 +1454,7 @@ class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV)
             res = person_res.copy()
         return res
 
-    def print_copy_groups(self, suffixes=[], separator=', ', render_as_html=True, html_pattern=u'<p>{0}</p>'):
+    def print_copy_groups(self, suffixes=[], separator=', ', render_as_html=True, html_pattern='<p>{0}</p>'):
         """
         Print the item's copy groups.
         suffixes is a list of suffixes of plone groups that we want to print: e.g. ['reviewers', 'oberservers']
