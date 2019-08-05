@@ -14,7 +14,6 @@ from Products.CMFCore.permissions import DeleteObjects
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import ReviewPortalContent
 from Products.CMFCore.permissions import View
-from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting import logger
 from Products.PloneMeeting.config import ReadDecision
 from Products.PloneMeeting.config import WriteDecision
@@ -132,15 +131,18 @@ def change_transition_new_state_id(wf_id, transition_id, new_state_id):
 
 def addState(wf_id,
              new_state_id,
+             new_state_title,
              permissions_cloned_state_id,
              leading_transition_id=None,
-             back_transitions={},
+             leading_transition_title=None,
+             back_transitions=[],
              leaving_transition_id=None,
              leaving_to_state_id=None,
              existing_leaving_transition_ids=[],
              existing_back_transition_ids=[],
              new_initial_state=False,
-             old_origin_state_id=None):
+             old_origin_state_id=None,
+             guard_name=None):
     """ """
     wfTool = api.portal.get_tool('portal_workflow')
     wf = wfTool.getWorkflowById(wf_id)
@@ -148,8 +150,6 @@ def addState(wf_id,
         return
 
     # ADD NEW STATE
-    # new_state_id may be 'validated' or 'validated|Validated', id or id|title
-    new_state_id, new_state_title = new_state_id.split('|')[0], safe_unicode(new_state_id.split('|')[-1])
     wf.states.addState(new_state_id)
     new_state = wf.states[new_state_id]
     new_state.setProperties(title=new_state_title, description='')
@@ -162,22 +162,23 @@ def addState(wf_id,
     # ADD NEW TRANSITIONS
     # leading_transition_id
     if leading_transition_id:
-        leading_transition_id, leading_transition_title = leading_transition_id.split('|')[0], \
-            safe_unicode(leading_transition_id.split('|')[-1])
         wf.transitions.addTransition(leading_transition_id)
         transition = wf.transitions.get(leading_transition_id)
-        guard_name = 'may{0}{1}'.format(leading_transition_id[0].upper(), leading_transition_id[1:])
+        if not guard_name:
+            guard_name = 'may{0}{1}()'.format(leading_transition_id[0].upper(), leading_transition_id[1:])
         transition.setProperties(
             title=leading_transition_title,
             new_state_id=new_state_id, trigger_type=1, script_name='',
             actbox_name=leading_transition_id, actbox_url='',
             actbox_icon='%(portal_url)s/{0}.png'.format(leading_transition_id), actbox_category='workflow',
-            props={'guard_expr': 'python:here.wfConditions().{0}()'.format(guard_name)})
+            props={'guard_expr': 'python:here.wfConditions().{0}'.format(guard_name)})
     # back_transition_id
-    for back_transition_id, back_from_state_id in back_transitions.items():
-        back_transition_id, back_transition_title = back_transition_id.split('|')[0], \
-            safe_unicode(back_transition_id.split('|')[-1])
-        wf.transitions.addTransition(back_transition_id)
+    for back_transition_infos in back_transitions:
+        back_transition_id = back_transition_infos['back_transition_id']
+        back_transition_title = back_transition_infos['back_transition_title']
+        back_from_state_id = back_transition_infos['back_from_state_id']
+        if back_transition_id not in wf.transitions:
+            wf.transitions.addTransition(back_transition_id)
         back_transition = wf.transitions.get(back_transition_id)
         back_transition.setProperties(
             title=back_transition_title,
@@ -840,46 +841,51 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
             levels = []
             previous = None
             first = True
-            item_validation_levels = list(meetingConfig.getItemWFValidationLevels())
+            item_validation_levels = list(meetingConfig.getItemWFValidationLevels(only_enabled=True))
             # build thing reversed as workflows work with leading transitions
             # so we need to create transitions leading to a new state
             item_validation_levels.reverse()
             for level in item_validation_levels:
-                if level['enabled'] == '1':
-                    data = {}
-                    data['new_state_id'] = level['state']
-                    data['permissions_cloned_state_id'] = 'itemcreated'
-                    data['leading_transition_id'] = level['leading_transition']
-                    data['back_transition'] = level['back_transition']
-                    # every state are inserted between "itemcreated" and previous one (if several) or "validated"
-                    data['existing_leaving_transition_ids'] = ['backToItemCreated']
-                    data['old_origin_state_id'] = 'itemcreated'
-                    if first:
-                        first = False
-                        data['back_transitions'] = {data['back_transition']: 'validated'}
-                        data['existing_leaving_transition_ids'].append('validate')
-                        data['leaving_to_state_id'] = 'validated'
-                    if previous:
-                        data['back_transitions'] = {data['back_transition']: previous['new_state_id'].split('|')[0]}
-                        data['existing_leaving_transition_ids'].append(previous['leading_transition_id'].split('|')[0])
-                        data['leaving_to_state_id'] = previous['new_state_id'].split('|')[0]
-                    previous = data
-                    levels.append(data)
+                data = {}
+                data['new_state_id'] = level['state']
+                data['new_state_title'] = level['state_title']
+                data['permissions_cloned_state_id'] = 'itemcreated'
+                data['leading_transition_id'] = level['leading_transition']
+                data['leading_transition_title'] = level['leading_transition_title']
+                data['back_transition'] = level['back_transition']
+                data['back_transition_title'] = level['back_transition_title']
+                # every state are inserted between "itemcreated" and previous one (if several) or "validated"
+                data['existing_leaving_transition_ids'] = ['backToItemCreated', 'validate']
+                data['old_origin_state_id'] = 'itemcreated'
+                data['guard_name'] = \
+                    'mayProposeToNextValidationLevel(destinationState="{0}")'.format(level['state'])
+                # add transition from validated to every validation levels
+                data['back_transitions'] = [{'back_transition_id': data['back_transition'],
+                                             'back_transition_title': data['back_transition_title'],
+                                             'back_from_state_id': 'validated'}]
+                if first:
+                    first = False
+                    data['leaving_to_state_id'] = 'validated'
+                if previous:
+                    data['back_transitions'].append(
+                        {'back_transition_id': data['back_transition'],
+                         'back_transition_title': data['back_transition_title'],
+                         'back_from_state_id': previous['new_state_id']})
+                    data['existing_leaving_transition_ids'].append(previous['leading_transition_id'])
+                    data['leaving_to_state_id'] = previous['new_state_id']
+                previous = data
+                levels.append(data)
             # remove unneeded 'back_transition' key, not used by addState
             for level in levels:
                 level.pop('back_transition')
+                level.pop('back_transition_title')
                 addState(itemWorkflow.id, **level)
 
         # "reviewers_take_back_validated_item" give the ability to reviewers to
-        # take back an item that is validated.  To do so, this wfAdaptation will
-        # extend roles having the 'Review portal content' permission in state 'validated'
-        # to add the 'MeetingReviewer' role
+        # take back an item that is validated.
+        # This is managed in MeetingItem.MeetingItemWorkflowConditions.mayCorrect
         elif wfAdaptation == 'reviewers_take_back_validated_item':
-            wf = itemWorkflow
-            state = wf.states.validated
-            revPortalContentRoles = state.permission_roles[ReviewPortalContent]
-            if 'MeetingReviewer' not in revPortalContentRoles:
-                state.setPermission(ReviewPortalContent, 0, list(revPortalContentRoles) + ['MeetingReviewer'])
+            pass
 
         # "archiving" transforms item and meeting workflow into simple, one-state
         # workflows for setting up an archive site.

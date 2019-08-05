@@ -315,7 +315,8 @@ body:not([class*='section-contacts']) .state-active, .label-state-active {color:
 .state-returned_to_proposing_group_proposed,
 .label-state-returned_to_proposing_group_proposed,
 .state-returned_to_proposing_group_prevalidated,
-.label-state-returned_to_proposing_group_prevalidated {
+.label-state-returned_to_proposing_group_prevalidated,
+*[class*='proposed'] {
     color: DarkOrange !important;
 }
 .state-validated, .label-state-validated { color: blue !important; }

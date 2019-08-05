@@ -16,6 +16,7 @@ from collective.contact.plonegroup.utils import get_organization
 from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_plone_groups
 from collective.datagridcolumns.MultiSelectColumn import MultiSelectColumn
+from collective.datagridcolumns.SelectColumn import SelectColumn
 from collective.eeafaceted.batchactions.interfaces import IBatchActionsMarker
 from collective.eeafaceted.collectionwidget.interfaces import IDashboardCollection
 from collective.eeafaceted.collectionwidget.utils import _get_criterion
@@ -62,7 +63,6 @@ from Products.CMFPlone.utils import safe_unicode
 from Products.DataGridField import DataGridField
 from Products.DataGridField.CheckboxColumn import CheckboxColumn
 from Products.DataGridField.Column import Column
-from Products.DataGridField.SelectColumn import SelectColumn
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
 from Products.PloneMeeting.config import CLONE_TO_OTHER_MC_ACTION_SUFFIX
@@ -1178,24 +1178,34 @@ schema = Schema((
         widget=DataGridField._properties['widget'](
             description="ItemWFValidationLevels",
             description_msgid="item_wf_validation_levels_descr",
-            columns={'number':
-                        SelectColumn("Item WF validation levels number",
-                                     vocabulary="listValidationLevelsNumbers",
-                                     col_description="Item WF validation levels number description."),
-                     'state':
+            columns={'state':
                         Column("Item WF validation levels state",
                                col_description="Item WF validation levels state description."),
+                     'state_title':
+                        Column("Item WF validation levels state title",
+                               col_description="Item WF validation levels state title description."),
                      'leading_transition':
                         Column("Item WF validation levels leading transition",
                                col_description="Item WF validation levels leading transition description."),
+                     'leading_transition_title':
+                        Column("Item WF validation levels leading transition title",
+                               col_description="Item WF validation levels leading transition title description."),
                      'back_transition':
                         Column("Item WF validation levels back transition",
                                col_description="Item WF validation levels back transition description."),
-                     'suffixes':
+                     'back_transition_title':
+                        Column("Item WF validation levels back transition title",
+                               col_description="Item WF validation levels back transition title description."),
+                     'suffix':
+                        SelectColumn("Item WF validation levels suffix",
+                                     vocabulary_factory=u'collective.contact.plonegroup.functions',
+                                     col_description="Item WF validation levels suffix description.",
+                                     default='1'),
+                     'extra_suffixes':
                         MultiSelectColumn(
-                            "Item WF validation levels suffixes",
+                            "Item WF validation levels extra suffixes",
                             vocabulary_factory=u'collective.contact.plonegroup.functions',
-                            col_description="Item WF validation levels suffixes description."),
+                            col_description="Item WF validation levels extra suffixes description."),
                      'enabled':
                         SelectColumn("Item WF validation levels enabled",
                                      vocabulary="listBooleanVocabulary",
@@ -1211,7 +1221,15 @@ schema = Schema((
         default=defValues.itemWFValidationLevels,
         allow_oddeven=True,
         write_permission="PloneMeeting: Write risky config",
-        columns=('number', 'state', 'leading_transition', 'back_transition', 'suffixes', 'enabled'),
+        columns=('state',
+                 'state_title',
+                 'leading_transition',
+                 'leading_transition_title',
+                 'back_transition',
+                 'back_transition_title',
+                 'suffix',
+                 'extra_suffixes',
+                 'enabled'),
         allow_empty_rows=False,
     ),
     LinesField(
@@ -3057,6 +3075,26 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         res = self.getField('usingGroups').get(self, **kwargs)
         if theObjects:
             res = get_organizations(kept_org_uids=res)
+        return res
+
+    security.declarePublic('getItemWFValidationLevels')
+
+    def getItemWFValidationLevels(self, state=None, data=None, only_enabled=False, **kwargs):
+        '''Override the field 'itemWFValidationLevels' accessor to be able to handle some paramters :
+           - state : return row relative to given p_state;
+           - data : return every values defined for a given datagrid column name;
+           - only_enabled : make sure to return rows having enabled '1'.'''
+        res = self.getField('itemWFValidationLevels').get(self, **kwargs)
+        enabled = ['0', '1']
+        if only_enabled:
+            enabled = ['1']
+        if only_enabled:
+            res = [level for level in res if level['enabled'] in enabled]
+
+        if state:
+            res = [level for level in res if level['state'] == state][0]
+        if data:
+            res = [level[data] for level in res]
         return res
 
     security.declarePublic('getOrderedItemInitiators')

@@ -215,23 +215,27 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
     def getLink_cachekey(method, self):
         '''cachekey method for self.getLink.'''
         res = super(ItemPrettyLinkAdapter, self).getLink_cachekey(self)
+
         # manage when displayed in availableItems on the meeting_view
         meeting_modified = None
         if displaying_available_items(self.context):
             meeting = getCurrentMeetingObject(self.context)
             if meeting:
                 meeting_modified = meeting.modified()
+
         # manage takenOverBy
         current_member_id = None
         takenOverBy = self.context.getTakenOverBy()
         if takenOverBy:
             current_member_id = api.user.get_current().getId()
+
         # manage when displaying the icon with informations about
         # the predecessor living in another MC
         predecessor_modified = None
         predecessor = self._predecessorFromOtherMC()
         if predecessor:
             predecessor_modified = predecessor.modified()
+
         # manage otherMC to send to, and cloned to
         # indeed we need to know where to send/have been sent if selected/unselected, ...
         ann = IAnnotations(self.context)
@@ -240,6 +244,7 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
         other_mc_cloned_to_ann_keys = [
             destMeetingConfigId for destMeetingConfigId in self.context.listOtherMeetingConfigsClonableTo().keys()
             if self.context._getSentToOtherMCAnnotationKey(destMeetingConfigId) in ann]
+
         return res + (meeting_modified,
                       takenOverBy,
                       current_member_id,
@@ -293,7 +298,10 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
                                                             context=self.request)))
 
         itemState = self.context.queryState()
-        if itemState == 'delayed':
+        # specifically manage states without leading icons to speed up things
+        if itemState in ('itemcreated', 'proposed', 'validated'):
+            pass
+        elif itemState == 'delayed':
             res.append(('delayed.png', translate('icon_help_delayed',
                                                  domain="PloneMeeting",
                                                  context=self.request)))
@@ -304,16 +312,6 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
         elif itemState == 'returned_to_proposing_group':
             res.append(('return_to_proposing_group.png',
                         translate('icon_help_returned_to_proposing_group',
-                                  domain="PloneMeeting",
-                                  context=self.request)))
-        elif itemState == 'returned_to_proposing_group_proposed':
-            res.append(('goTo_returned_to_proposing_group_proposed.png',
-                        translate('icon_help_returned_to_proposing_group_proposed',
-                                  domain="PloneMeeting",
-                                  context=self.request)))
-        elif itemState == 'returned_to_proposing_group_prevalidated':
-            res.append(('goTo_returned_to_proposing_group_prevalidated.png',
-                        translate('icon_help_returned_to_proposing_group_prevalidated',
                                   domain="PloneMeeting",
                                   context=self.request)))
         elif itemState == 'prevalidated':
@@ -379,6 +377,31 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
                         translate('icon_help_waiting_advices_from_prevalidated',
                                   domain="PloneMeeting",
                                   context=self.request)))
+        elif itemState.startswith('returned_to_proposing_group_'):
+            # get info about return_to_proposing_group validation
+            # level in MeetingConfig.itemWFValidationLevels
+            level = cfg.getItemWFValidationLevels(state=itemState)
+            res.append(('goTo_{0}.png'.format(itemState),
+                        translate(
+                            'icon_help_{0}'.format(itemState),
+                            domain="PloneMeeting",
+                            context=self.request,
+                            default=level and translate(
+                                level['state_title'],
+                                domain='plone',
+                                context=self.request) or u'')))
+        else:
+            # manage MeetingConfig.itemWFValidationLevels states
+            item_validation_states = cfg.getItemWFValidationLevels(data='state', only_enabled=True)
+            if itemState in item_validation_states:
+                level = cfg.getItemWFValidationLevels(state=itemState, only_enabled=True)
+                res.append(('{0}.png'.format(itemState),
+                            translate('icon_help_{0}'.format(itemState),
+                                      domain="PloneMeeting",
+                                      context=self.request,
+                                      default=translate(level['state_title'],
+                                                        domain='plone',
+                                                        context=self.request))))
 
         # Display icons about sent/cloned to other meetingConfigs
         clonedToOtherMCIds = self.context._getOtherMeetingConfigsImAmClonedIn()

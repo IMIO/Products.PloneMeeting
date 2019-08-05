@@ -1639,9 +1639,11 @@ def get_item_validation_wf_suffixes(cfg, org=None):
        MeetingConfig.itemWFValidationLevels.
        If p_org is given, we only return available suffixes."""
     base_suffixes = [u'creators', u'observers']
-    item_val_levels = cfg.getItemWFValidationLevels()
-    # level['suffixes'] is a list of suffixes
-    config_suffixes = [level['suffixes'] for level in item_val_levels]
+    # we get the principal suffix from level['suffix'] then level['extra_suffixes']
+    # is containing suffixes that will also get Editor access in relevant state
+    config_suffix = cfg.getItemWFValidationLevels(data='suffix', only_enabled=True)
+    config_extra_suffixes = cfg.getItemWFValidationLevels(data='extra_suffixes', only_enabled=True)
+    config_suffixes = [config_suffix] + list(config_extra_suffixes)
     config_suffixes = list(itertools.chain.from_iterable(config_suffixes))
     suffixes = base_suffixes + config_suffixes
     if org:
@@ -1653,10 +1655,10 @@ def get_item_validation_wf_suffixes(cfg, org=None):
 
 def compute_item_roles_to_assign_to_suffixes(cfg, item_state, org=None):
     """ """
-    item_val_levels = cfg.getItemWFValidationLevels()
-    item_val_levels_states = [level['state'] for level in item_val_levels]
-    # by default, observers may View in every states
-    suffix_roles = {'observers': ['Reader']}
+    item_val_levels_states = cfg.getItemWFValidationLevels(data='state', only_enabled=True)
+    # by default, observers may View in every states as well as creators
+    suffix_roles = {'observers': ['Reader'],
+                    'creators': ['Reader']}
 
     # itemcreated, first state, '_creators' are Editors
     if item_state in ['itemcreated', 'returned_to_proposing_group']:
@@ -1667,8 +1669,8 @@ def compute_item_roles_to_assign_to_suffixes(cfg, item_state, org=None):
         # find Editor suffixes
         # walk every defined validation levels so we give 'Reader'
         # to levels already behind us
-        for level in item_val_levels:
-            suffixes = level['suffixes']
+        for level in cfg.getItemWFValidationLevels(only_enabled=True):
+            suffixes = [level['suffix']] + list(level['extra_suffixes'])
             for suffix in suffixes:
                 if suffix not in suffix_roles:
                     suffix_roles[suffix] = []

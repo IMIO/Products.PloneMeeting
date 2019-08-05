@@ -82,7 +82,6 @@ from Products.PloneMeeting.config import ITEM_COMPLETENESS_ASKERS
 from Products.PloneMeeting.config import ITEM_COMPLETENESS_EVALUATORS
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import ITEM_STATES_NOT_LINKED_TO_MEETING
-from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
 from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
@@ -168,42 +167,60 @@ class MeetingItemWorkflowConditions(object):
 
     def __init__(self, item):
         self.context = item
+        self.tool = api.portal.get_tool('portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(item)
 
     def _publishedObjectIsMeeting(self):
         '''Is the object currently published in Plone a Meeting ?'''
         obj = getCurrentMeetingObject(self.context)
         return isinstance(obj, Meeting)
 
-    def _groupIsNotEmpty(self, suffix):
+    def _groupIsNotEmpty(self, suffix, user_id=None):
         '''Is there any user in the group?'''
         group_uid = self.context.getProposingGroup()
+        portal = api.portal.get()
         plone_group_id = get_plone_group_id(group_uid, suffix)
-        pg = api.portal.get_tool('portal_groups')
-        if pg.getGroupById(plone_group_id).getGroupMemberIds():
-            return True
+        # for performance reasons, check directly in source_groups stored data
+        group_users = portal.acl_users.source_groups._group_principal_map.get(plone_group_id, [])
+        return len(group_users) and not user_id or user_id in group_users
 
-    security.declarePublic('mayPropose')
+    def _getLastValidationState(self):
+        '''Last validation state is validation level state defined in MeetingConfig.itemWFValidationLevels
+           for which the linked suffixed Plone group is not empty.'''
+        levels = list(self.cfg.getItemWFValidationLevels(only_enabled=True))
+        res = 'itemcreated'
+        # get suffixed Plone group in reverse order of defined validation levels
+        levels.reverse()
+        for level in levels:
+            if self._groupIsNotEmpty(level['suffix']):
+                res = level['state']
+                break
+        return res
 
-    def mayPropose(self):
-        '''We may propose an item if the workflow permits it and if the
-           necessary fields are filled.  In the case an item is transferred from
-           another meetingConfig, the category could not be defined.'''
+    security.declarePublic('mayProposeToNextValidationLevel')
+
+    def mayProposeToNextValidationLevel(self, destinationState=None):
+        '''Check if able to propose to next validation level.'''
         if not self.context.getCategory(theObject=True):
             return No(_('required_category_ko'))
+        res = False
         if _checkPermission(ReviewPortalContent, self.context):
-            return True
-
-    security.declarePublic('mayPrevalidate')
-
-    def mayPrevalidate(self):
-        if _checkPermission(ReviewPortalContent, self.context):
-            return True
+            # check if next validation level suffixed Plone group is not empty
+            level = self.cfg.getItemWFValidationLevels(state=destinationState, only_enabled=True)
+            res = self._groupIsNotEmpty(level['suffix'])
+        return res
 
     security.declarePublic('mayValidate')
 
     def mayValidate(self):
+        '''May validate if having ReviewPortalContent and being last item validation level.'''
+        res = False
         if _checkPermission(ReviewPortalContent, self.context):
-            return True
+            item_state = self.context.queryState()
+            last_validation_state = self._getLastValidationState()
+            if item_state == last_validation_state:
+                res = True
+        return res
 
     security.declarePublic('mayPresent')
 
@@ -212,12 +229,9 @@ class MeetingItemWorkflowConditions(object):
         # could miss it's category
         if not self.context.getCategory(theObject=True):
             return No(_('required_category_ko'))
-        # only MeetingManagers may present an item, the 'Review portal content'
-        # permission is not enough as an item reviewer may have the 'Review portal content'
-        # when using the 'reviewers_take_back_validated_item' wfAdaptation
-        tool = api.portal.get_tool('portal_plonemeeting')
+        # only MeetingManagers may present an item
         if not _checkPermission(ReviewPortalContent, self.context) or \
-           not tool.isManager(self.context):
+           not self.tool.isManager(self.context):
             return False
         # We may present the item if Plone currently publishes a meeting.
         # Indeed, an item may only be presented within a meeting.
@@ -270,16 +284,19 @@ class MeetingItemWorkflowConditions(object):
 
     def mayCorrect(self, destinationState=None):
         '''See doc in interfaces.py.'''
-        # If the item is not linked to a meeting, the user just need the
-        # 'Review portal content' permission, if it is linked to a meeting, an item
-        # may still be corrected until the meeting is 'closed'.
         res = False
         meeting = self.context.getMeeting()
         if not meeting or (meeting and meeting.queryState() != 'closed'):
-            # item is not linked to a meeting, or in a meeting that is not 'closed',
-            # just check for 'Review portal content' permission
             if _checkPermission(ReviewPortalContent, self.context):
                 res = True
+            else:
+                # manage the reviewers_take_back_validated_item WFAdaptation
+                if 'reviewers_take_back_validated_item' in self.cfg.getWorkflowAdaptations() and \
+                   self.context.queryState() == 'validated':
+                    # is current user member of last validation level?
+                    last_val_state = self._getLastValidationState()
+                    level = self.cfg.getItemWFValidationLevels(state=last_val_state)
+                    res = self._groupIsNotEmpty(level['suffix'], user_id=api.user.get_current().id)
         return res
 
     security.declarePublic('mayBackToMeeting')
@@ -288,9 +305,8 @@ class MeetingItemWorkflowConditions(object):
         """Specific guard for the 'return_to_proposing_group' wfAdaptation.
            As we have only one guard_expr for potentially several transitions departing
            from the 'returned_to_proposing_group' state, we receive the p_transitionName."""
-        tool = api.portal.get_tool('portal_plonemeeting')
         if not _checkPermission(ReviewPortalContent, self.context) and not \
-           tool.isManager(self.context):
+           self.tool.isManager(self.context):
             return
         # get the linked meeting
         meeting = self.context.getMeeting()
@@ -367,15 +383,13 @@ class MeetingItemWorkflowConditions(object):
 
     def _hasAdvicesToGive(self, destination_state):
         """Check if there are advice to give in p_destination_state."""
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self.context)
         hasAdvicesToGive = False
         for org_uid, adviceInfo in self.context.adviceIndex.items():
             # only consider advices to give
             if adviceInfo['type'] not in (NOT_GIVEN_ADVICE_VALUE, 'asked_again', ):
                 continue
             org = get_organization(org_uid)
-            adviceStates = org.get_item_advice_states(cfg)
+            adviceStates = org.get_item_advice_states(self.cfg)
             if destination_state in adviceStates:
                 hasAdvicesToGive = True
                 break
@@ -429,8 +443,7 @@ class MeetingItemWorkflowConditions(object):
         """ """
         res = False
         if self.context.getIsAcceptableOutOfMeeting():
-            tool = api.portal.get_tool('portal_plonemeeting')
-            if _checkPermission(ReviewPortalContent, self.context) and tool.isManager(self.context):
+            if _checkPermission(ReviewPortalContent, self.context) and self.tool.isManager(self.context):
                 res = True
         return res
 
@@ -441,8 +454,7 @@ class MeetingItemWorkflowConditions(object):
         res = False
         emergency = self.context.getEmergency()
         if emergency == 'emergency_accepted':
-            tool = api.portal.get_tool('portal_plonemeeting')
-            if _checkPermission(ReviewPortalContent, self.context) and tool.isManager(self.context):
+            if _checkPermission(ReviewPortalContent, self.context) and self.tool.isManager(self.context):
                 res = True
         # if at least emergency is asked, then return a No message
         elif emergency != 'no_emergency':
@@ -473,14 +485,11 @@ class MeetingItemWorkflowActions(object):
         """Used for items in config."""
         pass
 
-    security.declarePrivate('doPropose')
+    security.declarePrivate('doProposeToNextValidationLevel')
 
-    def doPropose(self, stateChange):
-        pass
-
-    security.declarePrivate('doPrevalidate')
-
-    def doPrevalidate(self, stateChange):
+    def doProposeToNextValidationLevel(self, stateChange):
+        """Called by every item validation level defined
+           in MeetingConfig.itemWFValidationLevels."""
         pass
 
     security.declarePrivate('doValidate')
@@ -5207,12 +5216,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 self.manage_addLocalRoles(plone_group_id, tuple(roles))
 
         # MeetingManagers get full access if item at least validated and not decided
-        if item_state == 'validated' or self.hasMeeting():
-            mmanagers_group_id = "{0}_{1}".format(cfg.getId(), MEETINGMANAGERS_GROUP_SUFFIX)
-            mmanagers_roles = ['Reader', 'Reviewer', 'Contributor']
-            if item_state not in cfg.getItemDecidedStates():
-                mmanagers_roles.append('Editor')
-            self.manage_addLocalRoles(mmanagers_group_id, tuple(mmanagers_roles))
+        # XXX to do when moving to dexterity.localrolesfield
+        # if item_state == 'validated' or self.hasMeeting():
+        #     mmanagers_group_id = "{0}_{1}".format(cfg.getId(), MEETINGMANAGERS_GROUP_SUFFIX)
+        #     mmanagers_roles = ['Reader', 'Reviewer', 'Contributor']
+        #     if item_state not in cfg.getItemDecidedStates():
+        #         mmanagers_roles.append('Editor')
+        #     self.manage_addLocalRoles(mmanagers_group_id, tuple(mmanagers_roles))
 
     security.declareProtected(ModifyPortalContent, 'updateLocalRoles')
 

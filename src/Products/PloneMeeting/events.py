@@ -110,9 +110,15 @@ def onItemTransition(item, event):
     '''Called whenever a transition has been fired on an item.'''
     if not event.transition or (item != event.object):
         return
+
+    tool = api.portal.get_tool('portal_plonemeeting')
+    cfg = tool.getMeetingConfig(item)
+
     transitionId = event.transition.id
     if transitionId.startswith('backTo'):
         action = 'doCorrect'
+    elif transitionId in cfg.getItemWFValidationLevels(data='leading_transition', only_enabled=True):
+        action = 'doProposeToNextValidationLevel'
     elif transitionId.startswith('item'):
         action = 'doItem%s%s' % (transitionId[4].upper(), transitionId[5:])
     else:
@@ -120,8 +126,6 @@ def onItemTransition(item, event):
     do(action, event)
 
     # check if we need to send the item to another meetingConfig
-    tool = api.portal.get_tool('portal_plonemeeting')
-    cfg = tool.getMeetingConfig(item)
     if item.queryState() in cfg.getItemAutoSentToOtherMCStates():
         otherMCs = item.getOtherMeetingConfigsClonableTo()
         for otherMC in otherMCs:
