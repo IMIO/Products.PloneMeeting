@@ -5,8 +5,8 @@ Changelog
 4.1rc9 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- Optimized speed of MeetingItem.MeetingItemWorkflowConditions._groupIsNotEmpty, by not using portal_groups and getGroupMemberIds but directly
+  getting group members thru the acl_users.source_groups._group_principal_map stored data
 
 4.1rc8 (2019-08-02)
 -------------------
