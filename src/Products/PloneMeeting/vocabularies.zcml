@@ -17,8 +17,12 @@
            name="Products.PloneMeeting.vocabularies.everyorganizationsacronymsvocabulary" />
   <utility component=".vocabularies.AssociatedGroupsVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.associatedgroupsvocabulary" />
+  <utility component=".vocabularies.ItemAssociatedGroupsVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.itemassociatedgroupsvocabulary" />
   <utility component=".vocabularies.GroupsInChargeVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.groupsinchargevocabulary" />
+  <utility component=".vocabularies.ItemGroupsInChargeVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.itemgroupsinchargevocabulary" />
   <utility component=".vocabularies.ItemReviewStatesVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.itemreviewstatesvocabulary" />
   <utility component=".vocabularies.MeetingReviewStatesVocabularyFactory"

@@ -177,10 +177,11 @@ class MeetingItemWorkflowConditions(object):
     def _groupIsNotEmpty(self, suffix):
         '''Is there any user in the group?'''
         group_uid = self.context.getProposingGroup()
+        portal = api.portal.get()
         plone_group_id = get_plone_group_id(group_uid, suffix)
-        pg = api.portal.get_tool('portal_groups')
-        if pg.getGroupById(plone_group_id).getGroupMemberIds():
-            return True
+        # for performance reasons, check directly in source_groups stored data
+        group_users = portal.acl_users.source_groups._group_principal_map[plone_group_id]
+        return len(group_users)
 
     security.declarePublic('mayPropose')
 
@@ -876,7 +877,7 @@ schema = Schema((
         ),
         optional=True,
         multiValued=1,
-        vocabulary='listGroupsInCharge',
+        vocabulary_factory='Products.PloneMeeting.vocabularies.itemgroupsinchargevocabulary',
     ),
     LinesField(
         name='associatedGroups',
@@ -892,7 +893,7 @@ schema = Schema((
         ),
         optional=True,
         multiValued=1,
-        vocabulary_factory='Products.PloneMeeting.vocabularies.associatedgroupsvocabulary',
+        vocabulary_factory='Products.PloneMeeting.vocabularies.itemassociatedgroupsvocabulary',
     ),
     StringField(
         name='listType',
@@ -2695,42 +2696,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                         get_organization(current_groupInChargeUid).get_full_title()))
         return res.sortedByValue()
 
-    security.declarePrivate('listGroupsInCharge')
-
-    def listGroupsInCharge(self):
-        '''Lists the organizations that are in charge of this item.
-           If organizations are selected in MeetingConfig.orderedGroupsInCharge,
-           we only display these ones, else, we display every organizations selected in plonegroup.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self)
-        orderedGroupsInCharge = cfg.getOrderedGroupsInCharge()
-        if orderedGroupsInCharge:
-            orgs = list(cfg.getOrderedGroupsInCharge(theObjects=True))
-        else:
-            orgs = get_organizations()
-
-        # missing terms, selected on item but removed from orderedGroupsInCharge
-        stored_terms = self.getGroupsInCharge()
-        org_uids = [org.UID() for org in orgs]
-        missing_term_uids = [uid for uid in stored_terms
-                             if uid not in org_uids]
-        if missing_term_uids:
-            missing_terms = uuidsToObjects(missing_term_uids, ordered=False)
-            orgs += missing_terms
-
-        res = []
-        for org in orgs:
-            res.append((org.UID(), org.get_full_title()))
-        res = DisplayList(res)
-
-        # if groupsInCharge is not used as item inserting method, we display it alphabetically
-        groups_in_charge_inserting_methods = [
-            method for method in cfg.getInsertingMethodsOnAddItem()
-            if method['insertingMethod'] in ('on_groups_in_charge', )]
-        if not groups_in_charge_inserting_methods:
-            res = res.sortedByValue()
-
-        return res
 
     security.declarePrivate('listItemTags')
 

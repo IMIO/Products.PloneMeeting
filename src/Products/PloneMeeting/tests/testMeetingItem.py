@@ -36,6 +36,7 @@ from collective.iconifiedcategory.utils import get_group
 from DateTime import DateTime
 from ftw.labels.interfaces import ILabeling
 from imio.actionspanel.interfaces import IContentDeletable
+from imio.helpers.cache import cleanRamCache
 from imio.helpers.cache import cleanRamCacheFor
 from imio.history.interfaces import IImioHistory
 from imio.history.utils import getLastWFAction
@@ -2983,9 +2984,10 @@ class testMeetingItem(PloneMeetingTestCase):
         self._select_organization(self.developers_uid, remove=True)
         self.changeUser('pmManager')
         # still in the vocabulary because selected on the item
-        self.assertEquals(item.Vocabulary('associatedGroups')[0].keys(), [self.developers_uid, self.vendors_uid])
+        self.assertEquals(item.Vocabulary('associatedGroups')[0].keys(), [self.vendors_uid, self.developers_uid])
         # unselect 'developers' on the item, it will not appear anymore in the vocabulary
         item.setAssociatedGroups(())
+        cleanRamCache()
         self.assertEquals(item.Vocabulary('associatedGroups')[0].keys(), [self.vendors_uid, ])
 
     def test_pm_ListCategoriesContainsDisabledStoredValue(self):

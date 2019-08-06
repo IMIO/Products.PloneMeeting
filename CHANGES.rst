@@ -2,7 +2,13 @@ Changelog
 =========
 
 
-4.1rc8 (unreleased)
+4.1rc9 (unreleased)
+-------------------
+
+- Optimized speed of MeetingItem.MeetingItemWorkflowConditions._groupIsNotEmpty, by not using portal_groups and getGroupMemberIds but directly
+  getting group members thru the acl_users.source_groups._group_principal_map stored data
+
+4.1rc8 (2019-08-02)
 -------------------
 
 - Fixed MeetingConfig.validate_customAdvisers that failed to detect a removed row in use when it was a non delay aware row asked automatically
@@ -28,6 +34,10 @@ Changelog
 - Do not display DashboardPODTemplates on meeting faceted (available/presented items)
 - Display <table> with align="center" centered in the browser
 - Fix "html_pattern" parameter encoding in views.ItemDGHV.print_copy_groups()
+- Use separated vocabularies for faceted and item to manage MeetingItem.associatedGroups and MeetingItem.groupsInCharge : the faceted vocabulary is cached and the item
+  related vocabulary is calling the cached vocabulary and managing missing terms
+- Added ICompoundCriterionFilter adapter "items-with-personal-labels" to be able to query ftw.labels personal labels
+- Do not fail to add a Meeting in utils.get_context_with_request if Meeting portal_type contains blank spaces
 
 
 4.1rc7 (2019-07-19)
