@@ -33,10 +33,12 @@ Changelog
   so it is easier to reuse in other context without naming problem
 - Do not display DashboardPODTemplates on meeting faceted (available/presented items)
 - Display <table> with align="center" centered in the browser
+- Fix "html_pattern" parameter encoding in views.ItemDGHV.print_copy_groups()
 - Use separated vocabularies for faceted and item to manage MeetingItem.associatedGroups and MeetingItem.groupsInCharge : the faceted vocabulary is cached and the item
   related vocabulary is calling the cached vocabulary and managing missing terms
 - Added ICompoundCriterionFilter adapter "items-with-personal-labels" to be able to query ftw.labels personal labels
 - Do not fail to add a Meeting in utils.get_context_with_request if Meeting portal_type contains blank spaces
+
 
 4.1rc7 (2019-07-19)
 -------------------
