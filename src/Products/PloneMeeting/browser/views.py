@@ -1417,10 +1417,7 @@ class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV)
             return noMeetingMarker
 
     def print_preferred_meeting_date(self, returnDateTime=False, noMeetingMarker='-', unrestricted=True):
-        """Print meeting date, manage fact that item is not linked to a meeting,
-           in this case p_noMeetingMarker is returned.
-           If p_returnDateTime is True, it returns the meeting date DateTime,
-           otherwise it returns the meeting title containing formatted date."""
+        """TODO"""
         preferred_meeting_uid = self.getPreferredMeeting()
         if preferred_meeting_uid == 'whatever':
             return noMeetingMarker
