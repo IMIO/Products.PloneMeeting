@@ -1416,6 +1416,25 @@ class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV)
         else:
             return noMeetingMarker
 
+    def print_preferred_meeting_date(self, returnDateTime=False, noMeetingMarker='-', unrestricted=True):
+        """Print meeting date, manage fact that item is not linked to a meeting,
+           in this case p_noMeetingMarker is returned.
+           If p_returnDateTime is True, it returns the meeting date DateTime,
+           otherwise it returns the meeting title containing formatted date."""
+        preferred_meeting_uid = self.getPreferredMeeting()
+        if preferred_meeting_uid == 'whatever':
+            return noMeetingMarker
+        catalog = api.portal.get_tool('portal_catalog')
+        brains = catalog(UID=preferred_meeting_uid)
+        if len(brains) > 0:
+            return brains[0]
+        elif unrestricted:
+            brains = catalog.unrestrictedSearchResults(UID=preferred_meeting_uid)
+            if len(brains) > 0:
+                return brains[0]
+        else:
+            return noMeetingMarker
+
     def print_in_and_out_attendees(
             self,
             in_and_out_types=[],
