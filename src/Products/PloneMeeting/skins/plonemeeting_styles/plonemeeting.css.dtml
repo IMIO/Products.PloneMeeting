@@ -300,23 +300,18 @@ body:not([class*='section-contacts']) .state-active, .label-state-active {color:
 .state-advice_under_edit, .label-state-advice_under_edit {
     color: red !important;
 }
-.state-proposed,
-.label-state-proposed,
-.state-proposed_waiting_advices,
-.label-state-proposed_waiting_advices,
 .state-prevalidated,
 .label-state-prevalidated,
 .state-prevalidated_waiting_advices,
 .label-state-prevalidated_waiting_advices,
-.state-proposed__or__prevalidated_waiting_advices,
-.label-state-proposed__or__prevalidated_waiting_advices,
 .state-waiting_advices,
 .label-state-waiting_advices,
 .state-returned_to_proposing_group_proposed,
 .label-state-returned_to_proposing_group_proposed,
 .state-returned_to_proposing_group_prevalidated,
 .label-state-returned_to_proposing_group_prevalidated,
-*[class*='proposed'] {
+*[class^='proposed'], *[class^='state-proposed'],
+*[class^='pretty_link proposed'], *[class^='pretty_link state-proposed'] {
     color: DarkOrange !important;
 }
 .state-validated, .label-state-validated { color: blue !important; }

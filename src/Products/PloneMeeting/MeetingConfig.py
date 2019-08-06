@@ -2470,7 +2470,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     defaultWorkflows = ('meetingitem_workflow', 'meeting_workflow')
 
     # Names of workflow adaptations, ORDER IS IMPORTANT!
-    wfAdaptations = ('no_global_observation', 'creator_initiated_decisions',
+    wfAdaptations = ('apply_item_validation_levels',
+                     'no_global_observation', 'creator_initiated_decisions',
                      'only_creator_may_delete', 'pre_validation',
                      'pre_validation_keep_reviewer_permissions', 'items_come_validated',
                      'archiving', 'no_publication', 'no_proposal', 'everyone_reads_all',
@@ -2480,12 +2481,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                      'return_to_proposing_group', 'return_to_proposing_group_with_last_validation',
                      'return_to_proposing_group_with_all_validations',
                      'decide_item_when_back_to_meeting_from_returned_to_proposing_group',
-                     'hide_decisions_when_under_writing', 'waiting_advices',
+                     'hide_decisions_when_under_writing',
+                     'waiting_advices', 'waiting_advices_from_last_validation_level',
                      'accepted_out_of_meeting', 'accepted_out_of_meeting_and_duplicated',
                      'accepted_out_of_meeting_emergency', 'accepted_out_of_meeting_emergency_and_duplicated',
                      'postpone_next_meeting', 'mark_not_applicable',
-                     'removed', 'removed_and_duplicated', 'refused',
-                     'apply_item_validation_levels')
+                     'removed', 'removed_and_duplicated', 'refused')
 
     def _searchesInfo(self):
         """Informations used to create DashboardCollections in the searches."""
@@ -3092,9 +3093,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             res = [level for level in res if level['enabled'] in enabled]
 
         if state:
-            res = [level for level in res if level['state'] == state][0]
+            res = [level for level in res if level['state'] == state]
         if data:
             res = [level[data] for level in res]
+        if state:
+            res = res[0]
         return res
 
     security.declarePublic('getOrderedItemInitiators')

@@ -20,8 +20,6 @@ from Products.PloneMeeting.config import WriteDecision
 from Products.PloneMeeting.config import WriteItemMeetingManagerFields
 from Products.PloneMeeting.utils import updateCollectionCriterion
 
-import string
-
 
 # Stuff for performing workflow adaptations ------------------------------------
 noGlobalObsStates = ('itempublished', 'itemfrozen', 'accepted', 'refused',
@@ -37,7 +35,7 @@ groupDecisionReadStates = ('proposed', 'prevalidated', 'validated', 'presented',
 # 'state_for_return_to_proposing_group' where you will define custom permissions for this wfAdaptation...
 # values can be different by workflow, moreover me may also take a state from another item workflow,
 # so it could be {'meetingitem_workflow': 'anothermeetingitem_workflow.itemcreated', }
-RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE = {'meetingitem_workflow': 'meetingitem_workflow.itemcreated', }
+RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE = {'meetingitem_workflow': 'meetingitem_workflow.validated', }
 # if a state to clone defined here above in RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE is not enough
 # to manage permissions of the new state 'returned_to_proposing_group', we can define a full or partial
 # custom permissions dict that will update permissions that will be set.  This can be use together
@@ -94,11 +92,20 @@ WAITING_ADVICES_FROM_STATES = (
     {'from_states': ('itemcreated', ),
      'back_states': ('itemcreated', ),
      'perm_cloned_states': ('itemcreated',),
-     'remove_modify_access': True},
+     'remove_modify_access': True,
+     'use_custom_icon': False,
+     'use_custom_back_transition_title_for': (),
+     'use_custom_state_title': True,
+     },
     {'from_states': ('proposed', 'prevalidated'),
      'back_states': ('proposed', 'prevalidated'),
      'perm_cloned_states': ('prevalidated', 'proposed'),
-     'remove_modify_access': True},)
+     'remove_modify_access': True,
+     'use_custom_icon': False,
+     'use_custom_back_transition_title_for': (),
+     'use_custom_state_title': True,
+     },
+)
 
 
 def grantPermission(state, perm, role):
@@ -754,6 +761,7 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
         # "no_proposal" removes state 'proposed' in the item workflow: this way,
         # people can directly validate items after they have been created.
         elif wfAdaptation == 'no_proposal':
+            continue
             wf = itemWorkflow
             # Delete transitions 'propose' and 'backToProposed'
             for tr in ('propose', 'backToProposed'):
@@ -849,14 +857,11 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                 data = {}
                 data['new_state_id'] = level['state']
                 data['new_state_title'] = level['state_title']
-                data['permissions_cloned_state_id'] = 'itemcreated'
+                data['permissions_cloned_state_id'] = 'validated'
                 data['leading_transition_id'] = level['leading_transition']
                 data['leading_transition_title'] = level['leading_transition_title']
                 data['back_transition'] = level['back_transition']
                 data['back_transition_title'] = level['back_transition_title']
-                # every state are inserted between "itemcreated" and previous one (if several) or "validated"
-                data['existing_leaving_transition_ids'] = ['backToItemCreated', 'validate']
-                data['old_origin_state_id'] = 'itemcreated'
                 data['guard_name'] = \
                     'mayProposeToNextValidationLevel(destinationState="{0}")'.format(level['state'])
                 # add transition from validated to every validation levels
@@ -866,17 +871,21 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                 if first:
                     first = False
                     data['leaving_to_state_id'] = 'validated'
+                    data['leaving_transition_id'] = 'validate'
                 if previous:
                     data['back_transitions'].append(
                         {'back_transition_id': data['back_transition'],
                          'back_transition_title': data['back_transition_title'],
                          'back_from_state_id': previous['new_state_id']})
-                    data['existing_leaving_transition_ids'].append(previous['leading_transition_id'])
+                    data['existing_leaving_transition_ids'] = ['validate', previous['leading_transition_id']]
                     data['leaving_to_state_id'] = previous['new_state_id']
                 previous = data
                 levels.append(data)
-            # remove unneeded 'back_transition' key, not used by addState
+
+            # last added level is the new initial state
+            data['new_initial_state'] = True
             for level in levels:
+                # remove unneeded 'back_transition/back_transition_title' keys, not used by addState
                 level.pop('back_transition')
                 level.pop('back_transition_title')
                 addState(itemWorkflow.id, **level)
@@ -1058,12 +1067,13 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                                 updateCollectionCriterion(collection, criterion['i'],
                                                           tuple(criterion['v']) + ('decisions_published', ))
 
-        # "waiting_advices" add state 'xxx_waiting_advices' in the item workflow
+        # "waiting_advices/waiting_advices_from_last_validation_level"
+        # add state 'xxx_waiting_advices' in the item workflow
         # it is a go/back state from the WAITING_ADVICES_FROM_STATES item list of states.
         # It is made to isolate an item in a state where it is no more editable but some advices may be given
         # if we have several 'xxx_waiting_advices' states added,
         # it is prefixed with originState1__or__originState2 like 'proposed__or__prevalidated_waiting_advices'
-        elif wfAdaptation == 'waiting_advices':
+        elif wfAdaptation in ('waiting_advices', 'waiting_advices_from_last_validation_level'):
             wf = itemWorkflow
             # compute edit permissions existing on MeetingItem schema
             from Products.PloneMeeting.MeetingItem import MeetingItem
@@ -1088,21 +1098,30 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                         from_transition_id = FROM_TRANSITION_ID_PATTERN.format(from_state_id)
                         wf.transitions.addTransition(from_transition_id)
                         transition = wf.transitions[from_transition_id]
+                        icon_name = 'wait_advices_from'
+                        if infos['use_custom_icon']:
+                            icon_name = from_transition_id
                         transition.setProperties(
-                            title=from_transition_id,
+                            title='wait_advices_from',
                             new_state_id=new_state_id, trigger_type=1, script_name='',
                             actbox_name=from_transition_id, actbox_url='',
-                            actbox_icon='%(portal_url)s/{0}.png'.format(from_transition_id),
+                            actbox_icon='%(portal_url)s/{0}.png'.format(icon_name),
                             actbox_category='workflow',
-                            props={'guard_expr': 'python:here.wfConditions().may{0}()'.format(
-                                string.capwords(from_transition_id))})
+                            props={'guard_expr': 'python:here.wfConditions().mayWait_advices_from("{0}")'.format(
+                                from_state_id)})
                     for back_state_id in back_state_ids:
                         back_transition_id = 'backTo_{0}_from_waiting_advices'.format(back_state_id)
                         back_transition_ids.append(back_transition_id)
                         wf.transitions.addTransition(back_transition_id)
                         transition = wf.transitions[back_transition_id]
+                        back_transition_title = back_transition_id
+                        if back_state_id not in infos['use_custom_back_transition_title_for']:
+                            # reuse the existing back transition for title
+                            existing_back_transition_id = 'backTo%s%s' % (back_state_id[0].upper(), back_state_id[1:])
+                            if existing_back_transition_id in wf.transitions:
+                                back_transition_title = wf.transitions[existing_back_transition_id].title
                         transition.setProperties(
-                            title=back_transition_id,
+                            title=back_transition_title,
                             new_state_id=back_state_id, trigger_type=1, script_name='',
                             actbox_name=back_transition_id, actbox_url='',
                             actbox_icon='%(portal_url)s/{0}.png'.format(back_transition_id),
@@ -1110,7 +1129,11 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                             props={'guard_expr': 'python:here.wfConditions().mayCorrect("%s")' % back_state_id})
 
                     # Update connections between states and transitions
-                    new_state.setProperties(title=new_state_id, description='',
+                    new_state_title = new_state_id
+                    if not infos['use_custom_state_title']:
+                        new_state_title = 'waiting_advices'
+                    new_state.setProperties(title=new_state_title,
+                                            description='',
                                             transitions=back_transition_ids)
                     # store roles having the 'Review portal content' permission
                     # from states going to 'xxx_waiting_advices' so it will be used

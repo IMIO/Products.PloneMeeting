@@ -21,7 +21,8 @@
                                   obj_absolute_url python: obj and obj.absolute_url() or '';
                                   customMessageInfos python: context.adapted().getCustomAdviceMessageFor(advice);
                                   displayDefaultComplementaryMessage customMessageInfos/displayDefaultComplementaryMessage;
-                                  customAdviceMessage customMessageInfos/customAdviceMessage;">
+                                  customAdviceMessage customMessageInfos/customAdviceMessage;
+                                  state_infos python: view.state_infos(context);">
                 <legend>
                   <div style="display: inline"
                        class="collapsible active"
@@ -296,7 +297,7 @@
                        i18n:translate="">This item is not viewable by the advisers of this group in the current review state (<span i18n:name="item_review_state"
                                                                                                                                    i18n:translate=""
                                                                                                                                    i18n:domain="plone"
-                                                                                                                                   tal:content="item_review_state"
+                                                                                                                                   tal:content="state_infos/state_title"
                                                                                                                                    tal:attributes="class string:label-state-${item_review_state}"></span>).</span>
                     <br /><span tal:condition="advice/delay_infos"
                                 class="discreet"
@@ -307,7 +308,7 @@
                        i18n:translate="advice_can_no_more_be_given_in_current_item_state">This advice can no more be given in current item state (<span i18n:name="item_review_state"
                                                                                                        i18n:translate=""
                                                                                                        i18n:domain="plone"
-                                                                                                       tal:content="item_review_state"
+                                                                                                       tal:content="state_infos/state_title"
                                                                                                        tal:attributes="class string:label-state-${item_review_state}"></span>)</span>.
 
                 </tal:itemViewableButNoMoreAdviseableWithoutDelay>
@@ -317,7 +318,7 @@
                        <span i18n:name="item_review_state"
                              i18n:translate=""
                              i18n:domain="plone"
-                             tal:content="item_review_state"
+                             tal:content="state_infos/state_title"
                              tal:attributes="class string:label-state-${item_review_state}"></span>)
                     </span>,
                     <tal:advice_was_not_given_during_delay tal:condition="advice/delay_stopped_on">

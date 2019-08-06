@@ -115,14 +115,14 @@ def onItemTransition(item, event):
     cfg = tool.getMeetingConfig(item)
 
     transitionId = event.transition.id
-    if transitionId.startswith('backTo'):
-        action = 'doCorrect'
-    elif transitionId in cfg.getItemWFValidationLevels(data='leading_transition', only_enabled=True):
-        action = 'doProposeToNextValidationLevel'
-    elif transitionId.startswith('item'):
-        action = 'doItem%s%s' % (transitionId[4].upper(), transitionId[5:])
-    else:
-        action = 'do%s%s' % (transitionId[0].upper(), transitionId[1:])
+    action = item.wfActions()._getCustomActionName(transitionId)
+    if not action:
+        if transitionId.startswith('backTo'):
+            action = 'doCorrect'
+        elif transitionId.startswith('item'):
+            action = 'doItem%s%s' % (transitionId[4].upper(), transitionId[5:])
+        else:
+            action = 'do%s%s' % (transitionId[0].upper(), transitionId[1:])
     do(action, event)
 
     # check if we need to send the item to another meetingConfig
@@ -146,7 +146,7 @@ def onItemTransition(item, event):
     # just reindex the entire object
     item.reindexObject()
     # An item has ben modified
-    invalidate_cachekey_volatile_for('Products.PloneMeeting.MeetingItem.modified')
+    invalidate_cachekey_volatile_for('Products.PloneMeeting.MeetingItem.modified', get_again=True)
 
 
 def onMeetingTransition(meeting, event):
@@ -557,13 +557,13 @@ def onItemAdded(item, event):
     item.completeness_changes_history = PersistentList()
     # Add a place to store takenOverBy by review_state user id
     item.takenOverByInfos = PersistentMapping()
-    # An item has ben modified
-    invalidate_cachekey_volatile_for('Products.PloneMeeting.MeetingItem.modified')
     # if element is in a MeetingConfig, we mark it with IConfigElement interface
     if item.isDefinedInTool():
         alsoProvides(item, IConfigElement)
     else:
         noLongerProvides(item, IConfigElement)
+        # An item has ben modified
+        invalidate_cachekey_volatile_for('Products.PloneMeeting.MeetingItem.modified', get_again=True)
 
 
 def onItemModified(item, event):
@@ -595,8 +595,8 @@ def onItemModified(item, event):
                 item._at_creation_flag = True
                 item._renameAfterCreation(check_auto_id=False)
                 item._at_creation_flag = False
-    # An item has ben modified
-    invalidate_cachekey_volatile_for('Products.PloneMeeting.MeetingItem.modified')
+    # An item has ben modified, invalidate cachekey and stores it again so we avoid 2 writes
+    invalidate_cachekey_volatile_for('Products.PloneMeeting.MeetingItem.modified', get_again=True)
 
 
 def storeImagesLocallyDexterity(advice):
@@ -848,7 +848,7 @@ def onItemRemoved(item, event):
     if event.object.meta_type == 'Plone Site':
         return
     # An item has ben modified
-    invalidate_cachekey_volatile_for('Products.PloneMeeting.MeetingItem.modified')
+    invalidate_cachekey_volatile_for('Products.PloneMeeting.MeetingItem.modified', get_again=True)
 
 
 def onMeetingAdded(meeting, event):

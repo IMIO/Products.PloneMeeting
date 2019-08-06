@@ -201,13 +201,16 @@ class MeetingItemWorkflowConditions(object):
 
     def mayProposeToNextValidationLevel(self, destinationState=None):
         '''Check if able to propose to next validation level.'''
-        if not self.context.getCategory(theObject=True):
-            return No(_('required_category_ko'))
         res = False
         if _checkPermission(ReviewPortalContent, self.context):
             # check if next validation level suffixed Plone group is not empty
-            level = self.cfg.getItemWFValidationLevels(state=destinationState, only_enabled=True)
-            res = self._groupIsNotEmpty(level['suffix'])
+            suffix = self.cfg.getItemWFValidationLevels(
+                state=destinationState, data='suffix', only_enabled=True)
+            res = self._groupIsNotEmpty(suffix)
+        # check category after transition as transition could not be doable
+        # at all and in this case, we would display a No button for a transition not doable...
+        if res and not self.context.getCategory(theObject=True):
+            return No(_('required_category_ko'))
         return res
 
     security.declarePublic('mayValidate')
@@ -220,6 +223,8 @@ class MeetingItemWorkflowConditions(object):
             last_validation_state = self._getLastValidationState()
             if item_state == last_validation_state:
                 res = True
+        if res and not self.context.getCategory(theObject=True):
+            return No(_('required_category_ko'))
         return res
 
     security.declarePublic('mayPresent')
@@ -280,6 +285,18 @@ class MeetingItemWorkflowConditions(object):
            self.context.getMeeting().queryState() in ('decided', 'decisions_published', 'closed'):
             return True
 
+    def _currentUserIsAdviserAbleToChangeItemStateTo(self, destinationState):
+        ''' '''
+        item_state = self.context.queryState()
+        user_plone_groups = self.tool.get_plone_groups_for_user()
+        for org_uid in self.context.adviceIndex:
+            org = get_organization(org_uid)
+            # org can give advice in current state and member is adviser for it
+            if item_state in org.get_item_advice_states(self.cfg) and \
+               get_plone_group_id(org_uid, 'advisers') in user_plone_groups:
+                return True
+        return False
+
     security.declarePublic('mayCorrect')
 
     def mayCorrect(self, destinationState=None):
@@ -287,16 +304,41 @@ class MeetingItemWorkflowConditions(object):
         res = False
         meeting = self.context.getMeeting()
         if not meeting or (meeting and meeting.queryState() != 'closed'):
-            if _checkPermission(ReviewPortalContent, self.context):
-                res = True
+            # when item is validated, we may eventually send back to last validation state
+            item_state = self.context.queryState()
+            if item_state == 'validated':
+                last_val_state = self._getLastValidationState()
+                if destinationState == last_val_state:
+                    # MeetingManager probably
+                    if _checkPermission(ReviewPortalContent, self.context):
+                        res = True
+                    # manage the reviewers_take_back_validated_item WFAdaptation
+                    elif 'reviewers_take_back_validated_item' in self.cfg.getWorkflowAdaptations():
+                        # is current user member of last validation level?
+                        suffix = self.cfg.getItemWFValidationLevels(state=last_val_state, data='suffix')
+                        res = self._groupIsNotEmpty(suffix, user_id=api.user.get_current().id)
+            # using the 'waiting_advices_from_last_validation_level' WFAdaptations, we may only correct
+            # to the last validation level
+            # a member of last validation level may trigger the transition to last level
+            # and extra transitions out of validation transitions
+            elif item_state.endswith('_waiting_advices') and \
+                    'waiting_advices_from_last_validation_level' in self.cfg.getWorkflowAdaptations():
+                last_val_state = self._getLastValidationState()
+                item_validation_states = self.cfg.getItemWFValidationLevels(data='state', only_enabled=True)
+                if destinationState == last_val_state or destinationState not in item_validation_states:
+                    # bypass for Manager
+                    if _checkPermission(ReviewPortalContent, self.context):
+                        res = True
+                    else:
+                        # is current user member of last validation level?
+                        suffix = self.cfg.getItemWFValidationLevels(state=last_val_state, data='suffix')
+                        res = self._groupIsNotEmpty(suffix, user_id=api.user.get_current().id)
+                        # if not, maybe it is an adviser able to give an advice?
+                        if not res:
+                            # get advisers that are able to trigger transition
+                            res = self._currentUserIsAdviserAbleToChangeItemStateTo(destinationState)
             else:
-                # manage the reviewers_take_back_validated_item WFAdaptation
-                if 'reviewers_take_back_validated_item' in self.cfg.getWorkflowAdaptations() and \
-                   self.context.queryState() == 'validated':
-                    # is current user member of last validation level?
-                    last_val_state = self._getLastValidationState()
-                    level = self.cfg.getItemWFValidationLevels(state=last_val_state)
-                    res = self._groupIsNotEmpty(level['suffix'], user_id=api.user.get_current().id)
+                res = _checkPermission(ReviewPortalContent, self.context)
         return res
 
     security.declarePublic('mayBackToMeeting')
@@ -419,23 +461,18 @@ class MeetingItemWorkflowConditions(object):
                                       if tr.startswith('wait_advices_from')][0]
         return itemWF.transitions[waiting_advices_transition].new_state_id
 
-    security.declarePublic('mayWait_advices_from_itemcreated')
+    security.declarePublic('mayWait_advices_from')
 
-    def mayWait_advices_from_itemcreated(self):
+    def mayWait_advices_from(self, fromState=None):
         """ """
-        return self._mayWaitAdvices(self._getWaitingAdvicesStateFrom('itemcreated'))
-
-    security.declarePublic('mayWait_advices_from_proposed')
-
-    def mayWait_advices_from_proposed(self):
-        """ """
-        return self._mayWaitAdvices(self._getWaitingAdvicesStateFrom('proposed'))
-
-    security.declarePublic('mayWait_advices_from_prevalidated')
-
-    def mayWait_advices_from_prevalidated(self):
-        """ """
-        return self._mayWaitAdvices(self._getWaitingAdvicesStateFrom('prevalidated'))
+        # when using the 'waiting_advices_from_last_validation_level' WFAdaptation
+        # only last validation level may ask advices
+        res = True
+        if 'waiting_advices_from_last_validation_level' in self.cfg.getWorkflowAdaptations():
+            last_val_state = self._getLastValidationState()
+            if self.context.queryState() != last_val_state:
+                res = False
+        return res and self._mayWaitAdvices(self._getWaitingAdvicesStateFrom(fromState))
 
     security.declarePublic('mayAccept_out_of_meeting')
 
@@ -472,6 +509,17 @@ class MeetingItemWorkflowActions(object):
 
     def __init__(self, item):
         self.context = item
+        self.tool = api.portal.get_tool('portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(item)
+
+    def _getCustomActionName(self, transitionId):
+        """ """
+        action = None
+        if transitionId in self.cfg.getItemWFValidationLevels(data='leading_transition', only_enabled=True):
+            action = 'doProposeToNextValidationLevel'
+        elif transitionId.startswith('wait_advices_from'):
+            action = 'doWait_advices_from'
+        return action
 
     security.declarePrivate('doActivate')
 
@@ -566,9 +614,7 @@ class MeetingItemWorkflowActions(object):
     def doAccept_out_of_meeting(self, stateChange):
         """Duplicate item to validated if WFAdaptation
            'accepted_out_of_meeting_and_duplicated' is used."""
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self.context)
-        if 'accepted_out_of_meeting_and_duplicated' in cfg.getWorkflowAdaptations():
+        if 'accepted_out_of_meeting_and_duplicated' in self.cfg.getWorkflowAdaptations():
             self._duplicateAndValidate(cloneEventAction='create_from_accepted_out_of_meeting')
 
     security.declarePrivate('doAccept_out_of_meeting_emergency')
@@ -576,9 +622,7 @@ class MeetingItemWorkflowActions(object):
     def doAccept_out_of_meeting_emergency(self, stateChange):
         """Duplicate item to validated if WFAdaptation
            'accepted_out_of_meeting_and_duplicated' is used."""
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self.context)
-        if 'accepted_out_of_meeting_emergency_and_duplicated' in cfg.getWorkflowAdaptations():
+        if 'accepted_out_of_meeting_emergency_and_duplicated' in self.cfg.getWorkflowAdaptations():
             self._duplicateAndValidate(cloneEventAction='create_from_accepted_out_of_meeting_emergency')
 
     security.declarePrivate('doAccept')
@@ -599,10 +643,8 @@ class MeetingItemWorkflowActions(object):
     security.declarePrivate('doRemove')
 
     def doRemove(self, stateChange):
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self.context)
         # duplicate item if necessary
-        if 'removed_and_duplicated' in cfg.getWorkflowAdaptations():
+        if 'removed_and_duplicated' in self.cfg.getWorkflowAdaptations():
             creator = self.context.Creator()
             # We create a copy in the initial item state, in the folder of creator.
             self.context.clone(copyAnnexes=True,
@@ -623,14 +665,12 @@ class MeetingItemWorkflowActions(object):
                                         inheritAdvices=True)
         # set clonedItem to state 'validated'
         wfTool = api.portal.get_tool('portal_workflow')
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self.context)
         wf_comment = _('wf_transition_triggered_by_application')
         with api.env.adopt_roles(roles=['Manager']):
             # trigger transitions until 'validated', aka one step before 'presented'
             # set a special value in the REQUEST so guards may use it if necessary
             self.context.REQUEST.set('duplicating_and_validating_item', True)
-            for tr in cfg.getTransitionsForPresentingAnItem()[0:-1]:
+            for tr in self.cfg.getTransitionsForPresentingAnItem()[0:-1]:
                 wfTool.doActionFor(clonedItem, tr, comment=wf_comment)
             self.context.REQUEST.set('duplicating_and_validating_item', False)
         return clonedItem
@@ -714,19 +754,9 @@ class MeetingItemWorkflowActions(object):
     def doGoTo_returned_to_proposing_group_prevalidated(self, stateChange):
         pass
 
-    security.declarePrivate('doWait_advices_from_itemcreated')
+    security.declarePrivate('doWait_advices_from')
 
-    def doWait_advices_from_itemcreated(self, stateChange):
-        pass
-
-    security.declarePrivate('doWait_advices_from_proposed')
-
-    def doWait_advices_from_proposed(self, stateChange):
-        pass
-
-    security.declarePrivate('doWait_advices_from_prevalidated')
-
-    def doWait_advices_from_prevalidated(self, stateChange):
+    def doWait_advices_from(self, stateChange):
         pass
 
 
