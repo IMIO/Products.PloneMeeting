@@ -29,6 +29,7 @@ Changelog
 - Display <table> with align="center" centered in the browser
 - Fix "html_pattern" parameter encoding in views.ItemDGHV.print_copy_groups()
 
+
 4.1rc7 (2019-07-19)
 -------------------
 
