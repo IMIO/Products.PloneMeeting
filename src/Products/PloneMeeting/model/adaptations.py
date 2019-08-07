@@ -937,10 +937,8 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
         elif wfAdaptation == 'only_creator_may_delete':
             wf = itemWorkflow
             for state in wf.states.values():
-                if 'MeetingMember' in state.permission_roles[DeleteObjects]:
-                    state.setPermission(DeleteObjects, 0, ['MeetingMember', 'Manager'])
-                else:
-                    state.setPermission(DeleteObjects, 0, ['Manager', ])
+                if state.id != wf.initial_state:
+                    state.setPermission(DeleteObjects, 0, ['Manager'])
 
         # "no_global_observation" means that during the whole decision process,
         # every proposing group will only be able to consult items and decisions
