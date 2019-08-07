@@ -31,6 +31,7 @@ from imio.actionspanel.browser.views import ActionsPanelView
 from imio.annex import utils as imio_annex_utils
 from imio.dashboard.browser.overrides import IDRenderCategoryView
 from imio.dashboard.interfaces import IContactsDashboard
+from imio.helpers.cache import get_cachekey_volatile
 from imio.history import utils as imio_history_utils
 from imio.history.browser.views import IHContentHistoryView
 from imio.history.browser.views import IHDocumentBylineViewlet
@@ -643,12 +644,10 @@ class MeetingActionsPanelView(BaseActionsPanelView):
         cfg = self.tool.getMeetingConfig(self.context)
         cfg_modified = cfg.modified()
         userGroups = self.tool.get_plone_groups_for_user()
-        invalidate_meeting_actions_panel_cache = False
-        if hasattr(self.context, 'invalidate_meeting_actions_panel_cache'):
-            invalidate_meeting_actions_panel_cache = True
-            delattr(self.context, 'invalidate_meeting_actions_panel_cache')
+        date = get_cachekey_volatile(
+            'Products.PloneMeeting.Meeting.UID.{0}'.format(self.context.UID()))
         return (self.context.UID(), self.context.modified(), self.context.getRawItems(), cfg_modified,
-                userGroups, invalidate_meeting_actions_panel_cache,
+                userGroups, date,
                 useIcons, showTransitions, appendTypeNameToTransitionLabel, showEdit,
                 showOwnDelete, showActions, showAddContent, showHistory, showHistoryLastEventHasComments,
                 showArrows, kwargs)

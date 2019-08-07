@@ -1113,7 +1113,8 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
                 item = brain.getObject()
                 item.reindexObject(idxs=['linkedMeetingDate', 'getPreferredMeetingDate'])
             # clean cache for "Products.PloneMeeting.vocabularies.meetingdatesvocabulary"
-            invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.meetingdatesvocabulary")
+            invalidate_cachekey_volatile_for(
+                "Products.PloneMeeting.vocabularies.meetingdatesvocabulary", get_again=True)
 
     security.declarePrivate('setFirstItemNumber')
 
@@ -1707,7 +1708,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         # update every items itemReference if needed
         self.updateItemReferences(check_needed=True)
         # invalidate last meeting modified
-        invalidate_cachekey_volatile_for('Products.PloneMeeting.Meeting.modified')
+        invalidate_cachekey_volatile_for('Products.PloneMeeting.Meeting.modified', get_again=True)
         # Call sub-product-specific behaviour
         self.adapted().onEdit(isCreated=True)
         self.reindexObject()
@@ -1747,10 +1748,8 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         self.updateLocalRoles()
         # Call sub-product-specific behaviour
         self.adapted().onEdit(isCreated=False)
-        # clean cache for "Products.PloneMeeting.vocabularies.meetingdatesvocabulary"
-        invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.meetingdatesvocabulary")
         # invalidate last meeting modified
-        invalidate_cachekey_volatile_for('Products.PloneMeeting.Meeting.modified')
+        invalidate_cachekey_volatile_for('Products.PloneMeeting.Meeting.modified', get_again=True)
 
     def updateLocalRoles(self, **kwargs):
         """Update various local roles."""

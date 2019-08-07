@@ -10,6 +10,10 @@ Changelog
 - Make self.tool and self.cfg available on MeetingWorkflowConditions/MeetingItemWorkflowConditions and
   MeetingWorkflowActions/MeetingItemWorkflowActions
 - Clear borg.localroles at the end of MeetingItem.updateLocalRoles
+- Use imio.helpers.cache.invalidate_cachekey_volatile_for 'get_again=True' parameter to make sure an invalidated date is get immediatelly to avoid
+  a subsequent async request to get it, leading to a write in the database.  This avoids ConflictErrors when cache is invalidated.
+  Moreover, replaced Meeting.invalidate_meeting_actions_panel_cache attribute by a volatile cachekey to avoid a write when viewing the meeting and
+  and item was modified, the attribute is stored by the actions_panel, leading to a write
 - Item validation workflow is now designed in the MeetingConfig.itemWFValidationLevels, tThis imply :
     - to no longer rely on MEETINGROLES and MEETINGREVIEWERS constants;
     - reviewer levels and mapping between review_state and organization suffix that manage the item is computed from the MeetingConfig;
