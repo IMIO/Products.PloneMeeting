@@ -141,8 +141,8 @@ def onItemTransition(item, event):
         event.transition, event.status, event.kwargs))
     # just reindex the entire object
     item.reindexObject()
-    # An item has ben modified
-    invalidate_cachekey_volatile_for('Products.PloneMeeting.MeetingItem.modified')
+    # An item has ben modified, use get_again for portlet_todo
+    invalidate_cachekey_volatile_for('Products.PloneMeeting.MeetingItem.modified', get_again=True)
 
 
 def onMeetingTransition(meeting, event):
@@ -160,8 +160,8 @@ def onMeetingTransition(meeting, event):
        (event.old_state.id not in beforeLateStates and event.new_state.id in beforeLateStates):
         meeting.updateItemReferences()
 
-    # invalidate last meeting modified
-    invalidate_cachekey_volatile_for('Products.PloneMeeting.Meeting.modified')
+    # invalidate last meeting modified, use get_again for async meetings term render
+    invalidate_cachekey_volatile_for('Products.PloneMeeting.Meeting.modified', get_again=True)
 
     # notify a MeetingAfterTransitionEvent for subplugins so we are sure
     # that it is called after PloneMeeting meeting transition
@@ -553,8 +553,8 @@ def onItemAdded(item, event):
     item.completeness_changes_history = PersistentList()
     # Add a place to store takenOverBy by review_state user id
     item.takenOverByInfos = PersistentMapping()
-    # An item has ben modified
-    invalidate_cachekey_volatile_for('Products.PloneMeeting.MeetingItem.modified')
+    # An item has ben modified, use get_again for portlet_todo
+    invalidate_cachekey_volatile_for('Products.PloneMeeting.MeetingItem.modified', get_again=True)
     # if element is in a MeetingConfig, we mark it with IConfigElement interface
     if item.isDefinedInTool():
         alsoProvides(item, IConfigElement)
@@ -591,8 +591,8 @@ def onItemModified(item, event):
                 item._at_creation_flag = True
                 item._renameAfterCreation(check_auto_id=False)
                 item._at_creation_flag = False
-    # An item has ben modified
-    invalidate_cachekey_volatile_for('Products.PloneMeeting.MeetingItem.modified')
+    # An item has ben modified, use get_again for portlet_todo
+    invalidate_cachekey_volatile_for('Products.PloneMeeting.MeetingItem.modified', get_again=True)
 
 
 def storeImagesLocallyDexterity(advice):
@@ -843,8 +843,8 @@ def onItemRemoved(item, event):
     # bypass this if we are actually removing the 'Plone Site'
     if event.object.meta_type == 'Plone Site':
         return
-    # An item has ben modified
-    invalidate_cachekey_volatile_for('Products.PloneMeeting.MeetingItem.modified')
+    # An item has ben modified, use get_again for portlet_todo
+    invalidate_cachekey_volatile_for('Products.PloneMeeting.MeetingItem.modified', get_again=True)
 
 
 def onMeetingAdded(meeting, event):
@@ -858,7 +858,9 @@ def onMeetingAdded(meeting, event):
     userId = api.user.get_current().getId()
     meeting.manage_addLocalRoles(userId, ('Owner',))
     # clean cache for "Products.PloneMeeting.vocabularies.meetingdatesvocabulary"
-    invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.meetingdatesvocabulary")
+    # use get_again for async meetings term render
+    invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.meetingdatesvocabulary", get_again=True)
+    invalidate_cachekey_volatile_for('Products.PloneMeeting.Meeting.modified', get_again=True)
 
 
 def onMeetingRemoved(meeting, event):
@@ -892,8 +894,9 @@ def onMeetingRemoved(meeting, event):
     for item_to_reindex in items_to_reindex:
         item_to_reindex.reindexObject(idxs=['getPreferredMeeting', 'getPreferredMeetingDate'])
     # clean cache for "Products.PloneMeeting.vocabularies.meetingdatesvocabulary"
-    invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.meetingdatesvocabulary")
-    invalidate_cachekey_volatile_for('Products.PloneMeeting.Meeting.modified')
+    # use get_again for async meetings term render
+    invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.meetingdatesvocabulary", get_again=True)
+    invalidate_cachekey_volatile_for('Products.PloneMeeting.Meeting.modified', get_again=True)
 
 
 def _notifyMeetingConfigModified(child):

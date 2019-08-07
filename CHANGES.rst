@@ -10,6 +10,8 @@ Changelog
 - Make self.tool and self.cfg available on MeetingWorkflowConditions/MeetingItemWorkflowConditions and
   MeetingWorkflowActions/MeetingItemWorkflowActions
 - Clear borg.localroles at the end of MeetingItem.updateLocalRoles
+- Use imio.helpers.cache.invalidate_cachekey_volatile_for 'get_again=True' parameter to make sure an invalidated date is get immediatelly to avoid
+  a subsequent async request to get it, leading to a write in the database.  This avoids ConflictErrors when cache is invalidated
 
 4.1rc8 (2019-08-02)
 -------------------
