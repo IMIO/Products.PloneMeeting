@@ -111,6 +111,11 @@ MEETING_GROUP_SUFFIXES = [
     {'fct_title': u'observers', 'fct_id': u'observers', 'fct_orgs': []},
     {'fct_title': u'prereviewers', 'fct_id': u'prereviewers', 'fct_orgs': []},
     {'fct_title': u'reviewers', 'fct_id': u'reviewers', 'fct_orgs': []},
+    {'fct_title': u'level1reviewers', 'fct_id': u'level1reviewers', 'fct_orgs': []},
+    {'fct_title': u'level2reviewers', 'fct_id': u'level2reviewers', 'fct_orgs': []},
+    {'fct_title': u'level3reviewers', 'fct_id': u'level3reviewers', 'fct_orgs': []},
+    {'fct_title': u'level4reviewers', 'fct_id': u'level4reviewers', 'fct_orgs': []},
+    {'fct_title': u'level5reviewers', 'fct_id': u'level5reviewers', 'fct_orgs': []},
 ]
 
 # this is made to manage specific suffixes for a particular profile
