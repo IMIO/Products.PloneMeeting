@@ -285,14 +285,21 @@ class MeetingItemWorkflowConditions(object):
            self.context.getMeeting().queryState() in ('decided', 'decisions_published', 'closed'):
             return True
 
-    def _currentUserIsAdviserInCurrentState(self):
-        ''' '''
+    def _currentUserIsAdviserAbleToSendItemBack(self):
+        '''Is current user an adviser able to send an item 'waiting_advices' back to other states?
+           To do so :
+           - every advices that should be given have to be given;
+           - user must be adviser for advice;
+           - if advice not given, user must be able to evaluate completeness and item must be incomplete.'''
         item_state = self.context.queryState()
         user_plone_groups = self.tool.get_plone_groups_for_user()
         for org_uid in self.context.adviceIndex:
             org = get_organization(org_uid)
             # org can give advice in current state and member is adviser for it
             if item_state in org.get_item_advice_states(self.cfg) and \
+               (self.context._advice_is_given(org_uid) or
+                (self.context.adapted().mayEvaluateCompleteness() and
+                 not self.context.adapted()._is_complete())) and \
                get_plone_group_id(org_uid, 'advisers') in user_plone_groups:
                 return True
         return False
@@ -306,6 +313,7 @@ class MeetingItemWorkflowConditions(object):
         if not meeting or (meeting and meeting.queryState() != 'closed'):
             # when item is validated, we may eventually send back to last validation state
             item_state = self.context.queryState()
+            wfas = self.cfg.getWorkflowAdaptations()
             if item_state == 'validated':
                 last_val_state = self._getLastValidationState()
                 if destinationState == last_val_state:
@@ -317,12 +325,14 @@ class MeetingItemWorkflowConditions(object):
                         # is current user member of last validation level?
                         suffix = self.cfg.getItemWFValidationLevels(state=last_val_state, data='suffix')
                         res = self._groupIsNotEmpty(suffix, user_id=api.user.get_current().id)
-            # using the 'waiting_advices_from_last_validation_level' WFAdaptations, we may only correct
-            # to the last validation level
+            # using a 'waiting_advices_from_last_val_level_XXX' WFAdaptation,
+            # we may only correct to the last validation level
             # a member of last validation level may trigger the transition to last level
             # and extra transitions out of validation transitions
             elif item_state.endswith('_waiting_advices') and \
-                    'waiting_advices_from_last_validation_level' in self.cfg.getWorkflowAdaptations():
+                    'waiting_advices_from_last_val_level_only_adviser_send_back' in wfas or \
+                    'waiting_advices_from_last_val_level_only_proposing_group_send_back' in wfas or \
+                    'waiting_advices_from_last_val_level_adviser_and_proposing_group_send_back' in wfas:
                 last_val_state = self._getLastValidationState()
                 item_validation_states = self.cfg.getItemWFValidationLevels(data='state', only_enabled=True)
                 if destinationState == last_val_state or destinationState not in item_validation_states:
@@ -330,13 +340,17 @@ class MeetingItemWorkflowConditions(object):
                     if _checkPermission(ReviewPortalContent, self.context):
                         res = True
                     else:
-                        # is current user member of last validation level?
-                        suffix = self.cfg.getItemWFValidationLevels(state=last_val_state, data='suffix')
-                        res = self._groupIsNotEmpty(suffix, user_id=api.user.get_current().id)
+                        if 'waiting_advices_from_last_val_level_adviser_and_proposing_group_send_back' in wfas or \
+                           'waiting_advices_from_last_val_level_only_proposing_group_send_back' in wfas:
+                            # is current user member of last validation level?
+                            suffix = self.cfg.getItemWFValidationLevels(state=last_val_state, data='suffix')
+                            res = self._groupIsNotEmpty(suffix, user_id=api.user.get_current().id)
                         # if not, maybe it is an adviser able to give an advice?
                         if not res:
-                            # get advisers that are able to trigger transition
-                            res = self._currentUserIsAdviserInCurrentState()
+                            if 'waiting_advices_from_last_val_level_adviser_and_proposing_group_send_back' in wfas or \
+                               'waiting_advices_from_last_val_level_only_adviser_send_back' in wfas:
+                                # get advisers that are able to trigger transition
+                                res = self._currentUserIsAdviserAbleToSendItemBack()
             else:
                 res = _checkPermission(ReviewPortalContent, self.context)
         return res
@@ -465,10 +479,12 @@ class MeetingItemWorkflowConditions(object):
 
     def mayWait_advices_from(self, fromState=None):
         """ """
-        # when using the 'waiting_advices_from_last_validation_level' WFAdaptation
+        # when using the 'waiting_advices_from_last_val_level_XXX' WFAdaptation
         # only last validation level may ask advices
         res = True
-        if 'waiting_advices_from_last_validation_level' in self.cfg.getWorkflowAdaptations():
+        last_val_levels_wfas = [wfa for wfa in self.cfg.getWorkflowAdaptations()
+                                if wfa.startswith('waiting_advices_from_last_val_level')]
+        if last_val_levels_wfas:
             last_val_state = self._getLastValidationState()
             if self.context.queryState() != last_val_state:
                 res = False
@@ -1625,10 +1641,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        # Value could be '_none_' if it was displayed as listbox or None if
-        # it was displayed as radio buttons...  Category use 'flex' format
-        if (not cfg.getUseGroupsAsCategories()) and \
-           (value == '_none_' or not value):
+        # check if value is among categories defined in the MeetingConfig
+        if not cfg.getUseGroupsAsCategories() and value not in cfg.categories.objectIds():
             return translate('category_required', domain='PloneMeeting', context=self.REQUEST)
 
     security.declarePrivate('validate_itemAssembly')

@@ -1071,7 +1071,7 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
         # It is made to isolate an item in a state where it is no more editable but some advices may be given
         # if we have several 'xxx_waiting_advices' states added,
         # it is prefixed with originState1__or__originState2 like 'proposed__or__prevalidated_waiting_advices'
-        elif wfAdaptation in ('waiting_advices', 'waiting_advices_from_last_validation_level'):
+        elif wfAdaptation.startswith('waiting_advices'):
             wf = itemWorkflow
             # compute edit permissions existing on MeetingItem schema
             from Products.PloneMeeting.MeetingItem import MeetingItem
