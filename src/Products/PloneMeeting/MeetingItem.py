@@ -285,7 +285,7 @@ class MeetingItemWorkflowConditions(object):
            self.context.getMeeting().queryState() in ('decided', 'decisions_published', 'closed'):
             return True
 
-    def _currentUserIsAdviserAbleToChangeItemStateTo(self, destinationState):
+    def _currentUserIsAdviserInCurrentState(self):
         ''' '''
         item_state = self.context.queryState()
         user_plone_groups = self.tool.get_plone_groups_for_user()
@@ -336,7 +336,7 @@ class MeetingItemWorkflowConditions(object):
                         # if not, maybe it is an adviser able to give an advice?
                         if not res:
                             # get advisers that are able to trigger transition
-                            res = self._currentUserIsAdviserAbleToChangeItemStateTo(destinationState)
+                            res = self._currentUserIsAdviserInCurrentState()
             else:
                 res = _checkPermission(ReviewPortalContent, self.context)
         return res
