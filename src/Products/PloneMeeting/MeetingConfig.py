@@ -2482,7 +2482,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                      'return_to_proposing_group_with_all_validations',
                      'decide_item_when_back_to_meeting_from_returned_to_proposing_group',
                      'hide_decisions_when_under_writing',
-                     'waiting_advices',
                      'waiting_advices_from_last_val_level_only_adviser_send_back',
                      'waiting_advices_from_last_val_level_only_proposing_group_send_back',
                      'waiting_advices_from_last_val_level_adviser_and_proposing_group_send_back',
