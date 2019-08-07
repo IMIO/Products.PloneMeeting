@@ -9,6 +9,7 @@ Changelog
   getting group members thru the acl_users.source_groups._group_principal_map stored data
 - Make self.tool and self.cfg available on MeetingWorkflowConditions/MeetingItemWorkflowConditions and
   MeetingWorkflowActions/MeetingItemWorkflowActions
+- Clear borg.localroles at the end of MeetingItem.updateLocalRoles
 
 4.1rc8 (2019-08-02)
 -------------------

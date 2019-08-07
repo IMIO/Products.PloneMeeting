@@ -5100,8 +5100,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         self.updateLocalRoles(isCreated=True,
                               inheritedAdviserUids=kwargs.get('inheritedAdviserUids', []))
         # clean borg.localroles caching
-        cleanMemoize(self,
-                     prefixes=['borg.localrole.workspace.checkLocalRolesAllowed'])
+        cleanMemoize(self, prefixes=['borg.localrole.workspace.checkLocalRolesAllowed'])
         # Apply potential transformations to richtext fields
         transformAllRichTextFields(self)
         # Make sure we have 'text/html' for every Rich fields
@@ -5241,6 +5240,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             updateAnnexesAccess(advice)
         # manage automatically given permissions
         _addManagedPermissions(self)
+        # clean borg.localroles caching
+        cleanMemoize(self, prefixes=['borg.localrole.workspace.checkLocalRolesAllowed'])
         # notify that localRoles have been updated
         notify(ItemLocalRolesUpdatedEvent(self, old_local_roles))
         # reindex relevant indexes
