@@ -2851,6 +2851,25 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'tal_condition': "python: cfg.getEnableLabels()",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
+                # Unread to follow
+                ('searchitemstofollow', {
+                    'subFolderId': 'searches_items',
+                    'active': True,
+                    'query':
+                    [
+                        {u'i': u'labels',
+                         u'o': u'plone.app.querystring.operation.selection.is',
+                         u'v': [u'suivi']},
+                        {'i': 'CompoundCriterion',
+                         'o': 'plone.app.querystring.operation.compound.is',
+                         'v': 'items-with-personal-labels'},
+                    ],
+                    'sort_on': u'modified',
+                    'sort_reversed': True,
+                    'showNumberOfItems': False,
+                    'tal_condition': "python: cfg.getEnableLabels()",
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
                 # Corrected items
                 ('searchcorrecteditems', {
                     'subFolderId': 'searches_items',

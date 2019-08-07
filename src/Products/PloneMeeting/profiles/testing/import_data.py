@@ -335,6 +335,7 @@ meetingPma.defaultLabels = {
     'label': {'color': 'blue', 'label_id': 'label', 'by_user': False, 'title': 'Label'},
     'personal-label': {'color': 'yellow', 'label_id': 'personal-label', 'by_user': True, 'title': 'Personal label'},
     'lu': {'color': 'green', 'label_id': 'lu', 'by_user': True, 'title': 'Read'},
+    'suivi': {'color': 'yellow', 'label_id': 'suivi', 'by_user': True, 'title': 'Suivi'},
 }
 meetingPma.useAdvices = True
 meetingPma.selectableAdvisers = ['developers', 'vendors']

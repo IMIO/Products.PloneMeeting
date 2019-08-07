@@ -1227,7 +1227,7 @@ def get_context_with_request(context):
             referer = referer.split('?_authenticator=')[0]
             try:
                 context = portal.unrestrictedTraverse(referer)
-            except KeyError:
+            except (KeyError, AttributeError):
                 return None
             if not hasattr(context, 'portal_type') or \
                     not (context.portal_type == 'DashboardCollection' or context.portal_type.startswith('Meeting')):
