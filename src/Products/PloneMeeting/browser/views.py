@@ -1425,7 +1425,7 @@ class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV)
         :return: Preferred meeting date
         """
         preferred_meeting_uid = self.context.getPreferredMeeting()
-        if preferred_meeting_uid == 'whatever':
+        if preferred_meeting_uid == 'whatever':  # no need to do a query
             return noMeetingMarker
         catalog = api.portal.get_tool('portal_catalog')
         brains = catalog.unrestrictedSearchResults(UID=preferred_meeting_uid)
@@ -1434,8 +1434,7 @@ class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV)
                 return brains[0].getObject().getDate()
             tool = api.portal.get_tool('portal_plonemeeting')
             return tool.formatMeetingDate(brains[0])
-        # catalog query was empty, return noMeetingMarker then
-        return noMeetingMarker
+        return noMeetingMarker  # catalog query was empty
 
     def print_in_and_out_attendees(
             self,
