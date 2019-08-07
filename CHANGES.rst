@@ -9,6 +9,7 @@ Changelog
   getting group members thru the acl_users.source_groups._group_principal_map stored data
 - Make self.tool and self.cfg available on MeetingWorkflowConditions/MeetingItemWorkflowConditions and
   MeetingWorkflowActions/MeetingItemWorkflowActions
+- Clear borg.localroles at the end of MeetingItem.updateLocalRoles
 - Item validation workflow is now designed in the MeetingConfig.itemWFValidationLevels, tThis imply :
     - to no longer rely on MEETINGROLES and MEETINGREVIEWERS constants;
     - reviewer levels and mapping between review_state and organization suffix that manage the item is computed from the MeetingConfig;
