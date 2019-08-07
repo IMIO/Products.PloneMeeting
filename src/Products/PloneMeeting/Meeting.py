@@ -115,6 +115,8 @@ class MeetingWorkflowConditions(object):
 
     def __init__(self, meeting):
         self.context = meeting
+        self.tool = api.portal.get_tool('portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(self.context)
 
     def _decisionsAreArchivable(self):
         '''Returns True all the decisions may be archived.'''
@@ -127,9 +129,7 @@ class MeetingWorkflowConditions(object):
 
     def mayAcceptItems(self):
         if _checkPermission(ReviewPortalContent, self.context):
-            tool = api.portal.get_tool('portal_plonemeeting')
-            cfg = tool.getMeetingConfig(self.context)
-            if self.context.queryState() in cfg.adapted().getMeetingStatesAcceptingItems():
+            if self.context.queryState() in self.cfg.adapted().getMeetingStatesAcceptingItems():
                 return True
 
     security.declarePublic('mayPublish')
@@ -184,10 +184,8 @@ class MeetingWorkflowConditions(object):
 
         meeting_state = self.context.queryState()
         if meeting_state == 'closed':
-            tool = api.portal.get_tool('portal_plonemeeting')
-            cfg = tool.getMeetingConfig(self.context)
-            if tool.isManager(self.context, realManagers=True) or \
-               cfg.getMeetingManagerMayCorrectClosedMeeting():
+            if self.tool.isManager(self.context, realManagers=True) or \
+               self.cfg.getMeetingManagerMayCorrectClosedMeeting():
                 return True
             else:
                 return No(_('closed_meeting_not_correctable_by_config'))
@@ -232,6 +230,8 @@ class MeetingWorkflowActions(object):
 
     def __init__(self, meeting):
         self.context = meeting
+        self.tool = api.portal.get_tool('portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(self.context)
 
     security.declarePrivate('initSequenceNumber')
 
@@ -240,20 +240,19 @@ class MeetingWorkflowActions(object):
            adaptations), we attribute him a sequence number.'''
         if self.context.getMeetingNumber() != -1:
             return  # Already done.
-        cfg = self.context.portal_plonemeeting.getMeetingConfig(self.context)
-        if cfg.getYearlyInitMeetingNumber():
+        if self.cfg.getYearlyInitMeetingNumber():
             # I must reinit the meeting number to 0 if it is the first
             # meeting of this year.
             prev = self.context.getPreviousMeeting()
             if prev and \
                (prev.getDate().year() != self.context.getDate().year()):
                 self.context.setMeetingNumber(1)
-                cfg.setLastMeetingNumber(1)
+                self.cfg.setLastMeetingNumber(1)
                 return
         # If we are here, we must simply increment the meeting number.
-        meetingNumber = cfg.getLastMeetingNumber() + 1
+        meetingNumber = self.cfg.getLastMeetingNumber() + 1
         self.context.setMeetingNumber(meetingNumber)
-        cfg.setLastMeetingNumber(meetingNumber)
+        self.cfg.setLastMeetingNumber(meetingNumber)
 
     security.declarePrivate('doPublish')
 

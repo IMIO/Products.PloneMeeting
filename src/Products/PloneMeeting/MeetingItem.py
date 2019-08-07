@@ -30,7 +30,6 @@ from copy import deepcopy
 from DateTime import DateTime
 from datetime import datetime
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
-from imio.helpers.content import uuidsToObjects
 from imio.history.utils import getLastWFAction
 from imio.prettylink.interfaces import IPrettyLink
 from natsort import realsorted
@@ -168,20 +167,22 @@ class MeetingItemWorkflowConditions(object):
 
     def __init__(self, item):
         self.context = item
+        self.tool = api.portal.get_tool('portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(self.context)
 
     def _publishedObjectIsMeeting(self):
         '''Is the object currently published in Plone a Meeting ?'''
         obj = getCurrentMeetingObject(self.context)
         return isinstance(obj, Meeting)
 
-    def _groupIsNotEmpty(self, suffix):
+    def _groupIsNotEmpty(self, suffix, user_id=None):
         '''Is there any user in the group?'''
         group_uid = self.context.getProposingGroup()
         portal = api.portal.get()
         plone_group_id = get_plone_group_id(group_uid, suffix)
         # for performance reasons, check directly in source_groups stored data
-        group_users = portal.acl_users.source_groups._group_principal_map[plone_group_id]
-        return len(group_users)
+        group_users = portal.acl_users.source_groups._group_principal_map.get(plone_group_id, [])
+        return len(group_users) and not user_id or user_id in group_users
 
     security.declarePublic('mayPropose')
 
@@ -216,9 +217,8 @@ class MeetingItemWorkflowConditions(object):
         # only MeetingManagers may present an item, the 'Review portal content'
         # permission is not enough as MeetingReviewer may have the 'Review portal content'
         # when using the 'reviewers_take_back_validated_item' wfAdaptation
-        tool = api.portal.get_tool('portal_plonemeeting')
         if not _checkPermission(ReviewPortalContent, self.context) or \
-           not tool.isManager(self.context):
+           not self.tool.isManager(self.context):
             return False
         # We may present the item if Plone currently publishes a meeting.
         # Indeed, an item may only be presented within a meeting.
@@ -289,9 +289,8 @@ class MeetingItemWorkflowConditions(object):
         """Specific guard for the 'return_to_proposing_group' wfAdaptation.
            As we have only one guard_expr for potentially several transitions departing
            from the 'returned_to_proposing_group' state, we receive the p_transitionName."""
-        tool = api.portal.get_tool('portal_plonemeeting')
         if not _checkPermission(ReviewPortalContent, self.context) and not \
-           tool.isManager(self.context):
+           self.tool.isManager(self.context):
             return
         # get the linked meeting
         meeting = self.context.getMeeting()
@@ -368,15 +367,13 @@ class MeetingItemWorkflowConditions(object):
 
     def _hasAdvicesToGive(self, destination_state):
         """Check if there are advice to give in p_destination_state."""
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self.context)
         hasAdvicesToGive = False
         for org_uid, adviceInfo in self.context.adviceIndex.items():
             # only consider advices to give
             if adviceInfo['type'] not in (NOT_GIVEN_ADVICE_VALUE, 'asked_again', ):
                 continue
             org = get_organization(org_uid)
-            adviceStates = org.get_item_advice_states(cfg)
+            adviceStates = org.get_item_advice_states(self.cfg)
             if destination_state in adviceStates:
                 hasAdvicesToGive = True
                 break
@@ -430,8 +427,7 @@ class MeetingItemWorkflowConditions(object):
         """ """
         res = False
         if self.context.getIsAcceptableOutOfMeeting():
-            tool = api.portal.get_tool('portal_plonemeeting')
-            if _checkPermission(ReviewPortalContent, self.context) and tool.isManager(self.context):
+            if _checkPermission(ReviewPortalContent, self.context) and self.tool.isManager(self.context):
                 res = True
         return res
 
@@ -442,8 +438,7 @@ class MeetingItemWorkflowConditions(object):
         res = False
         emergency = self.context.getEmergency()
         if emergency == 'emergency_accepted':
-            tool = api.portal.get_tool('portal_plonemeeting')
-            if _checkPermission(ReviewPortalContent, self.context) and tool.isManager(self.context):
+            if _checkPermission(ReviewPortalContent, self.context) and self.tool.isManager(self.context):
                 res = True
         # if at least emergency is asked, then return a No message
         elif emergency != 'no_emergency':
@@ -461,6 +456,8 @@ class MeetingItemWorkflowActions(object):
 
     def __init__(self, item):
         self.context = item
+        self.tool = api.portal.get_tool('portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(self.context)
 
     security.declarePrivate('doActivate')
 
@@ -558,9 +555,7 @@ class MeetingItemWorkflowActions(object):
     def doAccept_out_of_meeting(self, stateChange):
         """Duplicate item to validated if WFAdaptation
            'accepted_out_of_meeting_and_duplicated' is used."""
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self.context)
-        if 'accepted_out_of_meeting_and_duplicated' in cfg.getWorkflowAdaptations():
+        if 'accepted_out_of_meeting_and_duplicated' in self.cfg.getWorkflowAdaptations():
             self._duplicateAndValidate(cloneEventAction='create_from_accepted_out_of_meeting')
 
     security.declarePrivate('doAccept_out_of_meeting_emergency')
@@ -568,9 +563,7 @@ class MeetingItemWorkflowActions(object):
     def doAccept_out_of_meeting_emergency(self, stateChange):
         """Duplicate item to validated if WFAdaptation
            'accepted_out_of_meeting_and_duplicated' is used."""
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self.context)
-        if 'accepted_out_of_meeting_emergency_and_duplicated' in cfg.getWorkflowAdaptations():
+        if 'accepted_out_of_meeting_emergency_and_duplicated' in self.cfg.getWorkflowAdaptations():
             self._duplicateAndValidate(cloneEventAction='create_from_accepted_out_of_meeting_emergency')
 
     security.declarePrivate('doAccept')
@@ -591,10 +584,8 @@ class MeetingItemWorkflowActions(object):
     security.declarePrivate('doRemove')
 
     def doRemove(self, stateChange):
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self.context)
         # duplicate item if necessary
-        if 'removed_and_duplicated' in cfg.getWorkflowAdaptations():
+        if 'removed_and_duplicated' in self.cfg.getWorkflowAdaptations():
             creator = self.context.Creator()
             # We create a copy in the initial item state, in the folder of creator.
             self.context.clone(copyAnnexes=True,
@@ -615,14 +606,12 @@ class MeetingItemWorkflowActions(object):
                                         inheritAdvices=True)
         # set clonedItem to state 'validated'
         wfTool = api.portal.get_tool('portal_workflow')
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self.context)
         wf_comment = _('wf_transition_triggered_by_application')
         with api.env.adopt_roles(roles=['Manager']):
             # trigger transitions until 'validated', aka one step before 'presented'
             # set a special value in the REQUEST so guards may use it if necessary
             self.context.REQUEST.set('duplicating_and_validating_item', True)
-            for tr in cfg.getTransitionsForPresentingAnItem()[0:-1]:
+            for tr in self.cfg.getTransitionsForPresentingAnItem()[0:-1]:
                 wfTool.doActionFor(clonedItem, tr, comment=wf_comment)
             self.context.REQUEST.set('duplicating_and_validating_item', False)
         return clonedItem
@@ -2695,7 +2684,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     u'{0} ({1})'.format(get_organization(current_proposingGroupUid).get_full_title(),
                                         get_organization(current_groupInChargeUid).get_full_title()))
         return res.sortedByValue()
-
 
     security.declarePrivate('listItemTags')
 
