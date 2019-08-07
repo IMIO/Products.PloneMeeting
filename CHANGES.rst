@@ -7,6 +7,7 @@ Changelog
 
 - Optimized speed of MeetingItem.MeetingItemWorkflowConditions._groupIsNotEmpty, by not using portal_groups and getGroupMemberIds but directly
   getting group members thru the acl_users.source_groups._group_principal_map stored data
+- Make self.tool and self.cfg available in MeetingItemWorkflowConditions and MeetingItemWorkflowActions
 
 4.1rc8 (2019-08-02)
 -------------------
