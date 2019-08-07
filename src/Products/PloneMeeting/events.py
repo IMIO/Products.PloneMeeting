@@ -563,11 +563,12 @@ def onItemAdded(item, event):
 
 
 def onItemModified(item, event):
-    '''Called when an item is modified so we can invalidate caching on linked meeting.'''
+    '''Called when an item is modified.'''
     meeting = item.getMeeting()
     if meeting:
         # invalidate meeting actions panel
-        meeting.invalidate_meeting_actions_panel_cache = True
+        invalidate_cachekey_volatile_for(
+            'Products.PloneMeeting.Meeting.UID.{0}'.format(meeting.UID()), get_again=True)
         # update item references if necessary
         meeting.updateItemReferences(startNumber=item.getItemNumber(), check_needed=True)
         # invalidate Meeting.getItemInsertOrder caching
