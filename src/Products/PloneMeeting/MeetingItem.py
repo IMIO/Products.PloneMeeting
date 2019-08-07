@@ -168,11 +168,7 @@ class MeetingItemWorkflowConditions(object):
     def __init__(self, item):
         self.context = item
         self.tool = api.portal.get_tool('portal_plonemeeting')
-<<<<<<< HEAD
-        self.cfg = self.tool.getMeetingConfig(item)
-=======
         self.cfg = self.tool.getMeetingConfig(self.context)
->>>>>>> origin/master
 
     def _publishedObjectIsMeeting(self):
         '''Is the object currently published in Plone a Meeting ?'''
@@ -185,7 +181,6 @@ class MeetingItemWorkflowConditions(object):
         portal = api.portal.get()
         plone_group_id = get_plone_group_id(group_uid, suffix)
         # for performance reasons, check directly in source_groups stored data
-<<<<<<< HEAD
         group_users = portal.acl_users.source_groups._group_principal_map.get(plone_group_id, [])
         return len(group_users) and not user_id or user_id in group_users
 
@@ -201,21 +196,6 @@ class MeetingItemWorkflowConditions(object):
                 res = level['state']
                 break
         return res
-=======
-        group_users = portal.acl_users.source_groups._group_principal_map[plone_group_id]
-        return len(group_users)
-
-    security.declarePublic('mayPropose')
-
-    def mayPropose(self):
-        '''We may propose an item if the workflow permits it and if the
-           necessary fields are filled.  In the case an item is transferred from
-           another meetingConfig, the category could not be defined.'''
-        if not self.context.getCategory(theObject=True):
-            return No(_('required_category_ko'))
-        if _checkPermission(ReviewPortalContent, self.context):
-            return True
->>>>>>> origin/master
 
     security.declarePublic('mayProposeToNextValidationLevel')
 
@@ -254,13 +234,7 @@ class MeetingItemWorkflowConditions(object):
         # could miss it's category
         if not self.context.getCategory(theObject=True):
             return No(_('required_category_ko'))
-<<<<<<< HEAD
         # only MeetingManagers may present an item
-=======
-        # only MeetingManagers may present an item, the 'Review portal content'
-        # permission is not enough as MeetingReviewer may have the 'Review portal content'
-        # when using the 'reviewers_take_back_validated_item' wfAdaptation
->>>>>>> origin/master
         if not _checkPermission(ReviewPortalContent, self.context) or \
            not self.tool.isManager(self.context):
             return False
@@ -536,8 +510,7 @@ class MeetingItemWorkflowActions(object):
     def __init__(self, item):
         self.context = item
         self.tool = api.portal.get_tool('portal_plonemeeting')
-<<<<<<< HEAD
-        self.cfg = self.tool.getMeetingConfig(item)
+        self.cfg = self.tool.getMeetingConfig(self.context)
 
     def _getCustomActionName(self, transitionId):
         """ """
@@ -547,9 +520,6 @@ class MeetingItemWorkflowActions(object):
         elif transitionId.startswith('wait_advices_from'):
             action = 'doWait_advices_from'
         return action
-=======
-        self.cfg = self.tool.getMeetingConfig(self.context)
->>>>>>> origin/master
 
     security.declarePrivate('doActivate')
 
@@ -5179,8 +5149,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         self.updateLocalRoles(isCreated=True,
                               inheritedAdviserUids=kwargs.get('inheritedAdviserUids', []))
         # clean borg.localroles caching
-        cleanMemoize(self,
-                     prefixes=['borg.localrole.workspace.checkLocalRolesAllowed'])
+        cleanMemoize(self, prefixes=['borg.localrole.workspace.checkLocalRolesAllowed'])
         # Apply potential transformations to richtext fields
         transformAllRichTextFields(self)
         # Make sure we have 'text/html' for every Rich fields
@@ -5334,6 +5303,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             updateAnnexesAccess(advice)
         # manage automatically given permissions
         _addManagedPermissions(self)
+        # clean borg.localroles caching
+        cleanMemoize(self, prefixes=['borg.localrole.workspace.checkLocalRolesAllowed'])
         # notify that localRoles have been updated
         notify(ItemLocalRolesUpdatedEvent(self, old_local_roles))
         # reindex relevant indexes
