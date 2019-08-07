@@ -1416,19 +1416,24 @@ class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV)
         else:
             return noMeetingMarker
 
-    def print_preferred_meeting_date(self, returnDateTime=False, noMeetingMarker='-', unrestricted=True):
-        """TODO"""
+    def print_preferred_meeting_date(self, returnDateTime=False, noMeetingMarker='-'):
+        """
+        Print preferred meeting date, manage fact that item has no preferred meeting date
+        :param returnDateTime if True, returns the preferred meeting date DateTime, otherwise it returns the
+        meeting title containing formatted date.
+        :param noMeetingMarker is returned when there is no preferredMeeting.
+        :return: Preferred meeting date
+        """
         preferred_meeting_uid = self.context.getPreferredMeeting()
         if preferred_meeting_uid == 'whatever':
             return noMeetingMarker
         catalog = api.portal.get_tool('portal_catalog')
-        brains = catalog(UID=preferred_meeting_uid)
-        if len(brains) > 0:
-            return brains[0]
-        elif unrestricted:
-            brains = catalog.unrestrictedSearchResults(UID=preferred_meeting_uid)
-            if len(brains) > 0:
-                return brains[0]
+        brains = catalog.unrestrictedSearchResults(UID=preferred_meeting_uid)
+        if len(brains) > 0 and returnDateTime:
+            return brains[0].getObject().getDate()
+        elif len(brains) > 0:
+            tool = api.portal.get_tool('portal_plonemeeting')
+            return tool.formatMeetingDate(brains[0])
         else:
             return noMeetingMarker
 
