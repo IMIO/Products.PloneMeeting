@@ -1429,13 +1429,13 @@ class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV)
             return noMeetingMarker
         catalog = api.portal.get_tool('portal_catalog')
         brains = catalog.unrestrictedSearchResults(UID=preferred_meeting_uid)
-        if len(brains) > 0 and returnDateTime:
-            return brains[0].getObject().getDate()
-        elif len(brains) > 0:
+        if len(brains) == 1:  # catalog query is expected to have only one brain
+            if returnDateTime:
+                return brains[0].getObject().getDate()
             tool = api.portal.get_tool('portal_plonemeeting')
             return tool.formatMeetingDate(brains[0])
-        else:
-            return noMeetingMarker
+        # catalog query was empty, return noMeetingMarker then
+        return noMeetingMarker
 
     def print_in_and_out_attendees(
             self,
