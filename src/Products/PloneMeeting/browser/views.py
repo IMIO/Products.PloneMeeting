@@ -1418,7 +1418,7 @@ class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV)
 
     def print_preferred_meeting_date(self, returnDateTime=False, noMeetingMarker='-', unrestricted=True):
         """TODO"""
-        preferred_meeting_uid = self.getPreferredMeeting()
+        preferred_meeting_uid = self.context.getPreferredMeeting()
         if preferred_meeting_uid == 'whatever':
             return noMeetingMarker
         catalog = api.portal.get_tool('portal_catalog')
