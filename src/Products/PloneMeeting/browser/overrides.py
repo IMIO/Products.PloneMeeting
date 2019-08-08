@@ -260,11 +260,11 @@ class PMConfigActionsPanelViewlet(ActionsPanelViewlet):
 class BaseGeneratorLinksViewlet(object):
     """ """
 
-    def getAvailableMailingLists(self, template_uid):
+    def getAvailableMailingLists(self, pod_template):
         '''Gets the names of the (currently active) mailing lists defined for
            this template.'''
         tool = api.portal.get_tool('portal_plonemeeting')
-        return tool.getAvailableMailingLists(self.context, template_uid)
+        return tool.getAvailableMailingLists(self.context, pod_template)
 
     def displayStoreAsAnnexSection(self):
         """ """
@@ -322,9 +322,8 @@ class PMDocumentGeneratorLinksViewlet(DocumentGeneratorLinksViewlet, BaseGenerat
         """ """
         return True
 
-    def may_store_as_annex(self, pod_template_uid):
+    def may_store_as_annex(self, pod_template):
         """By default only (Meeting)Managers are able to store a generated document as annex."""
-        pod_template = api.content.find(UID=pod_template_uid)[0].getObject()
         if not pod_template.store_as_annex:
             return False
         tool = api.portal.get_tool('portal_plonemeeting')
@@ -883,7 +882,7 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
             self.context,
             self.request,
             None,
-            None).may_store_as_annex(pod_template.UID())
+            None).may_store_as_annex(pod_template)
         if not may_store_as_annex:
             raise Unauthorized
 
@@ -1044,12 +1043,11 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
         tool = api.portal.get_tool('portal_plonemeeting')
         # Preamble: ensure that the mailingList is really active.
         mailinglist_name = safe_unicode(self.request.get('mailinglist_name'))
-        if mailinglist_name not in tool.getAvailableMailingLists(
-                self.context, template_uid=self.request.get('template_uid')):
+        pod_template = self.get_pod_template(self.request.get('template_uid'))
+        if mailinglist_name not in tool.getAvailableMailingLists(self.context, pod_template):
             raise Unauthorized
         # Retrieve mailing list recipients
         recipients = []
-        pod_template = self.get_pod_template(self.request.get('template_uid'))
         mailing_lists = pod_template.mailing_lists and pod_template.mailing_lists.strip()
         for line in mailing_lists.split('\n'):
             name, condition, values = line.split(';')

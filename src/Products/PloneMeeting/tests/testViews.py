@@ -1390,8 +1390,8 @@ class testViews(PloneMeetingTestCase):
         self.changeUser('restrictedpowerobserver1')
         # go on first item and navigate to following items
         # getSiblingItem is not taking care of isPrivacyViewable, but the object_goto view does
-        self.assertEqual(publicItem1.getSiblingItem('first'), secretItem1.getItemNumber())
-        self.assertEqual(publicItem1.getSiblingItem('next'), secretItem2.getItemNumber())
+        self.assertEqual(publicItem1.getSiblingItem('first')['first'], secretItem1.getItemNumber())
+        self.assertEqual(publicItem1.getSiblingItem('next')['next'], secretItem2.getItemNumber())
 
         # the object_goto view is taking care of not sending a user where he does not have access
         # user does not have access to secretItem so even if getSiblingItem returns it
@@ -1399,7 +1399,7 @@ class testViews(PloneMeetingTestCase):
         self.assertFalse(secretItem1.isPrivacyViewable())
         self.assertFalse(secretItem2.isPrivacyViewable())
         self.assertFalse(secretItem3.isPrivacyViewable())
-        self.assertEqual(publicItem1.getSiblingItem('last'), secretItem3.getItemNumber())
+        self.assertEqual(publicItem1.getSiblingItem('last')['last'], secretItem3.getItemNumber())
         view = publicItem1.restrictedTraverse('@@object_goto')
         # first, next and last items are not accessible (not privacy viewable)
         self.assertEqual(view('3', 'next'), publicItem2.absolute_url())

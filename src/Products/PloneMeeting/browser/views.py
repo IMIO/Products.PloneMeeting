@@ -501,7 +501,7 @@ class ObjectGoToView(BrowserView):
             not_accessible_item_found = False
             while not obj.adapted().isPrivacyViewable() and not next_obj == obj and not next_obj == self.context:
                 not_accessible_item_found = True
-                next_obj = obj.getSiblingItem(whichItem=way, itemNumber=False)
+                next_obj = obj.getSiblingItem(whichItem=way, itemNumber=False)[way]
                 if next_obj:
                     next_obj = next_obj.getObject()
                 else:

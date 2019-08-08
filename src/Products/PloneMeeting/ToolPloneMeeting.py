@@ -1497,12 +1497,10 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 history.append(event)
         obj.workflow_history[workflow_name] = tuple(history)
 
-    def getAvailableMailingLists(self, obj, template_uid):
+    def getAvailableMailingLists(self, obj, pod_template):
         '''Gets the names of the (currently active) mailing lists defined for
            this template.'''
         res = []
-        catalog = api.portal.get_tool('portal_catalog')
-        pod_template = catalog(UID=template_uid)[0].getObject()
         mailing_lists = pod_template.mailing_lists and pod_template.mailing_lists.strip()
         if not mailing_lists:
             return res

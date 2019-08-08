@@ -132,11 +132,11 @@ class ChangeItemOrderView(BrowserView):
             currentIsInteger = _is_integer(self.context.getItemNumber())
             illegal_switch = False
             if moveType == 'down':
-                nextIsInteger = _is_integer(self.context.getSiblingItem('next'))
+                nextIsInteger = _is_integer(self.context.getSiblingItem('next')['next'])
                 if (currentIsInteger and not nextIsInteger) or (not currentIsInteger and nextIsInteger):
                     illegal_switch = True
             elif moveType == 'up':
-                previousIsInteger = _is_integer(self.context.getSiblingItem('previous'))
+                previousIsInteger = _is_integer(self.context.getSiblingItem('previous')['previous'])
                 if (currentIsInteger and not previousIsInteger) or (not currentIsInteger and previousIsInteger):
                     illegal_switch = True
             if illegal_switch:

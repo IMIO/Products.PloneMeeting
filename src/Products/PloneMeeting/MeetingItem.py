@@ -2840,6 +2840,17 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             res = uuidToObject(res)
         return res
 
+    def getPreferredMeeting(self, theObject=False, **kwargs):
+        '''This redefined accessor may return the preferred meeting id or
+           the real meeting if p_theObject is True.'''
+        res = self.getField('preferredMeeting').get(self, **kwargs)  # = group id
+        if theObject:
+            if res and res != ITEM_NO_PREFERRED_MEETING_VALUE:
+                res = uuidToObject(res)
+            else:
+                res = None
+        return res
+
     security.declarePublic('getGroupsInCharge')
 
     def getGroupsInCharge(self, theObjects=False, fromOrgIfEmpty=False, first=False, **kwargs):
@@ -5378,6 +5389,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''If this item is within a meeting, this method returns the itemNumber of
            a sibling item that may be accessed by the current user. p_whichItem
            can be:
+           - 'all' (return every possible ways here under);
            - 'previous' (the previous item within the meeting);
            - 'next' (the next item item within the meeting);
            - 'first' (the first item of the meeting);
@@ -5386,7 +5398,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            sibling), the method returns None.
            If p_itemNumber is True (default), we return the getItemNumber.
         '''
-        sibling = None
+        sibling = {'first': None, 'last': None, 'next': None, 'previous': None}
         if self.hasMeeting():
             meeting = self.getMeeting()
             # use catalog query so returned items are really accessible by current user
@@ -5395,20 +5407,21 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             itemUids = [brain.UID for brain in brains]
             itemUid = self.UID()
             itemUidIndex = itemUids.index(itemUid)
-            if whichItem == 'previous':
+            if whichItem == 'previous' or whichItem == 'all':
                 # Is a previous item available ?
                 if not itemUidIndex == 0:
-                    sibling = brains[itemUidIndex - 1]
-            elif whichItem == 'next':
+                    sibling['previous'] = brains[itemUidIndex - 1]
+            if whichItem == 'next' or whichItem == 'all':
                 # Is a next item available ?
                 if not itemUidIndex == len(itemUids) - 1:
-                    sibling = brains[itemUidIndex + 1]
-            elif whichItem == 'first':
-                sibling = brains[0]
-            elif whichItem == 'last':
-                sibling = brains[-1]
+                    sibling['next'] = brains[itemUidIndex + 1]
+            if whichItem == 'first' or whichItem == 'all':
+                sibling['first'] = brains[0]
+            if whichItem == 'last' or whichItem == 'all':
+                sibling['last'] = brains[-1]
         if sibling and itemNumber:
-            sibling = sibling.getItemNumber
+            sibling = {key: value and value.getItemNumber or None
+                       for key, value in sibling.items()}
         return sibling
 
     security.declarePrivate('listCopyGroups')
