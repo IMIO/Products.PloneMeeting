@@ -501,7 +501,7 @@ class ObjectGoToView(BrowserView):
             not_accessible_item_found = False
             while not obj.adapted().isPrivacyViewable() and not next_obj == obj and not next_obj == self.context:
                 not_accessible_item_found = True
-                next_obj = obj.getSiblingItem(whichItem=way, itemNumber=False)[way]
+                next_obj = obj.getSiblingItem(whichItem=way, itemNumber=False)
                 if next_obj:
                     next_obj = next_obj.getObject()
                 else:
@@ -1824,4 +1824,5 @@ class PODTemplateMailingLists(BrowserView):
     def getAvailableMailingLists(self):
         '''Gets the names of the (currently active) mailing lists defined for template_uid.'''
         tool = api.portal.get_tool('portal_plonemeeting')
-        return tool.getAvailableMailingLists(self.context, self.template_uid)
+        pod_template = api.content.find(UID=self.template_uid)[0].getObject()
+        return tool.getAvailableMailingLists(self.context, pod_template)

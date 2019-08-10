@@ -862,6 +862,8 @@ class MyItemsTakenOverAdapter(CompoundCriterionBaseAdapter):
     @ram.cache(myitemstakenover_cachekey)
     def query_myitemstakenover(self):
         '''Queries all items that current user take over.'''
+        if not self.cfg:
+            return {}
         member = api.user.get_current()
         return {'portal_type': {'query': self.cfg.getItemTypeName()},
                 'getTakenOverBy': {'query': member.getId()}, }

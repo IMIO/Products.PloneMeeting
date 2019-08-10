@@ -469,21 +469,21 @@ class testViews(PloneMeetingTestCase):
         template = self.meetingConfig.podtemplates.itemTemplate
         # no mailing lists for now
         self.assertEqual(template.mailing_lists, u'')
-        self.failIf(self.tool.getAvailableMailingLists(item, template.UID()))
+        self.failIf(self.tool.getAvailableMailingLists(item, template))
 
         # define mailing_lists
         # False condition
         template.mailing_lists = "list1;python:False;user1@test.be\nlist2;python:False;user1@test.be"
-        self.assertEquals(self.tool.getAvailableMailingLists(item, template.UID()), [])
+        self.assertEquals(self.tool.getAvailableMailingLists(item, template), [])
         # wrong TAL condition, the list is there with error
         template.mailing_lists = "list1;python:wrong_expression;user1@test.be\nlist2;python:False;user1@test.be"
         error_msg = translate('Mailing lists are not correctly defined, original error is \"${error}\"',
                               mapping={'error': u'name \'wrong_expression\' is not defined', },
                               context=self.request)
-        self.assertEquals(self.tool.getAvailableMailingLists(item, template.UID()), [error_msg])
+        self.assertEquals(self.tool.getAvailableMailingLists(item, template), [error_msg])
         # correct and True condition
         template.mailing_lists = "list1;python:True;user1@test.be\nlist2;python:False;user1@test.be"
-        self.assertEquals(self.tool.getAvailableMailingLists(item, template.UID()), ['list1'])
+        self.assertEquals(self.tool.getAvailableMailingLists(item, template), ['list1'])
 
         # call the document-generation view
         self.request.set('template_uid', template.UID())
@@ -1390,8 +1390,8 @@ class testViews(PloneMeetingTestCase):
         self.changeUser('restrictedpowerobserver1')
         # go on first item and navigate to following items
         # getSiblingItem is not taking care of isPrivacyViewable, but the object_goto view does
-        self.assertEqual(publicItem1.getSiblingItem('first')['first'], secretItem1.getItemNumber())
-        self.assertEqual(publicItem1.getSiblingItem('next')['next'], secretItem2.getItemNumber())
+        self.assertEqual(publicItem1.getSiblingItem('first'), secretItem1.getItemNumber())
+        self.assertEqual(publicItem1.getSiblingItem('next'), secretItem2.getItemNumber())
 
         # the object_goto view is taking care of not sending a user where he does not have access
         # user does not have access to secretItem so even if getSiblingItem returns it
@@ -1399,7 +1399,7 @@ class testViews(PloneMeetingTestCase):
         self.assertFalse(secretItem1.isPrivacyViewable())
         self.assertFalse(secretItem2.isPrivacyViewable())
         self.assertFalse(secretItem3.isPrivacyViewable())
-        self.assertEqual(publicItem1.getSiblingItem('last')['last'], secretItem3.getItemNumber())
+        self.assertEqual(publicItem1.getSiblingItem('last'), secretItem3.getItemNumber())
         view = publicItem1.restrictedTraverse('@@object_goto')
         # first, next and last items are not accessible (not privacy viewable)
         self.assertEqual(view('3', 'next'), publicItem2.absolute_url())

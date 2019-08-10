@@ -5422,7 +5422,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if sibling and itemNumber:
             sibling = {key: value and value.getItemNumber or None
                        for key, value in sibling.items()}
-        return sibling
+        return sibling.get(whichItem, sibling)
 
     security.declarePrivate('listCopyGroups')
 
