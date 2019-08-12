@@ -4,19 +4,21 @@
 
    <tal:load condition="request/load_portlet_todo|nothing">
       <tal:defines define="wid view/getCollectionWidgetId;">
-         <tal:loop repeat="search view/getSearches">
-            <tal:block define="brains python: view.doSearch(collection=search);">
+         <tal:loop repeat="collection_path view/getSearches">
+            <tal:block define="search_infos python: view.doSearch(collection_path=collection_path);
+                               brains python:search_infos[0];
+                               collection python:search_infos[1];">
                <dd class="portletSection">
                   <tal:comment replace="nothing">On click, we simulate click in the collection widget portlet</tal:comment>
                   <a href="javascript:;"
                      style="display: inline;"
-                     tal:attributes="onclick string:javascript:document.getElementById('${wid}${search/UID}').getElementsByTagName('a')[0].click()"
+                     tal:attributes="onclick string:javascript:document.getElementById('${wid}${collection/UID}').getElementsByTagName('a')[0].click()"
                      title="see_everything"
                      i18n:attributes="title"
                      i18n:translate=""
-                     tal:content="search/Title">Search title</a>
+                     tal:content="collection/Title">Search title</a>
                </dd>
-               <span tal:attributes="id string:todo_${search/UID}">
+               <span tal:attributes="id string:todo_${collection/UID}">
                   <dd class="portletCell" tal:condition="not: brains">
                      <span class="discreet" i18n:translate="nothing_to_do">Nothing to do</span>
                   </dd>
@@ -24,7 +26,7 @@
                      <dd class="portletCell"
                          tal:condition="brains"
                          tal:define="oddrow repeat/brain/odd;
-                                     lastRow python:repeat['search'].last('meta_type') and repeat['brain'].last('meta_type');
+                                     lastRow python:repeat['collection_path'].last('meta_type') and repeat['brain'].last('meta_type');
                                      dummy python: oddrow and 'portletCell pmLink odd' or 'portletCell pmLink even';
                                      class python: lastRow and dummy + ' lastRow' or dummy;"
                          tal:attributes="class class">

@@ -14,6 +14,14 @@ Changelog
   a subsequent async request to get it, leading to a write in the database.  This avoids ConflictErrors when cache is invalidated.
   Moreover, replaced Meeting.invalidate_meeting_actions_panel_cache attribute by a volatile cachekey to avoid a write when viewing the meeting and
   and item was modified, the attribute is stored by the actions_panel, leading to a write
+- Avoid too much catalog query when it is not necessary :
+  - Added ram.cache for portlet_todo.getSearches (now returns collection path as we can not return collection objects with ram.cached method);
+  - In BaseGeneratorLinksViewlet.getAvailableMailingLists and PMDocumentGeneratorLinksViewlet.may_store_as_annex use the pod_template directly
+    instead querying the catalog on collection's UID;
+  - In meetingitem_view, use MeetingItem.getPreferredMeeting(theObject=True) to get the meeting object, do not use the vocabulary to display
+    the proposingGroup or proposingGroupWithGroupInCharge because it is doing too much logic, display proposingGroup/groupInCharge directly.
+  - Optimized MeetingItem.getSiblingItem to avoid calling it more than once, added value 'all' for whichItem parameter, this will make it compute
+    every possible values (first/last/next/previous) and return all in a dict.
 - Item validation workflow is now designed in the MeetingConfig.itemWFValidationLevels, tThis imply :
     - to no longer rely on MEETINGROLES and MEETINGREVIEWERS constants;
     - reviewer levels and mapping between review_state and organization suffix that manage the item is computed from the MeetingConfig;

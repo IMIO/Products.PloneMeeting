@@ -45,7 +45,7 @@
             <div class="discreet" tal:condition="python: not 'proposingGroupWithGroupInCharge' in usedAttrs">
                 <span class="item_attribute_label"
                       i18n:translate="PloneMeeting_label_proposingGroup"></span>:&nbsp;&nbsp;
-                <span metal:use-macro="python: here.widget('proposingGroup', mode='view')" />
+                <span tal:content="python: context.getProposingGroup(theObject=True).Title()" />
                 <span tal:condition="not: context/getProposingGroup">-</span>
             </div>
 
@@ -53,7 +53,7 @@
             <div class="discreet" tal:condition="python: 'proposingGroupWithGroupInCharge' in usedAttrs">
                 <span class="item_attribute_label"
                       i18n:translate="PloneMeeting_label_proposingGroupWithGroupInCharge"></span>:&nbsp;&nbsp;
-                <span metal:use-macro="python: here.widget('proposingGroupWithGroupInCharge', mode='view')" />
+                <span tal:content="python: context.getProposingGroup(theObject=True).Title()" />&nbsp;(<span tal:content="python: context.getGroupsInCharge(theObjects=True, first=True).Title()" />)
                 <span tal:condition="not: context/getProposingGroup">-</span>
             </div>
 
@@ -295,14 +295,11 @@
             <tal:comment replace="nothing">Preferred meeting</tal:comment>
             <div class="discreet">
                 <span class="item_attribute_label" i18n:translate="PloneMeeting_label_preferredMeeting"></span>:&nbsp;&nbsp;
-                <span tal:define="meetings python:here.portal_catalog(UID=here.getPreferredMeeting())">
-                <span tal:condition="meetings">
-                    <tal:block define="meeting python:meetings[0].getObject();">
-                      <tal:link tal:replace="structure meeting/getPrettyLink">
-                      </tal:link>
-                    </tal:block>
+                <span tal:define="preferred_meeting python:context.getPreferredMeeting(theObject=True)">
+                <span tal:condition="nocall:preferred_meeting">
+                      <tal:link tal:replace="structure preferred_meeting/getPrettyLink" />
                 </span>
-                <span tal:condition="not: meetings">-
+                <span tal:condition="not: nocall:preferred_meeting">-
                 </span>
               </span>
             </div>
@@ -315,7 +312,7 @@
                   <tal:link tal:replace="structure meeting/getPrettyLink">
                   </tal:link>
               </tal:hasMeeting>
-              <span tal:condition="python: not meeting">-</span>
+              <span tal:condition="not:nocall:meeting">-</span>
             </div>
 
             <tal:comment replace="nothing">List type</tal:comment>

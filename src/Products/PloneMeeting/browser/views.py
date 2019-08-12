@@ -1824,4 +1824,5 @@ class PODTemplateMailingLists(BrowserView):
     def getAvailableMailingLists(self):
         '''Gets the names of the (currently active) mailing lists defined for template_uid.'''
         tool = api.portal.get_tool('portal_plonemeeting')
-        return tool.getAvailableMailingLists(self.context, self.template_uid)
+        pod_template = api.content.find(UID=self.template_uid)[0].getObject()
+        return tool.getAvailableMailingLists(self.context, pod_template)

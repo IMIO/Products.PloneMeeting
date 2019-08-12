@@ -469,21 +469,21 @@ class testViews(PloneMeetingTestCase):
         template = self.meetingConfig.podtemplates.itemTemplate
         # no mailing lists for now
         self.assertEqual(template.mailing_lists, u'')
-        self.failIf(self.tool.getAvailableMailingLists(item, template.UID()))
+        self.failIf(self.tool.getAvailableMailingLists(item, template))
 
         # define mailing_lists
         # False condition
         template.mailing_lists = "list1;python:False;user1@test.be\nlist2;python:False;user1@test.be"
-        self.assertEquals(self.tool.getAvailableMailingLists(item, template.UID()), [])
+        self.assertEquals(self.tool.getAvailableMailingLists(item, template), [])
         # wrong TAL condition, the list is there with error
         template.mailing_lists = "list1;python:wrong_expression;user1@test.be\nlist2;python:False;user1@test.be"
         error_msg = translate('Mailing lists are not correctly defined, original error is \"${error}\"',
                               mapping={'error': u'name \'wrong_expression\' is not defined', },
                               context=self.request)
-        self.assertEquals(self.tool.getAvailableMailingLists(item, template.UID()), [error_msg])
+        self.assertEquals(self.tool.getAvailableMailingLists(item, template), [error_msg])
         # correct and True condition
         template.mailing_lists = "list1;python:True;user1@test.be\nlist2;python:False;user1@test.be"
-        self.assertEquals(self.tool.getAvailableMailingLists(item, template.UID()), ['list1'])
+        self.assertEquals(self.tool.getAvailableMailingLists(item, template), ['list1'])
 
         # call the document-generation view
         self.request.set('template_uid', template.UID())
