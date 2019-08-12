@@ -126,11 +126,6 @@ MEETING_GROUP_SUFFIXES = [
 # ]
 EXTRA_GROUP_SUFFIXES = []
 
-# additonal advice types that will be available for MeetingConfig.usedAdviceTypes
-# format is just a tuple containing keys, it will be translated using same key
-# ('extra_type_1', 'extra_type_2', 'extra_type_3', )
-EXTRA_ADVICE_TYPES = ()
-
 # list of reviewer roles, this needs to be defined in logical order because
 # we will also look for 'higher' reviewer level
 # the key is the group suffix and the value is a list of states of the items to review

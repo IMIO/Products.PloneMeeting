@@ -4113,7 +4113,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def _advicePortalTypeForAdviser(self, org_uid):
         '''See doc in interfaces.py.'''
-        return 'meetingadvice'
+        tool = api.portal.get_tool('portal_plonemeeting')
+        extra_infos = tool.adapted().get_extra_adviser_infos()
+        adviser_infos = extra_infos.get(org_uid, {})
+        advice_portal_type = adviser_infos.get('portal_type', None)
+        return advice_portal_type or 'meetingadvice'
 
     def _adviceTypesForAdviser(self, meeting_advice_portal_type):
         '''See doc in interfaces.py.'''

@@ -4986,13 +4986,20 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             portalType._aliases = basePortalType._aliases
             portalType._actions = tuple(basePortalType._cloneActions())
         # Update MeetingAdvice portal_types if necessary
-        self.adapted()._updateMeetingAdvicePortalTypes()
+        self._updateMeetingAdvicePortalTypes()
         # Update the cloneToOtherMeetingConfig actions visibility
         self._updateCloneToOtherMCActions()
 
     def _updateMeetingAdvicePortalTypes(self):
         '''See doc in interfaces.py.'''
-        return
+        # create a copy of each 'base_wf', we preprend the portal_type to create a new workflow
+        tool = api.portal.get_tool('portal_plonemeeting')
+        extra_adviser_infos = tool.adapted().get_extra_adviser_infos()
+        for org_uid, adviser_infos in extra_adviser_infos.items():
+            portal_type = adviser_infos['portal_type']
+            base_wf = adviser_infos['base_wf']
+            advice_wf_id = '{0}__{1}'.format(portal_type, base_wf)
+            duplicate_workflow(base_wf, advice_wf_id, portalTypeNames=[portal_type])
 
     security.declarePrivate('createSearches')
 

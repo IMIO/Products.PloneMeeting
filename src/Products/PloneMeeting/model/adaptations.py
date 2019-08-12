@@ -77,6 +77,7 @@ RETURN_TO_PROPOSING_GROUP_VALIDATION_STATES = ('proposed', )
 viewPermissions = (View, AccessContentsInformation)
 WF_APPLIED = 'Workflow adaptation "%s" applied for meetingConfig "%s".'
 WF_APPLIED_CUSTOM = 'Custom Workflow adaptation "%s" applied for meetingConfig "%s".'
+ADVICE_WF_APPLIED_CUSTOM = 'Custom advice Workflow adaptation "%s" applied on WF "%s" for meetingConfig "%s".'
 WF_DOES_NOT_EXIST_WARNING = "Could not apply workflow adaptations because the workflow '%s' does not exist."
 
 # list of states the creator can no more edit the item even while using the 'creator_edits_unless_closed' wfAdaptation
@@ -235,9 +236,16 @@ def addState(wf_id,
         existing_back_transition.new_state_id = new_state_id
 
 
-def removeState(wf_id, state_id, remove_leading_transitions=True, new_initial_state=None):
+def removeState(wf_id,
+                state_id,
+                old_leaving_transitions={},
+                old_leading_transitions={},
+                transitions_to_remove=[],
+                new_initial_state=None):
     '''Remove given p_state, if p_remove_arriving_transitions=True (default),
-       we remove every transitions leading to p_state.'''
+       we remove every transitions leading to p_state.
+       - old_leaving_transitions : list of dicts, key: leaving_transition, value: leaving_from_state_id.
+       - old_leading_transitions : list of dicts, key: leading_transition, value: leading_to_state_id.'''
     wfTool = api.portal.get_tool('portal_workflow')
     wf = wfTool.getWorkflowById(wf_id)
     # state does not exist?
@@ -250,18 +258,21 @@ def removeState(wf_id, state_id, remove_leading_transitions=True, new_initial_st
                      'please provide a correct new_initial_state!'.format(state_id, wf_id))
         return
 
-    if remove_leading_transitions:
-        leading_transitions = [tr.id for tr in wf.transitions.values()
-                               if tr.new_state_id == state_id]
-        wf.transitions.deleteTransitions(leading_transitions)
+    if transitions_to_remove:
+        wf.transitions.deleteTransitions(transitions_to_remove)
+
+    for leaving_transition, leaving_from_state_id in old_leaving_transitions.items():
+        leaving_from_state = wf.states[leaving_from_state_id]
+        leaving_from_state.transitions = leaving_from_state.transitions + ('leaving_transition', )
+
+    for leading_transition_id, leading_to_state_id in old_leading_transitions.items():
+        leading_transition = wf.states[leading_transition_id]
+        leading_transition.new_state_id = leading_to_state_id
+
     if wf.initial_state == state_id:
         wf.initial_state = new_initial_state
+
     wf.states.deleteStates([state_id])
-    if remove_leading_transitions:
-        logger.info('State "{0}" and leading transitions "{1}" were removed from WF "{2}"'.format(
-            state_id, ', '.join(leading_transitions), wf_id))
-    else:
-        logger.info('Transitions "{0}" was removed from WF "{1}"'.format(state_id, wf_id))
 
 
 def clone_permissions(wf_id, base_state_id, new_state_id):
@@ -703,10 +714,10 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                                                           last_returned_state_id=last_returned_state_id)
             last_returned_state_id = validation_state
 
+    tool = api.portal.get_tool('portal_plonemeeting')
     for wfAdaptation in wfAdaptations:
         # first try to call a performCustomWFAdaptations to see if it manages wfAdaptation
         # it could be a separated one or an overrided one
-        tool = api.portal.get_tool('portal_plonemeeting')
         applied = tool.adapted().performCustomWFAdaptations(meetingConfig, wfAdaptation, logger,
                                                             itemWorkflow, meetingWorkflow)
         # double check if applied is True or False, we need that boolean
@@ -1236,6 +1247,30 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                     presented.transitions = presented.transitions + ('backToProposed', )
 
         logger.info(WF_APPLIED % (wfAdaptation, meetingConfig.getId()))
+
+    # manage meetingadvice related workflow adaptations
+    for org_uid, extra_adviser_infos in tool.adapted().get_extra_adviser_infos().items():
+        # first try to call a performCustomAdviceWFAdaptations
+        portal_type = extra_adviser_infos['portal_type']
+        base_wf = extra_adviser_infos['base_wf']
+        advice_wf_id = '{0}__{1}'.format(portal_type, base_wf)
+        wfAdaptations = extra_adviser_infos['wf_adaptations']
+        for wfAdaptation in wfAdaptations:
+            applied = tool.adapted().performCustomAdviceWFAdaptations(
+                meetingConfig, wfAdaptation, logger, advice_wf_id)
+            # double check if applied is True or False, we need that boolean
+            if not isinstance(applied, bool):
+                raise Exception('ToolPloneMeeting.performCustomAdviceWFAdaptations must return a boolean value!')
+            # if performCustomWFAdaptations managed wfAdaptation, continue with next one
+            if applied:
+                logger.info(ADVICE_WF_APPLIED_CUSTOM % (wfAdaptation,
+                                                        advice_wf_id,
+                                                        meetingConfig.getId()))
+                continue
+            else:
+                # nothing done by default for now
+                raise Exception('ToolPloneMeeting.performCustomAdviceWFAdaptations '
+                                'did not hangle WFAdaptation %s!' % wfAdaptation)
 
 
 # Stuff for performing model adaptations ---------------------------------------

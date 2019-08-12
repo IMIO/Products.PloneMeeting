@@ -618,6 +618,15 @@ class IToolPloneMeetingDocumentation:
         '''See doc in methods with similar names above.'''
     def performCustomWFAdaptations(meetingConfig, wfAdaptation, logger, itemWorkflow, meetingWorkflow):
         '''This let's a plugin define it's own WFAdaptations to apply.'''
+    def get_extra_adviser_infos(self):
+        '''Extra adviser infos giving following information :
+           - master key: adviser organization id
+           - value : a dict with :
+               - 'portal_type' : the portal_type to use to give the advice;
+               - 'base_wf' : the name of the base WF used by this portal_type;
+                 will be used to generate a patched_ prefixed WF to apply WFAdaptations on;
+               - 'wf_adaptations': a list of workflow adaptations to apply.
+        '''
 
 
 class IToolPloneMeetingCustom(IToolPloneMeeting):
