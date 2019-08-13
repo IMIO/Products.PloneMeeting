@@ -5,8 +5,8 @@ Changelog
 4.1rc10 (unreleased)
 --------------------
 
-- Nothing changed yet.
-
+- Fixed POd template check functionnality when odt output_format was not available
+- Adapted regarding change in collective.iconifiedcategory where we do ot split the annex title displayed in the tooltipster popup (first part/rest part)
 
 4.1rc9 (2019-08-13)
 -------------------
