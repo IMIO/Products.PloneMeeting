@@ -621,8 +621,8 @@
  <state state_id="validated"
         title="validated"
         i18n:attributes="title">
-  <exit-transition transition_id="present"/>
   <exit-transition transition_id="backToItemCreated"/>
+  <exit-transition transition_id="present"/>
   <permission-map name="Access contents information"
                   acquired="False">
    <permission-role>Manager</permission-role>
