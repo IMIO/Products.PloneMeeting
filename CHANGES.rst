@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.1rc9 (unreleased)
+4.1rc9 (2019-08-13)
 -------------------
 
 - Optimized speed of MeetingItem.MeetingItemWorkflowConditions._groupIsNotEmpty, by not using portal_groups and getGroupMemberIds but directly
