@@ -7,10 +7,11 @@ Changelog
 
 - Fixed POd template check functionnality when odt output_format was not available
 - Adapted regarding change in collective.iconifiedcategory where we do not split the annex title displayed in the tooltipster popup (first part/rest part)
-- Added migrated step to version 4100 :
+- Added migration step to version 4100 :
     - Add new catalog indexes/columns (getAssociatedGroups);
     - Add new item dashboard faceted filters;
     - Disable use_stream for collective.documentgenerator.
+- Make sure collective.documentgenerator use_stream is set to False when creating a new site
 
 4.1rc9 (2019-08-13)
 -------------------
