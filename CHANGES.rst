@@ -2,11 +2,12 @@ Changelog
 =========
 
 
-4.1rc10 (unreleased)
---------------------
+4.1 (unreleased)
+----------------
 
 - Fixed POd template check functionnality when odt output_format was not available
-- Adapted regarding change in collective.iconifiedcategory where we do ot split the annex title displayed in the tooltipster popup (first part/rest part)
+- Adapted regarding change in collective.iconifiedcategory where we do not split the annex title displayed in the tooltipster popup (first part/rest part)
+- Added migrated step to version 4100, add new catalog indexes/columns (getAssociatedGroups) and item dashboard faceted filters
 
 4.1rc9 (2019-08-13)
 -------------------
