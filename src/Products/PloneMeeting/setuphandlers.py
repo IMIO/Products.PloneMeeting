@@ -10,6 +10,8 @@
 #
 
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
+from collective.documentgenerator.config import set_raiseOnError_for_non_managers
+from collective.documentgenerator.config import set_use_stream
 from collective.messagesviewlet.utils import add_message
 from dexterity.localroles.utils import add_fti_configuration
 from eea.facetednavigation.interfaces import ICriteria
@@ -300,22 +302,13 @@ def postInstall(context):
            api.content.get_state(browser_warn_msg) != 'activated':
             api.content.transition(browser_warn_msg, 'activate')
 
-    # collective.documentgenerator : enable raiseOnError_for_non_managers and set columnModifier to optimize
-    # temporary fix until collective.documentgenerator is released
-    try:
-        api.portal.set_registry_record(
-            'collective.documentgenerator.browser.controlpanel.'
-            'IDocumentGeneratorControlPanelSchema.column_modifier',
-            'optimize')
-    except api.exc.InvalidParameterError:
-        api.portal.set_registry_record(
-            'collective.documentgenerator.browser.controlpanel.'
-            'IDocumentGeneratorControlPanelSchema.optimize_tables',
-            True)
+    # collective.documentgenerator : change some default values
     api.portal.set_registry_record(
         'collective.documentgenerator.browser.controlpanel.'
-        'IDocumentGeneratorControlPanelSchema.raiseOnError_for_non_managers',
+        'IDocumentGeneratorControlPanelSchema.optimize_tables',
         True)
+    set_raiseOnError_for_non_managers(True)
+    set_use_stream(False)
 
     # create contacts directory and plonegroup-organization
     if not base_hasattr(site, 'contacts'):

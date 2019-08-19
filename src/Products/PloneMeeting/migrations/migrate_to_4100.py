@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from collective.documentgenerator.config import set_use_stream
 from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator
 
@@ -29,13 +30,15 @@ class Migrate_To_4100(Migrator):
         # update new getAssociatedGroups metadata, as field is never used,
         # we only create the metadata but do not reindex it
         self.addCatalogIndexesAndColumns(update_metadata=False)
+        set_use_stream(False)
 
 
 def migrate(context):
     '''This migration function will:
 
        1) Update faceted filters for item dashboards;
-       2) Add new catalog indexes/columns.
+       2) Add new catalog indexes/columns;
+       3) Make sure collective.documentgenerator 'use_stream' parameter is set to False.
     '''
     migrator = Migrate_To_4100(context)
     migrator.run()
