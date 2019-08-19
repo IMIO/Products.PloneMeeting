@@ -305,8 +305,8 @@ def postInstall(context):
     # collective.documentgenerator : change some default values
     api.portal.set_registry_record(
         'collective.documentgenerator.browser.controlpanel.'
-        'IDocumentGeneratorControlPanelSchema.optimize_tables',
-        True)
+        'IDocumentGeneratorControlPanelSchema.column_modifier',
+        'optimize')
     set_raiseOnError_for_non_managers(True)
     set_use_stream(False)
 
