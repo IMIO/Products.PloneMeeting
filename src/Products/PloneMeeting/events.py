@@ -916,53 +916,53 @@ def _notifyContainerModified(child):
         container = container.aq_parent
 
 
-def onConfigOrPloneElementAdded(config_element, event):
+def onConfigOrPloneElementAdded(element, event):
     '''Called whenever an element in the MeetingConfig or a default element in Plone was added.'''
     # invalidate cache of relevant vocabularies
-    if hasattr(config_element, '_invalidateCachedVocabularies'):
-        config_element._invalidateCachedVocabularies()
+    if hasattr(element, '_invalidateCachedVocabularies'):
+        element._invalidateCachedVocabularies()
 
     # set modification date on every containers
-    _notifyContainerModified(config_element)
+    _notifyContainerModified(element)
 
 
-def onConfigOrPloneElementModified(config_element, event):
+def onConfigOrPloneElementModified(element, event):
     '''Called whenever an element in the MeetingConfig or a default element in Plone was modified.'''
 
     # invalidate cache of relevant vocabularies
-    if hasattr(config_element, '_invalidateCachedVocabularies'):
-        config_element._invalidateCachedVocabularies()
+    if hasattr(element, '_invalidateCachedVocabularies'):
+        element._invalidateCachedVocabularies()
 
     # set modification date on every containers
-    _notifyContainerModified(config_element)
+    _notifyContainerModified(element)
 
 
-def onConfigOrPloneElementTransition(config_element, event):
+def onConfigOrPloneElementTransition(element, event):
     '''Called whenever a transition has been fired on an element of the MeetingConfig
        or a default element in Plone.'''
-    if not event.transition or (config_element != event.object):
+    if not event.transition or (element != event.object):
         return
 
     # invalidate cache of relevant vocabularies
-    if hasattr(config_element, '_invalidateCachedVocabularies'):
-        config_element._invalidateCachedVocabularies()
+    if hasattr(element, '_invalidateCachedVocabularies'):
+        element._invalidateCachedVocabularies()
 
     # set modification date on every containers
-    _notifyContainerModified(config_element)
+    _notifyContainerModified(element)
 
 
-def onConfigOrPloneElementRemoved(config_element, event):
+def onConfigOrPloneElementRemoved(element, event):
     '''Called when an element of the MeetingConfig or a default element in Plone is removed.'''
     # bypass this if we are actually removing the 'Plone Site'
     if event.object.meta_type == 'Plone Site':
         return
 
     # invalidate cache of relevant vocabularies
-    if hasattr(config_element, '_invalidateCachedVocabularies'):
-        config_element._invalidateCachedVocabularies()
+    if hasattr(element, '_invalidateCachedVocabularies'):
+        element._invalidateCachedVocabularies()
 
     # set modification date on every containers
-    _notifyContainerModified(config_element)
+    _notifyContainerModified(element)
 
 
 def onFolderReordered(folder, event):
