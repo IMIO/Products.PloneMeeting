@@ -120,12 +120,12 @@ class Migrator(BaseMigrator):
                   for portal_type in portal_types]
         return wf_ids
 
-    def addCatalogIndexesAndColumns(self, indexes=True, columns=True):
+    def addCatalogIndexesAndColumns(self, indexes=True, columns=True, update_metadata=True):
         """ """
         if indexes:
             addOrUpdateIndexes(self.portal, indexInfos)
         if columns:
-            addOrUpdateColumns(self.portal, columnInfos)
+            addOrUpdateColumns(self.portal, columnInfos, update_metadata=update_metadata)
 
     def updateTALConditions(self, old_word, new_word):
         """Update every elements having a tal_condition, replace given old_word by new_word."""

@@ -5,6 +5,10 @@
            i18n_domain="PloneMeeting">
 
   <subscriber for=".interfaces.IMeetingItem
+                   OFS.interfaces.IObjectWillBeAddedEvent"
+              handler=".events.onItemWillBeAdded" />
+
+  <subscriber for=".interfaces.IMeetingItem
                    zope.lifecycleevent.interfaces.IObjectAddedEvent"
               handler=".events.onItemAdded" />
 
@@ -78,23 +82,39 @@
 
   <subscriber for=".interfaces.IConfigElement
                    zope.lifecycleevent.interfaces.IObjectAddedEvent"
-              handler=".events.onConfigElementAdded" />
+              handler=".events.onConfigOrPloneElementAdded" />
 
   <subscriber for=".interfaces.IConfigElement
                    zope.lifecycleevent.IObjectModifiedEvent"
-              handler=".events.onConfigElementModified" />
+              handler=".events.onConfigOrPloneElementModified" />
 
   <subscriber for=".interfaces.IConfigElement
                    Products.DCWorkflow.interfaces.IAfterTransitionEvent"
-              handler=".events.onConfigElementTransition" />
+              handler=".events.onConfigOrPloneElementTransition" />
 
   <subscriber for=".interfaces.IConfigElement
                    zope.container.interfaces.IObjectRemovedEvent"
-              handler=".events.onConfigElementRemoved" />
+              handler=".events.onConfigOrPloneElementRemoved" />
+
+  <subscriber for=".interfaces.IPloneElement
+                   zope.lifecycleevent.interfaces.IObjectAddedEvent"
+              handler=".events.onConfigOrPloneElementAdded" />
+
+  <subscriber for=".interfaces.IPloneElement
+                   zope.lifecycleevent.IObjectModifiedEvent"
+              handler=".events.onConfigOrPloneElementModified" />
+
+  <subscriber for=".interfaces.IPloneElement
+                   Products.DCWorkflow.interfaces.IAfterTransitionEvent"
+              handler=".events.onConfigOrPloneElementTransition" />
+
+  <subscriber for=".interfaces.IPloneElement
+                   zope.container.interfaces.IObjectRemovedEvent"
+              handler=".events.onConfigOrPloneElementRemoved" />
 
   <subscriber for="Products.ATContentTypes.interfaces.IATBTreeFolder
                    Products.CMFPlone.interfaces.IReorderedEvent"
-              handler=".events.onConfigFolderReordered" />
+              handler=".events.onFolderReordered" />
 
   <!-- meetingadvice events -->
   <subscriber for=".content.advice.IMeetingAdvice

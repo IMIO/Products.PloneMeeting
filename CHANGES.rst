@@ -2,9 +2,18 @@ Changelog
 =========
 
 
-4.1rc10 (unreleased)
---------------------
+4.1 (unreleased)
+----------------
 
+- Fixed POd template check functionnality when odt output_format was not available
+- Adapted regarding change in collective.iconifiedcategory where we do not split the annex title displayed in the tooltipster popup (first part/rest part)
+- Added migration step to version 4100 :
+    - Add new catalog indexes/columns (getAssociatedGroups);
+    - Add new item dashboard faceted filters;
+    - Disable use_stream for collective.documentgenerator.
+- Make sure collective.documentgenerator use_stream is set to False when creating a new site
+- Extended the _notifyContainerModified event to default Plone elements Folder/File/Document/News Item, so when using a 'Documents' folder to publish some documents,
+  adding a new element will notify container modified and invalidate cache
 - Item validation workflow is now designed in the MeetingConfig.itemWFValidationLevels, tThis imply :
     - to no longer rely on MEETINGROLES and MEETINGREVIEWERS constants;
     - reviewer levels and mapping between review_state and organization suffix that manage the item is computed from the MeetingConfig;

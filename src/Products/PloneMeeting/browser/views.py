@@ -1538,11 +1538,12 @@ class CheckPodTemplatesView(BrowserView):
             for obj in objs:
                 view = obj.restrictedTraverse('@@document-generation')
                 self.request.set('template_uid', pod_template.UID())
+                output_format = pod_template.pod_formats[0]
                 self.request.set('output_format', pod_template.pod_formats[0])
                 view()
                 try:
                     view()
-                    view._generate_doc(pod_template, output_format='odt')
+                    view._generate_doc(pod_template, output_format=output_format)
                     messages['clean'].append((pod_template, obj))
                 except Exception, exc:
                     messages['error'].append((pod_template, obj, ('Error', exc.message)))

@@ -89,6 +89,11 @@ class IConfigElement(Interface):
     """
 
 
+class IPloneElement(Interface):
+    """Base marker interface for every Plone default content types
+    """
+
+
 class IMeetingContent(Interface):
     """Base marker interface for every content related elements
     """
