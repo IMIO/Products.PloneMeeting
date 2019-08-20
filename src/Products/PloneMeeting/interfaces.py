@@ -310,6 +310,9 @@ class IMeetingItemDocumentation:
     def _getAllGroupsManagingItem(self):
         """Returns the list of groups that manages the item during the entire item life.
            See _getGroupManagingItem docstring for more informations."""
+    def custom_validate_optionalAdvisers(value, storedOptionalAdvisers, removedAdvisers):
+        '''This is called by MeetingItem.validate_optionalAdvisers and let
+           a plugin validates selected optional advisers.'''
 
 
 class IMeetingItemWorkflowConditions(Interface):

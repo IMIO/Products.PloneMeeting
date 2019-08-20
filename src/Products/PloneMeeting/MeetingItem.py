@@ -1687,6 +1687,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''When selecting an optional adviser, make sure that 2 values regarding the same
            group are not selected, this could be the case when using delay-aware advisers.
            Moreover, make sure we can not unselect an adviser that already gave his advice.'''
+        # remove empty strings and Nones
+        value = [v for v in value if v]
         for adviser in value:
             # if it is a delay-aware advice, check that the same 'normal'
             # optional adviser has not be selected and that another delay-aware adviser
@@ -1721,6 +1723,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                                                                   removedAdviser)},
                                      domain='PloneMeeting',
                                      context=self.REQUEST)
+        return self.adapted().custom_validate_optionalAdvisers(value, storedOptionalAdvisers, removedAdvisers)
+
+    def custom_validate_optionalAdvisers(self, value, storedOptionalAdvisers, removedAdvisers):
+        '''See doc in interfaces.py.'''
+        pass
 
     security.declarePrivate('validate_classifier')
 

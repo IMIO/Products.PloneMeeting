@@ -14,6 +14,7 @@ Changelog
 - Make sure collective.documentgenerator use_stream is set to False when creating a new site
 - Extended the _notifyContainerModified event to default Plone elements Folder/File/Document/News Item, so when using a 'Documents' folder to publish some documents,
   adding a new element will notify container modified and invalidate cache
+- Added adaptable method MeetingItem.custom_validate_optionalAdvisers so a plugin may validate selected optional advisers if necessary
 - Item validation workflow is now designed in the MeetingConfig.itemWFValidationLevels, tThis imply :
     - to no longer rely on MEETINGROLES and MEETINGREVIEWERS constants;
     - reviewer levels and mapping between review_state and organization suffix that manage the item is computed from the MeetingConfig;
