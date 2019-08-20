@@ -285,6 +285,10 @@ class MeetingItemWorkflowConditions(object):
            self.context.getMeeting().queryState() in ('decided', 'decisions_published', 'closed'):
             return True
 
+    def _currentUserIsAdviserAbleToSendItemBackExtraCondition(self, org):
+        ''' '''
+        return True
+
     def _currentUserIsAdviserAbleToSendItemBack(self):
         '''Is current user an adviser able to send an item 'waiting_advices' back to other states?
            To do so :
@@ -300,7 +304,8 @@ class MeetingItemWorkflowConditions(object):
                (self.context._advice_is_given(org_uid) or
                 (self.context.adapted().mayEvaluateCompleteness() and
                  not self.context.adapted()._is_complete())) and \
-               get_plone_group_id(org_uid, 'advisers') in user_plone_groups:
+               get_plone_group_id(org_uid, 'advisers') in user_plone_groups and \
+               self._currentUserIsAdviserAbleToSendItemBackExtraCondition(org):
                 return True
         return False
 
