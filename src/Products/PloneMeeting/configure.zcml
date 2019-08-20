@@ -337,6 +337,20 @@
   <class class="plone.app.contenttypes.content.Collection">
     <implements interface="Products.PloneMeeting.interfaces.IConfigElement" />
   </class>
+  <!-- Mark some default Plone portal_types as IConfigElement so adding elements
+       to a "documents" folder will notify folder modified and invalidate caching -->
+  <class class="Products.ATContentTypes.content.document.ATDocument">
+    <implements interface="Products.PloneMeeting.interfaces.IPloneElement" />
+  </class>
+  <class class="plone.app.blob.content.ATBlob">
+    <implements interface="Products.PloneMeeting.interfaces.IPloneElement" />
+  </class>
+  <class class="Products.ATContentTypes.content.folder.ATFolder">
+    <implements interface="Products.PloneMeeting.interfaces.IPloneElement" />
+  </class>
+  <class class="Products.ATContentTypes.content.newsitem.ATNewsItem">
+    <implements interface="Products.PloneMeeting.interfaces.IPloneElement" />
+  </class>
 
   <!-- ETag components -->
   <adapter factory=".etags.UserGroups"

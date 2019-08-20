@@ -12,6 +12,8 @@ Changelog
     - Add new item dashboard faceted filters;
     - Disable use_stream for collective.documentgenerator.
 - Make sure collective.documentgenerator use_stream is set to False when creating a new site
+- Extended the _notifyContainerModified event to default Plone elements Folder/File/Document/News Item, so when using a 'Documents' folder to publish some documents,
+  adding a new element will notify container modified and invalidate cache
 
 4.1rc9 (2019-08-13)
 -------------------
