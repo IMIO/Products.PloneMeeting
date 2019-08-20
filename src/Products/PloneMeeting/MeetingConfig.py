@@ -3099,7 +3099,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # get the criterion
         criterion = _get_criterion(
             self.searches.searches_items,
-            ResultsPerPageWidget.widget_type)
+            ResultsPerPageWidget.widget_type,
+            raise_on_error=False)
         if criterion:
             value = criterion.default
         else:
