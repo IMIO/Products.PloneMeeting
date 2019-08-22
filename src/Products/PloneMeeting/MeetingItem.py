@@ -4097,7 +4097,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getAdvicesByType')
 
-    def getAdvicesByType(self):
+    def getAdvicesByType(self, include_not_asked=True):
         '''Returns the list of advices, grouped by type.'''
         res = {}
         tool = api.portal.get_tool('portal_plonemeeting')
@@ -4105,6 +4105,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         user_power_observer_types = [po_infos['row_id'] for po_infos in cfg.getPowerObservers()
                                      if tool.isPowerObserverForCfg(cfg, power_observer_type=po_infos['row_id'])]
         for groupId, adviceInfo in self.adviceIndex.iteritems():
+            if not include_not_asked and adviceInfo['not_asked']:
+                continue
             # make sure we do not modify original data
             adviceInfo = deepcopy(adviceInfo)
 
@@ -4320,6 +4322,26 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 .format(real_group_id, portal_url))))
         patched_vocab = DisplayList(patched_vocab)
         return self.displayValue(patched_vocab, self.getAllCopyGroups())
+
+    security.declarePublic('displayAdvisers')
+
+    def displayAdvisers(self):
+        '''Display advisers on the item view, especially the link showing users of a group.'''
+        portal_url = api.portal.get().absolute_url()
+        advisers_by_type = self.getAdvicesByType(include_not_asked=False)
+        res = []
+        for advice_type, advisers in advisers_by_type.items():
+            for adviser in advisers:
+                value = u"{0} <acronym><a onclick='event.preventDefault()' " \
+                    u"class='tooltipster-group-users deactivated' " \
+                    u"style='display: inline-block; padding: 0'" \
+                    u"href='#' data-group_id='{1}' data-base_url='{2}'>" \
+                    u"<img src='{2}/group_users.png' /></a></acronym>".format(
+                        adviser['name'] + (not adviser['optional'] and u' [auto]' or u''),
+                        get_plone_group_id(adviser['id'], 'advisers'),
+                        portal_url)
+                res.append(value)
+        return u', '.join(res)
 
     security.declarePublic('hasAdvices')
 
