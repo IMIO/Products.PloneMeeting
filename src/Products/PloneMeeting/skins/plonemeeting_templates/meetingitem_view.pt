@@ -26,7 +26,8 @@
                                   usedMeetingAttrs meetingConfig/getUsedMeetingAttributes;
                                   bilingual python: 'secondLanguage' in tool.getModelAdaptations();
                                   portal context/plone_portal_state/portal;
-                                  context_url context/absolute_url">
+                                  context_url context/absolute_url;
+                                  showAdvices python: context.adapted().showAdvices()">
 
     <script language="javascript"
             tal:content="python: 'ploneEditor = \'%s\';' % (member.getProperty('wysiwyg_editor') or here.portal_properties.site_properties.default_editor)">
@@ -99,6 +100,20 @@
                 <span tal:condition="nocall:cat" tal:content="cat/Title"></span>
             </div>
             </tal:category>
+
+            <tal:comment replace="nothing">Advices</tal:comment>
+            <div class="discreet" tal:condition="showAdvices"
+                                  tal:define="advisers context/displayAdvisers;">
+                <span class="item_attribute_label"
+                      i18n:translate="PloneMeeting_label_optionalAdvisers"></span>:&nbsp;&nbsp;
+                <tal:displayAdvisers condition="advisers">
+                    <span tal:replace="structure advisers">Advisers</span>
+                </tal:displayAdvisers>
+                <span tal:condition="not: advisers">-</span>
+                — <a class="discreet"
+                     tal:attributes="href string:${context_url}#advices"
+                     i18n:translate="legend_details" i18n:domain="plone">Details</a>
+            </div>
 
             <tal:comment replace="nothing">Copy groups for this item</tal:comment>
             <div class="discreet" tal:condition="context/isCopiesEnabled"
@@ -450,8 +465,7 @@
     <tal:comment replace="nothing">Annexes and advices</tal:comment>
     <a name="adviceAndAnnexes"></a>
     <table width="100%" cellpadding="1" cellspacing="1"
-           tal:define="showAnnexes python: tool.showAnnexesTab(context);
-                       showAdvices python: context.adapted().showAdvices()"
+           tal:define="showAnnexes python: tool.showAnnexesTab(context)"
             tal:condition="python: showAnnexes or showAdvices">
         <tr style="vertical-align: top;">
           <tal:annexes condition="showAnnexes">
@@ -463,9 +477,9 @@
             </td>
           </tal:annexes>
           <tal:comment replace="nothing">Advices</tal:comment>
-          <td id="itemAdvicesCell" tal:condition="python: context.adapted().showAdvices()">
+          <td id="itemAdvicesCell" tal:condition="showAdvices">
               <fieldset class="section_advices" tal:define="meetingItem python: context">
-              <legend i18n:translate="PloneMeeting_label_advices">Advices</legend>
+              <legend><a name="advices" i18n:translate="PloneMeeting_label_advices">Advices</a></legend>
                   <tal:advice replace="structure context/@@advices-icons" />
               </fieldset>
           </td>
