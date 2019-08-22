@@ -1585,8 +1585,10 @@ def get_state_infos(obj):
     wfTool = api.portal.get_tool('portal_workflow')
     review_state = wfTool.getInfoFor(obj, 'review_state')
     wf = wfTool.getWorkflowsFor(obj)[0]
+    state = wf.states.get(review_state)
+    state_title = state and state.title or review_state
     return {'state_name': review_state,
-            'state_title': translate(wf.states.get(review_state).title,
+            'state_title': translate(state_title,
                                      domain="plone",
                                      context=obj.REQUEST)}
 
