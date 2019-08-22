@@ -508,6 +508,8 @@ class testContacts(PloneMeetingTestCase):
         self.failIf(cfg.getCustomAdvisers())
         self.failIf(cfg.getPowerAdvisersGroups())
         self.failIf(cfg.getSelectableAdvisers())
+        self.failIf(cfg.getOrderedAssociatedOrganizations())
+        self.failIf(cfg.getOrderedGroupsInCharge())
         self.failUnless(self.developers_reviewers in cfg.getSelectableCopyGroups())
         can_not_delete_organization_meetingconfig = \
             translate('can_not_delete_organization_meetingconfig',
@@ -565,6 +567,26 @@ class testContacts(PloneMeetingTestCase):
         self.assertEquals(cm.exception.message, can_not_delete_organization_meetingconfig)
         # so remove usingGroups
         cfg.setUsingGroups([])
+
+        # define orderedAssociatedOrganizations, the exception is also raised
+        cfg.setOrderedAssociatedOrganizations([self.developers_uid, ])
+        transaction.commit()
+        with self.assertRaises(BeforeDeleteException) as cm:
+            self.portal.restrictedTraverse('@@delete_givenuid')(
+                self.developers_uid, catch_before_delete_exception=False)
+        self.assertEquals(cm.exception.message, can_not_delete_organization_meetingconfig)
+        # so remove orderedAssociatedOrganizations
+        cfg.setOrderedAssociatedOrganizations([])
+
+        # define orderedGroupsInCharge, the exception is also raised
+        cfg.setOrderedGroupsInCharge([self.developers_uid, ])
+        transaction.commit()
+        with self.assertRaises(BeforeDeleteException) as cm:
+            self.portal.restrictedTraverse('@@delete_givenuid')(
+                self.developers_uid, catch_before_delete_exception=False)
+        self.assertEquals(cm.exception.message, can_not_delete_organization_meetingconfig)
+        # so remove orderedGroupsInCharge
+        cfg.setOrderedGroupsInCharge([])
 
         # 2) fails because the corresponding Plone groups are not empty
         transaction.commit()
