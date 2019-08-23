@@ -311,7 +311,8 @@ body:not([class*='section-contacts']) .state-active, .label-state-active {color:
 .state-returned_to_proposing_group_prevalidated,
 .label-state-returned_to_proposing_group_prevalidated,
 *[class^='proposed'], *[class^='state-proposed'],
-*[class^='pretty_link proposed'], *[class^='pretty_link state-proposed'] {
+*[class^='pretty_link proposed'], *[class^='pretty_link state-proposed'],
+*[class$='_waiting_advices']:not(*[class$='_from_waiting_advices']) {
     color: DarkOrange !important;
 }
 .state-validated, .label-state-validated { color: blue !important; }

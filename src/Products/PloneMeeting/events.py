@@ -269,7 +269,9 @@ def onOrgWillBeRemoved(current_org, event):
         if current_org_uid in customAdvisersOrgUids or \
            current_org_uid in mc.getPowerAdvisersGroups() or \
            current_org_uid in mc.getSelectableAdvisers() or \
-           current_org_uid in mc.getUsingGroups():
+           current_org_uid in mc.getUsingGroups() or \
+           current_org_uid in mc.getOrderedAssociatedOrganizations() or \
+           current_org_uid in mc.getOrderedGroupsInCharge():
             raise BeforeDeleteException(translate("can_not_delete_organization_meetingconfig",
                                                   mapping={'cfg_url': mc.absolute_url()},
                                                   domain="plone",
@@ -301,8 +303,8 @@ def onOrgWillBeRemoved(current_org, event):
     catalog = api.portal.get_tool('portal_catalog')
 
     # In the application
-    # most of times, the real groupId is stored, but for MeetingItem.copyGroups, we
-    # store suffixed elements of the group, so compute suffixed elements for config and compare
+    # most of times, the org UID is stored, but for MeetingItem.copyGroups, we
+    # store suffixed elements of the org
     suffixedGroups = set()
     for suffix in get_all_suffixes():
         plone_group_id = get_plone_group_id(current_org_uid, suffix)

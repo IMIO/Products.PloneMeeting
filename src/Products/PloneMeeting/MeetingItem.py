@@ -459,14 +459,14 @@ class MeetingItemWorkflowConditions(object):
     def _mayWaitAdvices(self, destination_state):
         """Helper method used in every mayWait_advices_from_ guards."""
         res = False
-        if not self.context.getCategory(theObject=True):
-            return No(_('required_category_ko'))
         # check if there are advices to give in destination state
-        hasAdvicesToGive = self._hasAdvicesToGive(destination_state)
-        if not hasAdvicesToGive:
-            res = No(_('advice_required_to_ask_advices'))
-        elif _checkPermission(ReviewPortalContent, self.context):
-            res = True
+        if _checkPermission(ReviewPortalContent, self.context):
+            if not self.context.getCategory(theObject=True):
+                res = No(_('required_category_ko'))
+            elif not self._hasAdvicesToGive(destination_state):
+                res = No(_('advice_required_to_ask_advices'))
+            else:
+                res = True
         return res
 
     def _getWaitingAdvicesStateFrom(self, originStateId):
