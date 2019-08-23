@@ -285,11 +285,11 @@ class MeetingItemWorkflowConditions(object):
            self.context.getMeeting().queryState() in ('decided', 'decisions_published', 'closed'):
             return True
 
-    def _currentUserIsAdviserAbleToSendItemBackExtraCondition(self, org):
+    def _currentUserIsAdviserAbleToSendItemBackExtraCondition(self, org, destinationState):
         ''' '''
         return True
 
-    def _currentUserIsAdviserAbleToSendItemBack(self):
+    def _currentUserIsAdviserAbleToSendItemBack(self, destinationState):
         '''Is current user an adviser able to send an item 'waiting_advices' back to other states?
            To do so :
            - every advices that should be given have to be given;
@@ -305,7 +305,7 @@ class MeetingItemWorkflowConditions(object):
                 (self.context.adapted().mayEvaluateCompleteness() and
                  not self.context.adapted()._is_complete())) and \
                get_plone_group_id(org_uid, 'advisers') in user_plone_groups and \
-               self._currentUserIsAdviserAbleToSendItemBackExtraCondition(org):
+               self._currentUserIsAdviserAbleToSendItemBackExtraCondition(org, destinationState):
                 return True
         return False
 
@@ -355,7 +355,7 @@ class MeetingItemWorkflowConditions(object):
                             if 'waiting_advices_from_last_val_level_adviser_and_proposing_group_send_back' in wfas or \
                                'waiting_advices_from_last_val_level_only_adviser_send_back' in wfas:
                                 # get advisers that are able to trigger transition
-                                res = self._currentUserIsAdviserAbleToSendItemBack()
+                                res = self._currentUserIsAdviserAbleToSendItemBack(destinationState)
             else:
                 res = _checkPermission(ReviewPortalContent, self.context)
         return res
