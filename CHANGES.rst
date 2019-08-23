@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.1 (unreleased)
+4.1 (2019-08-23)
 ----------------
 
 - Fixed POd template check functionnality when odt output_format was not available
