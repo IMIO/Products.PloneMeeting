@@ -8,6 +8,7 @@ Changelog
 - Fixed bug on item template view when no proposingGroup defined, be defensive when getting proposingGroup
 - In the "Products.PloneMeeting.vocabularies.groupsinchargevocabulary", only consider organizations selected in plonegroup
 - Disable "inline_validation.js"
+- Added new advice type "Cautious", in addition to default ones "positive, positive with remarks, negative and nil"
 
 4.1 (2019-08-23)
 ----------------

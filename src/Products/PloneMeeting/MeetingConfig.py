@@ -4383,6 +4383,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             ("asked_again", translate('asked_again', domain=d, context=self.REQUEST)),
             ("positive", translate('positive', domain=d, context=self.REQUEST)),
             ("positive_with_remarks", translate('positive_with_remarks', domain=d, context=self.REQUEST)),
+            ("cautious", translate('cautious', domain=d, context=self.REQUEST)),
             ("negative", translate('negative', domain=d, context=self.REQUEST)),
             ("nil", translate('nil', domain=d, context=self.REQUEST)),
         ]
