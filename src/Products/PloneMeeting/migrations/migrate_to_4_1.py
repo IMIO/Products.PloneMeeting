@@ -865,7 +865,7 @@ class Migrate_To_4_1(Migrator):
             if 'absents' in histMeetingAttrs:
                 histMeetingAttrs.remove('absents')
             if 'lateAttendees' in histMeetingAttrs:
-                histMeetingAttrs.remove('itemAbsents')
+                histMeetingAttrs.remove('lateAttendees')
             cfg.setHistorizedMeetingAttributes(histMeetingAttrs)
         logger.info('Done.')
 
