@@ -255,7 +255,7 @@ class GroupsInChargeVocabulary(object):
         return date, cfg.getId(), only_selected
 
     @ram.cache(__call___cachekey)
-    def __call__(self, context, only_selected=True):
+    def __call__(self, context, only_selected=False):
         """List groups in charge :
            - if groupsInCharge in MeetingConfig.usedItemAttributes,
              list MeetingConfig.orderedGroupsInCharge;

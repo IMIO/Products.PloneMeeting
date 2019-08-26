@@ -72,7 +72,7 @@
 
 <javascript id="dropdown.js" insert-after="++resource++plone.app.discussion.javascripts/comments.js" />
 
-<javascript id="inline_validation.js" insert-after="dropdown.js" />
+<javascript id="inline_validation.js" insert-after="dropdown.js" enabled="False" />
 
 <javascript id="kss-bbb.js" insert-after="inline_validation.js" />
 
