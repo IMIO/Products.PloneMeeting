@@ -3,7 +3,7 @@
   <script type="text/javascript">
     createCookie('pmForceInsertNormal', false);
   </script>
-  <input onclick="javascript:changeForceInsertNormalCookie(this)"
+  <input onclick="changeForceInsertNormalCookie(this);"
          tal:define="enabled view/enabled"
          tal:attributes="disabled python: enabled and default or 'disabled'"
          type="checkbox"

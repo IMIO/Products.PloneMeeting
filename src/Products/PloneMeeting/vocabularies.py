@@ -247,13 +247,15 @@ ItemProposingGroupsForFacetedFilterVocabularyFactory = ItemProposingGroupsForFac
 class GroupsInChargeVocabulary(object):
     implements(IVocabularyFactory)
 
-    def __call___cachekey(method, self, context):
+    def __call___cachekey(method, self, context, only_selected=True):
         '''cachekey method for self.__call__.'''
         date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.groupsinchargevocabulary')
-        return date
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        return date, cfg.getId(), only_selected
 
     @ram.cache(__call___cachekey)
-    def __call__(self, context):
+    def __call__(self, context, only_selected=True):
         """List groups in charge :
            - if groupsInCharge in MeetingConfig.usedItemAttributes,
              list MeetingConfig.orderedGroupsInCharge;
@@ -263,7 +265,7 @@ class GroupsInChargeVocabulary(object):
         res = []
         # groups in charge are defined on organizations
         if 'groupsInCharge' not in cfg.getUsedItemAttributes():
-            orgs = get_organizations(only_selected=False)
+            orgs = get_organizations(only_selected=only_selected)
             for org in orgs:
                 for group_in_charge_uid in (org.groups_in_charge or []):
                     group_in_charge = get_organization(group_in_charge_uid)
@@ -273,7 +275,7 @@ class GroupsInChargeVocabulary(object):
         else:
             # groups in charge are selected on the items
             kept_org_uids = cfg.getOrderedGroupsInCharge()
-            res = get_organizations(only_selected=False, kept_org_uids=kept_org_uids)
+            res = get_organizations(only_selected=only_selected, kept_org_uids=kept_org_uids)
 
         res = [SimpleTerm(gic.UID(),
                           gic.UID(),
@@ -288,7 +290,7 @@ GroupsInChargeVocabularyFactory = GroupsInChargeVocabulary()
 
 
 class ItemGroupsInChargeVocabulary(GroupsInChargeVocabulary):
-    """Manage missing terms if context is a MeetingItem."""
+    """Manage missing terms when context is a MeetingItem."""
 
     def __call__(self, context):
         """ """
@@ -1399,10 +1401,12 @@ class AssociatedGroupsVocabulary(object):
         """ """
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        orderedAssociatedOrganizations = cfg.getOrderedAssociatedOrganizations()
-        if orderedAssociatedOrganizations:
+        # selectable associated groups defined in MeetingConfig?
+        if cfg.getOrderedAssociatedOrganizations():
             orgs = list(cfg.getOrderedAssociatedOrganizations(theObjects=True))
         else:
+            # if not then every existing organizations (even not selected in plonegroup)
+            # are selectable as associated groups
             orgs = get_organizations()
 
         terms = []

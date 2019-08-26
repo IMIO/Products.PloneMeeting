@@ -5,8 +5,8 @@ Changelog
 4.1.1 (unreleased)
 ------------------
 
-- Nothing changed yet.
-
+- Fixed bug on item template view when no proposingGroup defined, be defensive when getting proposingGroup
+- In the "Products.PloneMeeting.vocabularies.groupsinchargevocabulary", only consider organizations selected in plonegroup
 
 4.1 (2019-08-23)
 ----------------
