@@ -15,6 +15,7 @@ from collective.iconifiedcategory.adapter import CategorizedObjectAdapter
 from collective.iconifiedcategory.adapter import CategorizedObjectInfoAdapter
 from collective.iconifiedcategory.utils import get_categories
 from datetime import datetime
+from DateTime import DateTime
 from eea.facetednavigation.criteria.handler import Criteria as eeaCriteria
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from eea.facetednavigation.widgets.resultsperpage.widget import Widget as ResultsPerPageWidget
@@ -28,6 +29,7 @@ from imio.prettylink.adapters import PrettyLinkAdapter
 from persistent.list import PersistentList
 from plone import api
 from plone.api.exc import InvalidParameterError
+from plone.app.querystring.queryparser import parseFormquery
 from plone.memoize import ram
 from plone.memoize.instance import memoize
 from Products.CMFCore.permissions import AccessContentsInformation
@@ -833,6 +835,26 @@ def query_meeting_config_modified_cachekey(method, self):
     '''cachekey method for caching as long as MeetingConfig not modified.'''
     cfg_modified = self.cfg and self.cfg.modified() or datetime.now()
     return self.context.modified(), cfg_modified
+
+
+class LastDecisionsAdapter(CompoundCriterionBaseAdapter):
+
+    @property
+    def query_last_decisions(self):
+        '''Patch the query 'getDate' to not limit the search
+           to 'today' but 60 days in the future.'''
+        if not self.cfg:
+            return {}
+        # remove the 'last-decisions' adapter from query so we may parse it
+        # or it will lead to a RuntimeError: maximum recursion depth exceeded
+        query = [term for term in self.context.query if term[u'i'] != u'CompoundCriterion']
+        parsedQuery = parseFormquery(self.context, query)
+        # change the second date of getDate query, aka the 'max' date
+        parsedQuery['getDate']['query'][1] = DateTime() + 60
+        return parsedQuery
+
+    # we may not ram.cache methods in same file with same name...
+    query = query_last_decisions
 
 
 class ItemsOfMyGroupsAdapter(CompoundCriterionBaseAdapter):

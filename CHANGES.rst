@@ -11,6 +11,8 @@ Changelog
 - Added new advice types "Cautious" and "Positive with comments", in addition to default ones "Positive, Positive with remarks, Negative and Nil"
 - Added possibility to filter item dashboards for items taken over by "Nobody"
 - Use natsort.humansorted instead natsort.realsorted to sort vocabularies by term title
+- Changed base implementation of MeetingWorkflowConditions.mayDecide to only check if current user has "Review portal content" permission
+- Make the searchlastdecisions meetings search able to display decisions in the future
 
 4.1 (2019-08-23)
 ----------------

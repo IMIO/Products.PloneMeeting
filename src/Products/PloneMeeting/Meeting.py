@@ -151,29 +151,18 @@ class MeetingWorkflowConditions(object):
     security.declarePublic('mayFreeze')
 
     def mayFreeze(self):
+        res = False
         if _checkPermission(ReviewPortalContent, self.context):
-            return True
+            res = True
+        return res
 
     security.declarePublic('mayDecide')
 
     def mayDecide(self):
-        '''May decisions on this meeting be taken?'''
+        res = False
         if _checkPermission(ReviewPortalContent, self.context):
-            if not self.context.getDate().isPast():
-                return No(_('meeting_in_past'))
-            # Check that all items are OK.
             res = True
-            msg = None
-            for item in self.context.getItems():
-                if item.queryState() == 'itemfrozen':
-                    mayDecide = item.wfConditions().mayDecide()
-                    if not mayDecide:
-                        msg = mayDecide.msg
-                        break
-            if msg:
-                res = msg
-            return res
-        return False
+        return res
 
     security.declarePublic('mayCorrect')
 

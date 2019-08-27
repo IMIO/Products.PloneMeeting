@@ -170,6 +170,10 @@
            factory="Products.PloneMeeting.adapters.NegativePersonalLabelsAdapter"
            provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
            name="items-with-negative-personal-labels" />
+  <adapter for="*"
+           factory="Products.PloneMeeting.adapters.LastDecisionsAdapter"
+           provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
+           name="last-decisions" />
 
   <adapter factory=".validators.DXCertifiedSignaturesValidator" />
 
