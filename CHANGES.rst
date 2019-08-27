@@ -9,6 +9,8 @@ Changelog
 - In the "Products.PloneMeeting.vocabularies.groupsinchargevocabulary", only consider organizations selected in plonegroup
 - Disable "inline_validation.js"
 - Added new advice types "Cautious" and "Positive with comments", in addition to default ones "Positive, Positive with remarks, Negative and Nil"
+- Added possibility to filter item dashboards for items taken over by "Nobody"
+- Use natsort.humansorted instead natsort.realsorted to sort vocabularies by term title
 
 4.1 (2019-08-23)
 ----------------

@@ -323,6 +323,8 @@ ITEM_INSERT_METHODS = OrderedDict((
 
 ITEM_TRANSITION_WHEN_RETURNED_FROM_PROPOSING_GROUP_AFTER_CORRECTION = 'accept'
 
+EMPTY_STRING = '__empty_string__'
+
 
 def registerClasses():
     '''ArchGenXML generated code does not register Archetype classes at the

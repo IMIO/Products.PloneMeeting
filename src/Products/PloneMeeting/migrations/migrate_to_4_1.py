@@ -84,7 +84,7 @@ class Migrate_To_4_1(Migrator):
             criteria.edit(
                 'c12', **{
                     'vocabulary':
-                        'Products.PloneMeeting.vocabularies.creatorsforfacetedfiltervocabulary'})
+                        'Products.PloneMeeting.vocabularies.creatorswithnobodyforfacetedfiltervocabulary'})
             criteria.edit(
                 'c23', **{
                     'title': 'Groups in charge',
