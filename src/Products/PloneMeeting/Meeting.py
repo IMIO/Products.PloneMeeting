@@ -1219,7 +1219,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
     def getItemByNumber(self, number):
         '''Gets the item thas has number p_number.'''
         catalog = api.portal.get_tool('portal_catalog')
-        brains = catalog(linkedMeetingUID=self.UID(), getItemNumber=number)
+        brains = catalog(linkedMeetingUID=self.UID(), getItemNumber=str(number))
         if not brains:
             return None
         return brains[0].getObject()

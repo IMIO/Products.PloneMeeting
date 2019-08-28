@@ -270,6 +270,8 @@ def postInstall(context):
     viewer_settings['show_search_on_group_view'] = False
     viewer_settings['storage_type'] = 'Blob'
 
+    activate_solr_and_reindex_if_available(site)
+
     # configure Products.cron4plone
     # add a call to @@update-delay-aware-advices that will update
     # data regarding the delay-aware advices : call updateAdvices on every items
@@ -359,6 +361,27 @@ def postInstall(context):
 
     # reorder css
     _reorderCSS(site)
+
+
+def activate_solr_and_reindex_if_available(site):
+    """ activate solr indexing and reindex the existing content """
+    try:
+        from collective.solr.utils import activate
+        activate(True)
+        # import ipdb
+        # ipdb.set_trace()
+        import transaction
+        transaction.savepoint()
+        response = site.REQUEST.RESPONSE
+        original = response.write
+        response.write = lambda x: x  # temporarily ignore output
+        maintenance = site.unrestrictedTraverse("@@solr-maintenance")
+        maintenance.clear()
+        maintenance.reindex()
+        response.write = original
+    except ImportError:
+        # Solr is not in the environment -> ignore
+        pass
 
 
 def _configureCKeditor(site):

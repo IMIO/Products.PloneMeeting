@@ -13,6 +13,7 @@
     <dependency>profile-collective.js.iframeresizer:default</dependency>
     <dependency>profile-collective.js.tablednd:default</dependency>
     <dependency>profile-collective.messagesviewlet:messages</dependency>
+    <dependency>profile-collective.solr:default</dependency>
     <dependency>profile-communesplone.layout:default</dependency>
     <dependency>profile-dexterity.localrolesfield:default</dependency>
     <dependency>profile-ftw.labels:default</dependency>

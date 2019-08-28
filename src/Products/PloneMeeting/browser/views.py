@@ -481,7 +481,7 @@ class ObjectGoToView(BrowserView):
         catalog = api.portal.get_tool('portal_catalog')
         meeting = self.context.getMeeting()
         itemNumber = _itemNumber_to_storedItemNumber(itemNumber)
-        brains = catalog(linkedMeetingUID=meeting.UID(), getItemNumber=itemNumber)
+        brains = catalog(linkedMeetingUID=meeting.UID(), getItemNumber=str(itemNumber))
         if not brains:
             self.context.plone_utils.addPortalMessage(
                 translate(msgid='item_number_not_accessible',
