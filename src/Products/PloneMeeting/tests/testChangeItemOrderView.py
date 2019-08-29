@@ -553,6 +553,8 @@ class testChangeItemOrderView(PloneMeetingTestCase):
         self.assertEquals(item4.getItemNumber(), 400)
         self.assertEquals(item5.getItemNumber(), 500)
         # put the item2 back to position 2
+        import ipdb
+        ipdb.set_trace()
         view('up')
         self.assertEquals(item2.getItemNumber(), 200)
         # and other items position are adapted

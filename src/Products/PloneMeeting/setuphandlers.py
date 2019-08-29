@@ -149,6 +149,7 @@ def postInstall(context):
         return
     site = context.getSite()
 
+    activate_solr_and_reindex_if_available(site)
     # Create or update indexes
     addOrUpdateIndexes(site, indexInfos)
     addOrUpdateColumns(site, columnInfos)
@@ -270,8 +271,6 @@ def postInstall(context):
     viewer_settings['show_search_on_group_view'] = False
     viewer_settings['storage_type'] = 'Blob'
 
-    activate_solr_and_reindex_if_available(site)
-
     # configure Products.cron4plone
     # add a call to @@update-delay-aware-advices that will update
     # data regarding the delay-aware advices : call updateAdvices on every items
@@ -367,9 +366,11 @@ def activate_solr_and_reindex_if_available(site):
     """ activate solr indexing and reindex the existing content """
     try:
         from collective.solr.utils import activate
+        solr_activated = api.portal.get_registry_record('collective.solr.active')
+        if solr_activated:
+            return
         activate(True)
-        # import ipdb
-        # ipdb.set_trace()
+        api.portal.set_registry_record('collective.solr.required', [u''])
         import transaction
         transaction.savepoint()
         response = site.REQUEST.RESPONSE
@@ -377,8 +378,13 @@ def activate_solr_and_reindex_if_available(site):
         response.write = lambda x: x  # temporarily ignore output
         maintenance = site.unrestrictedTraverse("@@solr-maintenance")
         maintenance.clear()
+        transaction.savepoint()
         maintenance.reindex()
         response.write = original
+        transaction.savepoint()
+        catalog = api.portal.get_tool('portal_catalog')
+        catalog.clearFindAndRebuild()
+        transaction.savepoint()
     except ImportError:
         # Solr is not in the environment -> ignore
         pass

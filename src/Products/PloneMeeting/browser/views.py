@@ -481,7 +481,7 @@ class ObjectGoToView(BrowserView):
         catalog = api.portal.get_tool('portal_catalog')
         meeting = self.context.getMeeting()
         itemNumber = _itemNumber_to_storedItemNumber(itemNumber)
-        brains = catalog(linkedMeetingUID=meeting.UID(), getItemNumber=str(itemNumber))
+        brains = catalog(linkedMeetingUID=meeting.UID(), getItemNumber=itemNumber)
         if not brains:
             self.context.plone_utils.addPortalMessage(
                 translate(msgid='item_number_not_accessible',
@@ -547,7 +547,8 @@ class UpdateDelayAwareAdvicesView(BrowserView):
             for advice_state in ADVICE_STATES_ALIVE:
                 indexAdvisers.append("delay__%s_%s" % (org_uid, advice_state))
         query = {}
-        query['indexAdvisers'] = indexAdvisers
+        if indexAdvisers:
+            query['indexAdvisers'] = indexAdvisers
         return query
 
     def _updateAllAdvices(self, query={}):
