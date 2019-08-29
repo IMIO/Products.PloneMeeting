@@ -13,6 +13,7 @@ Changelog
 - Use natsort.humansorted instead natsort.realsorted to sort vocabularies by term title
 - Changed base implementation of MeetingWorkflowConditions.mayDecide to only check if current user has "Review portal content" permission
 - Make the searchlastdecisions meetings search able to display decisions in the future
+- Do not display the 'review_state' columns in contacts dashboard displaying organizations, it is always 'active', we use the 'selected in plonegroup' column information instead
 
 4.1 (2019-08-23)
 ----------------

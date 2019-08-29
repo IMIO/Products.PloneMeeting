@@ -38,10 +38,21 @@ class Migrate_To_4101(Migrator):
                 collection.setQuery(list(query))
         logger.info('Done.')
 
+    def _updateOrgsDashboardCollectionColumns(self):
+        """Make sure the 'review_state' column is not displayed in dashboards displaying organizations."""
+        logger.info("Updating dashboard organization collections to remove the \"review_state\" column...")
+        orgs_searches_folder = self.portal.contacts.get('orgs-searches')
+        # hide the 'review_state' column for orgs related collections
+        for org_coll in orgs_searches_folder.objectValues():
+            org_coll.customViewFields = [col_name for col_name in org_coll.customViewFields
+                                         if col_name != u'review_state']
+        logger.info('Done.')
+
     def run(self, extra_omitted=[]):
         logger.info('Migrating to PloneMeeting 4101...')
         self._updateFacetedFilters()
         self._updateSearchLastDecisionsQuery()
+        self._updateOrgsDashboardCollectionColumns()
         self.cleanRegistries()
         self.reindexIndexes(idxs=['getTakenOverBy'])
 
@@ -51,8 +62,9 @@ def migrate(context):
 
        1) Update faceted filters for item dashboards;
        2) Update the searchlastdecisions query to use last-decisions compound criterion adapter;
-       3) Clean registries;
-       4) Reindex the 'getTakenOverBy' catalog index as we use an indexer to handle empty value.
+       3) Update columns of collections displaying organizations in dashboard, remove the 'review_state' column;
+       4) Clean registries;
+       5) Reindex the 'getTakenOverBy' catalog index as we use an indexer to handle empty value.
     '''
     migrator = Migrate_To_4101(context)
     migrator.run()
