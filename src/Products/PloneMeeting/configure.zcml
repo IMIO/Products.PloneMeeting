@@ -170,6 +170,10 @@
            factory="Products.PloneMeeting.adapters.NegativePersonalLabelsAdapter"
            provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
            name="items-with-negative-personal-labels" />
+  <adapter for="*"
+           factory="Products.PloneMeeting.adapters.LastDecisionsAdapter"
+           provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
+           name="last-decisions" />
 
   <adapter factory=".validators.DXCertifiedSignaturesValidator" />
 
@@ -191,24 +195,25 @@
            provides="imio.actionspanel.interfaces.IContentDeletable" />
 
   <!-- Indexes -->
-  <adapter name="getRawClassifier" factory=".indexes.getRawClassifier" />
-  <adapter name="getConfigId" factory=".indexes.getConfigId" />
   <adapter name="Description" factory=".indexes.Description" />
+  <adapter name="getConfigId" factory=".indexes.getConfigId" />
+  <adapter name="getCopyGroups" factory=".indexes.getCopyGroups" />
+  <adapter name="getPreferredMeetingDate" factory=".indexes.getPreferredMeetingDate" />
+  <adapter name="getRawClassifier" factory=".indexes.getRawClassifier" />
+  <adapter name="getTakenOverBy" factory=".indexes.getTakenOverBy" />
   <adapter name="hasAnnexesToPrint" factory=".indexes.hasAnnexesToPrint" />
   <adapter name="hasAnnexesToSign" factory=".indexes.hasAnnexesToSign" />
+  <adapter name="indexAdvisers" factory=".indexes.indexAdvisers" />
   <adapter name="linkedMeetingDate" factory=".indexes.linkedMeetingDate" />
   <adapter name="linkedMeetingUID" factory=".indexes.linkedMeetingUID" />
-  <adapter name="getPreferredMeetingDate" factory=".indexes.getPreferredMeetingDate" />
-  <adapter name="getCopyGroups" factory=".indexes.getCopyGroups" />
-  <adapter name="sentToInfos" factory=".indexes.sentToInfos" />
-  <adapter name="templateUsingGroups" factory=".indexes.templateUsingGroups" />
   <adapter name="previous_review_state" factory=".indexes.previous_review_state" />
-  <adapter name="title_or_id" factory=".indexes.title_or_id" />
-  <adapter name="indexAdvisers" factory=".indexes.indexAdvisers" />
   <adapter name="reviewProcessInfo" factory=".indexes.reviewProcessInfo" />
-  <adapter name="sortable_title" factory=".indexes.sortable_title" />
-  <adapter name="sendToAuthority" factory=".indexes.sendToAuthority" />
   <adapter name="SearchableText" factory=".indexes.SearchableText" />
+  <adapter name="sendToAuthority" factory=".indexes.sendToAuthority" />
+  <adapter name="sentToInfos" factory=".indexes.sentToInfos" />
+  <adapter name="sortable_title" factory=".indexes.sortable_title" />
+  <adapter name="templateUsingGroups" factory=".indexes.templateUsingGroups" />
+  <adapter name="title_or_id" factory=".indexes.title_or_id" />
 
   <adapter
     for="imio.annex.content.annex.IAnnex"

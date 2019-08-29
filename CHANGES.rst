@@ -2,7 +2,19 @@ Changelog
 =========
 
 
-4.1 (unreleased)
+4.1.1 (unreleased)
+------------------
+
+- Fixed bug on item template view when no proposingGroup defined, be defensive when getting proposingGroup
+- In the "Products.PloneMeeting.vocabularies.groupsinchargevocabulary", only consider organizations selected in plonegroup
+- Disable "inline_validation.js"
+- Added new advice types "Cautious" and "Positive with comments", in addition to default ones "Positive, Positive with remarks, Negative and Nil"
+- Added possibility to filter item dashboards for items taken over by "Nobody"
+- Use natsort.humansorted instead natsort.realsorted to sort vocabularies by term title
+- Changed base implementation of MeetingWorkflowConditions.mayDecide to only check if current user has "Review portal content" permission
+- Make the searchlastdecisions meetings search able to display decisions in the future
+
+4.1 (2019-08-23)
 ----------------
 
 - Fixed POd template check functionnality when odt output_format was not available

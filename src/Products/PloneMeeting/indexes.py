@@ -12,6 +12,7 @@ from imio.history.interfaces import IImioHistory
 from OFS.interfaces import IItem
 from plone import api
 from plone.indexer import indexer
+from Products.PloneMeeting.config import EMPTY_STRING
 from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
@@ -35,6 +36,18 @@ def getConfigId(obj):
     tool = api.portal.get_tool('portal_plonemeeting')
     cfg = tool.getMeetingConfig(obj)
     return cfg and cfg.getId() or _marker
+
+
+@indexer(IMeetingItem)
+def getTakenOverBy(obj):
+    """
+      Indexes the takenOverBy with a special value when empty,
+      in faceted filters, query on empty value is ignored...
+    """
+    takenOverBy = obj.getTakenOverBy()
+    if not takenOverBy:
+        takenOverBy = EMPTY_STRING
+    return takenOverBy
 
 
 @indexer(IMeeting)

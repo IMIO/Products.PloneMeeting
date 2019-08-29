@@ -116,6 +116,18 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(len(pmFolder.objectValues('MeetingItem')), 1)
         self.assertEqual(pmFolder.objectValues('MeetingItem')[0].getId(), itemTemplate.getId)
 
+    def test_pm_ItemTemplateView(self):
+        '''As some fields behaves differently on an item template,
+           check that the view is still working correctly, for example if 'proposingGroup' is empty
+           (possible on an item template but not on a item in the application).'''
+        self.changeUser('siteadmin')
+        cfg = self.meetingConfig
+        itemTemplates = self.portal.portal_catalog(
+            portal_type=cfg.getItemTypeName(configType='MeetingItemTemplate'))
+        for brain in itemTemplates:
+            itemTemplate = brain.getObject()
+            itemTemplate()
+
     def test_pm_CreateItemFromTemplate(self):
         '''Test the createItemFromTemplate functionnality triggered from the plonemeeting portlet.'''
         cfg = self.meetingConfig

@@ -2967,6 +2967,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                         {'i': 'getDate',
                          'o': 'plone.app.querystring.operation.date.largerThanRelativeDate',
                          'v': '60'},
+                        {'i': 'CompoundCriterion',
+                         'o': 'plone.app.querystring.operation.compound.is',
+                         'v': 'last-decisions'},
                     ],
                     'sort_on': u'sortable_title',
                     'sort_reversed': True,
@@ -4475,7 +4478,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         res = [
             ("asked_again", translate('asked_again', domain=d, context=self.REQUEST)),
             ("positive", translate('positive', domain=d, context=self.REQUEST)),
+            ("positive_with_comments", translate('positive_with_comments', domain=d, context=self.REQUEST)),
             ("positive_with_remarks", translate('positive_with_remarks', domain=d, context=self.REQUEST)),
+            ("cautious", translate('cautious', domain=d, context=self.REQUEST)),
             ("negative", translate('negative', domain=d, context=self.REQUEST)),
             ("nil", translate('nil', domain=d, context=self.REQUEST)),
         ]

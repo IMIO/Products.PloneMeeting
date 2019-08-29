@@ -1010,6 +1010,34 @@ class testSearches(PloneMeetingTestCase):
             collection = brain.getObject()
             self.assertTrue(collection.restrictedTraverse('edit')())
 
+    def test_pm_SearchLastDecisions(self):
+        '''Test the 'last-decisions' CompoundCriterion adapter.
+           This should decided meetings from 60 days in the past to 60 days in the future.'''
+        cfg = self.meetingConfig
+        meetingTypeName = cfg.getMeetingTypeName()
+
+        # siteadmin is not member of any PloneMeeting groups
+        collection = cfg.searches.searches_decisions.searchlastdecisions
+
+        adapter = getAdapter(collection, ICompoundCriterionFilter, name='last-decisions')
+        self.changeUser('siteadmin')
+        # getDate minmax is correct, first date is 60 days before and second 60 days after now
+        self.assertTrue(adapter.query['getDate']['query'][0] < DateTime() - 59)
+        self.assertTrue(adapter.query['getDate']['query'][1] > DateTime() + 59)
+        self.assertEqual(adapter.query['portal_type']['query'], [meetingTypeName])
+
+        # decided meetings in the future and in the past are found
+        self.changeUser('pmManager')
+        self.failIf(collection.results())
+        past_meeting = self.create('Meeting', date=DateTime() - 45)
+        future_meeting = self.create('Meeting', date=DateTime() + 45)
+        self.failIf(collection.results())
+        self.decideMeeting(past_meeting)
+        self.decideMeeting(future_meeting)
+        result_uids = [brain.UID for brain in collection.results()]
+        self.assertTrue(past_meeting.UID() in result_uids)
+        self.assertTrue(future_meeting.UID() in result_uids)
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

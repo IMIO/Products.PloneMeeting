@@ -16,13 +16,14 @@ from eea.facetednavigation.interfaces import IFacetedNavigable
 from imio.annex.content.annex import IAnnex
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.content import uuidsToObjects
-from natsort import realsorted
+from natsort import humansorted
 from operator import attrgetter
 from plone import api
 from plone.memoize import ram
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import CONSIDERED_NOT_GIVEN_ADVICE_VALUE
+from Products.PloneMeeting.config import EMPTY_STRING
 from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
@@ -114,7 +115,7 @@ class ItemCategoriesVocabulary(object):
                            safe_unicode(category.Title())
                            )
             )
-        res = realsorted(res_active, key=attrgetter('title'))
+        res = humansorted(res_active, key=attrgetter('title'))
 
         res_not_active = []
         for category in notActiveCategories:
@@ -168,7 +169,7 @@ class ItemProposingGroupsVocabulary(object):
                            safe_unicode(active_org.get_full_title(first_index=1))
                            )
             )
-        res = realsorted(res_active, key=attrgetter('title'))
+        res = humansorted(res_active, key=attrgetter('title'))
 
         res_not_active = []
         request = getattr(context, 'REQUEST', getRequest())
@@ -183,7 +184,7 @@ class ItemProposingGroupsVocabulary(object):
                                      context=request)
                            )
             )
-        res = res + realsorted(res_not_active, key=attrgetter('title'))
+        res = res + humansorted(res_not_active, key=attrgetter('title'))
         return SimpleVocabulary(res)
 
 
@@ -221,7 +222,7 @@ class ItemProposingGroupsForFacetedFilterVocabulary(object):
                                safe_unicode(active_org.get_full_title(first_index=1))
                                )
                 )
-        res = realsorted(res_active, key=attrgetter('title'))
+        res = humansorted(res_active, key=attrgetter('title'))
 
         res_not_active = []
         for not_active_org in not_active_orgs:
@@ -237,7 +238,7 @@ class ItemProposingGroupsForFacetedFilterVocabulary(object):
                                          context=context.REQUEST)
                                )
                 )
-        res = res + realsorted(res_not_active, key=attrgetter('title'))
+        res = res + humansorted(res_not_active, key=attrgetter('title'))
         return SimpleVocabulary(res)
 
 
@@ -247,13 +248,15 @@ ItemProposingGroupsForFacetedFilterVocabularyFactory = ItemProposingGroupsForFac
 class GroupsInChargeVocabulary(object):
     implements(IVocabularyFactory)
 
-    def __call___cachekey(method, self, context):
+    def __call___cachekey(method, self, context, only_selected=True):
         '''cachekey method for self.__call__.'''
         date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.groupsinchargevocabulary')
-        return date
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        return date, cfg.getId(), only_selected
 
     @ram.cache(__call___cachekey)
-    def __call__(self, context):
+    def __call__(self, context, only_selected=False):
         """List groups in charge :
            - if groupsInCharge in MeetingConfig.usedItemAttributes,
              list MeetingConfig.orderedGroupsInCharge;
@@ -263,7 +266,7 @@ class GroupsInChargeVocabulary(object):
         res = []
         # groups in charge are defined on organizations
         if 'groupsInCharge' not in cfg.getUsedItemAttributes():
-            orgs = get_organizations(only_selected=False)
+            orgs = get_organizations(only_selected=only_selected)
             for org in orgs:
                 for group_in_charge_uid in (org.groups_in_charge or []):
                     group_in_charge = get_organization(group_in_charge_uid)
@@ -273,13 +276,13 @@ class GroupsInChargeVocabulary(object):
         else:
             # groups in charge are selected on the items
             kept_org_uids = cfg.getOrderedGroupsInCharge()
-            res = get_organizations(only_selected=False, kept_org_uids=kept_org_uids)
+            res = get_organizations(only_selected=only_selected, kept_org_uids=kept_org_uids)
 
         res = [SimpleTerm(gic.UID(),
                           gic.UID(),
                           safe_unicode(gic.get_full_title(first_index=1)))
                for gic in res]
-        res = realsorted(res, key=attrgetter('title'))
+        res = humansorted(res, key=attrgetter('title'))
 
         return SimpleVocabulary(res)
 
@@ -288,7 +291,7 @@ GroupsInChargeVocabularyFactory = GroupsInChargeVocabulary()
 
 
 class ItemGroupsInChargeVocabulary(GroupsInChargeVocabulary):
-    """Manage missing terms if context is a MeetingItem."""
+    """Manage missing terms when context is a MeetingItem."""
 
     def __call__(self, context):
         """ """
@@ -334,7 +337,7 @@ class EveryOrganizationsAcronymsVocabulary(object):
                                org.acronym or
                                translate("None", domain="PloneMeeting", context=context.REQUEST))
                            ))
-        res = realsorted(res, key=attrgetter('title'))
+        res = humansorted(res, key=attrgetter('title'))
         return SimpleVocabulary(res)
 
 
@@ -399,7 +402,7 @@ class CreatorsVocabulary(object):
                                   creator,
                                   safe_unicode(value))
                        )
-        res = realsorted(res, key=attrgetter('title'))
+        res = humansorted(res, key=attrgetter('title'))
         return SimpleVocabulary(res)
 
 
@@ -435,11 +438,31 @@ class CreatorsForFacetedFilterVocabulary(object):
                                   creator,
                                   safe_unicode(value))
                        )
-        res = realsorted(res, key=attrgetter('title'))
+        res = humansorted(res, key=attrgetter('title'))
         return SimpleVocabulary(res)
 
 
 CreatorsForFacetedFilterVocabularyFactory = CreatorsForFacetedFilterVocabulary()
+
+
+class CreatorsWithNobodyForFacetedFilterVocabulary(CreatorsForFacetedFilterVocabulary):
+    """Add the 'Nobody' option."""
+
+    def __call__(self, context):
+        """ """
+        res = super(CreatorsWithNobodyForFacetedFilterVocabulary, self).__call__(context)
+        # avoid do change original list of _terms
+        res = list(res._terms)
+        res.insert(0,
+                   SimpleTerm(EMPTY_STRING,
+                              EMPTY_STRING,
+                              translate('(Nobody)',
+                                        domain='PloneMeeting',
+                                        context=context.REQUEST)))
+        return SimpleVocabulary(res)
+
+
+CreatorsWithNobodyForFacetedFilterVocabularyFactory = CreatorsWithNobodyForFacetedFilterVocabulary()
 
 
 class MeetingDatesVocabulary(object):
@@ -573,7 +596,7 @@ class AskedAdvicesVocabulary(object):
             res.append(SimpleTerm(adviser,
                                   adviser,
                                   safe_unicode(termTitle)))
-        res = realsorted(res, key=attrgetter('title'))
+        res = humansorted(res, key=attrgetter('title'))
 
         res_not_active = []
         for adviser in not_active_advisers:
@@ -588,7 +611,7 @@ class AskedAdvicesVocabulary(object):
                            adviser,
                            safe_unicode(termTitle)))
 
-        res = res + realsorted(res_not_active, key=attrgetter('title'))
+        res = res + humansorted(res_not_active, key=attrgetter('title'))
         return SimpleVocabulary(res)
 
 
@@ -1379,6 +1402,7 @@ class SelectableAssociatedOrganizationsVocabulary(object):
                                        domain='PloneMeeting',
                                        mapping={'term_title': term.title, },
                                        context=context.REQUEST)
+        terms = humansorted(terms, key=attrgetter('title'))
         return SimpleVocabulary(terms)
 
 
@@ -1399,10 +1423,12 @@ class AssociatedGroupsVocabulary(object):
         """ """
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        orderedAssociatedOrganizations = cfg.getOrderedAssociatedOrganizations()
-        if orderedAssociatedOrganizations:
+        # selectable associated groups defined in MeetingConfig?
+        if cfg.getOrderedAssociatedOrganizations():
             orgs = list(cfg.getOrderedAssociatedOrganizations(theObjects=True))
         else:
+            # if not then every existing organizations (even not selected in plonegroup)
+            # are selectable as associated groups
             orgs = get_organizations()
 
         terms = []
@@ -1410,7 +1436,7 @@ class AssociatedGroupsVocabulary(object):
             org_uid = org.UID()
             terms.append(SimpleTerm(org_uid, org_uid, org.get_full_title()))
 
-        terms = realsorted(terms, key=attrgetter('title'))
+        terms = humansorted(terms, key=attrgetter('title'))
         return SimpleVocabulary(terms)
 
 
