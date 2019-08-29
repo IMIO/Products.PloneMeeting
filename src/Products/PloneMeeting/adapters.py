@@ -1267,20 +1267,15 @@ class AdvisedItemsAdapter(CompoundCriterionBaseAdapter):
             adviceStates += adviceWF.states.keys()
         # remove duplicates
         adviceStates = tuple(set(adviceStates))
+        indexAdvisers = []
         org_uids = [org.UID() for org in orgs]
+        for adviceState in adviceStates:
+            indexAdvisers += [org_uid + '_%s' % adviceState for org_uid in org_uids]
+            indexAdvisers += ['delay__' + org_uid + '_%s' % adviceState for org_uid in org_uids]
         # Create query parameters
-        query = {'portal_type': {'query': self.cfg.getItemTypeName()}}
-        if adviceStates:
-            indexAdvisers = []
-            for adviceState in adviceStates:
-                indexAdvisers += [org_uid + '_%s' % adviceState for org_uid in org_uids]
-                indexAdvisers += ['delay__' + org_uid + '_%s' % adviceState for org_uid in org_uids]
-
-            if indexAdvisers:
+        return {'portal_type': {'query': self.cfg.getItemTypeName()},
                 # KeywordIndex 'indexAdvisers' use 'OR' by default
-                query['indexAdvisers'] = indexAdvisers
-        # Create query parameters
-        return query
+                'indexAdvisers': {'query': indexAdvisers}, }
 
     # we may not ram.cache methods in same file with same name...
     query = query_adviseditems
@@ -1306,17 +1301,13 @@ class AdvisedItemsWithDelayAdapter(CompoundCriterionBaseAdapter):
             adviceStates += adviceWF.states.keys()
         # remove duplicates
         adviceStates = tuple(set(adviceStates))
+        indexAdvisers = []
+        for adviceState in adviceStates:
+            indexAdvisers += ['delay__' + org.UID() + '_%s' % adviceState for org in orgs]
         # Create query parameters
-        query = {'portal_type': {'query': self.cfg.getItemTypeName()}}
-        if adviceStates:
-            indexAdvisers = []
-            for adviceState in adviceStates:
-                indexAdvisers += ['delay__' + org.UID() + '_%s' % adviceState for org in orgs]
-            if indexAdvisers:
+        return {'portal_type': {'query': self.cfg.getItemTypeName()},
                 # KeywordIndex 'indexAdvisers' use 'OR' by default
-                query['indexAdvisers'] = indexAdvisers
-
-        return query
+                'indexAdvisers': {'query': indexAdvisers}, }
 
     # we may not ram.cache methods in same file with same name...
     query = query_adviseditemswithdelay

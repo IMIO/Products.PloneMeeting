@@ -547,8 +547,7 @@ class UpdateDelayAwareAdvicesView(BrowserView):
             for advice_state in ADVICE_STATES_ALIVE:
                 indexAdvisers.append("delay__%s_%s" % (org_uid, advice_state))
         query = {}
-        if indexAdvisers:
-            query['indexAdvisers'] = indexAdvisers
+        query['indexAdvisers'] = indexAdvisers
         return query
 
     def _updateAllAdvices(self, query={}):
