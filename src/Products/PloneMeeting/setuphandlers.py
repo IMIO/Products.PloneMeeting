@@ -332,8 +332,13 @@ def postInstall(context):
             acquire=0)
         # contacts dashboards
         add_orgs_searches(site, add_contact_lists_collections=False)
-        # post-configuration, show the "In/out plonegroup organization" filter
+        # post-configuration
         orgs_searches_folder = contacts.get('orgs-searches')
+        # hide the 'review_state' column for orgs related collections
+        for org_coll in orgs_searches_folder.objectValues():
+            org_coll.customViewFields = [col_name for col_name in org_coll.customViewFields
+                                         if col_name != u'review_state']
+        # show the "In/out plonegroup organization" filter
         orgs_searches_folder_criteria = ICriteria(orgs_searches_folder)
         own_org_criterion = orgs_searches_folder_criteria.get('c5')
         own_org_criterion.section = 'default'
