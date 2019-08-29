@@ -14,6 +14,12 @@ Changelog
 - Changed base implementation of MeetingWorkflowConditions.mayDecide to only check if current user has "Review portal content" permission
 - Make the searchlastdecisions meetings search able to display decisions in the future
 - Do not display the 'review_state' columns in contacts dashboard displaying organizations, it is always 'active', we use the 'selected in plonegroup' column information instead
+- Item validation workflow is now designed in the MeetingConfig.itemWFValidationLevels, tThis imply :
+    - to no longer rely on MEETINGROLES and MEETINGREVIEWERS constants;
+    - reviewer levels and mapping between review_state and organization suffix that manage the item is computed from the MeetingConfig;
+    - item validation specific roles (MeetingMember, MeetingReviewer, MeetingPreReviewer are removed from item workflows, local roles are dynamically given and
+      we only use common roles (Reader, Editor, Reviewer and Contributor)  
+- Use roles 'Reviewer' and 'Contributor' in meetingadvice_workflow
 
 4.1 (2019-08-23)
 ----------------
@@ -29,12 +35,6 @@ Changelog
   adding a new element will notify container modified and invalidate cache
 - Added adaptable method MeetingItem.custom_validate_optionalAdvisers so a plugin may validate selected optional advisers if necessary
 - Display asked advices on the meetingitem_view at top left together with copy groups so informations about who may see the item is located at the same place
-- Item validation workflow is now designed in the MeetingConfig.itemWFValidationLevels, tThis imply :
-    - to no longer rely on MEETINGROLES and MEETINGREVIEWERS constants;
-    - reviewer levels and mapping between review_state and organization suffix that manage the item is computed from the MeetingConfig;
-    - item validation specific roles (MeetingMember, MeetingReviewer, MeetingPreReviewer are removed from item workflows, local roles are dynamically given and
-      we only use common roles (Reader, Editor, Reviewer and Contributor)  
-- Use roles 'Reviewer' and 'Contributor' in meetingadvice_workflow
 
 4.1rc9 (2019-08-13)
 -------------------
