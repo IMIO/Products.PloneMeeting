@@ -467,18 +467,26 @@ class Migrate_To_4_1(Migrator):
                 # migrate MeetingUsers related fields
                 itemInitiators = item.getItemInitiator()
                 if itemInitiators:
-                    item.setItemInitiator([mu_hp_mappings[itemInitiator] for itemInitiator in itemInitiators])
+                    # do not fail if a MeetingUser was removed
+                    item.setItemInitiator([mu_hp_mappings[itemInitiator] for itemInitiator in itemInitiators
+                                           if itemInitiator in mu_hp_mappings])
                 delattr(item, 'itemAbsents')
                 delattr(item, 'itemSignatories')
                 delattr(item, 'answerers')
                 delattr(item, 'questioners')
                 item.votes = PersistentMapping()
 
-            # set orderedContacts then remove the meetingusers folder and contained MeetingUsers
+            # set orderedContacts and orderedItemInitiators
+            # then remove the meetingusers folder and contained MeetingUsers
             orderedContacts = [
                 mu_hp_mappings[mu.id] for mu in cfg.meetingusers.objectValues('MeetingUser')
-                if mu.queryState() == 'active']
+                if mu.queryState() == 'active' and 'assemblyMember' in mu.getUsages()]
             cfg.setOrderedContacts(orderedContacts)
+            orderedItemInitiators = [
+                mu_hp_mappings[mu.id] for mu in cfg.meetingusers.objectValues('MeetingUser')
+                if mu.queryState() == 'active' and 'asker' in mu.getUsages()]
+            cfg.setOrderedItemInitiators(orderedItemInitiators)
+
             cfg.manage_delObjects(ids=['meetingusers'])
 
         logger.info('Done.')
