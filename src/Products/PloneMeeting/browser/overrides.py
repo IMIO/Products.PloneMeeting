@@ -55,6 +55,7 @@ from Products.CMFPlone.utils import safe_unicode
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from Products.PloneMeeting import utils as pm_utils
 from Products.PloneMeeting.config import BARCODE_INSERTED_ATTR_ID
+from Products.PloneMeeting.config import EMPTY_STRING
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.interfaces import IMeeting
 from Products.PloneMeeting.utils import get_annexes
@@ -355,15 +356,16 @@ class PMDashboardDocumentGeneratorLinksViewlet(DashboardDocumentGeneratorLinksVi
     def get_all_pod_templates(self):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
-        if not cfg:
-            return []
+        query = {'object_provides': {'query': IDashboardPODTemplate.__identifier__},
+                 'sort_on': 'getObjPositionInParent'}
+        # filter on MeetingConfig if we are in it
+        if cfg:
+            query['path'] = {'query': '/'.join(cfg.getPhysicalPath())}
+        else:
+            query['getConfigId'] = EMPTY_STRING
+
         catalog = api.portal.get_tool('portal_catalog')
-        brains = catalog.unrestrictedSearchResults(
-            object_provides=IDashboardPODTemplate.__identifier__,
-            # PloneMeeting, just added following line
-            path={'query': '/'.join(cfg.getPhysicalPath())},
-            sort_on='getObjPositionInParent'
-        )
+        brains = catalog.unrestrictedSearchResults(**query)
         pod_templates = [self.context.unrestrictedTraverse(brain.getPath()) for brain in brains]
 
         return pod_templates

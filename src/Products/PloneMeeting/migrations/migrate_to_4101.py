@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from eea.facetednavigation.interfaces import ICriteria
+from imio.helpers.catalog import reindexIndexes
 from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator
 
@@ -48,13 +49,24 @@ class Migrate_To_4101(Migrator):
                                          if col_name != u'review_state']
         logger.info('Done.')
 
+    def _allowDashboardPODTemplateInDirectoryPortalType(self):
+        """Add 'DashboardPODTemplate' to 'allowed_content_types' of 'directory' portal_type."""
+        logger.info("Adding 'DashboardPODTemplate' to 'allowed_content_types' of 'directory' portal_type...")
+        pType = self.portal.portal_types['directory']
+        allowed_types = list(pType.allowed_content_types)
+        if 'DashboardPODTemplate' not in allowed_types:
+            allowed_types.append('DashboardPODTemplate')
+            pType.allowed_content_types = allowed_types
+        logger.info('Done.')
+
     def run(self, extra_omitted=[]):
         logger.info('Migrating to PloneMeeting 4101...')
         self._updateFacetedFilters()
         self._updateSearchLastDecisionsQuery()
         self._updateOrgsDashboardCollectionColumns()
+        self._allowDashboardPODTemplateInDirectoryPortalType()
         self.cleanRegistries()
-        self.reindexIndexes(idxs=['getTakenOverBy'])
+        reindexIndexes(self.portal, idxs=['getTakenOverBy', 'getConfigId'])
 
 
 def migrate(context):
@@ -63,8 +75,11 @@ def migrate(context):
        1) Update faceted filters for item dashboards;
        2) Update the searchlastdecisions query to use last-decisions compound criterion adapter;
        3) Update columns of collections displaying organizations in dashboard, remove the 'review_state' column;
+       4) Add 'DashboardPODTemplate' to the allowed types of a contacts directory;
        4) Clean registries;
-       5) Reindex the 'getTakenOverBy' catalog index as we use an indexer to handle empty value.
+       5) Reindex catalog indexes :
+              - 'getTakenOverBy' as we use an indexer to handle empty value;
+              - 'getConfigId' as we store a specific empty value as it is not possible to search on an empty index.
     '''
     migrator = Migrate_To_4101(context)
     migrator.run()

@@ -1109,11 +1109,14 @@ class PMDashboardCollectionsVocabulary(DashboardCollectionsVocabulary):
         catalog = api.portal.get_tool('portal_catalog')
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        query = {}
-        query['object_provides'] = IDashboardCollection.__identifier__
+        query = {'object_provides': {}}
+        query['object_provides']['query'] = IDashboardCollection.__identifier__
         if cfg:
             query['path'] = {'query': '/'.join(cfg.getPhysicalPath())}
             query['sort_on'] = 'sortable_title'
+        else:
+            # out of a MeetingConfig
+            query['getConfigId'] = EMPTY_STRING
         collection_brains = catalog(**query)
         vocabulary = SimpleVocabulary(
             [SimpleTerm(b.UID, b.UID, b.Title) for b in collection_brains]
