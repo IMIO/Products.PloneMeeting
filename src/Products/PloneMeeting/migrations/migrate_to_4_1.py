@@ -433,20 +433,44 @@ class Migrate_To_4_1(Migrator):
                     attendees = OrderedDict()
                     signatories = {}
                     for attendee_id in meeting.attendees:
-                        hp_uid = mu_hp_mappings[attendee_id]
-                        attendees[hp_uid] = 'attendee'
+                        hp_uid = mu_hp_mappings.get(attendee_id)
+                        if hp_uid:
+                            attendees[hp_uid] = 'attendee'
+                        else:
+                            self.warn(
+                                logger,
+                                'Could not find attendee "{0}" selected on meeting at "{1}"'.format(
+                                    attendee_id, '/'.join(meeting.getPhysicalPath())))
                     for absent_id in meeting.absents:
-                        hp_uid = mu_hp_mappings[absent_id]
-                        attendees[hp_uid] = 'absent'
+                        hp_uid = mu_hp_mappings.get(absent_id)
+                        if hp_uid:
+                            attendees[hp_uid] = 'absent'
+                        else:
+                            self.warn(
+                                logger,
+                                'Could not find absent "{0}" selected on meeting at "{1}"'.format(
+                                    attendee_id, '/'.join(meeting.getPhysicalPath())))
                     for excused_id in meeting.excused:
-                        hp_uid = mu_hp_mappings[excused_id]
-                        attendees[hp_uid] = 'excused'
+                        hp_uid = mu_hp_mappings.get(excused_id)
+                        if hp_uid:
+                            attendees[hp_uid] = 'excused'
+                        else:
+                            self.warn(
+                                logger,
+                                'Could not find excused "{0}" selected on meeting at "{1}"'.format(
+                                    attendee_id, '/'.join(meeting.getPhysicalPath())))
                     if not meeting.getSignatures():
                         signature_number = 1
                         for signatory_id in meeting.signatories:
-                            hp_uid = mu_hp_mappings[signatory_id]
-                            signatories[hp_uid] = str(signature_number)
-                            signature_number += 1
+                            hp_uid = mu_hp_mappings.get(signatory_id)
+                            if hp_uid:
+                                signatories[hp_uid] = str(signature_number)
+                                signature_number += 1
+                            else:
+                                self.warn(
+                                    logger,
+                                    'Could not find signatory "{0}" selected on meeting at "{1}"'.format(
+                                        signatory_id, '/'.join(meeting.getPhysicalPath())))
                     meeting._doUpdateContacts(attendees=attendees, signatories=signatories)
 
                 # remove old informations about MeetingUsers
@@ -470,6 +494,12 @@ class Migrate_To_4_1(Migrator):
                     # do not fail if a MeetingUser was removed
                     item.setItemInitiator([mu_hp_mappings[itemInitiator] for itemInitiator in itemInitiators
                                            if itemInitiator in mu_hp_mappings])
+                    for itemInitiator in itemInitiators:
+                        if itemInitiator not in mu_hp_mappings:
+                            self.warn(
+                                logger,
+                                'Could not find itemInitiator "{0}" selected on item at "{1}"'.format(
+                                    itemInitiator, '/'.join(item.getPhysicalPath())))
                 delattr(item, 'itemAbsents')
                 delattr(item, 'itemSignatories')
                 delattr(item, 'answerers')
