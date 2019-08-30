@@ -362,6 +362,7 @@ class PMDashboardDocumentGeneratorLinksViewlet(DashboardDocumentGeneratorLinksVi
         if cfg:
             query['path'] = {'query': '/'.join(cfg.getPhysicalPath())}
         else:
+            # out of a MeetingConfig
             query['getConfigId'] = EMPTY_STRING
 
         catalog = api.portal.get_tool('portal_catalog')
