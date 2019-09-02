@@ -568,11 +568,12 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
         if self.context.queryState() == 'validated':
             isPresentable = self.context.wfConditions().mayPresent()
 
+        # check also portal_url in case application is accessed thru different URI
         return (self.context.UID(), self.context.modified(), self.context.adviceIndex, cfg_modified,
                 userGroups, annotations,
                 meetingModified, useIcons, showTransitions, appendTypeNameToTransitionLabel, showEdit,
                 showOwnDelete, showActions, showAddContent, showHistory, showHistoryLastEventHasComments,
-                showArrows, isPresentable, kwargs)
+                showArrows, isPresentable, self.portal_url, kwargs)
 
     @ram.cache(__call___cachekey)
     def __call__(self,
@@ -652,11 +653,12 @@ class MeetingActionsPanelView(BaseActionsPanelView):
         userGroups = self.tool.get_plone_groups_for_user()
         date = get_cachekey_volatile(
             'Products.PloneMeeting.Meeting.UID.{0}'.format(self.context.UID()))
+        # check also portal_url in case application is accessed thru different URI
         return (self.context.UID(), self.context.modified(), self.context.getRawItems(), cfg_modified,
                 userGroups, date,
                 useIcons, showTransitions, appendTypeNameToTransitionLabel, showEdit,
                 showOwnDelete, showActions, showAddContent, showHistory, showHistoryLastEventHasComments,
-                showArrows, kwargs)
+                showArrows, self.portal_url, kwargs)
 
     @ram.cache(__call___cachekey)
     def __call__(self,

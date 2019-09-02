@@ -285,9 +285,12 @@ function advicesInfos() {
                trigger: 'custom',
                triggerOpen: {
                   mouseenter: true,
+                  click: true,
+                  tap: true,
                   },
                triggerClose: {
                   click: true,
+                  tap: true,
                   },
                functionReady_callback: initializeAdvicePopup,
                minWidth: 700,
@@ -302,9 +305,12 @@ function advicesInfos() {
                trigger: 'custom',
                triggerOpen: {
                   mouseenter: true,
+                  click: true,
+                  tap: true,
                   },
                triggerClose: {
                   click: true,
+                  tap: true,
                   },
                functionReady_callback: initializeAdvicePopup,
                minWidth: 700,

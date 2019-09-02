@@ -17,6 +17,8 @@ Changelog
 - Fixed migration of MeetingUsers, do not fail if a MeetingUser was deleted and initialize MeetingConfig.orderedContacts and MeetingConfig.orderedItemInitiators correctly
 - Added possibility to use a DashboardPODTemplate added into the contacts directory on contacts dashboards (and to define it in an import_data as well)
 - Moved organization.selectable_for_plonegroup field to the 'app_parameters' fieldset
+- Handle display of tooltipster when "tap" event (when using application on a mobile device)
+- Adapted actions_panel and faceted collection widget vocabulary to invalidate cache when portal_url changed, this can be the case when accessing application thru different portal_url
 
 4.1 (2019-08-23)
 ----------------
