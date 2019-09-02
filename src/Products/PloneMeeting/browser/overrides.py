@@ -170,10 +170,11 @@ class PloneMeetingContentActionsViewlet(ContentActionsViewlet):
            self.context.portal_type in (
             'ContentCategoryConfiguration', 'ContentCategoryGroup',
             'ConfigurablePODTemplate', 'DashboardPODTemplate',
-            'directory', 'organization', 'person', 'held_position') or \
+            'organization', 'person', 'held_position') or \
            self.context.portal_type.startswith(('meetingadvice',)) or \
            self.context.portal_type.endswith(('ContentCategory', 'ContentSubcategory',)) or \
-           IContactsDashboard.providedBy(self.context):
+           IContactsDashboard.providedBy(self.context) or \
+           (self.context.portal_type == 'directory' and self.view.__name__ != 'folder_contents'):
             return ''
         return self.index()
 
@@ -251,6 +252,9 @@ class PMConfigActionsPanelViewlet(ActionsPanelViewlet):
             url = '{0}?pageName=data#annexes_types'.format(cfg_url, )
         elif self.context.portal_type in ('person', 'held_position', 'organization'):
             url = parent.absolute_url()
+        elif self.context.portal_type == 'DashboardPODTemplate' and not cfg:
+            portal = api.portal.get()
+            url = portal.contacts.absolute_url()
         else:
             # We are in a subobject from the tool or on the PLONEGROUP_ORG
             url = tool_url
@@ -847,6 +851,7 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
         """ """
         generated_template = super(PMDocumentGenerationView, self).generate_and_download_doc(pod_template,
                                                                                              output_format)
+
         # check if we have to send this generated POD template or to render it
         if self.request.get('mailinglist_name'):
             return self._sendPodTemplate(generated_template)

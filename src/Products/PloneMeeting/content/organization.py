@@ -175,7 +175,7 @@ class IPMOrganization(IOrganization):
                    fields=['acronym', 'item_advice_states',
                            'item_advice_edit_states', 'item_advice_view_states',
                            'keep_access_to_item_when_advice_is_given', 'as_copy_group_on',
-                           'certified_signatures', 'groups_in_charge'])
+                           'certified_signatures', 'groups_in_charge', 'selectable_for_plonegroup'])
 
     @invariant
     def validate_selectable_for_plonegroup(data):

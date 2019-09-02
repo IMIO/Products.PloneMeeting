@@ -15,7 +15,8 @@ Changelog
 - Make the searchlastdecisions meetings search able to display decisions in the future
 - Do not display the 'review_state' columns in contacts dashboard displaying organizations, it is always 'active', we use the 'selected in plonegroup' column information instead
 - Fixed migration of MeetingUsers, do not fail if a MeetingUser was deleted and initialize MeetingConfig.orderedContacts and MeetingConfig.orderedItemInitiators correctly
-- Added possibility to use a DashboardPODTemplate added into the contacts directory on contacts dashboards
+- Added possibility to use a DashboardPODTemplate added into the contacts directory on contacts dashboards (and to define it in an import_data as well)
+- Moved organization.selectable_for_plonegroup field to the 'app_parameters' fieldset
 
 4.1 (2019-08-23)
 ----------------

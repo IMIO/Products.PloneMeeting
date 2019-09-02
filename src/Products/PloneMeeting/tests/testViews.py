@@ -1,26 +1,4 @@
 # -*- coding: utf-8 -*-
-#
-# File: testViews.py
-#
-# Copyright (c) 2015 by Imio.be
-#
-# GNU General Public License (GPL)
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
-# 02110-1301, USA.
-#
 
 from AccessControl import Unauthorized
 from collective.contact.plonegroup.utils import get_own_organization
@@ -1646,6 +1624,27 @@ class testViews(PloneMeetingTestCase):
             manager_name='collective.eeafaceted.z3ctable.topabovenav',
             viewlet_name='dashboard-document-generation-link')
         self.assertFalse(viewlet2.get_all_pod_templates())
+
+    def test_pm_dashboard_document_generation_link_viewlet_on_contacts(self):
+        """Dashboard POD templates are available on contacts dashboards."""
+        self.changeUser('pmManager')
+        # a DashboardPODTemplate is defined for the organizations dashboard
+        viewlet = self._get_viewlet(
+            context=self.portal.contacts.get('orgs-searches'),
+            manager_name='collective.eeafaceted.z3ctable.topabovenav',
+            viewlet_name='dashboard-document-generation-link')
+        self.request.form['c1[]'] = viewlet.context.get('all_orgs').UID()
+        # one generable template
+        generable_templates = viewlet.get_generable_templates()
+        self.assertTrue(generable_templates)
+        self.assertTrue(generable_templates[0].use_objects)
+        # NO DashboardPODTemplates are defined for persons dashboard
+        viewlet2 = self._get_viewlet(
+            context=self.portal.contacts.get('persons-searches'),
+            manager_name='collective.eeafaceted.z3ctable.topabovenav',
+            viewlet_name='dashboard-document-generation-link')
+        self.request.form['c1[]'] = viewlet2.context.get('all_persons').UID()
+        self.assertFalse(viewlet2.get_generable_templates())
 
 
 def test_suite():

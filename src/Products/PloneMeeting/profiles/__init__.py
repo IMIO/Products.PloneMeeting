@@ -267,6 +267,8 @@ class PodTemplateDescriptor(StyleTemplateDescriptor):
                          'roles_bypassing_talcondition',
                          'merge_templates')
 
+    excludedFields = ['dashboard_collections_ids', 'use_objects']
+
     def __init__(self, id, title, description='', enabled=True, dashboard=False):
         super(PodTemplateDescriptor, self).__init__(id, title, description, enabled)
         self.pod_formats = ['odt', ]
@@ -285,6 +287,8 @@ class PodTemplateDescriptor(StyleTemplateDescriptor):
         self.merge_templates = []
         self.is_reusable = False
         self.pod_template_to_use = {'cfg_id': None, 'template_id': None}
+        # only used by the DashboardPODTemplate
+        self.use_objects = False
 
 
 class PloneGroupDescriptor(Descriptor):
@@ -769,7 +773,7 @@ class PloneMeetingConfiguration(Descriptor):
     # through a profile.
     instance = None
 
-    excludedFields = ['directory_position_types', 'forceAddUsersAndGroups']
+    excludedFields = ['directory_position_types', 'forceAddUsersAndGroups', 'contactsTemplates']
 
     def get(klass):
         if not klass.instance:
@@ -822,5 +826,6 @@ class PloneMeetingConfiguration(Descriptor):
         self.persons = []  # ~[PersonDescriptor]~
         self.usersOutsideGroups = []  # ~[UserDescriptor]~
         self.directory_position_types = []
+        self.contactsTemplates = []  # ~[PodTemplateDescriptor]~
 
 # ------------------------------------------------------------------------------
