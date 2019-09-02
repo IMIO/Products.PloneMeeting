@@ -838,7 +838,9 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
             # imio.history utils
             'imio_history_utils': imio_history_utils,
             # make methods defined in utils available
-            'utils': pm_utils
+            # kept as 'utils' for backward compatibility, but we should use 'pm_utils'
+            'utils': pm_utils,
+            'pm_utils': pm_utils
         }
         return specific_context
 
