@@ -366,6 +366,9 @@ def activate_solr_and_reindex_if_available(site):
     """ activate solr indexing and reindex the existing content """
     try:
         from collective.solr.utils import activate
+        if not site.portal_quickinstaller.isProductInstalled('collective.solr'):
+            site.portal_setup.runAllImportStepsFromProfile('profile-collective.solr:default')
+
         solr_activated = api.portal.get_registry_record('collective.solr.active')
         if solr_activated:
             return
