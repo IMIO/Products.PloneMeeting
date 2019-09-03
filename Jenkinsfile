@@ -3,7 +3,7 @@ pmPipeline {
   testSuiteName = 'test'
   unitTestParameter = '--test=!robot'
   activateSolr = true
-  solrHost = 'config/communes'
+  solrConfig = 'config\\/communes'
   solrHost = '127.0.0.1'
   solrHttp = '35032'
 }
