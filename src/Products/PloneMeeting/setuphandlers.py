@@ -373,6 +373,9 @@ def activate_solr_and_reindex_if_available(site):
         api.portal.set_registry_record('collective.solr.required', [u''])
         import transaction
         transaction.savepoint()
+        catalog = api.portal.get_tool('portal_catalog')
+        catalog.clearFindAndRebuild()
+        transaction.savepoint()
         response = site.REQUEST.RESPONSE
         original = response.write
         response.write = lambda x: x  # temporarily ignore output
@@ -381,9 +384,6 @@ def activate_solr_and_reindex_if_available(site):
         transaction.savepoint()
         maintenance.reindex()
         response.write = original
-        transaction.savepoint()
-        catalog = api.portal.get_tool('portal_catalog')
-        catalog.clearFindAndRebuild()
         transaction.savepoint()
     except ImportError:
         # Solr is not in the environment -> ignore

@@ -1315,8 +1315,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
            - If p_prefix is True, the translated prefix "Meeting of" is
              prepended to the result.'''
         # Received meeting could be a brain or an object
-        import ipdb
-        # ipdb.set_trace()
         if meeting.__class__.__name__ in ['mybrains', 'CatalogContentListingObject', 'PloneFlare']:
             # It is a meeting brain, take the 'getDate' metadata
             date = meeting.getDate
