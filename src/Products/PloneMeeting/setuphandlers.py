@@ -8,32 +8,28 @@
 #
 # GNU General Public License (GPL)
 #
+import logging
+import os
 
+from Products.PloneMeeting.config import PMMessageFactory as _, CKEDITOR_MENUSTYLES_CUSTOMIZED_MSG, HAS_ZAMQP, \
+    ManageOwnOrganizationFields
+from Products.PloneMeeting.utils import cleanMemoize
+
+from Products.CMFPlacefulWorkflow.PlacefulWorkflowTool import WorkflowPolicyConfig_id
+from Products.CMFPlone.utils import base_hasattr
+from Products.CPUtils.Extensions.utils import configure_ckeditor
+from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_REAPPLY
+from Products.cron4plone.browser.configlets.cron_configuration import ICronConfiguration
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
-from collective.documentgenerator.config import set_raiseOnError_for_non_managers
-from collective.documentgenerator.config import set_use_stream
+from collective.documentgenerator.config import set_raiseOnError_for_non_managers, set_use_stream
 from collective.messagesviewlet.utils import add_message
 from dexterity.localroles.utils import add_fti_configuration
 from eea.facetednavigation.interfaces import ICriteria
 from imio.dashboard.setuphandlers import add_orgs_searches
-from imio.helpers.catalog import addOrUpdateColumns
-from imio.helpers.catalog import addOrUpdateIndexes
+from imio.helpers.catalog import addOrUpdateColumns, addOrUpdateIndexes
 from plone import api
-from Products.CMFPlacefulWorkflow.PlacefulWorkflowTool import WorkflowPolicyConfig_id
-from Products.CMFPlone.utils import base_hasattr
-from Products.CPUtils.Extensions.utils import configure_ckeditor
-from Products.cron4plone.browser.configlets.cron_configuration import ICronConfiguration
-from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_REAPPLY
-from Products.PloneMeeting.config import PMMessageFactory as _
-from Products.PloneMeeting.config import CKEDITOR_MENUSTYLES_CUSTOMIZED_MSG
-from Products.PloneMeeting.config import HAS_ZAMQP
-from Products.PloneMeeting.config import ManageOwnOrganizationFields
-from Products.PloneMeeting.utils import cleanMemoize
 from zope.component import queryUtility
 from zope.i18n import translate
-
-import logging
-
 
 __author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
 <g.bastien@imio.be>, Stephan GEULETTE <s.geulette@imio.be>"""
@@ -374,6 +370,8 @@ def activate_solr_and_reindex_if_available(site):
             return
         activate(True)
         api.portal.set_registry_record('collective.solr.required', [u''])
+        port = int(os.environ['SOLR_PORT'])
+        api.portal.set_registry_record('collective.solr.port', port)
         import transaction
         transaction.savepoint()
         catalog = api.portal.get_tool('portal_catalog')
