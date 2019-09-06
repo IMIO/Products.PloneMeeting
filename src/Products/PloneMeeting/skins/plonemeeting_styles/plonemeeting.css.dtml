@@ -1723,12 +1723,6 @@ div.config_sub_categories table {
    border-left: 5px solid grey;
 }
 
-/* highlight organizations not selectable in plonegroup */
-div.highlight.selectable_for_plonegroup_false label,
-div.highlight.selectable_for_plonegroup_false div span {
-   color: red;
-}
-
 /* highlight disabled values in red in faceted filters */
 #faceted-form fieldset.widget-fieldset label[title*="(Désactivé)"] {
     color: red;

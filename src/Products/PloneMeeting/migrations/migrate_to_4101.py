@@ -93,6 +93,15 @@ class Migrate_To_4101(Migrator):
         podTemplate.reindexObject()
         logger.info('Done.')
 
+    def _removeSelectableForPlonegroupFieldOnOrganizations(self):
+        '''Remove attribute 'selectable_for_plonegroup' on organizations.'''
+        logger.info("Removing attribute 'selectable_for_plonegroup' on every organizations...")
+        for brain in self.catalog(portal_type='organization'):
+            org = brain.getObject()
+            if hasattr(org, 'selectable_for_plonegroup'):
+                delattr(org, 'selectable_for_plonegroup')
+        logger.info('Done.')
+
     def run(self, extra_omitted=[]):
         logger.info('Migrating to PloneMeeting 4101...')
         self._updateFacetedFilters()
@@ -100,6 +109,7 @@ class Migrate_To_4101(Migrator):
         self._updateOrgsDashboardCollectionColumns()
         self._allowDashboardPODTemplateInDirectoryPortalType()
         self._addDashboardPODTemplateExportOrganizations()
+        self._removeSelectableForPlonegroupFieldOnOrganizations()
         self.cleanRegistries()
         reindexIndexes(self.portal, idxs=['getTakenOverBy', 'getConfigId'])
 
@@ -112,8 +122,9 @@ def migrate(context):
        3) Update columns of collections displaying organizations in dashboard, remove the 'review_state' column;
        4) Add 'DashboardPODTemplate' to the allowed types of a contacts directory;
        5) Add the 'Export CSV' DashboardPODTemplate available on the contacts 'All orgs' dashboard;
-       6) Clean registries;
-       7) Reindex catalog indexes :
+       6) Remove the 'selectable_for_plonegroup' attribute on organizations;
+       7) Clean registries;
+       8) Reindex catalog indexes :
               - 'getTakenOverBy' as we use an indexer to handle empty value;
               - 'getConfigId' as we store a specific empty value as it is not possible to search on an empty index.
     '''

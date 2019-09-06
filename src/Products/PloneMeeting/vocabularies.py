@@ -1,8 +1,10 @@
 # encoding: utf-8
 
+from collective.contact.plonegroup.browser.settings import EveryOrganizationsVocabulary
 from collective.contact.plonegroup.config import get_registry_organizations
 from collective.contact.plonegroup.utils import get_organization
 from collective.contact.plonegroup.utils import get_organizations
+from collective.contact.plonegroup.utils import get_own_organization
 from collective.documentgenerator.content.vocabulary import ExistingPODTemplateFactory
 from collective.documentgenerator.content.vocabulary import MergeTemplatesVocabularyFactory
 from collective.documentgenerator.content.vocabulary import PortalTypesVocabularyFactory
@@ -12,6 +14,7 @@ from collective.eeafaceted.collectionwidget.vocabulary import CachedCollectionVo
 from collective.eeafaceted.dashboard.vocabulary import DashboardCollectionsVocabulary
 from collective.iconifiedcategory.vocabularies import CategoryTitleVocabulary
 from collective.iconifiedcategory.vocabularies import CategoryVocabulary
+from DateTime import DateTime
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from imio.annex.content.annex import IAnnex
 from imio.helpers.cache import get_cachekey_volatile
@@ -30,8 +33,8 @@ from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.indexes import DELAYAWARE_ROW_ID_PATTERN
 from Products.PloneMeeting.indexes import REAL_ORG_UID_PATTERN
 from Products.PloneMeeting.interfaces import IMeetingConfig
+from Products.PloneMeeting.utils import decodeDelayAwareId
 from Products.PloneMeeting.utils import get_context_with_request
-from zope.component import queryUtility
 from zope.globalrequest import getRequest
 from zope.i18n import translate
 from zope.interface import implements
@@ -616,6 +619,124 @@ class AskedAdvicesVocabulary(object):
 
 
 AskedAdvicesVocabularyFactory = AskedAdvicesVocabulary()
+
+
+class ItemOptionalAdvicesVocabulary(object):
+    implements(IVocabularyFactory)
+
+    def __call__(self, context, include_selected=True, include_not_selectable_values=True):
+        """p_include_selected will make sure values selected on current context are
+           in the vocabulary.  Only relevant when context is a MeetingItem.
+           p_include_not_selectable_values will include the 'not_selectable_value_...' values,
+           useful for display only most of times."""
+        request = getRequest()
+
+        def _displayDelayAwareValue(delay_label, org_title, delay):
+            org_title = safe_unicode(org_title)
+            delay_label = safe_unicode(delay_label)
+            if delay_label:
+                value_to_display = translate('advice_delay_with_label',
+                                             domain='PloneMeeting',
+                                             mapping={'org_title': org_title,
+                                                      'delay': delay,
+                                                      'delay_label': delay_label},
+                                             default='${org_title} - ${delay} day(s) (${delay_label})',
+                                             context=request)
+            else:
+                value_to_display = translate('advice_delay_without_label',
+                                             domain='PloneMeeting',
+                                             mapping={'org_title': group_name,
+                                                      'delay': delay},
+                                             default='${org_title} - ${delay} day(s)',
+                                             context=request)
+            return value_to_display
+
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+
+        resDelayAwareAdvisers = []
+        # add delay-aware optionalAdvisers
+        # validity_date is used for customAdviser validaty (date from, date to)
+        validity_date = None
+        item = None
+        if context.meta_type == 'MeetingItem':
+            validity_date = context.created()
+            item = context
+        else:
+            validity_date = DateTime()
+        delayAwareAdvisers = cfg._optionalDelayAwareAdvisers(validity_date, item)
+        if delayAwareAdvisers:
+            # a delay-aware adviser has a special id so we can handle it specifically after
+            for delayAwareAdviser in delayAwareAdvisers:
+                adviserId = "%s__rowid__%s" % \
+                            (delayAwareAdviser['org_uid'],
+                             delayAwareAdviser['row_id'])
+                delay = delayAwareAdviser['delay']
+                delay_label = delayAwareAdviser['delay_label']
+                group_name = delayAwareAdviser['org_title']
+                value_to_display = _displayDelayAwareValue(delay_label, group_name, delay)
+                resDelayAwareAdvisers.append(
+                    SimpleTerm(adviserId, adviserId, value_to_display))
+
+        resNonDelayAwareAdvisers = []
+        selectableAdvisers = cfg.getSelectableAdvisers()
+        for org_uid in selectableAdvisers:
+            org = get_organization(org_uid)
+            resNonDelayAwareAdvisers.append(
+                SimpleTerm(org_uid, org_uid, org.get_full_title()))
+
+        # make sure optionalAdvisers actually stored have their corresponding
+        # term in the vocabulary, if not, add it
+        if include_selected:
+            optionalAdvisers = context.getOptionalAdvisers()
+            if optionalAdvisers:
+                optionalAdvisersInVocab = [org_infos.token for org_infos in resNonDelayAwareAdvisers] + \
+                                          [org_infos.token for org_infos in resDelayAwareAdvisers]
+                for optionalAdviser in optionalAdvisers:
+                    if optionalAdviser not in optionalAdvisersInVocab:
+                        org = get_organization(optionalAdviser)
+                        if '__rowid__' in optionalAdviser:
+                            org_uid, row_id = decodeDelayAwareId(optionalAdviser)
+                            delay = cfg._dataForCustomAdviserRowId(row_id)['delay']
+                            delay_label = context.adviceIndex[org_uid]['delay_label']
+                            org_title = org.get_full_title()
+                            value_to_display = _displayDelayAwareValue(delay_label, org_title, delay)
+                            resDelayAwareAdvisers.append(
+                                SimpleTerm(optionalAdviser, optionalAdviser, value_to_display))
+                        else:
+                            resNonDelayAwareAdvisers.append(
+                                SimpleTerm(optionalAdviser, optionalAdviser, org.get_full_title()))
+
+        # now create the listing
+        # sort elements by value before potentially prepending a special value here under
+        # for delay-aware advisers, the order is defined in the configuration, so we do not .sortedByValue()
+        resNonDelayAwareAdvisers = humansorted(resNonDelayAwareAdvisers, key=attrgetter('title'))
+        # we add a special value at the beginning of the vocabulary
+        # if we have delay-aware advisers
+        if delayAwareAdvisers:
+            delay_aware_optional_advisers_msg = translate('delay_aware_optional_advisers_term',
+                                                          domain='PloneMeeting',
+                                                          context=request)
+            resDelayAwareAdvisers.insert(
+                0, SimpleTerm('not_selectable_value_delay_aware_optional_advisers',
+                              'not_selectable_value_delay_aware_optional_advisers',
+                              delay_aware_optional_advisers_msg))
+
+            # if we have delay-aware advisers, we add another special value
+            # that explain that under are 'normal' optional advisers
+            if selectableAdvisers:
+                non_delay_aware_optional_advisers_msg = translate('non_delay_aware_optional_advisers_term',
+                                                                  domain='PloneMeeting',
+                                                                  context=request)
+                resNonDelayAwareAdvisers.insert(
+                    0, SimpleTerm('not_selectable_value_non_delay_aware_optional_advisers',
+                                  'not_selectable_value_non_delay_aware_optional_advisers',
+                                  non_delay_aware_optional_advisers_msg))
+
+        return SimpleVocabulary(resDelayAwareAdvisers + resNonDelayAwareAdvisers)
+
+
+ItemOptionalAdvicesVocabularyFactory = ItemOptionalAdvicesVocabulary()
 
 
 class AdviceTypesVocabulary(object):
@@ -1389,24 +1510,28 @@ class SelectableItemInitiatorsVocabulary(BaseHeldPositionsVocabulary):
 SelectableItemInitiatorsVocabularyFactory = SelectableItemInitiatorsVocabulary()
 
 
-class SelectableAssociatedOrganizationsVocabulary(object):
-    """Use u'collective.contact.plonegroup.organization_services' and adapt title
-       of the terms to show organizations that are in plonegroup and others that are not."""
+class SelectableAssociatedOrganizationsVocabulary(EveryOrganizationsVocabulary):
+    """Use BaseOrganizationServicesVocabulary and call it from contacts directory then
+       adapt title of the terms to show organizations that are in plonegroup and others that are not."""
     implements(IVocabularyFactory)
 
     def __call__(self, context):
         """ """
-        vocab = queryUtility(IVocabularyFactory, u'collective.contact.plonegroup.organization_services')
-        terms = vocab(None)
+        terms = super(SelectableAssociatedOrganizationsVocabulary, self).__call__(context)
         selected_orgs = get_registry_organizations()
+        own_org_uid = get_own_organization().UID()
+        res = []
         for term in terms:
+            if term.token == own_org_uid:
+                continue
             if term.value not in selected_orgs:
                 term.title = translate(msgid=u'${term_title} (Not selected in plonegroup)',
                                        domain='PloneMeeting',
                                        mapping={'term_title': term.title, },
                                        context=context.REQUEST)
-        terms = humansorted(terms, key=attrgetter('title'))
-        return SimpleVocabulary(terms)
+            res.append(term)
+        res = humansorted(res, key=attrgetter('title'))
+        return SimpleVocabulary(res)
 
 
 SelectableAssociatedOrganizationsVocabularyFactory = SelectableAssociatedOrganizationsVocabulary()

@@ -18,7 +18,6 @@ from Products.PloneMeeting.utils import computeCertifiedSignatures
 from Products.PloneMeeting.utils import listifySignatures
 from Products.PloneMeeting.validators import DXCertifiedSignaturesValidator
 from z3c.form.browser.checkbox import CheckBoxFieldWidget
-from z3c.form.browser.radio import RadioFieldWidget
 from zope import schema
 from zope.interface import Interface
 from zope.interface import Invalid
@@ -160,33 +159,12 @@ class IPMOrganization(IOrganization):
         required=False,
     )
 
-    form.read_permission(selectable_for_plonegroup='PloneMeeting.manage_internal_organization_fields')
-    form.write_permission(selectable_for_plonegroup='PloneMeeting.manage_internal_organization_fields')
-    form.widget('selectable_for_plonegroup', RadioFieldWidget)
-    selectable_for_plonegroup = schema.Bool(
-        title=_(u'PloneMeeting_label_selectable_for_plonegroup'),
-        description=_(u'selectable_for_plonegroup_descr'),
-        required=False,
-        default=True,
-    )
-
     model.fieldset('app_parameters',
                    label=_(u"Application parameters"),
                    fields=['acronym', 'item_advice_states',
                            'item_advice_edit_states', 'item_advice_view_states',
                            'keep_access_to_item_when_advice_is_given', 'as_copy_group_on',
-                           'certified_signatures', 'groups_in_charge', 'selectable_for_plonegroup'])
-
-    @invariant
-    def validate_selectable_for_plonegroup(data):
-        plonegroup_organizations = api.portal.get_registry_record(ORGANIZATIONS_REGISTRY)
-        # data.__context__ is None when creating new organization
-        if data.__context__ and \
-           not data.selectable_for_plonegroup and \
-           data.__context__.UID() in plonegroup_organizations:
-            raise Invalid(_("You can not select 'No' in field 'Selectable for plonegroup' as this organization "
-                            "is currently selected in plonegroup control panel.  Please unselect this organization "
-                            "from plonegroup control panel if you want to change this field value."))
+                           'certified_signatures', 'groups_in_charge'])
 
 
 validator.WidgetValidatorDiscriminators(

@@ -1,9 +1,5 @@
 # -*- coding: utf-8 -*-
-#
-# File: columns.py
-#
 
-from collective.contact.plonegroup.browser.tables import OrgaPrettyLinkWithAdditionalInfosColumn
 from collective.eeafaceted.z3ctable.columns import AbbrColumn
 from collective.eeafaceted.z3ctable.columns import ActionsColumn
 from collective.eeafaceted.z3ctable.columns import BaseColumn
@@ -70,14 +66,14 @@ class ItemGroupsInChargeAcronymColumn(AbbrColumn):
 class ItemAssociatedGroupsColumn(VocabularyColumn):
     """A column that display the associatedGroups."""
     attrName = 'getAssociatedGroups'
-    vocabulary = u'collective.contact.plonegroup.organization_services'
+    vocabulary = u'collective.contact.plonegroup.every_organizations'
 
 
 class ItemAssociatedGroupsAcronymColumn(AbbrColumn):
     """A column that display the associatedGroups acronym."""
     attrName = 'getAssociatedGroups'
     vocabulary = u'Products.PloneMeeting.vocabularies.everyorganizationsacronymsvocabulary'
-    full_vocabulary = u'collective.contact.plonegroup.organization_services'
+    full_vocabulary = u'collective.contact.plonegroup.every_organizations'
 
 
 class ItemAdvicesColumn(BrowserViewCallColumn):
@@ -367,9 +363,3 @@ class ReviewStateTitle(I18nColumn):
         wfTool = api.portal.get_tool('portal_workflow')
         wf = wfTool.getWorkflowsFor(obj)[0]
         return wf.states.get(item.review_state).title
-
-
-class PMOrgaPrettyLinkWithAdditionalInfosColumn(OrgaPrettyLinkWithAdditionalInfosColumn):
-    """ """
-    ai_highlighted_fields = ['selectable_for_plonegroup']
-    ai_generate_css_class_fields = ['selectable_for_plonegroup']

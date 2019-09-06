@@ -572,8 +572,7 @@ class Migrate_To_4_1(Migrator):
                     'keep_access_to_item_when_advice_is_given': mGroup.getKeepAccessToItemWhenAdviceIsGiven(),
                     'as_copy_group_on': mGroup.getAsCopyGroupOn(),
                     'certified_signatures': adapted_cs,
-                    'groups_in_charge': mGroup.getGroupsInCharge(),
-                    'selectable_for_plonegroup': True, }
+                    'groups_in_charge': mGroup.getGroupsInCharge(), }
             new_org = api.content.create(container=own_org, type='organization', **data)
             new_org_uid = new_org.UID()
             if mGroup.queryState() == 'active':

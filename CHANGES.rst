@@ -22,6 +22,8 @@ Changelog
 - Make Products.PloneMeeting.utils package available in POD templates under name 'pm_utils', it is already the case under name 'utils'
 - Removed the organization.selectable_for_plonegroup attribute, organizations not selectable in plonegroup will be stored outside plonegroup organization
 - Added possibility to import organization in a parent when using the organizations.csv to import contacts
+- Moved the MeetingItem.optionalAdvisers vocabulary from MeetingItem.listOptionalAdvisers to vocabulary factory 'Products.PloneMeeting.vocabularies.itemoptionaladvicesvocabulary',
+  this is necessary for imio.pm.ws to handle asking advices when using the createItem SOAP method
 
 4.1 (2019-08-23)
 ----------------
