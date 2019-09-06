@@ -92,7 +92,7 @@ class AdviceRemoveInheritanceForm(AutoExtensibleForm, form.EditForm):
                 advisers_vocab = get_vocab(
                     self.context,
                     self.context.getField('optionalAdvisers').vocabulary_factory,
-                    vocab_params={'include_selected': False, 'include_not_selectable_values': False})
+                    **{'include_selected': False, 'include_not_selectable_values': False})
                 if data['advice_uid'] in advisers_vocab:
                     optionalAdvisers = list(self.context.getOptionalAdvisers())
                     if data['advice_uid'] not in optionalAdvisers:

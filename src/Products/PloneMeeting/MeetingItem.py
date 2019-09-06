@@ -5479,7 +5479,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             advisers_vocab = get_vocab(
                 newItem,
                 newItem.getField('optionalAdvisers').vocabulary_factory,
-                vocab_params={'include_selected': False, 'include_not_selectable_values': False})
+                **{'include_selected': False, 'include_not_selectable_values': False})
             selectableAdvisers = advisers_vocab.by_token
             # make sure we only have selectable advisers
             newItem.setOptionalAdvisers(
