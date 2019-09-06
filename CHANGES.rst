@@ -20,6 +20,8 @@ Changelog
 - Handle display of tooltipster when "tap" event (when using application on a mobile device)
 - Adapted actions_panel and faceted collection widget vocabulary to invalidate cache when portal_url changed, this can be the case when accessing application thru different portal_url
 - Make Products.PloneMeeting.utils package available in POD templates under name 'pm_utils', it is already the case under name 'utils'
+- Removed the organization.selectable_for_plonegroup attribute, organizations not selectable in plonegroup will be stored outside plonegroup organization
+- Added possibility to import organization in a parent when using the organizations.csv to import contacts
 
 4.1 (2019-08-23)
 ----------------

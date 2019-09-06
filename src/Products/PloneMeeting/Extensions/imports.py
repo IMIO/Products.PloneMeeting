@@ -141,6 +141,9 @@ def import_contacts(self, dochange=True, ownorg='Mon organisation', only='ORGS|P
                     'mob': check_phone(digit(data[13]), i, 'ORGS', data[18]),
                     'fax': check_phone(digit(data[14]), i, 'ORGS', data[18]), 'eml': data[15],
                     'www': data[16], 'dep': data[17], 'cty': data[18], 'uid': uid}
+        # stored under a parent
+        if idp:
+            orgs[id]['lev'] = 2
         typ = 'types'
         if idp:
             typ = 'levels'
