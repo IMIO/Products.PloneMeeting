@@ -24,6 +24,11 @@ Changelog
 - Added possibility to import organization in a parent when using the organizations.csv to import contacts
 - Moved the MeetingItem.optionalAdvisers vocabulary from MeetingItem.listOptionalAdvisers to vocabulary factory 'Products.PloneMeeting.vocabularies.itemoptionaladvicesvocabulary',
   this is necessary for imio.pm.ws to handle asking advices when using the createItem SOAP method
+- JS method 'callViewAndReload' was moved to imio.helpers, moreover, useless parameter 'tags' was removed
+- Added holidays for 2020 and added corresponding upgrade step
+- Added parameter "include_person_title" to held_position.get_prefix_for_gender_and_number making it possible to generate "Madame la Directrice" sentence
+- Use vocabulary 'collective.contact.plonegroup.sorted_selected_organization_services' instead 'collective.contact.plonegroup.selected_organization_services'
+- Added utils.uncapitalize to lowerize first letter of a given string
 
 4.1 (2019-08-23)
 ----------------

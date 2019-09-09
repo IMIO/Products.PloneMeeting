@@ -1134,7 +1134,7 @@ schema = Schema((
         ),
         enforceVocabulary=True,
         multiValued=1,
-        vocabulary_factory='collective.contact.plonegroup.selected_organization_services',
+        vocabulary_factory='collective.contact.plonegroup.sorted_selected_organization_services',
     ),
     StringField(
         name='meetingTransitionInsertingMe',

@@ -7,7 +7,6 @@
                                    $(this).parent().parent().parent().hide();;
                                    callViewAndReload(base_url='${context/absolute_url}',
                                                      view_name='@@change-item-listtype',
-                                                     tag=this,
                                                      params={'new_value': '${listType/value}'},
                                                      force_faceted=${view/force_faceted});;;
                            class python: 'item_listType_%s' % listType.value"

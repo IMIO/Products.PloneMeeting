@@ -565,7 +565,7 @@ schema = Schema((
         ),
         schemata="data",
         multiValued=1,
-        vocabulary_factory='collective.contact.plonegroup.selected_organization_services',
+        vocabulary_factory='collective.contact.plonegroup.sorted_selected_organization_services',
         default=defValues.orderedGroupsInCharge,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
@@ -2236,7 +2236,7 @@ schema = Schema((
         ),
         schemata="advices",
         multiValued=1,
-        vocabulary_factory='collective.contact.plonegroup.selected_organization_services',
+        vocabulary_factory='collective.contact.plonegroup.sorted_selected_organization_services',
         default=defValues.usingGroups,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
@@ -4978,7 +4978,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             configId = mctct['meeting_config']
             actionId = self._getCloneToOtherMCActionId(configId, self.getId())
             urlExpr = "string:javascript:event.preventDefault();callViewAndReload(base_url='${object_url}', " \
-                "view_name='doCloneToOtherMeetingConfig',tag=this, " \
+                "view_name='doCloneToOtherMeetingConfig', " \
                 "params={'destMeetingConfigId': '%s'});" % configId
             availExpr = 'python: object.meta_type == "MeetingItem" and ' \
                         'object.adapted().mayCloneToOtherMeetingConfig("%s")' \

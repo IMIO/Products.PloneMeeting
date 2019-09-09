@@ -1179,6 +1179,7 @@ class Migrate_To_4_1(Migrator):
         # install collective.js.tablednd
         self.upgradeDependencies()
         self.cleanRegistries()
+        # holidays 2020 were added
         self.updateHolidays()
         self.addNewSearches()
 

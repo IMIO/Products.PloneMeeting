@@ -14,6 +14,7 @@ from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.content.source import PMContactSourceBinder
 from Products.PloneMeeting.utils import plain_render
+from Products.PloneMeeting.utils import uncapitalize
 from z3c.form.browser.checkbox import CheckBoxFieldWidget
 from zope.globalrequest import getRequest
 from zope.i18n import translate
@@ -181,7 +182,12 @@ class PMHeldPosition(HeldPosition):
                    'FP': values[0]}
         return res
 
-    def get_prefix_for_gender_and_number(self, value=None, include_value=False, use_by=False, use_to=False):
+    def get_prefix_for_gender_and_number(self,
+                                         value=None,
+                                         include_value=False,
+                                         include_person_title=False,
+                                         use_by=False,
+                                         use_to=False):
         """Get prefix to use depending on given value."""
         value_starting_vowel = {'MS': u'L\'',
                                 'MP': u'Les ',
@@ -246,6 +252,10 @@ class PMHeldPosition(HeldPosition):
             [self.get_person()], use_by=use_by, use_to=use_to), '') or ''
         if include_value:
             res = u'{0}{1}'.format(res, value)
+        if include_person_title:
+            # we lowerize first letter of res
+            res = uncapitalize(res)
+            res = u'{0} {1}'.format(self.person_title, res)
         return res
 
 

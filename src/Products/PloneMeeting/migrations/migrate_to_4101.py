@@ -102,6 +102,14 @@ class Migrate_To_4101(Migrator):
                 delattr(org, 'selectable_for_plonegroup')
         logger.info('Done.')
 
+    def _removeTagsParameterInCallToJSCallViewAndReloadInCloneToOtherMCActions(self):
+        '''Parameter was remove from JS callViewAndReload, this is stored
+           in clone to other mc actions on MeetingItem portal_types.'''
+        logger.info("Calling _updatePortalTypes for every MeetingConfigs...")
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            cfg._updatePortalTypes()
+        logger.info('Done.')
+
     def run(self, extra_omitted=[]):
         logger.info('Migrating to PloneMeeting 4101...')
         self._updateFacetedFilters()
@@ -110,8 +118,15 @@ class Migrate_To_4101(Migrator):
         self._allowDashboardPODTemplateInDirectoryPortalType()
         self._addDashboardPODTemplateExportOrganizations()
         self._removeSelectableForPlonegroupFieldOnOrganizations()
+        self._removeTagsParameterInCallToJSCallViewAndReloadInCloneToOtherMCActions()
         self.cleanRegistries()
+        # holidays 2020 were added
+        self.updateHolidays()
         reindexIndexes(self.portal, idxs=['getTakenOverBy', 'getConfigId'])
+        # re-run the Meeting workflows update as there was a bug in Migrator.refreshDatabase
+        meeting_wf_ids = self.getWorkflows(meta_types=['Meeting'])
+        self.refreshDatabase(catalogs=False, workflows=True, workflowsToUpdate=meeting_wf_ids)
+        self.tool.invalidateAllCache()
 
 
 def migrate(context):
@@ -127,6 +142,7 @@ def migrate(context):
        8) Reindex catalog indexes :
               - 'getTakenOverBy' as we use an indexer to handle empty value;
               - 'getConfigId' as we store a specific empty value as it is not possible to search on an empty index.
+       9) Refresh Meeting workflows so MeetingManager have 'Review portal content' in state 'closed'.
     '''
     migrator = Migrate_To_4101(context)
     migrator.run()

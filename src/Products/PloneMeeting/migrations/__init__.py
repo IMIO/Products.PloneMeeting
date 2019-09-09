@@ -144,6 +144,7 @@ class Migrator(BaseMigrator):
             if defaultHoliday not in currentHolidays and \
                DateTime(defaultHoliday) > highestStoredHoliday:
                 storedHolidays.append({'date': defaultHoliday})
+                logger.info('Adding {0} to holidays'.format(defaultHoliday))
         self.tool.setHolidays(storedHolidays)
         logger.info('Done.')
 
