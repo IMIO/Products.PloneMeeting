@@ -96,6 +96,10 @@ class testSetup(PloneMeetingTestCase):
                 self._removeConfigObjectsFor(cfg)
                 self.tool.manage_delObjects(ids=cfg.getId())
             self._removeOrganizations()
+            # remove every DashboardPODTemplates stored in contacts
+            to_remove = [obj.getId() for obj in self.portal.contacts.objectValues()
+                         if obj.portal_type in ('person', 'DashboardPODTemplate')]
+            self.portal.contacts.manage_delObjects(ids=to_remove)
 
             self.portal.portal_setup.runAllImportStepsFromProfile(u'profile-' + profile_name)
             # check that configured Pod templates are correctly rendered

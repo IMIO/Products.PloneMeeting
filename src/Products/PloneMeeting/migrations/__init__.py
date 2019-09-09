@@ -94,13 +94,6 @@ class Migrator(BaseMigrator):
         cke_props = self.portal.portal_properties.ckeditor_properties
         cke_props.menuStyles = self.menuStyles
 
-    def reindexIndexes(self, idxs=[]):
-        """Reindex given p_idxs."""
-        for idx in idxs:
-            logger.info('Reindexing the "{0}" index...'.format(idx))
-            self.portal.portal_catalog.reindexIndex(name=idx, REQUEST=None)
-        logger.info('Done.')
-
     def getWorkflows(self, meta_types=['Meeting',
                                        'MeetingItem',
                                        'MeetingItemTemplate',

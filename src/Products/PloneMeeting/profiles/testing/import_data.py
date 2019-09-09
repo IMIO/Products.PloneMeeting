@@ -179,13 +179,13 @@ powerobserver1 = UserDescriptor('powerobserver1',
                                 email="powerobserver1@plonemeeting.org",
                                 fullname='M. Power Observer1')
 cfg1_powerobservers = PloneGroupDescriptor('cfg1_powerobservers', 'cfg1_powerobservers', [])
-powerobserver1.ploneGroups = [cfg1_powerobservers, ]
+powerobserver1.ploneGroups = [cfg1_powerobservers]
 powerobserver2 = UserDescriptor('powerobserver2',
                                 [],
                                 email="powerobserver2@plonemeeting.org",
                                 fullname='M. Power Observer2')
 cfg2_powerobservers = PloneGroupDescriptor('cfg2_powerobservers', 'cfg2_powerobservers', [])
-powerobserver2.ploneGroups = [cfg2_powerobservers, ]
+powerobserver2.ploneGroups = [cfg2_powerobservers]
 restrictedpowerobserver1 = UserDescriptor('restrictedpowerobserver1',
                                           [],
                                           email="restrictedpowerobserver1@plonemeeting.org",
@@ -193,7 +193,7 @@ restrictedpowerobserver1 = UserDescriptor('restrictedpowerobserver1',
 cfg1_restrictedpowerobservers = PloneGroupDescriptor('cfg1_restrictedpowerobservers',
                                                      'cfg1_restrictedpowerobservers',
                                                      [])
-restrictedpowerobserver1.ploneGroups = [cfg1_restrictedpowerobservers, ]
+restrictedpowerobserver1.ploneGroups = [cfg1_restrictedpowerobservers]
 restrictedpowerobserver2 = UserDescriptor('restrictedpowerobserver2',
                                           [],
                                           email="restrictedpowerobserver2@plonemeeting.org",
@@ -201,7 +201,7 @@ restrictedpowerobserver2 = UserDescriptor('restrictedpowerobserver2',
 cfg2_restrictedpowerobservers = PloneGroupDescriptor('cfg2_restrictedpowerobservers',
                                                      'cfg2_restrictedpowerobservers',
                                                      [])
-restrictedpowerobserver2.ploneGroups = [cfg2_restrictedpowerobservers, ]
+restrictedpowerobserver2.ploneGroups = [cfg2_restrictedpowerobservers]
 # budget impact editors
 budgetimpacteditor = UserDescriptor('budgetimpacteditor',
                                     [],
@@ -266,13 +266,13 @@ template1 = ItemTemplateDescriptor(
 template2 = ItemTemplateDescriptor(
     'template2', 'Template2',
     'vendors', category='developers', description='<p>This is template2.</p>',
-    decision='<p>Template1 decision</p>', templateUsingGroups=['vendors', ])
+    decision='<p>Template1 decision</p>', templateUsingGroups=['vendors'])
 
 # Meeting configuration
 # PloneMeeting assembly
 meetingPma = MeetingConfigDescriptor(
     'plonemeeting-assembly', 'PloneMeeting assembly', 'PloneMeeting assembly', isDefault=True)
-meetingPma.meetingManagers = ['pmManager', ]
+meetingPma.meetingManagers = ['pmManager']
 meetingPma.shortName = 'Pma'
 meetingPma.assembly = 'Gauthier Bastien, Gilles Demaret, Kilian Soree, ' \
                       'Arnaud Hubaux, Jean-Michel Abe, Stephan Geulette, ' \
@@ -339,9 +339,9 @@ meetingPma.defaultLabels = {
 }
 meetingPma.useAdvices = True
 meetingPma.selectableAdvisers = ['developers', 'vendors']
-meetingPma.itemAdviceStates = ['proposed', ]
-meetingPma.itemAdviceEditStates = ['proposed', 'validated', ]
-meetingPma.itemAdviceViewStates = ['presented', ]
+meetingPma.itemAdviceStates = ['proposed']
+meetingPma.itemAdviceEditStates = ['proposed', 'validated']
+meetingPma.itemAdviceViewStates = ['presented']
 meetingPma.transitionsReinitializingDelays = ('backToItemCreated', )
 meetingPma.allItemTags = '\n'.join(('Strategic decision', 'Genericity mechanism', 'User interface'))
 meetingPma.sortAllItemTags = True
@@ -365,15 +365,15 @@ meetingPma.powerObservers = (
 meetingPma.useVotes = True
 meetingPma.styleTemplates = [stylesTemplate1, stylesTemplate2]
 meetingPma.podTemplates = [agendaTemplate, decisionsTemplate, itemTemplate, dashboardTemplate, allItemTemplate]
-meetingPma.selectableCopyGroups = [developers.getIdSuffixed('reviewers'), vendors.getIdSuffixed('reviewers'), ]
+meetingPma.selectableCopyGroups = [developers.getIdSuffixed('reviewers'), vendors.getIdSuffixed('reviewers')]
 meetingPma.meetingConfigsToCloneTo = [{'meeting_config': 'cfg2',
-                                       'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL}, ]
+                                       'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL}]
 meetingPma.addContactsCSV = False
 
 # Plonegov-assembly
 meetingPga = MeetingConfigDescriptor(
     'plonegov-assembly', 'PloneGov assembly', 'PloneGov assembly')
-meetingPga.meetingManagers = ['pmManager', ]
+meetingPga.meetingManagers = ['pmManager']
 meetingPga.shortName = 'Pga'
 meetingPga.assembly = 'Bill Gates, Steve Jobs'
 meetingPga.signatures = 'Bill Gates, Steve Jobs'
@@ -435,8 +435,8 @@ meetingPga.itemDecidedStates = ('accepted', 'delayed', 'confirmed', 'itemarchive
 meetingPga.workflowAdaptations = []
 meetingPga.itemPositiveDecidedStates = ['accepted', 'confirmed']
 meetingPga.useCopies = True
-meetingPga.selectableCopyGroups = [developers.getIdSuffixed('reviewers'), vendors.getIdSuffixed('reviewers'), ]
-meetingPga.itemCopyGroupsStates = ['validated', 'itempublished', 'itemfrozen', 'accepted', 'delayed', ]
+meetingPga.selectableCopyGroups = [developers.getIdSuffixed('reviewers'), vendors.getIdSuffixed('reviewers')]
+meetingPga.itemCopyGroupsStates = ['validated', 'itempublished', 'itemfrozen', 'accepted', 'delayed']
 # reuse itemTemplate from meetingPma
 pgaItemTemplate = PodTemplateDescriptor('itemTemplate', 'Meeting item')
 pgaItemTemplate.pod_template_to_use = {'cfg_id': meetingPma.id, 'template_id': itemTemplate.id}
@@ -468,4 +468,9 @@ data.usersOutsideGroups = [siteadmin, cadranel, voter1, voter2,
                            powerobserver1, powerobserver2,
                            restrictedpowerobserver1, restrictedpowerobserver2,
                            budgetimpacteditor]
-# ------------------------------------------------------------------------------
+contactsTemplate = PodTemplateDescriptor('contactsTemplate', 'Export organizations', dashboard=True)
+contactsTemplate.odt_file = 'organizations-export.ods'
+contactsTemplate.pod_formats = ['ods', 'xls']
+contactsTemplate.dashboard_collections_ids = ['all_orgs']
+contactsTemplate.use_objects = True
+data.contactsTemplates = [contactsTemplate]

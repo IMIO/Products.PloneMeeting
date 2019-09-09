@@ -1735,6 +1735,13 @@ def get_person_from_userid(userid, only_active=True):
             return person
 
 
+def decodeDelayAwareId(delayAwareId):
+    """Decode a 'delay-aware' id, we receive something like
+       'orgauid__rowid__myuniquerowid.20141215'. We return the org_uid and the row_id."""
+    infos = delayAwareId.split('__rowid__')
+    return infos[0], infos[1]
+
+
 class AdvicesUpdatedEvent(ObjectEvent):
     implements(IAdvicesUpdatedEvent)
 

@@ -6188,5 +6188,51 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             vocab = SimpleVocabulary(terms)
         return vocab
 
+    def _optionalDelayAwareAdvisers(self, validity_date, item=None):
+        '''Returns the 'delay-aware' advisers.
+           This will return a list of dict where dict contains :
+           'org_uid', 'delay' and 'delay_label'.'''
+        res = []
+        for customAdviserConfig in self.getCustomAdvisers():
+            # first check that the customAdviser is actually optional
+            if customAdviserConfig['gives_auto_advice_on']:
+                continue
+            # and check that it is not an advice linked to
+            # an automatic advice ('is_linked_to_previous_row')
+            if customAdviserConfig['is_linked_to_previous_row'] == '1':
+                isAutomatic, linkedRows = self._findLinkedRowsFor(customAdviserConfig['row_id'])
+                # is the first row an automatic adviser?
+                if isAutomatic:
+                    continue
+            # then check if it is a delay-aware advice
+            if not customAdviserConfig['delay']:
+                continue
+
+            # respect 'for_item_created_from' and 'for_item_created_until' defined dates
+            createdFrom = customAdviserConfig['for_item_created_from']
+            createdUntil = customAdviserConfig['for_item_created_until']
+            # createdFrom is required but not createdUntil
+            if DateTime(createdFrom) > validity_date or \
+               (createdUntil and DateTime(createdUntil) < validity_date):
+                continue
+
+            # check the 'available_on' TAL expression when an item is provided
+            eRes = True
+            if item:
+                eRes = item._evalAdviceAvailableOn(
+                    customAdviserConfig['available_on'], tool=self.aq_parent, cfg=self)
+
+            if not eRes:
+                continue
+
+            # ok add the adviser
+            org = get_organization(customAdviserConfig['org'])
+            res.append({'org_uid': customAdviserConfig['org'],
+                        'org_title': org.get_full_title(),
+                        'delay': customAdviserConfig['delay'],
+                        'delay_label': customAdviserConfig['delay_label'],
+                        'row_id': customAdviserConfig['row_id']})
+        return res
+
 
 registerType(MeetingConfig, PROJECTNAME)

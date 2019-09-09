@@ -28,6 +28,7 @@ from collective.contact.plonegroup.utils import get_own_organization
 from collective.contact.plonegroup.utils import get_plone_groups
 from DateTime import DateTime
 from datetime import date
+from imio.helpers.content import get_vocab
 from imio.helpers.content import validate_fields
 from OFS.ObjectManager import BeforeDeleteException
 from plone import api
@@ -822,10 +823,14 @@ class testContacts(PloneMeetingTestCase):
         self.changeUser('pmManager')
         # create an item so we can test vocabularies
         item = self.create('MeetingItem')
+        advisers_vocab_factory = get_vocab(
+            item,
+            'Products.PloneMeeting.vocabularies.itemoptionaladvicesvocabulary',
+            only_factory=True)
         self.assertTrue(self.developers_uid in item.Vocabulary('associatedGroups')[0])
         self.assertTrue(self.developers_uid in item.listProposingGroups())
         self.assertTrue(self.developers_reviewers in item.listCopyGroups())
-        self.assertTrue(self.developers_uid in item.listOptionalAdvisers())
+        self.assertTrue(self.developers_uid in advisers_vocab_factory(item))
         self.assertTrue(self.tool.userIsAmong(['creators']))
         # after deactivation, the group is no more useable...
         self.changeUser('admin')
@@ -836,7 +841,7 @@ class testContacts(PloneMeetingTestCase):
         item.setProposingGroup('')
         self.assertFalse(self.developers_uid in item.listProposingGroups())
         self.assertFalse(self.developers_reviewers in item.listCopyGroups())
-        self.assertFalse(self.developers_uid in item.listOptionalAdvisers())
+        self.assertFalse(self.developers_uid in advisers_vocab_factory(item))
         self.assertFalse(self.tool.userIsAmong(['creators']))
 
     def test_pm_RedefinedCertifiedSignatures(self):
@@ -1039,8 +1044,8 @@ class testContacts(PloneMeetingTestCase):
         # import contacts as Zope admin
         self.changeUser('admin')
         import_contacts(self.portal, path=path)
-        # we imported 5 organizations and 15 persons/held_positions
-        self.assertEqual(len(api.content.find(context=contacts, portal_type='organization')), 9)
+        # we imported 10 organizations and 15 persons/held_positions
+        self.assertEqual(len(api.content.find(context=contacts, portal_type='organization')), 13)
         self.assertEqual(len(api.content.find(context=contacts, portal_type='person')), 19)
         self.assertEqual(len(api.content.find(context=contacts, portal_type='held_position')), 19)
         # organizations are imported with an acronym
@@ -1052,6 +1057,11 @@ class testContacts(PloneMeetingTestCase):
         agent_interne_hp = contacts.get('agent-interne').objectValues()[0]
         self.assertEqual(agent_interne_hp.portal_type, 'held_position')
         self.assertEqual(agent_interne_hp.get_organization(), own_org)
+        # we can import organizations into another, we imported 4 orgs under my org
+        self.assertEqual(
+            own_org.objectIds(),
+            ['developers', 'vendors', 'endUsers',
+             'service-1', 'service-2', 'service-associe-1', 'service-associe-2'])
 
     def test_pm_Gender_and_number_from_position_type(self):
         """Return gender/number values depending on used position type."""

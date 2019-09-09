@@ -30,6 +30,7 @@ from copy import deepcopy
 from DateTime import DateTime
 from datetime import datetime
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
+from imio.helpers.content import get_vocab
 from imio.history.utils import getLastWFAction
 from imio.prettylink.interfaces import IPrettyLink
 from natsort import realsorted
@@ -100,6 +101,7 @@ from Products.PloneMeeting.utils import addDataChange
 from Products.PloneMeeting.utils import AdvicesUpdatedEvent
 from Products.PloneMeeting.utils import cleanMemoize
 from Products.PloneMeeting.utils import compute_item_roles_to_assign_to_suffixes
+from Products.PloneMeeting.utils import decodeDelayAwareId
 from Products.PloneMeeting.utils import fieldIsEmpty
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
 from Products.PloneMeeting.utils import getCurrentMeetingObject
@@ -1036,7 +1038,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         multiValued=1,
-        vocabulary='listOptionalAdvisers',
+        vocabulary_factory='Products.PloneMeeting.vocabularies.itemoptionaladvicesvocabulary',
         enforceVocabulary=False,
     ),
     TextField(
@@ -1716,11 +1718,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             givenAdvices = self.getGivenAdvices()
             for removedAdviser in removedAdvisers:
                 if '__rowid__' in removedAdviser:
-                    removedAdviser, rowid = self._decodeDelayAwareId(removedAdviser)
+                    removedAdviser, rowid = decodeDelayAwareId(removedAdviser)
                 if removedAdviser in givenAdvices and givenAdvices[removedAdviser]['optional'] is True:
+                    vocab = self.getField('optionalAdvisers').Vocabulary(self)
                     return translate('can_not_unselect_already_given_advice',
-                                     mapping={'removedAdviser': self.displayValue(self.listOptionalAdvisers(),
-                                                                                  removedAdviser)},
+                                     mapping={'removedAdviser': self.displayValue(vocab, removedAdviser)},
                                      domain='PloneMeeting',
                                      context=self.REQUEST)
         return self.adapted().custom_validate_optionalAdvisers(value, storedOptionalAdvisers, removedAdvisers)
@@ -3748,7 +3750,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         for adviser in self.getOptionalAdvisers():
             # if this is a delay-aware adviser, we have the data in the adviser id
             if '__rowid__' in adviser:
-                org_uid, row_id = self._decodeDelayAwareId(adviser)
+                org_uid, row_id = decodeDelayAwareId(adviser)
                 customAdviserInfos = cfg._dataForCustomAdviserRowId(row_id)
                 delay = customAdviserInfos['delay']
                 delay_left_alert = customAdviserInfos['delay_left_alert']
@@ -3893,156 +3895,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             empty_expr_is_true=True,
             error_pattern=ADVICE_AVAILABLE_ON_CONDITION_ERROR)
         return res
-
-    def _optionalDelayAwareAdvisers(self):
-        '''Returns the 'delay-aware' advisers.
-           This will return a list of dict where dict contains :
-           'org_uid', 'delay' and 'delay_label'.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self)
-        res = []
-        for customAdviserConfig in cfg.getCustomAdvisers():
-            # first check that the customAdviser is actually optional
-            if customAdviserConfig['gives_auto_advice_on']:
-                continue
-            # and check that it is not an advice linked to
-            # an automatic advice ('is_linked_to_previous_row')
-            if customAdviserConfig['is_linked_to_previous_row'] == '1':
-                isAutomatic, linkedRows = cfg._findLinkedRowsFor(customAdviserConfig['row_id'])
-                # is the first row an automatic adviser?
-                if isAutomatic:
-                    continue
-            # then check if it is a delay-aware advice
-            if not customAdviserConfig['delay']:
-                continue
-
-            # respect 'for_item_created_from' and 'for_item_created_until' defined dates
-            createdFrom = customAdviserConfig['for_item_created_from']
-            createdUntil = customAdviserConfig['for_item_created_until']
-            # createdFrom is required but not createdUntil
-            if DateTime(createdFrom) > self.created() or \
-               (createdUntil and DateTime(createdUntil) < self.created()):
-                continue
-
-            # check the 'available_on' TAL expression
-            eRes = self._evalAdviceAvailableOn(customAdviserConfig['available_on'], tool, cfg)
-
-            if not eRes:
-                continue
-
-            # ok add the adviser
-            org = get_organization(customAdviserConfig['org'])
-            res.append({'org_uid': customAdviserConfig['org'],
-                        'org_title': org.get_full_title(),
-                        'delay': customAdviserConfig['delay'],
-                        'delay_label': customAdviserConfig['delay_label'],
-                        'row_id': customAdviserConfig['row_id']})
-        return res
-
-    security.declarePrivate('listOptionalAdvisers')
-
-    def listOptionalAdvisers(self, include_selected=True):
-        '''Optional advisers for this item are organizations that are not among
-           automatic advisers and that have at least one adviser.
-           If p_include_selected is True, we ensure thtat the currently selected
-           elements on self are present in the vocabulary.'''
-        def _displayDelayAwareValue(delay_label, org_title, delay):
-            org_title = safe_unicode(org_title)
-            delay_label = safe_unicode(delay_label)
-            if delay_label:
-                value_to_display = translate('advice_delay_with_label',
-                                             domain='PloneMeeting',
-                                             mapping={'org_title': org_title,
-                                                      'delay': delay,
-                                                      'delay_label': delay_label},
-                                             default='${org_title} - ${delay} day(s) (${delay_label})',
-                                             context=self.REQUEST)
-            else:
-                value_to_display = translate('advice_delay_without_label',
-                                             domain='PloneMeeting',
-                                             mapping={'org_title': group_name,
-                                                      'delay': delay},
-                                             default='${org_title} - ${delay} day(s)',
-                                             context=self.REQUEST)
-            return value_to_display
-
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self)
-
-        resDelayAwareAdvisers = []
-        # add delay-aware optionalAdvisers
-        delayAwareAdvisers = self._optionalDelayAwareAdvisers()
-        if delayAwareAdvisers:
-            # a delay-aware adviser has a special id so we can handle it specifically after
-            for delayAwareAdviser in delayAwareAdvisers:
-                adviserId = "%s__rowid__%s" % \
-                            (delayAwareAdviser['org_uid'],
-                             delayAwareAdviser['row_id'])
-                delay = delayAwareAdviser['delay']
-                delay_label = delayAwareAdviser['delay_label']
-                group_name = delayAwareAdviser['org_title']
-                value_to_display = _displayDelayAwareValue(delay_label, group_name, delay)
-                resDelayAwareAdvisers.append((adviserId, value_to_display))
-
-        resNonDelayAwareAdvisers = []
-        selectableAdvisers = cfg.getSelectableAdvisers()
-        for org_uid in selectableAdvisers:
-            org = get_organization(org_uid)
-            resNonDelayAwareAdvisers.append((org_uid, org.get_full_title()))
-
-        # make sure optionalAdvisers actually stored have their corresponding
-        # term in the vocabulary, if not, add it
-        if include_selected:
-            optionalAdvisers = self.getOptionalAdvisers()
-            if optionalAdvisers:
-                optionalAdvisersInVocab = [org_infos[0] for org_infos in resNonDelayAwareAdvisers] + \
-                                          [org_infos[0] for org_infos in resDelayAwareAdvisers]
-                for optionalAdviser in optionalAdvisers:
-                    if optionalAdviser not in optionalAdvisersInVocab:
-                        org = get_organization(optionalAdviser)
-                        if '__rowid__' in optionalAdviser:
-                            org_uid, row_id = self._decodeDelayAwareId(optionalAdviser)
-                            delay = cfg._dataForCustomAdviserRowId(row_id)['delay']
-                            delay_label = self.adviceIndex[org_uid]['delay_label']
-                            org_title = org.get_full_title()
-                            value_to_display = _displayDelayAwareValue(delay_label, org_title, delay)
-                            resDelayAwareAdvisers.append((optionalAdviser, value_to_display))
-                        else:
-                            resNonDelayAwareAdvisers.append((optionalAdviser, org.get_full_title()))
-
-        # now create the listing
-        # sort elements by value before potentially prepending a special value here under
-        # for delay-aware advisers, the order is defined in the configuration, so we do not .sortedByValue()
-        resDelayAwareAdvisers = DisplayList(resDelayAwareAdvisers)
-        resNonDelayAwareAdvisers = DisplayList(resNonDelayAwareAdvisers).sortedByValue()
-        # we add a special value at the beginning of the vocabulary
-        # if we have delay-aware advisers
-        if delayAwareAdvisers:
-            delay_aware_optional_advisers_msg = translate('delay_aware_optional_advisers_term',
-                                                          domain='PloneMeeting',
-                                                          context=self.REQUEST)
-            resDelayAwareAdvisers = DisplayList([('not_selectable_value_delay_aware_optional_advisers',
-                                                  delay_aware_optional_advisers_msg)]) + resDelayAwareAdvisers
-
-            # if we have delay-aware advisers, we add another special value
-            # that explain that under are 'normal' optional advisers
-            if selectableAdvisers:
-                non_delay_aware_optional_advisers_msg = translate('non_delay_aware_optional_advisers_term',
-                                                                  domain='PloneMeeting',
-                                                                  context=self.REQUEST)
-                resNonDelayAwareAdvisers = \
-                    DisplayList([('not_selectable_value_non_delay_aware_optional_advisers',
-                                  non_delay_aware_optional_advisers_msg)]) + resNonDelayAwareAdvisers
-
-        return resDelayAwareAdvisers + resNonDelayAwareAdvisers
-
-    def _decodeDelayAwareId(self, delayAwareId):
-        '''
-          Decode a 'delay-aware' id, we receive something like 'orgauid__rowid__myuniquerowid.20141215'.
-          We return the org_uid and the row_id.
-        '''
-        infos = delayAwareId.split('__rowid__')
-        return infos[0], infos[1]
 
     security.declarePrivate('listItemInitiators')
 
@@ -5475,12 +5327,15 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('showOptionalAdvisers')
 
     def showOptionalAdvisers(self):
-        '''Show 'MeetingItem.optionalAdvisers' if the "advices" functionality is enabled
-           and if there are selectable optional advices.'''
+        '''Show 'MeetingItem.optionalAdvisers' if the "advices" functionality
+           is enabled and if there are selectable optional advices.'''
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        if cfg.getUseAdvices() and self.listOptionalAdvisers():
-            return True
+        res = False
+        if cfg.getUseAdvices():
+            vocab = self.getField('optionalAdvisers').Vocabulary(self)
+            res = bool(vocab)
+        return res
 
     security.declarePublic('isCopiesEnabled')
 
@@ -5707,7 +5562,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 tuple(set(copyGroups).intersection(set(selectableCopyGroups))))
         if 'optionalAdvisers' in copyFields:
             optionalAdvisers = list(newItem.getOptionalAdvisers())
-            selectableAdvisers = newItem.listOptionalAdvisers(include_selected=False).keys()
+            advisers_vocab = get_vocab(
+                newItem,
+                newItem.getField('optionalAdvisers').vocabulary_factory,
+                **{'include_selected': False, 'include_not_selectable_values': False})
+            selectableAdvisers = advisers_vocab.by_token
             # make sure we only have selectable advisers
             newItem.setOptionalAdvisers(
                 tuple(set(optionalAdvisers).intersection(set(selectableAdvisers))))

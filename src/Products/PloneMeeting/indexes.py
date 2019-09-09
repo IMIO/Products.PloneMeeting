@@ -35,7 +35,7 @@ def getConfigId(obj):
     """
     tool = api.portal.get_tool('portal_plonemeeting')
     cfg = tool.getMeetingConfig(obj)
-    return cfg and cfg.getId() or _marker
+    return cfg and cfg.getId() or EMPTY_STRING
 
 
 @indexer(IMeetingItem)

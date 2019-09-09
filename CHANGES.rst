@@ -14,6 +14,16 @@ Changelog
 - Changed base implementation of MeetingWorkflowConditions.mayDecide to only check if current user has "Review portal content" permission
 - Make the searchlastdecisions meetings search able to display decisions in the future
 - Do not display the 'review_state' columns in contacts dashboard displaying organizations, it is always 'active', we use the 'selected in plonegroup' column information instead
+- Fixed migration of MeetingUsers, do not fail if a MeetingUser was deleted and initialize MeetingConfig.orderedContacts and MeetingConfig.orderedItemInitiators correctly
+- Added possibility to use a DashboardPODTemplate added into the contacts directory on contacts dashboards (and to define it in an import_data as well)
+- Moved organization.selectable_for_plonegroup field to the 'app_parameters' fieldset
+- Handle display of tooltipster when "tap" event (when using application on a mobile device)
+- Adapted actions_panel and faceted collection widget vocabulary to invalidate cache when portal_url changed, this can be the case when accessing application thru different portal_url
+- Make Products.PloneMeeting.utils package available in POD templates under name 'pm_utils', it is already the case under name 'utils'
+- Removed the organization.selectable_for_plonegroup attribute, organizations not selectable in plonegroup will be stored outside plonegroup organization
+- Added possibility to import organization in a parent when using the organizations.csv to import contacts
+- Moved the MeetingItem.optionalAdvisers vocabulary from MeetingItem.listOptionalAdvisers to vocabulary factory 'Products.PloneMeeting.vocabularies.itemoptionaladvicesvocabulary',
+  this is necessary for imio.pm.ws to handle asking advices when using the createItem SOAP method
 - Item validation workflow is now designed in the MeetingConfig.itemWFValidationLevels, tThis imply :
     - to no longer rely on MEETINGROLES and MEETINGREVIEWERS constants;
     - reviewer levels and mapping between review_state and organization suffix that manage the item is computed from the MeetingConfig;

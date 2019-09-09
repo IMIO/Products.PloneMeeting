@@ -104,6 +104,9 @@ class ToolInitializer:
             # contacts directory
             if self.profileData.directory_position_types:
                 self.portal.contacts.position_types = self.profileData.directory_position_types
+            # contacts DashboardPODTemplate
+            for descr in self.profileData.contactsTemplates:
+                self.addPodTemplate(self.portal.contacts, descr, source=self.profilePath)
 
     def getProfileData(self):
         '''Loads, from the current profile, the data to import into the tool:
@@ -559,9 +562,15 @@ class ToolInitializer:
 
         return annexType
 
-    def addPodTemplate(self, cfg, pt, source):
+    def addPodTemplate(self, container, pt, source):
         '''Adds a POD template from p_pt (a PodTemplateDescriptor instance).'''
-        folder = getattr(cfg, TOOL_FOLDER_POD_TEMPLATES)
+        cfg = None
+        if container.portal_type == 'MeetingConfig':
+            cfg = container
+            dest_folder = getattr(container, TOOL_FOLDER_POD_TEMPLATES)
+        else:
+            # contacts DashboardPODTemplate
+            dest_folder = container
         # The template must be retrieved on disk from a profile or use another pod_template
         odt_file = None
         pod_template_to_use = None
@@ -606,27 +615,32 @@ class ToolInitializer:
             data['pod_portal_types'] = adapted_pod_portal_types
 
             if podType == 'DashboardPODTemplate':
+                # parameter use_objects is excluded by default as only relevant for DashboardPODTemplates
+                data['use_objects'] = pt.use_objects
                 # manage dashboard_collections from dashboard_collection_ids
                 # we have ids and we need UIDs
                 res = []
-                for coll_id in data['dashboard_collections_ids']:
-                    if coll_id in cfg.searches.searches_items.objectIds():
-                        collection = getattr(cfg.searches.searches_items, coll_id)
-                    elif coll_id in cfg.searches.searches_meetings.objectIds():
-                        collection = getattr(cfg.searches.searches_meetings, coll_id)
-                    else:
-                        collection = getattr(cfg.searches.searches_decisions, coll_id)
+                if cfg:
+                    collections_container = cfg.searches
+                else:
+                    # contacts
+                    collections_container = container
+                for coll_id in pt.dashboard_collections_ids:
+                    for folder in collections_container.objectValues('ATFolder'):
+                        if coll_id in folder.objectIds():
+                            collection = getattr(folder, coll_id)
+                            break
                     res.append(collection.UID())
                 data['dashboard_collections'] = res
             for sub_template in data['merge_templates']:
-                sub_template['template'] = folder.get(sub_template['template']).UID()
+                sub_template['template'] = dest_folder.get(sub_template['template']).UID()
 
         # associate style template with pod template if necessary
         if not data['is_style'] and data['style_template']:
             # we have a list of style templates
             styles_uids = []
             for style_template in data['style_template']:
-                style_template_obj = folder.get(style_template)
+                style_template_obj = dest_folder.get(style_template)
                 if style_template_obj.id in data['style_template']:
                     styles_uids.append(style_template_obj.UID())
 
@@ -634,7 +648,7 @@ class ToolInitializer:
 
         podTemplate = api.content.create(
             type=podType,
-            container=folder,
+            container=dest_folder,
             **data)
         validate_fields(podTemplate, raise_on_errors=True)
         return podTemplate

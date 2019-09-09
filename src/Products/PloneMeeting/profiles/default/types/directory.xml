@@ -4,6 +4,6 @@
  <property name="allowed_content_types">
   <element value="person"/>
   <element value="organization"/>
-  <element value="meetingorganization"/>
+  <element value="DashboardPODTemplate"/>
  </property>
 </object>
