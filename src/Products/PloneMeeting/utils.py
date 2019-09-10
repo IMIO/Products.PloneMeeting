@@ -91,7 +91,7 @@ WRONG_INTERFACE = 'Interface "%s" not found in package "%s".'
 ON_TRANSITION_TRANSFORM_TAL_EXPR_ERROR = 'There was an error during transform of field \'%s\' of this item. ' \
     'Please check TAL expression defined in the configuration.  Original exception: %s'
 ITEM_EXECUTE_ACTION_ERROR = "There was an error in the TAL expression '{0}' " \
-    "defined in field MeetingConfig.onMeetingTransitionItemActionToExecute and execute on item at '{1}'. " \
+    "defined in field MeetingConfig.onMeetingTransitionItemActionToExecute executed on item at '{1}'. " \
     "Original exception : {2}"
 
 # ------------------------------------------------------------------------------

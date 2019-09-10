@@ -4104,9 +4104,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 continue
             if value['item_action'] == EXECUTE_EXPR_VALUE and not value['tal_expression'] or \
                value['item_action'] != EXECUTE_EXPR_VALUE and value['tal_expression']:
-                return translate('on_meeting_transition_item_action_tal_expr_error',
-                                 domain='PloneMeeting',
-                                 context=self.REQUEST)
+                return _('on_meeting_transition_item_action_tal_expr_error')
 
     def _adviceConditionsInterfaceFor(self, advice_obj):
         '''See doc in interfaces.py.'''
