@@ -71,6 +71,7 @@ from Products.PloneMeeting.config import CLONE_TO_OTHER_MC_EMERGENCY_ACTION_SUFF
 from Products.PloneMeeting.config import DEFAULT_ITEM_COLUMNS
 from Products.PloneMeeting.config import DEFAULT_LIST_TYPES
 from Products.PloneMeeting.config import DEFAULT_MEETING_COLUMNS
+from Products.PloneMeeting.config import EXECUTE_EXPR_VALUE
 from Products.PloneMeeting.config import ITEM_ICON_COLORS
 from Products.PloneMeeting.config import ITEM_INSERT_METHODS
 from Products.PloneMeeting.config import ITEMTEMPLATESMANAGERS_GROUP_SUFFIX
@@ -1235,28 +1236,32 @@ schema = Schema((
         allow_empty_rows=False,
     ),
     DataGridField(
-        name='onMeetingTransitionItemTransitionToTrigger',
+        name='onMeetingTransitionItemActionToExecute',
         widget=DataGridField._properties['widget'](
-            description="OnMeetingTransitionItemTransitionToTrigger",
-            description_msgid="on_meeting_transition_item_transition_to_trigger_descr",
+            description="OnMeetingTransitionItemActionToExecute",
+            description_msgid="on_meeting_transition_item_action_to_execute_descr",
             columns={'meeting_transition':
-                        SelectColumn("On meeting transition item transition to trigger meeting transition",
+                        SelectColumn("On meeting transition item action to execute meeting transition",
                                      vocabulary="listEveryMeetingTransitions",
                                      col_description="The transition triggered on the meeting."),
-                     'item_transition':
-                        SelectColumn("On meeting transition item transition to trigger item transition",
-                                     vocabulary="listEveryItemTransitions",
-                                     col_description="The transition that will be triggered on "
-                                                     "every items of the meeting."), },
-            label='Onmeetingtransitionitemtransitiontotrigger',
-            label_msgid='PloneMeeting_label_onMeetingTransitionItemTransitionToTrigger',
+                     'item_action':
+                        SelectColumn("On meeting transition item action to execute item action",
+                                     vocabulary="listExecutableItemActions",
+                                     col_description="The action that will be executed on "
+                                                     "every items of the meeting."),
+                     'tal_expression':
+                        Column("On meeting transition item action to execute tal expression",
+                               col_description="The action to execute when 'Execute given action' "
+                                               "is selected in column 'Item action'."), },
+            label='Onmeetingtransitionitemactiontoexecute',
+            label_msgid='PloneMeeting_label_onMeetingTransitionItemActionToExecute',
             i18n_domain='PloneMeeting',
         ),
         schemata="workflow",
-        default=defValues.onMeetingTransitionItemTransitionToTrigger,
+        default=defValues.onMeetingTransitionItemActionToExecute,
         allow_oddeven=True,
         write_permission="PloneMeeting: Write risky config",
-        columns=('meeting_transition', 'item_transition', ),
+        columns=('meeting_transition', 'item_action', 'tal_expression'),
         allow_empty_rows=False,
     ),
     LinesField(
@@ -4089,6 +4094,20 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
 
+    def validate_onMeetingTransitionItemActionToExecute(self, values):
+        '''If EXECUTE_EXPR_VALUE is seleced in column 'item_action',
+           then column 'tal_expression' must be provided, a contrario,
+           it can not be provided when an item transition is selected in 'item_action'.'''
+        for value in values:
+            # bypass template_row_marker
+            if value.get('orderindex_', None) == "template_row_marker":
+                continue
+            if value['item_action'] == EXECUTE_EXPR_VALUE and not value['tal_expression'] or \
+               value['item_action'] != EXECUTE_EXPR_VALUE and value['tal_expression']:
+                return translate('on_meeting_transition_item_action_tal_expr_error',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
+
     def _adviceConditionsInterfaceFor(self, advice_obj):
         '''See doc in interfaces.py.'''
         return IMeetingAdviceWorkflowConditions.__identifier__
@@ -5410,6 +5429,15 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                      availableItemTransitionTitles[availableItemTransitionIds.index(tr)])
                 res.append(('%s.%s' % (cfgId, tr), text))
         return DisplayList(tuple(res)).sortedByValue()
+
+    security.declarePrivate('listExecutableItemActions')
+
+    def listExecutableItemActions(self):
+        '''Vocabulary for column item_action of field onMeetingTransitionItemActionToExecute.
+           This list a special value 'Execute given action' and the list of item transitions.'''
+        res = [(EXECUTE_EXPR_VALUE, _(EXECUTE_EXPR_VALUE))]
+        transitions = self.listEveryItemTransitions()
+        return DisplayList(res) + transitions
 
     security.declarePrivate('listEveryItemTransitions')
 

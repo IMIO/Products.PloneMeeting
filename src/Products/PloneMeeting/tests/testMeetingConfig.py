@@ -44,6 +44,7 @@ from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
 from Products.PloneMeeting.config import DEFAULT_ITEM_COLUMNS
 from Products.PloneMeeting.config import DEFAULT_LIST_TYPES
 from Products.PloneMeeting.config import DEFAULT_MEETING_COLUMNS
+from Products.PloneMeeting.config import EXECUTE_EXPR_VALUE
 from Products.PloneMeeting.config import ITEM_ICON_COLORS
 from Products.PloneMeeting.config import ITEMTEMPLATESMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
@@ -1095,6 +1096,49 @@ class testMeetingConfig(PloneMeetingTestCase):
         double_msg = _('error_list_types_same_identifier')
         self.assertEquals(cfg.validate_listTypes(valuesWithDouble), double_msg)
         self.failIf(cfg.validate_listTypes(values))
+
+    def test_pm_Validate_onMeetingTransitionItemActionToExecute(self):
+        '''If a tal_expression is provided, item_action
+           must be EXECUTE_EXPR_VALUE and the other way round.'''
+        cfg = self.meetingConfig
+        self.changeUser('siteadmin')
+        tal_expr_error_msg = _('on_meeting_transition_item_action_tal_expr_error')
+        # missing tal_expression
+        values = [{'meeting_transition': 'close',
+                   'item_action': EXECUTE_EXPR_VALUE,
+                   'tal_expression': ''}]
+        self.assertEqual(cfg.validate_onMeetingTransitionItemActionToExecute(values),
+                         tal_expr_error_msg)
+        # tal_expression defined on a item_action WF transition
+        values = [{'meeting_transition': 'close',
+                   'item_action': 'accept',
+                   'tal_expression': 'item/Title'}]
+        self.assertEqual(cfg.validate_onMeetingTransitionItemActionToExecute(values),
+                         tal_expr_error_msg)
+
+        # valid
+        values = [{'meeting_transition': 'close',
+                   'item_action': EXECUTE_EXPR_VALUE,
+                   'tal_expression': 'item/Title'},
+                  {'meeting_transition': 'close',
+                   'item_action': 'accept',
+                   'tal_expression': ''}]
+        self.failIf(cfg.validate_onMeetingTransitionItemActionToExecute(values))
+        # bypass template_row_marker
+        values.append({'meeting_transition': 'close',
+                       'orderindex_': 'template_row_marker',
+                       'item_action': EXECUTE_EXPR_VALUE,
+                       'tal_expression': ''})
+        self.failIf(cfg.validate_onMeetingTransitionItemActionToExecute(values))
+        # 'template_row_marker' is ignored by datagridfield
+        cfg.setOnMeetingTransitionItemActionToExecute(values)
+        self.assertEqual(cfg.getOnMeetingTransitionItemActionToExecute(),
+                         ({'item_action': EXECUTE_EXPR_VALUE,
+                           'meeting_transition': 'close',
+                           'tal_expression': 'item/Title'},
+                          {'item_action': 'accept',
+                           'meeting_transition': 'close',
+                           'tal_expression': ''}))
 
     def test_pm_AddingExistingSearchDoesNotBreak(self):
         '''

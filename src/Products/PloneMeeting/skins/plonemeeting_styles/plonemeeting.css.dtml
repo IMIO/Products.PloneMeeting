@@ -961,6 +961,13 @@ body[class*="itemtemplates"].template-manage-portlets a.link-parent {
     width: 10%;
 }
 
+/* make column displayed for MeetingConfig.onMeetingTransitionItemActionToExecute equals */
+#datagridwidget-table-onMeetingTransitionItemActionToExecute .datagridwidget-column-1,
+#datagridwidget-table-onMeetingTransitionItemActionToExecute .datagridwidget-column-2,
+#datagridwidget-table-onMeetingTransitionItemActionToExecute .datagridwidget-column-3 {
+    width: 33%;
+}
+
 /* display DX datagrid column in grey */
 .datagridwidget-table-view {
     border-color: #ddd;

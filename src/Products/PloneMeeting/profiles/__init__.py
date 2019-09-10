@@ -434,7 +434,7 @@ class MeetingConfigDescriptor(Descriptor):
                          'dashboardMeetingLinkedItemsFilters', 'groupsHiddenInDashboardFilter',
                          'usersHiddenInDashboardFilter', 'workflowAdaptations', 'transitionsToConfirm',
                          'transitionsForPresentingAnItem', 'onTransitionFieldTransforms',
-                         'onMeetingTransitionItemTransitionToTrigger', 'meetingPresentItemWhenNoCurrentMeetingStates',
+                         'onMeetingTransitionItemActionToExecute', 'meetingPresentItemWhenNoCurrentMeetingStates',
                          'itemAutoSentToOtherMCStates', 'itemManualSentToOtherMCStates', 'advicesKeptOnSentToOtherMC',
                          'mailItemEvents', 'mailMeetingEvents',
                          'usedAdviceTypes', 'selectableAdvisers', 'itemAdviceStates',
@@ -613,7 +613,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.transitionsToConfirm = []
         self.transitionsForPresentingAnItem = ['propose', 'validate', 'present']
         self.onTransitionFieldTransforms = []
-        self.onMeetingTransitionItemTransitionToTrigger = []
+        self.onMeetingTransitionItemActionToExecute = []
         self.meetingPresentItemWhenNoCurrentMeetingStates = []
         self.meetingManagerMayCorrectClosedMeeting = False
         self.itemAutoSentToOtherMCStates = ['accepted', ]

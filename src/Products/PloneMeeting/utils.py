@@ -37,6 +37,7 @@ from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFPlone.utils import safe_unicode
 from Products.DCWorkflow.events import TransitionEvent
 from Products.MailHost.MailHost import MailHostError
+from Products.PageTemplates.Expressions import SecureModuleImporter
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import ADD_SUBCONTENT_PERMISSIONS
 from Products.PloneMeeting.config import AddAnnex
@@ -89,6 +90,9 @@ WRONG_INTERFACE_PACKAGE = 'Could not find package "%s".'
 WRONG_INTERFACE = 'Interface "%s" not found in package "%s".'
 ON_TRANSITION_TRANSFORM_TAL_EXPR_ERROR = 'There was an error during transform of field \'%s\' of this item. ' \
     'Please check TAL expression defined in the configuration.  Original exception: %s'
+ITEM_EXECUTE_ACTION_ERROR = "There was an error in the TAL expression '{0}' " \
+    "defined in field MeetingConfig.onMeetingTransitionItemActionToExecute and execute on item at '{1}'. " \
+    "Original exception : {2}"
 
 # ------------------------------------------------------------------------------
 monthsIds = {1: 'month_jan', 2: 'month_feb', 3: 'month_mar', 4: 'month_apr',
@@ -1027,28 +1031,40 @@ def applyOnTransitionFieldTransform(obj, transitionId):
 
 
 # ------------------------------------------------------------------------------
-def meetingTriggerTransitionOnLinkedItems(meeting, transitionId):
+def meetingExecuteActionOnLinkedItems(meeting, transitionId):
     '''
       When the given p_transitionId is triggered on the given p_meeting,
-      check if we need to trigger workflow transition on linked items
-      defined in MeetingConfig.onMeetingTransitionItemTransitionToTrigger.
+      check if we need to trigger an action on linked items
+      defined in MeetingConfig.meetingExecuteActionOnLinkedItems.
     '''
     tool = api.portal.get_tool(TOOL_ID)
     cfg = tool.getMeetingConfig(meeting)
     wfTool = api.portal.get_tool('portal_workflow')
     wf_comment = _('wf_transition_triggered_by_application')
-
-    # if we have a transition to trigger on every items, trigger it!
-    for config in cfg.getOnMeetingTransitionItemTransitionToTrigger():
+    for config in cfg.getOnMeetingTransitionItemActionToExecute():
         if config['meeting_transition'] == transitionId:
-            # execute corresponding transition on every items
+            is_transition = not config['tal_expression']
             for item in meeting.getItems():
-                # do not fail if a transition could not be triggered, just add an
-                # info message to the log so configuration can be adapted to avoid this
-                try:
-                    wfTool.doActionFor(item, config['item_transition'], comment=wf_comment)
-                except WorkflowException:
-                    pass
+                if is_transition:
+                    # do not fail if a transition could not be triggered, just add an
+                    # info message to the log so configuration can be adapted to avoid this
+                    try:
+                        wfTool.doActionFor(item, config['item_action'], comment=wf_comment)
+                    except WorkflowException:
+                        pass
+                else:
+                    # execute the TAL expression, will not fail but log if an error occurs
+                    _evaluateExpression(
+                        item,
+                        expression=config['tal_expression'].strip(),
+                        roles_bypassing_expression=[],
+                        extra_expr_ctx={
+                            'pm_utils': SecureModuleImporter['Products.PloneMeeting.utils'],
+                            'tool': tool,
+                            'cfg': cfg,
+                            'item': item,
+                            'meeting': meeting},
+                        error_pattern=ITEM_EXECUTE_ACTION_ERROR)
 
 
 def computeCertifiedSignatures(signatures):

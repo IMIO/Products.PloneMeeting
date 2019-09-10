@@ -29,6 +29,8 @@ Changelog
 - Added parameter "include_person_title" to held_position.get_prefix_for_gender_and_number making it possible to generate "Madame la Directrice" sentence
 - Use vocabulary 'collective.contact.plonegroup.sorted_selected_organization_services' instead 'collective.contact.plonegroup.selected_organization_services'
 - Added utils.uncapitalize to lowerize first letter of a given string
+- Moved MeetingConfig.onMeetingTransitionItemTransitionToTrigger to MeetingConfig.onMeetingTransitionItemActionToExecute, in addition to be able to trigger a transition on every items
+  of a meeting when a transition is triggered on a meeting, it is now possible to execute a TAL expression
 
 4.1 (2019-08-23)
 ----------------
