@@ -1576,19 +1576,6 @@ def plain_render(obj, fieldname):
     return exportable.render_value(obj)
 
 
-def get_state_infos(obj):
-    """ """
-    wfTool = api.portal.get_tool('portal_workflow')
-    review_state = wfTool.getInfoFor(obj, 'review_state')
-    wf = wfTool.getWorkflowsFor(obj)[0]
-    state = wf.states.get(review_state)
-    state_title = state and state.title or review_state
-    return {'state_name': review_state,
-            'state_title': translate(state_title,
-                                     domain="plone",
-                                     context=obj.REQUEST)}
-
-
 def duplicate_workflow(workflowName, duplicatedWFId, portalTypeNames=[]):
     """Duplicate p_workflowName and use p_duplicatedWFId for new workflow.
        If p_portalTypeName is given, associate new workflow to given portalTypeNames."""

@@ -31,6 +31,7 @@ Changelog
 - Added utils.uncapitalize to lowerize first letter of a given string
 - Moved MeetingConfig.onMeetingTransitionItemTransitionToTrigger to MeetingConfig.onMeetingTransitionItemActionToExecute, in addition to be able to trigger a transition on every items
   of a meeting when a transition is triggered on a meeting, it is now possible to execute a TAL expression
+- 'workflowstate' viewlet was moved to plonetheme.imioapps.browser.viewlets and utils.get_state_infos was moved to imio.helpers.content, adapted code accordingly
 
 4.1 (2019-08-23)
 ----------------

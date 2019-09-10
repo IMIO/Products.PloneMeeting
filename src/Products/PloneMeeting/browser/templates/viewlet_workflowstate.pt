@@ -1,6 +1,0 @@
-<div class="pm_workflowstate" i18n:domain="plone">
-  <span i18n:translate="label_state"></span>&nbsp;
-  <span tal:define="state_infos view/state_infos"
-        tal:content="state_infos/state_title"
-        tal:attributes="class string:state-${state_infos/state_name}"></span>
-</div>
