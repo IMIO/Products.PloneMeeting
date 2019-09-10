@@ -325,6 +325,8 @@ ITEM_TRANSITION_WHEN_RETURNED_FROM_PROPOSING_GROUP_AFTER_CORRECTION = 'accept'
 
 EMPTY_STRING = '__empty_string__'
 
+EXECUTE_EXPR_VALUE = 'execute_tal_expression'
+
 
 def registerClasses():
     '''ArchGenXML generated code does not register Archetype classes at the

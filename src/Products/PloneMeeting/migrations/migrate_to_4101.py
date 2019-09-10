@@ -110,6 +110,23 @@ class Migrate_To_4101(Migrator):
             cfg._updatePortalTypes()
         logger.info('Done.')
 
+    def _moveToMeetingConfigOnMeetingTransitionItemActionToExecute(self):
+        '''Field MeetingConfig.onMeetingTransitionItemTransitionToTrigger was moved
+           to MeetingConfig.onMeetingTransitionItemActionToExecute.'''
+        logger.info("Migrating field onMeetingTransitionItemActionToExecute for every MeetingConfigs...")
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            if hasattr(cfg, 'onMeetingTransitionItemTransitionToTrigger'):
+                old_values = cfg.onMeetingTransitionItemTransitionToTrigger
+                # move 'item_transition' to 'item_action' and add empty 'tal_expression'
+                new_values = []
+                for old_value in old_values:
+                    new_values.append({'meeting_transition': old_value['meeting_transition'],
+                                       'item_action': old_value['item_transition'],
+                                       'tal_expression': ''})
+                cfg.setOnMeetingTransitionItemActionToExecute(new_values)
+                delattr(cfg, 'onMeetingTransitionItemTransitionToTrigger')
+        logger.info('Done.')
+
     def run(self, extra_omitted=[]):
         logger.info('Migrating to PloneMeeting 4101...')
         self._updateFacetedFilters()
@@ -119,6 +136,7 @@ class Migrate_To_4101(Migrator):
         self._addDashboardPODTemplateExportOrganizations()
         self._removeSelectableForPlonegroupFieldOnOrganizations()
         self._removeTagsParameterInCallToJSCallViewAndReloadInCloneToOtherMCActions()
+        self._moveToMeetingConfigOnMeetingTransitionItemActionToExecute()
         self.cleanRegistries()
         # holidays 2020 were added
         self.updateHolidays()
@@ -138,11 +156,13 @@ def migrate(context):
        4) Add 'DashboardPODTemplate' to the allowed types of a contacts directory;
        5) Add the 'Export CSV' DashboardPODTemplate available on the contacts 'All orgs' dashboard;
        6) Remove the 'selectable_for_plonegroup' attribute on organizations;
-       7) Clean registries;
-       8) Reindex catalog indexes :
+       7) Move field MeetingConfig.onMeetingTransitionItemTransitionToTrigger to
+          MeetingConfig.onMeetingTransitionItemActionToExecute;
+       8) Clean registries;
+       9) Reindex catalog indexes :
               - 'getTakenOverBy' as we use an indexer to handle empty value;
               - 'getConfigId' as we store a specific empty value as it is not possible to search on an empty index.
-       9) Refresh Meeting workflows so MeetingManager have 'Review portal content' in state 'closed'.
+       10) Refresh Meeting workflows so MeetingManager have 'Review portal content' in state 'closed'.
     '''
     migrator = Migrate_To_4101(context)
     migrator.run()

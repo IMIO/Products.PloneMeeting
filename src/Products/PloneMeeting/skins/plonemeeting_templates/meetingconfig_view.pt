@@ -722,7 +722,7 @@
           </td>
         </tr>
         <tr valign="top">
-          <td tal:define="field python:here.getField('onMeetingTransitionItemTransitionToTrigger')">
+          <td tal:define="field python:here.getField('onMeetingTransitionItemActionToExecute')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
           <td tal:define="field python:here.getField('meetingPresentItemWhenNoCurrentMeetingStates')">
