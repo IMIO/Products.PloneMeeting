@@ -2514,7 +2514,7 @@ class testMeeting(PloneMeetingTestCase):
 
         # invalidated when review state changed
         # just make sure the contained item is not changed
-        cfg.setOnMeetingTransitionItemTransitionToTrigger(())
+        cfg.setOnMeetingTransitionItemActionToExecute(())
         itemModified = item.modified()
         itemWFHistory = deepcopy(item.workflow_history)
         self.freezeMeeting(meeting)
