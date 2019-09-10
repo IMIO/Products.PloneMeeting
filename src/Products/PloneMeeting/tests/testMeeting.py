@@ -361,7 +361,8 @@ class testMeeting(PloneMeetingTestCase):
         # first of all, it works, and the item is inserted in the meeting,
         # here at the beginning as index is 0 for disabled orgs
         self.assertEquals([item.getId() for item in meeting.getItems(ordered=True)],
-                          ['o2', 'recItem1', 'recItem2', 'o3', 'o5', 'o2', 'o4', 'o6'])
+                          ['o2', 'recItem1', 'recItem2', 'item-2',
+                           'item-4', 'item-1', 'item-3', 'item-5'])
         self.assertEquals([item.getProposingGroup(True).id for item in meeting.getItems(ordered=True)],
                           ['vendors', 'developers', 'developers', 'developers', 'developers',
                            'vendors', 'vendors', 'vendors'])
