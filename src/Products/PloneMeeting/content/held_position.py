@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from collective.contact.core import _ as _ccc
 from collective.contact.core.content.held_position import HeldPosition
 from collective.contact.core.content.held_position import IHeldPosition
-from collective.contact.core.schema import ContactChoice
 from collective.contact.core.utils import get_gender_and_number
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from collective.excelexport.exportables.dexterityfields import get_exportable_for_fieldname
@@ -12,7 +10,6 @@ from plone.dexterity.schema import DexteritySchemaPolicy
 from plone.supermodel import model
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.config import PMMessageFactory as _
-from Products.PloneMeeting.content.source import PMContactSourceBinder
 from Products.PloneMeeting.utils import plain_render
 from Products.PloneMeeting.utils import uncapitalize
 from z3c.form.browser.checkbox import CheckBoxFieldWidget
@@ -25,16 +22,6 @@ import zope.schema
 
 class IPMHeldPosition(IHeldPosition):
     """ """
-
-    # override position to use a select list restricted to orgs out of PLONEGROUP_ORG
-    position = ContactChoice(
-        title=_ccc("Organization/Position"),
-        description=_("Select an organization, most of time, there is one single organization, "
-                      "search for \"My organization\"."),
-        source=PMContactSourceBinder(),
-        required=True,
-    )
-
     form.order_before(position_type='start_date')
     position_type = zope.schema.Choice(
         title=_("Position type"),

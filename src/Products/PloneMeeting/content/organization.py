@@ -2,14 +2,10 @@
 
 from collective.contact.core.content.organization import IOrganization
 from collective.contact.core.content.organization import Organization
-from collective.contact.plonegroup.config import ORGANIZATIONS_REGISTRY
-from collective.contact.plonegroup.config import PLONEGROUP_ORG
-from collective.contact.plonegroup.interfaces import IPloneGroupContact
 from collective.contact.plonegroup.utils import get_organization
 from collective.contact.plonegroup.utils import get_organizations
 from collective.z3cform.datagridfield import DataGridFieldFactory
 from collective.z3cform.datagridfield import DictRow
-from plone import api
 from plone.autoform import directives as form
 from plone.dexterity.schema import DexteritySchemaPolicy
 from plone.supermodel import model
@@ -20,8 +16,6 @@ from Products.PloneMeeting.validators import DXCertifiedSignaturesValidator
 from z3c.form.browser.checkbox import CheckBoxFieldWidget
 from zope import schema
 from zope.interface import Interface
-from zope.interface import Invalid
-from zope.interface import invariant
 from z3c.form import validator
 
 
@@ -183,14 +177,6 @@ class PMOrganization(Organization):
     def get_groups_in_charge(self):
         """Accessor so it can be called in a TAL expression."""
         return self.groups_in_charge
-
-    def get_full_title(self, separator=u' / ', first_index=0):
-        """Override to change default first_index from 0 to 1 for IPloneGroupContact,
-           so we do not display the 'My organization' level for elements displayed in the
-           'My organization' organization."""
-        if self.id != PLONEGROUP_ORG and IPloneGroupContact.providedBy(self):
-            first_index = 1
-        return super(PMOrganization, self).get_full_title(separator, first_index)
 
     def get_item_advice_states(self, cfg=None):
         res = self.item_advice_states
