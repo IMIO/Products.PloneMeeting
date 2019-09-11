@@ -4285,7 +4285,8 @@ class testMeetingItem(PloneMeetingTestCase):
             item.adapted().getExtraFieldsToCopyWhenCloning(
                 cloned_to_same_mc=False, cloned_from_item_template=False))
         # showinsearch and searchwords must be ignored when using Solr
-        item_field_set = set([x for x in itemFields if x not in ('showinsearch', 'searchwords')])
+        item_field_set = set(
+                [field_name for field_name in itemFields if field_name not in ('showinsearch', 'searchwords')])
         self.assertEquals(copiedFields, item_field_set)
 
         newItem = item.clone()
