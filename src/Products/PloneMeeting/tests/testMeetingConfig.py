@@ -1164,6 +1164,8 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.assertTrue(self.hasPermission(ModifyPortalContent, cfg))
         # every editable fields are protected by the 'PloneMeeting: Write harmless config' permission
         for field in cfg.Schema().editableFields(cfg):
+            if field.getName() in ('showinsearch', 'searchwords'):
+                continue
             self.assertTrue(field.write_permission == WriteHarmlessConfig)
 
     def test_pm_LinkedGroupsCreatedCorrectly(self):
