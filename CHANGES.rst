@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.1.1 (unreleased)
+4.1.1 (2019-09-12)
 ------------------
 
 - Fixed bug on item template view when no proposingGroup defined, be defensive when getting proposingGroup
