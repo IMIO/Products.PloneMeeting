@@ -246,34 +246,30 @@ class PMOrganization(Organization):
                 res = True
         return res
 
-    def get_certified_signatures(self, computed=False, cfg=None, from_group_in_charge=False, listify=True, **kwargs):
-        '''Overrides field 'certified_signatures' accessor to be able to pass
+    def get_certified_signatures(self, computed=False, cfg=None, group_in_charge=None, listify=True, **kwargs):
+        """Overrides field 'certified_signatures' accessor to be able to pass
            the p_computed parameter that will return computed certified signatures,
            so signatures really available right now.  If nothing is defined on the organization,
            use certified signatures defined on the corresponding p_cfg MeetingConfig.
-           If p_from_group_in_charge is True, we get certifiedSignatures from the first defined
-           self.groupsInCharge.'''
+           If p_from_group_in_charge is an organization, we get certifiedSignatures from it."""
         group_signatures = self.certified_signatures
         if computed:
-            computedSignatures = cfg.getCertifiedSignatures(computed=True)
+            computed_signatures = cfg.getCertifiedSignatures(computed=True)
 
             # get certified signatures from first of the defined groupsInCharge
-            groups_in_charge = self.groups_in_charge
-            if from_group_in_charge and groups_in_charge:
-                group_in_charge = get_organization(groups_in_charge[0])
-                computedSignatures.update(
-                    computeCertifiedSignatures(group_in_charge.get_certified_signatures()))
-
+            if group_in_charge:
+                computed_signatures.update(computeCertifiedSignatures(group_in_charge.get_certified_signatures()))
+                
             # if we have certified signatures defined on this MeetingGroup
             # update MeetingConfig signatures regarding what is defined here
             if group_signatures:
-                computedSignatures.update(computeCertifiedSignatures(group_signatures))
+                computed_signatures.update(computeCertifiedSignatures(group_signatures))
             # listify signatures, for backward compatibility, we need a list of pair
             # of function/name, like ['function1', 'name1', 'function2', 'name2']
             if listify:
-                group_signatures = listifySignatures(computedSignatures)
+                group_signatures = listifySignatures(computed_signatures)
             else:
-                group_signatures = computedSignatures
+                group_signatures = computed_signatures
         return group_signatures
 
     def get_order(self, associated_org_uids=[], cfg=None):
