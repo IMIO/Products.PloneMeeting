@@ -4102,6 +4102,23 @@ class testMeetingItem(PloneMeetingTestCase):
             item.getCertifiedSignatures(from_group_in_charge=True),
             ['GroupInChargeFunction1', 'GroupInChargeName1',
              'GroupInChargeFunction2', 'GroupInChargeName2'])
+
+        # test the case when more than 1 group in charge is selected on proposing group
+        # Make sure the signatures are extracted from the one selected in the MeetingItem
+        self.developers.groups_in_charge = (self.endUsers_uid, self.vendors_uid)
+        self.assertEqual(self.endUsers.get_certified_signatures(), [])
+        self.assertEqual(
+                item.getCertifiedSignatures(from_group_in_charge=True), ['Function1', 'Name1', 'Function2', 'Name2'])
+        self.assertEqual(
+                item.getCertifiedSignatures(from_group_in_charge=False), ['Function1', 'Name1', 'Function2', 'Name2'])
+
+        item.setGroupsInCharge([self.vendors_uid])
+
+        self.assertEqual(
+                item.getCertifiedSignatures(from_group_in_charge=True),
+                ['GroupInChargeFunction1', 'GroupInChargeName1',
+                 'GroupInChargeFunction2', 'GroupInChargeName2'])
+
         self.assertEqual(
             item.getCertifiedSignatures(from_group_in_charge=False),
             ['Function1', 'Name1', 'Function2', 'Name2'])
@@ -4284,7 +4301,10 @@ class testMeetingItem(PloneMeetingTestCase):
                 cloned_to_same_mc=True, cloned_from_item_template=False) +
             item.adapted().getExtraFieldsToCopyWhenCloning(
                 cloned_to_same_mc=False, cloned_from_item_template=False))
-        self.assertEquals(copiedFields, set(itemFields))
+        # showinsearch and searchwords must be ignored when using Solr
+        item_field_set = set(
+                [field_name for field_name in itemFields if field_name not in ('showinsearch', 'searchwords')])
+        self.assertEquals(copiedFields, item_field_set)
 
         newItem = item.clone()
         self.assertEquals(item.Title(), newItem.Title())

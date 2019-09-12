@@ -34,6 +34,7 @@ from plone import api
 from plone import namedfile
 from plone.app.testing import login
 from plone.app.testing import logout
+from plone.app.testing.bbb import _createMemberarea
 from plone.app.testing.helpers import setRoles
 from plone.dexterity.utils import createContentInContainer
 from Products.Five.browser import BrowserView
@@ -45,7 +46,6 @@ from Products.PloneMeeting.testing import PM_TESTING_PROFILE_FUNCTIONAL
 from Products.PloneMeeting.tests.helpers import PloneMeetingTestingHelpers
 from Products.PloneMeeting.utils import cleanMemoize
 from Products.PloneMeeting.utils import reviewersFor
-from plone.app.testing.bbb import _createMemberarea
 from z3c.form.testing import TestRequest as z3c_form_TestRequest
 from zope.component import getMultiAdapter
 from zope.event import notify
@@ -148,8 +148,8 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         self.annexFileTypeDecision = 'decision-annex'
         self.annexFileTypeAdvice = 'advice-annex'
         self.annexFileTypeMeeting = 'meeting-annex'
-        # log current test name
-        pm_logger.info('Executing {0}'.format(self._testMethodName))
+        # log current test module and method name
+        pm_logger.info('Executing {0}:{1}'.format(self.__class__.__name__, self._testMethodName))
 
     def tearDown(self):
         self._cleanExistingTmpAnnexFile()

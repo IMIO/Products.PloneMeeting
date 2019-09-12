@@ -33,6 +33,12 @@ try:
 except pkg_resources.DistributionNotFound:
     HAS_ZAMQP = False
 
+HAS_SOLR = True
+try:
+    pkg_resources.get_distribution('collective.solr')
+except pkg_resources.DistributionNotFound:
+    HAS_SOLR = False
+
 __author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
 <g.bastien@imio.be>, Stephan GEULETTE <s.geulette@imio.be>"""
 __docformat__ = 'plaintext'
@@ -324,6 +330,8 @@ ITEM_INSERT_METHODS = OrderedDict((
 ITEM_TRANSITION_WHEN_RETURNED_FROM_PROPOSING_GROUP_AFTER_CORRECTION = 'accept'
 
 EMPTY_STRING = '__empty_string__'
+
+EXECUTE_EXPR_VALUE = 'execute_tal_expression'
 
 
 def registerClasses():

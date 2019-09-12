@@ -23,8 +23,8 @@
 #
 
 from AccessControl import Unauthorized
-from DateTime import DateTime
 from collective.contact.plonegroup.utils import get_organizations
+from DateTime import DateTime
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from zope.component import queryUtility

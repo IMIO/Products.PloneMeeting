@@ -8,19 +8,19 @@
     <browser:viewlet
         name="plone.belowcontenttitle.workflowstate"
         manager="plone.app.layout.viewlets.interfaces.IBelowContentTitle"
-        class=".viewlets.WorkflowState"
+        class="plonetheme.imioapps.browser.viewlets.WorkflowState"
         for="Products.PloneMeeting.interfaces.IMeeting"
         permission="zope2.View" />
     <browser:viewlet
         name="plone.belowcontenttitle.workflowstate"
         manager="plone.app.layout.viewlets.interfaces.IBelowContentTitle"
-        class=".viewlets.WorkflowState"
+        class="plonetheme.imioapps.browser.viewlets.WorkflowState"
         for="Products.PloneMeeting.interfaces.IMeetingItem"
         permission="zope2.View" />
     <browser:viewlet
         name="plone.belowcontenttitle.workflowstate"
         manager="plone.app.layout.viewlets.interfaces.IBelowContentTitle"
-        class="Products.PloneMeeting.browser.viewlets.WorkflowState"
+        class="plonetheme.imioapps.browser.viewlets.WorkflowState"
         for="Products.PloneMeeting.content.advice.IMeetingAdvice"
         permission="zope2.View" />
     <browser:viewlet

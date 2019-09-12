@@ -22,8 +22,8 @@
 from collections import OrderedDict
 from collective.contact.core.utils import get_gender_and_number
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
-from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_organization
+from collective.contact.plonegroup.utils import get_organizations
 from collective.documentgenerator.helper.archetypes import ATDocumentGenerationHelperView
 from collective.documentgenerator.helper.dexterity import DXDocumentGenerationHelperView
 from collective.eeafaceted.batchactions import _ as _CEBA

@@ -8,7 +8,6 @@
 #
 # GNU General Public License (GPL)
 #
-
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from collective.documentgenerator.config import set_raiseOnError_for_non_managers
 from collective.documentgenerator.config import set_use_stream
@@ -26,6 +25,7 @@ from Products.cron4plone.browser.configlets.cron_configuration import ICronConfi
 from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_REAPPLY
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import CKEDITOR_MENUSTYLES_CUSTOMIZED_MSG
+from Products.PloneMeeting.config import HAS_SOLR
 from Products.PloneMeeting.config import HAS_ZAMQP
 from Products.PloneMeeting.config import ManageOwnOrganizationFields
 from Products.PloneMeeting.utils import cleanMemoize
@@ -33,6 +33,7 @@ from zope.component import queryUtility
 from zope.i18n import translate
 
 import logging
+import os
 
 
 __author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
@@ -149,6 +150,7 @@ def postInstall(context):
         return
     site = context.getSite()
 
+    activate_solr_and_reindex_if_available(site)
     # Create or update indexes
     addOrUpdateIndexes(site, indexInfos)
     addOrUpdateColumns(site, columnInfos)
@@ -359,6 +361,36 @@ def postInstall(context):
 
     # reorder css
     _reorderCSS(site)
+
+
+def activate_solr_and_reindex_if_available(site):
+    if HAS_SOLR:
+        """ activate solr indexing and reindex the existing content """
+        from collective.solr.utils import activate
+        if not site.portal_quickinstaller.isProductInstalled('collective.solr'):
+            site.portal_setup.runAllImportStepsFromProfile('profile-collective.solr:default')
+
+        solr_activated = api.portal.get_registry_record('collective.solr.active')
+        if solr_activated:
+            return
+        activate(True)
+        api.portal.set_registry_record('collective.solr.required', [u''])
+        port = int(os.environ['SOLR_PORT'])
+        api.portal.set_registry_record('collective.solr.port', port)
+        import transaction
+        transaction.savepoint()
+        catalog = api.portal.get_tool('portal_catalog')
+        catalog.clearFindAndRebuild()
+        transaction.savepoint()
+        response = site.REQUEST.RESPONSE
+        original = response.write
+        response.write = lambda x: x  # temporarily ignore output
+        maintenance = site.unrestrictedTraverse("@@solr-maintenance")
+        maintenance.clear()
+        transaction.savepoint()
+        maintenance.reindex()
+        response.write = original
+        transaction.savepoint()
 
 
 def _configureCKeditor(site):

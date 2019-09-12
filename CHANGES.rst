@@ -2,7 +2,17 @@ Changelog
 =========
 
 
-4.1.1 (unreleased)
+4.1.2 (unreleased)
+------------------
+
+- Item validation workflow is now designed in the MeetingConfig.itemWFValidationLevels, tThis imply :
+    - to no longer rely on MEETINGROLES and MEETINGREVIEWERS constants;
+    - reviewer levels and mapping between review_state and organization suffix that manage the item is computed from the MeetingConfig;
+    - item validation specific roles (MeetingMember, MeetingReviewer, MeetingPreReviewer are removed from item workflows, local roles are dynamically given and
+      we only use common roles (Reader, Editor, Reviewer and Contributor)  
+- Use roles 'Reviewer' and 'Contributor' in meetingadvice_workflow
+
+4.1.1 (2019-09-12)
 ------------------
 
 - Fixed bug on item template view when no proposingGroup defined, be defensive when getting proposingGroup
@@ -24,12 +34,20 @@ Changelog
 - Added possibility to import organization in a parent when using the organizations.csv to import contacts
 - Moved the MeetingItem.optionalAdvisers vocabulary from MeetingItem.listOptionalAdvisers to vocabulary factory 'Products.PloneMeeting.vocabularies.itemoptionaladvicesvocabulary',
   this is necessary for imio.pm.ws to handle asking advices when using the createItem SOAP method
-- Item validation workflow is now designed in the MeetingConfig.itemWFValidationLevels, tThis imply :
-    - to no longer rely on MEETINGROLES and MEETINGREVIEWERS constants;
-    - reviewer levels and mapping between review_state and organization suffix that manage the item is computed from the MeetingConfig;
-    - item validation specific roles (MeetingMember, MeetingReviewer, MeetingPreReviewer are removed from item workflows, local roles are dynamically given and
-      we only use common roles (Reader, Editor, Reviewer and Contributor)  
-- Use roles 'Reviewer' and 'Contributor' in meetingadvice_workflow
+- JS method 'callViewAndReload' was moved to imio.helpers, moreover, useless parameter 'tags' was removed
+- Added holidays for 2020 and added corresponding upgrade step
+- Added parameter "include_person_title" to held_position.get_prefix_for_gender_and_number making it possible to generate "Madame la Directrice" sentence
+- Use vocabulary 'collective.contact.plonegroup.sorted_selected_organization_services' instead 'collective.contact.plonegroup.selected_organization_services'
+- Added utils.uncapitalize to lowerize first letter of a given string
+- Moved MeetingConfig.onMeetingTransitionItemTransitionToTrigger to MeetingConfig.onMeetingTransitionItemActionToExecute, in addition to be able to trigger a transition on every items
+  of a meeting when a transition is triggered on a meeting, it is now possible to execute a TAL expression
+- 'workflowstate' viewlet was moved to plonetheme.imioapps.browser.viewlets and utils.get_state_infos was moved to imio.helpers.content, adapted code accordingly
+- Added Ability to run using solr instead of catalog
+- Do not restrict selection of held_position.position to organizations outside "My organization".  We may link an held_position to an organization stored in "My organization".
+  This will let link a held_position to an organization having a role in the application: group in charge, adviser, ...
+- Changed organization.get_certified_signatures parameter from_group_in_charge=False to group_in_charge=None, it will receive a group in charge (organization) to get certified signatures on.
+  This manage the fact that several groups in charge may be selected on an organization and the selected group in charge is defined on the linked item
+- Override organization.get_full_title only when value is not the indexed value. So "My organziation" is displayed in the contact widget but not in other cases
 
 4.1 (2019-08-23)
 ----------------

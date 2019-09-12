@@ -44,11 +44,11 @@ from Products.PloneMeeting.utils import _addManagedPermissions
 from Products.PloneMeeting.utils import addRecurringItemsIfRelevant
 from Products.PloneMeeting.utils import AdviceAfterAddEvent
 from Products.PloneMeeting.utils import AdviceAfterModifyEvent
-from Products.PloneMeeting.utils import applyOnTransitionFieldTransform
 from Products.PloneMeeting.utils import AdviceAfterTransitionEvent
+from Products.PloneMeeting.utils import applyOnTransitionFieldTransform
 from Products.PloneMeeting.utils import ItemAfterTransitionEvent
 from Products.PloneMeeting.utils import MeetingAfterTransitionEvent
-from Products.PloneMeeting.utils import meetingTriggerTransitionOnLinkedItems
+from Products.PloneMeeting.utils import meetingExecuteActionOnLinkedItems
 from Products.PloneMeeting.utils import notifyModifiedAndReindex
 from Products.PloneMeeting.utils import sendMailIfRelevant
 from zExceptions import Redirect
@@ -98,8 +98,8 @@ def do(action, event):
         # Send mail if relevant
         sendMailIfRelevant(event.object, "meeting_state_changed_%s" % event.transition.id, 'View')
         # trigger some transitions on contained items depending on
-        # MeetingConfig.onMeetingTransitionItemTransitionToTrigger
-        meetingTriggerTransitionOnLinkedItems(event.object, event.transition.id)
+        # MeetingConfig.onMeetingTransitionItemActionToExecute
+        meetingExecuteActionOnLinkedItems(event.object, event.transition.id)
         # update modification date upon state change
         event.object.notifyModified()
     elif objectType == 'MeetingAdvice':

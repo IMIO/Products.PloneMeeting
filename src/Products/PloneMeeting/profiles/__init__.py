@@ -23,6 +23,7 @@ from Products.PloneMeeting.config import DEFAULT_LIST_TYPES
 from Products.PloneMeeting.config import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.config import EXTRA_GROUP_SUFFIXES
 from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
+
 import copy
 
 
@@ -435,7 +436,7 @@ class MeetingConfigDescriptor(Descriptor):
                          'usersHiddenInDashboardFilter', 'workflowAdaptations',
                          'itemWFValidationLevels', 'transitionsToConfirm',
                          'transitionsForPresentingAnItem', 'onTransitionFieldTransforms',
-                         'onMeetingTransitionItemTransitionToTrigger', 'meetingPresentItemWhenNoCurrentMeetingStates',
+                         'onMeetingTransitionItemActionToExecute', 'meetingPresentItemWhenNoCurrentMeetingStates',
                          'itemAutoSentToOtherMCStates', 'itemManualSentToOtherMCStates', 'advicesKeptOnSentToOtherMC',
                          'mailItemEvents', 'mailMeetingEvents',
                          'usedAdviceTypes', 'selectableAdvisers', 'itemAdviceStates',
@@ -689,7 +690,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.transitionsToConfirm = []
         self.transitionsForPresentingAnItem = ['propose', 'validate', 'present']
         self.onTransitionFieldTransforms = []
-        self.onMeetingTransitionItemTransitionToTrigger = []
+        self.onMeetingTransitionItemActionToExecute = []
         self.meetingPresentItemWhenNoCurrentMeetingStates = []
         self.meetingManagerMayCorrectClosedMeeting = False
         self.itemAutoSentToOtherMCStates = ['accepted', ]
@@ -868,32 +869,33 @@ class PloneMeetingConfiguration(Descriptor):
         self.modelAdaptations = []
         self.enableScanDocs = False
         self.workingDays = ('mon', 'tue', 'wed', 'thu', 'fri')
-        self.holidays = [{'date': '2018/01/01', },  # 2018
-                         {'date': '2018/04/02', },
-                         {'date': '2018/05/01', },
-                         {'date': '2018/05/10', },
-                         {'date': '2018/05/21', },
-                         {'date': '2018/07/21', },
-                         {'date': '2018/08/15', },
-                         {'date': '2018/09/27', },
-                         {'date': '2018/11/01', },
-                         {'date': '2018/11/11', },
-                         {'date': '2018/11/15', },
-                         {'date': '2018/12/25', },
+        self.holidays = [
+            {'date': '2019/01/01', },  # 2019
+            {'date': '2019/04/22', },
+            {'date': '2019/05/01', },
+            {'date': '2019/05/30', },
+            {'date': '2019/06/10', },
+            {'date': '2019/07/21', },
+            {'date': '2019/08/15', },
+            {'date': '2019/09/27', },
+            {'date': '2019/11/01', },
+            {'date': '2019/11/11', },
+            {'date': '2019/11/15', },
+            {'date': '2019/12/25', },
 
-                         {'date': '2019/01/01', },  # 2019
-                         {'date': '2019/04/22', },
-                         {'date': '2019/05/01', },
-                         {'date': '2019/05/30', },
-                         {'date': '2019/06/10', },
-                         {'date': '2019/07/21', },
-                         {'date': '2019/08/15', },
-                         {'date': '2019/09/27', },
-                         {'date': '2019/11/01', },
-                         {'date': '2019/11/11', },
-                         {'date': '2019/11/15', },
-                         {'date': '2019/12/25', },
-                         ]
+            {'date': '2020/01/01', },  # 2020
+            {'date': '2020/04/13', },
+            {'date': '2020/05/01', },
+            {'date': '2020/05/21', },
+            {'date': '2020/06/01', },
+            {'date': '2020/07/21', },
+            {'date': '2020/08/15', },
+            {'date': '2020/09/27', },
+            {'date': '2020/11/01', },
+            {'date': '2020/11/11', },
+            {'date': '2020/11/15', },
+            {'date': '2020/12/25', },
+        ]
         self.delayUnavailableEndDays = ()
         self.configGroups = ()
         self.meetingConfigs = meetingConfigs  # ~[MeetingConfigDescriptor]~

@@ -1135,7 +1135,14 @@ class testContacts(PloneMeetingTestCase):
         person.gender = u'M'
         self.assertEqual(hp.get_prefix_for_gender_and_number(), u"Le ")
         person.gender = u'F'
+        person.person_title = u'Madame'
         self.assertEqual(hp.get_prefix_for_gender_and_number(), u"La ")
+        # include_value and include_person_title
+        self.assertEqual(hp.get_prefix_for_gender_and_number(include_value=True), u"La Directrice")
+        # prefix first letter is lowerized
+        self.assertEqual(
+            hp.get_prefix_for_gender_and_number(include_value=True, include_person_title=True),
+            u'Madame la Directrice')
 
     def test_pm_RemoveNotSelectedOrganization(self):
         """Check that removing a not selected organization works correctly."""

@@ -101,14 +101,14 @@
                              i18n:attributes="title"
                              title="to_advice_asked_again"
                              tal:attributes="src string:${view/portal_url}/advice_${adviceStyle}_asked_again.png;
-                                       onClick string:javascript:callViewAndReload(base_url='${obj_absolute_url}', view_name='@@change-advice-asked-again', this);;"/></acronym>
+                                       onClick string:javascript:$('.tooltipstered').tooltipster('hide');;callViewAndReload(base_url='${obj_absolute_url}', view_name='@@change-advice-asked-again');;"/></acronym>
                      <acronym tal:condition="python: obj and context.adapted().mayBackToPreviousAdvice(obj)">
                          <img tal:condition="python: advice['type'] == 'asked_again'"
                               class="askAdviceAgainEditable"
                               i18n:attributes="title"
                               title="to_previous_given_advice"
                               tal:attributes="src string:${view/portal_url}/advice_${adviceStyle}_asked_again_back_to_previous.png;
-                                              onClick string:javascript:callViewAndReload(base_url='${obj_absolute_url}', view_name='@@change-advice-asked-again', this);;"/></acronym>
+                                              onClick string:javascript:$('.tooltipstered').tooltipster('hide');;callViewAndReload(base_url='${obj_absolute_url}', view_name='@@change-advice-asked-again');;"/></acronym>
                      <tal:advice-change-delay-condition condition="view/mayChangeDelay">
                       <acronym title="Change delay"
                             i18n:domain="PloneMeeting"
@@ -166,12 +166,12 @@
                          class="adviceHiddenDuringRedactionEditable"
                          i18n:attributes="title" title="to_not_hidden_during_redaction"
                          tal:attributes="src string:${view/portal_url}/advice_${adviceStyle}_enable_hidden_during_redaction.png;
-                                         onClick string:javascript:callViewAndReload(base_url='${obj_absolute_url}', view_name='@@change-advice-hidden-during-redaction', this);;"/>
+                                         onClick string:javascript:$('.tooltipstered').tooltipster('hide');;callViewAndReload(base_url='${obj_absolute_url}', view_name='@@change-advice-hidden-during-redaction');;"/>
                     <img tal:condition="not: advice/hidden_during_redaction"
                          class="adviceHiddenDuringRedactionEditable"
                          i18n:attributes="title" title="to_hidden_during_redaction"
                          tal:attributes="src string:${view/portal_url}/advice_${adviceStyle}_disable_hidden_during_redaction.png;
-                                         onClick string:javascript:callViewAndReload(base_url='${obj_absolute_url}', view_name='@@change-advice-hidden-during-redaction', this);;"/>
+                                         onClick string:javascript:$('.tooltipstered').tooltipster('hide');;callViewAndReload(base_url='${obj_absolute_url}', view_name='@@change-advice-hidden-during-redaction');;"/>
                   </td>
                   </tal:editableOrLocked>
                   <td tal:condition="python: view.tool.showAnnexesTab(obj)" align="right" width="20px" class="noPadding">

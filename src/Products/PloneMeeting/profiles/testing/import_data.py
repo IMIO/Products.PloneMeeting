@@ -23,10 +23,10 @@ from copy import deepcopy
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
 from Products.PloneMeeting.profiles import AnnexTypeDescriptor
 from Products.PloneMeeting.profiles import CategoryDescriptor
+from Products.PloneMeeting.profiles import HeldPositionDescriptor
 from Products.PloneMeeting.profiles import ItemAnnexSubTypeDescriptor
 from Products.PloneMeeting.profiles import ItemAnnexTypeDescriptor
 from Products.PloneMeeting.profiles import ItemTemplateDescriptor
-from Products.PloneMeeting.profiles import HeldPositionDescriptor
 from Products.PloneMeeting.profiles import MeetingConfigDescriptor
 from Products.PloneMeeting.profiles import OrgDescriptor
 from Products.PloneMeeting.profiles import PersonDescriptor
@@ -290,44 +290,61 @@ meetingPma.itemDecidedStates = ('accepted', 'delayed', 'confirmed', 'itemarchive
 meetingPma.workflowAdaptations = []
 meetingPma.itemPositiveDecidedStates = ['accepted', 'confirmed']
 meetingPma.transitionsForPresentingAnItem = ('propose', 'validate', 'present', )
-meetingPma.onMeetingTransitionItemTransitionToTrigger = ({'meeting_transition': 'publish',
-                                                          'item_transition': 'itempublish'},
+meetingPma.onMeetingTransitionItemActionToExecute = (
+    {'meeting_transition': 'publish',
+     'item_action': 'itempublish',
+     'tal_expression': ''},
 
-                                                         {'meeting_transition': 'freeze',
-                                                          'item_transition': 'itempublish'},
-                                                         {'meeting_transition': 'freeze',
-                                                          'item_transition': 'itemfreeze'},
+    {'meeting_transition': 'freeze',
+     'item_action': 'itempublish',
+     'tal_expression': ''},
+    {'meeting_transition': 'freeze',
+     'item_action': 'itemfreeze',
+     'tal_expression': ''},
 
-                                                         {'meeting_transition': 'decide',
-                                                          'item_transition': 'itempublish'},
-                                                         {'meeting_transition': 'decide',
-                                                          'item_transition': 'itemfreeze'},
+    {'meeting_transition': 'decide',
+     'item_action': 'itempublish',
+     'tal_expression': ''},
+    {'meeting_transition': 'decide',
+     'item_action': 'itemfreeze',
+     'tal_expression': ''},
 
-                                                         {'meeting_transition': 'close',
-                                                          'item_transition': 'itempublish'},
-                                                         {'meeting_transition': 'close',
-                                                          'item_transition': 'itemfreeze'},
-                                                         {'meeting_transition': 'close',
-                                                          'item_transition': 'accept'},
-                                                         {'meeting_transition': 'close',
-                                                          'item_transition': 'confirm'},
+    {'meeting_transition': 'close',
+     'item_action': 'itempublish',
+     'tal_expression': ''},
+    {'meeting_transition': 'close',
+     'item_action': 'itemfreeze',
+     'tal_expression': ''},
+    {'meeting_transition': 'close',
+     'item_action': 'accept',
+     'tal_expression': ''},
+    {'meeting_transition': 'close',
+     'item_action': 'confirm',
+     'tal_expression': ''},
 
-                                                         {'meeting_transition': 'publish_decisions',
-                                                          'item_transition': 'itempublish'},
-                                                         {'meeting_transition': 'publish_decisions',
-                                                          'item_transition': 'itemfreeze'},
-                                                         {'meeting_transition': 'publish_decisions',
-                                                          'item_transition': 'accept'},
-                                                         {'meeting_transition': 'publish_decisions',
-                                                          'item_transition': 'confirm'},
+    {'meeting_transition': 'publish_decisions',
+     'item_action': 'itempublish',
+     'tal_expression': ''},
+    {'meeting_transition': 'publish_decisions',
+     'item_action': 'itemfreeze',
+     'tal_expression': ''},
+    {'meeting_transition': 'publish_decisions',
+     'item_action': 'accept',
+     'tal_expression': ''},
+    {'meeting_transition': 'publish_decisions',
+     'item_action': 'confirm',
+     'tal_expression': ''},
 
-                                                         {'meeting_transition': 'archive',
-                                                          'item_transition': 'itemarchive'},
+    {'meeting_transition': 'archive',
+     'item_action': 'itemarchive',
+     'tal_expression': ''},
 
-                                                         {'meeting_transition': 'backToCreated',
-                                                          'item_transition': 'backToItemPublished'},
-                                                         {'meeting_transition': 'backToCreated',
-                                                          'item_transition': 'backToPresented'},)
+    {'meeting_transition': 'backToCreated',
+     'item_action': 'backToItemPublished',
+     'tal_expression': ''},
+    {'meeting_transition': 'backToCreated',
+     'item_action': 'backToPresented',
+     'tal_expression': ''},)
 
 meetingPma.insertingMethodsOnAddItem = ({'insertingMethod': 'on_proposing_groups', 'reverse': '0'}, )
 meetingPma.useGroupsAsCategories = True
@@ -385,45 +402,8 @@ meetingPga.annexTypes = [financialAnalysis, legalAnalysis,
                          adviceAnnex, adviceLegalAnalysis, meetingAnnex]
 meetingPga.usedItemAttributes = ('description', 'toDiscuss', 'associatedGroups', 'itemIsSigned',)
 meetingPga.transitionsForPresentingAnItem = ('propose', 'validate', 'present', )
-meetingPga.onMeetingTransitionItemTransitionToTrigger = ({'meeting_transition': 'publish',
-                                                          'item_transition': 'itempublish'},
-
-                                                         {'meeting_transition': 'freeze',
-                                                          'item_transition': 'itempublish'},
-                                                         {'meeting_transition': 'freeze',
-                                                          'item_transition': 'itemfreeze'},
-
-                                                         {'meeting_transition': 'decide',
-                                                          'item_transition': 'itempublish'},
-                                                         {'meeting_transition': 'decide',
-                                                          'item_transition': 'itemfreeze'},
-
-                                                         {'meeting_transition': 'close',
-                                                          'item_transition': 'itempublish'},
-                                                         {'meeting_transition': 'close',
-                                                          'item_transition': 'itemfreeze'},
-                                                         {'meeting_transition': 'close',
-                                                          'item_transition': 'accept'},
-                                                         {'meeting_transition': 'close',
-                                                          'item_transition': 'confirm'},
-
-                                                         {'meeting_transition': 'publish_decisions',
-                                                          'item_transition': 'itempublish'},
-                                                         {'meeting_transition': 'publish_decisions',
-                                                          'item_transition': 'itemfreeze'},
-                                                         {'meeting_transition': 'publish_decisions',
-                                                          'item_transition': 'accept'},
-                                                         {'meeting_transition': 'publish_decisions',
-                                                          'item_transition': 'confirm'},
-
-                                                         {'meeting_transition': 'archive',
-                                                          'item_transition': 'itemarchive'},
-
-                                                         {'meeting_transition': 'backToCreated',
-                                                          'item_transition': 'backToItemPublished'},
-                                                         {'meeting_transition': 'backToCreated',
-                                                          'item_transition': 'backToPresented'},)
-
+meetingPga.onMeetingTransitionItemActionToExecute = deepcopy(
+    meetingPma.onMeetingTransitionItemActionToExecute)
 meetingPga.insertingMethodsOnAddItem = ({'insertingMethod': 'on_categories', 'reverse': '0'}, )
 meetingPga.useGroupsAsCategories = False
 meetingPga.itemTemplates = (template1, template2, )

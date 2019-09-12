@@ -1204,7 +1204,7 @@ schema = Schema((
         ),
         enforceVocabulary=True,
         multiValued=1,
-        vocabulary_factory='collective.contact.plonegroup.selected_organization_services',
+        vocabulary_factory='collective.contact.plonegroup.sorted_selected_organization_services',
     ),
     StringField(
         name='meetingTransitionInsertingMe',
@@ -3094,11 +3094,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if forceUseCertifiedSignaturesOnMeetingConfig:
             return cfg.getCertifiedSignatures(computed=True, listify=listify)
 
+        selected_group_in_charge = None
+        if from_group_in_charge:
+            selected_group_in_charge = item.getGroupsInCharge(theObjects=True, fromOrgIfEmpty=True, first=True)
         # get certified signatures computed, this will return a list with pair
         # of function/signatures, so ['function1', 'name1', 'function2', 'name2', 'function3', 'name3', ]
         # this list is ordered by signature number defined on the organization/MeetingConfig
         return item.getProposingGroup(theObject=True).get_certified_signatures(
-            computed=True, cfg=cfg, from_group_in_charge=from_group_in_charge, listify=listify)
+            computed=True, cfg=cfg, group_in_charge=selected_group_in_charge, listify=listify)
 
     security.declarePublic('redefinedItemAssemblies')
 
