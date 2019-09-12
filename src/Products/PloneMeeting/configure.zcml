@@ -23,6 +23,7 @@
   <include package="collective.js.fancytree"/>
   <include package="collective.js.jqueryui"/>
   <include package="collective.messagesviewlet"/>
+  <include zcml:condition="installed collective.solr" package="collective.solr" />
   <include package="dexterity.localrolesfield"/>
   <include package="ftw.labels"/>
   <include package="imio.annex"/>
@@ -225,6 +226,14 @@
     for="Products.PloneMeeting.interfaces.IMeetingContent
          zope.publisher.interfaces.browser.IBrowserRequest
          Products.ZCatalog.interfaces.ICatalogBrain"
+    provides="collective.iconifiedcategory.interfaces.IIconifiedContent"
+    factory=".adapters.PMCategorizedObjectAdapter"
+    />
+
+  <adapter zcml:condition="installed collective.solr"
+    for="Products.PloneMeeting.interfaces.IMeetingContent
+         zope.publisher.interfaces.browser.IBrowserRequest
+         collective.solr.flare.PloneFlare"
     provides="collective.iconifiedcategory.interfaces.IIconifiedContent"
     factory=".adapters.PMCategorizedObjectAdapter"
     />

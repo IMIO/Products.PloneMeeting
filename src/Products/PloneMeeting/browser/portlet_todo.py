@@ -152,7 +152,8 @@ class Renderer(base.Renderer, FacetedRenderer):
           will not work, that is why we use unrestricted getObject.
         """
         # received brain is a plone.app.contentlisting.catalog.CatalogContentListingObject instance
-        item = brain._brain._unrestrictedGetObject()
+        brain = getattr(brain, '_brain', brain)
+        item = brain.getObject()
         return self.tool.getColoredLink(item, showColors=True, maxLength=self.data.title_length)
 
     def getCollectionWidgetId(self):
