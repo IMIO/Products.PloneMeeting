@@ -5,8 +5,8 @@ Changelog
 4.1.2 (unreleased)
 ------------------
 
-- Nothing changed yet.
-
+- Defined 'Products.PloneMeeting.vocabularies.everyorganizationsvocabulary' only calling original 'collective.contact.plonegroup.every_organizations' vocabulary
+  but adds ram.cache and render term title without "My organization"
 
 4.1.1 (2019-09-12)
 ------------------

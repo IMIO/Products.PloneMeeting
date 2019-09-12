@@ -318,7 +318,26 @@ class ItemGroupsInChargeVocabulary(GroupsInChargeVocabulary):
 ItemGroupsInChargeVocabularyFactory = ItemGroupsInChargeVocabulary()
 
 
-class EveryOrganizationsAcronymsVocabulary(object):
+class PMEveryOrganizationsVocabulary(EveryOrganizationsVocabulary):
+    """ """
+
+    def __call___cachekey(method, self, context):
+        '''cachekey method for self.__call__.'''
+        date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.everyorganizationsvocabulary')
+        return date
+
+    @ram.cache(__call___cachekey)
+    def __call__(self, context):
+        return super(PMEveryOrganizationsVocabulary, self).__call__(context)
+
+    def _term_title(self, orga, parent_label):
+        # ignore parent_label
+        return orga.title
+
+PMEveryOrganizationsVocabularyFactory = PMEveryOrganizationsVocabulary()
+
+
+class EveryOrganizationsAcronymsVocabulary(EveryOrganizationsVocabulary):
     implements(IVocabularyFactory)
 
     def __call___cachekey(method, self, context):
@@ -328,20 +347,11 @@ class EveryOrganizationsAcronymsVocabulary(object):
 
     @ram.cache(__call___cachekey)
     def __call__(self, context):
-        """ """
-        orgs = get_organizations(only_selected=False)
-        res = []
-        for org in orgs:
-            org_uid = org.UID()
-            res.append(
-                SimpleTerm(org_uid,
-                           org_uid,
-                           safe_unicode(
-                               org.acronym or
-                               translate("None", domain="PloneMeeting", context=context.REQUEST))
-                           ))
-        res = humansorted(res, key=attrgetter('title'))
-        return SimpleVocabulary(res)
+        return super(EveryOrganizationsAcronymsVocabulary, self).__call__(context)
+
+    def _term_title(self, orga, parent_label):
+        # org acronym instead title
+        return orga.acronym or translate("None", domain="PloneMeeting", context=orga.REQUEST)
 
 
 EveryOrganizationsAcronymsVocabularyFactory = EveryOrganizationsAcronymsVocabulary()
