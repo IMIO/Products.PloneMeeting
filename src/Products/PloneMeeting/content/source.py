@@ -1,8 +1,15 @@
 # -*- coding: utf-8 -*-
+
 from collective.contact.widget.source import ContactSource
 from collective.contact.widget.source import ContactSourceBinder
 from collective.contact.plonegroup.utils import get_own_organization
 
+
+#############################################
+#
+#      NOT USED ANYMORE TO BE REMOVED
+#
+#############################################
 
 class PMContactSource(ContactSource):
     """Returns organizations, except ones stored in PLONEGROUP_ORG."""

@@ -33,6 +33,8 @@ Changelog
   of a meeting when a transition is triggered on a meeting, it is now possible to execute a TAL expression
 - 'workflowstate' viewlet was moved to plonetheme.imioapps.browser.viewlets and utils.get_state_infos was moved to imio.helpers.content, adapted code accordingly
 - Added Ability to run using solr instead of catalog
+- Do not restrict selection of held_position.position to organizations outside "My organization".  We may link an held_position to an organization stored in "My organization".
+  This will let link a held_position to an organization having a role in the application: group in charge, adviser, ...
 
 4.1 (2019-08-23)
 ----------------
