@@ -21,9 +21,9 @@ from plone.app.contenttypes.migration.dxmigration import migrate_base_class_to_n
 from Products.CMFPlone.utils import base_hasattr
 from Products.CMFPlone.utils import safe_unicode
 from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_NEW
-from Products.PloneMeeting.content.person import PMPerson
 from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
 from Products.PloneMeeting.config import TOOL_FOLDER_POD_TEMPLATES
+from Products.PloneMeeting.content.person import PMPerson
 from Products.PloneMeeting.indexes import DELAYAWARE_ROW_ID_PATTERN
 from Products.PloneMeeting.indexes import REAL_ORG_UID_PATTERN
 from Products.PloneMeeting.interfaces import IConfigElement

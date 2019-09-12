@@ -8,16 +8,6 @@
 #
 # GNU General Public License (GPL)
 #
-import logging
-import os
-
-from Products.PloneMeeting.config import CKEDITOR_MENUSTYLES_CUSTOMIZED_MSG
-from Products.PloneMeeting.config import HAS_ZAMQP
-from Products.PloneMeeting.config import HAS_SOLR
-from Products.PloneMeeting.config import ManageOwnOrganizationFields
-from Products.PloneMeeting.config import PMMessageFactory as _
-from Products.PloneMeeting.utils import cleanMemoize
-
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from collective.documentgenerator.config import set_raiseOnError_for_non_managers
 from collective.documentgenerator.config import set_use_stream
@@ -33,8 +23,18 @@ from Products.CMFPlone.utils import base_hasattr
 from Products.CPUtils.Extensions.utils import configure_ckeditor
 from Products.cron4plone.browser.configlets.cron_configuration import ICronConfiguration
 from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_REAPPLY
+from Products.PloneMeeting.config import PMMessageFactory as _
+from Products.PloneMeeting.config import CKEDITOR_MENUSTYLES_CUSTOMIZED_MSG
+from Products.PloneMeeting.config import HAS_SOLR
+from Products.PloneMeeting.config import HAS_ZAMQP
+from Products.PloneMeeting.config import ManageOwnOrganizationFields
+from Products.PloneMeeting.utils import cleanMemoize
 from zope.component import queryUtility
 from zope.i18n import translate
+
+import logging
+import os
+
 
 __author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
 <g.bastien@imio.be>, Stephan GEULETTE <s.geulette@imio.be>"""

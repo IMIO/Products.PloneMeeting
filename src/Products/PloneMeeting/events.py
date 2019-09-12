@@ -44,8 +44,8 @@ from Products.PloneMeeting.utils import _addManagedPermissions
 from Products.PloneMeeting.utils import addRecurringItemsIfRelevant
 from Products.PloneMeeting.utils import AdviceAfterAddEvent
 from Products.PloneMeeting.utils import AdviceAfterModifyEvent
-from Products.PloneMeeting.utils import applyOnTransitionFieldTransform
 from Products.PloneMeeting.utils import AdviceAfterTransitionEvent
+from Products.PloneMeeting.utils import applyOnTransitionFieldTransform
 from Products.PloneMeeting.utils import ItemAfterTransitionEvent
 from Products.PloneMeeting.utils import MeetingAfterTransitionEvent
 from Products.PloneMeeting.utils import meetingExecuteActionOnLinkedItems

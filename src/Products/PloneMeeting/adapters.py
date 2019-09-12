@@ -14,8 +14,8 @@ from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.iconifiedcategory.adapter import CategorizedObjectAdapter
 from collective.iconifiedcategory.adapter import CategorizedObjectInfoAdapter
 from collective.iconifiedcategory.utils import get_categories
-from datetime import datetime
 from DateTime import DateTime
+from datetime import datetime
 from eea.facetednavigation.criteria.handler import Criteria as eeaCriteria
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from eea.facetednavigation.widgets.resultsperpage.widget import Widget as ResultsPerPageWidget

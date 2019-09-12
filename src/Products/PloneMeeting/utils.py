@@ -46,8 +46,8 @@ from Products.PloneMeeting.config import PloneMeetingError
 from Products.PloneMeeting.config import TOOL_ID
 from Products.PloneMeeting.interfaces import IAdviceAfterAddEvent
 from Products.PloneMeeting.interfaces import IAdviceAfterModifyEvent
-from Products.PloneMeeting.interfaces import IAdvicesUpdatedEvent
 from Products.PloneMeeting.interfaces import IAdviceAfterTransitionEvent
+from Products.PloneMeeting.interfaces import IAdvicesUpdatedEvent
 from Products.PloneMeeting.interfaces import IItemAfterTransitionEvent
 from Products.PloneMeeting.interfaces import IItemDuplicatedEvent
 from Products.PloneMeeting.interfaces import IItemDuplicatedFromConfigEvent

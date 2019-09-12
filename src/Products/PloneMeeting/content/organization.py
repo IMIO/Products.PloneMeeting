@@ -14,10 +14,10 @@ from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.utils import computeCertifiedSignatures
 from Products.PloneMeeting.utils import listifySignatures
 from Products.PloneMeeting.validators import DXCertifiedSignaturesValidator
+from z3c.form import validator
 from z3c.form.browser.checkbox import CheckBoxFieldWidget
 from zope import schema
 from zope.interface import Interface
-from z3c.form import validator
 
 
 class ICertifiedSignaturesRowSchema(Interface):

@@ -2,11 +2,11 @@
 
 from AccessControl import Unauthorized
 from collective.contact.plonegroup.utils import get_organization
-from plone.dexterity.browser.view import DefaultView
 from imio.actionspanel.interfaces import IContentDeletable
 from imio.helpers.content import get_state_infos
 from imio.history.browser.views import IHVersionPreviewView
 from plone import api
+from plone.dexterity.browser.view import DefaultView
 from plone.memoize import ram
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.utils import _checkPermission

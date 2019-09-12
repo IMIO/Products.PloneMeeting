@@ -92,10 +92,10 @@ from Products.PloneMeeting.config import WriteRiskyConfig
 from Products.PloneMeeting.indexes import DELAYAWARE_ROW_ID_PATTERN
 from Products.PloneMeeting.indexes import REAL_ORG_UID_PATTERN
 from Products.PloneMeeting.interfaces import IMeeting
-from Products.PloneMeeting.interfaces import IMeetingConfig
-from Products.PloneMeeting.interfaces import IMeetingItem
 from Products.PloneMeeting.interfaces import IMeetingAdviceWorkflowActions
 from Products.PloneMeeting.interfaces import IMeetingAdviceWorkflowConditions
+from Products.PloneMeeting.interfaces import IMeetingConfig
+from Products.PloneMeeting.interfaces import IMeetingItem
 from Products.PloneMeeting.interfaces import IMeetingItemWorkflowActions
 from Products.PloneMeeting.interfaces import IMeetingItemWorkflowConditions
 from Products.PloneMeeting.interfaces import IMeetingWorkflowActions
