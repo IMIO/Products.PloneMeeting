@@ -7,6 +7,7 @@
 # GNU General Public License (GPL)
 #
 
+from collective.contact.core.content.organization import IOrganization
 from DateTime import DateTime
 from imio.history.interfaces import IImioHistory
 from OFS.interfaces import IItem
@@ -378,3 +379,10 @@ def indexAdvisers(obj):
     res = list(set(res))
     res.sort()
     return res
+
+
+@indexer(IOrganization)
+def get_full_title(obj):
+    '''By default we hide the "My organization" level, but not in the indexed
+       value as it is used in the contact widget.'''
+    return obj.get_full_title(force_separator=True)

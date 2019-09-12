@@ -215,6 +215,7 @@
   <adapter name="sortable_title" factory=".indexes.sortable_title" />
   <adapter name="templateUsingGroups" factory=".indexes.templateUsingGroups" />
   <adapter name="title_or_id" factory=".indexes.title_or_id" />
+  <adapter name="get_full_title" factory=".indexes.get_full_title" />
 
   <adapter
     for="imio.annex.content.annex.IAnnex"

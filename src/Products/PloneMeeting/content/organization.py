@@ -2,7 +2,8 @@
 
 from collective.contact.core.content.organization import IOrganization
 from collective.contact.core.content.organization import Organization
-from collective.contact.plonegroup.utils import get_organization
+from collective.contact.plonegroup.config import PLONEGROUP_ORG
+from collective.contact.plonegroup.interfaces import IPloneGroupContact
 from collective.contact.plonegroup.utils import get_organizations
 from collective.z3cform.datagridfield import DataGridFieldFactory
 from collective.z3cform.datagridfield import DictRow
@@ -178,6 +179,14 @@ class PMOrganization(Organization):
         """Accessor so it can be called in a TAL expression."""
         return self.groups_in_charge
 
+    def get_full_title(self, separator=u' / ', first_index=0, force_separator=False):
+        """Override to change default first_index from 0 to 1 for IPloneGroupContact,
+           so we do not display the 'My organization' level for elements displayed in the
+           'My organization' organization."""
+        if not force_separator and self.id != PLONEGROUP_ORG and IPloneGroupContact.providedBy(self):
+            first_index = 1
+        return super(PMOrganization, self).get_full_title(separator, first_index)
+
     def get_item_advice_states(self, cfg=None):
         res = self.item_advice_states
         if cfg:
@@ -245,7 +254,7 @@ class PMOrganization(Organization):
             # get certified signatures from first of the defined groupsInCharge
             if group_in_charge:
                 computed_signatures.update(computeCertifiedSignatures(group_in_charge.get_certified_signatures()))
-                
+
             # if we have certified signatures defined on this MeetingGroup
             # update MeetingConfig signatures regarding what is defined here
             if group_signatures:

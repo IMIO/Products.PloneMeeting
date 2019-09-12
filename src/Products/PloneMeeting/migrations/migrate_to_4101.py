@@ -3,7 +3,9 @@
 from eea.facetednavigation.interfaces import ICriteria
 from imio.helpers.catalog import reindexIndexes
 from plone import api
+from plone.app.contenttypes.migration.dxmigration import migrate_base_class_to_new_class
 from plone.namedfile.file import NamedBlobFile
+from Products.PloneMeeting.content.organization import PMOrganization
 from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator
 
@@ -127,6 +129,20 @@ class Migrate_To_4101(Migrator):
                 delattr(cfg, 'onMeetingTransitionItemTransitionToTrigger')
         logger.info('Done.')
 
+    def _migrateContactOrganizationPersonsKlass(self):
+        """klass used by 'organization' portal_type changed, this is only relevant for
+           users using beta versions..."""
+        logger.info('Migrating klass of collective.contact Organization to PMOrganization...')
+        for brain in self.catalog(portal_type='organization'):
+            org = brain.getObject()
+            if not isinstance(org, PMOrganization):
+                logger.info('Migrating organization at {0}'.format('/'.join(org.getPhysicalPath())))
+                migrate_base_class_to_new_class(
+                    org,
+                    old_class_name='collective.contact.core.content.organization.Organization',
+                    new_class_name='Products.PloneMeeting.content.organization.PMOrganization')
+        logger.info('Done.')
+
     def run(self, extra_omitted=[]):
         logger.info('Migrating to PloneMeeting 4101...')
         self._updateFacetedFilters()
@@ -137,9 +153,11 @@ class Migrate_To_4101(Migrator):
         self._removeSelectableForPlonegroupFieldOnOrganizations()
         self._removeTagsParameterInCallToJSCallViewAndReloadInCloneToOtherMCActions()
         self._moveToMeetingConfigOnMeetingTransitionItemActionToExecute()
+        self._migrateContactOrganizationPersonsKlass()
         self.cleanRegistries()
         # holidays 2020 were added
         self.updateHolidays()
+        self.reindexIndexesFor(idxs=['get_full_title'], **{'portal_type': ['organization']})
         reindexIndexes(self.portal, idxs=['getTakenOverBy', 'getConfigId'])
         # re-run the Meeting workflows update as there was a bug in Migrator.refreshDatabase
         meeting_wf_ids = self.getWorkflows(meta_types=['Meeting'])
@@ -158,11 +176,15 @@ def migrate(context):
        6) Remove the 'selectable_for_plonegroup' attribute on organizations;
        7) Move field MeetingConfig.onMeetingTransitionItemTransitionToTrigger to
           MeetingConfig.onMeetingTransitionItemActionToExecute;
-       8) Clean registries;
-       9) Reindex catalog indexes :
+       8) Migrate organizations having klass Organization to klass PMOrganization;
+       9) Clean registries;
+       10) Update holidays to manage 2020;
+       11) Reindex catalog indexes :
               - 'getTakenOverBy' as we use an indexer to handle empty value;
-              - 'getConfigId' as we store a specific empty value as it is not possible to search on an empty index.
-       10) Refresh Meeting workflows so MeetingManager have 'Review portal content' in state 'closed'.
+              - 'getConfigId' as we store a specific empty value as it is not possible to search on an empty index;
+              - 'get_full_title' as indexed value is different than displayed one.
+       12) Refresh Meeting workflows so MeetingManager have 'Review portal content' in state 'closed';
+       13) Invalidate all cache.
     '''
     migrator = Migrate_To_4101(context)
     migrator.run()

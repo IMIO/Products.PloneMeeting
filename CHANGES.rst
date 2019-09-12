@@ -37,6 +37,7 @@ Changelog
   This will let link a held_position to an organization having a role in the application: group in charge, adviser, ...
 - Changed organization.get_certified_signatures parameter from_group_in_charge=False to group_in_charge=None, it will receive a group in charge (organization) to get certified signatures on.
   This manage the fact that several groups in charge may be selected on an organization and the selected group in charge is defined on the linked item
+- Override organization.get_full_title only when value is not the indexed value. So "My organziation" is displayed in the contact widget but not in other cases
 
 4.1 (2019-08-23)
 ----------------
