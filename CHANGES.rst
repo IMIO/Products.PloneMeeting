@@ -35,6 +35,8 @@ Changelog
 - Added Ability to run using solr instead of catalog
 - Do not restrict selection of held_position.position to organizations outside "My organization".  We may link an held_position to an organization stored in "My organization".
   This will let link a held_position to an organization having a role in the application: group in charge, adviser, ...
+- Changed organization.get_certified_signatures parameter from_group_in_charge=False to group_in_charge=None, it will receive a group in charge (organization) to get certified signatures on.
+  This manage the fact that several groups in charge may be selected on an organization and the selected group in charge is defined on the linked item
 
 4.1 (2019-08-23)
 ----------------
