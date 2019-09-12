@@ -66,14 +66,14 @@ class ItemGroupsInChargeAcronymColumn(AbbrColumn):
 class ItemAssociatedGroupsColumn(VocabularyColumn):
     """A column that display the associatedGroups."""
     attrName = 'getAssociatedGroups'
-    vocabulary = u'collective.contact.plonegroup.every_organizations'
+    vocabulary = u'Products.PloneMeeting.vocabularies.everyorganizationsvocabulary'
 
 
 class ItemAssociatedGroupsAcronymColumn(AbbrColumn):
     """A column that display the associatedGroups acronym."""
     attrName = 'getAssociatedGroups'
     vocabulary = u'Products.PloneMeeting.vocabularies.everyorganizationsacronymsvocabulary'
-    full_vocabulary = u'collective.contact.plonegroup.every_organizations'
+    full_vocabulary = u'Products.PloneMeeting.vocabularies.everyorganizationsvocabulary'
 
 
 class ItemAdvicesColumn(BrowserViewCallColumn):

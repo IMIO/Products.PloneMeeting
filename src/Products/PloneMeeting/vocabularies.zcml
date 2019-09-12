@@ -13,6 +13,8 @@
            name="Products.PloneMeeting.vocabularies.proposinggroupsvocabulary" />
   <utility component=".vocabularies.ItemProposingGroupsForFacetedFilterVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.proposinggroupsforfacetedfiltervocabulary" />
+  <utility component=".vocabularies.PMEveryOrganizationsVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.everyorganizationsvocabulary" />
   <utility component=".vocabularies.EveryOrganizationsAcronymsVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.everyorganizationsacronymsvocabulary" />
   <utility component=".vocabularies.AssociatedGroupsVocabularyFactory"
