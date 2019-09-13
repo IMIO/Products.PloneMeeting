@@ -1565,8 +1565,8 @@ class AssociatedGroupsVocabulary(object):
         if cfg.getOrderedAssociatedOrganizations():
             orgs = list(cfg.getOrderedAssociatedOrganizations(theObjects=True))
         else:
-            # if not then every existing organizations (even not selected in plonegroup)
-            # are selectable as associated groups
+            # if not then every existing organizations of plonegroup
+            # (even not selected) are selectable as associated groups
             orgs = get_organizations()
 
         terms = []

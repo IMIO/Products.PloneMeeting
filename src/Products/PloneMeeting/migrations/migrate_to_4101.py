@@ -23,6 +23,11 @@ class Migrate_To_4101(Migrator):
                 'c12', **{
                     'vocabulary':
                         'Products.PloneMeeting.vocabularies.creatorswithnobodyforfacetedfiltervocabulary'})
+            criteria.edit(
+                'c27', **{
+                    'vocabulary':
+                        'Products.PloneMeeting.vocabularies.associatedgroupsvocabulary'})
+
         logger.info('Done.')
 
     def _updateSearchLastDecisionsQuery(self):

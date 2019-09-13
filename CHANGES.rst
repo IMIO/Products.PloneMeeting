@@ -7,6 +7,8 @@ Changelog
 
 - Defined 'Products.PloneMeeting.vocabularies.everyorganizationsvocabulary' only calling original 'collective.contact.plonegroup.every_organizations' vocabulary
   but adds ram.cache and render term title without "My organization"
+- Use vocabulary 'Products.PloneMeeting.vocabularies.associatedgroupsvocabulary' for faceted filter 'associatedGroups' instead
+  'Products.PloneMeeting.vocabularies.everyorganizationsacronymsvocabulary'
 
 4.1.1 (2019-09-12)
 ------------------
