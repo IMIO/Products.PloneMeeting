@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.1.2 (unreleased)
+4.1.2 (2019-09-13)
 ------------------
 
 - Defined 'Products.PloneMeeting.vocabularies.everyorganizationsvocabulary' only calling original 'collective.contact.plonegroup.every_organizations' vocabulary
