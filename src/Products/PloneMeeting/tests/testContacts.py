@@ -100,7 +100,8 @@ class testContacts(PloneMeetingTestCase):
             meeting.getAllUsedHeldPositions(),
             meeting.getAllUsedHeldPositions(include_new=True))
         # select new hp
-        cfg.setOrderedContacts(cfg.listSelectableContacts().keys())
+        ordered_contacts = cfg.getField('orderedContacts').Vocabulary(cfg).keys()
+        cfg.setOrderedContacts(ordered_contacts)
         self.assertEqual(
             meeting.getAllUsedHeldPositions() + (new_hp, ),
             meeting.getAllUsedHeldPositions(include_new=True))
