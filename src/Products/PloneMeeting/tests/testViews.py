@@ -792,7 +792,7 @@ class testViews(PloneMeetingTestCase):
         view = item.restrictedTraverse('document-generation')
         helper = view.get_generation_context_helper()
         self.assertEqual(
-            helper.printAdviceInfos(item),
+            helper.printAdvicesInfos(item),
             "<p class='pmAdvices'><u><b>Advices :</b></u></p>"
             "<p class='pmAdvices'><u>Developers:</u><br /><u>Advice type :</u> "
             "<i>Positive</i><br /><u>Advice given by :</u> "
