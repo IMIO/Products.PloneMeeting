@@ -5,8 +5,7 @@ Changelog
 4.1.3 (unreleased)
 ------------------
 
-- Nothing changed yet.
-
+- Fixed bug "AttributeError: 'NoneType' object has no attribute 'lower'" in BaseDGHV.printAdvicesInfos when advice comment is None
 
 4.1.2 (2019-09-13)
 ------------------
