@@ -776,30 +776,46 @@ class testViews(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         item.setOptionalAdvisers((self.developers_uid, self.vendors_uid), )
         item._update_after_edit()
+        view = item.restrictedTraverse('document-generation')
+        helper = view.get_generation_context_helper()
 
+        # advices not given
+        self.assertEqual(
+            helper.printAdvicesInfos(item),
+            "<p class='pmAdvices'><u><b>Advices :</b></u></p>"
+            "<p class='pmAdvices'><u>Developers:</u><br /><u>Advice type :</u> "
+            "<i>Not given yet</i></p><p class='pmAdvices'><u>Vendors:</u><br />"
+            "<u>Advice type :</u> <i>Not given yet</i></p>")
         self.changeUser('pmAdviser1')
         createContentInContainer(item,
                                  'meetingadvice',
                                  **{'advice_group': self.developers_uid,
                                     'advice_type': u'positive',
                                     'advice_comment': RichTextValue(u'My comment')})
+        # mixes advice given and not given
+        self.assertEqual(
+            helper.printAdvicesInfos(item),
+            "<p class='pmAdvices'><u><b>Advices :</b></u></p>"
+            "<p class='pmAdvices'><u>Vendors:</u><br /><u>Advice type :</u> "
+            "<i>Not given yet</i></p><p class='pmAdvices'><u>Developers:</u><br />"
+            "<u>Advice type :</u> <i>Positive</i><br /><u>Advice given by :</u> "
+            "<i>M. PMAdviser One</i><br /><u>Advice comment :</u> My comment<p></p></p>")
+
+        # every advices given
         self.changeUser('pmReviewer2')
         createContentInContainer(item,
                                  'meetingadvice',
                                  **{'advice_group': self.vendors_uid,
                                     'advice_type': u'negative'})
         self.changeUser('pmCreator1')
-        view = item.restrictedTraverse('document-generation')
-        helper = view.get_generation_context_helper()
         self.assertEqual(
             helper.printAdvicesInfos(item),
-            "<p class='pmAdvices'><u><b>Advices :</b></u></p>"
-            "<p class='pmAdvices'><u>Developers:</u><br /><u>Advice type :</u> "
-            "<i>Positive</i><br /><u>Advice given by :</u> "
-            "<i>M. PMAdviser One</i><br /><u>Advice comment :</u> "
-            "My comment<p></p></p><p class='pmAdvices'><u>Vendors:</u><br />"
-            "<u>Advice type :</u> <i>Negative</i><br /><u>Advice given by :</u> "
-            "<i>M. PMReviewer Two</i><br /><u>Advice comment :</u> -<p></p></p>")
+            "<p class='pmAdvices'><u><b>Advices :</b></u></p><p class='pmAdvices'>"
+            "<u>Vendors:</u><br /><u>Advice type :</u> <i>Negative</i><br />"
+            "<u>Advice given by :</u> <i>M. PMReviewer Two</i><br />"
+            "<u>Advice comment :</u> -<p></p></p><p class='pmAdvices'><u>Developers:</u><br />"
+            "<u>Advice type :</u> <i>Positive</i><br /><u>Advice given by :</u> "
+            "<i>M. PMAdviser One</i><br /><u>Advice comment :</u> My comment<p></p></p>")
 
     def test_pm_MeetingUpdateItemReferences(self):
         """Test call to @@update-item-references from the meeting that will update

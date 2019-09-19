@@ -751,17 +751,20 @@ class BaseDGHV(object):
                           withAdvicesTitle=True,
                           withDelay=False,
                           withDelayLabel=True,
-                          withAuthor=True):
+                          withAuthor=True,
+                          ordered=True):
         '''Helper method to have a printable version of advices.'''
-        itemAdvicesByType = item.getAdvicesByType()
         res = ""
         if withAdvicesTitle:
             res += "<p class='pmAdvices'><u><b>%s :</b></u></p>" % \
                 translate('PloneMeeting_label_advices',
                           domain='PloneMeeting',
                           context=self.request)
-        for adviceType in itemAdvicesByType:
-            for advice in itemAdvicesByType[adviceType]:
+        itemAdvicesByType = item.getAdvicesByType(ordered=ordered)
+        itemAdvicesByType = OrderedDict(itemAdvicesByType)
+        itemAdvicesByType = sorted(itemAdvicesByType.items())
+        for adviceType, advices in itemAdvicesByType:
+            for advice in advices:
                 res += "<p class='pmAdvices'>"
                 # if we have a delay and delay_label, we display it
                 delayAwareMsg = u''

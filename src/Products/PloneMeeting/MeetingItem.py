@@ -3952,7 +3952,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getAdvicesByType')
 
-    def getAdvicesByType(self, include_not_asked=True):
+    def getAdvicesByType(self, include_not_asked=True, ordered=True):
         '''Returns the list of advices, grouped by type.'''
         res = {}
         tool = api.portal.get_tool('portal_plonemeeting')
@@ -3981,6 +3981,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             else:
                 advices = res[adviceType]
             advices.append(adviceInfo.__dict__['data'])
+        if ordered:
+            ordered_res = {}
+
+            def getKey(advice_info):
+                return advice_info['name']
+            for advice_type, advice_infos in res.items():
+                ordered_res[advice_type] = sorted(advice_infos, key=getKey)
+            res = ordered_res
         return res
 
     def couldInheritAdvice(self, adviserId, dry_run=False):

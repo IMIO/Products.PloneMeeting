@@ -6,6 +6,7 @@ Changelog
 ------------------
 
 - Fixed bug "AttributeError: 'NoneType' object has no attribute 'lower'" in BaseDGHV.printAdvicesInfos when advice comment is None
+- Added parameter ordered=True to 'MeetingItem.getAdvicesByType', this will order elements by adviser group title (key 'name' in indexAdvisers) under an advice_type
 
 4.1.2 (2019-09-13)
 ------------------
