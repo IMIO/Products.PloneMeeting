@@ -1132,6 +1132,7 @@ class testContacts(PloneMeetingTestCase):
         hp.label = u''
         hp.position_type = u'admin'
         self.assertEqual(hp.get_prefix_for_gender_and_number(), u"L'")
+        self.assertEqual(hp.get_prefix_for_gender_and_number(include_value=True), u"L'Administratrice")
         hp.position_type = u'director'
         person.gender = u'M'
         self.assertEqual(hp.get_prefix_for_gender_and_number(), u"Le ")
@@ -1144,6 +1145,22 @@ class testContacts(PloneMeetingTestCase):
         self.assertEqual(
             hp.get_prefix_for_gender_and_number(include_value=True, include_person_title=True),
             u'Madame la Directrice')
+        # we may give a position_type_attr, this is usefull when using field secondary_position_type
+        self.assertIsNone(hp.secondary_position_type)
+        self.assertEqual(hp.get_prefix_for_gender_and_number(
+            include_value=True, position_type_attr='secondary_position_type'),
+            u'')
+        hp.secondary_position_type = u'admin'
+        # include_value and include_person_title
+        self.assertEqual(hp.get_prefix_for_gender_and_number(
+            include_value=True, position_type_attr='secondary_position_type'),
+            u"L'Administratrice")
+        # prefix first letter is lowerized
+        self.assertEqual(
+            hp.get_prefix_for_gender_and_number(include_value=True,
+                                                include_person_title=True,
+                                                position_type_attr='secondary_position_type'),
+            u"Madame l'Administratrice")
 
     def test_pm_RemoveNotSelectedOrganization(self):
         """Check that removing a not selected organization works correctly."""
