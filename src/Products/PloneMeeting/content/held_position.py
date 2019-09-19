@@ -179,7 +179,6 @@ class PMHeldPosition(HeldPosition):
         return res
 
     def get_prefix_for_gender_and_number(self,
-                                         value=None,
                                          include_value=False,
                                          include_person_title=False,
                                          use_by=False,
@@ -234,10 +233,9 @@ class PMHeldPosition(HeldPosition):
                                     }
 
         res = u''
+        value = self.get_label(position_type_attr=position_type_attr)
         if not value:
-            value = self.get_label(position_type_attr=position_type_attr)
-            if not value:
-                return res
+            return res
 
         # startswith vowel or consonant?
         first_letter = safe_unicode(value[0])

@@ -1145,6 +1145,7 @@ class testContacts(PloneMeetingTestCase):
         self.assertEqual(
             hp.get_prefix_for_gender_and_number(include_value=True, include_person_title=True),
             u'Madame la Directrice')
+
         # we may give a position_type_attr, this is usefull when using field secondary_position_type
         self.assertIsNone(hp.secondary_position_type)
         self.assertEqual(hp.get_prefix_for_gender_and_number(
