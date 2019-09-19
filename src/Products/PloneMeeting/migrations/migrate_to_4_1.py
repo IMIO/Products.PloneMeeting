@@ -761,6 +761,10 @@ class Migrate_To_4_1(Migrator):
                 mGroupId, suffix = v.rsplit('_', 1)
                 realGroupId = item._realCopyGroupId(mGroupId)
                 org = own_org.get(realGroupId)
+                if not org:
+                    self.warn(logger, 'Ignoring value "{0}" when migrating copyGroups on item at "{1}"'.format(
+                        v, '/'.join(item.getPhysicalPath())))
+                    continue
                 new_value = get_plone_group_id(org.UID(), suffix)
                 adapted_copyGroups.append(new_value)
             item.setCopyGroups(adapted_copyGroups)
