@@ -10,6 +10,8 @@ Changelog
 - Fixed migration, do not fail to migrate 'MeetingItem.copyGroups' in case a copy group does not exist anymore, was possible in old versions
 - Added field held_position.secondary_position_type working exactly the same way as held_position.position_type to be able to define a secondary_position_type useable when necessary.
   Adapted also held_position.get_prefix_for_gender_and_number method to be able to pass position_type_attr='secondary_position_type'
+- Added 'MeetingItem.associatedGroups' to 'MeetingConfig.ItemFieldsToKeepConfigSortingFor' so it is possible to display it alphabetically
+  or keep order defined in 'MeetingConfig.orderedAssociatedOrganizations'
 
 4.1.2 (2019-09-13)
 ------------------
