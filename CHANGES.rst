@@ -12,6 +12,7 @@ Changelog
   Adapted also held_position.get_prefix_for_gender_and_number method to be able to pass position_type_attr='secondary_position_type'
 - Added 'MeetingItem.associatedGroups' to 'MeetingConfig.ItemFieldsToKeepConfigSortingFor' so it is possible to display it alphabetically
   or keep order defined in 'MeetingConfig.orderedAssociatedOrganizations'
+- Added back informations in meetingitem_view about items defined in tool (templateUsingGroups/meetingTransitionInsertingMe), was removed wrongly when removing the 'back' link
 
 4.1.2 (2019-09-13)
 ------------------
