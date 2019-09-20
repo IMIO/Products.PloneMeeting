@@ -1510,7 +1510,7 @@ class testMeeting(PloneMeetingTestCase):
             item = self.create('MeetingItem', **itemData)
             self.presentItem(item)
         self.assertEqual(
-            [anItem.Title() for anItem in meeting.getItems(ordered=True)],
+            [anItem.getDecision() for anItem in meeting.getItems(ordered=True)],
             ["<p>A REFUS\xc3\x89 d'engager Madame Untell Anne au poste propos\xc3\xa9</p>",
              "<p>ACCEPTE d'engager Madame Untell Anne au poste propos\xc3\xa9</p>",
              "<p>ACCEPTENT d'engager Madame Untell Anne au poste propos\xc3\xa9</p>",
@@ -1521,7 +1521,7 @@ class testMeeting(PloneMeetingTestCase):
              "<p>REFUSE d'engager Madame Untell Anne au poste propos\xc3\xa9</p>",
              '<p>Second recurring item approved</p>'])
         self.assertEqual(
-            [anItem._findOrderFor('on_item_title') for anItem in meeting.getItems(ordered=True)],
+            [anItem._findOrderFor('on_item_decision_first_words') for anItem in meeting.getItems(ordered=True)],
             [u"a refuse d'engager madame untell",
              u"accepte d'engager madame untell anne",
              u"acceptent d'engager madame untell anne",
