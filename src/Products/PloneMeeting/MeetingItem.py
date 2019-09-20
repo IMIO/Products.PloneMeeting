@@ -79,6 +79,7 @@ from Products.PloneMeeting.config import EXTRA_COPIED_FIELDS_FROM_ITEM_TEMPLATE
 from Products.PloneMeeting.config import EXTRA_COPIED_FIELDS_SAME_MC
 from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
 from Products.PloneMeeting.config import HIDE_DECISION_UNDER_WRITING_MSG
+from Products.PloneMeeting.config import INSERTING_ON_ITEM_DECISION_FIRST_WORDS_NB
 from Products.PloneMeeting.config import ITEM_COMPLETENESS_ASKERS
 from Products.PloneMeeting.config import ITEM_COMPLETENESS_EVALUATORS
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
@@ -3431,6 +3432,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             res = pollTypes.index(pollType)
         elif insertMethod == 'on_item_title':
             res = normalize(safe_unicode(self.Title()))
+        elif insertMethod == 'on_item_decision_first_words':
+            decision = safe_unicode(self.getDecision(mimetype='text/plain')).strip()
+            decision = decision.split(' ')[0:INSERTING_ON_ITEM_DECISION_FIRST_WORDS_NB]
+            decision = ' '.join(decision)
+            res = normalize(safe_unicode(decision))
         else:
             res = self.adapted()._findCustomOrderFor(insertMethod)
         return res
