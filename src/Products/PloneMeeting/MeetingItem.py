@@ -114,6 +114,7 @@ from Products.PloneMeeting.utils import ItemDuplicatedEvent
 from Products.PloneMeeting.utils import ItemDuplicatedToOtherMCEvent
 from Products.PloneMeeting.utils import ItemLocalRolesUpdatedEvent
 from Products.PloneMeeting.utils import networkdays
+from Products.PloneMeeting.utils import normalize
 from Products.PloneMeeting.utils import rememberPreviousData
 from Products.PloneMeeting.utils import sendMail
 from Products.PloneMeeting.utils import sendMailIfRelevant
@@ -3428,6 +3429,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             pollTypes = [term.token for term in factory(self)._terms]
             # Get the order of the pollType
             res = pollTypes.index(pollType)
+        elif insertMethod == 'on_item_title':
+            res = normalize(safe_unicode(self.Title()))
         else:
             res = self.adapted()._findCustomOrderFor(insertMethod)
         return res

@@ -325,6 +325,8 @@ ITEM_INSERT_METHODS = OrderedDict((
     ('on_other_mc_to_clone_to', ['field_meetingConfigsToCloneTo']),
     # according to poll type;
     ('on_poll_type', ['field_usedPollTypes']),
+    # alphabetically according to MeetingItem.title field content
+    ('on_item_title', []),
 ))
 
 ITEM_TRANSITION_WHEN_RETURNED_FROM_PROPOSING_GROUP_AFTER_CORRECTION = 'accept'

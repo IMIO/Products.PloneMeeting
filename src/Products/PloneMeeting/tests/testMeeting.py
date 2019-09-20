@@ -1435,6 +1435,46 @@ class testMeeting(PloneMeetingTestCase):
         self.assertEquals(meeting.getItems(ordered=True),
                           [item2, item1])
 
+    def test_pm_InsertItemOnItemTitle(self):
+        """Test when inserting item in a meeting using 'on_item_title' insertion method."""
+        cfg = self.meetingConfig
+        cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_item_title', 'reverse': '0'}, ))
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime('2019/09/20'))
+        data = ({'title': 'Émettre une annonce : changement'},
+                {'title': 'Émettre une annonce : nouveau'},
+                {'title': 'Émettre une annonce - Nouveau contrat'},
+                {'title': 'Admettre un nouveau'},
+                {'title': 'Admettre un nouveau supression'},
+                {'title': 'Admettre un nouveau super'},
+                {'title': 'Admettre de nouveaux super'},
+                {'title': 'Admettre de nouveaux'},
+                {'title': 'Admettre de nouveaux super'},
+                {'title': 'Editer une nouvelle'},
+                {'title': 'Suppression du serveur SMTP'},
+                {'title': "Problème envoi d'e-mails - Solution temporaire"},
+                {'title': 'Émettre une annonce : changement'}, )
+        for itemData in data:
+            item = self.create('MeetingItem', **itemData)
+            self.presentItem(item)
+        self.assertEqual(
+            [anItem.Title() for anItem in meeting.getItems(ordered=True)],
+            ['Admettre de nouveaux',
+             'Admettre de nouveaux super',
+             'Admettre de nouveaux super',
+             'Admettre un nouveau',
+             'Admettre un nouveau super',
+             'Admettre un nouveau supression',
+             'Editer une nouvelle',
+             '\xc3\x89mettre une annonce - Nouveau contrat',
+             '\xc3\x89mettre une annonce : changement',
+             '\xc3\x89mettre une annonce : changement',
+             '\xc3\x89mettre une annonce : nouveau',
+             "Probl\xc3\xa8me envoi d'e-mails - Solution temporaire",
+             'Recurring item #1',
+             'Recurring item #2',
+             'Suppression du serveur SMTP'])
+
     def test_pm_GetItemInsertOrderByProposingGroup(self):
         """Test the Meeting.getItemInsertOrder method caching when using order
            depending on proposing group."""

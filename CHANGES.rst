@@ -13,6 +13,7 @@ Changelog
 - Added 'MeetingItem.associatedGroups' to 'MeetingConfig.ItemFieldsToKeepConfigSortingFor' so it is possible to display it alphabetically
   or keep order defined in 'MeetingConfig.orderedAssociatedOrganizations'
 - Added back informations in meetingitem_view about items defined in tool (templateUsingGroups/meetingTransitionInsertingMe), was removed wrongly when removing the 'back' link
+- Added inserting method 'on_item_title', this will insert items following title alphabetical order
 
 4.1.2 (2019-09-13)
 ------------------
