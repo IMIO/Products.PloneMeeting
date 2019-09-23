@@ -81,6 +81,7 @@ import os
 import os.path
 import re
 import socket
+import unicodedata
 import urlparse
 
 
@@ -1728,6 +1729,15 @@ def decodeDelayAwareId(delayAwareId):
 def uncapitalize(string):
     """Lowerize first letter of given p_string."""
     return string[0].lower() + string[1:]
+
+
+def normalize(string, acceptable=[]):
+    """Normalize given string :
+       - turn é to e;
+       - only keep lower letters, numbers and punctuation;
+       - lowerized."""
+    return ''.join(x for x in unicodedata.normalize('NFKD', string)
+                   if unicodedata.category(x) != 'Mn').lower().strip()
 
 
 class AdvicesUpdatedEvent(ObjectEvent):

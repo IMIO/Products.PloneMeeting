@@ -4615,6 +4615,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         res = DisplayList((
             ('proposingGroup', translate('PloneMeeting_label_proposingGroup', domain=d, context=self.REQUEST)),
             ('category', translate('PloneMeeting_label_category', domain=d, context=self.REQUEST)),
+            ('associatedGroups', translate('PloneMeeting_label_associatedGroups', domain=d, context=self.REQUEST)),
         ))
         return res
 

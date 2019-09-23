@@ -761,6 +761,10 @@ class Migrate_To_4_1(Migrator):
                 mGroupId, suffix = v.rsplit('_', 1)
                 realGroupId = item._realCopyGroupId(mGroupId)
                 org = own_org.get(realGroupId)
+                if not org:
+                    self.warn(logger, 'Ignoring value "{0}" when migrating copyGroups on item at "{1}"'.format(
+                        v, '/'.join(item.getPhysicalPath())))
+                    continue
                 new_value = get_plone_group_id(org.UID(), suffix)
                 adapted_copyGroups.append(new_value)
             item.setCopyGroups(adapted_copyGroups)
@@ -1230,14 +1234,10 @@ class Migrate_To_4_1(Migrator):
         self._initFTWLabels()
         self._adaptShowHolidaysMessage()
         self.tool.invalidateAllCache()
-        if self.already_migrated is False:
-            # too many indexes to update, rebuild the portal_catalog
-            meeting_wf_ids = self.getWorkflows(meta_types=['Meeting'])
-            self.refreshDatabase(workflows=True,
-                                 workflowsToUpdate=['plonemeeting_onestate_workflow'] + meeting_wf_ids)
-        else:
-            self.warn(logger,
-                      'Bypassing workflows and portal_catalog update because application was already migrated.')
+        # too many indexes to update, rebuild the portal_catalog
+        meeting_wf_ids = self.getWorkflows(meta_types=['Meeting'])
+        self.refreshDatabase(workflows=True,
+                             workflowsToUpdate=['plonemeeting_onestate_workflow'] + meeting_wf_ids)
 
 
 # The migration function -------------------------------------------------------

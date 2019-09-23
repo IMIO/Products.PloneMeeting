@@ -2975,21 +2975,48 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmManager')
         # create an item to test the vocabulary
         item = self.create('MeetingItem')
-        self.assertEquals(item.Vocabulary('associatedGroups')[0].keys(), [self.developers_uid, self.vendors_uid])
+        self.assertEqual(item.Vocabulary('associatedGroups')[0].keys(),
+                         [self.developers_uid, self.vendors_uid])
         # now select the 'developers' as associatedGroup for the item
         item.setAssociatedGroups((self.developers_uid, ))
         # still the complete vocabulary
-        self.assertEquals(item.Vocabulary('associatedGroups')[0].keys(), [self.developers_uid, self.vendors_uid])
+        self.assertEqual(item.Vocabulary('associatedGroups')[0].keys(),
+                         [self.developers_uid, self.vendors_uid])
         # disable developers organization
         self.changeUser('admin')
         self._select_organization(self.developers_uid, remove=True)
         self.changeUser('pmManager')
         # still in the vocabulary because selected on the item
-        self.assertEquals(item.Vocabulary('associatedGroups')[0].keys(), [self.vendors_uid, self.developers_uid])
+        # but added at the end of the vocabulary
+        self.assertEqual(item.Vocabulary('associatedGroups')[0].keys(),
+                         [self.vendors_uid, self.developers_uid])
         # unselect 'developers' on the item, it will not appear anymore in the vocabulary
         item.setAssociatedGroups(())
         cleanRamCache()
-        self.assertEquals(item.Vocabulary('associatedGroups')[0].keys(), [self.vendors_uid, ])
+        self.assertEqual(item.Vocabulary('associatedGroups')[0].keys(), [self.vendors_uid, ])
+        # 'associatedGroups' may be selected in 'MeetingConfig.ItemFieldsToKeepConfigSortingFor'
+        cfg = self.meetingConfig
+        cfg.setOrderedAssociatedOrganizations((self.vendors_uid, self.developers_uid, self.endUsers_uid))
+        # sorted alphabetically by default
+        self.assertFalse('associatedGroups' in cfg.getItemFieldsToKeepConfigSortingFor())
+        cleanRamCache()
+        self.assertEqual(item.Vocabulary('associatedGroups')[0].keys(),
+                         [self.developers_uid, self.endUsers_uid, self.vendors_uid, ])
+        cfg.setItemFieldsToKeepConfigSortingFor(('associatedGroups', ))
+        cleanRamCache()
+        self.assertEqual(item.Vocabulary('associatedGroups')[0].keys(),
+                         list(cfg.getOrderedAssociatedOrganizations()))
+        # when nothing defined in MeetingConfig.orderedAssociatedOrganizations
+        # so when selected organizations displayed, sorted alphabetically
+        cfg.setOrderedAssociatedOrganizations(())
+        cleanRamCache()
+        self.assertEqual(item.Vocabulary('associatedGroups')[0].keys(),
+                         [self.vendors_uid])
+        self._select_organization(self.developers_uid)
+        self._select_organization(self.endUsers_uid)
+        cleanRamCache()
+        self.assertEqual(item.Vocabulary('associatedGroups')[0].keys(),
+                         [self.developers_uid, self.endUsers_uid, self.vendors_uid])
 
     def test_pm_ListCategoriesContainsDisabledStoredValue(self):
         '''
@@ -4107,17 +4134,16 @@ class testMeetingItem(PloneMeetingTestCase):
         # Make sure the signatures are extracted from the one selected in the MeetingItem
         self.developers.groups_in_charge = (self.endUsers_uid, self.vendors_uid)
         self.assertEqual(self.endUsers.get_certified_signatures(), [])
-        self.assertEqual(
-                item.getCertifiedSignatures(from_group_in_charge=True), ['Function1', 'Name1', 'Function2', 'Name2'])
-        self.assertEqual(
-                item.getCertifiedSignatures(from_group_in_charge=False), ['Function1', 'Name1', 'Function2', 'Name2'])
+        self.assertEqual(item.getCertifiedSignatures(from_group_in_charge=True),
+                         ['Function1', 'Name1', 'Function2', 'Name2'])
+        self.assertEqual(item.getCertifiedSignatures(from_group_in_charge=False),
+                         ['Function1', 'Name1', 'Function2', 'Name2'])
 
         item.setGroupsInCharge([self.vendors_uid])
 
-        self.assertEqual(
-                item.getCertifiedSignatures(from_group_in_charge=True),
-                ['GroupInChargeFunction1', 'GroupInChargeName1',
-                 'GroupInChargeFunction2', 'GroupInChargeName2'])
+        self.assertEqual(item.getCertifiedSignatures(from_group_in_charge=True),
+                         ['GroupInChargeFunction1', 'GroupInChargeName1',
+                          'GroupInChargeFunction2', 'GroupInChargeName2'])
 
         self.assertEqual(
             item.getCertifiedSignatures(from_group_in_charge=False),
@@ -4302,8 +4328,8 @@ class testMeetingItem(PloneMeetingTestCase):
             item.adapted().getExtraFieldsToCopyWhenCloning(
                 cloned_to_same_mc=False, cloned_from_item_template=False))
         # showinsearch and searchwords must be ignored when using Solr
-        item_field_set = set(
-                [field_name for field_name in itemFields if field_name not in ('showinsearch', 'searchwords')])
+        item_field_set = set([field_name for field_name in itemFields
+                              if field_name not in ('showinsearch', 'searchwords')])
         self.assertEquals(copiedFields, item_field_set)
 
         newItem = item.clone()

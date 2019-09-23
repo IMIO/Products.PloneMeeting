@@ -299,6 +299,9 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             # optionalAdvisers are not set (???) by invokeFactory...
             if 'optionalAdvisers' in attrs:
                 obj.setOptionalAdvisers(attrs['optionalAdvisers'])
+            # decision is not set (???) by invokeFactory...
+            if 'decision' in attrs:
+                obj.setDecision(attrs['decision'])
             # define a category for the item if necessary
             if autoAddCategory and not \
                cfg.getUseGroupsAsCategories() and not \

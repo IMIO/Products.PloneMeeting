@@ -1435,6 +1435,128 @@ class testMeeting(PloneMeetingTestCase):
         self.assertEquals(meeting.getItems(ordered=True),
                           [item2, item1])
 
+    def test_pm_InsertItemOnItemTitle(self):
+        """Test when inserting item in a meeting using 'on_item_title' insertion method."""
+        cfg = self.meetingConfig
+        cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_item_title', 'reverse': '0'}, ))
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime('2019/09/20'))
+        data = ({'title': 'Émettre une annonce : changement'},
+                {'title': 'Émettre une annonce : nouveau'},
+                {'title': 'Émettre une annonce - Nouveau contrat'},
+                {'title': 'Admettre un nouveau'},
+                {'title': 'Admettre un nouveau supression'},
+                {'title': 'Admettre un nouveau super'},
+                {'title': 'Admettre de nouveaux super'},
+                {'title': 'Admettre de nouveaux'},
+                {'title': 'Admettre de nouveaux super'},
+                {'title': 'Editer une nouvelle'},
+                {'title': 'Suppression du serveur SMTP'},
+                {'title': "Problème envoi d'e-mails - Solution temporaire"},
+                {'title': 'Émettre une annonce : changement'}, )
+        for itemData in data:
+            item = self.create('MeetingItem', **itemData)
+            self.presentItem(item)
+        self.assertEqual(
+            [anItem.Title() for anItem in meeting.getItems(ordered=True)],
+            ['Admettre de nouveaux',
+             'Admettre de nouveaux super',
+             'Admettre de nouveaux super',
+             'Admettre un nouveau',
+             'Admettre un nouveau super',
+             'Admettre un nouveau supression',
+             'Editer une nouvelle',
+             '\xc3\x89mettre une annonce - Nouveau contrat',
+             '\xc3\x89mettre une annonce : changement',
+             '\xc3\x89mettre une annonce : changement',
+             '\xc3\x89mettre une annonce : nouveau',
+             "Probl\xc3\xa8me envoi d'e-mails - Solution temporaire",
+             'Recurring item #1',
+             'Recurring item #2',
+             'Suppression du serveur SMTP'])
+        self.assertEqual(
+            [anItem._findOrderFor('on_item_title') for anItem in meeting.getItems(ordered=True)],
+            [u'admettre de nouveaux',
+             u'admettre de nouveaux super',
+             u'admettre de nouveaux super',
+             u'admettre un nouveau',
+             u'admettre un nouveau super',
+             u'admettre un nouveau supression',
+             u'editer une nouvelle',
+             u'emettre une annonce - nouveau contrat',
+             u'emettre une annonce : changement',
+             u'emettre une annonce : changement',
+             u'emettre une annonce : nouveau',
+             u"probleme envoi d'e-mails - solution temporaire",
+             u'recurring item #1',
+             u'recurring item #2',
+             u'suppression du serveur smtp'])
+
+    def test_pm_InsertItemOnItemDecisionFirstWords(self):
+        """Test when inserting item in a meeting using
+           'on_item_decision_first_words' insertion method."""
+        cfg = self.meetingConfig
+        cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_item_decision_first_words', 'reverse': '0'}, ))
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime('2019/09/20'))
+        data = ({'decision': "<p>DÉCIDE d'engager Madame Untell Anne au poste proposé</p>"},
+                {'decision': "<p>DÉCIDE de refuser</p>"},
+                {'decision': "<p>REFUSE d'engager Madame Untell Anne au poste proposé</p>"},
+                {'decision': "<p>A REFUSÉ d'engager Madame Untell Anne au poste proposé</p>"},
+                {'decision': "<p>DECIDE aussi de ne pas décider</p>"},
+                {'decision': "<p>ACCEPTE d'engager Madame Untell Anne au poste proposé</p>"},
+                {'decision': "<p>ACCEPTENT d'engager Madame Untell Anne au poste proposé</p>"}, )
+        for itemData in data:
+            item = self.create('MeetingItem', **itemData)
+            self.presentItem(item)
+        self.assertEqual(
+            [anItem.getDecision() for anItem in meeting.getItems(ordered=True)],
+            ["<p>A REFUS\xc3\x89 d'engager Madame Untell Anne au poste propos\xc3\xa9</p>",
+             "<p>ACCEPTE d'engager Madame Untell Anne au poste propos\xc3\xa9</p>",
+             "<p>ACCEPTENT d'engager Madame Untell Anne au poste propos\xc3\xa9</p>",
+             '<p>DECIDE aussi de ne pas d\xc3\xa9cider</p>',
+             "<p>D\xc3\x89CIDE d'engager Madame Untell Anne au poste propos\xc3\xa9</p>",
+             '<p>D\xc3\x89CIDE de refuser</p>',
+             '<p>First recurring item approved</p>',
+             "<p>REFUSE d'engager Madame Untell Anne au poste propos\xc3\xa9</p>",
+             '<p>Second recurring item approved</p>'])
+        self.assertEqual(
+            [anItem._findOrderFor('on_item_decision_first_words') for anItem in meeting.getItems(ordered=True)],
+            [u"a refuse d'engager madame untell",
+             u"accepte d'engager madame untell anne",
+             u"acceptent d'engager madame untell anne",
+             u'decide aussi de ne pas',
+             u"decide d'engager madame untell anne",
+             u'decide de refuser',
+             u'first recurring item approved',
+             u"refuse d'engager madame untell anne",
+             u'second recurring item approved'])
+
+    def test_pm_InsertItemOnItemCreator(self):
+        """Test when inserting item in a meeting using 'on_item_creator' insertion method."""
+        cfg = self.meetingConfig
+        cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_item_creator', 'reverse': '0'}, ))
+        self.changeUser('pmCreator1')
+        item1 = self.create('MeetingItem')
+        item2 = self.create('MeetingItem')
+        item3 = self.create('MeetingItem')
+        self.changeUser('pmCreator2')
+        item4 = self.create('MeetingItem')
+        item5 = self.create('MeetingItem')
+        item6 = self.create('MeetingItem')
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime('2019/09/20'))
+        item7 = self.create('MeetingItem')
+        item8 = self.create('MeetingItem')
+        item9 = self.create('MeetingItem')
+        for item in [item1, item2, item9, item7, item6, item5, item4, item8, item3]:
+            self.presentItem(item)
+        self.assertEqual(
+            [self.tool.getUserName(anItem.Creator()) for anItem in meeting.getItems(ordered=True)],
+            ['M. PMCreator One', 'M. PMCreator One', 'M. PMCreator One',
+             'M. PMCreator Two', 'M. PMCreator Two', 'M. PMCreator Two',
+             'M. PMManager', 'M. PMManager', 'M. PMManager', 'M. PMManager', 'M. PMManager'])
+
     def test_pm_GetItemInsertOrderByProposingGroup(self):
         """Test the Meeting.getItemInsertOrder method caching when using order
            depending on proposing group."""

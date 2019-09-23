@@ -43,6 +43,7 @@ from plone.memoize.view import memoize_contextless
 from Products.CMFCore.permissions import ManagePortal
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.utils import _checkPermission
+from Products.CMFPlone.utils import safe_unicode
 from Products.Five import BrowserView
 from Products.PloneMeeting import logger
 from Products.PloneMeeting.browser.itemchangeorder import _is_integer
@@ -415,7 +416,7 @@ class MeetingReorderItems(BrowserView):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
         # sort items by insertOrder then by date it was presented
-        # so items with same insert order will be sorted by WF transition present time
+        # so items with same insert order will be sorted by WF transition 'present' time
         items = sorted([
             (self.context.getItemInsertOrder(item, cfg), getLastWFAction(item, 'present')['time'], item)
             for item in items]
@@ -663,7 +664,7 @@ class BaseDGHV(object):
                     hasSeparation = False
                     if checkNeedSeparator:
                         preparedXhtmlContent = "<special_tag>%s</special_tag>" % xhtmlContent
-                        tree = lxml.html.fromstring(unicode(preparedXhtmlContent, 'utf-8'))
+                        tree = lxml.html.fromstring(safe_unicode(preparedXhtmlContent))
                         children = tree.getchildren()
                         if children and not children[-1].text:
                             hasSeparation = True
@@ -750,17 +751,20 @@ class BaseDGHV(object):
                           withAdvicesTitle=True,
                           withDelay=False,
                           withDelayLabel=True,
-                          withAuthor=True):
+                          withAuthor=True,
+                          ordered=True):
         '''Helper method to have a printable version of advices.'''
-        itemAdvicesByType = item.getAdvicesByType()
         res = ""
         if withAdvicesTitle:
             res += "<p class='pmAdvices'><u><b>%s :</b></u></p>" % \
                 translate('PloneMeeting_label_advices',
                           domain='PloneMeeting',
                           context=self.request)
-        for adviceType in itemAdvicesByType:
-            for advice in itemAdvicesByType[adviceType]:
+        itemAdvicesByType = item.getAdvicesByType(ordered=ordered)
+        itemAdvicesByType = OrderedDict(itemAdvicesByType)
+        itemAdvicesByType = sorted(itemAdvicesByType.items())
+        for adviceType, advices in itemAdvicesByType:
+            for advice in advices:
                 res += "<p class='pmAdvices'>"
                 # if we have a delay and delay_label, we display it
                 delayAwareMsg = u''
@@ -772,9 +776,9 @@ class BaseDGHV(object):
                 if withDelayLabel and advice['delay'] and advice['delay_label']:
                     if delayAwareMsg:
                         delayAwareMsg = "%s - %s" % (delayAwareMsg,
-                                                     unicode(advice['delay_label'], 'utf-8'))
+                                                     safe_unicode(advice['delay_label']))
                     else:
-                        delayAwareMsg = "%s" % unicode(advice['delay_label'], 'utf-8')
+                        delayAwareMsg = "%s" % safe_unicode(advice['delay_label'])
                 if delayAwareMsg:
                     delayAwareMsg = u" <i>(%s)</i>" % cgi.escape(delayAwareMsg)
                     res = res + u"<u>%s %s:</u>" % (cgi.escape(advice['name']),
@@ -803,13 +807,13 @@ class BaseDGHV(object):
                     res = res + u"<br /><u>%s :</u> <i>%s</i>" % (translate('Advice given by',
                                                                   domain='PloneMeeting',
                                                                   context=self.request),
-                                                                  cgi.escape(unicode(author, 'utf-8')), )
+                                                                  cgi.escape(safe_unicode(author)), )
 
-                    adviceComment = 'comment' in advice and self.printXhtml(adviceObj, advice['comment']) or '-'
+                    adviceComment = advice['comment'] and self.printXhtml(adviceObj, advice['comment']) or '-'
                     res = res + (u"<br /><u>%s :</u> %s<p></p>" % (translate('Advice comment',
                                                                              domain='PloneMeeting',
                                                                              context=self.request),
-                                                                   unicode(adviceComment, 'utf-8')))
+                                                                   safe_unicode(adviceComment)))
                 res += u"</p>"
         if not itemAdvicesByType:
             res += "<p class='pmAdvices'>-</p>"

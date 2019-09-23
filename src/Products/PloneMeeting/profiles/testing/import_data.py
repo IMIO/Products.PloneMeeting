@@ -251,13 +251,13 @@ recItem1 = RecurringItemDescriptor(
     'Recurring item #1',
     proposingGroup='developers',
     description='<p>This is the first recurring item.</p>',
-    decision='First recurring item approved')
+    decision='<p>First recurring item approved</p>')
 recItem2 = RecurringItemDescriptor(
     'recItem2',
     'Recurring item #2',
     proposingGroup='developers',
     description='<p>This is the second recurring item.</p>',
-    decision='Second recurring item approved')
+    decision='<p>Second recurring item approved</p>')
 # item templates
 template1 = ItemTemplateDescriptor(
     'template1', 'Template1',

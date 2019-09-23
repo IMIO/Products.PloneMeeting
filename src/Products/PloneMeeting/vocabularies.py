@@ -1551,30 +1551,32 @@ class AssociatedGroupsVocabulary(object):
     """ """
     implements(IVocabularyFactory)
 
-    def __call___cachekey(method, self, context):
+    def __call___cachekey(method, self, context, sort=True):
         '''cachekey method for self.__call__.'''
         date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.associatedgroupsvocabulary')
-        return date
+        return date, sort
 
     @ram.cache(__call___cachekey)
-    def __call__(self, context):
+    def __call__(self, context, sort=True):
         """ """
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         # selectable associated groups defined in MeetingConfig?
+        is_using_cfg_order = False
         if cfg.getOrderedAssociatedOrganizations():
+            is_using_cfg_order = True
             orgs = list(cfg.getOrderedAssociatedOrganizations(theObjects=True))
         else:
-            # if not then every existing organizations (even not selected in plonegroup)
-            # are selectable as associated groups
-            orgs = get_organizations()
+            # if not then every selected organizations of plonegroup
+            orgs = get_organizations(only_selected=True)
 
         terms = []
         for org in orgs:
             org_uid = org.UID()
             terms.append(SimpleTerm(org_uid, org_uid, org.get_full_title()))
 
-        terms = humansorted(terms, key=attrgetter('title'))
+        if sort or not is_using_cfg_order:
+            terms = humansorted(terms, key=attrgetter('title'))
         return SimpleVocabulary(terms)
 
 
@@ -1587,7 +1589,12 @@ class ItemAssociatedGroupsVocabulary(AssociatedGroupsVocabulary):
 
     def __call__(self, context):
         """ """
-        terms = super(ItemAssociatedGroupsVocabulary, self).__call__(context)._terms
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        sort = True
+        if 'associatedGroups' in cfg.getItemFieldsToKeepConfigSortingFor():
+            sort = False
+        terms = super(ItemAssociatedGroupsVocabulary, self).__call__(context, sort=sort)._terms
         # when used on an item, manage missing terms, selected on item
         # but removed from orderedAssociatedOrganizations or from plonegroup
         stored_terms = context.getAssociatedGroups()

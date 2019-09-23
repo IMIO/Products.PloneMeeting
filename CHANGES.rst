@@ -2,17 +2,35 @@ Changelog
 =========
 
 
-4.1.2 (unreleased)
+4.1.3 (unreleased)
 ------------------
 
-- Defined 'Products.PloneMeeting.vocabularies.everyorganizationsvocabulary' only calling original 'collective.contact.plonegroup.every_organizations' vocabulary
-  but adds ram.cache and render term title without "My organization"
+- Fixed bug "AttributeError: 'NoneType' object has no attribute 'lower'" in BaseDGHV.printAdvicesInfos when advice comment is None
+- Added parameter ordered=True to 'MeetingItem.getAdvicesByType', this will order elements by adviser group title (key 'name' in indexAdvisers) under an advice_type
+- Fixed migration, do not fail to migrate 'MeetingItem.copyGroups' in case a copy group does not exist anymore, was possible in old versions
+- Added field held_position.secondary_position_type working exactly the same way as held_position.position_type to be able to define a secondary_position_type useable when necessary.
+  Adapted also held_position.get_prefix_for_gender_and_number method to be able to pass position_type_attr='secondary_position_type'
+- Added 'MeetingItem.associatedGroups' to 'MeetingConfig.ItemFieldsToKeepConfigSortingFor' so it is possible to display it alphabetically
+  or keep order defined in 'MeetingConfig.orderedAssociatedOrganizations'
+- Added back informations in meetingitem_view about items defined in tool (templateUsingGroups/meetingTransitionInsertingMe), was removed wrongly when removing the 'back' link
+- Added inserting method 'on_item_title', this will insert items following title alphabetical order
+- Added inserting method 'on_item_decision_first_words', this will insert items following decision field content alphabetical order
+- Added inserting method 'on_item_creator', this will insert items following item creator fullname alphabetical order
+- Fixed Migrator.updateTALConditions to use the behavior adapter to get/set the tal_condition
 - Item validation workflow is now designed in the MeetingConfig.itemWFValidationLevels, tThis imply :
     - to no longer rely on MEETINGROLES and MEETINGREVIEWERS constants;
     - reviewer levels and mapping between review_state and organization suffix that manage the item is computed from the MeetingConfig;
     - item validation specific roles (MeetingMember, MeetingReviewer, MeetingPreReviewer are removed from item workflows, local roles are dynamically given and
       we only use common roles (Reader, Editor, Reviewer and Contributor)  
 - Use roles 'Reviewer' and 'Contributor' in meetingadvice_workflow
+
+4.1.2 (2019-09-13)
+------------------
+
+- Defined 'Products.PloneMeeting.vocabularies.everyorganizationsvocabulary' only calling original 'collective.contact.plonegroup.every_organizations' vocabulary
+  but adds ram.cache and render term title without "My organization"
+- Use vocabulary 'Products.PloneMeeting.vocabularies.associatedgroupsvocabulary' for faceted filter 'associatedGroups' instead
+  'Products.PloneMeeting.vocabularies.everyorganizationsacronymsvocabulary'
 
 4.1.1 (2019-09-12)
 ------------------

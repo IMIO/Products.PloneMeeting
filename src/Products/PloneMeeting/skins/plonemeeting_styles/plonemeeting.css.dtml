@@ -1788,6 +1788,10 @@ div#held_position_back_refs {
    display: none !important;
 }
 
+div.itemtemplate-infos, div.recurringitem-infos {
+   padding-top: 1em;
+}
+
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */

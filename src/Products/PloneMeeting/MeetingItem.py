@@ -79,6 +79,7 @@ from Products.PloneMeeting.config import EXTRA_COPIED_FIELDS_FROM_ITEM_TEMPLATE
 from Products.PloneMeeting.config import EXTRA_COPIED_FIELDS_SAME_MC
 from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
 from Products.PloneMeeting.config import HIDE_DECISION_UNDER_WRITING_MSG
+from Products.PloneMeeting.config import INSERTING_ON_ITEM_DECISION_FIRST_WORDS_NB
 from Products.PloneMeeting.config import ITEM_COMPLETENESS_ASKERS
 from Products.PloneMeeting.config import ITEM_COMPLETENESS_EVALUATORS
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
@@ -114,6 +115,7 @@ from Products.PloneMeeting.utils import ItemDuplicatedEvent
 from Products.PloneMeeting.utils import ItemDuplicatedToOtherMCEvent
 from Products.PloneMeeting.utils import ItemLocalRolesUpdatedEvent
 from Products.PloneMeeting.utils import networkdays
+from Products.PloneMeeting.utils import normalize
 from Products.PloneMeeting.utils import rememberPreviousData
 from Products.PloneMeeting.utils import sendMail
 from Products.PloneMeeting.utils import sendMailIfRelevant
@@ -3496,6 +3498,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             pollTypes = [term.token for term in factory(self)._terms]
             # Get the order of the pollType
             res = pollTypes.index(pollType)
+        elif insertMethod == 'on_item_title':
+            res = normalize(safe_unicode(self.Title()))
+        elif insertMethod == 'on_item_decision_first_words':
+            decision = safe_unicode(self.getDecision(mimetype='text/plain')).strip()
+            decision = decision.split(' ')[0:INSERTING_ON_ITEM_DECISION_FIRST_WORDS_NB]
+            decision = ' '.join(decision)
+            res = normalize(safe_unicode(decision))
+        elif insertMethod == 'on_item_creator':
+            creator_fullname = safe_unicode(tool.getUserName(self.Creator()))
+            res = normalize(creator_fullname)
         else:
             res = self.adapted()._findCustomOrderFor(insertMethod)
         return res
@@ -4024,7 +4036,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getAdvicesByType')
 
-    def getAdvicesByType(self, include_not_asked=True):
+    def getAdvicesByType(self, include_not_asked=True, ordered=True):
         '''Returns the list of advices, grouped by type.'''
         res = {}
         tool = api.portal.get_tool('portal_plonemeeting')
@@ -4053,6 +4065,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             else:
                 advices = res[adviceType]
             advices.append(adviceInfo.__dict__['data'])
+        if ordered:
+            ordered_res = {}
+
+            def getKey(advice_info):
+                return advice_info['name']
+            for advice_type, advice_infos in res.items():
+                ordered_res[advice_type] = sorted(advice_infos, key=getKey)
+            res = ordered_res
         return res
 
     def couldInheritAdvice(self, adviserId, dry_run=False):

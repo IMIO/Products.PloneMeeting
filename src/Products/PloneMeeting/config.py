@@ -325,7 +325,15 @@ ITEM_INSERT_METHODS = OrderedDict((
     ('on_other_mc_to_clone_to', ['field_meetingConfigsToCloneTo']),
     # according to poll type;
     ('on_poll_type', ['field_usedPollTypes']),
+    # alphabetically according to MeetingItem.title field content
+    ('on_item_title', []),
+    # alphabetically according to MeetingItem.decision field content first words
+    ('on_item_decision_first_words', []),
+    # alphabetically according to MeetingItem.Creator member fullname
+    ('on_item_creator', []),
 ))
+
+INSERTING_ON_ITEM_DECISION_FIRST_WORDS_NB = 5
 
 ITEM_TRANSITION_WHEN_RETURNED_FROM_PROPOSING_GROUP_AFTER_CORRECTION = 'accept'
 
