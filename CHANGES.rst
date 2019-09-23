@@ -15,6 +15,7 @@ Changelog
 - Added back informations in meetingitem_view about items defined in tool (templateUsingGroups/meetingTransitionInsertingMe), was removed wrongly when removing the 'back' link
 - Added inserting method 'on_item_title', this will insert items following title alphabetical order
 - Added inserting method 'on_item_decision_first_words', this will insert items following decision field content alphabetical order
+- Added inserting method 'on_item_creator', this will insert items following item creator fullname alphabetical order
 
 4.1.2 (2019-09-13)
 ------------------

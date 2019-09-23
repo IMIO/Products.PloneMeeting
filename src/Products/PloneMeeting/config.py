@@ -329,6 +329,8 @@ ITEM_INSERT_METHODS = OrderedDict((
     ('on_item_title', []),
     # alphabetically according to MeetingItem.decision field content first words
     ('on_item_decision_first_words', []),
+    # alphabetically according to MeetingItem.Creator member fullname
+    ('on_item_creator', []),
 ))
 
 INSERTING_ON_ITEM_DECISION_FIRST_WORDS_NB = 5

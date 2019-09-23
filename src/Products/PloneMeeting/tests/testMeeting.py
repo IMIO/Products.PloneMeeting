@@ -1532,6 +1532,31 @@ class testMeeting(PloneMeetingTestCase):
              u"refuse d'engager madame untell anne",
              u'second recurring item approved'])
 
+    def test_pm_InsertItemOnItemCreator(self):
+        """Test when inserting item in a meeting using 'on_item_creator' insertion method."""
+        cfg = self.meetingConfig
+        cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_item_creator', 'reverse': '0'}, ))
+        self.changeUser('pmCreator1')
+        item1 = self.create('MeetingItem')
+        item2 = self.create('MeetingItem')
+        item3 = self.create('MeetingItem')
+        self.changeUser('pmCreator2')
+        item4 = self.create('MeetingItem')
+        item5 = self.create('MeetingItem')
+        item6 = self.create('MeetingItem')
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime('2019/09/20'))
+        item7 = self.create('MeetingItem')
+        item8 = self.create('MeetingItem')
+        item9 = self.create('MeetingItem')
+        for item in [item1, item2, item9, item7, item6, item5, item4, item8, item3]:
+            self.presentItem(item)
+        self.assertEqual(
+            [self.tool.getUserName(anItem.Creator()) for anItem in meeting.getItems(ordered=True)],
+            ['M. PMCreator One', 'M. PMCreator One', 'M. PMCreator One',
+             'M. PMCreator Two', 'M. PMCreator Two', 'M. PMCreator Two',
+             'M. PMManager', 'M. PMManager', 'M. PMManager', 'M. PMManager', 'M. PMManager'])
+
     def test_pm_GetItemInsertOrderByProposingGroup(self):
         """Test the Meeting.getItemInsertOrder method caching when using order
            depending on proposing group."""

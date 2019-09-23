@@ -3437,6 +3437,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             decision = decision.split(' ')[0:INSERTING_ON_ITEM_DECISION_FIRST_WORDS_NB]
             decision = ' '.join(decision)
             res = normalize(safe_unicode(decision))
+        elif insertMethod == 'on_item_creator':
+            creator_fullname = safe_unicode(tool.getUserName(self.Creator()))
+            res = normalize(creator_fullname)
         else:
             res = self.adapted()._findCustomOrderFor(insertMethod)
         return res
