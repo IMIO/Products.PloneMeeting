@@ -15,6 +15,7 @@
    through the ZMI. Every migration function corresponds to a import step in
    portal_setup.'''
 
+from collective.behavior.talcondition.behavior import  ITALCondition
 from DateTime import DateTime
 from imio.helpers.catalog import addOrUpdateColumns
 from imio.helpers.catalog import addOrUpdateIndexes
@@ -125,10 +126,12 @@ class Migrator(BaseMigrator):
         for brain in api.content.find(
                 object_provides='collective.behavior.talcondition.interfaces.ITALConditionable'):
             obj = brain.getObject()
-            tal_condition = obj.tal_condition
+            adapted = ITALCondition(obj)
+            tal_condition = adapted.get_tal_condition()
             if tal_condition and old_word in tal_condition:
+                import ipdb; ipdb.set_trace()
                 tal_condition = tal_condition.replace(old_word, new_word)
-                obj.tal_condition = tal_condition
+                adapted.set_tal_condition(tal_condition)
 
     def updateHolidays(self):
         '''Update holidays using default holidays.'''

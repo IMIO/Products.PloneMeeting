@@ -16,6 +16,7 @@ Changelog
 - Added inserting method 'on_item_title', this will insert items following title alphabetical order
 - Added inserting method 'on_item_decision_first_words', this will insert items following decision field content alphabetical order
 - Added inserting method 'on_item_creator', this will insert items following item creator fullname alphabetical order
+- Fixed Migrator.updateTALConditions to use the behavior adapter to get/set the tal_condition
 
 4.1.2 (2019-09-13)
 ------------------
