@@ -1234,14 +1234,10 @@ class Migrate_To_4_1(Migrator):
         self._initFTWLabels()
         self._adaptShowHolidaysMessage()
         self.tool.invalidateAllCache()
-        if self.already_migrated is False:
-            # too many indexes to update, rebuild the portal_catalog
-            meeting_wf_ids = self.getWorkflows(meta_types=['Meeting'])
-            self.refreshDatabase(workflows=True,
-                                 workflowsToUpdate=['plonemeeting_onestate_workflow'] + meeting_wf_ids)
-        else:
-            self.warn(logger,
-                      'Bypassing workflows and portal_catalog update because application was already migrated.')
+        # too many indexes to update, rebuild the portal_catalog
+        meeting_wf_ids = self.getWorkflows(meta_types=['Meeting'])
+        self.refreshDatabase(workflows=True,
+                             workflowsToUpdate=['plonemeeting_onestate_workflow'] + meeting_wf_ids)
 
 
 # The migration function -------------------------------------------------------
