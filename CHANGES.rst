@@ -6,6 +6,12 @@ Changelog
 ------------------
 
 - Nothing changed yet.
+- Item validation workflow is now designed in the MeetingConfig.itemWFValidationLevels, tThis imply :
+    - to no longer rely on MEETINGROLES and MEETINGREVIEWERS constants;
+    - reviewer levels and mapping between review_state and organization suffix that manage the item is computed from the MeetingConfig;
+    - item validation specific roles (MeetingMember, MeetingReviewer, MeetingPreReviewer are removed from item workflows, local roles are dynamically given and
+      we only use common roles (Reader, Editor, Reviewer and Contributor)  
+- Use roles 'Reviewer' and 'Contributor' in meetingadvice_workflow
 
 
 4.1.3 (2019-09-23)
@@ -23,12 +29,6 @@ Changelog
 - Added inserting method 'on_item_decision_first_words', this will insert items following decision field content alphabetical order
 - Added inserting method 'on_item_creator', this will insert items following item creator fullname alphabetical order
 - Fixed Migrator.updateTALConditions to use the behavior adapter to get/set the tal_condition
-- Item validation workflow is now designed in the MeetingConfig.itemWFValidationLevels, tThis imply :
-    - to no longer rely on MEETINGROLES and MEETINGREVIEWERS constants;
-    - reviewer levels and mapping between review_state and organization suffix that manage the item is computed from the MeetingConfig;
-    - item validation specific roles (MeetingMember, MeetingReviewer, MeetingPreReviewer are removed from item workflows, local roles are dynamically given and
-      we only use common roles (Reader, Editor, Reviewer and Contributor)  
-- Use roles 'Reviewer' and 'Contributor' in meetingadvice_workflow
 
 4.1.2 (2019-09-13)
 ------------------
