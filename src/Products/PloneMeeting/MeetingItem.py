@@ -59,6 +59,7 @@ from Products.Archetypes.atapi import TextAreaWidget
 from Products.Archetypes.atapi import TextField
 from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.permissions import DeleteObjects
+from Products.CMFCore.permissions import ManagePortal
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import ReviewPortalContent
 from Products.CMFCore.permissions import View
@@ -223,10 +224,14 @@ class MeetingItemWorkflowConditions(object):
         '''May validate if having ReviewPortalContent and being last item validation level.'''
         res = False
         if _checkPermission(ReviewPortalContent, self.context):
-            item_state = self.context.queryState()
-            last_validation_state = self._getLastValidationState()
-            if item_state == last_validation_state:
+            # bypass for Manager, works with adopt_roles
+            if _checkPermission(ManagePortal, self.context):
                 res = True
+            else:
+                item_state = self.context.queryState()
+                last_validation_state = self._getLastValidationState()
+                if item_state == last_validation_state:
+                    res = True
         if res and not self.context.getCategory(theObject=True):
             return No(_('required_category_ko'))
         return res
@@ -240,7 +245,7 @@ class MeetingItemWorkflowConditions(object):
             return No(_('required_category_ko'))
         # only MeetingManagers may present an item
         if not _checkPermission(ReviewPortalContent, self.context) or \
-           not self.tool.isManager(self.context):
+           not _checkPermission(ManagePortal, self.context):
             return False
         # We may present the item if Plone currently publishes a meeting.
         # Indeed, an item may only be presented within a meeting.
@@ -491,12 +496,14 @@ class MeetingItemWorkflowConditions(object):
         # when using the 'waiting_advices_from_last_val_level_XXX' WFAdaptation
         # only last validation level may ask advices
         res = True
-        last_val_levels_wfas = [wfa for wfa in self.cfg.getWorkflowAdaptations()
-                                if wfa.startswith('waiting_advices_from_last_val_level')]
-        if last_val_levels_wfas:
-            last_val_state = self._getLastValidationState()
-            if self.context.queryState() != last_val_state:
-                res = False
+        # bypass for Manager
+        if not _checkPermission(ManagePortal, self.context):
+            last_val_levels_wfas = [wfa for wfa in self.cfg.getWorkflowAdaptations()
+                                    if wfa.startswith('waiting_advices_from_last_val_level')]
+            if last_val_levels_wfas:
+                last_val_state = self._getLastValidationState()
+                if self.context.queryState() != last_val_state:
+                    res = False
         return res and self._mayWaitAdvices(self._getWaitingAdvicesStateFrom(fromState))
 
     security.declarePublic('mayAccept_out_of_meeting')

@@ -5,14 +5,13 @@ Changelog
 4.1.4 (unreleased)
 ------------------
 
-- Nothing changed yet.
-- Item validation workflow is now designed in the MeetingConfig.itemWFValidationLevels, tThis imply :
+- Item validation workflow is now designed in the MeetingConfig.itemWFValidationLevels, this imply :
     - to no longer rely on MEETINGROLES and MEETINGREVIEWERS constants;
     - reviewer levels and mapping between review_state and organization suffix that manage the item is computed from the MeetingConfig;
     - item validation specific roles (MeetingMember, MeetingReviewer, MeetingPreReviewer are removed from item workflows, local roles are dynamically given and
-      we only use common roles (Reader, Editor, Reviewer and Contributor)  
+      we only use common roles (Reader, Editor, Reviewer and Contributor)
 - Use roles 'Reviewer' and 'Contributor' in meetingadvice_workflow
-
+- Added bypass for users having 'Manage portal' in MeetingItemWorkflowConditions in 'mayWait_advices_from', 'mayValidate' and 'mayPresent'
 
 4.1.3 (2019-09-23)
 ------------------
