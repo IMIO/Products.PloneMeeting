@@ -860,7 +860,7 @@ def onItemRemoved(item, event):
     if event.object.meta_type == 'Plone Site':
         return
     # An item has ben modified, use get_again for portlet_todo
-	invalidate_cachekey_volatile_for('Products.PloneMeeting.MeetingItem.modified', get_again=True)
+    invalidate_cachekey_volatile_for('Products.PloneMeeting.MeetingItem.modified', get_again=True)
 
 
 def onMeetingAdded(meeting, event):
