@@ -85,6 +85,7 @@ from Products.PloneMeeting.config import ITEM_COMPLETENESS_ASKERS
 from Products.PloneMeeting.config import ITEM_COMPLETENESS_EVALUATORS
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import ITEM_STATES_NOT_LINKED_TO_MEETING
+from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
 from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
@@ -5191,12 +5192,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         # MeetingManagers get full access if item at least validated and not decided
         # XXX to do when moving to dexterity.localrolesfield
-        # if item_state == 'validated' or self.hasMeeting():
-        #     mmanagers_group_id = "{0}_{1}".format(cfg.getId(), MEETINGMANAGERS_GROUP_SUFFIX)
-        #     mmanagers_roles = ['Reader', 'Reviewer', 'Contributor']
-        #     if item_state not in cfg.getItemDecidedStates():
-        #         mmanagers_roles.append('Editor')
-        #     self.manage_addLocalRoles(mmanagers_group_id, tuple(mmanagers_roles))
+        if item_state == 'validated' or self.hasMeeting():
+            mmanagers_group_id = "{0}_{1}".format(cfg.getId(), MEETINGMANAGERS_GROUP_SUFFIX)
+            mmanagers_roles = ['Reader', 'Reviewer', 'Contributor']
+            if item_state not in cfg.getItemDecidedStates():
+                mmanagers_roles.append('Editor')
+            self.manage_addLocalRoles(mmanagers_group_id, tuple(mmanagers_roles))
 
     security.declareProtected(ModifyPortalContent, 'updateLocalRoles')
 
@@ -5252,8 +5253,22 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         cleanMemoize(self, prefixes=['borg.localrole.workspace.checkLocalRolesAllowed'])
         # notify that localRoles have been updated
         notify(ItemLocalRolesUpdatedEvent(self, old_local_roles))
+        # propagate Reader local_roles to sub elements
+        # this way for example users have Reader role on item may view the advices
+        self._propagateReaderLocalRoleTuSubObjects()
         # reindex relevant indexes
         self.reindexObjectSecurity()
+
+    def _propagateReaderLocalRoleTuSubObjects(self):
+        """Propagate the 'Reader' local role on sub objects
+           that are blocking local roles inheritance."""
+        grp_reader_localroles = [
+            grp_id for grp_id in self.__ac_local_roles__
+            if 'Reader' in self.__ac_local_roles__[grp_id]]
+        for obj in self.objectValues():
+            if getattr(obj, '__ac_local_roles_block__', False):
+                for grp_id in grp_reader_localroles:
+                    obj.manage_addLocalRoles(grp_id, ['Reader'])
 
     def _updateCopyGroupsLocalRoles(self, isCreated):
         '''Give the 'Reader' local role to the copy groups

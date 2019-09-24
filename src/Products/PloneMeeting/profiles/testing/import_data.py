@@ -287,7 +287,6 @@ meetingPma.usedItemAttributes = ('description', 'toDiscuss', 'itemTags', 'itemIs
 meetingPma.usedMeetingAttributes = ('place',)
 meetingPma.maxShownListings = '100'
 meetingPma.itemDecidedStates = ('accepted', 'delayed', 'confirmed', 'itemarchived')
-meetingPma.workflowAdaptations = []
 meetingPma.itemPositiveDecidedStates = ['accepted', 'confirmed']
 meetingPma.transitionsForPresentingAnItem = ('propose', 'validate', 'present', )
 meetingPma.onMeetingTransitionItemActionToExecute = (
@@ -412,7 +411,6 @@ meetingPga.selectableAdvisers = []
 # use same values as meetingPma for powerObserversStates
 meetingPga.powerObservers = deepcopy(meetingPma.powerObservers)
 meetingPga.itemDecidedStates = ('accepted', 'delayed', 'confirmed', 'itemarchived')
-meetingPga.workflowAdaptations = []
 meetingPga.itemPositiveDecidedStates = ['accepted', 'confirmed']
 meetingPga.useCopies = True
 meetingPga.selectableCopyGroups = [developers.getIdSuffixed('reviewers'), vendors.getIdSuffixed('reviewers')]

@@ -853,8 +853,11 @@ class testAnnexes(PloneMeetingTestCase):
         # use the 'only_creator_may_delete' WF adaptation if available
         # in this case, it will ensure that when validated, the item may not be
         # deleted but annexes may be deleted by item editor
-        if 'only_creator_may_delete' in cfg.listWorkflowAdaptations():
-            cfg.setWorkflowAdaptations('only_creator_may_delete')
+        wfAdaptations = cfg.getWorkflowAdaptations()
+        if 'only_creator_may_delete' in cfg.listWorkflowAdaptations() and \
+           'only_creator_may_delete' not in wfAdaptations:
+            wfAdaptations = wfAdaptations + ('only_creator_may_delete', )
+            cfg.setWorkflowAdaptations(wfAdaptations)
             cfg.at_post_edit_script()
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')

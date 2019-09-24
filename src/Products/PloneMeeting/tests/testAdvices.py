@@ -218,13 +218,18 @@ class testAdvices(PloneMeetingTestCase):
         self.assertEquals(item1.adviceIndex[self.vendors_uid]['type'], 'positive')
         self.assertEquals(item1.adviceIndex[self.vendors_uid]['comment'], u'My comment')
         self.changeUser('pmReviewer1')
+        # may edit the item but not the advice
+        self.assertTrue(self.hasPermission(ModifyPortalContent, item1))
+        self.assertTrue(self.hasPermission(View, item1))
+        given_advice = getattr(item1, item1.adviceIndex[self.vendors_uid]['advice_id'])
+        self.assertFalse(self.hasPermission(ModifyPortalContent, given_advice))
+        self.assertTrue(self.hasPermission(View, given_advice))
         self.validateItem(item1)
         # now 'pmReviewer2' can't add (already given) an advice
         # but he can still edit the advice he just gave
         self.changeUser('pmReviewer2')
         self.failUnless(self.hasPermission(View, item1))
         self.assertEquals(item1.getAdvicesGroupsInfosForUser(), ([], [(self.vendors_uid, 'Vendors')]))
-        given_advice = getattr(item1, item1.adviceIndex[self.vendors_uid]['advice_id'])
         self.failUnless(self.hasPermission(ModifyPortalContent, given_advice))
         # another member of the same _advisers group may also edit the given advice
         self.changeUser('pmManager')
@@ -232,6 +237,7 @@ class testAdvices(PloneMeetingTestCase):
         self.failUnless(self.hasPermission(ModifyPortalContent, given_advice))
         # if a user that can not remove the advice tries he gets Unauthorized
         self.changeUser('pmReviewer1')
+        self.failIf(self.hasPermission(ModifyPortalContent, given_advice))
         self.assertRaises(Unauthorized, item1.restrictedTraverse('@@delete_givenuid'), item1.meetingadvice.UID())
         # put the item back in a state where 'pmReviewer2' can remove the advice
         self.changeUser('pmManager')

@@ -811,6 +811,11 @@ class testWorkflows(PloneMeetingTestCase):
         self.changeUser('siteadmin')
         self.assertTrue(meeting.wfConditions().mayCorrect())
 
+    def test_pm_ItemWFValidatedStateIsTheInitialState(self):
+        '''While using the "apply_item_validation_levels" WFAdaptation, the 'validated' state
+           must be the initial_state.'''
+        raise
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite
