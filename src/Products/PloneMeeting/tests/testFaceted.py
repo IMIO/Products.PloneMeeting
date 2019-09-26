@@ -395,6 +395,7 @@ class testFaceted(PloneMeetingTestCase):
         org4 = self.create('organization', id='org4', title='Org 4',
                            acronym='Org4', groups_in_charge=(org3uid,))
         org4_uid = org4.UID()
+        self._select_organization(org4_uid)
         self.assertEqual([term.title for term in vocab(meetingFolder)], ['Org 1', 'Org 2', 'Org 3'])
 
         # change a group in charge
