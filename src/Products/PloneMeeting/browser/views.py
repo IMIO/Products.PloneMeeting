@@ -19,6 +19,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA.
 #
+from AccessControl.SecurityManagement import getSecurityManager
 from collections import OrderedDict
 from collective.contact.core.utils import get_gender_and_number
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
@@ -42,6 +43,7 @@ from plone.memoize.view import memoize
 from plone.memoize.view import memoize_contextless
 from Products.CMFCore.permissions import ManagePortal
 from Products.CMFCore.permissions import ModifyPortalContent
+from Products.CMFCore.permissions import View
 from Products.CMFCore.utils import _checkPermission
 from Products.CMFPlone.utils import safe_unicode
 from Products.Five import BrowserView
@@ -1407,12 +1409,18 @@ class MeetingDocumentGenerationHelperView(FolderDocumentGenerationHelperView):
 class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV):
     """ """
 
-    def printMeetingDate(self, returnDateTime=False, noMeetingMarker='-'):
+    def print_meeting_date(self, returnDateTime=False, noMeetingMarker='-', unrestricted=True):
         """Print meeting date, manage fact that item is not linked to a meeting,
            in this case p_noMeetingMarker is returned.
            If p_returnDateTime is True, it returns the meeting date DateTime,
-           otherwise it returns the meeting title containing formatted date."""
+           otherwise it returns the meeting title containing formatted date.
+           If unrestricted is True, don't check if the current user has access to the meeting
+        """
         meeting = self.context.getMeeting()
+
+        if not unrestricted and not getSecurityManager().checkPermission(View, meeting):
+            return noMeetingMarker
+
         if meeting:
             if returnDateTime:
                 return meeting.getDate()
@@ -1420,19 +1428,25 @@ class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV)
         else:
             return noMeetingMarker
 
-    def print_preferred_meeting_date(self, returnDateTime=False, noMeetingMarker='-'):
+    def print_preferred_meeting_date(self, returnDateTime=False, noMeetingMarker='-', unrestricted=True):
         """
         Print preferred meeting date, manage fact that item has no preferred meeting date
         :param returnDateTime if True, returns the preferred meeting date DateTime, otherwise it returns the
         meeting title containing formatted date.
         :param noMeetingMarker is returned when there is no preferredMeeting.
+        :param unrestricted if True, don't check if the current user has access to the meeting
         :return: Preferred meeting date
         """
         preferred_meeting_uid = self.context.getPreferredMeeting()
         if preferred_meeting_uid == 'whatever':  # no need to do a query
             return noMeetingMarker
         catalog = api.portal.get_tool('portal_catalog')
-        brains = catalog.unrestrictedSearchResults(UID=preferred_meeting_uid)
+
+        if unrestricted:
+            brains = catalog.unrestrictedSearchResults(UID=preferred_meeting_uid)
+        else:
+            brains = catalog(UID=preferred_meeting_uid)
+
         if len(brains) == 1:  # catalog query is expected to have only one brain
             if returnDateTime:
                 return brains[0].getObject().getDate()
