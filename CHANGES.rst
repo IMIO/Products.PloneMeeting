@@ -7,6 +7,8 @@ Changelog
 
 - Added 'MeetingItem.groupsInCharge' to 'MeetingConfig.ItemFieldsToKeepConfigSortingFor' so it is possible to display it alphabetically
   or keep order defined in 'MeetingConfig.orderedGroupsInCharge'
+- Adapted 'MeetingItem.getAdviceObj' to not use the MeetingItem.adviceIndex 'advice_id' to get the given advice.
+  Indeed, when this method is called during 'MeetingItem.adviceIndex' computation, the 'advice_id' could not be there even if advice obj exists
 
 4.1.3 (2019-09-23)
 ------------------
