@@ -9,6 +9,9 @@ Changelog
   or keep order defined in 'MeetingConfig.orderedGroupsInCharge'
 - Adapted 'MeetingItem.getAdviceObj' to not use the MeetingItem.adviceIndex 'advice_id' to get the given advice.
   Indeed, when this method is called during 'MeetingItem.adviceIndex' computation, the 'advice_id' could not be there even if advice obj exists
+- Fixed access to item view to users not able to view the linked meeting.  Indeed in this case it raised Unauthorized because call to Meeting.getAssembly (now declared Public)
+- Adapted the item edit form to display fields 'proposingGroup', 'proposingGroupWithGroupInCharge', 'groupsInCharge', 'classifier' and 'category' one below the others
+  and no more one next the the other to avoid hidding fields when one field is too large
 
 4.1.3 (2019-09-23)
 ------------------

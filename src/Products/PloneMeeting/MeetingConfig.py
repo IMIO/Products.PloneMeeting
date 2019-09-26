@@ -6179,5 +6179,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                         'row_id': customAdviserConfig['row_id']})
         return res
 
+    def _assembly_fields(self, field_name=True):
+        ''' '''
+        fields = [field for field in Meeting.schema.fields()
+                  if field.getName().startswith('assembly')]
+        if field_name:
+            fields = [field.getName() for field in fields]
+        return fields
+
 
 registerType(MeetingConfig, PROJECTNAME)
