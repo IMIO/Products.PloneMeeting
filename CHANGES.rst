@@ -12,6 +12,8 @@ Changelog
 - Fixed access to item view to users not able to view the linked meeting.  Indeed in this case it raised Unauthorized because call to Meeting.getAssembly (now declared Public)
 - Adapted the item edit form to display fields 'proposingGroup', 'proposingGroupWithGroupInCharge', 'groupsInCharge', 'classifier' and 'category' one below the others
   and no more one next the the other to avoid hidding fields when one field is too large
+- Added print_preferred_meeting_date so a preferred meeting date can be easily be printed in documents.
+- Adapted print_meeting_date and print_preferred_meeting_date so they can now be used in restricted or unrestricted mode.
 
 4.1.3 (2019-09-23)
 ------------------
