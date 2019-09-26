@@ -8,8 +8,8 @@
 #
 
 from AccessControl import Unauthorized
-from ftw.labels.jar import LabelJar
 from ftw.labels.browser.labeling import Labeling
+from ftw.labels.jar import LabelJar
 from ftw.labels.portlets.labeljar import Renderer as ftw_labels_renderer
 from ftw.labels.viewlets.labeling import LabelingViewlet
 from imio.helpers.cache import cleanRamCacheFor

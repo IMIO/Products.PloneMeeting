@@ -1,11 +1,11 @@
-// Function that shows a popup that asks the user if he really wants to delete
+// Function that shows a popup that asks the user if he really wants to reinitialize advice delay
 function confirmReinitializeDelay(base_url, advice, tag, msgName){
     if (!msgName) {
         msgName = 'reinit_delay_confirm_message';
     }
     var msg = window.eval(msgName);
     if (confirm(msg)) {
-        callViewAndReload(base_url, view_name='@@advice-reinit-delay', tag, params={'advice': advice});
+        callViewAndReload(base_url, view_name='@@advice-reinit-delay', params={'advice': advice});
     }
 }
 
@@ -597,34 +597,6 @@ function moveItem(baseUrl, moveType, tag) {
     success: function(data) {
         // reload the faceted page
         Faceted.URLHandler.hash_changed();
-    },
-    error: function(jqXHR, textStatus, errorThrown) {
-      /*console.log(textStatus);*/
-      window.location.href = window.location.href;
-      }
-    });
-}
-
-// ajax call managing a call to a given p_view_name and reload taking faceted into account
-function callViewAndReload(baseUrl, view_name, tag, params, force_faceted=false) {
-  redirect = '0';
-  if (!force_faceted && !has_faceted()) {
-    redirect = '1';
-  }
-  $.ajax({
-    url: baseUrl + "/" + view_name,
-    data: params,
-    dataType: 'html',
-    cache: false,
-    async: true,
-    success: function(data) {
-        // reload the faceted page if we are on it, refresh current if not
-        if ((redirect === '0') && !(data)) {
-            Faceted.URLHandler.hash_changed();
-        }
-        else {
-            window.location.href = data;
-        }
     },
     error: function(jqXHR, textStatus, errorThrown) {
       /*console.log(textStatus);*/

@@ -30,6 +30,7 @@ from copy import deepcopy
 from DateTime import DateTime
 from datetime import datetime
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
+from imio.helpers.content import get_vocab
 from imio.history.utils import getLastWFAction
 from imio.prettylink.interfaces import IPrettyLink
 from natsort import realsorted
@@ -78,6 +79,7 @@ from Products.PloneMeeting.config import EXTRA_COPIED_FIELDS_FROM_ITEM_TEMPLATE
 from Products.PloneMeeting.config import EXTRA_COPIED_FIELDS_SAME_MC
 from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
 from Products.PloneMeeting.config import HIDE_DECISION_UNDER_WRITING_MSG
+from Products.PloneMeeting.config import INSERTING_ON_ITEM_DECISION_FIRST_WORDS_NB
 from Products.PloneMeeting.config import ITEM_COMPLETENESS_ASKERS
 from Products.PloneMeeting.config import ITEM_COMPLETENESS_EVALUATORS
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
@@ -100,6 +102,7 @@ from Products.PloneMeeting.utils import _storedItemNumber_to_itemNumber
 from Products.PloneMeeting.utils import addDataChange
 from Products.PloneMeeting.utils import AdvicesUpdatedEvent
 from Products.PloneMeeting.utils import cleanMemoize
+from Products.PloneMeeting.utils import decodeDelayAwareId
 from Products.PloneMeeting.utils import fieldIsEmpty
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
 from Products.PloneMeeting.utils import getCurrentMeetingObject
@@ -112,6 +115,7 @@ from Products.PloneMeeting.utils import ItemDuplicatedEvent
 from Products.PloneMeeting.utils import ItemDuplicatedToOtherMCEvent
 from Products.PloneMeeting.utils import ItemLocalRolesUpdatedEvent
 from Products.PloneMeeting.utils import networkdays
+from Products.PloneMeeting.utils import normalize
 from Products.PloneMeeting.utils import rememberPreviousData
 from Products.PloneMeeting.utils import sendMail
 from Products.PloneMeeting.utils import sendMailIfRelevant
@@ -966,7 +970,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         multiValued=1,
-        vocabulary='listOptionalAdvisers',
+        vocabulary_factory='Products.PloneMeeting.vocabularies.itemoptionaladvicesvocabulary',
         enforceVocabulary=False,
     ),
     TextField(
@@ -1132,7 +1136,7 @@ schema = Schema((
         ),
         enforceVocabulary=True,
         multiValued=1,
-        vocabulary_factory='collective.contact.plonegroup.selected_organization_services',
+        vocabulary_factory='collective.contact.plonegroup.sorted_selected_organization_services',
     ),
     StringField(
         name='meetingTransitionInsertingMe',
@@ -1619,6 +1623,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''When selecting an optional adviser, make sure that 2 values regarding the same
            group are not selected, this could be the case when using delay-aware advisers.
            Moreover, make sure we can not unselect an adviser that already gave his advice.'''
+        # remove empty strings and Nones
+        value = [v for v in value if v]
         for adviser in value:
             # if it is a delay-aware advice, check that the same 'normal'
             # optional adviser has not be selected and that another delay-aware adviser
@@ -1646,13 +1652,18 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             givenAdvices = self.getGivenAdvices()
             for removedAdviser in removedAdvisers:
                 if '__rowid__' in removedAdviser:
-                    removedAdviser, rowid = self._decodeDelayAwareId(removedAdviser)
+                    removedAdviser, rowid = decodeDelayAwareId(removedAdviser)
                 if removedAdviser in givenAdvices and givenAdvices[removedAdviser]['optional'] is True:
+                    vocab = self.getField('optionalAdvisers').Vocabulary(self)
                     return translate('can_not_unselect_already_given_advice',
-                                     mapping={'removedAdviser': self.displayValue(self.listOptionalAdvisers(),
-                                                                                  removedAdviser)},
+                                     mapping={'removedAdviser': self.displayValue(vocab, removedAdviser)},
                                      domain='PloneMeeting',
                                      context=self.REQUEST)
+        return self.adapted().custom_validate_optionalAdvisers(value, storedOptionalAdvisers, removedAdvisers)
+
+    def custom_validate_optionalAdvisers(self, value, storedOptionalAdvisers, removedAdvisers):
+        '''See doc in interfaces.py.'''
+        pass
 
     security.declarePrivate('validate_classifier')
 
@@ -2840,6 +2851,17 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             res = uuidToObject(res)
         return res
 
+    def getPreferredMeeting(self, theObject=False, **kwargs):
+        '''This redefined accessor may return the preferred meeting id or
+           the real meeting if p_theObject is True.'''
+        res = self.getField('preferredMeeting').get(self, **kwargs)  # = group id
+        if theObject:
+            if res and res != ITEM_NO_PREFERRED_MEETING_VALUE:
+                res = uuidToObject(res)
+            else:
+                res = None
+        return res
+
     security.declarePublic('getGroupsInCharge')
 
     def getGroupsInCharge(self, theObjects=False, fromOrgIfEmpty=False, first=False, **kwargs):
@@ -3006,11 +3028,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if forceUseCertifiedSignaturesOnMeetingConfig:
             return cfg.getCertifiedSignatures(computed=True, listify=listify)
 
+        selected_group_in_charge = None
+        if from_group_in_charge:
+            selected_group_in_charge = item.getGroupsInCharge(theObjects=True, fromOrgIfEmpty=True, first=True)
         # get certified signatures computed, this will return a list with pair
         # of function/signatures, so ['function1', 'name1', 'function2', 'name2', 'function3', 'name3', ]
         # this list is ordered by signature number defined on the organization/MeetingConfig
         return item.getProposingGroup(theObject=True).get_certified_signatures(
-            computed=True, cfg=cfg, from_group_in_charge=from_group_in_charge, listify=listify)
+            computed=True, cfg=cfg, group_in_charge=selected_group_in_charge, listify=listify)
 
     security.declarePublic('redefinedItemAssemblies')
 
@@ -3405,6 +3430,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             pollTypes = [term.token for term in factory(self)._terms]
             # Get the order of the pollType
             res = pollTypes.index(pollType)
+        elif insertMethod == 'on_item_title':
+            res = normalize(safe_unicode(self.Title()))
+        elif insertMethod == 'on_item_decision_first_words':
+            decision = safe_unicode(self.getDecision(mimetype='text/plain')).strip()
+            decision = decision.split(' ')[0:INSERTING_ON_ITEM_DECISION_FIRST_WORDS_NB]
+            decision = ' '.join(decision)
+            res = normalize(safe_unicode(decision))
+        elif insertMethod == 'on_item_creator':
+            creator_fullname = safe_unicode(tool.getUserName(self.Creator()))
+            res = normalize(creator_fullname)
         else:
             res = self.adapted()._findCustomOrderFor(insertMethod)
         return res
@@ -3662,7 +3697,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         for adviser in self.getOptionalAdvisers():
             # if this is a delay-aware adviser, we have the data in the adviser id
             if '__rowid__' in adviser:
-                org_uid, row_id = self._decodeDelayAwareId(adviser)
+                org_uid, row_id = decodeDelayAwareId(adviser)
                 customAdviserInfos = cfg._dataForCustomAdviserRowId(row_id)
                 delay = customAdviserInfos['delay']
                 delay_left_alert = customAdviserInfos['delay_left_alert']
@@ -3808,156 +3843,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             error_pattern=ADVICE_AVAILABLE_ON_CONDITION_ERROR)
         return res
 
-    def _optionalDelayAwareAdvisers(self):
-        '''Returns the 'delay-aware' advisers.
-           This will return a list of dict where dict contains :
-           'org_uid', 'delay' and 'delay_label'.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self)
-        res = []
-        for customAdviserConfig in cfg.getCustomAdvisers():
-            # first check that the customAdviser is actually optional
-            if customAdviserConfig['gives_auto_advice_on']:
-                continue
-            # and check that it is not an advice linked to
-            # an automatic advice ('is_linked_to_previous_row')
-            if customAdviserConfig['is_linked_to_previous_row'] == '1':
-                isAutomatic, linkedRows = cfg._findLinkedRowsFor(customAdviserConfig['row_id'])
-                # is the first row an automatic adviser?
-                if isAutomatic:
-                    continue
-            # then check if it is a delay-aware advice
-            if not customAdviserConfig['delay']:
-                continue
-
-            # respect 'for_item_created_from' and 'for_item_created_until' defined dates
-            createdFrom = customAdviserConfig['for_item_created_from']
-            createdUntil = customAdviserConfig['for_item_created_until']
-            # createdFrom is required but not createdUntil
-            if DateTime(createdFrom) > self.created() or \
-               (createdUntil and DateTime(createdUntil) < self.created()):
-                continue
-
-            # check the 'available_on' TAL expression
-            eRes = self._evalAdviceAvailableOn(customAdviserConfig['available_on'], tool, cfg)
-
-            if not eRes:
-                continue
-
-            # ok add the adviser
-            org = get_organization(customAdviserConfig['org'])
-            res.append({'org_uid': customAdviserConfig['org'],
-                        'org_title': org.get_full_title(),
-                        'delay': customAdviserConfig['delay'],
-                        'delay_label': customAdviserConfig['delay_label'],
-                        'row_id': customAdviserConfig['row_id']})
-        return res
-
-    security.declarePrivate('listOptionalAdvisers')
-
-    def listOptionalAdvisers(self, include_selected=True):
-        '''Optional advisers for this item are organizations that are not among
-           automatic advisers and that have at least one adviser.
-           If p_include_selected is True, we ensure thtat the currently selected
-           elements on self are present in the vocabulary.'''
-        def _displayDelayAwareValue(delay_label, org_title, delay):
-            org_title = safe_unicode(org_title)
-            delay_label = safe_unicode(delay_label)
-            if delay_label:
-                value_to_display = translate('advice_delay_with_label',
-                                             domain='PloneMeeting',
-                                             mapping={'org_title': org_title,
-                                                      'delay': delay,
-                                                      'delay_label': delay_label},
-                                             default='${org_title} - ${delay} day(s) (${delay_label})',
-                                             context=self.REQUEST)
-            else:
-                value_to_display = translate('advice_delay_without_label',
-                                             domain='PloneMeeting',
-                                             mapping={'org_title': group_name,
-                                                      'delay': delay},
-                                             default='${org_title} - ${delay} day(s)',
-                                             context=self.REQUEST)
-            return value_to_display
-
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self)
-
-        resDelayAwareAdvisers = []
-        # add delay-aware optionalAdvisers
-        delayAwareAdvisers = self._optionalDelayAwareAdvisers()
-        if delayAwareAdvisers:
-            # a delay-aware adviser has a special id so we can handle it specifically after
-            for delayAwareAdviser in delayAwareAdvisers:
-                adviserId = "%s__rowid__%s" % \
-                            (delayAwareAdviser['org_uid'],
-                             delayAwareAdviser['row_id'])
-                delay = delayAwareAdviser['delay']
-                delay_label = delayAwareAdviser['delay_label']
-                group_name = delayAwareAdviser['org_title']
-                value_to_display = _displayDelayAwareValue(delay_label, group_name, delay)
-                resDelayAwareAdvisers.append((adviserId, value_to_display))
-
-        resNonDelayAwareAdvisers = []
-        selectableAdvisers = cfg.getSelectableAdvisers()
-        for org_uid in selectableAdvisers:
-            org = get_organization(org_uid)
-            resNonDelayAwareAdvisers.append((org_uid, org.get_full_title()))
-
-        # make sure optionalAdvisers actually stored have their corresponding
-        # term in the vocabulary, if not, add it
-        if include_selected:
-            optionalAdvisers = self.getOptionalAdvisers()
-            if optionalAdvisers:
-                optionalAdvisersInVocab = [org_infos[0] for org_infos in resNonDelayAwareAdvisers] + \
-                                          [org_infos[0] for org_infos in resDelayAwareAdvisers]
-                for optionalAdviser in optionalAdvisers:
-                    if optionalAdviser not in optionalAdvisersInVocab:
-                        org = get_organization(optionalAdviser)
-                        if '__rowid__' in optionalAdviser:
-                            org_uid, row_id = self._decodeDelayAwareId(optionalAdviser)
-                            delay = cfg._dataForCustomAdviserRowId(row_id)['delay']
-                            delay_label = self.adviceIndex[org_uid]['delay_label']
-                            org_title = org.get_full_title()
-                            value_to_display = _displayDelayAwareValue(delay_label, org_title, delay)
-                            resDelayAwareAdvisers.append((optionalAdviser, value_to_display))
-                        else:
-                            resNonDelayAwareAdvisers.append((optionalAdviser, org.get_full_title()))
-
-        # now create the listing
-        # sort elements by value before potentially prepending a special value here under
-        # for delay-aware advisers, the order is defined in the configuration, so we do not .sortedByValue()
-        resDelayAwareAdvisers = DisplayList(resDelayAwareAdvisers)
-        resNonDelayAwareAdvisers = DisplayList(resNonDelayAwareAdvisers).sortedByValue()
-        # we add a special value at the beginning of the vocabulary
-        # if we have delay-aware advisers
-        if delayAwareAdvisers:
-            delay_aware_optional_advisers_msg = translate('delay_aware_optional_advisers_term',
-                                                          domain='PloneMeeting',
-                                                          context=self.REQUEST)
-            resDelayAwareAdvisers = DisplayList([('not_selectable_value_delay_aware_optional_advisers',
-                                                  delay_aware_optional_advisers_msg)]) + resDelayAwareAdvisers
-
-            # if we have delay-aware advisers, we add another special value
-            # that explain that under are 'normal' optional advisers
-            if selectableAdvisers:
-                non_delay_aware_optional_advisers_msg = translate('non_delay_aware_optional_advisers_term',
-                                                                  domain='PloneMeeting',
-                                                                  context=self.REQUEST)
-                resNonDelayAwareAdvisers = \
-                    DisplayList([('not_selectable_value_non_delay_aware_optional_advisers',
-                                  non_delay_aware_optional_advisers_msg)]) + resNonDelayAwareAdvisers
-
-        return resDelayAwareAdvisers + resNonDelayAwareAdvisers
-
-    def _decodeDelayAwareId(self, delayAwareId):
-        '''
-          Decode a 'delay-aware' id, we receive something like 'orgauid__rowid__myuniquerowid.20141215'.
-          We return the org_uid and the row_id.
-        '''
-        infos = delayAwareId.split('__rowid__')
-        return infos[0], infos[1]
-
     security.declarePrivate('listItemInitiators')
 
     def listItemInitiators(self):
@@ -4079,7 +3964,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getAdvicesByType')
 
-    def getAdvicesByType(self):
+    def getAdvicesByType(self, include_not_asked=True, ordered=True):
         '''Returns the list of advices, grouped by type.'''
         res = {}
         tool = api.portal.get_tool('portal_plonemeeting')
@@ -4087,6 +3972,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         user_power_observer_types = [po_infos['row_id'] for po_infos in cfg.getPowerObservers()
                                      if tool.isPowerObserverForCfg(cfg, power_observer_type=po_infos['row_id'])]
         for groupId, adviceInfo in self.adviceIndex.iteritems():
+            if not include_not_asked and adviceInfo['not_asked']:
+                continue
             # make sure we do not modify original data
             adviceInfo = deepcopy(adviceInfo)
 
@@ -4106,6 +3993,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             else:
                 advices = res[adviceType]
             advices.append(adviceInfo.__dict__['data'])
+        if ordered:
+            ordered_res = {}
+
+            def getKey(advice_info):
+                return advice_info['name']
+            for advice_type, advice_infos in res.items():
+                ordered_res[advice_type] = sorted(advice_infos, key=getKey)
+            res = ordered_res
         return res
 
     def couldInheritAdvice(self, adviserId, dry_run=False):
@@ -4302,6 +4197,26 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 .format(real_group_id, portal_url))))
         patched_vocab = DisplayList(patched_vocab)
         return self.displayValue(patched_vocab, self.getAllCopyGroups())
+
+    security.declarePublic('displayAdvisers')
+
+    def displayAdvisers(self):
+        '''Display advisers on the item view, especially the link showing users of a group.'''
+        portal_url = api.portal.get().absolute_url()
+        advisers_by_type = self.getAdvicesByType(include_not_asked=False)
+        res = []
+        for advice_type, advisers in advisers_by_type.items():
+            for adviser in advisers:
+                value = u"{0} <acronym><a onclick='event.preventDefault()' " \
+                    u"class='tooltipster-group-users deactivated' " \
+                    u"style='display: inline-block; padding: 0'" \
+                    u"href='#' data-group_id='{1}' data-base_url='{2}'>" \
+                    u"<img src='{2}/group_users.png' /></a></acronym>".format(
+                        adviser['name'] + (not adviser['optional'] and u' [auto]' or u''),
+                        get_plone_group_id(adviser['id'], 'advisers'),
+                        portal_url)
+                res.append(value)
+        return u', '.join(res)
 
     security.declarePublic('hasAdvices')
 
@@ -5349,12 +5264,15 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('showOptionalAdvisers')
 
     def showOptionalAdvisers(self):
-        '''Show 'MeetingItem.optionalAdvisers' if the "advices" functionality is enabled
-           and if there are selectable optional advices.'''
+        '''Show 'MeetingItem.optionalAdvisers' if the "advices" functionality
+           is enabled and if there are selectable optional advices.'''
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        if cfg.getUseAdvices() and self.listOptionalAdvisers():
-            return True
+        res = False
+        if cfg.getUseAdvices():
+            vocab = self.getField('optionalAdvisers').Vocabulary(self)
+            res = bool(vocab)
+        return res
 
     security.declarePublic('isCopiesEnabled')
 
@@ -5378,6 +5296,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''If this item is within a meeting, this method returns the itemNumber of
            a sibling item that may be accessed by the current user. p_whichItem
            can be:
+           - 'all' (return every possible ways here under);
            - 'previous' (the previous item within the meeting);
            - 'next' (the next item item within the meeting);
            - 'first' (the first item of the meeting);
@@ -5386,7 +5305,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            sibling), the method returns None.
            If p_itemNumber is True (default), we return the getItemNumber.
         '''
-        sibling = None
+        sibling = {'first': None, 'last': None, 'next': None, 'previous': None}
         if self.hasMeeting():
             meeting = self.getMeeting()
             # use catalog query so returned items are really accessible by current user
@@ -5395,21 +5314,22 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             itemUids = [brain.UID for brain in brains]
             itemUid = self.UID()
             itemUidIndex = itemUids.index(itemUid)
-            if whichItem == 'previous':
+            if whichItem == 'previous' or whichItem == 'all':
                 # Is a previous item available ?
                 if not itemUidIndex == 0:
-                    sibling = brains[itemUidIndex - 1]
-            elif whichItem == 'next':
+                    sibling['previous'] = brains[itemUidIndex - 1]
+            if whichItem == 'next' or whichItem == 'all':
                 # Is a next item available ?
                 if not itemUidIndex == len(itemUids) - 1:
-                    sibling = brains[itemUidIndex + 1]
-            elif whichItem == 'first':
-                sibling = brains[0]
-            elif whichItem == 'last':
-                sibling = brains[-1]
+                    sibling['next'] = brains[itemUidIndex + 1]
+            if whichItem == 'first' or whichItem == 'all':
+                sibling['first'] = brains[0]
+            if whichItem == 'last' or whichItem == 'all':
+                sibling['last'] = brains[-1]
         if sibling and itemNumber:
-            sibling = sibling.getItemNumber
-        return sibling
+            sibling = {key: value and value.getItemNumber or None
+                       for key, value in sibling.items()}
+        return sibling.get(whichItem, sibling)
 
     security.declarePrivate('listCopyGroups')
 
@@ -5579,7 +5499,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 tuple(set(copyGroups).intersection(set(selectableCopyGroups))))
         if 'optionalAdvisers' in copyFields:
             optionalAdvisers = list(newItem.getOptionalAdvisers())
-            selectableAdvisers = newItem.listOptionalAdvisers(include_selected=False).keys()
+            advisers_vocab = get_vocab(
+                newItem,
+                newItem.getField('optionalAdvisers').vocabulary_factory,
+                **{'include_selected': False, 'include_not_selectable_values': False})
+            selectableAdvisers = advisers_vocab.by_token
             # make sure we only have selectable advisers
             newItem.setOptionalAdvisers(
                 tuple(set(optionalAdvisers).intersection(set(selectableAdvisers))))

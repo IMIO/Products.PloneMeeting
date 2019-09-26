@@ -13,6 +13,8 @@
            name="Products.PloneMeeting.vocabularies.proposinggroupsvocabulary" />
   <utility component=".vocabularies.ItemProposingGroupsForFacetedFilterVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.proposinggroupsforfacetedfiltervocabulary" />
+  <utility component=".vocabularies.PMEveryOrganizationsVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.everyorganizationsvocabulary" />
   <utility component=".vocabularies.EveryOrganizationsAcronymsVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.everyorganizationsacronymsvocabulary" />
   <utility component=".vocabularies.AssociatedGroupsVocabularyFactory"
@@ -31,8 +33,12 @@
            name="Products.PloneMeeting.vocabularies.creatorsvocabulary" />
   <utility component=".vocabularies.CreatorsForFacetedFilterVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.creatorsforfacetedfiltervocabulary" />
+  <utility component=".vocabularies.CreatorsWithNobodyForFacetedFilterVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.creatorswithnobodyforfacetedfiltervocabulary" />
   <utility component=".vocabularies.MeetingDatesVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.meetingdatesvocabulary" />
+  <utility component=".vocabularies.ItemOptionalAdvicesVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.itemoptionaladvicesvocabulary" />
   <utility component=".vocabularies.AskedAdvicesVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.askedadvicesvocabulary" />
   <utility component=".vocabularies.AdviceTypesVocabularyFactory"

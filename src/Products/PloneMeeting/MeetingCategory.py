@@ -64,7 +64,7 @@ schema = Schema((
         ),
         enforceVocabulary=True,
         multiValued=1,
-        vocabulary_factory='collective.contact.plonegroup.selected_organization_services',
+        vocabulary_factory='collective.contact.plonegroup.sorted_selected_organization_services',
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(

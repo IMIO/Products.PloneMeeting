@@ -23,8 +23,8 @@
 #
 
 from AccessControl import Unauthorized
-from DateTime import DateTime
 from collective.contact.plonegroup.utils import get_organizations
+from DateTime import DateTime
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from zope.component import queryUtility
@@ -287,7 +287,8 @@ class testFaceted(PloneMeetingTestCase):
             "Products.PloneMeeting.vocabularies.proposinggroupsforfacetedfiltervocabulary")
         # once get, it is cached
         self.assertEquals(len(vocab1(pmFolder)), 3)
-        self.assertEquals(len(vocab2(pmFolder)), 3)
+        # contains My organization
+        self.assertEquals(len(vocab2(pmFolder)), 4)
         self.assertEquals(len(vocab3(pmFolder)), 3)
 
         # if we add/remove/edit an organozation, then the cache is cleaned
@@ -297,7 +298,7 @@ class testFaceted(PloneMeetingTestCase):
         self._select_organization(new_org_uid)
         # cache was cleaned
         self.assertEquals(len(vocab1(pmFolder)), 4)
-        self.assertEquals(len(vocab2(pmFolder)), 4)
+        self.assertEquals(len(vocab2(pmFolder)), 5)
         self.assertEquals(len(vocab3(pmFolder)), 4)
 
         # edit a group
@@ -317,7 +318,7 @@ class testFaceted(PloneMeetingTestCase):
         self.portal.restrictedTraverse('@@delete_givenuid')(new_org_uid)
         # cache was cleaned
         self.assertEquals(len(vocab1(pmFolder)), 3)
-        self.assertEquals(len(vocab2(pmFolder)), 3)
+        self.assertEquals(len(vocab2(pmFolder)), 4)
         self.assertEquals(len(vocab3(pmFolder)), 3)
 
         # activate "End users"
@@ -326,7 +327,7 @@ class testFaceted(PloneMeetingTestCase):
             [u'Developers', u'Vendors', u'End users (Inactive)'])
         self.assertEquals(
             [term.title for term in vocab2(pmFolder)],
-            [u'Devel', u'Devil', u'EndUsers'])
+            [u'None', u'Devel', u'Devil', u'EndUsers'])
         self.assertEquals(
             [term.title for term in vocab3(pmFolder)],
             [u'Developers', u'Vendors', u'End users (Inactive)'])
@@ -336,7 +337,7 @@ class testFaceted(PloneMeetingTestCase):
             [u'Developers', u'End users', u'Vendors'])
         self.assertEquals(
             [term.title for term in vocab2(pmFolder)],
-            [u'Devel', u'Devil', u'EndUsers'])
+            [u'None', u'Devel', u'Devil', u'EndUsers'])
         self.assertEquals(
             [term.title for term in vocab3(pmFolder)],
             [u'Developers', u'End users', u'Vendors'])
@@ -652,17 +653,18 @@ class testFaceted(PloneMeetingTestCase):
            it is not displayed in the vocabulary."""
         searches = self.meetingConfig.searches
         searchAllItems = searches.searches_items.searchallitems
+        searchAllItems_path = searchAllItems.absolute_url_path()
         self.changeUser('pmCreator1')
         vocab = queryUtility(IVocabularyFactory,
                              "Products.PloneMeeting.vocabularies.conditionawarecollectionvocabulary")
-        self.assertTrue(searchAllItems in vocab(searches))
+        self.assertTrue(searchAllItems_path in vocab(searches))
         # disable it then test again
         self.changeUser('siteadmin')
         searchAllItems.enabled = False
         # invalidate vocabulary cache
         notify(ObjectModifiedEvent(searchAllItems))
         self.changeUser('pmCreator1')
-        self.assertFalse(searchAllItems in vocab(searches))
+        self.assertFalse(searchAllItems_path in vocab(searches))
 
 
 def test_suite():

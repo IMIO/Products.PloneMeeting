@@ -151,29 +151,18 @@ class MeetingWorkflowConditions(object):
     security.declarePublic('mayFreeze')
 
     def mayFreeze(self):
+        res = False
         if _checkPermission(ReviewPortalContent, self.context):
-            return True
+            res = True
+        return res
 
     security.declarePublic('mayDecide')
 
     def mayDecide(self):
-        '''May decisions on this meeting be taken?'''
+        res = False
         if _checkPermission(ReviewPortalContent, self.context):
-            if not self.context.getDate().isPast():
-                return No(_('meeting_in_past'))
-            # Check that all items are OK.
             res = True
-            msg = None
-            for item in self.context.getItems():
-                if item.queryState() == 'itemfrozen':
-                    mayDecide = item.wfConditions().mayDecide()
-                    if not mayDecide:
-                        msg = mayDecide.msg
-                        break
-            if msg:
-                res = msg
-            return res
-        return False
+        return res
 
     security.declarePublic('mayCorrect')
 
@@ -1113,7 +1102,8 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
                 item = brain.getObject()
                 item.reindexObject(idxs=['linkedMeetingDate', 'getPreferredMeetingDate'])
             # clean cache for "Products.PloneMeeting.vocabularies.meetingdatesvocabulary"
-            invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.meetingdatesvocabulary")
+            invalidate_cachekey_volatile_for(
+                "Products.PloneMeeting.vocabularies.meetingdatesvocabulary", get_again=True)
 
     security.declarePrivate('setFirstItemNumber')
 
@@ -1707,7 +1697,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         # update every items itemReference if needed
         self.updateItemReferences(check_needed=True)
         # invalidate last meeting modified
-        invalidate_cachekey_volatile_for('Products.PloneMeeting.Meeting.modified')
+        invalidate_cachekey_volatile_for('Products.PloneMeeting.Meeting.modified', get_again=True)
         # Call sub-product-specific behaviour
         self.adapted().onEdit(isCreated=True)
         self.reindexObject()
@@ -1747,10 +1737,8 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         self.updateLocalRoles()
         # Call sub-product-specific behaviour
         self.adapted().onEdit(isCreated=False)
-        # clean cache for "Products.PloneMeeting.vocabularies.meetingdatesvocabulary"
-        invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.meetingdatesvocabulary")
         # invalidate last meeting modified
-        invalidate_cachekey_volatile_for('Products.PloneMeeting.Meeting.modified')
+        invalidate_cachekey_volatile_for('Products.PloneMeeting.Meeting.modified', get_again=True)
 
     def updateLocalRoles(self, **kwargs):
         """Update various local roles."""

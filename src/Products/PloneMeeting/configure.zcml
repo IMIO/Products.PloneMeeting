@@ -23,6 +23,7 @@
   <include package="collective.js.fancytree"/>
   <include package="collective.js.jqueryui"/>
   <include package="collective.messagesviewlet"/>
+  <include zcml:condition="installed collective.solr" package="collective.solr" />
   <include package="dexterity.localrolesfield"/>
   <include package="ftw.labels"/>
   <include package="imio.annex"/>
@@ -170,6 +171,10 @@
            factory="Products.PloneMeeting.adapters.NegativePersonalLabelsAdapter"
            provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
            name="items-with-negative-personal-labels" />
+  <adapter for="*"
+           factory="Products.PloneMeeting.adapters.LastDecisionsAdapter"
+           provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
+           name="last-decisions" />
 
   <adapter factory=".validators.DXCertifiedSignaturesValidator" />
 
@@ -191,24 +196,26 @@
            provides="imio.actionspanel.interfaces.IContentDeletable" />
 
   <!-- Indexes -->
-  <adapter name="getRawClassifier" factory=".indexes.getRawClassifier" />
-  <adapter name="getConfigId" factory=".indexes.getConfigId" />
   <adapter name="Description" factory=".indexes.Description" />
+  <adapter name="getConfigId" factory=".indexes.getConfigId" />
+  <adapter name="getCopyGroups" factory=".indexes.getCopyGroups" />
+  <adapter name="getPreferredMeetingDate" factory=".indexes.getPreferredMeetingDate" />
+  <adapter name="getRawClassifier" factory=".indexes.getRawClassifier" />
+  <adapter name="getTakenOverBy" factory=".indexes.getTakenOverBy" />
   <adapter name="hasAnnexesToPrint" factory=".indexes.hasAnnexesToPrint" />
   <adapter name="hasAnnexesToSign" factory=".indexes.hasAnnexesToSign" />
+  <adapter name="indexAdvisers" factory=".indexes.indexAdvisers" />
   <adapter name="linkedMeetingDate" factory=".indexes.linkedMeetingDate" />
   <adapter name="linkedMeetingUID" factory=".indexes.linkedMeetingUID" />
-  <adapter name="getPreferredMeetingDate" factory=".indexes.getPreferredMeetingDate" />
-  <adapter name="getCopyGroups" factory=".indexes.getCopyGroups" />
-  <adapter name="sentToInfos" factory=".indexes.sentToInfos" />
-  <adapter name="templateUsingGroups" factory=".indexes.templateUsingGroups" />
   <adapter name="previous_review_state" factory=".indexes.previous_review_state" />
-  <adapter name="title_or_id" factory=".indexes.title_or_id" />
-  <adapter name="indexAdvisers" factory=".indexes.indexAdvisers" />
   <adapter name="reviewProcessInfo" factory=".indexes.reviewProcessInfo" />
-  <adapter name="sortable_title" factory=".indexes.sortable_title" />
-  <adapter name="sendToAuthority" factory=".indexes.sendToAuthority" />
   <adapter name="SearchableText" factory=".indexes.SearchableText" />
+  <adapter name="sendToAuthority" factory=".indexes.sendToAuthority" />
+  <adapter name="sentToInfos" factory=".indexes.sentToInfos" />
+  <adapter name="sortable_title" factory=".indexes.sortable_title" />
+  <adapter name="templateUsingGroups" factory=".indexes.templateUsingGroups" />
+  <adapter name="title_or_id" factory=".indexes.title_or_id" />
+  <adapter name="get_full_title" factory=".indexes.get_full_title" />
 
   <adapter
     for="imio.annex.content.annex.IAnnex"
@@ -220,6 +227,14 @@
     for="Products.PloneMeeting.interfaces.IMeetingContent
          zope.publisher.interfaces.browser.IBrowserRequest
          Products.ZCatalog.interfaces.ICatalogBrain"
+    provides="collective.iconifiedcategory.interfaces.IIconifiedContent"
+    factory=".adapters.PMCategorizedObjectAdapter"
+    />
+
+  <adapter zcml:condition="installed collective.solr"
+    for="Products.PloneMeeting.interfaces.IMeetingContent
+         zope.publisher.interfaces.browser.IBrowserRequest
+         collective.solr.flare.PloneFlare"
     provides="collective.iconifiedcategory.interfaces.IIconifiedContent"
     factory=".adapters.PMCategorizedObjectAdapter"
     />
@@ -336,6 +351,20 @@
   </class>
   <class class="plone.app.contenttypes.content.Collection">
     <implements interface="Products.PloneMeeting.interfaces.IConfigElement" />
+  </class>
+  <!-- Mark some default Plone portal_types as IConfigElement so adding elements
+       to a "documents" folder will notify folder modified and invalidate caching -->
+  <class class="Products.ATContentTypes.content.document.ATDocument">
+    <implements interface="Products.PloneMeeting.interfaces.IPloneElement" />
+  </class>
+  <class class="plone.app.blob.content.ATBlob">
+    <implements interface="Products.PloneMeeting.interfaces.IPloneElement" />
+  </class>
+  <class class="Products.ATContentTypes.content.folder.ATFolder">
+    <implements interface="Products.PloneMeeting.interfaces.IPloneElement" />
+  </class>
+  <class class="Products.ATContentTypes.content.newsitem.ATNewsItem">
+    <implements interface="Products.PloneMeeting.interfaces.IPloneElement" />
   </class>
 
   <!-- ETag components -->

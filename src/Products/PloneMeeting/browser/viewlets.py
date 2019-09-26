@@ -27,17 +27,7 @@ from plone.app.layout.viewlets import ViewletBase
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from Products.PloneMeeting.events import _is_held_pos_uid_used_by
 from Products.PloneMeeting.utils import displaying_available_items
-from Products.PloneMeeting.utils import get_state_infos
 from zope.component import getMultiAdapter
-
-
-class WorkflowState(ViewletBase):
-    '''This viewlet displays the workflow state.'''
-
-    def state_infos(self):
-        return get_state_infos(self.context)
-
-    index = ViewPageTemplateFile("templates/viewlet_workflowstate.pt")
 
 
 class ForceInsertNormal(ViewletBase):

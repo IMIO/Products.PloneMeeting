@@ -28,6 +28,7 @@ from collective.contact.plonegroup.utils import get_own_organization
 from collective.contact.plonegroup.utils import get_plone_groups
 from DateTime import DateTime
 from datetime import date
+from imio.helpers.content import get_vocab
 from imio.helpers.content import validate_fields
 from OFS.ObjectManager import BeforeDeleteException
 from plone import api
@@ -99,7 +100,8 @@ class testContacts(PloneMeetingTestCase):
             meeting.getAllUsedHeldPositions(),
             meeting.getAllUsedHeldPositions(include_new=True))
         # select new hp
-        cfg.setOrderedContacts(cfg.listSelectableContacts().keys())
+        ordered_contacts = cfg.getField('orderedContacts').Vocabulary(cfg).keys()
+        cfg.setOrderedContacts(ordered_contacts)
         self.assertEqual(
             meeting.getAllUsedHeldPositions() + (new_hp, ),
             meeting.getAllUsedHeldPositions(include_new=True))
@@ -508,6 +510,8 @@ class testContacts(PloneMeetingTestCase):
         self.failIf(cfg.getCustomAdvisers())
         self.failIf(cfg.getPowerAdvisersGroups())
         self.failIf(cfg.getSelectableAdvisers())
+        self.failIf(cfg.getOrderedAssociatedOrganizations())
+        self.failIf(cfg.getOrderedGroupsInCharge())
         self.failUnless(self.developers_reviewers in cfg.getSelectableCopyGroups())
         can_not_delete_organization_meetingconfig = \
             translate('can_not_delete_organization_meetingconfig',
@@ -565,6 +569,26 @@ class testContacts(PloneMeetingTestCase):
         self.assertEquals(cm.exception.message, can_not_delete_organization_meetingconfig)
         # so remove usingGroups
         cfg.setUsingGroups([])
+
+        # define orderedAssociatedOrganizations, the exception is also raised
+        cfg.setOrderedAssociatedOrganizations([self.developers_uid, ])
+        transaction.commit()
+        with self.assertRaises(BeforeDeleteException) as cm:
+            self.portal.restrictedTraverse('@@delete_givenuid')(
+                self.developers_uid, catch_before_delete_exception=False)
+        self.assertEquals(cm.exception.message, can_not_delete_organization_meetingconfig)
+        # so remove orderedAssociatedOrganizations
+        cfg.setOrderedAssociatedOrganizations([])
+
+        # define orderedGroupsInCharge, the exception is also raised
+        cfg.setOrderedGroupsInCharge([self.developers_uid, ])
+        transaction.commit()
+        with self.assertRaises(BeforeDeleteException) as cm:
+            self.portal.restrictedTraverse('@@delete_givenuid')(
+                self.developers_uid, catch_before_delete_exception=False)
+        self.assertEquals(cm.exception.message, can_not_delete_organization_meetingconfig)
+        # so remove orderedGroupsInCharge
+        cfg.setOrderedGroupsInCharge([])
 
         # 2) fails because the corresponding Plone groups are not empty
         transaction.commit()
@@ -800,10 +824,14 @@ class testContacts(PloneMeetingTestCase):
         self.changeUser('pmManager')
         # create an item so we can test vocabularies
         item = self.create('MeetingItem')
+        advisers_vocab_factory = get_vocab(
+            item,
+            'Products.PloneMeeting.vocabularies.itemoptionaladvicesvocabulary',
+            only_factory=True)
         self.assertTrue(self.developers_uid in item.Vocabulary('associatedGroups')[0])
         self.assertTrue(self.developers_uid in item.listProposingGroups())
         self.assertTrue(self.developers_reviewers in item.listCopyGroups())
-        self.assertTrue(self.developers_uid in item.listOptionalAdvisers())
+        self.assertTrue(self.developers_uid in advisers_vocab_factory(item))
         self.assertTrue(self.tool.userIsAmong(['creators']))
         # after deactivation, the group is no more useable...
         self.changeUser('admin')
@@ -814,7 +842,7 @@ class testContacts(PloneMeetingTestCase):
         item.setProposingGroup('')
         self.assertFalse(self.developers_uid in item.listProposingGroups())
         self.assertFalse(self.developers_reviewers in item.listCopyGroups())
-        self.assertFalse(self.developers_uid in item.listOptionalAdvisers())
+        self.assertFalse(self.developers_uid in advisers_vocab_factory(item))
         self.assertFalse(self.tool.userIsAmong(['creators']))
 
     def test_pm_RedefinedCertifiedSignatures(self):
@@ -1017,8 +1045,8 @@ class testContacts(PloneMeetingTestCase):
         # import contacts as Zope admin
         self.changeUser('admin')
         import_contacts(self.portal, path=path)
-        # we imported 5 organizations and 15 persons/held_positions
-        self.assertEqual(len(api.content.find(context=contacts, portal_type='organization')), 9)
+        # we imported 10 organizations and 15 persons/held_positions
+        self.assertEqual(len(api.content.find(context=contacts, portal_type='organization')), 13)
         self.assertEqual(len(api.content.find(context=contacts, portal_type='person')), 19)
         self.assertEqual(len(api.content.find(context=contacts, portal_type='held_position')), 19)
         # organizations are imported with an acronym
@@ -1030,6 +1058,11 @@ class testContacts(PloneMeetingTestCase):
         agent_interne_hp = contacts.get('agent-interne').objectValues()[0]
         self.assertEqual(agent_interne_hp.portal_type, 'held_position')
         self.assertEqual(agent_interne_hp.get_organization(), own_org)
+        # we can import organizations into another, we imported 4 orgs under my org
+        self.assertEqual(
+            own_org.objectIds(),
+            ['developers', 'vendors', 'endUsers',
+             'service-1', 'service-2', 'service-associe-1', 'service-associe-2'])
 
     def test_pm_Gender_and_number_from_position_type(self):
         """Return gender/number values depending on used position type."""
@@ -1099,11 +1132,36 @@ class testContacts(PloneMeetingTestCase):
         hp.label = u''
         hp.position_type = u'admin'
         self.assertEqual(hp.get_prefix_for_gender_and_number(), u"L'")
+        self.assertEqual(hp.get_prefix_for_gender_and_number(include_value=True), u"L'Administratrice")
         hp.position_type = u'director'
         person.gender = u'M'
         self.assertEqual(hp.get_prefix_for_gender_and_number(), u"Le ")
         person.gender = u'F'
+        person.person_title = u'Madame'
         self.assertEqual(hp.get_prefix_for_gender_and_number(), u"La ")
+        # include_value and include_person_title
+        self.assertEqual(hp.get_prefix_for_gender_and_number(include_value=True), u"La Directrice")
+        # prefix first letter is lowerized
+        self.assertEqual(
+            hp.get_prefix_for_gender_and_number(include_value=True, include_person_title=True),
+            u'Madame la Directrice')
+
+        # we may give a position_type_attr, this is usefull when using field secondary_position_type
+        self.assertIsNone(hp.secondary_position_type)
+        self.assertEqual(hp.get_prefix_for_gender_and_number(
+            include_value=True, position_type_attr='secondary_position_type'),
+            u'')
+        hp.secondary_position_type = u'admin'
+        # include_value and include_person_title
+        self.assertEqual(hp.get_prefix_for_gender_and_number(
+            include_value=True, position_type_attr='secondary_position_type'),
+            u"L'Administratrice")
+        # prefix first letter is lowerized
+        self.assertEqual(
+            hp.get_prefix_for_gender_and_number(include_value=True,
+                                                include_person_title=True,
+                                                position_type_attr='secondary_position_type'),
+            u"Madame l'Administratrice")
 
     def test_pm_RemoveNotSelectedOrganization(self):
         """Check that removing a not selected organization works correctly."""

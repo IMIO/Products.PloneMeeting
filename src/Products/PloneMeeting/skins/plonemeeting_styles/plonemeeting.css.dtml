@@ -961,6 +961,13 @@ body[class*="itemtemplates"].template-manage-portlets a.link-parent {
     width: 10%;
 }
 
+/* make column displayed for MeetingConfig.onMeetingTransitionItemActionToExecute equals */
+#datagridwidget-table-onMeetingTransitionItemActionToExecute .datagridwidget-column-1,
+#datagridwidget-table-onMeetingTransitionItemActionToExecute .datagridwidget-column-2,
+#datagridwidget-table-onMeetingTransitionItemActionToExecute .datagridwidget-column-3 {
+    width: 33%;
+}
+
 /* display DX datagrid column in grey */
 .datagridwidget-table-view {
     border-color: #ddd;
@@ -1699,6 +1706,12 @@ p#download_vcard {
     content: "\f146";
 }
 
+/* hide actions menu when on folder_contents of contacts directory except 'Add' menu */
+.template-folder_contents.portaltype-directory ul#contentActionMenus li dl:not([id='plone-contentmenu-factories']) {
+   display: none;
+}
+
+
 /* hide app_parameters for plonegroup root organization,
    show it whan adding a new organization (context is plonegroup-organization) */
 body[class*='subsection-plonegroup-organization icons-on']:not([class*='template-organization']) a#fieldsetlegend-app_parameters,
@@ -1715,12 +1728,6 @@ div.config_sub_categories {
 div[class*='organization_level_']:not([class*='organization_level_0']) table,
 div.config_sub_categories table {
    border-left: 5px solid grey;
-}
-
-/* highlight organizations not selectable in plonegroup */
-div.highlight.selectable_for_plonegroup_false label,
-div.highlight.selectable_for_plonegroup_false div span {
-   color: red;
 }
 
 /* highlight disabled values in red in faceted filters */
@@ -1782,6 +1789,10 @@ div#held_position_back_refs {
 /* hide link 'Add contact' on organization view */
 #content a.addnewcontactfromorganization.link-overlay {
    display: none !important;
+}
+
+div.itemtemplate-infos, div.recurringitem-infos {
+   padding-top: 1em;
 }
 
 /* </dtml-with> */

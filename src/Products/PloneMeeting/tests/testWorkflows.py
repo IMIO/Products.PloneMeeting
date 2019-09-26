@@ -34,6 +34,7 @@ from Products.CMFCore.permissions import View
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.PloneMeeting.config import AddAnnex
 from Products.PloneMeeting.config import AddAnnexDecision
+from Products.PloneMeeting.config import EXECUTE_EXPR_VALUE
 from Products.PloneMeeting.config import WriteItemMeetingManagerFields
 from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
@@ -134,9 +135,9 @@ class testWorkflows(PloneMeetingTestCase):
         statusMessages = IStatusMessage(self.portal.REQUEST)
         # for now, just the faceted related messages
         messages = statusMessages.show()
-        self.assertTrue(len(messages) == 2)
-        self.assertTrue(messages[0].message == u'Faceted navigation enabled')
-        self.assertTrue(messages[1].message == u'Configuration imported')
+        self.assertEqual(len(messages), 2)
+        self.assertEqual(messages[0].message, u'Faceted navigation enabled')
+        self.assertEqual(messages[1].message, u'Configuration imported')
         # @@delete_givenuid added one statusMessage about BeforeDeleteException
         transaction.commit()
         self.portal.restrictedTraverse('@@delete_givenuid')(pmManagerFolder.UID())
@@ -458,7 +459,7 @@ class testWorkflows(PloneMeetingTestCase):
         self.changeUser('pmManager')
         self._removeConfigObjectsFor(self.meetingConfig)
         meetingWithoutRecurringItems = self.create('Meeting', date='2008/12/11 09:00:00')
-        self.assertTrue(meetingWithoutRecurringItems.getItems() == [])
+        self.assertEqual(meetingWithoutRecurringItems.getItems(), [])
 
     def test_pm_InactiveRecurringItemsAreNotInserted(self):
         '''Only active recurring items are presented to the meeting.'''
@@ -467,17 +468,17 @@ class testWorkflows(PloneMeetingTestCase):
         self.changeUser('pmManager')
         meeting = self.create('Meeting', date='2007/12/11 09:00:00')
         # contains 3 recurring items
-        self.assertTrue(len(meeting.getItems()) == 3)
+        self.assertEqual(len(meeting.getItems()), 3)
         # disable a recurring item
         self.changeUser('siteadmin')
         recItem1 = cfg.getRecurringItems()[0]
-        self.assertTrue(recItem1.getMeetingTransitionInsertingMe() == u'_init_')
+        self.assertEqual(recItem1.getMeetingTransitionInsertingMe(), u'_init_')
         self.do(recItem1, 'deactivate')
         # create a new meeting
         self.changeUser('pmManager')
         meeting2 = self.create('Meeting', date='2008/12/11 09:00:00')
         # contains 2 recurring items
-        self.assertTrue(len(meeting2.getItems()) == 2)
+        self.assertEqual(len(meeting2.getItems()), 2)
 
     def test_pm_RecurringItemsBypassSecurity(self):
         '''Tests that recurring items are addable by a MeetingManager even if by default,
@@ -500,15 +501,16 @@ class testWorkflows(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         # 'pmManager' may propose the item but he will not be able to validate it
         self.proposeItem(item)
-        self.assertTrue(item.queryState() == self._stateMappingFor('proposed'))
+        self.assertEqual(item.queryState(), self._stateMappingFor('proposed'))
         # we have no avaialble transition, or just one, and in this case, it is a 'back' transition
         availableTransitions = self.wfTool.getTransitionsFor(item)
         if availableTransitions:
-            self.assertTrue(len(availableTransitions) == 1 and availableTransitions[0]['id'].startswith('back'))
+            self.assertEqual(len(availableTransitions), 1)
+            self.assertTrue(availableTransitions[0]['id'].startswith('back'))
         # now, create a meeting, the item is correctly added no matter MeetingManager could not validate it
         meeting = self.create('Meeting', date=DateTime('2013/01/01'))
-        self.assertTrue(len(meeting.getItems()) == 1)
-        self.assertTrue(meeting.getItems()[0].getProposingGroup() == self.developers_uid)
+        self.assertEqual(len(meeting.getItems()), 1)
+        self.assertEqual(meeting.getItems()[0].getProposingGroup(), self.developers_uid)
 
     def test_pm_RecurringItemsRespectSortingMethodOnAddItemPrivacy(self):
         '''Tests the recurring items system when items are inserted
@@ -524,13 +526,13 @@ class testWorkflows(PloneMeetingTestCase):
         # of the meeting presented items
         # the first recurring item of the config is inserted on '_init_'
         firstRecurringItem = cfg.getRecurringItems()[0]
-        self.assertTrue(firstRecurringItem.getMeetingTransitionInsertingMe() == '_init_')
+        self.assertEqual(firstRecurringItem.getMeetingTransitionInsertingMe(), '_init_')
         firstRecurringItem.setPrivacy('secret')
         self.changeUser('pmManager')
         meeting = self.create('Meeting', date='2007/12/11 09:00:00')
         # after every recurring items have been inserted, the last is the 'secret' one
-        self.assertTrue(len(meeting.getItems()) == 3)
-        self.assertTrue(meeting.getItems(ordered=True)[-1].getPrivacy() == 'secret')
+        self.assertEqual(len(meeting.getItems()), 3)
+        self.assertEqual(meeting.getItems(ordered=True)[-1].getPrivacy(), 'secret')
 
     def test_pm_RecurringItemsWithWrongTransitionsForPresentingAnItem(self):
         '''Tests the recurring items system when using a wrong MeetingConfig.transitionsForPresentingAnItem.'''
@@ -550,40 +552,145 @@ class testWorkflows(PloneMeetingTestCase):
         meeting2 = self.create('Meeting', date='2009/12/11 09:00:00')
         self.failIf(len(meeting2.getItems()) != 0)
 
-    def test_pm_MeetingTransitionTriggerLinkedItemsTransitions(self):
-        '''Test the MeetingConfig.onMeetingTransitionItemTransitionToTrigger parameter :
-           when a transition is triggered on a meeting, we can define transitions that will be
-           automatically triggered on every items of the meeting.'''
+    def test_pm_MeetingExecuteActionOnLinkedItemsCaseTransition(self):
+        '''Test the MeetingConfig.onMeetingTransitionItemActionToExecute parameter :
+           triggering a transition on every items.'''
         self.changeUser('pmManager')
         # create a meeting with items
         meeting = self._createMeetingWithItems()
         # for now, every items are 'presented'
         for item in meeting.getItems():
-            self.assertTrue(item.queryState() == 'presented')
+            self.assertEqual(item.queryState(), 'presented')
         # when we freeze a meeting, we want every contained items to be frozen as well
         self.freezeMeeting(meeting)
         for item in meeting.getItems():
-            self.assertTrue(item.queryState() == 'itemfrozen')
+            self.assertEqual(item.queryState(), 'itemfrozen')
         # when we close a meeting, we want every items to be automatically accepted
         # that is what is defined in the import_data of the testing profile
         self.closeMeeting(meeting)
         for item in meeting.getItems():
-            self.assertTrue(item.queryState() == self.ITEM_WF_STATE_AFTER_MEETING_TRANSITION['close'])
+            self.assertEqual(item.queryState(), self.ITEM_WF_STATE_AFTER_MEETING_TRANSITION['close'])
 
         # now test that it also works with 'back transitions' : when a meeting goes
         # back to 'created' from 'frozen', specify that every items must go back to 'presented'
         meeting2 = self._createMeetingWithItems()
         # for now, every items are 'presented'
         for item in meeting2.getItems():
-            self.assertTrue(item.queryState() == 'presented')
+            self.assertEqual(item.queryState(), 'presented')
         self.freezeMeeting(meeting2)
         # every items are now frozen
         for item in meeting2.getItems():
-            self.assertTrue(item.queryState() == 'itemfrozen')
+            self.assertEqual(item.queryState(), 'itemfrozen')
         self.backToState(meeting2, 'created')
         # every items are now back to presented
         for item in meeting2.getItems():
-            self.assertTrue(item.queryState() == 'presented')
+            self.assertEqual(item.queryState(), 'presented')
+
+    def test_pm_MeetingExecuteActionOnLinkedItemsCaseTALExpression(self):
+        '''Test the MeetingConfig.onMeetingTransitionItemActionToExecute parameter :
+           executing a TAL expression on every items.'''
+        # when we freeze a meeting, we will append word '(frozen)' to the item title
+        # first, wrong tal_expression, nothing is done
+        self.changeUser('siteadmin')
+        cfg = self.meetingConfig
+        cfg.setOnMeetingTransitionItemActionToExecute(
+            [{'meeting_transition': 'freeze',
+              'item_action': EXECUTE_EXPR_VALUE,
+              'tal_expression': 'item/unknown'},
+             {'meeting_transition': 'freeze',
+              'item_action': 'itempublish',
+              'tal_expression': ''},
+             {'meeting_transition': 'freeze',
+              'item_action': 'itemfreeze',
+              'tal_expression': ''}, ])
+        self.changeUser('pmManager')
+        # create a meeting with items
+        meeting = self._createMeetingWithItems()
+        # for now, every items are 'presented'
+        for item in meeting.getItems():
+            self.assertEqual(item.queryState(), 'presented')
+        # freeze the meeting, nothing is done by the expression and the items are frozen
+        self.freezeMeeting(meeting)
+        for item in meeting.getItems():
+            self.assertEqual(item.queryState(), 'itemfrozen')
+
+        # now a valid config, append ('accepted') to item title when meeting is decided
+        title_suffix = " (accepted)"
+        cfg.setOnMeetingTransitionItemActionToExecute(
+            [{'meeting_transition': 'decide',
+              'item_action': EXECUTE_EXPR_VALUE,
+              'tal_expression': 'python: item.setTitle(item.Title() + "{0}")'.format(title_suffix)},
+             {'meeting_transition': 'decide',
+              'item_action': 'accept',
+              'tal_expression': ''}])
+        for item in meeting.getItems():
+            self.assertFalse(title_suffix in item.Title())
+        self.decideMeeting(meeting)
+        for item in meeting.getItems():
+            self.assertTrue(title_suffix in item.Title())
+            self.assertEqual(item.queryState(), 'accepted')
+
+    def test_pm_MeetingExecuteActionOnLinkedItemsGiveAccessToAcceptedItemsOfAMeetingToPowerAdvisers(self):
+        '''Test the MeetingConfig.onMeetingTransitionItemActionToExecute parameter :
+           specific usecase, being able to give access to decided items of a meeting only when meeting
+           is closed, even if item is decided before the meeting is closed.'''
+        self.changeUser('siteadmin')
+        cfg = self.meetingConfig
+        # call updateLocalRoles on item only if it not already decided
+        # as updateLocalRoles is called when item review_state changed
+        self.assertTrue('accepted' in cfg.getItemDecidedStates())
+        cfg.setOnMeetingTransitionItemActionToExecute(
+            [{'meeting_transition': 'decide',
+              'item_action': 'itempublish',
+              'tal_expression': ''},
+             {'meeting_transition': 'decide',
+              'item_action': 'itemfreeze',
+              'tal_expression': ''},
+
+             {'meeting_transition': 'close',
+              'item_action': 'itempublish',
+              'tal_expression': ''},
+             {'meeting_transition': 'close',
+              'item_action': 'itemfreeze',
+              'tal_expression': ''},
+             {'meeting_transition': 'close',
+              'item_action': EXECUTE_EXPR_VALUE,
+              'tal_expression': 'python: item.queryState() in cfg.getItemDecidedStates() and '
+                'item.updateLocalRoles()'},
+             {'meeting_transition': 'close',
+              'item_action': 'accept',
+              'tal_expression': ''}, ])
+        # configure access of powerobservers only access if meeting is 'closed'
+        cfg.setPowerObservers([
+            {'item_access_on': 'python: item.getMeeting().queryState() == "closed"',
+             'item_states': ['accepted'],
+             'label': 'Power observers',
+             'meeting_access_on': '',
+             'meeting_states': ['closed'],
+             'row_id': 'powerobservers'}])
+        self.changeUser('pmManager')
+        item1 = self.create('MeetingItem')
+        item1.setDecision(self.decisionText)
+        item2 = self.create('MeetingItem', decision=self.decisionText)
+        item2.setDecision(self.decisionText)
+        meeting = self.create('Meeting', date=DateTime('2019/09/10'))
+        self.presentItem(item1)
+        self.presentItem(item2)
+        self.decideMeeting(meeting)
+        self.do(item1, 'accept')
+        self.assertEqual(item1.queryState(), 'accepted')
+        # power observer does not have access to item1/item2
+        self.changeUser('powerobserver1')
+        self.assertFalse(self.hasPermission(View, item1))
+        self.assertFalse(self.hasPermission(View, item2))
+        self.changeUser('pmManager')
+        self.closeMeeting(meeting)
+        # items are accepted
+        self.assertEqual(item1.queryState(), 'accepted')
+        self.assertEqual(item2.queryState(), 'accepted')
+        # and powerobserver has also access to item1 that was already accepted before meeting was closed
+        self.assertTrue(self.hasPermission(View, item1))
+        self.assertTrue(self.hasPermission(View, item2))
 
     def test_pm_MeetingNotClosableIfItemStillReturnedToProposingGroup(self):
         """If there are items in state 'returned_to_proposing_group', a meeting may not be closed."""

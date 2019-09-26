@@ -44,11 +44,11 @@ from Products.PloneMeeting.utils import _addManagedPermissions
 from Products.PloneMeeting.utils import addRecurringItemsIfRelevant
 from Products.PloneMeeting.utils import AdviceAfterAddEvent
 from Products.PloneMeeting.utils import AdviceAfterModifyEvent
-from Products.PloneMeeting.utils import applyOnTransitionFieldTransform
 from Products.PloneMeeting.utils import AdviceAfterTransitionEvent
+from Products.PloneMeeting.utils import applyOnTransitionFieldTransform
 from Products.PloneMeeting.utils import ItemAfterTransitionEvent
 from Products.PloneMeeting.utils import MeetingAfterTransitionEvent
-from Products.PloneMeeting.utils import meetingTriggerTransitionOnLinkedItems
+from Products.PloneMeeting.utils import meetingExecuteActionOnLinkedItems
 from Products.PloneMeeting.utils import notifyModifiedAndReindex
 from Products.PloneMeeting.utils import sendMailIfRelevant
 from zExceptions import Redirect
@@ -98,8 +98,8 @@ def do(action, event):
         # Send mail if relevant
         sendMailIfRelevant(event.object, "meeting_state_changed_%s" % event.transition.id, 'View')
         # trigger some transitions on contained items depending on
-        # MeetingConfig.onMeetingTransitionItemTransitionToTrigger
-        meetingTriggerTransitionOnLinkedItems(event.object, event.transition.id)
+        # MeetingConfig.onMeetingTransitionItemActionToExecute
+        meetingExecuteActionOnLinkedItems(event.object, event.transition.id)
         # update modification date upon state change
         event.object.notifyModified()
     elif objectType == 'MeetingAdvice':
@@ -141,8 +141,8 @@ def onItemTransition(item, event):
         event.transition, event.status, event.kwargs))
     # just reindex the entire object
     item.reindexObject()
-    # An item has ben modified
-    invalidate_cachekey_volatile_for('Products.PloneMeeting.MeetingItem.modified')
+    # An item has ben modified, use get_again for portlet_todo
+    invalidate_cachekey_volatile_for('Products.PloneMeeting.MeetingItem.modified', get_again=True)
 
 
 def onMeetingTransition(meeting, event):
@@ -160,8 +160,8 @@ def onMeetingTransition(meeting, event):
        (event.old_state.id not in beforeLateStates and event.new_state.id in beforeLateStates):
         meeting.updateItemReferences()
 
-    # invalidate last meeting modified
-    invalidate_cachekey_volatile_for('Products.PloneMeeting.Meeting.modified')
+    # invalidate last meeting modified, use get_again for async meetings term render
+    invalidate_cachekey_volatile_for('Products.PloneMeeting.Meeting.modified', get_again=True)
 
     # notify a MeetingAfterTransitionEvent for subplugins so we are sure
     # that it is called after PloneMeeting meeting transition
@@ -217,6 +217,7 @@ def _invalidateOrgRelatedCachedVocabularies():
     '''Clean cache for vocabularies using organizations.'''
     invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.proposinggroupsvocabulary")
     invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.associatedgroupsvocabulary")
+    invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.everyorganizationsvocabulary")
     invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.everyorganizationsacronymsvocabulary")
     invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.proposinggroupsforfacetedfiltervocabulary")
     invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.groupsinchargevocabulary")
@@ -265,7 +266,9 @@ def onOrgWillBeRemoved(current_org, event):
         if current_org_uid in customAdvisersOrgUids or \
            current_org_uid in mc.getPowerAdvisersGroups() or \
            current_org_uid in mc.getSelectableAdvisers() or \
-           current_org_uid in mc.getUsingGroups():
+           current_org_uid in mc.getUsingGroups() or \
+           current_org_uid in mc.getOrderedAssociatedOrganizations() or \
+           current_org_uid in mc.getOrderedGroupsInCharge():
             raise BeforeDeleteException(translate("can_not_delete_organization_meetingconfig",
                                                   mapping={'cfg_url': mc.absolute_url()},
                                                   domain="plone",
@@ -297,8 +300,8 @@ def onOrgWillBeRemoved(current_org, event):
     catalog = api.portal.get_tool('portal_catalog')
 
     # In the application
-    # most of times, the real groupId is stored, but for MeetingItem.copyGroups, we
-    # store suffixed elements of the group, so compute suffixed elements for config and compare
+    # most of times, the org UID is stored, but for MeetingItem.copyGroups, we
+    # store suffixed elements of the org
     suffixedGroups = set()
     for suffix in get_all_suffixes():
         plone_group_id = get_plone_group_id(current_org_uid, suffix)
@@ -553,8 +556,8 @@ def onItemAdded(item, event):
     item.completeness_changes_history = PersistentList()
     # Add a place to store takenOverBy by review_state user id
     item.takenOverByInfos = PersistentMapping()
-    # An item has ben modified
-    invalidate_cachekey_volatile_for('Products.PloneMeeting.MeetingItem.modified')
+    # An item has ben modified, use get_again for portlet_todo
+    invalidate_cachekey_volatile_for('Products.PloneMeeting.MeetingItem.modified', get_again=True)
     # if element is in a MeetingConfig, we mark it with IConfigElement interface
     if item.isDefinedInTool():
         alsoProvides(item, IConfigElement)
@@ -562,12 +565,19 @@ def onItemAdded(item, event):
         noLongerProvides(item, IConfigElement)
 
 
+def onItemWillBeAdded(item, event):
+    '''This method is called after a paste, before the ObjectAdded event.
+       We make sure the item does not provide IConfigElement anymore.'''
+    noLongerProvides(item, IConfigElement)
+
+
 def onItemModified(item, event):
-    '''Called when an item is modified so we can invalidate caching on linked meeting.'''
+    '''Called when an item is modified.'''
     meeting = item.getMeeting()
     if meeting:
         # invalidate meeting actions panel
-        meeting.invalidate_meeting_actions_panel_cache = True
+        invalidate_cachekey_volatile_for(
+            'Products.PloneMeeting.Meeting.UID.{0}'.format(meeting.UID()), get_again=True)
         # update item references if necessary
         meeting.updateItemReferences(startNumber=item.getItemNumber(), check_needed=True)
         # invalidate Meeting.getItemInsertOrder caching
@@ -591,8 +601,8 @@ def onItemModified(item, event):
                 item._at_creation_flag = True
                 item._renameAfterCreation(check_auto_id=False)
                 item._at_creation_flag = False
-    # An item has ben modified
-    invalidate_cachekey_volatile_for('Products.PloneMeeting.MeetingItem.modified')
+    # An item has ben modified, use get_again for portlet_todo
+    invalidate_cachekey_volatile_for('Products.PloneMeeting.MeetingItem.modified', get_again=True)
 
 
 def storeImagesLocallyDexterity(advice):
@@ -843,8 +853,8 @@ def onItemRemoved(item, event):
     # bypass this if we are actually removing the 'Plone Site'
     if event.object.meta_type == 'Plone Site':
         return
-    # An item has ben modified
-    invalidate_cachekey_volatile_for('Products.PloneMeeting.MeetingItem.modified')
+    # An item has ben modified, use get_again for portlet_todo
+    invalidate_cachekey_volatile_for('Products.PloneMeeting.MeetingItem.modified', get_again=True)
 
 
 def onMeetingAdded(meeting, event):
@@ -858,7 +868,9 @@ def onMeetingAdded(meeting, event):
     userId = api.user.get_current().getId()
     meeting.manage_addLocalRoles(userId, ('Owner',))
     # clean cache for "Products.PloneMeeting.vocabularies.meetingdatesvocabulary"
-    invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.meetingdatesvocabulary")
+    # use get_again for async meetings term render
+    invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.meetingdatesvocabulary", get_again=True)
+    invalidate_cachekey_volatile_for('Products.PloneMeeting.Meeting.modified', get_again=True)
 
 
 def onMeetingRemoved(meeting, event):
@@ -892,72 +904,74 @@ def onMeetingRemoved(meeting, event):
     for item_to_reindex in items_to_reindex:
         item_to_reindex.reindexObject(idxs=['getPreferredMeeting', 'getPreferredMeetingDate'])
     # clean cache for "Products.PloneMeeting.vocabularies.meetingdatesvocabulary"
-    invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.meetingdatesvocabulary")
-    invalidate_cachekey_volatile_for('Products.PloneMeeting.Meeting.modified')
+    # use get_again for async meetings term render
+    invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.meetingdatesvocabulary", get_again=True)
+    invalidate_cachekey_volatile_for('Products.PloneMeeting.Meeting.modified', get_again=True)
 
 
-def _notifyMeetingConfigModified(child):
-    """A child of a MeetingConfig notifyModified it's MeetingConfig chain of containers."""
+def _notifyContainerModified(child):
+    """A child of a container notifyModified it's container chain of containers."""
     # set modification date on every containers
     container = child.aq_parent
+    # either element is in a MeetingConfig or in a folder in a Plone Site
     while container.portal_type not in ('ToolPloneMeeting', 'Plone Site'):
         notifyModifiedAndReindex(container)
         container = container.aq_parent
 
 
-def onConfigElementAdded(config_element, event):
-    '''Called whenever an element in the MeetingConfig was added.'''
-
+def onConfigOrPloneElementAdded(element, event):
+    '''Called whenever an element in the MeetingConfig or a default element in Plone was added.'''
     # invalidate cache of relevant vocabularies
-    if hasattr(config_element, '_invalidateCachedVocabularies'):
-        config_element._invalidateCachedVocabularies()
+    if hasattr(element, '_invalidateCachedVocabularies'):
+        element._invalidateCachedVocabularies()
 
     # set modification date on every containers
-    _notifyMeetingConfigModified(config_element)
+    _notifyContainerModified(element)
 
 
-def onConfigElementModified(config_element, event):
-    '''Called whenever an element in the MeetingConfig was modified.'''
+def onConfigOrPloneElementModified(element, event):
+    '''Called whenever an element in the MeetingConfig or a default element in Plone was modified.'''
 
     # invalidate cache of relevant vocabularies
-    if hasattr(config_element, '_invalidateCachedVocabularies'):
-        config_element._invalidateCachedVocabularies()
+    if hasattr(element, '_invalidateCachedVocabularies'):
+        element._invalidateCachedVocabularies()
 
     # set modification date on every containers
-    _notifyMeetingConfigModified(config_element)
+    _notifyContainerModified(element)
 
 
-def onConfigElementTransition(config_element, event):
-    '''Called whenever a transition has been fired on an element of the MeetingConfig.'''
-    if not event.transition or (config_element != event.object):
+def onConfigOrPloneElementTransition(element, event):
+    '''Called whenever a transition has been fired on an element of the MeetingConfig
+       or a default element in Plone.'''
+    if not event.transition or (element != event.object):
         return
 
     # invalidate cache of relevant vocabularies
-    if hasattr(config_element, '_invalidateCachedVocabularies'):
-        config_element._invalidateCachedVocabularies()
+    if hasattr(element, '_invalidateCachedVocabularies'):
+        element._invalidateCachedVocabularies()
 
     # set modification date on every containers
-    _notifyMeetingConfigModified(config_element)
+    _notifyContainerModified(element)
 
 
-def onConfigElementRemoved(config_element, event):
-    '''Called when an element of the MeetingConfig is removed.'''
+def onConfigOrPloneElementRemoved(element, event):
+    '''Called when an element of the MeetingConfig or a default element in Plone is removed.'''
     # bypass this if we are actually removing the 'Plone Site'
     if event.object.meta_type == 'Plone Site':
         return
 
     # invalidate cache of relevant vocabularies
-    if hasattr(config_element, '_invalidateCachedVocabularies'):
-        config_element._invalidateCachedVocabularies()
+    if hasattr(element, '_invalidateCachedVocabularies'):
+        element._invalidateCachedVocabularies()
 
     # set modification date on every containers
-    _notifyMeetingConfigModified(config_element)
+    _notifyContainerModified(element)
 
 
-def onConfigFolderReordered(folder, event):
-    '''When a subfolder of a MeetingConfig is reordered we update container modified.'''
-    if folder.aq_parent.portal_type == 'MeetingConfig':
-        notifyModifiedAndReindex(folder)
+def onFolderReordered(folder, event):
+    '''When a subfolder of a MeetingConfig or a default element in Plone is reordered
+       we update container modified.'''
+    notifyModifiedAndReindex(folder)
 
 
 def onDashboardCollectionAdded(collection, event):
@@ -1053,10 +1067,10 @@ def onCategorizedElementsUpdatedEvent(content_category, event):
     """When elements using a ContentCategory are updated,
        notifyModified the MeetingConfig so cache is invalidated."""
     # set modification date on every containers
-    _notifyMeetingConfigModified(content_category)
+    _notifyContainerModified(content_category)
 
 
 def onFacetedGlobalSettingsChanged(folder, event):
     """ """
     # set modification date on every containers
-    _notifyMeetingConfigModified(folder)
+    _notifyContainerModified(folder)

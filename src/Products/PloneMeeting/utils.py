@@ -1,24 +1,4 @@
 # -*- coding: utf-8 -*-
-#
-# Copyright (c) 2015 by Imio.be
-#
-# GNU General Public License (GPL)
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
-# 02110-1301, USA.
-#
 
 from AccessControl.Permission import Permission
 from appy.shared.diff import HtmlDiff
@@ -57,6 +37,7 @@ from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFPlone.utils import safe_unicode
 from Products.DCWorkflow.events import TransitionEvent
 from Products.MailHost.MailHost import MailHostError
+from Products.PageTemplates.Expressions import SecureModuleImporter
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import ADD_SUBCONTENT_PERMISSIONS
 from Products.PloneMeeting.config import AddAnnex
@@ -65,8 +46,8 @@ from Products.PloneMeeting.config import PloneMeetingError
 from Products.PloneMeeting.config import TOOL_ID
 from Products.PloneMeeting.interfaces import IAdviceAfterAddEvent
 from Products.PloneMeeting.interfaces import IAdviceAfterModifyEvent
-from Products.PloneMeeting.interfaces import IAdvicesUpdatedEvent
 from Products.PloneMeeting.interfaces import IAdviceAfterTransitionEvent
+from Products.PloneMeeting.interfaces import IAdvicesUpdatedEvent
 from Products.PloneMeeting.interfaces import IItemAfterTransitionEvent
 from Products.PloneMeeting.interfaces import IItemDuplicatedEvent
 from Products.PloneMeeting.interfaces import IItemDuplicatedFromConfigEvent
@@ -97,6 +78,7 @@ import os
 import os.path
 import re
 import socket
+import unicodedata
 import urlparse
 
 
@@ -109,6 +91,9 @@ WRONG_INTERFACE_PACKAGE = 'Could not find package "%s".'
 WRONG_INTERFACE = 'Interface "%s" not found in package "%s".'
 ON_TRANSITION_TRANSFORM_TAL_EXPR_ERROR = 'There was an error during transform of field \'%s\' of this item. ' \
     'Please check TAL expression defined in the configuration.  Original exception: %s'
+ITEM_EXECUTE_ACTION_ERROR = "There was an error in the TAL expression '{0}' " \
+    "defined in field MeetingConfig.onMeetingTransitionItemActionToExecute executed on item at '{1}'. " \
+    "Original exception : {2}"
 
 # ------------------------------------------------------------------------------
 monthsIds = {1: 'month_jan', 2: 'month_feb', 3: 'month_mar', 4: 'month_apr',
@@ -1047,28 +1032,40 @@ def applyOnTransitionFieldTransform(obj, transitionId):
 
 
 # ------------------------------------------------------------------------------
-def meetingTriggerTransitionOnLinkedItems(meeting, transitionId):
+def meetingExecuteActionOnLinkedItems(meeting, transitionId):
     '''
       When the given p_transitionId is triggered on the given p_meeting,
-      check if we need to trigger workflow transition on linked items
-      defined in MeetingConfig.onMeetingTransitionItemTransitionToTrigger.
+      check if we need to trigger an action on linked items
+      defined in MeetingConfig.meetingExecuteActionOnLinkedItems.
     '''
     tool = api.portal.get_tool(TOOL_ID)
     cfg = tool.getMeetingConfig(meeting)
     wfTool = api.portal.get_tool('portal_workflow')
     wf_comment = _('wf_transition_triggered_by_application')
-
-    # if we have a transition to trigger on every items, trigger it!
-    for config in cfg.getOnMeetingTransitionItemTransitionToTrigger():
+    for config in cfg.getOnMeetingTransitionItemActionToExecute():
         if config['meeting_transition'] == transitionId:
-            # execute corresponding transition on every items
+            is_transition = not config['tal_expression']
             for item in meeting.getItems():
-                # do not fail if a transition could not be triggered, just add an
-                # info message to the log so configuration can be adapted to avoid this
-                try:
-                    wfTool.doActionFor(item, config['item_transition'], comment=wf_comment)
-                except WorkflowException:
-                    pass
+                if is_transition:
+                    # do not fail if a transition could not be triggered, just add an
+                    # info message to the log so configuration can be adapted to avoid this
+                    try:
+                        wfTool.doActionFor(item, config['item_action'], comment=wf_comment)
+                    except WorkflowException:
+                        pass
+                else:
+                    # execute the TAL expression, will not fail but log if an error occurs
+                    _evaluateExpression(
+                        item,
+                        expression=config['tal_expression'].strip(),
+                        roles_bypassing_expression=[],
+                        extra_expr_ctx={
+                            'pm_utils': SecureModuleImporter['Products.PloneMeeting.utils'],
+                            'tool': tool,
+                            'cfg': cfg,
+                            'item': item,
+                            'meeting': meeting},
+                        error_pattern=ITEM_EXECUTE_ACTION_ERROR)
 
 
 def computeCertifiedSignatures(signatures):
@@ -1580,17 +1577,6 @@ def plain_render(obj, fieldname):
     return exportable.render_value(obj)
 
 
-def get_state_infos(obj):
-    """ """
-    wfTool = api.portal.get_tool('portal_workflow')
-    review_state = wfTool.getInfoFor(obj, 'review_state')
-    wf = wfTool.getWorkflowsFor(obj)[0]
-    return {'state_name': review_state,
-            'state_title': translate(wf.states.get(review_state).title,
-                                     domain="plone",
-                                     context=obj.REQUEST)}
-
-
 def duplicate_workflow(workflowName, duplicatedWFId, portalTypeNames=[]):
     """Duplicate p_workflowName and use p_duplicatedWFId for new workflow.
        If p_portalTypeName is given, associate new workflow to given portalTypeNames."""
@@ -1657,6 +1643,27 @@ def get_person_from_userid(userid, only_active=True):
         person = brain.getObject()
         if person.userid == userid:
             return person
+
+
+def decodeDelayAwareId(delayAwareId):
+    """Decode a 'delay-aware' id, we receive something like
+       'orgauid__rowid__myuniquerowid.20141215'. We return the org_uid and the row_id."""
+    infos = delayAwareId.split('__rowid__')
+    return infos[0], infos[1]
+
+
+def uncapitalize(string):
+    """Lowerize first letter of given p_string."""
+    return string[0].lower() + string[1:]
+
+
+def normalize(string, acceptable=[]):
+    """Normalize given string :
+       - turn é to e;
+       - only keep lower letters, numbers and punctuation;
+       - lowerized."""
+    return ''.join(x for x in unicodedata.normalize('NFKD', string)
+                   if unicodedata.category(x) != 'Mn').lower().strip()
 
 
 class AdvicesUpdatedEvent(ObjectEvent):

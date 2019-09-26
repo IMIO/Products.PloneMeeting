@@ -29,4 +29,26 @@
       handler="Products.PloneMeeting.migrations.migrate_to_4_1.migrate"
       profile="Products.PloneMeeting:default" />
 
+  <genericsetup:upgradeStep
+      title="Go to PloneMeeting 4100"
+      description=""
+      source="4.1"
+      destination="4100"
+      handler="Products.PloneMeeting.migrations.migrate_to_4100.migrate"
+      profile="Products.PloneMeeting:default" />
+
+  <genericsetup:upgradeSteps
+      source="4100"
+      destination="4101"
+      profile="Products.PloneMeeting:default">
+    <genericsetup:upgradeStep
+      title="Go to PloneMeeting 4101"
+      description=""
+      handler="Products.PloneMeeting.migrations.migrate_to_4101.migrate" />
+    <genericsetup:upgradeDepends
+      title="Reapply jsregistry.xml"
+      description="This will disable inline_validation.js"
+      import_steps="jsregistry" />
+  </genericsetup:upgradeSteps>
+
 </configure>

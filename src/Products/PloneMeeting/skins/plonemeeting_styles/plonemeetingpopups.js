@@ -282,13 +282,10 @@ function advicesInfos() {
       data_parameters=['adviceType'],
       options={zIndex: 5000,
                position: 'left',
-               trigger: 'custom',
-               triggerOpen: {
-                  mouseenter: true,
-                  },
+                // do not close on mouseleave
                triggerClose: {
                   click: true,
-                  },
+                  tap: true, },
                functionReady_callback: initializeAdvicePopup,
                minWidth: 700,
                maxWidth: 700,
@@ -299,13 +296,10 @@ function advicesInfos() {
       data_parameters=['adviceType'],
       options={zIndex: 1,
                position: 'bottom',
-               trigger: 'custom',
-               triggerOpen: {
-                  mouseenter: true,
-                  },
+                // do not close on mouseleave
                triggerClose: {
                   click: true,
-                  },
+                  tap: true, },
                functionReady_callback: initializeAdvicePopup,
                minWidth: 700,
                maxWidth: 700,

@@ -1,8 +1,10 @@
 # encoding: utf-8
 
+from collective.contact.plonegroup.browser.settings import EveryOrganizationsVocabulary
 from collective.contact.plonegroup.config import get_registry_organizations
 from collective.contact.plonegroup.utils import get_organization
 from collective.contact.plonegroup.utils import get_organizations
+from collective.contact.plonegroup.utils import get_own_organization
 from collective.documentgenerator.content.vocabulary import ExistingPODTemplateFactory
 from collective.documentgenerator.content.vocabulary import MergeTemplatesVocabularyFactory
 from collective.documentgenerator.content.vocabulary import PortalTypesVocabularyFactory
@@ -12,25 +14,27 @@ from collective.eeafaceted.collectionwidget.vocabulary import CachedCollectionVo
 from collective.eeafaceted.dashboard.vocabulary import DashboardCollectionsVocabulary
 from collective.iconifiedcategory.vocabularies import CategoryTitleVocabulary
 from collective.iconifiedcategory.vocabularies import CategoryVocabulary
+from DateTime import DateTime
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from imio.annex.content.annex import IAnnex
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.content import uuidsToObjects
-from natsort import realsorted
+from natsort import humansorted
 from operator import attrgetter
 from plone import api
 from plone.memoize import ram
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import CONSIDERED_NOT_GIVEN_ADVICE_VALUE
+from Products.PloneMeeting.config import EMPTY_STRING
 from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.indexes import DELAYAWARE_ROW_ID_PATTERN
 from Products.PloneMeeting.indexes import REAL_ORG_UID_PATTERN
 from Products.PloneMeeting.interfaces import IMeetingConfig
+from Products.PloneMeeting.utils import decodeDelayAwareId
 from Products.PloneMeeting.utils import get_context_with_request
-from zope.component import queryUtility
 from zope.globalrequest import getRequest
 from zope.i18n import translate
 from zope.interface import implements
@@ -114,7 +118,7 @@ class ItemCategoriesVocabulary(object):
                            safe_unicode(category.Title())
                            )
             )
-        res = realsorted(res_active, key=attrgetter('title'))
+        res = humansorted(res_active, key=attrgetter('title'))
 
         res_not_active = []
         for category in notActiveCategories:
@@ -168,7 +172,7 @@ class ItemProposingGroupsVocabulary(object):
                            safe_unicode(active_org.get_full_title(first_index=1))
                            )
             )
-        res = realsorted(res_active, key=attrgetter('title'))
+        res = humansorted(res_active, key=attrgetter('title'))
 
         res_not_active = []
         request = getattr(context, 'REQUEST', getRequest())
@@ -183,7 +187,7 @@ class ItemProposingGroupsVocabulary(object):
                                      context=request)
                            )
             )
-        res = res + realsorted(res_not_active, key=attrgetter('title'))
+        res = res + humansorted(res_not_active, key=attrgetter('title'))
         return SimpleVocabulary(res)
 
 
@@ -221,7 +225,7 @@ class ItemProposingGroupsForFacetedFilterVocabulary(object):
                                safe_unicode(active_org.get_full_title(first_index=1))
                                )
                 )
-        res = realsorted(res_active, key=attrgetter('title'))
+        res = humansorted(res_active, key=attrgetter('title'))
 
         res_not_active = []
         for not_active_org in not_active_orgs:
@@ -237,7 +241,7 @@ class ItemProposingGroupsForFacetedFilterVocabulary(object):
                                          context=context.REQUEST)
                                )
                 )
-        res = res + realsorted(res_not_active, key=attrgetter('title'))
+        res = res + humansorted(res_not_active, key=attrgetter('title'))
         return SimpleVocabulary(res)
 
 
@@ -247,13 +251,15 @@ ItemProposingGroupsForFacetedFilterVocabularyFactory = ItemProposingGroupsForFac
 class GroupsInChargeVocabulary(object):
     implements(IVocabularyFactory)
 
-    def __call___cachekey(method, self, context):
+    def __call___cachekey(method, self, context, only_selected=True):
         '''cachekey method for self.__call__.'''
         date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.groupsinchargevocabulary')
-        return date
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        return date, cfg.getId(), only_selected
 
     @ram.cache(__call___cachekey)
-    def __call__(self, context):
+    def __call__(self, context, only_selected=False):
         """List groups in charge :
            - if groupsInCharge in MeetingConfig.usedItemAttributes,
              list MeetingConfig.orderedGroupsInCharge;
@@ -263,7 +269,7 @@ class GroupsInChargeVocabulary(object):
         res = []
         # groups in charge are defined on organizations
         if 'groupsInCharge' not in cfg.getUsedItemAttributes():
-            orgs = get_organizations(only_selected=False)
+            orgs = get_organizations(only_selected=only_selected)
             for org in orgs:
                 for group_in_charge_uid in (org.groups_in_charge or []):
                     group_in_charge = get_organization(group_in_charge_uid)
@@ -273,13 +279,13 @@ class GroupsInChargeVocabulary(object):
         else:
             # groups in charge are selected on the items
             kept_org_uids = cfg.getOrderedGroupsInCharge()
-            res = get_organizations(only_selected=False, kept_org_uids=kept_org_uids)
+            res = get_organizations(only_selected=only_selected, kept_org_uids=kept_org_uids)
 
         res = [SimpleTerm(gic.UID(),
                           gic.UID(),
                           safe_unicode(gic.get_full_title(first_index=1)))
                for gic in res]
-        res = realsorted(res, key=attrgetter('title'))
+        res = humansorted(res, key=attrgetter('title'))
 
         return SimpleVocabulary(res)
 
@@ -288,7 +294,7 @@ GroupsInChargeVocabularyFactory = GroupsInChargeVocabulary()
 
 
 class ItemGroupsInChargeVocabulary(GroupsInChargeVocabulary):
-    """Manage missing terms if context is a MeetingItem."""
+    """Manage missing terms when context is a MeetingItem."""
 
     def __call__(self, context):
         """ """
@@ -312,7 +318,26 @@ class ItemGroupsInChargeVocabulary(GroupsInChargeVocabulary):
 ItemGroupsInChargeVocabularyFactory = ItemGroupsInChargeVocabulary()
 
 
-class EveryOrganizationsAcronymsVocabulary(object):
+class PMEveryOrganizationsVocabulary(EveryOrganizationsVocabulary):
+    """ """
+
+    def __call___cachekey(method, self, context):
+        '''cachekey method for self.__call__.'''
+        date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.everyorganizationsvocabulary')
+        return date
+
+    @ram.cache(__call___cachekey)
+    def __call__(self, context):
+        return super(PMEveryOrganizationsVocabulary, self).__call__(context)
+
+    def _term_title(self, orga, parent_label):
+        # ignore parent_label
+        return orga.title
+
+PMEveryOrganizationsVocabularyFactory = PMEveryOrganizationsVocabulary()
+
+
+class EveryOrganizationsAcronymsVocabulary(EveryOrganizationsVocabulary):
     implements(IVocabularyFactory)
 
     def __call___cachekey(method, self, context):
@@ -322,20 +347,11 @@ class EveryOrganizationsAcronymsVocabulary(object):
 
     @ram.cache(__call___cachekey)
     def __call__(self, context):
-        """ """
-        orgs = get_organizations(only_selected=False)
-        res = []
-        for org in orgs:
-            org_uid = org.UID()
-            res.append(
-                SimpleTerm(org_uid,
-                           org_uid,
-                           safe_unicode(
-                               org.acronym or
-                               translate("None", domain="PloneMeeting", context=context.REQUEST))
-                           ))
-        res = realsorted(res, key=attrgetter('title'))
-        return SimpleVocabulary(res)
+        return super(EveryOrganizationsAcronymsVocabulary, self).__call__(context)
+
+    def _term_title(self, orga, parent_label):
+        # org acronym instead title
+        return orga.acronym or translate("None", domain="PloneMeeting", context=orga.REQUEST)
 
 
 EveryOrganizationsAcronymsVocabularyFactory = EveryOrganizationsAcronymsVocabulary()
@@ -399,7 +415,7 @@ class CreatorsVocabulary(object):
                                   creator,
                                   safe_unicode(value))
                        )
-        res = realsorted(res, key=attrgetter('title'))
+        res = humansorted(res, key=attrgetter('title'))
         return SimpleVocabulary(res)
 
 
@@ -435,11 +451,31 @@ class CreatorsForFacetedFilterVocabulary(object):
                                   creator,
                                   safe_unicode(value))
                        )
-        res = realsorted(res, key=attrgetter('title'))
+        res = humansorted(res, key=attrgetter('title'))
         return SimpleVocabulary(res)
 
 
 CreatorsForFacetedFilterVocabularyFactory = CreatorsForFacetedFilterVocabulary()
+
+
+class CreatorsWithNobodyForFacetedFilterVocabulary(CreatorsForFacetedFilterVocabulary):
+    """Add the 'Nobody' option."""
+
+    def __call__(self, context):
+        """ """
+        res = super(CreatorsWithNobodyForFacetedFilterVocabulary, self).__call__(context)
+        # avoid do change original list of _terms
+        res = list(res._terms)
+        res.insert(0,
+                   SimpleTerm(EMPTY_STRING,
+                              EMPTY_STRING,
+                              translate('(Nobody)',
+                                        domain='PloneMeeting',
+                                        context=context.REQUEST)))
+        return SimpleVocabulary(res)
+
+
+CreatorsWithNobodyForFacetedFilterVocabularyFactory = CreatorsWithNobodyForFacetedFilterVocabulary()
 
 
 class MeetingDatesVocabulary(object):
@@ -573,7 +609,7 @@ class AskedAdvicesVocabulary(object):
             res.append(SimpleTerm(adviser,
                                   adviser,
                                   safe_unicode(termTitle)))
-        res = realsorted(res, key=attrgetter('title'))
+        res = humansorted(res, key=attrgetter('title'))
 
         res_not_active = []
         for adviser in not_active_advisers:
@@ -588,11 +624,129 @@ class AskedAdvicesVocabulary(object):
                            adviser,
                            safe_unicode(termTitle)))
 
-        res = res + realsorted(res_not_active, key=attrgetter('title'))
+        res = res + humansorted(res_not_active, key=attrgetter('title'))
         return SimpleVocabulary(res)
 
 
 AskedAdvicesVocabularyFactory = AskedAdvicesVocabulary()
+
+
+class ItemOptionalAdvicesVocabulary(object):
+    implements(IVocabularyFactory)
+
+    def __call__(self, context, include_selected=True, include_not_selectable_values=True):
+        """p_include_selected will make sure values selected on current context are
+           in the vocabulary.  Only relevant when context is a MeetingItem.
+           p_include_not_selectable_values will include the 'not_selectable_value_...' values,
+           useful for display only most of times."""
+        request = getRequest()
+
+        def _displayDelayAwareValue(delay_label, org_title, delay):
+            org_title = safe_unicode(org_title)
+            delay_label = safe_unicode(delay_label)
+            if delay_label:
+                value_to_display = translate('advice_delay_with_label',
+                                             domain='PloneMeeting',
+                                             mapping={'org_title': org_title,
+                                                      'delay': delay,
+                                                      'delay_label': delay_label},
+                                             default='${org_title} - ${delay} day(s) (${delay_label})',
+                                             context=request)
+            else:
+                value_to_display = translate('advice_delay_without_label',
+                                             domain='PloneMeeting',
+                                             mapping={'org_title': group_name,
+                                                      'delay': delay},
+                                             default='${org_title} - ${delay} day(s)',
+                                             context=request)
+            return value_to_display
+
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+
+        resDelayAwareAdvisers = []
+        # add delay-aware optionalAdvisers
+        # validity_date is used for customAdviser validaty (date from, date to)
+        validity_date = None
+        item = None
+        if context.meta_type == 'MeetingItem':
+            validity_date = context.created()
+            item = context
+        else:
+            validity_date = DateTime()
+        delayAwareAdvisers = cfg._optionalDelayAwareAdvisers(validity_date, item)
+        if delayAwareAdvisers:
+            # a delay-aware adviser has a special id so we can handle it specifically after
+            for delayAwareAdviser in delayAwareAdvisers:
+                adviserId = "%s__rowid__%s" % \
+                            (delayAwareAdviser['org_uid'],
+                             delayAwareAdviser['row_id'])
+                delay = delayAwareAdviser['delay']
+                delay_label = delayAwareAdviser['delay_label']
+                group_name = delayAwareAdviser['org_title']
+                value_to_display = _displayDelayAwareValue(delay_label, group_name, delay)
+                resDelayAwareAdvisers.append(
+                    SimpleTerm(adviserId, adviserId, value_to_display))
+
+        resNonDelayAwareAdvisers = []
+        selectableAdvisers = cfg.getSelectableAdvisers()
+        for org_uid in selectableAdvisers:
+            org = get_organization(org_uid)
+            resNonDelayAwareAdvisers.append(
+                SimpleTerm(org_uid, org_uid, org.get_full_title()))
+
+        # make sure optionalAdvisers actually stored have their corresponding
+        # term in the vocabulary, if not, add it
+        if include_selected:
+            optionalAdvisers = context.getOptionalAdvisers()
+            if optionalAdvisers:
+                optionalAdvisersInVocab = [org_infos.token for org_infos in resNonDelayAwareAdvisers] + \
+                                          [org_infos.token for org_infos in resDelayAwareAdvisers]
+                for optionalAdviser in optionalAdvisers:
+                    if optionalAdviser not in optionalAdvisersInVocab:
+                        org = get_organization(optionalAdviser)
+                        if '__rowid__' in optionalAdviser:
+                            org_uid, row_id = decodeDelayAwareId(optionalAdviser)
+                            delay = cfg._dataForCustomAdviserRowId(row_id)['delay']
+                            delay_label = context.adviceIndex[org_uid]['delay_label']
+                            org_title = org.get_full_title()
+                            value_to_display = _displayDelayAwareValue(delay_label, org_title, delay)
+                            resDelayAwareAdvisers.append(
+                                SimpleTerm(optionalAdviser, optionalAdviser, value_to_display))
+                        else:
+                            resNonDelayAwareAdvisers.append(
+                                SimpleTerm(optionalAdviser, optionalAdviser, org.get_full_title()))
+
+        # now create the listing
+        # sort elements by value before potentially prepending a special value here under
+        # for delay-aware advisers, the order is defined in the configuration, so we do not .sortedByValue()
+        resNonDelayAwareAdvisers = humansorted(resNonDelayAwareAdvisers, key=attrgetter('title'))
+        # we add a special value at the beginning of the vocabulary
+        # if we have delay-aware advisers
+        if delayAwareAdvisers:
+            delay_aware_optional_advisers_msg = translate('delay_aware_optional_advisers_term',
+                                                          domain='PloneMeeting',
+                                                          context=request)
+            resDelayAwareAdvisers.insert(
+                0, SimpleTerm('not_selectable_value_delay_aware_optional_advisers',
+                              'not_selectable_value_delay_aware_optional_advisers',
+                              delay_aware_optional_advisers_msg))
+
+            # if we have delay-aware advisers, we add another special value
+            # that explain that under are 'normal' optional advisers
+            if selectableAdvisers:
+                non_delay_aware_optional_advisers_msg = translate('non_delay_aware_optional_advisers_term',
+                                                                  domain='PloneMeeting',
+                                                                  context=request)
+                resNonDelayAwareAdvisers.insert(
+                    0, SimpleTerm('not_selectable_value_non_delay_aware_optional_advisers',
+                                  'not_selectable_value_non_delay_aware_optional_advisers',
+                                  non_delay_aware_optional_advisers_msg))
+
+        return SimpleVocabulary(resDelayAwareAdvisers + resNonDelayAwareAdvisers)
+
+
+ItemOptionalAdvicesVocabularyFactory = ItemOptionalAdvicesVocabulary()
 
 
 class AdviceTypesVocabulary(object):
@@ -1086,11 +1240,14 @@ class PMDashboardCollectionsVocabulary(DashboardCollectionsVocabulary):
         catalog = api.portal.get_tool('portal_catalog')
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        query = {}
-        query['object_provides'] = IDashboardCollection.__identifier__
+        query = {'object_provides': {}}
+        query['object_provides']['query'] = IDashboardCollection.__identifier__
         if cfg:
             query['path'] = {'query': '/'.join(cfg.getPhysicalPath())}
             query['sort_on'] = 'sortable_title'
+        else:
+            # out of a MeetingConfig
+            query['getConfigId'] = EMPTY_STRING
         collection_brains = catalog(**query)
         vocabulary = SimpleVocabulary(
             [SimpleTerm(b.UID, b.UID, b.Title) for b in collection_brains]
@@ -1363,23 +1520,28 @@ class SelectableItemInitiatorsVocabulary(BaseHeldPositionsVocabulary):
 SelectableItemInitiatorsVocabularyFactory = SelectableItemInitiatorsVocabulary()
 
 
-class SelectableAssociatedOrganizationsVocabulary(object):
-    """Use u'collective.contact.plonegroup.organization_services' and adapt title
-       of the terms to show organizations that are in plonegroup and others that are not."""
+class SelectableAssociatedOrganizationsVocabulary(EveryOrganizationsVocabulary):
+    """Use BaseOrganizationServicesVocabulary and call it from contacts directory then
+       adapt title of the terms to show organizations that are in plonegroup and others that are not."""
     implements(IVocabularyFactory)
 
     def __call__(self, context):
         """ """
-        vocab = queryUtility(IVocabularyFactory, u'collective.contact.plonegroup.organization_services')
-        terms = vocab(None)
+        terms = super(SelectableAssociatedOrganizationsVocabulary, self).__call__(context)
         selected_orgs = get_registry_organizations()
+        own_org_uid = get_own_organization().UID()
+        res = []
         for term in terms:
+            if term.token == own_org_uid:
+                continue
             if term.value not in selected_orgs:
                 term.title = translate(msgid=u'${term_title} (Not selected in plonegroup)',
                                        domain='PloneMeeting',
                                        mapping={'term_title': term.title, },
                                        context=context.REQUEST)
-        return SimpleVocabulary(terms)
+            res.append(term)
+        res = humansorted(res, key=attrgetter('title'))
+        return SimpleVocabulary(res)
 
 
 SelectableAssociatedOrganizationsVocabularyFactory = SelectableAssociatedOrganizationsVocabulary()
@@ -1389,28 +1551,32 @@ class AssociatedGroupsVocabulary(object):
     """ """
     implements(IVocabularyFactory)
 
-    def __call___cachekey(method, self, context):
+    def __call___cachekey(method, self, context, sort=True):
         '''cachekey method for self.__call__.'''
         date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.associatedgroupsvocabulary')
-        return date
+        return date, sort
 
     @ram.cache(__call___cachekey)
-    def __call__(self, context):
+    def __call__(self, context, sort=True):
         """ """
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        orderedAssociatedOrganizations = cfg.getOrderedAssociatedOrganizations()
-        if orderedAssociatedOrganizations:
+        # selectable associated groups defined in MeetingConfig?
+        is_using_cfg_order = False
+        if cfg.getOrderedAssociatedOrganizations():
+            is_using_cfg_order = True
             orgs = list(cfg.getOrderedAssociatedOrganizations(theObjects=True))
         else:
-            orgs = get_organizations()
+            # if not then every selected organizations of plonegroup
+            orgs = get_organizations(only_selected=True)
 
         terms = []
         for org in orgs:
             org_uid = org.UID()
             terms.append(SimpleTerm(org_uid, org_uid, org.get_full_title()))
 
-        terms = realsorted(terms, key=attrgetter('title'))
+        if sort or not is_using_cfg_order:
+            terms = humansorted(terms, key=attrgetter('title'))
         return SimpleVocabulary(terms)
 
 
@@ -1423,7 +1589,12 @@ class ItemAssociatedGroupsVocabulary(AssociatedGroupsVocabulary):
 
     def __call__(self, context):
         """ """
-        terms = super(ItemAssociatedGroupsVocabulary, self).__call__(context)._terms
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        sort = True
+        if 'associatedGroups' in cfg.getItemFieldsToKeepConfigSortingFor():
+            sort = False
+        terms = super(ItemAssociatedGroupsVocabulary, self).__call__(context, sort=sort)._terms
         # when used on an item, manage missing terms, selected on item
         # but removed from orderedAssociatedOrganizations or from plonegroup
         stored_terms = context.getAssociatedGroups()

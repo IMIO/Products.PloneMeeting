@@ -26,7 +26,8 @@
                                   usedMeetingAttrs meetingConfig/getUsedMeetingAttributes;
                                   bilingual python: 'secondLanguage' in tool.getModelAdaptations();
                                   portal context/plone_portal_state/portal;
-                                  context_url context/absolute_url">
+                                  context_url context/absolute_url;
+                                  showAdvices python: context.adapted().showAdvices()">
 
     <script language="javascript"
             tal:content="python: 'ploneEditor = \'%s\';' % (member.getProperty('wysiwyg_editor') or here.portal_properties.site_properties.default_editor)">
@@ -39,22 +40,23 @@
 
     <table width="100%" border="0" class="item-infos">
       <tr valign="top">
-        <td width="50%" style="padding-right: 0.5em;">
+        <td width="50%" style="padding-right: 0.5em;" tal:define="proposingGroup python: context.getProposingGroup(theObject=True)">
 
             <tal:comment replace="nothing">Proposing group (when proposingGroupWithGroupInCharge is not used)</tal:comment>
             <div class="discreet" tal:condition="python: not 'proposingGroupWithGroupInCharge' in usedAttrs">
                 <span class="item_attribute_label"
                       i18n:translate="PloneMeeting_label_proposingGroup"></span>:&nbsp;&nbsp;
-                <span metal:use-macro="python: here.widget('proposingGroup', mode='view')" />
-                <span tal:condition="not: context/getProposingGroup">-</span>
+                <span tal:condition="nocall:proposingGroup"
+                      tal:content="proposingGroup/Title" />
+                <span tal:condition="not:nocall:proposingGroup">-</span>
             </div>
 
             <tal:comment replace="nothing">Proposing group (when proposingGroupWithGroupInCharge is used)</tal:comment>
             <div class="discreet" tal:condition="python: 'proposingGroupWithGroupInCharge' in usedAttrs">
                 <span class="item_attribute_label"
                       i18n:translate="PloneMeeting_label_proposingGroupWithGroupInCharge"></span>:&nbsp;&nbsp;
-                <span metal:use-macro="python: here.widget('proposingGroupWithGroupInCharge', mode='view')" />
-                <span tal:condition="not: context/getProposingGroup">-</span>
+                <span tal:content="proposingGroup/Title" />&nbsp;(<span tal:content="python: context.getGroupsInCharge(theObjects=True, first=True).Title()" />)
+                <span tal:condition="not:nocall:proposingGroup">-</span>
             </div>
 
             <tal:comment replace="nothing">Groups in charge</tal:comment>
@@ -99,6 +101,20 @@
                 <span tal:condition="nocall:cat" tal:content="cat/Title"></span>
             </div>
             </tal:category>
+
+            <tal:comment replace="nothing">Advices</tal:comment>
+            <div class="discreet" tal:condition="showAdvices"
+                                  tal:define="advisers context/displayAdvisers;">
+                <span class="item_attribute_label"
+                      i18n:translate="PloneMeeting_label_optionalAdvisers"></span>:&nbsp;&nbsp;
+                <tal:displayAdvisers condition="advisers">
+                    <span tal:replace="structure advisers">Advisers</span>
+                </tal:displayAdvisers>
+                <span tal:condition="not: advisers">-</span>
+                — <a class="discreet"
+                     tal:attributes="href string:${context_url}#advices"
+                     i18n:translate="legend_details" i18n:domain="plone">Details</a>
+            </div>
 
             <tal:comment replace="nothing">Copy groups for this item</tal:comment>
             <div class="discreet" tal:condition="context/isCopiesEnabled"
@@ -295,14 +311,11 @@
             <tal:comment replace="nothing">Preferred meeting</tal:comment>
             <div class="discreet">
                 <span class="item_attribute_label" i18n:translate="PloneMeeting_label_preferredMeeting"></span>:&nbsp;&nbsp;
-                <span tal:define="meetings python:here.portal_catalog(UID=here.getPreferredMeeting())">
-                <span tal:condition="meetings">
-                    <tal:block define="meeting python:meetings[0].getObject();">
-                      <tal:link tal:replace="structure meeting/getPrettyLink">
-                      </tal:link>
-                    </tal:block>
+                <span tal:define="preferred_meeting python:context.getPreferredMeeting(theObject=True)">
+                <span tal:condition="nocall:preferred_meeting">
+                      <tal:link tal:replace="structure preferred_meeting/getPrettyLink" />
                 </span>
-                <span tal:condition="not: meetings">-
+                <span tal:condition="not: nocall:preferred_meeting">-
                 </span>
               </span>
             </div>
@@ -315,7 +328,7 @@
                   <tal:link tal:replace="structure meeting/getPrettyLink">
                   </tal:link>
               </tal:hasMeeting>
-              <span tal:condition="python: not meeting">-</span>
+              <span tal:condition="not:nocall:meeting">-</span>
             </div>
 
             <tal:comment replace="nothing">List type</tal:comment>
@@ -453,8 +466,7 @@
     <tal:comment replace="nothing">Annexes and advices</tal:comment>
     <a name="adviceAndAnnexes"></a>
     <table width="100%" cellpadding="1" cellspacing="1"
-           tal:define="showAnnexes python: tool.showAnnexesTab(context);
-                       showAdvices python: context.adapted().showAdvices()"
+           tal:define="showAnnexes python: tool.showAnnexesTab(context)"
             tal:condition="python: showAnnexes or showAdvices">
         <tr style="vertical-align: top;">
           <tal:annexes condition="showAnnexes">
@@ -466,9 +478,9 @@
             </td>
           </tal:annexes>
           <tal:comment replace="nothing">Advices</tal:comment>
-          <td id="itemAdvicesCell" tal:condition="python: context.adapted().showAdvices()">
+          <td id="itemAdvicesCell" tal:condition="showAdvices">
               <fieldset class="section_advices" tal:define="meetingItem python: context">
-              <legend i18n:translate="PloneMeeting_label_advices">Advices</legend>
+              <legend><a name="advices" i18n:translate="PloneMeeting_label_advices">Advices</a></legend>
                   <tal:advice replace="structure context/@@advices-icons" />
               </fieldset>
           </td>
@@ -519,7 +531,25 @@
       <tal:itemNavigation replace="structure context/@@item-navigation-widget" />
     </tal:itemNavigation>
 
-       </metal:body_macro>
+    <tal:comment replace="nothing">Fields that appear only if the item is defined in a configuration</tal:comment>
+    <tal:itemInConfig condition="context/isDefinedInTool">
+      <tal:templateUsingGroups condition="python: context.isDefinedInTool(item_type='itemtemplate')">
+        <div class="discreet itemtemplate-infos">
+         <span class="item_attribute_label" i18n:translate="PloneMeeting_label_templateUsingGroups">Template using groups</span>:&nbsp;&nbsp;
+         <span metal:use-macro="python: here.widget('templateUsingGroups', mode='view')" />
+        </div>
+      </tal:templateUsingGroups>
+
+      <tal:transitionsForRecurring condition="python: context.isDefinedInTool(item_type='recurring')">
+        <div class="discreet recurringitem-infos">
+         <span class="item_attribute_label" i18n:translate="PloneMeeting_label_meetingTransitionInsertingMe">Meeting transition inserting me</span>:&nbsp;&nbsp;
+         <span metal:use-macro="python: here.widget('meetingTransitionInsertingMe', mode='view')" />
+        </div>
+      </tal:transitionsForRecurring>
+
+    </tal:itemInConfig>
+
+    </metal:body_macro>
     </metal:fill>
   </body>
 </html>

@@ -8,8 +8,9 @@
 #
 # GNU General Public License (GPL)
 #
-
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
+from collective.documentgenerator.config import set_raiseOnError_for_non_managers
+from collective.documentgenerator.config import set_use_stream
 from collective.messagesviewlet.utils import add_message
 from dexterity.localroles.utils import add_fti_configuration
 from eea.facetednavigation.interfaces import ICriteria
@@ -24,6 +25,7 @@ from Products.cron4plone.browser.configlets.cron_configuration import ICronConfi
 from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_REAPPLY
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import CKEDITOR_MENUSTYLES_CUSTOMIZED_MSG
+from Products.PloneMeeting.config import HAS_SOLR
 from Products.PloneMeeting.config import HAS_ZAMQP
 from Products.PloneMeeting.config import ManageOwnOrganizationFields
 from Products.PloneMeeting.utils import cleanMemoize
@@ -31,6 +33,7 @@ from zope.component import queryUtility
 from zope.i18n import translate
 
 import logging
+import os
 
 
 __author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
@@ -147,6 +150,7 @@ def postInstall(context):
         return
     site = context.getSite()
 
+    activate_solr_and_reindex_if_available(site)
     # Create or update indexes
     addOrUpdateIndexes(site, indexInfos)
     addOrUpdateColumns(site, columnInfos)
@@ -300,22 +304,13 @@ def postInstall(context):
            api.content.get_state(browser_warn_msg) != 'activated':
             api.content.transition(browser_warn_msg, 'activate')
 
-    # collective.documentgenerator : enable raiseOnError_for_non_managers and set columnModifier to optimize
-    # temporary fix until collective.documentgenerator is released
-    try:
-        api.portal.set_registry_record(
-            'collective.documentgenerator.browser.controlpanel.'
-            'IDocumentGeneratorControlPanelSchema.column_modifier',
-            'optimize')
-    except api.exc.InvalidParameterError:
-        api.portal.set_registry_record(
-            'collective.documentgenerator.browser.controlpanel.'
-            'IDocumentGeneratorControlPanelSchema.optimize_tables',
-            True)
+    # collective.documentgenerator : change some default values
     api.portal.set_registry_record(
         'collective.documentgenerator.browser.controlpanel.'
-        'IDocumentGeneratorControlPanelSchema.raiseOnError_for_non_managers',
-        True)
+        'IDocumentGeneratorControlPanelSchema.column_modifier',
+        'optimize')
+    set_raiseOnError_for_non_managers(True)
+    set_use_stream(False)
 
     # create contacts directory and plonegroup-organization
     if not base_hasattr(site, 'contacts'):
@@ -339,8 +334,13 @@ def postInstall(context):
             acquire=0)
         # contacts dashboards
         add_orgs_searches(site, add_contact_lists_collections=False)
-        # post-configuration, show the "In/out plonegroup organization" filter
+        # post-configuration
         orgs_searches_folder = contacts.get('orgs-searches')
+        # hide the 'review_state' column for orgs related collections
+        for org_coll in orgs_searches_folder.objectValues():
+            org_coll.customViewFields = [col_name for col_name in org_coll.customViewFields
+                                         if col_name != u'review_state']
+        # show the "In/out plonegroup organization" filter
         orgs_searches_folder_criteria = ICriteria(orgs_searches_folder)
         own_org_criterion = orgs_searches_folder_criteria.get('c5')
         own_org_criterion.section = 'default'
@@ -361,6 +361,36 @@ def postInstall(context):
 
     # reorder css
     _reorderCSS(site)
+
+
+def activate_solr_and_reindex_if_available(site):
+    if HAS_SOLR:
+        """ activate solr indexing and reindex the existing content """
+        from collective.solr.utils import activate
+        if not site.portal_quickinstaller.isProductInstalled('collective.solr'):
+            site.portal_setup.runAllImportStepsFromProfile('profile-collective.solr:default')
+
+        solr_activated = api.portal.get_registry_record('collective.solr.active')
+        if solr_activated:
+            return
+        activate(True)
+        api.portal.set_registry_record('collective.solr.required', [u''])
+        port = int(os.environ['SOLR_PORT'])
+        api.portal.set_registry_record('collective.solr.port', port)
+        import transaction
+        transaction.savepoint()
+        catalog = api.portal.get_tool('portal_catalog')
+        catalog.clearFindAndRebuild()
+        transaction.savepoint()
+        response = site.REQUEST.RESPONSE
+        original = response.write
+        response.write = lambda x: x  # temporarily ignore output
+        maintenance = site.unrestrictedTraverse("@@solr-maintenance")
+        maintenance.clear()
+        transaction.savepoint()
+        maintenance.reindex()
+        response.write = original
+        transaction.savepoint()
 
 
 def _configureCKeditor(site):

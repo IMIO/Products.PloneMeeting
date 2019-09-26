@@ -5,6 +5,7 @@ from collective.fingerpointing.config import AUDIT_MESSAGE
 from collective.fingerpointing.logger import log_info
 from collective.fingerpointing.utils import get_request_information
 from imio.actionspanel.utils import findViewableURL
+from imio.helpers.content import get_vocab
 from plone import api
 from plone.autoform import directives
 from plone.autoform.form import AutoExtensibleForm
@@ -88,7 +89,11 @@ class AdviceRemoveInheritanceForm(AutoExtensibleForm, form.EditForm):
         if data['inherited_advice_action'] == 'ask_locally':
             if self.context.showOptionalAdvisers():
                 optionalAdvisers = list(self.context.getOptionalAdvisers())
-                if data['advice_uid'] in self.context.listOptionalAdvisers().keys():
+                advisers_vocab = get_vocab(
+                    self.context,
+                    self.context.getField('optionalAdvisers').vocabulary_factory,
+                    **{'include_selected': False, 'include_not_selectable_values': False})
+                if data['advice_uid'] in advisers_vocab:
                     optionalAdvisers = list(self.context.getOptionalAdvisers())
                     if data['advice_uid'] not in optionalAdvisers:
                         optionalAdvisers.append(data['advice_uid'])

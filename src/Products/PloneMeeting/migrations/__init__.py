@@ -15,6 +15,7 @@
    through the ZMI. Every migration function corresponds to a import step in
    portal_setup.'''
 
+from collective.behavior.talcondition.behavior import ITALCondition
 from DateTime import DateTime
 from imio.helpers.catalog import addOrUpdateColumns
 from imio.helpers.catalog import addOrUpdateIndexes
@@ -94,13 +95,6 @@ class Migrator(BaseMigrator):
         cke_props = self.portal.portal_properties.ckeditor_properties
         cke_props.menuStyles = self.menuStyles
 
-    def reindexIndexes(self, idxs=[]):
-        """Reindex given p_idxs."""
-        for idx in idxs:
-            logger.info('Reindexing the "{0}" index...'.format(idx))
-            self.portal.portal_catalog.reindexIndex(name=idx, REQUEST=None)
-        logger.info('Done.')
-
     def getWorkflows(self, meta_types=['Meeting',
                                        'MeetingItem',
                                        'MeetingItemTemplate',
@@ -120,22 +114,23 @@ class Migrator(BaseMigrator):
                   for portal_type in portal_types]
         return wf_ids
 
-    def addCatalogIndexesAndColumns(self, indexes=True, columns=True):
+    def addCatalogIndexesAndColumns(self, indexes=True, columns=True, update_metadata=True):
         """ """
         if indexes:
             addOrUpdateIndexes(self.portal, indexInfos)
         if columns:
-            addOrUpdateColumns(self.portal, columnInfos)
+            addOrUpdateColumns(self.portal, columnInfos, update_metadata=update_metadata)
 
     def updateTALConditions(self, old_word, new_word):
         """Update every elements having a tal_condition, replace given old_word by new_word."""
         for brain in api.content.find(
                 object_provides='collective.behavior.talcondition.interfaces.ITALConditionable'):
             obj = brain.getObject()
-            tal_condition = obj.tal_condition
+            adapted = ITALCondition(obj)
+            tal_condition = adapted.get_tal_condition()
             if tal_condition and old_word in tal_condition:
                 tal_condition = tal_condition.replace(old_word, new_word)
-                obj.tal_condition = tal_condition
+                adapted.set_tal_condition(tal_condition)
 
     def updateHolidays(self):
         '''Update holidays using default holidays.'''
@@ -151,6 +146,7 @@ class Migrator(BaseMigrator):
             if defaultHoliday not in currentHolidays and \
                DateTime(defaultHoliday) > highestStoredHoliday:
                 storedHolidays.append({'date': defaultHoliday})
+                logger.info('Adding {0} to holidays'.format(defaultHoliday))
         self.tool.setHolidays(storedHolidays)
         logger.info('Done.')
 

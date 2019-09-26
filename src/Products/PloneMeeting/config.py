@@ -33,6 +33,12 @@ try:
 except pkg_resources.DistributionNotFound:
     HAS_ZAMQP = False
 
+HAS_SOLR = True
+try:
+    pkg_resources.get_distribution('collective.solr')
+except pkg_resources.DistributionNotFound:
+    HAS_SOLR = False
+
 __author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
 <g.bastien@imio.be>, Stephan GEULETTE <s.geulette@imio.be>"""
 __docformat__ = 'plaintext'
@@ -319,9 +325,21 @@ ITEM_INSERT_METHODS = OrderedDict((
     ('on_other_mc_to_clone_to', ['field_meetingConfigsToCloneTo']),
     # according to poll type;
     ('on_poll_type', ['field_usedPollTypes']),
+    # alphabetically according to MeetingItem.title field content
+    ('on_item_title', []),
+    # alphabetically according to MeetingItem.decision field content first words
+    ('on_item_decision_first_words', []),
+    # alphabetically according to MeetingItem.Creator member fullname
+    ('on_item_creator', []),
 ))
 
+INSERTING_ON_ITEM_DECISION_FIRST_WORDS_NB = 5
+
 ITEM_TRANSITION_WHEN_RETURNED_FROM_PROPOSING_GROUP_AFTER_CORRECTION = 'accept'
+
+EMPTY_STRING = '__empty_string__'
+
+EXECUTE_EXPR_VALUE = 'execute_tal_expression'
 
 
 def registerClasses():

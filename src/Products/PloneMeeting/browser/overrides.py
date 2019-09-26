@@ -31,6 +31,7 @@ from imio.actionspanel.browser.views import ActionsPanelView
 from imio.annex import utils as imio_annex_utils
 from imio.dashboard.browser.overrides import IDRenderCategoryView
 from imio.dashboard.interfaces import IContactsDashboard
+from imio.helpers.cache import get_cachekey_volatile
 from imio.history import utils as imio_history_utils
 from imio.history.browser.views import IHContentHistoryView
 from imio.history.browser.views import IHDocumentBylineViewlet
@@ -54,6 +55,7 @@ from Products.CMFPlone.utils import safe_unicode
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from Products.PloneMeeting import utils as pm_utils
 from Products.PloneMeeting.config import BARCODE_INSERTED_ATTR_ID
+from Products.PloneMeeting.config import EMPTY_STRING
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.interfaces import IMeeting
 from Products.PloneMeeting.utils import get_annexes
@@ -168,10 +170,11 @@ class PloneMeetingContentActionsViewlet(ContentActionsViewlet):
            self.context.portal_type in (
             'ContentCategoryConfiguration', 'ContentCategoryGroup',
             'ConfigurablePODTemplate', 'DashboardPODTemplate',
-            'directory', 'organization', 'person', 'held_position') or \
+            'organization', 'person', 'held_position') or \
            self.context.portal_type.startswith(('meetingadvice',)) or \
            self.context.portal_type.endswith(('ContentCategory', 'ContentSubcategory',)) or \
-           IContactsDashboard.providedBy(self.context):
+           IContactsDashboard.providedBy(self.context) or \
+           (self.context.portal_type == 'directory' and self.view.__name__ != 'folder_contents'):
             return ''
         return self.index()
 
@@ -249,6 +252,9 @@ class PMConfigActionsPanelViewlet(ActionsPanelViewlet):
             url = '{0}?pageName=data#annexes_types'.format(cfg_url, )
         elif self.context.portal_type in ('person', 'held_position', 'organization'):
             url = parent.absolute_url()
+        elif self.context.portal_type == 'DashboardPODTemplate' and not cfg:
+            portal = api.portal.get()
+            url = portal.contacts.absolute_url()
         else:
             # We are in a subobject from the tool or on the PLONEGROUP_ORG
             url = tool_url
@@ -259,11 +265,11 @@ class PMConfigActionsPanelViewlet(ActionsPanelViewlet):
 class BaseGeneratorLinksViewlet(object):
     """ """
 
-    def getAvailableMailingLists(self, template_uid):
+    def getAvailableMailingLists(self, pod_template):
         '''Gets the names of the (currently active) mailing lists defined for
            this template.'''
         tool = api.portal.get_tool('portal_plonemeeting')
-        return tool.getAvailableMailingLists(self.context, template_uid)
+        return tool.getAvailableMailingLists(self.context, pod_template)
 
     def displayStoreAsAnnexSection(self):
         """ """
@@ -321,9 +327,8 @@ class PMDocumentGeneratorLinksViewlet(DocumentGeneratorLinksViewlet, BaseGenerat
         """ """
         return True
 
-    def may_store_as_annex(self, pod_template_uid):
+    def may_store_as_annex(self, pod_template):
         """By default only (Meeting)Managers are able to store a generated document as annex."""
-        pod_template = api.content.find(UID=pod_template_uid)[0].getObject()
         if not pod_template.store_as_annex:
             return False
         tool = api.portal.get_tool('portal_plonemeeting')
@@ -355,15 +360,17 @@ class PMDashboardDocumentGeneratorLinksViewlet(DashboardDocumentGeneratorLinksVi
     def get_all_pod_templates(self):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
-        if not cfg:
-            return []
+        query = {'object_provides': {'query': IDashboardPODTemplate.__identifier__},
+                 'sort_on': 'getObjPositionInParent'}
+        # filter on MeetingConfig if we are in it
+        if cfg:
+            query['path'] = {'query': '/'.join(cfg.getPhysicalPath())}
+        else:
+            # out of a MeetingConfig
+            query['getConfigId'] = EMPTY_STRING
+
         catalog = api.portal.get_tool('portal_catalog')
-        brains = catalog.unrestrictedSearchResults(
-            object_provides=IDashboardPODTemplate.__identifier__,
-            # PloneMeeting, just added following line
-            path={'query': '/'.join(cfg.getPhysicalPath())},
-            sort_on='getObjPositionInParent'
-        )
+        brains = catalog.unrestrictedSearchResults(**query)
         pod_templates = [self.context.unrestrictedTraverse(brain.getPath()) for brain in brains]
 
         return pod_templates
@@ -437,7 +444,7 @@ class PMRenderTermView(RenderTermPortletView):
 
     def __call__(self, term, category, widget):
         rendered_term = super(PMRenderTermView, self).__call__(term, category, widget)
-        # display the searchallmeetings as a selection list
+        # display the searchallmeetings/searchlastdecisions as a selection list
         if self.context.getId() in ['searchallmeetings', 'searchlastdecisions']:
             rendered_term = "<div id='async_search_term_{0}' class='loading' data-collection_uid='{0}'>" \
                 "<img src='{1}/spinner_small.gif' /></div>".format(
@@ -561,11 +568,12 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
         if self.context.queryState() == 'validated':
             isPresentable = self.context.wfConditions().mayPresent()
 
+        # check also portal_url in case application is accessed thru different URI
         return (self.context.UID(), self.context.modified(), self.context.adviceIndex, cfg_modified,
                 userGroups, annotations,
                 meetingModified, useIcons, showTransitions, appendTypeNameToTransitionLabel, showEdit,
                 showOwnDelete, showActions, showAddContent, showHistory, showHistoryLastEventHasComments,
-                showArrows, isPresentable, kwargs)
+                showArrows, isPresentable, self.portal_url, kwargs)
 
     @ram.cache(__call___cachekey)
     def __call__(self,
@@ -643,15 +651,14 @@ class MeetingActionsPanelView(BaseActionsPanelView):
         cfg = self.tool.getMeetingConfig(self.context)
         cfg_modified = cfg.modified()
         userGroups = self.tool.get_plone_groups_for_user()
-        invalidate_meeting_actions_panel_cache = False
-        if hasattr(self.context, 'invalidate_meeting_actions_panel_cache'):
-            invalidate_meeting_actions_panel_cache = True
-            delattr(self.context, 'invalidate_meeting_actions_panel_cache')
+        date = get_cachekey_volatile(
+            'Products.PloneMeeting.Meeting.UID.{0}'.format(self.context.UID()))
+        # check also portal_url in case application is accessed thru different URI
         return (self.context.UID(), self.context.modified(), self.context.getRawItems(), cfg_modified,
-                userGroups, invalidate_meeting_actions_panel_cache,
+                userGroups, date,
                 useIcons, showTransitions, appendTypeNameToTransitionLabel, showEdit,
                 showOwnDelete, showActions, showAddContent, showHistory, showHistoryLastEventHasComments,
-                showArrows, kwargs)
+                showArrows, self.portal_url, kwargs)
 
     @ram.cache(__call___cachekey)
     def __call__(self,
@@ -831,7 +838,9 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
             # imio.history utils
             'imio_history_utils': imio_history_utils,
             # make methods defined in utils available
-            'utils': pm_utils
+            # kept as 'utils' for backward compatibility, but we should use 'pm_utils'
+            'utils': pm_utils,
+            'pm_utils': pm_utils
         }
         return specific_context
 
@@ -846,6 +855,7 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
         """ """
         generated_template = super(PMDocumentGenerationView, self).generate_and_download_doc(pod_template,
                                                                                              output_format)
+
         # check if we have to send this generated POD template or to render it
         if self.request.get('mailinglist_name'):
             return self._sendPodTemplate(generated_template)
@@ -884,7 +894,7 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
             self.context,
             self.request,
             None,
-            None).may_store_as_annex(pod_template.UID())
+            None).may_store_as_annex(pod_template)
         if not may_store_as_annex:
             raise Unauthorized
 
@@ -1045,12 +1055,11 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
         tool = api.portal.get_tool('portal_plonemeeting')
         # Preamble: ensure that the mailingList is really active.
         mailinglist_name = safe_unicode(self.request.get('mailinglist_name'))
-        if mailinglist_name not in tool.getAvailableMailingLists(
-                self.context, template_uid=self.request.get('template_uid')):
+        pod_template = self.get_pod_template(self.request.get('template_uid'))
+        if mailinglist_name not in tool.getAvailableMailingLists(self.context, pod_template):
             raise Unauthorized
         # Retrieve mailing list recipients
         recipients = []
-        pod_template = self.get_pod_template(self.request.get('template_uid'))
         mailing_lists = pod_template.mailing_lists and pod_template.mailing_lists.strip()
         for line in mailing_lists.split('\n'):
             name, condition, values = line.split(';')

@@ -7,11 +7,13 @@
 # GNU General Public License (GPL)
 #
 
+from collective.contact.core.content.organization import IOrganization
 from DateTime import DateTime
 from imio.history.interfaces import IImioHistory
 from OFS.interfaces import IItem
 from plone import api
 from plone.indexer import indexer
+from Products.PloneMeeting.config import EMPTY_STRING
 from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
@@ -34,7 +36,19 @@ def getConfigId(obj):
     """
     tool = api.portal.get_tool('portal_plonemeeting')
     cfg = tool.getMeetingConfig(obj)
-    return cfg and cfg.getId() or _marker
+    return cfg and cfg.getId() or EMPTY_STRING
+
+
+@indexer(IMeetingItem)
+def getTakenOverBy(obj):
+    """
+      Indexes the takenOverBy with a special value when empty,
+      in faceted filters, query on empty value is ignored...
+    """
+    takenOverBy = obj.getTakenOverBy()
+    if not takenOverBy:
+        takenOverBy = EMPTY_STRING
+    return takenOverBy
 
 
 @indexer(IMeeting)
@@ -365,3 +379,10 @@ def indexAdvisers(obj):
     res = list(set(res))
     res.sort()
     return res
+
+
+@indexer(IOrganization)
+def get_full_title(obj):
+    '''By default we hide the "My organization" level, but not in the indexed
+       value as it is used in the contact widget.'''
+    return obj.get_full_title(force_separator=True)

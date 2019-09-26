@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from collective.contact.core import _ as _ccc
 from collective.contact.core.content.held_position import HeldPosition
 from collective.contact.core.content.held_position import IHeldPosition
-from collective.contact.core.schema import ContactChoice
 from collective.contact.core.utils import get_gender_and_number
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from collective.excelexport.exportables.dexterityfields import get_exportable_for_fieldname
@@ -12,8 +10,8 @@ from plone.dexterity.schema import DexteritySchemaPolicy
 from plone.supermodel import model
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.config import PMMessageFactory as _
-from Products.PloneMeeting.content.source import PMContactSourceBinder
 from Products.PloneMeeting.utils import plain_render
+from Products.PloneMeeting.utils import uncapitalize
 from z3c.form.browser.checkbox import CheckBoxFieldWidget
 from zope.globalrequest import getRequest
 from zope.i18n import translate
@@ -24,16 +22,6 @@ import zope.schema
 
 class IPMHeldPosition(IHeldPosition):
     """ """
-
-    # override position to use a select list restricted to orgs out of PLONEGROUP_ORG
-    position = ContactChoice(
-        title=_ccc("Organization/Position"),
-        description=_("Select an organization, most of time, there is one single organization, "
-                      "search for \"My organization\"."),
-        source=PMContactSourceBinder(),
-        required=True,
-    )
-
     form.order_before(position_type='start_date')
     position_type = zope.schema.Choice(
         title=_("Position type"),
@@ -43,6 +31,15 @@ class IPMHeldPosition(IHeldPosition):
                       "(element <a href='../../contacts/edit' target='_blank'>\"edit contacts\"</a>)."),
         vocabulary="PositionTypes",
         required=True,
+    )
+
+    form.order_after(secondary_position_type='position_type')
+    secondary_position_type = zope.schema.Choice(
+        title=_("Secondary position type"),
+        description=_("Select a secondary position type if necessary. "
+                      "Will work the same way as field \"Position type\" here above."),
+        vocabulary="PositionTypes",
+        required=False,
     )
 
     form.widget('usages', CheckBoxFieldWidget, multiple='multiple')
@@ -70,18 +67,18 @@ class IPMHeldPosition(IHeldPosition):
 
     model.fieldset('held_position_app_parameters',
                    label=_(u"Application parameters"),
-                   fields=['position', 'label', 'position_type', 'start_date', 'end_date',
+                   fields=['position', 'label', 'position_type', 'secondary_position_type', 'start_date', 'end_date',
                            'usages', 'defaults', 'signature_number'])
 
 
 class PMHeldPosition(HeldPosition):
     """Override HeldPosition to add some fields and methods."""
 
-    def get_label(self):
+    def get_label(self, position_type_attr='position_type'):
         """Override get_label to use position_type if label is empty."""
         value = self.label
         if not value:
-            values = self.gender_and_number_from_position_type()
+            values = self.gender_and_number_from_position_type(position_type_attr=position_type_attr)
             gender = self.get_person().gender
             if gender == 'M':
                 value = values['MS']
@@ -165,10 +162,10 @@ class PMHeldPosition(HeldPosition):
             person_held_position_label = u", {0}".format(held_position_label)
         return u'{0}{1} {2}{3}'.format(person_title, firstname, person.lastname, person_held_position_label)
 
-    def gender_and_number_from_position_type(self):
+    def gender_and_number_from_position_type(self, position_type_attr='position_type'):
         """Split the position_type and generates a dict with gender and number possibilities."""
-        value = get_exportable_for_fieldname(self, 'position_type', getRequest()).render_value(self)
-        values = value and value.split('|') or ['', '', '', '']
+        value = get_exportable_for_fieldname(self, position_type_attr, getRequest()).render_value(self)
+        values = value and value.split('|') or [u'', u'', u'', u'']
         if len(values) > 1:
             res = {'MS': values[0],
                    'MP': values[1],
@@ -181,7 +178,12 @@ class PMHeldPosition(HeldPosition):
                    'FP': values[0]}
         return res
 
-    def get_prefix_for_gender_and_number(self, value=None, include_value=False, use_by=False, use_to=False):
+    def get_prefix_for_gender_and_number(self,
+                                         include_value=False,
+                                         include_person_title=False,
+                                         use_by=False,
+                                         use_to=False,
+                                         position_type_attr='position_type'):
         """Get prefix to use depending on given value."""
         value_starting_vowel = {'MS': u'L\'',
                                 'MP': u'Les ',
@@ -230,8 +232,11 @@ class PMHeldPosition(HeldPosition):
                                     'TFP': u'aux ',
                                     }
 
+        res = u''
+        value = self.get_label(position_type_attr=position_type_attr)
         if not value:
-            value = self.get_label()
+            return res
+
         # startswith vowel or consonant?
         first_letter = safe_unicode(value[0])
         # turn "é" to "e"
@@ -240,12 +245,16 @@ class PMHeldPosition(HeldPosition):
             mappings = value_starting_vowel
         else:
             mappings = value_starting_consonant
-        values = {k: v for k, v in self.gender_and_number_from_position_type().items()
+        values = {k: v for k, v in self.gender_and_number_from_position_type(position_type_attr).items()
                   if v == value}
         res = values and mappings.get(get_gender_and_number(
-            [self.get_person()], use_by=use_by, use_to=use_to), '') or ''
+            [self.get_person()], use_by=use_by, use_to=use_to), u'') or u''
         if include_value:
             res = u'{0}{1}'.format(res, value)
+        if include_person_title:
+            # we lowerize first letter of res
+            res = uncapitalize(res)
+            res = u'{0} {1}'.format(self.person_title, res)
         return res
 
 

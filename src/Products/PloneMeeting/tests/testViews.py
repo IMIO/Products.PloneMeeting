@@ -1,26 +1,4 @@
 # -*- coding: utf-8 -*-
-#
-# File: testViews.py
-#
-# Copyright (c) 2015 by Imio.be
-#
-# GNU General Public License (GPL)
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
-# 02110-1301, USA.
-#
 
 from AccessControl import Unauthorized
 from collective.contact.plonegroup.utils import get_own_organization
@@ -115,6 +93,18 @@ class testViews(PloneMeetingTestCase):
         # one item created in the user pmFolder
         self.assertEqual(len(pmFolder.objectValues('MeetingItem')), 1)
         self.assertEqual(pmFolder.objectValues('MeetingItem')[0].getId(), itemTemplate.getId)
+
+    def test_pm_ItemTemplateView(self):
+        '''As some fields behaves differently on an item template,
+           check that the view is still working correctly, for example if 'proposingGroup' is empty
+           (possible on an item template but not on a item in the application).'''
+        self.changeUser('siteadmin')
+        cfg = self.meetingConfig
+        itemTemplates = self.portal.portal_catalog(
+            portal_type=cfg.getItemTypeName(configType='MeetingItemTemplate'))
+        for brain in itemTemplates:
+            itemTemplate = brain.getObject()
+            itemTemplate()
 
     def test_pm_CreateItemFromTemplate(self):
         '''Test the createItemFromTemplate functionnality triggered from the plonemeeting portlet.'''
@@ -469,21 +459,21 @@ class testViews(PloneMeetingTestCase):
         template = self.meetingConfig.podtemplates.itemTemplate
         # no mailing lists for now
         self.assertEqual(template.mailing_lists, u'')
-        self.failIf(self.tool.getAvailableMailingLists(item, template.UID()))
+        self.failIf(self.tool.getAvailableMailingLists(item, template))
 
         # define mailing_lists
         # False condition
         template.mailing_lists = "list1;python:False;user1@test.be\nlist2;python:False;user1@test.be"
-        self.assertEquals(self.tool.getAvailableMailingLists(item, template.UID()), [])
+        self.assertEquals(self.tool.getAvailableMailingLists(item, template), [])
         # wrong TAL condition, the list is there with error
         template.mailing_lists = "list1;python:wrong_expression;user1@test.be\nlist2;python:False;user1@test.be"
         error_msg = translate('Mailing lists are not correctly defined, original error is \"${error}\"',
                               mapping={'error': u'name \'wrong_expression\' is not defined', },
                               context=self.request)
-        self.assertEquals(self.tool.getAvailableMailingLists(item, template.UID()), [error_msg])
+        self.assertEquals(self.tool.getAvailableMailingLists(item, template), [error_msg])
         # correct and True condition
         template.mailing_lists = "list1;python:True;user1@test.be\nlist2;python:False;user1@test.be"
-        self.assertEquals(self.tool.getAvailableMailingLists(item, template.UID()), ['list1'])
+        self.assertEquals(self.tool.getAvailableMailingLists(item, template), ['list1'])
 
         # call the document-generation view
         self.request.set('template_uid', template.UID())
@@ -773,6 +763,59 @@ class testViews(PloneMeetingTestCase):
         self.assertEquals(
             helper.printXhtml(item, [motivation, '<br>'], use_safe_html=False),
             motivation + '<br>')
+
+    def test_pm_PrintAdvicesInfos(self):
+        """Test the printAdvicesInfos method."""
+        cfg = self.meetingConfig
+        cfg.setSelectableAdvisers((self.developers_uid, self.vendors_uid))
+        cfg.setItemAdviceStates((self._stateMappingFor('itemcreated'),))
+        cfg.setItemAdviceEditStates((self._stateMappingFor('itemcreated'),))
+        cfg.setItemAdviceViewStates((self._stateMappingFor('itemcreated'),))
+        cfg.at_post_edit_script()
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        item.setOptionalAdvisers((self.developers_uid, self.vendors_uid), )
+        item._update_after_edit()
+        view = item.restrictedTraverse('document-generation')
+        helper = view.get_generation_context_helper()
+
+        # advices not given
+        self.assertEqual(
+            helper.printAdvicesInfos(item),
+            "<p class='pmAdvices'><u><b>Advices :</b></u></p>"
+            "<p class='pmAdvices'><u>Developers:</u><br /><u>Advice type :</u> "
+            "<i>Not given yet</i></p><p class='pmAdvices'><u>Vendors:</u><br />"
+            "<u>Advice type :</u> <i>Not given yet</i></p>")
+        self.changeUser('pmAdviser1')
+        createContentInContainer(item,
+                                 'meetingadvice',
+                                 **{'advice_group': self.developers_uid,
+                                    'advice_type': u'positive',
+                                    'advice_comment': RichTextValue(u'My comment')})
+        # mixes advice given and not given
+        self.assertEqual(
+            helper.printAdvicesInfos(item),
+            "<p class='pmAdvices'><u><b>Advices :</b></u></p>"
+            "<p class='pmAdvices'><u>Vendors:</u><br /><u>Advice type :</u> "
+            "<i>Not given yet</i></p><p class='pmAdvices'><u>Developers:</u><br />"
+            "<u>Advice type :</u> <i>Positive</i><br /><u>Advice given by :</u> "
+            "<i>M. PMAdviser One</i><br /><u>Advice comment :</u> My comment<p></p></p>")
+
+        # every advices given
+        self.changeUser('pmReviewer2')
+        createContentInContainer(item,
+                                 'meetingadvice',
+                                 **{'advice_group': self.vendors_uid,
+                                    'advice_type': u'negative'})
+        self.changeUser('pmCreator1')
+        self.assertEqual(
+            helper.printAdvicesInfos(item),
+            "<p class='pmAdvices'><u><b>Advices :</b></u></p><p class='pmAdvices'>"
+            "<u>Vendors:</u><br /><u>Advice type :</u> <i>Negative</i><br />"
+            "<u>Advice given by :</u> <i>M. PMReviewer Two</i><br />"
+            "<u>Advice comment :</u> -<p></p></p><p class='pmAdvices'><u>Developers:</u><br />"
+            "<u>Advice type :</u> <i>Positive</i><br /><u>Advice given by :</u> "
+            "<i>M. PMAdviser One</i><br /><u>Advice comment :</u> My comment<p></p></p>")
 
     def test_pm_MeetingUpdateItemReferences(self):
         """Test call to @@update-item-references from the meeting that will update
@@ -1634,6 +1677,27 @@ class testViews(PloneMeetingTestCase):
             manager_name='collective.eeafaceted.z3ctable.topabovenav',
             viewlet_name='dashboard-document-generation-link')
         self.assertFalse(viewlet2.get_all_pod_templates())
+
+    def test_pm_dashboard_document_generation_link_viewlet_on_contacts(self):
+        """Dashboard POD templates are available on contacts dashboards."""
+        self.changeUser('pmManager')
+        # a DashboardPODTemplate is defined for the organizations dashboard
+        viewlet = self._get_viewlet(
+            context=self.portal.contacts.get('orgs-searches'),
+            manager_name='collective.eeafaceted.z3ctable.topabovenav',
+            viewlet_name='dashboard-document-generation-link')
+        self.request.form['c1[]'] = viewlet.context.get('all_orgs').UID()
+        # one generable template
+        generable_templates = viewlet.get_generable_templates()
+        self.assertTrue(generable_templates)
+        self.assertTrue(generable_templates[0].use_objects)
+        # NO DashboardPODTemplates are defined for persons dashboard
+        viewlet2 = self._get_viewlet(
+            context=self.portal.contacts.get('persons-searches'),
+            manager_name='collective.eeafaceted.z3ctable.topabovenav',
+            viewlet_name='dashboard-document-generation-link')
+        self.request.form['c1[]'] = viewlet2.context.get('all_persons').UID()
+        self.assertFalse(viewlet2.get_generable_templates())
 
 
 def test_suite():

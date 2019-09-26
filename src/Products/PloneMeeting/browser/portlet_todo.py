@@ -10,7 +10,6 @@ from imio.helpers.cache import get_cachekey_volatile
 from plone import api
 from plone.app.portlets.portlets import base
 from plone.memoize import ram
-from plone.memoize.view import memoize
 from plone.portlets.interfaces import IPortletDataProvider
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from zope import schema
@@ -78,7 +77,7 @@ class Renderer(base.Renderer, FacetedRenderer):
         '''cachekey method for self.__call__.'''
         userGroups = self.tool.get_plone_groups_for_user()
         cfg_modified = self.cfg.modified()
-        # URL to the annex_type can change if server URL changed
+        # URL to the item can change if server URL changed
         server_url = self.request.get('SERVER_URL', None)
         # cache until an item is modified
         date = get_cachekey_volatile('Products.PloneMeeting.MeetingItem.modified')
@@ -101,7 +100,13 @@ class Renderer(base.Renderer, FacetedRenderer):
             return True
         return False
 
-    @memoize
+    def getSearches_cachekey(method, self):
+        '''cachekey method for self.getSearches.'''
+        userGroups = self.tool.get_plone_groups_for_user()
+        cfg_modified = self.cfg.modified()
+        return userGroups, cfg_modified
+
+    @ram.cache(getSearches_cachekey)
     def getSearches(self):
         ''' Returns the list of searches to display in portlet_todo.'''
         res = []
@@ -124,11 +129,12 @@ class Renderer(base.Renderer, FacetedRenderer):
                 data.update({'obj': search})
                 if not evaluateExpressionFor(search, extra_expr_ctx=data):
                     continue
-            res.append(search)
+            res.append('/'.join(search.getPhysicalPath()))
         return res
 
-    def doSearch(self, collection):
+    def doSearch(self, collection_path):
         """ """
+        collection = self.portal.unrestrictedTraverse(collection_path)
         # get the sorting, either faceted sorting criterion is used
         # or we will use sort_on and sort_reversed defined on collection
         sorting_criterion = _get_criterion(self.cfg.searches.searches_items, SortingWidget.widget_type)
@@ -137,7 +143,7 @@ class Renderer(base.Renderer, FacetedRenderer):
         else:
             sort_on = collection.sort_on
         return collection.results(**{'limit': self.data.batch_size,
-                                     'sort_on': sort_on})
+                                     'sort_on': sort_on}), collection
 
     def getColoredLink(self, brain):
         """
@@ -146,7 +152,8 @@ class Renderer(base.Renderer, FacetedRenderer):
           will not work, that is why we use unrestricted getObject.
         """
         # received brain is a plone.app.contentlisting.catalog.CatalogContentListingObject instance
-        item = brain._brain._unrestrictedGetObject()
+        brain = getattr(brain, '_brain', brain)
+        item = brain.getObject()
         return self.tool.getColoredLink(item, showColors=True, maxLength=self.data.title_length)
 
     def getCollectionWidgetId(self):

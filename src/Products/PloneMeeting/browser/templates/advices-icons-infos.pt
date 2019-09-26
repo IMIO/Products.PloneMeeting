@@ -100,14 +100,14 @@
                              i18n:attributes="title"
                              title="to_advice_asked_again"
                              tal:attributes="src string:${view/portal_url}/advice_${adviceStyle}_asked_again.png;
-                                       onClick string:javascript:callViewAndReload(base_url='${obj_absolute_url}', view_name='@@change-advice-asked-again', this);;"/></acronym>
+                                       onClick string:javascript:$('.tooltipstered').tooltipster('hide');;callViewAndReload(base_url='${obj_absolute_url}', view_name='@@change-advice-asked-again');;"/></acronym>
                      <acronym tal:condition="python: obj and context.adapted().mayBackToPreviousAdvice(obj)">
                          <img tal:condition="python: advice['type'] == 'asked_again'"
                               class="askAdviceAgainEditable"
                               i18n:attributes="title"
                               title="to_previous_given_advice"
                               tal:attributes="src string:${view/portal_url}/advice_${adviceStyle}_asked_again_back_to_previous.png;
-                                              onClick string:javascript:callViewAndReload(base_url='${obj_absolute_url}', view_name='@@change-advice-asked-again', this);;"/></acronym>
+                                              onClick string:javascript:$('.tooltipstered').tooltipster('hide');;callViewAndReload(base_url='${obj_absolute_url}', view_name='@@change-advice-asked-again');;"/></acronym>
                      <tal:advice-change-delay-condition condition="view/mayChangeDelay">
                       <acronym title="Change delay"
                             i18n:domain="PloneMeeting"
@@ -165,12 +165,12 @@
                          class="adviceHiddenDuringRedactionEditable"
                          i18n:attributes="title" title="to_not_hidden_during_redaction"
                          tal:attributes="src string:${view/portal_url}/advice_${adviceStyle}_enable_hidden_during_redaction.png;
-                                         onClick string:javascript:callViewAndReload(base_url='${obj_absolute_url}', view_name='@@change-advice-hidden-during-redaction', this);;"/>
+                                         onClick string:javascript:$('.tooltipstered').tooltipster('hide');;callViewAndReload(base_url='${obj_absolute_url}', view_name='@@change-advice-hidden-during-redaction');;"/>
                     <img tal:condition="not: advice/hidden_during_redaction"
                          class="adviceHiddenDuringRedactionEditable"
                          i18n:attributes="title" title="to_hidden_during_redaction"
                          tal:attributes="src string:${view/portal_url}/advice_${adviceStyle}_disable_hidden_during_redaction.png;
-                                         onClick string:javascript:callViewAndReload(base_url='${obj_absolute_url}', view_name='@@change-advice-hidden-during-redaction', this);;"/>
+                                         onClick string:javascript:$('.tooltipstered').tooltipster('hide');;callViewAndReload(base_url='${obj_absolute_url}', view_name='@@change-advice-hidden-during-redaction');;"/>
                   </td>
                   </tal:editableOrLocked>
                   <td tal:condition="python: view.tool.showAnnexesTab(obj)" align="right" width="20px" class="noPadding">
@@ -223,9 +223,9 @@
 
                     <div class="pm_workflowstate" i18n:domain="plone" tal:condition="nocall:obj">
                       <span i18n:translate="label_state"></span>&nbsp;
-                      <span tal:define="state_infos python: view.state_infos(obj)"
-                            tal:content="state_infos/state_title"
-                            tal:attributes="class string:state-${state_infos/state_name}"></span>
+                      <span tal:define="advice_state_infos python: view.state_infos(obj)"
+                            tal:content="advice_state_infos/state_title"
+                            tal:attributes="class string:state-${advice_state_infos/state_name}"></span>
                     </div>
 
                     <fieldset class="advice_comment">
@@ -266,8 +266,9 @@
                 </td>
               </tr>
             </table>
-            <tal:complementaryInfoMessage condition="python: displayDefaultComplementaryMessage and adviceType in ('not_given', 'asked_again')"
-                                          define="adviceAlterable python: (adviceType == 'not_given' and advice['advice_addable']) or (adviceType == 'asked_again' and advice['advice_editable'])">
+            <tal:complementaryInfoMessage condition="python: displayDefaultComplementaryMessage and adviceType in ('not_given', 'asked_again')">
+               <tal:defines define="adviceAlterable python: (adviceType == 'not_given' and advice['advice_addable']) or (adviceType == 'asked_again' and advice['advice_editable']);
+                                    item_state_infos python: view.state_infos(context);">
                 <tal:adviceGiveableWithoutDelay condition="python: adviceAlterable and not advice['delay_infos']">
                     <span class="discreet"
                           i18n:translate="">The item is viewable by the advisers of this group but the advice has not been given yet.
@@ -296,7 +297,7 @@
                        i18n:translate="">This item is not viewable by the advisers of this group in the current review state (<span i18n:name="item_review_state"
                                                                                                                                    i18n:translate=""
                                                                                                                                    i18n:domain="plone"
-                                                                                                                                   tal:content="item_review_state"
+                                                                                                                                   tal:content="item_state_infos/state_title"
                                                                                                                                    tal:attributes="class string:label-state-${item_review_state}"></span>).</span>
                     <br /><span tal:condition="advice/delay_infos"
                                 class="discreet"
@@ -307,7 +308,7 @@
                        i18n:translate="advice_can_no_more_be_given_in_current_item_state">This advice can no more be given in current item state (<span i18n:name="item_review_state"
                                                                                                        i18n:translate=""
                                                                                                        i18n:domain="plone"
-                                                                                                       tal:content="item_review_state"
+                                                                                                       tal:content="item_state_infos/state_title"
                                                                                                        tal:attributes="class string:label-state-${item_review_state}"></span>)</span>.
 
                 </tal:itemViewableButNoMoreAdviseableWithoutDelay>
@@ -317,7 +318,7 @@
                        <span i18n:name="item_review_state"
                              i18n:translate=""
                              i18n:domain="plone"
-                             tal:content="item_review_state"
+                             tal:content="item_state_infos/state_title"
                              tal:attributes="class string:label-state-${item_review_state}"></span>)
                     </span>,
                     <tal:advice_was_not_given_during_delay tal:condition="advice/delay_stopped_on">
@@ -354,6 +355,7 @@
                           tal:condition="python: advice['delay_stopped_on'] and not advice['delay_started_on']">the advice was asked after this date.
                     </span>
                 </tal:itemViewableButNoMoreAdviseableWithDelay>
+               </tal:defines>
             </tal:complementaryInfoMessage>
             </tal:notHiddenUnderRedactionOrManagable>
 

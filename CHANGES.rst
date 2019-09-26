@@ -2,7 +2,89 @@ Changelog
 =========
 
 
-4.1rc9 (unreleased)
+4.1.4 (unreleased)
+------------------
+
+- Nothing changed yet.
+
+
+4.1.3 (2019-09-23)
+------------------
+
+- Fixed bug "AttributeError: 'NoneType' object has no attribute 'lower'" in BaseDGHV.printAdvicesInfos when advice comment is None
+- Added parameter ordered=True to 'MeetingItem.getAdvicesByType', this will order elements by adviser group title (key 'name' in indexAdvisers) under an advice_type
+- Fixed migration, do not fail to migrate 'MeetingItem.copyGroups' in case a copy group does not exist anymore, was possible in old versions
+- Added field held_position.secondary_position_type working exactly the same way as held_position.position_type to be able to define a secondary_position_type useable when necessary.
+  Adapted also held_position.get_prefix_for_gender_and_number method to be able to pass position_type_attr='secondary_position_type'
+- Added 'MeetingItem.associatedGroups' to 'MeetingConfig.ItemFieldsToKeepConfigSortingFor' so it is possible to display it alphabetically
+  or keep order defined in 'MeetingConfig.orderedAssociatedOrganizations'
+- Added back informations in meetingitem_view about items defined in tool (templateUsingGroups/meetingTransitionInsertingMe), was removed wrongly when removing the 'back' link
+- Added inserting method 'on_item_title', this will insert items following title alphabetical order
+- Added inserting method 'on_item_decision_first_words', this will insert items following decision field content alphabetical order
+- Added inserting method 'on_item_creator', this will insert items following item creator fullname alphabetical order
+- Fixed Migrator.updateTALConditions to use the behavior adapter to get/set the tal_condition
+
+4.1.2 (2019-09-13)
+------------------
+
+- Defined 'Products.PloneMeeting.vocabularies.everyorganizationsvocabulary' only calling original 'collective.contact.plonegroup.every_organizations' vocabulary
+  but adds ram.cache and render term title without "My organization"
+- Use vocabulary 'Products.PloneMeeting.vocabularies.associatedgroupsvocabulary' for faceted filter 'associatedGroups' instead
+  'Products.PloneMeeting.vocabularies.everyorganizationsacronymsvocabulary'
+
+4.1.1 (2019-09-12)
+------------------
+
+- Fixed bug on item template view when no proposingGroup defined, be defensive when getting proposingGroup
+- In the "Products.PloneMeeting.vocabularies.groupsinchargevocabulary", only consider organizations selected in plonegroup
+- Disable "inline_validation.js"
+- Added new advice types "Cautious" and "Positive with comments", in addition to default ones "Positive, Positive with remarks, Negative and Nil"
+- Added possibility to filter item dashboards for items taken over by "Nobody"
+- Use natsort.humansorted instead natsort.realsorted to sort vocabularies by term title
+- Changed base implementation of MeetingWorkflowConditions.mayDecide to only check if current user has "Review portal content" permission
+- Make the searchlastdecisions meetings search able to display decisions in the future
+- Do not display the 'review_state' columns in contacts dashboard displaying organizations, it is always 'active', we use the 'selected in plonegroup' column information instead
+- Fixed migration of MeetingUsers, do not fail if a MeetingUser was deleted and initialize MeetingConfig.orderedContacts and MeetingConfig.orderedItemInitiators correctly
+- Added possibility to use a DashboardPODTemplate added into the contacts directory on contacts dashboards (and to define it in an import_data as well)
+- Moved organization.selectable_for_plonegroup field to the 'app_parameters' fieldset
+- Handle display of tooltipster when "tap" event (when using application on a mobile device)
+- Adapted actions_panel and faceted collection widget vocabulary to invalidate cache when portal_url changed, this can be the case when accessing application thru different portal_url
+- Make Products.PloneMeeting.utils package available in POD templates under name 'pm_utils', it is already the case under name 'utils'
+- Removed the organization.selectable_for_plonegroup attribute, organizations not selectable in plonegroup will be stored outside plonegroup organization
+- Added possibility to import organization in a parent when using the organizations.csv to import contacts
+- Moved the MeetingItem.optionalAdvisers vocabulary from MeetingItem.listOptionalAdvisers to vocabulary factory 'Products.PloneMeeting.vocabularies.itemoptionaladvicesvocabulary',
+  this is necessary for imio.pm.ws to handle asking advices when using the createItem SOAP method
+- JS method 'callViewAndReload' was moved to imio.helpers, moreover, useless parameter 'tags' was removed
+- Added holidays for 2020 and added corresponding upgrade step
+- Added parameter "include_person_title" to held_position.get_prefix_for_gender_and_number making it possible to generate "Madame la Directrice" sentence
+- Use vocabulary 'collective.contact.plonegroup.sorted_selected_organization_services' instead 'collective.contact.plonegroup.selected_organization_services'
+- Added utils.uncapitalize to lowerize first letter of a given string
+- Moved MeetingConfig.onMeetingTransitionItemTransitionToTrigger to MeetingConfig.onMeetingTransitionItemActionToExecute, in addition to be able to trigger a transition on every items
+  of a meeting when a transition is triggered on a meeting, it is now possible to execute a TAL expression
+- 'workflowstate' viewlet was moved to plonetheme.imioapps.browser.viewlets and utils.get_state_infos was moved to imio.helpers.content, adapted code accordingly
+- Added Ability to run using solr instead of catalog
+- Do not restrict selection of held_position.position to organizations outside "My organization".  We may link an held_position to an organization stored in "My organization".
+  This will let link a held_position to an organization having a role in the application: group in charge, adviser, ...
+- Changed organization.get_certified_signatures parameter from_group_in_charge=False to group_in_charge=None, it will receive a group in charge (organization) to get certified signatures on.
+  This manage the fact that several groups in charge may be selected on an organization and the selected group in charge is defined on the linked item
+- Override organization.get_full_title only when value is not the indexed value. So "My organziation" is displayed in the contact widget but not in other cases
+
+4.1 (2019-08-23)
+----------------
+
+- Fixed POd template check functionnality when odt output_format was not available
+- Adapted regarding change in collective.iconifiedcategory where we do not split the annex title displayed in the tooltipster popup (first part/rest part)
+- Added migration step to version 4100 :
+    - Add new catalog indexes/columns (getAssociatedGroups);
+    - Add new item dashboard faceted filters;
+    - Disable use_stream for collective.documentgenerator.
+- Make sure collective.documentgenerator use_stream is set to False when creating a new site
+- Extended the _notifyContainerModified event to default Plone elements Folder/File/Document/News Item, so when using a 'Documents' folder to publish some documents,
+  adding a new element will notify container modified and invalidate cache
+- Added adaptable method MeetingItem.custom_validate_optionalAdvisers so a plugin may validate selected optional advisers if necessary
+- Display asked advices on the meetingitem_view at top left together with copy groups so informations about who may see the item is located at the same place
+
+4.1rc9 (2019-08-13)
 -------------------
 
 - Optimized speed of MeetingItem.MeetingItemWorkflowConditions._groupIsNotEmpty, by not using portal_groups and getGroupMemberIds but directly
@@ -10,6 +92,15 @@ Changelog
 - Make self.tool and self.cfg available on MeetingWorkflowConditions/MeetingItemWorkflowConditions and
   MeetingWorkflowActions/MeetingItemWorkflowActions
 - Clear borg.localroles at the end of MeetingItem.updateLocalRoles
+- Use imio.helpers.cache.invalidate_cachekey_volatile_for 'get_again=True' parameter to make sure an invalidated date is get immediatelly to avoid
+  a subsequent async request to get it, leading to a write in the database.  This avoids ConflictErrors when cache is invalidated.
+  Moreover, replaced Meeting.invalidate_meeting_actions_panel_cache attribute by a volatile cachekey to avoid a write when viewing the meeting and
+  and item was modified, the attribute is stored by the actions_panel, leading to a write
+- Avoid too much catalog query when it is not necessary :
+    - Added ram.cache for portlet_todo.getSearches (now returns collection path as we can not return collection objects with ram.cached method);
+    - In BaseGeneratorLinksViewlet.getAvailableMailingLists and PMDocumentGeneratorLinksViewlet.may_store_as_annex use the pod_template directly instead querying the catalog on collection's UID;
+    - In meetingitem_view, use MeetingItem.getPreferredMeeting(theObject=True) to get the meeting object, do not use the vocabulary to display the proposingGroup or proposingGroupWithGroupInCharge because it is doing too much logic, display proposingGroup/groupInCharge directly.
+    - Optimized MeetingItem.getSiblingItem to avoid calling it more than once, added value 'all' for whichItem parameter, this will make it compute every possible values (first/last/next/previous) and return all in a dict.
 
 4.1rc8 (2019-08-02)
 -------------------

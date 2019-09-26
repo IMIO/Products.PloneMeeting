@@ -71,6 +71,7 @@ from Products.PloneMeeting.config import CLONE_TO_OTHER_MC_EMERGENCY_ACTION_SUFF
 from Products.PloneMeeting.config import DEFAULT_ITEM_COLUMNS
 from Products.PloneMeeting.config import DEFAULT_LIST_TYPES
 from Products.PloneMeeting.config import DEFAULT_MEETING_COLUMNS
+from Products.PloneMeeting.config import EXECUTE_EXPR_VALUE
 from Products.PloneMeeting.config import ITEM_ICON_COLORS
 from Products.PloneMeeting.config import ITEM_INSERT_METHODS
 from Products.PloneMeeting.config import ITEMTEMPLATESMANAGERS_GROUP_SUFFIX
@@ -91,10 +92,10 @@ from Products.PloneMeeting.config import WriteRiskyConfig
 from Products.PloneMeeting.indexes import DELAYAWARE_ROW_ID_PATTERN
 from Products.PloneMeeting.indexes import REAL_ORG_UID_PATTERN
 from Products.PloneMeeting.interfaces import IMeeting
-from Products.PloneMeeting.interfaces import IMeetingConfig
-from Products.PloneMeeting.interfaces import IMeetingItem
 from Products.PloneMeeting.interfaces import IMeetingAdviceWorkflowActions
 from Products.PloneMeeting.interfaces import IMeetingAdviceWorkflowConditions
+from Products.PloneMeeting.interfaces import IMeetingConfig
+from Products.PloneMeeting.interfaces import IMeetingItem
 from Products.PloneMeeting.interfaces import IMeetingItemWorkflowActions
 from Products.PloneMeeting.interfaces import IMeetingItemWorkflowConditions
 from Products.PloneMeeting.interfaces import IMeetingWorkflowActions
@@ -565,7 +566,7 @@ schema = Schema((
         ),
         schemata="data",
         multiValued=1,
-        vocabulary_factory='collective.contact.plonegroup.selected_organization_services',
+        vocabulary_factory='collective.contact.plonegroup.sorted_selected_organization_services',
         default=defValues.orderedGroupsInCharge,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
@@ -1235,28 +1236,32 @@ schema = Schema((
         allow_empty_rows=False,
     ),
     DataGridField(
-        name='onMeetingTransitionItemTransitionToTrigger',
+        name='onMeetingTransitionItemActionToExecute',
         widget=DataGridField._properties['widget'](
-            description="OnMeetingTransitionItemTransitionToTrigger",
-            description_msgid="on_meeting_transition_item_transition_to_trigger_descr",
+            description="OnMeetingTransitionItemActionToExecute",
+            description_msgid="on_meeting_transition_item_action_to_execute_descr",
             columns={'meeting_transition':
-                        SelectColumn("On meeting transition item transition to trigger meeting transition",
+                        SelectColumn("On meeting transition item action to execute meeting transition",
                                      vocabulary="listEveryMeetingTransitions",
                                      col_description="The transition triggered on the meeting."),
-                     'item_transition':
-                        SelectColumn("On meeting transition item transition to trigger item transition",
-                                     vocabulary="listEveryItemTransitions",
-                                     col_description="The transition that will be triggered on "
-                                                     "every items of the meeting."), },
-            label='Onmeetingtransitionitemtransitiontotrigger',
-            label_msgid='PloneMeeting_label_onMeetingTransitionItemTransitionToTrigger',
+                     'item_action':
+                        SelectColumn("On meeting transition item action to execute item action",
+                                     vocabulary="listExecutableItemActions",
+                                     col_description="The action that will be executed on "
+                                                     "every items of the meeting."),
+                     'tal_expression':
+                        Column("On meeting transition item action to execute tal expression",
+                               col_description="The action to execute when 'Execute given action' "
+                                               "is selected in column 'Item action'."), },
+            label='Onmeetingtransitionitemactiontoexecute',
+            label_msgid='PloneMeeting_label_onMeetingTransitionItemActionToExecute',
             i18n_domain='PloneMeeting',
         ),
         schemata="workflow",
-        default=defValues.onMeetingTransitionItemTransitionToTrigger,
+        default=defValues.onMeetingTransitionItemActionToExecute,
         allow_oddeven=True,
         write_permission="PloneMeeting: Write risky config",
-        columns=('meeting_transition', 'item_transition', ),
+        columns=('meeting_transition', 'item_action', 'tal_expression'),
         allow_empty_rows=False,
     ),
     LinesField(
@@ -2236,7 +2241,7 @@ schema = Schema((
         ),
         schemata="advices",
         multiValued=1,
-        vocabulary_factory='collective.contact.plonegroup.selected_organization_services',
+        vocabulary_factory='collective.contact.plonegroup.sorted_selected_organization_services',
         default=defValues.usingGroups,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
@@ -2905,6 +2910,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                         {'i': 'getDate',
                          'o': 'plone.app.querystring.operation.date.largerThanRelativeDate',
                          'v': '60'},
+                        {'i': 'CompoundCriterion',
+                         'o': 'plone.app.querystring.operation.compound.is',
+                         'v': 'last-decisions'},
                     ],
                     'sort_on': u'sortable_title',
                     'sort_reversed': True,
@@ -3099,7 +3107,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # get the criterion
         criterion = _get_criterion(
             self.searches.searches_items,
-            ResultsPerPageWidget.widget_type)
+            ResultsPerPageWidget.widget_type,
+            raise_on_error=False)
         if criterion:
             value = criterion.default
         else:
@@ -4085,6 +4094,18 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
 
+    def validate_onMeetingTransitionItemActionToExecute(self, values):
+        '''If EXECUTE_EXPR_VALUE is seleced in column 'item_action',
+           then column 'tal_expression' must be provided, a contrario,
+           it can not be provided when an item transition is selected in 'item_action'.'''
+        for value in values:
+            # bypass template_row_marker
+            if value.get('orderindex_', None) == "template_row_marker":
+                continue
+            if value['item_action'] == EXECUTE_EXPR_VALUE and not value['tal_expression'] or \
+               value['item_action'] != EXECUTE_EXPR_VALUE and value['tal_expression']:
+                return _('on_meeting_transition_item_action_tal_expr_error')
+
     def _adviceConditionsInterfaceFor(self, advice_obj):
         '''See doc in interfaces.py.'''
         return IMeetingAdviceWorkflowConditions.__identifier__
@@ -4381,7 +4402,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         res = [
             ("asked_again", translate('asked_again', domain=d, context=self.REQUEST)),
             ("positive", translate('positive', domain=d, context=self.REQUEST)),
+            ("positive_with_comments", translate('positive_with_comments', domain=d, context=self.REQUEST)),
             ("positive_with_remarks", translate('positive_with_remarks', domain=d, context=self.REQUEST)),
+            ("cautious", translate('cautious', domain=d, context=self.REQUEST)),
             ("negative", translate('negative', domain=d, context=self.REQUEST)),
             ("nil", translate('nil', domain=d, context=self.REQUEST)),
         ]
@@ -4499,6 +4522,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         res = DisplayList((
             ('proposingGroup', translate('PloneMeeting_label_proposingGroup', domain=d, context=self.REQUEST)),
             ('category', translate('PloneMeeting_label_category', domain=d, context=self.REQUEST)),
+            ('associatedGroups', translate('PloneMeeting_label_associatedGroups', domain=d, context=self.REQUEST)),
         ))
         return res
 
@@ -4972,7 +4996,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             configId = mctct['meeting_config']
             actionId = self._getCloneToOtherMCActionId(configId, self.getId())
             urlExpr = "string:javascript:event.preventDefault();callViewAndReload(base_url='${object_url}', " \
-                "view_name='doCloneToOtherMeetingConfig',tag=this, " \
+                "view_name='doCloneToOtherMeetingConfig', " \
                 "params={'destMeetingConfigId': '%s'});" % configId
             availExpr = 'python: object.meta_type == "MeetingItem" and ' \
                         'object.adapted().mayCloneToOtherMeetingConfig("%s")' \
@@ -5404,6 +5428,15 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                      availableItemTransitionTitles[availableItemTransitionIds.index(tr)])
                 res.append(('%s.%s' % (cfgId, tr), text))
         return DisplayList(tuple(res)).sortedByValue()
+
+    security.declarePrivate('listExecutableItemActions')
+
+    def listExecutableItemActions(self):
+        '''Vocabulary for column item_action of field onMeetingTransitionItemActionToExecute.
+           This list a special value 'Execute given action' and the list of item transitions.'''
+        res = [(EXECUTE_EXPR_VALUE, _(EXECUTE_EXPR_VALUE))]
+        transitions = self.listEveryItemTransitions()
+        return DisplayList(res) + transitions
 
     security.declarePrivate('listEveryItemTransitions')
 
@@ -6088,6 +6121,52 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             terms = [term for term in vocab._terms if '(*)' in term.title]
             vocab = SimpleVocabulary(terms)
         return vocab
+
+    def _optionalDelayAwareAdvisers(self, validity_date, item=None):
+        '''Returns the 'delay-aware' advisers.
+           This will return a list of dict where dict contains :
+           'org_uid', 'delay' and 'delay_label'.'''
+        res = []
+        for customAdviserConfig in self.getCustomAdvisers():
+            # first check that the customAdviser is actually optional
+            if customAdviserConfig['gives_auto_advice_on']:
+                continue
+            # and check that it is not an advice linked to
+            # an automatic advice ('is_linked_to_previous_row')
+            if customAdviserConfig['is_linked_to_previous_row'] == '1':
+                isAutomatic, linkedRows = self._findLinkedRowsFor(customAdviserConfig['row_id'])
+                # is the first row an automatic adviser?
+                if isAutomatic:
+                    continue
+            # then check if it is a delay-aware advice
+            if not customAdviserConfig['delay']:
+                continue
+
+            # respect 'for_item_created_from' and 'for_item_created_until' defined dates
+            createdFrom = customAdviserConfig['for_item_created_from']
+            createdUntil = customAdviserConfig['for_item_created_until']
+            # createdFrom is required but not createdUntil
+            if DateTime(createdFrom) > validity_date or \
+               (createdUntil and DateTime(createdUntil) < validity_date):
+                continue
+
+            # check the 'available_on' TAL expression when an item is provided
+            eRes = True
+            if item:
+                eRes = item._evalAdviceAvailableOn(
+                    customAdviserConfig['available_on'], tool=self.aq_parent, cfg=self)
+
+            if not eRes:
+                continue
+
+            # ok add the adviser
+            org = get_organization(customAdviserConfig['org'])
+            res.append({'org_uid': customAdviserConfig['org'],
+                        'org_title': org.get_full_title(),
+                        'delay': customAdviserConfig['delay'],
+                        'delay_label': customAdviserConfig['delay_label'],
+                        'row_id': customAdviserConfig['row_id']})
+        return res
 
 
 registerType(MeetingConfig, PROJECTNAME)
