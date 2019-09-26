@@ -2173,6 +2173,30 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(power_observer_group_id in item.__ac_local_roles__)
         self.assertTrue(power_observer_group_id in meeting.__ac_local_roles__)
 
+    def test_pm_PowerObserverMayViewItemWhenMeetingNotViewable(self):
+        """As a power observer may access an item that is in a not viewable meeting,
+           check that accessing the item view works."""
+        cfg = self.meetingConfig
+        self.changeUser('siteadmin')
+        # enable Meeting fields that are often displayed on the item view
+        assembly_field_names = cfg._assembly_fields(field_name=True)
+        usedItemAttrs = cfg.getUsedItemAttributes()
+        usedItemAttrs = set(assembly_field_names).union(usedItemAttrs)
+        cfg.setUsedItemAttributes(usedItemAttrs)
+        self._setPowerObserverStates(states=('presented', ))
+        self._setPowerObserverStates(field_name='meeting_states', states=())
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        meeting = self.create('Meeting', date=DateTime('2019/09/26'))
+        self.presentItem(item)
+        self.changeUser('powerobserver1')
+        self.assertFalse(self.hasPermission(View, meeting))
+        self.assertTrue(self.hasPermission(View, item))
+        # the item view is accessible
+        import ipdb; ipdb.set_trace()
+        self.assertTrue(item())
+        self.assertTrue(item.restrictedTraverse('@@categorized-annexes'))
+
     def test_pm_BudgetImpactEditorsGroups(self):
         '''Test the management of MeetingConfig linked 'budgetimpacteditors' Plone group.'''
         # specify that budgetImpactEditors will be able to edit the budgetInfos of self.meetingConfig items

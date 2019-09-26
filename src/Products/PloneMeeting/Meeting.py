@@ -739,6 +739,10 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
 
     meetingClosedStates = ['closed', 'archived']
 
+    # declarePublic so it is callable in item view template
+    # when the meeting is not viewable by the current user
+    security.declarePublic('getAssembly')
+
     security.declarePublic('getPrettyLink')
 
     def getPrettyLink(self,
@@ -1954,10 +1958,10 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         usedAttrs = cfg.getUsedMeetingAttributes()
-        # get fields beginning with 'assembly'
-        fields = [field for field in self.Schema().fields()
-                  if field.getName().startswith('assembly')]
-        return [field.getName() for field in fields if field.getName() in usedAttrs or field.get(self)]
+        # get assembly fields
+        fields = cfg._assembly_fields(field_name=False)
+        return [field.getName() for field in fields
+                if field.getName() in usedAttrs or field.get(self)]
 
     security.declarePublic('showSignatures')
 
