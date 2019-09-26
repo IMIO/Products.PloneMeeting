@@ -19,7 +19,6 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA.
 #
-from AccessControl.SecurityManagement import getSecurityManager
 from collections import OrderedDict
 from collective.contact.core.utils import get_gender_and_number
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
@@ -1418,7 +1417,7 @@ class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV)
         """
         meeting = self.context.getMeeting()
 
-        if not unrestricted and not getSecurityManager().checkPermission(View, meeting):
+        if not unrestricted and not _checkPermission(View, meeting):
             return noMeetingMarker
 
         if meeting:
@@ -1439,7 +1438,7 @@ class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV)
         """
         meeting = self.context.getPreferredMeeting(theObject=True)
 
-        if not unrestricted and not getSecurityManager().checkPermission(View, meeting):
+        if not unrestricted and not _checkPermission(View, meeting):
             return noMeetingMarker
 
         if meeting:

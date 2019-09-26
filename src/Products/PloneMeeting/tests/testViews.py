@@ -843,25 +843,25 @@ class testViews(PloneMeetingTestCase):
         helper = view.get_generation_context_helper()
 
         self.assertListEqual(  # item is not in a meeting so noMeetingMarker is expected
-            ['-', 'xxx'],
-            [helper.print_meeting_date(), helper.print_meeting_date(noMeetingMarker='xxx')]
+            [helper.print_meeting_date(), helper.print_meeting_date(noMeetingMarker='xxx')],
+            ['-', 'xxx']
         )
         self.presentItem(item)
 
         self.changeUser('powerobserver1')
         # standard case, item in a meeting, no access restriction
         self.assertListEqual(
-            ['01 january 2019', DateTime('2019/01/01')],
-            [helper.print_meeting_date(), helper.print_meeting_date(returnDateTime=True)]
+            [helper.print_meeting_date(), helper.print_meeting_date(returnDateTime=True)],
+            ['01 january 2019', DateTime('2019/01/01')]
         )
+        # powerobserver1 can't see the meeting so noMeetingMarker is expected when unrestricted=False
         self.assertListEqual(
-            ['', None],  # powerobserver1 can't see the meeting so noMeetingMarker is expected when unrestricted=False
             [helper.print_meeting_date(unrestricted=False, noMeetingMarker=''),
-             helper.print_meeting_date(returnDateTime=True, unrestricted=False, noMeetingMarker=None)]
+             helper.print_meeting_date(returnDateTime=True, unrestricted=False, noMeetingMarker=None)],
+            ['', None]
         )
 
     def test_pm_PrintPreferredMeetingDate(self):
-        # Setup
         cfg = self.meetingConfig
         cfg.setPowerObservers([
             {'item_access_on': '',
@@ -879,29 +879,29 @@ class testViews(PloneMeetingTestCase):
              'meeting_states': [],
              'row_id': 'powerobservers'}])
 
-        self.changeUser('pmCreator1')
-        item = self.create('MeetingItem')
         self.changeUser('pmManager')
+        item = self.create('MeetingItem')
         meeting = self.create('Meeting', date=DateTime('2019/01/01'))
         view = item.restrictedTraverse('document-generation')
         helper = view.get_generation_context_helper()
 
         self.assertListEqual(  # item has not preferred meeting so noMeetingMarker is expected
-            ['-', 'xxx'],
-            [helper.print_preferred_meeting_date(), helper.print_preferred_meeting_date(noMeetingMarker='xxx')]
+            [helper.print_preferred_meeting_date(), helper.print_preferred_meeting_date(noMeetingMarker='xxx')],
+            ['-', 'xxx']
         )
 
         item.setPreferredMeeting(meeting.UID())
         self.assertListEqual(  # standard case, a preferred meeting date is expected
-            ['01 january 2019', DateTime('2019/01/01')],
-            [helper.print_preferred_meeting_date(), helper.print_preferred_meeting_date(returnDateTime=True)]
+            [helper.print_preferred_meeting_date(), helper.print_preferred_meeting_date(returnDateTime=True)],
+            ['01 january 2019', DateTime('2019/01/01')]
         )
 
         self.changeUser('powerobserver1')
         self.assertListEqual(
-            ['', None],  # powerobserver1 can't see the meeting so noMeetingMarker is expected when unrestricted=False
+            # powerobserver1 can't see the meeting so noMeetingMarker is expected when unrestricted=False
             [helper.print_preferred_meeting_date(unrestricted=False, noMeetingMarker=''),
-             helper.print_preferred_meeting_date(returnDateTime=True, unrestricted=False, noMeetingMarker=None)]
+             helper.print_preferred_meeting_date(returnDateTime=True, unrestricted=False, noMeetingMarker=None)],
+            ['', None],
         )
 
     def test_pm_MeetingUpdateItemReferences(self):
