@@ -4520,15 +4520,26 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''Vocabulary for itemFieldsToKeepConfigSortingFor field.'''
         d = "PloneMeeting"
         res = DisplayList((
-            ('proposingGroup', translate('PloneMeeting_label_proposingGroup', domain=d, context=self.REQUEST)),
-            ('category', translate('PloneMeeting_label_category', domain=d, context=self.REQUEST)),
-            ('associatedGroups', translate('PloneMeeting_label_associatedGroups', domain=d, context=self.REQUEST)),
+            ('proposingGroup', translate('PloneMeeting_label_proposingGroup',
+                                         domain=d,
+                                         context=self.REQUEST)),
+            ('category', translate('PloneMeeting_label_category',
+                                   domain=d,
+                                   context=self.REQUEST)),
+            ('associatedGroups', translate('PloneMeeting_label_associatedGroups',
+                                           domain=d,
+                                           context=self.REQUEST)),
+            ('groupsInCharge', translate('PloneMeeting_label_groupsInCharge',
+                                         domain=d,
+                                         context=self.REQUEST)),
         ))
         return res
 
     def listBooleanVocabulary(self):
-        '''Vocabulary generating a boolean behaviour : just 2 values, one yes/True, and the other no/False.
-           This is used in DataGridFields to avoid use of CheckBoxColumn that does not handle validation correctly.'''
+        '''Vocabulary generating a boolean behaviour : just 2 values,
+           one yes/True, and the other no/False.
+           This is used in DataGridFields to avoid use of CheckBoxColumn
+           that does not handle validation correctly.'''
         d = "PloneMeeting"
         res = DisplayList((
             ('0', translate('boolean_value_false', domain=d, context=self.REQUEST)),
@@ -6167,6 +6178,14 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                         'delay_label': customAdviserConfig['delay_label'],
                         'row_id': customAdviserConfig['row_id']})
         return res
+
+    def _assembly_fields(self, field_name=True):
+        ''' '''
+        fields = [field for field in Meeting.schema.fields()
+                  if field.getName().startswith('assembly')]
+        if field_name:
+            fields = [field.getName() for field in fields]
+        return fields
 
 
 registerType(MeetingConfig, PROJECTNAME)

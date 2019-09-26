@@ -417,7 +417,7 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
         translationMapping['itemState'] = translate(obj.queryState(),
                                                     domain='plone',
                                                     context=obj.REQUEST)
-        meeting = obj.getMeeting(brain=True)
+        meeting = obj.getMeeting()
         if meeting:
             translationMapping['meetingTitle'] = safe_unicode(meeting.Title())
             translationMapping['meetingLongTitle'] = tool.formatMeetingDate(meeting, prefixed=True)

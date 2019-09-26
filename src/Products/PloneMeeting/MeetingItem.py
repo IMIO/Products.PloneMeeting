@@ -4358,12 +4358,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         return data
 
     def getAdviceObj(self, adv_uid):
-        """Return the advice object for given p_advId.
+        """Return the advice object for given p_adv_uid.
            If advice object does not exist, None is returned."""
         adviceObj = None
-        if adv_uid in self.adviceIndex and \
-           self.adviceIndex[adv_uid].get('advice_id', None):
-            adviceObj = getattr(self, self.adviceIndex[adv_uid]['advice_id'])
+        advices = self.getAdvices()
+        # get the advice without using self.adviceIndex because
+        # getAdviceObj may be called during self.adviceIndex computation
+        for advice in advices:
+            if advice.advice_group == adv_uid:
+                adviceObj = advice
+                break
         return adviceObj
 
     def _grantPermissionToRole(self, permission, role_to_give, obj):
