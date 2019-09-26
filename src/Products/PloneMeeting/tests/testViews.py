@@ -37,7 +37,6 @@ from zope.intid.interfaces import IIntIds
 
 import transaction
 
-
 SAMPLE_ERROR_MESSAGE = u'This is the error message!'
 
 
@@ -218,7 +217,7 @@ class testViews(PloneMeetingTestCase):
         subFolder1 = cfg.itemtemplates.subfolder1
         newItemTemplate = self.create('MeetingItemTemplate', folder=subFolder1)
         # hide it to pmCreator1
-        newItemTemplate.setTemplateUsingGroups((self.vendors_uid, ))
+        newItemTemplate.setTemplateUsingGroups((self.vendors_uid,))
         newItemTemplate.reindexObject()
         self.changeUser('pmCreator1')
         view()
@@ -357,14 +356,14 @@ class testViews(PloneMeetingTestCase):
 
         # the automatic advice has been added
         self.assertTrue(itemWithNonDelayAwareAdvices.adviceIndex[self.vendors_uid]['optional'] is False)
-        itemWithNonDelayAwareAdvices.setOptionalAdvisers((self.developers_uid, ))
+        itemWithNonDelayAwareAdvices.setOptionalAdvisers((self.developers_uid,))
         itemWithNonDelayAwareAdvices._update_after_edit()
         self.assertTrue(itemWithNonDelayAwareAdvices.adviceIndex[self.developers_uid]['optional'] is True)
 
         # one delay-aware advice addable
         itemWithDelayAwareAdvice = self.create('MeetingItem')
         itemWithDelayAwareAdvice.setOptionalAdvisers(
-            ('{0}__rowid__unique_id_123'.format(self.vendors_uid), ))
+            ('{0}__rowid__unique_id_123'.format(self.vendors_uid),))
         itemWithDelayAwareAdvice._update_after_edit()
         self.proposeItem(itemWithDelayAwareAdvice)
         self.assertTrue(itemWithDelayAwareAdvice.adviceIndex[self.vendors_uid]['advice_addable'])
@@ -426,23 +425,23 @@ class testViews(PloneMeetingTestCase):
         """Test the _updateAllAdvices method that update every advices.
            It is used to update every delay aware advices every night."""
         cfg = self.meetingConfig
-        cfg.setItemAdviceStates(('itemcreated', ))
-        cfg.setItemAdviceEditStates(('itemcreated', ))
+        cfg.setItemAdviceStates(('itemcreated',))
+        cfg.setItemAdviceEditStates(('itemcreated',))
         # create items and ask advice
         self.changeUser('pmCreator1')
         item1 = self.create('MeetingItem')
-        item1.setOptionalAdvisers((self.developers_uid, ))
+        item1.setOptionalAdvisers((self.developers_uid,))
         item1._update_after_edit()
         item2 = self.create('MeetingItem')
-        item2.setOptionalAdvisers((self.developers_uid, ))
+        item2.setOptionalAdvisers((self.developers_uid,))
         self.proposeItem(item2)
         self.assertTrue(self.developers_advisers in item1.__ac_local_roles__)
         self.assertFalse(self.developers_advisers in item2.__ac_local_roles__)
 
         # change configuration, _updateAllAdvices then check again
         self.changeUser('siteadmin')
-        cfg.setItemAdviceStates((self._stateMappingFor('proposed'), ))
-        cfg.setItemAdviceEditStates((self._stateMappingFor('proposed'), ))
+        cfg.setItemAdviceStates((self._stateMappingFor('proposed'),))
+        cfg.setItemAdviceEditStates((self._stateMappingFor('proposed'),))
         # check that item modified is not changed when advice updated
         item1_original_modified = item1.modified()
         item2_original_modified = item2.modified()
@@ -817,6 +816,94 @@ class testViews(PloneMeetingTestCase):
             "<u>Advice type :</u> <i>Positive</i><br /><u>Advice given by :</u> "
             "<i>M. PMAdviser One</i><br /><u>Advice comment :</u> My comment<p></p></p>")
 
+    def test_pm_PrintMeetingDate(self):
+        # Setup
+        cfg = self.meetingConfig
+        cfg.setPowerObservers([
+            {'item_access_on': '',
+             'item_states': ['validated',
+                             'presented',
+                             'itemfrozen',
+                             'returned_to_proposing_group',
+                             'pre_accepted'
+                             'accepted',
+                             'accepted_but_modified',
+                             'delayed',
+                             'refused'],
+             'label': 'testSuperObservers',
+             'meeting_access_on': '',
+             'meeting_states': [],
+             'row_id': 'powerobservers'}])
+
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime('2019/01/01'))
+        view = item.restrictedTraverse('document-generation')
+        helper = view.get_generation_context_helper()
+
+        self.assertListEqual(  # item is not in a meeting so noMeetingMarker is expected
+            [helper.print_meeting_date(), helper.print_meeting_date(noMeetingMarker='xxx')],
+            ['-', 'xxx']
+        )
+        self.presentItem(item)
+
+        self.changeUser('powerobserver1')
+        # standard case, item in a meeting, no access restriction
+        self.assertListEqual(
+            [helper.print_meeting_date(), helper.print_meeting_date(returnDateTime=True)],
+            ['01 january 2019', DateTime('2019/01/01')]
+        )
+        # powerobserver1 can't see the meeting so noMeetingMarker is expected when unrestricted=False
+        self.assertListEqual(
+            [helper.print_meeting_date(unrestricted=False, noMeetingMarker=''),
+             helper.print_meeting_date(returnDateTime=True, unrestricted=False, noMeetingMarker=None)],
+            ['', None]
+        )
+
+    def test_pm_PrintPreferredMeetingDate(self):
+        cfg = self.meetingConfig
+        cfg.setPowerObservers([
+            {'item_access_on': '',
+             'item_states': ['validated',
+                             'presented',
+                             'itemfrozen',
+                             'returned_to_proposing_group',
+                             'pre_accepted'
+                             'accepted',
+                             'accepted_but_modified',
+                             'delayed',
+                             'refused'],
+             'label': 'testSuperObservers',
+             'meeting_access_on': '',
+             'meeting_states': [],
+             'row_id': 'powerobservers'}])
+
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        meeting = self.create('Meeting', date=DateTime('2019/01/01'))
+        view = item.restrictedTraverse('document-generation')
+        helper = view.get_generation_context_helper()
+
+        self.assertListEqual(  # item has not preferred meeting so noMeetingMarker is expected
+            [helper.print_preferred_meeting_date(), helper.print_preferred_meeting_date(noMeetingMarker='xxx')],
+            ['-', 'xxx']
+        )
+
+        item.setPreferredMeeting(meeting.UID())
+        self.assertListEqual(  # standard case, a preferred meeting date is expected
+            [helper.print_preferred_meeting_date(), helper.print_preferred_meeting_date(returnDateTime=True)],
+            ['01 january 2019', DateTime('2019/01/01')]
+        )
+
+        self.changeUser('powerobserver1')
+        self.assertListEqual(
+            # powerobserver1 can't see the meeting so noMeetingMarker is expected when unrestricted=False
+            [helper.print_preferred_meeting_date(unrestricted=False, noMeetingMarker=''),
+             helper.print_preferred_meeting_date(returnDateTime=True, unrestricted=False, noMeetingMarker=None)],
+            ['', None],
+        )
+
     def test_pm_MeetingUpdateItemReferences(self):
         """Test call to @@update-item-references from the meeting that will update
            every references of items of a meeting."""
@@ -1092,7 +1179,7 @@ class testViews(PloneMeetingTestCase):
         self.assertFalse(powerobservers in item1.__ac_local_roles__)
         self.assertFalse(powerobservers in item2.__ac_local_roles__)
         self.assertFalse(powerobservers in item3.__ac_local_roles__)
-        self._setPowerObserverStates(states=(self._stateMappingFor('itemcreated'), ))
+        self._setPowerObserverStates(states=(self._stateMappingFor('itemcreated'),))
         dashboardFolder = self.getMeetingFolder().searches_items
         form = dashboardFolder.restrictedTraverse('@@update-local-roles-batch-action')
         self.assertTrue(form.available())
@@ -1360,7 +1447,7 @@ class testViews(PloneMeetingTestCase):
         assert_results(item, [self.vendors_uid])
         assert_results(item, [self.developers_uid])
 
-        item.setOptionalAdvisers(('{0}__rowid__unique_id_123'.format(self.developers_uid), ))
+        item.setOptionalAdvisers(('{0}__rowid__unique_id_123'.format(self.developers_uid),))
         item._update_after_edit()
 
         # test with 1 not given advice
@@ -1403,9 +1490,9 @@ class testViews(PloneMeetingTestCase):
         self._removeConfigObjectsFor(cfg)
         cfg.setRestrictAccessToSecretItems(True)
         self._setPowerObserverStates(observer_type='restrictedpowerobservers',
-                                     states=('presented', ))
+                                     states=('presented',))
         cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'at_the_end',
-                                           'reverse': '0'}, ))
+                                           'reverse': '0'},))
         # create 2 'public' items and 1 'secret' item
         self.changeUser('pmManager')
         publicItem1 = self.create('MeetingItem')

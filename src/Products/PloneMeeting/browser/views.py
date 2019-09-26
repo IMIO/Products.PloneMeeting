@@ -42,6 +42,7 @@ from plone.memoize.view import memoize
 from plone.memoize.view import memoize_contextless
 from Products.CMFCore.permissions import ManagePortal
 from Products.CMFCore.permissions import ModifyPortalContent
+from Products.CMFCore.permissions import View
 from Products.CMFCore.utils import _checkPermission
 from Products.CMFPlone.utils import safe_unicode
 from Products.Five import BrowserView
@@ -1407,18 +1408,39 @@ class MeetingDocumentGenerationHelperView(FolderDocumentGenerationHelperView):
 class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV):
     """ """
 
-    def printMeetingDate(self, returnDateTime=False, noMeetingMarker='-'):
+    def print_meeting_date(self, returnDateTime=False, noMeetingMarker='-', unrestricted=True):
         """Print meeting date, manage fact that item is not linked to a meeting,
            in this case p_noMeetingMarker is returned.
            If p_returnDateTime is True, it returns the meeting date DateTime,
-           otherwise it returns the meeting title containing formatted date."""
+           otherwise it returns the meeting title containing formatted date.
+           If unrestricted is True, don't check if the current user has access to the meeting
+        """
         meeting = self.context.getMeeting()
-        if meeting:
-            if returnDateTime:
-                return meeting.getDate()
-            return meeting.Title()
-        else:
+
+        if not meeting or (not unrestricted and not _checkPermission(View, meeting)):
             return noMeetingMarker
+
+        if returnDateTime:
+            return meeting.getDate()
+        return meeting.Title()
+
+    def print_preferred_meeting_date(self, returnDateTime=False, noMeetingMarker='-', unrestricted=True):
+        """
+        Print preferred meeting date, manage fact that item has no preferred meeting date
+        :param returnDateTime if True, returns the preferred meeting date DateTime, otherwise it returns the
+        meeting title containing formatted date.
+        :param noMeetingMarker is returned when there is no preferredMeeting.
+        :param unrestricted if True, don't check if the current user has access to the meeting
+        :return: Preferred meeting date
+        """
+        preferred_meeting = self.context.getPreferredMeeting(theObject=True)
+
+        if not preferred_meeting or (not unrestricted and not _checkPermission(View, preferred_meeting)):
+            return noMeetingMarker
+
+        if returnDateTime:
+            return preferred_meeting.getDate()
+        return preferred_meeting.Title()
 
     def print_in_and_out_attendees(
             self,
