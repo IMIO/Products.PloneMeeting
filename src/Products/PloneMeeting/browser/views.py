@@ -1417,15 +1417,12 @@ class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV)
         """
         meeting = self.context.getMeeting()
 
-        if not unrestricted and not _checkPermission(View, meeting):
+        if not meeting or (not unrestricted and not _checkPermission(View, meeting)):
             return noMeetingMarker
 
-        if meeting:
-            if returnDateTime:
-                return meeting.getDate()
-            return meeting.Title()
-        else:
-            return noMeetingMarker
+        if returnDateTime:
+            return meeting.getDate()
+        return meeting.Title()
 
     def print_preferred_meeting_date(self, returnDateTime=False, noMeetingMarker='-', unrestricted=True):
         """
@@ -1436,17 +1433,14 @@ class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV)
         :param unrestricted if True, don't check if the current user has access to the meeting
         :return: Preferred meeting date
         """
-        meeting = self.context.getPreferredMeeting(theObject=True)
+        preferred_meeting = self.context.getPreferredMeeting(theObject=True)
 
-        if not unrestricted and not _checkPermission(View, meeting):
+        if not preferred_meeting or (not unrestricted and not _checkPermission(View, preferred_meeting)):
             return noMeetingMarker
 
-        if meeting:
-            if returnDateTime:
-                return meeting.getDate()
-            return meeting.Title()
-        else:
-            return noMeetingMarker
+        if returnDateTime:
+            return preferred_meeting.getDate()
+        return preferred_meeting.Title()
 
     def print_in_and_out_attendees(
             self,
