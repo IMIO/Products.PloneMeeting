@@ -2968,10 +2968,7 @@ class testMeetingItem(PloneMeetingTestCase):
                           'Vendors (Reviewers)'])
 
     def test_pm_AssociatedGroupsVocabulary(self):
-        '''
-          Check that we still have the stored value in the vocabulary, aka if the stored value
-          is no more in the vocabulary, it is still in it tough ;-)
-        '''
+        '''MeetingItem.associatedGroups vocabulary.'''
         self.changeUser('pmManager')
         # create an item to test the vocabulary
         item = self.create('MeetingItem')
@@ -3017,6 +3014,49 @@ class testMeetingItem(PloneMeetingTestCase):
         cleanRamCache()
         self.assertEqual(item.Vocabulary('associatedGroups')[0].keys(),
                          [self.developers_uid, self.endUsers_uid, self.vendors_uid])
+
+    def test_pm_ItemOrderedGroupsInChargeVocabulary(self):
+        '''MeetingItem.groupsInCharge vocabulary.'''
+        self.changeUser('siteadmin')
+        cfg = self.meetingConfig
+        usedItemAttrs = cfg.getUsedItemAttributes()
+        if 'groupsInCharge' not in usedItemAttrs:
+            cfg.setUsedItemAttributes(usedItemAttrs + ('groupsInCharge', ))
+        self.changeUser('pmManager')
+        # create an item to test the vocabulary
+        item = self.create('MeetingItem')
+        self.assertEqual(item.Vocabulary('groupsInCharge')[0].keys(),
+                         [self.developers_uid, self.vendors_uid])
+        # now select the 'developers' as groupInCharge for the item
+        item.setGroupsInCharge((self.developers_uid, ))
+        # still the complete vocabulary
+        self.assertEqual(item.Vocabulary('groupsInCharge')[0].keys(),
+                         [self.developers_uid, self.vendors_uid])
+        # disable developers organization
+        self.changeUser('admin')
+        self._select_organization(self.developers_uid, remove=True)
+        self.changeUser('pmManager')
+        # still in the vocabulary because selected on the item
+        # but added at the end of the vocabulary
+        self.assertEqual(item.Vocabulary('groupsInCharge')[0].keys(),
+                         [self.vendors_uid, self.developers_uid])
+        # unselect 'developers' on the item, it will not appear anymore in the vocabulary
+        item.setGroupsInCharge(())
+        cleanRamCache()
+        self.assertEqual(item.Vocabulary('groupsInCharge')[0].keys(), [self.vendors_uid, ])
+        # 'groupsInCharge' may be selected in 'MeetingConfig.ItemFieldsToKeepConfigSortingFor'
+        self._select_organization(self.developers_uid)
+        self._select_organization(self.endUsers_uid)
+        cfg.setOrderedGroupsInCharge((self.vendors_uid, self.developers_uid, self.endUsers_uid))
+        # sorted alphabetically by default
+        self.assertFalse('groupsInCharge' in cfg.getItemFieldsToKeepConfigSortingFor())
+        cleanRamCache()
+        self.assertEqual(item.Vocabulary('groupsInCharge')[0].keys(),
+                         [self.developers_uid, self.endUsers_uid, self.vendors_uid, ])
+        cfg.setItemFieldsToKeepConfigSortingFor(('groupsInCharge', ))
+        cleanRamCache()
+        self.assertEqual(item.Vocabulary('groupsInCharge')[0].keys(),
+                         list(cfg.getOrderedGroupsInCharge()))
 
     def test_pm_ListCategoriesContainsDisabledStoredValue(self):
         '''

@@ -251,15 +251,15 @@ ItemProposingGroupsForFacetedFilterVocabularyFactory = ItemProposingGroupsForFac
 class GroupsInChargeVocabulary(object):
     implements(IVocabularyFactory)
 
-    def __call___cachekey(method, self, context, only_selected=True):
+    def __call___cachekey(method, self, context, only_selected=True, sort=True):
         '''cachekey method for self.__call__.'''
         date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.groupsinchargevocabulary')
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        return date, cfg.getId(), only_selected
+        return date, cfg.getId(), only_selected, sort
 
     @ram.cache(__call___cachekey)
-    def __call__(self, context, only_selected=False):
+    def __call__(self, context, only_selected=True, sort=True):
         """List groups in charge :
            - if groupsInCharge in MeetingConfig.usedItemAttributes,
              list MeetingConfig.orderedGroupsInCharge;
@@ -267,6 +267,7 @@ class GroupsInChargeVocabulary(object):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         res = []
+        is_using_cfg_order = False
         # groups in charge are defined on organizations
         if 'groupsInCharge' not in cfg.getUsedItemAttributes():
             orgs = get_organizations(only_selected=only_selected)
@@ -278,6 +279,7 @@ class GroupsInChargeVocabulary(object):
                         res.append(group_in_charge)
         else:
             # groups in charge are selected on the items
+            is_using_cfg_order = True
             kept_org_uids = cfg.getOrderedGroupsInCharge()
             res = get_organizations(only_selected=only_selected, kept_org_uids=kept_org_uids)
 
@@ -285,7 +287,9 @@ class GroupsInChargeVocabulary(object):
                           gic.UID(),
                           safe_unicode(gic.get_full_title(first_index=1)))
                for gic in res]
-        res = humansorted(res, key=attrgetter('title'))
+
+        if sort or not is_using_cfg_order:
+            res = humansorted(res, key=attrgetter('title'))
 
         return SimpleVocabulary(res)
 
@@ -298,7 +302,12 @@ class ItemGroupsInChargeVocabulary(GroupsInChargeVocabulary):
 
     def __call__(self, context):
         """ """
-        terms = super(ItemGroupsInChargeVocabulary, self).__call__(context)._terms
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        sort = True
+        if 'groupsInCharge' in cfg.getItemFieldsToKeepConfigSortingFor():
+            sort = False
+        terms = super(ItemGroupsInChargeVocabulary, self).__call__(context, sort=sort)._terms
 
         # when used on an item, manage missing terms, selected on item
         # but removed from orderedGroupsInCharge or from plonegroup
