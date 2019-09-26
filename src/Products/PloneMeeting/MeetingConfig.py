@@ -4613,15 +4613,26 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''Vocabulary for itemFieldsToKeepConfigSortingFor field.'''
         d = "PloneMeeting"
         res = DisplayList((
-            ('proposingGroup', translate('PloneMeeting_label_proposingGroup', domain=d, context=self.REQUEST)),
-            ('category', translate('PloneMeeting_label_category', domain=d, context=self.REQUEST)),
-            ('associatedGroups', translate('PloneMeeting_label_associatedGroups', domain=d, context=self.REQUEST)),
+            ('proposingGroup', translate('PloneMeeting_label_proposingGroup',
+                                         domain=d,
+                                         context=self.REQUEST)),
+            ('category', translate('PloneMeeting_label_category',
+                                   domain=d,
+                                   context=self.REQUEST)),
+            ('associatedGroups', translate('PloneMeeting_label_associatedGroups',
+                                           domain=d,
+                                           context=self.REQUEST)),
+            ('groupsInCharge', translate('PloneMeeting_label_groupsInCharge',
+                                         domain=d,
+                                         context=self.REQUEST)),
         ))
         return res
 
     def listBooleanVocabulary(self):
-        '''Vocabulary generating a boolean behaviour : just 2 values, one yes/True, and the other no/False.
-           This is used in DataGridFields to avoid use of CheckBoxColumn that does not handle validation correctly.'''
+        '''Vocabulary generating a boolean behaviour : just 2 values,
+           one yes/True, and the other no/False.
+           This is used in DataGridFields to avoid use of CheckBoxColumn
+           that does not handle validation correctly.'''
         d = "PloneMeeting"
         res = DisplayList((
             ('0', translate('boolean_value_false', domain=d, context=self.REQUEST)),

@@ -5,6 +5,8 @@ Changelog
 4.1.4 (unreleased)
 ------------------
 
+- Added 'MeetingItem.groupsInCharge' to 'MeetingConfig.ItemFieldsToKeepConfigSortingFor' so it is possible to display it alphabetically
+  or keep order defined in 'MeetingConfig.orderedGroupsInCharge'
 - Item validation workflow is now designed in the MeetingConfig.itemWFValidationLevels, this imply :
     - to no longer rely on MEETINGROLES and MEETINGREVIEWERS constants;
     - reviewer levels and mapping between review_state and organization suffix that manage the item is computed from the MeetingConfig;
