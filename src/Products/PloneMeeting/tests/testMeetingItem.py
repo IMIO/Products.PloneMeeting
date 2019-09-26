@@ -2193,7 +2193,6 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertFalse(self.hasPermission(View, meeting))
         self.assertTrue(self.hasPermission(View, item))
         # the item view is accessible
-        import ipdb; ipdb.set_trace()
         self.assertTrue(item())
         self.assertTrue(item.restrictedTraverse('@@categorized-annexes'))
 

@@ -12,6 +12,7 @@ Changelog
 - Fixed access to item view to users not able to view the linked meeting.  Indeed in this case it raised Unauthorized because call to Meeting.getAssembly (now declared Public)
 - Adapted the item edit form to display fields 'proposingGroup', 'proposingGroupWithGroupInCharge', 'groupsInCharge', 'classifier' and 'category' one below the others
   and no more one next the the other to avoid hidding fields when one field is too large
+- Adapted print_meeting_date and print_preferred_meeting_date so they can now be used in restricted or unrestricted mode.
 - Item validation workflow is now designed in the MeetingConfig.itemWFValidationLevels, this imply :
     - to no longer rely on MEETINGROLES and MEETINGREVIEWERS constants;
     - reviewer levels and mapping between review_state and organization suffix that manage the item is computed from the MeetingConfig;
