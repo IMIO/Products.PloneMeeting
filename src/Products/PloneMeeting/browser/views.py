@@ -1437,22 +1437,17 @@ class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV)
         :param unrestricted if True, don't check if the current user has access to the meeting
         :return: Preferred meeting date
         """
-        preferred_meeting_uid = self.context.getPreferredMeeting()
-        if preferred_meeting_uid == 'whatever':  # no need to do a query
+        meeting = self.context.getPreferredMeeting(theObject=True)
+
+        if not unrestricted and not getSecurityManager().checkPermission(View, meeting):
             return noMeetingMarker
-        catalog = api.portal.get_tool('portal_catalog')
 
-        if unrestricted:
-            brains = catalog.unrestrictedSearchResults(UID=preferred_meeting_uid)
-        else:
-            brains = catalog(UID=preferred_meeting_uid)
-
-        if len(brains) == 1:  # catalog query is expected to have only one brain
+        if meeting:
             if returnDateTime:
-                return brains[0].getObject().getDate()
-            tool = api.portal.get_tool('portal_plonemeeting')
-            return tool.formatMeetingDate(brains[0])
-        return noMeetingMarker  # catalog query was empty
+                return meeting.getDate()
+            return meeting.Title()
+        else:
+            return noMeetingMarker
 
     def print_in_and_out_attendees(
             self,
