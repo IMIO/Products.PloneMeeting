@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.1.5 (unreleased)
+4.1.5 (2019-09-30)
 ------------------
 
 - Fixed migration of contacts/orgs-searches 'c5.default' faceted criterion as we store a string instead a list, we can not use the 'edit'
