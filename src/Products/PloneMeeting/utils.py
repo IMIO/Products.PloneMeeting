@@ -1666,6 +1666,20 @@ def normalize(string, acceptable=[]):
                    if unicodedata.category(x) != 'Mn').lower().strip()
 
 
+def add_wf_history_action(obj, action_name, user_id):
+    wfTool = api.portal.get_tool('portal_workflow')
+    wfName = wfTool.getWorkflowsFor(obj)[0].id
+    firstEvent = obj.workflow_history[wfName][0]
+    cloneEvent = firstEvent.copy()
+    # action comments must be translated in the imio.history domain
+    cLabel = action_name + '_comments'
+    cloneEvent['comments'] = cLabel
+    # action_name must be translated in the plone domain
+    cloneEvent['action'] = action_name
+    cloneEvent['actor'] = user_id or api.user.get_current().id
+    obj.workflow_history[wfName] = (firstEvent, cloneEvent)
+
+
 class AdvicesUpdatedEvent(ObjectEvent):
     implements(IAdvicesUpdatedEvent)
 

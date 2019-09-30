@@ -5,8 +5,7 @@ Changelog
 4.1.6 (unreleased)
 ------------------
 
-- Nothing changed yet.
-
+- Moved the logic of added a line to the workflow_history while creating an new item to utils.add_wf_history_action so it can be used by other packages (imio.p.ws).
 
 4.1.5 (2019-09-30)
 ------------------

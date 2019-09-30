@@ -100,6 +100,7 @@ from Products.PloneMeeting.model.adaptations import RETURN_TO_PROPOSING_GROUP_MA
 from Products.PloneMeeting.utils import _addManagedPermissions
 from Products.PloneMeeting.utils import _storedItemNumber_to_itemNumber
 from Products.PloneMeeting.utils import addDataChange
+from Products.PloneMeeting.utils import add_wf_history_action
 from Products.PloneMeeting.utils import AdvicesUpdatedEvent
 from Products.PloneMeeting.utils import cleanMemoize
 from Products.PloneMeeting.utils import decodeDelayAwareId
@@ -3749,6 +3750,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     'org': org,
                     'org_uid': customAdviser['org'],
                     'pm_utils': SecureModuleImporter['Products.PloneMeeting.utils'],
+                    'imio_history_utils': SecureModuleImporter['imio.history.utils'],
                     'tool': tool,
                     'cfg': cfg},
                 empty_expr_is_true=False,
@@ -3836,6 +3838,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             extra_expr_ctx={
                 'item': self,
                 'pm_utils': SecureModuleImporter['Products.PloneMeeting.utils'],
+                'imio_history_utils': SecureModuleImporter['imio.history.utils'],
                 'tool': tool,
                 'cfg': cfg,
                 'mayEdit': mayEdit},
@@ -5447,7 +5450,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # check if may clone
         self._mayClone(cloneEventAction)
 
-        wfTool = api.portal.get_tool('portal_workflow')
         # Get the PloneMeetingFolder of the current user as destFolder
         tool = api.portal.get_tool('portal_plonemeeting')
         userId = api.user.get_current().getId()
@@ -5528,16 +5530,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if cloneEventAction:
             # We are sure that there is only one key in the workflow_history
             # because it was cleaned by ToolPloneMeeting.pasteItem
-            wfName = wfTool.getWorkflowsFor(newItem)[0].id
-            firstEvent = newItem.workflow_history[wfName][0]
-            cloneEvent = firstEvent.copy()
-            # to be translated, cloneEventAction_comments must be in the 'imio.history' domain
-            # so it is displayed in content_history together with wf transitions
-            cLabel = cloneEventAction + '_comments'
-            cloneEvent['comments'] = cLabel
-            cloneEvent['action'] = cloneEventAction
-            cloneEvent['actor'] = userId
-            newItem.workflow_history[wfName] = (firstEvent, cloneEvent)
+            add_wf_history_action(newItem, action_name=cloneEventAction, user_id=userId)
 
         newItem.at_post_create_script(inheritedAdviserUids=inheritedAdviserUids)
 
