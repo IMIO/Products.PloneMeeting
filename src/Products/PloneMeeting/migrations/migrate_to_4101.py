@@ -28,14 +28,14 @@ class Migrate_To_4101(Migrator):
                 'c27', **{
                     'vocabulary':
                         'Products.PloneMeeting.vocabularies.associatedgroupsvocabulary'})
+        logger.info('Done.')
 
+        logger.info("Updating faceted filter \"Defined in\" for 'c5' "
+                    "criterion of contacts/orgs-searches...")
         obj = self.portal.contacts.get('orgs-searches')
-        # update vocabulary for relevant filters
         criteria = ICriteria(obj)
-        criteria.edit(
-            'c5', **{
-                'default':
-                    u'collective.contact.plonegroup.interfaces.IPloneGroupContact'})
+        criterion = criteria.get('c5')
+        criterion.default = u'collective.contact.plonegroup.interfaces.IPloneGroupContact'
         logger.info('Done.')
 
     def _updateSearchLastDecisionsQuery(self):
