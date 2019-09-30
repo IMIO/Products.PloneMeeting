@@ -33,6 +33,7 @@ class Migrate_To_4101(Migrator):
         logger.info("Updating faceted filter \"Defined in\" for 'c5' "
                     "criterion of contacts/orgs-searches...")
         obj = self.portal.contacts.get('orgs-searches')
+        # as default is not correct (a string instead a list, we can not use edit or it fails to validate)
         criteria = ICriteria(obj)
         criterion = criteria.get('c5')
         criterion.default = u'collective.contact.plonegroup.interfaces.IPloneGroupContact'
