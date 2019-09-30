@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.1.4 (unreleased)
+4.1.4 (2019-09-30)
 ------------------
 
 - Added 'MeetingItem.groupsInCharge' to 'MeetingConfig.ItemFieldsToKeepConfigSortingFor' so it is possible to display it alphabetically
