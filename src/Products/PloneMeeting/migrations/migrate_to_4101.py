@@ -13,7 +13,8 @@ from Products.PloneMeeting.migrations import Migrator
 class Migrate_To_4101(Migrator):
 
     def _updateFacetedFilters(self):
-        """Update vocabulary used for "Taken over by"."""
+        """Update vocabulary used for "Taken over by".
+           Make sure the default for contacts 'c5' widget is not a list."""
         logger.info("Updating faceted filter \"Taken over by\" for every MeetingConfigs...")
         for cfg in self.tool.objectValues('MeetingConfig'):
             obj = cfg.searches.searches_items
@@ -28,6 +29,13 @@ class Migrate_To_4101(Migrator):
                     'vocabulary':
                         'Products.PloneMeeting.vocabularies.associatedgroupsvocabulary'})
 
+        obj = self.portal.contacts.get('orgs-searches')
+        # update vocabulary for relevant filters
+        criteria = ICriteria(obj)
+        criteria.edit(
+            'c5', **{
+                'default':
+                    u'collective.contact.plonegroup.interfaces.IPloneGroupContact'})
         logger.info('Done.')
 
     def _updateSearchLastDecisionsQuery(self):
