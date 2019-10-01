@@ -13,7 +13,8 @@ from Products.PloneMeeting.migrations import Migrator
 class Migrate_To_4101(Migrator):
 
     def _updateFacetedFilters(self):
-        """Update vocabulary used for "Taken over by"."""
+        """Update vocabulary used for "Taken over by".
+           Make sure the default for contacts 'c5' widget is not a list."""
         logger.info("Updating faceted filter \"Taken over by\" for every MeetingConfigs...")
         for cfg in self.tool.objectValues('MeetingConfig'):
             obj = cfg.searches.searches_items
@@ -27,7 +28,15 @@ class Migrate_To_4101(Migrator):
                 'c27', **{
                     'vocabulary':
                         'Products.PloneMeeting.vocabularies.associatedgroupsvocabulary'})
+        logger.info('Done.')
 
+        logger.info("Updating faceted filter \"Defined in\" for 'c5' "
+                    "criterion of contacts/orgs-searches...")
+        obj = self.portal.contacts.get('orgs-searches')
+        # as default is not correct (a string instead a list, we can not use edit or it fails to validate)
+        criteria = ICriteria(obj)
+        criterion = criteria.get('c5')
+        criterion.default = u'collective.contact.plonegroup.interfaces.IPloneGroupContact'
         logger.info('Done.')
 
     def _updateSearchLastDecisionsQuery(self):
@@ -112,9 +121,9 @@ class Migrate_To_4101(Migrator):
     def _removeTagsParameterInCallToJSCallViewAndReloadInCloneToOtherMCActions(self):
         '''Parameter was remove from JS callViewAndReload, this is stored
            in clone to other mc actions on MeetingItem portal_types.'''
-        logger.info("Calling _updatePortalTypes for every MeetingConfigs...")
+        logger.info("Calling registerPortalTypes for every MeetingConfigs...")
         for cfg in self.tool.objectValues('MeetingConfig'):
-            cfg._updatePortalTypes()
+            cfg.registerPortalTypes()
         logger.info('Done.')
 
     def _moveToMeetingConfigOnMeetingTransitionItemActionToExecute(self):

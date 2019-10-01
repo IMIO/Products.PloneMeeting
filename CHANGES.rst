@@ -2,7 +2,21 @@ Changelog
 =========
 
 
-4.1.4 (unreleased)
+4.1.6 (unreleased)
+------------------
+
+- Moved the logic of added a line to the workflow_history while creating an new item to utils.add_wf_history_action so it can be used by other packages (imio.p.ws).
+- Removed @ram.cache for MeetingConfig.listStates method, this was sometimes leading to breaking the workflowAdaptations application and validation
+- Fixed migration to 4101, in _removeTagsParameterInCallToJSCallViewAndReloadInCloneToOtherMCActions, do not call MeetingConfig._updatePortalTypes because it does not apply
+  workflowAdaptations, call MeetingConfig.registerPortalTypes
+
+4.1.5 (2019-09-30)
+------------------
+
+- Fixed migration of contacts/orgs-searches 'c5.default' faceted criterion as we store a string instead a list, we can not use the 'edit'
+  method that validates the format of the given value
+
+4.1.4 (2019-09-30)
 ------------------
 
 - Added 'MeetingItem.groupsInCharge' to 'MeetingConfig.ItemFieldsToKeepConfigSortingFor' so it is possible to display it alphabetically
@@ -13,6 +27,8 @@ Changelog
 - Adapted the item edit form to display fields 'proposingGroup', 'proposingGroupWithGroupInCharge', 'groupsInCharge', 'classifier' and 'category' one below the others
   and no more one next the the other to avoid hidding fields when one field is too large
 - Adapted print_meeting_date and print_preferred_meeting_date so they can now be used in restricted or unrestricted mode.
+- Adapted migration to 4101 to make sure that value stored in 'c5' widget of contacts/orgs-searches dashboard is not a list
+
 
 4.1.3 (2019-09-23)
 ------------------
