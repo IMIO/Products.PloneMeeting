@@ -860,14 +860,6 @@ class Migrate_To_4_1(Migrator):
            optional field and is used if 'Meeting.assembly' is used.
            Remove also fields removed from MeetingItem schema."""
         logger.info('Updating every MeetingConfig.usedItemAttributes/MeetingConfig.usedMeetingAttributes...')
-
-        # in certain rare cases, we need to launch migration several times, this will activate
-        # the description field on item and it is not always needed...
-        # if already migrated, bypass this step
-        if self.already_migrated:
-            self._already_migrated()
-            return
-
         for cfg in self.tool.objectValues('MeetingConfig'):
             # MeetingItem
             usedItemAttrs = list(cfg.getUsedItemAttributes())
