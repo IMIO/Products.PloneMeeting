@@ -6,6 +6,9 @@ Changelog
 ------------------
 
 - Moved the logic of added a line to the workflow_history while creating an new item to utils.add_wf_history_action so it can be used by other packages (imio.p.ws).
+- Removed @ram.cache for MeetingConfig.listStates method, this was sometimes leading to breaking the workflowAdaptations application and validation
+- Fixed migration to 4101, in _removeTagsParameterInCallToJSCallViewAndReloadInCloneToOtherMCActions, do not call MeetingConfig._updatePortalTypes because it does not apply
+  workflowAdaptations, call MeetingConfig.registerPortalTypes
 
 4.1.5 (2019-09-30)
 ------------------

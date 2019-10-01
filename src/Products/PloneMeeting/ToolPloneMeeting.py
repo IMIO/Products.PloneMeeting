@@ -77,6 +77,7 @@ from Products.PloneMeeting.config import SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY
 from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.model.adaptations import performModelAdaptations
 from Products.PloneMeeting.profiles import PloneMeetingConfiguration
+from Products.PloneMeeting.utils import add_wf_history_action
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getCustomSchemaFields
@@ -1148,12 +1149,13 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         self.REQUEST.set('defer_categorized_content_created_event', False)
 
         # The copy/paste has transferred history. We must clean the history
-        # of the cloned object.
+        # of the cloned object then add the 'Creation' event.
         wfName = wftool.getWorkflowsFor(newItem)[0].id
-        firstEvent = newItem.workflow_history[wfName][0]
-        firstEvent['actor'] = newOwnerId or self.Creator()
-        firstEvent['time'] = DateTime()
-        newItem.workflow_history[wfName] = (firstEvent, )
+        newItem.workflow_history[wfName] = ()
+        add_wf_history_action(newItem,
+                              action_name=None,
+                              action_label=None,
+                              user_id=newOwnerId or newItem.Creator())
 
         # The copy/paste has transferred annotations, we do not need them.
         for ann in annotations:

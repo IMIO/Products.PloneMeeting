@@ -121,9 +121,9 @@ class Migrate_To_4101(Migrator):
     def _removeTagsParameterInCallToJSCallViewAndReloadInCloneToOtherMCActions(self):
         '''Parameter was remove from JS callViewAndReload, this is stored
            in clone to other mc actions on MeetingItem portal_types.'''
-        logger.info("Calling _updatePortalTypes for every MeetingConfigs...")
+        logger.info("Calling registerPortalTypes for every MeetingConfigs...")
         for cfg in self.tool.objectValues('MeetingConfig'):
-            cfg._updatePortalTypes()
+            cfg.registerPortalTypes()
         logger.info('Done.')
 
     def _moveToMeetingConfigOnMeetingTransitionItemActionToExecute(self):
