@@ -1424,6 +1424,13 @@ class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV)
             return meeting.getDate()
         return meeting.Title()
 
+    def printMeetingDate(self, returnDateTime=False, noMeetingMarker='-', unrestricted=True):
+        """
+        Allow backward compatibility with old PODTemplates.
+        See print_meeting_date for docstring.
+        """
+        return self.print_meeting_date(self, returnDateTime, noMeetingMarker, unrestricted)
+
     def print_preferred_meeting_date(self, returnDateTime=False, noMeetingMarker='-', unrestricted=True):
         """
         Print preferred meeting date, manage fact that item has no preferred meeting date

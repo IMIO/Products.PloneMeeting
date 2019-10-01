@@ -9,6 +9,7 @@ Changelog
 - Removed @ram.cache for MeetingConfig.listStates method, this was sometimes leading to breaking the workflowAdaptations application and validation
 - Fixed migration to 4101, in _removeTagsParameterInCallToJSCallViewAndReloadInCloneToOtherMCActions, do not call MeetingConfig._updatePortalTypes because it does not apply
   workflowAdaptations, call MeetingConfig.registerPortalTypes
+- print_meeting_date : Backward compatibility with old PODTemplates
 
 4.1.5 (2019-09-30)
 ------------------
