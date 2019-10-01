@@ -9,13 +9,13 @@ Changelog
 - Removed @ram.cache for MeetingConfig.listStates method, this was sometimes leading to breaking the workflowAdaptations application and validation
 - Fixed migration to 4101, in _removeTagsParameterInCallToJSCallViewAndReloadInCloneToOtherMCActions, do not call MeetingConfig._updatePortalTypes because it does not apply
   workflowAdaptations, call MeetingConfig.registerPortalTypes
+- print_meeting_date : Backward compatibility with old PODTemplates
 
 4.1.5 (2019-09-30)
 ------------------
 
 - Fixed migration of contacts/orgs-searches 'c5.default' faceted criterion as we store a string instead a list, we can not use the 'edit'
   method that validates the format of the given value
-- print_meeting_date : Backward compatibility with old PODTemplates
 
 4.1.4 (2019-09-30)
 ------------------
