@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.1.6.1 (unreleased)
+4.1.6.1 (2019-10-01)
 --------------------
 
 - In Migrate_To_4_1._updateUsedAttributes while already migrated
