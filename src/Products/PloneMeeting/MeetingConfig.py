@@ -5452,13 +5452,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 res.append((workflowName, workflowName))
         return DisplayList(tuple(res)).sortedByValue()
 
-    def listStates_cachekey(method, self, objectType, excepted=None):
-        '''cachekey method for self.listStates.'''
-        return (self.modified(), objectType, excepted)
-
     security.declarePublic('listStates')
 
-    @ram.cache(listStates_cachekey)
     def listStates(self, objectType, excepted=None):
         '''Lists the possible states for the p_objectType ("Item" or "Meeting")
            used in this meeting config. State name specified in p_excepted will
