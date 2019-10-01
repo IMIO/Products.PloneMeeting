@@ -15,6 +15,7 @@ Changelog
 
 - Fixed migration of contacts/orgs-searches 'c5.default' faceted criterion as we store a string instead a list, we can not use the 'edit'
   method that validates the format of the given value
+- Backward compatibility for print_meeting_date for old PODTemplates (printMeetingDate)
 
 4.1.4 (2019-09-30)
 ------------------
