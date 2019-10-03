@@ -3349,6 +3349,7 @@ class testMeetingItem(PloneMeetingTestCase):
         item.setOptionalAdvisers((self.developers_uid, ))
         item._update_after_edit()
         can_not_unselect_msg = translate('can_not_unselect_already_given_advice',
+                                         mapping={'removedAdviser': self.developers.Title()},
                                          domain='PloneMeeting',
                                          context=self.portal.REQUEST)
         # for now as developers advice is not given, we can unselect it

@@ -2937,18 +2937,27 @@ class testAdvices(PloneMeetingTestCase):
     def test_pm_GetAdviceDataForInheritedAdvice(self):
         '''Test the getAdviceDataFor method when the advice is inherited.'''
         item1, item2, vendors_advice, developers_advice = self._setupInheritedAdvice()
-        # item1 and item2 have same values except that inherited advice have a 'adviceHolder'
+        # item1 and item2 have same values except that inherited advice
+        # have a 'adviceHolder' and is 'inherited', we patch item1 data to compare
         item1VendorsData = item1.getAdviceDataFor(item1, self.vendors_uid).copy()
+        self.assertIsNone(item1VendorsData.get('adviceHolder'))
+        self.assertFalse(item1VendorsData['inherited'])
         item1VendorsData['adviceHolder'] = item1
+        item1VendorsData['inherited'] = True
         item1DevData = item1.getAdviceDataFor(item1, self.developers_uid).copy()
+        self.assertIsNone(item1DevData.get('adviceHolder'))
+        self.assertFalse(item1DevData['inherited'])
         item1DevData['adviceHolder'] = item1
+        item1DevData['inherited'] = True
         item2VendorsData = item2.getAdviceDataFor(item2, self.vendors_uid).copy()
         item2DevData = item2.getAdviceDataFor(item2, self.developers_uid).copy()
         self.assertEqual(item1VendorsData, item2VendorsData)
         self.assertEqual(item1DevData, item2DevData)
         # adviceIndex is not impacted
         self.assertFalse('adviceHolder' in item1.adviceIndex)
-        self.assertFalse('adviceHolder' in item2.adviceIndex)
+        self.assertFalse('adviceHolder' in item2.adviceIndex.values())
+        self.assertFalse('adviceHolder' in item1.adviceIndex)
+        self.assertFalse('adviceHolder' in item2.adviceIndex.values())
 
     def test_pm_GetInheritedAdviceInfo(self):
         '''MeetingItem.getInheritedAdviceInfo will return advice info of original
