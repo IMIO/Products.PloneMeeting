@@ -157,6 +157,15 @@ class Migrate_To_4101(Migrator):
                     new_class_name='Products.PloneMeeting.content.organization.PMOrganization')
         logger.info('Done.')
 
+    def _correctAccessToPODTemplates(self):
+        """Correct weird Unauthorized when accessing POD template file."""
+        logger.info('Correcting access to POD Templates file...')
+        for brain in self.catalog(
+                object_provides='collective.documentgenerator.content.pod_template.IPODTemplate'):
+            pod_template = brain.getObject()
+            pod_template.reindexObject()
+        logger.info('Done.')
+
     def run(self, extra_omitted=[]):
         logger.info('Migrating to PloneMeeting 4101...')
         self._updateFacetedFilters()
@@ -168,6 +177,7 @@ class Migrate_To_4101(Migrator):
         self._removeTagsParameterInCallToJSCallViewAndReloadInCloneToOtherMCActions()
         self._moveToMeetingConfigOnMeetingTransitionItemActionToExecute()
         self._migrateContactOrganizationPersonsKlass()
+        self._correctAccessToPODTemplates()
         self.cleanRegistries()
         # holidays 2020 were added
         self.updateHolidays()

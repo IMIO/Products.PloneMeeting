@@ -7,6 +7,8 @@ Changelog
 
 - Fixed bug where an error was raised when asking a delay aware advice on an item for which an non delay aware inherited advice was already existing.
   Adapted MeetingItem.validate_optionalAdvisers to not let select an adviser if it is already inherited on current item
+- Added migration step to make sure POD templates access is fixed
+- Corrected template 'export-organizations.ods' as field PMOrganization.selectable_for_plonegroup was removed
 
 4.1.6.1 (2019-10-01)
 --------------------
