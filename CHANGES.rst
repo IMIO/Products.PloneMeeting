@@ -5,8 +5,8 @@ Changelog
 4.1.7 (unreleased)
 ------------------
 
-- Nothing changed yet.
-
+- Fixed bug where an error was raised when asking a delay aware advice on an item for which an non delay aware inherited advice was already existing.
+  Adapted MeetingItem.validate_optionalAdvisers to not let select an adviser if it is already inherited on current item
 
 4.1.6.1 (2019-10-01)
 --------------------

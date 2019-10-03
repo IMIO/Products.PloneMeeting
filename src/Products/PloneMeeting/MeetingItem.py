@@ -1631,21 +1631,35 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # optional adviser has not be selected and that another delay-aware adviser
             # for the same group is not selected too
             # we know that it is a delay-aware adviser because we have '__rowid__' in it's key
+            rowid = ''
             if '__rowid__' in adviser:
+                adviser_real_uid, rowid = decodeDelayAwareId(adviser)
                 # check that the same 'non-delay-aware' adviser has not be selected
-                nonDelayAwareAdviserPossibleId = adviser.split('__rowid__')[0]
-                if nonDelayAwareAdviserPossibleId in value:
+                if adviser_real_uid in value:
                     return translate('can_not_select_several_optional_advisers_same_group',
                                      domain='PloneMeeting',
                                      context=self.REQUEST)
                 # check that another delay-aware adviser of the same group
-                # is not selected at the same time, we could have 2 (or even more) delays for the same group
-                delayAdviserStartsWith = adviser.split('__rowid__')[0] + '__rowid__'
+                # is not selected at the same time, we could have 2 (or even more)
+                # delays for the same group
+                delayAdviserStartsWith = adviser_real_uid + '__rowid__'
                 for v in value:
                     if v.startswith(delayAdviserStartsWith) and not v == adviser:
                         return translate('can_not_select_several_optional_advisers_same_group',
                                          domain='PloneMeeting',
                                          context=self.REQUEST)
+            else:
+                adviser_real_uid = adviser
+            # when advices are inherited, we can not ask another one for same adviser
+            if adviser_real_uid in self.adviceIndex and \
+               self.adviceIndex[adviser_real_uid]['inherited']:
+                # use getAdviceData for because we do not have every correct values
+                # stored for an inherited advice, especially 'not_asked'
+                adviceInfo = self.getAdviceDataFor(self, adviser_real_uid)
+                if rowid != adviceInfo['row_id'] or adviceInfo['not_asked']:
+                    return translate('can_not_select_optional_adviser_same_group_as_inherited',
+                                     domain='PloneMeeting',
+                                     context=self.REQUEST)
         # find unselected advices and check if it was not already given
         storedOptionalAdvisers = self.getOptionalAdvisers()
         removedAdvisers = set(storedOptionalAdvisers).difference(set(value))
@@ -4315,6 +4329,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # if advice is inherited get real adviceInfo
             if adviceInfo['inherited']:
                 adviceInfo = self.getInheritedAdviceInfo(advId)
+                adviceInfo['inherited'] = True
             data[advId] = adviceInfo.copy()
             # hide advice data if relevant
             if hide_advices_under_redaction and \

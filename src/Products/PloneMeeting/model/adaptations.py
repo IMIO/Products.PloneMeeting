@@ -513,7 +513,7 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
             actbox_icon=image_url, actbox_category='workflow',
             props={'guard_expr': 'python:here.wfConditions().mayCorrect()'})
 
-        # link state and transition (keep bckTo_returned... if not firstLevel)
+        # link state and transition (keep backTo_returned_... if not firstLevel)
         transition_ids = ()
         if last_returned_state_id != 'returned_to_proposing_group':
             transition_ids = [tr for tr in wf.states[last_returned_state_id].transitions
