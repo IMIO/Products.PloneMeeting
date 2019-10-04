@@ -9,6 +9,7 @@ Changelog
   Adapted MeetingItem.validate_optionalAdvisers to not let select an adviser if it is already inherited on current item
 - Added migration step to make sure POD templates access is fixed
 - Corrected template 'export-organizations.ods' as field PMOrganization.selectable_for_plonegroup was removed
+- In migration to v4.1, migrate also expressions using 'here' ('here.portal_plonemeeting', ...)
 
 4.1.6.1 (2019-10-01)
 --------------------
