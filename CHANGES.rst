@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.1.7 (unreleased)
+4.1.7 (2019-10-04)
 ------------------
 
 - Fixed bug where an error was raised when asking a delay aware advice on an item for which an non delay aware inherited advice was already existing.
