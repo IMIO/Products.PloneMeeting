@@ -5,8 +5,7 @@ Changelog
 4.1.8 (unreleased)
 ------------------
 
-- Nothing changed yet.
-
+- Added possibility to bypass catalog/workflows refresh in migration step to 4101 if coming from migration step to 4.1 as this was already done
 
 4.1.7 (2019-10-04)
 ------------------

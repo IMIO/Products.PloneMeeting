@@ -166,7 +166,7 @@ class Migrate_To_4101(Migrator):
             pod_template.reindexObject()
         logger.info('Done.')
 
-    def run(self, extra_omitted=[]):
+    def run(self, extra_omitted=[], from_migration_to_41=False):
         logger.info('Migrating to PloneMeeting 4101...')
         self._updateFacetedFilters()
         self._updateSearchLastDecisionsQuery()
@@ -181,11 +181,14 @@ class Migrate_To_4101(Migrator):
         self.cleanRegistries()
         # holidays 2020 were added
         self.updateHolidays()
-        self.reindexIndexesFor(idxs=['get_full_title'], **{'portal_type': ['organization']})
-        reindexIndexes(self.portal, idxs=['getTakenOverBy', 'getConfigId'])
-        # re-run the Meeting workflows update as there was a bug in Migrator.refreshDatabase
-        meeting_wf_ids = self.getWorkflows(meta_types=['Meeting'])
-        self.refreshDatabase(catalogs=False, workflows=True, workflowsToUpdate=meeting_wf_ids)
+        # refresh if we are not coming from migration to 4.1,
+        # in this case it was already refreshed
+        if not from_migration_to_41:
+            self.reindexIndexesFor(idxs=['get_full_title'], **{'portal_type': ['organization']})
+            reindexIndexes(self.portal, idxs=['getTakenOverBy', 'getConfigId'])
+            # re-run the Meeting workflows update as there was a bug in Migrator.refreshDatabase
+            meeting_wf_ids = self.getWorkflows(meta_types=['Meeting'])
+            self.refreshDatabase(catalogs=False, workflows=True, workflowsToUpdate=meeting_wf_ids)
         self.tool.invalidateAllCache()
 
 
