@@ -155,12 +155,13 @@ class AdvicesIconsInfos(BrowserView):
 
     def mayRemoveInheritedAdvice(self):
         """To remove an inherited advice, must be :
-           - MeetingManager;
+           - MeetingManager and item is not decided;
            - or adviser for p_advice_id group and current item
              in a itemAdviceEditStates review_state."""
         res = False
         if self.adviceIsInherited:
-            if self.tool.isManager(self.context) and self.context.mayQuickEdit('optionalAdvisers'):
+            if self.tool.isManager(self.context) and \
+               self.context.queryState() not in self.cfg.getItemDecidedStates():
                 res = True
             else:
                 if self.cfg.getInheritedAdviceRemoveableByAdviser() and \

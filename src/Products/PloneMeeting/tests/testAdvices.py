@@ -3198,8 +3198,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue(adviser_fullname in advices_icons_infos(adviceType=u'positive'))
 
     def test_pm_RemoveInheritedAdviceByMeetingManager(self):
-        """A MeetingManager may remove an inherited advice as long as
-           able to quickEdit 'optionalAdvisers' field on item."""
+        """A MeetingManager may remove an inherited advice as long as item is not decided."""
         cfg = self.meetingConfig
         item1, item2, vendors_advice, developers_advice = self._setupInheritedAdvice()
         self.changeUser('pmManager')
@@ -3244,6 +3243,18 @@ class testAdvices(PloneMeetingTestCase):
             context=self.request)
         messages = IStatusMessage(self.request).show()
         self.assertEqual(messages[-1].message, ask_locally_not_configured_msg)
+
+        # MeetingManager may remove inherited advice as long as item is not decided
+        item2.setDecision(self.decisionText)
+        meeting = self.create('Meeting', date=DateTime('2019/10/10'))
+        advice_infos = form._advice_infos(data={'advice_uid': self.vendors_uid})
+        self.assertTrue(advice_infos.mayRemoveInheritedAdvice())
+        self.presentItem(item2)
+        self.assertEqual(item2.queryState(), 'presented')
+        self.assertTrue(advice_infos.mayRemoveInheritedAdvice())
+        self.closeMeeting(meeting)
+        self.assertTrue(item2.queryState() in cfg.getItemDecidedStates())
+        self.assertFalse(advice_infos.mayRemoveInheritedAdvice())
 
     def test_pm_RemoveInheritedAdviceByAdviser(self):
         """An adviser may remove an inherited advice he is adviser for
