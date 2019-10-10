@@ -157,7 +157,16 @@ class Migrate_To_4101(Migrator):
                     new_class_name='Products.PloneMeeting.content.organization.PMOrganization')
         logger.info('Done.')
 
-    def run(self, extra_omitted=[]):
+    def _correctAccessToPODTemplates(self):
+        """Correct weird Unauthorized when accessing POD template file."""
+        logger.info('Correcting access to POD Templates file...')
+        for brain in self.catalog(
+                object_provides='collective.documentgenerator.content.pod_template.IPODTemplate'):
+            pod_template = brain.getObject()
+            pod_template.reindexObject()
+        logger.info('Done.')
+
+    def run(self, extra_omitted=[], from_migration_to_41=False):
         logger.info('Migrating to PloneMeeting 4101...')
         self._updateFacetedFilters()
         self._updateSearchLastDecisionsQuery()
@@ -168,14 +177,18 @@ class Migrate_To_4101(Migrator):
         self._removeTagsParameterInCallToJSCallViewAndReloadInCloneToOtherMCActions()
         self._moveToMeetingConfigOnMeetingTransitionItemActionToExecute()
         self._migrateContactOrganizationPersonsKlass()
+        self._correctAccessToPODTemplates()
         self.cleanRegistries()
         # holidays 2020 were added
         self.updateHolidays()
-        self.reindexIndexesFor(idxs=['get_full_title'], **{'portal_type': ['organization']})
-        reindexIndexes(self.portal, idxs=['getTakenOverBy', 'getConfigId'])
-        # re-run the Meeting workflows update as there was a bug in Migrator.refreshDatabase
-        meeting_wf_ids = self.getWorkflows(meta_types=['Meeting'])
-        self.refreshDatabase(catalogs=False, workflows=True, workflowsToUpdate=meeting_wf_ids)
+        # refresh if we are not coming from migration to 4.1,
+        # in this case it was already refreshed
+        if not from_migration_to_41:
+            self.reindexIndexesFor(idxs=['get_full_title'], **{'portal_type': ['organization']})
+            reindexIndexes(self.portal, idxs=['getTakenOverBy', 'getConfigId'])
+            # re-run the Meeting workflows update as there was a bug in Migrator.refreshDatabase
+            meeting_wf_ids = self.getWorkflows(meta_types=['Meeting'])
+            self.refreshDatabase(catalogs=False, workflows=True, workflowsToUpdate=meeting_wf_ids)
         self.tool.invalidateAllCache()
 
 
@@ -188,17 +201,19 @@ def migrate(context):
        4) Add 'DashboardPODTemplate' to the allowed types of a contacts directory;
        5) Add the 'Export CSV' DashboardPODTemplate available on the contacts 'All orgs' dashboard;
        6) Remove the 'selectable_for_plonegroup' attribute on organizations;
-       7) Move field MeetingConfig.onMeetingTransitionItemTransitionToTrigger to
+       7) Update 'clone to other MC' portal_type action;
+       8) Move field MeetingConfig.onMeetingTransitionItemTransitionToTrigger to
           MeetingConfig.onMeetingTransitionItemActionToExecute;
-       8) Migrate organizations having klass Organization to klass PMOrganization;
-       9) Clean registries;
-       10) Update holidays to manage 2020;
-       11) Reindex catalog indexes :
+       9) Migrate organizations having klass Organization to klass PMOrganization;
+       10) Fix access to POD template file;
+       11) Clean registries;
+       12) Update holidays to manage 2020;
+       13) Reindex catalog indexes :
               - 'getTakenOverBy' as we use an indexer to handle empty value;
               - 'getConfigId' as we store a specific empty value as it is not possible to search on an empty index;
               - 'get_full_title' as indexed value is different than displayed one.
-       12) Refresh Meeting workflows so MeetingManager have 'Review portal content' in state 'closed';
-       13) Invalidate all cache.
+       14) Refresh Meeting workflows so MeetingManager have 'Review portal content' in state 'closed';
+       15) Invalidate all cache.
     '''
     migrator = Migrate_To_4101(context)
     migrator.run()

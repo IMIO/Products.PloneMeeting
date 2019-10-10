@@ -2723,7 +2723,17 @@ class testAdvices(PloneMeetingTestCase):
               'gives_auto_advice_on': '',
               'for_item_created_from': '2016/08/08',
               'delay': '5',
-              'delay_label': ''}, ])
+              'delay_label': '',
+              'available_on': '',
+              'is_linked_to_previous_row': '0'},
+             {'row_id': 'unique_id_456',
+              'org': self.developers_uid,
+              'gives_auto_advice_on': '',
+              'for_item_created_from': '2016/08/08',
+              'delay': '10',
+              'delay_label': '',
+              'available_on': '',
+              'is_linked_to_previous_row': '1'}, ])
         cfg.setItemAdviceStates(('itemcreated', ))
         cfg.setItemAdviceEditStates(('itemcreated', ))
         cfg.setItemAdviceViewStates(('itemcreated', ))
@@ -2933,18 +2943,27 @@ class testAdvices(PloneMeetingTestCase):
     def test_pm_GetAdviceDataForInheritedAdvice(self):
         '''Test the getAdviceDataFor method when the advice is inherited.'''
         item1, item2, vendors_advice, developers_advice = self._setupInheritedAdvice()
-        # item1 and item2 have same values except that inherited advice have a 'adviceHolder'
+        # item1 and item2 have same values except that inherited advice
+        # have a 'adviceHolder' and is 'inherited', we patch item1 data to compare
         item1VendorsData = item1.getAdviceDataFor(item1, self.vendors_uid).copy()
+        self.assertIsNone(item1VendorsData.get('adviceHolder'))
+        self.assertFalse(item1VendorsData['inherited'])
         item1VendorsData['adviceHolder'] = item1
+        item1VendorsData['inherited'] = True
         item1DevData = item1.getAdviceDataFor(item1, self.developers_uid).copy()
+        self.assertIsNone(item1DevData.get('adviceHolder'))
+        self.assertFalse(item1DevData['inherited'])
         item1DevData['adviceHolder'] = item1
+        item1DevData['inherited'] = True
         item2VendorsData = item2.getAdviceDataFor(item2, self.vendors_uid).copy()
         item2DevData = item2.getAdviceDataFor(item2, self.developers_uid).copy()
         self.assertEqual(item1VendorsData, item2VendorsData)
         self.assertEqual(item1DevData, item2DevData)
         # adviceIndex is not impacted
         self.assertFalse('adviceHolder' in item1.adviceIndex)
-        self.assertFalse('adviceHolder' in item2.adviceIndex)
+        self.assertFalse('adviceHolder' in item2.adviceIndex.values())
+        self.assertFalse('adviceHolder' in item1.adviceIndex)
+        self.assertFalse('adviceHolder' in item2.adviceIndex.values())
 
     def test_pm_GetInheritedAdviceInfo(self):
         '''MeetingItem.getInheritedAdviceInfo will return advice info of original
@@ -3262,6 +3281,63 @@ class testAdvices(PloneMeetingTestCase):
         '''Test the indexAdvisers of an inherited advice.  Values have to be same as original advice.'''
         item1, item2, vendors_advice, developers_advice = self._setupInheritedAdvice()
         self.assertEqual(indexAdvisers(item1)(), indexAdvisers(item2)())
+
+    def test_pm_ValidateOptionalAdvisersWithInheritedAdvices(self):
+        """When an advice is inherited, it will not be possible to select an inherited
+           advice on new item using a different row_id.
+           We it will not be possible to ask an advice with delay if advice without delay is inherited
+           and the other way round."""
+        item1, item2, vendors_advice, developers_advice = self._setupInheritedAdvice()
+
+        # when items in same MC, optionalAdvisers field value is kept
+        self.assertEqual(item2.getAdviceDataFor(item2, self.vendors_uid)['row_id'], '')
+        self.assertEqual(item2.getAdviceDataFor(item2, self.developers_uid)['row_id'], 'unique_id_123')
+        self.assertEqual(item1.portal_type, item2.portal_type)
+        # as optionalAdvisers are selected by default on copied item
+        # it must validate as it, but we can not change an herited advice row_id
+        self.failIf(item2.validate_optionalAdvisers(item2.getOptionalAdvisers()))
+        self.failIf(item2.validate_optionalAdvisers((self.vendors_uid, )))
+        self.failIf(item2.validate_optionalAdvisers(
+            ('{0}__rowid__unique_id_123'.format(self.developers_uid), )))
+        # fails when changing row_id
+        inherited_select_error_msg = translate(
+            'can_not_select_optional_adviser_same_group_as_inherited',
+            domain='PloneMeeting',
+            context=self.portal.REQUEST)
+        self.assertEqual(
+            item2.validate_optionalAdvisers(('{0}__rowid__unique_id_456'.format(
+                self.developers_uid), )),
+            inherited_select_error_msg)
+        self.assertEqual(
+            item2.validate_optionalAdvisers((self.developers_uid, )),
+            inherited_select_error_msg)
+
+        # items in different MCs, optionalAdvisers field value is not kept
+        # select another row_id, mean non delay aware adviser of a delay aware adviser
+        # or another delay for a delay aware adviser
+        cfg = self.meetingConfig
+        cfg.setContentsKeptOnSentToOtherMC((u'advices', ))
+        cfg2 = self.meetingConfig2
+        cfg2Id = cfg2.getId()
+        cfg.setItemManualSentToOtherMCStates((self._stateMappingFor('itemcreated')))
+        item1.setOtherMeetingConfigsClonableTo((cfg2Id, ))
+        item3 = item1.cloneToOtherMeetingConfig(cfg2Id)
+        self.assertNotEqual(item1.portal_type, item3.portal_type)
+        # advices are kept
+        self.assertTrue(item3.adviceIndex)
+        # optionalAdvisers are not kept
+        self.assertEqual(item3.getOptionalAdvisers(), ())
+        # select another optionalAdviser for developers
+        # when selecting the non custom advisers developers_uid
+        self.assertEqual(item3.validate_optionalAdvisers((self.developers_uid, )),
+                         inherited_select_error_msg)
+        # when selecting a custom adviser for same adviser
+        self.assertEqual(
+            item3.validate_optionalAdvisers(('{0}__rowid__unique_id_456'.format(
+                self.developers_uid), )),
+            inherited_select_error_msg)
+        # possible to select a new adviser
+        self.failIf(item3.validate_optionalAdvisers((self.endUsers_uid, )))
 
     def test_pm_ItemModifiedWhenAdviceChanged(self):
         """When an advice is added/modified/removed/attribute changed,

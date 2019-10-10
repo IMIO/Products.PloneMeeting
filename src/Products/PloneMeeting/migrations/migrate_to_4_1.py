@@ -860,14 +860,6 @@ class Migrate_To_4_1(Migrator):
            optional field and is used if 'Meeting.assembly' is used.
            Remove also fields removed from MeetingItem schema."""
         logger.info('Updating every MeetingConfig.usedItemAttributes/MeetingConfig.usedMeetingAttributes...')
-
-        # in certain rare cases, we need to launch migration several times, this will activate
-        # the description field on item and it is not always needed...
-        # if already migrated, bypass this step
-        if self.already_migrated:
-            self._already_migrated()
-            return
-
         for cfg in self.tool.objectValues('MeetingConfig'):
             # MeetingItem
             usedItemAttrs = list(cfg.getUsedItemAttributes())
@@ -1218,9 +1210,19 @@ class Migrate_To_4_1(Migrator):
                                  new_word="power_observer_type='powerobservers'")
         self.updateTALConditions(old_word='context.portal_plonemeeting',
                                  new_word='tool')
+        self.updateTALConditions(old_word='here.portal_plonemeeting',
+                                 new_word='tool')
         self.updateTALConditions(old_word='context.portal_plonemeeting.getMeetingConfig(context)',
                                  new_word='cfg')
+        self.updateTALConditions(old_word='here.portal_plonemeeting.getMeetingConfig(here)',
+                                 new_word='cfg')
+        self.updateTALConditions(old_word='context.portal_plonemeeting.getMeetingConfig(here)',
+                                 new_word='cfg')
+        self.updateTALConditions(old_word='here.portal_plonemeeting.getMeetingConfig(context)',
+                                 new_word='cfg')
         self.updateTALConditions(old_word='tool.getMeetingConfig(context)',
+                                 new_word='cfg')
+        self.updateTALConditions(old_word='tool.getMeetingConfig(here)',
                                  new_word='cfg')
         self._updateUsedAttributes()
         self._updateHistorizedAttributes()

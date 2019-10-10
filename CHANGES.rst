@@ -2,9 +2,10 @@ Changelog
 =========
 
 
-4.1.7 (unreleased)
+4.1.8 (unreleased)
 ------------------
 
+- Added possibility to bypass catalog/workflows refresh in migration step to 4101 if coming from migration step to 4.1 as this was already done
 - Adapted print_meeting_date and print_preferred_meeting_date so they can now be used in restricted or unrestricted mode.
 - Item validation workflow is now designed in the MeetingConfig.itemWFValidationLevels, this imply :
     - to no longer rely on MEETINGROLES and MEETINGREVIEWERS constants;
@@ -14,6 +15,19 @@ Changelog
 - Use roles 'Reviewer' and 'Contributor' in meetingadvice_workflow
 - Added bypass for users having 'Manage portal' in MeetingItemWorkflowConditions in 'mayWait_advices_from', 'mayValidate' and 'mayPresent'
 
+4.1.7 (2019-10-04)
+------------------
+
+- Fixed bug where an error was raised when asking a delay aware advice on an item for which an non delay aware inherited advice was already existing.
+  Adapted MeetingItem.validate_optionalAdvisers to not let select an adviser if it is already inherited on current item
+- Added migration step to make sure POD templates access is fixed
+- Corrected template 'export-organizations.ods' as field PMOrganization.selectable_for_plonegroup was removed
+- In migration to v4.1, migrate also expressions using 'here' ('here.portal_plonemeeting', ...)
+
+4.1.6.1 (2019-10-01)
+--------------------
+
+- In Migrate_To_4_1._updateUsedAttributes while already migrated
 
 4.1.6 (2019-10-01)
 ------------------
