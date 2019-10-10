@@ -33,6 +33,7 @@ from Products.CMFCore.permissions import DeleteObjects
 from Products.CMFCore.permissions import ManageProperties
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
+from Products.CMFCore.utils import _checkPermission
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFPlone.utils import safe_unicode
 from Products.DCWorkflow.events import TransitionEvent
@@ -1159,6 +1160,29 @@ def toHTMLStrikedContent(plain_content):
     """
     plain_content = plain_content.replace('[[', '<strike>').replace(']]', '</strike>')
     return plain_content
+
+
+def display_as_html(plain_content, obj):
+    """Display p_plain_content as HTML, especially ending lines
+       that are not displayed if empty."""
+    html_content = plain_content.replace('\n', '<br />')
+    if _checkPermission(ModifyPortalContent, obj):
+        # replace ending <br /> by empty tags
+        splitted = html_content.split('<br />')
+        res = []
+        for elt in splitted:
+            if not elt.strip():
+                res.append('<p>&nbsp;</p>')
+            else:
+                res.append('<p>' + elt + '</p>')
+        html_content = ''.join(res)
+        html_content = markEmptyTags(
+            html_content,
+            tagTitle=translate('blank_line',
+                               domain='PloneMeeting',
+                               context=obj.REQUEST),
+            onlyAtTheEnd=True)
+    return html_content
 
 
 def _itemNumber_to_storedItemNumber(number):

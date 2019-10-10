@@ -9,6 +9,7 @@ Changelog
 - Adapted AdvicesIconsInfos.mayRemoveInheritedAdvice that is also used by the '@@advice-remove-inheritance' view
   so a MeetingManager may remove an inherited advice as long as item is not decided
 - Display workflowstate viewlet the new way as it was moved to plonetheme.imioapps and CSS were changed
+- Show clearly empty lines at end of Meeting.signatures field, this way editors may see immediatelly if a line is missing
 
 4.1.7 (2019-10-04)
 ------------------

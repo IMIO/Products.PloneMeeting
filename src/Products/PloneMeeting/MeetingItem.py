@@ -104,6 +104,7 @@ from Products.PloneMeeting.utils import add_wf_history_action
 from Products.PloneMeeting.utils import AdvicesUpdatedEvent
 from Products.PloneMeeting.utils import cleanMemoize
 from Products.PloneMeeting.utils import decodeDelayAwareId
+from Products.PloneMeeting.utils import display_as_html
 from Products.PloneMeeting.utils import fieldIsEmpty
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
 from Products.PloneMeeting.utils import getCurrentMeetingObject
@@ -3014,7 +3015,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getItemSignatures')
 
-    def getItemSignatures(self, real=False, **kwargs):
+    def getItemSignatures(self, real=False, for_display=False, **kwargs):
         '''Gets the signatures for this item. If no signature is defined,
            meeting signatures are returned.'''
         res = self.getField('itemSignatures').get(self, **kwargs)
@@ -3022,6 +3023,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return res
         if not res and self.hasMeeting():
             res = self.getMeeting().getSignatures(**kwargs)
+        if for_display:
+            res = display_as_html(res, self)
         return res
 
     security.declarePublic('hasItemSignatures')

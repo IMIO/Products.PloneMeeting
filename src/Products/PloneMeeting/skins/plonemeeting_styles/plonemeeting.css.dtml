@@ -803,6 +803,13 @@ p.indent-firstline {text-indent: 40px;}
     padding-bottom: 2px;
 }
 
+/* signatures displayed on meeting view */
+#content fieldset.meeting_signatures p,
+#content div.item_signatures p {
+   line-height: 1em;
+   margin-bottom: 0em;
+}
+
 .adviceIsConfidentialNotEditable {
     cursor: help;
 }

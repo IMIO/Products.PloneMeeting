@@ -61,6 +61,7 @@ from Products.PloneMeeting.interfaces import IMeetingWorkflowConditions
 from Products.PloneMeeting.utils import _addManagedPermissions
 from Products.PloneMeeting.utils import addDataChange
 from Products.PloneMeeting.utils import addRecurringItemsIfRelevant
+from Products.PloneMeeting.utils import display_as_html
 from Products.PloneMeeting.utils import displaying_available_items
 from Products.PloneMeeting.utils import fieldIsEmpty
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
@@ -903,6 +904,13 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
     def displayStrikedAssembly(self):
         """ """
         return toHTMLStrikedContent(self.getAssembly())
+
+    security.declarePublic('displaySignatures')
+
+    def displaySignatures(self):
+        """Display signatures as HTML, make sure lines added at end
+           of signatures are displayed on screen correctly."""
+        return display_as_html(self.getSignatures(), self)
 
     security.declarePublic('getAllUsedHeldPositions')
 

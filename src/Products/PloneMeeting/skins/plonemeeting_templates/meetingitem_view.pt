@@ -207,11 +207,11 @@
                   <tal:item_signatures tal:condition="python: ('signatures' in usedMeetingAttrs or context.getItemSignatures()) and not meeting.getSignatories()">
                       <tal:defines define="class_if_highlighted python: redefinedItemSignatures and 'highlightValue' or '';
                                            class_to_use python: mayQuickEditItemSignatures and (class_if_highlighted and class_if_highlighted + ' item_attribute_label' or ' item_attribute_label') or class_if_highlighted + ' item_attribute_label'">
-                        <div>
+                        <div class="item_signatures">
                             <span class="item_attribute_label"
                                   tal:attributes="class string:${class_to_use}"
                                   i18n:translate="PloneMeeting_label_itemSignatures"></span>:&nbsp;&nbsp;
-                            <span tal:replace="structure python: context.getItemSignatures(mimetype='text/x-html-safe') or '-'">Signatures</span>
+                            <span tal:replace="structure python: context.getItemSignatures(for_display=True) or '-'">Signatures</span>
                         </div>
                       </tal:defines>
                   </tal:item_signatures>
