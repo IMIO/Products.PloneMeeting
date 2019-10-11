@@ -11,6 +11,7 @@ Changelog
 - Display workflowstate viewlet the new way as it was moved to plonetheme.imioapps and CSS were changed
 - Show clearly empty lines at end of Meeting.signatures field, this way editors may see immediatelly if a line is missing
 - Fixed vocabulary keys used for field MeetingConfig.mailMeetingEvents (listMeetingEvents) that was breaking the mail notifications upon meeting state change
+- Fixed migration step Migrate_To_4101._correctAccessToPODTemplates to also update StyleTemplate objects
 
 4.1.7 (2019-10-04)
 ------------------

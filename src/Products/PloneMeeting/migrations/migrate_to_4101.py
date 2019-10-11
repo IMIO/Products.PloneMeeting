@@ -160,9 +160,14 @@ class Migrate_To_4101(Migrator):
     def _correctAccessToPODTemplates(self):
         """Correct weird Unauthorized when accessing POD template file."""
         logger.info('Correcting access to POD Templates file...')
-        for brain in self.catalog(
-                object_provides='collective.documentgenerator.content.pod_template.IPODTemplate'):
+        brains = self.catalog(
+            object_provides=(
+                'collective.documentgenerator.content.pod_template.IPODTemplate',
+                'collective.documentgenerator.content.style_template.IStyleTemplate'))
+        for brain in brains:
             pod_template = brain.getObject()
+            logger.info('Updating access for POD template at {0}'.format(
+                '/'.join(pod_template.getPhysicalPath())))
             pod_template.reindexObject()
         logger.info('Done.')
 
