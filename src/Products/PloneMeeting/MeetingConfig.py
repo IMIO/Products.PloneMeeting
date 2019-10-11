@@ -5632,7 +5632,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                        domain="PloneMeeting",
                                        mapping={'state_info': meeting_transition_name},
                                        context=self.REQUEST)
-            res.append(("item_state_changed_%s" % meeting_transition_id, translated_msg))
+            res.append(("meeting_state_changed_%s" % meeting_transition_id, translated_msg))
 
         return DisplayList(res).sortedByValue()
 

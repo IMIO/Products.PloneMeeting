@@ -10,6 +10,7 @@ Changelog
   so a MeetingManager may remove an inherited advice as long as item is not decided
 - Display workflowstate viewlet the new way as it was moved to plonetheme.imioapps and CSS were changed
 - Show clearly empty lines at end of Meeting.signatures field, this way editors may see immediatelly if a line is missing
+- Fixed vocabulary keys used for field MeetingConfig.mailMeetingEvents (listMeetingEvents) that was breaking the mail notifications upon meeting state change
 
 4.1.7 (2019-10-04)
 ------------------
@@ -28,7 +29,7 @@ Changelog
 4.1.6 (2019-10-01)
 ------------------
 
-- Moved the logic of added a line to the workflow_history while creating an new item to utils.add_wf_history_action so it can be used by other packages (imio.p.ws).
+- Moved the logic of added a line to the workflow_history while creating an new item to utils.add_wf_history_action so it can be used by other packages (imio.p.ws)
 - Removed @ram.cache for MeetingConfig.listStates method, this was sometimes leading to breaking the workflowAdaptations application and validation
 - Fixed migration to 4101, in _removeTagsParameterInCallToJSCallViewAndReloadInCloneToOtherMCActions, do not call MeetingConfig._updatePortalTypes because it does not apply
   workflowAdaptations, call MeetingConfig.registerPortalTypes
