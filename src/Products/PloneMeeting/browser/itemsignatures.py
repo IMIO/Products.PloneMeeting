@@ -128,6 +128,9 @@ class ManageItemSignaturesForm(form.Form):
     @button.buttonAndHandler(_('Apply'), name='apply_item_signatures')
     def handleApplyItemSignatures(self, action):
         data, errors = self.extractData()
+        # extra data for 'item_signatures' manually because default converter
+        # strip the value and we lose empty lines at end of the field
+        data['item_signatures'] = self.widgets['item_signatures'].extract()
         if errors:
             self.status = self.formErrorsMessage
             return
