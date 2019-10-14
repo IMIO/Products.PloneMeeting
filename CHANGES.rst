@@ -5,8 +5,7 @@ Changelog
 4.1.9 (unreleased)
 ------------------
 
-- Nothing changed yet.
-
+- Add a validation step "Are you sure?" before launching items and meetings local roles update from the action button on portal_plonemeeting
 
 4.1.8 (2019-10-14)
 ------------------
