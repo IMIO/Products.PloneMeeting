@@ -504,6 +504,35 @@ class testPerformances(PloneMeetingTestCase):
         for time in range(times):
             self.meetingConfig.getCategories(userId='pmManager', caching=caching)
 
+    def test_pm_UpdateLocalRolesOnItemsWithoutAnnexesOrAdvices(self):
+        '''Call updateLocalRoles on items without any annexes or advices.'''
+        self.changeUser('pmManager')
+        # create 50 items with 20 annexes
+        number_of_items = 50
+        number_of_annexes = 0
+        number_of_advices = 0
+        meeting, items = self._setupMeetingItemsWithAnnexes(
+            number_of_items=number_of_items,
+            number_of_annexes=number_of_annexes,
+            with_meeting=False,
+            as_uids=False)
+        # make sure we have many asked advices
+        for item in items:
+            self.assertEqual(len(item.adviceIndex), number_of_advices)
+
+        # call update local roles 2 times
+        uids = listify_uids([item.UID() for item in items])
+        pm_logger.info(
+            'Call 1 to updateLocalRoles on {0} items holding '
+            '{1} annexes and {2} auto asked advices.'.format(
+                number_of_items, number_of_annexes, number_of_advices))
+        self._updateItemLocalRoles(uids)
+        pm_logger.info(
+            'Call 2 to updateLocalRoles on {0} items holding '
+            '{1} annexes and {2} auto asked advices.'.format(
+                number_of_items, number_of_annexes, number_of_advices))
+        self._updateItemLocalRoles(uids)
+
     def test_pm_UpdateLocalRolesOnItemsHoldingAnnexesAndAdvices(self):
         '''Call updateLocalRoles on items holding many annexes and advices.'''
         # configure several auto asked advices and manually asked advices
