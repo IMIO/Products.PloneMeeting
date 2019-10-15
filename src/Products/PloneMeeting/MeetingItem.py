@@ -3818,33 +3818,49 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         self.autoCopyGroups = PersistentList()
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        for org in get_organizations():
-            org_uid = org.UID()
-            suffixes = _evaluateExpression(
-                self,
-                expression=org.as_copy_group_on,
-                roles_bypassing_expression=[],
-                extra_expr_ctx={
-                    'item': self,
-                    'isCreated': isCreated,
-                    'pm_utils': SecureModuleImporter['Products.PloneMeeting.utils'],
-                    'tool': tool,
-                    'cfg': cfg},
-                empty_expr_is_true=False,
-                error_pattern=AS_COPYGROUP_CONDITION_ERROR)
-            if not suffixes or not isinstance(suffixes, (tuple, list)):
-                continue
-            # The expression is supposed to return a list a Plone group suffixes
-            # check that the real linked Plone groups are selectable
-            for suffix in suffixes:
-                if suffix not in get_all_suffixes(org_uid):
-                    # If the suffix returned by the expression does not exist
-                    # log it, it is a configuration problem
-                    logger.warning(AS_COPYGROUP_RES_ERROR.format(suffix, org_uid))
+        using_groups = cfg.getUsingGroups()
+        # store in the REQUEST the fact that we found an expression
+        # to evaluate.  If it is not the case, this will speed up
+        # when updating local roles for several elements
+        req_key = 'add_auto_copy_groups_search_for_expression__{0}'.format(cfg.getItemTypeName())
+        search_for_expression = self.REQUEST.get(req_key, True)
+        if search_for_expression:
+            self.REQUEST.set(req_key, False)
+            for org in get_organizations():
+                org_uid = org.UID()
+                # bypass organizations not selected for this MeetingConfig
+                if using_groups and org_uid not in using_groups:
                     continue
-                plone_group_id = get_plone_group_id(org_uid, suffix)
-                auto_plone_group_id = '{0}{1}'.format(AUTO_COPY_GROUP_PREFIX, plone_group_id)
-                self.autoCopyGroups.append(auto_plone_group_id)
+                expr = org.as_copy_group_on
+                if not expr or not expr.strip():
+                    continue
+                # store in the REQUEST fact that there is at least one expression to evaluate
+                self.REQUEST.set(req_key, True)
+                suffixes = _evaluateExpression(
+                    self,
+                    expression=org.as_copy_group_on,
+                    roles_bypassing_expression=[],
+                    extra_expr_ctx={
+                        'item': self,
+                        'isCreated': isCreated,
+                        'pm_utils': SecureModuleImporter['Products.PloneMeeting.utils'],
+                        'tool': tool,
+                        'cfg': cfg},
+                    empty_expr_is_true=False,
+                    error_pattern=AS_COPYGROUP_CONDITION_ERROR)
+                if not suffixes or not isinstance(suffixes, (tuple, list)):
+                    continue
+                # The expression is supposed to return a list a Plone group suffixes
+                # check that the real linked Plone groups are selectable
+                for suffix in suffixes:
+                    if suffix not in get_all_suffixes(org_uid):
+                        # If the suffix returned by the expression does not exist
+                        # log it, it is a configuration problem
+                        logger.warning(AS_COPYGROUP_RES_ERROR.format(suffix, org_uid))
+                        continue
+                    plone_group_id = get_plone_group_id(org_uid, suffix)
+                    auto_plone_group_id = '{0}{1}'.format(AUTO_COPY_GROUP_PREFIX, plone_group_id)
+                    self.autoCopyGroups.append(auto_plone_group_id)
 
     def _evalAdviceAvailableOn(self, available_on_expr, tool, cfg, mayEdit=True):
         """ """

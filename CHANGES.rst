@@ -6,6 +6,10 @@ Changelog
 ------------------
 
 - Add a validation step "Are you sure?" before launching items and meetings local roles update from the action button on portal_plonemeeting
+- Optimize MeetingItem.updateLocalRoles to take into account cases when several items are updated :
+  - Do not compute auto copy groups if there were no expression found on previous updated item of same portal_type
+  - Do not update annexes accesses if annex was not confidentiel and still not confidential
+  - Added caching to collective.contact.plonegroup.get_organization for the time of a REQUEST to avoid doing too much catalog queries
 
 4.1.8 (2019-10-14)
 ------------------
