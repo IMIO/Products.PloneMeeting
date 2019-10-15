@@ -624,7 +624,7 @@ class testPerformances(PloneMeetingTestCase):
 
         # call update local roles 2 times
         uids = listify_uids([item.UID() for item in items])
-        number_of_annexes = 0
+        number_of_annexes = 20
         for item in items:
             self.assertEqual(len(get_annexes(item)), number_of_annexes)
 
