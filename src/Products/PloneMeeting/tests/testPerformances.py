@@ -30,6 +30,7 @@ from plone import api
 from PloneMeetingTestCase import pm_logger
 from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
+from Products.PloneMeeting.utils import get_annexes
 from profilehooks import timecall
 
 
@@ -504,86 +505,136 @@ class testPerformances(PloneMeetingTestCase):
         for time in range(times):
             self.meetingConfig.getCategories(userId='pmManager', caching=caching)
 
-    def test_pm_UpdateLocalRolesOnItemsWithoutAnnexesOrAdvices(self):
-        '''Call updateLocalRoles on items without any annexes or advices.'''
-        self.changeUser('pmManager')
-        # create 50 items with 20 annexes
-        number_of_items = 50
-        number_of_annexes = 0
-        number_of_advices = 0
-        meeting, items = self._setupMeetingItemsWithAnnexes(
-            number_of_items=number_of_items,
-            number_of_annexes=number_of_annexes,
-            with_meeting=False,
-            as_uids=False)
-        # make sure we have many asked advices
-        for item in items:
-            self.assertEqual(len(item.adviceIndex), number_of_advices)
-
-        # call update local roles 2 times
-        uids = listify_uids([item.UID() for item in items])
-        pm_logger.info(
-            'Call 1 to updateLocalRoles on {0} items holding '
-            '{1} annexes and {2} auto asked advices.'.format(
-                number_of_items, number_of_annexes, number_of_advices))
-        self._updateItemLocalRoles(uids)
-        pm_logger.info(
-            'Call 2 to updateLocalRoles on {0} items holding '
-            '{1} annexes and {2} auto asked advices.'.format(
-                number_of_items, number_of_annexes, number_of_advices))
-        self._updateItemLocalRoles(uids)
-
-    def test_pm_UpdateLocalRolesOnItemsHoldingAnnexesAndAdvices(self):
+    def _setupItemsForUpdateLocalRoles(self, add_advices=True, add_annexes=True):
         '''Call updateLocalRoles on items holding many annexes and advices.'''
         # configure several auto asked advices and manually asked advices
         cfg = self.meetingConfig
         self.changeUser('siteadmin')
-        # create some groups in charge
-        gic_uids = []
-        for i in range(1, 11):
-            gic = self.create(
-                'organization',
-                id='groupincharge{0}'.format(i),
-                Title='Group in charge {0}'.format(i),
-                acronym='GIC{0}'.format(i))
-            gic_uids.append(gic.UID())
-        # set the groups in charge, in charge of developers
-        self.developers.groups_in_charge = gic_uids
-        # configure customAdvisers
-        custom_advisers = []
-        for gic_uid in gic_uids:
-            custom_advisers.append(
-                {'gives_auto_advice_on':
-                    "python:'{0}' in item.getGroupsInCharge(fromOrgIfEmpty=True)".format(gic_uid),
-                 'org': gic_uid,
-                 'for_item_created_from': '2019/10/15',
-                 'row_id': 'row_id__{0}'.format(gic_uid)})
-        cfg.setCustomAdvisers(custom_advisers)
+        if add_advices:
+            # create some groups in charge
+            gic_uids = []
+            for i in range(1, 11):
+                gic = self.create(
+                    'organization',
+                    id='groupincharge{0}'.format(i),
+                    Title='Group in charge {0}'.format(i),
+                    acronym='GIC{0}'.format(i))
+                gic_uids.append(gic.UID())
+            # set the groups in charge, in charge of developers
+            self.developers.groups_in_charge = gic_uids
+            # configure customAdvisers
+            custom_advisers = []
+            for gic_uid in gic_uids:
+                custom_advisers.append(
+                    {'gives_auto_advice_on':
+                        "python:'{0}' in item.getGroupsInCharge(fromOrgIfEmpty=True)".format(gic_uid),
+                     'org': gic_uid,
+                     'for_item_created_from': '2019/10/15',
+                     'row_id': 'row_id__{0}'.format(gic_uid)})
+            cfg.setCustomAdvisers(custom_advisers)
+
         self.changeUser('pmManager')
         # create 50 items with 20 annexes
         number_of_items = 50
-        number_of_annexes = 20
-        number_of_advices = len(cfg.getCustomAdvisers())
+        number_of_annexes = 0
+        if add_annexes:
+            number_of_annexes = 20
         meeting, items = self._setupMeetingItemsWithAnnexes(
             number_of_items=number_of_items,
             number_of_annexes=number_of_annexes,
             with_meeting=False,
             as_uids=False)
-        # make sure we have many asked advices
+        return items
+
+    def test_pm_UpdateLocalRolesOn50ItemsWith0AnnexesAnd0Advices(self):
+        '''Call updateLocalRoles on items without any annexes or advices.'''
+        items = self._setupItemsForUpdateLocalRoles(add_advices=False,
+                                                    add_annexes=False)
+        number_of_advices = 0
         for item in items:
             self.assertEqual(len(item.adviceIndex), number_of_advices)
 
         # call update local roles 2 times
         uids = listify_uids([item.UID() for item in items])
+        number_of_annexes = 0
+        for item in items:
+            self.assertEqual(len(get_annexes(item)), number_of_annexes)
+
         pm_logger.info(
-            'Call 1 to updateLocalRoles on {0} items holding '
-            '{1} annexes and {2} auto asked advices.'.format(
-                number_of_items, number_of_annexes, number_of_advices))
+            'Call 1 to updateLocalRoles on 50 items holding '
+            '{0} annexes and {1} auto asked advices.'.format(number_of_annexes, number_of_advices))
         self._updateItemLocalRoles(uids)
         pm_logger.info(
-            'Call 2 to updateLocalRoles on {0} items holding '
-            '{1} annexes and {2} auto asked advices.'.format(
-                number_of_items, number_of_annexes, number_of_advices))
+            'Call 2 to updateLocalRoles on 50 items holding '
+            '{0} annexes and {1} auto asked advices.'.format(number_of_annexes, number_of_advices))
+        self._updateItemLocalRoles(uids)
+
+    def test_pm_UpdateLocalRolesOn50ItemsWith20AnnexesAnd0Advices(self):
+        '''Call updateLocalRoles on items with 20 annexes and 0 advices.'''
+        items = self._setupItemsForUpdateLocalRoles(add_advices=False,
+                                                    add_annexes=True)
+        number_of_advices = 0
+        for item in items:
+            self.assertEqual(len(item.adviceIndex), number_of_advices)
+
+        # call update local roles 2 times
+        uids = listify_uids([item.UID() for item in items])
+        number_of_annexes = 20
+        for item in items:
+            self.assertEqual(len(get_annexes(item)), number_of_annexes)
+
+        pm_logger.info(
+            'Call 1 to updateLocalRoles on 50 items holding '
+            '{0} annexes and {1} auto asked advices.'.format(number_of_annexes, number_of_advices))
+        self._updateItemLocalRoles(uids)
+        pm_logger.info(
+            'Call 2 to updateLocalRoles on 50 items holding '
+            '{0} annexes and {1} auto asked advices.'.format(number_of_annexes, number_of_advices))
+        self._updateItemLocalRoles(uids)
+
+    def test_pm_UpdateLocalRolesOn50ItemsWith0AnnexesAnd10Advices(self):
+        '''Call updateLocalRoles on items with 0 annexes and 10 advices.'''
+        items = self._setupItemsForUpdateLocalRoles(add_advices=True,
+                                                    add_annexes=False)
+        number_of_advices = 10
+        for item in items:
+            self.assertEqual(len(item.adviceIndex), number_of_advices)
+
+        # call update local roles 2 times
+        uids = listify_uids([item.UID() for item in items])
+        number_of_annexes = 0
+        for item in items:
+            self.assertEqual(len(get_annexes(item)), number_of_annexes)
+        pm_logger.info(
+            'Call 1 to updateLocalRoles on 50 items holding '
+            '{0} annexes and {1} auto asked advices.'.format(number_of_annexes, number_of_advices))
+        self._updateItemLocalRoles(uids)
+        pm_logger.info(
+            'Call 2 to updateLocalRoles on 50 items holding '
+            '{0} annexes and {1} auto asked advices.'.format(number_of_annexes, number_of_advices))
+        self._updateItemLocalRoles(uids)
+
+    def test_pm_UpdateLocalRolesOn50ItemsWith20AnnexesAnd10Advices(self):
+        '''Call updateLocalRoles on items with 20 annexes and 10 advices.'''
+        items = self._setupItemsForUpdateLocalRoles(add_advices=True,
+                                                    add_annexes=True)
+        number_of_advices = 10
+        for item in items:
+            self.assertEqual(len(item.adviceIndex), number_of_advices)
+
+        # call update local roles 2 times
+        uids = listify_uids([item.UID() for item in items])
+        number_of_annexes = 0
+        for item in items:
+            self.assertEqual(len(get_annexes(item)), number_of_annexes)
+
+        pm_logger.info(
+            'Call 1 to updateLocalRoles on 50 items holding '
+            '{0} annexes and {1} auto asked advices.'.format(number_of_annexes, number_of_advices))
+        self._updateItemLocalRoles(uids)
+        pm_logger.info(
+            'Call 2 to updateLocalRoles on 50 items holding '
+            '{0} annexes and {1} auto asked advices.'.format(number_of_annexes, number_of_advices))
         self._updateItemLocalRoles(uids)
 
     @timecall
