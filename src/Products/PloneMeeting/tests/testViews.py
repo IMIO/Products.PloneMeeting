@@ -8,6 +8,7 @@ from ftw.labels.interfaces import ILabeling
 from ftw.labels.interfaces import ILabelJar
 from imio.helpers.cache import cleanRamCacheFor
 from os import path
+from persistent.mapping import PersistentMapping
 from plone import api
 from plone.app.testing import logout
 from plone.app.textfield.value import RichTextValue
@@ -838,7 +839,7 @@ class testViews(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         self.changeUser('pmManager')
-        meeting = self.create('Meeting', date=DateTime('2019/01/01'))
+        self.create('Meeting', date=DateTime('2019/01/01'))
         view = item.restrictedTraverse('document-generation')
         helper = view.get_generation_context_helper()
 
@@ -1606,6 +1607,13 @@ class testViews(PloneMeetingTestCase):
         """By default, labels are editable if item editable, except for MeetingManagers
            that may edit labels forever.
            Personal labels are editable by anybody able to see the item."""
+        cfg = self.meetingConfig
+        # as label jar is updated by the import process
+        # make sure we have a persistentmapping containing persistentmappings
+        labeljar = getAdapter(cfg, ILabelJar)
+        for value in labeljar.storage.values():
+            self.assertTrue(isinstance(value, PersistentMapping))
+
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         item.setDecision(self.decisionText)
