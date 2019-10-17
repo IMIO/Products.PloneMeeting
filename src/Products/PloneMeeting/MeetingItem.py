@@ -2183,7 +2183,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # make change in linkedItem.at_ordered_refs until it is fixed in Products.Archetypes
             self._p_changed = True
 
-    security.declarePrivate('setCategory')
+    security.declareProtected(ModifyPortalContent, 'setCategory')
 
     def setCategory(self, value, **kwargs):
         '''Overrides the field 'category' mutator to be able to
@@ -2194,7 +2194,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             self.REQUEST.set('need_Meeting_updateItemReferences', True)
         self.getField('category').set(self, value, **kwargs)
 
-    security.declarePrivate('setClassifier')
+    security.declareProtected(ModifyPortalContent, 'setClassifier')
 
     def setClassifier(self, value, **kwargs):
         '''Overrides the field 'classifier' mutator to be able to
@@ -2205,7 +2205,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             self.REQUEST.set('need_Meeting_updateItemReferences', True)
         self.getField('classifier').set(self, value, **kwargs)
 
-    security.declarePrivate('setProposingGroup')
+    security.declareProtected(ModifyPortalContent, 'setProposingGroup')
 
     def setProposingGroup(self, value, **kwargs):
         '''Overrides the field 'proposingGroup' mutator to be able to
@@ -2216,7 +2216,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             self.REQUEST.set('need_Meeting_updateItemReferences', True)
         self.getField('proposingGroup').set(self, value, **kwargs)
 
-    security.declarePrivate('setProposingGroupWithGroupInCharge')
+    security.declareProtected(ModifyPortalContent, 'setProposingGroupWithGroupInCharge')
 
     def setProposingGroupWithGroupInCharge(self, value, **kwargs):
         '''Overrides the field 'proposingGroupWithGroupInCharge' mutator to be able to
@@ -2237,7 +2237,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         value = [v for v in value if v and v.strip()]
         return tuple(value)
 
-    security.declarePrivate('setOtherMeetingConfigsClonableTo')
+    security.declareProtected(ModifyPortalContent, 'setOtherMeetingConfigsClonableTo')
 
     def setOtherMeetingConfigsClonableTo(self, value, **kwargs):
         '''Overrides the field 'otherMeetingConfigsClonableTo' mutator to be able to

@@ -838,7 +838,7 @@ class testViews(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         self.changeUser('pmManager')
-        meeting = self.create('Meeting', date=DateTime('2019/01/01'))
+        self.create('Meeting', date=DateTime('2019/01/01'))
         view = item.restrictedTraverse('document-generation')
         helper = view.get_generation_context_helper()
 

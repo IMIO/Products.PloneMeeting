@@ -1085,7 +1085,7 @@ class Migrate_To_4_1(Migrator):
                     jar_storage.update(defaultFTWLabels)
             logger.info('Done.')
 
-            # if some ftw_labels must be activated, we get in in env variable
+            # if some ftw_labels must be activated, we get it from env variable
             personal_labels = os.getenv('FTW_LABELS_PERSONAL_LABELS', [])
             if personal_labels and defined_new_labels:
                 # personal_labels is a list as a string, so something like "['label']"
