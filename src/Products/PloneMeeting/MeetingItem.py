@@ -2499,7 +2499,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            automatically added groups instead of the AUTO_COPY_GROUP_PREFIX prefixed name."""
         allGroups = self.getCopyGroups()
         if auto_real_plone_group_ids:
-            allGroups += tuple([self._realCopyGroupId(plone_group_id) for plone_group_id in self.autoCopyGroups])
+            allGroups += tuple([self._realCopyGroupId(plone_group_id)
+                                for plone_group_id in self.autoCopyGroups])
         else:
             allGroups += tuple(self.autoCopyGroups)
         return allGroups
@@ -3822,10 +3823,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # store in the REQUEST the fact that we found an expression
         # to evaluate.  If it is not the case, this will speed up
         # when updating local roles for several elements
-        req_key = 'add_auto_copy_groups_search_for_expression__{0}'.format(cfg.getItemTypeName())
-        search_for_expression = self.REQUEST.get(req_key, True)
+        req_key = 'add_auto_copy_groups_search_for_expression__{0}'.format(
+            cfg.getItemTypeName())
+        ann = IAnnotations(self.REQUEST)
+        search_for_expression = ann.get(req_key, True)
         if search_for_expression:
-            self.REQUEST.set(req_key, False)
+            ann[req_key] = False
             for org in get_organizations():
                 org_uid = org.UID()
                 # bypass organizations not selected for this MeetingConfig
@@ -3835,7 +3838,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 if not expr or not expr.strip():
                     continue
                 # store in the REQUEST fact that there is at least one expression to evaluate
-                self.REQUEST.set(req_key, True)
+                ann[req_key] = True
                 suffixes = _evaluateExpression(
                     self,
                     expression=org.as_copy_group_on,
