@@ -16,6 +16,7 @@ Changelog
   - Do not compute auto copy groups if there were no expression found on previous updated item of same portal_type
   - Do not update annexes accesses if annex was not confidential and still not confidential
   - Added caching to collective.contact.plonegroup.get_organization for the time of a REQUEST to avoid doing too much catalog queries
+  - Added avoid_reindex parameter to updateLocalRoles method, in this case, if __ac_loca_roles__ did not change, reindexObjectSecurity is bypassed
 - Use declareProtected(ModifyPortalContent) for methods on MeetingItem 'setCategory', 'setClassifier', 'setProposingGroup' and 'setProposingGroupWithGroupInCharge'
 
 4.1.8 (2019-10-14)

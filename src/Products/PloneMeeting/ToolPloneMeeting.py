@@ -1465,7 +1465,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                          brain.portal_type,
                          '/'.join(itemOrMeeting.getPhysicalPath())))
             i = i + 1
-            itemOrMeeting.updateLocalRoles()
+            itemOrMeeting.updateLocalRoles(avoid_reindex=True)
 
         seconds = time.time() - startTime
         logger.info('updateAllLocalRoles finished in %.2f seconds(s) (about %d minute(s)), that is %d by second.' %

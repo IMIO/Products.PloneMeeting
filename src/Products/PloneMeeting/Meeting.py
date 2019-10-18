@@ -1768,8 +1768,11 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         _addManagedPermissions(self)
         # notify that localRoles have been updated
         notify(MeetingLocalRolesUpdatedEvent(self, old_local_roles))
-        # reindex relevant indexes
-        self.reindexObjectSecurity()
+
+        # reindex object security except if avoid_reindex=True and localroles are the same
+        avoid_reindex = kwargs.get('avoid_reindex', False)
+        if not avoid_reindex or old_local_roles != self.__ac_local_roles__:
+            self.reindexObjectSecurity()
 
     def _updatePowerObserversLocalRoles(self):
         '''Give local roles to the groups defined in MeetingConfig.powerObservers.'''

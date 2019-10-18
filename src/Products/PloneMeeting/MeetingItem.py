@@ -5087,7 +5087,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def at_post_edit_script(self):
         self.updateLocalRoles(invalidate=self.willInvalidateAdvices(),
-                              isCreated=False)
+                              isCreated=False,
+                              avoid_reindex=True)
         # Apply potential transformations to richtext fields
         transformAllRichTextFields(self)
         # Add a line in history if historized fields have changed
@@ -5203,8 +5204,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         cleanMemoize(self, prefixes=['borg.localrole.workspace.checkLocalRolesAllowed'])
         # notify that localRoles have been updated
         notify(ItemLocalRolesUpdatedEvent(self, old_local_roles))
-        # reindex relevant indexes
-        self.reindexObjectSecurity()
+
+        # reindex object security except if avoid_reindex=True and localroles are the same
+        avoid_reindex = kwargs.get('avoid_reindex', False)
+        if not avoid_reindex or old_local_roles != self.__ac_local_roles__:
+            self.reindexObjectSecurity()
 
     def _updateCopyGroupsLocalRoles(self, isCreated):
         '''Give the 'Reader' local role to the copy groups
