@@ -39,7 +39,9 @@
                 <acronym><a tal:attributes="onclick string:event.preventDefault();;
                                             javascript:$(this).parents('form')[0].store_as_annex.value='1';;
                                             javascript:$(this).parents('form')[0].target='_self';;
-                                            generatePodDocument('${infos/template_uid}','${infos/output_format}', this);;">
+                                            generatePodDocument('${infos/template_uid}','${infos/output_format}', this);;
+                                            javascript:$$(this).parents('form')[0].store_as_annex.value='0';;
+                                            javascript:$$(this).parents('form')[0].target='_blank';;">
                     <img tal:attributes="src string:${view/portal_url}/store_as_annex.png;
                                          title python: view.get_store_as_annex_title_msg(infos['store_as_annex_title'])" />
                 </a></acronym>

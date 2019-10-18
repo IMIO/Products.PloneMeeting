@@ -10,6 +10,8 @@ Changelog
   - Jar storage that was a dict instead a PersistentMapping and that was making changes done to it not persisted;
   - Go back to the 'data' tab on the MeetingConfig while removing a label from the labels portlet;
   - Invalidate the ftw.labels faceted vocabulary when a label is added/updated/removed.
+- While storing a POD template as annex, make sure values for form.store_as_annex and form.target are correctly set back to defaults because
+  in case a user use the back button, this could lead to Unauthorized while generating a POD template that can not be stored just after having stored a POD template
 
 4.1.8 (2019-10-14)
 ------------------
