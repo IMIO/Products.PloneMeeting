@@ -1422,7 +1422,12 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
         groups = []
         if self.context.confidential:
             groups = self._compute_visible_for_groups()
-        self._apply_visible_groups_security(groups)
+
+        # apply security if confidential or going from confidential to not confidential
+        # in this case, the 'View' permission was not acquired
+        if self.context.confidential or \
+           not self.context.acquiredRolesAreUsedBy('View'):
+            self._apply_visible_groups_security(groups)
         return groups
 
     def _compute_visible_for_groups(self):
@@ -1522,22 +1527,11 @@ class PMCategorizedObjectAdapter(CategorizedObjectAdapter):
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
 
-    def _use_isPrivacyViewable_cachekey(method, self):
-        '''cachekey method for self._use_isPrivacyViewable.'''
-        return str(self.request._debug)
-
-    @ram.cache(_use_isPrivacyViewable_cachekey)
-    def _use_isPrivacyViewable(self):
-        """ """
-        if self.cfg.getRestrictAccessToSecretItems():
-            return True
-        return False
-
     def can_view(self):
 
         # is the context a MeetingItem and privacy viewable?
         if self.context.meta_type == 'MeetingItem' and \
-           self._use_isPrivacyViewable() and \
+           self.cfg.getRestrictAccessToSecretItems() and \
            not self.context.adapted().isPrivacyViewable():
             return False
 

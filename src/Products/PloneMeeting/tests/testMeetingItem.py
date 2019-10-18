@@ -1714,7 +1714,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # relevant local roles for copyGroups
         wf_name = self.wfTool.getWorkflowsFor(i4)[0].getId()
         initial_state = self.wfTool[wf_name].initial_state
-        self.meetingConfig.setItemCopyGroupsStates((initial_state, ))
+        cfg.setItemCopyGroupsStates((initial_state, ))
         i5 = self.create('MeetingItem', proposingGroup=self.vendors_uid)
         # relevant groups are auto added
         self.failIf(i5.getCopyGroups())
@@ -1846,6 +1846,7 @@ class testMeetingItem(PloneMeetingTestCase):
                          (self.developers_reviewers, ))
         self.vendors.as_copy_group_on = "python: item.getProposingGroup() == " \
             "pm_utils.org_id_to_uid('developers') and ['reviewers', ] or []"
+        self.cleanMemoize()
         item._update_after_edit()
         auto_vendors_reviewers = 'auto__{0}'.format(self.vendors_reviewers)
         self.assertEqual(item.getAllCopyGroups(),

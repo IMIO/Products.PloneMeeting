@@ -2183,7 +2183,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # make change in linkedItem.at_ordered_refs until it is fixed in Products.Archetypes
             self._p_changed = True
 
-    security.declarePrivate('setCategory')
+    security.declareProtected(ModifyPortalContent, 'setCategory')
 
     def setCategory(self, value, **kwargs):
         '''Overrides the field 'category' mutator to be able to
@@ -2194,7 +2194,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             self.REQUEST.set('need_Meeting_updateItemReferences', True)
         self.getField('category').set(self, value, **kwargs)
 
-    security.declarePrivate('setClassifier')
+    security.declareProtected(ModifyPortalContent, 'setClassifier')
 
     def setClassifier(self, value, **kwargs):
         '''Overrides the field 'classifier' mutator to be able to
@@ -2205,7 +2205,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             self.REQUEST.set('need_Meeting_updateItemReferences', True)
         self.getField('classifier').set(self, value, **kwargs)
 
-    security.declarePrivate('setProposingGroup')
+    security.declareProtected(ModifyPortalContent, 'setProposingGroup')
 
     def setProposingGroup(self, value, **kwargs):
         '''Overrides the field 'proposingGroup' mutator to be able to
@@ -2216,7 +2216,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             self.REQUEST.set('need_Meeting_updateItemReferences', True)
         self.getField('proposingGroup').set(self, value, **kwargs)
 
-    security.declarePrivate('setProposingGroupWithGroupInCharge')
+    security.declareProtected(ModifyPortalContent, 'setProposingGroupWithGroupInCharge')
 
     def setProposingGroupWithGroupInCharge(self, value, **kwargs):
         '''Overrides the field 'proposingGroupWithGroupInCharge' mutator to be able to
@@ -2237,7 +2237,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         value = [v for v in value if v and v.strip()]
         return tuple(value)
 
-    security.declarePrivate('setOtherMeetingConfigsClonableTo')
+    security.declareProtected(ModifyPortalContent, 'setOtherMeetingConfigsClonableTo')
 
     def setOtherMeetingConfigsClonableTo(self, value, **kwargs):
         '''Overrides the field 'otherMeetingConfigsClonableTo' mutator to be able to
@@ -2499,7 +2499,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            automatically added groups instead of the AUTO_COPY_GROUP_PREFIX prefixed name."""
         allGroups = self.getCopyGroups()
         if auto_real_plone_group_ids:
-            allGroups += tuple([self._realCopyGroupId(plone_group_id) for plone_group_id in self.autoCopyGroups])
+            allGroups += tuple([self._realCopyGroupId(plone_group_id)
+                                for plone_group_id in self.autoCopyGroups])
         else:
             allGroups += tuple(self.autoCopyGroups)
         return allGroups
@@ -3818,33 +3819,51 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         self.autoCopyGroups = PersistentList()
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        for org in get_organizations():
-            org_uid = org.UID()
-            suffixes = _evaluateExpression(
-                self,
-                expression=org.as_copy_group_on,
-                roles_bypassing_expression=[],
-                extra_expr_ctx={
-                    'item': self,
-                    'isCreated': isCreated,
-                    'pm_utils': SecureModuleImporter['Products.PloneMeeting.utils'],
-                    'tool': tool,
-                    'cfg': cfg},
-                empty_expr_is_true=False,
-                error_pattern=AS_COPYGROUP_CONDITION_ERROR)
-            if not suffixes or not isinstance(suffixes, (tuple, list)):
-                continue
-            # The expression is supposed to return a list a Plone group suffixes
-            # check that the real linked Plone groups are selectable
-            for suffix in suffixes:
-                if suffix not in get_all_suffixes(org_uid):
-                    # If the suffix returned by the expression does not exist
-                    # log it, it is a configuration problem
-                    logger.warning(AS_COPYGROUP_RES_ERROR.format(suffix, org_uid))
+        using_groups = cfg.getUsingGroups()
+        # store in the REQUEST the fact that we found an expression
+        # to evaluate.  If it is not the case, this will speed up
+        # when updating local roles for several elements
+        req_key = 'add_auto_copy_groups_search_for_expression__{0}'.format(
+            cfg.getItemTypeName())
+        ann = IAnnotations(self.REQUEST)
+        search_for_expression = ann.get(req_key, True)
+        if search_for_expression:
+            ann[req_key] = False
+            for org in get_organizations():
+                org_uid = org.UID()
+                # bypass organizations not selected for this MeetingConfig
+                if using_groups and org_uid not in using_groups:
                     continue
-                plone_group_id = get_plone_group_id(org_uid, suffix)
-                auto_plone_group_id = '{0}{1}'.format(AUTO_COPY_GROUP_PREFIX, plone_group_id)
-                self.autoCopyGroups.append(auto_plone_group_id)
+                expr = org.as_copy_group_on
+                if not expr or not expr.strip():
+                    continue
+                # store in the REQUEST fact that there is at least one expression to evaluate
+                ann[req_key] = True
+                suffixes = _evaluateExpression(
+                    self,
+                    expression=org.as_copy_group_on,
+                    roles_bypassing_expression=[],
+                    extra_expr_ctx={
+                        'item': self,
+                        'isCreated': isCreated,
+                        'pm_utils': SecureModuleImporter['Products.PloneMeeting.utils'],
+                        'tool': tool,
+                        'cfg': cfg},
+                    empty_expr_is_true=False,
+                    error_pattern=AS_COPYGROUP_CONDITION_ERROR)
+                if not suffixes or not isinstance(suffixes, (tuple, list)):
+                    continue
+                # The expression is supposed to return a list a Plone group suffixes
+                # check that the real linked Plone groups are selectable
+                for suffix in suffixes:
+                    if suffix not in get_all_suffixes(org_uid):
+                        # If the suffix returned by the expression does not exist
+                        # log it, it is a configuration problem
+                        logger.warning(AS_COPYGROUP_RES_ERROR.format(suffix, org_uid))
+                        continue
+                    plone_group_id = get_plone_group_id(org_uid, suffix)
+                    auto_plone_group_id = '{0}{1}'.format(AUTO_COPY_GROUP_PREFIX, plone_group_id)
+                    self.autoCopyGroups.append(auto_plone_group_id)
 
     def _evalAdviceAvailableOn(self, available_on_expr, tool, cfg, mayEdit=True):
         """ """
