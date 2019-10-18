@@ -14,7 +14,7 @@ Changelog
   in case a user use the back button, this could lead to Unauthorized while generating a POD template that can not be stored just after having stored a POD template
 - Optimize MeetingItem.updateLocalRoles to take into account cases when several items are updated :
   - Do not compute auto copy groups if there were no expression found on previous updated item of same portal_type
-  - Do not update annexes accesses if annex was not confidentiel and still not confidential
+  - Do not update annexes accesses if annex was not confidential and still not confidential
   - Added caching to collective.contact.plonegroup.get_organization for the time of a REQUEST to avoid doing too much catalog queries
 - Use declareProtected(ModifyPortalContent) for methods on MeetingItem 'setCategory', 'setClassifier', 'setProposingGroup' and 'setProposingGroupWithGroupInCharge'
 
