@@ -33,6 +33,7 @@ from DateTime import DateTime
 from eea.facetednavigation.widgets.resultsperpage.widget import Widget as ResultsPerPageWidget
 from ftw.labels.interfaces import ILabeling
 from ftw.labels.interfaces import ILabelJar
+from imio.helpers.content import get_vocab
 from OFS.ObjectManager import BeforeDeleteException
 from plone import api
 from Products.CMFCore.permissions import ModifyPortalContent
@@ -1838,6 +1839,43 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.assertEqual(item_labeling.storage, {})
         self.assertTrue(jar.remove(label_id='label'))
         self.assertFalse('label' in jar.storage)
+
+    def test_pm_ConfigModifiedWhenFTWLabelManaged(self):
+        """MeetingConfig is modified when a label is added/updated/removed.
+           As the 'Products.PloneMeeting.vocabularies.ftwlabelsforfacetedfiltervocabulary'
+           relies on MeetingConfig modified, it's cache is invalidated as well."""
+        cfg = self.meetingConfig
+        self.changeUser('siteadmin')
+        jar = ILabelJar(cfg)
+        # vocabulary
+        pmFolder = self.getMeetingFolder()
+        vocab_factory = get_vocab(
+            pmFolder,
+            'Products.PloneMeeting.vocabularies.ftwlabelsforfacetedfiltervocabulary',
+            only_factory=True)
+        # add a label
+        label_id = 'new-added-label'
+        self.assertFalse(label_id in vocab_factory(pmFolder))
+        config_modified_before_add = cfg.modified()
+        jar.add(title='New added label', color='red', by_user=False)
+        self.assertTrue(cfg.modified() > config_modified_before_add)
+        self.assertTrue(label_id in vocab_factory(pmFolder))
+        self.assertEqual(vocab_factory(pmFolder).getTerm(label_id).title, 'New added label')
+
+        # update a label
+        config_modified_before_update = cfg.modified()
+        jar.update(label_id='new-added-label',
+                   title='New added label2',
+                   color='red',
+                   by_user=False)
+        self.assertTrue(cfg.modified() > config_modified_before_update)
+        self.assertEqual(vocab_factory(pmFolder).getTerm(label_id).title, 'New added label2')
+
+        # remove a label
+        config_modified_before_remove = cfg.modified()
+        jar.remove('new-added-label')
+        self.assertTrue(cfg.modified() > config_modified_before_remove)
+        self.assertFalse(label_id in vocab_factory(pmFolder))
 
     def test_pm_Validate_powerObservers(self):
         '''Test the MeetingConfig.powerObservers validation.

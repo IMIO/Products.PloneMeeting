@@ -19,6 +19,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA.
 
+from collections import OrderedDict
 from copy import deepcopy
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
 from Products.PloneMeeting.profiles import AnnexTypeDescriptor
@@ -348,12 +349,11 @@ meetingPma.onMeetingTransitionItemActionToExecute = (
 
 meetingPma.insertingMethodsOnAddItem = ({'insertingMethod': 'on_proposing_groups', 'reverse': '0'}, )
 meetingPma.useGroupsAsCategories = True
-meetingPma.defaultLabels = {
-    'label': {'color': 'blue', 'label_id': 'label', 'by_user': False, 'title': 'Label'},
-    'personal-label': {'color': 'yellow', 'label_id': 'personal-label', 'by_user': True, 'title': 'Personal label'},
-    'lu': {'color': 'green', 'label_id': 'lu', 'by_user': True, 'title': 'Read'},
-    'suivi': {'color': 'yellow', 'label_id': 'suivi', 'by_user': True, 'title': 'Suivi'},
-}
+meetingPma.defaultLabels = [
+    {'color': 'blue', 'by_user': False, 'title': 'Label'},
+    {'color': 'yellow', 'by_user': True, 'title': 'Personal label'},
+    {'color': 'green', 'by_user': True, 'title': 'Read'},
+    {'color': 'yellow', 'by_user': True, 'title': 'Suivi'}]
 meetingPma.useAdvices = True
 meetingPma.selectableAdvisers = ['developers', 'vendors']
 meetingPma.itemAdviceStates = ['proposed']

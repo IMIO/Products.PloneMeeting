@@ -6,6 +6,12 @@ Changelog
 ------------------
 
 - Add a validation step "Are you sure?" before launching items and meetings local roles update from the action button on portal_plonemeeting
+- Fixed ftw.labels :
+  - Jar storage that was a dict instead a PersistentMapping and that was making changes done to it not persisted;
+  - Go back to the 'data' tab on the MeetingConfig while removing a label from the labels portlet;
+  - Invalidate the ftw.labels faceted vocabulary when a label is added/updated/removed.
+- While storing a POD template as annex, make sure values for form.store_as_annex and form.target are correctly set back to defaults because
+  in case a user use the back button, this could lead to Unauthorized while generating a POD template that can not be stored just after having stored a POD template
 - Optimize MeetingItem.updateLocalRoles to take into account cases when several items are updated :
   - Do not compute auto copy groups if there were no expression found on previous updated item of same portal_type
   - Do not update annexes accesses if annex was not confidentiel and still not confidential

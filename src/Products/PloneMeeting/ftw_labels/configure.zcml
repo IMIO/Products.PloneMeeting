@@ -34,6 +34,13 @@
             permission="zope2.View"
             allowed_attributes="pers_update"
             />
+        <browser:page
+            for="Products.PloneMeeting.interfaces.IMeetingConfig"
+            name="labels-jar"
+            class="Products.PloneMeeting.ftw_labels.overrides.PMLabelsJar"
+            permission="ftw.labels.ManageLabelsJar"
+            allowed_attributes="create update remove edit_label"
+            />
     </configure>
 
     <!-- Vocabularies -->

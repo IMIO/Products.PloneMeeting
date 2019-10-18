@@ -9,14 +9,15 @@
 
 from AccessControl import Unauthorized
 from ftw.labels.browser.labeling import Labeling
+from ftw.labels.browser.labelsjar import LabelsJar
 from ftw.labels.jar import LabelJar
 from ftw.labels.portlets.labeljar import Renderer as ftw_labels_renderer
 from ftw.labels.viewlets.labeling import LabelingViewlet
-from imio.helpers.cache import cleanRamCacheFor
 from plone import api
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.utils import _checkPermission
 from Products.PloneMeeting.config import PMMessageFactory as _
+from Products.PloneMeeting.utils import notifyModifiedAndReindex
 
 
 class PMFTWLabelsRenderer(ftw_labels_renderer):
@@ -29,17 +30,13 @@ class PMFTWLabelsRenderer(ftw_labels_renderer):
             self.context.getEnableLabels() and \
             self.request.get('pageName', None) == 'data'
 
-    @property
-    def labels(self):
-        """This is overrided to invalidate the
-           "Products.PloneMeeting.vocabularies.ftwlabelsvocabulary" vocabulary.
-           This is a workaround, each time we see the portlet, it means we are
-           in the configuration and maybe we just added/removed/edited a label."""
-        cleanRamCacheFor('Products.PloneMeeting.MeetingItem.ftwlabelsvocabulary')
-        return super(PMFTWLabelsRenderer, self).labels
-
 
 class PMLabelJar(LabelJar):
+
+    def add(self, title, color, by_user):
+        """Override to invalidate relevant cache."""
+        notifyModifiedAndReindex(self.context)
+        return super(PMLabelJar, self).add(title, color, by_user)
 
     def remove(self, label_id):
         """Protect against removal of used labels."""
@@ -52,7 +49,22 @@ class PMLabelJar(LabelJar):
                 type='error',
                 request=self.context.REQUEST)
             return self.context.REQUEST.RESPONSE.redirect(self.context.REQUEST['HTTP_REFERER'])
+        notifyModifiedAndReindex(self.context)
         return super(PMLabelJar, self).remove(label_id)
+
+    def update(self, label_id, title, color, by_user):
+        """ """
+        notifyModifiedAndReindex(self.context)
+        return super(PMLabelJar, self).update(label_id, title, color, by_user)
+
+
+class PMLabelsJar(LabelsJar):
+    """ """
+
+    def remove(self):
+        """Redirect to HTTP_REFERER."""
+        super(PMLabelsJar, self).remove()
+        return self._redirect()
 
 
 class PMLabeling(Labeling):

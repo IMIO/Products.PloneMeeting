@@ -846,15 +846,19 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
 
     def _get_generation_context(self, helper_view, pod_template):
         """We backwardly use 'itemUids' instead of 'uids' for list of uids..."""
-        generation_context = super(PMDocumentGenerationView, self)._get_generation_context(helper_view,
-                                                                                           pod_template)
+        generation_context = super(
+            PMDocumentGenerationView, self)._get_generation_context(
+                helper_view,
+                pod_template)
         generation_context['itemUids'] = generation_context.get('uids', [])
         return generation_context
 
     def generate_and_download_doc(self, pod_template, output_format):
         """ """
-        generated_template = super(PMDocumentGenerationView, self).generate_and_download_doc(pod_template,
-                                                                                             output_format)
+        generated_template = super(
+            PMDocumentGenerationView, self).generate_and_download_doc(
+                pod_template,
+                output_format)
 
         # check if we have to send this generated POD template or to render it
         if self.request.get('mailinglist_name'):
