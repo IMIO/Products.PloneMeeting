@@ -1429,7 +1429,7 @@ class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV)
         Allow backward compatibility with old PODTemplates.
         See print_meeting_date for docstring.
         """
-        return self.print_meeting_date(self, returnDateTime, noMeetingMarker, unrestricted)
+        return self.print_meeting_date(returnDateTime, noMeetingMarker, unrestricted)
 
     def print_preferred_meeting_date(self, returnDateTime=False, noMeetingMarker='-', unrestricted=True):
         """
