@@ -889,6 +889,8 @@ class testMeetingItem(PloneMeetingTestCase):
         cfgId = cfg.getId()
         cfg2 = self.meetingConfig2
         cfg2Id = cfg2.getId()
+        # test also rendered message when cfg2 title contains special characters
+        cfg2.setTitle('\xc3\xa9 and \xc3\xa9')
         data = self._setupSendItemToOtherMC(with_advices=True)
         # by default, an item sent is resulting in his wf initial_state
         # if no transitions to trigger are defined when sending the item to the new MC
@@ -948,8 +950,6 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % cfg2Id,
                                          'trigger_workflow_transitions_until': '%s.%s' %
                                          (cfg2Id, 'present')},))
-        # test also rendered message when cfg2 title contains special characters
-        cfg2.setTitle('\xc3\xa9 and \xc3\xa9')
         data = self._setupSendItemToOtherMC(with_advices=True)
         newItem = data['newItem']
         # could not be added because no meeting in initial_state is available

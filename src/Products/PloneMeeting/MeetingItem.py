@@ -5728,13 +5728,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             originalPublishedObject = self.REQUEST.get('PUBLISHED')
             # do this as Manager to be sure that transitions may be triggered
             with api.env.adopt_roles(roles=['Manager']):
+                destCfgTitle = safe_unicode(destMeetingConfig.Title())
                 for tr in destMeetingConfig.getTransitionsForPresentingAnItem():
                     try:
                         # special handling for the 'present' transition
                         # that needs a meeting as 'PUBLISHED' object to work
                         if tr == 'present':
                             if not meeting:
-                                destCfgTitle = safe_unicode(destMeetingConfig.Title())
                                 plone_utils.addPortalMessage(
                                     _('could_not_present_item_no_meeting_accepting_items',
                                       mapping={'destMeetingConfigTitle': destCfgTitle}),
@@ -5745,12 +5745,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                         wfTool.doActionFor(newItem, tr, comment=wf_comment)
                     except WorkflowException:
                         # in case something goes wrong, only warn the user by adding a portal message
-                        plone_utils.addPortalMessage(translate('could_not_trigger_transition_for_cloned_item',
-                                                               mapping={'meetingConfigTitle': unicode(
-                                                                        destMeetingConfig.Title(), 'utf-8')},
-                                                               domain="PloneMeeting",
-                                                               context=self.REQUEST),
-                                                     type='warning')
+                        plone_utils.addPortalMessage(
+                            translate('could_not_trigger_transition_for_cloned_item',
+                                      mapping={'meetingConfigTitle': destCfgTitle},
+                                      domain="PloneMeeting",
+                                      context=self.REQUEST),
+                            type='warning')
                         break
                     # if we are on the triggerUntil transition, we will stop at next loop
                     if tr == triggerUntil:
