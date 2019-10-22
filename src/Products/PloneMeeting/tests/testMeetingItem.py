@@ -919,10 +919,8 @@ class testMeetingItem(PloneMeetingTestCase):
         wf_name = self.wfTool.getWorkflowsFor(newItem)[0].getId()
         if not self.wfTool[wf_name].initial_state == 'validated':
             self.assertNotEqual(newItem.queryState(), 'validated')
-            fail_to_trigger_msg = translate('could_not_trigger_transition_for_cloned_item',
-                                            domain='PloneMeeting',
-                                            mapping={'meetingConfigTitle': cfg2.Title()},
-                                            context=self.request)
+            fail_to_trigger_msg = u'Some transitions could not be triggered for the item ' \
+                u'sent to "\xe9 and \xe9", please check the new item.'
             lastPortalMessage = IStatusMessage(self.request).showStatusMessages()[-1]
             self.assertEqual(lastPortalMessage.message, fail_to_trigger_msg)
 
