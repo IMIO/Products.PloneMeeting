@@ -957,7 +957,7 @@ class testMeetingItem(PloneMeetingTestCase):
             review_states=(meeting_initial_state, ))), 0)
         self.assertEqual(newItem.queryState(), 'validated')
         # a status message was added
-        lastPortalMessage = IStatusMessage(self.request).showStatusMessages()[-2]
+        lastPortalMessage = IStatusMessage(self.request).showStatusMessages()[-1]
         self.assertEqual(
             lastPortalMessage.message,
             u'The cloned item could not be presented to a meeting in the "\xe9 and \xe9" '
