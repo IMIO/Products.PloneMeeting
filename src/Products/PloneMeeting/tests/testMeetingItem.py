@@ -948,6 +948,8 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % cfg2Id,
                                          'trigger_workflow_transitions_until': '%s.%s' %
                                          (cfg2Id, 'present')},))
+        # test also rendered message when cfg2 title contains special characters
+        cfg2.setTitle('\xc3\xa9 and \xc3\xa9')
         data = self._setupSendItemToOtherMC(with_advices=True)
         newItem = data['newItem']
         # could not be added because no meeting in initial_state is available
@@ -957,15 +959,11 @@ class testMeetingItem(PloneMeetingTestCase):
             review_states=(meeting_initial_state, ))), 0)
         self.assertEqual(newItem.queryState(), 'validated')
         # a status message was added
-        fail_to_present_msg = translate('could_not_present_item_no_meeting_accepting_items',
-                                        domain='PloneMeeting',
-                                        mapping={'destMeetingConfigTitle': cfg2.Title(),
-                                                 'initial_state': translate(meeting_initial_state,
-                                                                            domain="plone",
-                                                                            context=self.request)},
-                                        context=self.request)
-        lastPortalMessage = IStatusMessage(self.request).showStatusMessages()[-1]
-        self.assertEqual(lastPortalMessage.message, fail_to_present_msg)
+        lastPortalMessage = IStatusMessage(self.request).showStatusMessages()[-2]
+        self.assertEqual(
+            lastPortalMessage.message,
+            u'The cloned item could not be presented to a meeting in the "\xe9 and \xe9" '
+            u'configuration, no suitable meeting could be found.')
 
         # the item will only be presented if a meeting in it's initial state
         # in the future is available.  Add a meeting with a date in the past
@@ -989,7 +987,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.setMeetingConfig(cfgId)
         data = self._setupSendItemToOtherMC(with_advices=True)
         newItem = data['newItem']
-        # the item could not be presented
+        # the item could be presented
         self.assertEqual(newItem.queryState(), 'presented')
 
     def test_pm_SendItemToOtherMCTriggeredTransitionsAreUnrestricted(self):

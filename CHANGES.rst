@@ -18,6 +18,8 @@ Changelog
   - Added caching to collective.contact.plonegroup.get_organization for the time of a REQUEST to avoid doing too much catalog queries
   - Added avoid_reindex parameter to updateLocalRoles method, in this case, if __ac_loca_roles__ did not change, reindexObjectSecurity is bypassed
 - Use declareProtected(ModifyPortalContent) for methods on MeetingItem 'setCategory', 'setClassifier', 'setProposingGroup' and 'setProposingGroupWithGroupInCharge'
+- Fixed bug when an item is sent to another MeetingConfig and fails to be presented in a meeting because none is available, it crashed to render the portal_message
+  if the destination MeetingConfig title contained special characters
 
 4.1.8 (2019-10-14)
 ------------------

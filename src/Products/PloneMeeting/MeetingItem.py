@@ -5734,9 +5734,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                         # that needs a meeting as 'PUBLISHED' object to work
                         if tr == 'present':
                             if not meeting:
+                                destCfgTitle = safe_unicode(destMeetingConfig.Title())
                                 plone_utils.addPortalMessage(
                                     _('could_not_present_item_no_meeting_accepting_items',
-                                      mapping={'destMeetingConfigTitle': destMeetingConfig.Title()}),
+                                      mapping={'destMeetingConfigTitle': destCfgTitle}),
                                     'warning')
                                 break
                             newItem.REQUEST['PUBLISHED'] = meeting
