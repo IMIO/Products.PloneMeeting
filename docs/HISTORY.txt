@@ -86,6 +86,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   we lose (for example) resolveuid links
 - MeetingConfig.custom_validate_workflowAdaptations now receives values, added and removed as parameters
 - Manage holidays for 2020, added upgrade step
+- Fixed bug when an item is sent to another MeetingConfig and fails to be presented in a meeting because none is available,
+  it crashed to render the portal_message if the destination MeetingConfig title contained special characters
 
 4.0 (2017-08-04)
 ----------------
