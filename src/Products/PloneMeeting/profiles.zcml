@@ -67,7 +67,13 @@
       destination="4.0.1"
       handler="Products.PloneMeeting.migrations.migrate_to_4_0.migrate_step5_holidays"
       profile="Products.PloneMeeting:default" />
-
+  <genericsetup:upgradeStep
+      title="Go to PloneMeeting 4.0.2"
+      description="Update holidays to manage 2020 days"
+      source="4.0.1"
+      destination="4.0.2"
+      handler="Products.PloneMeeting.migrations.migrate_to_4_0_2.migrate"
+      profile="Products.PloneMeeting:default" />
 
   <!-- ##/code-section profiles.zcml-bottom -->
 
