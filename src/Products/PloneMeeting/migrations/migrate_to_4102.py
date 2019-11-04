@@ -33,17 +33,33 @@ class Migrate_To_4102(Migrator):
             encoding='utf-8')
         logger.info('Done.')
 
+    def _fixBadHolidayValue(self):
+        """A bad value was historically added '2017/2/25', turn it to '2017/12/25'."""
+        logger.info("Fix wrong value in ToolPloneMeeting.holidays...")
+        storedHolidays = self.tool.getHolidays()
+        holidays = []
+        for holiday in storedHolidays:
+            if holiday['date'] == '2017/2/25':
+                holidays.append({'date': '2017/12/25'})
+                logger.info('Wrong value "2017/2/25" was fixed!')
+            else:
+                holidays.append(holiday)
+        self.tool.setHolidays(holidays)
+        logger.info('Done.')
+
     def run(self):
         logger.info('Migrating to PloneMeeting 4102...')
         self._updateFTWLabelsStorage()
         self._adaptHolidaysWarningMessage()
+        self._fixBadHolidayValue()
 
 
 def migrate(context):
     '''This migration function will:
 
        1) Update ftw.labels jar storage to use PersistentMappings;
-       2) Update collective.messagesviewlet 'holidays warning' text.
+       2) Update collective.messagesviewlet 'holidays warning' text;
+       3) Fix bad value '2017/2/25' in ToolPloneMeeting.holidays.
     '''
     migrator = Migrate_To_4102(context)
     migrator.run()

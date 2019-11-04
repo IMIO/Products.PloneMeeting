@@ -21,6 +21,7 @@ Changelog
 - Fixed bug when an item is sent to another MeetingConfig and fails to be presented in a meeting because none is available, it crashed to render the portal_message
   if the destination MeetingConfig title contained special characters
 - Changed text of collective.messagesviewlet 'Holidays warning' message to use a less panicking content
+- Added upgrade step to fix wrong ToolPloneMeeting.holidays value '2017/2/25'
 
 4.1.8 (2019-10-14)
 ------------------
