@@ -5,8 +5,7 @@ Changelog
 4.1.10 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- When an annex has been modified, avoid to reindex the entire parent, only reindex relevant indexes : modified related indexes and SearchableText as annex title is indexed into it
 
 4.1.9 (2019-11-04)
 ------------------

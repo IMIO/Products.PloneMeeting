@@ -755,9 +755,8 @@ def onAnnexModified(annex, event):
     '''When an annex is modified, update parent's modification date.'''
     parent = annex.aq_inner.aq_parent
     # update modificationDate, it is used for caching and co
-    parent.notifyModified()
-    # just reindex the entire object
-    parent.reindexObject()
+    # we need to reindex parent's SearchableText as annex title is stored in it
+    notifyModifiedAndReindex(parent, extra_idxs=['SearchableText'])
 
 
 def onAnnexFileChanged(annex, event):
