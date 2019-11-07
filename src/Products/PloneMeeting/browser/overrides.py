@@ -24,6 +24,7 @@ from collective.iconifiedcategory.browser.views import CategorizedChildInfosView
 from collective.iconifiedcategory.browser.views import CategorizedChildView
 from collective.iconifiedcategory.interfaces import ICategorizedConfidential
 from collective.iconifiedcategory.interfaces import ICategorizedPrint
+from collective.iconifiedcategory.interfaces import ICategorizedPublishable
 from collective.iconifiedcategory.interfaces import ICategorizedSigned
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from imio.actionspanel.browser.viewlets import ActionsPanelViewlet
@@ -1116,6 +1117,8 @@ class CategorizedAnnexesView(CategorizedTabView):
             alsoProvides(table, ICategorizedPrint)
         if self.config.confidentiality_activated and self._showConfidentialColumn():
             alsoProvides(table, ICategorizedConfidential)
+        if self.config.publishable_activated:
+            alsoProvides(table, ICategorizedPublishable)
         if self.config.signed_activated:
             alsoProvides(table, ICategorizedSigned)
 
