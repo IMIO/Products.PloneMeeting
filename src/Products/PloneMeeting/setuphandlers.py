@@ -229,17 +229,6 @@ def postInstall(context):
         if hasattr(pt.aq_base, transformId):
             pt.manage_delObjects([transformId])
 
-    # Grant role "Member" to virtual group AuthenticatedMembers. This way, LDAP
-    # plugin can be used without using sub-plugins "Roles" and
-    # "Roles Enumeration" that, in most cases, perform unneeded LDAP queries
-    # for only granting default role "Member".
-    authUsers = site.acl_users.getGroupByName('AuthenticatedUsers')
-    authRoles = authUsers.getRoles()
-    if 'Member' not in authRoles:
-        authRoles.append('Member')
-        site.portal_groups.editGroup('AuthenticatedUsers', roles=authRoles,
-                                     groups=())
-
     # configure CKEditor : adapt available buttons in toolbar and
     # defines it as default Plone editor
     _configureCKeditor(site)

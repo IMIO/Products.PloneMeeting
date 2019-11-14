@@ -1413,7 +1413,7 @@ class PMBaseOverviewControlPanel(UsersGroupsControlPanelView):
 
     @property
     def portal_roles(self):
-        return ['MeetingObserverGlobal', 'Manager']
+        return ['MeetingObserverGlobal', 'Manager', 'Member']
 
     def doSearch(self, searchString):
         results = super(PMBaseOverviewControlPanel, self).doSearch(searchString)

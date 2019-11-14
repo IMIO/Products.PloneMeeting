@@ -9,7 +9,9 @@ Changelog
 - Integrated new column "publishable" from collective.iconifiedcategory, this is done conditionnaly if relevant version of collective.iconifiedcategory is used
 - Fixed bug where 'Manager' role was removed from 'Administrators' group when saving the results in the @@usergroup-groupprefs,
   this was due to 'Manager' role not listed in the form and so removed on save.  Now every golbal roles used by the application
-  are displayed, namely 'MeetingObserverGlobal' and 'Manager' roles.  'Site Administrator' role is not displayed for now
+  are displayed, namely 'MeetingObserverGlobal', 'Manager' and 'Member' roles.  'Site Administrator' role is not displayed for now
+- No more give the 'Member' role to 'AuthenticatedUsers' auto_group, this was used with old LDAP plugin that did not give 'Member' role by default.
+  Now every users will get 'Member' role and every groups, including 'AuehtenticatedUsers' will not get the 'Member' role anymore
 
 4.1.9 (2019-11-04)
 ------------------
