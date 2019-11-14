@@ -24,7 +24,6 @@ from collective.iconifiedcategory.browser.views import CategorizedChildInfosView
 from collective.iconifiedcategory.browser.views import CategorizedChildView
 from collective.iconifiedcategory.interfaces import ICategorizedConfidential
 from collective.iconifiedcategory.interfaces import ICategorizedPrint
-from collective.iconifiedcategory.interfaces import ICategorizedPublishable
 from collective.iconifiedcategory.interfaces import ICategorizedSigned
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from imio.actionspanel.browser.viewlets import ActionsPanelViewlet
@@ -64,6 +63,12 @@ from Products.PloneMeeting.utils import sendMail
 from zope.annotation import IAnnotations
 from zope.i18n import translate
 from zope.interface import alsoProvides
+
+try:
+    HAS_CAT_PUBLISHABLE = True
+    from collective.iconifiedcategory.interfaces import ICategorizedPublishable
+except ImportError:
+    HAS_CAT_PUBLISHABLE = False
 
 
 class PMFolderContentsView(FolderContentsView):
@@ -1117,7 +1122,7 @@ class CategorizedAnnexesView(CategorizedTabView):
             alsoProvides(table, ICategorizedPrint)
         if self.config.confidentiality_activated and self._showConfidentialColumn():
             alsoProvides(table, ICategorizedConfidential)
-        if self.config.publishable_activated:
+        if HAS_CAT_PUBLISHABLE and self.config.publishable_activated:
             alsoProvides(table, ICategorizedPublishable)
         if self.config.signed_activated:
             alsoProvides(table, ICategorizedSigned)
@@ -1408,14 +1413,15 @@ class PMBaseOverviewControlPanel(UsersGroupsControlPanelView):
 
     @property
     def portal_roles(self):
-        return ['MeetingObserverGlobal']
+        return ['MeetingObserverGlobal', 'Manager']
 
     def doSearch(self, searchString):
         results = super(PMBaseOverviewControlPanel, self).doSearch(searchString)
         adapted_results = []
         for item in results:
             adapted_item = item.copy()
-            adapted_item['roles']['MeetingObserverGlobal']['canAssign'] = False
+            for role in self.portal_roles:
+                adapted_item['roles'][role]['canAssign'] = False
             adapted_results.append(adapted_item)
         return adapted_results
 
