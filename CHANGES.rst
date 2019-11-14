@@ -6,6 +6,10 @@ Changelog
 -------------------
 
 - When an annex has been modified, avoid to reindex the entire parent, only reindex relevant indexes : modified related indexes and SearchableText as annex title is indexed into it
+- Integrated new column "publishable" from collective.iconifiedcategory, this is done conditionnaly if relevant version of collective.iconifiedcategory is used
+- Fixed bug where 'Manager' role was removed from 'Administrators' group when saving the results in the @@usergroup-groupprefs,
+  this was due to 'Manager' role not listed in the form and so removed on save.  Now every golbal roles used by the application
+  are displayed, namely 'MeetingObserverGlobal' and 'Manager' roles.  'Site Administrator' role is not displayed for now
 
 4.1.9 (2019-11-04)
 ------------------
