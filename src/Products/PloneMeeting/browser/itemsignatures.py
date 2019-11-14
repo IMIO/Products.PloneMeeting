@@ -47,8 +47,7 @@ def item_signatures_default():
     """
       Returns the itemSignatures of the item.
       As from zope.schema._bootstrapinterfaces import
-      IContextAwareDefaultFactory
-      does not seem to work,
+      IContextAwareDefaultFactory does not seem to work,
       we have to get current context manually...
     """
     context = getSite().REQUEST['PUBLISHED'].context
