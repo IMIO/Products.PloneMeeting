@@ -2539,6 +2539,18 @@ class testMeeting(PloneMeetingTestCase):
         self.assertFalse([folderId for folderId in meetingParentFolder.objectIds()
                           if not folderId.startswith('searches_')])
 
+    def test_pm_RemovedMeetingWithItemUsingAnImage(self):
+        """As 'Image' is a IPloneContent, make sure a meeting containing items using images can be removed."""
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime('2019/11/15'))
+        item = self.create('MeetingItem')
+        self.presentItem(item)
+        item.setPreferredMeeting(meeting.UID())
+        text = '<p>Text with image <img src="http://www.imio.be/contact.png"/>.</p>'
+        item.setDecision(text)
+        item._update_after_edit()
+        self.deleteAsManager(meeting.UID())
+
     def test_pm_DeletingMeetingUpdateItemsPreferredMeeting(self):
         '''When a meeting is deleted, if it was selected as preferredMeeting
            for some items, these items are updated and preferredMeeting is set to 'whatever'.'''

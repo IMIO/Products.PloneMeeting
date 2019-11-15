@@ -366,6 +366,9 @@
   <class class="Products.ATContentTypes.content.newsitem.ATNewsItem">
     <implements interface="Products.PloneMeeting.interfaces.IPloneElement" />
   </class>
+  <class class="Products.ATContentTypes.content.link.ATLink">
+    <implements interface="Products.PloneMeeting.interfaces.IPloneElement" />
+  </class>
 
   <!-- ETag components -->
   <adapter factory=".etags.UserGroups"

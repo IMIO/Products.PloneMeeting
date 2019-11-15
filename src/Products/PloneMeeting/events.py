@@ -40,6 +40,7 @@ from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import ROOT_FOLDER
 from Products.PloneMeeting.config import TOOL_FOLDER_SEARCHES
 from Products.PloneMeeting.interfaces import IConfigElement
+from Products.PloneMeeting.interfaces import IMeetingContent
 from Products.PloneMeeting.utils import _addManagedPermissions
 from Products.PloneMeeting.utils import addRecurringItemsIfRelevant
 from Products.PloneMeeting.utils import AdviceAfterAddEvent
@@ -868,8 +869,10 @@ def onMeetingAdded(meeting, event):
     meeting.manage_addLocalRoles(userId, ('Owner',))
     # clean cache for "Products.PloneMeeting.vocabularies.meetingdatesvocabulary"
     # use get_again for async meetings term render
-    invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.meetingdatesvocabulary", get_again=True)
-    invalidate_cachekey_volatile_for('Products.PloneMeeting.Meeting.modified', get_again=True)
+    invalidate_cachekey_volatile_for(
+        'Products.PloneMeeting.vocabularies.meetingdatesvocabulary', get_again=True)
+    invalidate_cachekey_volatile_for(
+        'Products.PloneMeeting.Meeting.modified', get_again=True)
 
 
 def onMeetingRemoved(meeting, event):
@@ -901,11 +904,14 @@ def onMeetingRemoved(meeting, event):
         item.setPreferredMeeting(ITEM_NO_PREFERRED_MEETING_VALUE)
         items_to_reindex.append(item)
     for item_to_reindex in items_to_reindex:
-        item_to_reindex.reindexObject(idxs=['getPreferredMeeting', 'getPreferredMeetingDate'])
+        item_to_reindex.reindexObject(
+            idxs=['getPreferredMeeting', 'getPreferredMeetingDate'])
     # clean cache for "Products.PloneMeeting.vocabularies.meetingdatesvocabulary"
     # use get_again for async meetings term render
-    invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.meetingdatesvocabulary", get_again=True)
-    invalidate_cachekey_volatile_for('Products.PloneMeeting.Meeting.modified', get_again=True)
+    invalidate_cachekey_volatile_for(
+        'Products.PloneMeeting.vocabularies.meetingdatesvocabulary', get_again=True)
+    invalidate_cachekey_volatile_for(
+        'Products.PloneMeeting.Meeting.modified', get_again=True)
 
 
 def _notifyContainerModified(child):
@@ -913,7 +919,9 @@ def _notifyContainerModified(child):
     # set modification date on every containers
     container = child.aq_parent
     # either element is in a MeetingConfig or in a folder in a Plone Site
-    while container.portal_type not in ('ToolPloneMeeting', 'Plone Site'):
+    # if it is in a meeting content (meeting/item/advice/...), break
+    while (container.portal_type not in ('ToolPloneMeeting', 'Plone Site') and
+           not IMeetingContent.providedBy(container)):
         notifyModifiedAndReindex(container)
         container = container.aq_parent
 

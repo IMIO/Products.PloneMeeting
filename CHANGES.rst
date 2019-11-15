@@ -12,6 +12,9 @@ Changelog
   are displayed, namely 'MeetingObserverGlobal', 'Manager' and 'Member' roles.  'Site Administrator' role is not displayed for now
 - No more give the 'Member' role to 'AuthenticatedUsers' auto_group, this was used with old LDAP plugin that did not give 'Member' role by default.
   Now every users will get 'Member' role and every groups, including 'AuehtenticatedUsers' will not get the 'Member' role anymore
+- Fixed CSS applied on selected meeting in the meeting selection box so selected value is correctly colored
+- Fixed bug where it was not possible to remove a meeting containing an item having an image used in a RichText field.
+  This was due to fact that when a Plone content is removed, it's container is notifyModified, this is no more done if container is an IMeetingContent
 
 4.1.9 (2019-11-04)
 ------------------
