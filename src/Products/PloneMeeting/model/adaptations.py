@@ -1011,6 +1011,9 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                 # wipeout 'from_states' and 'back_states' to remove unexisting ones
                 from_state_ids = [state for state in infos['from_states'] if state in wf.states]
                 back_state_ids = [state for state in infos['back_states'] if state in wf.states]
+                # if nothing left, continue
+                if not from_state_ids or not back_state_ids:
+                    continue
                 new_state_id = NEW_STATE_ID_PATTERN.format('__or__'.join(from_state_ids))
                 back_transition_ids = []
                 if new_state_id not in wf.states:

@@ -15,6 +15,7 @@ Changelog
 - Fixed CSS applied on selected meeting in the meeting selection box so selected value is correctly colored
 - Fixed bug where it was not possible to remove a meeting containing an item having an image used in a RichText field.
   This was due to fact that when a Plone content is removed, it's container is notifyModified, this is no more done if container is an IMeetingContent
+- Fixed bug with 'waiting_advices' workflow adaptation that failed to be activated if a state defined in WAITING_ADVICES_FROM_STATES did not exist
 
 4.1.9 (2019-11-04)
 ------------------
