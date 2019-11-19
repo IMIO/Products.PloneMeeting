@@ -5,8 +5,7 @@ Changelog
 4.1.11 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- Relaunch upgrade step _adaptHolidaysWarningMessage while moving to version 4103
 
 4.1.10 (2019-11-19)
 -------------------

@@ -2,10 +2,10 @@
 
 from plone import api
 from Products.PloneMeeting.migrations import logger
-from Products.PloneMeeting.migrations import Migrator
+from Products.PloneMeeting.migrations.migrate_to_4102 import Migrate_To_4102
 
 
-class Migrate_To_4103(Migrator):
+class Migrate_To_4103(Migrate_To_4102):
 
     def _fixGroupsAndUsersRoles(self):
         """Make sure the 'Administrators' group exists and has the 'Manager' role.
@@ -48,12 +48,14 @@ class Migrate_To_4103(Migrator):
     def run(self):
         logger.info('Migrating to PloneMeeting 4103...')
         self._fixGroupsAndUsersRoles()
+        self._adaptHolidaysWarningMessage()
 
 
 def migrate(context):
     '''This migration function will:
 
-       1) Fix groups and users roles (roles 'Manager' and 'Member').
+       1) Fix groups and users roles (roles 'Manager' and 'Member');
+       2) Re-run the step that adapts holidays warning message as imio.pm.locales was not released...
     '''
     migrator = Migrate_To_4103(context)
     migrator.run()
