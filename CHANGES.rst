@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.1.11 (unreleased)
+4.1.11 (2019-11-19)
 -------------------
 
 - Relaunch upgrade step _adaptHolidaysWarningMessage while moving to version 4103
