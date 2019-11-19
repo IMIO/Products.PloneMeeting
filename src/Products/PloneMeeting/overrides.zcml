@@ -200,6 +200,11 @@
              provides="eea.facetednavigation.interfaces.ICriteria"
              factory="Products.PloneMeeting.adapters.Criteria" />
 
+    <adapter
+        for="eea.facetednavigation.subtypes.interfaces.IFacetedNavigable"
+        provides="collective.documentgenerator.interfaces.IGenerablePODTemplates"
+        factory=".adapters.PMDashboardGenerablePODTemplatesAdapter"/>
+
     <!-- IPrettyLink -->
     <adapter zcml:condition="not-installed imio.zamqp.pm"
              for="imio.annex.content.annex.IAnnex"
