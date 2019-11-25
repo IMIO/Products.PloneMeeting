@@ -5,8 +5,7 @@ Changelog
 4.1.12 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- Fixed bug when an inherited advice is unselected from original item holding the asked advice, update back predecessors so advice is no more inherited
 
 4.1.11 (2019-11-19)
 -------------------

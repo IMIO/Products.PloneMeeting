@@ -107,6 +107,7 @@ from Products.PloneMeeting.utils import decodeDelayAwareId
 from Products.PloneMeeting.utils import display_as_html
 from Products.PloneMeeting.utils import fieldIsEmpty
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
+from Products.PloneMeeting.utils import get_every_back_references
 from Products.PloneMeeting.utils import getCurrentMeetingObject
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getFieldContent
@@ -4061,7 +4062,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return res
 
         inheritedAdviceInfo = deepcopy(predecessor.adviceIndex.get(adviserId))
-        while (predecessor and predecessor.adviceIndex[adviserId]['inherited']):
+        while (predecessor and
+               predecessor.adviceIndex.get(adviserId) and
+               predecessor.adviceIndex[adviserId]['inherited']):
             predecessor = predecessor.getPredecessor()
             inheritedAdviceInfo = deepcopy(predecessor.adviceIndex.get(adviserId))
 
@@ -4828,15 +4831,18 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         # update adviceIndex of every items for which I am the predecessor
         # this way inherited advices are correct if any
-        backPredecessor = self.getBRefs('ItemPredecessor')
-        while backPredecessor:
-            backPredecessor = backPredecessor[0]
-            hasInheritedAdvices = [adviceInfo for adviceInfo in backPredecessor.adviceIndex.values()
-                                   if adviceInfo.get('inherited', False)]
-            if not hasInheritedAdvices:
-                break
-            backPredecessor.updateLocalRoles()
-            backPredecessor = backPredecessor.getBRefs('ItemPredecessor')
+        back_objs = get_every_back_references(self, 'ItemPredecessor')
+        for back_obj in back_objs:
+            # removed inherited advice uids are advice removed on original item
+            # that were inherited on back references
+            removedInheritedAdviserUids = [
+                adviceInfo['id'] for adviceInfo in back_obj.adviceIndex.values()
+                if adviceInfo.get('inherited', False) and
+                adviceInfo['id'] not in self.adviceIndex]
+            if removedInheritedAdviserUids:
+                for removedInheritedAdviserUid in removedInheritedAdviserUids:
+                    back_obj.adviceIndex[removedInheritedAdviserUid]['inherited'] = False
+                back_obj.updateLocalRoles()
 
         # notify that advices have been updated so subproducts
         # may interact if necessary
@@ -5939,14 +5945,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def _cleanAdviceInheritance(self, item, adviceId):
         '''Clean advice inheritance for given p_adviceId on p_item.'''
-        def cleanAdviceInheritanceFor(backPredecessors):
-            for backPredecessor in backPredecessors:
-                if backPredecessor.adviceIndex.get(adviceId, None) and \
-                   backPredecessor.adviceIndex[adviceId]['inherited']:
-                    backPredecessor.adviceIndex[adviceId]['inherited'] = False
-                    backPredecessor.updateLocalRoles()
-                    cleanAdviceInheritanceFor(backPredecessor.getBRefs('ItemPredecessor'))
-        cleanAdviceInheritanceFor(item.getBRefs('ItemPredecessor'))
+        back_objs = get_every_back_references(self, 'ItemPredecessor')
+        for back_obj in back_objs:
+            if back_obj.adviceIndex.get(adviceId, None) and \
+               back_obj.adviceIndex[adviceId]['inherited']:
+                back_obj.adviceIndex[adviceId]['inherited'] = False
+                back_obj.updateLocalRoles()
 
     security.declarePublic('getAttendees')
 

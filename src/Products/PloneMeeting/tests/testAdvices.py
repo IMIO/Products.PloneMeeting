@@ -3073,6 +3073,22 @@ class testAdvices(PloneMeetingTestCase):
         self.portal.restrictedTraverse('@@delete_givenuid')(item1.getAdviceObj(self.endUsers_uid).UID())
         self.assertFalse(self.endUsers_uid in item2.adviceIndex)
 
+    def test_pm_InheritedAdviceUpdatedWhenInheritedAdviceNoMoreAskedOnOriginalItem(self):
+        '''When advices are inherited, it will behave correctly if we remove the asked advice
+           from original item ('not_given' advice that was inherited).'''
+        item1, item2, vendors_advice, developers_advice = self._setupInheritedAdvice()
+        self.assertTrue(self.developers_uid in item1.adviceIndex)
+        self.assertTrue(item2.adviceIndex[self.developers_uid]['inherited'])
+        # remove the optional advice asked
+        self.deleteAsManager(item1.adviceIndex[self.developers_uid]['advice_uid'])
+        item1.setOptionalAdvisers((self.vendors_uid, ))
+        item1._update_after_edit()
+        # item1 and item2 adviceIndex is correct
+        self.assertFalse(self.developers_uid in item1.adviceIndex)
+        # as still in optionalAdvisers, developers advice is asked again but no more inherited
+        self.assertFalse(item2.adviceIndex[self.developers_uid]['inherited'])
+        self.assertEqual(item2.adviceIndex[self.developers_uid]['type'], NOT_GIVEN_ADVICE_VALUE)
+
     def test_pm_InheritedAdviceUpdatedWhenInheritedItemRemoved(self):
         '''When advices are inherited, it will behave correctly depending on original
            item.  If item the advices are inherited from is removed, advices are updated.'''
