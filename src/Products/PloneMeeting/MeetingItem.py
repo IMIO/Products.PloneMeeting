@@ -4568,8 +4568,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # now get inherited advices that are not in optional advisers and
         # automatic advisers, it is the case for not_asked advices or when sending
         # an item to another MC
-        handledAdviserUids = [optAdviser['org_uid'] for optAdviser in optionalAdvisers]
-        handledAdviserUids += [autoAdviser['org_uid'] for autoAdviser in automaticAdvisers]
+        handledAdviserUids = [optAdviser['org_uid'] for optAdviser in optionalAdvisers
+                              if optAdviser['org_uid'] not in inheritedAdviserUids]
+        handledAdviserUids += [autoAdviser['org_uid'] for autoAdviser in automaticAdvisers
+                               if autoAdviser['org_uid'] not in inheritedAdviserUids]
         # when inheritedAdviserUids, adviceIndex is empty
         unhandledAdviserUids = [org_uid for org_uid in inheritedAdviserUids
                                 if org_uid not in handledAdviserUids]

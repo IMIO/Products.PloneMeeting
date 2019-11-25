@@ -6,6 +6,8 @@ Changelog
 -------------------
 
 - Fixed bug when an inherited advice is unselected from original item holding the asked advice, update back predecessors so advice is no more inherited
+- Fixed bug when an inherited advice is given by a power adviser on original item then item is sent to another MeetingConfig in which a delay aware advice
+  is automatically asked on resulting item, the automatically asked advice must not be taken into account in place of inherited advice
 
 4.1.11 (2019-11-19)
 -------------------
