@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.1.13 (unreleased)
+4.1.13 (2019-11-26)
 -------------------
 
 - Fix rendering of POD templates on Meeting, was crashing because using DashboardPODTemplates, now use ConfigurablePODTemplates
