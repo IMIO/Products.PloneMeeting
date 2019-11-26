@@ -5,8 +5,8 @@ Changelog
 4.1.13 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- Fix rendering of POD templates on Meeting, was crashing because using DashboardPODTemplates, now use ConfigurablePODTemplates
+- Adapted CSS and code regarding changes in imio.prettylink (state related CSS class is moved from <a> tag to inner <span>)
 
 4.1.12 (2019-11-26)
 -------------------

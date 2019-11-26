@@ -2,6 +2,7 @@
 
 from collective.eeafaceted.batchactions.interfaces import IBatchActionsMarker
 from collective.eeafaceted.collectionwidget.interfaces import ICollectiveEeafacetedCollectionwidgetLayer
+from eea.facetednavigation.subtypes.interfaces import IFacetedNavigable
 from ftw.labels.interfaces import ILabelSupport
 from zope.component.interfaces import IObjectEvent
 from zope.interface import Interface
@@ -104,7 +105,7 @@ class IMeetingItem(IMeetingContent, ILabelSupport):
     """
 
 
-class IMeeting(IMeetingContent):
+class IMeeting(IMeetingContent, IFacetedNavigable):
     """Marker interface for .Meeting.Meeting
     """
 

@@ -153,7 +153,6 @@ allItemTemplate.odt_file = 'all_item.odt'
 allItemTemplate.pod_portal_types = ['Meeting']
 allItemTemplate.merge_templates = [{'pod_context_name': u'item', 'do_rendering': False, 'template': 'itemTemplate'}]
 
-
 dashboardTemplate = PodTemplateDescriptor('dashboardTemplate', 'Dashboard summary', dashboard=True)
 dashboardTemplate.odt_file = 'Dashboard.odt'
 dashboardTemplate.tal_condition = u'python: context.absolute_url().endswith("/searches_items")'

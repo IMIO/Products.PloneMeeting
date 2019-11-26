@@ -3,7 +3,9 @@
                      usedAttrs cfg/getUsedMeetingAttributes;
                      toLocalizedTime nocall: context/@@plone/toLocalizedTime;"
              i18n:domain="PloneMeeting">
-  <div class="discreet">
+
+  <div class="discreet meeting-before-faceted-infos">
+
   <tal:comment replace="nothing">Place</tal:comment>
   <tal:place condition="python: ('place' in usedAttrs) or context.getPlace()">
     <span class="meeting_attribute_label" i18n:translate="PloneMeeting_label_place"></span>:&nbsp;&nbsp;
@@ -200,5 +202,7 @@ field before and the 'attendees' now, if the field is not empty, we display it</
     &nbsp;&nbsp;<span class="meeting_attribute_label" i18n:translate="PloneMeeting_label_preMeetingPlace"></span>:&nbsp;&nbsp;
     <span tal:replace="python: context.getPreMeetingPlace() or '-'"></span>
   </tal:prePlace>
+
   </div>
+
 </tal:defines>

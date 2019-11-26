@@ -303,11 +303,11 @@ div.viewlet_workflowstate span.state-advice_under_edit {
     background-color: red;
     border-color: red;
 }
-.state-advicecreated span,
-.state-created span,
-.state-itemcreated span,
-.state-itemcreated_waiting_advices span,
-.state-advice_under_edit span {color: red;}
+.state-advicecreated,
+.state-created,
+.state-itemcreated,
+.state-itemcreated_waiting_advices,
+.state-advice_under_edit {color: red;}
 /* DarkOrange */
 div.viewlet_workflowstate span[class^='state-proposed'],
 div.viewlet_workflowstate span.state-proposed_waiting_advices,
@@ -320,34 +320,34 @@ div.viewlet_workflowstate span.state-returned_to_proposing_group_prevalidated {
     background-color: DarkOrange;
     border-color: DarkOrange;
 }
-.state-proposed span,
-.state-proposed_waiting_advices span,
-.state-prevalidated span,
-.state-prevalidated_waiting_advices span,
-.state-proposed__or__prevalidated_waiting_advices span,
-.state-waiting_advices span,
-.state-returned_to_proposing_group_proposed span,
-.state-returned_to_proposing_group_prevalidated span {color: DarkOrange;}
+.state-proposed,
+.state-proposed_waiting_advices,
+.state-prevalidated,
+.state-prevalidated_waiting_advices,
+.state-proposed__or__prevalidated_waiting_advices,
+.state-waiting_advices,
+.state-returned_to_proposing_group_proposed,
+.state-returned_to_proposing_group_prevalidated {color: DarkOrange;}
 /* blue */
 div.viewlet_workflowstate span.state-validated {
     background-color: blue;
     border-color: blue;
 }
-.state-validated span {color: blue;}
+.state-validated {color: blue;}
 /* brown */
 div.viewlet_workflowstate span.state-presented {
     background-color: brown;
     border-color: brown;
 }
-.state-presented span {color: brown;}
+.state-presented {color: brown;}
 /* cornflowerBlue */
 div.viewlet_workflowstate span.state-itemfrozen,
 div.viewlet_workflowstate span.state-frozen {
     background-color: cornflowerBlue;
     border-color: cornflowerBlue;
 }
-.state-itemfrozen span,
-.state-frozen span {color: cornflowerBlue;}
+.state-itemfrozen,
+.state-frozen {color: cornflowerBlue;}
 /* grey */
 div.viewlet_workflowstate span.state-returned_to_proposing_group,
 div.viewlet_workflowstate span.state-closed,
@@ -359,29 +359,29 @@ div.viewlet_workflowstate span.state-advice_given {
     background-color: grey;
     border-color: grey;
 }
-.state-returned_to_proposing_group span,
-.state-closed span,
-.state-delayed span,
-.state-marked_not_applicable span,
-.state-postponed_next_meeting span,
-.state-removed span,
-.state-advice_given span {color: grey;}
+.state-returned_to_proposing_group,
+.state-closed,
+.state-delayed,
+.state-marked_not_applicable,
+.state-postponed_next_meeting,
+.state-removed,
+.state-advice_given {color: grey;}
 /* darkgoldenrod */
 div.viewlet_workflowstate span.state-itempublished,
 div.viewlet_workflowstate span.state-published {
     background-color: darkgoldenrod;
     border-color: darkgoldenrod;
 }
-.state-itempublished span,
-.state-published span {color: darkgoldenrod;}
+.state-itempublished,
+.state-published {color: darkgoldenrod;}
 /* black */
 div.viewlet_workflowstate span.state-decided,
 div.viewlet_workflowstate span.state-decisions_published {
     background-color: black;
     border-color: black;
 }
-.state-decided span,
-.state-decisions_published span {color: black;}
+.state-decided,
+.state-decisions_published {color: black;}
 /* green */
 div.viewlet_workflowstate span.state-accepted,
 div.viewlet_workflowstate span.state-accepted_but_modified,
@@ -392,18 +392,18 @@ div.viewlet_workflowstate span.state-confirmed {
     background-color: green;
     border-color: green;
 }
-.state-accepted span,
-.state-accepted_but_modified span,
-.state-accepted_out_of_meeting span,
-.state-accepted_out_of_meeting_emergency span,
-.state-pre_accepted span,
-.state-confirmed span {color: green;}
+.state-accepted,
+.state-accepted_but_modified,
+.state-accepted_out_of_meeting,
+.state-accepted_out_of_meeting_emergency,
+.state-pre_accepted,
+.state-confirmed {color: green;}
 /* Violet */
 div.viewlet_workflowstate span.state-refused {
     background-color: violet;
     border-color: violet;
 }
-.state-refused span {color: violet;}
+.state-refused {color: violet;}
 
 /* Colors on transitions, used in the item wf history */
 /* this correspond to the element creation */
@@ -942,6 +942,10 @@ table.listing th.th_header_getItemNumber {
 /* define the width of the input containing the number of the item on the meeting_view */
 span#meetingItems INPUT[type=text], span#lateItems INPUT[type=text] {
     width: 2.5em;
+}
+
+div.meeting-before-faceted-infos {
+   display: inline-block;
 }
 
 #content .warningInMeetingConfig {

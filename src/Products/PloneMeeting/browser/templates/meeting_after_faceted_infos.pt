@@ -5,6 +5,8 @@
                      bilingual python: 'secondLanguage' in view.tool.getModelAdaptations();"
              i18n:domain="PloneMeeting">
 
+  <div class="meeting-after-faceted-infos">
+
   <tal:comment replace="nothing">In and out moves</tal:comment>
   <tal:field define="fieldName python: 'inAndOutMoves'; ajaxEdit python:True">
     <metal:f use-macro="context/@@pm-macros/viewContentField"/>
@@ -64,5 +66,7 @@
       </tr>
     </table>
   </fieldset>
+
+  </div>
 
 </tal:defines>

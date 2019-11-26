@@ -1769,6 +1769,40 @@ class testViews(PloneMeetingTestCase):
         adapter2 = getAdapter(pmFolder2, IGenerablePODTemplates)
         self.assertFalse(adapter2.get_all_pod_templates())
 
+    def test_pm_content_document_generation_link_viewlet(self):
+        """POD templates are available on a per MeetingConfig basis and
+           ConfigurablePODTemplates are available for meeting content, IMeeting as well."""
+        cfg = self.meetingConfig
+        cfg.setItemAdviceStates(('itemcreated',))
+        cfg.setItemAdviceEditStates(('itemcreated',))
+
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        item.setOptionalAdvisers((self.developers_uid,))
+        item._update_after_edit()
+        advice = createContentInContainer(
+            item,
+            'meetingadvice',
+            **{'advice_group': self.developers_uid,
+               'advice_type': u'positive',
+               'advice_comment': RichTextValue(u'My comment')})
+        # adapters
+        # item
+        item_adapter = getAdapter(item, IGenerablePODTemplates)
+        item_generable_ids = [template.getId() for template in item_adapter.get_generable_templates()]
+        self.assertEqual(item_generable_ids, ['itemTemplate'])
+        # meeting, does not use DashboardPODTemplates
+        meeting = self.create('Meeting', date=DateTime('2019/11/26'))
+        meeting_adapter = getAdapter(meeting, IGenerablePODTemplates)
+        meeting_generable_ids = [template.getId() for template in meeting_adapter.get_generable_templates()]
+        self.assertEqual(meeting_generable_ids, ['agendaTemplate', 'allItemTemplate'])
+        # advice
+        # by defaut, no POD template for advice, enable itemTemplate
+        cfg.podtemplates.itemTemplate.pod_portal_types = [u'meetingadvice']
+        advice_adapter = getAdapter(advice, IGenerablePODTemplates)
+        advice_generable_ids = [template.getId() for template in advice_adapter.get_generable_templates()]
+        self.assertEqual(advice_generable_ids, ['itemTemplate'])
+
     def test_pm_dashboard_document_generation_link_viewlet_on_contacts(self):
         """Dashboard POD templates are available on contacts dashboards."""
         self.changeUser('pmManager')

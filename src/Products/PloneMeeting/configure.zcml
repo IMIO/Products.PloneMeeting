@@ -289,6 +289,11 @@
   <adapter for="OFS.interfaces.IItem"
            provides="collective.documentgenerator.interfaces.IGenerablePODTemplates"
            factory=".adapters.PMGenerablePODTemplatesAdapter"/>
+  <!-- Use the PMGenerablePODTemplatesAdapter for IMeeting,
+       not the PMDashboardGenerablePODTemplatesAdapter -->
+  <adapter for="Products.PloneMeeting.interfaces.IMeeting"
+           provides="collective.documentgenerator.interfaces.IGenerablePODTemplates"
+           factory=".adapters.PMGenerablePODTemplatesAdapter"/>
 
   <five:deprecatedManageAddDelete class=".MeetingItem.MeetingItem" />
   <five:deprecatedManageAddDelete class=".Meeting.Meeting" />
