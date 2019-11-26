@@ -4521,6 +4521,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # every meetingadvice to the role 'Authenticated', a role that current user has
             self._removeEveryContainedAdvices()
 
+        # manage inherited advices
+        inheritedAdviserUids = inheritedAdviserUids or [
+            org_uid for org_uid in self.adviceIndex
+            if self.adviceIndex[org_uid].get('inherited', False)]
+
         # Update the dictionary self.adviceIndex with every advices to give
         i = -1
         # we will recompute the entire adviceIndex

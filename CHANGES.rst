@@ -5,8 +5,7 @@ Changelog
 4.1.14 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- Finally fixes advice inheritance when original advice is not delay aware and the MeetingConfig holding inherited advice has a delay aware custom adviser
 
 4.1.13 (2019-11-26)
 -------------------

@@ -3115,6 +3115,14 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue(
             item2.restrictedTraverse('@@advices-icons-infos')(
                 adviceType='positive'))
+        # following updateLocalRoles are correct
+        item2.updateLocalRoles()
+        item2._update_after_edit()
+        self.assertTrue(
+            item2.restrictedTraverse('@@advices-icons')())
+        self.assertTrue(
+            item2.restrictedTraverse('@@advices-icons-infos')(
+                adviceType='positive'))
 
     def test_pm_InheritedAdviceUpdatedWhenInheritedAdviceNoMoreAskedOnOriginalItem(self):
         '''When advices are inherited, it will behave correctly if we remove the asked advice
