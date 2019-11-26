@@ -3073,6 +3073,65 @@ class testAdvices(PloneMeetingTestCase):
         self.portal.restrictedTraverse('@@delete_givenuid')(item1.getAdviceObj(self.endUsers_uid).UID())
         self.assertFalse(self.endUsers_uid in item2.adviceIndex)
 
+    def test_pm_InheritedAdviceAddedAsPowerAdviserSentToOtherMCUsingDelayAwareAdvice(self):
+        '''When advices are inherited, if an advice was given by a power adviser on item of
+           MeetingConfig A and is sent to a MeetingConfig B for which a delay aware advice
+           is configured for same adviser as power adviser of MeetingConfig A, everything works
+           as expected and the inherited advice is shown correctly.'''
+        cfg = self.meetingConfig
+        cfg = self.meetingConfig
+        cfg.setItemAdviceStates((self._stateMappingFor('itemcreated'), ))
+        cfg.setPowerAdvisersGroups((self.developers_uid, ))
+        cfg.setItemManualSentToOtherMCStates((self._stateMappingFor('itemcreated')))
+        self._setPowerObserverStates(states=(self._stateMappingFor('itemcreated'), ))
+        cfg2 = self.meetingConfig2
+        cfg2Id = cfg2.getId()
+        cfg2.setCustomAdvisers(
+            [{'row_id': 'unique_id_123',
+              'org': self.developers_uid,
+              'gives_auto_advice_on': 'python:True',
+              'for_item_created_from': '2016/08/08',
+              'delay': '5',
+              'delay_label': ''}, ])
+
+        cfg.setContentsKeptOnSentToOtherMC(('advices', ))
+        self.changeUser('pmManager')
+        item1 = self.create('MeetingItem')
+        item1.setOtherMeetingConfigsClonableTo((cfg2Id, ))
+        # give advice
+        createContentInContainer(item1,
+                                 'meetingadvice',
+                                 **{'advice_group': self.developers_uid,
+                                    'advice_type': u'positive',
+                                    'advice_hide_during_redaction': False,
+                                    'advice_comment': RichTextValue(u'My comment')})
+        # send item to cfg2, this will keep power adviser advice instead asking delay aware advice
+        item2 = item1.cloneToOtherMeetingConfig(cfg2Id)
+        self.assertTrue(item2.adviceIndex[self.developers_uid]['inherited'])
+        self.assertEqual(item2.adviceIndex[self.developers_uid]['delay'], '')
+        # advice infos are displayed correctly on item
+        self.assertTrue(
+            item2.restrictedTraverse('@@advices-icons')())
+        self.assertTrue(
+            item2.restrictedTraverse('@@advices-icons-infos')(
+                adviceType='positive'))
+
+    def test_pm_InheritedAdviceUpdatedWhenInheritedAdviceNoMoreAskedOnOriginalItem(self):
+        '''When advices are inherited, it will behave correctly if we remove the asked advice
+           from original item ('not_given' advice that was inherited).'''
+        item1, item2, vendors_advice, developers_advice = self._setupInheritedAdvice()
+        self.assertTrue(self.developers_uid in item1.adviceIndex)
+        self.assertTrue(item2.adviceIndex[self.developers_uid]['inherited'])
+        # remove the optional advice asked
+        self.deleteAsManager(item1.adviceIndex[self.developers_uid]['advice_uid'])
+        item1.setOptionalAdvisers((self.vendors_uid, ))
+        item1._update_after_edit()
+        # item1 and item2 adviceIndex is correct
+        self.assertFalse(self.developers_uid in item1.adviceIndex)
+        # as still in optionalAdvisers, developers advice is asked again but no more inherited
+        self.assertFalse(item2.adviceIndex[self.developers_uid]['inherited'])
+        self.assertEqual(item2.adviceIndex[self.developers_uid]['type'], NOT_GIVEN_ADVICE_VALUE)
+
     def test_pm_InheritedAdviceUpdatedWhenInheritedItemRemoved(self):
         '''When advices are inherited, it will behave correctly depending on original
            item.  If item the advices are inherited from is removed, advices are updated.'''
