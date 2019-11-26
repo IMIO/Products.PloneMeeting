@@ -2,6 +2,7 @@
 
 from AccessControl import Unauthorized
 from collective.contact.plonegroup.utils import get_own_organization
+from collective.documentgenerator.interfaces import IGenerablePODTemplates
 from DateTime import DateTime
 from datetime import datetime
 from ftw.labels.interfaces import ILabeling
@@ -37,6 +38,7 @@ from zope.i18n import translate
 from zope.intid.interfaces import IIntIds
 
 import transaction
+
 
 SAMPLE_ERROR_MESSAGE = u'This is the error message!'
 
@@ -1760,39 +1762,27 @@ class testViews(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         # some DashboardPODTemplates are defined in cfg1
         pmFolder = self.getMeetingFolder()
-        viewlet = self._get_viewlet(
-            context=pmFolder,
-            manager_name='collective.eeafaceted.z3ctable.topabovenav',
-            viewlet_name='dashboard-document-generation-link')
-        self.assertTrue(viewlet.get_all_pod_templates())
+        adapter1 = getAdapter(pmFolder, IGenerablePODTemplates)
+        self.assertTrue(adapter1.get_all_pod_templates())
         # NO DashboardPODTemplates are defined in cfg2
         pmFolder2 = self.getMeetingFolder(self.meetingConfig2)
-        viewlet2 = self._get_viewlet(
-            context=pmFolder2,
-            manager_name='collective.eeafaceted.z3ctable.topabovenav',
-            viewlet_name='dashboard-document-generation-link')
-        self.assertFalse(viewlet2.get_all_pod_templates())
+        adapter2 = getAdapter(pmFolder2, IGenerablePODTemplates)
+        self.assertFalse(adapter2.get_all_pod_templates())
 
     def test_pm_dashboard_document_generation_link_viewlet_on_contacts(self):
         """Dashboard POD templates are available on contacts dashboards."""
         self.changeUser('pmManager')
         # a DashboardPODTemplate is defined for the organizations dashboard
-        viewlet = self._get_viewlet(
-            context=self.portal.contacts.get('orgs-searches'),
-            manager_name='collective.eeafaceted.z3ctable.topabovenav',
-            viewlet_name='dashboard-document-generation-link')
-        self.request.form['c1[]'] = viewlet.context.get('all_orgs').UID()
+        adapter1 = getAdapter(self.portal.contacts.get('orgs-searches'), IGenerablePODTemplates)
+        self.request.form['c1[]'] = adapter1.context.get('all_orgs').UID()
         # one generable template
-        generable_templates = viewlet.get_generable_templates()
+        generable_templates = adapter1.get_generable_templates()
         self.assertTrue(generable_templates)
         self.assertTrue(generable_templates[0].use_objects)
         # NO DashboardPODTemplates are defined for persons dashboard
-        viewlet2 = self._get_viewlet(
-            context=self.portal.contacts.get('persons-searches'),
-            manager_name='collective.eeafaceted.z3ctable.topabovenav',
-            viewlet_name='dashboard-document-generation-link')
-        self.request.form['c1[]'] = viewlet2.context.get('all_persons').UID()
-        self.assertFalse(viewlet2.get_generable_templates())
+        adapter2 = getAdapter(self.portal.contacts.get('persons-searches'), IGenerablePODTemplates)
+        self.request.form['c1[]'] = adapter2.context.get('all_persons').UID()
+        self.assertFalse(adapter2.get_generable_templates())
 
 
 def test_suite():

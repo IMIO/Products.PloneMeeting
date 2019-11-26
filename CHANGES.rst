@@ -5,6 +5,8 @@ Changelog
 4.1.12 (unreleased)
 -------------------
 
+- Adapted code to redefine the 'IGenerablePODTemplates' adapter for context and dashboard now that 'get_all_pod_templates' and 'get_generable_templates'
+  were moved from 'DocumentGeneratorLinksViewlet' to 'GenerablePODTemplatesAdapter' in 'collective.documentgenerator'
 - Fixed bug when an inherited advice is unselected from original item holding the asked advice, update back predecessors so advice is no more inherited
 - Fixed bug when an inherited advice is given by a power adviser on original item then item is sent to another MeetingConfig in which a delay aware advice
   is automatically asked on resulting item, the automatically asked advice must not be taken into account in place of inherited advice

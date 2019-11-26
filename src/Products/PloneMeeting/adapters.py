@@ -11,6 +11,10 @@ from appy.shared.diff import HtmlDiff
 from collective.contact.plonegroup.utils import get_organization
 from collective.contact.plonegroup.utils import get_own_organization
 from collective.contact.plonegroup.utils import get_plone_group_id
+from collective.documentgenerator.adapters import GenerablePODTemplatesAdapter
+from collective.documentgenerator.content.pod_template import IPODTemplate
+from collective.eeafaceted.dashboard.adapters import DashboardGenerablePODTemplatesAdapter
+from collective.eeafaceted.dashboard.content.pod_template import IDashboardPODTemplate
 from collective.iconifiedcategory.adapter import CategorizedObjectAdapter
 from collective.iconifiedcategory.adapter import CategorizedObjectInfoAdapter
 from collective.iconifiedcategory.utils import get_categories
@@ -40,6 +44,7 @@ from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.config import AddAnnexDecision
 from Products.PloneMeeting.config import DUPLICATE_AND_KEEP_LINK_EVENT_ACTION
 from Products.PloneMeeting.config import DUPLICATE_EVENT_ACTION
+from Products.PloneMeeting.config import EMPTY_STRING
 from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import MEETINGROLES
@@ -1650,3 +1655,47 @@ class IconifiedCategoryGroupAdapter(object):
         categories = categories + get_categories(self.context, only_enabled=only_enabled)
         self.request['force_use_item_decision_annexes_group'] = False
         return categories
+
+
+class PMGenerablePODTemplatesAdapter(GenerablePODTemplatesAdapter):
+    """ """
+
+    def get_all_pod_templates(self):
+        """Query by MeetingConfig."""
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
+        if not cfg:
+            return []
+        catalog = api.portal.get_tool('portal_catalog')
+        brains = catalog.unrestrictedSearchResults(
+            object_provides={'query': IPODTemplate.__identifier__,
+                             'not': IDashboardPODTemplate.__identifier__},
+            # PloneMeeting, just added following line
+            path={'query': '/'.join(cfg.getPhysicalPath())},
+            sort_on='getObjPositionInParent'
+        )
+        pod_templates = [self.context.unrestrictedTraverse(brain.getPath()) for brain in brains]
+
+        return pod_templates
+
+
+class PMDashboardGenerablePODTemplatesAdapter(DashboardGenerablePODTemplatesAdapter):
+    """ """
+
+    def get_all_pod_templates(self):
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
+        query = {'object_provides': {'query': IDashboardPODTemplate.__identifier__},
+                 'sort_on': 'getObjPositionInParent'}
+        # filter on MeetingConfig if we are in it
+        if cfg:
+            query['path'] = {'query': '/'.join(cfg.getPhysicalPath())}
+        else:
+            # out of a MeetingConfig
+            query['getConfigId'] = EMPTY_STRING
+
+        catalog = api.portal.get_tool('portal_catalog')
+        brains = catalog.unrestrictedSearchResults(**query)
+        pod_templates = [self.context.unrestrictedTraverse(brain.getPath()) for brain in brains]
+
+        return pod_templates

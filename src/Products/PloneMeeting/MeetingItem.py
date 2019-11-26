@@ -99,8 +99,8 @@ from Products.PloneMeeting.Meeting import Meeting
 from Products.PloneMeeting.model.adaptations import RETURN_TO_PROPOSING_GROUP_MAPPINGS
 from Products.PloneMeeting.utils import _addManagedPermissions
 from Products.PloneMeeting.utils import _storedItemNumber_to_itemNumber
-from Products.PloneMeeting.utils import addDataChange
 from Products.PloneMeeting.utils import add_wf_history_action
+from Products.PloneMeeting.utils import addDataChange
 from Products.PloneMeeting.utils import AdvicesUpdatedEvent
 from Products.PloneMeeting.utils import cleanMemoize
 from Products.PloneMeeting.utils import decodeDelayAwareId
