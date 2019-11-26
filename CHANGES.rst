@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.1.12 (unreleased)
+4.1.12 (2019-11-26)
 -------------------
 
 - Adapted code to redefine the 'IGenerablePODTemplates' adapter for context and dashboard now that 'get_all_pod_templates' and 'get_generable_templates'
