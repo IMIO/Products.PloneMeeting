@@ -6,6 +6,8 @@ Changelog
 -------------------
 
 - Finally fixes advice inheritance when original advice is not delay aware and the MeetingConfig holding inherited advice has a delay aware custom adviser
+- Do not make IMeeting inherits from IFacetedNavigable or it does not apply the faceted configuration when a new meeting is created because it already implements IFacetedNavigable...
+  Override the IDashboardGenerablePODTemplates from collective.eeafaceted.dashboard to manage dashboard related POD templates
 
 4.1.13 (2019-11-26)
 -------------------
