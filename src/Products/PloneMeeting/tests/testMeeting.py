@@ -24,6 +24,7 @@ from collective.contact.plonegroup.utils import get_organizations
 from copy import deepcopy
 from DateTime import DateTime
 from DateTime.DateTime import _findLocalTimeZoneName
+from eea.facetednavigation.interfaces import IFacetedLayout
 from imio.helpers.cache import cleanRamCacheFor
 from os import path
 from plone.app.querystring.querybuilder import queryparser
@@ -3157,6 +3158,13 @@ class testMeeting(PloneMeetingTestCase):
             [brain._unrestrictedGetObject().getItemReference() for
              brain in meeting.getItems(ordered=True, theObjects=False, unrestricted=True)],
             [100, 200, 300, 400])
+
+    def test_pm_MeetingFacetedView(self):
+        '''Faceted is correctly configured on a meeting and relevant layouts are used.'''
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime('2019/11/27'))
+        self.assertEqual(meeting.getLayout(), 'meeting_view')
+        self.assertEqual(IFacetedLayout(meeting).layout, 'faceted-table-items')
 
 
 def test_suite():
