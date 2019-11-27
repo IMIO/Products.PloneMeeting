@@ -3177,9 +3177,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            signatory uid as key and 'signature_number' as value.
            Else, the key is the signatory contact object.
         '''
-        res = []
         if not self.hasMeeting():
-            return res
+            return {}
         meeting = self.getMeeting()
         if real:
             signatories = {}
