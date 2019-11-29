@@ -980,13 +980,19 @@ body.template-search_form #content label {
     display: none;
 }
 
-/* hide some parts of the screen in the configuration of itemtemplates */
-body[class*="itemtemplates"] #plone-contentmenu-workflow,
-body[class*="itemtemplates"] a#plone-contentmenu-settings,
-body[class*="itemtemplates"] a.link-parent,
-body[class*="itemtemplates"] .documentDescription,
-body[class*="itemtemplates"] #plone-contentmenu-actions,
-body[class*="itemtemplates"] #plone-contentmenu-display {
+/* hide some parts of the screen in the configuration of itemtemplates as well as on any other folders and on MessagesConfig */
+body[class*="portaltype-folder"] #plone-contentmenu-workflow,
+body[class*="portaltype-messagesconfig"] #plone-contentmenu-workflow,
+body[class*="portaltype-folder"] a#plone-contentmenu-settings,
+body[class*="portaltype-messagesconfig"] a#plone-contentmenu-settings,
+body[class*="portaltype-folder"] a.link-parent,
+body[class*="portaltype-messagesconfig"] a.link-parent,
+body[class*="portaltype-folder"] .documentDescription,
+body[class*="portaltype-messagesconfig"] .documentDescription,
+body[class*="portaltype-folder"] #plone-contentmenu-actions,
+body[class*="portaltype-messagesconfig"] #plone-contentmenu-actions,
+body[class*="portaltype-folder"] #plone-contentmenu-display,
+body[class*="portaltype-messagesconfig"] #plone-contentmenu-display {
     display: none !important;
 }
 /* do not hide link-parent when in manage-portlets of itemtemplates... */

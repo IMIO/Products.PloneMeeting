@@ -1,6 +1,8 @@
+# -*- coding: utf-8 -*-
+
+from plone import api
 from plone.app.layout.navigation.navtree import buildFolderTree
 from plone.app.layout.navigation.navtree import NavtreeStrategyBase
-from Products.CMFCore.utils import getToolByName
 from Products.Five.browser import BrowserView
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from zope.component import getMultiAdapter
@@ -16,7 +18,7 @@ class ItemTemplateView(BrowserView):
         self.request = request
         portal_state = getMultiAdapter((self.context, self.request), name=u'plone_portal_state')
         self.portal = portal_state.portal()
-        self.tool = getToolByName(self.context, 'portal_plonemeeting')
+        self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
         self.request.set('disable_border', 1)
 
@@ -43,11 +45,10 @@ class ItemTemplateView(BrowserView):
     def createItemFromTemplate(self, templateUID):
         '''The user wants to create an item from a item template that lies in
            this meeting configuration. Item id is in the request.'''
-        catalog = getToolByName(self.context, 'portal_catalog')
+        catalog = api.portal.get_tool('portal_catalog')
         templateItem = catalog(UID=templateUID)[0].getObject()
         # Create the new item by duplicating the template item
-        membershipTool = getToolByName(self.context, 'portal_membership')
-        member = membershipTool.getAuthenticatedMember()
+        member = api.user.get_current()
         newItem = templateItem.clone(newOwnerId=member.id,
                                      cloneEventAction='create_meeting_item_from_template',
                                      destFolder=self.context,
