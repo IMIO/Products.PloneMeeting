@@ -994,7 +994,6 @@ def forceHTMLContentTypeForEmptyRichFields(obj):
             field.setContentType(obj, 'text/html')
 
 
-# ------------------------------------------------------------------------------
 def applyOnTransitionFieldTransform(obj, transitionId):
     '''
       Apply onTransitionFieldTransforms defined in the corresponding obj MeetingConfig.
@@ -1014,6 +1013,8 @@ def applyOnTransitionFieldTransform(obj, transitionId):
                     roles_bypassing_expression=[],
                     extra_expr_ctx={
                         'item': obj,
+                        'pm_utils': SecureModuleImporter['Products.PloneMeeting.utils'],
+                        'imio_history_utils': SecureModuleImporter['imio.history.utils'],
                         'tool': tool,
                         'cfg': cfg},
                     empty_expr_is_true=False,
@@ -1061,6 +1062,7 @@ def meetingExecuteActionOnLinkedItems(meeting, transitionId):
                         roles_bypassing_expression=[],
                         extra_expr_ctx={
                             'pm_utils': SecureModuleImporter['Products.PloneMeeting.utils'],
+                            'imio_history_utils': SecureModuleImporter['imio.history.utils'],
                             'tool': tool,
                             'cfg': cfg,
                             'item': item,

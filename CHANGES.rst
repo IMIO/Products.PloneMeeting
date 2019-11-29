@@ -6,7 +6,10 @@ Changelog
 -------------------
 
 - Only show the 'Add element' actions menu when Manager is on a Folder or on a MessagesConfig element, this way we avoid users changing review_state, layout our deleting the element...
-
+- When using the tooltipster to change the MeetingItem.listType value, display the current listType value so user know what it is before changing to another value,
+  especially useful on the meeting_view where current listType value is not displayed
+- Make 'pm_utils' and 'imio_history_utils' available in every TAL expressions evaluated using collective.behavior.talcondition.utils._evaluateExpression, this way it is also possible
+  when evaluating the TAL expression of MeetingConfig.onTransitionFieldTransforms to access the item's history and to include in a field comment added for last WF transition for example
 
 4.1.14 (2019-11-27)
 -------------------

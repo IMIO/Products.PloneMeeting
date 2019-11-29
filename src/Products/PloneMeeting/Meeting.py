@@ -1786,6 +1786,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
                                    extra_expr_ctx={
                                        'meeting': self,
                                        'pm_utils': SecureModuleImporter['Products.PloneMeeting.utils'],
+                                       'imio_history_utils': SecureModuleImporter['imio.history.utils'],
                                        'tool': tool,
                                        'cfg': cfg}):
                 powerObserversGroupId = "%s_%s" % (cfg.getId(), po_infos['row_id'])

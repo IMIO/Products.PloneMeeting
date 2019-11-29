@@ -3520,8 +3520,7 @@ class testMeetingItem(PloneMeetingTestCase):
     def test_pm_OnTransitionFieldTransforms(self):
         '''On transition triggered, some transforms can be applied to item or meeting
            rich text field depending on what is defined in MeetingConfig.onTransitionFieldTransforms.
-           This is used for example to adapt the text of the decision when an item is delayed or refused.
-           '''
+           This is used for example to adapt the text of the decision when an item is delayed or refused.'''
         cfg = self.meetingConfig
         self.changeUser('pmManager')
         meeting = self._createMeetingWithItems()
@@ -3575,6 +3574,23 @@ class testMeetingItem(PloneMeetingTestCase):
         messages = IStatusMessage(self.request).show()
         self.assertEqual(messages[-1].message, ON_TRANSITION_TRANSFORM_TAL_EXPR_ERROR %
                          ('decision', "'some_wrong_tal_expression'"))
+
+    def test_pm_OnTransitionFieldTransformsUseLastCommentFromHistory(self):
+        '''Use comment of last WF transition in expression.'''
+        cfg = self.meetingConfig
+        self.changeUser('pmManager')
+        meeting = self._createMeetingWithItems()
+        self.decideMeeting(meeting)
+        cfg.setOnTransitionFieldTransforms(
+            ({'transition': 'delay',
+              'field_name': 'MeetingItem.decision',
+              'tal_expression': "python: '<p>{0}</p>'.format("
+                "imio_history_utils.getLastWFAction(context)['comments'])"}, ))
+        item = meeting.getItems()[0]
+        item.setDecision(self.decisionText)
+        wf_comment = 'Delayed for this precise reason \xc3\xa9'
+        self.do(item, 'delay', comment=wf_comment)
+        self.assertEqual(item.getDecision(), '<p>{0}</p>'.format(wf_comment))
 
     def test_pm_TakenOverBy(self):
         '''Test the view that manage the MeetingItem.takenOverBy toggle.

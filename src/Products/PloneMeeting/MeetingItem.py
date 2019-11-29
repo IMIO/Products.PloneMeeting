@@ -3848,6 +3848,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                         'item': self,
                         'isCreated': isCreated,
                         'pm_utils': SecureModuleImporter['Products.PloneMeeting.utils'],
+                        'imio_history_utils': SecureModuleImporter['imio.history.utils'],
                         'tool': tool,
                         'cfg': cfg},
                     empty_expr_is_true=False,
@@ -5260,6 +5261,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                    extra_expr_ctx={
                                        'item': self,
                                        'pm_utils': SecureModuleImporter['Products.PloneMeeting.utils'],
+                                       'imio_history_utils': SecureModuleImporter['imio.history.utils'],
                                        'tool': tool,
                                        'cfg': cfg}):
                 powerObserversGroupId = "%s_%s" % (cfg_id, po_infos['row_id'])
