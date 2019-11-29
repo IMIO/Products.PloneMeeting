@@ -3584,13 +3584,19 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg.setOnTransitionFieldTransforms(
             ({'transition': 'delay',
               'field_name': 'MeetingItem.decision',
-              'tal_expression': "python: '<p>{0}</p>'.format("
-                "imio_history_utils.getLastWFAction(context)['comments'])"}, ))
+              'tal_expression': "python: imio_history_utils.getLastWFAction(context)['comments'] and "
+                "'<p>{0}</p>'.format(imio_history_utils.getLastWFAction(context)['comments']) or "
+                "'<p>Generic comment.</p>'"}, ))
         item = meeting.getItems()[0]
         item.setDecision(self.decisionText)
         wf_comment = 'Delayed for this precise reason \xc3\xa9'
+        # with comment in last WF transition
         self.do(item, 'delay', comment=wf_comment)
         self.assertEqual(item.getDecision(), '<p>{0}</p>'.format(wf_comment))
+        # without comment in last WF transition
+        self.backToState(item, 'itemfrozen')
+        self.do(item, 'delay')
+        self.assertEqual(item.getDecision(), '<p>Generic comment.</p>')
 
     def test_pm_TakenOverBy(self):
         '''Test the view that manage the MeetingItem.takenOverBy toggle.
