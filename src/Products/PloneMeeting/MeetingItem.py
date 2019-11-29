@@ -1472,8 +1472,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     schema = MeetingItem_schema
 
-    meetingTransitionsAcceptingRecurringItems = ('_init_', 'publish', 'freeze', 'decide')
-
     security.declarePublic('title_or_id')
 
     def title_or_id(self, withTypeName=True):
@@ -3261,64 +3259,36 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def addRecurringItemToMeeting(self, meeting):
         '''See doc in interfaces.py.'''
         item = self.getSelf()
-        # Retrieve the meeting history of the workflow used for the meeting
         wfTool = api.portal.get_tool('portal_workflow')
-        meetingWFName = wfTool.getWorkflowsFor(meeting)[0].getId()
-        history = meeting.workflow_history[meetingWFName]
-        # By default, a first action is added to the workflow_history when the element
-        # is created, the 'action' is None and the intial review_state is in 'review_state'
-        if history[-1]['action'] is None:
-            lastTransition = '_init_'
-        else:
-            lastTransition = history[-1]['action']
-        transitions = item.meetingTransitionsAcceptingRecurringItems
-        if lastTransition and (lastTransition not in transitions):
-            # A strange transition was chosen for addding a recurring item (ie
-            # when putting back the meeting from 'published' to 'created' in
-            # order to correct an error). In those cases we do nothing but
-            # sending a mail to the site administrator for telling him that he
-            # should change the settings linked to recurring items in the
-            # corresponding meeting config.
-            logger.warn(REC_ITEM_ERROR % (item.id,
-                                          WRONG_TRANSITION % lastTransition))
-            sendMail(None, item, 'recurringItemBadTransition')
-            # We do not use delete_givenuid here but unrestrictedRemoveGivenObject
-            # that act as an unrestricted method because the item could be
-            # not accessible by the MeetingManager.  In the case for example
-            # where a recurring item is created with a proposingGroup the
-            # MeetingManager is not in as a creator...
-            # we must be sure that the item is removed in every case.
+        tool = api.portal.get_tool('portal_plonemeeting')
+        try:
+            # Hmm... the currently published object is p_meeting, right?
+            item.REQUEST.set('PUBLISHED', meeting)
+            item.setPreferredMeeting(meeting.UID())  # This way it will
+            # be considered as "late item" for this meeting if relevant.
+            # Ok, now let's present the item in the meeting.
+            # to avoid being stopped by mandatory advices not given, we add
+            # a flag that specify that the current item is a recurring item
+            item.isRecurringItem = True
+            # we use the wf path defined in the cfg.transitionsForPresentingAnItem
+            # to present the item to the meeting
+            cfg = tool.getMeetingConfig(item)
+            # give 'Manager' role to current user to bypass transitions guard
+            # and avoid permission problems when transitions are triggered
+            with api.env.adopt_roles(['Manager', ]):
+                for tr in cfg.getTransitionsForPresentingAnItem():
+                    wfTool.doActionFor(item, tr)
+            # the item must be at least presented to a meeting, either we raise
+            if not item.hasMeeting():
+                raise WorkflowException
+            del item.isRecurringItem
+        except WorkflowException, wfe:
+            msg = REC_ITEM_ERROR % (item.id, str(wfe))
+            logger.warn(msg)
+            api.portal.show_message(msg, request=item.REQUEST, type='error')
+            sendMail(None, item, 'recurringItemWorkflowError')
             unrestrictedRemoveGivenObject(item)
             return True
-        else:
-            wfTool = api.portal.get_tool('portal_workflow')
-            tool = api.portal.get_tool('portal_plonemeeting')
-            try:
-                # Hmm... the currently published object is p_meeting, right?
-                item.REQUEST.set('PUBLISHED', meeting)
-                item.setPreferredMeeting(meeting.UID())  # This way it will
-                # be considered as "late item" for this meeting if relevant.
-                # Ok, now let's present the item in the meeting.
-                # to avoid being stopped by mandatory advices not given, we add
-                # a flag that specify that the current item is a recurring item
-                item.isRecurringItem = True
-                # we use the wf path defined in the cfg.transitionsForPresentingAnItem
-                # to present the item to the meeting
-                cfg = tool.getMeetingConfig(item)
-                # give 'Manager' role to current user to bypass transitions guard
-                # and avoid permission problems when transitions are triggered
-                with api.env.adopt_roles(['Manager', ]):
-                    for tr in cfg.getTransitionsForPresentingAnItem():
-                        wfTool.doActionFor(item, tr)
-                # the item must be at least presented to a meeting, either we raise
-                if not item.hasMeeting():
-                    raise WorkflowException
-                del item.isRecurringItem
-            except WorkflowException, wfe:
-                logger.warn(REC_ITEM_ERROR % (item.id, str(wfe)))
-                sendMail(None, item, 'recurringItemWorkflowError')
-                unrestrictedRemoveGivenObject(item)
-                return True
 
     def _checkMayQuickEdit(self, bypassWritePermissionCheck=False, permission=ModifyPortalContent, expression=''):
         """ """

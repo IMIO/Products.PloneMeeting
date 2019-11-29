@@ -10,6 +10,7 @@ Changelog
   especially useful on the meeting_view where current listType value is not displayed
 - Make 'pm_utils' and 'imio_history_utils' available in every TAL expressions evaluated using collective.behavior.talcondition.utils._evaluateExpression, this way it is also possible
   when evaluating the TAL expression of MeetingConfig.onTransitionFieldTransforms to access the item's history and to include in a field comment added for last WF transition for example
+- Display an error portal_message while creating a meeting and some recurring items could not be inserted
 
 4.1.14 (2019-11-27)
 -------------------
