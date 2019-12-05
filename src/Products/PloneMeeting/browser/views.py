@@ -1408,6 +1408,13 @@ class MeetingDocumentGenerationHelperView(FolderDocumentGenerationHelperView):
 class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV):
     """ """
 
+    def output_for_restapi(self):
+        ''' '''
+        result = {}
+        result['deliberation'] = self.print_deliberation()
+        result['public_deliberation'] = self.print_public_deliberation()
+        return result
+
     def print_meeting_date(self, returnDateTime=False, noMeetingMarker='-', unrestricted=True):
         """Print meeting date, manage fact that item is not linked to a meeting,
            in this case p_noMeetingMarker is returned.

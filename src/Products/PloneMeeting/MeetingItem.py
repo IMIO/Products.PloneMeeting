@@ -4326,7 +4326,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             if adviceInfo['inherited']:
                 adviceInfo = self.getInheritedAdviceInfo(advId)
                 adviceInfo['inherited'] = True
-            data[advId] = adviceInfo.copy()
+            # turn adviceInfo PersistentMapping into a dict
+            data[advId] = dict(adviceInfo)
             # hide advice data if relevant
             if hide_advices_under_redaction and \
                 data[advId][HIDDEN_DURING_REDACTION_ADVICE_VALUE] and \
