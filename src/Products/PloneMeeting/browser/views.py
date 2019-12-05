@@ -1506,6 +1506,23 @@ class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV)
             return html_pattern.format(res)
         return res
 
+    def print_deliberation(self,
+                           xhtmlContents=[],
+                           **kwargs):
+        '''Print the full item deliberation.'''
+        if not xhtmlContents:
+            xhtmlContents = [self.context.getMotivation(), self.context.getDecision()]
+        return self.printXhtml(
+            self.context,
+            xhtmlContents,
+            **kwargs)
+
+    def print_public_deliberation(self,
+                                  xhtmlContents=[],
+                                  **kwargs):
+        '''Overridable method to return public deliberation.'''
+        return self.print_deliberation(xhtmlContents, **kwargs)
+
 
 class AdviceDocumentGenerationHelperView(DXDocumentGenerationHelperView, BaseDGHV):
     """ """

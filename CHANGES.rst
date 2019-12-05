@@ -11,6 +11,8 @@ Changelog
 - Make 'pm_utils' and 'imio_history_utils' available in every TAL expressions evaluated using collective.behavior.talcondition.utils._evaluateExpression, this way it is also possible
   when evaluating the TAL expression of MeetingConfig.onTransitionFieldTransforms to access the item's history and to include in a field comment added for last WF transition for example
 - Display an error portal_message while creating a meeting and some recurring items could not be inserted
+- Added methods ItemDocumentGenerationHelperView.print_deliberation and ItemDocumentGenerationHelperView.print_public_deliberation, this will be used to render the body of an item.
+  print_public_deliberation will be used to generate the 'formatted_public_deliberation' key in plonemeeting.restapi, by default it calls 'print_deliberation' but could be overrided
 
 4.1.14 (2019-11-27)
 -------------------
