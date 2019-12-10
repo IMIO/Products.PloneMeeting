@@ -5378,7 +5378,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         for state in workflow.states.objectValues():
             if excepted and (state.id == excepted):
                 continue
-            res.append((state.id, translate(state.title, domain="plone", context=self.REQUEST)))
+            res.append((state.id,
+                        u'{0} ({1})'.format(
+                            translate(state.title, domain="plone", context=self.REQUEST),
+                            state.id)
+                        ))
         return res
 
     security.declarePublic('listAllTransitions')
