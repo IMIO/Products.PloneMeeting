@@ -612,7 +612,7 @@ class Migrate_To_4_1(Migrator):
             for suffix in get_all_suffixes(org_uid):
                 ori_plone_group_id = mGroup.getPloneGroupId(suffix)
                 ori_plone_group = api.group.get(ori_plone_group_id)
-                if ori_plone_group and ori_plone_group.getMemberIds():
+                if ori_plone_group:
                     new_plone_group = get_plone_group(org_uid, suffix)
                     for member_id in ori_plone_group.getMemberIds():
                         # manage no more existing users
