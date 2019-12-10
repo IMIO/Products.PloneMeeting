@@ -619,8 +619,8 @@ class Migrate_To_4_1(Migrator):
                         if not api.user.get(member_id):
                             continue
                         api.group.add_user(group=new_plone_group, username=member_id)
-                # remove original Plone group
-                portal_groups.removeGroup(ori_plone_group_id)
+                    # remove original Plone group
+                    portal_groups.removeGroup(ori_plone_group_id)
 
         # now that every groups are migrated, we may migrate groups_in_charge
         # we have old MeetingGroup ids stored, we want organization UIDs
