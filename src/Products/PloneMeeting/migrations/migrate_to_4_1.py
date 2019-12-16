@@ -1248,10 +1248,11 @@ class Migrate_To_4_1(Migrator):
         self._initFTWLabels()
         self._adaptShowHolidaysMessage()
         self.tool.invalidateAllCache()
-        # too many indexes to update, rebuild the portal_catalog
+        # too many indexes to update, rebuild the portal_catalog, but do not update other catalogs
         meeting_wf_ids = self.getWorkflows(meta_types=['Meeting'])
         self.refreshDatabase(workflows=True,
-                             workflowsToUpdate=['plonemeeting_onestate_workflow'] + meeting_wf_ids)
+                             workflowsToUpdate=['plonemeeting_onestate_workflow'] + meeting_wf_ids,
+                             catalogsToUpdate=[])
 
 
 # The migration function -------------------------------------------------------

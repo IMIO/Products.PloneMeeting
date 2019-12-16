@@ -1663,6 +1663,23 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if not cfg.getUseGroupsAsCategories() and value not in cfg.categories.objectIds():
             return translate('category_required', domain='PloneMeeting', context=self.REQUEST)
 
+    security.declarePrivate('validate_groupsInCharge')
+
+    def validate_groupsInCharge(self, value):
+        '''Checks that, if we use the "groupsInCharge", a group in charge is specified,
+           except when editing an item template.'''
+
+        # bypass for itemtemplates
+        if self.isDefinedInTool(item_type='itemtemplate'):
+            return
+
+        # remove empty strings and Nones
+        value = [v for v in value if v]
+
+        # check if field is enabled in the MeetingConfig
+        if self.attributeIsUsed('groupsInCharge') and not value:
+            return translate('groupsInCharge_required', domain='PloneMeeting', context=self.REQUEST)
+
     security.declarePrivate('validate_itemAssembly')
 
     def validate_itemAssembly(self, value):
@@ -3461,7 +3478,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # get the category order, pass onlySelectable to False so disabled categories
             # are taken into account also, so we avoid problems with freshly disabled categories
             # or when a category is restricted to a group a MeetingManager is not member of
-            res = self.getCategory(True).getOrder(onlySelectable=False)
+            res = 1
+            category = self.getCategory(True)
+            if category:
+                res = category.getOrder(onlySelectable=False)
         elif insertMethod == 'on_proposing_groups':
             org = self.getProposingGroup(True)
             res = org.get_order()

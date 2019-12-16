@@ -374,11 +374,13 @@ class MeetingReviewStatesVocabulary(object):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         res = []
-        for state_id, state_title in cfg.listMeetingStates().items():
+        states = cfg.listStates('Meeting', with_state_id=False)
+        for state_id, state_title in states:
             res.append(SimpleTerm(state_id,
                                   state_id,
                                   safe_unicode(state_title))
                        )
+        res = humansorted(res, key=attrgetter('title'))
         return SimpleVocabulary(res)
 
 
@@ -393,11 +395,13 @@ class ItemReviewStatesVocabulary(object):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         res = []
-        for state_id, state_title in cfg.listItemStates().items():
+        states = cfg.listStates('Item', with_state_id=False)
+        for state_id, state_title in states:
             res.append(SimpleTerm(state_id,
                                   state_id,
                                   safe_unicode(state_title))
                        )
+        res = humansorted(res, key=attrgetter('title'))
         return SimpleVocabulary(res)
 
 
@@ -543,10 +547,11 @@ class AskedAdvicesVocabulary(object):
                 res.append(REAL_ORG_UID_PATTERN.format(customAdviser['org']))
 
         # classic advisers
-        orgs = get_organizations(only_selected=True)
+        orgs = [org for org in get_organizations(only_selected=True)
+                if org.UID() in self.cfg.getSelectableAdvisers()]
         if not active:
             orgs = [org for org in get_organizations(only_selected=False)
-                    if org not in orgs]
+                    if org not in orgs and org.UID() in self.cfg.getSelectableAdvisers()]
         for org in orgs:
             formatted = REAL_ORG_UID_PATTERN.format(org.UID())
             res.append(formatted)
@@ -1388,6 +1393,7 @@ class ItemAllStatesVocabulary(object):
                 res.append(
                     SimpleTerm(term_key, term_key, term_value))
 
+        res = humansorted(res, key=attrgetter('title'))
         return SimpleVocabulary(res)
 
 
