@@ -5364,7 +5364,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('listStates')
 
-    def listStates(self, objectType, excepted=None):
+    def listStates(self, objectType, excepted=None, with_state_id=True):
         '''Lists the possible states for the p_objectType ("Item" or "Meeting")
            used in this meeting config. State name specified in p_excepted will
            be ommitted from the result.'''
@@ -5375,14 +5375,17 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             workflow = wfTool.getWorkflowsFor(self.getMeetingTypeName())[0]
         else:
             workflow = wfTool.getWorkflowsFor(self.getItemTypeName())[0]
+
         for state in workflow.states.objectValues():
             if excepted and (state.id == excepted):
                 continue
-            res.append((state.id,
-                        u'{0} ({1})'.format(
-                            translate(state.title, domain="plone", context=self.REQUEST),
-                            state.id)
-                        ))
+
+            state_title = translate(state.title, domain="plone", context=self.REQUEST)
+            if with_state_id:
+                state_title = u'{0} ({1})'.format(state_title, state.id)
+
+            res.append((state.id, state_title))
+
         return res
 
     security.declarePublic('listAllTransitions')

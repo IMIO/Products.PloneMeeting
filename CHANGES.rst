@@ -13,6 +13,12 @@ Changelog
 - Display an error portal_message while creating a meeting and some recurring items could not be inserted
 - Added methods ItemDocumentGenerationHelperView.print_deliberation and ItemDocumentGenerationHelperView.print_public_deliberation, this will be used to render the body of an item.
   Added method ItemDocumentGenerationHelperView.output_for_restapi that is used by plonemeeting.restapi for the @deliberation MeetingItem endpoint
+- In MeetingItem._findOrderFor, in 'on_categories', do not break if an item does not have a category,
+  this can be the case when categories were just enabled and a meeting already contains items without a category
+- Adapted AskedAdvicesVocabulary to only keep advices that are in MeetingConfig.selectableAdvisers.
+  This vocabulary is used in the faceted filter "Advices" and for field MeetingConfig.advicesKeptOnSentToOtherMC
+- Added MeetingItem.validate_groupsInCharge, when enabled in MeetingConfig.usedItemAttributes, field MeetingItem.groupsInCharge is required
+- In main migration to v4.1, do not refresh other catalogs that portal_catalog (bypass reference_catalog and uid_catalog)
 
 4.1.14 (2019-11-27)
 -------------------
