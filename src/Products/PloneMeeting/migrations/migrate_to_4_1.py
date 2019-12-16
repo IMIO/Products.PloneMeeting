@@ -24,6 +24,7 @@ from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_NEW
 from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
 from Products.PloneMeeting.config import TOOL_FOLDER_POD_TEMPLATES
 from Products.PloneMeeting.content.person import PMPerson
+from Products.PloneMeeting.exportimport.content import update_labels_jar
 from Products.PloneMeeting.indexes import DELAYAWARE_ROW_ID_PATTERN
 from Products.PloneMeeting.indexes import REAL_ORG_UID_PATTERN
 from Products.PloneMeeting.interfaces import IConfigElement
@@ -611,15 +612,15 @@ class Migrate_To_4_1(Migrator):
             for suffix in get_all_suffixes(org_uid):
                 ori_plone_group_id = mGroup.getPloneGroupId(suffix)
                 ori_plone_group = api.group.get(ori_plone_group_id)
-                if ori_plone_group and ori_plone_group.getMemberIds():
+                if ori_plone_group:
                     new_plone_group = get_plone_group(org_uid, suffix)
                     for member_id in ori_plone_group.getMemberIds():
                         # manage no more existing users
                         if not api.user.get(member_id):
                             continue
                         api.group.add_user(group=new_plone_group, username=member_id)
-                # remove original Plone group
-                portal_groups.removeGroup(ori_plone_group_id)
+                    # remove original Plone group
+                    portal_groups.removeGroup(ori_plone_group_id)
 
         # now that every groups are migrated, we may migrate groups_in_charge
         # we have old MeetingGroup ids stored, we want organization UIDs
@@ -1079,25 +1080,28 @@ class Migrate_To_4_1(Migrator):
             logger.info("Setting default ftw.labels...")
             defined_new_labels = False
             for cfg in self.tool.objectValues('MeetingConfig'):
-                jar_storage = ILabelJar(cfg).storage
-                if not jar_storage:
+                jar = ILabelJar(cfg)
+                if not jar.storage:
                     defined_new_labels = True
-                    jar_storage.update(defaultFTWLabels)
+                    update_labels_jar(jar, values=defaultFTWLabels)
             logger.info('Done.')
 
-            # if some ftw_labels must be activated, we get in in env variable
+            # if some ftw_labels must be activated, we get it from env variable
             personal_labels = os.getenv('FTW_LABELS_PERSONAL_LABELS', [])
             if personal_labels and defined_new_labels:
                 # personal_labels is a list as a string, so something like "['label']"
                 personal_labels = literal_eval(personal_labels)
-                logger.info("Initializing '${0}' personal labels...".format(', '.join(personal_labels)))
+                logger.info("Initializing '${0}' personal labels...".format(
+                    ', '.join(personal_labels)))
                 for cfg in self.tool.objectValues('MeetingConfig'):
                     # if we activate some labels, then we enableLabels
                     cfg.setEnableLabels(True)
                     jar_storage = ILabelJar(cfg)
-                    kept_personal_labels = [pl for pl in personal_labels if pl in jar_storage.storage]
+                    kept_personal_labels = [pl for pl in personal_labels
+                                            if pl in jar_storage.storage]
                     if kept_personal_labels:
-                        cfg._updatePersonalLabels(personal_labels=kept_personal_labels, reindex=False)
+                        cfg._updatePersonalLabels(
+                            personal_labels=kept_personal_labels, reindex=False)
             else:
                 logger.info("No personal labels to activate...")
 

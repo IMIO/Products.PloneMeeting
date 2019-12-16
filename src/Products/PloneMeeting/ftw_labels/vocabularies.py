@@ -30,7 +30,7 @@ class FTWLabelsVocabulary(object):
         except:
             return SimpleVocabulary(res)
 
-        if cfg:
+        if cfg and cfg.getEnableLabels():
             labels = ILabelJar(cfg).list()
             for label in labels:
                 if label['by_user']:
@@ -56,14 +56,15 @@ class FTWLabelsForFacetedFilterVocabulary(object):
     """
     implements(IVocabularyFactory)
 
-    def __call___cachekey(method, self, context, classifiers=False):
+    def __call___cachekey(method, self, context):
         '''cachekey method for self.__call__.'''
-        date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.ftwlabelsforfacetedfiltervocabulary')
+        date = get_cachekey_volatile(
+            'Products.PloneMeeting.vocabularies.ftwlabelsforfacetedfiltervocabulary')
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         # personal labels include current user id
         member_id = api.user.get_current().getId()
-        return date, cfg.getId(), member_id, classifiers
+        return date, cfg.getId(), cfg.modified(), member_id
 
     @ram.cache(__call___cachekey)
     def __call__(self, context):

@@ -3,7 +3,9 @@
                      usedAttrs cfg/getUsedMeetingAttributes;
                      toLocalizedTime nocall: context/@@plone/toLocalizedTime;"
              i18n:domain="PloneMeeting">
-  <div class="discreet">
+
+  <div class="discreet meeting-before-faceted-infos">
+
   <tal:comment replace="nothing">Place</tal:comment>
   <tal:place condition="python: ('place' in usedAttrs) or context.getPlace()">
     <span class="meeting_attribute_label" i18n:translate="PloneMeeting_label_place"></span>:&nbsp;&nbsp;
@@ -165,21 +167,21 @@ field before and the 'attendees' now, if the field is not empty, we display it</
       </tal:assembly>
 
       <tal:comment replace="nothing">Free text fields available when using 'assembly' or 'attenddes'</tal:comment>
-      <fieldset tal:condition="python: 'assemblyGuests' in shownAssemblyFields">
+      <fieldset class="meeting_assemblyGuests" tal:condition="python: 'assemblyGuests' in shownAssemblyFields">
           <legend i18n:translate="meeting_assemblyGuests">Guests</legend>
           <span tal:replace="structure python: context.getAssemblyGuests() or '<p>-</p>'"/>
       </fieldset>
-      <fieldset tal:condition="python: 'assemblyProxies' in shownAssemblyFields">
+      <fieldset class="meeting_assemblyProxies" tal:condition="python: 'assemblyProxies' in shownAssemblyFields">
           <legend i18n:translate="meeting_assemblyProxies">Proxies</legend>
           <span tal:replace="structure python: context.getAssemblyProxies() or '<p>-</p>'"/>
       </fieldset>
-      <fieldset tal:condition="python: 'assemblyStaves' in shownAssemblyFields">
+      <fieldset class="meeting_assemblyStaves" tal:condition="python: 'assemblyStaves' in shownAssemblyFields">
           <legend i18n:translate="meeting_assemblyStaves">Staves</legend>
           <span tal:replace="structure python: context.getAssemblyStaves() or '<p>-</p>'"/>
       </fieldset>
-      <fieldset tal:condition="context/showSignatures">
+      <fieldset class="meeting_signatures" tal:condition="context/showSignatures">
           <legend i18n:translate="meeting_signatures">Signatures</legend>
-          <span tal:replace="structure python: context.getSignatures(mimetype='text/x-html-safe') or '<p>-</p>'"/>
+          <span tal:replace="structure context/displaySignatures|string:<p>-</p>"/>
       </fieldset>
      </tal:assembly_fields>
     </div>
@@ -200,5 +202,7 @@ field before and the 'attendees' now, if the field is not empty, we display it</
     &nbsp;&nbsp;<span class="meeting_attribute_label" i18n:translate="PloneMeeting_label_preMeetingPlace"></span>:&nbsp;&nbsp;
     <span tal:replace="python: context.getPreMeetingPlace() or '-'"></span>
   </tal:prePlace>
+
   </div>
+
 </tal:defines>

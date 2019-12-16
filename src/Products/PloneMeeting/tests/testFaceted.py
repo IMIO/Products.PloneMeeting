@@ -25,6 +25,7 @@
 from AccessControl import Unauthorized
 from collective.contact.plonegroup.utils import get_organizations
 from DateTime import DateTime
+from eea.facetednavigation.interfaces import IFacetedLayout
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from zope.component import queryUtility
@@ -45,6 +46,8 @@ class testFaceted(PloneMeetingTestCase):
         self.request.RESPONSE.setHeader('location', '')
         creatorPMFolder = self.tool.getPloneMeetingFolder(cfgId)
         self.assertEqual(creatorPMFolder.getLayout(), 'facetednavigation_view')
+        # check faceted_layout
+        self.assertEqual(IFacetedLayout(creatorPMFolder).layout, 'faceted-table-items')
         creatorPMFolderUrl = creatorPMFolder.absolute_url()
         # access the pmFolder
         creatorPMFolder()

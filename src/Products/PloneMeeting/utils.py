@@ -35,6 +35,7 @@ from Products.CMFCore.permissions import DeleteObjects
 from Products.CMFCore.permissions import ManageProperties
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
+from Products.CMFCore.utils import _checkPermission
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFPlone.utils import safe_unicode
 from Products.DCWorkflow.events import TransitionEvent
@@ -765,8 +766,7 @@ def getFieldVersion(obj, name, changes):
        historical modifications of field content are highlighted.'''
     lastVersion = obj.getField(name).getAccessor(obj)()
     # highlight blank lines at the end of the text if current user may edit the obj
-    member = api.user.get_current()
-    if member.has_permission(ModifyPortalContent, obj):
+    if _checkPermission(ModifyPortalContent, obj):
         lastVersion = markEmptyTags(lastVersion,
                                     tagTitle=translate('blank_line',
                                                        domain='PloneMeeting',
@@ -1001,7 +1001,6 @@ def forceHTMLContentTypeForEmptyRichFields(obj):
             field.setContentType(obj, 'text/html')
 
 
-# ------------------------------------------------------------------------------
 def applyOnTransitionFieldTransform(obj, transitionId):
     '''
       Apply onTransitionFieldTransforms defined in the corresponding obj MeetingConfig.
@@ -1021,6 +1020,8 @@ def applyOnTransitionFieldTransform(obj, transitionId):
                     roles_bypassing_expression=[],
                     extra_expr_ctx={
                         'item': obj,
+                        'pm_utils': SecureModuleImporter['Products.PloneMeeting.utils'],
+                        'imio_history_utils': SecureModuleImporter['imio.history.utils'],
                         'tool': tool,
                         'cfg': cfg},
                     empty_expr_is_true=False,
@@ -1068,6 +1069,7 @@ def meetingExecuteActionOnLinkedItems(meeting, transitionId):
                         roles_bypassing_expression=[],
                         extra_expr_ctx={
                             'pm_utils': SecureModuleImporter['Products.PloneMeeting.utils'],
+                            'imio_history_utils': SecureModuleImporter['imio.history.utils'],
                             'tool': tool,
                             'cfg': cfg,
                             'item': item,
@@ -1166,6 +1168,29 @@ def toHTMLStrikedContent(plain_content):
     """
     plain_content = plain_content.replace('[[', '<strike>').replace(']]', '</strike>')
     return plain_content
+
+
+def display_as_html(plain_content, obj):
+    """Display p_plain_content as HTML, especially ending lines
+       that are not displayed if empty."""
+    html_content = plain_content.replace('\n', '<br />')
+    if _checkPermission(ModifyPortalContent, obj):
+        # replace ending <br /> by empty tags
+        splitted = html_content.split('<br />')
+        res = []
+        for elt in splitted:
+            if not elt.strip():
+                res.append('<p>&nbsp;</p>')
+            else:
+                res.append('<p>' + elt + '</p>')
+        html_content = ''.join(res)
+        html_content = markEmptyTags(
+            html_content,
+            tagTitle=translate('blank_line',
+                               domain='PloneMeeting',
+                               context=obj.REQUEST),
+            onlyAtTheEnd=True)
+    return html_content
 
 
 def _itemNumber_to_storedItemNumber(number):
@@ -1553,6 +1578,17 @@ def reviewersFor(workflow_id=None):
     return MEETINGREVIEWERS.get('*')
 
 
+def get_every_back_references(obj, relationship):
+    '''Loop recursievely thru every back reference of type p_relationship
+       for p_obj and return it.'''
+    def get_back_references(back_refs, res=[]):
+        for back_obj in back_refs:
+            res.append(back_obj)
+            get_back_references(back_obj.getBRefs(relationship), res)
+        return res
+    return get_back_references(obj.getBRefs(relationship))
+
+
 def getStatesBefore(obj, review_state_id):
     """
       Returns states before the p_review_state_id state.
@@ -1721,7 +1757,8 @@ def get_person_from_userid(userid, only_active=True):
 
 def decodeDelayAwareId(delayAwareId):
     """Decode a 'delay-aware' id, we receive something like
-       'orgauid__rowid__myuniquerowid.20141215'. We return the org_uid and the row_id."""
+       'orgauid__rowid__myuniquerowid.20141215'.
+       We return the org_uid and the row_id."""
     infos = delayAwareId.split('__rowid__')
     return infos[0], infos[1]
 

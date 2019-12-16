@@ -5468,7 +5468,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         for state in workflow.states.objectValues():
             if excepted and (state.id == excepted):
                 continue
-            res.append((state.id, translate(state.title, domain="plone", context=self.REQUEST)))
+            res.append((state.id,
+                        u'{0} ({1})'.format(
+                            translate(state.title, domain="plone", context=self.REQUEST),
+                            state.id)
+                        ))
         return res
 
     security.declarePublic('listAllTransitions')
@@ -5725,7 +5729,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                        domain="PloneMeeting",
                                        mapping={'state_info': meeting_transition_name},
                                        context=self.REQUEST)
-            res.append(("item_state_changed_%s" % meeting_transition_id, translated_msg))
+            res.append(("meeting_state_changed_%s" % meeting_transition_id, translated_msg))
 
         return DisplayList(res).sortedByValue()
 

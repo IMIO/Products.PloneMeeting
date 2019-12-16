@@ -222,7 +222,7 @@
                       </tal:defines>
                     </tal:previousAdviceType>
 
-                    <div class="pm_workflowstate" i18n:domain="plone" tal:condition="nocall:obj">
+                    <div class="viewlet_workflowstate" i18n:domain="plone" tal:condition="nocall:obj">
                       <span i18n:translate="label_state"></span>&nbsp;
                       <span tal:define="advice_state_infos python: view.state_infos(obj)"
                             tal:content="advice_state_infos/state_title"

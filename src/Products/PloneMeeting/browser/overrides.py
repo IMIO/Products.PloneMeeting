@@ -9,14 +9,12 @@ from collective.contact.core import utils as contact_core_utils
 from collective.contact.plonegroup import utils as contact_plonegroup_utils
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from collective.contact.plonegroup.utils import get_all_suffixes
-from collective.documentgenerator.content.pod_template import IPODTemplate
 from collective.documentgenerator.viewlets.generationlinks import DocumentGeneratorLinksViewlet
 from collective.eeafaceted.batchactions.browser.views import TransitionBatchActionForm
 from collective.eeafaceted.collectionwidget.browser.views import FacetedDashboardView
 from collective.eeafaceted.dashboard.browser.overrides import DashboardDocumentGenerationView
 from collective.eeafaceted.dashboard.browser.overrides import DashboardDocumentGeneratorLinksViewlet
 from collective.eeafaceted.dashboard.browser.views import RenderTermPortletView
-from collective.eeafaceted.dashboard.content.pod_template import IDashboardPODTemplate
 from collective.iconifiedcategory import utils as collective_iconifiedcategory_utils
 from collective.iconifiedcategory.browser.actionview import ConfidentialChangeView
 from collective.iconifiedcategory.browser.tabview import CategorizedTabView
@@ -55,7 +53,6 @@ from Products.CMFPlone.utils import safe_unicode
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from Products.PloneMeeting import utils as pm_utils
 from Products.PloneMeeting.config import BARCODE_INSERTED_ATTR_ID
-from Products.PloneMeeting.config import EMPTY_STRING
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.interfaces import IMeeting
 from Products.PloneMeeting.utils import get_annexes
@@ -63,6 +60,13 @@ from Products.PloneMeeting.utils import sendMail
 from zope.annotation import IAnnotations
 from zope.i18n import translate
 from zope.interface import alsoProvides
+
+
+try:
+    HAS_CAT_PUBLISHABLE = True
+    from collective.iconifiedcategory.interfaces import ICategorizedPublishable
+except ImportError:
+    HAS_CAT_PUBLISHABLE = False
 
 
 class PMFolderContentsView(FolderContentsView):
@@ -291,24 +295,6 @@ class PMDocumentGeneratorLinksViewlet(DocumentGeneratorLinksViewlet, BaseGenerat
         no_faceted_context = IMeeting.providedBy(self.context) or not IFacetedNavigable.providedBy(self.context)
         return no_faceted_context and available
 
-    def get_all_pod_templates(self):
-        """Query by MeetingConfig."""
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self.context)
-        if not cfg:
-            return []
-        catalog = api.portal.get_tool('portal_catalog')
-        brains = catalog.unrestrictedSearchResults(
-            object_provides={'query': IPODTemplate.__identifier__,
-                             'not': IDashboardPODTemplate.__identifier__},
-            # PloneMeeting, just added following line
-            path={'query': '/'.join(cfg.getPhysicalPath())},
-            sort_on='getObjPositionInParent'
-        )
-        pod_templates = [self.context.unrestrictedTraverse(brain.getPath()) for brain in brains]
-
-        return pod_templates
-
     def add_extra_links_info(self, template, infos):
         """Complete infos with the store_as_annex data."""
         res = {'store_as_annex_uid': None,
@@ -356,24 +342,6 @@ class PMDashboardDocumentGeneratorLinksViewlet(DashboardDocumentGeneratorLinksVi
         if not IMeeting.providedBy(self.context):
             res = super(PMDashboardDocumentGeneratorLinksViewlet, self).available()
         return res
-
-    def get_all_pod_templates(self):
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self.context)
-        query = {'object_provides': {'query': IDashboardPODTemplate.__identifier__},
-                 'sort_on': 'getObjPositionInParent'}
-        # filter on MeetingConfig if we are in it
-        if cfg:
-            query['path'] = {'query': '/'.join(cfg.getPhysicalPath())}
-        else:
-            # out of a MeetingConfig
-            query['getConfigId'] = EMPTY_STRING
-
-        catalog = api.portal.get_tool('portal_catalog')
-        brains = catalog.unrestrictedSearchResults(**query)
-        pod_templates = [self.context.unrestrictedTraverse(brain.getPath()) for brain in brains]
-
-        return pod_templates
 
 
 class PloneMeetingOverviewControlPanel(OverviewControlPanel):
@@ -846,15 +814,19 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
 
     def _get_generation_context(self, helper_view, pod_template):
         """We backwardly use 'itemUids' instead of 'uids' for list of uids..."""
-        generation_context = super(PMDocumentGenerationView, self)._get_generation_context(helper_view,
-                                                                                           pod_template)
+        generation_context = super(
+            PMDocumentGenerationView, self)._get_generation_context(
+                helper_view,
+                pod_template)
         generation_context['itemUids'] = generation_context.get('uids', [])
         return generation_context
 
     def generate_and_download_doc(self, pod_template, output_format):
         """ """
-        generated_template = super(PMDocumentGenerationView, self).generate_and_download_doc(pod_template,
-                                                                                             output_format)
+        generated_template = super(
+            PMDocumentGenerationView, self).generate_and_download_doc(
+                pod_template,
+                output_format)
 
         # check if we have to send this generated POD template or to render it
         if self.request.get('mailinglist_name'):
@@ -1112,6 +1084,8 @@ class CategorizedAnnexesView(CategorizedTabView):
             alsoProvides(table, ICategorizedPrint)
         if self.config.confidentiality_activated and self._showConfidentialColumn():
             alsoProvides(table, ICategorizedConfidential)
+        if HAS_CAT_PUBLISHABLE and self.config.publishable_activated:
+            alsoProvides(table, ICategorizedPublishable)
         if self.config.signed_activated:
             alsoProvides(table, ICategorizedSigned)
 
@@ -1401,14 +1375,15 @@ class PMBaseOverviewControlPanel(UsersGroupsControlPanelView):
 
     @property
     def portal_roles(self):
-        return ['MeetingObserverGlobal']
+        return ['MeetingObserverGlobal', 'Manager', 'Member']
 
     def doSearch(self, searchString):
         results = super(PMBaseOverviewControlPanel, self).doSearch(searchString)
         adapted_results = []
         for item in results:
             adapted_item = item.copy()
-            adapted_item['roles']['MeetingObserverGlobal']['canAssign'] = False
+            for role in self.portal_roles:
+                adapted_item['roles'][role]['canAssign'] = False
             adapted_results.append(adapted_item)
         return adapted_results
 

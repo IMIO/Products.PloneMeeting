@@ -452,8 +452,8 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                                             'tool-getmeetinggroups-',
                                             'meeting-config-getcategories-',
                                             'meeting-config-gettopics-',
-                                            'plonegroup-utils-get_organizations-'
-                                            ])
+                                            'plonegroup-utils-get_organizations-',
+                                            'add_auto_copy_groups_search_for_expression__'])
 
     def _removeOrganizations(self):
         """Delete every organizations found in own_org."""

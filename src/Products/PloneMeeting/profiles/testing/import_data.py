@@ -152,7 +152,6 @@ allItemTemplate.odt_file = 'all_item.odt'
 allItemTemplate.pod_portal_types = ['Meeting']
 allItemTemplate.merge_templates = [{'pod_context_name': u'item', 'do_rendering': False, 'template': 'itemTemplate'}]
 
-
 dashboardTemplate = PodTemplateDescriptor('dashboardTemplate', 'Dashboard summary', dashboard=True)
 dashboardTemplate.odt_file = 'Dashboard.odt'
 dashboardTemplate.tal_condition = u'python: context.absolute_url().endswith("/searches_items")'
@@ -347,12 +346,11 @@ meetingPma.onMeetingTransitionItemActionToExecute = (
 
 meetingPma.insertingMethodsOnAddItem = ({'insertingMethod': 'on_proposing_groups', 'reverse': '0'}, )
 meetingPma.useGroupsAsCategories = True
-meetingPma.defaultLabels = {
-    'label': {'color': 'blue', 'label_id': 'label', 'by_user': False, 'title': 'Label'},
-    'personal-label': {'color': 'yellow', 'label_id': 'personal-label', 'by_user': True, 'title': 'Personal label'},
-    'lu': {'color': 'green', 'label_id': 'lu', 'by_user': True, 'title': 'Read'},
-    'suivi': {'color': 'yellow', 'label_id': 'suivi', 'by_user': True, 'title': 'Suivi'},
-}
+meetingPma.defaultLabels = [
+    {'color': 'blue', 'by_user': False, 'title': 'Label'},
+    {'color': 'yellow', 'by_user': True, 'title': 'Personal label'},
+    {'color': 'green', 'by_user': True, 'title': 'Read'},
+    {'color': 'yellow', 'by_user': True, 'title': 'Suivi'}]
 meetingPma.useAdvices = True
 meetingPma.selectableAdvisers = ['developers', 'vendors']
 meetingPma.itemAdviceStates = ['proposed']

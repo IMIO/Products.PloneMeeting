@@ -293,51 +293,117 @@ body:not([class*='section-contacts']) .state-active, .label-state-active {color:
 .state-deactivated {
     color: red !important;
 }
-.state-advicecreated, .label-state-advicecreated,
-.state-created, .label-state-created,
-.state-itemcreated, .label-state-itemcreated,
-.state-itemcreated_waiting_advices, .label-state-itemcreated_waiting_advices,
-.state-advice_under_edit, .label-state-advice_under_edit {
-    color: red !important;
+
+/* red */
+div.viewlet_workflowstate span.state-advicecreated,
+div.viewlet_workflowstate span.state-created,
+div.viewlet_workflowstate span.state-itemcreated,
+div.viewlet_workflowstate span.state-itemcreated_waiting_advices,
+div.viewlet_workflowstate span.state-advice_under_edit {
+    background-color: red;
+    border-color: red;
 }
+.state-advicecreated,
+.state-created,
+.state-itemcreated,
+.state-itemcreated_waiting_advices,
+.state-advice_under_edit {color: red;}
+/* DarkOrange */
+div.viewlet_workflowstate span[class^='state-proposed'],
+div.viewlet_workflowstate span.state-proposed_waiting_advices,
+div.viewlet_workflowstate span.state-prevalidated,
+div.viewlet_workflowstate span.state-prevalidated_waiting_advices,
+div.viewlet_workflowstate span.state-proposed__or__prevalidated_waiting_advices,
+div.viewlet_workflowstate span.state-waiting_advices,
+div.viewlet_workflowstate span.state-returned_to_proposing_group_proposed,
+div.viewlet_workflowstate span.state-returned_to_proposing_group_prevalidated {
+    background-color: DarkOrange;
+    border-color: DarkOrange;
+}
+.state-proposed,
+.state-proposed_waiting_advices,
 .state-prevalidated,
-.label-state-prevalidated,
 .state-prevalidated_waiting_advices,
-.label-state-prevalidated_waiting_advices,
+.state-proposed__or__prevalidated_waiting_advices,
 .state-waiting_advices,
-.label-state-waiting_advices,
 .state-returned_to_proposing_group_proposed,
-.label-state-returned_to_proposing_group_proposed,
-.state-returned_to_proposing_group_prevalidated,
-.label-state-returned_to_proposing_group_prevalidated,
-*[class^='proposed'], *[class^='state-proposed'],
-*[class^='pretty_link proposed'], *[class^='pretty_link state-proposed'],
-*[class$='_waiting_advices']:not([class$='_from_waiting_advices']) {
-    color: DarkOrange !important;
+.state-returned_to_proposing_group_prevalidated {color: DarkOrange;}
+/* blue */
+div.viewlet_workflowstate span.state-validated {
+    background-color: blue;
+    border-color: blue;
 }
-.state-validated, .label-state-validated { color: blue !important; }
-.state-presented, .label-state-presented { color: brown !important; }
-.state-itemfrozen, .label-state-itemfrozen,
-.state-frozen, .label-state-frozen { color: cornflowerBlue !important; }
+.state-validated {color: blue;}
+/* brown */
+div.viewlet_workflowstate span.state-presented {
+    background-color: brown;
+    border-color: brown;
+}
+.state-presented {color: brown;}
+/* cornflowerBlue */
+div.viewlet_workflowstate span.state-itemfrozen,
+div.viewlet_workflowstate span.state-frozen {
+    background-color: cornflowerBlue;
+    border-color: cornflowerBlue;
+}
+.state-itemfrozen,
+.state-frozen {color: cornflowerBlue;}
+/* grey */
+div.viewlet_workflowstate span.state-returned_to_proposing_group,
+div.viewlet_workflowstate span.state-closed,
+div.viewlet_workflowstate span.state-delayed,
+div.viewlet_workflowstate span.state-marked_not_applicable,
+div.viewlet_workflowstate span.state-postponed_next_meeting,
+div.viewlet_workflowstate span.state-removed,
+div.viewlet_workflowstate span.state-advice_given {
+    background-color: grey;
+    border-color: grey;
+}
 .state-returned_to_proposing_group,
-.label-state-returned_to_proposing_group,
-.state-advice_given,
-.label-state-advice_given { color: grey !important; }
-.state-itempublished, .label-state-itempublished,
-.state-published, .label-state-published { color: darkgoldenrod !important; }
-.state-decided, .label-state-decided,
-.state-decisions_published, .label-state-decisions_published { color: black !important; }
-.state-accepted, .label-state-accepted,
-.state-accepted_out_of_meeting, .label-state-accepted_out_of_meeting,
-.state-accepted_out_of_meeting_emergency, .label-state-accepted_out_of_meeting_emergency,
-.state-confirmed, .label-state-confirmed { color: green !important; }
-.state-delayed, .label-state-delayed,
-.state-marked_not_applicable, .label-state-marked_not_applicable,
-.state-postponed_next_meeting, .label-state-postponed_next_meeting,
-.state-removed, .label-state-removed {
-    color: grey !important; }
-.state-refused, .label-state-refused { color: violet !important; }
-.state-closed, .label-state-closed { color: grey !important; }
+.state-closed,
+.state-delayed,
+.state-marked_not_applicable,
+.state-postponed_next_meeting,
+.state-removed,
+.state-advice_given {color: grey;}
+/* darkgoldenrod */
+div.viewlet_workflowstate span.state-itempublished,
+div.viewlet_workflowstate span.state-published {
+    background-color: darkgoldenrod;
+    border-color: darkgoldenrod;
+}
+.state-itempublished,
+.state-published {color: darkgoldenrod;}
+/* black */
+div.viewlet_workflowstate span.state-decided,
+div.viewlet_workflowstate span.state-decisions_published {
+    background-color: black;
+    border-color: black;
+}
+.state-decided,
+.state-decisions_published {color: black;}
+/* green */
+div.viewlet_workflowstate span.state-accepted,
+div.viewlet_workflowstate span.state-accepted_but_modified,
+div.viewlet_workflowstate span.state-accepted_out_of_meeting,
+div.viewlet_workflowstate span.state-accepted_out_of_meeting_emergency,
+div.viewlet_workflowstate span.state-pre_accepted,
+div.viewlet_workflowstate span.state-confirmed {
+    background-color: green;
+    border-color: green;
+}
+.state-accepted,
+.state-accepted_but_modified,
+.state-accepted_out_of_meeting,
+.state-accepted_out_of_meeting_emergency,
+.state-pre_accepted,
+.state-confirmed {color: green;}
+/* Violet */
+div.viewlet_workflowstate span.state-refused {
+    background-color: violet;
+    border-color: violet;
+}
+.state-refused {color: violet;}
 
 /* Colors on transitions, used in the item wf history */
 /* this correspond to the element creation */
@@ -737,6 +803,13 @@ p.indent-firstline {text-indent: 40px;}
     padding-bottom: 2px;
 }
 
+/* signatures displayed on meeting view */
+#content fieldset.meeting_signatures p,
+#content div.item_signatures p {
+   line-height: 1em;
+   margin-bottom: 0em;
+}
+
 .adviceIsConfidentialNotEditable {
     cursor: help;
 }
@@ -871,6 +944,10 @@ span#meetingItems INPUT[type=text], span#lateItems INPUT[type=text] {
     width: 2.5em;
 }
 
+div.meeting-before-faceted-infos {
+   display: inline-block;
+}
+
 #content .warningInMeetingConfig {
     color: red;
 }
@@ -903,13 +980,19 @@ body.template-search_form #content label {
     display: none;
 }
 
-/* hide some parts of the screen in the configuration of itemtemplates */
-body[class*="itemtemplates"] #plone-contentmenu-workflow,
-body[class*="itemtemplates"] a#plone-contentmenu-settings,
-body[class*="itemtemplates"] a.link-parent,
-body[class*="itemtemplates"] .documentDescription,
-body[class*="itemtemplates"] #plone-contentmenu-actions,
-body[class*="itemtemplates"] #plone-contentmenu-display {
+/* hide some parts of the screen in the configuration of itemtemplates as well as on any other folders and on MessagesConfig */
+body[class*="portaltype-folder"] #plone-contentmenu-workflow,
+body[class*="portaltype-messagesconfig"] #plone-contentmenu-workflow,
+body[class*="portaltype-folder"] a#plone-contentmenu-settings,
+body[class*="portaltype-messagesconfig"] a#plone-contentmenu-settings,
+body[class*="portaltype-folder"] a.link-parent,
+body[class*="portaltype-messagesconfig"] a.link-parent,
+body[class*="portaltype-folder"] .documentDescription,
+body[class*="portaltype-messagesconfig"] .documentDescription,
+body[class*="portaltype-folder"] #plone-contentmenu-actions,
+body[class*="portaltype-messagesconfig"] #plone-contentmenu-actions,
+body[class*="portaltype-folder"] #plone-contentmenu-display,
+body[class*="portaltype-messagesconfig"] #plone-contentmenu-display {
     display: none !important;
 }
 /* do not hide link-parent when in manage-portlets of itemtemplates... */
@@ -1077,7 +1160,7 @@ span.advices_of_type {
 table.listing tr[class][class] td.meeting_item_listType_normal {
     background-color: white;
 }
-#content span.item_listType_normal,
+span.item_listType_normal,
 div.tooltipster-content a.item_listType_normal:link,
 div.tooltipster-content a.item_listType_normal:visited {
     color: &dtml-discreetColor;;
@@ -1086,7 +1169,7 @@ div.tooltipster-content a.item_listType_normal:visited {
 table.listing tr[class][class] td.meeting_item_listType_late {
     background-color: red;
 }
-#content span.item_listType_late,
+span.item_listType_late,
 div.tooltipster-content a.item_listType_late:link,
 div.tooltipster-content a.item_listType_late:visited {
     color: red;

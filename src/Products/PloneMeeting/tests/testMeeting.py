@@ -24,6 +24,7 @@ from collective.contact.plonegroup.utils import get_organizations
 from copy import deepcopy
 from DateTime import DateTime
 from DateTime.DateTime import _findLocalTimeZoneName
+from eea.facetednavigation.interfaces import IFacetedLayout
 from imio.helpers.cache import cleanRamCacheFor
 from os import path
 from plone.app.querystring.querybuilder import queryparser
@@ -2539,6 +2540,18 @@ class testMeeting(PloneMeetingTestCase):
         self.assertFalse([folderId for folderId in meetingParentFolder.objectIds()
                           if not folderId.startswith('searches_')])
 
+    def test_pm_RemovedMeetingWithItemUsingAnImage(self):
+        """As 'Image' is a IPloneContent, make sure a meeting containing items using images can be removed."""
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime('2019/11/15'))
+        item = self.create('MeetingItem')
+        self.presentItem(item)
+        item.setPreferredMeeting(meeting.UID())
+        text = '<p>Text with image <img src="http://www.imio.be/contact.png"/>.</p>'
+        item.setDecision(text)
+        item._update_after_edit()
+        self.deleteAsManager(meeting.UID())
+
     def test_pm_DeletingMeetingUpdateItemsPreferredMeeting(self):
         '''When a meeting is deleted, if it was selected as preferredMeeting
            for some items, these items are updated and preferredMeeting is set to 'whatever'.'''
@@ -3028,10 +3041,11 @@ class testMeeting(PloneMeetingTestCase):
                                                context=self.portal.REQUEST)
         self.assertEquals(
             meeting.getPrettyLink(showContentIcon=True, prefixed=True),
-            u"<a class='pretty_link state-created' title='Meeting of 05/05/2015 (12:35)' "
-            "href='http://nohost/plone/Members/pmManager/mymeetings/{0}/o1' "
-            "target='_self'><span class='pretty_link_icons'><img title='{1}' "
-            "src='http://nohost/plone/Meeting.png' /></span><span class='pretty_link_content'>"
+            u"<a class='pretty_link' title='Meeting of 05/05/2015 (12:35)' "
+            "href='http://nohost/plone/Members/pmManager/mymeetings/{0}/o1' target='_self'>"
+            "<span class='pretty_link_icons'><img title='{1}' "
+            "src='http://nohost/plone/Meeting.png' /></span>"
+            "<span class='pretty_link_content state-created'>"
             "Meeting of 05/05/2015 (12:35)</span></a>".format(self.meetingConfig.getId(),
                                                               translatedMeetingTypeTitle))
 
@@ -3144,6 +3158,13 @@ class testMeeting(PloneMeetingTestCase):
             [brain._unrestrictedGetObject().getItemReference() for
              brain in meeting.getItems(ordered=True, theObjects=False, unrestricted=True)],
             [100, 200, 300, 400])
+
+    def test_pm_MeetingFacetedView(self):
+        '''Faceted is correctly configured on a meeting and relevant layouts are used.'''
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime('2019/11/27'))
+        self.assertEqual(meeting.getLayout(), 'meeting_view')
+        self.assertEqual(IFacetedLayout(meeting).layout, 'faceted-table-items')
 
 
 def test_suite():

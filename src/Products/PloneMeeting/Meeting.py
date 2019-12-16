@@ -61,6 +61,7 @@ from Products.PloneMeeting.interfaces import IMeetingWorkflowConditions
 from Products.PloneMeeting.utils import _addManagedPermissions
 from Products.PloneMeeting.utils import addDataChange
 from Products.PloneMeeting.utils import addRecurringItemsIfRelevant
+from Products.PloneMeeting.utils import display_as_html
 from Products.PloneMeeting.utils import displaying_available_items
 from Products.PloneMeeting.utils import fieldIsEmpty
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
@@ -903,6 +904,13 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
     def displayStrikedAssembly(self):
         """ """
         return toHTMLStrikedContent(self.getAssembly())
+
+    security.declarePublic('displaySignatures')
+
+    def displaySignatures(self):
+        """Display signatures as HTML, make sure lines added at end
+           of signatures are displayed on screen correctly."""
+        return display_as_html(self.getSignatures(), self)
 
     security.declarePublic('getAllUsedHeldPositions')
 
@@ -1760,8 +1768,11 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         _addManagedPermissions(self)
         # notify that localRoles have been updated
         notify(MeetingLocalRolesUpdatedEvent(self, old_local_roles))
-        # reindex relevant indexes
-        self.reindexObjectSecurity()
+
+        # reindex object security except if avoid_reindex=True and localroles are the same
+        avoid_reindex = kwargs.get('avoid_reindex', False)
+        if not avoid_reindex or old_local_roles != self.__ac_local_roles__:
+            self.reindexObjectSecurity()
 
     def _updatePowerObserversLocalRoles(self):
         '''Give local roles to the groups defined in MeetingConfig.powerObservers.'''
@@ -1775,6 +1786,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
                                    extra_expr_ctx={
                                        'meeting': self,
                                        'pm_utils': SecureModuleImporter['Products.PloneMeeting.utils'],
+                                       'imio_history_utils': SecureModuleImporter['imio.history.utils'],
                                        'tool': tool,
                                        'cfg': cfg}):
                 powerObserversGroupId = "%s_%s" % (cfg.getId(), po_infos['row_id'])

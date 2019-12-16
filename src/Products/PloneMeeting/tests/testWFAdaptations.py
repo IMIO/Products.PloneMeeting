@@ -2239,6 +2239,31 @@ class testWFAdaptations(PloneMeetingTestCase):
         # back to original configuration
         adaptations.WAITING_ADVICES_FROM_STATES = original_WAITING_ADVICES_FROM_STATES
 
+    def test_pm_WFA_waiting_advices_unknown_state(self):
+        '''Does not fail to be activated if a from/back state does not exist.'''
+        cfg = self.meetingConfig
+        # ease override by subproducts
+        if 'waiting_advices' not in cfg.listWorkflowAdaptations():
+            return
+
+        from Products.PloneMeeting.model import adaptations
+        original_WAITING_ADVICES_FROM_STATES = adaptations.WAITING_ADVICES_FROM_STATES
+        adaptations.WAITING_ADVICES_FROM_STATES = original_WAITING_ADVICES_FROM_STATES + (
+            {'from_states': ('unknown', ),
+             'back_states': ('unknown', ),
+             'perm_cloned_states': ('unknown', ),
+             'remove_modify_access': True}, )
+        cfg.setWorkflowAdaptations('waiting_advices')
+        cfg.at_post_edit_script()
+        itemWF = self.wfTool.getWorkflowsFor(cfg.getItemTypeName())[0]
+        # does not fail and existing states are taken into account
+        self.assertEqual(
+            [st for st in itemWF.states if 'waiting_advices' in st],
+            ['proposed_waiting_advices', 'itemcreated_waiting_advices'])
+
+        # back to original configuration
+        adaptations.WAITING_ADVICES_FROM_STATES = original_WAITING_ADVICES_FROM_STATES
+
     def _setItemToWaitingAdvices(self, item, transition):
         """Done to be overrided, sometimes it is necessary to do something more to be able
            to set item to 'waiting_advices'."""

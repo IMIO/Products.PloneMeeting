@@ -2,10 +2,17 @@ Changelog
 =========
 
 
-4.1.8 (unreleased)
-------------------
+4.1.15 (unreleased)
+-------------------
 
-- Added possibility to bypass catalog/workflows refresh in migration step to 4101 if coming from migration step to 4.1 as this was already done
+- Only show the 'Add element' actions menu when Manager is on a Folder or on a MessagesConfig element, this way we avoid users changing review_state, layout our deleting the element...
+- When using the tooltipster to change the MeetingItem.listType value, display the current listType value so user know what it is before changing to another value,
+  especially useful on the meeting_view where current listType value is not displayed
+- Make 'pm_utils' and 'imio_history_utils' available in every TAL expressions evaluated using collective.behavior.talcondition.utils._evaluateExpression, this way it is also possible
+  when evaluating the TAL expression of MeetingConfig.onTransitionFieldTransforms to access the item's history and to include in a field comment added for last WF transition for example
+- Display an error portal_message while creating a meeting and some recurring items could not be inserted
+- Added methods ItemDocumentGenerationHelperView.print_deliberation and ItemDocumentGenerationHelperView.print_public_deliberation, this will be used to render the body of an item.
+  Added method ItemDocumentGenerationHelperView.output_for_restapi that is used by plonemeeting.restapi for the @deliberation MeetingItem endpoint
 - Adapted print_meeting_date and print_preferred_meeting_date so they can now be used in restricted or unrestricted mode.
 - Item validation workflow is now designed in the MeetingConfig.itemWFValidationLevels, this imply :
     - to no longer rely on MEETINGROLES and MEETINGREVIEWERS constants;
@@ -14,6 +21,81 @@ Changelog
       we only use common roles (Reader, Editor, Reviewer and Contributor)
 - Use roles 'Reviewer' and 'Contributor' in meetingadvice_workflow
 - Added bypass for users having 'Manage portal' in MeetingItemWorkflowConditions in 'mayWait_advices_from', 'mayValidate' and 'mayPresent'
+
+4.1.14 (2019-11-27)
+-------------------
+
+- Finally fixes advice inheritance when original advice is not delay aware and the MeetingConfig holding inherited advice has a delay aware custom adviser
+- Do not make IMeeting inherits from IFacetedNavigable or it does not apply the faceted configuration when a new meeting is created because it already implements IFacetedNavigable...
+  Override the IDashboardGenerablePODTemplates from collective.eeafaceted.dashboard to manage dashboard related POD templates
+
+4.1.13 (2019-11-26)
+-------------------
+
+- Fix rendering of POD templates on Meeting, was crashing because using DashboardPODTemplates, now use ConfigurablePODTemplates
+- Adapted CSS and code regarding changes in imio.prettylink (state related CSS class is moved from <a> tag to inner <span>)
+
+4.1.12 (2019-11-26)
+-------------------
+
+- Adapted code to redefine the 'IGenerablePODTemplates' adapter for context and dashboard now that 'get_all_pod_templates' and 'get_generable_templates'
+  were moved from 'DocumentGeneratorLinksViewlet' to 'GenerablePODTemplatesAdapter' in 'collective.documentgenerator'
+- Fixed bug when an inherited advice is unselected from original item holding the asked advice, update back predecessors so advice is no more inherited
+- Fixed bug when an inherited advice is given by a power adviser on original item then item is sent to another MeetingConfig in which a delay aware advice
+  is automatically asked on resulting item, the automatically asked advice must not be taken into account in place of inherited advice
+
+4.1.11 (2019-11-19)
+-------------------
+
+- Relaunch upgrade step _adaptHolidaysWarningMessage while moving to version 4103
+
+4.1.10 (2019-11-19)
+-------------------
+
+- When an annex has been modified, avoid to reindex the entire parent, only reindex relevant indexes : modified related indexes and SearchableText as annex title is indexed into it
+- Integrated new column "publishable" from collective.iconifiedcategory, this is done conditionnaly if relevant version of collective.iconifiedcategory is used
+- Fixed bug where 'Manager' role was removed from 'Administrators' group when saving the results in the @@usergroup-groupprefs,
+  this was due to 'Manager' role not listed in the form and so removed on save.  Now every golbal roles used by the application
+  are displayed, namely 'MeetingObserverGlobal', 'Manager' and 'Member' roles.  'Site Administrator' role is not displayed for now
+- No more give the 'Member' role to 'AuthenticatedUsers' auto_group, this was used with old LDAP plugin that did not give 'Member' role by default.
+  Now every users will get 'Member' role and every groups, including 'AuehtenticatedUsers' will not get the 'Member' role anymore
+- Fixed CSS applied on selected meeting in the meeting selection box so selected value is correctly colored
+- Fixed bug where it was not possible to remove a meeting containing an item having an image used in a RichText field.
+  This was due to fact that when a Plone content is removed, it's container is notifyModified, this is no more done if container is an IMeetingContent
+- Fixed bug with 'waiting_advices' workflow adaptation that failed to be activated if a state defined in WAITING_ADVICES_FROM_STATES did not exist
+
+4.1.9 (2019-11-04)
+------------------
+
+- Add a validation step "Are you sure?" before launching items and meetings local roles update from the action button on portal_plonemeeting
+- Fixed ftw.labels :
+  - Jar storage that was a dict instead a PersistentMapping and that was making changes done to it not persisted;
+  - Go back to the 'data' tab on the MeetingConfig while removing a label from the labels portlet;
+  - Invalidate the ftw.labels faceted vocabulary when a label is added/updated/removed.
+- While storing a POD template as annex, make sure values for form.store_as_annex and form.target are correctly set back to defaults because
+  in case a user use the back button, this could lead to Unauthorized while generating a POD template that can not be stored just after having stored a POD template
+- Optimize MeetingItem.updateLocalRoles to take into account cases when several items are updated :
+  - Do not compute auto copy groups if there were no expression found on previous updated item of same portal_type
+  - Do not update annexes accesses if annex was not confidential and still not confidential
+  - Added caching to collective.contact.plonegroup.get_organization for the time of a REQUEST to avoid doing too much catalog queries
+  - Added avoid_reindex parameter to updateLocalRoles method, in this case, if __ac_loca_roles__ did not change, reindexObjectSecurity is bypassed
+- Use declareProtected(ModifyPortalContent) for methods on MeetingItem 'setCategory', 'setClassifier', 'setProposingGroup' and 'setProposingGroupWithGroupInCharge'
+- Fixed bug when an item is sent to another MeetingConfig and fails to be presented in a meeting because none is available, it crashed to render the portal_message
+  if the destination MeetingConfig title contained special characters
+- Changed text of collective.messagesviewlet 'Holidays warning' message to use a less panicking content
+- Added upgrade step to fix wrong ToolPloneMeeting.holidays value '2017/2/25'
+
+4.1.8 (2019-10-14)
+------------------
+
+- Added possibility to bypass catalog/workflows refresh in migration step to 4101 if coming from migration step to 4.1 as this was already done
+- Adapted AdvicesIconsInfos.mayRemoveInheritedAdvice that is also used by the '@@advice-remove-inheritance' view
+  so a MeetingManager may remove an inherited advice as long as item is not decided
+- Display workflowstate viewlet the new way as it was moved to plonetheme.imioapps and CSS were changed
+- Show clearly empty lines at end of Meeting.signatures field, this way editors may see immediatelly if a line is missing
+- Fixed vocabulary keys used for field MeetingConfig.mailMeetingEvents (listMeetingEvents) that was breaking the mail notifications upon meeting state change
+- Fixed migration step Migrate_To_4101._correctAccessToPODTemplates to also update StyleTemplate objects
+- Fixed itemsignatures management to keep empty lines at the end of the value because it was stripped by the form
 
 4.1.7 (2019-10-04)
 ------------------
@@ -32,7 +114,7 @@ Changelog
 4.1.6 (2019-10-01)
 ------------------
 
-- Moved the logic of added a line to the workflow_history while creating an new item to utils.add_wf_history_action so it can be used by other packages (imio.p.ws).
+- Moved the logic of added a line to the workflow_history while creating an new item to utils.add_wf_history_action so it can be used by other packages (imio.p.ws)
 - Removed @ram.cache for MeetingConfig.listStates method, this was sometimes leading to breaking the workflowAdaptations application and validation
 - Fixed migration to 4101, in _removeTagsParameterInCallToJSCallViewAndReloadInCloneToOtherMCActions, do not call MeetingConfig._updatePortalTypes because it does not apply
   workflowAdaptations, call MeetingConfig.registerPortalTypes

@@ -100,14 +100,16 @@ from Products.PloneMeeting.Meeting import Meeting
 from Products.PloneMeeting.model.adaptations import RETURN_TO_PROPOSING_GROUP_MAPPINGS
 from Products.PloneMeeting.utils import _addManagedPermissions
 from Products.PloneMeeting.utils import _storedItemNumber_to_itemNumber
-from Products.PloneMeeting.utils import addDataChange
 from Products.PloneMeeting.utils import add_wf_history_action
+from Products.PloneMeeting.utils import addDataChange
 from Products.PloneMeeting.utils import AdvicesUpdatedEvent
 from Products.PloneMeeting.utils import cleanMemoize
 from Products.PloneMeeting.utils import compute_item_roles_to_assign_to_suffixes
 from Products.PloneMeeting.utils import decodeDelayAwareId
+from Products.PloneMeeting.utils import display_as_html
 from Products.PloneMeeting.utils import fieldIsEmpty
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
+from Products.PloneMeeting.utils import get_every_back_references
 from Products.PloneMeeting.utils import getCurrentMeetingObject
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getFieldContent
@@ -1548,8 +1550,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     schema = MeetingItem_schema
 
-    meetingTransitionsAcceptingRecurringItems = ('_init_', 'publish', 'freeze', 'decide')
-
     security.declarePublic('title_or_id')
 
     def title_or_id(self, withTypeName=True):
@@ -2258,7 +2258,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # make change in linkedItem.at_ordered_refs until it is fixed in Products.Archetypes
             self._p_changed = True
 
-    security.declarePrivate('setCategory')
+    security.declareProtected(ModifyPortalContent, 'setCategory')
 
     def setCategory(self, value, **kwargs):
         '''Overrides the field 'category' mutator to be able to
@@ -2269,7 +2269,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             self.REQUEST.set('need_Meeting_updateItemReferences', True)
         self.getField('category').set(self, value, **kwargs)
 
-    security.declarePrivate('setClassifier')
+    security.declareProtected(ModifyPortalContent, 'setClassifier')
 
     def setClassifier(self, value, **kwargs):
         '''Overrides the field 'classifier' mutator to be able to
@@ -2280,7 +2280,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             self.REQUEST.set('need_Meeting_updateItemReferences', True)
         self.getField('classifier').set(self, value, **kwargs)
 
-    security.declarePrivate('setProposingGroup')
+    security.declareProtected(ModifyPortalContent, 'setProposingGroup')
 
     def setProposingGroup(self, value, **kwargs):
         '''Overrides the field 'proposingGroup' mutator to be able to
@@ -2291,7 +2291,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             self.REQUEST.set('need_Meeting_updateItemReferences', True)
         self.getField('proposingGroup').set(self, value, **kwargs)
 
-    security.declarePrivate('setProposingGroupWithGroupInCharge')
+    security.declareProtected(ModifyPortalContent, 'setProposingGroupWithGroupInCharge')
 
     def setProposingGroupWithGroupInCharge(self, value, **kwargs):
         '''Overrides the field 'proposingGroupWithGroupInCharge' mutator to be able to
@@ -2312,7 +2312,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         value = [v for v in value if v and v.strip()]
         return tuple(value)
 
-    security.declarePrivate('setOtherMeetingConfigsClonableTo')
+    security.declareProtected(ModifyPortalContent, 'setOtherMeetingConfigsClonableTo')
 
     def setOtherMeetingConfigsClonableTo(self, value, **kwargs):
         '''Overrides the field 'otherMeetingConfigsClonableTo' mutator to be able to
@@ -2574,7 +2574,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            automatically added groups instead of the AUTO_COPY_GROUP_PREFIX prefixed name."""
         allGroups = self.getCopyGroups()
         if auto_real_plone_group_ids:
-            allGroups += tuple([self._realCopyGroupId(plone_group_id) for plone_group_id in self.autoCopyGroups])
+            allGroups += tuple([self._realCopyGroupId(plone_group_id)
+                                for plone_group_id in self.autoCopyGroups])
         else:
             allGroups += tuple(self.autoCopyGroups)
         return allGroups
@@ -3090,7 +3091,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getItemSignatures')
 
-    def getItemSignatures(self, real=False, **kwargs):
+    def getItemSignatures(self, real=False, for_display=False, **kwargs):
         '''Gets the signatures for this item. If no signature is defined,
            meeting signatures are returned.'''
         res = self.getField('itemSignatures').get(self, **kwargs)
@@ -3098,6 +3099,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return res
         if not res and self.hasMeeting():
             res = self.getMeeting().getSignatures(**kwargs)
+        if for_display:
+            res = display_as_html(res, self)
         return res
 
     security.declarePublic('hasItemSignatures')
@@ -3332,64 +3335,36 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def addRecurringItemToMeeting(self, meeting):
         '''See doc in interfaces.py.'''
         item = self.getSelf()
-        # Retrieve the meeting history of the workflow used for the meeting
         wfTool = api.portal.get_tool('portal_workflow')
-        meetingWFName = wfTool.getWorkflowsFor(meeting)[0].getId()
-        history = meeting.workflow_history[meetingWFName]
-        # By default, a first action is added to the workflow_history when the element
-        # is created, the 'action' is None and the intial review_state is in 'review_state'
-        if history[-1]['action'] is None:
-            lastTransition = '_init_'
-        else:
-            lastTransition = history[-1]['action']
-        transitions = item.meetingTransitionsAcceptingRecurringItems
-        if lastTransition and (lastTransition not in transitions):
-            # A strange transition was chosen for addding a recurring item (ie
-            # when putting back the meeting from 'published' to 'created' in
-            # order to correct an error). In those cases we do nothing but
-            # sending a mail to the site administrator for telling him that he
-            # should change the settings linked to recurring items in the
-            # corresponding meeting config.
-            logger.warn(REC_ITEM_ERROR % (item.id,
-                                          WRONG_TRANSITION % lastTransition))
-            sendMail(None, item, 'recurringItemBadTransition')
-            # We do not use delete_givenuid here but unrestrictedRemoveGivenObject
-            # that act as an unrestricted method because the item could be
-            # not accessible by the MeetingManager.  In the case for example
-            # where a recurring item is created with a proposingGroup the
-            # MeetingManager is not in as a creator...
-            # we must be sure that the item is removed in every case.
+        tool = api.portal.get_tool('portal_plonemeeting')
+        try:
+            # Hmm... the currently published object is p_meeting, right?
+            item.REQUEST.set('PUBLISHED', meeting)
+            item.setPreferredMeeting(meeting.UID())  # This way it will
+            # be considered as "late item" for this meeting if relevant.
+            # Ok, now let's present the item in the meeting.
+            # to avoid being stopped by mandatory advices not given, we add
+            # a flag that specify that the current item is a recurring item
+            item.isRecurringItem = True
+            # we use the wf path defined in the cfg.transitionsForPresentingAnItem
+            # to present the item to the meeting
+            cfg = tool.getMeetingConfig(item)
+            # give 'Manager' role to current user to bypass transitions guard
+            # and avoid permission problems when transitions are triggered
+            with api.env.adopt_roles(['Manager', ]):
+                for tr in cfg.getTransitionsForPresentingAnItem():
+                    wfTool.doActionFor(item, tr)
+            # the item must be at least presented to a meeting, either we raise
+            if not item.hasMeeting():
+                raise WorkflowException
+            del item.isRecurringItem
+        except WorkflowException, wfe:
+            msg = REC_ITEM_ERROR % (item.id, str(wfe))
+            logger.warn(msg)
+            api.portal.show_message(msg, request=item.REQUEST, type='error')
+            sendMail(None, item, 'recurringItemWorkflowError')
             unrestrictedRemoveGivenObject(item)
             return True
-        else:
-            wfTool = api.portal.get_tool('portal_workflow')
-            tool = api.portal.get_tool('portal_plonemeeting')
-            try:
-                # Hmm... the currently published object is p_meeting, right?
-                item.REQUEST.set('PUBLISHED', meeting)
-                item.setPreferredMeeting(meeting.UID())  # This way it will
-                # be considered as "late item" for this meeting if relevant.
-                # Ok, now let's present the item in the meeting.
-                # to avoid being stopped by mandatory advices not given, we add
-                # a flag that specify that the current item is a recurring item
-                item.isRecurringItem = True
-                # we use the wf path defined in the cfg.transitionsForPresentingAnItem
-                # to present the item to the meeting
-                cfg = tool.getMeetingConfig(item)
-                # give 'Manager' role to current user to bypass transitions guard
-                # and avoid permission problems when transitions are triggered
-                with api.env.adopt_roles(['Manager', ]):
-                    for tr in cfg.getTransitionsForPresentingAnItem():
-                        wfTool.doActionFor(item, tr)
-                # the item must be at least presented to a meeting, either we raise
-                if not item.hasMeeting():
-                    raise WorkflowException
-                del item.isRecurringItem
-            except WorkflowException, wfe:
-                logger.warn(REC_ITEM_ERROR % (item.id, str(wfe)))
-                sendMail(None, item, 'recurringItemWorkflowError')
-                unrestrictedRemoveGivenObject(item)
-                return True
 
     def _checkMayQuickEdit(self, bypassWritePermissionCheck=False, permission=ModifyPortalContent, expression=''):
         """ """
@@ -3891,33 +3866,52 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         self.autoCopyGroups = PersistentList()
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        for org in get_organizations():
-            org_uid = org.UID()
-            suffixes = _evaluateExpression(
-                self,
-                expression=org.as_copy_group_on,
-                roles_bypassing_expression=[],
-                extra_expr_ctx={
-                    'item': self,
-                    'isCreated': isCreated,
-                    'pm_utils': SecureModuleImporter['Products.PloneMeeting.utils'],
-                    'tool': tool,
-                    'cfg': cfg},
-                empty_expr_is_true=False,
-                error_pattern=AS_COPYGROUP_CONDITION_ERROR)
-            if not suffixes or not isinstance(suffixes, (tuple, list)):
-                continue
-            # The expression is supposed to return a list a Plone group suffixes
-            # check that the real linked Plone groups are selectable
-            for suffix in suffixes:
-                if suffix not in get_all_suffixes(org_uid):
-                    # If the suffix returned by the expression does not exist
-                    # log it, it is a configuration problem
-                    logger.warning(AS_COPYGROUP_RES_ERROR.format(suffix, org_uid))
+        using_groups = cfg.getUsingGroups()
+        # store in the REQUEST the fact that we found an expression
+        # to evaluate.  If it is not the case, this will speed up
+        # when updating local roles for several elements
+        req_key = 'add_auto_copy_groups_search_for_expression__{0}'.format(
+            cfg.getItemTypeName())
+        ann = IAnnotations(self.REQUEST)
+        search_for_expression = ann.get(req_key, True)
+        if search_for_expression:
+            ann[req_key] = False
+            for org in get_organizations():
+                org_uid = org.UID()
+                # bypass organizations not selected for this MeetingConfig
+                if using_groups and org_uid not in using_groups:
                     continue
-                plone_group_id = get_plone_group_id(org_uid, suffix)
-                auto_plone_group_id = '{0}{1}'.format(AUTO_COPY_GROUP_PREFIX, plone_group_id)
-                self.autoCopyGroups.append(auto_plone_group_id)
+                expr = org.as_copy_group_on
+                if not expr or not expr.strip():
+                    continue
+                # store in the REQUEST fact that there is at least one expression to evaluate
+                ann[req_key] = True
+                suffixes = _evaluateExpression(
+                    self,
+                    expression=org.as_copy_group_on,
+                    roles_bypassing_expression=[],
+                    extra_expr_ctx={
+                        'item': self,
+                        'isCreated': isCreated,
+                        'pm_utils': SecureModuleImporter['Products.PloneMeeting.utils'],
+                        'imio_history_utils': SecureModuleImporter['imio.history.utils'],
+                        'tool': tool,
+                        'cfg': cfg},
+                    empty_expr_is_true=False,
+                    error_pattern=AS_COPYGROUP_CONDITION_ERROR)
+                if not suffixes or not isinstance(suffixes, (tuple, list)):
+                    continue
+                # The expression is supposed to return a list a Plone group suffixes
+                # check that the real linked Plone groups are selectable
+                for suffix in suffixes:
+                    if suffix not in get_all_suffixes(org_uid):
+                        # If the suffix returned by the expression does not exist
+                        # log it, it is a configuration problem
+                        logger.warning(AS_COPYGROUP_RES_ERROR.format(suffix, org_uid))
+                        continue
+                    plone_group_id = get_plone_group_id(org_uid, suffix)
+                    auto_plone_group_id = '{0}{1}'.format(AUTO_COPY_GROUP_PREFIX, plone_group_id)
+                    self.autoCopyGroups.append(auto_plone_group_id)
 
     def _evalAdviceAvailableOn(self, available_on_expr, tool, cfg, mayEdit=True):
         """ """
@@ -4119,7 +4113,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return res
 
         inheritedAdviceInfo = deepcopy(predecessor.adviceIndex.get(adviserId))
-        while (predecessor and predecessor.adviceIndex[adviserId]['inherited']):
+        while (predecessor and
+               predecessor.adviceIndex.get(adviserId) and
+               predecessor.adviceIndex[adviserId]['inherited']):
             predecessor = predecessor.getPredecessor()
             inheritedAdviceInfo = deepcopy(predecessor.adviceIndex.get(adviserId))
 
@@ -4410,7 +4406,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             if adviceInfo['inherited']:
                 adviceInfo = self.getInheritedAdviceInfo(advId)
                 adviceInfo['inherited'] = True
-            data[advId] = adviceInfo.copy()
+            # turn adviceInfo PersistentMapping into a dict
+            data[advId] = dict(adviceInfo)
             # hide advice data if relevant
             if hide_advices_under_redaction and \
                 data[advId][HIDDEN_DURING_REDACTION_ADVICE_VALUE] and \
@@ -4576,6 +4573,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # every meetingadvice to the role 'Authenticated', a role that current user has
             self._removeEveryContainedAdvices()
 
+        # manage inherited advices
+        inheritedAdviserUids = inheritedAdviserUids or [
+            org_uid for org_uid in self.adviceIndex
+            if self.adviceIndex[org_uid].get('inherited', False)]
+
         # Update the dictionary self.adviceIndex with every advices to give
         i = -1
         # we will recompute the entire adviceIndex
@@ -4623,8 +4625,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # now get inherited advices that are not in optional advisers and
         # automatic advisers, it is the case for not_asked advices or when sending
         # an item to another MC
-        handledAdviserUids = [optAdviser['org_uid'] for optAdviser in optionalAdvisers]
-        handledAdviserUids += [autoAdviser['org_uid'] for autoAdviser in automaticAdvisers]
+        handledAdviserUids = [optAdviser['org_uid'] for optAdviser in optionalAdvisers
+                              if optAdviser['org_uid'] not in inheritedAdviserUids]
+        handledAdviserUids += [autoAdviser['org_uid'] for autoAdviser in automaticAdvisers
+                               if autoAdviser['org_uid'] not in inheritedAdviserUids]
         # when inheritedAdviserUids, adviceIndex is empty
         unhandledAdviserUids = [org_uid for org_uid in inheritedAdviserUids
                                 if org_uid not in handledAdviserUids]
@@ -4886,15 +4890,18 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         # update adviceIndex of every items for which I am the predecessor
         # this way inherited advices are correct if any
-        backPredecessor = self.getBRefs('ItemPredecessor')
-        while backPredecessor:
-            backPredecessor = backPredecessor[0]
-            hasInheritedAdvices = [adviceInfo for adviceInfo in backPredecessor.adviceIndex.values()
-                                   if adviceInfo.get('inherited', False)]
-            if not hasInheritedAdvices:
-                break
-            backPredecessor.updateLocalRoles()
-            backPredecessor = backPredecessor.getBRefs('ItemPredecessor')
+        back_objs = get_every_back_references(self, 'ItemPredecessor')
+        for back_obj in back_objs:
+            # removed inherited advice uids are advice removed on original item
+            # that were inherited on back references
+            removedInheritedAdviserUids = [
+                adviceInfo['id'] for adviceInfo in back_obj.adviceIndex.values()
+                if adviceInfo.get('inherited', False) and
+                adviceInfo['id'] not in self.adviceIndex]
+            if removedInheritedAdviserUids:
+                for removedInheritedAdviserUid in removedInheritedAdviserUids:
+                    back_obj.adviceIndex[removedInheritedAdviserUid]['inherited'] = False
+                back_obj.updateLocalRoles()
 
         # notify that advices have been updated so subproducts
         # may interact if necessary
@@ -5145,7 +5152,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def at_post_edit_script(self):
         self.updateLocalRoles(invalidate=self.willInvalidateAdvices(),
-                              isCreated=False)
+                              isCreated=False,
+                              avoid_reindex=True)
         # Apply potential transformations to richtext fields
         transformAllRichTextFields(self)
         # Add a line in history if historized fields have changed
@@ -5278,8 +5286,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # propagate Reader local_roles to sub elements
         # this way for example users have Reader role on item may view the advices
         self._propagateReaderLocalRoleTuSubObjects()
-        # reindex relevant indexes
-        self.reindexObjectSecurity()
+        # reindex object security except if avoid_reindex=True and localroles are the same
+        avoid_reindex = kwargs.get('avoid_reindex', False)
+        if not avoid_reindex or old_local_roles != self.__ac_local_roles__:
+            self.reindexObjectSecurity()
 
     def _propagateReaderLocalRoleTuSubObjects(self):
         """Propagate the 'Reader' local role on sub objects
@@ -5329,6 +5339,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                    extra_expr_ctx={
                                        'item': self,
                                        'pm_utils': SecureModuleImporter['Products.PloneMeeting.utils'],
+                                       'imio_history_utils': SecureModuleImporter['imio.history.utils'],
                                        'tool': tool,
                                        'cfg': cfg}):
                 powerObserversGroupId = "%s_%s" % (cfg_id, po_infos['row_id'])
@@ -5810,6 +5821,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             originalPublishedObject = self.REQUEST.get('PUBLISHED')
             # do this as Manager to be sure that transitions may be triggered
             with api.env.adopt_roles(roles=['Manager']):
+                destCfgTitle = safe_unicode(destMeetingConfig.Title())
                 for tr in destMeetingConfig.getTransitionsForPresentingAnItem():
                     try:
                         # special handling for the 'present' transition
@@ -5818,7 +5830,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                             if not meeting:
                                 plone_utils.addPortalMessage(
                                     _('could_not_present_item_no_meeting_accepting_items',
-                                      mapping={'destMeetingConfigTitle': destMeetingConfig.Title()}),
+                                      mapping={'destMeetingConfigTitle': destCfgTitle}),
                                     'warning')
                                 break
                             newItem.REQUEST['PUBLISHED'] = meeting
@@ -5826,12 +5838,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                         wfTool.doActionFor(newItem, tr, comment=wf_comment)
                     except WorkflowException:
                         # in case something goes wrong, only warn the user by adding a portal message
-                        plone_utils.addPortalMessage(translate('could_not_trigger_transition_for_cloned_item',
-                                                               mapping={'meetingConfigTitle': unicode(
-                                                                        destMeetingConfig.Title(), 'utf-8')},
-                                                               domain="PloneMeeting",
-                                                               context=self.REQUEST),
-                                                     type='warning')
+                        plone_utils.addPortalMessage(
+                            translate('could_not_trigger_transition_for_cloned_item',
+                                      mapping={'meetingConfigTitle': destCfgTitle},
+                                      domain="PloneMeeting",
+                                      context=self.REQUEST),
+                            type='warning')
                         break
                     # if we are on the triggerUntil transition, we will stop at next loop
                     if tr == triggerUntil:
@@ -6020,14 +6032,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def _cleanAdviceInheritance(self, item, adviceId):
         '''Clean advice inheritance for given p_adviceId on p_item.'''
-        def cleanAdviceInheritanceFor(backPredecessors):
-            for backPredecessor in backPredecessors:
-                if backPredecessor.adviceIndex.get(adviceId, None) and \
-                   backPredecessor.adviceIndex[adviceId]['inherited']:
-                    backPredecessor.adviceIndex[adviceId]['inherited'] = False
-                    backPredecessor.updateLocalRoles()
-                    cleanAdviceInheritanceFor(backPredecessor.getBRefs('ItemPredecessor'))
-        cleanAdviceInheritanceFor(item.getBRefs('ItemPredecessor'))
+        back_objs = get_every_back_references(self, 'ItemPredecessor')
+        for back_obj in back_objs:
+            if back_obj.adviceIndex.get(adviceId, None) and \
+               back_obj.adviceIndex[adviceId]['inherited']:
+                back_obj.adviceIndex[adviceId]['inherited'] = False
+                back_obj.updateLocalRoles()
 
     security.declarePublic('getAttendees')
 

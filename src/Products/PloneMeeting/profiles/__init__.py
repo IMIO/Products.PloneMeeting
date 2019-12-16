@@ -543,7 +543,7 @@ class MeetingConfigDescriptor(Descriptor):
         # labels are like :
         # {'read': {'color': 'blue', 'label_id': 'read', 'by_user': True, 'title': 'Read'},
         #  'urgent': {'color': 'red', 'label_id': 'urgent', 'by_user': False, 'title': 'Urgent'}}}
-        self.defaultLabels = {}
+        self.defaultLabels = []
         # When adding items to a meeting, what sortingMethod must be applied successively?
         self.insertingMethodsOnAddItem = ({'insertingMethod': 'at_the_end', }, )
         # List if item tags defined for this meeting config

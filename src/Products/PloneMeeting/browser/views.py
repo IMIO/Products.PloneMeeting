@@ -1408,6 +1408,13 @@ class MeetingDocumentGenerationHelperView(FolderDocumentGenerationHelperView):
 class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV):
     """ """
 
+    def output_for_restapi(self):
+        ''' '''
+        result = {}
+        result['deliberation'] = self.print_deliberation()
+        result['public_deliberation'] = self.print_public_deliberation()
+        return result
+
     def print_meeting_date(self, returnDateTime=False, noMeetingMarker='-', unrestricted=True):
         """Print meeting date, manage fact that item is not linked to a meeting,
            in this case p_noMeetingMarker is returned.
@@ -1429,7 +1436,7 @@ class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV)
         Allow backward compatibility with old PODTemplates.
         See print_meeting_date for docstring.
         """
-        return self.print_meeting_date(self, returnDateTime, noMeetingMarker, unrestricted)
+        return self.print_meeting_date(returnDateTime, noMeetingMarker, unrestricted)
 
     def print_preferred_meeting_date(self, returnDateTime=False, noMeetingMarker='-', unrestricted=True):
         """
@@ -1505,6 +1512,23 @@ class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV)
             res = separator.join(group.Title() for group in res)
             return html_pattern.format(res)
         return res
+
+    def print_deliberation(self,
+                           xhtmlContents=[],
+                           **kwargs):
+        '''Print the full item deliberation.'''
+        if not xhtmlContents:
+            xhtmlContents = [self.context.getMotivation(), self.context.getDecision()]
+        return self.printXhtml(
+            self.context,
+            xhtmlContents,
+            **kwargs)
+
+    def print_public_deliberation(self,
+                                  xhtmlContents=[],
+                                  **kwargs):
+        '''Overridable method to return public deliberation.'''
+        return self.print_deliberation(xhtmlContents, **kwargs)
 
 
 class AdviceDocumentGenerationHelperView(DXDocumentGenerationHelperView, BaseDGHV):

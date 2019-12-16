@@ -1,3 +1,8 @@
+<label i18n:domain="PloneMeeting" i18n:translate="">PloneMeeting_label_listType</label> :
+<span tal:attributes="class python: 'item_listType_' + context.getListType()">
+     <span metal:use-macro="python: here.widget('listType', mode='view')" />
+</span>
+<p>&nbsp;</p>
 <tal:defines define="selectableListTypes view/selectableListTypes;">
     <tal:loop repeat="listType selectableListTypes">
         <span class="fa fa-angle-double-right" />

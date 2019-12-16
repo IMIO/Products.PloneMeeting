@@ -51,4 +51,20 @@
       import_steps="jsregistry" />
   </genericsetup:upgradeSteps>
 
+  <genericsetup:upgradeStep
+      title="Go to PloneMeeting 4102"
+      description=""
+      source="4101"
+      destination="4102"
+      handler="Products.PloneMeeting.migrations.migrate_to_4102.migrate"
+      profile="Products.PloneMeeting:default" />
+
+  <genericsetup:upgradeStep
+      title="Go to PloneMeeting 4103"
+      description=""
+      source="4102"
+      destination="4103"
+      handler="Products.PloneMeeting.migrations.migrate_to_4103.migrate"
+      profile="Products.PloneMeeting:default" />
+
 </configure>

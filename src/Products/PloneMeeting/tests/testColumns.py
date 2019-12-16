@@ -100,8 +100,8 @@ class testColumns(PloneMeetingTestCase):
         # the secret item is not accessible
         self.assertEqual(
             secretBrainPrettyLinkColumn,
-            u"<div class='pretty_link state-itemcreated' title='Secret item title'>"
-            u"<span class='pretty_link_content'>Secret item title <span class='discreet no_access'>"
+            u"<div class='pretty_link' title='Secret item title'>"
+            u"<span class='pretty_link_content state-itemcreated'>Secret item title <span class='discreet no_access'>"
             u"(You can not access this element)</span></span></div>")
 
     def test_pm_AnnexActionsColumnShowArrows(self):
@@ -198,12 +198,12 @@ class testColumns(PloneMeetingTestCase):
 
         # linked and viewable
         item_brain = self.portal.portal_catalog(UID=item.UID())[0]
-        self.assertTrue(u"<a class='pretty_link state-created' " in column.renderCell(item_brain))
+        self.assertTrue(u"<span class='pretty_link_content state-created'>" in column.renderCell(item_brain))
         # linked but not viewable
         self.changeUser('powerobserver1')
         # column have use_caching=True
         column = ItemLinkedMeetingColumn(meetingFolder, self.portal.REQUEST, faceted_table)
-        self.assertTrue(u"<div class='pretty_link state-created' " in column.renderCell(item_brain))
+        self.assertTrue(u"<span class='pretty_link_content state-created'>" in column.renderCell(item_brain))
 
 
 def test_suite():

@@ -73,6 +73,14 @@ MEETINGCONFIG_BADREQUEST_ERROR = 'There was an error during creation of MeetingC
                                  'Original error : "%s"'
 
 
+def update_labels_jar(jar, values):
+    """ """
+    for value in values:
+        jar.add(title=value['title'],
+                color=value['color'],
+                by_user=value['by_user'])
+
+
 class ToolInitializer:
     '''Initializes the PloneMeeting tool based on information from a given
        PloneMeeting profile.'''
@@ -299,8 +307,8 @@ class ToolInitializer:
 
         # set default labels
         if data.defaultLabels:
-            jar_storage = ILabelJar(cfg).storage
-            jar_storage.update(deepcopy(data.defaultLabels))
+            jar = ILabelJar(cfg)
+            update_labels_jar(jar, values=data.defaultLabels)
 
         # disable relevant dashboard collections
         for collection_path in data.disabled_collections:

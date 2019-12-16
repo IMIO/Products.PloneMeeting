@@ -286,6 +286,10 @@
            name="data_changes"
            provides="imio.history.interfaces.IImioHistory" />
 
+  <adapter for="OFS.interfaces.IItem"
+           provides="collective.documentgenerator.interfaces.IGenerablePODTemplates"
+           factory=".adapters.PMGenerablePODTemplatesAdapter"/>
+
   <five:deprecatedManageAddDelete class=".MeetingItem.MeetingItem" />
   <five:deprecatedManageAddDelete class=".Meeting.Meeting" />
   <five:deprecatedManageAddDelete class=".MeetingCategory.MeetingCategory" />
@@ -364,6 +368,9 @@
     <implements interface="Products.PloneMeeting.interfaces.IPloneElement" />
   </class>
   <class class="Products.ATContentTypes.content.newsitem.ATNewsItem">
+    <implements interface="Products.PloneMeeting.interfaces.IPloneElement" />
+  </class>
+  <class class="Products.ATContentTypes.content.link.ATLink">
     <implements interface="Products.PloneMeeting.interfaces.IPloneElement" />
   </class>
 
