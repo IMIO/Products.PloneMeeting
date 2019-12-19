@@ -680,6 +680,20 @@ class testAnnexes(PloneMeetingTestCase):
         self.assertTrue(catalog(SearchableText=ITEM_TITLE))
         self.assertFalse(catalog(SearchableText=ANNEX_TITLE))
 
+    def test_pm_AnnexesTitleFoundInMeetingSearchableText(self):
+        '''Annexes title is indexed in the meeting SearchableText.'''
+        ANNEX_TITLE = "SpecialAnnexTitle"
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime('2019/12/19'))
+        catalog = self.portal.portal_catalog
+        self.assertFalse(catalog(SearchableText=ANNEX_TITLE))
+        # add an annex
+        annex = self.addAnnex(meeting, annexTitle=ANNEX_TITLE)
+        self.assertTrue(len(catalog(SearchableText=ANNEX_TITLE)) == 2)
+        # remove the annex
+        self.portal.restrictedTraverse('@@delete_givenuid')(annex.UID())
+        self.assertFalse(catalog(SearchableText=ANNEX_TITLE))
+
     def test_pm_AnnexesConvertedIfAutoConvertIsEnabled(self):
         """If collective.documentviewer 'auto_convert' is enabled,
            the annexes and decision annexes are converted."""

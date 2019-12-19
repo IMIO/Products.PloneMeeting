@@ -1241,7 +1241,6 @@ class Migrate_To_4_1(Migrator):
         self._migrateItemsInConfig()
         self._initFTWLabels()
         self._adaptShowHolidaysMessage()
-        self.tool.invalidateAllCache()
         # too many indexes to update, rebuild the portal_catalog, but do not update other catalogs
         meeting_wf_ids = self.getWorkflows(meta_types=['Meeting'])
         self.refreshDatabase(workflows=True,
