@@ -863,12 +863,15 @@ class BaseDGHV(object):
             meeting_item = self.context
             if meeting_item.getItemAssembly():
                 res = meeting_item.getItemAssembly()
+
         if res and striked:
             res = toHTMLStrikedContent(res)
-        elif attendees_by_type:
+
+        if not res and attendees_by_type:
             res = self.print_attendees_by_type(**kwargs)
         else:
             res = self.print_attendees(**kwargs)
+
         return res
 
     def _get_attendees(self):
