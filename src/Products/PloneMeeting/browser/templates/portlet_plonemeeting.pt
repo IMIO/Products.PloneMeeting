@@ -18,7 +18,7 @@
                        class="fa fa-home"
                        href="#"
                        tal:attributes="href meetingFolder/searches_items/absolute_url;
-                                       title cfg/getName">
+                                       title cfg/Title">
                     </a>
                     <a style="display: inline;"
                        class="fa fa-cog"

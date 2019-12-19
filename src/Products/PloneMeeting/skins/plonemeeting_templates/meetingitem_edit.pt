@@ -14,8 +14,7 @@
                        tool python: context.portal_plonemeeting;
                        portal context/portal_url/getPortalObject;
                        cfg python: tool.getMeetingConfig(context);
-                       usedAttrs cfg/getUsedItemAttributes;
-                       bilingual python: 'secondLanguage' in tool.getModelAdaptations();">
+                       usedAttrs cfg/getUsedItemAttributes;">
 
     <tal:showWarningWillInvalidateAdvices condition="context/willInvalidateAdvices">
     <dl class="portalMessage warning">
@@ -23,7 +22,7 @@
     </dl><br />
     </tal:showWarningWillInvalidateAdvices>
 
-    <tal:comment replace="nothing">Title and description(s), mono- or bilingual</tal:comment>
+    <tal:comment replace="nothing">Title and description(s)</tal:comment>
     <tal:field define="fieldName python: 'title'">
       <metal:f use-macro="context/@@pm-macros/editContentField"/>
     </tal:field>

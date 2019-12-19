@@ -110,7 +110,6 @@ from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
 from Products.PloneMeeting.utils import get_every_back_references
 from Products.PloneMeeting.utils import getCurrentMeetingObject
 from Products.PloneMeeting.utils import getCustomAdapter
-from Products.PloneMeeting.utils import getFieldContent
 from Products.PloneMeeting.utils import getFieldVersion
 from Products.PloneMeeting.utils import getWorkflowAdapter
 from Products.PloneMeeting.utils import hasHistory
@@ -1494,12 +1493,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 tool = api.portal.get_tool('portal_plonemeeting')
                 return "{0} ({1})".format(title, tool.formatMeetingDate(meeting, withHour=True).encode('utf-8'))
         return title
-
-    security.declarePublic('getName')
-
-    def getName(self, force=None):
-        '''Returns the possibly translated title.'''
-        return getFieldContent(self, 'title', force)
 
     security.declarePublic('getPrettyLink')
 

@@ -75,7 +75,6 @@ from Products.PloneMeeting.config import PY_DATETIME_WEEKDAYS
 from Products.PloneMeeting.config import ROOT_FOLDER
 from Products.PloneMeeting.config import SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY
 from Products.PloneMeeting.MeetingItem import MeetingItem
-from Products.PloneMeeting.model.adaptations import performModelAdaptations
 from Products.PloneMeeting.profiles import PloneMeetingConfiguration
 from Products.PloneMeeting.utils import add_wf_history_action
 from Products.PloneMeeting.utils import get_annexes
@@ -171,20 +170,6 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         default_content_type='text/plain',
-    ),
-    LinesField(
-        name='modelAdaptations',
-        default=defValues.modelAdaptations,
-        widget=MultiSelectionWidget(
-            description="ModelAdaptations",
-            description_msgid="model_adaptations_descr",
-            format="checkbox",
-            label='Modeladaptations',
-            label_msgid='PloneMeeting_label_modelAdaptations',
-            i18n_domain='PloneMeeting',
-        ),
-        multiValued=1,
-        vocabulary='listModelAdaptations',
     ),
     LinesField(
         name='workingDays',
@@ -295,7 +280,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     # tool should not appear in portal_catalog
     def at_post_edit_script(self):
         self.unindexObject()
-        performModelAdaptations(self)
         self.adapted().onEdit(isCreated=False)
 
     security.declarePrivate('at_post_create_script')
@@ -878,31 +862,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
         adapted.__init__(obj, **params)
         return adapted.getLink()
-
-    security.declarePublic('listModelAdaptations')
-
-    def listModelAdaptations(self):
-        d = 'PloneMeeting'
-        res = (
-            # This adaptation adds, for every content field defined on meetings,
-            # items and annexes, a second field for storing content in a second
-            # language.
-            ('secondLanguage', translate('ma_second_language', domain=d, context=self.REQUEST)),
-            # This adaptation does the same thing, but for every content field
-            # defined on objects in the configuration (like classifiers, POD
-            # templates or file types). Why do we need 2 distinct adaptations:
-            # secondLanguage and secondLanguageCfg? Because config content is
-            # more felt like a matter of interface language, not content
-            # language. For instance, imagine a place where people talk 2
-            # languages; everyone can encode item content in its own language,
-            # but everyone wants the user interface in its language. For this
-            # kind of site, we will not use adaptation "secondLanguage", but we
-            # will use "secondLanguageCfg". This way, when choosing a
-            # classifier, the user will get the name of the classifier in its
-            # own language.
-            ('secondLanguageCfg', translate('ma_second_language_cfg', domain=d, context=self.REQUEST)),
-        )
-        return DisplayList(res)
 
     security.declarePrivate('listWeekDays')
 

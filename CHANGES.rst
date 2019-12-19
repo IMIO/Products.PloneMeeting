@@ -19,6 +19,9 @@ Changelog
   This vocabulary is used in the faceted filter "Advices" and for field MeetingConfig.advicesKeptOnSentToOtherMC
 - Added MeetingItem.validate_groupsInCharge, when enabled in MeetingConfig.usedItemAttributes, field MeetingItem.groupsInCharge is required
 - In main migration to v4.1, do not refresh other catalogs that portal_catalog (bypass reference_catalog and uid_catalog)
+- Removed ToolPloneMeeting.modelAdaptations and relative functionnality (bilingual, getName, ...)
+- Make RichText fields of Meeting searchable, index also meeting annexes title in SearchableText index
+- Added upgrade step to 4104
 
 4.1.14 (2019-11-27)
 -------------------

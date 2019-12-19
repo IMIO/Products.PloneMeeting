@@ -204,7 +204,7 @@ def sentToInfos(obj):
     return res or _marker
 
 
-@indexer(IMeetingItem)
+@indexer(IMeetingContent)
 def SearchableText(obj):
     """
       Contained annex title is indexed in the item's SearchableText.

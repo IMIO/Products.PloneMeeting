@@ -112,7 +112,6 @@ from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getCustomSchemaFields
-from Products.PloneMeeting.utils import getFieldContent
 from Products.PloneMeeting.utils import listifySignatures
 from Products.PloneMeeting.utils import reviewersFor
 from Products.PloneMeeting.utils import updateAnnexesAccess
@@ -2948,12 +2947,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def _extraSearchesInfo(self, infos):
         '''This is made to be overrided by a subplugin, to insert it's own searches.'''
         return infos
-
-    security.declarePublic('getName')
-
-    def getName(self, force=None):
-        '''Returns the possibly translated title.'''
-        return getFieldContent(self, 'title', force)
 
     security.declarePublic('Title')
 

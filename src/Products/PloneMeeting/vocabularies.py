@@ -830,7 +830,7 @@ class SentToInfosVocabulary(object):
                    )
         for cfgInfo in cfg.getMeetingConfigsToCloneTo():
             cfgId = cfgInfo['meeting_config']
-            cfgTitle = getattr(tool, cfgId).getName()
+            cfgTitle = getattr(tool, cfgId).Title()
             # add 'clonable to' and 'cloned to' options
             for suffix in ('__clonable_to', '__clonable_to_emergency',
                            '__cloned_to', '__cloned_to_emergency'):

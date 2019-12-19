@@ -1,8 +1,7 @@
 <tal:defines define="cfg python: view.cfg;
                      portal_url python: view.portal_url;
                      usedAttrs cfg/getUsedMeetingAttributes;
-                     member context/@@plone_portal_state/member;
-                     bilingual python: 'secondLanguage' in view.tool.getModelAdaptations();"
+                     member python: view.member;"
              i18n:domain="PloneMeeting">
 
   <div class="meeting-after-faceted-infos">

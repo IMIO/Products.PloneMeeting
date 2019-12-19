@@ -4,11 +4,6 @@
    PloneMeeting data structures and workflows.'''
 
 from plone import api
-from Products.Archetypes.atapi import RichWidget
-from Products.Archetypes.atapi import StringField
-from Products.Archetypes.atapi import StringWidget
-from Products.Archetypes.atapi import TextAreaWidget
-from Products.Archetypes.atapi import TextField
 from Products.CMFCore.permissions import AccessContentsInformation
 from Products.CMFCore.permissions import DeleteObjects
 from Products.CMFCore.permissions import ModifyPortalContent
@@ -17,7 +12,6 @@ from Products.CMFCore.permissions import View
 from Products.PloneMeeting import logger
 from Products.PloneMeeting.config import ReadDecision
 from Products.PloneMeeting.config import WriteDecision
-from Products.PloneMeeting.config import WriteItemMeetingManagerFields
 from Products.PloneMeeting.utils import updateCollectionCriterion
 
 import string
@@ -1150,109 +1144,6 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                 if 'backToProposed' not in presented.transitions:
                     presented.transitions = presented.transitions + ('backToProposed', )
         logger.info(WF_APPLIED % (wfAdaptation, meetingConfig.getId()))
-
-
-# Stuff for performing model adaptations ---------------------------------------
-def companionField(name, type='simple', label=None, searchable=False,
-                   readPermission=None, writePermission=None, condition=None):
-    '''This function creates the companion field for field named p_name, that
-       will contain field content in a second language. p_type can be "simple"
-       (a single-line input field), "text" (a textarea) or "rich" (a
-       word-processor-like field).'''
-    # Determine field and widget types
-    fieldType = StringField
-    widgetType = StringWidget
-    if type != 'simple':
-        fieldType = TextField
-        if type == 'rich':
-            widgetType = RichWidget
-        else:
-            widgetType = TextAreaWidget
-    # Create the widget definition
-    if not label:
-        label = 'PloneMeeting_label_%s' % name
-    label += '2'
-    widget = widgetType(label=name.capitalize(), label_msgid=label,
-                        i18n_domain='PloneMeeting')
-    if condition:
-        widget.condition = condition
-    # Create the type definition
-    required = name == 'title'
-    res = fieldType(name=name + '2', widget=widget, required=required)
-    res.searchable = searchable
-    if type == 'rich':
-        res.default_content_type = "text/html"
-        res.allowable_content_types = ('text/html',)
-        res.default_output_type = "text/html"
-    if type == 'text':
-        res.allowable_content_types = ('text/plain',)
-    if readPermission:
-        res.read_permission = readPermission
-    if writePermission:
-        res.write_permission = writePermission
-    return res
-
-
-# ------------------------------------------------------------------------------
-# Schema additions for model adaptations "secondLanguage" and
-# "secondLanguageCfg", which allows to manage content in a second language.
-cf = companionField
-
-additions = {
-    # Additional fields for MeetingItem
-    "MeetingItem":
-    (cf('title', searchable=True),
-     cf('description', type='rich', searchable=True),
-     cf('detailedDescription', type='rich'),
-     cf('decision', type='rich', searchable=True,
-        readPermission="PloneMeeting: Read decision",
-        writePermission="PloneMeeting: Write decision"),
-     cf('observations', type='rich',
-        label='PloneMeeting_itemObservations',
-        condition="python: here.attributeIsUsed('observations')",
-        readPermission="PloneMeeting: Read item observations",
-        writePermission=WriteItemMeetingManagerFields)),
-
-    # Additional fields for Meeting
-    "Meeting": (cf('observations', type='rich',
-                   condition="python: here.showMeetingManagerReservedField('observations')",
-                   label='PloneMeeting_meetingObservations'),
-                cf('preObservations', type='rich',
-                   condition="python: here.showMeetingManagerReservedField('preObservations')",)),
-
-    # Additional fields for other types
-    "MeetingCategory": (cf('title'), cf('description', type='text')),
-    "MeetingGroup": (cf('title'), cf('description', type='text')),
-    "MeetingConfig": (cf('title'),),
-}
-
-
-def patchSchema(typeName):
-    '''This function updates, if required, the schema of content tyne named
-       p_typeName with additional fields from a model adaptation.'''
-    global additions
-    # pyflakes
-    cType = ''
-    exec 'from Products.PloneMeeting.%s import %s as cType' % (typeName, typeName)
-    toAdd = additions[typeName]
-    # Update the schema only if it hasn't been already done.
-    if not toAdd[0].getName() in cType.schema._fields:
-        for field in toAdd:
-            cType.schema.addField(field)
-            cType.schema.moveField(field.getName(), after=field.getName()[:-1])
-
-
-def performModelAdaptations(tool):
-    '''Performs the required model adaptations.'''
-    global additions
-    adaptations = tool.getModelAdaptations()
-    if 'secondLanguage' in adaptations:
-        patchSchema('MeetingItem')
-    if 'secondLanguageCfg' in adaptations:
-        for contentType in additions.iterkeys():
-            if (contentType != 'MeetingItem'):
-                patchSchema(contentType)
-# ------------------------------------------------------------------------------
 
 
 def getValidationReturnedStates(cfg):

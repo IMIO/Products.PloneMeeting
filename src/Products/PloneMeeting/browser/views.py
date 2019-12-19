@@ -353,6 +353,12 @@ class MeetingAfterFacetedInfosView(BrowserView):
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
 
+    def __call__(self):
+        """ """
+        # initialize member in call because it is Anonymous in __init__ of view...
+        self.member = api.user.get_current()
+        return super(MeetingAfterFacetedInfosView, self).__call__()
+
 
 class MeetingInsertingMethodsHelpMsgView(BrowserView):
     """ """

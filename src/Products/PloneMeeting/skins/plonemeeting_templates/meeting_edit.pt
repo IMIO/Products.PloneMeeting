@@ -14,7 +14,6 @@
                        tool python: context.portal_plonemeeting;
                        portal context/portal_url/getPortalObject;
                        meetingConfig python: tool.getMeetingConfig(here);
-                       bilingual python: 'secondLanguage' in tool.getModelAdaptations();
                        usedAttrs meetingConfig/getUsedMeetingAttributes;
                        useUserReplacements python: 'replacements' in usedAttrs;">
 
