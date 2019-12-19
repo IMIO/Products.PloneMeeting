@@ -22,6 +22,9 @@ Changelog
 - Removed ToolPloneMeeting.modelAdaptations and relative functionnality (bilingual, getName, ...)
 - Make RichText fields of Meeting searchable, index also meeting annexes title in SearchableText index
 - Added upgrade step to 4104
+- Removed DashboardCollection 'searchalldecisions' and replaced it by 'searchallmeetings', this way every meetings are displayed and user may search accross all meetings
+  or filter on review_state if he wants only decided meetings
+- Added helper method Migrator.updateCollectionColumns to be able to update every columns for every DashboardCollections of every MeetingConfigs
 
 4.1.14 (2019-11-27)
 -------------------

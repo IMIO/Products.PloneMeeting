@@ -106,13 +106,6 @@ class Migrate_To_4_1(Migrator):
             cfg.createItemTemplateManagersGroup()
         logger.info('Done.')
 
-    def _updateCollectionColumns(self):
-        """Update collections columns as column 'check_box_item' was renamed to 'select_row'."""
-        logger.info("Updating collections columns for every MeetingConfigs...")
-        for cfg in self.tool.objectValues('MeetingConfig'):
-            cfg.updateCollectionColumns()
-        logger.info('Done.')
-
     def _migrateGroupsInChargeAttributes(self):
         '''Field MeetingConfig.itemGroupInChargeStates was renamed to MeetingConfig.itemGroupsInChargeStates.
            Value reader_groupincharge is now reader_groupsincharge.'''
@@ -1194,7 +1187,8 @@ class Migrate_To_4_1(Migrator):
         # migration steps
         self._updateFacetedFilters()
         self._addItemTemplatesManagersGroup()
-        self._updateCollectionColumns()
+        # Update collections columns as column 'check_box_item' was renamed to 'select_row'
+        self.updateCollectionColumns()
         self._markSearchesFoldersWithIBatchActionsMarker()
         self._removeMCPortalTabs()
         self._manageContentsKeptWhenItemSentToOtherMC()

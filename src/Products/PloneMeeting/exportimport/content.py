@@ -246,8 +246,8 @@ class ToolInitializer:
     def _finishConfigFor(self, cfg, data):
         """When the MeetingConfig has been created, some parameters still need to be applied
            because they need the MeetingConfig to exist."""
-        # apply the meetingTopicStates to the 'searchallmeetings' DashboardCollection
-        updateCollectionCriterion(cfg.searches.searches_meetings.searchallmeetings,
+        # apply the meetingTopicStates to the 'searchnotdecidedmeetings' DashboardCollection
+        updateCollectionCriterion(cfg.searches.searches_meetings.searchnotdecidedmeetings,
                                   'review_state',
                                   list(data.meetingTopicStates))
         # apply the maxDaysDecisions to the 'searchlastdecisions' DashboardCollection
@@ -257,9 +257,6 @@ class ToolInitializer:
         # apply the decisionTopicStates to the 'searchlastdecisions'
         # and 'searchalldecision' DashboardCollections
         updateCollectionCriterion(cfg.searches.searches_decisions.searchlastdecisions,
-                                  'review_state',
-                                  list(data.decisionTopicStates))
-        updateCollectionCriterion(cfg.searches.searches_decisions.searchalldecisions,
                                   'review_state',
                                   list(data.decisionTopicStates))
         # select correct default view

@@ -624,11 +624,11 @@ class MeetingConfigDescriptor(Descriptor):
         # When the system displays the list of all meetings (the "all meetings"
         # topic), only meetings having one of the stated listed in
         # meetingTopicStates will be shown.
-        # this will be applied on the 'searchallmeetings' Collection
+        # this will be applied on the 'searchnotdecidedmeetings' Collection
         self.meetingTopicStates = ['created', 'published', 'frozen']
         # In the "decisions" portlet, the "all decisions" portlet will only show
         # meetings having one of the states listed in decisionTopicStates.
-        # this will be applied on the 'searchalldecisions' Collection
+        # this will be applied on the 'searchlastdecisions' DashboardCollection
         self.decisionTopicStates = ['decided', 'closed', 'archived']
         # Maximum number of meetings or decisions shown in the meeting and
         # decision portlets. If overflow, a combo box is shown instead of a
@@ -636,8 +636,8 @@ class MeetingConfigDescriptor(Descriptor):
         self.maxShownMeetings = 5
         # If a decision if maxDaysDecisions old (or older), it is not shown
         # anymore in the "decisions" portlet. This decision may still be
-        # consulted by clicking on "all decisions" in the same portlet.
-        # this will be applied on the 'searchalldecisions' Collection
+        # consulted by clicking on "all meetings" in the same portlet.
+        # this will be applied on the 'searchlastdecisions' DashboardCollection
         self.maxDaysDecisions = 60
         # Which view do you want to select when entering a PloneMeeting folder ?
         self.meetingAppDefaultView = 'searchallitems'
@@ -668,7 +668,8 @@ class MeetingConfigDescriptor(Descriptor):
         self.maxShownAvailableItems = 20
         self.maxShownMeetingItems = 40
         # list of collection ids to disable
-        self.disabled_collections = []  # ['searches_items/searchallitems', 'searches_meetings/searchallmeetings']
+        # ['searches_items/searchallitems', 'searches_meetings/searchnotdecidedmeetings']
+        self.disabled_collections = []
 
         # Mail-related parameters -----------------------------------------------
         # Mail mode can be: activated, deactivated, test.

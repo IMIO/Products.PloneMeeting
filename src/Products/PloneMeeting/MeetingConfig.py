@@ -2876,7 +2876,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # All not-yet-decided meetings
-                ('searchallmeetings', {
+                ('searchnotdecidedmeetings', {
                     'subFolderId': 'searches_meetings',
                     'active': True,
                     'query':
@@ -2919,8 +2919,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'tal_condition': '',
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
-                # All decided meetings
-                ('searchalldecisions', {
+                # All meetings
+                ('searchallmeetings', {
                     'subFolderId': 'searches_decisions',
                     'active': True,
                     'query':
@@ -2928,9 +2928,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                         {'i': 'portal_type',
                          'o': 'plone.app.querystring.operation.selection.is',
                          'v': [meetingType, ]},
-                        {'i': 'review_state',
-                         'o': 'plone.app.querystring.operation.selection.is',
-                         'v': ['decided', 'closed']},
                     ],
                     'sort_on': u'sortable_title',
                     'sort_reversed': True,
