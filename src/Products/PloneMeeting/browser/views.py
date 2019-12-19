@@ -855,14 +855,10 @@ class BaseDGHV(object):
         '''Returns the assembly for this meeting or item.
            If p_striked is True, return striked assembly.'''
         res = None
-        if self.context.meta_type == 'Meeting':
-            meeting = self.context
-            if meeting.getAssembly():
-                res = meeting.getAssembly()
-        else:
-            meeting_item = self.context
-            if meeting_item.getItemAssembly():
-                res = meeting_item.getItemAssembly()
+        if self.context.meta_type == 'Meeting' and self.context.getAssembly():
+            res = self.context.getAssembly()
+        elif self.context.meta_type == 'MeetingItem' and self.context.getItemAssembly():
+            res = self.context.getItemAssembly()
 
         if res and striked:
             res = toHTMLStrikedContent(res)
