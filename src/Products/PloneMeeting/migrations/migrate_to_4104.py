@@ -18,8 +18,8 @@ class Migrate_To_4104(Migrator):
            'searchallmeetings' was replaced by 'searchnotdecidedmeetings',
            We rename old DashboardCollections to keep their UID (maybe used by POD templates, ...),
            moreover if a query parameter was changed, it is kept."""
-        logger.info("Renaming collection 'searchallmeetings' to 'searchnotdecidedmeetings'...")
         self.addNewSearches()
+        logger.info("Renaming collection 'searchallmeetings' to 'searchnotdecidedmeetings'...")
         for cfg in self.tool.objectValues('MeetingConfig'):
             if 'searchallmeetings' in cfg.searches.searches_meetings.objectIds():
                 cfg.searches.searches_meetings.manage_delObjects(ids=['searchnotdecidedmeetings'])

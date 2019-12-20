@@ -40,13 +40,13 @@ from imio.annex.columns import ActionsColumn
 from plone import api
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
+from plone.indexer.wrapper import IndexableObjectWrapper
 from Products.CMFCore.permissions import DeleteObjects
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.PloneMeeting.config import AddAnnex
 from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
-from Products.PloneMeeting.indexes import SearchableText
 from Products.PloneMeeting.MeetingConfig import PROPOSINGGROUPPREFIX
 from Products.PloneMeeting.MeetingConfig import SUFFIXPROFILEPREFIX
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
@@ -643,8 +643,9 @@ class testAnnexes(PloneMeetingTestCase):
         self.assertTrue(len(catalog(SearchableText=ITEM_DESCRIPTION)) == 1)
         self.assertTrue(len(catalog(SearchableText=ITEM_DECISION)) == 1)
         self.assertFalse(catalog(SearchableText=ANNEX_TITLE))
+        indexable_wrapper = IndexableObjectWrapper(item, catalog)
         self.assertEquals(
-            SearchableText(item)(),
+            indexable_wrapper.SearchableText,
             '{0}  <p>{1}</p>  <p>{2}</p> '.format(
                 ITEM_TITLE, ITEM_DESCRIPTION, ITEM_DECISION)
         )
@@ -660,8 +661,9 @@ class testAnnexes(PloneMeetingTestCase):
         self.assertTrue(len(catalog(SearchableText=ITEM_DESCRIPTION)) == 1)
         self.assertTrue(len(catalog(SearchableText=ITEM_DECISION)) == 1)
         self.assertTrue(len(catalog(SearchableText=ANNEX_TITLE)) == 2)
+        indexable_wrapper = IndexableObjectWrapper(item, catalog)
         self.assertEquals(
-            SearchableText(item)(),
+            indexable_wrapper.SearchableText,
             '{0}  <p>{1}</p>  <p>{2}</p>  {3} '.format(
                 ITEM_TITLE, ITEM_DESCRIPTION, ITEM_DECISION, ANNEX_TITLE))
         itemRID = catalog(UID=item.UID())[0].getRID()
