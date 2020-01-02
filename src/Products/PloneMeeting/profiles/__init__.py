@@ -696,6 +696,8 @@ class MeetingConfigDescriptor(Descriptor):
         # List of item states when it is possible for 'Budget impact reviewers' to edit the budgetInfos
         self.itemBudgetInfosStates = []
         self.itemGroupsInChargeStates = []
+        self.includeGroupsInChargeDefinedOnProposingGroup = False
+        self.includeGroupsInChargeDefinedOnCategory = False
         # List of Organization uids to consider as Power advisers
         self.powerAdvisersGroups = []
         # List of item and meeting states the users in the MeetingConfig

@@ -158,6 +158,14 @@ def linkedMeetingDate(obj):
 
 
 @indexer(IMeetingItem)
+def getGroupsInCharge(obj):
+    """
+      Indexes the groupsInCharge attribute including auto groups
+    """
+    return obj.getGroupsInCharge(includeAuto=True)
+
+
+@indexer(IMeetingItem)
 def getPreferredMeetingDate(obj):
     """
       Store the preferredMeeting date.

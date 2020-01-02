@@ -25,6 +25,9 @@ Changelog
 - Removed DashboardCollection 'searchalldecisions' and replaced it by 'searchallmeetings', this way every meetings are displayed and user may search accross all meetings
   or filter on review_state if he wants only decided meetings
 - Added helper method Migrator.updateCollectionColumns to be able to update every columns for every DashboardCollections of every MeetingConfigs
+- Added possibility to define groups in charge for a given MeetingCategory, the same way it is done for organization.groups_in_charge.
+  New parameters MeetingConfig.includeGroupsInChargeDefinedOnProposingGroup and MeetingConfig.includeGroupsInChargeDefinedOnCategory will make it possible to take groups in charge
+  defined on the proposingGroup or on the category into account while giving access to the item or to the confidential annexes
 
 4.1.14 (2019-11-27)
 -------------------

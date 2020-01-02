@@ -242,6 +242,7 @@ def onOrgWillBeRemoved(current_org, event):
       - it can not be referenced in an existing MeetingConfig;
       - it can not be used in an existing MeetingCategory.usingGroups;
       - it can not be used as groupInCharge of another organization;
+      - it can not be used as groupInCharge of a category;
       - the linked ploneGroups must be empty of members.'''
     # Do lighter checks first...  Check that the organization is not used
     # in a meetingConfig
@@ -285,6 +286,11 @@ def onOrgWillBeRemoved(current_org, event):
         classifiers = mc.classifiers.objectValues('MeetingCategory')
         for cat in tuple(categories) + tuple(classifiers):
             if current_org_uid in cat.getUsingGroups():
+                raise BeforeDeleteException(translate("can_not_delete_organization_meetingcategory",
+                                                      mapping={'url': cat.absolute_url()},
+                                                      domain="plone",
+                                                      context=request))
+            if current_org_uid in cat.getGroupsInCharge():
                 raise BeforeDeleteException(translate("can_not_delete_organization_meetingcategory",
                                                       mapping={'url': cat.absolute_url()},
                                                       domain="plone",

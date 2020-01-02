@@ -571,6 +571,32 @@ schema = Schema((
         write_permission="PloneMeeting: Write risky config",
     ),
     BooleanField(
+        name='includeGroupsInChargeDefinedOnProposingGroup',
+        default=defValues.includeGroupsInChargeDefinedOnProposingGroup,
+        widget=BooleanField._properties['widget'](
+            description="IncludeGroupsInChargeDefinedOnProposingGroup",
+            description_msgid="include_groups_in_charge_defined_on_proposing_group_descr",
+            label='Includegroupsinchargedefinedonproposinggroup',
+            label_msgid='PloneMeeting_label_includeGroupsInChargeDefinedOnProposingGroup',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="data",
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    BooleanField(
+        name='includeGroupsInChargeDefinedOnCategory',
+        default=defValues.includeGroupsInChargeDefinedOnCategory,
+        widget=BooleanField._properties['widget'](
+            description="IncludeGroupsInChargeDefinedOnCategory",
+            description_msgid="include_groups_in_charge_defined_on_category_descr",
+            label='Includegroupsinchargedefinedoncategory',
+            label_msgid='PloneMeeting_label_includeGroupsInChargeDefinedOnCategory',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="data",
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    BooleanField(
         name='toDiscussSetOnItemInsert',
         default=defValues.toDiscussSetOnItemInsert,
         widget=BooleanField._properties['widget'](

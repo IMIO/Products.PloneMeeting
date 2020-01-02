@@ -2890,18 +2890,43 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getGroupsInCharge')
 
-    def getGroupsInCharge(self, theObjects=False, fromOrgIfEmpty=False, first=False, **kwargs):
+    def getGroupsInCharge(self,
+                          theObjects=False,
+                          fromOrgIfEmpty=False,
+                          fromCatIfEmpty=False,
+                          first=False,
+                          includeAuto=False,
+                          **kwargs):
         '''Redefine field MeetingItem.groupsInCharge accessor to be able to return
            groupsInCharge id or the real orgs if p_theObjects is True.
            Default behaviour is to get the orgs stored in the groupsInCharge field.
-           If p_first is True, we only return first group in charge.'''
-        item = self.getSelf()
-        res = item.getField('groupsInCharge').get(item, **kwargs)  # = org_uid
-        if not res and fromOrgIfEmpty:
-            proposingGroup = item.getProposingGroup(theObject=True)
-            groups_in_charge = proposingGroup.get_groups_in_charge()
-            if groups_in_charge:
-                res = groups_in_charge
+           If p_first is True, we only return first group in charge.
+           If p_includAuto is True, we will include auto computed groupsInCharge,
+           so groupsInCharge defined in proposingGroup and category.'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+
+        res = list(self.getField('groupsInCharge').get(self, **kwargs))  # = org_uid
+
+        if (not res and fromOrgIfEmpty) or \
+           (includeAuto and cfg.getIncludeGroupsInChargeDefinedOnProposingGroup()):
+            proposingGroup = self.getProposingGroup(theObject=True)
+            org_groups_in_charge = [
+                gic_uid for gic_uid in proposingGroup.get_groups_in_charge()
+                if gic_uid not in res]
+            if org_groups_in_charge:
+                res += list(org_groups_in_charge)
+
+        if (not res and fromCatIfEmpty) or \
+           (includeAuto and cfg.getIncludeGroupsInChargeDefinedOnCategory()):
+            category = self.getCategory(theObject=True, real=True)
+            if category:
+                cat_groups_in_charge = [
+                    gic_uid for gic_uid in category.getGroupsInCharge()
+                    if gic_uid not in res]
+                if cat_groups_in_charge:
+                    res += list(cat_groups_in_charge)
+
         # avoid getting every organizations if first=True
         if res and first and theObjects:
             res = [res[0]]
@@ -3058,7 +3083,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         selected_group_in_charge = None
         if from_group_in_charge:
-            selected_group_in_charge = item.getGroupsInCharge(theObjects=True, fromOrgIfEmpty=True, first=True)
+            selected_group_in_charge = item.getGroupsInCharge(
+                theObjects=True, fromOrgIfEmpty=True, fromCatIfEmpty=True, first=True)
         # get certified signatures computed, this will return a list with pair
         # of function/signatures, so ['function1', 'name1', 'function2', 'name2', 'function3', 'name3', ]
         # this list is ordered by signature number defined on the organization/MeetingConfig
@@ -3484,7 +3510,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def _computeOrderOnGroupsInCharge(self, cfg):
         '''Helper method to compute inserting index when using insert method 'on_groups_in_charge'.'''
-        groups_in_charge = self.getGroupsInCharge()
+        groups_in_charge = self.getGroupsInCharge(includeAuto=True)
         # computing will generate following order :
         # items having no groups in charge
         # items having group in charge 1 only
@@ -3791,7 +3817,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                             res[-1]['delay_label'] = storedCustomAdviser['delay_label']
         return res
 
-    security.declarePublic('addAutoCopyGroups')
+    security.declarePrivate('addAutoCopyGroups')
 
     def addAutoCopyGroups(self, isCreated):
         '''What group should be automatically set as copyGroups for this item?
@@ -5188,8 +5214,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # always done after updateLocalRoles, we do it here as it is trivial
         self._updateBudgetImpactEditorsLocalRoles()
         # update group in charge local roles
-        # we will give the current groupInCharge _observers sub group access to this item
-        self._updateGroupInChargeLocalRoles()
+        # we will give the current groupsInCharge _observers sub group access to this item
+        self._updateGroupsInChargeLocalRoles()
         # update annexes categorized_elements to store 'visible_for_groups'
         # do it only if local_roles changed
         updateAnnexesAccess(self)
@@ -5207,6 +5233,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         avoid_reindex = kwargs.get('avoid_reindex', False)
         if not avoid_reindex or old_local_roles != self.__ac_local_roles__:
             self.reindexObjectSecurity()
+        # return indexes_to_update in case a reindexObject is not done
+        return ['getCopyGroups', 'getGroupsInCharge']
 
     def _updateCopyGroupsLocalRoles(self, isCreated):
         '''Give the 'Reader' local role to the copy groups
@@ -5262,14 +5290,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         budgetImpactEditorsGroupId = "%s_%s" % (cfg.getId(), BUDGETIMPACTEDITORS_GROUP_SUFFIX)
         self.manage_addLocalRoles(budgetImpactEditorsGroupId, ('MeetingBudgetImpactEditor',))
 
-    def _updateGroupInChargeLocalRoles(self):
+    def _updateGroupsInChargeLocalRoles(self):
         '''Get the current groupsInCharge and give View access to the _observers Plone group.'''
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         itemState = self.queryState()
         if itemState not in cfg.getItemGroupsInChargeStates():
             return
-        groupsInCharge = self.getGroupsInCharge(True)
+        groupsInCharge = self.getGroupsInCharge(theObjects=True, includeAuto=True)
         for groupInCharge in groupsInCharge:
             observersPloneGroupId = get_plone_group_id(groupInCharge.UID(), 'observers')
             self.manage_addLocalRoles(observersPloneGroupId, (READER_USECASES['groupsincharge'],))

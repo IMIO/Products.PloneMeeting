@@ -1424,7 +1424,11 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                          brain.portal_type,
                          '/'.join(itemOrMeeting.getPhysicalPath())))
             i = i + 1
-            itemOrMeeting.updateLocalRoles(avoid_reindex=True)
+            indexes_to_update = itemOrMeeting.updateLocalRoles(avoid_reindex=True)
+            # if auto rules regarding copyGroups or groupsInCharge changed
+            # we could have more or less copyGroups/groupsInCharge so reindex relevant indexes
+            if indexes_to_update:
+                itemOrMeeting.reindexObject(idxs=indexes_to_update)
 
         seconds = time.time() - startTime
         logger.info('updateAllLocalRoles finished in %.2f seconds(s) (about %d minute(s)), that is %d by second.' %
