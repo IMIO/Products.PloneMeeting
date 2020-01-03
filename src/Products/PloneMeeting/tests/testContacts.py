@@ -707,7 +707,8 @@ class testContacts(PloneMeetingTestCase):
         # the group is actually removed
         self.failIf(self.developers in self.own_org)
 
-        # 4) fails when used in a MeetingCategory.usingGroups
+        # 4) fails when used in a MeetingCategory.usingGroups or MeetingCategory.groupsInCharge
+        # usingGroups
         cat = cfg2.categories.subproducts
         self.assertTrue(self.vendors_uid in cat.getUsingGroups())
         with self.assertRaises(BeforeDeleteException) as cm:
@@ -719,6 +720,18 @@ class testContacts(PloneMeetingTestCase):
                                     mapping={'url': cat.absolute_url()},
                                     context=self.portal.REQUEST))
         cat.setUsingGroups([])
+        # groupsInCharge
+        cat.setGroupsInCharge([self.vendors_uid])
+        transaction.commit()
+        with self.assertRaises(BeforeDeleteException) as cm:
+            self.portal.restrictedTraverse('@@delete_givenuid')(
+                self.vendors_uid, catch_before_delete_exception=False)
+        self.assertEquals(cm.exception.message,
+                          translate('can_not_delete_organization_meetingcategory',
+                                    domain='plone',
+                                    mapping={'url': cat.absolute_url()},
+                                    context=self.portal.REQUEST))
+        cat.setGroupsInCharge([])
 
         # 5) removing a used group in the configuration fails too
         # remove item because it uses 'vendors'

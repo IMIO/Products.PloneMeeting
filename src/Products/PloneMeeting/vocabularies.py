@@ -268,8 +268,9 @@ class GroupsInChargeVocabulary(object):
         cfg = tool.getMeetingConfig(context)
         res = []
         is_using_cfg_order = False
-        # groups in charge are defined on organizations
         if 'groupsInCharge' not in cfg.getUsedItemAttributes():
+            # groups in charge are defined on organizations or categories
+            # organizations
             orgs = get_organizations(only_selected=only_selected)
             for org in orgs:
                 for group_in_charge_uid in (org.groups_in_charge or []):
@@ -277,6 +278,16 @@ class GroupsInChargeVocabulary(object):
                     # manage duplicates
                     if group_in_charge and group_in_charge not in res:
                         res.append(group_in_charge)
+            # categories
+            if not cfg.getUseGroupsAsCategories():
+                classifiers = 'classifier' in cfg.getUsedItemAttributes()
+                categories = cfg.getCategories(classifiers=classifiers, onlySelectable=False, caching=False)
+                for cat in categories:
+                    for group_in_charge_uid in cat.getGroupsInCharge():
+                        group_in_charge = get_organization(group_in_charge_uid)
+                        # manage duplicates
+                        if group_in_charge and group_in_charge not in res:
+                            res.append(group_in_charge)
         else:
             # groups in charge are selected on the items
             is_using_cfg_order = True

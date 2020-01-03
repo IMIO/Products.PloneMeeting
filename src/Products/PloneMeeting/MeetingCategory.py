@@ -82,6 +82,20 @@ schema = Schema((
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
+    LinesField(
+        name='groupsInCharge',
+        widget=MultiSelectionWidget(
+            size=10,
+            description="Groupsincharge",
+            description_msgid="category_groups_in_charge_descr",
+            format="checkbox",
+            label='Groupsincharge',
+            label_msgid='PloneMeeting_label_groupsInCharge',
+            i18n_domain='PloneMeeting',
+        ),
+        multiValued=1,
+        vocabulary_factory='collective.contact.plonegroup.sorted_selected_organization_services',
+    ),
 
 ),
 )
@@ -138,6 +152,7 @@ class MeetingCategory(BaseContent, BrowserDefaultMixin):
     def _invalidateCachedVocabularies(self):
         """Clean cache for vocabularies using MeetingCategories."""
         invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.categoriesvocabulary")
+        invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.groupsinchargevocabulary")
 
     security.declarePrivate('at_post_create_script')
 
