@@ -722,6 +722,7 @@ class testContacts(PloneMeetingTestCase):
         cat.setUsingGroups([])
         # groupsInCharge
         cat.setGroupsInCharge([self.vendors_uid])
+        transaction.commit()
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(
                 self.vendors_uid, catch_before_delete_exception=False)
