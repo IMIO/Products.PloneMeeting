@@ -622,6 +622,8 @@ class AskedAdvicesVocabulary(object):
             self.cfg = self.tool.getMeetingConfig(context)
         except:
             return SimpleVocabulary(res)
+        if self.cfg is None:
+            return SimpleVocabulary(res)
 
         self.context = context
         self.request = context.REQUEST
