@@ -1,13 +1,4 @@
 # -*- coding: utf-8 -*-
-#
-# File: MeetingItem.py
-#
-# Copyright (c) 2015 by Imio.be
-# Generator: ArchGenXML Version 2.7
-#            http://plone.org/products/archgenxml
-#
-# GNU General Public License (GPL)
-#
 
 from AccessControl import ClassSecurityInfo
 from AccessControl import Unauthorized

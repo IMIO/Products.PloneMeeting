@@ -1,13 +1,4 @@
 # -*- coding: utf-8 -*-
-#
-# File: events.py
-#
-# Copyright (c) 2015 by Imio.be
-# Generator: ArchGenXML Version 2.7
-#            http://plone.org/products/archgenxml
-#
-# GNU General Public License (GPL)
-#
 
 from AccessControl import Unauthorized
 from collective.contact.plonegroup.utils import get_all_suffixes
