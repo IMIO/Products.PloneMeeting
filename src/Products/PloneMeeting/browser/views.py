@@ -860,15 +860,16 @@ class BaseDGHV(object):
         elif self.context.meta_type == 'MeetingItem' and self.context.getItemAssembly():
             res = self.context.getItemAssembly()
 
-        if res and striked:
-            res = toHTMLStrikedContent(res)
+        if res:
+            if striked:
+                return toHTMLStrikedContent(res)
+            else:
+                return res
 
-        if not res and attendees_by_type:
-            res = self.print_attendees_by_type(**kwargs)
+        if attendees_by_type:
+            return self.print_attendees_by_type(**kwargs)
         else:
-            res = self.print_attendees(**kwargs)
-
-        return res
+            return self.print_attendees(**kwargs)
 
     def _get_attendees(self):
         """ """
@@ -1189,6 +1190,41 @@ class BaseDGHV(object):
         helperView = obj.restrictedTraverse('@@document-generation')
         generation_helper_view = helperView._get_generation_context(self.getDGHV(obj), sub_pod_template)
         return generation_helper_view
+
+    def print_signatures_by_position(self):
+        """
+        Print signatures by position
+        :return: a dict with position as key and signature as value
+        like this {1 : 'The mayor,', 2: 'John Doe'}.
+        A dict is used to safely get a signature with the get method
+        """
+        signatures = None
+        if self.context.meta_type == 'Meeting' and self.context.getSignatures():
+            signatures = self.context.getSignatures()
+        elif self.context.meta_type == 'MeetingItem' and self.context.getItemSignatures():
+            signatures = self.context.getItemSignatures()
+
+        if signatures:
+            return OrderedDict({i: signature for i, signature in enumerate(signatures.split('\n'))})
+        else:
+            return self.print_signatories_by_position()
+
+    def print_signatories_by_position(self,
+                                      signature_format=['position_type', 'person']):
+        """
+        Print signatories by position
+        :return: a dict with position as key and signature as value
+        like this {1 : 'The mayor,', 2: 'John Doe'}
+        """
+        signature_lines = OrderedDict()
+        if self.context.meta_type == 'Meeting':
+            signatories = self.getSignatories(theObjects=True, by_signature_number=True)
+        else:
+            signatories = self.getItemSignatories(theObjects=True, by_signature_number=True)
+
+        for signatory in signatories:
+            pass #TODO
+
 
 
 class FolderDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV):
