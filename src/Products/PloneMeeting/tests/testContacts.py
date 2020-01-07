@@ -1,26 +1,4 @@
 # -*- coding: utf-8 -*-
-#
-# File: testMeeting.py
-#
-# Copyright (c) 2015 by Imio.be
-#
-# GNU General Public License (GPL)
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
-# 02110-1301, USA.
-#
 
 from AccessControl import Unauthorized
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
@@ -707,7 +685,8 @@ class testContacts(PloneMeetingTestCase):
         # the group is actually removed
         self.failIf(self.developers in self.own_org)
 
-        # 4) fails when used in a MeetingCategory.usingGroups
+        # 4) fails when used in a MeetingCategory.usingGroups or MeetingCategory.groupsInCharge
+        # usingGroups
         cat = cfg2.categories.subproducts
         self.assertTrue(self.vendors_uid in cat.getUsingGroups())
         with self.assertRaises(BeforeDeleteException) as cm:
@@ -719,6 +698,18 @@ class testContacts(PloneMeetingTestCase):
                                     mapping={'url': cat.absolute_url()},
                                     context=self.portal.REQUEST))
         cat.setUsingGroups([])
+        # groupsInCharge
+        cat.setGroupsInCharge([self.vendors_uid])
+        transaction.commit()
+        with self.assertRaises(BeforeDeleteException) as cm:
+            self.portal.restrictedTraverse('@@delete_givenuid')(
+                self.vendors_uid, catch_before_delete_exception=False)
+        self.assertEquals(cm.exception.message,
+                          translate('can_not_delete_organization_meetingcategory',
+                                    domain='plone',
+                                    mapping={'url': cat.absolute_url()},
+                                    context=self.portal.REQUEST))
+        cat.setGroupsInCharge([])
 
         # 5) removing a used group in the configuration fails too
         # remove item because it uses 'vendors'

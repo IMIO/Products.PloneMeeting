@@ -57,7 +57,7 @@
                                   classOddEven python: oddrow and 'even' or 'odd';"
                      tal:attributes="class python: not isActive and classOddEven+' state-inactive' or classOddEven"
                      valign="top">
-                    <td><h5><a tal:attributes="href obj/absolute_url" tal:content="obj/getName"></a></h5>
+                    <td><h5><a tal:attributes="href obj/absolute_url" tal:content="obj/Title"></a></h5>
                     </td>
                     <td i18n:domain="plone">
                       <span tal:condition="isActive" i18n:translate="">Yes</span>
@@ -150,12 +150,6 @@
             <td tal:define="field python:here.getField('unrestrictedUsers')">
                 <span metal:use-macro="here/widgets/field/macros/view" />
             </td>
-            <td></td>
-          </tr>
-          <tr valign="top">
-            <td tal:define="field python:here.getField('modelAdaptations')">
-              <span metal:use-macro="here/widgets/field/macros/view" /></td>
-            <td></td>
             <td></td>
           </tr>
           <tr valign="top">

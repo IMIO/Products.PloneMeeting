@@ -19,6 +19,15 @@ Changelog
   This vocabulary is used in the faceted filter "Advices" and for field MeetingConfig.advicesKeptOnSentToOtherMC
 - Added MeetingItem.validate_groupsInCharge, when enabled in MeetingConfig.usedItemAttributes, field MeetingItem.groupsInCharge is required
 - In main migration to v4.1, do not refresh other catalogs that portal_catalog (bypass reference_catalog and uid_catalog)
+- Removed ToolPloneMeeting.modelAdaptations and relative functionnality (bilingual, getName, ...)
+- Make RichText fields of Meeting searchable, index also meeting annexes title in SearchableText index
+- Added upgrade step to 4104
+- Removed DashboardCollection 'searchalldecisions' and replaced it by 'searchallmeetings', this way every meetings are displayed and user may search accross all meetings
+  or filter on review_state if he wants only decided meetings
+- Added helper method Migrator.updateCollectionColumns to be able to update every columns for every DashboardCollections of every MeetingConfigs
+- Added possibility to define groups in charge for a given MeetingCategory, the same way it is done for organization.groups_in_charge.
+  New parameters MeetingConfig.includeGroupsInChargeDefinedOnProposingGroup and MeetingConfig.includeGroupsInChargeDefinedOnCategory will make it possible to take groups in charge
+  defined on the proposingGroup or on the category into account while giving access to the item or to the confidential annexes
 
 4.1.14 (2019-11-27)
 -------------------

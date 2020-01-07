@@ -69,17 +69,6 @@ class Descriptor(object):
                 res[k] = v
         return res
 
-    def setBilingual(self, name, value):
-        '''Field named p_name is potentially a bilingual field. If it is the
-           case, p_value is a tuple of strings, and not a single string value.
-           In this case, we set 2 attributes instead of one on p_self, the
-           second one being named like the first one suffixed with char "2".'''
-        if not value or isinstance(value, basestring):
-            setattr(self, name, value)
-        else:
-            setattr(self, name, value[0])
-            setattr(self, name + '2', value[1])
-
 
 class RecurringItemDescriptor(Descriptor):
     excludedFields = ['title']
@@ -88,13 +77,13 @@ class RecurringItemDescriptor(Descriptor):
                  description='', category='', associatedGroups=(), decision='',
                  itemKeywords='', itemTags=(), meetingTransitionInsertingMe='_init_'):
         self.id = id
-        self.setBilingual('title', title)
+        self.title = title
         self.proposingGroup = proposingGroup
         self.proposingGroupWithGroupInCharge = proposingGroupWithGroupInCharge
-        self.setBilingual('description', description)
+        self.description = description
         self.category = category
         self.associatedGroups = associatedGroups
-        self.setBilingual('decision', decision)
+        self.decision = decision
         self.itemKeywords = itemKeywords
         self.itemTags = itemTags
         self.meetingTransitionInsertingMe = meetingTransitionInsertingMe
@@ -107,14 +96,14 @@ class ItemTemplateDescriptor(Descriptor):
                  description='', category='', associatedGroups=(), decision='',
                  itemKeywords='', itemTags=(), templateUsingGroups=[]):
         self.id = id
-        self.setBilingual('title', title)
+        self.title = title
         # the proposingGroup can be empty ('') for itemtemplate
         self.proposingGroup = proposingGroup
         self.proposingGroupWithGroupInCharge = proposingGroupWithGroupInCharge
-        self.setBilingual('description', description)
+        self.description = description
         self.category = category
         self.associatedGroups = associatedGroups
-        self.setBilingual('decision', decision)
+        self.decision = decision
         self.itemKeywords = itemKeywords
         self.itemTags = itemTags
         self.templateUsingGroups = templateUsingGroups
@@ -126,8 +115,8 @@ class CategoryDescriptor(Descriptor):
     def __init__(self, id, title, description='', categoryId='',
                  usingGroups=[], active=True):
         self.id = id
-        self.setBilingual('title', title)
-        self.setBilingual('description', description)
+        self.title = title
+        self.description = description
         self.categoryId = categoryId
         self.usingGroups = usingGroups
         self.active = active
@@ -393,9 +382,9 @@ class OrgDescriptor(Descriptor):
                  active=True, as_copy_group_on=None, groups_in_charge=[],
                  suffixes=MEETING_GROUP_SUFFIXES):
         self.id = id
-        self.setBilingual('title', title)
+        self.title = title
         self.acronym = acronym
-        self.setBilingual('description', description)
+        self.description = description
         self.parent_path = ''
         self.item_advice_states = []
         self.item_advice_edit_states = []
@@ -467,7 +456,7 @@ class MeetingConfigDescriptor(Descriptor):
 
     def __init__(self, id, title, folderTitle, isDefault=False, active=True):
         self.id = id  # Identifier of the meeting config.
-        self.setBilingual('title', title)
+        self.title = title
         self.active = active
         # ids of users that will be MeetingManagers for this MeetingConfig
         self.meetingManagers = []
@@ -635,11 +624,11 @@ class MeetingConfigDescriptor(Descriptor):
         # When the system displays the list of all meetings (the "all meetings"
         # topic), only meetings having one of the stated listed in
         # meetingTopicStates will be shown.
-        # this will be applied on the 'searchallmeetings' Collection
+        # this will be applied on the 'searchnotdecidedmeetings' Collection
         self.meetingTopicStates = ['created', 'published', 'frozen']
         # In the "decisions" portlet, the "all decisions" portlet will only show
         # meetings having one of the states listed in decisionTopicStates.
-        # this will be applied on the 'searchalldecisions' Collection
+        # this will be applied on the 'searchlastdecisions' DashboardCollection
         self.decisionTopicStates = ['decided', 'closed', 'archived']
         # Maximum number of meetings or decisions shown in the meeting and
         # decision portlets. If overflow, a combo box is shown instead of a
@@ -647,8 +636,8 @@ class MeetingConfigDescriptor(Descriptor):
         self.maxShownMeetings = 5
         # If a decision if maxDaysDecisions old (or older), it is not shown
         # anymore in the "decisions" portlet. This decision may still be
-        # consulted by clicking on "all decisions" in the same portlet.
-        # this will be applied on the 'searchalldecisions' Collection
+        # consulted by clicking on "all meetings" in the same portlet.
+        # this will be applied on the 'searchlastdecisions' DashboardCollection
         self.maxDaysDecisions = 60
         # Which view do you want to select when entering a PloneMeeting folder ?
         self.meetingAppDefaultView = 'searchallitems'
@@ -679,7 +668,8 @@ class MeetingConfigDescriptor(Descriptor):
         self.maxShownAvailableItems = 20
         self.maxShownMeetingItems = 40
         # list of collection ids to disable
-        self.disabled_collections = []  # ['searches_items/searchallitems', 'searches_meetings/searchallmeetings']
+        # ['searches_items/searchallitems', 'searches_meetings/searchnotdecidedmeetings']
+        self.disabled_collections = []
 
         # Mail-related parameters -----------------------------------------------
         # Mail mode can be: activated, deactivated, test.
@@ -706,6 +696,8 @@ class MeetingConfigDescriptor(Descriptor):
         # List of item states when it is possible for 'Budget impact reviewers' to edit the budgetInfos
         self.itemBudgetInfosStates = []
         self.itemGroupsInChargeStates = []
+        self.includeGroupsInChargeDefinedOnProposingGroup = False
+        self.includeGroupsInChargeDefinedOnCategory = False
         # List of Organization uids to consider as Power advisers
         self.powerAdvisersGroups = []
         # List of item and meeting states the users in the MeetingConfig
@@ -782,7 +774,7 @@ class PloneMeetingConfiguration(Descriptor):
         return klass.instance
     get = classmethod(get)
 
-    multiSelectFields = ('modelAdaptations', 'workingDays', 'configGroups')
+    multiSelectFields = ('workingDays', 'configGroups')
 
     def __init__(self, meetingFolderTitle, meetingConfigs, orgs):
         self.meetingFolderTitle = meetingFolderTitle
@@ -790,7 +782,6 @@ class PloneMeetingConfiguration(Descriptor):
         self.functionalAdminName = ''
         self.restrictUsers = False
         self.unrestrictedUsers = ''
-        self.modelAdaptations = []
         self.enableScanDocs = False
         self.workingDays = ('mon', 'tue', 'wed', 'thu', 'fri')
         self.holidays = [

@@ -53,7 +53,6 @@ from Products.PloneMeeting.config import TOOL_FOLDER_ITEM_TEMPLATES
 from Products.PloneMeeting.config import TOOL_FOLDER_POD_TEMPLATES
 from Products.PloneMeeting.config import TOOL_FOLDER_RECURRING_ITEMS
 from Products.PloneMeeting.Extensions.imports import import_contacts
-from Products.PloneMeeting.model.adaptations import performModelAdaptations
 from Products.PloneMeeting.profiles import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.ToolPloneMeeting import MEETING_CONFIG_ERROR
 from Products.PloneMeeting.utils import org_id_to_uid
@@ -133,7 +132,6 @@ class ToolInitializer:
         self.data = self.profileData
         if not self.data:
             return self.noDataMessage
-        performModelAdaptations(self.tool)
         # Register classes again, after model adaptations have been performed
         # (see comment in __init__.py)
         registerClasses()
@@ -248,8 +246,8 @@ class ToolInitializer:
     def _finishConfigFor(self, cfg, data):
         """When the MeetingConfig has been created, some parameters still need to be applied
            because they need the MeetingConfig to exist."""
-        # apply the meetingTopicStates to the 'searchallmeetings' DashboardCollection
-        updateCollectionCriterion(cfg.searches.searches_meetings.searchallmeetings,
+        # apply the meetingTopicStates to the 'searchnotdecidedmeetings' DashboardCollection
+        updateCollectionCriterion(cfg.searches.searches_meetings.searchnotdecidedmeetings,
                                   'review_state',
                                   list(data.meetingTopicStates))
         # apply the maxDaysDecisions to the 'searchlastdecisions' DashboardCollection
@@ -259,9 +257,6 @@ class ToolInitializer:
         # apply the decisionTopicStates to the 'searchlastdecisions'
         # and 'searchalldecision' DashboardCollections
         updateCollectionCriterion(cfg.searches.searches_decisions.searchlastdecisions,
-                                  'review_state',
-                                  list(data.decisionTopicStates))
-        updateCollectionCriterion(cfg.searches.searches_decisions.searchalldecisions,
                                   'review_state',
                                   list(data.decisionTopicStates))
         # select correct default view

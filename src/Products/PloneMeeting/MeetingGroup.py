@@ -31,7 +31,6 @@ from Products.PloneMeeting.config import WriteRiskyConfig
 from Products.PloneMeeting.utils import computeCertifiedSignatures
 from Products.PloneMeeting.utils import createOrUpdatePloneGroup
 from Products.PloneMeeting.utils import getCustomAdapter
-from Products.PloneMeeting.utils import getFieldContent
 from Products.PloneMeeting.utils import listifySignatures
 from zope.i18n import translate
 from zope.interface import implements
@@ -202,12 +201,6 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
 
     schema = MeetingGroup_schema
 
-    security.declarePublic('getName')
-
-    def getName(self, force=None):
-        '''Returns the possibly translated title.'''
-        return getFieldContent(self, 'title', force)
-
     security.declarePublic('queryState')
 
     def queryState(self):
@@ -268,7 +261,7 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
         res = []
         tool = api.portal.get_tool('portal_plonemeeting')
         for mGroup in tool.getMeetingGroups():
-            res.append((mGroup.getId(), mGroup.getName()))
+            res.append((mGroup.getId(), mGroup.Title()))
         # make sure that if a configuration was defined for a group
         # that is now inactive, it is still displayed
         storedGroupsInCharge = self.getGroupsInCharge()
@@ -277,7 +270,7 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
             for storedGroupInCharge in storedGroupsInCharge:
                 if storedGroupInCharge not in groupsInVocab:
                     mGroup = getattr(tool, storedGroupInCharge)
-                    res.append((mGroup.getId(), mGroup.getName()))
+                    res.append((mGroup.getId(), mGroup.Title()))
         return DisplayList(res).sortedByValue()
 
     def getPloneGroupId(self, suffix):

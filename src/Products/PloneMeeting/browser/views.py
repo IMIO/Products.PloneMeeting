@@ -1,24 +1,5 @@
 # -*- coding: utf-8 -*-
-#
-# Copyright (c) 2015 by Imio.be
-#
-# GNU General Public License (GPL)
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
-# 02110-1301, USA.
-#
+
 from collections import OrderedDict
 from collective.contact.core.utils import get_gender_and_number
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
@@ -352,6 +333,12 @@ class MeetingAfterFacetedInfosView(BrowserView):
         self.portal_url = api.portal.get().absolute_url()
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
+
+    def __call__(self):
+        """ """
+        # initialize member in call because it is Anonymous in __init__ of view...
+        self.member = api.user.get_current()
+        return super(MeetingAfterFacetedInfosView, self).__call__()
 
 
 class MeetingInsertingMethodsHelpMsgView(BrowserView):

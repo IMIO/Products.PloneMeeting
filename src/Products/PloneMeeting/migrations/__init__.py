@@ -158,6 +158,13 @@ class Migrator(BaseMigrator):
             cfg.createSearches(cfg._searchesInfo())
         logger.info('Done.')
 
+    def updateCollectionColumns(self):
+        """Update collections columns."""
+        logger.info("Updating collections columns for every MeetingConfigs...")
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            cfg.updateCollectionColumns()
+        logger.info('Done.')
+
     def cleanMeetingConfigs(self, field_names=[]):
         """Remove given p_field_names from every MeetingConfigs."""
         logger.info('Cleaning MeetingConfigs...')
@@ -197,4 +204,5 @@ class Migrator(BaseMigrator):
         for cfgId in self.cfgsAdvicesInvalidation:
             cfg = getattr(self.tool, cfgId)
             cfg.setEnableAdviceInvalidation(self.cfgsAdvicesInvalidation[cfgId])
+        self.tool.invalidateAllCache()
         BaseMigrator.finish(self)
