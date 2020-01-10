@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.1.15 (unreleased)
+4.1.15 (2020-01-10)
 -------------------
 
 - Only show the 'Add element' actions menu when Manager is on a Folder or on a MessagesConfig element, this way we avoid users changing review_state, layout our deleting the element...
