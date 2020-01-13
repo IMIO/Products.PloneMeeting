@@ -723,44 +723,6 @@ def getDateFromDelta(aDate, delta):
     return DateTime('%s %s' % ((aDate + int(days)).strftime('%Y/%m/%d'), hour))
 
 
-mainTypes = ('MeetingItem', 'Meeting')
-
-
-def getFieldContent(obj, name, force=None, sep='-', **kwargs):
-    '''Returns the content of p_field on p_obj. If content if available in
-       2 languages, return the one that corresponds to user language, excepted
-       if p_force is integer 1 or 2: in this case it returns content in language
-       1 or 2. If p_force is "all", it returns the content in both languages,
-       separated with p_sep.'''
-    global mainTypes
-    if force:
-        if force == 1:
-            return obj.getField(name).get(obj, **kwargs)
-        elif force == 2:
-            return obj.getField(name + '2').get(obj, **kwargs)
-        elif force == 'all':
-            return '%s%s%s' % (obj.getField(name).get(obj, **kwargs), sep,
-                               obj.getField(name + '2').get(obj, **kwargs))
-    field = obj.getField(name)
-    # Is content of this field bilingual?
-    tool = api.portal.get_tool('portal_plonemeeting')
-    adaptations = tool.getModelAdaptations()
-    if obj.meta_type in mainTypes:
-        bilingual = 'secondLanguage' in adaptations
-    else:
-        bilingual = 'secondLanguageCfg' in adaptations
-    if not bilingual:
-        return field.get(obj)
-    else:
-        # Get the name of the 2 languages
-        firstLanguage = obj.portal_languages.getDefaultLanguage()[0:2]
-        userLanguage = tool.getUserLanguage()
-        if userLanguage == firstLanguage:
-            return field.get(obj)
-        else:
-            return obj.getField(field.getName() + '2').get(obj, **kwargs)
-
-
 def getFieldVersion(obj, name, changes):
     '''Returns the content of field p_name on p_obj. If p_changes is True,
        historical modifications of field content are highlighted.'''

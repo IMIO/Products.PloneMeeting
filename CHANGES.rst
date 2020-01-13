@@ -2,7 +2,19 @@ Changelog
 =========
 
 
-4.1.15 (unreleased)
+4.1.16 (unreleased)
+-------------------
+
+- Adapted print_meeting_date and print_preferred_meeting_date so they can now be used in restricted or unrestricted mode.
+- Item validation workflow is now designed in the MeetingConfig.itemWFValidationLevels, this imply :
+    - to no longer rely on MEETINGROLES and MEETINGREVIEWERS constants;
+    - reviewer levels and mapping between review_state and organization suffix that manage the item is computed from the MeetingConfig;
+    - item validation specific roles (MeetingMember, MeetingReviewer, MeetingPreReviewer are removed from item workflows, local roles are dynamically given and
+      we only use common roles (Reader, Editor, Reviewer and Contributor)
+- Use roles 'Reviewer' and 'Contributor' in meetingadvice_workflow
+- Added bypass for users having 'Manage portal' in MeetingItemWorkflowConditions in 'mayWait_advices_from', 'mayValidate' and 'mayPresent'
+
+4.1.15 (2020-01-10)
 -------------------
 
 - Only show the 'Add element' actions menu when Manager is on a Folder or on a MessagesConfig element, this way we avoid users changing review_state, layout our deleting the element...
@@ -19,14 +31,15 @@ Changelog
   This vocabulary is used in the faceted filter "Advices" and for field MeetingConfig.advicesKeptOnSentToOtherMC
 - Added MeetingItem.validate_groupsInCharge, when enabled in MeetingConfig.usedItemAttributes, field MeetingItem.groupsInCharge is required
 - In main migration to v4.1, do not refresh other catalogs that portal_catalog (bypass reference_catalog and uid_catalog)
-- Adapted print_meeting_date and print_preferred_meeting_date so they can now be used in restricted or unrestricted mode.
-- Item validation workflow is now designed in the MeetingConfig.itemWFValidationLevels, this imply :
-    - to no longer rely on MEETINGROLES and MEETINGREVIEWERS constants;
-    - reviewer levels and mapping between review_state and organization suffix that manage the item is computed from the MeetingConfig;
-    - item validation specific roles (MeetingMember, MeetingReviewer, MeetingPreReviewer are removed from item workflows, local roles are dynamically given and
-      we only use common roles (Reader, Editor, Reviewer and Contributor)
-- Use roles 'Reviewer' and 'Contributor' in meetingadvice_workflow
-- Added bypass for users having 'Manage portal' in MeetingItemWorkflowConditions in 'mayWait_advices_from', 'mayValidate' and 'mayPresent'
+- Removed ToolPloneMeeting.modelAdaptations and relative functionnality (bilingual, getName, ...)
+- Make RichText fields of Meeting searchable, index also meeting annexes title in SearchableText index
+- Added upgrade step to 4104
+- Removed DashboardCollection 'searchalldecisions' and replaced it by 'searchallmeetings', this way every meetings are displayed and user may search accross all meetings
+  or filter on review_state if he wants only decided meetings
+- Added helper method Migrator.updateCollectionColumns to be able to update every columns for every DashboardCollections of every MeetingConfigs
+- Added possibility to define groups in charge for a given MeetingCategory, the same way it is done for organization.groups_in_charge.
+  New parameters MeetingConfig.includeGroupsInChargeDefinedOnProposingGroup and MeetingConfig.includeGroupsInChargeDefinedOnCategory will make it possible to take groups in charge
+  defined on the proposingGroup or on the category into account while giving access to the item or to the confidential annexes
 
 4.1.14 (2019-11-27)
 -------------------

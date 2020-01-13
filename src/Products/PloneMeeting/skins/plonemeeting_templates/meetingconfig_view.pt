@@ -10,7 +10,7 @@
   <body>
   <metal:title fill-slot="content-title">
     <h1 class="documentFirstHeading">
-        <span tal:content="context/getName"></span>
+        <span tal:content="context/Title"></span>
     </h1>
   </metal:title>
   <metal:description fill-slot="content-description">
@@ -642,7 +642,7 @@
                           classOddEven python: oddrow and 'even' or 'odd';" valign="top"
                 tal:attributes="class python: not isActive and classOddEven+' state-inactive' or classOddEven"
                 class="#">
-            <td><h5><a tal:attributes="href obj/absolute_url" tal:content="obj/getName"></a></h5></td>
+            <td><h5><a tal:attributes="href obj/absolute_url" tal:content="obj/Title"></a></h5></td>
             <td><span tal:content="python: obj.getMeetingTransitionInsertingMe() or '-'" i18n:domain="plone" i18n:translate="">Transition inserting me</span></td>
             <td align="right">
               <tal:actions replace="structure python: obj.restrictedTraverse('@@config_actions_panel')(showActions=False, showTransitions=False, showArrows=True)" />

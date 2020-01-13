@@ -28,7 +28,6 @@ from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 from Products.PloneMeeting.config import PROJECTNAME
 from Products.PloneMeeting.config import WriteRiskyConfig
 from Products.PloneMeeting.utils import getCustomAdapter
-from Products.PloneMeeting.utils import getFieldContent
 from zope.i18n import translate
 from zope.interface import implements
 
@@ -266,12 +265,6 @@ class MeetingUser(BaseContent, BrowserDefaultMixin):
         if self.__class__.__name__ != 'MeetingUser':
             return self.context
         return self
-
-    security.declarePublic('getBilingual')
-
-    def getBilingual(self, name, force=None, sep='-'):
-        '''Returns the possibly translated content of field named p_name.'''
-        return getFieldContent(self, name, force, sep)
 
     security.declarePublic('adapted')
 

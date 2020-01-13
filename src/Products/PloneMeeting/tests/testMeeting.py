@@ -478,13 +478,13 @@ class testMeeting(PloneMeetingTestCase):
         meeting = self._createMeetingWithItems()
         self.assertEquals([(item.getProposingGroup(), item.getGroupsInCharge())
                            for item in meeting.getItems(ordered=True)],
-                          [(self.developers_uid, ()),
-                           (self.developers_uid, ()),
-                           (self.vendors_uid, ()),
-                           (self.developers_uid, ()),
-                           (self.vendors_uid, ()),
-                           (self.developers_uid, ()),
-                           (self.vendors_uid, ())])
+                          [(self.developers_uid, []),
+                           (self.developers_uid, []),
+                           (self.vendors_uid, []),
+                           (self.developers_uid, []),
+                           (self.vendors_uid, []),
+                           (self.developers_uid, []),
+                           (self.vendors_uid, [])])
 
         # configure groups to define groups in charge
         gic1 = self.create(
@@ -513,13 +513,13 @@ class testMeeting(PloneMeetingTestCase):
         meeting = self._createMeetingWithItems()
         self.assertEquals([(item.getProposingGroup(), item.getGroupsInCharge())
                            for item in meeting.getItems(ordered=True)],
-                          [(self.vendors_uid, (gic1_uid, )),
-                           (self.vendors_uid, (gic1_uid, )),
-                           (self.vendors_uid, (gic1_uid, )),
-                           (self.developers_uid, (gic2_uid, )),
-                           (self.developers_uid, (gic2_uid, )),
-                           (self.developers_uid, (gic2_uid, )),
-                           (self.developers_uid, (gic2_uid, ))])
+                          [(self.vendors_uid, [gic1_uid]),
+                           (self.vendors_uid, [gic1_uid]),
+                           (self.vendors_uid, [gic1_uid]),
+                           (self.developers_uid, [gic2_uid]),
+                           (self.developers_uid, [gic2_uid]),
+                           (self.developers_uid, [gic2_uid]),
+                           (self.developers_uid, [gic2_uid])])
         self.vendors.groups_in_charge = (gic2_uid,)
         self.developers.groups_in_charge = (gic1_uid,)
         # make sure recurring items are correctly configured
@@ -530,13 +530,13 @@ class testMeeting(PloneMeetingTestCase):
         self.assertEquals([(item.getProposingGroup(),
                            item.getGroupsInCharge())
                            for item in meeting2.getItems(ordered=True)],
-                          [(self.developers_uid, (gic1_uid, )),
-                           (self.developers_uid, (gic1_uid, )),
-                           (self.developers_uid, (gic1_uid, )),
-                           (self.developers_uid, (gic1_uid, )),
-                           (self.vendors_uid, (gic2_uid, )),
-                           (self.vendors_uid, (gic2_uid, )),
-                           (self.vendors_uid, (gic2_uid, ))])
+                          [(self.developers_uid, [gic1_uid]),
+                           (self.developers_uid, [gic1_uid]),
+                           (self.developers_uid, [gic1_uid]),
+                           (self.developers_uid, [gic1_uid]),
+                           (self.vendors_uid, [gic2_uid]),
+                           (self.vendors_uid, [gic2_uid]),
+                           (self.vendors_uid, [gic2_uid])])
 
         # reverse
         cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_groups_in_charge',
@@ -545,13 +545,13 @@ class testMeeting(PloneMeetingTestCase):
         self.assertEquals([(item.getProposingGroup(),
                            item.getGroupsInCharge())
                            for item in meeting3.getItems(ordered=True)],
-                          [(self.vendors_uid, (gic2_uid, )),
-                           (self.vendors_uid, (gic2_uid, )),
-                           (self.vendors_uid, (gic2_uid, )),
-                           (self.developers_uid, (gic1_uid, )),
-                           (self.developers_uid, (gic1_uid, )),
-                           (self.developers_uid, (gic1_uid, )),
-                           (self.developers_uid, (gic1_uid, ))])
+                          [(self.vendors_uid, [gic2_uid]),
+                           (self.vendors_uid, [gic2_uid]),
+                           (self.vendors_uid, [gic2_uid]),
+                           (self.developers_uid, [gic1_uid]),
+                           (self.developers_uid, [gic1_uid]),
+                           (self.developers_uid, [gic1_uid]),
+                           (self.developers_uid, [gic1_uid])])
 
         # it follows groupsInCharge order in the configuration, change it and test again
         # invert position of gic1 and gic2
@@ -566,13 +566,13 @@ class testMeeting(PloneMeetingTestCase):
         self.assertEquals([(item.getProposingGroup(),
                            item.getGroupsInCharge())
                            for item in meeting4.getItems(ordered=True)],
-                          [(self.vendors_uid, (gic2_uid, )),
-                           (self.vendors_uid, (gic2_uid, )),
-                           (self.vendors_uid, (gic2_uid, )),
-                           (self.developers_uid, (gic1_uid, )),
-                           (self.developers_uid, (gic1_uid, )),
-                           (self.developers_uid, (gic1_uid, )),
-                           (self.developers_uid, (gic1_uid, ))])
+                          [(self.vendors_uid, [gic2_uid]),
+                           (self.vendors_uid, [gic2_uid]),
+                           (self.vendors_uid, [gic2_uid]),
+                           (self.developers_uid, [gic1_uid]),
+                           (self.developers_uid, [gic1_uid]),
+                           (self.developers_uid, [gic1_uid]),
+                           (self.developers_uid, [gic1_uid])])
 
         # if a group is not selected, it does not break but the index is 0
         # so it is inserted at the beginning
@@ -582,13 +582,13 @@ class testMeeting(PloneMeetingTestCase):
                            item.getGroupsInCharge(),
                            item.getItemNumber())
                            for item in meeting5.getItems(ordered=True)],
-                          [(self.developers_uid, (gic1_uid, ), 100),
-                           (self.developers_uid, (gic1_uid, ), 200),
-                           (self.developers_uid, (gic1_uid, ), 300),
-                           (self.developers_uid, (gic1_uid, ), 400),
-                           (self.vendors_uid, (gic2_uid, ), 500),
-                           (self.vendors_uid, (gic2_uid, ), 600),
-                           (self.vendors_uid, (gic2_uid, ), 700)])
+                          [(self.developers_uid, [gic1_uid], 100),
+                           (self.developers_uid, [gic1_uid], 200),
+                           (self.developers_uid, [gic1_uid], 300),
+                           (self.developers_uid, [gic1_uid], 400),
+                           (self.vendors_uid, [gic2_uid], 500),
+                           (self.vendors_uid, [gic2_uid], 600),
+                           (self.vendors_uid, [gic2_uid], 700)])
 
     def test_pm_InsertItemOnSeveralGroupsInCharge(self):
         '''Here we test when several groupsInCharge selected, so when the MeetingItem.groupsInCharge
@@ -650,17 +650,17 @@ class testMeeting(PloneMeetingTestCase):
         orderedItems = meeting.getItems(ordered=True)
         self.assertEqual(
             [item.getGroupsInCharge() for item in orderedItems],
-            [(),
-             (),
-             (),
-             (gic1_uid,),
-             (gic1_uid, gic2_uid),
-             (gic1_uid, gic2_uid),
-             (gic1_uid, gic2_uid, gic3_uid),
-             (gic1_uid, gic3_uid),
-             (gic2_uid,),
-             (gic2_uid, gic3_uid),
-             (gic3_uid,)]
+            [[],
+             [],
+             [],
+             [gic1_uid],
+             [gic1_uid, gic2_uid],
+             [gic1_uid, gic2_uid],
+             [gic1_uid, gic2_uid, gic3_uid],
+             [gic1_uid, gic3_uid],
+             [gic2_uid],
+             [gic2_uid, gic3_uid],
+             [gic3_uid]]
         )
 
         # order may be defined in MeetingConfig.orderedGroupsInCharge
@@ -675,17 +675,17 @@ class testMeeting(PloneMeetingTestCase):
         orderedItems = meeting.getItems(ordered=True)
         self.assertEqual(
             [item.getGroupsInCharge() for item in orderedItems],
-            [(),
-             (),
-             (),
-             (gic3_uid,),
-             (gic1_uid, gic3_uid),
-             (gic1_uid, gic2_uid, gic3_uid),
-             (gic2_uid, gic3_uid),
-             (gic1_uid,),
-             (gic1_uid, gic2_uid),
-             (gic1_uid, gic2_uid),
-             (gic2_uid,)]
+            [[],
+             [],
+             [],
+             [gic3_uid],
+             [gic1_uid, gic3_uid],
+             [gic1_uid, gic2_uid, gic3_uid],
+             [gic2_uid, gic3_uid],
+             [gic1_uid],
+             [gic1_uid, gic2_uid],
+             [gic1_uid, gic2_uid],
+             [gic2_uid]]
         )
 
     def test_pm_InsertItemOnAllAssociatedGroups(self):
@@ -1375,19 +1375,19 @@ class testMeeting(PloneMeetingTestCase):
               anItem.getAssociatedGroups(),
               anItem.getProposingGroup()) for
              anItem in ordered_items],
-            [((), 'research', (), self.vendors_uid),
-             ((), 'research', (ag2_uid,), self.vendors_uid),
-             ((gic1_uid,), 'research', (ag1_uid,), self.developers_uid),
-             ((gic1_uid,), 'events', (ag2_uid,), self.vendors_uid),
-             ((gic1_uid, gic2_uid), 'development', (), self.vendors_uid),
-             ((gic1_uid, gic3_uid), 'events', (ag4_uid,), self.developers_uid),
-             ((gic1_uid, gic4_uid), 'events', (ag3_uid, ag4_uid), self.developers_uid),
-             ((gic2_uid,), 'development', (ag2_uid,), self.vendors_uid),
-             ((gic3_uid,), 'development', (ag3_uid,), self.developers_uid),
-             ((gic3_uid,), 'events', (ag1_uid, ag2_uid, ag3_uid, ag4_uid), self.vendors_uid),
-             ((gic3_uid, gic4_uid), 'events', (), self.vendors_uid),
-             ((gic4_uid,), 'events', (), self.developers_uid),
-             ((gic4_uid,), 'events', (ag4_uid,), self.developers_uid)])
+            [([], 'research', (), self.vendors_uid),
+             ([], 'research', (ag2_uid,), self.vendors_uid),
+             ([gic1_uid], 'research', (ag1_uid,), self.developers_uid),
+             ([gic1_uid], 'events', (ag2_uid,), self.vendors_uid),
+             ([gic1_uid, gic2_uid], 'development', (), self.vendors_uid),
+             ([gic1_uid, gic3_uid], 'events', (ag4_uid,), self.developers_uid),
+             ([gic1_uid, gic4_uid], 'events', (ag3_uid, ag4_uid), self.developers_uid),
+             ([gic2_uid], 'development', (ag2_uid,), self.vendors_uid),
+             ([gic3_uid], 'development', (ag3_uid,), self.developers_uid),
+             ([gic3_uid], 'events', (ag1_uid, ag2_uid, ag3_uid, ag4_uid), self.vendors_uid),
+             ([gic3_uid, gic4_uid], 'events', (), self.vendors_uid),
+             ([gic4_uid], 'events', (), self.developers_uid),
+             ([gic4_uid], 'events', (ag4_uid,), self.developers_uid)])
         self.assertEqual(
             [anItem.adapted()._getInsertOrder(cfg) for anItem in ordered_items],
             [[0.0, 1, 0.0, 2],

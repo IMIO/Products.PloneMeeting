@@ -292,6 +292,58 @@ class testMeetingItem(PloneMeetingTestCase):
                           (vendors_gic2, 'Vendors (Org 2)'),
                           (vendors_gic3, 'Vendors (Org 3)'),))
 
+    def test_pm_GroupsInChargeFromProposingGroup(self):
+        '''Groups in charge defined on the organization proposingGroup is taken into
+           account by MeetingItem.getGroupsInCharge and get local_roles on item
+           if MeetingConfig.includeGroupsInChargeDefinedOnProposingGroup.'''
+        cfg = self.meetingConfig
+        cfg.setUseGroupsAsCategories(True)
+        cfg.setIncludeGroupsInChargeDefinedOnProposingGroup(False)
+        cfg.setItemGroupsInChargeStates((self._stateMappingFor('itemcreated'), ))
+        self.developers.groups_in_charge = (self.vendors_uid, )
+
+        # create an item
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        # no effetct when MeetingConfig.includeGroupsInChargeDefinedOnProposingGroup is False
+        self.assertEqual(item.getGroupsInCharge(includeAuto=True), [])
+        self.assertFalse(self.vendors_observers in item.__ac_local_roles__)
+        # enable includeGroupsInChargeDefinedOnProposingGroup
+        cfg.setIncludeGroupsInChargeDefinedOnProposingGroup(True)
+        item._update_after_edit()
+        self.assertEqual(item.getGroupsInCharge(includeAuto=True), [self.vendors_uid])
+        self.assertTrue(READER_USECASES['groupsincharge'] in item.__ac_local_roles__[self.vendors_observers])
+
+    def test_pm_GroupsInChargeFromCategory(self):
+        '''Groups in charge defined on the item category MeetingCategory is taken into
+           account by MeetingItem.getGroupsInCharge and get local_roles on item
+           if MeetingConfig.includeGroupsInChargeDefinedOnCategory.'''
+        cfg = self.meetingConfig
+        cfg.setUseGroupsAsCategories(False)
+        cfg.setIncludeGroupsInChargeDefinedOnCategory(False)
+        cfg.setItemGroupsInChargeStates((self._stateMappingFor('itemcreated'), ))
+        development = cfg.categories.development
+        development.setGroupsInCharge([self.vendors_uid])
+
+        # create an item
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        # select the right category
+        item.setCategory(development.getId())
+        item._update_after_edit()
+        # no effetct when MeetingConfig.includeGroupsInChargeDefinedOnCategory is False
+        self.assertEqual(item.getGroupsInCharge(includeAuto=True), [])
+        self.assertFalse(self.vendors_observers in item.__ac_local_roles__)
+        # enable includeGroupsInChargeDefinedOnCategory
+        cfg.setIncludeGroupsInChargeDefinedOnCategory(True)
+        item._update_after_edit()
+        self.assertEqual(item.getGroupsInCharge(includeAuto=True), [self.vendors_uid])
+        self.assertTrue(READER_USECASES['groupsincharge'] in item.__ac_local_roles__[self.vendors_observers])
+        # does not fail if no category
+        item.setCategory('')
+        item._update_after_edit()
+        self.assertEqual(item.getGroupsInCharge(includeAuto=True), [])
+
     def test_pm_SendItemToOtherMC(self):
         '''Test the send an item to another meetingConfig functionnality'''
         # Activate the functionnality
@@ -478,7 +530,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # enable motivation and budgetInfos in cfg1, not in cfg2
         cfg.setUsedItemAttributes(('description', 'motivation', 'budgetInfos'))
         cfg2.setUsedItemAttributes(('description', 'itemIsSigned', 'privacy'))
-        cfg.setItemManualSentToOtherMCStates((self._stateMappingFor('itemcreated')))
+        cfg.setItemManualSentToOtherMCStates((self._stateMappingFor('itemcreated'), ))
 
         # create and send
         self.changeUser('pmManager')
