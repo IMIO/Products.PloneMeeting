@@ -280,11 +280,8 @@ class testWorkflows(PloneMeetingTestCase):
         self.failIf(len(self.transitions(meeting)) != 2)
         # When a meeting is closed, items without a decision are automatically 'accepted'
         self.do(meeting, 'close')
-        self.assertEquals(item1.queryState(), 'confirmed')
-        self.assertEquals(item2.queryState(), 'confirmed')
-        self.do(meeting, 'archive')
-        self.assertEquals(item1.queryState(), 'itemarchived')
-        self.assertEquals(item2.queryState(), 'itemarchived')
+        self.assertEquals(item1.queryState(), 'accepted')
+        self.assertEquals(item2.queryState(), 'accepted')
 
     def test_pm_WorkflowPermissions(self):
         '''This test checks whether workflow permissions are correct while

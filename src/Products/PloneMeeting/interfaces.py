@@ -333,8 +333,6 @@ class IMeetingItemWorkflowConditions(Interface):
         '''May a decision take place on this item (accept, reject...)?'''
     def mayDelay():
         '''May this item be delayed to another meeting ?'''
-    def mayConfirm():
-        '''May the decision be definitely confirmed?'''
     def mayCorrect(destinationState=None):
         '''Used for 'back' transitions.  p_destinationState is useful when there are
            several 'back' transitions from the same state.'''
@@ -342,8 +340,6 @@ class IMeetingItemWorkflowConditions(Interface):
         '''May one publish me?'''
     def mayFreeze():
         '''May one freeze me ?'''
-    def mayArchive():
-        '''May one archive me ?'''
     def isLateFor(meeting):
         '''Normally, when meeting agendas are published (and seen by everyone),
            we shouldn't continue to add items to it. But sometimes those things
@@ -390,8 +386,12 @@ class IMeetingItemWorkflowActions(Interface):
         '''Executes when the meeting containing this item is frozen (ie
            published, but without most people having the possibility to modify
            it).'''
+    def doPre_accept(stateChange):
+        '''Executes when an item is pre_accepted.'''
     def doAccept(stateChange):
         '''Executes when an item is accepted.'''
+    def doAccept_but_modify(stateChange):
+        '''Executes when an item is accepted_but_modified.'''
     def doRefuse(stateChange):
         '''Executes when an item is refused.'''
     def doDelay(stateChange):
@@ -399,10 +399,6 @@ class IMeetingItemWorkflowActions(Interface):
     def doCorrect(stateChange):
         '''Executes when the user performs a wrong action and needs to undo
            it.'''
-    def doConfirm(stateChange):
-        '''Executes when an item is definitely confirmed.'''
-    def doItemArchive(stateChange):
-        '''Executes when the meeting containing this item is archived.'''
 
 
 class IMeetingItemCustom(IMeetingItem):

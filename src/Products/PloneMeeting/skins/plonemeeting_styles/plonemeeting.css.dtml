@@ -384,8 +384,7 @@ div.viewlet_workflowstate span.state-accepted,
 div.viewlet_workflowstate span.state-accepted_but_modified,
 div.viewlet_workflowstate span.state-accepted_out_of_meeting,
 div.viewlet_workflowstate span.state-accepted_out_of_meeting_emergency,
-div.viewlet_workflowstate span.state-pre_accepted,
-div.viewlet_workflowstate span.state-confirmed {
+div.viewlet_workflowstate span.state-pre_accepted {
     background-color: green;
     border-color: green;
 }
@@ -393,8 +392,7 @@ div.viewlet_workflowstate span.state-confirmed {
 .state-accepted_but_modified,
 .state-accepted_out_of_meeting,
 .state-accepted_out_of_meeting_emergency,
-.state-pre_accepted,
-.state-confirmed {color: green;}
+.state-pre_accepted {color: green;}
 /* Violet */
 div.viewlet_workflowstate span.state-refused {
     background-color: violet;

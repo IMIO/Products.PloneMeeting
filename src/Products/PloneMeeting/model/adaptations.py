@@ -17,8 +17,7 @@ from Products.PloneMeeting.utils import updateCollectionCriterion
 
 # Stuff for performing workflow adaptations ------------------------------------
 noGlobalObsStates = ('itempublished', 'itemfrozen', 'accepted', 'refused',
-                     'delayed', 'confirmed', 'itemarchived',
-                     'removed', 'removed_and_duplicated', 'marked_not_applicable')
+                     'delayed', 'removed', 'removed_and_duplicated', 'marked_not_applicable')
 groupDecisionReadStates = ('proposed', 'prevalidated', 'validated', 'presented',
                            'itempublished', 'itemfrozen')
 
@@ -64,7 +63,7 @@ RETURN_TO_PROPOSING_GROUP_MAPPINGS = {'backTo_presented_from_returned_to_proposi
                                       ['published', ],
                                       'backTo_itemfrozen_from_returned_to_proposing_group':
                                       ['frozen', 'decided', 'decisions_published', ],
-                                      'NO_MORE_RETURNABLE_STATES': ['closed', 'archived', ]
+                                      'NO_MORE_RETURNABLE_STATES': ['closed']
                                       }
 RETURN_TO_PROPOSING_GROUP_VALIDATION_STATES = ('proposed', )
 
@@ -76,7 +75,7 @@ WF_DOES_NOT_EXIST_WARNING = "Could not apply workflow adaptations because the wo
 
 # list of states the creator can no more edit the item even while using the 'creator_edits_unless_closed' wfAdaptation
 # this is made to be overrided if necessary
-WF_NOT_CREATOR_EDITS_UNLESS_CLOSED = ('delayed', 'refused', 'confirmed', 'itemarchived')
+WF_NOT_CREATOR_EDITS_UNLESS_CLOSED = ('delayed', 'refused', 'accepted', 'pre_accepted', 'accepted_but_modified')
 
 # list of dict containing infos about 'waiting_advices' state(s) to add
 # a state will be added by "dict", 'from_states' are list of states leading to the new state
@@ -369,7 +368,7 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                           origin_transition_id,
                           origin_transition_guard_expr_name,
                           back_transition_id,
-                          back_transition_guard_expr_name='mayCorrect',
+                          back_transition_guard_expr_name='mayCorrect()',
                           base_state_id='accepted'):
         """Add an isolated state with transitions go and back from/to another state."""
         wf = itemWorkflow
@@ -393,7 +392,7 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                 actbox_name=transition_id, actbox_url='',
                 actbox_icon='%(portal_url)s/{0}.png'.format(transition_id),
                 actbox_category='workflow',
-                props={'guard_expr': 'python:here.wfConditions().{0}()'.format(guard_expr_name)})
+                props={'guard_expr': 'python:here.wfConditions().{0}'.format(guard_expr_name)})
 
         # link states and transitions
         # new_state
@@ -405,6 +404,7 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
         origin_state.setProperties(
             title=origin_state.title, description=origin_state.description,
             transitions=origin_state.transitions + (origin_transition_id, ))
+        return new_state
 
     def _apply_pre_validation(keepReviewerPermissions=False):
         """Helper method to apply the 'pre_validation' or 'pre_validation_keep_reviewer_permissions' wfAdaptation,
@@ -733,19 +733,18 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
             # First, update the meeting workflow
             wf = meetingWorkflow
             # Delete transitions 'publish' and 'backToPublished'
-            for tr in ('publish', 'backToPublished', 'republish'):
+            for tr in ('publish', 'backToPublished'):
                 if tr in wf.transitions:
                     wf.transitions.deleteTransitions([tr])
             # Update connections between states and transitions
-            wf.states['created'].setProperties(
-                title='created', description='', transitions=['freeze'])
             wf.states['frozen'].setProperties(
                 title='frozen', description='',
                 transitions=['backToCreated', 'decide'])
+            wf.states['decided'].setProperties(
+                title='decided', description='', transitions=['backToFrozen', 'close'])
             # Delete state 'published'
             if 'published' in wf.states:
                 wf.states.deleteStates(['published'])
-
             # Then, update the item workflow.
             wf = itemWorkflow
             # Delete transitions 'itempublish' and 'backToItemPublished'
@@ -753,15 +752,20 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                 if tr in wf.transitions:
                     wf.transitions.deleteTransitions([tr])
             # Update connections between states and transitions
-            wf.states['presented'].setProperties(
-                title='presented', description='',
-                transitions=['itemfreeze', 'backToValidated'])
             wf.states['itemfrozen'].setProperties(
                 title='itemfrozen', description='',
-                transitions=['accept', 'refuse', 'delay', 'backToPresented'])
+                transitions=['accept', 'accept_but_modify', 'delay', 'pre_accept', 'backToPresented'])
+            for decidedState in ['accepted', 'delayed', 'accepted_but_modified']:
+                wf.states[decidedState].setProperties(
+                    title=decidedState, description='',
+                    transitions=['backToItemFrozen', ])
+            wf.states['pre_accepted'].setProperties(
+                title='pre_accepted', description='',
+                transitions=['accept', 'accept_but_modify', 'backToItemFrozen'])
             # Delete state 'published'
             if 'itempublished' in wf.states:
                 wf.states.deleteStates(['itempublished'])
+            return True
 
         # "no_proposal" removes state 'proposed' in the item workflow: this way,
         # people can directly validate items after they have been created.
@@ -901,38 +905,6 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
         elif wfAdaptation == 'reviewers_take_back_validated_item':
             pass
 
-        # "archiving" transforms item and meeting workflow into simple, one-state
-        # workflows for setting up an archive site.
-        elif wfAdaptation == 'archiving':
-            # Keep only final state (itemarchived) in item workflow
-            wf = itemWorkflow
-            # State 'itemarchived' becomes the initial state
-            wf.initial_state = 'itemarchived'
-            # Remove all transitions
-            names = wf.transitions.keys()
-            if names:
-                wf.transitions.deleteTransitions(names)
-            # Remove all states but "itemarchived"
-            names = wf.states.keys()
-            if 'itemarchived' in names:
-                names.remove('itemarchived')
-            if names:
-                wf.states.deleteStates(names)
-            # Keep only final state (archived) in meeting workflow
-            wf = meetingWorkflow
-            # State 'archived' becomes the initial state
-            wf.initial_state = 'archived'
-            # Remove all transitions
-            names = wf.transitions.keys()
-            if names:
-                wf.transitions.deleteTransitions(names)
-            # Remove all states but "archived"
-            names = wf.states.keys()
-            if 'archived' in names:
-                names.remove('archived')
-            if names:
-                wf.states.deleteStates(names)
-
         # "only_creator_may_delete" grants the permission to delete items to
         # creators only (=role MeetingMember)(and also to God=Manager).
         # (De-)activation of adaptation "pre_validation" impacts this one.
@@ -979,8 +951,8 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
 
         # "creator_edits_unless_closed" allows the creator of an item to edit it
         # (decision included) unless the meeting is closed. To be more precise,
-        # the creator will not be able to edit the item if it is delayed, refused,
-        # confirmed or archived. In the standard workflow, as soon as the item is
+        # the creator will not be able to edit the item if it is WF_NOT_CREATOR_EDITS_UNLESS_CLOSED
+        # In the standard workflow, as soon as the item is
         # proposed, its creator looses his ability to modify it.
         elif wfAdaptation == 'creator_edits_unless_closed':
             wf = itemWorkflow
@@ -1184,6 +1156,11 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
             _addDecidedState(new_state_id='marked_not_applicable',
                              transition_id='mark_not_applicable')
 
+        # "delayed" add state 'delayed' in the item workflow
+        elif wfAdaptation == 'delayed':
+            _addDecidedState(new_state_id='delayed',
+                             transition_id='delay')
+
         # "removed" and "removed_and_duplicated" add state 'removed' in the item workflow
         elif wfAdaptation in ('removed', 'removed_and_duplicated'):
             _addDecidedState(new_state_id='removed',
@@ -1194,16 +1171,27 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
             _addDecidedState(new_state_id='refused',
                              transition_id='refuse')
 
-        # "accepted_out_of_meeting" add state 'accepted_out_of_meeting'
-        # from 'validated' in the item WF
-        elif wfAdaptation in ['accepted_out_of_meeting',
-                              'accepted_out_of_meeting_and_duplicated']:
-            _addIsolatedState(
-                new_state_id='accepted_out_of_meeting',
-                origin_state_id='validated',
-                origin_transition_id='accept_out_of_meeting',
-                origin_transition_guard_expr_name='mayAccept_out_of_meeting',
-                back_transition_id='backToValidatedFromAcceptedOutOfMeeting')
+        # "accepted_but_modified" add state 'accepted_but_modified' in the item workflow
+        elif wfAdaptation == 'accepted_but_modified':
+            _addDecidedState(new_state_id='accepted_but_modified',
+                             transition_id='accept_but_modify')
+
+        # "pre_accept" add state 'pre_accepted'
+        # from 'itemfrozen' in the item WF
+        elif wfAdaptation == 'pre_accept':
+            # add state from itemfrozen ...
+            new_state = _addIsolatedState(
+                new_state_id='pre_accepted',
+                origin_state_id='itemfrozen',
+                origin_transition_id='pre_accept',
+                origin_transition_guard_expr_name='mayDecide',
+                back_transition_guard_expr_name="mayCorrect('itempublished')",
+                back_transition_id='backToItemFrozen')
+            # ... then add output transitions to 'accepted' and 'accepted_but_modified'
+            out_transitions = ['backToItemFrozen', 'accept']
+            if 'accepted_but_modified' in wfAdaptations:
+                out_transitions.append('accepted_but_modified')
+                new_state.transitions = out_transitions
 
         # "accepted_out_of_meeting_emergency" add state 'accepted_out_of_meeting_emergency'
         # from 'validated' in the item WF

@@ -32,7 +32,6 @@ from Products.CMFCore.permissions import View
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.PloneMeeting.config import HIDE_DECISION_UNDER_WRITING_MSG
 from Products.PloneMeeting.config import WriteBudgetInfos
-from Products.PloneMeeting.config import WriteDecision
 from Products.PloneMeeting.config import WriteItemMeetingManagerFields
 from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
 from Products.PloneMeeting.model.adaptations import RETURN_TO_PROPOSING_GROUP_FROM_ITEM_STATES
@@ -54,13 +53,12 @@ class testWFAdaptations(PloneMeetingTestCase):
         '''Test what are the available wfAdaptations.
            This way, if we add a wfAdaptations, the test will 'break' until it is adapted...'''
         self.assertEquals(sorted(self.meetingConfig.listWorkflowAdaptations().keys()),
-                          ['accepted_out_of_meeting',
+                          ['accepted_but_modified',
+                           'accepted_out_of_meeting',
                            'accepted_out_of_meeting_and_duplicated',
                            'accepted_out_of_meeting_emergency',
                            'accepted_out_of_meeting_emergency_and_duplicated',
-                           'archiving',
                            'creator_edits_unless_closed',
-                           'creator_initiated_decisions',
                            'decide_item_when_back_to_meeting_from_returned_to_proposing_group',
                            'everyone_reads_all',
                            'hide_decisions_when_under_writing',
@@ -71,6 +69,7 @@ class testWFAdaptations(PloneMeetingTestCase):
                            'no_publication',
                            'only_creator_may_delete',
                            'postpone_next_meeting',
+                           'pre_accepted',
                            'pre_validation',
                            'pre_validation_keep_reviewer_permissions',
                            'presented_item_back_to_itemcreated',
@@ -176,8 +175,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         # 'items_come_validated' alone is ok
         self.failIf(cfg.validate_workflowAdaptations(('items_come_validated', )))
         # conflicts with some
-        for otherWFA in ('creator_initiated_decisions',
-                         'pre_validation',
+        for otherWFA in ('pre_validation',
                          'pre_validation_keep_reviewer_permissions',
                          'reviewers_take_back_validated_item',
                          'presented_item_back_to_itemcreated',
@@ -186,13 +184,6 @@ class testWFAdaptations(PloneMeetingTestCase):
             self.assertEquals(
                 cfg.validate_workflowAdaptations(('items_come_validated', otherWFA)),
                 wa_conflicts)
-
-        # 'archiving' must be used alone
-        self.failIf(cfg.validate_workflowAdaptations(('archiving', )))
-        # conflicts with any other
-        self.assertEquals(
-            cfg.validate_workflowAdaptations(('archiving', 'any_other')),
-            wa_conflicts)
 
         # 'no_proposal' alone is ok
         self.failIf(cfg.validate_workflowAdaptations(('no_proposal', )))
@@ -377,24 +368,6 @@ class testWFAdaptations(PloneMeetingTestCase):
         # make wfAdaptation selectable
         self.validateItem(item)
         self.failIf(cfg.validate_workflowAdaptations(('items_come_validated', )))
-
-    def test_pm_Validate_workflowAdaptations_removed_archiving(self):
-        """Test MeetingConfig.validate_workflowAdaptations that manage removal
-           of wfAdaptations 'archiving' that is not possible."""
-        # ease override by subproducts
-        cfg = self.meetingConfig
-        if 'archiving' not in cfg.listWorkflowAdaptations():
-            return
-
-        archiving_removed_error = translate('wa_removed_archiving_error',
-                                            domain='PloneMeeting',
-                                            context=self.request)
-        cfg.setWorkflowAdaptations(('archiving', ))
-        performWorkflowAdaptations(cfg, logger=pm_logger)
-        self.failIf(cfg.validate_workflowAdaptations(('archiving', )))
-        self.assertEquals(
-            cfg.validate_workflowAdaptations(()),
-            archiving_removed_error)
 
     def test_pm_Validate_workflowAdaptations_removed_pre_validation(self):
         """Test MeetingConfig.validate_workflowAdaptations that manage removal
@@ -915,33 +888,6 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.do(i1, 'prevalidate')
         self.do(i1, 'validate')
 
-    def test_pm_WFA_creator_initiated_decisions(self):
-        '''Test the workflowAdaptation 'creator_initiated_decisions'.
-           Check that the creator can edit the decision field while activated.'''
-        # ease override by subproducts
-        cfg = self.meetingConfig
-        if 'creator_initiated_decisions' not in cfg.listWorkflowAdaptations():
-            return
-        self.changeUser('pmManager')
-        # check while the wfAdaptation is not activated
-        self._creator_initiated_decisions_inactive()
-        # activate the wfAdaptation and check
-        cfg.setWorkflowAdaptations('creator_initiated_decisions')
-        performWorkflowAdaptations(cfg, logger=pm_logger)
-        self._creator_initiated_decisions_active()
-
-    def _creator_initiated_decisions_inactive(self):
-        '''Tests while 'creator_initiated_decisions' wfAdaptation is inactive.'''
-        self.changeUser('pmCreator1')
-        i1 = self.create('MeetingItem')
-        self.failIf(self.hasPermission(WriteDecision, i1))
-
-    def _creator_initiated_decisions_active(self):
-        '''Tests while 'creator_initiated_decisions' wfAdaptation is active.'''
-        self.changeUser('pmCreator1')
-        i1 = self.create('MeetingItem')
-        self.failUnless(self.hasPermission(WriteDecision, i1))
-
     def test_pm_WFA_items_come_validated(self):
         '''Test the workflowAdaptation 'items_come_validated'.'''
         # ease override by subproducts
@@ -970,39 +916,8 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertEquals(i1.queryState(), 'validated')
         self.assertEquals(self.transitions(i1), [])
 
-    def test_pm_WFA_archiving(self):
-        '''Test the workflowAdaptation 'archiving'.'''
-        # ease override by subproducts
-        cfg = self.meetingConfig
-        if 'archiving' not in cfg.listWorkflowAdaptations():
-            return
-        # check while the wfAdaptation is not activated
-        self._archiving_inactive()
-        # activate the wfAdaptation and check
-        cfg.setWorkflowAdaptations('archiving')
-        performWorkflowAdaptations(cfg, logger=pm_logger)
-        self._archiving_active()
-
-    def _archiving_inactive(self):
-        '''Tests while 'archiving' wfAdaptation is inactive.'''
-        self.changeUser('pmCreator1')
-        i1 = self.create('MeetingItem')
-        self.assertEquals(i1.queryState(), 'itemcreated')
-        # we have transitions
-        self.failUnless(self.transitions(i1))
-
-    def _archiving_active(self):
-        '''Tests while 'archiving' wfAdaptation is active.'''
-        self.changeUser('pmCreator1')
-        i1 = self.create('MeetingItem')
-        self.assertEquals(i1.queryState(), 'itemarchived')
-        self.failIf(self.transitions(i1))
-        # even for the admin (Manager)
-        self.changeUser('admin')
-        self.failIf(self.transitions(i1))
-
     def test_pm_WFA_only_creator_may_delete(self):
-        '''Test the workflowAdaptation 'archiving'.'''
+        '''Test the workflowAdaptation 'only_creator_may_delete'.'''
         # ease override by subproducts
         cfg = self.meetingConfig
         if 'only_creator_may_delete' not in cfg.listWorkflowAdaptations():
@@ -1818,8 +1733,6 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertEquals(item.getDecision(), '<p>Decision adapted by pmManager</p>')
         # make sure decision is visible or not when item is decided and so no more editable by anyone
         self.do(item, 'accept')
-        if 'confirm' in self.transitions(item):
-            self.do(item, 'confirm')
         self.assertFalse(self.hasPermission(ModifyPortalContent, item))
         self.assertEquals(item.getMotivation(), '<p>Motivation adapted by pmManager</p>')
         self.assertEquals(item.getDecision(), '<p>Decision adapted by pmManager</p>')

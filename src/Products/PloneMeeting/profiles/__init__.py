@@ -705,7 +705,7 @@ class MeetingConfigDescriptor(Descriptor):
         # In the "decisions" portlet, the "all decisions" portlet will only show
         # meetings having one of the states listed in decisionTopicStates.
         # this will be applied on the 'searchlastdecisions' DashboardCollection
-        self.decisionTopicStates = ['decided', 'closed', 'archived']
+        self.decisionTopicStates = ['decided', 'closed']
         # Maximum number of meetings or decisions shown in the meeting and
         # decision portlets. If overflow, a combo box is shown instead of a
         # list of links.

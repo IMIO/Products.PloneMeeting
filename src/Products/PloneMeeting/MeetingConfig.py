@@ -2501,10 +2501,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     # Names of workflow adaptations, ORDER IS IMPORTANT!
     wfAdaptations = ('apply_item_validation_levels',
-                     'no_global_observation', 'creator_initiated_decisions',
+                     'no_global_observation',
                      'only_creator_may_delete', 'pre_validation',
                      'pre_validation_keep_reviewer_permissions', 'items_come_validated',
-                     'archiving', 'no_publication', 'no_proposal', 'everyone_reads_all',
+                     'accepted_but_modified', 'pre_accept',
+                     'no_publication', 'no_proposal', 'everyone_reads_all',
                      'reviewers_take_back_validated_item', 'creator_edits_unless_closed',
                      'presented_item_back_to_itemcreated', 'presented_item_back_to_proposed',
                      'presented_item_back_to_prevalidated',
@@ -2518,7 +2519,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                      'accepted_out_of_meeting', 'accepted_out_of_meeting_and_duplicated',
                      'accepted_out_of_meeting_emergency', 'accepted_out_of_meeting_emergency_and_duplicated',
                      'postpone_next_meeting', 'mark_not_applicable',
-                     'removed', 'removed_and_duplicated', 'refused')
+                     'removed', 'removed_and_duplicated', 'refused', 'delayed')
 
     def _searchesInfo(self):
         """Informations used to create DashboardCollections in the searches."""
@@ -3903,16 +3904,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # conflicts
         msg = translate('wa_conflicts', domain='PloneMeeting', context=self.REQUEST)
         if 'items_come_validated' in values and \
-            ('creator_initiated_decisions' in values or
-             'pre_validation' in values or
+            ('pre_validation' in values or
              'pre_validation_keep_reviewer_permissions' in values or
              'reviewers_take_back_validated_item' in values or
              'presented_item_back_to_itemcreated' in values or
              'presented_item_back_to_prevalidated' in values or
              'presented_item_back_to_proposed' in values):
-            return msg
-        if ('archiving' in values) and (len(values) > 1):
-            # Archiving is incompatible with any other workflow adaptation
             return msg
         if 'no_proposal' in values and \
             ('pre_validation' in values or
@@ -3973,11 +3970,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # validate removed workflowAdaptations, in case we removed a wfAdaptation that added
         # a state for example, double check that no more element (item or meeting) is in that state...
         removed = set(self.getWorkflowAdaptations()).difference(set(values))
-        if 'archiving' in removed:
-            # it is not possible to go back from an archived site
-            return translate('wa_removed_archiving_error',
-                             domain='PloneMeeting',
-                             context=self.REQUEST)
         # check if pre_validation is removed only if the other pre_validation is not added
         # at the same time (switch from one to other)
         if ('pre_validation' in removed and 'pre_validation_keep_reviewer_permissions' not in added) or \

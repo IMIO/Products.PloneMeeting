@@ -21,24 +21,28 @@ class PloneMeetingTestingHelpers:
     TRANSITIONS_FOR_PRESENTING_ITEM_1 = TRANSITIONS_FOR_PRESENTING_ITEM_2 = (
         'propose', 'prevalidate', 'validate', 'present', )
 
-    TRANSITIONS_FOR_PUBLISHING_MEETING_1 = TRANSITIONS_FOR_PUBLISHING_MEETING_2 = ('publish', )
-    TRANSITIONS_FOR_FREEZING_MEETING_1 = TRANSITIONS_FOR_FREEZING_MEETING_2 = ('publish', 'freeze', )
-    TRANSITIONS_FOR_DECIDING_MEETING_1 = TRANSITIONS_FOR_DECIDING_MEETING_2 = ('publish', 'freeze', 'decide', )
-    TRANSITIONS_FOR_CLOSING_MEETING_1 = TRANSITIONS_FOR_CLOSING_MEETING_2 = ('publish',
-                                                                             'freeze',
+    TRANSITIONS_FOR_PUBLISHING_MEETING_1 = TRANSITIONS_FOR_PUBLISHING_MEETING_2 = ('freeze', 'publish', )
+    TRANSITIONS_FOR_FREEZING_MEETING_1 = TRANSITIONS_FOR_FREEZING_MEETING_2 = ('freeze', )
+    TRANSITIONS_FOR_DECIDING_MEETING_1 = TRANSITIONS_FOR_DECIDING_MEETING_2 = ('freeze', 'publish', 'decide')
+    TRANSITIONS_FOR_CLOSING_MEETING_1 = TRANSITIONS_FOR_CLOSING_MEETING_2 = ('freeze',
+                                                                             'publish',
                                                                              'decide',
                                                                              'close', )
-    TRANSITIONS_FOR_ACCEPTING_ITEMS_MEETING_1 = TRANSITIONS_FOR_ACCEPTING_ITEMS_MEETING_2 = ('publish', 'freeze', )
+    TRANSITIONS_FOR_ACCEPTING_ITEMS_MEETING_1 = ('freeze', 'publish', 'decide')
+    TRANSITIONS_FOR_ACCEPTING_ITEMS_MEETING_2 = ('freeze', 'publish', 'decide')
     BACK_TO_WF_PATH_1 = BACK_TO_WF_PATH_2 = {
         # Meeting
-        'created': ('backToFrozen',
+        'created': ('backToDecisionsPublished',
+                    'backToDecided',
                     'backToPublished',
+                    'backToFrozen',
                     'backToCreated',),
         # MeetingItem
         'itemcreated': ('backToItemPublished',
                         'backToItemFrozen',
                         'backToPresented',
                         'backToValidated',
+                        'backToPreValidated',
                         'backToProposed',
                         'backToItemCreated', ),
         'proposed': ('backToItemPublished',
@@ -80,8 +84,8 @@ class PloneMeetingTestingHelpers:
     WF_MEETING_TRANSITION_NAME_MAPPINGS_2 = {}
 
     # in which state an item must be after a particular meeting transition?
-    ITEM_WF_STATE_AFTER_MEETING_TRANSITION = {'publish_decisions': 'confirmed',
-                                              'close': 'confirmed', }
+    ITEM_WF_STATE_AFTER_MEETING_TRANSITION = {'publish_decisions': 'accepted',
+                                              'close': 'accepted', }
 
     def _stateMappingFor(self, state_name, meta_type='MeetingItem'):
         """ """

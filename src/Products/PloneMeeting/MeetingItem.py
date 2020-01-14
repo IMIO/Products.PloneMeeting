@@ -416,16 +416,6 @@ class MeetingItemWorkflowConditions(object):
                 res = True
         return res
 
-    security.declarePublic('mayArchive')
-
-    def mayArchive(self):
-        res = False
-        if _checkPermission(ReviewPortalContent, self.context):
-            if self.context.hasMeeting() and \
-               (self.context.getMeeting().queryState() == 'archived'):
-                res = True
-        return res
-
     security.declarePublic('mayReturnToProposingGroup')
 
     def mayReturnToProposingGroup(self):
@@ -754,16 +744,6 @@ class MeetingItemWorkflowActions(object):
                 from config import ITEM_TRANSITION_WHEN_RETURNED_FROM_PROPOSING_GROUP_AFTER_CORRECTION
                 wTool.doActionFor(self.context, ITEM_TRANSITION_WHEN_RETURNED_FROM_PROPOSING_GROUP_AFTER_CORRECTION)
 
-    security.declarePrivate('doConfirm')
-
-    def doConfirm(self, stateChange):
-        pass
-
-    security.declarePrivate('doItemArchive')
-
-    def doItemArchive(self, stateChange):
-        pass
-
     security.declarePrivate('doReturn_to_proposing_group')
 
     def doReturn_to_proposing_group(self, stateChange):
@@ -783,6 +763,16 @@ class MeetingItemWorkflowActions(object):
     security.declarePrivate('doWait_advices_from')
 
     def doWait_advices_from(self, stateChange):
+        pass
+
+    security.declarePrivate('doAccept_but_modify')
+
+    def doAccept_but_modify(self, stateChange):
+        pass
+
+    security.declarePrivate('doPre_accept')
+
+    def doPre_accept(self, stateChange):
         pass
 
 

@@ -285,8 +285,8 @@ meetingPma.annexTypes = [financialAnalysis, budgetAnalysisCfg1, overheadAnalysis
 meetingPma.usedItemAttributes = ('description', 'toDiscuss', 'itemTags', 'itemIsSigned',)
 meetingPma.usedMeetingAttributes = ('place',)
 meetingPma.maxShownListings = '100'
-meetingPma.itemDecidedStates = ('accepted', 'delayed', 'confirmed', 'itemarchived')
-meetingPma.itemPositiveDecidedStates = ['accepted', 'confirmed']
+meetingPma.itemDecidedStates = ('accepted', 'delayed')
+meetingPma.itemPositiveDecidedStates = ['accepted']
 meetingPma.transitionsForPresentingAnItem = ('propose', 'validate', 'present', )
 meetingPma.onMeetingTransitionItemActionToExecute = (
     {'meeting_transition': 'publish',
@@ -316,9 +316,6 @@ meetingPma.onMeetingTransitionItemActionToExecute = (
     {'meeting_transition': 'close',
      'item_action': 'accept',
      'tal_expression': ''},
-    {'meeting_transition': 'close',
-     'item_action': 'confirm',
-     'tal_expression': ''},
 
     {'meeting_transition': 'publish_decisions',
      'item_action': 'itempublish',
@@ -328,13 +325,6 @@ meetingPma.onMeetingTransitionItemActionToExecute = (
      'tal_expression': ''},
     {'meeting_transition': 'publish_decisions',
      'item_action': 'accept',
-     'tal_expression': ''},
-    {'meeting_transition': 'publish_decisions',
-     'item_action': 'confirm',
-     'tal_expression': ''},
-
-    {'meeting_transition': 'archive',
-     'item_action': 'itemarchive',
      'tal_expression': ''},
 
     {'meeting_transition': 'backToCreated',
@@ -408,8 +398,8 @@ meetingPga.useAdvices = False
 meetingPga.selectableAdvisers = []
 # use same values as meetingPma for powerObserversStates
 meetingPga.powerObservers = deepcopy(meetingPma.powerObservers)
-meetingPga.itemDecidedStates = ('accepted', 'delayed', 'confirmed', 'itemarchived')
-meetingPga.itemPositiveDecidedStates = ['accepted', 'confirmed']
+meetingPga.itemDecidedStates = ('accepted', 'delayed')
+meetingPga.itemPositiveDecidedStates = ['accepted']
 meetingPga.useCopies = True
 meetingPga.selectableCopyGroups = [developers.getIdSuffixed('reviewers'), vendors.getIdSuffixed('reviewers')]
 meetingPga.itemCopyGroupsStates = ['validated', 'itempublished', 'itemfrozen', 'accepted', 'delayed']
