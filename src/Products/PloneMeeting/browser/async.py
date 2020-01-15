@@ -165,7 +165,7 @@ class TakenOverBy(BrowserView):
                                       context=self.request)
 
         html = self.IMG_TEMPLATE % (css_class, title, name, taken_over_by)
-        notifyModifiedAndReindex(self.context, extra_idxs=['getTakenOverBy '])
+        notifyModifiedAndReindex(self.context, extra_idxs=['getTakenOverBy'])
         return html
 
 
