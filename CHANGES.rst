@@ -8,6 +8,7 @@ Changelog
 - In events.onConfigOrPloneElementModified do not call _notifyContainerModified if event element is a PloneMeeting folder, a user personal folder that contains items and meetings
 - In asynchronous tasks (change completeness/emergency/listType/toDiscuss), use utils.notifyModifiedAndReindex instead
   MeetingItem._update_after_edit that does to much (full reindex, updateLocalRoles)
+- Avoid useless full reindex when RichText field is edited using quick edit and when annex is added/edited/removed
 
 4.1.15 (2020-01-10)
 -------------------

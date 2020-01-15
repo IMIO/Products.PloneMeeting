@@ -26,7 +26,7 @@ from plone.app.textfield import RichText
 from plone.app.uuid.utils import uuidToObject
 from plone.autoform.interfaces import WRITE_PERMISSIONS_KEY
 from plone.dexterity.interfaces import IDexterityContent
-from Products.Archetypes.event import ObjectEditedEvent
+from plone.locking.events import unlockAfterModification
 from Products.CMFCore.permissions import AccessContentsInformation
 from Products.CMFCore.permissions import AddPortalContent
 from Products.CMFCore.permissions import DeleteObjects
@@ -68,7 +68,6 @@ from zope.component import getAdapter
 from zope.component import queryUtility
 from zope.component.hooks import getSite
 from zope.component.interfaces import ObjectEvent
-from zope.event import notify
 from zope.globalrequest import getRequest
 from zope.i18n import translate
 from zope.interface import implements
@@ -880,19 +879,24 @@ def setFieldFromAjax(obj, fieldName, newValue):
     # Potentially store it in object history
     if previousData:
         addDataChange(obj, previousData)
-    # Update the last modification date
-    notifyModifiedAndReindex(obj, extra_idxs=['Date'])
     # Apply XHTML transforms when relevant
     transformAllRichTextFields(obj, onlyField=fieldName)
-    obj.reindexObject()
-    # notify that object was edited so unlocking event is called
-    notify(ObjectEditedEvent(obj))
+    # only reindex relevant indexes aka SearchableText + field specific index if exists
+    index_names = api.portal.get_tool('portal_catalog').indexes()
+    extra_idxs = ['SearchableText']
+    if fieldName in index_names:
+        extra_idxs.append(fieldName)
+    if field.accessor in index_names:
+        extra_idxs.append(field.accessor)
+    notifyModifiedAndReindex(obj, extra_idxs=extra_idxs)
+    # just unlock, do not call ObjectEditedEvent because it does too much
+    unlockAfterModification(obj, event={})
 
 
 def notifyModifiedAndReindex(obj, extra_idxs=[]):
     """ """
     obj.notifyModified()
-    obj.reindexObject(idxs=['modified', 'ModificationDate'] + extra_idxs)
+    obj.reindexObject(idxs=['modified', 'ModificationDate', 'Date'] + extra_idxs)
 
 
 def transformAllRichTextFields(obj, onlyField=None):

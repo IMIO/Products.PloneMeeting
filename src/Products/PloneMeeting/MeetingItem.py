@@ -4858,7 +4858,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         notify(AdvicesUpdatedEvent(self,
                                    triggered_by_transition=triggered_by_transition,
                                    old_adviceIndex=old_adviceIndex))
-        self.reindexObject(idxs=['indexAdvisers', ])
+        self.reindexObject(idxs=['indexAdvisers'])
         self.REQUEST.set('currentlyUpdatingAdvice', False)
 
     def _itemToAdviceIsViewable(self, org_uid):
