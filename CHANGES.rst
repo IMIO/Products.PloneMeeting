@@ -5,8 +5,7 @@ Changelog
 4.1.16 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- In events.onConfigOrPloneElementModified do not call _notifyContainerModified if event element is a PloneMeeting folder, a user personal folder that contains items and meetings
 
 4.1.15 (2020-01-10)
 -------------------

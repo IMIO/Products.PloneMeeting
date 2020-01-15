@@ -931,6 +931,12 @@ def onConfigOrPloneElementAdded(element, event):
 def onConfigOrPloneElementModified(element, event):
     '''Called whenever an element in the MeetingConfig or a default element in Plone was modified.'''
 
+    # bypass if current element is a PloneMeeting folder
+    # aka a folder where items and meetings are stored in the application
+    # or this is done when an item/meeting is created/edited/removed/duplicated/...
+    if element.getProperty('meeting_config'):
+        return
+
     # invalidate cache of relevant vocabularies
     if hasattr(element, '_invalidateCachedVocabularies'):
         element._invalidateCachedVocabularies()
