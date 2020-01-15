@@ -892,7 +892,7 @@ def setFieldFromAjax(obj, fieldName, newValue):
 def notifyModifiedAndReindex(obj, extra_idxs=[]):
     """ """
     obj.notifyModified()
-    obj.reindexObject(idxs=['modified', 'ModificationDate'])
+    obj.reindexObject(idxs=['modified', 'ModificationDate'] + extra_idxs)
 
 
 def transformAllRichTextFields(obj, onlyField=None):

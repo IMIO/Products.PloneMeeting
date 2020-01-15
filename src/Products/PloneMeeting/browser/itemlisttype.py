@@ -3,6 +3,7 @@ from plone import api
 from Products.Five.browser import BrowserView
 from Products.PloneMeeting.config import PloneMeetingError
 from Products.PloneMeeting.utils import ItemListTypeChangedEvent
+from Products.PloneMeeting.utils import notifyModifiedAndReindex
 from zope.component import queryUtility
 from zope.event import notify
 from zope.schema.interfaces import IVocabularyFactory
@@ -54,8 +55,6 @@ class ChangeItemListTypeView(BrowserView):
     def __call__(self, new_value):
         '''Change listType value.'''
         self._changeListType(new_value)
-        # update item
-        self.context._update_after_edit()
 
     def _changeListType(self, new_value):
         '''Helper method that changes listType value and check that :
@@ -75,13 +74,13 @@ class ChangeItemListTypeView(BrowserView):
         # set the new listType and notify events
         old_listType = self.context.getListType()
         self.context.setListType(new_value)
-        self.context.reindexObject(idxs=['listType', ])
+        notifyModifiedAndReindex(self.context, extra_idxs=['listType'])
         try:
             notify(ItemListTypeChangedEvent(self.context, old_listType))
         except PloneMeetingError, msg:
             # back to original state
             self.context.setListType(old_listType)
-            self.context.reindexObject(idxs=['listType', ])
+            notifyModifiedAndReindex(self.context, extra_idxs=['listType'])
             plone_utils = api.portal.get_tool('plone_utils')
             plone_utils.addPortalMessage(msg, type='warning')
 

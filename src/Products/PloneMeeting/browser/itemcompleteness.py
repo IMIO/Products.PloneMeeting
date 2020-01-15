@@ -5,6 +5,7 @@ from DateTime import DateTime
 from plone import api
 from Products.Archetypes import DisplayList
 from Products.Five.browser import BrowserView
+from Products.PloneMeeting.utils import notifyModifiedAndReindex
 
 
 class ItemCompletenessView(BrowserView):
@@ -64,8 +65,6 @@ class ChangeItemCompletenessView(BrowserView):
             # is available in the field vocabulary if not available, and selectable by current user
             self._changeCompleteness(self.request.get('new_completeness_value'),
                                      comment=self.request.get('comment', ''))
-            # update item
-            self.context._update_after_edit()
             return self.request.RESPONSE.redirect(self.context.absolute_url())
         return self.index()
 
@@ -86,7 +85,7 @@ class ChangeItemCompletenessView(BrowserView):
                         'time': DateTime(),
                         'comments': comment}
         self.context.completeness_changes_history.append(history_data)
-        self.context.reindexObject(idxs=['getCompleteness', ])
+        notifyModifiedAndReindex(self.context, extra_idxs=['getCompleteness'])
 
 
 class ItemCompletenessHistoryView(BrowserView):

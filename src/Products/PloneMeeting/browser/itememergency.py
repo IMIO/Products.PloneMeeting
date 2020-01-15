@@ -6,6 +6,7 @@ from Products.Archetypes import DisplayList
 from Products.CMFCore.utils import getToolByName
 from Products.Five.browser import BrowserView
 from Products.PloneMeeting.config import PMMessageFactory as _
+from Products.PloneMeeting.utils import notifyModifiedAndReindex
 from z3c.form import button
 from z3c.form import field
 from z3c.form import form
@@ -121,7 +122,7 @@ class ItemEmergencyChangeForm(form.Form):
                         'comments': data['comment']}
         self.context.emergency_changes_history.append(history_data)
         # update item
-        self.context._update_after_edit()
+        notifyModifiedAndReindex(self.context)
         plone_utils = api.portal.get_tool('plone_utils')
         plone_utils.addPortalMessage(_("Item emergency changed."))
         self.request.RESPONSE.redirect(self.context.absolute_url())
