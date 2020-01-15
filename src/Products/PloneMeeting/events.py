@@ -737,7 +737,9 @@ def onAnnexAdded(annex, event):
 
         # update parent modificationDate, it is used for caching and co
         # and reindex parent SearchableText
-        notifyModifiedAndReindex(parent, extra_idxs=['SearchableText'])
+        notifyModifiedAndReindex(
+            parent,
+            extra_idxs=['SearchableText', 'hasAnnexesToPrint', 'hasAnnexesToSign'])
 
 
 def onAnnexEditFinished(annex, event):
