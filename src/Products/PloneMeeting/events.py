@@ -285,6 +285,7 @@ def onOrgWillBeRemoved(current_org, event):
     # Then check that every linked Plone group is empty because we are going to delete it.
     for suffix in get_all_suffixes(current_org_uid):
         plone_group = get_plone_group(current_org_uid, suffix)
+        # use getGroupMembers to ignore '<not found>' users
         if plone_group and plone_group.getGroupMembers():
             raise BeforeDeleteException(translate("can_not_delete_organization_plonegroup",
                                                   mapping={'member_id': plone_group.getGroupMembers()[0]},
