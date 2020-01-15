@@ -74,7 +74,7 @@ class ChangeItemListTypeView(BrowserView):
         # set the new listType and notify events
         old_listType = self.context.getListType()
         self.context.setListType(new_value)
-        notifyModifiedAndReindex(self.context, extra_idxs=['listType'])
+        notifyModifiedAndReindex(self.context, extra_idxs=['listType'], notify_event=True)
         try:
             notify(ItemListTypeChangedEvent(self.context, old_listType))
         except PloneMeetingError, msg:

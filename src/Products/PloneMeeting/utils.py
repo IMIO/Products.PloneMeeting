@@ -27,6 +27,7 @@ from plone.app.uuid.utils import uuidToObject
 from plone.autoform.interfaces import WRITE_PERMISSIONS_KEY
 from plone.dexterity.interfaces import IDexterityContent
 from plone.locking.events import unlockAfterModification
+from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.permissions import AccessContentsInformation
 from Products.CMFCore.permissions import AddPortalContent
 from Products.CMFCore.permissions import DeleteObjects
@@ -68,6 +69,7 @@ from zope.component import getAdapter
 from zope.component import queryUtility
 from zope.component.hooks import getSite
 from zope.component.interfaces import ObjectEvent
+from zope.event import notify
 from zope.globalrequest import getRequest
 from zope.i18n import translate
 from zope.interface import implements
@@ -893,10 +895,12 @@ def setFieldFromAjax(obj, fieldName, newValue):
     unlockAfterModification(obj, event={})
 
 
-def notifyModifiedAndReindex(obj, extra_idxs=[]):
+def notifyModifiedAndReindex(obj, extra_idxs=[], notify_event=False):
     """ """
     obj.notifyModified()
     obj.reindexObject(idxs=['modified', 'ModificationDate', 'Date'] + extra_idxs)
+    if notify_event:
+        notify(ObjectEditedEvent(obj))
 
 
 def transformAllRichTextFields(obj, onlyField=None):
