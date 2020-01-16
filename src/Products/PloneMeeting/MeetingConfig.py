@@ -2502,10 +2502,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     # Names of workflow adaptations, ORDER IS IMPORTANT!
     wfAdaptations = ('apply_item_validation_levels',
                      'no_global_observation',
-                     'only_creator_may_delete', 'pre_validation',
-                     'pre_validation_keep_reviewer_permissions', 'items_come_validated',
-                     'accepted_but_modified', 'pre_accept',
-                     'no_publication', 'no_proposal', 'everyone_reads_all',
+                     'only_creator_may_delete', 'items_come_validated',
+                     'accepted_but_modified',
+                     'postpone_next_meeting', 'mark_not_applicable',
+                     'removed', 'removed_and_duplicated', 'refused', 'delayed',
+                     'pre_accepted',
+                     'no_publication', 'everyone_reads_all',
                      'reviewers_take_back_validated_item', 'creator_edits_unless_closed',
                      'presented_item_back_to_itemcreated', 'presented_item_back_to_proposed',
                      'presented_item_back_to_prevalidated',
@@ -2517,9 +2519,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                      'waiting_advices_from_last_val_level_only_proposing_group_send_back',
                      'waiting_advices_from_last_val_level_adviser_and_proposing_group_send_back',
                      'accepted_out_of_meeting', 'accepted_out_of_meeting_and_duplicated',
-                     'accepted_out_of_meeting_emergency', 'accepted_out_of_meeting_emergency_and_duplicated',
-                     'postpone_next_meeting', 'mark_not_applicable',
-                     'removed', 'removed_and_duplicated', 'refused', 'delayed')
+                     'accepted_out_of_meeting_emergency', 'accepted_out_of_meeting_emergency_and_duplicated')
 
     def _searchesInfo(self):
         """Informations used to create DashboardCollections in the searches."""

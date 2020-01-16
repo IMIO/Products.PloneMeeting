@@ -321,7 +321,7 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
 
     def _addDecidedState(new_state_id,
                          transition_id,
-                         base_state_id='delayed'):
+                         base_state_id='accepted'):
         """Helper method for adding a decided state, base work will be done using the
            p_base_state (cloning permission, transition start/end points)."""
         wf = itemWorkflow
@@ -384,15 +384,16 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
         for transition_id, destination_state_id, guard_expr_name in (
                 (origin_transition_id, new_state_id, origin_transition_guard_expr_name),
                 (back_transition_id, origin_state_id, back_transition_guard_expr_name)):
-            wf.transitions.addTransition(transition_id)
-            transition = wf.transitions[transition_id]
-            transition.setProperties(
-                title=transition_id,
-                new_state_id=destination_state_id, trigger_type=1, script_name='',
-                actbox_name=transition_id, actbox_url='',
-                actbox_icon='%(portal_url)s/{0}.png'.format(transition_id),
-                actbox_category='workflow',
-                props={'guard_expr': 'python:here.wfConditions().{0}'.format(guard_expr_name)})
+            if transition_id not in wf.transitions:
+                wf.transitions.addTransition(transition_id)
+                transition = wf.transitions[transition_id]
+                transition.setProperties(
+                    title=transition_id,
+                    new_state_id=destination_state_id, trigger_type=1, script_name='',
+                    actbox_name=transition_id, actbox_url='',
+                    actbox_icon='%(portal_url)s/{0}.png'.format(transition_id),
+                    actbox_category='workflow',
+                    props={'guard_expr': 'python:here.wfConditions().{0}'.format(guard_expr_name)})
 
         # link states and transitions
         # new_state
@@ -752,16 +753,19 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                 if tr in wf.transitions:
                     wf.transitions.deleteTransitions([tr])
             # Update connections between states and transitions
+            tr_leaving_itempublished = list(wf.states['itempublished'].transitions)
+            tr_leaving_itempublished.remove('backToItemFrozen')
+            tr_leaving_itempublished.append('backToPresented')
             wf.states['itemfrozen'].setProperties(
                 title='itemfrozen', description='',
-                transitions=['accept', 'accept_but_modify', 'delay', 'pre_accept', 'backToPresented'])
-            for decidedState in ['accepted', 'delayed', 'accepted_but_modified']:
-                wf.states[decidedState].setProperties(
-                    title=decidedState, description='',
+                transitions=tr_leaving_itempublished)
+            for tr_leaving_itempublished in wf.states['itempublished'].transitions:
+                if tr_leaving_itempublished.startswith('back'):
+                    continue
+                leading_to_state = wf.transitions[tr_leaving_itempublished].new_state_id
+                wf.states[leading_to_state].setProperties(
+                    title=leading_to_state, description='',
                     transitions=['backToItemFrozen', ])
-            wf.states['pre_accepted'].setProperties(
-                title='pre_accepted', description='',
-                transitions=['accept', 'accept_but_modify', 'backToItemFrozen'])
             # Delete state 'published'
             if 'itempublished' in wf.states:
                 wf.states.deleteStates(['itempublished'])
@@ -1176,9 +1180,9 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
             _addDecidedState(new_state_id='accepted_but_modified',
                              transition_id='accept_but_modify')
 
-        # "pre_accept" add state 'pre_accepted'
+        # "pre_accepted" add state 'pre_accepted'
         # from 'itemfrozen' in the item WF
-        elif wfAdaptation == 'pre_accept':
+        elif wfAdaptation == 'pre_accepted':
             # add state from itemfrozen ...
             new_state = _addIsolatedState(
                 new_state_id='pre_accepted',
@@ -1186,12 +1190,12 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                 origin_transition_id='pre_accept',
                 origin_transition_guard_expr_name='mayDecide',
                 back_transition_guard_expr_name="mayCorrect('itempublished')",
-                back_transition_id='backToItemFrozen')
+                back_transition_id='backToItemPublished')
             # ... then add output transitions to 'accepted' and 'accepted_but_modified'
             out_transitions = ['backToItemFrozen', 'accept']
             if 'accepted_but_modified' in wfAdaptations:
-                out_transitions.append('accepted_but_modified')
-                new_state.transitions = out_transitions
+                out_transitions.append('accept_but_modify')
+            new_state.transitions = out_transitions
 
         # "accepted_out_of_meeting_emergency" add state 'accepted_out_of_meeting_emergency'
         # from 'validated' in the item WF

@@ -418,7 +418,7 @@
              before_script=""
              after_script=""
              i18n:attributes="title">
-  <action url="" icon="%(portal_url)s/backToItePublished.png" category="workflow" i18n:translate="">backToItemFrozen</action>
+  <action url="" icon="%(portal_url)s/backToItemFrozen.png" category="workflow" i18n:translate="">backToItemFrozen</action>
   <guard>
     <guard-expression>python:here.wfConditions().mayCorrect('itemfrozen')</guard-expression>
   </guard>
@@ -430,7 +430,7 @@
              before_script=""
              after_script=""
              i18n:attributes="title">
-  <action url="" icon="%(portal_url)s/backToItemFrozen.png" category="workflow" i18n:translate="">backToItemPublished</action>
+  <action url="" icon="%(portal_url)s/backToItemPublished.png" category="workflow" i18n:translate="">backToItemPublished</action>
   <guard>
     <guard-expression>python:here.wfConditions().mayCorrect('itempublished')</guard-expression>
   </guard>
