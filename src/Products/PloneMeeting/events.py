@@ -44,6 +44,7 @@ from Products.PloneMeeting.utils import meetingExecuteActionOnLinkedItems
 from Products.PloneMeeting.utils import notifyModifiedAndReindex
 from Products.PloneMeeting.utils import sendMailIfRelevant
 from zExceptions import Redirect
+from zope.container.contained import ContainerModifiedEvent
 from zope.event import notify
 from zope.globalrequest import getRequest
 from zope.i18n import translate
@@ -289,6 +290,7 @@ def onOrgWillBeRemoved(current_org, event):
     # Then check that every linked Plone group is empty because we are going to delete it.
     for suffix in get_all_suffixes(current_org_uid):
         plone_group = get_plone_group(current_org_uid, suffix)
+        # use getGroupMembers to ignore '<not found>' users
         if plone_group and plone_group.getGroupMembers():
             raise BeforeDeleteException(translate("can_not_delete_organization_plonegroup",
                                                   mapping={'member_id': plone_group.getGroupMembers()[0]},
@@ -572,34 +574,37 @@ def onItemWillBeAdded(item, event):
 
 def onItemModified(item, event):
     '''Called when an item is modified.'''
-    meeting = item.getMeeting()
-    if meeting:
-        # invalidate meeting actions panel
-        invalidate_cachekey_volatile_for(
-            'Products.PloneMeeting.Meeting.UID.{0}'.format(meeting.UID()), get_again=True)
-        # update item references if necessary
-        meeting.updateItemReferences(startNumber=item.getItemNumber(), check_needed=True)
-        # invalidate Meeting.getItemInsertOrder caching
-        meeting._invalidate_insert_order_cache_for(item)
+    # if called because content was changed, like annex/advice added/removed
+    # we bypass, no need to update references or rename id
+    if not isinstance(event, ContainerModifiedEvent):
+        meeting = item.getMeeting()
+        if meeting:
+            # invalidate meeting actions panel
+            invalidate_cachekey_volatile_for(
+                'Products.PloneMeeting.Meeting.UID.{0}'.format(meeting.UID()), get_again=True)
+            # update item references if necessary
+            meeting.updateItemReferences(startNumber=item.getItemNumber(), check_needed=True)
+            # invalidate Meeting.getItemInsertOrder caching
+            meeting._invalidate_insert_order_cache_for(item)
 
-    # reactivate rename_after_creation as long as item is in it's initial_state
-    # if not currently creating an element.  Indeed adding an image to an item
-    # that is in the creation process will trigger modified event
-    if item._at_rename_after_creation and not item.checkCreationFlag():
-        wfTool = api.portal.get_tool('portal_workflow')
-        itemWF = wfTool.getWorkflowsFor(item)[0]
-        initial_state = itemWF.initial_state
-        # only rename if this will effectively change the id
-        if initial_state == item.queryState() and item.getId() != item.generateNewId():
-            # in case a user of same group is editing the item of another user
-            # he does not have the 'Add portal content' permission that is necessary
-            # when renaming so do this as Manager
-            with api.env.adopt_roles(['Manager']):
-                # set _at_creation_flag to True so MeetingItem.manage_beforeDelete
-                # ignores it and does not break predecessor and link to meeting
-                item._at_creation_flag = True
-                item._renameAfterCreation(check_auto_id=False)
-                item._at_creation_flag = False
+        # reactivate rename_after_creation as long as item is in it's initial_state
+        # if not currently creating an element.  Indeed adding an image to an item
+        # that is in the creation process will trigger modified event
+        if item._at_rename_after_creation and not item.checkCreationFlag():
+            wfTool = api.portal.get_tool('portal_workflow')
+            itemWF = wfTool.getWorkflowsFor(item)[0]
+            initial_state = itemWF.initial_state
+            # only rename if this will effectively change the id
+            if initial_state == item.queryState() and item.getId() != item.generateNewId():
+                # in case a user of same group is editing the item of another user
+                # he does not have the 'Add portal content' permission that is necessary
+                # when renaming so do this as Manager
+                with api.env.adopt_roles(['Manager']):
+                    # set _at_creation_flag to True so MeetingItem.manage_beforeDelete
+                    # ignores it and does not break predecessor and link to meeting
+                    item._at_creation_flag = True
+                    item._renameAfterCreation(check_auto_id=False)
+                    item._at_creation_flag = False
     # An item has ben modified, use get_again for portlet_todo
     invalidate_cachekey_volatile_for('Products.PloneMeeting.MeetingItem.modified', get_again=True)
 
@@ -736,10 +741,11 @@ def onAnnexAdded(annex, event):
             # Potentially I must notify MeetingManagers through email.
             parent.sendMailIfRelevant('annexAdded', 'meetingmanagers', isSuffix=True)
 
-        # update modificationDate, it is used for caching and co
-        parent.notifyModified()
-        # just reindex the entire object
-        parent.reindexObject()
+        # update parent modificationDate, it is used for caching and co
+        # and reindex parent SearchableText
+        notifyModifiedAndReindex(
+            parent,
+            extra_idxs=['SearchableText', 'hasAnnexesToPrint', 'hasAnnexesToSign'])
 
 
 def onAnnexEditFinished(annex, event):
@@ -789,9 +795,7 @@ def onAnnexRemoved(annex, event):
             parent.updateLocalRoles(invalidate=True)
 
     # update modification date and SearchableText
-    parent.notifyModified()
-    # just reindex the entire object
-    parent.reindexObject()
+    notifyModifiedAndReindex(parent, extra_idxs=['SearchableText', 'hasAnnexesToPrint', 'hasAnnexesToSign'])
 
 
 def onAnnexToPrintChanged(annex, event):
@@ -936,6 +940,12 @@ def onConfigOrPloneElementAdded(element, event):
 
 def onConfigOrPloneElementModified(element, event):
     '''Called whenever an element in the MeetingConfig or a default element in Plone was modified.'''
+
+    # bypass if current element is a PloneMeeting folder
+    # aka a folder where items and meetings are stored in the application
+    # or this is done when an item/meeting is created/edited/removed/duplicated/...
+    if element.getProperty('meeting_config'):
+        return
 
     # invalidate cache of relevant vocabularies
     if hasattr(element, '_invalidateCachedVocabularies'):

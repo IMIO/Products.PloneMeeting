@@ -28,6 +28,7 @@ from plone.app.textfield import RichText
 from plone.app.uuid.utils import uuidToObject
 from plone.autoform.interfaces import WRITE_PERMISSIONS_KEY
 from plone.dexterity.interfaces import IDexterityContent
+from plone.locking.events import unlockAfterModification
 from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.permissions import AccessContentsInformation
 from Products.CMFCore.permissions import AddPortalContent
@@ -887,19 +888,35 @@ def setFieldFromAjax(obj, fieldName, newValue):
     # Potentially store it in object history
     if previousData:
         addDataChange(obj, previousData)
-    # Update the last modification date
-    notifyModifiedAndReindex(obj, extra_idxs=['Date'])
     # Apply XHTML transforms when relevant
     transformAllRichTextFields(obj, onlyField=fieldName)
-    obj.reindexObject()
-    # notify that object was edited so unlocking event is called
-    notify(ObjectEditedEvent(obj))
+    # only reindex relevant indexes aka SearchableText + field specific index if exists
+    index_names = api.portal.get_tool('portal_catalog').indexes()
+    extra_idxs = ['SearchableText']
+    if fieldName in index_names:
+        extra_idxs.append(fieldName)
+    if field.accessor in index_names:
+        extra_idxs.append(field.accessor)
+    notifyModifiedAndReindex(obj, extra_idxs=extra_idxs)
+    # just unlock, do not call ObjectEditedEvent because it does too much
+    unlockAfterModification(obj, event={})
 
 
-def notifyModifiedAndReindex(obj, extra_idxs=[]):
-    """ """
+def notifyModifiedAndReindex(obj, extra_idxs=[], notify_event=False):
+    """Ease notifyModified and reindex of a given p_obj.
+       If p_extra_idxs contains '*', a full reindex is done, if not
+       only 'modified' related indexes are updated.
+       If p_notify_event is True, the ObjectEditedEvent is notified."""
+
     obj.notifyModified()
-    obj.reindexObject(idxs=['modified', 'ModificationDate'])
+
+    idxs = []
+    if '*' not in extra_idxs:
+        idxs = ['modified', 'ModificationDate', 'Date'] + extra_idxs
+    obj.reindexObject(idxs=idxs)
+
+    if notify_event:
+        notify(ObjectEditedEvent(obj))
 
 
 def transformAllRichTextFields(obj, onlyField=None):

@@ -5,6 +5,10 @@ Changelog
 4.1.16 (unreleased)
 -------------------
 
+- In events.onConfigOrPloneElementModified do not call _notifyContainerModified if event element is a PloneMeeting folder, a user personal folder that contains items and meetings
+- Adapted MeetingItem._update_after_edit to be able to pass only some indexes to reindex, adapted async methods (change itemlisttype, itemcompleteness, ...) accordingly.
+  By defaukt, MeetingItem._update_after_edit will do a full reindex but if some specific indexes are given, only these indexes are reindexed
+- Avoid useless full reindex when RichText field is edited using quick edit and when annex is added/edited/removed
 - Adapted print_meeting_date and print_preferred_meeting_date so they can now be used in restricted or unrestricted mode.
 - Item validation workflow is now designed in the MeetingConfig.itemWFValidationLevels, this imply :
     - to no longer rely on MEETINGROLES and MEETINGREVIEWERS constants;

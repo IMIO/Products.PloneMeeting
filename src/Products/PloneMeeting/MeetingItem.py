@@ -48,7 +48,6 @@ from Products.Archetypes.atapi import StringField
 from Products.Archetypes.atapi import StringWidget
 from Products.Archetypes.atapi import TextAreaWidget
 from Products.Archetypes.atapi import TextField
-from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.permissions import DeleteObjects
 from Products.CMFCore.permissions import ManagePortal
 from Products.CMFCore.permissions import ModifyPortalContent
@@ -111,6 +110,7 @@ from Products.PloneMeeting.utils import ItemDuplicatedToOtherMCEvent
 from Products.PloneMeeting.utils import ItemLocalRolesUpdatedEvent
 from Products.PloneMeeting.utils import networkdays
 from Products.PloneMeeting.utils import normalize
+from Products.PloneMeeting.utils import notifyModifiedAndReindex
 from Products.PloneMeeting.utils import rememberPreviousData
 from Products.PloneMeeting.utils import sendMail
 from Products.PloneMeeting.utils import sendMailIfRelevant
@@ -4928,7 +4928,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         notify(AdvicesUpdatedEvent(self,
                                    triggered_by_transition=triggered_by_transition,
                                    old_adviceIndex=old_adviceIndex))
-        self.reindexObject(idxs=['indexAdvisers', ])
+        self.reindexObject(idxs=['indexAdvisers'])
         self.REQUEST.set('currentlyUpdatingAdvice', False)
 
     def _itemToAdviceIsViewable(self, org_uid):
@@ -5153,7 +5153,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         self.adapted().onEdit(isCreated=True)
         self.reindexObject()
 
-    def _update_after_edit(self):
+    def _update_after_edit(self, idxs=['*']):
         """Convenience method that make sure ObjectModifiedEvent and
            at_post_edit_script are called, like it is the case in
            Archetypes.BaseObject.processForm.
@@ -5164,8 +5164,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # WARNING, we do things the same order processForm do it
         # reindexObject is done in _processForm, then notify and
         # call to at_post_edit_script are done
-        self.reindexObject()
-        notify(ObjectEditedEvent(self))
+        notifyModifiedAndReindex(self, extra_idxs=idxs, notify_event=True)
         self.at_post_edit_script()
 
     security.declarePrivate('at_post_edit_script')
