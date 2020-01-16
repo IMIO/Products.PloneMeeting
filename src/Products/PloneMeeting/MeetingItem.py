@@ -5083,7 +5083,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         self.adapted().onEdit(isCreated=True)
         self.reindexObject()
 
-    def _update_after_edit(self, idxs=[]):
+    def _update_after_edit(self, idxs=['*']):
         """Convenience method that make sure ObjectModifiedEvent and
            at_post_edit_script are called, like it is the case in
            Archetypes.BaseObject.processForm.

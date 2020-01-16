@@ -898,7 +898,13 @@ def setFieldFromAjax(obj, fieldName, newValue):
 def notifyModifiedAndReindex(obj, extra_idxs=[], notify_event=False):
     """ """
     obj.notifyModified()
-    obj.reindexObject(idxs=['modified', 'ModificationDate', 'Date'] + extra_idxs)
+
+    idxs = []
+    if '*' not in extra_idxs:
+        idxs = ['modified', 'ModificationDate', 'Date'] + extra_idxs
+
+    obj.reindexObject(idxs=idxs)
+
     if notify_event:
         notify(ObjectEditedEvent(obj))
 
