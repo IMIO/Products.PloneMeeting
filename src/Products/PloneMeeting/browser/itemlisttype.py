@@ -74,17 +74,17 @@ class ChangeItemListTypeView(BrowserView):
         # set the new listType and notify events
         old_listType = self.context.getListType()
         self.context.setListType(new_value)
-        notifyModifiedAndReindex(self.context, extra_idxs=['listType'], notify_event=True)
+        self.context._update_after_edit(idxs=['listType'])
         try:
             notify(ItemListTypeChangedEvent(self.context, old_listType))
         except PloneMeetingError, msg:
             # back to original state
             self.context.setListType(old_listType)
-            notifyModifiedAndReindex(self.context, extra_idxs=['listType'])
+            self.context._update_after_edit(idxs=['listType'])
             plone_utils = api.portal.get_tool('plone_utils')
             plone_utils.addPortalMessage(msg, type='warning')
 
         # an item's listType has been changed, notify meeting
         if self.context.hasMeeting():
             meeting = self.context.getMeeting()
-            meeting.notifyModified()
+            notifyModifiedAndReindex(meeting)
