@@ -5391,6 +5391,30 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     subFolder.processForm(values={'dummy': None})
                 subFolder.reindexObject()
 
+    security.declarePublic('getItemWorkflow')
+
+    def getItemWorkflow(self, theObject=False, type_name=None, **kwargs):
+        '''Overrides field 'itemWorkflow' accessor to be able to pass
+           the p_theObject parameter that will return portal_workflow WF object.'''
+        itemWorkflow = self.getField('itemWorkflow').get(self, **kwargs)
+        if theObject:
+            wfTool = api.portal.get_tool('portal_workflow')
+            type_name = type_name or self.getItemTypeName()
+            itemWorkflow = wfTool.getWorkflowsFor(type_name)[0]
+        return itemWorkflow
+
+    security.declarePublic('getMeetingWorkflow')
+
+    def getMeetingWorkflow(self, theObject=False, type_name=None, **kwargs):
+        '''Overrides field 'meetingWorkflow' accessor to be able to pass
+           the p_theObject parameter that will return portal_workflow WF object.'''
+        meetingWorkflow = self.getField('meetingWorkflow').get(self, **kwargs)
+        if theObject:
+            wfTool = api.portal.get_tool('portal_workflow')
+            type_name = type_name or self.getMeetingTypeName()
+            meetingWorkflow = wfTool.getWorkflowsFor(type_name)[0]
+        return meetingWorkflow
+
     security.declarePublic('getItemTypeName')
 
     def getItemTypeName(self, configType=None):

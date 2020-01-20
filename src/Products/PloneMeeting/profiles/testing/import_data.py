@@ -285,6 +285,7 @@ meetingPma.annexTypes = [financialAnalysis, budgetAnalysisCfg1, overheadAnalysis
 meetingPma.usedItemAttributes = ('description', 'toDiscuss', 'itemTags', 'itemIsSigned',)
 meetingPma.usedMeetingAttributes = ('place',)
 meetingPma.maxShownListings = '100'
+meetingPma.workflowAdaptations = ['apply_item_validation_levels', 'delayed']
 meetingPma.itemDecidedStates = ('accepted', 'delayed')
 meetingPma.itemPositiveDecidedStates = ['accepted']
 meetingPma.transitionsForPresentingAnItem = ('propose', 'validate', 'present', )
@@ -394,6 +395,7 @@ meetingPga.onMeetingTransitionItemActionToExecute = deepcopy(
 meetingPga.insertingMethodsOnAddItem = ({'insertingMethod': 'on_categories', 'reverse': '0'}, )
 meetingPga.useGroupsAsCategories = False
 meetingPga.itemTemplates = (template1, template2, )
+meetingPga.workflowAdaptations = ['apply_item_validation_levels', 'delayed']
 meetingPga.useAdvices = False
 meetingPga.selectableAdvisers = []
 # use same values as meetingPma for powerObserversStates

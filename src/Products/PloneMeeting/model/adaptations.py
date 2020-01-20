@@ -17,7 +17,8 @@ from Products.PloneMeeting.utils import updateCollectionCriterion
 
 # Stuff for performing workflow adaptations ------------------------------------
 noGlobalObsStates = ('itempublished', 'itemfrozen', 'accepted', 'refused',
-                     'delayed', 'removed', 'removed_and_duplicated', 'marked_not_applicable')
+                     'delayed', 'removed', 'removed_and_duplicated', 'marked_not_applicable',
+                     'accepted_but_modified', 'pre_accepted')
 groupDecisionReadStates = ('proposed', 'prevalidated', 'validated', 'presented',
                            'itempublished', 'itemfrozen')
 
@@ -769,7 +770,6 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
             # Delete state 'published'
             if 'itempublished' in wf.states:
                 wf.states.deleteStates(['itempublished'])
-            return True
 
         # "no_proposal" removes state 'proposed' in the item workflow: this way,
         # people can directly validate items after they have been created.
@@ -802,40 +802,6 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
         # even if that reviewer is not in the Plone _prereviewers group
         elif wfAdaptation == 'pre_validation_keep_reviewer_permissions':
             _apply_pre_validation(keepReviewerPermissions=True)
-
-        # "creator_initiated_decisions" means that decisions (field item.decision)
-        # are already pre-encoded (as propositions) by the proposing group.
-        # (De-)activation of adaptation "pre_validation"/"pre_validation_keep_reviewer_permissions" impacts this one.
-        elif wfAdaptation == 'creator_initiated_decisions':
-            wf = itemWorkflow
-            # Creator can read and write the "decision" field on item creation.
-            grantPermission(wf.states['itemcreated'], WriteDecision, 'MeetingMember')
-            grantPermission(wf.states['itemcreated'], ReadDecision, 'MeetingMember')
-            # (Pre)reviewer can write the "decision" field once proposed.
-            writer = 'MeetingReviewer'
-            if 'pre_validation' in wfAdaptations or \
-               'pre_validation_keep_reviewer_permissions' in wfAdaptations:
-                writer = 'MeetingPreReviewer'
-            if 'proposed' in wf.states:
-                grantPermission(wf.states['proposed'], WriteDecision, writer)
-            # Reviewer can write the "decision" field once prevalidated
-            if 'pre_validation' in wfAdaptations or \
-               'pre_validation_keep_reviewer_permissions' in wfAdaptations:
-                grantPermission(wf.states['prevalidated'], WriteDecision,
-                                'MeetingReviewer')
-            # Group-related roles can read the decision during the whole process.
-            groupRoles = ['MeetingMember', 'MeetingReviewer', 'MeetingObserverLocal']
-            if 'pre_validation' in wfAdaptations or \
-               'pre_validation_keep_reviewer_permissions' in wfAdaptations:
-                groupRoles.append('MeetingPreReviewer')
-            for stateName in groupDecisionReadStates:
-                if stateName not in wf.states:
-                    continue
-                for role in groupRoles:
-                    try:
-                        grantPermission(wf.states[stateName], ReadDecision, role)
-                    except KeyError:
-                        pass  # State 'prevalidated' may not exist.
 
         # "items_come_validated" removes the early steps of the item workflow: the
         # initial state becomes "validated". This can be used, for example, when

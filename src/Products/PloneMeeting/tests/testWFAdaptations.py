@@ -58,6 +58,7 @@ class testWFAdaptations(PloneMeetingTestCase):
                            'accepted_out_of_meeting_and_duplicated',
                            'accepted_out_of_meeting_emergency',
                            'accepted_out_of_meeting_emergency_and_duplicated',
+                           'apply_item_validation_levels',
                            'creator_edits_unless_closed',
                            'decide_item_when_back_to_meeting_from_returned_to_proposing_group',
                            'delayed',
