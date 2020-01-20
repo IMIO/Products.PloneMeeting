@@ -35,7 +35,6 @@ from Products.CMFCore.permissions import ManageProperties
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.CMFCore.utils import _checkPermission
-from Products.CMFCore.utils import getToolByName
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFPlone.utils import safe_unicode
 from Products.DCWorkflow.events import TransitionEvent
@@ -539,9 +538,7 @@ def sendMailIfRelevant(obj, event, permissionOrRole, isRole=False,
     if isRole and (permissionOrRole == 'Owner'):
         userIds = [obj.Creator()]
     else:
-        md = getToolByName(api.portal.get(), 'portal_memberdata')
-        userIds = [x for x in md._members.keys()]
-
+        userIds = api.portal.get_tool('portal_memberdata')._members
     for userId in userIds:
         user = membershipTool.getMemberById(userId)
         # do not warn user doing the action
