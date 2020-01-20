@@ -1186,7 +1186,7 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
             # add state from itemfrozen ...
             new_state = _addIsolatedState(
                 new_state_id='pre_accepted',
-                origin_state_id='itemfrozen',
+                origin_state_id='itempublished',
                 origin_transition_id='pre_accept',
                 origin_transition_guard_expr_name='mayDecide',
                 back_transition_guard_expr_name="mayCorrect('itempublished')",
