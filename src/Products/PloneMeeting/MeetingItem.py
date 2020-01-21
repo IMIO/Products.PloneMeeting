@@ -5304,7 +5304,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         notify(ItemLocalRolesUpdatedEvent(self, old_local_roles))
         # propagate Reader local_roles to sub elements
         # this way for example users have Reader role on item may view the advices
-        self._propagateReaderLocalRoleTuSubObjects()
+        self._propagateReaderAndMeetingManagerLocalRolesToSubObjects()
         # reindex object security except if avoid_reindex=True and localroles are the same
         avoid_reindex = kwargs.get('avoid_reindex', False)
         if not avoid_reindex or old_local_roles != self.__ac_local_roles__:
@@ -5312,16 +5312,20 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # return indexes_to_update in case a reindexObject is not done
         return ['getCopyGroups', 'getGroupsInCharge']
 
-    def _propagateReaderLocalRoleTuSubObjects(self):
-        """Propagate the 'Reader' local role on sub objects
-           that are blocking local roles inheritance."""
+    def _propagateReaderAndMeetingManagerLocalRolesToSubObjects(self):
+        """Propagate the 'Reader' and 'MeetingManager' local roles to
+           sub objects that are blocking local roles inheritance."""
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
         grp_reader_localroles = [
             grp_id for grp_id in self.__ac_local_roles__
             if 'Reader' in self.__ac_local_roles__[grp_id]]
+        meetingmanager_group_id = get_plone_group_id(cfg.getId(), MEETINGMANAGERS_GROUP_SUFFIX)
         for obj in self.objectValues():
             if getattr(obj, '__ac_local_roles_block__', False):
                 for grp_id in grp_reader_localroles:
                     obj.manage_addLocalRoles(grp_id, ['Reader'])
+                obj.manage_addLocalRoles(meetingmanager_group_id, ['MeetingManager'])
 
     def _updateCopyGroupsLocalRoles(self, isCreated):
         '''Give the 'Reader' local role to the copy groups
