@@ -468,7 +468,7 @@
              i18n:attributes="title">
   <action url="" icon="%(portal_url)s/itempublish.png" category="workflow" i18n:translate="">itemfreeze</action>
   <guard>
-    <guard-expression>python:here.wfConditions().mayPublish()</guard-expression>
+    <guard-expression>python:here.wfConditions().mayFreeze()</guard-expression>
   </guard>
  </transition>
  <transition transition_id="itempublish"
@@ -480,7 +480,7 @@
              i18n:attributes="title">
   <action url="" icon="%(portal_url)s/itemfreeze.png" category="workflow" i18n:translate="">itempublish</action>
   <guard>
-    <guard-expression>python:here.wfConditions().mayFreeze()</guard-expression>
+    <guard-expression>python:here.wfConditions().mayPublish()</guard-expression>
   </guard>
  </transition>
  <transition transition_id="present"

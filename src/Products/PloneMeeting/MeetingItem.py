@@ -607,13 +607,13 @@ class MeetingItemWorkflowActions(object):
         """Set presented item in a late state, this is done to be easy to override in case
            WF transitions to set an item late item is different, without redefining
            the entire doPresent.
-           By default, this will freeze the item."""
+           By default, this will freeze or publish the item."""
         wTool = api.portal.get_tool('portal_workflow')
         try:
+            wTool.doActionFor(self.context, 'itemfreeze')
             wTool.doActionFor(self.context, 'itempublish')
         except:
             pass  # Maybe does state 'itempublish' not exist.
-        wTool.doActionFor(self.context, 'itemfreeze')
 
     security.declarePrivate('doItemPublish')
 
