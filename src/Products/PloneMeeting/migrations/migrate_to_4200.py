@@ -80,7 +80,7 @@ class Migrate_To_4200(Migrator):
 def migrate(context):
     '''This migration function will:
 
-       1) ???
+       1) Configure field MeetingConfig.itemWFValidationLevels depending on old wfAdaptations.
 
     '''
     migrator = Migrate_To_4200(context)

@@ -10,7 +10,6 @@ from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import ReviewPortalContent
 from Products.CMFCore.permissions import View
 from Products.PloneMeeting import logger
-from Products.PloneMeeting.config import ReadDecision
 from Products.PloneMeeting.config import WriteDecision
 from Products.PloneMeeting.utils import updateCollectionCriterion
 
