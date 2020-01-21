@@ -76,6 +76,9 @@ class Migrate_To_4200(Migrator):
         # configure new WFs
         self._configureItemWFValidationLevels()
 
+        self.tool.updateAllLocalRoles(meta_type=('MeetingItem', ))
+        self.refreshDatabase(workflows=True, catalogsToUpdate=[])
+
 
 def migrate(context):
     '''This migration function will:

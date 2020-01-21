@@ -398,3 +398,16 @@ class PloneMeetingTestingHelpers:
         """Select organization in ORGANIZATIONS_REGISTRY."""
         select_organization(org_uid, remove=remove)
         self.cleanMemoize()
+
+    def _enablePrevalidation(self, cfg, enable_extra_suffixes=False):
+        """Enable the 'prevalidated' state in MeetingConfig.itemWFValidationLevels."""
+        currentUser = self.member.getId()
+        self.changeUser('admin')
+        itemWFValidationLevels = cfg.getItemWFValidationLevels()
+        itemWFValidationLevels[1]['suffix'] = 'prereviewers'
+        itemWFValidationLevels[2]['enabled'] = '1'
+        if enable_extra_suffixes:
+            itemWFValidationLevels[2]['extra_suffixes'] = ['reviewers']
+        cfg.setItemWFValidationLevels(itemWFValidationLevels)
+        cfg.at_post_edit_script()
+        self.changeUser(currentUser)

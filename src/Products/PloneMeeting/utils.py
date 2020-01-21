@@ -3,6 +3,7 @@
 from AccessControl.Permission import Permission
 from appy.shared.diff import HtmlDiff
 from bs4 import BeautifulSoup
+from collections import OrderedDict
 from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_own_organization
@@ -1549,12 +1550,27 @@ def main_item_data(item):
     return data
 
 
-def reviewersFor(workflow_id=None):
-    # import MEETINGREVIEWERS as it is often monkeypatched...
-    from Products.PloneMeeting.config import MEETINGREVIEWERS
-    if workflow_id and workflow_id in MEETINGREVIEWERS:
-        return MEETINGREVIEWERS.get(workflow_id)
-    return MEETINGREVIEWERS.get('*')
+def reviewersFor(cfg):
+    """Return an OrderedDict were key is the reviewer suffix and
+       value the corresponding item state, from highest level to lower level.
+       For example :
+       OrderedDict([('reviewers', ['prevalidated']), ('prereviewers', ['proposed'])])
+    """
+
+    suffixes = list(cfg.getItemWFValidationLevels(data='suffix', only_enabled=True))[1:]
+    # we need from highest level to lowest
+    suffixes.reverse()
+    states = list(cfg.getItemWFValidationLevels(data='state', only_enabled=True))[1:]
+    # we need from highest level to lowest
+    states.reverse()
+
+    # group suffix to state
+    tuples = zip(suffixes, states)
+
+    res = OrderedDict()
+    for suffix, state in tuples:
+        res[suffix] = [state]
+    return res
 
 
 def get_every_back_references(obj, relationship):
@@ -1698,6 +1714,23 @@ def compute_item_roles_to_assign_to_suffixes(cfg, item_state, org=None):
             if item_is_decided and suffix != 'observers':
                 given_roles.append('Contributor')
             suffix_roles[suffix] = given_roles
+
+    # returned_to_proposing_group_* states
+    if item_state.startswith('returned_to_proposing_group_'):
+        # find corresponding state in item_val_levels_states
+        corresponding_item_state = item_state.split('returned_to_proposing_group_')[1]
+        for level in cfg.getItemWFValidationLevels(only_enabled=True):
+            if level['state'] == corresponding_item_state:
+                given_roles = []
+                suffixes = [level['suffix']] + list(level['extra_suffixes'])
+                for suffix in suffixes:
+                    given_roles.append('Editor')
+                    given_roles.append('Reviewer')
+                    given_roles.append('Contributor')
+                for role in given_roles:
+                    if role not in suffix_roles[suffix]:
+                        suffix_roles[suffix].append(role)
+
     return suffix_roles
 
 

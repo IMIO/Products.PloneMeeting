@@ -785,29 +785,6 @@ class testWorkflows(PloneMeetingTestCase):
         # but not other fields
         self.assertFalse(obsField.writeable(item))
 
-    def test_pm_MeetingReviewersValuesAreCorrect(self):
-        """Make sure values defined in config.MEETINGREVIEWERS are valid :
-           - workflows exist;
-           - keys are existing in MEETINGROLES;
-           - values are valid WF states."""
-        from Products.PloneMeeting.config import MEETINGREVIEWERS
-        from Products.PloneMeeting.config import MEETINGROLES
-        for wf_id, values in MEETINGREVIEWERS.items():
-            for cfg in self.tool.objectValues('MeetingConfig'):
-                item_base_wf_name = cfg.getItemWorkflow()
-                if wf_id != '*' and wf_id != item_base_wf_name:
-                    continue
-                wf = self.wfTool.getWorkflowsFor(cfg.getItemTypeName())[0]
-                for meeting_role, states in values.items():
-                    self.assertTrue(meeting_role in MEETINGROLES)
-                    # only test with '*' if self.meetingConfig itemWF is not defined in MEETINGREVIEWERS
-                    if wf_id == '*' and item_base_wf_name in MEETINGREVIEWERS:
-                        continue
-                    for state in states:
-                        if state not in states:
-                            pm_logger.info('test_pm_MeetingReviewersValuesAreCorrect: '
-                                           'state {0} not found in wf {1}'.format(state, wf.getId()))
-
     def test_pm_CorrectClosedMeeting(self):
         """A closed meeting may be corrected by MeetingManagers
            if MeetingConfig.meetingManagerMayCorrectClosedMeeting is True."""

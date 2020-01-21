@@ -527,10 +527,11 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         '''Check if the currently logged user is in at least one of p_suffixes-related Plone
            group.  p_suffixes is a list of suffixes.
            If cfg, we filter on cfg.usingGroups.'''
-        # display a warning if suffixes is not a tuple/list
+        # display a warning if suffixes is not a tuple/list, this was the case before
         if not isinstance(suffixes, (tuple, list)):
             logger.warn("ToolPloneMeeting.userIsAmong parameter 'suffixes' must be "
                         "a tuple or list of suffixes, but we received '{0}'".format(suffixes))
+            return
 
         using_groups = cfg and cfg.getUsingGroups() or []
         activeOrgUids = [org.UID() for org in get_organizations(

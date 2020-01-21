@@ -104,11 +104,6 @@ ADD_SUBCONTENT_PERMISSIONS = [
     AddAnnexDecision,
     'ATContentTypes: Add Image']
 
-MEETINGROLES = {'creators': 'MeetingMember',
-                'prereviewers': 'MeetingPreReviewer',
-                'reviewers': 'MeetingReviewer',
-                'observers': 'MeetingObserverLocal',
-                'advisers': None}
 # base suffixes, THIS IS NOT INTENDED TO BE OVERRIDED or monkeypatched,
 # if necessary, use EXTRA_GROUP_SUFFIXES to extend it
 MEETING_GROUP_SUFFIXES = [
@@ -131,13 +126,6 @@ MEETING_GROUP_SUFFIXES = [
 #   'fct_orgs': ['path_to_group_id_1', 'path_to_group_id_2']},
 # ]
 EXTRA_GROUP_SUFFIXES = []
-
-# list of reviewer roles, this needs to be defined in logical order because
-# we will also look for 'higher' reviewer level
-# the key is the group suffix and the value is a list of states of the items to review
-# highest levels to lowest levels
-MEETINGREVIEWERS = {'*': OrderedDict([('reviewers', ['proposed']),
-                                      ('prereviewers', ['proposed']), ]), }
 
 # This is the group created for each MeetingConfig where we store
 # users that will be able to edit the budgetInfos field for items in state
@@ -182,10 +170,10 @@ ploneMeetingRoles = (
     'MeetingObserverGlobal',
 )
 
-# Roles that can evaluate MeetingItem.completeness
-ITEM_COMPLETENESS_EVALUATORS = ('MeetingManager', 'Manager', 'MeetingReviewer', 'MeetingPreReviewer', )
-# Roles that can ask new evaluation of  MeetingItem.completeness if set to 'incomplete'
-ITEM_COMPLETENESS_ASKERS = ('MeetingManager', 'Manager', 'MeetingReviewer', 'MeetingPreReviewer', 'MeetingMember', )
+# Suffixes that may evaluate MeetingItem.completeness
+ITEM_COMPLETENESS_EVALUATORS = ('reviewers', 'prereviewers', )
+# Suffixes that can ask new evaluation of MeetingItem.completeness if set to 'incomplete'
+ITEM_COMPLETENESS_ASKERS = ('reviewers', 'prereviewers', 'creators', )
 
 # The id used for the root folder added to the member personal area that
 # will contain every meetingConfigs available to the member

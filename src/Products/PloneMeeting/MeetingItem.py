@@ -2023,12 +2023,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if item.isDefinedInTool():
             return False
 
+        res = False
+        tool = api.portal.get_tool('portal_plonemeeting')
         member = api.user.get_current()
         # user must be an item completeness editor (one of corresponding role)
-        if not member.has_permission(ModifyPortalContent, item) or \
-           not member.has_role(ITEM_COMPLETENESS_EVALUATORS, item):
-            return False
-        return True
+        if member.has_permission(ModifyPortalContent, item) and \
+           (tool.userIsAmong(ITEM_COMPLETENESS_EVALUATORS) or tool.isManager(item)):
+            res = True
+        return res
 
     security.declarePublic('mayAskCompletenessEvalAgain')
 
@@ -2040,13 +2042,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         item = self.getSelf()
         if item.isDefinedInTool():
             return
+
+        res = False
+        tool = api.portal.get_tool('portal_plonemeeting')
         member = api.user.get_current()
         # user must be an item completeness editor (one of corresponding role)
-        if not item.getCompleteness() == 'completeness_incomplete' or \
-           not member.has_permission(ModifyPortalContent, item) or \
-           not member.has_role(ITEM_COMPLETENESS_ASKERS, item):
-            return False
-        return True
+        if item.getCompleteness() == 'completeness_incomplete' and \
+           member.has_permission(ModifyPortalContent, item) and \
+           (tool.userIsAmong(ITEM_COMPLETENESS_ASKERS) or tool.isManager(item)):
+            res = True
+        return res
 
     security.declarePublic('mayEditAdviceConfidentiality')
 

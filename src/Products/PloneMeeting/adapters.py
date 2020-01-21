@@ -958,7 +958,7 @@ class BaseItemsToValidateOfHighestHierarchicLevelAdapter(CompoundCriterionBaseAd
             # in this case, we do not want to display a result
             # we return an unknown review_state
             return _find_nothing_query(self.cfg.getItemTypeName())
-        reviewers = reviewersFor(self.cfg.getItemWorkflow())
+        reviewers = reviewersFor(self.cfg)
         review_states = reviewers[highestReviewerLevel]
         # specific management for workflows using the 'pre_validation' wfAdaptation
         if highestReviewerLevel == 'reviewers' and \
@@ -1035,7 +1035,7 @@ class BaseItemsToValidateOfEveryReviewerLevelsAndLowerLevelsAdapter(CompoundCrit
             if not highestReviewerLevel:
                 continue
             foundLevel = False
-            reviewers = reviewersFor(self.cfg.getItemWorkflow())
+            reviewers = reviewersFor(self.cfg)
             for reviewer_suffix, review_states in reviewers.items():
                 if not foundLevel and not reviewer_suffix == highestReviewerLevel:
                     continue
@@ -1094,7 +1094,7 @@ class BaseItemsToValidateOfMyReviewerGroupsAdapter(CompoundCriterionBaseAdapter)
             return {}
         userPloneGroups = self.tool.get_plone_groups_for_user()
         reviewProcessInfos = []
-        reviewers = reviewersFor(self.cfg.getItemWorkflow())
+        reviewers = reviewersFor(self.cfg)
         for userPloneGroupId in userPloneGroups:
             for reviewer_suffix, review_states in reviewers.items():
                 # current user may be able to validate at at least

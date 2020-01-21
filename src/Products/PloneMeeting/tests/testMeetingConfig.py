@@ -1660,7 +1660,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         cfg2 = self.meetingConfig2
         cfg2.setWorkflowAdaptations(())
         cfg2.at_post_edit_script()
-        cfg3 = self.create('MeetingConfig')
+        cfg3 = self.create('MeetingConfig', workflowAdaptations=[])
 
         # test with normal value
         self.assertEqual(cfg2.getPlaces(), '')
