@@ -2108,7 +2108,7 @@ class testMeeting(PloneMeetingTestCase):
         item.REQUEST['PUBLISHED'] = item
         # as no current meeting and no meeting in the future, the item
         # may not be presented anymore
-        self.assertTrue(not item.wfConditions().mayPresent())
+        self.assertFalse(item.wfConditions().mayPresent())
 
         item.REQUEST['PUBLISHED'] = meeting
         # freeze the meeting, there will be no more meeting to present the item to
@@ -2973,18 +2973,16 @@ class testMeeting(PloneMeetingTestCase):
             return
 
         cfg.setWorkflowAdaptations(())
-        cfg.setMeetingWorkflow('meeting_workflow')
         cfg.at_post_edit_script()
         cfg2.setWorkflowAdaptations(())
-        cfg2.setMeetingWorkflow('meeting_workflow')
         cfg2.at_post_edit_script()
 
         self.changeUser('pmManager')
         meeting = self.create('Meeting', date=DateTime('2018/04/09'))
         self.assertEqual(sorted(meeting.getStatesBefore('frozen')),
-                         ['created', 'published'])
-        self.assertEqual(sorted(meeting.getStatesBefore('published')),
                          ['created'])
+        self.assertEqual(sorted(meeting.getStatesBefore('published')),
+                         ['created', 'frozen'])
         # use the no_publication WF adaptation to remove state 'published'
         cfg.setWorkflowAdaptations(('no_publication', ))
         # do not use at_post_edit_script that does a cleanRamCache()
@@ -2993,35 +2991,37 @@ class testMeeting(PloneMeetingTestCase):
         self.assertEqual(sorted(meeting.getStatesBefore('frozen')),
                          ['created'])
         # state not found, every states are returned
-        self.assertEqual(sorted(meeting.getStatesBefore('published')),
-                         ['archived', 'closed', 'created', 'decided', 'frozen'])
+        self.assertEqual(sorted(meeting.getStatesBefore('unknown_state')),
+                         ['closed', 'created', 'decided', 'frozen'])
         cfg.setWorkflowAdaptations(())
         # do not use at_post_edit_script that does a cleanRamCache()
         cfg.registerPortalTypes()
         transaction.commit()
         self.assertEqual(sorted(meeting.getStatesBefore('frozen')),
-                         ['created', 'published'])
-        self.assertEqual(sorted(meeting.getStatesBefore('published')),
                          ['created'])
+        self.assertEqual(sorted(meeting.getStatesBefore('published')),
+                         ['created', 'frozen'])
 
         # different for 2 meetingConfigs
         self.setMeetingConfig(cfg2.getId())
         meeting2 = self.create('Meeting', date=DateTime('2018/04/09'))
         self.assertEqual(sorted(meeting2.getStatesBefore('frozen')),
-                         ['created', 'published'])
+                         ['created'])
+        self.assertEqual(sorted(meeting2.getStatesBefore('published')),
+                         ['created', 'frozen'])
         cfg2.setWorkflowAdaptations(('no_publication', ))
         cfg2.registerPortalTypes()
         transaction.commit()
 
         # different values for different meetings
         self.assertEqual(sorted(meeting.getStatesBefore('frozen')),
-                         ['created', 'published'])
-        self.assertEqual(sorted(meeting.getStatesBefore('published')),
                          ['created'])
+        self.assertEqual(sorted(meeting.getStatesBefore('published')),
+                         ['created', 'frozen'])
         self.assertEqual(sorted(meeting2.getStatesBefore('frozen')),
                          ['created'])
         self.assertEqual(sorted(meeting2.getStatesBefore('published')),
-                         ['archived', 'closed', 'created', 'decided', 'frozen'])
+                         ['closed', 'created', 'decided', 'frozen'])
 
         # if no frozen state found, every states are considered as before frozen
         # connect 'published' state to 'decided'
@@ -3029,7 +3029,7 @@ class testMeeting(PloneMeetingTestCase):
         meeting_wf.states.deleteStates(['frozen'])
         cfg.at_post_edit_script()
         self.assertEqual(sorted(meeting.getStatesBefore('frozen')),
-                         ['archived', 'closed', 'created', 'decided', 'published'])
+                         ['closed', 'created', 'decided', 'published'])
 
     def test_pm_GetPrettyLink(self):
         """Test the Meeting.getPrettyLink method."""

@@ -239,7 +239,7 @@ class MeetingItemWorkflowConditions(object):
             return No(_('required_category_ko'))
         # only MeetingManagers may present an item
         if not _checkPermission(ReviewPortalContent, self.context) or \
-           not _checkPermission(ManagePortal, self.context):
+           not self.tool.isManager(self.context):
             return False
         # We may present the item if Plone currently publishes a meeting.
         # Indeed, an item may only be presented within a meeting.
