@@ -1197,20 +1197,43 @@ class BaseDGHV(object):
             return self.print_signatories_by_position()
 
     def print_signatories_by_position(self,
-                                      signature_format=['position_type', 'person']):
+                                      signature_format=(u'position_type', u'person'),
+                                      separator=u', ',
+                                      ender=' ; '):
         """
         Print signatories by position
         :return: a dict with position as key and signature as value
         like this {1 : 'The mayor,', 2: 'John Doe'}
+        A dict is used to safely get a signature with the get method
         """
         signature_lines = OrderedDict()
         if self.context.meta_type == 'Meeting':
-            signatories = self.getSignatories(theObjects=True, by_signature_number=True)
+            signatories = self.context.getSignatories(theObjects=True, by_signature_number=True)
         else:
-            signatories = self.getItemSignatories(theObjects=True, by_signature_number=True)
+            signatories = self.context.getItemSignatories(theObjects=True, by_signature_number=True)
+        i = 0
 
-        for signatory in signatories:
-            pass #TODO
+        for signatory in signatories.values():
+            for attr in signature_format:
+                if u'position_type' in attr:
+                    signature_lines[i] = signatory.get_prefix_for_gender_and_number(
+                        include_value=True,
+                        position_type_attr=attr)
+                elif attr == u'person':
+                    signature_lines[i] = signatory.get_person_title(include_person_title=False)
+                elif hasattr(signatory, attr):
+                    signature_lines[i] = attr
+                else:
+                    signature_lines[i] += signature_format
+
+                if attr != signature_format[-1]:
+                    signature_lines[i] += separator
+                else:
+                    signature_lines[i] += ender
+
+                i += 1
+
+        return signature_lines
 
 
 
