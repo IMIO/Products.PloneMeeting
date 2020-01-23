@@ -1199,7 +1199,7 @@ class BaseDGHV(object):
     def print_signatories_by_position(self,
                                       signature_format=(u'position_type', u'person'),
                                       separator=u', ',
-                                      ender=' ; '):
+                                      ender=''):
         """
         Print signatories by position
         :return: a dict with position as key and signature as value
@@ -1211,27 +1211,26 @@ class BaseDGHV(object):
             signatories = self.context.getSignatories(theObjects=True, by_signature_number=True)
         else:
             signatories = self.context.getItemSignatories(theObjects=True, by_signature_number=True)
-        i = 0
 
+        n_line = 0
         for signatory in signatories.values():
             for attr in signature_format:
                 if u'position_type' in attr:
-                    signature_lines[i] = signatory.get_prefix_for_gender_and_number(
+                    signature_lines[n_line] = signatory.get_prefix_for_gender_and_number(
                         include_value=True,
                         position_type_attr=attr)
                 elif attr == u'person':
-                    signature_lines[i] = signatory.get_person_title(include_person_title=False)
+                    signature_lines[n_line] = signatory.get_person_title(include_person_title=False)
                 elif hasattr(signatory, attr):
-                    signature_lines[i] = attr
+                    signature_lines[n_line] = attr
                 else:
-                    signature_lines[i] += signature_format
+                    signature_lines[n_line] += signature_format
 
-                if attr != signature_format[-1]:
-                    signature_lines[i] += separator
+                if attr != signature_format[-1]:  # if not last line of signatory
+                    signature_lines[n_line] += separator
                 else:
-                    signature_lines[i] += ender
-
-                i += 1
+                    signature_lines[n_line] += ender
+                n_line += 1
 
         return signature_lines
 
