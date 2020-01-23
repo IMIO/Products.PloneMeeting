@@ -1556,7 +1556,6 @@ def reviewersFor(cfg):
        For example :
        OrderedDict([('reviewers', ['prevalidated']), ('prereviewers', ['proposed'])])
     """
-
     suffixes = list(cfg.getItemWFValidationLevels(data='suffix', only_enabled=True))[1:]
     # we need from highest level to lowest
     suffixes.reverse()

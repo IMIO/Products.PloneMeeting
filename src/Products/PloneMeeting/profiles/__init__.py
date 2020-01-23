@@ -598,14 +598,14 @@ class MeetingConfigDescriptor(Descriptor):
         # default PloneMeeting workflows.
         self.workflowAdaptations = ['apply_item_validation_levels']
         self.itemWFValidationLevels = (
-            {'leading_transition': '',
+            {'leading_transition': '-',
              'state_title': 'itemcreated',
              'suffix': 'creators',
              'enabled': '1',
              'state': 'itemcreated',
              'back_transition_title': 'backToItemCreated',
              'back_transition': 'backToItemCreated',
-             'leading_transition_title': '',
+             'leading_transition_title': '-',
              'extra_suffixes': []},
             {'leading_transition': 'propose',
              'state_title': 'proposed',

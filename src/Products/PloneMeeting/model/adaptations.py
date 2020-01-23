@@ -48,13 +48,13 @@ RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE = {'meetingitem_workflow': 'meetingitem
 # For example :
 # {'my_item_workflow': {WriteMeetingManagerItemFields: ('Manager', 'MeetingManager', 'MeetingMember', )}, }
 RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS = {}
-# states of the meeting from wich an item can be 'returned_to_proposing_group'
+# states of the meeting from which an item can be 'returned_to_proposing_group'
 RETURN_TO_PROPOSING_GROUP_FROM_ITEM_STATES = ('presented', 'itemfrozen', 'itempublished', )
 # mapping definintions regarding the 'return_to_proposing_group' wfAdaptation
 # this is used in MeetingItem.mayBackToMeeting and may vary upon used workflow
 # the key is the transition triggerable on the item and the values are states
-# of the linked meeting in wich this transition can be triggered
-# the last key 'no_more_returnable_state' specify states in wich the item is no more
+# of the linked meeting in which this transition can be triggered
+# the last key 'no_more_returnable_state' specify states in which the item is no more
 # returnable to the meeting...
 # these mappings are easily overridable by a subproduct...
 RETURN_TO_PROPOSING_GROUP_MAPPINGS = {'backTo_presented_from_returned_to_proposing_group':
@@ -166,12 +166,17 @@ def addState(wf_id,
         wf.transitions.addTransition(leading_transition_id)
         transition = wf.transitions.get(leading_transition_id)
         if not guard_name:
-            guard_name = 'may{0}{1}()'.format(leading_transition_id[0].upper(), leading_transition_id[1:])
+            guard_name = 'may{0}{1}()'.format(leading_transition_id[0].upper(),
+                                              leading_transition_id[1:])
         transition.setProperties(
             title=leading_transition_title,
-            new_state_id=new_state_id, trigger_type=1, script_name='',
-            actbox_name=leading_transition_id, actbox_url='',
-            actbox_icon='%(portal_url)s/{0}.png'.format(leading_transition_id), actbox_category='workflow',
+            new_state_id=new_state_id,
+            trigger_type=1,
+            script_name='',
+            actbox_name=leading_transition_id,
+            actbox_url='',
+            actbox_icon='%(portal_url)s/{0}.png'.format(leading_transition_id),
+            actbox_category='workflow',
             props={'guard_expr': 'python:here.wfConditions().{0}'.format(guard_name)})
     # back_transition_id
     for back_transition_infos in back_transitions:
@@ -183,9 +188,13 @@ def addState(wf_id,
         back_transition = wf.transitions.get(back_transition_id)
         back_transition.setProperties(
             title=back_transition_title,
-            new_state_id=new_state_id, trigger_type=1, script_name='',
-            actbox_name=back_transition_id, actbox_url='',
-            actbox_icon='%(portal_url)s/{0}.png'.format(back_transition_id), actbox_category='workflow',
+            new_state_id=new_state_id,
+            trigger_type=1,
+            script_name='',
+            actbox_name=back_transition_id,
+            actbox_url='',
+            actbox_icon='%(portal_url)s/{0}.png'.format(back_transition_id),
+            actbox_category='workflow',
             props={'guard_expr': 'python:here.wfConditions().mayCorrect("{0}")'.format(new_state_id)})
         # add back_transition to back_from_state
         back_from_state = wf.states[back_from_state_id]
@@ -198,9 +207,13 @@ def addState(wf_id,
         guard_name = 'may{0}{1}'.format(leaving_transition_id[0].upper(), leaving_transition_id[1:])
         transition.setProperties(
             title=leaving_transition_id,
-            new_state_id=leaving_to_state_id, trigger_type=1, script_name='',
-            actbox_name=leaving_transition_id, actbox_url='',
-            actbox_icon='%(portal_url)s/{0}.png'.format(leaving_transition_id), actbox_category='workflow',
+            new_state_id=leaving_to_state_id,
+            trigger_type=1,
+            script_name='',
+            actbox_name=leaving_transition_id,
+            actbox_url='',
+            actbox_icon='%(portal_url)s/{0}.png'.format(leaving_transition_id),
+            actbox_category='workflow',
             props={'guard_expr': 'python:here.wfConditions().{0}()'.format(guard_name)})
 
     # CONNECT STATES AND TRANSITIONS
@@ -294,8 +307,7 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
     # make sure given wfAdaptations are in the right order
     # import MeetingConfig only here so we are sure that the 'wfAdaptations' attr
     # has been updated by subplugins if any
-    from Products.PloneMeeting.MeetingConfig import MeetingConfig
-    ordered_wfAdaptations = MeetingConfig.wfAdaptations
+    ordered_wfAdaptations = meetingConfig.listWorkflowAdaptations().keys()
     wfAdaptations = list(wfAdaptations)
     wfAdaptations.sort(key=lambda x: ordered_wfAdaptations.index(x))
     wfTool = api.portal.get_tool('portal_workflow')
@@ -597,11 +609,11 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
         # finally, apply computed permissions, aka cloned
         new_state.permission_roles = cloned_permissions_with_meetingmanager
 
-    def _apply_return_to_proposing_group(wichValidation=None):
+    def _apply_return_to_proposing_group(whichValidation=None):
         """Helper method to apply the 'return_to_proposing_group' or
            'return_to_proposing_group_with_last_validation' or
            'return_to_proposing_group_with_all_validations' wfAdaptation.
-           wichValidation must in ('None', 'last', 'all')
+           whichValidation must in ('None', 'last', 'all')
         """
         if 'returned_to_proposing_group' not in itemWorkflow.states:
             # add the 'returned_to_proposing_group' state and clone the
@@ -695,10 +707,10 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                 transitions=newTransitionNames)
 
         # keep validation returned states
-        validation_returned_states = getValidationReturnedStates(meetingConfig)
-        if wichValidation == 'last':
+        validation_returned_states = _getValidationReturnedStates(meetingConfig)
+        if whichValidation == 'last':
             validation_returned_states = (validation_returned_states[-1],)
-        elif wichValidation is None:
+        elif whichValidation is None:
             validation_returned_states = ()
         last_returned_state_id = 'returned_to_proposing_group'
 
@@ -789,35 +801,6 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
             if 'proposed' in wf.states:
                 wf.states.deleteStates(['proposed'])
 
-        # "pre_validation" adds an additional state in the item validation chain:
-        # itemcreated -> proposed -> *prevalidated* -> validated.
-        # It implies the creation of a new role "MeetingPreReviewer", and use of
-        # MeetingGroup-related Plone groups suffixed with "_prereviewers".
-        elif wfAdaptation == 'pre_validation':
-            _apply_pre_validation(keepReviewerPermissions=False)
-
-        # same as the "pre_validation" here above but will make it possible for a
-        # user that is reviewer to validate items proposed to the prereviewer
-        # even if that reviewer is not in the Plone _prereviewers group
-        elif wfAdaptation == 'pre_validation_keep_reviewer_permissions':
-            _apply_pre_validation(keepReviewerPermissions=True)
-
-        # "items_come_validated" removes the early steps of the item workflow: the
-        # initial state becomes "validated". This can be used, for example, when
-        # an item comes from another MeetingConfig.
-        elif wfAdaptation == 'items_come_validated':
-            wf = itemWorkflow
-            # State 'validated' becomes the initial state
-            wf.initial_state = 'validated'
-            # Remove early transitions
-            for tr in ('propose', 'validate', 'backToProposed', 'backToItemCreated'):
-                if tr in wf.transitions:
-                    wf.transitions.deleteTransitions([tr])
-            # Remove early states
-            for st in ('itemcreated', 'proposed'):
-                if st in wf.states:
-                    wf.states.deleteStates([st])
-
         # build item validation levels based on MeetingConfig.itemWFValidationLevels values
         elif wfAdaptation == 'apply_item_validation_levels':
             wf = itemWorkflow
@@ -860,6 +843,11 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                 previous = data
                 levels.append(data)
 
+            # make sure we have no leading transition for initial_state, it is the case
+            # by default there is something because datagrid column is required...
+            levels[-1]['leading_transition_id'] = ''
+            levels[-1]['leading_transition_title'] = ''
+
             # last added level is the new initial state
             data['new_initial_state'] = True
             for level in levels:
@@ -874,10 +862,17 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
         elif wfAdaptation == 'reviewers_take_back_validated_item':
             pass
 
+        # "decide_item_when_back_to_meeting_from_returned_to_proposing_group" will
+        # trigger some transitions defined in
+        # config.ITEM_TRANSITION_WHEN_RETURNED_FROM_PROPOSING_GROUP_AFTER_CORRECTION
+        # when an item that was returned_to_proposing_group
+        # is send back to meeting if meeting is in a "decided" state
+        elif wfAdaptation == 'decide_item_when_back_to_meeting_from_returned_to_proposing_group':
+            pass
+
         # "only_creator_may_delete" grants the permission to delete items to
         # creators only (=role MeetingMember)(and also to God=Manager).
-        # (De-)activation of adaptation "pre_validation" impacts this one.
-        # We will check states in wich MeetingMember could delete and let only him
+        # We will check states in which MeetingMember could delete and let only him
         # have the delete permission.  In states where MeetingMember could not delete,
         # nobody will be able to delete at all (except God Itself obviously)
         elif wfAdaptation == 'only_creator_may_delete':
@@ -937,15 +932,15 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
         # with this, the item can be 'returned_to_proposing_group' when in a meeting then the creators
         # can modify it if necessary and send it back to the MeetingManagers when done
         elif wfAdaptation == 'return_to_proposing_group':
-            _apply_return_to_proposing_group(wichValidation=None)
+            _apply_return_to_proposing_group(whichValidation=None)
 
         # same as the "return_to_proposing_group" here above but the reviewer must validate item
         elif wfAdaptation == 'return_to_proposing_group_with_last_validation':
-            _apply_return_to_proposing_group(wichValidation='last')
+            _apply_return_to_proposing_group(whichValidation='last')
 
         # same as the "return_to_proposing_group" here above but the item must be validate by all hierarchical level
         elif wfAdaptation == 'return_to_proposing_group_with_all_validations':
-            _apply_return_to_proposing_group(wichValidation='all')
+            _apply_return_to_proposing_group(whichValidation='all')
 
         # "hide_decisions_when_under_writing" add state 'decisions_published' in the meeting workflow
         # between the 'decided' and the 'closed' states.  The idea is to hide the decisions to non
@@ -1162,6 +1157,17 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                 out_transitions.append('accept_but_modify')
             new_state.transitions = out_transitions
 
+        # "accepted_out_of_meeting" add state 'accepted_out_of_meeting'
+        # from 'validated' in the item WF
+        elif wfAdaptation in ['accepted_out_of_meeting',
+                              'accepted_out_of_meeting_and_duplicated']:
+            _addIsolatedState(
+                new_state_id='accepted_out_of_meeting',
+                origin_state_id='validated',
+                origin_transition_id='accept_out_of_meeting',
+                origin_transition_guard_expr_name='mayAccept_out_of_meeting',
+                back_transition_id='backToValidatedFromAcceptedOutOfMeeting')
+
         # "accepted_out_of_meeting_emergency" add state 'accepted_out_of_meeting_emergency'
         # from 'validated' in the item WF
         elif wfAdaptation in ['accepted_out_of_meeting_emergency',
@@ -1173,14 +1179,16 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                 origin_transition_guard_expr_name='mayAccept_out_of_meeting_emergency',
                 back_transition_id='backToValidatedFromAcceptedOutOfMeetingEmergency')
 
-        # "presented_item_back_to_itemcreated" allows the MeetingManagers to send a presented
-        # item directly back to "itemcreated" in addition to back to "validated"
-        elif wfAdaptation == 'presented_item_back_to_itemcreated':
+        # "presented_item_back_to_XXX" allows the MeetingManagers to send a presented
+        # item directly back to "XXX" item validation state in addition to back to "validated"
+        elif wfAdaptation.startswith('presented_item_back_to_'):
             wf = itemWorkflow
-            if 'itemcreated' in wf.states:
-                presented = wf.states.presented
-                if 'backToItemCreated' not in presented.transitions:
-                    presented.transitions = presented.transitions + ('backToItemCreated', )
+            presented = wf.states.presented
+            item_validation_state = wfAdaptation.replace('presented_item_back_to_', '')
+            # find back transition that leads to item_validation_state
+            validation_state_infos = meetingConfig.getItemWFValidationLevels(state=item_validation_state)
+            back_transition = validation_state_infos['back_transition']
+            presented.transitions = presented.transitions + (back_transition, )
 
         # "presented_item_back_to_prevalidated" allows the MeetingManagers to send a presented
         # item directly back to "prevalidated" in addition to back to "validated"
@@ -1227,19 +1235,10 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                                 'did not hangle WFAdaptation %s!' % wfAdaptation)
 
 
-def getValidationReturnedStates(cfg):
-    '''used for check compatibility in config '''
-    states = RETURN_TO_PROPOSING_GROUP_VALIDATION_STATES
-    # if workflowAdaptation 'pre_validation' is used, append 'prevalidated'
-    # either we are setting workflowAdaptations, or it is stored in MeetingConfig
-    use_prevalidation = False
-    if hasattr(cfg.REQUEST, 'useGroupsAsCategories'):
-        use_prevalidation = 'pre_validation' in cfg.REQUEST.get('workflowAdaptations', [])
-    else:
-        use_prevalidation = 'pre_validation' in cfg.getWorkflowAdaptations()
-    if use_prevalidation:
-        states += ('prevalidated', )
+def _getValidationReturnedStates(cfg):
+    ''' '''
     res = []
+    states = cfg.getItemWFValidationLevels(data='state', only_enabled=True)[1:]
     for state in states:
         res.append("returned_to_proposing_group_%s" % state)
     return res

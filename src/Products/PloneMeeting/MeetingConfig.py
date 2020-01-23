@@ -100,7 +100,7 @@ from Products.PloneMeeting.interfaces import IMeetingWorkflowActions
 from Products.PloneMeeting.interfaces import IMeetingWorkflowConditions
 from Products.PloneMeeting.Meeting import Meeting
 from Products.PloneMeeting.MeetingItem import MeetingItem
-from Products.PloneMeeting.model.adaptations import getValidationReturnedStates
+from Products.PloneMeeting.model.adaptations import _getValidationReturnedStates
 from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
 from Products.PloneMeeting.profiles import MeetingConfigDescriptor
 from Products.PloneMeeting.utils import computeCertifiedSignatures
@@ -1206,22 +1206,28 @@ schema = Schema((
             description_msgid="item_wf_validation_levels_descr",
             columns={'state':
                         Column("Item WF validation levels state",
-                               col_description="Item WF validation levels state description."),
+                               col_description="Item WF validation levels state description.",
+                               required=True),
                      'state_title':
                         Column("Item WF validation levels state title",
-                               col_description="Item WF validation levels state title description."),
+                               col_description="Item WF validation levels state title description.",
+                               required=True),
                      'leading_transition':
                         Column("Item WF validation levels leading transition",
-                               col_description="Item WF validation levels leading transition description."),
+                               col_description="Item WF validation levels leading transition description.",
+                               required=True),
                      'leading_transition_title':
                         Column("Item WF validation levels leading transition title",
-                               col_description="Item WF validation levels leading transition title description."),
+                               col_description="Item WF validation levels leading transition title description.",
+                               required=True),
                      'back_transition':
                         Column("Item WF validation levels back transition",
-                               col_description="Item WF validation levels back transition description."),
+                               col_description="Item WF validation levels back transition description.",
+                               required=True),
                      'back_transition_title':
                         Column("Item WF validation levels back transition title",
-                               col_description="Item WF validation levels back transition title description."),
+                               col_description="Item WF validation levels back transition title description.",
+                               required=True),
                      'suffix':
                         SelectColumn("Item WF validation levels suffix",
                                      vocabulary_factory=u'collective.contact.plonegroup.functions',
@@ -2502,15 +2508,14 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     # Names of workflow adaptations, ORDER IS IMPORTANT!
     wfAdaptations = ('apply_item_validation_levels',
                      'no_global_observation',
-                     'only_creator_may_delete', 'items_come_validated',
+                     'only_creator_may_delete',
                      'accepted_but_modified',
                      'postpone_next_meeting', 'mark_not_applicable',
                      'removed', 'removed_and_duplicated', 'refused', 'delayed',
                      'pre_accepted',
                      'no_publication', 'everyone_reads_all',
                      'reviewers_take_back_validated_item', 'creator_edits_unless_closed',
-                     'presented_item_back_to_itemcreated', 'presented_item_back_to_proposed',
-                     'presented_item_back_to_prevalidated',
+                     'presented_item_back_to_validation_state',
                      'return_to_proposing_group', 'return_to_proposing_group_with_last_validation',
                      'return_to_proposing_group_with_all_validations',
                      'decide_item_when_back_to_meeting_from_returned_to_proposing_group',
@@ -3126,12 +3131,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getItemWFValidationLevels')
 
-    def getItemWFValidationLevels(self, state=None, data=None, only_enabled=False, **kwargs):
+    def getItemWFValidationLevels(self, state=None, data=None, only_enabled=False, value=None, **kwargs):
         '''Override the field 'itemWFValidationLevels' accessor to be able to handle some paramters :
            - state : return row relative to given p_state;
            - data : return every values defined for a given datagrid column name;
            - only_enabled : make sure to return rows having enabled '1'.'''
-        res = self.getField('itemWFValidationLevels').get(self, **kwargs)
+        res = value or self.getField('itemWFValidationLevels').get(self, **kwargs)
         enabled = ['0', '1']
         if only_enabled:
             enabled = ['1']
@@ -3903,21 +3908,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
         # conflicts
         msg = translate('wa_conflicts', domain='PloneMeeting', context=self.REQUEST)
-        if 'items_come_validated' in values and \
-            ('pre_validation' in values or
-             'pre_validation_keep_reviewer_permissions' in values or
-             'reviewers_take_back_validated_item' in values or
-             'presented_item_back_to_itemcreated' in values or
-             'presented_item_back_to_prevalidated' in values or
-             'presented_item_back_to_proposed' in values):
-            return msg
-        if 'no_proposal' in values and \
-            ('pre_validation' in values or
-             'pre_validation_keep_reviewer_permissions' in values or
-             'presented_item_back_to_proposed' in values):
-            return msg
-        if 'pre_validation' in values and 'pre_validation_keep_reviewer_permissions' in values:
-            return msg
         if 'removed' in values and 'removed_and_duplicated' in values:
             return msg
         if 'accepted_out_of_meeting' in values and \
@@ -3927,15 +3917,39 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
            'accepted_out_of_meeting_emergency_and_duplicated' in values:
             return msg
 
-        # 'presented_item_back_to_prevalidated' needs 'pre_validation'
-        if 'presented_item_back_to_prevalidated' in values and \
-           ('pre_validation' not in values and 'pre_validation_keep_reviewer_permissions' not in values):
-            return translate('wa_presented_item_back_to_prevalidated_needs_pre_validation_error',
-                             domain='PloneMeeting',
-                             context=self.REQUEST)
+        # dependency on 'apply_item_validation_levels'
+        msg = translate('wa_apply_item_validation_levels_dependency',
+                        domain='PloneMeeting',
+                        context=self.REQUEST)
+        back_from_presented = [v for v in values
+                               if v.startswith('presented_item_back_to_')]
+        if 'apply_item_validation_levels' not in values:
+            if 'reviewers_take_back_validated_item' in values or \
+               'return_to_proposing_group_with_last_validation' in values or \
+               'return_to_proposing_group_with_all_validations' in values or \
+               back_from_presented:
+                return msg
+
+        # check that selected back_from_presented transitions
+        # exists in MeetingConfig.itemWFValidationLevels
+        if back_from_presented:
+            msg = translate('wa_presented_back_to_wrong_itemWFValidationLevels',
+                            domain='PloneMeeting',
+                            context=self.REQUEST)
+            itemWFValidationLevels = self.REQUEST.get(
+                'itemWFValidationLevels', self.getItemWFValidationLevels())
+            item_validation_states = self.getItemWFValidationLevels(
+                data='state',
+                value=itemWFValidationLevels,
+                only_enabled=True)
+            for back_from in back_from_presented:
+                presented_state = back_from.replace('presented_item_back_to_', '')
+                if presented_state not in item_validation_states:
+                    return msg
 
         # several 'return_to_proposing_group' values may not be selected together
-        return_to_prop_group_wf_adaptations = [v for v in values if v.startswith('return_to_proposing_group')]
+        return_to_prop_group_wf_adaptations = [
+            v for v in values if v.startswith('return_to_proposing_group')]
         if len(return_to_prop_group_wf_adaptations) > 1:
             return msg
 
@@ -3952,35 +3966,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 return translate('wa_added_no_publication_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
-        if 'no_proposal' in added:
-            # this will remove the 'proposed' state for MeetingItem
-            # check that no more items are in this state
-            if catalog(portal_type=self.getItemTypeName(), review_state='proposed'):
-                return translate('wa_added_no_proposal_error',
-                                 domain='PloneMeeting',
-                                 context=self.REQUEST)
-        if 'items_come_validated' in added:
-            # this will remove states 'itemcreated' and 'proposed' for MeetingItem
-            # check that no more items are in these states
-            if catalog(portal_type=self.getItemTypeName(), review_state=('itemcreated', 'proposed')):
-                return translate('wa_added_items_come_validated_error',
-                                 domain='PloneMeeting',
-                                 context=self.REQUEST)
 
         # validate removed workflowAdaptations, in case we removed a wfAdaptation that added
         # a state for example, double check that no more element (item or meeting) is in that state...
         removed = set(self.getWorkflowAdaptations()).difference(set(values))
-        # check if pre_validation is removed only if the other pre_validation is not added
-        # at the same time (switch from one to other)
-        if ('pre_validation' in removed and 'pre_validation_keep_reviewer_permissions' not in added) or \
-           ('pre_validation_keep_reviewer_permissions' in removed and 'pre_validation' not in added):
-            # this will remove the 'prevalidated' state for MeetingItem
-            # check that no more items are in this state
-            if catalog(portal_type=self.getItemTypeName(),
-                       review_state=('prevalidated', 'returned_to_proposing_group_prevalidated')):
-                return translate('wa_removed_pre_validation_error',
-                                 domain='PloneMeeting',
-                                 context=self.REQUEST)
         if 'waiting_advices' in removed:
             # this will remove the 'waiting_advices' state for MeetingItem
             # check that no more items are in this state
@@ -4001,7 +3990,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 return translate('wa_removed_return_to_proposing_group_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
-        validation_returned_states = getValidationReturnedStates(self)
+        validation_returned_states = _getValidationReturnedStates(self)
         if ('return_to_proposing_group_with_last_validation' in removed) and \
            not ('return_to_proposing_group_with_all_validations' in added):
             # this will remove the 'returned_to_proposing_group with last validation state'
@@ -4028,14 +4017,16 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 return translate('wa_removed_hide_decisions_when_under_writing_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
-        if 'accepted_out_of_meeting' in removed:
+        if 'accepted_out_of_meeting' in removed or \
+           'accepted_out_of_meeting_and_duplicated' in removed:
             # this will remove the 'accepted_out_of_meeting' state for Item
             # check that no more items are in this state
             if catalog(portal_type=self.getItemTypeName(), review_state='accepted_out_of_meeting'):
                 return translate('wa_removed_accepted_out_of_meeting_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
-        if 'accepted_out_of_meeting_emergency' in removed:
+        if 'accepted_out_of_meeting_emergency' in removed or \
+           'accepted_out_of_meeting_emergency_and_duplicated' in removed:
             # this will remove the 'accepted_out_of_meeting_emergency' state for Item
             # check that no more items are in this state
             if catalog(portal_type=self.getItemTypeName(), review_state='accepted_out_of_meeting_emergency'):
@@ -4063,7 +4054,27 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 return translate('wa_removed_refused_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
-
+        if 'delayed' in removed:
+            # this will remove the 'delayed' state for Item
+            # check that no more items are in this state
+            if catalog(portal_type=self.getItemTypeName(), review_state='delayed'):
+                return translate('wa_removed_delayed_error',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
+        if 'accepted_but_modified' in removed:
+            # this will remove the 'accepted_but_modified' state for Item
+            # check that no more items are in this state
+            if catalog(portal_type=self.getItemTypeName(), review_state='accepted_but_modified'):
+                return translate('wa_removed_accepted_but_modified_error',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
+        if 'pre_accepted' in removed:
+            # this will remove the 'pre_accepted' state for Item
+            # check that no more items are in this state
+            if catalog(portal_type=self.getItemTypeName(), review_state='pre_accepted'):
+                return translate('wa_removed_pre_accepted_error',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
         # check if 'removed' is removed only if the other 'removed_and_duplicated' is not added
         # at the same time (switch from one to other)
         if ('removed' in removed and 'removed_and_duplicated' not in added) or \
@@ -4074,7 +4085,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 return translate('wa_removed_removed_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
-
+        if 'apply_item_validation_levels' in removed:
+            # this will remove every item validation states defined in MeetingConfig.itemWFValidationLevels
+            itemWFValidationLevels = self.getItemWFValidationLevels(data='state', only_enabled=True)
+            if catalog(portal_type=self.getItemTypeName(), review_state=itemWFValidationLevels):
+                return translate('wa_removed_apply_item_validation_levels_error',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
         return self.adapted().custom_validate_workflowAdaptations(values, added, removed)
 
     def custom_validate_workflowAdaptations(self, values, added, removed):
@@ -4277,8 +4294,26 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''Lists the available workflow changes.'''
         res = []
         for adaptation in self.wfAdaptations:
-            title = translate('wa_%s' % adaptation, domain='PloneMeeting', context=self.REQUEST)
-            res.append((adaptation, title))
+            # back transitions from presented to every available item validation
+            # states defined in MeetingConfig.itemWFValidationLevels
+            if adaptation == 'presented_item_back_to_validation_state':
+                for item_validation_level in self.getItemWFValidationLevels(only_enabled=True):
+                    adaptation_id = 'presented_item_back_to_{0}'.format(item_validation_level['state'])
+                    translated_item_validation_state = translate(
+                        item_validation_level['state_title'],
+                        domain='plone',
+                        context=self.REQUEST)
+                    title = translate(
+                        'wa_presented_item_back_to_validation_state',
+                        domain='PloneMeeting',
+                        mapping={'item_state': translated_item_validation_state},
+                        context=self.REQUEST,
+                        default=u'Item back to presented from validation state "{0}"'.format(
+                            translated_item_validation_state))
+                    res.append((adaptation_id, title))
+            else:
+                title = translate('wa_%s' % adaptation, domain='PloneMeeting', context=self.REQUEST)
+                res.append((adaptation, title))
         return DisplayList(tuple(res))
 
     security.declarePrivate('listValidationLevelsNumbers')

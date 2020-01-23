@@ -5244,13 +5244,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             if plone_group_id:
                 self.manage_addLocalRoles(plone_group_id, tuple(roles))
 
-        # MeetingManagers get full access if item at least validated and not decided
+        # MeetingManagers get access if item at least validated or decided
+        # decided will include states "decided out of meeting"
+        # if it is still not decided, it gets full access
         # XXX to do when moving to dexterity.localrolesfield
-        if item_state == 'validated' or self.hasMeeting():
+        mmanagers_item_states = ('validated', ) + cfg.getItemDecidedStates()
+        if item_state in mmanagers_item_states or self.hasMeeting():
             mmanagers_group_id = "{0}_{1}".format(cfg.getId(), MEETINGMANAGERS_GROUP_SUFFIX)
-            mmanagers_roles = ['Reader', 'Reviewer', 'Contributor']
+            mmanagers_roles = ['Reader']
             if item_state not in cfg.getItemDecidedStates():
-                mmanagers_roles.append('Editor')
+                mmanagers_roles += ['Editor', 'Reviewer', 'Contributor']
             self.manage_addLocalRoles(mmanagers_group_id, tuple(mmanagers_roles))
 
     security.declareProtected(ModifyPortalContent, 'updateLocalRoles')
