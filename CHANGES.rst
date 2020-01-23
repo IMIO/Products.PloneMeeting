@@ -6,6 +6,7 @@ Changelog
 -------------------
 
 - Finally fixes advice inheritance when original advice is not delay aware and the MeetingConfig holding inherited advice has a delay aware custom adviser
+- Fix MeetingItem.getItemSignatories so it returns an empty dict when there is no signatories
 
 4.1.13 (2019-11-26)
 -------------------
