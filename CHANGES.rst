@@ -2,7 +2,15 @@ Changelog
 =========
 
 
-4.1.15 (unreleased)
+4.1.16 (unreleased)
+-------------------
+
+- In events.onConfigOrPloneElementModified do not call _notifyContainerModified if event element is a PloneMeeting folder, a user personal folder that contains items and meetings
+- Adapted MeetingItem._update_after_edit to be able to pass only some indexes to reindex, adapted async methods (change itemlisttype, itemcompleteness, ...) accordingly.
+  By defaukt, MeetingItem._update_after_edit will do a full reindex but if some specific indexes are given, only these indexes are reindexed
+- Avoid useless full reindex when RichText field is edited using quick edit and when annex is added/edited/removed
+
+4.1.15 (2020-01-10)
 -------------------
 
 - Only show the 'Add element' actions menu when Manager is on a Folder or on a MessagesConfig element, this way we avoid users changing review_state, layout our deleting the element...

@@ -9,6 +9,7 @@ from Products.CMFCore.utils import _checkPermission
 from Products.Five import BrowserView
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from Products.PloneMeeting.config import WriteBudgetInfos
+from Products.PloneMeeting.utils import notifyModifiedAndReindex
 from zope.i18n import translate
 
 
@@ -164,7 +165,7 @@ class TakenOverBy(BrowserView):
                                       context=self.request)
 
         html = self.IMG_TEMPLATE % (css_class, title, name, taken_over_by)
-        self.context._update_after_edit()
+        notifyModifiedAndReindex(self.context, extra_idxs=['getTakenOverBy'])
         return html
 
 
