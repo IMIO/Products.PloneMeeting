@@ -538,6 +538,7 @@ def sendMailIfRelevant(obj, event, permissionOrRole, isRole=False,
     if isRole and (permissionOrRole == 'Owner'):
         userIds = [obj.Creator()]
     else:
+        # Warning "_members" returns all users (even deleted users), the filter must do this afterwards.
         userIds = api.portal.get_tool('portal_memberdata')._members
     for userId in userIds:
         user = membershipTool.getMemberById(userId)
