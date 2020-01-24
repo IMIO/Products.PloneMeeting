@@ -4,7 +4,7 @@
     xmlns:plone="http://namespaces.plone.org/plone">
 
     <!-- Viewlets -->
-    <!-- Display workflow state on the Meeting, MeetingItem and meetingadvice -->
+    <!-- Display workflow state on the Meeting, MeetingItem, meetingadvice and some elements of the config -->
     <browser:viewlet
         name="plone.belowcontenttitle.workflowstate"
         manager="plone.app.layout.viewlets.interfaces.IBelowContentTitle"
@@ -23,6 +23,19 @@
         class="plonetheme.imioapps.browser.viewlets.WorkflowState"
         for="Products.PloneMeeting.content.advice.IMeetingAdvice"
         permission="zope2.View" />
+    <browser:viewlet
+        name="plone.belowcontenttitle.workflowstate"
+        manager="plone.app.layout.viewlets.interfaces.IBelowContentTitle"
+        class="plonetheme.imioapps.browser.viewlets.WorkflowState"
+        for="Products.PloneMeeting.interfaces.IMeetingConfig"
+        permission="zope2.View" />
+    <browser:viewlet
+        name="plone.belowcontenttitle.workflowstate"
+        manager="plone.app.layout.viewlets.interfaces.IBelowContentTitle"
+        class="plonetheme.imioapps.browser.viewlets.WorkflowState"
+        for="Products.PloneMeeting.interfaces.IMeetingCategory"
+        permission="zope2.View" />
+
     <browser:viewlet
         for="Products.PloneMeeting.interfaces.IMeeting"
         name="force-insert-normal"
