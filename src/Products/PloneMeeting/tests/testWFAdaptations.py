@@ -3,6 +3,7 @@
 # File: testWFAdaptations.py
 #
 
+from copy import deepcopy
 from DateTime.DateTime import DateTime
 from plone import api
 from plone.app.textfield.value import RichTextValue
@@ -709,14 +710,16 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertEqual(cfg.getItemWFValidationLevels(data='state', only_enabled=True),
                          ['itemcreated', 'proposed'])
         self._disableItemValidationLevels(cfg, levels=['proposed'])
-        self.failIf(cfg.validate_itemWFValidationLevels(cfg.getItemWFValidationLevels()))
+        values_disabled_proposed = deepcopy(cfg.getItemWFValidationLevels())
+        self._enableItemValidationLevels(cfg, levels=['proposed'])
+        self.failIf(cfg.validate_itemWFValidationLevels(values_disabled_proposed))
 
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
         self.assertEqual(item.queryState(), 'itemcreated')
         # get correct value when 'itemcreated' is disabled
         self._disableItemValidationLevels(cfg, levels=['itemcreated'])
-        values_disabled_item_created = cfg.getItemWFValidationLevels()
+        values_disabled_item_created = deepcopy(cfg.getItemWFValidationLevels())
         self._enableItemValidationLevels(cfg, levels=['itemcreated'])
         # validation KO
         level_removed_error = \

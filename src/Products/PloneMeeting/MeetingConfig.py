@@ -4108,7 +4108,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             data='state',
             value=values,
             only_enabled=True)
-        removed_or_disabled = set(enabled_stored_states).difference(set(enabled_values_states))
+        removed_or_disabled = tuple(set(enabled_stored_states).difference(set(enabled_values_states)))
 
         catalog = api.portal.get_tool('portal_catalog')
         brains = catalog(portal_type=self.getItemTypeName(), review_state=removed_or_disabled)
