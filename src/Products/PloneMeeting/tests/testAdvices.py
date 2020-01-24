@@ -3326,7 +3326,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertEqual(item2.queryState(), 'presented')
         self.assertTrue(advice_infos.mayRemoveInheritedAdvice())
         self.closeMeeting(meeting)
-        self.assertTrue(item2.queryState() in cfg.getItemDecidedStates())
+        self.assertTrue(item2.queryState() in cfg.adapted().getItemDecidedStates())
         self.assertFalse(advice_infos.mayRemoveInheritedAdvice())
 
     def test_pm_RemoveInheritedAdviceByAdviser(self):

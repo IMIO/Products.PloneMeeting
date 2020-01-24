@@ -411,3 +411,27 @@ class PloneMeetingTestingHelpers:
         cfg.setItemWFValidationLevels(itemWFValidationLevels)
         cfg.at_post_edit_script()
         self.changeUser(currentUser)
+
+    def _enableItemValidationLevels(self, cfg, levels=[]):
+        """Disable every item validation levels."""
+        currentUser = self.member.getId()
+        self.changeUser('admin')
+        itemValLevels = cfg.getItemWFValidationLevels()
+        for itemValLevel in itemValLevels:
+            if not levels or itemValLevel['state'] in levels:
+                itemValLevel['enabled'] = '1'
+        cfg.setItemWFValidationLevels(itemValLevels)
+        cfg.at_post_edit_script()
+        self.changeUser(currentUser)
+
+    def _disableItemValidationLevels(self, cfg, levels=[]):
+        """Disable every item validation levels."""
+        currentUser = self.member.getId()
+        self.changeUser('admin')
+        itemValLevels = cfg.getItemWFValidationLevels()
+        for itemValLevel in itemValLevels:
+            if not levels or itemValLevel['state'] in levels:
+                itemValLevel['enabled'] = '0'
+        cfg.setItemWFValidationLevels(itemValLevels)
+        cfg.at_post_edit_script()
+        self.changeUser(currentUser)

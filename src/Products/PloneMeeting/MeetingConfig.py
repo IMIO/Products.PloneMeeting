@@ -1149,23 +1149,6 @@ schema = Schema((
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
-        name='itemDecidedStates',
-        widget=MultiSelectionWidget(
-            description="ItemDecidedStates",
-            description_msgid="item_decided_states_descr",
-            format="checkbox",
-            label='Itemdecidedstates',
-            label_msgid='PloneMeeting_label_itemDecidedStates',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="workflow",
-        multiValued=1,
-        vocabulary='listItemStates',
-        default=defValues.itemDecidedStates,
-        enforceVocabulary=True,
-        write_permission="PloneMeeting: Write risky config",
-    ),
-    LinesField(
         name='itemPositiveDecidedStates',
         widget=MultiSelectionWidget(
             description="ItemPositiveDecidedStates",
@@ -2506,25 +2489,31 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     defaultWorkflows = ('meetingitem_workflow', 'meeting_workflow')
 
     # Names of workflow adaptations, ORDER IS IMPORTANT!
-    wfAdaptations = ('apply_item_validation_levels',
-                     'no_global_observation',
+    wfAdaptations = ('no_global_observation',
                      'only_creator_may_delete',
                      'accepted_but_modified',
-                     'postpone_next_meeting', 'mark_not_applicable',
-                     'removed', 'removed_and_duplicated', 'refused', 'delayed',
+                     'postpone_next_meeting',
+                     'mark_not_applicable',
+                     'removed',
+                     'removed_and_duplicated',
+                     'refused',
+                     'delayed',
                      'pre_accepted',
-                     'no_publication', 'everyone_reads_all',
-                     'reviewers_take_back_validated_item', 'creator_edits_unless_closed',
+                     'no_publication',
+                     'reviewers_take_back_validated_item',
                      'presented_item_back_to_validation_state',
-                     'return_to_proposing_group', 'return_to_proposing_group_with_last_validation',
+                     'return_to_proposing_group',
+                     'return_to_proposing_group_with_last_validation',
                      'return_to_proposing_group_with_all_validations',
                      'decide_item_when_back_to_meeting_from_returned_to_proposing_group',
                      'hide_decisions_when_under_writing',
                      'waiting_advices_from_last_val_level_only_adviser_send_back',
                      'waiting_advices_from_last_val_level_only_proposing_group_send_back',
                      'waiting_advices_from_last_val_level_adviser_and_proposing_group_send_back',
-                     'accepted_out_of_meeting', 'accepted_out_of_meeting_and_duplicated',
-                     'accepted_out_of_meeting_emergency', 'accepted_out_of_meeting_emergency_and_duplicated')
+                     'accepted_out_of_meeting',
+                     'accepted_out_of_meeting_and_duplicated',
+                     'accepted_out_of_meeting_emergency',
+                     'accepted_out_of_meeting_emergency_and_duplicated')
 
     def _searchesInfo(self):
         """Informations used to create DashboardCollections in the searches."""
@@ -2534,7 +2523,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         wfTool = api.portal.get_tool('portal_workflow')
         itemWF = wfTool.getWorkflowsFor(itemType)[0]
         livingItemStates = [state for state in itemWF.states
-                            if state not in self.getItemDecidedStates()]
+                            if state not in self.adapted().getItemDecidedStates()]
         infos = OrderedDict(
             [
                 # My items
@@ -3119,6 +3108,19 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # need to use ICriteria.edit to make change persistent
                 criteria.edit(criterion.__name__, **{'default': value})
         self.getField('maxShownListings').set(self, value, **kwargs)
+
+    def getItemDecidedStates(self):
+        '''Return list of item decided states.'''
+        return ['accepted',
+                'accepted_but_modified',
+                'accepted_out_of_meeting',
+                'accepted_out_of_meeting_emergency',
+                'delayed',
+                'delayed',
+                'marked_not_applicable',
+                'postponed_next_meeting',
+                'refused',
+                'removed']
 
     security.declarePublic('getUsingGroups')
 
@@ -3897,8 +3899,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('validate_workflowAdaptations')
 
     def validate_workflowAdaptations(self, values):
-        '''This method ensures that the combination of used workflow
-           adaptations is valid.'''
+        '''Validates field workflowAdaptaations.'''
+
         # inline validation sends a string instead of a tuple... bypass it!
         if not hasattr(values, '__iter__'):
             return
@@ -3916,14 +3918,28 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         if 'accepted_out_of_meeting_emergency' in values and \
            'accepted_out_of_meeting_emergency_and_duplicated' in values:
             return msg
+        # several 'return_to_proposing_group' values may not be selected together
+        return_to_prop_group_wf_adaptations = [
+            v for v in values if v.startswith('return_to_proposing_group')]
+        if len(return_to_prop_group_wf_adaptations) > 1:
+            return msg
 
-        # dependency on 'apply_item_validation_levels'
-        msg = translate('wa_apply_item_validation_levels_dependency',
+        # dependency on 'MeetingConfig.itemWFValidationLevels'
+        msg = translate('wa_item_validation_levels_dependency',
                         domain='PloneMeeting',
                         context=self.REQUEST)
+
+        # item validation levels
+        itemWFValidationLevels = self.REQUEST.get(
+            'itemWFValidationLevels', self.getItemWFValidationLevels())
+        item_validation_states = self.getItemWFValidationLevels(
+            data='state',
+            value=itemWFValidationLevels,
+            only_enabled=True)
+
         back_from_presented = [v for v in values
                                if v.startswith('presented_item_back_to_')]
-        if 'apply_item_validation_levels' not in values:
+        if not item_validation_states:
             if 'reviewers_take_back_validated_item' in values or \
                'return_to_proposing_group_with_last_validation' in values or \
                'return_to_proposing_group_with_all_validations' in values or \
@@ -3936,22 +3952,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             msg = translate('wa_presented_back_to_wrong_itemWFValidationLevels',
                             domain='PloneMeeting',
                             context=self.REQUEST)
-            itemWFValidationLevels = self.REQUEST.get(
-                'itemWFValidationLevels', self.getItemWFValidationLevels())
-            item_validation_states = self.getItemWFValidationLevels(
-                data='state',
-                value=itemWFValidationLevels,
-                only_enabled=True)
             for back_from in back_from_presented:
                 presented_state = back_from.replace('presented_item_back_to_', '')
                 if presented_state not in item_validation_states:
                     return msg
-
-        # several 'return_to_proposing_group' values may not be selected together
-        return_to_prop_group_wf_adaptations = [
-            v for v in values if v.startswith('return_to_proposing_group')]
-        if len(return_to_prop_group_wf_adaptations) > 1:
-            return msg
 
         catalog = api.portal.get_tool('portal_catalog')
         wfTool = api.portal.get_tool('portal_workflow')
@@ -4085,14 +4089,45 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 return translate('wa_removed_removed_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
-        if 'apply_item_validation_levels' in removed:
-            # this will remove every item validation states defined in MeetingConfig.itemWFValidationLevels
-            itemWFValidationLevels = self.getItemWFValidationLevels(data='state', only_enabled=True)
-            if catalog(portal_type=self.getItemTypeName(), review_state=itemWFValidationLevels):
-                return translate('wa_removed_apply_item_validation_levels_error',
-                                 domain='PloneMeeting',
-                                 context=self.REQUEST)
         return self.adapted().custom_validate_workflowAdaptations(values, added, removed)
+
+    security.declarePrivate('validate_itemWFValidationLevels')
+
+    def validate_itemWFValidationLevels(self, values):
+        '''Validates field itemWFValidationLevels.'''
+        # inline validation sends a string instead of a tuple... bypass it!
+        if not hasattr(values, '__iter__'):
+            return
+
+        res = []
+        for value in values:
+            # pass 'template_row_marker'
+            if value.get('orderindex_', None) == 'template_row_marker':
+                continue
+            res.append(value)
+        values = res
+
+        # make sure no item in state that were removed or disabled
+        enabled_stored_states = self.getItemWFValidationLevels(
+            data='state',
+            only_enabled=True)
+        enabled_values_states = self.getItemWFValidationLevels(
+            data='state',
+            value=values,
+            only_enabled=True)
+        removed_or_disabled = set(enabled_stored_states).difference(set(enabled_values_states))
+
+        catalog = api.portal.get_tool('portal_catalog')
+        brains = catalog(portal_type=self.getItemTypeName(), review_state=removed_or_disabled)
+        if brains:
+            aBrain = brains[0]
+            return translate('item_wf_val_states_can_not_be_removed_in_use',
+                             domain='PloneMeeting',
+                             mapping={'item_state': translate(aBrain.review_state,
+                                                              domain="plone",
+                                                              context=self.REQUEST),
+                                      'item_url': aBrain.getURL()},
+                             context=self.REQUEST)
 
     def custom_validate_workflowAdaptations(self, values, added, removed):
         '''See doc in interfaces.py.'''

@@ -161,7 +161,7 @@ class AdvicesIconsInfos(BrowserView):
         res = False
         if self.adviceIsInherited:
             if self.tool.isManager(self.context) and \
-               self.context.queryState() not in self.cfg.getItemDecidedStates():
+               self.context.queryState() not in self.cfg.adapted().getItemDecidedStates():
                 res = True
             else:
                 if self.cfg.getInheritedAdviceRemoveableByAdviser() and \

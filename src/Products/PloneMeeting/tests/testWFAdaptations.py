@@ -10,7 +10,6 @@ from plone.dexterity.utils import createContentInContainer
 from Products.CMFCore.permissions import DeleteObjects
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
-from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.PloneMeeting.config import HIDE_DECISION_UNDER_WRITING_MSG
 from Products.PloneMeeting.config import WriteBudgetInfos
 from Products.PloneMeeting.config import WriteItemMeetingManagerFields
@@ -18,7 +17,6 @@ from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
 from Products.PloneMeeting.model.adaptations import RETURN_TO_PROPOSING_GROUP_FROM_ITEM_STATES
 from Products.PloneMeeting.model.adaptations import RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE
 from Products.PloneMeeting.model.adaptations import RETURN_TO_PROPOSING_GROUP_VALIDATION_STATES
-from Products.PloneMeeting.model.adaptations import WF_NOT_CREATOR_EDITS_UNLESS_CLOSED
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
 from zope.i18n import translate
@@ -39,15 +37,10 @@ class testWFAdaptations(PloneMeetingTestCase):
                           'accepted_out_of_meeting_and_duplicated',
                           'accepted_out_of_meeting_emergency',
                           'accepted_out_of_meeting_emergency_and_duplicated',
-                          'apply_item_validation_levels',
-                          'creator_edits_unless_closed',
                           'decide_item_when_back_to_meeting_from_returned_to_proposing_group',
                           'delayed',
-                          'everyone_reads_all',
                           'hide_decisions_when_under_writing',
                           'mark_not_applicable',
-                          'no_global_observation',
-                          'no_proposal',
                           'no_publication',
                           'only_creator_may_delete',
                           'postpone_next_meeting',
@@ -151,19 +144,28 @@ class testWFAdaptations(PloneMeetingTestCase):
         cfg = self.meetingConfig
 
         # return_to_proposing_group_... alone is ok
-        self.failIf(cfg.validate_workflowAdaptations(('return_to_proposing_group',)))
-        self.failIf(cfg.validate_workflowAdaptations(('return_to_proposing_group_with_last_validation',)))
-        self.failIf(cfg.validate_workflowAdaptations(('return_to_proposing_group_with_all_validations',)))
+        self.failIf(cfg.validate_workflowAdaptations(
+            ('return_to_proposing_group',)))
+        self.failIf(cfg.validate_workflowAdaptations(
+            ('return_to_proposing_group_with_last_validation',)))
+        self.failIf(cfg.validate_workflowAdaptations(
+            ('return_to_proposing_group_with_all_validations',)))
         # Only one return_to_proposing_group can be selectable
         self.assertEqual(
-            cfg.validate_workflowAdaptations(('return_to_proposing_group_with_last_validation',
-                                              'return_to_proposing_group')), wa_conflicts)
+            cfg.validate_workflowAdaptations(
+                ('return_to_proposing_group_with_last_validation',
+                 'return_to_proposing_group')),
+            wa_conflicts)
         self.assertEqual(
-            cfg.validate_workflowAdaptations(('return_to_proposing_group_with_last_validation',
-                                              'return_to_proposing_group_with_all_validations')), wa_conflicts)
+            cfg.validate_workflowAdaptations(
+                ('return_to_proposing_group_with_last_validation',
+                 'return_to_proposing_group_with_all_validations')),
+            wa_conflicts)
         self.assertEqual(
-            cfg.validate_workflowAdaptations(('return_to_proposing_group_with_all_validations',
-                                              'return_to_proposing_group')), wa_conflicts)
+            cfg.validate_workflowAdaptations(
+                ('return_to_proposing_group_with_all_validations',
+                 'return_to_proposing_group')),
+            wa_conflicts)
 
         # removed and removed_and_duplicated may not be used together
         self.failIf(cfg.validate_workflowAdaptations(('removed',)))
@@ -195,40 +197,38 @@ class testWFAdaptations(PloneMeetingTestCase):
                  'accepted_out_of_meeting_emergency_and_duplicated')),
             wa_conflicts)
 
-    def test_pm_Validate_workflowAdaptations_apply_item_validation_levels_dependency(self):
+    def test_pm_Validate_workflowAdaptations_item_validation_levels_dependency(self):
         """Test MeetingConfig.validate_workflowAdaptations where some wfAdaptations
-           depend on the apply_item_validation_levels wfAdaptation (that must be activated)."""
-        wa_dependency = translate('wa_apply_item_validation_levels_dependency',
+           depend on MeetingConfig.itemWFValidationLevels (that must be activated)."""
+        wa_dependency = translate('wa_item_validation_levels_dependency',
                                   domain='PloneMeeting',
                                   context=self.request)
         cfg = self.meetingConfig
+        self.assertEqual(cfg.getItemWFValidationLevels(data='state', only_enabled=True),
+                         ['itemcreated', 'proposed'])
+        self.failIf(cfg.validate_workflowAdaptations(('reviewers_take_back_validated_item', )))
+        self.failIf(cfg.validate_workflowAdaptations(('return_to_proposing_group_with_last_validation', )))
+        self.failIf(cfg.validate_workflowAdaptations(('return_to_proposing_group_with_all_validations', )))
+        self.failIf(cfg.validate_workflowAdaptations(('presented_item_back_to_itemcreated', )))
 
-        # apply_item_validation_levels alone is ok
-        self.failIf(cfg.validate_workflowAdaptations(('apply_item_validation_levels',)))
-
-        # some wfAdaptations removed and removed_and_duplicated may not be used together
-        self.failIf(cfg.validate_workflowAdaptations(('removed',)))
-        self.failIf(cfg.validate_workflowAdaptations(('removed_and_duplicated',)))
+        # disable every item validation levels
+        self._disableItemValidationLevels(cfg)
         self.assertEqual(
-            cfg.validate_workflowAdaptations(
-                ('reviewers_take_back_validated_item', ),
-                wa_dependency))
+            cfg.validate_workflowAdaptations(('reviewers_take_back_validated_item', )),
+            wa_dependency)
         self.assertEqual(
-            cfg.validate_workflowAdaptations(
-                ('return_to_proposing_group_with_last_validation', ),
-                wa_dependency))
+            cfg.validate_workflowAdaptations(('return_to_proposing_group_with_last_validation', )),
+            wa_dependency)
         self.assertEqual(
-            cfg.validate_workflowAdaptations(
-                ('return_to_proposing_group_with_all_validations', ),
-                wa_dependency))
+            cfg.validate_workflowAdaptations(('return_to_proposing_group_with_all_validations', )),
+            wa_dependency)
         self.assertEqual(
-            cfg.validate_workflowAdaptations(
-                ('presented_item_back_to_itemcreated', ),
-                wa_dependency))
+            cfg.validate_workflowAdaptations(('presented_item_back_to_itemcreated', )),
+            wa_dependency)
 
     def test_pm_Validate_workflowAdaptations_presented_item_back_to_validation_state(self):
         """If a WFA 'presented_item_back_to_XXX' is selected,
-           then the 'apply_item_validation_levels' must be selected as well,
+           then MeetingConfig.itemWFValidationLevels must provides some states,
            moreover it checks too if a validation level is available,
            this could not be the case when set using import_data or
            if validation_level was just disabled."""
@@ -240,16 +240,12 @@ class testWFAdaptations(PloneMeetingTestCase):
         # itemcreated and proposed are enabled
         self.assertEqual(cfg.getItemWFValidationLevels(data='state', only_enabled=True),
                          ['itemcreated', 'proposed'])
-        self.failIf(cfg.validate_workflowAdaptations(('apply_item_validation_levels',
-                                                      'presented_item_back_to_itemcreated')))
-        self.failIf(cfg.validate_workflowAdaptations(('apply_item_validation_levels',
-                                                      'presented_item_back_to_proposed')))
+        self.failIf(cfg.validate_workflowAdaptations(('presented_item_back_to_itemcreated', )))
+        self.failIf(cfg.validate_workflowAdaptations(('presented_item_back_to_proposed', )))
         # unknown (unselected) item validation level
         self.assertEqual(
-            cfg.validate_workflowAdaptations(
-                ('apply_item_validation_levels',
-                 'presented_item_back_to_unknown', ),
-                wa_error))
+            cfg.validate_workflowAdaptations(('presented_item_back_to_unknown', )),
+            wa_error)
 
     def test_pm_Validate_workflowAdaptations_added_no_publication(self):
         """Test MeetingConfig.validate_workflowAdaptations that manage addition
@@ -472,7 +468,6 @@ class testWFAdaptations(PloneMeetingTestCase):
             self.changeUser('pmManager')
             cfg.setWorkflowAdaptations((wfa_name, ))
             cfg.at_post_edit_script()
-
             item = self.create('MeetingItem')
             self.validateItem(item)
             self.failIf(cfg.validate_workflowAdaptations((wfa_name, )))
@@ -487,11 +482,6 @@ class testWFAdaptations(PloneMeetingTestCase):
                 cfg.validate_workflowAdaptations(()),
                 msg_removed_error)
 
-            # make wfAdaptation selectable, pmManager may not do it
-            # as it is a decided state, and in this final state,
-            # a MeetingManager may not do anything
-            self.assertFalse(back_transition in self.transitions(item))
-            self.changeUser('siteadmin')
             self.do(item, back_transition)
             self.failIf(cfg.validate_workflowAdaptations(()))
 
@@ -709,6 +699,34 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.closeMeeting(meeting)
         self.failIf(cfg.validate_workflowAdaptations(()))
 
+    def test_pm_Validate_itemWFValidationLevels_removed_used_state(self):
+        """Test MeetingConfig.validate_itemWFValidationLevels, if we remove a validation
+           level state that is used by an item."""
+        # ease override by subproducts
+        cfg = self.meetingConfig
+
+        # remove a state that is not in use
+        self.assertEqual(cfg.getItemWFValidationLevels(data='state', only_enabled=True),
+                         ['itemcreated', 'proposed'])
+        self._disableItemValidationLevels(cfg, levels=['proposed'])
+        self.failIf(cfg.validate_itemWFValidationLevels(cfg.getItemWFValidationLevels()))
+
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        self.assertEqual(item.queryState(), 'itemcreated')
+        self._disableItemValidationLevels(cfg, levels=['itemcreated'])
+        level_removed_error = \
+            translate('item_wf_val_states_can_not_be_removed_in_use',
+                      domain='PloneMeeting',
+                      mapping={'item_state': 'itemcreated',
+                               'item_url': item.absolute_url()},
+                      context=self.request)
+        self.assertEqual(cfg.validate_itemWFValidationLevels(cfg.getItemWFValidationLevels()),
+                         level_removed_error)
+        # delete item then validation is correct
+        self.deleteAsManager(item.UID())
+        self.failIf(cfg.validate_itemWFValidationLevels(cfg.getItemWFValidationLevels()))
+
     def test_pm_WFA_no_publication(self):
         '''Test the workflowAdaptation 'no_publication'.
            This test check the removal of the 'published' state in the meeting/item WF.'''
@@ -875,7 +893,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.changeUser('pmCreator2')
         item = self.create('MeetingItem')
         self.assertEqual(item.queryState(), 'itemcreated')
-        # we have transitions
+        # creator can delete
         self.failUnless(self.hasPermission(DeleteObjects, item))
         self.proposeItem(item)
         self.failIf(self.hasPermission(DeleteObjects, item))
@@ -896,296 +914,22 @@ class testWFAdaptations(PloneMeetingTestCase):
            Only the 'MeetingMember' and the 'Manager' have the 'Delete objects' permission.'''
         self.changeUser('pmCreator2')
         item = self.create('MeetingItem')
-        # now check the item workflow states regarding the 'Delete objects' permission
-        wf = self.wfTool.getWorkflowsFor(item)[0]
-        # the only state in wich the creator (MeetingMember) can delete
-        # the item is when it is 'itemcreated'
-        for state in wf.states.values():
-            if state.id == 'itemcreated':
-                self.assertEqual(state.permission_roles[DeleteObjects], ('MeetingMember', 'Manager'))
-            else:
-                self.assertEqual(state.permission_roles[DeleteObjects], ('Manager', ))
-
-    def test_pm_WFA_no_global_observation(self):
-        '''Test the workflowAdaptation 'no_global_observation'.'''
-        cfg = self.meetingConfig
-        # ease override by subproducts
-        if 'no_global_observation' not in cfg.listWorkflowAdaptations():
-            return
-        # check while the wfAdaptation is not activated
-        self._no_global_observation_inactive()
-        # activate the wfAdaptation and check
-        cfg.setWorkflowAdaptations('no_global_observation')
-        performWorkflowAdaptations(cfg, logger=pm_logger)
-        self._no_global_observation_active()
-
-    def _no_global_observation_inactive(self):
-        '''Tests while 'no_global_observation' wfAdaptation is inactive.'''
-        # when the item is 'itempublished', everybody (having MeetingObserverGlobal role) can see the items
-        self.changeUser('pmCreator1')
-        i1 = self.create('MeetingItem')
-        i1.setDecision('<p>My decision</p>')
+        self.assertEqual(item.queryState(), 'itemcreated')
+        # creator can delete
+        self.failUnless(self.hasPermission(DeleteObjects, item))
+        self.proposeItem(item)
+        self.failIf(self.hasPermission(DeleteObjects, item))
+        self.changeUser('pmReviewer2')
+        # the Reviewer can NOT delete
+        self.failIf(self.hasPermission(DeleteObjects, item))
+        self.validateItem(item)
+        self.failIf(self.hasPermission(DeleteObjects, item))
         self.changeUser('pmManager')
-        m1 = self.create('Meeting', date=DateTime())
-        for tr in self.meetingConfig.getTransitionsForPresentingAnItem():
-            self.changeUser('pmManager')
-            try:
-                self.do(i1, tr)
-            except WorkflowException:
-                continue
-            self.changeUser('pmCreator1')
-            self.failUnless(self.hasPermission(View, i1))
-            self.changeUser('pmCreator2')
-            self.failIf(self.hasPermission(View, i1))
-        # now here i1 is "presented"
-        # once meeting/items are "published", it is visible by everybody
-        isPublished = False
-        for tr in self._getTransitionsToCloseAMeeting():
-            self.changeUser('pmManager')
-            if tr in self.transitions(m1):
-                self.do(m1, tr)
-            else:
-                continue
-            self.changeUser('pmCreator1')
-            self.failUnless(self.hasPermission(View, i1))
-            if not isPublished and m1.queryState() == 'published':
-                isPublished = True
-            if isPublished:
-                self.changeUser('pmCreator2')
-                self.failUnless(self.hasPermission(View, i1))
-            else:
-                self.changeUser('pmCreator2')
-                self.failIf(self.hasPermission(View, i1))
-        # check that the meeting have been published
-        self.failUnless(isPublished)
-
-    def _no_global_observation_active(self):
-        '''Tests while 'no_global_observation' wfAdaptation is active.'''
-        # when the item is 'itempublished', it is no more viewable by everybody
-        self.changeUser('pmCreator1')
-        i1 = self.create('MeetingItem')
-        i1.setDecision('<p>My decision</p>')
-        self.changeUser('pmManager')
-        m1 = self.create('Meeting', date=DateTime())
-        for tr in self.meetingConfig.getTransitionsForPresentingAnItem():
-            self.changeUser('pmManager')
-            try:
-                self.do(i1, tr)
-            except WorkflowException:
-                continue
-            self.changeUser('pmCreator1')
-            self.failUnless(self.hasPermission(View, i1))
-            self.changeUser('pmCreator2')
-            self.failIf(self.hasPermission(View, i1))
-        # now here i1 is "presented"
-        # once meeting/items are "published", it is NOT visible because of the wfAdaptation
-        isPublished = False
-        for tr in self._getTransitionsToCloseAMeeting():
-            self.changeUser('pmManager')
-            if tr in self.transitions(m1):
-                self.do(m1, tr)
-            else:
-                continue
-            self.changeUser('pmCreator1')
-            self.failUnless(self.hasPermission(View, i1))
-            if not isPublished and m1.queryState() == 'published':
-                isPublished = True
-            # no matter the element is published or not
-            self.changeUser('pmCreator2')
-            self.failIf(self.hasPermission(View, i1))
-        # check that the meeting have been published
-        self.failUnless(isPublished)
-        # check every decided states of the item
-        # set the meeting back to decided
+        # the MeetingManager can NOT delete
+        self.failIf(self.hasPermission(DeleteObjects, item))
+        # God can delete too...
         self.changeUser('admin')
-        while not m1.queryState() == 'decided':
-            self.do(m1, [tr for tr in self.transitions(m1) if tr.startswith('back')][0])
-        # now the meeting is 'decided', put i1 backToFrozen and test every available decided state
-        while not i1.queryState() in ['itemfrozen', 'itempublished', ]:
-            self.do(i1, [tr for tr in self.transitions(i1) if tr.startswith('back')][0])
-        # now check every item decision
-        self.changeUser('pmManager')
-        availableDecisionTransitions = [tr for tr in self.transitions(i1) if not tr.startswith('back')]
-        for availableDecisionTransition in availableDecisionTransitions:
-            self.do(i1, availableDecisionTransition)
-            self.changeUser('pmCreator2')
-            self.failIf(self.hasPermission(View, i1))
-            self.changeUser('pmManager')
-            # compute backTransition
-            backTransition = [tr for tr in self.transitions(i1) if tr.startswith('back')][0]
-            self.do(i1, backTransition)
-
-    def test_pm_WFA_everyone_reads_all(self):
-        '''Test the workflowAdaptation 'everyone_reads_all'.'''
-        cfg = self.meetingConfig
-        # ease override by subproducts
-        if 'everyone_reads_all' not in cfg.listWorkflowAdaptations():
-            return
-        self.changeUser('pmManager')
-        # check while the wfAdaptation is not activated
-        self._everyone_reads_all_inactive()
-        # activate the wfAdaptation and check
-        cfg.setWorkflowAdaptations('everyone_reads_all')
-        performWorkflowAdaptations(cfg, logger=pm_logger)
-        self._everyone_reads_all_active()
-
-    def _everyone_reads_all_inactive(self):
-        '''Tests while 'everyone_reads_all' wfAdaptation is inactive.'''
-        # when the meeting/item is 'published' and in following states,
-        # everybody (having MeetingObserverGlobal role) can see the items
-        self.changeUser('pmCreator1')
-        i1 = self.create('MeetingItem')
-        i1.setDecision('<p>My decision</p>')
-        self.changeUser('pmManager')
-        m1 = self.create('Meeting', date=DateTime())
-        for tr in self.meetingConfig.getTransitionsForPresentingAnItem():
-            self.changeUser('pmManager')
-            try:
-                self.do(i1, tr)
-            except WorkflowException:
-                continue
-            self.changeUser('pmCreator1')
-            self.failUnless(self.hasPermission(View, i1))
-            self.changeUser('pmCreator2')
-            self.failIf(self.hasPermission(View, i1))
-        # now here i1 is "presented"
-        # once meeting/items are "published", it is visible by everybody
-        isPublished = False
-        for tr in self._getTransitionsToCloseAMeeting():
-            self.changeUser('pmManager')
-            if tr in self.transitions(m1):
-                self.do(m1, tr)
-            else:
-                continue
-            self.changeUser('pmCreator1')
-            self.failUnless(self.hasPermission(View, i1))
-            if not isPublished and m1.queryState() == 'published':
-                isPublished = True
-            if isPublished:
-                self.changeUser('pmCreator2')
-                self.failUnless(self.hasPermission(View, i1))
-            else:
-                self.changeUser('pmCreator2')
-                self.failIf(self.hasPermission(View, i1))
-        # check that the meeting have been published
-        self.failUnless(isPublished)
-
-    def _everyone_reads_all_active(self):
-        '''Tests while 'everyone_reads_all' wfAdaptation is inactive.'''
-        # when the meeting/item is 'published' and in following states,
-        # everybody (having MeetingObserverGlobal role) can see the items
-        # if activated, everyone can even see everything before
-        '''Tests while 'everyone_reads_all' wfAdaptation is inactive.'''
-        # when the meeting/item is 'published' and in following states,
-        # everybody (having MeetingObserverGlobal role) can see the items
-        self.changeUser('pmCreator1')
-        i1 = self.create('MeetingItem')
-        i1.setDecision('<p>My decision</p>')
-        self.changeUser('pmManager')
-        m1 = self.create('Meeting', date=DateTime())
-        for tr in self.meetingConfig.getTransitionsForPresentingAnItem():
-            self.changeUser('pmManager')
-            try:
-                self.do(i1, tr)
-            except WorkflowException:
-                continue
-            self.changeUser('pmCreator1')
-            self.failUnless(self.hasPermission(View, i1))
-            self.changeUser('pmCreator2')
-            self.failUnless(self.hasPermission(View, i1))
-        # now here i1 is "presented"
-        # once meeting/items are "published", it is visible by everybody
-        isPublished = False
-        for tr in self._getTransitionsToCloseAMeeting():
-            self.changeUser('pmManager')
-            if tr in self.transitions(m1):
-                self.do(m1, tr)
-            else:
-                continue
-            self.changeUser('pmCreator1')
-            self.failUnless(self.hasPermission(View, i1))
-            if not isPublished and m1.queryState() == 'published':
-                isPublished = True
-            self.changeUser('pmCreator2')
-            self.failUnless(self.hasPermission(View, i1))
-        # check that the meeting have been published
-        self.failUnless(isPublished)
-
-    def test_pm_WFA_creator_edits_unless_closed(self):
-        '''Test the workflowAdaptation 'creator_edits_unless_closed'.'''
-        cfg = self.meetingConfig
-        # ease override by subproducts
-        if 'creator_edits_unless_closed' not in cfg.listWorkflowAdaptations():
-            return
-        self.changeUser('pmManager')
-        # check while the wfAdaptation is not activated
-        self._creator_edits_unless_closed_inactive()
-        # activate the wfAdaptation and check
-        cfg.setWorkflowAdaptations('creator_edits_unless_closed')
-        performWorkflowAdaptations(cfg, logger=pm_logger)
-        self._creator_edits_unless_closed_active()
-
-    def _creator_edits_unless_closed_inactive(self):
-        '''Tests while 'creator_edits_unless_closed' wfAdaptation is inactive.'''
-        # by default, the item creator can just edit a created item, no more after
-        self.changeUser('pmCreator1')
-        i1 = self.create('MeetingItem')
-        i1.setDecision('<p>My decision</p>')
-        self.failUnless(self.hasPermission(ModifyPortalContent, i1))
-        self.changeUser('pmManager')
-        m1 = self.create('Meeting', date=DateTime())
-        for tr in self.meetingConfig.getTransitionsForPresentingAnItem():
-            self.changeUser('pmManager')
-            try:
-                self.do(i1, tr)
-            except WorkflowException:
-                continue
-            self.changeUser('pmCreator1')
-            # the creator can no more modify the item
-            self.failIf(self.hasPermission(ModifyPortalContent, i1))
-        for tr in self._getTransitionsToCloseAMeeting():
-            self.changeUser('pmManager')
-            if tr in self.transitions(m1):
-                self.do(m1, tr)
-            else:
-                continue
-            self.changeUser('pmCreator1')
-            # the creator can no more modify the item
-            self.failIf(self.hasPermission(ModifyPortalContent, i1))
-
-    def _creator_edits_unless_closed_active(self):
-        '''Tests while 'creator_edits_unless_closed' wfAdaptation is active.'''
-        self.changeUser('pmCreator1')
-        i1 = self.create('MeetingItem')
-        i1.setDecision("<p>My decision</p>")
-        self.failUnless(self.hasPermission(ModifyPortalContent, i1))
-        self.changeUser('pmManager')
-        m1 = self.create('Meeting', date=DateTime())
-        for tr in self.meetingConfig.getTransitionsForPresentingAnItem():
-            self.changeUser('pmManager')
-            try:
-                self.do(i1, tr)
-            except WorkflowException:
-                continue
-            self.changeUser('pmCreator1')
-            # the creator can still modify the item if certain states
-            # by default every state before "present"
-            if not i1.queryState() in WF_NOT_CREATOR_EDITS_UNLESS_CLOSED:
-                self.failUnless(self.hasPermission(ModifyPortalContent, i1))
-            else:
-                self.failIf(self.hasPermission(ModifyPortalContent, i1))
-        for tr in self._getTransitionsToCloseAMeeting():
-            self.changeUser('pmManager')
-            if tr in self.transitions(m1):
-                self.do(m1, tr)
-            else:
-                continue
-            self.changeUser('pmCreator1')
-            # the creator can still modify the item if certain states
-            if not i1.queryState() in WF_NOT_CREATOR_EDITS_UNLESS_CLOSED:
-                self.failUnless(self.hasPermission(ModifyPortalContent, i1))
-            else:
-                self.failIf(self.hasPermission(ModifyPortalContent, i1))
+        self.failUnless(self.hasPermission(DeleteObjects, item))
 
     def test_pm_WFA_return_to_proposing_group(self):
         '''Test the workflowAdaptation 'return_to_proposing_group'.'''
@@ -1796,7 +1540,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.do(item, 'return_to_proposing_group')
 
         self.changeUser('pmCreator1')
-
+        import ipdb; ipdb.set_trace()
         self.do(item, 'backTo_itemfrozen_from_returned_to_proposing_group')
 
         # Ensure the item is not simply frozen at this point
@@ -2168,7 +1912,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.do(item, 'postpone_next_meeting')
         self.assertEqual(item.queryState(), 'postponed_next_meeting')
         # back transition
-        self.do(item, 'backToItemFrozen')
+        self.do(item, 'backToItemPublished')
 
     def test_pm_WFA_postpone_next_meeting_back_transition(self):
         '''The back transition may vary if using additional WFAdaptations,
@@ -2190,10 +1934,10 @@ class testWFAdaptations(PloneMeetingTestCase):
 
             itemWF = self.wfTool.getWorkflowsFor(self.meetingConfig.getItemTypeName())[0]
             self.assertEqual(itemWF.states['postponed_next_meeting'].transitions,
-                             itemWF.states['delayed'].transitions)
-            # transition 'postpone_next_meeting' get out from same state as 'delay'
+                             itemWF.states['accepted'].transitions)
+            # transition 'postpone_next_meeting' get out from same state as 'accepted'
             for state in itemWF.states.values():
-                if 'delay' in state.transitions:
+                if 'accept' in state.transitions:
                     self.assertTrue('postpone_next_meeting' in state.transitions)
                 else:
                     self.assertFalse('postpone_next_meeting' in state.transitions)
@@ -2360,7 +2104,7 @@ class testWFAdaptations(PloneMeetingTestCase):
             self.assertEqual(linked_item.queryState(), self._initial_state(linked_item))
 
         # back transition
-        self.do(item, 'backToItemFrozen')
+        self.do(item, 'backToItemPublished')
 
     def test_pm_WFA_mark_not_applicable(self):
         '''Test the workflowAdaptation 'mark_not_applicable'.'''

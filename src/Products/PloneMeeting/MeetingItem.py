@@ -1891,7 +1891,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         item = self.getSelf()
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(item)
-        return cfg.getItemDecidedStates()
+        return cfg.adapted().getItemDecidedStates()
 
     security.declarePublic('mayChangeListType')
 
@@ -5248,12 +5248,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # decided will include states "decided out of meeting"
         # if it is still not decided, it gets full access
         # XXX to do when moving to dexterity.localrolesfield
-        mmanagers_item_states = ('validated', ) + cfg.getItemDecidedStates()
-        if item_state in mmanagers_item_states or self.hasMeeting():
+        mmanagers_item_states = ['validated'] + list(cfg.adapted().getItemDecidedStates())
+        meeting = self.getMeeting()
+        if item_state in mmanagers_item_states or meeting:
             mmanagers_group_id = "{0}_{1}".format(cfg.getId(), MEETINGMANAGERS_GROUP_SUFFIX)
-            mmanagers_roles = ['Reader']
-            if item_state not in cfg.getItemDecidedStates():
-                mmanagers_roles += ['Editor', 'Reviewer', 'Contributor']
+            # 'Reviewer' also on decided item, the WF guard will avoid correct is meeting closed
+            mmanagers_roles = ['Reader', 'Reviewer']
+            if item_state not in cfg.adapted().getItemDecidedStates():
+                mmanagers_roles += ['Editor', 'Contributor']
             self.manage_addLocalRoles(mmanagers_group_id, tuple(mmanagers_roles))
 
     security.declareProtected(ModifyPortalContent, 'updateLocalRoles')

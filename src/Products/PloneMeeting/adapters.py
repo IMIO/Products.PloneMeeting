@@ -1362,7 +1362,7 @@ class DecidedItemsAdapter(CompoundCriterionBaseAdapter):
         if not self.cfg:
             return {}
         return {'portal_type': {'query': self.cfg.getItemTypeName()},
-                'review_state': {'query': self.cfg.getItemDecidedStates()}, }
+                'review_state': {'query': self.cfg.adapted().getItemDecidedStates()}, }
 
     # we may not ram.cache methods in same file with same name...
     query = query_decideditems

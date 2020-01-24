@@ -428,8 +428,7 @@ class MeetingConfigDescriptor(Descriptor):
                          'onMeetingTransitionItemActionToExecute', 'meetingPresentItemWhenNoCurrentMeetingStates',
                          'itemAutoSentToOtherMCStates', 'itemManualSentToOtherMCStates', 'advicesKeptOnSentToOtherMC',
                          'mailItemEvents', 'mailMeetingEvents',
-                         'usedAdviceTypes', 'selectableAdvisers', 'itemAdviceStates',
-                         'itemDecidedStates', 'itemPositiveDecidedStates',
+                         'usedAdviceTypes', 'selectableAdvisers', 'itemAdviceStates', 'itemPositiveDecidedStates',
                          'itemAdviceEditStates', 'itemAdviceViewStates', 'itemBudgetInfosStates',
                          'powerAdvisersGroups', 'powerObservers',
                          'meetingConfigsToCloneTo', 'itemAdviceInvalidateStates', 'transitionsReinitializingDelays',
@@ -592,7 +591,6 @@ class MeetingConfigDescriptor(Descriptor):
                                           'IMeetingWorkflowConditions'
         self.meetingActionsInterface = 'Products.PloneMeeting.interfaces.' \
                                        'IMeetingWorkflowActions'
-        self.itemDecidedStates = []
         self.itemPositiveDecidedStates = []
         # Workflow adaptations are sets of changes that can be applied to
         # default PloneMeeting workflows.

@@ -452,6 +452,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # An item is automatically sent to the other meetingConfigs when it is 'accepted'
         # if every conditions are correct
         self.failIf(otherMeetingConfigId in item._getOtherMeetingConfigsImAmClonedIn())
+        import ipdb; ipdb.set_trace()
         self.do(item, 'backToItemPublished')
         self.do(item, 'accept')
         # The item as been automatically sent to the 'plonemeeting-assembly'
