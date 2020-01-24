@@ -1149,23 +1149,6 @@ schema = Schema((
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
-        name='itemPositiveDecidedStates',
-        widget=MultiSelectionWidget(
-            description="ItemPositiveDecidedStates",
-            description_msgid="item_positive_decided_states_descr",
-            format="checkbox",
-            label='Itempositivedecidedstates',
-            label_msgid='PloneMeeting_label_itemPositiveDecidedStates',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="workflow",
-        multiValued=1,
-        vocabulary='listItemStates',
-        default=defValues.itemPositiveDecidedStates,
-        enforceVocabulary=True,
-        write_permission="PloneMeeting: Write risky config",
-    ),
-    LinesField(
         name='workflowAdaptations',
         widget=MultiSelectionWidget(
             description="WorkflowAdaptations",
@@ -3122,6 +3105,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 'refused',
                 'removed']
 
+    def getItemPositiveDecidedStates(self):
+        '''Return list of item positive decided states.'''
+        return ['accepted',
+                'accepted_but_modified',
+                'accepted_out_of_meeting',
+                'accepted_out_of_meeting_emergency']
+
     security.declarePublic('getUsingGroups')
 
     def getUsingGroups(self, theObjects=False, **kwargs):
@@ -4091,6 +4081,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                  context=self.REQUEST)
         return self.adapted().custom_validate_workflowAdaptations(values, added, removed)
 
+    def custom_validate_workflowAdaptations(self, values, added, removed):
+        '''See doc in interfaces.py.'''
+        pass
+
     security.declarePrivate('validate_itemWFValidationLevels')
 
     def validate_itemWFValidationLevels(self, values):
@@ -4128,10 +4122,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                                               context=self.REQUEST),
                                       'item_url': aBrain.getURL()},
                              context=self.REQUEST)
-
-    def custom_validate_workflowAdaptations(self, values, added, removed):
-        '''See doc in interfaces.py.'''
-        pass
 
     security.declarePrivate('validate_itemAdviceEditStates')
 

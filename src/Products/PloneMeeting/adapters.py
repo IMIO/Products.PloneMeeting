@@ -499,7 +499,7 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
                                       default="Sent from ${meetingConfigTitle}, "
                                       "original item is \"${predecessorState}\".")))
             else:
-                if predecessor_state in predecessorCfg.getItemPositiveDecidedStates():
+                if predecessor_state in predecessorCfg.adapted().getItemPositiveDecidedStates():
                     res.append(('cloned_and_decided.png',
                                 translate(
                                     'icon_help_cloned_and_decided',
