@@ -42,7 +42,8 @@ class testWFAdaptations(PloneMeetingTestCase):
                           'only_creator_may_delete',
                           'postpone_next_meeting',
                           'pre_accepted',
-                          'presented_item_back_to_validation_state',
+                          'presented_item_back_to_itemcreated',
+                          'presented_item_back_to_proposed',
                           'refused',
                           'removed',
                           'removed_and_duplicated',
@@ -50,7 +51,9 @@ class testWFAdaptations(PloneMeetingTestCase):
                           'return_to_proposing_group_with_all_validations',
                           'return_to_proposing_group_with_last_validation',
                           'reviewers_take_back_validated_item',
-                          'waiting_advices'])
+                          'waiting_advices_from_last_val_level_adviser_and_proposing_group_send_back',
+                          'waiting_advices_from_last_val_level_only_adviser_send_back',
+                          'waiting_advices_from_last_val_level_only_proposing_group_send_back'])
 
     def test_pm_WFA_appliedOnMeetingConfigEdit(self):
         """WFAdpatations are applied when the MeetingConfig is edited."""
@@ -711,18 +714,22 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
         self.assertEqual(item.queryState(), 'itemcreated')
+        # get correct value when 'itemcreated' is disabled
         self._disableItemValidationLevels(cfg, levels=['itemcreated'])
+        values_disabled_item_created = cfg.getItemWFValidationLevels()
+        self._enableItemValidationLevels(cfg, levels=['itemcreated'])
+        # validation KO
         level_removed_error = \
             translate('item_wf_val_states_can_not_be_removed_in_use',
                       domain='PloneMeeting',
                       mapping={'item_state': 'itemcreated',
                                'item_url': item.absolute_url()},
                       context=self.request)
-        self.assertEqual(cfg.validate_itemWFValidationLevels(cfg.getItemWFValidationLevels()),
+        self.assertEqual(cfg.validate_itemWFValidationLevels(values_disabled_item_created),
                          level_removed_error)
         # delete item then validation is correct
         self.deleteAsManager(item.UID())
-        self.failIf(cfg.validate_itemWFValidationLevels(cfg.getItemWFValidationLevels()))
+        self.failIf(cfg.validate_itemWFValidationLevels(values_disabled_item_created))
 
     def test_pm_WFA_no_publication(self):
         '''Test the workflowAdaptation 'no_publication'.
@@ -960,10 +967,6 @@ class testWFAdaptations(PloneMeetingTestCase):
         # a subplugin can call these test separately
         # RETURN_TO_PROPOSING_GROUP_FROM_ITEM_STATES
         self._return_to_proposing_group_active_from_item_states()
-        # RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE
-        self._return_to_proposing_group_active_state_to_clone()
-        # RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS
-        self._return_to_proposing_group_active_custom_permissions()
 
     def _return_to_proposing_group_active_from_item_states(self):
         '''Helper method to test 'return_to_proposing_group' wfAdaptation regarding the
@@ -1048,8 +1051,6 @@ class testWFAdaptations(PloneMeetingTestCase):
         # RETURN_TO_PROPOSING_GROUP_FROM_ITEM_STATES
         #  ... we use the same test than original return to proposing group
         self._return_to_proposing_group_active_from_item_states()
-        # RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE ORIGINAL and WITH VALIDATION
-        self._return_to_proposing_group_with_validation_active_state_to_clone()
 
     def _return_to_proposing_group_with_validation_active_wf_functionality(self):
         '''Tests the workflow functionality of using the
@@ -1375,7 +1376,6 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.do(item, 'return_to_proposing_group')
 
         self.changeUser('pmCreator1')
-        import ipdb; ipdb.set_trace()
         self.do(item, 'backTo_itemfrozen_from_returned_to_proposing_group')
 
         # Ensure the item is not simply frozen at this point

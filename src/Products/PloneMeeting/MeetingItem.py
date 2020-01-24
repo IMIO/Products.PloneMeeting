@@ -742,7 +742,12 @@ class MeetingItemWorkflowActions(object):
             with api.env.adopt_roles(roles=['Manager']):
                 wTool = api.portal.get_tool('portal_workflow')
                 from config import ITEM_TRANSITION_WHEN_RETURNED_FROM_PROPOSING_GROUP_AFTER_CORRECTION
-                wTool.doActionFor(self.context, ITEM_TRANSITION_WHEN_RETURNED_FROM_PROPOSING_GROUP_AFTER_CORRECTION)
+                wf_comment = _('wf_transition_triggered_by_application')
+                if 'no_publication' not in self.cfg.getWorkflowAdaptations():
+                    wTool.doActionFor(self.context, 'itempublish', comment=wf_comment)
+                wTool.doActionFor(self.context,
+                                  ITEM_TRANSITION_WHEN_RETURNED_FROM_PROPOSING_GROUP_AFTER_CORRECTION,
+                                  comment=wf_comment)
 
     security.declarePrivate('doReturn_to_proposing_group')
 

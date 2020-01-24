@@ -2472,8 +2472,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     defaultWorkflows = ('meetingitem_workflow', 'meeting_workflow')
 
     # Names of workflow adaptations, ORDER IS IMPORTANT!
-    wfAdaptations = ('no_global_observation',
-                     'only_creator_may_delete',
+    wfAdaptations = ('only_creator_may_delete',
                      'accepted_but_modified',
                      'postpone_next_meeting',
                      'mark_not_applicable',
