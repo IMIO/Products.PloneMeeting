@@ -408,7 +408,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             if api.content.get_state(cfg) == 'active' and \
                self.checkMayView(cfg) and \
                (isManager or isPowerObserver or
-                    (check_using_groups and self.get_orgs_for_user(using_groups=cfg.getUsingGroups()))):
+                    (check_using_groups and self.get_orgs_for_user(using_groups=cfg.getUsingGroups(),
+                                                                   the_objects=False))):
                 res.append(cfg)
         return res
 
@@ -1124,9 +1125,10 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         # Change the proposing group if the item owner does not belong to
         # the defined proposing group, except if p_keepProposingGroup is True
         if not keepProposingGroup:
-            userGroups = self.get_orgs_for_user(user_id=newOwnerId, suffixes=['creators', ])
-            if userGroups and newItem.getProposingGroup(True) not in userGroups:
-                newItem.setProposingGroup(userGroups[0].UID())
+            userGroupUids = self.get_orgs_for_user(
+                user_id=newOwnerId, suffixes=['creators', ], the_objects=False)
+            if userGroupUids and newItem.getProposingGroup(True) not in userGroupUids:
+                newItem.setProposingGroup(userGroupUids[0])
 
         if newOwnerId != loggedUserId:
             plone_utils = api.portal.get_tool('plone_utils')
