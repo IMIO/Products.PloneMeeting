@@ -4349,7 +4349,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         data = {}
         tool = api.portal.get_tool('portal_plonemeeting')
-        adviser_org_uids = [org.UID() for org in tool.get_orgs_for_user(suffixes=['advisers'])]
+        adviser_org_uids = tool.get_orgs_for_user(suffixes=['advisers'], the_object=False)
         for adviceInfo in self.adviceIndex.values():
             advId = adviceInfo['id']
             # if advice is inherited get real adviceInfo
