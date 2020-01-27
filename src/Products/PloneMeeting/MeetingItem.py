@@ -3179,7 +3179,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''
         signatories = {}
         if not self.hasMeeting():
-            return {}
+            return signatories
         meeting = self.getMeeting()
         if not real:
             signatories = meeting.getSignatories(by_signature_number=True)
