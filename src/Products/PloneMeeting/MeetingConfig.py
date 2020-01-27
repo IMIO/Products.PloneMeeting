@@ -6373,5 +6373,25 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             fields = [field.getName() for field in fields]
         return fields
 
+    def get_item_corresponding_state_to_assign_local_roles(self, item_state):
+        """If an item_state is not managed by assign_roles_to_group_suffixes,
+           maybe there is a correspondance between current item_state and
+           a managed item state.  If not we raise."""
+        corresponding_item_state = None
+        # return_to_proposing_group states
+        item_val_levels_states = self.getItemWFValidationLevels(data='state', only_enabled=True)
+        if item_state.startswith('returned_to_proposing_group'):
+            if item_state == 'returned_to_proposing_group':
+                corresponding_item_state = item_val_levels_states[0]
+            else:
+                corresponding_item_state = item_state.split('returned_to_proposing_group_')[1]
+        return corresponding_item_state
+
+    def get_item_custom_suffix_roles(self, item_state):
+        """If an item_state is not managed by assign_roles_to_group_suffixes,
+           and no corresponding item state exists by default, we can manage
+           suffix_roles manually."""
+        return True, []
+
 
 registerType(MeetingConfig, PROJECTNAME)

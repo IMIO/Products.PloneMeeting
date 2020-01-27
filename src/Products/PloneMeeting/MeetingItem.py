@@ -5233,26 +5233,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             res.append(proposingGroup)
         return res
 
-    def _get_corresponding_state_to_assign_local_roles(self, cfg, item_state):
-        """If an item_state is not managed by assign_roles_to_group_suffixes,
-           maybe there is a correspondance between current item_state and
-           a managed item state.  If not we raise."""
-        corresponding_item_state = None
-        # return_to_proposing_group states
-        item_val_levels_states = cfg.getItemWFValidationLevels(data='state', only_enabled=True)
-        if item_state.startswith('returned_to_proposing_group'):
-            if item_state == 'returned_to_proposing_group':
-                corresponding_item_state = item_val_levels_states[0]
-            else:
-                corresponding_item_state = item_state.split('returned_to_proposing_group_')[1]
-        return corresponding_item_state
-
-    def _get_custom_suffix_roles(self, cfg, item_state):
-        """If an item_state is not managed by assign_roles_to_group_suffixes,
-           and no corresponding item state exists by default, we can manage
-           suffix_roles manually."""
-        return True, []
-
     def assign_roles_to_group_suffixes(self):
         """Method that do the work of assigning relevant roles to
            suffixed groups of an organization depending on current state :
@@ -5273,22 +5253,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        apply_meetingmanagers_access = True
-        suffix_roles = []
-
-        # roles given to item_state are managed automatically
-        # it is possible to manage it manually for extra states (coming from wfAdaptations for example)
-        # try to find corresponding item state
-        corresponding_auto_item_state = self.adapted()._get_corresponding_state_to_assign_local_roles(cfg, item_state)
-        if corresponding_auto_item_state:
-            item_state = corresponding_auto_item_state
-        else:
-            # if no corresponding item state, check if we manage state suffix roles manually
-            apply_meetingmanagers_access, suffix_roles = self.adapted()._get_custom_suffix_roles(cfg, item_state)
-
-        # find suffix_roles if it was not managed manually
-        if not suffix_roles:
-            suffix_roles = compute_item_roles_to_assign_to_suffixes(cfg, item_state, org)
+        apply_meetingmanagers_access, suffix_roles = compute_item_roles_to_assign_to_suffixes(
+            cfg, item_state, org)
 
         # apply local roles to computed suffixes
         for suffix, roles in suffix_roles.items():
@@ -5299,7 +5265,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # MeetingManagers get access if item at least validated or decided
         # decided will include states "decided out of meeting"
         # if it is still not decided, it gets full access
-        # XXX to do when moving to dexterity.localrolesfield
         if apply_meetingmanagers_access:
             mmanagers_item_states = ['validated'] + list(cfg.adapted().getItemDecidedStates())
             meeting = self.getMeeting()

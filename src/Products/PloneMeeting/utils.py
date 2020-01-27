@@ -1671,6 +1671,23 @@ def get_item_validation_wf_suffixes(cfg, org=None):
 
 def compute_item_roles_to_assign_to_suffixes(cfg, item_state, org=None):
     """ """
+    apply_meetingmanagers_access = True
+    suffix_roles = []
+
+    # roles given to item_state are managed automatically
+    # it is possible to manage it manually for extra states (coming from wfAdaptations for example)
+    # try to find corresponding item state
+    corresponding_auto_item_state = cfg.adapted().get_item_corresponding_state_to_assign_local_roles(item_state)
+    if corresponding_auto_item_state:
+        item_state = corresponding_auto_item_state
+    else:
+        # if no corresponding item state, check if we manage state suffix roles manually
+        apply_meetingmanagers_access, suffix_roles = cfg.adapted().get_item_custom_suffix_roles(item_state)
+
+    # find suffix_roles if it was not managed manually
+    if suffix_roles:
+        return apply_meetingmanagers_access, suffix_roles
+
     item_val_levels_states = cfg.getItemWFValidationLevels(data='state', only_enabled=True)
     # by default, observers may View in every states as well as creators
     suffix_roles = {'observers': ['Reader'],
@@ -1711,7 +1728,7 @@ def compute_item_roles_to_assign_to_suffixes(cfg, item_state, org=None):
                 given_roles.append('Contributor')
             suffix_roles[suffix] = given_roles
 
-    return suffix_roles
+    return apply_meetingmanagers_access, suffix_roles
 
 
 def org_id_to_uid(org_info, raise_on_error=True):
