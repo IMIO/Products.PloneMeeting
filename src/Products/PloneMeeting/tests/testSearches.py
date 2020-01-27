@@ -750,7 +750,6 @@ class testSearches(PloneMeetingTestCase):
         self.assertEqual(adapter.query, _find_nothing_query(itemTypeName))
         self.changeUser('pmManager')
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstocorrect')
-        import ipdb; ipdb.set_trace()
         self.assertEqual(
             adapter.query,
             {'portal_type': {'query': itemTypeName},
