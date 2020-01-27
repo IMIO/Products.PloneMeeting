@@ -48,7 +48,7 @@ class testSearches(PloneMeetingTestCase):
         cfg = self.meetingConfig
         searchallitems = cfg.searches.searches_items.searchallitems
         collectionCriterion = getCollectionLinkCriterion(cfg.searches)
-        self.assertEquals(collectionCriterion.default, searchallitems.UID())
+        self.assertEqual(collectionCriterion.default, searchallitems.UID())
 
     def test_pm_SearchItemsOfMyGroups(self):
         '''Test the 'items-of-my-groups' adapter that returns items using proposingGroup
@@ -103,13 +103,13 @@ class testSearches(PloneMeetingTestCase):
                              ICompoundCriterionFilter,
                              name='items-to-advice')
         # admin is not adviser
-        self.assertEquals(adapter.query,
-                          {'indexAdvisers': {'query': []},
-                           'portal_type': {'query': itemTypeName}})
+        self.assertEqual(adapter.query,
+                         {'indexAdvisers': {'query': []},
+                          'portal_type': {'query': itemTypeName}})
         # as adviser, query is correct
         self.changeUser('pmAdviser1')
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstoadvice')
-        self.assertEquals(
+        self.assertEqual(
             adapter.query,
             {'indexAdvisers': {
                 'query': ['{0}_advice_not_given'.format(self.developers_uid),
@@ -127,7 +127,7 @@ class testSearches(PloneMeetingTestCase):
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstoadvice')
         self.failIf(collection.results())
         # an advice can be given when an item is 'proposed'
-        self.assertEquals(cfg.getItemAdviceStates(), (self._stateMappingFor('proposed'), ))
+        self.assertEqual(cfg.getItemAdviceStates(), (self._stateMappingFor('proposed'), ))
         # create an item to advice
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
@@ -146,8 +146,8 @@ class testSearches(PloneMeetingTestCase):
         # now test as advisers
         self.changeUser('pmAdviser1')
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstoadvice')
-        self.assertEquals(len(collection.results()), 1)
-        self.assertEquals(collection.results()[0].UID, item.UID())
+        self.assertEqual(len(collection.results()), 1)
+        self.assertEqual(collection.results()[0].UID, item.UID())
         # when an advice on an item is given, the item is no more returned by searchItemsToAdvice
         # so pmAdviser1 gives his advice
         createContentInContainer(item,
@@ -160,8 +160,8 @@ class testSearches(PloneMeetingTestCase):
         # pmReviewer2 is adviser for 'vendors', delay-aware advices are also returned
         self.changeUser('pmReviewer2')
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstoadvice')
-        self.assertEquals(len(collection.results()), 1)
-        self.assertEquals(collection.results()[0].UID, item.UID())
+        self.assertEqual(len(collection.results()), 1)
+        self.assertEqual(collection.results()[0].UID, item.UID())
         # when an advice on an item is given, the item is no more returned by searchItemsToAdvice
         # so pmReviewer2 gives his advice
         advice = createContentInContainer(item,
@@ -179,16 +179,16 @@ class testSearches(PloneMeetingTestCase):
         self.proposeItem(item)
         self.changeUser('pmReviewer2')
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstoadvice')
-        self.assertEquals(len(collection.results()), 1)
-        self.assertEquals(collection.results()[0].UID, item.UID())
+        self.assertEqual(len(collection.results()), 1)
+        self.assertEqual(collection.results()[0].UID, item.UID())
 
         # a given advice that is 'hidden_during_redaction' is also found by this search
         advice.advice_type = u'positive'
         changeView = advice.restrictedTraverse('@@change-advice-hidden-during-redaction')
         changeView()
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstoadvice')
-        self.assertEquals(len(collection.results()), 1)
-        self.assertEquals(collection.results()[0].UID, item.UID())
+        self.assertEqual(len(collection.results()), 1)
+        self.assertEqual(collection.results()[0].UID, item.UID())
 
     def test_pm_SearchAdvisedItems(self):
         '''Test the 'search-advised-items' adapter.  This should return a list of items
@@ -203,9 +203,9 @@ class testSearches(PloneMeetingTestCase):
                              ICompoundCriterionFilter,
                              name='advised-items')
         # admin is not adviser
-        self.assertEquals(adapter.query,
-                          {'indexAdvisers': {'query': []},
-                           'portal_type': {'query': itemTypeName}})
+        self.assertEqual(adapter.query,
+                         {'indexAdvisers': {'query': []},
+                          'portal_type': {'query': itemTypeName}})
         # as adviser, query is correct
         self.changeUser('pmAdviser1')
         indexAdvisers = []
@@ -220,9 +220,9 @@ class testSearches(PloneMeetingTestCase):
             indexAdvisers.append('delay__{0}_{1}'.format(self.developers_uid, adviceState))
 
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_adviseditems')
-        self.assertEquals(adapter.query,
-                          {'indexAdvisers': {'query': indexAdvisers},
-                           'portal_type': {'query': itemTypeName}})
+        self.assertEqual(adapter.query,
+                         {'indexAdvisers': {'query': indexAdvisers},
+                          'portal_type': {'query': itemTypeName}})
 
         # now do the query
         # this adapter is used by the "searchalladviseditems"
@@ -232,7 +232,7 @@ class testSearches(PloneMeetingTestCase):
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_adviseditems')
         self.failIf(collection.results())
         # an advice can be given when an item is 'proposed'
-        self.assertEquals(cfg.getItemAdviceStates(), (self._stateMappingFor('proposed'), ))
+        self.assertEqual(cfg.getItemAdviceStates(), (self._stateMappingFor('proposed'), ))
         # create an item to advice
         self.changeUser('pmCreator1')
         item1 = self.create('MeetingItem')
@@ -287,7 +287,7 @@ class testSearches(PloneMeetingTestCase):
         self.changeUser('pmAdviser1')
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_adviseditems')
         self.failUnless(len(collection.results()) == 1)
-        self.assertEquals(collection.results()[0].UID, item1.UID())
+        self.assertEqual(collection.results()[0].UID, item1.UID())
 
     def test_pm_SearchAdvisedItemsWithDelay(self):
         '''Test the 'search-advised-items-with-delay' adapter.  This should return a list
@@ -301,9 +301,9 @@ class testSearches(PloneMeetingTestCase):
                              ICompoundCriterionFilter,
                              name='advised-items-with-delay')
         # admin is not adviser
-        self.assertEquals(adapter.query,
-                          {'indexAdvisers': {'query': []},
-                           'portal_type': {'query': itemTypeName}})
+        self.assertEqual(adapter.query,
+                         {'indexAdvisers': {'query': []},
+                          'portal_type': {'query': itemTypeName}})
         # as adviser, query is correct
         self.changeUser('pmAdviser1')
         adviceStates = []
@@ -313,11 +313,11 @@ class testSearches(PloneMeetingTestCase):
         # remove duplicates
         adviceStates = tuple(set(adviceStates))
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_adviseditemswithdelay')
-        self.assertEquals(adapter.query,
-                          {'indexAdvisers': {'query':
-                           ['delay__{0}_{1}'.format(
-                            self.developers_uid, adviceState) for adviceState in adviceStates]},
-                           'portal_type': {'query': itemTypeName}})
+        self.assertEqual(adapter.query,
+                         {'indexAdvisers': {'query':
+                          ['delay__{0}_{1}'.format(
+                           self.developers_uid, adviceState) for adviceState in adviceStates]},
+                          'portal_type': {'query': itemTypeName}})
 
         # now do the query
         # this adapter is used by the "searchalladviseditemswithdelay"
@@ -327,7 +327,7 @@ class testSearches(PloneMeetingTestCase):
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_adviseditemswithdelay')
         self.failIf(collection.results())
         # an advice can be given when an item is 'proposed'
-        self.assertEquals(cfg.getItemAdviceStates(), (self._stateMappingFor('proposed'), ))
+        self.assertEqual(cfg.getItemAdviceStates(), (self._stateMappingFor('proposed'), ))
         # create an item to advice
         self.changeUser('pmCreator1')
         item1 = self.create('MeetingItem')
@@ -388,16 +388,16 @@ class testSearches(PloneMeetingTestCase):
                              ICompoundCriterionFilter,
                              name='items-in-copy')
         # admin does not belong to any group
-        self.assertEquals(adapter.query,
-                          {'getCopyGroups': {'query': []},
-                           'portal_type': {'query': itemTypeName}})
+        self.assertEqual(adapter.query,
+                         {'getCopyGroups': {'query': []},
+                          'portal_type': {'query': itemTypeName}})
         # as creator, query is correct
         self.changeUser('pmCreator1')
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemsincopy')
-        self.assertEquals(adapter.query,
-                          {'getCopyGroups': {
-                           'query': sorted(['AuthenticatedUsers', self.developers_creators])},
-                           'portal_type': {'query': itemTypeName}})
+        self.assertEqual(adapter.query,
+                         {'getCopyGroups': {
+                          'query': sorted(['AuthenticatedUsers', self.developers_creators])},
+                          'portal_type': {'query': itemTypeName}})
 
         # now do the query
         # this adapter is used by the "searchallitemsincopy"
@@ -457,9 +457,9 @@ class testSearches(PloneMeetingTestCase):
                              name='my-items-taken-over')
         # query is correct
         self.changeUser('pmManager')
-        self.assertEquals(adapter.query,
-                          {'portal_type': {'query': itemTypeName},
-                           'getTakenOverBy': {'query': 'pmManager'}})
+        self.assertEqual(adapter.query,
+                         {'portal_type': {'query': itemTypeName},
+                          'getTakenOverBy': {'query': 'pmManager'}})
 
         # now do the query
         # this adapter is used by the "searchmyitemstakenover"
@@ -499,12 +499,12 @@ class testSearches(PloneMeetingTestCase):
                              name='items-to-validate-of-highest-hierarchic-level')
         # if user si not a reviewer, we want the search to return
         # nothing so the query uses an unknown review_state
-        self.assertEquals(adapter.query, _find_nothing_query(itemTypeName))
+        self.assertEqual(adapter.query, _find_nothing_query(itemTypeName))
         # for a reviewer, query is correct
         self.changeUser('pmManager')
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstovalidateofhighesthierarchiclevel')
         reviewProcessInfo = self._searchItemsToValidateOfHighestHierarchicLevelReviewerInfo(cfg)
-        self.assertEquals(
+        self.assertEqual(
             adapter.query,
             {'reviewProcessInfo':
                 {'query': reviewProcessInfo},
@@ -591,7 +591,7 @@ class testSearches(PloneMeetingTestCase):
         # if user si not a reviewer, we want the search to return
         # nothing so the query uses an unknown review_state
         itemTypeName = cfg.getItemTypeName()
-        self.assertEquals(adapter.query, _find_nothing_query(itemTypeName))
+        self.assertEqual(adapter.query, _find_nothing_query(itemTypeName))
         # for a reviewer, query is correct
         self.changeUser('pmReviewer1')
         # only reviewer for highest level
@@ -602,11 +602,11 @@ class testSearches(PloneMeetingTestCase):
         query = adapter.query
         query['reviewProcessInfo']['query'].sort()
         states = reviewers.values()[0]
-        self.assertEquals(adapter.query,
-                          {'portal_type': {'query': itemTypeName},
-                           'reviewProcessInfo': {
-                           'query': sorted(['{0}__reviewprocess__{1}'.format(self.developers_uid, state)
-                                            for state in states])}})
+        self.assertEqual(adapter.query,
+                         {'portal_type': {'query': itemTypeName},
+                          'reviewProcessInfo': {
+                          'query': sorted(['{0}__reviewprocess__{1}'.format(self.developers_uid, state)
+                                           for state in states])}})
 
         # now do the query
         # this adapter is not used by default, but is intended to be used with
@@ -687,7 +687,7 @@ class testSearches(PloneMeetingTestCase):
                              ICompoundCriterionFilter,
                              name='items-to-validate-of-every-reviewer-levels-and-lower-levels')
         self.changeUser('pmObserver1')
-        self.assertEquals(adapter.query, _find_nothing_query(itemTypeName))
+        self.assertEqual(adapter.query, _find_nothing_query(itemTypeName))
         # now do the query
         # this adapter is not used by default, but is intended to be used with
         # the "searchitemstovalidate" collection so use it with it
@@ -701,9 +701,9 @@ class testSearches(PloneMeetingTestCase):
         # find state to use for current reviewer
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstovalidateofeveryreviewerlevelsandlowerlevels')
         reviewProcessInfo = self._searchItemsToValidateOfEveryReviewerLevelsAndLowerLevelsReviewerInfo(cfg)
-        self.assertEquals(adapter.query,
-                          {'portal_type': {'query': itemTypeName},
-                           'reviewProcessInfo': {'query': reviewProcessInfo}})
+        self.assertEqual(adapter.query,
+                         {'portal_type': {'query': itemTypeName},
+                          'reviewProcessInfo': {'query': reviewProcessInfo}})
         self.failUnless(len(collection.results()) == 2)
         # as second level user, he will also see items because items are from lower reviewer levels
         self.changeUser('pmReviewerLevel2')
@@ -737,7 +737,7 @@ class testSearches(PloneMeetingTestCase):
                              ICompoundCriterionFilter,
                              name='items-to-correct')
         # wfAdaptation 'return_to_proposing_group' is not enabled
-        self.assertEquals(adapter.query, _find_nothing_query(itemTypeName))
+        self.assertEqual(adapter.query, _find_nothing_query(itemTypeName))
         wfAdaptations = list(cfg.getWorkflowAdaptations())
         if 'return_to_proposing_group' not in wfAdaptations:
             wfAdaptations.append('return_to_proposing_group')
@@ -745,13 +745,13 @@ class testSearches(PloneMeetingTestCase):
         cfg.at_post_edit_script()
 
         # normally this search is not available to users that are not able to correct items
-        # nevertheless, if a user is in not able to edit items to correct, the special
+        # nevertheless, if a user is not able to edit items to correct, the special
         # query 'return nothing' is returned
-        self.assertEquals(adapter.query, _find_nothing_query(itemTypeName))
+        self.assertEqual(adapter.query, _find_nothing_query(itemTypeName))
         self.changeUser('pmManager')
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstocorrect')
-
-        self.assertEquals(
+        import ipdb; ipdb.set_trace()
+        self.assertEqual(
             adapter.query,
             {'portal_type': {'query': itemTypeName},
              'reviewProcessInfo': {
@@ -761,11 +761,11 @@ class testSearches(PloneMeetingTestCase):
         # create an item for developers and one for vendors and 'return' it to proposingGroup
         self.create('Meeting', date=DateTime())
         developersItem = self.create('MeetingItem')
-        self.assertEquals(developersItem.getProposingGroup(), self.developers_uid)
+        self.assertEqual(developersItem.getProposingGroup(), self.developers_uid)
         self.presentItem(developersItem)
         self.changeUser('pmCreator2')
         vendorsItem = self.create('MeetingItem')
-        self.assertEquals(vendorsItem.getProposingGroup(), self.vendors_uid)
+        self.assertEqual(vendorsItem.getProposingGroup(), self.vendors_uid)
         self.changeUser('pmManager')
         self.presentItem(vendorsItem)
         collection = cfg.searches.searches_items.searchitemstocorrect
@@ -808,7 +808,7 @@ class testSearches(PloneMeetingTestCase):
                              ICompoundCriterionFilter,
                              name='items-to-correct-to-validate-of-highest-hierarchic-level')
         # wfAdaptation 'return_to_proposing_group_with_last_validation' is not enabled
-        self.assertEquals(adapter.query, _find_nothing_query(itemTypeName))
+        self.assertEqual(adapter.query, _find_nothing_query(itemTypeName))
         wfAdaptations = list(cfg.getWorkflowAdaptations())
         if 'return_to_proposing_group_with_last_validation' not in wfAdaptations:
             wfAdaptations.append('return_to_proposing_group_with_last_validation')
@@ -821,10 +821,10 @@ class testSearches(PloneMeetingTestCase):
         # normally this search is not available to users that are not able to review items
         # nevertheless, if a user is in not able to edit items to correct in proposed, the special
         # query 'return nothing' is returned
-        self.assertEquals(adapter.query, _find_nothing_query(itemTypeName))
+        self.assertEqual(adapter.query, _find_nothing_query(itemTypeName))
         self.changeUser('pmManager')
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstocorrecttovalidateofhighesthierarchiclevel')
-        self.assertEquals(adapter.query, {
+        self.assertEqual(adapter.query, {
             'reviewProcessInfo':
             {'query': ['{0}__reviewprocess__returned_to_proposing_group_proposed'.format(self.developers_uid)]},
             'portal_type': {'query': itemTypeName}})
@@ -833,11 +833,11 @@ class testSearches(PloneMeetingTestCase):
         # create an item for developers and one for vendors and 'return' it to proposingGroup
         self.create('Meeting', date=DateTime())
         developersItem = self.create('MeetingItem')
-        self.assertEquals(developersItem.getProposingGroup(), self.developers_uid)
+        self.assertEqual(developersItem.getProposingGroup(), self.developers_uid)
         self.presentItem(developersItem)
         self.changeUser('pmCreator2')
         vendorsItem = self.create('MeetingItem')
-        self.assertEquals(vendorsItem.getProposingGroup(), self.vendors_uid)
+        self.assertEqual(vendorsItem.getProposingGroup(), self.vendors_uid)
         self.changeUser('pmManager')
         self.presentItem(vendorsItem)
         collection = cfg.searches.searches_items.searchitemstocorrecttovalidate
@@ -897,7 +897,7 @@ class testSearches(PloneMeetingTestCase):
                              ICompoundCriterionFilter,
                              name='items-to-correct-to-validate-of-every-reviewer-groups')
         # wfAdaptation 'return_to_proposing_group_with_last_validation' is not enabled
-        self.assertEquals(adapter.query, _find_nothing_query(itemTypeName))
+        self.assertEqual(adapter.query, _find_nothing_query(itemTypeName))
         wfAdaptations = list(cfg.getWorkflowAdaptations())
         if 'return_to_proposing_group_with_all_validations' not in wfAdaptations:
             wfAdaptations.append('return_to_proposing_group_with_all_validations')
@@ -910,11 +910,11 @@ class testSearches(PloneMeetingTestCase):
         # normally this search is not available to users that are not able to review items
         # nevertheless, if a user is in not able to edit items to correct in proposed, the special
         # query 'return nothing' is returned
-        self.assertEquals(adapter.query, _find_nothing_query(itemTypeName))
+        self.assertEqual(adapter.query, _find_nothing_query(itemTypeName))
         self.changeUser('pmManager')
         cleanRamCacheFor(
             'Products.PloneMeeting.adapters.query_itemstocorrecttovalidateofeveryreviewerlevelsandlowerlevels')
-        self.assertEquals(adapter.query, {
+        self.assertEqual(adapter.query, {
             'portal_type': {'query': itemTypeName},
             'reviewProcessInfo':
             {'query': ['{0}__reviewprocess__returned_to_proposing_group_prevalidated'.format(self.developers_uid),
@@ -924,10 +924,10 @@ class testSearches(PloneMeetingTestCase):
         # create an item for developers and one for vendors and 'return' it to proposingGroup
         self.create('Meeting', date=DateTime())
         developersItem = self.create('MeetingItem')
-        self.assertEquals(developersItem.getProposingGroup(), self.developers_uid)
+        self.assertEqual(developersItem.getProposingGroup(), self.developers_uid)
         self.changeUser('pmCreator2')
         vendorsItem = self.create('MeetingItem')
-        self.assertEquals(vendorsItem.getProposingGroup(), self.vendors_uid)
+        self.assertEqual(vendorsItem.getProposingGroup(), self.vendors_uid)
         # present items
         self.changeUser('pmManager')
         self.presentItem(developersItem)

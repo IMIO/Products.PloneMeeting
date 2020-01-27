@@ -54,6 +54,8 @@ class Migrate_To_4200(Migrator):
             # make sure new wfAdaptations are enabled (were default, now optional)
             cleaned_wfas += [wfa for wfa in ('pre_accepted', 'delayed', 'accepted_but_modified', )
                              if wfa in cfg.listWorkflowAdaptations()]
+            # remove duplicates (in case migration is launched several times)
+            cleaned_wfas = tuple(set(cleaned_wfas))
             cfg.setWorkflowAdaptations(cleaned_wfas)
             cfg.at_post_edit_script()
         logger.info('Done.')
@@ -63,6 +65,11 @@ class Migrate_To_4200(Migrator):
 
         self.upgradeAll(omit=['Products.PloneMeeting:default',
                               self.profile_name.replace('profile-', '')] + extra_omitted)
+
+        # reinstall workflows before updating workflowAdaptations
+        self.runProfileSteps('Products.PloneMeeting', steps=['workflow'], profile='default')
+        # configure wfAdaptations before reinstall
+        self._configureItemWFValidationLevels()
 
         # reinstall so versions are correctly shown in portal_quickinstaller
         self.reinstall(profiles=['profile-Products.PloneMeeting:default', ],
@@ -74,7 +81,6 @@ class Migrate_To_4200(Migrator):
                            dependency_strategy=DEPENDENCY_STRATEGY_NEW)
 
         # configure new WFs
-        self._configureItemWFValidationLevels()
         self.cleanMeetingConfigs(field_names=['itemDecidedStates', 'itemPositiveDecidedStates'])
 
         self.tool.updateAllLocalRoles(meta_type=('MeetingItem', ))

@@ -6374,9 +6374,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return fields
 
     def get_item_corresponding_state_to_assign_local_roles(self, item_state):
-        """If an item_state is not managed by assign_roles_to_group_suffixes,
-           maybe there is a correspondance between current item_state and
-           a managed item state.  If not we raise."""
+        '''See doc in interfaces.py.'''
         corresponding_item_state = None
         # return_to_proposing_group states
         item_val_levels_states = self.getItemWFValidationLevels(data='state', only_enabled=True)
@@ -6388,9 +6386,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return corresponding_item_state
 
     def get_item_custom_suffix_roles(self, item_state):
-        """If an item_state is not managed by assign_roles_to_group_suffixes,
-           and no corresponding item state exists by default, we can manage
-           suffix_roles manually."""
+        '''See doc in interfaces.py.'''
         return True, []
 
 

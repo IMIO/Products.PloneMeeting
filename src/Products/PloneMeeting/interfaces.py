@@ -594,6 +594,14 @@ class IMeetingConfigDocumentation:
         '''Return the interface name to use to get the advice WF conditions adapter.'''
     def _adviceActionsInterfaceFor(self, advice_obj):
         '''Return the interface name to use to get the advice WF actions adapter.'''
+    def get_item_corresponding_state_to_assign_local_roles(self, item_state):
+        '''If an item_state is not managed by MeetingItem.assign_roles_to_group_suffixes,
+           maybe there is a correspondence between current item_state and
+           a managed item state.'''
+    def get_item_custom_suffix_roles(self, item_state):
+        """If an item_state is not managed by MeetingItem.assign_roles_to_group_suffixes,
+           and no corresponding item state exists by default, we can manage
+           suffix_roles manually."""
 
 
 class IMeetingConfigCustom(IMeetingConfig):
