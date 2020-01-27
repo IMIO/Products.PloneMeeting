@@ -13,6 +13,7 @@ from collective.contact.plonegroup.config import get_registry_organizations
 from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_organization
 from collective.contact.plonegroup.utils import get_organizations
+from collective.contact.plonegroup.utils import get_plone_group
 from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.fingerpointing.config import AUDIT_MESSAGE
 from collective.fingerpointing.logger import log_info
@@ -360,7 +361,9 @@ class MeetingItemWorkflowConditions(object):
                                 # get advisers that are able to trigger transition
                                 res = self._currentUserIsAdviserAbleToSendItemBack(destinationState)
             else:
-                res = _checkPermission(ReviewPortalContent, self.context)
+                # maybe destinationState is a validation state? in this case return True only if group not empty
+                suffix = self.cfg.getItemWFValidationLevels(state=destinationState, data='suffix')
+                res = _checkPermission(ReviewPortalContent, self.context) and (not suffix or self._groupIsNotEmpty(suffix))
         return res
 
     security.declarePublic('mayBackToMeeting')
@@ -5258,9 +5261,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         # apply local roles to computed suffixes
         for suffix, roles in suffix_roles.items():
-            plone_group_id = get_plone_group_id(org.UID(), suffix)
-            if plone_group_id:
-                self.manage_addLocalRoles(plone_group_id, tuple(roles))
+            plone_group = get_plone_group(org.UID(), suffix)
+            if plone_group:
+                self.manage_addLocalRoles(plone_group.id, tuple(roles))
 
         # MeetingManagers get access if item at least validated or decided
         # decided will include states "decided out of meeting"

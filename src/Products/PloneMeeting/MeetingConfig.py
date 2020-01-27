@@ -3139,7 +3139,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         if data:
             res = [level[data] for level in res]
         if state:
-            res = res[0]
+            res = res and res[0] or res
         return res
 
     security.declarePublic('getOrderedItemInitiators')
