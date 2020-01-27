@@ -593,7 +593,7 @@ class MeetingConfigDescriptor(Descriptor):
                                        'IMeetingWorkflowActions'
         # Workflow adaptations are sets of changes that can be applied to
         # default PloneMeeting workflows.
-        self.workflowAdaptations = ['apply_item_validation_levels']
+        self.workflowAdaptations = []
         self.itemWFValidationLevels = (
             {'leading_transition': '-',
              'state_title': 'itemcreated',

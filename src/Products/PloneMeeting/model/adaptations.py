@@ -451,9 +451,9 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
             newState = getattr(itemWorkflow.states, 'returned_to_proposing_group')
             # stateToCloneInfos is like 'meetingitem_workflow.itemcreated'
             stateToClone = itemWorkflow.states['validated']
-            # we must make sure the MeetingManagers still may access this item
-            # so add MeetingManager role to every cloned permissions
+            # remove DeleteObjects permission
             cloned_permissions = dict(stateToClone.permission_roles)
+            cloned_permissions[DeleteObjects] = ('Manager')
             newState.permission_roles = cloned_permissions
 
             # now create the necessary transitions : one to go to 'returned_to_proposing_group' state

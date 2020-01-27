@@ -1676,12 +1676,9 @@ def compute_item_roles_to_assign_to_suffixes(cfg, item_state, org=None):
     suffix_roles = {'observers': ['Reader'],
                     'creators': ['Reader']}
 
-    # itemcreated, first state, '_creators' are Editors
-    if item_state in ['itemcreated', 'returned_to_proposing_group']:
-        suffix_roles['creators'] = ['Editor', 'Reader', 'Reviewer', 'Contributor']
-
     # MeetingConfig.itemWFValidationLevels
-    elif item_state in item_val_levels_states:
+    # states before validated
+    if item_state in item_val_levels_states:
         # find Editor suffixes
         # walk every defined validation levels so we give 'Reader'
         # to levels already behind us
@@ -1713,22 +1710,6 @@ def compute_item_roles_to_assign_to_suffixes(cfg, item_state, org=None):
             if item_is_decided and suffix != 'observers':
                 given_roles.append('Contributor')
             suffix_roles[suffix] = given_roles
-
-    # returned_to_proposing_group_* states
-    if item_state.startswith('returned_to_proposing_group_'):
-        # find corresponding state in item_val_levels_states
-        corresponding_item_state = item_state.split('returned_to_proposing_group_')[1]
-        for level in cfg.getItemWFValidationLevels(only_enabled=True):
-            if level['state'] == corresponding_item_state:
-                given_roles = []
-                suffixes = [level['suffix']] + list(level['extra_suffixes'])
-                for suffix in suffixes:
-                    given_roles.append('Editor')
-                    given_roles.append('Reviewer')
-                    given_roles.append('Contributor')
-                for role in given_roles:
-                    if role not in suffix_roles[suffix]:
-                        suffix_roles[suffix].append(role)
 
     return suffix_roles
 

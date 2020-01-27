@@ -229,10 +229,11 @@ class testWorkflows(PloneMeetingTestCase):
         self.changeUser('pmCreator2')
         self.failIf(self.hasPermission(View, someAnnex))
         self.changeUser('pmManager')
+        self.do(meeting, 'freeze')
         self.do(meeting, 'publish')
-        # pmCreator2 can now view the annex.
+        # pmCreator2 can no more view the annex.
         self.changeUser('pmCreator2')
-        self.failUnless(self.hasPermission(View, someAnnex))
+        self.failIf(self.hasPermission(View, someAnnex))
         # pmReviewer2 validates item2
         self.changeUser('pmReviewer2')
         self.do(item2, 'validate')
@@ -246,14 +247,18 @@ class testWorkflows(PloneMeetingTestCase):
         # So now I should have 5 normal items (do not forget the autoadded
         # recurring item) and no late item
         self.failIf(len(meeting.getItems()) != 5)
-        # pmReviewer1 now adds an annex to item1
+        # Reviewers can't add annexes
+        self.changeUser('pmReviewer2')
+        self.failIf(self.hasPermission(AddAnnex, item2))
+        self.assertRaises(Unauthorized, self.addAnnex, item2, relatedTo='item_decision')
         self.changeUser('pmReviewer1')
-        self.addAnnex(item1)
+        self.assertRaises(Unauthorized, self.addAnnex, item2)
+        self.assertRaises(Unauthorized, self.addAnnex, item2, relatedTo='item_decision')
         # pmManager adds a decision to item1 and freezes the meeting
         self.changeUser('pmManager')
         item1.setDecision(self.decisionText)
-        self.do(meeting, 'freeze')
-        # Now reviewers can't add annexes anymore
+        self.do(meeting, 'decide')
+        # Reviewers can't add annexes
         self.changeUser('pmReviewer2')
         self.failIf(self.hasPermission(AddAnnex, item2))
         self.assertRaises(Unauthorized, self.addAnnex, item2, relatedTo='item_decision')
@@ -271,10 +276,9 @@ class testWorkflows(PloneMeetingTestCase):
         # the duplicated item has item3 as predecessor
         duplicatedItem = item3.getBRefs('ItemPredecessor')[0]
         self.assertEquals(duplicatedItem.getPredecessor().UID(), item3.UID())
-        # When a meeting is decided, items are at least set to 'itemfrozen'
-        self.do(meeting, 'decide')
-        self.assertEquals(item1.queryState(), 'itemfrozen')
-        self.assertEquals(item2.queryState(), 'itemfrozen')
+        # When a meeting is decided, items are at least set to 'itempublished'
+        self.assertEquals(item1.queryState(), 'itempublished')
+        self.assertEquals(item2.queryState(), 'itempublished')
         # An already decided item keep his given decision
         self.assertEquals(item3.queryState(), 'delayed')
         self.failIf(len(self.transitions(meeting)) != 2)
@@ -282,6 +286,13 @@ class testWorkflows(PloneMeetingTestCase):
         self.do(meeting, 'close')
         self.assertEquals(item1.queryState(), 'accepted')
         self.assertEquals(item2.queryState(), 'accepted')
+        # Reviewers can add decision annexes
+        self.changeUser('pmReviewer1')
+        self.failIf(self.hasPermission(AddAnnex, item1))
+        self.addAnnex(item1, relatedTo='item_decision')
+        self.changeUser('pmReviewer2')
+        self.failIf(self.hasPermission(AddAnnex, item2))
+        self.addAnnex(item2, relatedTo='item_decision')
 
     def test_pm_WorkflowPermissions(self):
         '''This test checks whether workflow permissions are correct while
@@ -295,10 +306,11 @@ class testWorkflows(PloneMeetingTestCase):
         item2 = self.create('MeetingItem', title='A second item')
         annex1 = self.addAnnex(item1)
         annexItem2 = self.addAnnex(item2)
-        for userId in ('pmCreator1', 'pmCreator1b'):
+        # pmReviewer1 is _observers
+        for userId in ('pmCreator1', 'pmCreator1b', 'pmReviewer1'):
             self.changeUser(userId)
             self.failUnless(self.hasPermission(View, (item1, annex1)))
-        for userId in ('pmReviewer1', 'pmCreator2', 'pmReviewer2'):
+        for userId in ('pmCreator2', 'pmReviewer2'):
             self.changeUser(userId)
             self.failIf(self.hasPermission(View, (item1, annex1)))
         # pmCreator1 proposes the item
@@ -411,24 +423,23 @@ class testWorkflows(PloneMeetingTestCase):
             self.assertEqual(item._at_rename_after_creation, MeetingItem._at_rename_after_creation)
         # 1 recurring item is inserted at meeting creation
         self.failIf(len(meeting.getItems()) != 3)
-        # meeting has not already been frozen, so when publishing, the added recurring
-        # item is considered as a normal item
-        self.publishMeeting(meeting)
-        self.failIf(len(meeting.getItems()) != 4)
-        self.assertFalse(meeting.getItems(ordered=True)[-1].isLate())
         # now freeze the meeting, future added items will be considered as late
         self.freezeMeeting(meeting)
+        self.failIf(len(meeting.getItems()) != 4)
+        self.assertTrue(meeting.getItems(ordered=True)[-1].isLate())
+        # meeting has not already been frozen, when publishing, the added recurring
+        # item is considered as a late item
+        self.publishMeeting(meeting)
         self.failIf(len(meeting.getItems()) != 5)
         self.assertTrue(meeting.getItems(ordered=True)[-1].isLate())
         # Back to created: rec item 2 is inserted.
         self.backToState(meeting, 'created')
         self.failIf(len(meeting.getItems()) != 6)
         # a recurring item can be added several times...
-        self.freezeMeeting(meeting)
-        # one normal recurring item is added when meeting is published, and so meeting still not frozen
-        # and one recurring item is added when meeting is frozen, so item considered as late
+        self.publishMeeting(meeting)
+        # one item added during freeze and one during publish
         self.failIf(len(meeting.getItems()) != 8)
-        self.assertFalse(meeting.getItems(ordered=True)[-2].isLate())
+        self.assertTrue(meeting.getItems(ordered=True)[-2].isLate())
         self.assertTrue(meeting.getItems(ordered=True)[-1].isLate())
         # an item need a decisionText to be decided...
         for item in (meeting.getItems()):
@@ -645,6 +656,9 @@ class testWorkflows(PloneMeetingTestCase):
               'item_action': EXECUTE_EXPR_VALUE,
               'tal_expression': 'python: item.setTitle(item.Title() + "{0}")'.format(title_suffix)},
              {'meeting_transition': 'decide',
+              'item_action': 'itempublish',
+              'tal_expression': ''},
+             {'meeting_transition': 'decide',
               'item_action': 'accept',
               'tal_expression': ''}])
         for item in meeting.getItems():
@@ -665,17 +679,17 @@ class testWorkflows(PloneMeetingTestCase):
         self.assertTrue('accepted' in cfg.adapted().getItemDecidedStates())
         cfg.setOnMeetingTransitionItemActionToExecute(
             [{'meeting_transition': 'decide',
-              'item_action': 'itempublish',
+              'item_action': 'itemfreeze',
               'tal_expression': ''},
              {'meeting_transition': 'decide',
-              'item_action': 'itemfreeze',
+              'item_action': 'itempublish',
               'tal_expression': ''},
 
              {'meeting_transition': 'close',
-              'item_action': 'itempublish',
+              'item_action': 'itemfreeze',
               'tal_expression': ''},
              {'meeting_transition': 'close',
-              'item_action': 'itemfreeze',
+              'item_action': 'itempublish',
               'tal_expression': ''},
              {'meeting_transition': 'close',
               'item_action': EXECUTE_EXPR_VALUE,
@@ -811,11 +825,6 @@ class testWorkflows(PloneMeetingTestCase):
         self.assertTrue(meeting.wfConditions().mayCorrect())
         self.changeUser('siteadmin')
         self.assertTrue(meeting.wfConditions().mayCorrect())
-
-    def test_pm_ItemWFValidatedStateIsTheInitialState(self):
-        '''While using the "apply_item_validation_levels" WFAdaptation, the 'validated' state
-           must be the initial_state.'''
-        raise
 
 
 def test_suite():

@@ -469,7 +469,7 @@ class MeetingItemWorkflowConditions(object):
         wfTool = api.portal.get_tool('portal_workflow')
         itemWF = wfTool.getWorkflowsFor(self.context)[0]
         originState = itemWF.states[originStateId]
-        waiting_advices_transition = [tr for tr in originState.getTransitions()
+        waiting_advices_transition = [tr for tr in originState.transitions
                                       if tr.startswith('wait_advices_from')][0]
         return itemWF.transitions[waiting_advices_transition].new_state_id
 
@@ -477,17 +477,24 @@ class MeetingItemWorkflowConditions(object):
 
     def mayWait_advices_from(self, fromState=None):
         """ """
-        # when using the 'waiting_advices_from_last_val_level_XXX' WFAdaptation
+        # when using the 'waiting_advices_from_XXX' WFAdaptation
+        # either from last_level, or from every levels
         # only last validation level may ask advices
-        res = True
+        res = False
         # bypass for Manager
-        if not _checkPermission(ManagePortal, self.context):
+        if _checkPermission(ManagePortal, self.context):
+            res = True
+        else:
             last_val_levels_wfas = [wfa for wfa in self.cfg.getWorkflowAdaptations()
                                     if wfa.startswith('waiting_advices_from_last_val_level')]
+            every_val_levels_wfas = [wfa for wfa in self.cfg.getWorkflowAdaptations()
+                                     if wfa.startswith('waiting_advices_from_every_val_level')]
             if last_val_levels_wfas:
                 last_val_state = self._getLastValidationState()
-                if self.context.queryState() != last_val_state:
-                    res = False
+                if self.context.queryState() == last_val_state:
+                    res = True
+            elif every_val_levels_wfas:
+                res = True
         return res and self._mayWaitAdvices(self._getWaitingAdvicesStateFrom(fromState))
 
     security.declarePublic('mayAccept_out_of_meeting')
@@ -5226,12 +5233,37 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             res.append(proposingGroup)
         return res
 
-    def _assign_roles_to_group_suffixes(self):
+    def _get_corresponding_state_to_assign_local_roles(self, cfg, item_state):
+        """If an item_state is not managed by assign_roles_to_group_suffixes,
+           maybe there is a correspondance between current item_state and
+           a managed item state.  If not we raise."""
+        corresponding_item_state = None
+        # return_to_proposing_group states
+        item_val_levels_states = cfg.getItemWFValidationLevels(data='state', only_enabled=True)
+        if item_state.startswith('returned_to_proposing_group'):
+            if item_state == 'returned_to_proposing_group':
+                corresponding_item_state = item_val_levels_states[0]
+            else:
+                corresponding_item_state = item_state.split('returned_to_proposing_group_')[1]
+        return corresponding_item_state
+
+    def _get_custom_suffix_roles(self, cfg, item_state):
+        """If an item_state is not managed by assign_roles_to_group_suffixes,
+           and no corresponding item state exists by default, we can manage
+           suffix_roles manually."""
+        return True, []
+
+    def assign_roles_to_group_suffixes(self):
         """Method that do the work of assigning relevant roles to
            suffixed groups of an organization depending on current state :
            - suffix '_observers' will have 'Reader' role in every cases;
            - state 'itemcreated', _creators is 'Editor';
-           - states managed by MeetingConfig.itemWFValidationLevels"""
+           - states managed by MeetingConfig.itemWFValidationLevels.
+           For now, we manage every roles :
+           - itemcreated;
+           - validation levels
+           For unknown states, method _get_corresponding_state_to_assign_local_roles
+           will be used to determinate a known configuration to take into ccount"""
         # Add the local roles corresponding to the group managing the item
         item_state = self.queryState()
         org = self.adapted()._getGroupManagingItem(item_state)
@@ -5241,7 +5273,22 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        suffix_roles = compute_item_roles_to_assign_to_suffixes(cfg, item_state, org)
+        apply_meetingmanagers_access = True
+        suffix_roles = []
+
+        # roles given to item_state are managed automatically
+        # it is possible to manage it manually for extra states (coming from wfAdaptations for example)
+        # try to find corresponding item state
+        corresponding_auto_item_state = self.adapted()._get_corresponding_state_to_assign_local_roles(cfg, item_state)
+        if corresponding_auto_item_state:
+            item_state = corresponding_auto_item_state
+        else:
+            # if no corresponding item state, check if we manage state suffix roles manually
+            apply_meetingmanagers_access, suffix_roles = self.adapted()._get_custom_suffix_roles(cfg, item_state)
+
+        # find suffix_roles if it was not managed manually
+        if not suffix_roles:
+            suffix_roles = compute_item_roles_to_assign_to_suffixes(cfg, item_state, org)
 
         # apply local roles to computed suffixes
         for suffix, roles in suffix_roles.items():
@@ -5253,15 +5300,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # decided will include states "decided out of meeting"
         # if it is still not decided, it gets full access
         # XXX to do when moving to dexterity.localrolesfield
-        mmanagers_item_states = ['validated'] + list(cfg.adapted().getItemDecidedStates())
-        meeting = self.getMeeting()
-        if item_state in mmanagers_item_states or meeting:
-            mmanagers_group_id = "{0}_{1}".format(cfg.getId(), MEETINGMANAGERS_GROUP_SUFFIX)
-            # 'Reviewer' also on decided item, the WF guard will avoid correct is meeting closed
-            mmanagers_roles = ['Reader', 'Reviewer']
-            if item_state not in cfg.adapted().getItemDecidedStates():
-                mmanagers_roles += ['Editor', 'Contributor']
-            self.manage_addLocalRoles(mmanagers_group_id, tuple(mmanagers_roles))
+        if apply_meetingmanagers_access:
+            mmanagers_item_states = ['validated'] + list(cfg.adapted().getItemDecidedStates())
+            meeting = self.getMeeting()
+            if item_state in mmanagers_item_states or meeting:
+                mmanagers_group_id = "{0}_{1}".format(cfg.getId(), MEETINGMANAGERS_GROUP_SUFFIX)
+                # 'Reviewer' also on decided item, the WF guard will avoid correct is meeting closed
+                mmanagers_roles = ['Reader', 'Reviewer']
+                if item_state not in cfg.adapted().getItemDecidedStates():
+                    mmanagers_roles += ['Editor', 'Contributor']
+                self.manage_addLocalRoles(mmanagers_group_id, tuple(mmanagers_roles))
 
     security.declareProtected(ModifyPortalContent, 'updateLocalRoles')
 
@@ -5281,7 +5329,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         self.manage_addLocalRoles(self.owner_info()['id'], ('Owner',))
 
         # update suffixes related local roles
-        self._assign_roles_to_group_suffixes()
+        self.assign_roles_to_group_suffixes()
 
         # update local roles regarding copyGroups
         isCreated = kwargs.get('isCreated', None)
