@@ -3202,13 +3202,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            signatory uid as key and 'signature_number' as value.
            Else, the key is the signatory contact object.
         '''
-        res = []
+        signatories = {}
         if not self.hasMeeting():
-            return res
+            return signatories
         meeting = self.getMeeting()
-        if real:
-            signatories = {}
-        else:
+        if not real:
             signatories = meeting.getSignatories(by_signature_number=True)
         item_signatories = meeting.getItemSignatories().get(self.UID(), {})
         signatories.update(item_signatories)
