@@ -268,8 +268,9 @@ class GroupsInChargeVocabulary(object):
         cfg = tool.getMeetingConfig(context)
         res = []
         is_using_cfg_order = False
-        # groups in charge are defined on organizations
         if 'groupsInCharge' not in cfg.getUsedItemAttributes():
+            # groups in charge are defined on organizations or categories
+            # organizations
             orgs = get_organizations(only_selected=only_selected)
             for org in orgs:
                 for group_in_charge_uid in (org.groups_in_charge or []):
@@ -277,6 +278,16 @@ class GroupsInChargeVocabulary(object):
                     # manage duplicates
                     if group_in_charge and group_in_charge not in res:
                         res.append(group_in_charge)
+            # categories
+            if not cfg.getUseGroupsAsCategories():
+                classifiers = 'classifier' in cfg.getUsedItemAttributes()
+                categories = cfg.getCategories(classifiers=classifiers, onlySelectable=False, caching=False)
+                for cat in categories:
+                    for group_in_charge_uid in cat.getGroupsInCharge():
+                        group_in_charge = get_organization(group_in_charge_uid)
+                        # manage duplicates
+                        if group_in_charge and group_in_charge not in res:
+                            res.append(group_in_charge)
         else:
             # groups in charge are selected on the items
             is_using_cfg_order = True
@@ -374,11 +385,13 @@ class MeetingReviewStatesVocabulary(object):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         res = []
-        for state_id, state_title in cfg.listMeetingStates().items():
+        states = cfg.listStates('Meeting', with_state_id=False)
+        for state_id, state_title in states:
             res.append(SimpleTerm(state_id,
                                   state_id,
                                   safe_unicode(state_title))
                        )
+        res = humansorted(res, key=attrgetter('title'))
         return SimpleVocabulary(res)
 
 
@@ -393,11 +406,13 @@ class ItemReviewStatesVocabulary(object):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         res = []
-        for state_id, state_title in cfg.listItemStates().items():
+        states = cfg.listStates('Item', with_state_id=False)
+        for state_id, state_title in states:
             res.append(SimpleTerm(state_id,
                                   state_id,
                                   safe_unicode(state_title))
                        )
+        res = humansorted(res, key=attrgetter('title'))
         return SimpleVocabulary(res)
 
 
@@ -543,10 +558,11 @@ class AskedAdvicesVocabulary(object):
                 res.append(REAL_ORG_UID_PATTERN.format(customAdviser['org']))
 
         # classic advisers
-        orgs = get_organizations(only_selected=True)
+        orgs = [org for org in get_organizations(only_selected=True)
+                if org.UID() in self.cfg.getSelectableAdvisers()]
         if not active:
             orgs = [org for org in get_organizations(only_selected=False)
-                    if org not in orgs]
+                    if org not in orgs and org.UID() in self.cfg.getSelectableAdvisers()]
         for org in orgs:
             formatted = REAL_ORG_UID_PATTERN.format(org.UID())
             res.append(formatted)
@@ -605,6 +621,8 @@ class AskedAdvicesVocabulary(object):
             # in some case, like Plone Site creation, context is the Zope app...
             self.cfg = self.tool.getMeetingConfig(context)
         except:
+            return SimpleVocabulary(res)
+        if self.cfg is None:
             return SimpleVocabulary(res)
 
         self.context = context
@@ -825,7 +843,7 @@ class SentToInfosVocabulary(object):
                    )
         for cfgInfo in cfg.getMeetingConfigsToCloneTo():
             cfgId = cfgInfo['meeting_config']
-            cfgTitle = getattr(tool, cfgId).getName()
+            cfgTitle = getattr(tool, cfgId).Title()
             # add 'clonable to' and 'cloned to' options
             for suffix in ('__clonable_to', '__clonable_to_emergency',
                            '__cloned_to', '__cloned_to_emergency'):
@@ -1388,6 +1406,7 @@ class ItemAllStatesVocabulary(object):
                 res.append(
                     SimpleTerm(term_key, term_key, term_value))
 
+        res = humansorted(res, key=attrgetter('title'))
         return SimpleVocabulary(res)
 
 

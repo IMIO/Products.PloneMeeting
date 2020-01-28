@@ -73,38 +73,38 @@ dl.portlet .ploneMeetingSelectContainer p {
     margin-right: 1em;
 }
 /* make sure if both select boxes are displayed, first is displayed above second */
-dl.portlet div#go_to_meeting_img_select_box_searchallmeetings {
+dl.portlet div#go_to_meeting_img_select_box_searchnotdecidedmeetings {
     z-index: 2;
 }
 
-dl.portlet div.ploneMeetingSelectContainer.go_to_meeting_img_select_box_searchallmeetings div.ploneMeetingSelectDropdownIcon,
+dl.portlet div.ploneMeetingSelectContainer.go_to_meeting_img_select_box_searchnotdecidedmeetings div.ploneMeetingSelectDropdownIcon,
 dl.portlet div.ploneMeetingSelectContainer.go_to_meeting_img_select_box_searchlastdecisions div.ploneMeetingSelectDropdownIcon {
     width: 80%;
     min-width: 150px;
 }
-dl.portlet div.ploneMeetingSelectContainer.go_to_meeting_img_select_box_searchallmeetings div.ploneMeetingSelectBox,
+dl.portlet div.ploneMeetingSelectContainer.go_to_meeting_img_select_box_searchnotdecidedmeetings div.ploneMeetingSelectBox,
 dl.portlet div.ploneMeetingSelectContainer.go_to_meeting_img_select_box_searchlastdecisions div.ploneMeetingSelectBox {
     width: 80%;
     min-width: 150px;
     padding-right: 9px;
 }
-dl.portlet div.ploneMeetingSelectContainer span#idButtonText_go_to_meeting_img_select_box_searchallmeetings,
+dl.portlet div.ploneMeetingSelectContainer span#idButtonText_go_to_meeting_img_select_box_searchnotdecidedmeetings,
 dl.portlet div.ploneMeetingSelectContainer span#idButtonText_go_to_meeting_img_select_box_searchlastdecisions {
     display: inline-block;
 }
 /* add some top padding for --- choose --- */
-dl.portlet div.ploneMeetingSelectContainer span#idButtonText_go_to_meeting_img_select_box_searchallmeetings span.select_choice {
+dl.portlet div.ploneMeetingSelectContainer span#idButtonText_go_to_meeting_img_select_box_searchnotdecidedmeetings span.select_choice {
     display: block;
     padding-top: 2px;
 }
 
 /* cancel additional padding given by faceted to the meeting list */
-dl.portlet div.faceted-tagscloud-collection-widget div.ploneMeetingSelectContainer.go_to_meeting_img_select_box_searchallmeetings a.pretty_link,
+dl.portlet div.faceted-tagscloud-collection-widget div.ploneMeetingSelectContainer.go_to_meeting_img_select_box_searchnotdecidedmeetings a.pretty_link,
 dl.portlet div.faceted-tagscloud-collection-widget div.ploneMeetingSelectContainer.go_to_meeting_img_select_box_searchlastdecisions a.pretty_link {
     margin-left: 0em;
 }
 
-dl.portlet div.ploneMeetingSelectContainer.go_to_meeting_img_select_box_searchallmeetings p,
+dl.portlet div.ploneMeetingSelectContainer.go_to_meeting_img_select_box_searchnotdecidedmeetings p,
 dl.portlet div.ploneMeetingSelectContainer.go_to_meeting_img_select_box_searchlastdecisions p {
     margin-bottom: 0em;
 }
@@ -146,10 +146,8 @@ dl.portlet div.ploneMeetingSelectBox {
     z-index: 1;
     overflow: hidden;
 }
-
 dl.portlet p.ploneMeetingSelectItem {
-    margin: 0px 1px 0px 1px;
-    width: 99%; /* If 100% a horizontal scrollbar is displayed */
+    margin: 0px;
     vertical-align: top !important;
     min-height: 18px;
     padding-left: 5px;
@@ -158,11 +156,11 @@ dl.portlet p.ploneMeetingSelectItem a {
     min-height: 18px;
     padding-top: 3px;
 }
-dl.portlet p.ploneMeetingSelectItem:hover a {
+dl.portlet p.ploneMeetingSelectItem:hover,
+dl.portlet p.ploneMeetingSelectItem:hover span {
     background-color: &dtml-globalBackgroundColor;;
-}
-dl.portlet p.ploneMeetingSelectItem:hover a span {
     color: white;
+    font-weight: bold;
 }
 
 dl.portlet .ploneMeetingSelectImage {
@@ -297,6 +295,7 @@ body:not([class*='section-contacts']) .state-active, .label-state-active {color:
 /* red */
 div.viewlet_workflowstate span.state-advicecreated,
 div.viewlet_workflowstate span.state-created,
+div.viewlet_workflowstate span.state-inactive,
 div.viewlet_workflowstate span.state-itemcreated,
 div.viewlet_workflowstate span.state-itemcreated_waiting_advices,
 div.viewlet_workflowstate span.state-advice_under_edit {
@@ -383,6 +382,7 @@ div.viewlet_workflowstate span.state-decisions_published {
 .state-decided,
 .state-decisions_published {color: black;}
 /* green */
+div.viewlet_workflowstate span.state-active,
 div.viewlet_workflowstate span.state-accepted,
 div.viewlet_workflowstate span.state-accepted_but_modified,
 div.viewlet_workflowstate span.state-accepted_out_of_meeting,
@@ -423,29 +423,6 @@ div.viewlet_workflowstate span.state-refused {
 .transition-delay { color: grey !important; }
 .transition-refuse { color: violet !important; }
 .transition-close { color: black !important; }
-
-#plone-contentmenu-workflow .state-inactive,
-#plone-contentmenu-workflow .state-advice_under_edit {
-    border-radius: 0.5em 0.5em 0.5em 0.5em;
-    background-color: red;
-    padding: 0 0.5em;
-    color: white !important;
-    border: 2px solid red;
-}
-#plone-contentmenu-workflow .state-advice_given {
-    border-radius: 0.5em 0.5em 0.5em 0.5em;
-    background-color: grey;
-    padding: 0 0.5em;
-    color: white !important;
-    border: 2px solid grey;
-}
-#plone-contentmenu-workflow .state-active {
-    border-radius: 0.5em 0.5em 0.5em 0.5em;
-    background-color: green;
-    padding: 0 0.5em;
-    color: white !important;
-    border: 2px solid green;
-}
 
 .somethingtodo { color: red !important; }
 .selectRow { }
@@ -980,13 +957,19 @@ body.template-search_form #content label {
     display: none;
 }
 
-/* hide some parts of the screen in the configuration of itemtemplates */
-body[class*="itemtemplates"] #plone-contentmenu-workflow,
-body[class*="itemtemplates"] a#plone-contentmenu-settings,
-body[class*="itemtemplates"] a.link-parent,
-body[class*="itemtemplates"] .documentDescription,
-body[class*="itemtemplates"] #plone-contentmenu-actions,
-body[class*="itemtemplates"] #plone-contentmenu-display {
+/* hide some parts of the screen in the configuration of itemtemplates as well as on any other folders and on MessagesConfig */
+body[class*="portaltype-folder"] #plone-contentmenu-workflow,
+body[class*="portaltype-messagesconfig"] #plone-contentmenu-workflow,
+body[class*="portaltype-folder"] a#plone-contentmenu-settings,
+body[class*="portaltype-messagesconfig"] a#plone-contentmenu-settings,
+body[class*="portaltype-folder"] a.link-parent,
+body[class*="portaltype-messagesconfig"] a.link-parent,
+body[class*="portaltype-folder"] .documentDescription,
+body[class*="portaltype-messagesconfig"] .documentDescription,
+body[class*="portaltype-folder"] #plone-contentmenu-actions,
+body[class*="portaltype-messagesconfig"] #plone-contentmenu-actions,
+body[class*="portaltype-folder"] #plone-contentmenu-display,
+body[class*="portaltype-messagesconfig"] #plone-contentmenu-display {
     display: none !important;
 }
 /* do not hide link-parent when in manage-portlets of itemtemplates... */
@@ -1154,7 +1137,7 @@ span.advices_of_type {
 table.listing tr[class][class] td.meeting_item_listType_normal {
     background-color: white;
 }
-#content span.item_listType_normal,
+span.item_listType_normal,
 div.tooltipster-content a.item_listType_normal:link,
 div.tooltipster-content a.item_listType_normal:visited {
     color: &dtml-discreetColor;;
@@ -1163,7 +1146,7 @@ div.tooltipster-content a.item_listType_normal:visited {
 table.listing tr[class][class] td.meeting_item_listType_late {
     background-color: red;
 }
-#content span.item_listType_late,
+span.item_listType_late,
 div.tooltipster-content a.item_listType_late:link,
 div.tooltipster-content a.item_listType_late:visited {
     color: red;

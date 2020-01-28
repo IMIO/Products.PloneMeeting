@@ -199,6 +199,7 @@
   <adapter name="Description" factory=".indexes.Description" />
   <adapter name="getConfigId" factory=".indexes.getConfigId" />
   <adapter name="getCopyGroups" factory=".indexes.getCopyGroups" />
+  <adapter name="getGroupsInCharge" factory=".indexes.getGroupsInCharge" />
   <adapter name="getPreferredMeetingDate" factory=".indexes.getPreferredMeetingDate" />
   <adapter name="getRawClassifier" factory=".indexes.getRawClassifier" />
   <adapter name="getTakenOverBy" factory=".indexes.getTakenOverBy" />
@@ -209,7 +210,8 @@
   <adapter name="linkedMeetingUID" factory=".indexes.linkedMeetingUID" />
   <adapter name="previous_review_state" factory=".indexes.previous_review_state" />
   <adapter name="reviewProcessInfo" factory=".indexes.reviewProcessInfo" />
-  <adapter name="SearchableText" factory=".indexes.SearchableText" />
+  <adapter name="SearchableText" factory=".indexes.SearchableText_item" />
+  <adapter name="SearchableText" factory=".indexes.SearchableText_meeting" />
   <adapter name="sendToAuthority" factory=".indexes.sendToAuthority" />
   <adapter name="sentToInfos" factory=".indexes.sentToInfos" />
   <adapter name="sortable_title" factory=".indexes.sortable_title" />
@@ -287,11 +289,6 @@
            provides="imio.history.interfaces.IImioHistory" />
 
   <adapter for="OFS.interfaces.IItem"
-           provides="collective.documentgenerator.interfaces.IGenerablePODTemplates"
-           factory=".adapters.PMGenerablePODTemplatesAdapter"/>
-  <!-- Use the PMGenerablePODTemplatesAdapter for IMeeting,
-       not the PMDashboardGenerablePODTemplatesAdapter -->
-  <adapter for="Products.PloneMeeting.interfaces.IMeeting"
            provides="collective.documentgenerator.interfaces.IGenerablePODTemplates"
            factory=".adapters.PMGenerablePODTemplatesAdapter"/>
 

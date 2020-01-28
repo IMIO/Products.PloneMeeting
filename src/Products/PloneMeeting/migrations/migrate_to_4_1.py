@@ -106,13 +106,6 @@ class Migrate_To_4_1(Migrator):
             cfg.createItemTemplateManagersGroup()
         logger.info('Done.')
 
-    def _updateCollectionColumns(self):
-        """Update collections columns as column 'check_box_item' was renamed to 'select_row'."""
-        logger.info("Updating collections columns for every MeetingConfigs...")
-        for cfg in self.tool.objectValues('MeetingConfig'):
-            cfg.updateCollectionColumns()
-        logger.info('Done.')
-
     def _migrateGroupsInChargeAttributes(self):
         '''Field MeetingConfig.itemGroupInChargeStates was renamed to MeetingConfig.itemGroupsInChargeStates.
            Value reader_groupincharge is now reader_groupsincharge.'''
@@ -612,15 +605,15 @@ class Migrate_To_4_1(Migrator):
             for suffix in get_all_suffixes(org_uid):
                 ori_plone_group_id = mGroup.getPloneGroupId(suffix)
                 ori_plone_group = api.group.get(ori_plone_group_id)
-                if ori_plone_group and ori_plone_group.getMemberIds():
+                if ori_plone_group:
                     new_plone_group = get_plone_group(org_uid, suffix)
                     for member_id in ori_plone_group.getMemberIds():
                         # manage no more existing users
                         if not api.user.get(member_id):
                             continue
                         api.group.add_user(group=new_plone_group, username=member_id)
-                # remove original Plone group
-                portal_groups.removeGroup(ori_plone_group_id)
+                    # remove original Plone group
+                    portal_groups.removeGroup(ori_plone_group_id)
 
         # now that every groups are migrated, we may migrate groups_in_charge
         # we have old MeetingGroup ids stored, we want organization UIDs
@@ -1194,7 +1187,8 @@ class Migrate_To_4_1(Migrator):
         # migration steps
         self._updateFacetedFilters()
         self._addItemTemplatesManagersGroup()
-        self._updateCollectionColumns()
+        # Update collections columns as column 'check_box_item' was renamed to 'select_row'
+        self.updateCollectionColumns()
         self._markSearchesFoldersWithIBatchActionsMarker()
         self._removeMCPortalTabs()
         self._manageContentsKeptWhenItemSentToOtherMC()
@@ -1247,11 +1241,11 @@ class Migrate_To_4_1(Migrator):
         self._migrateItemsInConfig()
         self._initFTWLabels()
         self._adaptShowHolidaysMessage()
-        self.tool.invalidateAllCache()
-        # too many indexes to update, rebuild the portal_catalog
+        # too many indexes to update, rebuild the portal_catalog, but do not update other catalogs
         meeting_wf_ids = self.getWorkflows(meta_types=['Meeting'])
         self.refreshDatabase(workflows=True,
-                             workflowsToUpdate=['plonemeeting_onestate_workflow'] + meeting_wf_ids)
+                             workflowsToUpdate=['plonemeeting_onestate_workflow'] + meeting_wf_ids,
+                             catalogsToUpdate=[])
 
 
 # The migration function -------------------------------------------------------

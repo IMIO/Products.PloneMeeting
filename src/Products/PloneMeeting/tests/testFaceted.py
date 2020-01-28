@@ -25,6 +25,7 @@
 from AccessControl import Unauthorized
 from collective.contact.plonegroup.utils import get_organizations
 from DateTime import DateTime
+from eea.facetednavigation.interfaces import IFacetedLayout
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from zope.component import queryUtility
@@ -45,6 +46,8 @@ class testFaceted(PloneMeetingTestCase):
         self.request.RESPONSE.setHeader('location', '')
         creatorPMFolder = self.tool.getPloneMeetingFolder(cfgId)
         self.assertEqual(creatorPMFolder.getLayout(), 'facetednavigation_view')
+        # check faceted_layout
+        self.assertEqual(IFacetedLayout(creatorPMFolder).layout, 'faceted-table-items')
         creatorPMFolderUrl = creatorPMFolder.absolute_url()
         # access the pmFolder
         creatorPMFolder()
@@ -489,34 +492,32 @@ class testFaceted(PloneMeetingTestCase):
         delayAdvisers = [adviser for adviser in cfg.getCustomAdvisers() if adviser['delay']]
         self.assertEquals(len(delayAdvisers), 4)
         self.assertEquals(len(get_organizations(not_empty_suffix='advisers')), 2)
-        # once get, it is cached, it include not selected values
-        self.assertEquals(len(vocab(pmFolder)), 7)
+        # once get, it is cached, it includes customAdvisers and MeetingConfig.selectableAdvisers
+        self.assertEquals(len(vocab(pmFolder)), 6)
 
-        # if we add/remove/edit an organization, then the cache is cleaned
+        # if we select a new organization, then the cache is cleaned
         # add an organization
         new_org = self.create('organization', title='New organization', acronym='N.G.')
         new_org_uid = new_org.UID()
+        cfg.setSelectableAdvisers(cfg.getSelectableAdvisers() + (new_org_uid, ))
         # cache was cleaned
-        self.assertEquals(len(vocab(pmFolder)), 8)
+        self.assertEquals(len(vocab(pmFolder)), 7)
         # edit an organization
         new_org_term_id = 'real_org_uid__{0}'.format(new_org_uid)
-        self.assertEquals(vocab(pmFolder).by_token[new_org_term_id].title,
-                          'New organization (Inactive)')
+        self.assertEquals(vocab(pmFolder).by_token[new_org_term_id].title, 'New organization (Inactive)')
         new_org.title = u'Modified title'
         notify(ObjectModifiedEvent(new_org))
         # cache was cleaned
-        self.assertEquals(vocab(pmFolder).by_token[new_org_term_id].title,
-                          'Modified title (Inactive)')
+        self.assertEquals(vocab(pmFolder).by_token[new_org_term_id].title, 'Modified title (Inactive)')
         # select the organization, cache is cleaned
         self._select_organization(new_org_uid)
-        self.assertEquals(vocab(pmFolder).by_token[new_org_term_id].title,
-                          'Modified title')
+        self.assertEquals(vocab(pmFolder).by_token[new_org_term_id].title, 'Modified title')
         # remove an organization
         # first need to unselect it
         self._select_organization(new_org_uid, remove=True)
         self.portal.restrictedTraverse('@@delete_givenuid')(new_org_uid)
         # cache was cleaned
-        self.assertEquals(len(vocab(pmFolder)), 7)
+        self.assertEquals(len(vocab(pmFolder)), 6)
 
         # if we add/remove/edit a customAdviser, then the cache is cleaned
         # add a customAdviser
@@ -528,7 +529,7 @@ class testFaceted(PloneMeetingTestCase):
                                'delay_label': 'New delay'})
         cfg.setCustomAdvisers(customAdvisers)
         cfg.at_post_edit_script()
-        self.assertEquals(len(vocab(pmFolder)), 8)
+        self.assertEquals(len(vocab(pmFolder)), 7)
         self.assertTrue('delay_row_id__unique_id_999' in vocab(pmFolder).by_token)
         # delay is displayed in customAdviser title
         self.assertTrue('11 day(s)' in vocab(pmFolder).by_token['delay_row_id__unique_id_999'].title)
@@ -541,7 +542,7 @@ class testFaceted(PloneMeetingTestCase):
         customAdvisers = customAdvisers[:-1]
         cfg.setCustomAdvisers(customAdvisers)
         cfg.at_post_edit_script()
-        self.assertEquals(len(vocab(pmFolder)), 7)
+        self.assertEquals(len(vocab(pmFolder)), 6)
 
     def test_pm_AskedAdvicesVocabulariesMCAware(self):
         '''Test the "Products.PloneMeeting.vocabularies.askedadvicesvocabulary"

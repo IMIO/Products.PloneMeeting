@@ -24,5 +24,6 @@ class PMTALCondition(TALCondition):
         cfg = tool.getMeetingConfig(context)
         extra_context.update({'tool': tool,
                               'pm_utils': SecureModuleImporter['Products.PloneMeeting.utils'],
+                              'imio_history_utils': SecureModuleImporter['imio.history.utils'],
                               'cfg': cfg})
         return extra_context

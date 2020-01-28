@@ -112,7 +112,6 @@ from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getCustomSchemaFields
-from Products.PloneMeeting.utils import getFieldContent
 from Products.PloneMeeting.utils import listifySignatures
 from Products.PloneMeeting.utils import reviewersFor
 from Products.PloneMeeting.utils import updateAnnexesAccess
@@ -569,6 +568,32 @@ schema = Schema((
         vocabulary_factory='collective.contact.plonegroup.sorted_selected_organization_services',
         default=defValues.orderedGroupsInCharge,
         enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    BooleanField(
+        name='includeGroupsInChargeDefinedOnProposingGroup',
+        default=defValues.includeGroupsInChargeDefinedOnProposingGroup,
+        widget=BooleanField._properties['widget'](
+            description="IncludeGroupsInChargeDefinedOnProposingGroup",
+            description_msgid="include_groups_in_charge_defined_on_proposing_group_descr",
+            label='Includegroupsinchargedefinedonproposinggroup',
+            label_msgid='PloneMeeting_label_includeGroupsInChargeDefinedOnProposingGroup',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="data",
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    BooleanField(
+        name='includeGroupsInChargeDefinedOnCategory',
+        default=defValues.includeGroupsInChargeDefinedOnCategory,
+        widget=BooleanField._properties['widget'](
+            description="IncludeGroupsInChargeDefinedOnCategory",
+            description_msgid="include_groups_in_charge_defined_on_category_descr",
+            label='Includegroupsinchargedefinedoncategory',
+            label_msgid='PloneMeeting_label_includeGroupsInChargeDefinedOnCategory',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="data",
         write_permission="PloneMeeting: Write risky config",
     ),
     BooleanField(
@@ -2475,7 +2500,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
-                    'tal_condition': "python: tool.get_orgs_for_user()",
+                    'tal_condition': "python: tool.get_orgs_for_user(the_objects=False)",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Living items, items in the current flow, by default every states but decidedStates
@@ -2494,7 +2519,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
-                    'tal_condition': "python: tool.get_orgs_for_user()",
+                    'tal_condition': "python: tool.get_orgs_for_user(the_objects=False)",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Items I take over
@@ -2511,8 +2536,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_reversed': True,
                     'showNumberOfItems': False,
                     'tal_condition': "python: 'takenOverBy' in cfg.getUsedItemAttributes() "
-                                     "and (tool.get_orgs_for_user(omittedSuffixes=['observers', ]) or "
-                                     "tool.isManager(here))",
+                                     "and (tool.get_orgs_for_user(omittedSuffixes=['observers', ], "
+                                     "the_objects=False) or tool.isManager(here))",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # All (visible) items
@@ -2877,7 +2902,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # All not-yet-decided meetings
-                ('searchallmeetings', {
+                ('searchnotdecidedmeetings', {
                     'subFolderId': 'searches_meetings',
                     'active': True,
                     'query':
@@ -2920,8 +2945,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'tal_condition': '',
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
-                # All decided meetings
-                ('searchalldecisions', {
+                # All meetings
+                ('searchallmeetings', {
                     'subFolderId': 'searches_decisions',
                     'active': True,
                     'query':
@@ -2929,9 +2954,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                         {'i': 'portal_type',
                          'o': 'plone.app.querystring.operation.selection.is',
                          'v': [meetingType, ]},
-                        {'i': 'review_state',
-                         'o': 'plone.app.querystring.operation.selection.is',
-                         'v': ['decided', 'closed']},
                     ],
                     'sort_on': u'sortable_title',
                     'sort_reversed': True,
@@ -2948,12 +2970,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def _extraSearchesInfo(self, infos):
         '''This is made to be overrided by a subplugin, to insert it's own searches.'''
         return infos
-
-    security.declarePublic('getName')
-
-    def getName(self, force=None):
-        '''Returns the possibly translated title.'''
-        return getFieldContent(self, 'title', force)
 
     security.declarePublic('Title')
 
@@ -5324,7 +5340,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def userIsAReviewer(self):
         '''Is current user a reviewer?  So is current user among groups of reviewers?'''
         tool = api.portal.get_tool('portal_plonemeeting')
-        return bool(tool.get_orgs_for_user(suffixes=reviewersFor(self.getItemWorkflow()).keys()))
+        return bool(tool.get_orgs_for_user(suffixes=reviewersFor(self.getItemWorkflow()).keys(),
+                                           the_objects=False))
 
     def _highestReviewerLevel(self, groupIds):
         '''Return highest reviewer level found in given p_groupIds.'''
@@ -5364,7 +5381,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('listStates')
 
-    def listStates(self, objectType, excepted=None):
+    def listStates(self, objectType, excepted=None, with_state_id=True):
         '''Lists the possible states for the p_objectType ("Item" or "Meeting")
            used in this meeting config. State name specified in p_excepted will
            be ommitted from the result.'''
@@ -5375,10 +5392,17 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             workflow = wfTool.getWorkflowsFor(self.getMeetingTypeName())[0]
         else:
             workflow = wfTool.getWorkflowsFor(self.getItemTypeName())[0]
+
         for state in workflow.states.objectValues():
             if excepted and (state.id == excepted):
                 continue
-            res.append((state.id, translate(state.title, domain="plone", context=self.REQUEST)))
+
+            state_title = translate(state.title, domain="plone", context=self.REQUEST)
+            if with_state_id:
+                state_title = u'{0} ({1})'.format(state_title, state.id)
+
+            res.append((state.id, state_title))
+
         return res
 
     security.declarePublic('listAllTransitions')
@@ -5825,10 +5849,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         if filtered:
             tool = api.portal.get_tool('portal_plonemeeting')
             member = api.user.get_current()
-            memberGroups = [org.UID() for org in
-                            tool.get_orgs_for_user(user_id=member.getId(), suffixes=['creators'])]
+            memberOrgUids = [org_uid for org_uid in
+                             tool.get_orgs_for_user(
+                                 user_id=member.getId(),
+                                 suffixes=['creators'],
+                                 the_objects=False)]
             query['templateUsingGroups'] = ('__nothing_selected__', '__folder_in_itemtemplates__', ) + \
-                tuple(memberGroups)
+                tuple(memberOrgUids)
         return query
 
     security.declarePublic('getItemTemplates')

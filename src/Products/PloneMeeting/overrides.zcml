@@ -201,7 +201,7 @@
              factory="Products.PloneMeeting.adapters.Criteria" />
 
     <adapter for="eea.facetednavigation.subtypes.interfaces.IFacetedNavigable"
-             provides="collective.documentgenerator.interfaces.IGenerablePODTemplates"
+             provides="collective.eeafaceted.dashboard.interfaces.IDashboardGenerablePODTemplates"
              factory=".adapters.PMDashboardGenerablePODTemplatesAdapter"/>
 
     <!-- IPrettyLink -->

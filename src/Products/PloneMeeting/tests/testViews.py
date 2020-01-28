@@ -3,6 +3,7 @@
 from AccessControl import Unauthorized
 from collective.contact.plonegroup.utils import get_own_organization
 from collective.documentgenerator.interfaces import IGenerablePODTemplates
+from collective.eeafaceted.dashboard.interfaces import IDashboardGenerablePODTemplates
 from DateTime import DateTime
 from datetime import datetime
 from ftw.labels.interfaces import ILabeling
@@ -1762,11 +1763,11 @@ class testViews(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         # some DashboardPODTemplates are defined in cfg1
         pmFolder = self.getMeetingFolder()
-        adapter1 = getAdapter(pmFolder, IGenerablePODTemplates)
+        adapter1 = getAdapter(pmFolder, IDashboardGenerablePODTemplates)
         self.assertTrue(adapter1.get_all_pod_templates())
         # NO DashboardPODTemplates are defined in cfg2
         pmFolder2 = self.getMeetingFolder(self.meetingConfig2)
-        adapter2 = getAdapter(pmFolder2, IGenerablePODTemplates)
+        adapter2 = getAdapter(pmFolder2, IDashboardGenerablePODTemplates)
         self.assertFalse(adapter2.get_all_pod_templates())
 
     def test_pm_content_document_generation_link_viewlet(self):
@@ -1807,14 +1808,14 @@ class testViews(PloneMeetingTestCase):
         """Dashboard POD templates are available on contacts dashboards."""
         self.changeUser('pmManager')
         # a DashboardPODTemplate is defined for the organizations dashboard
-        adapter1 = getAdapter(self.portal.contacts.get('orgs-searches'), IGenerablePODTemplates)
+        adapter1 = getAdapter(self.portal.contacts.get('orgs-searches'), IDashboardGenerablePODTemplates)
         self.request.form['c1[]'] = adapter1.context.get('all_orgs').UID()
         # one generable template
         generable_templates = adapter1.get_generable_templates()
         self.assertTrue(generable_templates)
         self.assertTrue(generable_templates[0].use_objects)
         # NO DashboardPODTemplates are defined for persons dashboard
-        adapter2 = getAdapter(self.portal.contacts.get('persons-searches'), IGenerablePODTemplates)
+        adapter2 = getAdapter(self.portal.contacts.get('persons-searches'), IDashboardGenerablePODTemplates)
         self.request.form['c1[]'] = adapter2.context.get('all_persons').UID()
         self.assertFalse(adapter2.get_generable_templates())
 

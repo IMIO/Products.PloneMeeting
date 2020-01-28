@@ -292,6 +292,58 @@ class testMeetingItem(PloneMeetingTestCase):
                           (vendors_gic2, 'Vendors (Org 2)'),
                           (vendors_gic3, 'Vendors (Org 3)'),))
 
+    def test_pm_GroupsInChargeFromProposingGroup(self):
+        '''Groups in charge defined on the organization proposingGroup is taken into
+           account by MeetingItem.getGroupsInCharge and get local_roles on item
+           if MeetingConfig.includeGroupsInChargeDefinedOnProposingGroup.'''
+        cfg = self.meetingConfig
+        cfg.setUseGroupsAsCategories(True)
+        cfg.setIncludeGroupsInChargeDefinedOnProposingGroup(False)
+        cfg.setItemGroupsInChargeStates((self._stateMappingFor('itemcreated'), ))
+        self.developers.groups_in_charge = (self.vendors_uid, )
+
+        # create an item
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        # no effetct when MeetingConfig.includeGroupsInChargeDefinedOnProposingGroup is False
+        self.assertEqual(item.getGroupsInCharge(includeAuto=True), [])
+        self.assertFalse(self.vendors_observers in item.__ac_local_roles__)
+        # enable includeGroupsInChargeDefinedOnProposingGroup
+        cfg.setIncludeGroupsInChargeDefinedOnProposingGroup(True)
+        item._update_after_edit()
+        self.assertEqual(item.getGroupsInCharge(includeAuto=True), [self.vendors_uid])
+        self.assertTrue(READER_USECASES['groupsincharge'] in item.__ac_local_roles__[self.vendors_observers])
+
+    def test_pm_GroupsInChargeFromCategory(self):
+        '''Groups in charge defined on the item category MeetingCategory is taken into
+           account by MeetingItem.getGroupsInCharge and get local_roles on item
+           if MeetingConfig.includeGroupsInChargeDefinedOnCategory.'''
+        cfg = self.meetingConfig
+        cfg.setUseGroupsAsCategories(False)
+        cfg.setIncludeGroupsInChargeDefinedOnCategory(False)
+        cfg.setItemGroupsInChargeStates((self._stateMappingFor('itemcreated'), ))
+        development = cfg.categories.development
+        development.setGroupsInCharge([self.vendors_uid])
+
+        # create an item
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        # select the right category
+        item.setCategory(development.getId())
+        item._update_after_edit()
+        # no effetct when MeetingConfig.includeGroupsInChargeDefinedOnCategory is False
+        self.assertEqual(item.getGroupsInCharge(includeAuto=True), [])
+        self.assertFalse(self.vendors_observers in item.__ac_local_roles__)
+        # enable includeGroupsInChargeDefinedOnCategory
+        cfg.setIncludeGroupsInChargeDefinedOnCategory(True)
+        item._update_after_edit()
+        self.assertEqual(item.getGroupsInCharge(includeAuto=True), [self.vendors_uid])
+        self.assertTrue(READER_USECASES['groupsincharge'] in item.__ac_local_roles__[self.vendors_observers])
+        # does not fail if no category
+        item.setCategory('')
+        item._update_after_edit()
+        self.assertEqual(item.getGroupsInCharge(includeAuto=True), [])
+
     def test_pm_SendItemToOtherMC(self):
         '''Test the send an item to another meetingConfig functionnality'''
         # Activate the functionnality
@@ -478,7 +530,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # enable motivation and budgetInfos in cfg1, not in cfg2
         cfg.setUsedItemAttributes(('description', 'motivation', 'budgetInfos'))
         cfg2.setUsedItemAttributes(('description', 'itemIsSigned', 'privacy'))
-        cfg.setItemManualSentToOtherMCStates((self._stateMappingFor('itemcreated')))
+        cfg.setItemManualSentToOtherMCStates((self._stateMappingFor('itemcreated'), ))
 
         # create and send
         self.changeUser('pmManager')
@@ -3520,8 +3572,7 @@ class testMeetingItem(PloneMeetingTestCase):
     def test_pm_OnTransitionFieldTransforms(self):
         '''On transition triggered, some transforms can be applied to item or meeting
            rich text field depending on what is defined in MeetingConfig.onTransitionFieldTransforms.
-           This is used for example to adapt the text of the decision when an item is delayed or refused.
-           '''
+           This is used for example to adapt the text of the decision when an item is delayed or refused.'''
         cfg = self.meetingConfig
         self.changeUser('pmManager')
         meeting = self._createMeetingWithItems()
@@ -3575,6 +3626,29 @@ class testMeetingItem(PloneMeetingTestCase):
         messages = IStatusMessage(self.request).show()
         self.assertEqual(messages[-1].message, ON_TRANSITION_TRANSFORM_TAL_EXPR_ERROR %
                          ('decision', "'some_wrong_tal_expression'"))
+
+    def test_pm_OnTransitionFieldTransformsUseLastCommentFromHistory(self):
+        '''Use comment of last WF transition in expression.'''
+        cfg = self.meetingConfig
+        self.changeUser('pmManager')
+        meeting = self._createMeetingWithItems()
+        self.decideMeeting(meeting)
+        cfg.setOnTransitionFieldTransforms(
+            ({'transition': 'delay',
+              'field_name': 'MeetingItem.decision',
+              'tal_expression': "python: imio_history_utils.getLastWFAction(context)['comments'] and "
+                "'<p>{0}</p>'.format(imio_history_utils.getLastWFAction(context)['comments']) or "
+                "'<p>Generic comment.</p>'"}, ))
+        item = meeting.getItems()[0]
+        item.setDecision(self.decisionText)
+        wf_comment = 'Delayed for this precise reason \xc3\xa9'
+        # with comment in last WF transition
+        self.do(item, 'delay', comment=wf_comment)
+        self.assertEqual(item.getDecision(), '<p>{0}</p>'.format(wf_comment))
+        # without comment in last WF transition
+        self.backToState(item, 'itemfrozen')
+        self.do(item, 'delay')
+        self.assertEqual(item.getDecision(), '<p>Generic comment.</p>')
 
     def test_pm_TakenOverBy(self):
         '''Test the view that manage the MeetingItem.takenOverBy toggle.

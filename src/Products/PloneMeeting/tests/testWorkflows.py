@@ -423,14 +423,14 @@ class testWorkflows(PloneMeetingTestCase):
         self.freezeMeeting(meeting)
         self.failIf(len(meeting.getItems()) != 5)
         self.assertTrue(meeting.getItems(ordered=True)[-1].isLate())
-        # Back to created: rec item 2 is not inserted.
+        # Back to created: rec item 2 is inserted.
         self.backToState(meeting, 'created')
-        self.failIf(len(meeting.getItems()) != 5)
+        self.failIf(len(meeting.getItems()) != 6)
         # a recurring item can be added several times...
         self.freezeMeeting(meeting)
         # one normal recurring item is added when meeting is published, and so meeting still not frozen
         # and one recurring item is added when meeting is frozen, so item considered as late
-        self.failIf(len(meeting.getItems()) != 7)
+        self.failIf(len(meeting.getItems()) != 8)
         self.assertFalse(meeting.getItems(ordered=True)[-2].isLate())
         self.assertTrue(meeting.getItems(ordered=True)[-1].isLate())
         # an item need a decisionText to be decided...
@@ -438,7 +438,7 @@ class testWorkflows(PloneMeetingTestCase):
             item.setDecision(self.decisionText)
         self.decideMeeting(meeting)
         # a recurring item is added during the 'decide' transition
-        self.failIf(len(meeting.getItems()) != 8)
+        self.failIf(len(meeting.getItems()) != 9)
         self.assertTrue(meeting.getItems(ordered=True)[-1].isLate())
 
     def test_pm_RecurringItemAddAnnexPermission(self):
@@ -511,6 +511,33 @@ class testWorkflows(PloneMeetingTestCase):
         meeting = self.create('Meeting', date=DateTime('2013/01/01'))
         self.assertEqual(len(meeting.getItems()), 1)
         self.assertEqual(meeting.getItems()[0].getProposingGroup(), self.developers_uid)
+
+    def test_pm_RecurringItemsWithCategoryWithUnavailableUsingGroups(self):
+        '''Tests that recurring items are not added if it uses a category restricted
+           to some groups the MeetingManager is not member of.'''
+        self.changeUser('admin')
+        cfg = self.meetingConfig
+        self._removeConfigObjectsFor(cfg)
+        cfg.setUseGroupsAsCategories(False)
+        research = cfg.categories.research
+        research.setUsingGroups((self.endUsers_uid, ))
+        self.create('MeetingItemRecurring',
+                    title='Rec item developers',
+                    proposingGroup=self.endUsers_uid,
+                    meetingTransitionInsertingMe='_init_',
+                    category=research.getId())
+
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime('2019/11/29'))
+        # the item was not inserted
+        self.assertEqual(len(meeting.getItems()), 0)
+        # a portal_message is displayed to the user
+        statusMessages = IStatusMessage(self.portal.REQUEST)
+        messages = statusMessages.show()
+        self.assertEqual(
+            messages[-1].message,
+            u'There was an error while trying to generate recurring item with id "rec-item-developers". '
+            u'No workflow provides the \'${action_id}\' action.')
 
     def test_pm_RecurringItemsRespectSortingMethodOnAddItemPrivacy(self):
         '''Tests the recurring items system when items are inserted

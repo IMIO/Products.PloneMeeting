@@ -2,11 +2,51 @@ Changelog
 =========
 
 
-4.1.14 (unreleased)
+4.1.16 (unreleased)
+-------------------
+
+- In events.onConfigOrPloneElementModified do not call _notifyContainerModified if event element is a PloneMeeting folder, a user personal folder that contains items and meetings
+- Adapted MeetingItem._update_after_edit to be able to pass only some indexes to reindex, adapted async methods (change itemlisttype, itemcompleteness, ...) accordingly.
+  By defaukt, MeetingItem._update_after_edit will do a full reindex but if some specific indexes are given, only these indexes are reindexed
+- Avoid useless full reindex when RichText field is edited using quick edit and when annex is added/edited/removed
+- While using ToolPloneMeeting.get_orgs_for_user, use the_objects=False as much as possible as this method is cached, returned objects could behave weirdly
+- Avoid an error with zope users during install when `collective.indexing` is used
+- Changed the user recovery code so that it works with an "ldap" configuration. This change allows the use of notifications with an "ldap" configuration.
+- Fix MeetingItem.getItemSignatories so it returns an empty dict when there is no signatories
+
+4.1.15 (2020-01-10)
+-------------------
+
+- Only show the 'Add element' actions menu when Manager is on a Folder or on a MessagesConfig element, this way we avoid users changing review_state, layout our deleting the element...
+- When using the tooltipster to change the MeetingItem.listType value, display the current listType value so user know what it is before changing to another value,
+  especially useful on the meeting_view where current listType value is not displayed
+- Make 'pm_utils' and 'imio_history_utils' available in every TAL expressions evaluated using collective.behavior.talcondition.utils._evaluateExpression, this way it is also possible
+  when evaluating the TAL expression of MeetingConfig.onTransitionFieldTransforms to access the item's history and to include in a field comment added for last WF transition for example
+- Display an error portal_message while creating a meeting and some recurring items could not be inserted
+- Added methods ItemDocumentGenerationHelperView.print_deliberation and ItemDocumentGenerationHelperView.print_public_deliberation, this will be used to render the body of an item.
+  Added method ItemDocumentGenerationHelperView.output_for_restapi that is used by plonemeeting.restapi for the @deliberation MeetingItem endpoint
+- In MeetingItem._findOrderFor, in 'on_categories', do not break if an item does not have a category,
+  this can be the case when categories were just enabled and a meeting already contains items without a category
+- Adapted AskedAdvicesVocabulary to only keep advices that are in MeetingConfig.selectableAdvisers.
+  This vocabulary is used in the faceted filter "Advices" and for field MeetingConfig.advicesKeptOnSentToOtherMC
+- Added MeetingItem.validate_groupsInCharge, when enabled in MeetingConfig.usedItemAttributes, field MeetingItem.groupsInCharge is required
+- In main migration to v4.1, do not refresh other catalogs that portal_catalog (bypass reference_catalog and uid_catalog)
+- Removed ToolPloneMeeting.modelAdaptations and relative functionnality (bilingual, getName, ...)
+- Make RichText fields of Meeting searchable, index also meeting annexes title in SearchableText index
+- Added upgrade step to 4104
+- Removed DashboardCollection 'searchalldecisions' and replaced it by 'searchallmeetings', this way every meetings are displayed and user may search accross all meetings
+  or filter on review_state if he wants only decided meetings
+- Added helper method Migrator.updateCollectionColumns to be able to update every columns for every DashboardCollections of every MeetingConfigs
+- Added possibility to define groups in charge for a given MeetingCategory, the same way it is done for organization.groups_in_charge.
+  New parameters MeetingConfig.includeGroupsInChargeDefinedOnProposingGroup and MeetingConfig.includeGroupsInChargeDefinedOnCategory will make it possible to take groups in charge
+  defined on the proposingGroup or on the category into account while giving access to the item or to the confidential annexes
+
+4.1.14 (2019-11-27)
 -------------------
 
 - Finally fixes advice inheritance when original advice is not delay aware and the MeetingConfig holding inherited advice has a delay aware custom adviser
-- Fix MeetingItem.getItemSignatories so it returns an empty dict when there is no signatories
+- Do not make IMeeting inherits from IFacetedNavigable or it does not apply the faceted configuration when a new meeting is created because it already implements IFacetedNavigable...
+  Override the IDashboardGenerablePODTemplates from collective.eeafaceted.dashboard to manage dashboard related POD templates
 
 4.1.13 (2019-11-26)
 -------------------

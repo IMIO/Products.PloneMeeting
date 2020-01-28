@@ -26,6 +26,7 @@ from plone.app.textfield import RichText
 from plone.app.uuid.utils import uuidToObject
 from plone.autoform.interfaces import WRITE_PERMISSIONS_KEY
 from plone.dexterity.interfaces import IDexterityContent
+from plone.locking.events import unlockAfterModification
 from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.permissions import AccessContentsInformation
 from Products.CMFCore.permissions import AddPortalContent
@@ -537,9 +538,8 @@ def sendMailIfRelevant(obj, event, permissionOrRole, isRole=False,
     if isRole and (permissionOrRole == 'Owner'):
         userIds = [obj.Creator()]
     else:
-        userIds = membershipTool.listMemberIds()
-        # When using the LDAP plugin, this method does not return all
-        # users, nor the cached users!
+        # Warning "_members" returns all users (even deleted users), the filter must do this afterwards.
+        userIds = api.portal.get_tool('portal_memberdata')._members
     for userId in userIds:
         user = membershipTool.getMemberById(userId)
         # do not warn user doing the action
@@ -716,44 +716,6 @@ def getDateFromDelta(aDate, delta):
     return DateTime('%s %s' % ((aDate + int(days)).strftime('%Y/%m/%d'), hour))
 
 
-mainTypes = ('MeetingItem', 'Meeting')
-
-
-def getFieldContent(obj, name, force=None, sep='-', **kwargs):
-    '''Returns the content of p_field on p_obj. If content if available in
-       2 languages, return the one that corresponds to user language, excepted
-       if p_force is integer 1 or 2: in this case it returns content in language
-       1 or 2. If p_force is "all", it returns the content in both languages,
-       separated with p_sep.'''
-    global mainTypes
-    if force:
-        if force == 1:
-            return obj.getField(name).get(obj, **kwargs)
-        elif force == 2:
-            return obj.getField(name + '2').get(obj, **kwargs)
-        elif force == 'all':
-            return '%s%s%s' % (obj.getField(name).get(obj, **kwargs), sep,
-                               obj.getField(name + '2').get(obj, **kwargs))
-    field = obj.getField(name)
-    # Is content of this field bilingual?
-    tool = api.portal.get_tool('portal_plonemeeting')
-    adaptations = tool.getModelAdaptations()
-    if obj.meta_type in mainTypes:
-        bilingual = 'secondLanguage' in adaptations
-    else:
-        bilingual = 'secondLanguageCfg' in adaptations
-    if not bilingual:
-        return field.get(obj)
-    else:
-        # Get the name of the 2 languages
-        firstLanguage = obj.portal_languages.getDefaultLanguage()[0:2]
-        userLanguage = tool.getUserLanguage()
-        if userLanguage == firstLanguage:
-            return field.get(obj)
-        else:
-            return obj.getField(field.getName() + '2').get(obj, **kwargs)
-
-
 def getFieldVersion(obj, name, changes):
     '''Returns the content of field p_name on p_obj. If p_changes is True,
        historical modifications of field content are highlighted.'''
@@ -918,19 +880,35 @@ def setFieldFromAjax(obj, fieldName, newValue):
     # Potentially store it in object history
     if previousData:
         addDataChange(obj, previousData)
-    # Update the last modification date
-    notifyModifiedAndReindex(obj, extra_idxs=['Date'])
     # Apply XHTML transforms when relevant
     transformAllRichTextFields(obj, onlyField=fieldName)
-    obj.reindexObject()
-    # notify that object was edited so unlocking event is called
-    notify(ObjectEditedEvent(obj))
+    # only reindex relevant indexes aka SearchableText + field specific index if exists
+    index_names = api.portal.get_tool('portal_catalog').indexes()
+    extra_idxs = ['SearchableText']
+    if fieldName in index_names:
+        extra_idxs.append(fieldName)
+    if field.accessor in index_names:
+        extra_idxs.append(field.accessor)
+    notifyModifiedAndReindex(obj, extra_idxs=extra_idxs)
+    # just unlock, do not call ObjectEditedEvent because it does too much
+    unlockAfterModification(obj, event={})
 
 
-def notifyModifiedAndReindex(obj, extra_idxs=[]):
-    """ """
+def notifyModifiedAndReindex(obj, extra_idxs=[], notify_event=False):
+    """Ease notifyModified and reindex of a given p_obj.
+       If p_extra_idxs contains '*', a full reindex is done, if not
+       only 'modified' related indexes are updated.
+       If p_notify_event is True, the ObjectEditedEvent is notified."""
+
     obj.notifyModified()
-    obj.reindexObject(idxs=['modified', 'ModificationDate'])
+
+    idxs = []
+    if '*' not in extra_idxs:
+        idxs = ['modified', 'ModificationDate', 'Date'] + extra_idxs
+    obj.reindexObject(idxs=idxs)
+
+    if notify_event:
+        notify(ObjectEditedEvent(obj))
 
 
 def transformAllRichTextFields(obj, onlyField=None):
@@ -994,7 +972,6 @@ def forceHTMLContentTypeForEmptyRichFields(obj):
             field.setContentType(obj, 'text/html')
 
 
-# ------------------------------------------------------------------------------
 def applyOnTransitionFieldTransform(obj, transitionId):
     '''
       Apply onTransitionFieldTransforms defined in the corresponding obj MeetingConfig.
@@ -1014,6 +991,8 @@ def applyOnTransitionFieldTransform(obj, transitionId):
                     roles_bypassing_expression=[],
                     extra_expr_ctx={
                         'item': obj,
+                        'pm_utils': SecureModuleImporter['Products.PloneMeeting.utils'],
+                        'imio_history_utils': SecureModuleImporter['imio.history.utils'],
                         'tool': tool,
                         'cfg': cfg},
                     empty_expr_is_true=False,
@@ -1061,6 +1040,7 @@ def meetingExecuteActionOnLinkedItems(meeting, transitionId):
                         roles_bypassing_expression=[],
                         extra_expr_ctx={
                             'pm_utils': SecureModuleImporter['Products.PloneMeeting.utils'],
+                            'imio_history_utils': SecureModuleImporter['imio.history.utils'],
                             'tool': tool,
                             'cfg': cfg,
                             'item': item,

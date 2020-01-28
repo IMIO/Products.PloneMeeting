@@ -24,8 +24,6 @@
                                   meeting context/getMeeting;
                                   usedAttrs meetingConfig/getUsedItemAttributes;
                                   usedMeetingAttrs meetingConfig/getUsedMeetingAttributes;
-                                  bilingual python: 'secondLanguage' in tool.getModelAdaptations();
-                                  portal context/plone_portal_state/portal;
                                   context_url context/absolute_url;
                                   showAdvices python: context.adapted().showAdvices()">
 
