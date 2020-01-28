@@ -363,7 +363,8 @@ class MeetingItemWorkflowConditions(object):
             else:
                 # maybe destinationState is a validation state? in this case return True only if group not empty
                 suffix = self.cfg.getItemWFValidationLevels(state=destinationState, data='suffix')
-                res = _checkPermission(ReviewPortalContent, self.context) and (not suffix or self._groupIsNotEmpty(suffix))
+                res = _checkPermission(ReviewPortalContent, self.context) and \
+                    (not suffix or self._groupIsNotEmpty(suffix))
         return res
 
     security.declarePublic('mayBackToMeeting')
@@ -545,6 +546,8 @@ class MeetingItemWorkflowActions(object):
             action = 'doProposeToNextValidationLevel'
         elif transitionId.startswith('wait_advices_from'):
             action = 'doWait_advices_from'
+        elif transitionId.startswith('goTo_returned_to_proposing_group'):
+            action = 'doGoTo_returned_to_proposing_group'
         return action
 
     security.declarePrivate('doActivate')
@@ -765,14 +768,9 @@ class MeetingItemWorkflowActions(object):
         '''Send an email when returned to proposing group if relevant...'''
         self.context.sendMailIfRelevant('returnedToProposingGroup', 'creators', isSuffix=True)
 
-    security.declarePrivate('doGoTo_returned_to_proposing_group_proposed')
+    security.declarePrivate('doGoTo_returned_to_proposing_group')
 
-    def doGoTo_returned_to_proposing_group_proposed(self, stateChange):
-        pass
-
-    security.declarePrivate('doGoTo_returned_to_proposing_group_prevalidated')
-
-    def doGoTo_returned_to_proposing_group_prevalidated(self, stateChange):
+    def doGoTo_returned_to_proposing_group(self, stateChange):
         pass
 
     security.declarePrivate('doWait_advices_from')

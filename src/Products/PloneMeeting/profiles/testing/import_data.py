@@ -226,6 +226,7 @@ developers.advisers.append(pmManager)
 
 vendors = OrgDescriptor('vendors', 'Vendors', u'Devil')
 vendors.creators.append(pmCreator2)
+vendors.prereviewers.append(pmReviewer2)
 vendors.reviewers.append(pmReviewer2)
 vendors.observers.append(pmReviewer2)
 vendors.observers.append(pmObserver2)

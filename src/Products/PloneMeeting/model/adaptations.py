@@ -398,7 +398,7 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
             new_state_id=last_returned_state_id, trigger_type=1, script_name='',
             actbox_name=transition_id, actbox_url='',
             actbox_icon=image_url, actbox_category='workflow',
-            props={'guard_expr': 'python:here.wfConditions().mayCorrect()'})
+            props={'guard_expr': 'python:here.wfConditions().mayCorrect("%s")' % new_state_id})
 
         # use same transitions as state last_returned_state_id and add transition between
         # new state and last_returned_state_id except transitions start with backTo_returned_...
@@ -421,7 +421,10 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
             new_state_id=new_state_id, trigger_type=1, script_name='',
             actbox_name=transition_id, actbox_url='',
             actbox_icon=image_url, actbox_category='workflow',
-            props={'guard_expr': 'python:here.wfConditions().mayCorrect()'})
+            props={
+                'guard_expr': 'python:here.wfConditions()'
+                '.mayProposeToNextValidationLevel(destinationState="{0}")'.format(
+                    transition_id.replace('goTo_returned_to_proposing_group_', ''))})
 
         # link state and transition (keep backTo_returned_... if not firstLevel)
         transition_ids = ()
@@ -914,6 +917,7 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                 origin_state_id='validated',
                 origin_transition_id='accept_out_of_meeting',
                 origin_transition_guard_expr_name='mayAccept_out_of_meeting()',
+                back_transition_guard_expr_name="mayCorrect('validated')",
                 back_transition_id='backToValidatedFromAcceptedOutOfMeeting')
 
         # "accepted_out_of_meeting_emergency" add state 'accepted_out_of_meeting_emergency'
@@ -925,6 +929,7 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                 origin_state_id='validated',
                 origin_transition_id='accept_out_of_meeting_emergency',
                 origin_transition_guard_expr_name='mayAccept_out_of_meeting_emergency()',
+                back_transition_guard_expr_name="mayCorrect('validated')",
                 back_transition_id='backToValidatedFromAcceptedOutOfMeetingEmergency')
 
         # "presented_item_back_to_XXX" allows the MeetingManagers to send a presented
