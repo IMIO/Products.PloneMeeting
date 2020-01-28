@@ -441,6 +441,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         if api.user.is_anonymous():
             return []
         user = userId and api.user.get(userId) or api.user.get_current()
+        if not hasattr(user, "getGroups"):
+            return []
         user_groups = user.getGroups()
         if org_uid:
             user_groups = [plone_group for plone_group in user_groups if plone_group.startswith(org_uid)]
