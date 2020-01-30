@@ -559,3 +559,17 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                 else:
                     po_infos['meeting_access_on'] = access_on
         cfg.setPowerObservers(power_observers)
+
+    def _activate_wfas(self, wfas, cfg=None):
+        """Activate given p_wfas, we clean wfas, apply,
+           then set given p_wfas and apply again."""
+        currentUser = self.member.getId()
+        self.changeUser('siteadmin')
+        if cfg is None:
+            cfg = self.meetingConfig
+        cfg.setWorkflowAdaptations(())
+        cfg.at_post_edit_script()
+        if wfas:
+            cfg.setWorkflowAdaptations(wfas)
+            cfg.at_post_edit_script()
+        self.changeUser(currentUser)

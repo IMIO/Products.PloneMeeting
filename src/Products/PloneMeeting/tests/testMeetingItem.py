@@ -625,8 +625,10 @@ class testMeetingItem(PloneMeetingTestCase):
         # Do necessary transitions on the meeting before being able to accept an item
         necessaryMeetingTransitionsToAcceptItem = self._getNecessaryMeetingTransitionsToAcceptItem()
         for transition in necessaryMeetingTransitionsToAcceptItem:
-            self.do(meeting, transition)
-            self.failIf(item.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
+            # do not break in case 'no_publication' WFA is enabled for example
+            if transition in self.transitions(meeting):
+                self.do(meeting, transition)
+                self.failIf(item.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
         if with_annexes:
             decisionAnnex1 = self.addAnnex(item, relatedTo='item_decision')
             decisionAnnex2 = self.addAnnex(item,
@@ -1135,7 +1137,9 @@ class testMeetingItem(PloneMeetingTestCase):
         # it will be presented to the frozenMeeting
         self.deleteAsManager(sentItem.UID())
         item.setOtherMeetingConfigsClonableToEmergency((cfg2Id,))
-        self.backToState(item, 'itempublished')
+        # back to itempublished or itemfrozen
+        back_transitions = [tr for tr in self.transitions(item) if tr.startswith('back')]
+        self.do(item, back_transitions[0])
         cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
         self.do(item, 'accept')
         sentItem = item.getItemClonedToOtherMC(cfg2Id)
@@ -1148,7 +1152,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # before frozenMeeting
         createdMeeting.setDate(now + 1)
         createdMeeting.reindexObject(idxs=['getDate'])
-        self.backToState(item, 'itempublished')
+        self.do(item, back_transitions[0])
         cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
         self.do(item, 'accept')
         sentItem = item.getItemClonedToOtherMC(cfg2Id)
@@ -1158,7 +1162,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.deleteAsManager(sentItem.UID())
         createdMeeting.setDate(now - 1)
         createdMeeting.reindexObject(idxs=['getDate'])
-        self.backToState(item, 'itempublished')
+        self.do(item, back_transitions[0])
         cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
         self.do(item, 'accept')
         sentItem = item.getItemClonedToOtherMC(cfg2Id)
@@ -1170,7 +1174,7 @@ class testMeetingItem(PloneMeetingTestCase):
         createdMeeting.reindexObject(idxs=['getDate'])
         frozenMeeting.setDate(now - 1)
         frozenMeeting.reindexObject(idxs=['getDate'])
-        self.backToState(item, 'itempublished')
+        self.do(item, back_transitions[0])
         cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
         self.do(item, 'accept')
         sentItem = item.getItemClonedToOtherMC(cfg2Id)

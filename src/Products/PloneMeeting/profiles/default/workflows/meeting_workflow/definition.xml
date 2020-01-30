@@ -91,7 +91,7 @@
         title="decided"
         i18n:attributes="title">
   <exit-transition transition_id="close"/>
-  <exit-transition transition_id="backToFrozen"/>
+  <exit-transition transition_id="backToPublished"/>
   <permission-map name="Access contents information"
                   acquired="False">
    <permission-role>Manager</permission-role>
@@ -168,7 +168,7 @@
  <state state_id="published"
         title="published"
         i18n:attributes="title">
-  <exit-transition transition_id="backToPublished"/>
+  <exit-transition transition_id="backToFrozen"/>
   <exit-transition transition_id="decide"/>
   <permission-map name="Access contents information"
                   acquired="False">
@@ -230,26 +230,26 @@
  </transition>
  <transition transition_id="backToFrozen"
              title="backToFrozen"
-             new_state="published"
+             new_state="frozen"
              trigger="USER"
              before_script=""
              after_script=""
              i18n:attributes="title">
   <action url="" icon="" category="workflow" i18n:translate="">backToFrozen</action>
   <guard>
-    <guard-expression>python:here.wfConditions().mayCorrect('published')</guard-expression>
+    <guard-expression>python:here.wfConditions().mayCorrect('frozen')</guard-expression>
   </guard>
  </transition>
  <transition transition_id="backToPublished"
              title="backToPublished"
-             new_state="frozen"
+             new_state="published"
              trigger="USER"
              before_script=""
              after_script=""
              i18n:attributes="title">
   <action url="" icon="" category="workflow" i18n:translate="">backToPublished</action>
   <guard>
-    <guard-expression>python:here.wfConditions().mayCorrect('frozen')</guard-expression>
+    <guard-expression>python:here.wfConditions().mayCorrect('published')</guard-expression>
   </guard>
  </transition>
  <transition transition_id="close"
