@@ -4100,7 +4100,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             res.append(value)
         values = res
 
-        # make sure no item in state that were removed or disabled
         enabled_stored_states = self.getItemWFValidationLevels(
             data='state',
             only_enabled=True)
@@ -4110,6 +4109,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             only_enabled=True)
         removed_or_disabled = tuple(set(enabled_stored_states).difference(set(enabled_values_states)))
 
+        # if some states are enabled, then first state 'itemcreated' is mandatory
+        if enabled_values_states and 'itemcreated' not in enabled_values_states:
+            return translate('item_wf_val_states_itemcreated_mandatory',
+                             domain='PloneMeeting',
+                             context=self.REQUEST)
+
+        # make sure no item in state that were removed or disabled
         catalog = api.portal.get_tool('portal_catalog')
         brains = catalog(portal_type=self.getItemTypeName(), review_state=removed_or_disabled)
         if brains:

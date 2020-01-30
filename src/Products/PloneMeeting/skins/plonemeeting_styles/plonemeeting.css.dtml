@@ -768,8 +768,9 @@ p.indent-firstline {text-indent: 40px;}
     padding: 3px 0px 2px 20px;
 }
 
-.input_disabled {
-    color: grey !important;
+.input_disabled,
+input[readonly=""] {
+    color: lightgrey !important;
     border-color: lightgrey !important;
     cursor: not-allowed !important;
 }
