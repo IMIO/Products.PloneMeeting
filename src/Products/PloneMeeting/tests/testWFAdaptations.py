@@ -755,6 +755,12 @@ class testWFAdaptations(PloneMeetingTestCase):
         item = meeting.getItems()[0]
         self.publishMeeting(meeting)
         self.assertEqual(item.queryState(), 'itempublished')
+        # item decided states point back to itempublished
+        cfg = self.meetingConfig
+        itemWF = cfg.getItemWorkflow(True)
+        for state in itemWF.states.values():
+            if state in self.meetingConfig.getItemDecidedStates():
+                self.assertTrue('backToItemPublished' in state.transitions)
 
     def _no_publication_active(self):
         '''Tests while 'no_publication' wfAdaptation is active.'''
@@ -769,6 +775,28 @@ class testWFAdaptations(PloneMeetingTestCase):
                 self.failIf('publish' in self.transitions(m1))
         # check that we are able to reach the end of the wf process
         self.assertEqual(lastTriggeredTransition, self._getTransitionsToCloseAMeeting()[-1])
+        # check that every item decided states now point back to itemfrozen
+        # item decided states point back to itempublished
+        cfg = self.meetingConfig
+        itemWF = cfg.getItemWorkflow(True)
+        for state in itemWF.states.values():
+            if state in self.meetingConfig.getItemDecidedStates():
+                self.assertTrue('backToItemFrozen' in state.transitions)
+
+    def test_pm_WFA_no_publication_and_pre_accepted(self):
+        '''Test the workflowAdaptation 'no_publication/pre_accepted' togheter.'''
+        # ease override by subproducts
+        cfg = self.meetingConfig
+        if 'no_publication' not in cfg.listWorkflowAdaptations() or \
+           'pre_accepted' not in cfg.listWorkflowAdaptations():
+            return
+        self.changeUser('pmManager')
+        cfg.setWorkflowAdaptations(['pre_accepted', 'no_publication'])
+        cfg.at_post_edit_script()
+        cfg = self.meetingConfig
+        itemWF = cfg.getItemWorkflow(True)
+        self.assertTrue('accept' in itemWF.states['pre_accepted'].transitions)
+        self.assertTrue('backToItemFrozen' in itemWF.states['pre_accepted'].transitions)
 
     def test_pm_WFA_no_proposal(self):
         '''Test the workflowAdaptation 'no_proposal'.
@@ -1898,7 +1926,8 @@ class testWFAdaptations(PloneMeetingTestCase):
                                    wf_adaptation_name,
                                    item_state,
                                    item_transition,
-                                   will_be_cloned=False):
+                                   will_be_cloned=False,
+                                   additional_wf_transitions=[]):
         """Helper method to check WFA adding an item decision state."""
         # ease override by subproducts
         cfg = self.meetingConfig
@@ -1910,7 +1939,8 @@ class testWFAdaptations(PloneMeetingTestCase):
         cfg.setWorkflowAdaptations((wf_adaptation_name, ))
         performWorkflowAdaptations(cfg, logger=pm_logger)
         # activate the wfAdaptation and check
-        self._item_decision_state_active(item_state, item_transition, will_be_cloned)
+        self._item_decision_state_active(
+            item_state, item_transition, will_be_cloned, additional_wf_transitions)
 
     def _item_decision_state_inactive(self, item_state, item_transition):
         """Helper method to check WFA adding an item decision state when it is inactive."""
@@ -1918,7 +1948,11 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertFalse(item_transition in itemWF.transitions)
         self.assertFalse(item_state in itemWF.states)
 
-    def _item_decision_state_active(self, item_state, item_transition, will_be_cloned):
+    def _item_decision_state_active(self,
+                                    item_state,
+                                    item_transition,
+                                    will_be_cloned,
+                                    additional_wf_transitions):
         """Helper method to check WFA adding an item decision state when it is active."""
         itemWF = self.wfTool.getWorkflowsFor(self.meetingConfig.getItemTypeName())[0]
         self.assertTrue(item_transition in itemWF.transitions)
@@ -1940,6 +1974,10 @@ class testWFAdaptations(PloneMeetingTestCase):
             # item was duplicated and new item is in it's initial state
             linked_item = item.getBRefs('ItemPredecessor')[0]
             self.assertEqual(linked_item.queryState(), self._initial_state(linked_item))
+
+        if additional_wf_transitions:
+            for additional_wf_transition in additional_wf_transitions:
+                self.do(item, additional_wf_transition)
 
         # back transition
         self.do(item, 'backToItemPublished')
@@ -1972,6 +2010,14 @@ class testWFAdaptations(PloneMeetingTestCase):
             wf_adaptation_name='refused',
             item_state='refused',
             item_transition='refuse')
+
+    def test_pm_WFA_pre_accepted(self):
+        '''Test the workflowAdaptation 'pre_accepted'.'''
+        self._check_item_decision_state(
+            wf_adaptation_name='pre_accepted',
+            item_state='pre_accepted',
+            item_transition='pre_accept',
+            additional_wf_transitions=['accept'])
 
     def test_pm_WFA_reviewers_take_back_validated_item(self):
         '''Test the workflowAdaptation 'reviewers_take_back_validated_item'.'''

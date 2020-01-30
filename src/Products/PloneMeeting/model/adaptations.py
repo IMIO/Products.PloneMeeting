@@ -628,9 +628,12 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                 if tr_leaving_itempublished.startswith('back'):
                     continue
                 leading_to_state = wf.transitions[tr_leaving_itempublished].new_state_id
+                patched_transitions = list(wf.states[leading_to_state].transitions)
+                patched_transitions.remove('backToItemPublished')
+                patched_transitions.append('backToItemFrozen')
                 wf.states[leading_to_state].setProperties(
                     title=leading_to_state, description='',
-                    transitions=['backToItemFrozen', ])
+                    transitions=patched_transitions)
             # Delete state 'published'
             if 'itempublished' in wf.states:
                 wf.states.deleteStates(['itempublished'])
@@ -903,7 +906,7 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                 back_transition_guard_expr_name="mayCorrect('itempublished')",
                 back_transition_id='backToItemPublished')
             # ... then add output transitions to 'accepted' and 'accepted_but_modified'
-            out_transitions = ['backToItemFrozen', 'accept']
+            out_transitions = ['backToItemPublished', 'accept']
             if 'accepted_but_modified' in wfAdaptations:
                 out_transitions.append('accept_but_modify')
             new_state.transitions = out_transitions
