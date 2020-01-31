@@ -977,7 +977,10 @@ class BaseItemsToValidateOfHighestHierarchicLevelAdapter(CompoundCriterionBaseAd
             org_uid, reviewer_level = plone_group_id.split('_')
             # reviewers[reviewer_level] is a list of states
             reviewProcessInfo = [
-                '{0}__reviewprocess__{1}'.format(org_uid, level) for level in reviewers[reviewer_level]
+                '{0}__reviewprocess__{1}'.format(
+                    org_uid,
+                    '{0}{1}'.format(prefix_review_state, review_state))
+                for review_state in reviewers[reviewer_level]
             ]
             reviewProcessInfos.extend(reviewProcessInfo)
         return {'portal_type': {'query': self.cfg.getItemTypeName()},
