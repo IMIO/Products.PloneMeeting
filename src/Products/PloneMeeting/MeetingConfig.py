@@ -3121,7 +3121,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getItemWFValidationLevels')
 
-    def getItemWFValidationLevels(self, state=None, data=None, only_enabled=False, value=None, **kwargs):
+    def getItemWFValidationLevels(self,
+                                  state=None,
+                                  data=None,
+                                  only_enabled=False,
+                                  value=None,
+                                  **kwargs):
         '''Override the field 'itemWFValidationLevels' accessor to be able to handle some paramters :
            - state : return row relative to given p_state;
            - data : return every values defined for a given datagrid column name;
@@ -3139,6 +3144,20 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             res = [level[data] for level in res]
         if state:
             res = res and res[0] or res
+        # when displayed, append translated values to elements title
+        if self.REQUEST.get('translated_itemWFValidationLevels'):
+            translated_res = deepcopy(res)
+            translated_titles = ('state_title',
+                                 'leading_transition_title',
+                                 'back_transition_title')
+            for line in translated_res:
+                for translated_title in translated_titles:
+                    translated_value = translate(line[translated_title],
+                                                 domain='plone',
+                                                 context=self.REQUEST)
+                    line[translated_title] = u"{0} ({1})".format(
+                        line[translated_title], translated_value)
+            res = translated_res
         return res
 
     security.declarePublic('getOrderedItemInitiators')
@@ -6380,9 +6399,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     def get_item_corresponding_state_to_assign_local_roles(self, item_state):
         '''See doc in interfaces.py.'''
+        cfg = self.getSelf()
         corresponding_item_state = None
         # return_to_proposing_group states
-        item_val_levels_states = self.getItemWFValidationLevels(data='state', only_enabled=True)
+        item_val_levels_states = cfg.getItemWFValidationLevels(data='state', only_enabled=True)
         if item_state.startswith('returned_to_proposing_group'):
             if item_state == 'returned_to_proposing_group':
                 corresponding_item_state = item_val_levels_states[0]

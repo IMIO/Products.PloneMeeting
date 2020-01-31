@@ -29,6 +29,7 @@ from collective.eeafaceted.collectionwidget.utils import _get_criterion
 from collective.eeafaceted.collectionwidget.utils import _updateDefaultCollectionFor
 from collective.eeafaceted.collectionwidget.utils import getCollectionLinkCriterion
 from collective.iconifiedcategory.utils import get_category_object
+from copy import deepcopy
 from DateTime import DateTime
 from eea.facetednavigation.widgets.resultsperpage.widget import Widget as ResultsPerPageWidget
 from ftw.labels.interfaces import ILabeling
@@ -1969,6 +1970,51 @@ class testMeetingConfig(PloneMeetingTestCase):
         cfg.setPowerObservers(values)
         # the linked Plone group was removed
         self.assertFalse(api.group.get(plone_group_id))
+
+    def test_pm_Validate_itemWFValidationLevels_removed_used_state(self):
+        """Test MeetingConfig.validate_itemWFValidationLevels, if we remove a validation
+           level state that is used by an item."""
+        # ease override by subproducts
+        cfg = self.meetingConfig
+
+        # itemcreated level is mandatory
+        level_itemcreated_error = \
+            translate('item_wf_val_states_itemcreated_mandatory',
+                      domain='PloneMeeting',
+                      context=self.request)
+        # values_disabled_item_created
+        self._disableItemValidationLevels(cfg, levels=['itemcreated'])
+        values_disabled_item_created = deepcopy(cfg.getItemWFValidationLevels())
+        self._enableItemValidationLevels(cfg, levels=['itemcreated'])
+        self.assertEqual(cfg.validate_itemWFValidationLevels(values_disabled_item_created),
+                         level_itemcreated_error)
+
+        # remove a state that is not in use
+        self.assertEqual(cfg.getItemWFValidationLevels(data='state', only_enabled=True),
+                         ['itemcreated', 'proposed'])
+        # values_disabled_proposed
+        self._disableItemValidationLevels(cfg, levels=['proposed'])
+        values_disabled_proposed = deepcopy(cfg.getItemWFValidationLevels())
+        self._enableItemValidationLevels(cfg, levels=['proposed'])
+        self.failIf(cfg.validate_itemWFValidationLevels(values_disabled_proposed))
+
+        # create an item that will be itemcreated
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        self.assertEqual(item.queryState(), 'itemcreated')
+        self.do(item, 'propose')
+        level_removed_error = \
+            translate('item_wf_val_states_can_not_be_removed_in_use',
+                      domain='PloneMeeting',
+                      mapping={'item_state': 'itemcreated',
+                               'item_url': item.absolute_url()},
+                      context=self.request)
+        self.assertEqual(cfg.validate_itemWFValidationLevels(values_disabled_proposed),
+                         level_removed_error)
+
+        # delete item then validation is correct
+        self.deleteAsManager(item.UID())
+        self.failIf(cfg.validate_itemWFValidationLevels(values_disabled_proposed))
 
 
 def test_suite():

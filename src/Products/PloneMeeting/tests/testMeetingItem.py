@@ -344,7 +344,7 @@ class testMeetingItem(PloneMeetingTestCase):
         item._update_after_edit()
         self.assertEqual(item.getGroupsInCharge(includeAuto=True), [])
 
-    def test_pm_SendItemToOtherMC(self):
+    def test_pm_SendItemToOtherMCDefaultFunctionnality(self):
         '''Test the send an item to another meetingConfig functionnality'''
         # Activate the functionnality
         self.changeUser('admin')
@@ -357,7 +357,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # and it has not already been sent to this other meetingConfig
         self.changeUser('pmManager')
         meetingDate = DateTime('2008/06/12 08:00:00')
-        m1 = self.create('Meeting', date=meetingDate)
+        meeting = self.create('Meeting', date=meetingDate)
         # a creator creates an item
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
@@ -380,8 +380,9 @@ class testMeetingItem(PloneMeetingTestCase):
         # do necessary transitions on the meeting before being able to accept an item
         necessaryMeetingTransitionsToAcceptItem = self._getNecessaryMeetingTransitionsToAcceptItem()
         for transition in necessaryMeetingTransitionsToAcceptItem:
-            self.do(m1, transition)
-            self.failIf(item.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
+            if transition in self.transitions(meeting):
+                self.do(meeting, transition)
+                self.failIf(item.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
         self.do(item, 'accept')
         # still not sendable as 'plonemeeting-assembly' not in item.otherMeetingConfigsClonableTo
         self.failIf(item.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
@@ -452,7 +453,8 @@ class testMeetingItem(PloneMeetingTestCase):
         # An item is automatically sent to the other meetingConfigs when it is 'accepted'
         # if every conditions are correct
         self.failIf(otherMeetingConfigId in item._getOtherMeetingConfigsImAmClonedIn())
-        self.do(item, 'backToItemPublished')
+        back_transition = [tr for tr in self.transitions(item) if tr.startswith('back')][0]
+        self.do(item, back_transition)
         self.do(item, 'accept')
         # The item as been automatically sent to the 'plonemeeting-assembly'
         self.failUnless(otherMeetingConfigId in item._getOtherMeetingConfigsImAmClonedIn())
@@ -478,7 +480,7 @@ class testMeetingItem(PloneMeetingTestCase):
             if needToBackToPublished:
                 # do this as 'Manager' in case 'MeetingManager' can not delete the item in used item workflow
                 self.deleteAsManager(newUID)
-                self.do(item, 'backToItemPublished')
+                self.do(item, back_transition)
                 self.failIf(item._checkAlreadyClonedToOtherMC(otherMeetingConfigId))
                 self.assertFalse(item.getItemClonedToOtherMC(otherMeetingConfigId))
             transition = getTransitionToReachState(item, state)
@@ -1138,8 +1140,8 @@ class testMeetingItem(PloneMeetingTestCase):
         self.deleteAsManager(sentItem.UID())
         item.setOtherMeetingConfigsClonableToEmergency((cfg2Id,))
         # back to itempublished or itemfrozen
-        back_transitions = [tr for tr in self.transitions(item) if tr.startswith('back')]
-        self.do(item, back_transitions[0])
+        back_transition = [tr for tr in self.transitions(item) if tr.startswith('back')][0]
+        self.do(item, back_transition)
         cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
         self.do(item, 'accept')
         sentItem = item.getItemClonedToOtherMC(cfg2Id)
@@ -1152,7 +1154,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # before frozenMeeting
         createdMeeting.setDate(now + 1)
         createdMeeting.reindexObject(idxs=['getDate'])
-        self.do(item, back_transitions[0])
+        self.do(item, back_transition)
         cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
         self.do(item, 'accept')
         sentItem = item.getItemClonedToOtherMC(cfg2Id)
@@ -1162,7 +1164,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.deleteAsManager(sentItem.UID())
         createdMeeting.setDate(now - 1)
         createdMeeting.reindexObject(idxs=['getDate'])
-        self.do(item, back_transitions[0])
+        self.do(item, back_transition)
         cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
         self.do(item, 'accept')
         sentItem = item.getItemClonedToOtherMC(cfg2Id)
@@ -1174,7 +1176,7 @@ class testMeetingItem(PloneMeetingTestCase):
         createdMeeting.reindexObject(idxs=['getDate'])
         frozenMeeting.setDate(now - 1)
         frozenMeeting.reindexObject(idxs=['getDate'])
-        self.do(item, back_transitions[0])
+        self.do(item, back_transition)
         cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
         self.do(item, 'accept')
         sentItem = item.getItemClonedToOtherMC(cfg2Id)

@@ -3,7 +3,6 @@
 # File: testWFAdaptations.py
 #
 
-from copy import deepcopy
 from DateTime.DateTime import DateTime
 from plone import api
 from plone.app.textfield.value import RichTextValue
@@ -250,6 +249,9 @@ class testWFAdaptations(PloneMeetingTestCase):
         # ease override by subproducts
         if 'no_publication' not in self.meetingConfig.listWorkflowAdaptations():
             return
+
+        # make sure no wfas activated
+        self._activate_wfas([])
 
         no_publication_added_error = translate('wa_added_no_publication_error',
                                                domain='PloneMeeting',
@@ -687,51 +689,6 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.closeMeeting(meeting)
         self.failIf(cfg.validate_workflowAdaptations(()))
 
-    def test_pm_Validate_itemWFValidationLevels_removed_used_state(self):
-        """Test MeetingConfig.validate_itemWFValidationLevels, if we remove a validation
-           level state that is used by an item."""
-        # ease override by subproducts
-        cfg = self.meetingConfig
-
-        # itemcreated level is mandatory
-        level_itemcreated_error = \
-            translate('item_wf_val_states_itemcreated_mandatory',
-                      domain='PloneMeeting',
-                      context=self.request)
-        # values_disabled_item_created
-        self._disableItemValidationLevels(cfg, levels=['itemcreated'])
-        values_disabled_item_created = deepcopy(cfg.getItemWFValidationLevels())
-        self._enableItemValidationLevels(cfg, levels=['itemcreated'])
-        self.assertEqual(cfg.validate_itemWFValidationLevels(values_disabled_item_created),
-                         level_itemcreated_error)
-
-        # remove a state that is not in use
-        self.assertEqual(cfg.getItemWFValidationLevels(data='state', only_enabled=True),
-                         ['itemcreated', 'proposed'])
-        # values_disabled_proposed
-        self._disableItemValidationLevels(cfg, levels=['proposed'])
-        values_disabled_proposed = deepcopy(cfg.getItemWFValidationLevels())
-        self._enableItemValidationLevels(cfg, levels=['proposed'])
-        self.failIf(cfg.validate_itemWFValidationLevels(values_disabled_proposed))
-
-        # create an item that will be itemcreated
-        self.changeUser('pmManager')
-        item = self.create('MeetingItem')
-        self.assertEqual(item.queryState(), 'itemcreated')
-        self.do(item, 'propose')
-        level_removed_error = \
-            translate('item_wf_val_states_can_not_be_removed_in_use',
-                      domain='PloneMeeting',
-                      mapping={'item_state': 'itemcreated',
-                               'item_url': item.absolute_url()},
-                      context=self.request)
-        self.assertEqual(cfg.validate_itemWFValidationLevels(values_disabled_proposed),
-                         level_removed_error)
-
-        # delete item then validation is correct
-        self.deleteAsManager(item.UID())
-        self.failIf(cfg.validate_itemWFValidationLevels(values_disabled_proposed))
-
     def test_pm_WFA_no_publication(self):
         '''Test the workflowAdaptation 'no_publication'.
            This test check the removal of the 'published' state in the meeting/item WF.'''
@@ -741,6 +698,7 @@ class testWFAdaptations(PloneMeetingTestCase):
             return
         self.changeUser('pmManager')
         # check while the wfAdaptation is not activated
+        self._activate_wfas([])
         self._no_publication_inactive()
         # activate the wfAdaptation and check
         self._activate_wfas(('no_publication', ))
@@ -1386,8 +1344,10 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.changeUser('admin')
         self._removeConfigObjectsFor(cfg)
         self.changeUser('pmManager')
-        self._activate_wfas(('return_to_proposing_group',
-                             'decide_item_when_back_to_meeting_from_returned_to_proposing_group', ))
+        self._activate_wfas(
+            ('accept_but_modify',
+             'return_to_proposing_group',
+             'decide_item_when_back_to_meeting_from_returned_to_proposing_group', ))
 
         self.changeUser('pmManager')
         meeting = self.create('Meeting', date=DateTime('2016/01/01 12:00'))
@@ -1918,6 +1878,8 @@ class testWFAdaptations(PloneMeetingTestCase):
         if wf_adaptation_name not in cfg.listWorkflowAdaptations():
             return
         self.changeUser('pmManager')
+        # make sure no wfas activated
+        self._activate_wfas([])
         # check while the wfAdaptation is not activated
         self._item_decision_state_inactive(item_state, item_transition)
         # activate the wfAdaptation and check
