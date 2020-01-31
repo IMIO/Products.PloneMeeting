@@ -1497,8 +1497,8 @@ class testMeetingConfig(PloneMeetingTestCase):
         # custom cleanup for profiles having extra roles
         self._removeUsersFromEveryGroups(self._usersToRemoveFromGroupsForUpdatePersonalLabels())
         # do not consider observers group as it changes too often from one WF to another...
-        self._removePrincipalFromGroup('pmReviewer1', self.developers_observers)
-        self._removePrincipalFromGroup('pmObserver1', self.developers_observers)
+        self._removePrincipalFromGroups('pmReviewer1', [self.developers_observers])
+        self._removePrincipalFromGroups('pmObserver1', [self.developers_observers])
         self.changeUser('pmManager')
         item1 = self.create('MeetingItem')
         item2 = self.create('MeetingItem')
@@ -1964,7 +1964,7 @@ class testMeetingConfig(PloneMeetingTestCase):
             domain='PloneMeeting',
             context=self.portal.REQUEST)
         self.assertEqual(cfg.validate_powerObservers(values), plone_group_not_empty_error_msg)
-        self._removePrincipalFromGroup('restrictedpowerobserver1', plone_group_id)
+        self._removePrincipalFromGroups('restrictedpowerobserver1', [plone_group_id])
         # validates with removed power observer
         self.assertFalse(cfg.validate_powerObservers(values))
         cfg.setPowerObservers(values)

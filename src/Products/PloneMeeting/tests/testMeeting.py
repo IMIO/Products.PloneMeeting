@@ -2559,7 +2559,7 @@ class testMeeting(PloneMeetingTestCase):
         self.changeUser('admin')
         self._removeConfigObjectsFor(self.meetingConfig)
         # make sure 'pmManager' may not see items of 'vendors'
-        self._removePrincipalFromGroup('pmManager', self.vendors_advisers)
+        self._removePrincipalFromGroups('pmManager', [self.vendors_advisers])
 
         # create a meeting and an item, set the meeting as preferredMeeting for the item
         # then when the meeting is removed, the item preferredMeeting is back to 'whatever'
@@ -2698,8 +2698,8 @@ class testMeeting(PloneMeetingTestCase):
         actions_panel._transitions = None
         meetingManager_rendered_actions_panel = actions_panel()
         # we will remove 'pmManager' from the cfg _meetingmanagers group
-        self._removePrincipalFromGroup('pmManager',
-                                       '{0}_{1}'.format(cfg.getId(), MEETINGMANAGERS_GROUP_SUFFIX))
+        self._removePrincipalFromGroups(
+            'pmManager', ['{0}_{1}'.format(cfg.getId(), MEETINGMANAGERS_GROUP_SUFFIX)])
         # we need to reconnect for groups changes to take effect
         self.changeUser('pmManager')
         self.assertFalse('MeetingManager' in self.member.getRolesInContext(meeting))

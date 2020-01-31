@@ -1345,7 +1345,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self._removeConfigObjectsFor(cfg)
         self.changeUser('pmManager')
         self._activate_wfas(
-            ('accept_but_modify',
+            ('accepted_but_modified',
              'return_to_proposing_group',
              'decide_item_when_back_to_meeting_from_returned_to_proposing_group', ))
 
@@ -1366,12 +1366,9 @@ class testWFAdaptations(PloneMeetingTestCase):
         from Products.PloneMeeting.config import ITEM_TRANSITION_WHEN_RETURNED_FROM_PROPOSING_GROUP_AFTER_CORRECTION
         wfTool = api.portal.get_tool('portal_workflow')
         itemWorkflow = wfTool.getWorkflowsFor(self.meetingConfig.getItemTypeName())[0]
-
         self.assertTrue(ITEM_TRANSITION_WHEN_RETURNED_FROM_PROPOSING_GROUP_AFTER_CORRECTION in itemWorkflow.transitions,
                         "%s not in item workflow" % ITEM_TRANSITION_WHEN_RETURNED_FROM_PROPOSING_GROUP_AFTER_CORRECTION)
-
         transition = itemWorkflow.transitions[ITEM_TRANSITION_WHEN_RETURNED_FROM_PROPOSING_GROUP_AFTER_CORRECTION]
-
         self.assertEqual(transition.new_state_id, item.queryState())
 
     def test_pm_WFA_waiting_advices(self):

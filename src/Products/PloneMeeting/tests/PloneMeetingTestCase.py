@@ -535,9 +535,10 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         self.changeUser(self.member.getId())
         cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
 
-    def _removePrincipalFromGroup(self, principal_id, group_id):
+    def _removePrincipalFromGroups(self, principal_id, group_ids):
         """We need to changeUser so getGroups is updated."""
-        self.portal.portal_groups.removePrincipalFromGroup(principal_id, group_id)
+        for group_id in group_ids:
+            self.portal.portal_groups.removePrincipalFromGroup(principal_id, group_id)
         self.changeUser(self.member.getId())
         cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
 

@@ -972,7 +972,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         pmManagerGroups = [groups for groups, user in self.tool._users_groups_value() if user == 'pmManager'][0]
         self.assertTrue(self.developers_creators in pmManagerGroups)
         # remove pmManager from developers creators
-        self._removePrincipalFromGroup('pmManager', self.developers_creators)
+        self._removePrincipalFromGroups('pmManager', [self.developers_creators])
         pmManagerGroups = [groups for groups, user in self.tool._users_groups_value() if user == 'pmManager'][0]
         self.assertFalse(self.developers_creators in pmManagerGroups)
 

@@ -202,7 +202,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         self.assertEqual(item.listProposingGroups().keys(), [self.developers_uid, self.endUsers_uid, self.vendors_uid])
         # remove user from vendors
-        self._removePrincipalFromGroup('pmCreator1', self.vendors_creators)
+        self._removePrincipalFromGroups('pmCreator1', [self.vendors_creators])
         self.assertEqual(item.listProposingGroups().keys(), [self.developers_uid, self.endUsers_uid])
 
     def test_pm_ListProposingGroupsKeepConfigSorting(self):

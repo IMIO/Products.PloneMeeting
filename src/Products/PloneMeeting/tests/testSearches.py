@@ -567,6 +567,35 @@ class testSearches(PloneMeetingTestCase):
         self.validateItem(item)
         self.failIf(collection.results())
 
+    def test_pm_SearchItemsToValidateOfHighestHierarchicLevelReturnsEveryLevels(self):
+        '''When a user is developers_level3reviewers and vendors_level2reviewers,
+           both groups must be queried.'''
+        self.changeUser('siteadmin')
+        cfg = self.meetingConfig
+        self._enablePrevalidation(cfg)
+
+        # make pmReviewer2 is vendors_prereviewers and developers_reviewers
+        # add pmReviewer2 to developers_reviewers
+        self.changeUser('pmReviewer2')
+        member_groups = [grp_id for grp_id in self.member.getGroups()
+                         if grp_id != 'AuthenticatedUsers']
+        self._removePrincipalFromGroups('pmReviewer2', member_groups)
+        self._addPrincipalToGroup('pmReviewer2', self.developers_reviewers)
+        self._addPrincipalToGroup('pmReviewer2', self.vendors_prereviewers)
+        self.assertItemsEqual(
+            self.member.getGroups(),
+            ['AuthenticatedUsers', self.developers_reviewers, self.vendors_prereviewers])
+
+        # generated query
+        adapter = getAdapter(cfg,
+                             ICompoundCriterionFilter,
+                             name='items-to-validate-of-highest-hierarchic-level')
+        query = adapter.query
+        self.assertEqual(len(query['reviewProcessInfo']['query']), 2)
+        import ipdb; ipdb.set_trace()
+        self.assertTrue('{0}__reviewprocess__prevalidated'.format(self.developers_uid) in query)
+        self.assertTrue('{0}__reviewprocess__proposed'.format(self.vendors_uid) in query)
+
     def test_pm_SearchItemsToValidateOfMyReviewerGroups(self):
         '''Test the 'items-to-validate-of-my-reviewer-groups' adapter.
            This should return a list of items a user could validate at any level,

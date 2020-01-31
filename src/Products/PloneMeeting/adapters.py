@@ -952,31 +952,34 @@ class BaseItemsToValidateOfHighestHierarchicLevelAdapter(CompoundCriterionBaseAd
            in state corresponding to his 'reviewer' role.'''
         if not self.cfg:
             return {}
-        userPloneGroupIds = self.tool.get_plone_groups_for_user()
-        highestReviewerLevel = self.cfg._highestReviewerLevel(userPloneGroupIds)
-        if not highestReviewerLevel:
+
+        # first check if user is a reviewer
+        if not self.cfg.userIsAReviewer():
             # in this case, we do not want to display a result
             # we return an unknown review_state
             return _find_nothing_query(self.cfg.getItemTypeName())
+
+        # now get highest hierarchic level for every user groups
+        org_uids = self.tool.get_orgs_for_user(the_objects=False)
+        userPloneGroupIds = self.tool.get_plone_groups_for_user()
         reviewers = reviewersFor(self.cfg)
-        review_states = reviewers[highestReviewerLevel]
-        # specific management for workflows using the 'pre_validation' wfAdaptation
-        if highestReviewerLevel == 'reviewers' and \
-            ('pre_validation' in self.cfg.getWorkflowAdaptations() or
-             'pre_validation_keep_reviewer_permissions' in self.cfg.getWorkflowAdaptations()) and \
-           review_states == ['proposed']:
-            review_states = ['prevalidated']
+        userReviewerPloneGroupIds = []
+        for org_uid in org_uids:
+            for reviewer_level in reviewers:
+                plone_group_id = get_plone_group_id(org_uid, reviewer_level)
+                if plone_group_id in userPloneGroupIds:
+                    userReviewerPloneGroupIds.append(plone_group_id)
+                    break
 
         reviewProcessInfos = []
-        for plone_group_id in userPloneGroupIds:
-            if plone_group_id.endswith('_%s' % highestReviewerLevel):
-                # append group name without suffix
-                org_uid = get_organization(plone_group_id).UID()
-                review_states = [
-                    '{0}{1}'.format(prefix_review_state, review_state) for review_state in review_states]
-                reviewProcessInfo = [
-                    '{0}__reviewprocess__{1}'.format(org_uid, review_state) for review_state in review_states]
-                reviewProcessInfos.extend(reviewProcessInfo)
+        for plone_group_id in userReviewerPloneGroupIds:
+            # append group name without suffix
+            org_uid, reviewer_level = plone_group_id.split('_')
+            # reviewers[reviewer_level] is a list of states
+            reviewProcessInfo = [
+                '{0}__reviewprocess__{1}'.format(org_uid, level) for level in reviewers[reviewer_level]
+            ]
+            reviewProcessInfos.extend(reviewProcessInfo)
         return {'portal_type': {'query': self.cfg.getItemTypeName()},
                 'reviewProcessInfo': {'query': reviewProcessInfos}, }
 
