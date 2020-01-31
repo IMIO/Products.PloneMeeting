@@ -99,7 +99,7 @@ class testWFAdaptations(PloneMeetingTestCase):
             return
         self.changeUser('pmManager')
         # activate
-        self._activate_wfadaptations(('return_to_proposing_group', ))
+        self._activate_wfas(('return_to_proposing_group', ))
         itemWF = self.wfTool.getWorkflowsFor(cfg.getItemTypeName())[0]
         self.assertTrue('returned_to_proposing_group' in itemWF.states)
 
@@ -117,7 +117,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertEqual(cfg.getMeetingWorkflow(), cfg2.getMeetingWorkflow())
         # apply the 'return_to_proposing_group' WFAdaptation for cfg
         # activate
-        self._activate_wfadaptations(('return_to_proposing_group', ))
+        self._activate_wfas(('return_to_proposing_group', ))
         originalWF = self.wfTool.get(cfg.getItemWorkflow())
         cfgItemWF = self.wfTool.getWorkflowsFor(cfg.getItemTypeName())[0]
         cfg2ItemWF = self.wfTool.getWorkflowsFor(cfg2.getItemTypeName())[0]
@@ -326,7 +326,7 @@ class testWFAdaptations(PloneMeetingTestCase):
                                                  domain='PloneMeeting',
                                                  context=self.request)
         self.changeUser('pmManager')
-        self._activate_wfadaptations(('pre_validation', ))
+        self._activate_wfas(('pre_validation', ))
 
         item = self.create('MeetingItem')
         self.proposeItem(item)
@@ -1920,8 +1920,8 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.changeUser('pmManager')
         # check while the wfAdaptation is not activated
         self._item_decision_state_inactive(item_state, item_transition)
-        self._activate_wfas((wf_adaptation_name, )('waiting_advices', ))
         # activate the wfAdaptation and check
+        self._activate_wfas((wf_adaptation_name, ))
         self._item_decision_state_active(
             item_state, item_transition, will_be_cloned, additional_wf_transitions)
 

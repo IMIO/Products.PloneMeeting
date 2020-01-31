@@ -1209,7 +1209,6 @@ schema = Schema((
                                      vocabulary="listBooleanVocabulary",
                                      col_description="Item WF validation levels enabled description.",
                                      default='1'),
-
                      },
             label='Itemwfvalidationlevels',
             label_msgid='PloneMeeting_label_itemWFValidationLevels',
