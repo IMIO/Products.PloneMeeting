@@ -693,33 +693,44 @@ class testWFAdaptations(PloneMeetingTestCase):
         # ease override by subproducts
         cfg = self.meetingConfig
 
+        # itemcreated level is mandatory
+        level_itemcreated_error = \
+            translate('item_wf_val_states_itemcreated_mandatory',
+                      domain='PloneMeeting',
+                      context=self.request)
+        # values_disabled_item_created
+        self._disableItemValidationLevels(cfg, levels=['itemcreated'])
+        values_disabled_item_created = deepcopy(cfg.getItemWFValidationLevels())
+        self._enableItemValidationLevels(cfg, levels=['itemcreated'])
+        self.assertEqual(cfg.validate_itemWFValidationLevels(values_disabled_item_created),
+                         level_itemcreated_error)
+
         # remove a state that is not in use
         self.assertEqual(cfg.getItemWFValidationLevels(data='state', only_enabled=True),
                          ['itemcreated', 'proposed'])
+        # values_disabled_proposed
         self._disableItemValidationLevels(cfg, levels=['proposed'])
         values_disabled_proposed = deepcopy(cfg.getItemWFValidationLevels())
         self._enableItemValidationLevels(cfg, levels=['proposed'])
         self.failIf(cfg.validate_itemWFValidationLevels(values_disabled_proposed))
 
+        # create an item that will be itemcreated
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
         self.assertEqual(item.queryState(), 'itemcreated')
-        # get correct value when 'itemcreated' is disabled
-        self._disableItemValidationLevels(cfg, levels=['itemcreated'])
-        values_disabled_item_created = deepcopy(cfg.getItemWFValidationLevels())
-        self._enableItemValidationLevels(cfg, levels=['itemcreated'])
-        # validation KO
+        self.do(item, 'propose')
         level_removed_error = \
             translate('item_wf_val_states_can_not_be_removed_in_use',
                       domain='PloneMeeting',
                       mapping={'item_state': 'itemcreated',
                                'item_url': item.absolute_url()},
                       context=self.request)
-        self.assertEqual(cfg.validate_itemWFValidationLevels(values_disabled_item_created),
+        self.assertEqual(cfg.validate_itemWFValidationLevels(values_disabled_proposed),
                          level_removed_error)
+
         # delete item then validation is correct
         self.deleteAsManager(item.UID())
-        self.failIf(cfg.validate_itemWFValidationLevels(values_disabled_item_created))
+        self.failIf(cfg.validate_itemWFValidationLevels(values_disabled_proposed))
 
     def test_pm_WFA_no_publication(self):
         '''Test the workflowAdaptation 'no_publication'.
