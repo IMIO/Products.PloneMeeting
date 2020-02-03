@@ -184,17 +184,26 @@ class MeetingItemWorkflowConditions(object):
         group_users = portal.acl_users.source_groups._group_principal_map.get(plone_group_id, [])
         return len(group_users) and not user_id or user_id in group_users
 
-    def _getLastValidationState(self):
-        '''Last validation state is validation level state defined in MeetingConfig.itemWFValidationLevels
-           for which the linked suffixed Plone group is not empty.'''
+    def _getLastValidationState(self, before_last=False):
+        '''Last validation state is validation level state defined in
+           MeetingConfig.itemWFValidationLevels for which the linked
+           suffixed Plone group is not empty.
+           If p_before_last=True, then we return before_last level.'''
         levels = list(self.cfg.getItemWFValidationLevels(only_enabled=True))
         res = 'itemcreated'
         # get suffixed Plone group in reverse order of defined validation levels
         levels.reverse()
+        found_last = False
+        found_before_last = False
         for level in levels:
             if self._groupIsNotEmpty(level['suffix']):
                 res = level['state']
-                break
+                if found_last:
+                    found_before_last = True
+                else:
+                    found_last = True
+                if (found_last and not before_last) or found_before_last:
+                    break
         return res
 
     security.declarePublic('mayProposeToNextValidationLevel')
@@ -489,13 +498,20 @@ class MeetingItemWorkflowConditions(object):
         if _checkPermission(ManagePortal, self.context):
             res = True
         else:
-            last_val_levels_wfas = [wfa for wfa in self.cfg.getWorkflowAdaptations()
-                                    if wfa.startswith('waiting_advices_from_last_val_level')]
-            every_val_levels_wfas = [wfa for wfa in self.cfg.getWorkflowAdaptations()
-                                     if wfa.startswith('waiting_advices_from_every_val_level')]
+            last_val_levels_wfas = [
+                wfa for wfa in self.cfg.getWorkflowAdaptations()
+                if wfa.startswith('waiting_advices_from_last_val_level')]
+            before_last_val_levels_wfas = [
+                wfa for wfa in self.cfg.getWorkflowAdaptations()
+                if wfa.startswith('waiting_advices_from_before_last_val_level')]
+            every_val_levels_wfas = [
+                wfa for wfa in self.cfg.getWorkflowAdaptations()
+                if wfa.startswith('waiting_advices_from_every_val_level')]
             if last_val_levels_wfas:
-                last_val_state = self._getLastValidationState()
-                if self.context.queryState() == last_val_state:
+                last_val_states = [self._getLastValidationState()]
+                if before_last_val_levels_wfas:
+                    last_val_states.append(self._getLastValidationState(before_last=True))
+                if self.context.queryState() in last_val_states:
                     res = True
             elif every_val_levels_wfas:
                 res = True

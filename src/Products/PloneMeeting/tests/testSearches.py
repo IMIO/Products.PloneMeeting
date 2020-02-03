@@ -203,7 +203,6 @@ class testSearches(PloneMeetingTestCase):
                              ICompoundCriterionFilter,
                              name='advised-items')
         # admin is not adviser
-        import ipdb; ipdb.set_trace()
         self.assertEqual(adapter.query,
                          {'indexAdvisers': {'query': []},
                           'portal_type': {'query': itemTypeName}})
@@ -302,7 +301,6 @@ class testSearches(PloneMeetingTestCase):
                              ICompoundCriterionFilter,
                              name='advised-items-with-delay')
         # admin is not adviser
-        import ipdb; ipdb.set_trace()
         self.assertEqual(adapter.query,
                          {'indexAdvisers': {'query': []},
                           'portal_type': {'query': itemTypeName}})
