@@ -203,6 +203,7 @@ class testSearches(PloneMeetingTestCase):
                              ICompoundCriterionFilter,
                              name='advised-items')
         # admin is not adviser
+        import ipdb; ipdb.set_trace()
         self.assertEqual(adapter.query,
                          {'indexAdvisers': {'query': []},
                           'portal_type': {'query': itemTypeName}})
@@ -301,6 +302,7 @@ class testSearches(PloneMeetingTestCase):
                              ICompoundCriterionFilter,
                              name='advised-items-with-delay')
         # admin is not adviser
+        import ipdb; ipdb.set_trace()
         self.assertEqual(adapter.query,
                          {'indexAdvisers': {'query': []},
                           'portal_type': {'query': itemTypeName}})
@@ -592,8 +594,10 @@ class testSearches(PloneMeetingTestCase):
                              name='items-to-validate-of-highest-hierarchic-level')
         query = adapter.query
         self.assertEqual(len(query['reviewProcessInfo']['query']), 2)
-        self.assertTrue('{0}__reviewprocess__prevalidated'.format(self.developers_uid) in query['reviewProcessInfo']['query'])
-        self.assertTrue('{0}__reviewprocess__proposed'.format(self.vendors_uid) in query['reviewProcessInfo']['query'])
+        self.assertTrue('{0}__reviewprocess__prevalidated'.format(self.developers_uid)
+                        in query['reviewProcessInfo']['query'])
+        self.assertTrue('{0}__reviewprocess__proposed'.format(self.vendors_uid)
+                        in query['reviewProcessInfo']['query'])
 
     def test_pm_SearchItemsToValidateOfMyReviewerGroups(self):
         '''Test the 'items-to-validate-of-my-reviewer-groups' adapter.

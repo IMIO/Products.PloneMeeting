@@ -107,9 +107,9 @@ class testAdvices(PloneMeetingTestCase):
         self.create('Meeting', date=meetingDate)
         for item in (item1, item2, item3):
             self.presentItem(item)
-        self.assertEquals(item1.queryState(), self._stateMappingFor('presented'))
-        self.assertEquals(item2.queryState(), self._stateMappingFor('presented'))
-        self.assertEquals(item3.queryState(), self._stateMappingFor('presented'))
+        self.assertEqual(item1.queryState(), self._stateMappingFor('presented'))
+        self.assertEqual(item2.queryState(), self._stateMappingFor('presented'))
+        self.assertEqual(item3.queryState(), self._stateMappingFor('presented'))
         # item1 still viewable because the item an advice is asked for is still viewable in the 'presented' state...
         self.changeUser('pmReviewer2')
         self.failUnless(self.hasPermission(View, item1))
@@ -155,7 +155,7 @@ class testAdvices(PloneMeetingTestCase):
         item1.setOptionalAdvisers((self.vendors_uid, ))
         item1._update_after_edit()
         # 'pmCreator1' has no addable nor editable advice to give
-        self.assertEquals(item1.getAdvicesGroupsInfosForUser(), ([], []))
+        self.assertEqual(item1.getAdvicesGroupsInfosForUser(), ([], []))
         self.changeUser('pmReviewer2')
         self.failIf(self.hasPermission(View, item1))
         self.changeUser('pmCreator1')
@@ -165,27 +165,27 @@ class testAdvices(PloneMeetingTestCase):
                           createContentInContainer,
                           item1,
                           'meetingadvice')
-        self.assertEquals(item1.getAdvicesGroupsInfosForUser(), ([], []))
+        self.assertEqual(item1.getAdvicesGroupsInfosForUser(), ([], []))
         self.changeUser('pmReviewer2')
         # 'pmReviewer2' has one advice to give for 'vendors' and no advice to edit
-        self.assertEquals(item1.getAdvicesGroupsInfosForUser(), ([(self.vendors_uid, u'Vendors')], []))
-        self.assertEquals(item1.hasAdvices(), False)
+        self.assertEqual(item1.getAdvicesGroupsInfosForUser(), ([(self.vendors_uid, u'Vendors')], []))
+        self.assertEqual(item1.hasAdvices(), False)
         # fields 'advice_type' and 'advice_group' are mandatory
         form = item1.restrictedTraverse('++add++meetingadvice').form_instance
         form.ti = self.portal.portal_types['meetingadvice']
         self.request['PUBLISHED'] = form
         form.update()
         errors = form.extractData()[1]
-        self.assertEquals(errors[0].error, RequiredMissing('advice_group'))
-        self.assertEquals(errors[1].error, RequiredMissing('advice_type'))
+        self.assertEqual(errors[0].error, RequiredMissing('advice_group'))
+        self.assertEqual(errors[1].error, RequiredMissing('advice_type'))
         # value used for 'advice_type' and 'advice_group' must be correct
         form.request.set('form.widgets.advice_type', u'wrong_value')
         errors = form.extractData()[1]
-        self.assertEquals(errors[1].error, RequiredMissing('advice_type'))
+        self.assertEqual(errors[1].error, RequiredMissing('advice_type'))
         # but if the value is correct, the field renders correctly
         form.request.set('form.widgets.advice_type', u'positive')
         data = form.extractData()[0]
-        self.assertEquals(data['advice_type'], u'positive')
+        self.assertEqual(data['advice_type'], u'positive')
         # regarding 'advice_group' value, only correct are the ones in the vocabulary
         # so using another will fail, for example, can not give an advice for another group
         form.request.set('form.widgets.advice_group', self.developers_uid)
@@ -211,12 +211,12 @@ class testAdvices(PloneMeetingTestCase):
         form.request.form['advice_type'] = u'positive'
         form.request.form['advice_comment'] = RichTextValue(u'My comment')
         form.createAndAdd(form.request.form)
-        self.assertEquals(item1.hasAdvices(), True)
+        self.assertEqual(item1.hasAdvices(), True)
         # 'pmReviewer2' has no more addable advice (as already given) but has now an editable advice
-        self.assertEquals(item1.getAdvicesGroupsInfosForUser(), ([], [(self.vendors_uid, 'Vendors')]))
+        self.assertEqual(item1.getAdvicesGroupsInfosForUser(), ([], [(self.vendors_uid, 'Vendors')]))
         # given advice is correctly stored
-        self.assertEquals(item1.adviceIndex[self.vendors_uid]['type'], 'positive')
-        self.assertEquals(item1.adviceIndex[self.vendors_uid]['comment'], u'My comment')
+        self.assertEqual(item1.adviceIndex[self.vendors_uid]['type'], 'positive')
+        self.assertEqual(item1.adviceIndex[self.vendors_uid]['comment'], u'My comment')
         self.changeUser('pmReviewer1')
         # may edit the item but not the advice
         self.assertTrue(self.hasPermission(ModifyPortalContent, item1))
@@ -229,11 +229,11 @@ class testAdvices(PloneMeetingTestCase):
         # but he can still edit the advice he just gave
         self.changeUser('pmReviewer2')
         self.failUnless(self.hasPermission(View, item1))
-        self.assertEquals(item1.getAdvicesGroupsInfosForUser(), ([], [(self.vendors_uid, 'Vendors')]))
+        self.assertEqual(item1.getAdvicesGroupsInfosForUser(), ([], [(self.vendors_uid, 'Vendors')]))
         self.failUnless(self.hasPermission(ModifyPortalContent, given_advice))
         # another member of the same _advisers group may also edit the given advice
         self.changeUser('pmManager')
-        self.assertEquals(item1.getAdvicesGroupsInfosForUser(), ([], [(self.vendors_uid, 'Vendors')]))
+        self.assertEqual(item1.getAdvicesGroupsInfosForUser(), ([], [(self.vendors_uid, 'Vendors')]))
         self.failUnless(self.hasPermission(ModifyPortalContent, given_advice))
         # if a user that can not remove the advice tries he gets Unauthorized
         self.changeUser('pmReviewer1')
@@ -245,24 +245,24 @@ class testAdvices(PloneMeetingTestCase):
         self.changeUser('pmReviewer2')
         # remove the advice
         item1.restrictedTraverse('@@delete_givenuid')(item1.meetingadvice.UID())
-        self.assertEquals(item1.getAdvicesGroupsInfosForUser(), ([(self.vendors_uid, u'Vendors')], []))
+        self.assertEqual(item1.getAdvicesGroupsInfosForUser(), ([(self.vendors_uid, u'Vendors')], []))
 
         # if advices are disabled in the meetingConfig, getAdvicesGroupsInfosForUser is emtpy
         self.changeUser('admin')
         self.meetingConfig.setUseAdvices(False)
         self.changeUser('pmReviewer2')
-        self.assertEquals(item1.getAdvicesGroupsInfosForUser(), ([], []))
+        self.assertEqual(item1.getAdvicesGroupsInfosForUser(), ([], []))
         self.changeUser('admin')
         self.meetingConfig.setUseAdvices(True)
 
         # activate advices again and this time remove the fact that we asked the advice
         self.changeUser('pmReviewer2')
-        self.assertEquals(item1.getAdvicesGroupsInfosForUser(), ([(self.vendors_uid, u'Vendors')], []))
+        self.assertEqual(item1.getAdvicesGroupsInfosForUser(), ([(self.vendors_uid, u'Vendors')], []))
         self.changeUser('pmManager')
         item1.setOptionalAdvisers([])
         item1._update_after_edit()
         self.changeUser('pmReviewer2')
-        self.assertEquals(item1.getAdvicesGroupsInfosForUser(), ([], []))
+        self.assertEqual(item1.getAdvicesGroupsInfosForUser(), ([], []))
 
     def test_pm_AddAnnexToAdvice(self):
         '''
@@ -386,7 +386,7 @@ class testAdvices(PloneMeetingTestCase):
         # check than the adviser can see the item
         self.changeUser('pmReviewer2')
         self.failUnless(self.hasPermission(View, item1))
-        self.assertEquals(item1.getAdvicesGroupsInfosForUser(), ([(self.vendors_uid, u'Vendors')], []))
+        self.assertEqual(item1.getAdvicesGroupsInfosForUser(), ([(self.vendors_uid, u'Vendors')], []))
         self.failUnless(self.hasPermission(AddAdvice, item1))
 
     def test_pm_AdvicesInvalidation(self):
@@ -408,7 +408,7 @@ class testAdvices(PloneMeetingTestCase):
         self.proposeItem(item)
         # login as adviser and add an advice
         self.changeUser('pmReviewer2')
-        self.assertEquals(item.getAdvicesGroupsInfosForUser(), ([(self.vendors_uid, u'Vendors')], []))
+        self.assertEqual(item.getAdvicesGroupsInfosForUser(), ([(self.vendors_uid, u'Vendors')], []))
         # give an advice
         createContentInContainer(item,
                                  'meetingadvice',
@@ -515,7 +515,7 @@ class testAdvices(PloneMeetingTestCase):
             '{0}__rowid__unique_id_123'.format(self.vendors_uid), ))
         item.updateLocalRoles()
         # no advice to give as item is 'itemcreated'
-        self.assertEquals(
+        self.assertEqual(
             sorted(indexAdvisers.callable(item)),
             sorted(
                 ['delay_row_id__unique_id_123',
@@ -530,7 +530,7 @@ class testAdvices(PloneMeetingTestCase):
         item.reindexObject()
         self.changeUser('pmAdviser1')
         # now advice are giveable but not given
-        self.assertEquals(
+        self.assertEqual(
             sorted(indexAdvisers.callable(item)),
             sorted(
                 ['delay_row_id__unique_id_123',
@@ -543,11 +543,11 @@ class testAdvices(PloneMeetingTestCase):
         itemUID = item.UID()
         brains = self.portal.portal_catalog(
             indexAdvisers='{0}_advice_not_given'.format(self.developers_uid))
-        self.assertEquals(len(brains), 1)
-        self.assertEquals(brains[0].UID, itemUID)
+        self.assertEqual(len(brains), 1)
+        self.assertEqual(brains[0].UID, itemUID)
         brains = self.portal.portal_catalog(indexAdvisers='delay_row_id__unique_id_123')
-        self.assertEquals(len(brains), 1)
-        self.assertEquals(brains[0].UID, itemUID)
+        self.assertEqual(len(brains), 1)
+        self.assertEqual(brains[0].UID, itemUID)
         # create the advice
         advice = createContentInContainer(
             item,
@@ -556,7 +556,7 @@ class testAdvices(PloneMeetingTestCase):
                'advice_type': u'positive',
                'advice_comment': RichTextValue(u'My comment')})
         # now that an advice has been given for the developers group, the indexAdvisers has been updated
-        self.assertEquals(
+        self.assertEqual(
             sorted(indexAdvisers.callable(item)),
             sorted(
                 ['delay_row_id__unique_id_123',
@@ -569,14 +569,14 @@ class testAdvices(PloneMeetingTestCase):
                  'positive'])
         )
         brains = self.portal.portal_catalog(indexAdvisers='{0}_advice_under_edit'.format(self.developers_uid))
-        self.assertEquals(len(brains), 1)
-        self.assertEquals(brains[0].UID, itemUID)
+        self.assertEqual(len(brains), 1)
+        self.assertEqual(brains[0].UID, itemUID)
 
         # turn advice to hidden during redaction
         changeHiddenDuringRedactionView = advice.restrictedTraverse('@@change-advice-hidden-during-redaction')
         changeHiddenDuringRedactionView()
         self.assertTrue(advice.advice_hide_during_redaction)
-        self.assertEquals(
+        self.assertEqual(
             sorted(indexAdvisers.callable(item)),
             sorted(
                 ['delay__{0}_advice_not_given'.format(self.vendors_uid),
@@ -591,12 +591,12 @@ class testAdvices(PloneMeetingTestCase):
         )
         brains = self.portal.portal_catalog(
             indexAdvisers='real_org_uid__{0}__hidden_during_redaction'.format(self.developers_uid))
-        self.assertEquals(len(brains), 1)
-        self.assertEquals(brains[0].UID, itemUID)
+        self.assertEqual(len(brains), 1)
+        self.assertEqual(brains[0].UID, itemUID)
         # makes this advice 'considered_not_given_hidden_during_redaction'
         self.changeUser('pmReviewer1')
         self.validateItem(item)
-        self.assertEquals(
+        self.assertEqual(
             sorted(indexAdvisers.callable(item)),
             sorted(
                 [CONSIDERED_NOT_GIVEN_ADVICE_VALUE,
@@ -611,8 +611,8 @@ class testAdvices(PloneMeetingTestCase):
         brains = self.portal.portal_catalog(
             indexAdvisers='real_org_uid__{0}__considered_not_given_hidden_during_redaction'.format(
                 self.developers_uid))
-        self.assertEquals(len(brains), 1)
-        self.assertEquals(brains[0].UID, itemUID)
+        self.assertEqual(len(brains), 1)
+        self.assertEqual(brains[0].UID, itemUID)
         # back to 'proposed' and not more hidden_during_redaction
         self.backToState(item, self._stateMappingFor('proposed'))
         self.changeUser('pmAdviser1')
@@ -622,7 +622,7 @@ class testAdvices(PloneMeetingTestCase):
         advice.advice_group = self.vendors_uid
         # notify modified
         notify(ObjectModifiedEvent(advice))
-        self.assertEquals(
+        self.assertEqual(
             sorted(indexAdvisers.callable(item)),
             sorted(
                 ['delay_row_id__unique_id_123',
@@ -637,13 +637,13 @@ class testAdvices(PloneMeetingTestCase):
         # the index in the portal_catalog is updated too
         brains = self.portal.portal_catalog(
             indexAdvisers='delay__{0}_advice_under_edit'.format(self.vendors_uid))
-        self.assertEquals(len(brains), 1)
-        self.assertEquals(brains[0].UID, itemUID)
+        self.assertEqual(len(brains), 1)
+        self.assertEqual(brains[0].UID, itemUID)
 
         # put the item in a state where given advices are not editable anymore
         self.changeUser('pmReviewer1')
         self.backToState(item, self._stateMappingFor('itemcreated'))
-        self.assertEquals(
+        self.assertEqual(
             sorted(indexAdvisers.callable(item)),
             sorted(
                 ['delay_row_id__unique_id_123',
@@ -657,7 +657,7 @@ class testAdvices(PloneMeetingTestCase):
         # ask a given advice again
         self.changeUser('pmCreator1')
         advice.restrictedTraverse('@@change-advice-asked-again')()
-        self.assertEquals(
+        self.assertEqual(
             sorted(indexAdvisers.callable(item)),
             sorted(
                 ['asked_again',
@@ -672,7 +672,7 @@ class testAdvices(PloneMeetingTestCase):
         )
         # put it back to a state where it is editable
         self.proposeItem(item)
-        self.assertEquals(
+        self.assertEqual(
             sorted(indexAdvisers.callable(item)),
             sorted(
                 ['asked_again',
@@ -690,7 +690,7 @@ class testAdvices(PloneMeetingTestCase):
         self.changeUser('siteadmin')
         item.restrictedTraverse('@@delete_givenuid')(advice.UID())
         self.changeUser('pmAdviser1')
-        self.assertEquals(
+        self.assertEqual(
             sorted(indexAdvisers.callable(item)),
             sorted(
                 ['delay_row_id__unique_id_123',
@@ -704,16 +704,16 @@ class testAdvices(PloneMeetingTestCase):
         # the index in the portal_catalog is updated too
         brains = self.portal.portal_catalog(
             indexAdvisers='delay__{0}_advice_not_given'.format(self.vendors_uid))
-        self.assertEquals(len(brains), 1)
-        self.assertEquals(brains[0].UID, itemUID)
+        self.assertEqual(len(brains), 1)
+        self.assertEqual(brains[0].UID, itemUID)
         brains = self.portal.portal_catalog(
             indexAdvisers='{0}_advice_not_given'.format(self.developers_uid))
-        self.assertEquals(len(brains), 1)
-        self.assertEquals(brains[0].UID, itemUID)
+        self.assertEqual(len(brains), 1)
+        self.assertEqual(brains[0].UID, itemUID)
         # if a delay-aware advice delay is exceeded, it is indexed with an ending '2'
         item.adviceIndex[self.vendors_uid]['delay_started_on'] = datetime(2012, 01, 01)
         item.updateLocalRoles()
-        self.assertEquals(
+        self.assertEqual(
             sorted(indexAdvisers.callable(item)),
             sorted(
                 ['delay_row_id__unique_id_123',
@@ -729,8 +729,8 @@ class testAdvices(PloneMeetingTestCase):
         '''Test the indexAdvisers 'combined idnex' functionnality that makes it possible
            to query items having advice of a given group using a given advice_type.'''
         # an advice can be given when an item is 'proposed' or 'validated'
-        self.assertEquals(self.meetingConfig.getItemAdviceStates(),
-                          (self._stateMappingFor('proposed'), ))
+        self.assertEqual(self.meetingConfig.getItemAdviceStates(),
+                         (self._stateMappingFor('proposed'), ))
         # create 3 items with various advices
         self.changeUser('pmCreator1')
         item1 = self.create('MeetingItem')
@@ -745,19 +745,19 @@ class testAdvices(PloneMeetingTestCase):
 
         # query not_given advices
         catalog = self.portal.portal_catalog
-        self.assertEquals(
+        self.assertEqual(
             set([brain.UID for brain in catalog(
                 indexAdvisers='not_given')]),
             set([item1.UID(), item2.UID()]))
-        self.assertEquals(
+        self.assertEqual(
             set([brain.UID for brain in catalog(
                 indexAdvisers='real_org_uid__{0}'.format(self.developers_uid))]),
             set([item1.UID(), item2.UID()]))
-        self.assertEquals(
+        self.assertEqual(
             set([brain.UID for brain in catalog(
                 indexAdvisers='real_org_uid__{0}__not_given'.format(self.developers_uid))]),
             set([item1.UID(), item2.UID()]))
-        self.assertEquals(
+        self.assertEqual(
             set([brain.UID for brain in catalog(
                 indexAdvisers='real_org_uid__{0}__not_given'.format(self.vendors_uid))]),
             set([item1.UID()]))
@@ -774,27 +774,27 @@ class testAdvices(PloneMeetingTestCase):
         # query not given and positive advices
         self.changeUser('pmCreator1')
         # item1 still have vendors advice not given
-        self.assertEquals(
+        self.assertEqual(
             set([brain.UID for brain in catalog(
                 indexAdvisers='not_given')]),
             set([item1.UID(), item2.UID()]))
-        self.assertEquals(
+        self.assertEqual(
             set([brain.UID for brain in catalog(
                 indexAdvisers=['not_given', 'positive'])]),
             set([item1.UID(), item2.UID()]))
-        self.assertEquals(
+        self.assertEqual(
             set([brain.UID for brain in catalog(
                 indexAdvisers='real_org_uid__{0}'.format(self.developers_uid))]),
             set([item1.UID(), item2.UID()]))
-        self.assertEquals(
+        self.assertEqual(
             set([brain.UID for brain in catalog(
                 indexAdvisers='real_org_uid__{0}__not_given'.format(self.developers_uid))]),
             set([item2.UID()]))
-        self.assertEquals(
+        self.assertEqual(
             set([brain.UID for brain in catalog(
                 indexAdvisers='real_org_uid__{0}__positive'.format(self.developers_uid))]),
             set([item1.UID()]))
-        self.assertEquals(
+        self.assertEqual(
             set([brain.UID for brain in catalog(
                 indexAdvisers='real_org_uid__{0}__not_given'.format(self.vendors_uid))]),
             set([item1.UID()]))
@@ -810,31 +810,31 @@ class testAdvices(PloneMeetingTestCase):
                                     'advice_type': u'negative',
                                     'advice_comment': RichTextValue(u'My comment')})
         # query not given and positive advices
-        self.assertEquals(
+        self.assertEqual(
             set([brain.UID for brain in catalog(
                 indexAdvisers=['not_given'])]),
             set([item1.UID()]))
-        self.assertEquals(
+        self.assertEqual(
             set([brain.UID for brain in catalog(
                 indexAdvisers=['positive'])]),
             set([item1.UID()]))
-        self.assertEquals(
+        self.assertEqual(
             set([brain.UID for brain in catalog(
                 indexAdvisers=['negative'])]),
             set([item2.UID()]))
-        self.assertEquals(
+        self.assertEqual(
             set([brain.UID for brain in catalog(
                 indexAdvisers='real_org_uid__{0}'.format(self.developers_uid))]),
             set([item1.UID(), item2.UID()]))
-        self.assertEquals(
+        self.assertEqual(
             set([brain.UID for brain in catalog(
                 indexAdvisers='real_org_uid__{0}__negative'.format(self.developers_uid))]),
             set([item2.UID()]))
-        self.assertEquals(
+        self.assertEqual(
             set([brain.UID for brain in catalog(
                 indexAdvisers='real_org_uid__{0}__positive'.format(self.developers_uid))]),
             set([item1.UID()]))
-        self.assertEquals(
+        self.assertEqual(
             set([brain.UID for brain in catalog(
                 indexAdvisers='real_org_uid__{0}__not_given'.format(self.vendors_uid))]),
             set([item1.UID()]))
@@ -896,8 +896,8 @@ class testAdvices(PloneMeetingTestCase):
         item.updateLocalRoles()
         # 'vendors' is still in adviceIndex, the TAL expr could be evaluated correctly
         self.assertTrue(self.vendors_uid in item.adviceIndex)
-        self.assertEquals(item.getAdvicesGroupsInfosForUser(),
-                          ([(self.vendors_uid, 'Vendors')], []))
+        self.assertEqual(item.getAdvicesGroupsInfosForUser(),
+                         ([(self.vendors_uid, 'Vendors')], []))
         createContentInContainer(item,
                                  'meetingadvice',
                                  **{'advice_group': self.vendors_uid,
@@ -1001,7 +1001,7 @@ class testAdvices(PloneMeetingTestCase):
         self.failIf(item.getAutomaticAdvisersData())
         # now make the second row expression return True, set item.budgetRelated
         item.setBudgetRelated(True)
-        self.assertEquals(
+        self.assertEqual(
             sorted(item.getAutomaticAdvisersData()),
             sorted(
                 [{'gives_auto_advice_on_help_message': '',
@@ -1036,14 +1036,14 @@ class testAdvices(PloneMeetingTestCase):
               'delay': '',
               'delay_left_alert': '',
               'delay_label': ''}, ])
-        self.assertEquals(item.getAutomaticAdvisersData(),
-                          [{'gives_auto_advice_on_help_message': '',
-                            'org_uid': self.developers_uid,
-                            'org_title': 'Developers',
-                            'row_id': 'unique_id_123',
-                            'delay': '',
-                            'delay_left_alert': '',
-                            'delay_label': ''}])
+        self.assertEqual(item.getAutomaticAdvisersData(),
+                         [{'gives_auto_advice_on_help_message': '',
+                           'org_uid': self.developers_uid,
+                           'org_title': 'Developers',
+                           'row_id': 'unique_id_123',
+                           'delay': '',
+                           'delay_left_alert': '',
+                           'delay_label': ''}])
         # now define a 'for_item_created_until' that is in the past
         # relative to the item created date
         cfg.setCustomAdvisers(
@@ -1076,8 +1076,8 @@ class testAdvices(PloneMeetingTestCase):
                                           **{'advice_group': self.developers_uid,
                                              'advice_type': u'positive',
                                              'advice_comment': RichTextValue(u'My comment')})
-        self.assertEquals(advice.advice_row_id, '')
-        self.assertEquals(item.adviceIndex[advice.advice_group]['row_id'], '')
+        self.assertEqual(advice.advice_row_id, '')
+        self.assertEqual(item.adviceIndex[advice.advice_group]['row_id'], '')
 
         # now remove it and make it a 'delay-aware' advice
         item.restrictedTraverse('@@delete_givenuid')(advice.UID())
@@ -1094,8 +1094,8 @@ class testAdvices(PloneMeetingTestCase):
                                           **{'advice_group': self.developers_uid,
                                              'advice_type': u'positive',
                                              'advice_comment': RichTextValue(u'My comment')})
-        self.assertEquals(advice.advice_row_id, 'unique_id_123')
-        self.assertEquals(item.adviceIndex[advice.advice_group]['row_id'], 'unique_id_123')
+        self.assertEqual(advice.advice_row_id, 'unique_id_123')
+        self.assertEqual(item.adviceIndex[advice.advice_group]['row_id'], 'unique_id_123')
 
         # same behaviour for an automatic advice
         cfg.setCustomAdvisers(
@@ -1112,9 +1112,9 @@ class testAdvices(PloneMeetingTestCase):
                                           **{'advice_group': self.vendors_uid,
                                              'advice_type': u'negative',
                                              'advice_comment': RichTextValue(u'My comment')})
-        self.assertEquals(item.adviceIndex[self.vendors_uid]['row_id'], 'unique_id_456')
+        self.assertEqual(item.adviceIndex[self.vendors_uid]['row_id'], 'unique_id_456')
         automatic_advice_obj = getattr(item, item.adviceIndex[self.vendors_uid]['advice_id'])
-        self.assertEquals(automatic_advice_obj.advice_row_id, 'unique_id_456')
+        self.assertEqual(automatic_advice_obj.advice_row_id, 'unique_id_456')
 
     def test_pm_DelayStartedStoppedOn(self):
         '''Test the 'advice_started_on' and 'advice_stopped_on' date initialization.
@@ -1159,14 +1159,14 @@ class testAdvices(PloneMeetingTestCase):
         item.setOptionalAdvisers((self.vendors_uid, ))
         item._update_after_edit()
         # advice are correctly asked
-        self.assertEquals(
+        self.assertEqual(
             sorted(item.adviceIndex.keys()),
             sorted([self.vendors_uid, self.developers_uid]))
         # for now, dates are not defined
-        self.assertEquals([advice['delay_started_on'] for advice in item.adviceIndex.values()],
-                          [None, None])
-        self.assertEquals([advice['delay_stopped_on'] for advice in item.adviceIndex.values()],
-                          [None, None])
+        self.assertEqual([advice['delay_started_on'] for advice in item.adviceIndex.values()],
+                         [None, None])
+        self.assertEqual([advice['delay_stopped_on'] for advice in item.adviceIndex.values()],
+                         [None, None])
         # propose the item, nothing should have changed
         self.proposeItem(item)
         self.assertEqual(
@@ -1268,7 +1268,7 @@ class testAdvices(PloneMeetingTestCase):
                                           **{'advice_group': self.vendors_uid,
                                              'advice_type': u'negative',
                                              'advice_comment': RichTextValue(u'My comment')})
-        self.assertEquals(item.adviceIndex[self.vendors_uid]['row_id'], 'unique_id_123')
+        self.assertEqual(item.adviceIndex[self.vendors_uid]['row_id'], 'unique_id_123')
         # advice is editable as delay is not exceeded
         self.assertTrue(item.getDelayInfosForAdvice(self.vendors_uid)['left_delay'] > 0)
         self.assertTrue(self.hasPermission(ModifyPortalContent, advice))
@@ -1616,8 +1616,8 @@ class testAdvices(PloneMeetingTestCase):
         cleanRamCacheFor('Products.PloneMeeting.MeetingConfig._findLinkedRowsFor')
         # the delay may still be edited when the user can edit the item
         # except if it is an automatic advice for wich only MeetingManagers may change delay
-        self.assertEquals(availableDelaysView.listSelectableDelays(),
-                          [('unique_id_456', '10', u''), ('unique_id_789', '20', u'')])
+        self.assertEqual(availableDelaysView.listSelectableDelays(),
+                         [('unique_id_456', '10', u''), ('unique_id_789', '20', u'')])
         # access to delay changes history
         self.assertTrue(availableDelaysView._mayAccessDelayChangesHistory())
         # the creator may only edit the delays if it may edit the item
@@ -1629,8 +1629,8 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue(availableDelaysView._mayAccessDelayChangesHistory())
         # the pmReviewer1 can change delay as he may edit the item
         self.changeUser('pmReviewer1')
-        self.assertEquals(availableDelaysView.listSelectableDelays(),
-                          [('unique_id_456', '10', u''), ('unique_id_789', '20', u'')])
+        self.assertEqual(availableDelaysView.listSelectableDelays(),
+                         [('unique_id_456', '10', u''), ('unique_id_789', '20', u'')])
         # access to delay changes history
         self.assertTrue(availableDelaysView._mayAccessDelayChangesHistory())
 
@@ -2079,7 +2079,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertFalse(pr.getHistoryMetadata(advice))
         self.backToState(item, 'itemcreated')
         # advice was historized
-        self.assertEquals(pr.getHistoryMetadata(advice)._available, [0])
+        self.assertEqual(pr.getHistoryMetadata(advice)._available, [0])
         self.assertTrue(item.adapted().mayAskAdviceAgain(advice))
         self.assertFalse(item.adapted().mayBackToPreviousAdvice(advice))
         # for now 'advice_hide_during_redaction' is False
@@ -2108,7 +2108,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue(advice.advice_hide_during_redaction)
         changeView()
         # when going back to previous version, a new version is done
-        self.assertEquals(pr.getHistoryMetadata(advice)._available, [0, 1])
+        self.assertEqual(pr.getHistoryMetadata(advice)._available, [0, 1])
         self.assertEqual(advice.advice_type, 'negative')
         # advice was automatically shown
         self.assertFalse(advice.advice_hide_during_redaction)
@@ -2117,7 +2117,7 @@ class testAdvices(PloneMeetingTestCase):
         notify(ObjectModifiedEvent(advice))
         changeView()
         # this time a new version has been saved
-        self.assertEquals(pr.getHistoryMetadata(advice)._available, [0, 1, 2])
+        self.assertEqual(pr.getHistoryMetadata(advice)._available, [0, 1, 2])
         self.assertEqual(advice.advice_type, 'asked_again')
         self.proposeItem(item)
         self.changeUser('pmReviewer2')
@@ -2130,7 +2130,7 @@ class testAdvices(PloneMeetingTestCase):
         notify(ObjectModifiedEvent(advice))
         self.changeUser('pmReviewer1')
         self.backToState(item, 'itemcreated')
-        self.assertEquals(pr.getHistoryMetadata(advice)._available, [0, 1, 2])
+        self.assertEqual(pr.getHistoryMetadata(advice)._available, [0, 1, 2])
         # but works after when advice is no more 'asked_again'
         self.proposeItem(item)
         self.changeUser('pmReviewer2')
@@ -2138,7 +2138,7 @@ class testAdvices(PloneMeetingTestCase):
         notify(ObjectModifiedEvent(advice))
         self.changeUser('pmReviewer1')
         self.backToState(item, 'itemcreated')
-        self.assertEquals(pr.getHistoryMetadata(advice)._available, [0, 1, 2, 3])
+        self.assertEqual(pr.getHistoryMetadata(advice)._available, [0, 1, 2, 3])
 
     def test_pm_HistorizedAdviceIsNotDeletable(self):
         """When an advice has been historized (officially given or asked_again,
@@ -2253,21 +2253,21 @@ class testAdvices(PloneMeetingTestCase):
         h_metadata = pr.getHistoryMetadata(advice)
         self.assertTrue(h_metadata)
         # first version, item data was historized on it
-        self.assertEquals(h_metadata._available, [0])
+        self.assertEqual(h_metadata._available, [0])
         previous = pr.retrieve(advice, 0).object
-        self.assertEquals(previous.historized_item_data,
-                          [{'field_name': 'title', 'field_content': 'Item to advice'},
-                           {'field_name': 'description', 'field_content': '<p>Item description</p>'},
-                           {'field_name': 'detailedDescription', 'field_content': '<p>Item detailed description</p>'},
-                           {'field_name': 'motivation', 'field_content': '<p>Item motivation</p>'},
-                           {'field_name': 'decision', 'field_content': '<p>Item decision</p>'}])
+        self.assertEqual(previous.historized_item_data,
+                         [{'field_name': 'title', 'field_content': 'Item to advice'},
+                          {'field_name': 'description', 'field_content': '<p>Item description</p>'},
+                          {'field_name': 'detailedDescription', 'field_content': '<p>Item detailed description</p>'},
+                          {'field_name': 'motivation', 'field_content': '<p>Item motivation</p>'},
+                          {'field_name': 'decision', 'field_content': '<p>Item decision</p>'}])
         # when giving advice for a second time, if advice is not edited, it is not versioned uselessly
         self.backToState(item, self._stateMappingFor('proposed'))
-        self.assertEquals(advice.queryState(), 'advice_under_edit')
+        self.assertEqual(advice.queryState(), 'advice_under_edit')
         self.validateItem(item)
-        self.assertEquals(advice.queryState(), 'advice_given')
+        self.assertEqual(advice.queryState(), 'advice_given')
         h_metadata = pr.getHistoryMetadata(advice)
-        self.assertEquals(h_metadata._available, [0])
+        self.assertEqual(h_metadata._available, [0])
 
         # come back to 'proposed' and edit advice
         item.setDecision('<p>Another decision</p>')
@@ -2275,14 +2275,14 @@ class testAdvices(PloneMeetingTestCase):
         notify(ObjectModifiedEvent(advice))
         self.validateItem(item)
         h_metadata = pr.getHistoryMetadata(advice)
-        self.assertEquals(h_metadata._available, [0, 1])
+        self.assertEqual(h_metadata._available, [0, 1])
         previous = pr.retrieve(advice, 1).object
-        self.assertEquals(previous.historized_item_data,
-                          [{'field_name': 'title', 'field_content': 'Item to advice'},
-                           {'field_name': 'description', 'field_content': '<p>Item description</p>'},
-                           {'field_name': 'detailedDescription', 'field_content': '<p>Item detailed description</p>'},
-                           {'field_name': 'motivation', 'field_content': '<p>Item motivation</p>'},
-                           {'field_name': 'decision', 'field_content': '<p>Another decision</p>'}])
+        self.assertEqual(previous.historized_item_data,
+                         [{'field_name': 'title', 'field_content': 'Item to advice'},
+                          {'field_name': 'description', 'field_content': '<p>Item description</p>'},
+                          {'field_name': 'detailedDescription', 'field_content': '<p>Item detailed description</p>'},
+                          {'field_name': 'motivation', 'field_content': '<p>Item motivation</p>'},
+                          {'field_name': 'decision', 'field_content': '<p>Another decision</p>'}])
 
     def test_pm_AdviceModificationDateKeptWhenAdviceHistorized(self):
         """Make sure historizing the advice will not change the advice modification date."""
@@ -2400,11 +2400,11 @@ class testAdvices(PloneMeetingTestCase):
         self.assertFalse(pr.getHistoryMetadata(advice))
         self.request.form['detailedDescription'] = '<p>Item detailed description not active</p>'
         item.processForm()
-        self.assertEquals(item.getDetailedDescription(),
-                          '<p>Item detailed description not active</p>')
+        self.assertEqual(item.getDetailedDescription(),
+                         '<p>Item detailed description not active</p>')
         # it was not versioned because versionateAdviceIfGivenAndItemModified is False
         h_metadata = pr.getHistoryMetadata(advice)
-        self.assertEquals(h_metadata, [])
+        self.assertEqual(h_metadata, [])
         # activate and try again
         self.changeUser('siteadmin')
         cfg.setVersionateAdviceIfGivenAndItemModified(True)
@@ -2413,29 +2413,29 @@ class testAdvices(PloneMeetingTestCase):
         # first version, item data was historized on it
         previous = pr.retrieve(advice, 0).object
         # we have item data before it was modified
-        self.assertEquals(previous.historized_item_data,
-                          [{'field_name': 'title',
-                            'field_content': 'Item to advice'},
-                           {'field_name': 'description',
-                            'field_content': '<p>Item description</p>'},
-                           {'field_name': 'detailedDescription',
-                            'field_content': '<p>Item detailed description not active</p>'},
-                           {'field_name': 'motivation',
-                            'field_content': '<p>Item motivation</p>'},
-                           {'field_name': 'decision',
-                            'field_content': '<p>Item decision</p>'}])
+        self.assertEqual(previous.historized_item_data,
+                         [{'field_name': 'title',
+                           'field_content': 'Item to advice'},
+                          {'field_name': 'description',
+                           'field_content': '<p>Item description</p>'},
+                          {'field_name': 'detailedDescription',
+                           'field_content': '<p>Item detailed description not active</p>'},
+                          {'field_name': 'motivation',
+                           'field_content': '<p>Item motivation</p>'},
+                          {'field_name': 'decision',
+                           'field_content': '<p>Item decision</p>'}])
 
         # when editing item a second time, if advice is not edited, it is not versioned uselessly
         self.request.form['detailedDescription'] = '<p>Item detailed description edited 2</p>'
         item.processForm({'detailedDescription': '<p>Item detailed description edited 2</p>'})
-        self.assertEquals(item.getDetailedDescription(), '<p>Item detailed description edited 2</p>')
+        self.assertEqual(item.getDetailedDescription(), '<p>Item detailed description edited 2</p>')
         h_metadata = pr.getHistoryMetadata(advice)
-        self.assertEquals(h_metadata._available, [0])
+        self.assertEqual(h_metadata._available, [0])
 
         # when moving to 'validated', advice is 'adviceGiven', but not versioned again
         self.validateItem(item)
         h_metadata = pr.getHistoryMetadata(advice)
-        self.assertEquals(h_metadata._available, [0])
+        self.assertEqual(h_metadata._available, [0])
 
         # but it is again if advice is edited
         self.changeUser('pmManager')
@@ -2446,7 +2446,7 @@ class testAdvices(PloneMeetingTestCase):
         # validate item, this time advice is versioned again
         self.validateItem(item)
         h_metadata = pr.getHistoryMetadata(advice)
-        self.assertEquals(h_metadata._available, [0, 1])
+        self.assertEqual(h_metadata._available, [0, 1])
 
         # and once again back to proposed and edit item
         # not versioned because advice was not edited
@@ -2455,9 +2455,9 @@ class testAdvices(PloneMeetingTestCase):
         self.changeUser('pmReviewer1')
         self.request.form['detailedDescription'] = '<p>Item detailed description edited 3</p>'
         item.processForm({'detailedDescription': '<p>Item detailed description edited 3</p>'})
-        self.assertEquals(item.getDetailedDescription(), '<p>Item detailed description edited 3</p>')
+        self.assertEqual(item.getDetailedDescription(), '<p>Item detailed description edited 3</p>')
         h_metadata = pr.getHistoryMetadata(advice)
-        self.assertEquals(h_metadata._available, [0, 1])
+        self.assertEqual(h_metadata._available, [0, 1])
 
         # right, back to proposed and use ajax edit
         self.changeUser('pmManager')
@@ -2466,29 +2466,29 @@ class testAdvices(PloneMeetingTestCase):
         notify(ObjectModifiedEvent(advice))
         self.changeUser('pmReviewer1')
         item.setFieldFromAjax('detailedDescription', '<p>Item detailed description edited 4</p>')
-        self.assertEquals(item.getDetailedDescription(), '<p>Item detailed description edited 4</p>')
+        self.assertEqual(item.getDetailedDescription(), '<p>Item detailed description edited 4</p>')
         # advice was versioned again
         h_metadata = pr.getHistoryMetadata(advice)
-        self.assertEquals(h_metadata._available, [0, 1, 2])
+        self.assertEqual(h_metadata._available, [0, 1, 2])
         # we have item data before it was modified
         previous = pr.retrieve(advice, 2).object
-        self.assertEquals(previous.historized_item_data,
-                          [{'field_name': 'title',
-                            'field_content': 'Item to advice'},
-                           {'field_name': 'description',
-                            'field_content': '<p>Item description</p>'},
-                           {'field_name': 'detailedDescription',
-                            'field_content': '<p>Item detailed description edited 3</p>'},
-                           {'field_name': 'motivation',
-                            'field_content': '<p>Item motivation</p>'},
-                           {'field_name': 'decision',
-                            'field_content': '<p>Item decision</p>'}])
+        self.assertEqual(previous.historized_item_data,
+                         [{'field_name': 'title',
+                           'field_content': 'Item to advice'},
+                          {'field_name': 'description',
+                           'field_content': '<p>Item description</p>'},
+                          {'field_name': 'detailedDescription',
+                           'field_content': '<p>Item detailed description edited 3</p>'},
+                          {'field_name': 'motivation',
+                           'field_content': '<p>Item motivation</p>'},
+                          {'field_name': 'decision',
+                           'field_content': '<p>Item decision</p>'}])
 
         # advice is also versionated if some annex are added/removed
         annex = self.addAnnex(item)
         # was already versionated so no more
         h_metadata = pr.getHistoryMetadata(advice)
-        self.assertEquals(h_metadata._available, [0, 1, 2])
+        self.assertEqual(h_metadata._available, [0, 1, 2])
         # right edit the advice and remove the annex
         self.changeUser('pmReviewer2')
         notify(ObjectModifiedEvent(advice))
@@ -2496,14 +2496,14 @@ class testAdvices(PloneMeetingTestCase):
         self.deleteAsManager(annex.UID())
         # advice was versioned again
         h_metadata = pr.getHistoryMetadata(advice)
-        self.assertEquals(h_metadata._available, [0, 1, 2, 3])
+        self.assertEqual(h_metadata._available, [0, 1, 2, 3])
         # edit advice and add a new annex, advice will be versionated
         self.changeUser('pmReviewer2')
         notify(ObjectModifiedEvent(advice))
         self.changeUser('pmReviewer1')
         annex = self.addAnnex(item)
         h_metadata = pr.getHistoryMetadata(advice)
-        self.assertEquals(h_metadata._available, [0, 1, 2, 3, 4])
+        self.assertEqual(h_metadata._available, [0, 1, 2, 3, 4])
 
     def _setupKeepAccessToItemWhenAdviceIsGiven(self):
         """Setup for testing aroung 'keepAccessToItemWhenAdviceIsGiven'."""
@@ -2583,7 +2583,7 @@ class testAdvices(PloneMeetingTestCase):
 
         # this does not interact with other given advices
         self.changeUser('pmAdviser1')
-        self.assertEquals(self.developers.get_keep_access_to_item_when_advice_is_given(), '')
+        self.assertEqual(self.developers.get_keep_access_to_item_when_advice_is_given(), '')
         self.assertFalse(self.hasPermission(View, item))
 
         # override the other way round
@@ -2686,8 +2686,8 @@ class testAdvices(PloneMeetingTestCase):
         portal_repository = self.portal.portal_repository
         for portal_type_id in portal_types:
             if portal_type_id.startswith('meetingadvice'):
-                self.assertEquals(portal_repository._version_policy_mapping[portal_type_id],
-                                  [u'version_on_revert'])
+                self.assertEqual(portal_repository._version_policy_mapping[portal_type_id],
+                                 [u'version_on_revert'])
 
     def test_pm_GetAdviceObj(self):
         """Test the MeetingItem.getAdviceObj that return the real advice
