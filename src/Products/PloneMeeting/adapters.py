@@ -1161,7 +1161,6 @@ class BaseItemsToCorrectAdapter(CompoundCriterionBaseAdapter):
         reviewProcessInfos = []
         for review_state in review_states:
             if review_state in itemWF.states:
-<<<<<<< HEAD
                 # roles that may edit
                 edit_roles = itemWF.states[review_state].permission_roles[ModifyPortalContent]
                 # suffixes information for review_state
@@ -1175,14 +1174,6 @@ class BaseItemsToCorrectAdapter(CompoundCriterionBaseAdapter):
                 userOrgIds = [org.UID() for org in self.tool.get_orgs_for_user(suffixes=suffixes)]
                 for userOrgId in userOrgIds:
                     reviewProcessInfos.append('%s__reviewprocess__%s' % (userOrgId, review_state))
-=======
-                roles = itemWF.states[review_state].permission_roles[ModifyPortalContent]
-                suffixes = [suffix for suffix, role in MEETINGROLES.items() if role in roles]
-                userOrgUids = self.tool.get_orgs_for_user(suffixes=suffixes, the_objects=False)
-                if userOrgUids:
-                    for userOrgUid in userOrgUids:
-                        reviewProcessInfos.append('%s__reviewprocess__%s' % (userOrgUid, review_state))
->>>>>>> origin/master
         if not reviewProcessInfos:
             return _find_nothing_query(self.cfg.getItemTypeName())
         # Create query parameters

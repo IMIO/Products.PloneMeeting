@@ -5530,12 +5530,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def userIsAReviewer(self):
         '''Is current user a reviewer?  So is current user among groups of reviewers?'''
         tool = api.portal.get_tool('portal_plonemeeting')
-<<<<<<< HEAD
         return bool(tool.get_orgs_for_user(suffixes=reviewersFor(self).keys()))
-=======
-        return bool(tool.get_orgs_for_user(suffixes=reviewersFor(self.getItemWorkflow()).keys(),
-                                           the_objects=False))
->>>>>>> origin/master
 
     def _highestReviewerLevel(self, groupIds):
         '''Return highest reviewer level found in given p_groupIds.'''
