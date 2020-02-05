@@ -2,6 +2,17 @@ Changelog
 =========
 
 
+4.2a1 (unreleased)
+------------------
+
+- Item validation workflow is now designed in the MeetingConfig.itemWFValidationLevels, this imply :
+    - to no longer rely on MEETINGROLES and MEETINGREVIEWERS constants;
+    - reviewer levels and mapping between review_state and organization suffix that manage the item is computed from the MeetingConfig;
+    - item validation specific roles (MeetingMember, MeetingReviewer, MeetingPreReviewer are removed from item workflows, local roles are dynamically given and
+      we only use common roles (Reader, Editor, Reviewer and Contributor)
+- Use roles 'Reviewer' and 'Contributor' in meetingadvice_workflow
+- Added bypass for users having 'Manage portal' in MeetingItemWorkflowConditions in 'mayWait_advices_from', 'mayValidate' and 'mayPresent'
+
 4.1.16 (unreleased)
 -------------------
 
@@ -13,14 +24,6 @@ Changelog
 - Avoid an error with zope users during install when `collective.indexing` is used
 - Changed the user recovery code so that it works with an "ldap" configuration. This change allows the use of notifications with an "ldap" configuration.
 - Fix MeetingItem.getItemSignatories so it returns an empty dict when there is no signatories
-- Adapted print_meeting_date and print_preferred_meeting_date so they can now be used in restricted or unrestricted mode.
-- Item validation workflow is now designed in the MeetingConfig.itemWFValidationLevels, this imply :
-    - to no longer rely on MEETINGROLES and MEETINGREVIEWERS constants;
-    - reviewer levels and mapping between review_state and organization suffix that manage the item is computed from the MeetingConfig;
-    - item validation specific roles (MeetingMember, MeetingReviewer, MeetingPreReviewer are removed from item workflows, local roles are dynamically given and
-      we only use common roles (Reader, Editor, Reviewer and Contributor)
-- Use roles 'Reviewer' and 'Contributor' in meetingadvice_workflow
-- Added bypass for users having 'Manage portal' in MeetingItemWorkflowConditions in 'mayWait_advices_from', 'mayValidate' and 'mayPresent'
 
 4.1.15 (2020-01-10)
 -------------------
