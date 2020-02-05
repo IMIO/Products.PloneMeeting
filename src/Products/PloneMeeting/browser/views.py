@@ -854,7 +854,7 @@ class BaseDGHV(object):
                 return res
 
         if attendees_by_type:
-            return self.print_attendees_by_type(**kwargs)
+            return self.print_attendees_by_type(group_position_type=True, **kwargs)
         else:
             return self.print_attendees(**kwargs)
 
@@ -1178,7 +1178,7 @@ class BaseDGHV(object):
         generation_helper_view = helperView._get_generation_context(self.getDGHV(obj), sub_pod_template)
         return generation_helper_view
 
-    def print_signatures_by_position(self):
+    def print_signatures_by_position(self, **kwargs):
         """
         Print signatures by position
         :return: a dict with position as key and signature as value
@@ -1194,7 +1194,7 @@ class BaseDGHV(object):
         if signatures:
             return OrderedDict({i: signature for i, signature in enumerate(signatures.split('\n'))})
         else:
-            return self.print_signatories_by_position()
+            return self.print_signatories_by_position(**kwargs)
 
     def print_signatories_by_position(self,
                                       signature_format=(u'position_type', u'person'),

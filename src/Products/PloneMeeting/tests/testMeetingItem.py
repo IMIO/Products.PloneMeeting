@@ -5184,6 +5184,30 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(helper.printAssembly(striked=True),
                          '<p>Assembly with <strike>striked</strike> part</p>')
 
+    def test_pm_printAssembly(self):
+        # Set up
+        self.changeUser('siteadmin')
+        cfg = self.meetingConfig
+        cfg.setUsedMeetingAttributes(('attendees', 'excused', 'absents', 'signatories',))
+        ordered_contacts = cfg.getField('orderedContacts').Vocabulary(cfg).keys()
+        cfg.setOrderedContacts(ordered_contacts)
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime())
+        item = self.create('MeetingItem')
+        self.presentItem(item)
+        template = self.meetingConfig.podtemplates.itemTemplate
+        self.request.set('template_uid', template.UID())
+        self.request.set('output_format', 'odt')
+        view = item.restrictedTraverse('@@document-generation')
+        view()
+        helper = view.get_generation_context_helper()
+
+        printed_assembly = helper.printAssembly()
+        # Every attendee first name and lastname must be in view.printAssembly()
+        for attendee in item.getAttendees(theObjects=True):
+            self.assertIn(attendee.get_person().firstname, printed_assembly)
+            self.assertIn(attendee.get_person().lastname, printed_assembly)
+
     def test_pm_DownOrUpWorkflowAgain(self):
         """Test the MeetingItem.downOrUpWorkflowAgain behavior."""
         self.changeUser('siteadmin')
