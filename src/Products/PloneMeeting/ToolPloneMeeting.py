@@ -1317,59 +1317,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             res = translate('meeting_of', domain='PloneMeeting', context=self.REQUEST) + ' ' + res
         return res
 
-    security.declarePublic('findSecondLanguage')
-
-    def findSecondLanguage(self):
-        '''The second language used is the second language in portal_languages.supported_langs
-           that is not the defaultLanguage considered as the 'first language'.'''
-        languagesTool = api.portal.get_tool('portal_languages')
-        supported_langs = languagesTool.getSupportedLanguages()
-        res = None
-        if len(supported_langs) == 2:
-            defaultLanguage = languagesTool.getDefaultLanguage()
-            for supported_lang in supported_langs:
-                if not supported_lang == defaultLanguage:
-                    res = supported_lang
-                    break
-        return res
-
-    security.declarePublic('showTogglePersons')
-
-    def showTogglePersons(self, context):
-        '''Under what circumstances must action 'toggle persons' be shown?'''
-        # If we are on a meeting return True
-        rq = context.REQUEST
-        cfg = context.portal_plonemeeting.getMeetingConfig(context)
-        if not cfg:
-            return
-        if 'attendees' not in cfg.getUsedMeetingAttributes():
-            return
-        if context.getLayout() in ('meeting_view', 'meetingitem_view'):
-            res = not rq['ACTUAL_URL'].endswith('_edit') and not rq['ACTUAL_URL'].endswith('_form')
-            if context.meta_type == 'MeetingItem':
-                return res and context.hasMeeting()
-            return res
-
-    security.declarePublic('getUserLanguage')
-
-    def getUserLanguage(self):
-        '''Gets the language (code) of the current user.'''
-        # Try first the "LANGUAGE" key from the request
-        res = self.REQUEST.get('LANGUAGE', None)
-        if res:
-            return res
-        # Try then the HTTP_ACCEPT_LANGUAGE key from the request, which stores
-        # language preferences as defined in the user's browser. Several
-        # languages can be listed, from most to less wanted.
-        res = self.REQUEST.get('HTTP_ACCEPT_LANGUAGE', None)
-        if not res:
-            return 'en'
-        if ',' in res:
-            res = res[:res.find(',')]
-        if '-' in res:
-            res = res[:res.find('-')]
-        return res
-
     security.declareProtected(ModifyPortalContent, 'convertAnnexes')
 
     def convertAnnexes(self):
