@@ -5203,7 +5203,7 @@ class testMeetingItem(PloneMeetingTestCase):
         helper = view.get_generation_context_helper()
 
         printed_assembly = helper.printAssembly()
-        # Every attendee first name and lastname must be in view.printAssembly()
+        # Every attendee firstname and lastname must be in view.printAssembly()
         for attendee in item.getAttendees(theObjects=True):
             self.assertIn(attendee.get_person().firstname, printed_assembly)
             self.assertIn(attendee.get_person().lastname, printed_assembly)
