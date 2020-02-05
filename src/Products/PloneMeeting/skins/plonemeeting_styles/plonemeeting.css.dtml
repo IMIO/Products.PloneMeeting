@@ -295,6 +295,7 @@ body:not([class*='section-contacts']) .state-active, .label-state-active {color:
 /* red */
 div.viewlet_workflowstate span.state-advicecreated,
 div.viewlet_workflowstate span.state-created,
+div.viewlet_workflowstate span.state-inactive,
 div.viewlet_workflowstate span.state-itemcreated,
 div.viewlet_workflowstate span.state-itemcreated_waiting_advices,
 div.viewlet_workflowstate span.state-advice_under_edit {
@@ -380,6 +381,7 @@ div.viewlet_workflowstate span.state-decisions_published {
 .state-decided,
 .state-decisions_published {color: black;}
 /* green */
+div.viewlet_workflowstate span.state-active,
 div.viewlet_workflowstate span.state-accepted,
 div.viewlet_workflowstate span.state-accepted_but_modified,
 div.viewlet_workflowstate span.state-accepted_out_of_meeting,
@@ -418,29 +420,6 @@ div.viewlet_workflowstate span.state-refused {
 .transition-delay { color: grey !important; }
 .transition-refuse { color: violet !important; }
 .transition-close { color: black !important; }
-
-#plone-contentmenu-workflow .state-inactive,
-#plone-contentmenu-workflow .state-advice_under_edit {
-    border-radius: 0.5em 0.5em 0.5em 0.5em;
-    background-color: red;
-    padding: 0 0.5em;
-    color: white !important;
-    border: 2px solid red;
-}
-#plone-contentmenu-workflow .state-advice_given {
-    border-radius: 0.5em 0.5em 0.5em 0.5em;
-    background-color: grey;
-    padding: 0 0.5em;
-    color: white !important;
-    border: 2px solid grey;
-}
-#plone-contentmenu-workflow .state-active {
-    border-radius: 0.5em 0.5em 0.5em 0.5em;
-    background-color: green;
-    padding: 0 0.5em;
-    color: white !important;
-    border: 2px solid green;
-}
 
 .somethingtodo { color: red !important; }
 .selectRow { }

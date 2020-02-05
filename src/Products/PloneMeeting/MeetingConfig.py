@@ -2539,7 +2539,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
-                    'tal_condition': "python: tool.get_orgs_for_user()",
+                    'tal_condition': "python: tool.get_orgs_for_user(the_objects=False)",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Living items, items in the current flow, by default every states but decidedStates
@@ -2558,7 +2558,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
-                    'tal_condition': "python: tool.get_orgs_for_user()",
+                    'tal_condition': "python: tool.get_orgs_for_user(the_objects=False)",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Items I take over
@@ -2575,8 +2575,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_reversed': True,
                     'showNumberOfItems': False,
                     'tal_condition': "python: 'takenOverBy' in cfg.getUsedItemAttributes() "
-                                     "and (tool.get_orgs_for_user(omittedSuffixes=['observers', ]) or "
-                                     "tool.isManager(here))",
+                                     "and (tool.get_orgs_for_user(omittedSuffixes=['observers', ], "
+                                     "the_objects=False) or tool.isManager(here))",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # All (visible) items
@@ -5530,7 +5530,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def userIsAReviewer(self):
         '''Is current user a reviewer?  So is current user among groups of reviewers?'''
         tool = api.portal.get_tool('portal_plonemeeting')
+<<<<<<< HEAD
         return bool(tool.get_orgs_for_user(suffixes=reviewersFor(self).keys()))
+=======
+        return bool(tool.get_orgs_for_user(suffixes=reviewersFor(self.getItemWorkflow()).keys(),
+                                           the_objects=False))
+>>>>>>> origin/master
 
     def _highestReviewerLevel(self, groupIds):
         '''Return highest reviewer level found in given p_groupIds.'''
@@ -6041,10 +6046,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         if filtered:
             tool = api.portal.get_tool('portal_plonemeeting')
             member = api.user.get_current()
-            memberGroups = [org.UID() for org in
-                            tool.get_orgs_for_user(user_id=member.getId(), suffixes=['creators'])]
+            memberOrgUids = [org_uid for org_uid in
+                             tool.get_orgs_for_user(
+                                 user_id=member.getId(),
+                                 suffixes=['creators'],
+                                 the_objects=False)]
             query['templateUsingGroups'] = ('__nothing_selected__', '__folder_in_itemtemplates__', ) + \
-                tuple(memberGroups)
+                tuple(memberOrgUids)
         return query
 
     security.declarePublic('getItemTemplates')

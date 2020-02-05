@@ -9,6 +9,10 @@ Changelog
 - Adapted MeetingItem._update_after_edit to be able to pass only some indexes to reindex, adapted async methods (change itemlisttype, itemcompleteness, ...) accordingly.
   By defaukt, MeetingItem._update_after_edit will do a full reindex but if some specific indexes are given, only these indexes are reindexed
 - Avoid useless full reindex when RichText field is edited using quick edit and when annex is added/edited/removed
+- While using ToolPloneMeeting.get_orgs_for_user, use the_objects=False as much as possible as this method is cached, returned objects could behave weirdly
+- Avoid an error with zope users during install when `collective.indexing` is used
+- Changed the user recovery code so that it works with an "ldap" configuration. This change allows the use of notifications with an "ldap" configuration.
+- Fix MeetingItem.getItemSignatories so it returns an empty dict when there is no signatories
 - Adapted print_meeting_date and print_preferred_meeting_date so they can now be used in restricted or unrestricted mode.
 - Item validation workflow is now designed in the MeetingConfig.itemWFValidationLevels, this imply :
     - to no longer rely on MEETINGROLES and MEETINGREVIEWERS constants;

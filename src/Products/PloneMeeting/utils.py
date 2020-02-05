@@ -549,9 +549,8 @@ def sendMailIfRelevant(obj, event, permissionOrSuffix, isSuffix=False,
         if plone_group:
             userIds = plone_group.getGroupMemberIds()
     else:
-        userIds = membershipTool.listMemberIds()
-        # When using the LDAP plugin, this method does not return all
-        # users, nor the cached users!
+        # Warning "_members" returns all users (even deleted users), the filter must do this afterwards.
+        userIds = api.portal.get_tool('portal_memberdata')._members
     for userId in userIds:
         user = membershipTool.getMemberById(userId)
         # do not warn user doing the action
