@@ -13,6 +13,7 @@ Changelog
 - Avoid an error with zope users during install when `collective.indexing` is used
 - Changed the user recovery code so that it works with an "ldap" configuration. This change allows the use of notifications with an "ldap" configuration.
 - Fix MeetingItem.getItemSignatories so it returns an empty dict when there is no signatories
+- Fixed item view template when using field `proposingGroupWithGroupInCharge`, it may be empty when used on an item template
 
 4.1.15 (2020-01-10)
 -------------------

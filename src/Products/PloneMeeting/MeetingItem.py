@@ -2221,10 +2221,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def setProposingGroupWithGroupInCharge(self, value, **kwargs):
         '''Overrides the field 'proposingGroupWithGroupInCharge' mutator to be able to
            set a correct 'proposingGroup' and 'groupsInCharge' from received value.'''
+        # value may be empty if used on an itemTemplate
+        proposingGroup = groupInCharge = ''
         if value:
             proposingGroup, groupInCharge = value.split('__groupincharge__')
-            self.setProposingGroup(proposingGroup)
-            self.setGroupsInCharge([groupInCharge])
+        self.setProposingGroup(proposingGroup)
+        self.setGroupsInCharge([groupInCharge])
         self.getField('proposingGroupWithGroupInCharge').set(self, value, **kwargs)
 
     def _adaptLinesValueToBeCompared(self, value):
