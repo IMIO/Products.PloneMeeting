@@ -626,6 +626,10 @@ class testAnnexes(PloneMeetingTestCase):
                          {'pmCreator1': ['Owner'],
                           self.developers_creators: ['AnnexReader']})
 
+    def _manage_custom_searchable_fields(self, item):
+        """"""
+        pass
+
     def test_pm_AnnexesTitleFoundInItemSearchableText(self):
         '''Annexes title is indexed in the item SearchableText.'''
         ANNEX_TITLE = "SpecialAnnexTitle"
@@ -636,6 +640,7 @@ class testAnnexes(PloneMeetingTestCase):
         item = self.create('MeetingItem', title=ITEM_TITLE)
         item.setDescription(ITEM_DESCRIPTION)
         item.setDecision(ITEM_DECISION)
+        self._manage_custom_searchable_fields(item)
         item.reindexObject(idxs=['SearchableText', ])
         catalog = self.portal.portal_catalog
         index = catalog.Indexes['SearchableText']
