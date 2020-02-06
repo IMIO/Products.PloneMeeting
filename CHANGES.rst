@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2a1 (unreleased)
+4.2a1 (2020-02-06)
 ------------------
 
 - Item validation workflow is now designed in the MeetingConfig.itemWFValidationLevels, this imply :
