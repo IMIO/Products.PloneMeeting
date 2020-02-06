@@ -310,6 +310,7 @@ class MeetingItemWorkflowConditions(object):
            - if advice not given, user must be able to evaluate completeness and item must be incomplete.'''
         item_state = self.context.queryState()
         user_plone_groups = self.tool.get_plone_groups_for_user()
+        res = False
         for org_uid in self.context.adviceIndex:
             org = get_organization(org_uid)
             # org can give advice in current state and member is adviser for it
@@ -319,8 +320,9 @@ class MeetingItemWorkflowConditions(object):
                  not self.context.adapted()._is_complete())) and \
                get_plone_group_id(org_uid, 'advisers') in user_plone_groups and \
                self._currentUserIsAdviserAbleToSendItemBackExtraCondition(org, destinationState):
-                return True
-        return False
+                res = True
+                break
+        return res
 
     security.declarePublic('mayCorrect')
 
