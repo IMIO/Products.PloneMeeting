@@ -897,8 +897,6 @@ class testAnnexes(PloneMeetingTestCase):
         item.restrictedTraverse('@@delete_givenuid')(annexDecision1.UID())
 
         self.proposeItem(item)
-        import ipdb
-        ipdb.set_trace()
         # creator no more able to delete annex
         self.assertFalse(IContentDeletable(annex2).mayDelete())
         self.assertFalse(IContentDeletable(annexDecision2).mayDelete())
