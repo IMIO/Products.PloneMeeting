@@ -829,6 +829,9 @@ class BaseDGHV(object):
         # as amqp is activated when necessary
         from imio.zamqp.core.utils import next_scan_id
         scan_id = next_scan_id(file_portal_types=['annex', 'annexDecision'])
+        # append a special value to scan_id stored in REQUEST if it is not a stored value
+        if self.request.get('store_as_annex', '0') != '1':
+            scan_id = scan_id + ' [Tmp QR code!!!]'
         # make the 'item_scan_id' value available in the REQUEST
         self.request.set(ITEM_SCAN_ID_NAME, scan_id)
         return scan_id

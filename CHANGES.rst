@@ -11,9 +11,10 @@ Changelog
 - Avoid useless full reindex when RichText field is edited using quick edit and when annex is added/edited/removed
 - While using ToolPloneMeeting.get_orgs_for_user, use the_objects=False as much as possible as this method is cached, returned objects could behave weirdly
 - Avoid an error with zope users during install when `collective.indexing` is used
-- Changed the user recovery code so that it works with an "ldap" configuration. This change allows the use of notifications with an "ldap" configuration.
+- Changed the user recovery code so that it works with an "ldap" configuration. This change allows the use of notifications with an "ldap" configuration
 - Fix MeetingItem.getItemSignatories so it returns an empty dict when there is no signatories
 - Fixed item view template when using field `proposingGroupWithGroupInCharge`, it may be empty when used on an item template
+- In `BaseDGHV.get_scan_id`, append a special value 'Temporary' to generated QR code when is it generated and still not stored as annex as it is subject to change at next generation
 
 4.1.15 (2020-01-10)
 -------------------
