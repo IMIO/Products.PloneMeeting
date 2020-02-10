@@ -134,7 +134,7 @@
                 define="redefinedItemAssemblies python: context.redefinedItemAssemblies();
                         redefinedItemSignatures python: context.getItemSignatures(real=True) or context.getItemSignatories(real=True);
                         mayQuickEditItemAssembly context/mayQuickEditItemAssembly;
-                        mayQuickEditItemSignatures python: 'signatures' in usedMeetingAttrs and context.mayQuickEdit('itemSignatures', bypassWritePermissionCheck=True);">
+                        mayQuickEditItemSignatures context/mayQuickEditItemSignatures;">
               <div id="assembly-and-signatures"
                   onclick="togglePersonsCookie();;toggleDoc('collapsible-assembly-and-signatures');"
                   class="collapsible discreet">

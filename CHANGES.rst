@@ -16,6 +16,7 @@ Changelog
 - Fixed item view template when using field `proposingGroupWithGroupInCharge`, it may be empty when used on an item template
 - In `BaseDGHV.get_scan_id`, append a special value 'Temporary' to generated QR code when is it generated and still not stored as annex as it is subject to change at next generation
 - Fixed bug with itemAssembly and itemSignatures edition where an item with redefined itemAssembly/itemSignatures in a non closed meeting was editable by anybody
+- Added possibility to configure attributes of annexes (confidentiality, to_be_printed, ...) that will only be displayed and/or editable to MeetingManagers
 
 4.1.15 (2020-01-10)
 -------------------

@@ -435,7 +435,8 @@ class MeetingConfigDescriptor(Descriptor):
                          'customAdvisers', 'selectableCopyGroups', 'itemCopyGroupsStates', 'votesEncoder',
                          'meetingTopicStates', 'decisionTopicStates', 'itemFieldsToKeepConfigSortingFor',
                          'listTypes', 'selectablePrivacies', 'xhtmlTransformFields', 'xhtmlTransformTypes',
-                         'usedVoteValues', 'insertingMethodsOnAddItem', 'itemAnnexConfidentialVisibleFor',
+                         'usedVoteValues', 'insertingMethodsOnAddItem',
+                         'annexRestrictShownAndEditableAttributes', 'itemAnnexConfidentialVisibleFor',
                          'adviceAnnexConfidentialVisibleFor', 'meetingAnnexConfidentialVisibleFor',
                          'enableAdviceConfidentiality', 'adviceConfidentialityDefault', 'adviceConfidentialFor',
                          'hideNotViewableLinkedItemsTo', 'inheritedAdviceRemoveableByAdviser', 'usingGroups',
@@ -559,6 +560,7 @@ class MeetingConfigDescriptor(Descriptor):
         # which a "delta" is applied as defined hereafter (same format as
         # above fields).
         self.preMeetingDateDefault = '4.08:30'
+        self.annexRestrictShownAndEditableAttributes = ()
         # annex confidentiality, setting something in 3 attributes here
         # under will automatically enable confidentiality on relevant CategoryGroup
         self.itemAnnexConfidentialVisibleFor = ()

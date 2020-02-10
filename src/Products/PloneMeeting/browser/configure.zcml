@@ -906,6 +906,27 @@
           class="Products.PloneMeeting.browser.overrides.PMConfidentialChangeView"
           permission="zope2.View"
           />
+        <browser:page
+          name="iconified-publishable"
+          for="imio.annex.content.annex.IAnnex"
+          layer="collective.iconifiedcategory.interfaces.ICollectiveIconifiedCategoryLayer"
+          class="Products.PloneMeeting.browser.overrides.PMPublishableChangeView"
+          permission="zope2.View"
+          />
+        <browser:page
+          name="iconified-signed"
+          for="imio.annex.content.annex.IAnnex"
+          layer="collective.iconifiedcategory.interfaces.ICollectiveIconifiedCategoryLayer"
+          class="Products.PloneMeeting.browser.overrides.PMSignedChangeView"
+          permission="zope2.View"
+          />
+        <browser:page
+          name="iconified-print"
+          for="imio.annex.content.annex.IAnnex"
+          layer="collective.iconifiedcategory.interfaces.ICollectiveIconifiedCategoryLayer"
+          class="Products.PloneMeeting.browser.overrides.PMToPrintChangeView"
+          permission="zope2.View"
+          />
     </configure>
 
     <browser:page
