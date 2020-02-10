@@ -2792,6 +2792,64 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertRaises(Unauthorized, formAssembly.update)
         self.assertRaises(Unauthorized, formSignatures.update)
 
+    def test_pm_MayQuickEditItemAssemblyAndSignatures(self):
+        """Method that protects edition of itemAssembly/itemSignatures fields.
+           Only a MeetingManager may edit these fields until meeting is closed."""
+        def _checkOnlyEditableByManagers(item,
+                                         may_edit=['pmManager'],
+                                         may_not_edit=['pmCreator1', 'pmReviewer1']):
+            """ """
+            original_user_id = self.member.getId()
+            for user_id in may_edit:
+                self.changeUser(user_id)
+                self.assertTrue(item.mayQuickEditItemAssembly())
+                self.assertTrue(item.mayQuickEditItemSignatures())
+            for user_id in may_not_edit:
+                self.changeUser(user_id)
+                self.assertFalse(item.mayQuickEditItemAssembly())
+                self.assertFalse(item.mayQuickEditItemSignatures())
+            self.changeUser(original_user_id)
+
+        cfg = self.meetingConfig
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        item.setDecision(self.decisionText)
+        cfg.setUsedMeetingAttributes(('assembly', 'signatures'))
+        self.assertFalse(item.mayQuickEditItemAssembly())
+        self.assertFalse(item.mayQuickEditItemSignatures())
+        self.validateItem(item)
+        self.changeUser('pmReviewer1')
+        self.assertFalse(item.mayQuickEditItemAssembly())
+        self.assertFalse(item.mayQuickEditItemSignatures())
+        # only editable when in meeting
+        self.changeUser('pmManager')
+        self.assertFalse(item.mayQuickEditItemAssembly())
+        self.assertFalse(item.mayQuickEditItemSignatures())
+        meeting = self.create('Meeting', date=DateTime('2020/02/10'))
+        self.presentItem(item)
+        _checkOnlyEditableByManagers(item)
+        # decide meeting
+        self.decideMeeting(meeting)
+        _checkOnlyEditableByManagers(item)
+        # accept item
+        self.do(item, 'accept')
+        _checkOnlyEditableByManagers(item)
+        # if not used, fields are not editable
+        cfg.setUsedMeetingAttributes(())
+        _checkOnlyEditableByManagers(item,
+                                     may_edit=[],
+                                     may_not_edit=['pmManager', 'pmCreator1', 'pmReviewer1'])
+        cfg.setUsedMeetingAttributes(('assembly', 'signatures'))
+        # change itemAssembly/itemSignatures
+        item.setItemAssembly('New assembly')
+        item.setItemSignatures('New signatures')
+        _checkOnlyEditableByManagers(item)
+        # no more editable by anybody when meeting closed
+        self.closeMeeting(meeting)
+        _checkOnlyEditableByManagers(item,
+                                     may_edit=[],
+                                     may_not_edit=['pmManager', 'pmCreator1', 'pmReviewer1'])
+
     def test_pm_Validate_item_assembly(self):
         """Test the method that validates item_assembly on the item_assembly_form.
            The validator logic is tested in testUtils.test_pm_Validate_item_assembly_value,
