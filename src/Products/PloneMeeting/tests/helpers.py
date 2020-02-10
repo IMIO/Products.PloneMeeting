@@ -232,21 +232,26 @@ class PloneMeetingTestingHelpers:
         meetingConfigNumber = self._determinateUsedMeetingConfigNumber()
         BACK_TO_WF_PATH = getattr(self, 'BACK_TO_WF_PATH_%d' % meetingConfigNumber)
         useDefinedWfPath = False
+        # check if a mapping exist for state name, returns original state if no mapping exists
+        state = self._stateMappingFor(state)
         if state in BACK_TO_WF_PATH:
             transitions = BACK_TO_WF_PATH[state]
             useDefinedWfPath = True
-        # check if a mapping exist for state name, returns original state if no mapping exists
-        state = self._stateMappingFor(state)
         # do things as admin to avoid permission issues
         currentUser = self.member.getId()
         self.changeUser('admin')
-        while not itemOrMeeting.queryState() == state:
+        max_attempts = 20
+        nb_attempts = 0
+        while not itemOrMeeting.queryState() == state or nb_attempts >= max_attempts:
+            nb_attempts += 1
             if not useDefinedWfPath:
                 transitions = self.transitions(itemOrMeeting)
             for tr in transitions:
                 if (tr.startswith('back') or useDefinedWfPath) and tr in self.transitions(itemOrMeeting):
                     self.do(itemOrMeeting, tr)
                     break
+        if nb_attempts >= max_attempts:
+            raise ValueError('impossible to go back to {}'.format(state))
         self.changeUser(currentUser)
 
     def _doTransitionsFor(self, itemOrMeeting, transitions):
