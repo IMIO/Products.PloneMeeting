@@ -1076,7 +1076,7 @@ class CategorizedAnnexesView(CategorizedTabView):
         self.portal_type = portal_type
         return super(CategorizedAnnexesView, self).table_render(portal_type=portal_type)
 
-    def _prepare_table_render(self, table, portal_type):
+    def _prepare_table_render(self, table):
         """To be removed when using collective.iconifiedcategory 0.39+"""
         if self.show('confidentiality'):
             alsoProvides(table, ICategorizedConfidential)
