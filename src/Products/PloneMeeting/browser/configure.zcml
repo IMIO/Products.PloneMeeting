@@ -69,10 +69,17 @@
             permission="zope2.View"/>
     </configure>
 
-    <!-- Annexes table view -->
+    <!-- Annexes table view, override @@iconifiedcategory and make it available under name @@categorized-annexes -->
     <browser:page
         for="*"
         name="categorized-annexes"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        class=".overrides.CategorizedAnnexesView"
+        permission="zope2.View"
+        template="templates/categorized_annexes.pt" />
+    <browser:page
+        for="Products.PloneMeeting.interfaces.IMeetingContent"
+        name="iconifiedcategory"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         class=".overrides.CategorizedAnnexesView"
         permission="zope2.View"

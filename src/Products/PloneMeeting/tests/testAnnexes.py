@@ -626,6 +626,72 @@ class testAnnexes(PloneMeetingTestCase):
                          {'pmCreator1': ['Owner'],
                           self.developers_creators: ['AnnexReader']})
 
+    def test_pm_AnnexRestrictShownAndEditableAttributes(self):
+        """Test MeetingConfig.annexRestrictShownAndEditableAttributes
+           that defines what annex attributes are displayed/editable only to MeetingManagers."""
+        # enable every attributes
+        self.changeUser('siteadmin')
+        cfg = self.meetingConfig
+        cfg.setAnnexRestrictShownAndEditableAttributes(())
+        config = cfg.annexes_types.item_annexes
+        annex_attr_names = (
+            'confidentiality_activated',
+            'signed_activated',
+            'publishable_activated',
+            'to_be_printed_activated')
+        # enable every attr for annex, none for annexDecision
+        for attr_name in annex_attr_names:
+            setattr(config, attr_name, True)
+
+        # helper check method
+        annex_attr_change_view_names = (
+            '@@iconified-confidential',
+            '@@iconified-signed',
+            '@@iconified-publishable',
+            '@@iconified-print')
+
+        def _check(annexes_table,
+                   annex,
+                   annex_decision,
+                   displayed=annex_attr_change_view_names,
+                   editable=annex_attr_change_view_names):
+            ''' '''
+            # nothing displayed for annexDecision
+            for view_name in displayed:
+                self.assertTrue(view_name in annexes_table.table_render(portal_type='annex'))
+                self.assertFalse(view_name in annexes_table.table_render(portal_type='annexDecision'))
+            for view_name in editable:
+                self.assertTrue(annex.restrictedTraverse(view_name)._may_set_values({}))
+                self.assertFalse(annex_decision.restrictedTraverse(view_name)._may_set_values({}))
+
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        annex = self.addAnnex(item)
+        annex_decision = self.addAnnex(item, relatedTo='item_decision')
+        annexes_table = item.restrictedTraverse('@@iconifiedcategory')
+        # everything displayed/editable by user
+        self.assertEqual(cfg.getAnnexRestrictShownAndEditableAttributes(), ())
+        _check(annexes_table, annex, annex_decision)
+        # confidential no more editable but viewable
+        cfg.setAnnexRestrictShownAndEditableAttributes(('confidentiality_edit'))
+        list_editable_annex_attr_change_view_names = list(annex_attr_change_view_names)
+        list_editable_annex_attr_change_view_names.remove('@@iconified-confidential')
+        _check(annexes_table, annex, annex_decision, editable=list_editable_annex_attr_change_view_names)
+        # confidential and signed no more editable but viewable
+        cfg.setAnnexRestrictShownAndEditableAttributes(('confidentiality_edit', 'signed_edit'))
+        list_editable_annex_attr_change_view_names.remove('@@iconified-signed')
+        _check(annexes_table, annex, annex_decision, editable=list_editable_annex_attr_change_view_names)
+        # when someting not displayed, not editable automatically
+        cfg.setAnnexRestrictShownAndEditableAttributes(('confidentiality_edit',
+                                                        'signed_edit',
+                                                        'publishable_display'))
+        list_editable_annex_attr_change_view_names.remove('@@iconified-publishable')
+        list_displayed_annex_attr_change_view_names = list(annex_attr_change_view_names)
+        list_displayed_annex_attr_change_view_names.remove('@@iconified-publishable')
+        _check(annexes_table, annex, annex_decision,
+               editable=list_editable_annex_attr_change_view_names,
+               displayed=list_displayed_annex_attr_change_view_names)
+
     def _manage_custom_searchable_fields(self, item):
         """"""
         pass
