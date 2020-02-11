@@ -2147,19 +2147,6 @@ schema = Schema((
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
-    BooleanField(
-        name='ownerMayDeleteAnnexDecision',
-        default=defValues.ownerMayDeleteAnnexDecision,
-        widget=BooleanField._properties['widget'](
-            description="OwnerMayDeleteAnnexDecision",
-            description_msgid="owner_may_delete_annex_decision_descr",
-            label='Ownermaydeleteannexdecision',
-            label_msgid='PloneMeeting_label_ownerMayDeleteAnnexDecision',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="advices",
-        write_permission="PloneMeeting: Write risky config",
-    ),
     LinesField(
         name='annexRestrictShownAndEditableAttributes',
         widget=MultiSelectionWidget(
@@ -2175,6 +2162,19 @@ schema = Schema((
         vocabulary_factory='Products.PloneMeeting.vocabularies.annex_restrict_shown_and_editable_attributes_vocabulary',
         default=defValues.annexRestrictShownAndEditableAttributes,
         enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    BooleanField(
+        name='ownerMayDeleteAnnexDecision',
+        default=defValues.ownerMayDeleteAnnexDecision,
+        widget=BooleanField._properties['widget'](
+            description="OwnerMayDeleteAnnexDecision",
+            description_msgid="owner_may_delete_annex_decision_descr",
+            label='Ownermaydeleteannexdecision',
+            label_msgid='PloneMeeting_label_ownerMayDeleteAnnexDecision',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="advices",
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
