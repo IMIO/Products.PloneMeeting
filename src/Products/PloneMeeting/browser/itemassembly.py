@@ -347,12 +347,14 @@ class ManageItemAssemblyForm(form.Form):
     def handleCancel(self, action):
         self._finished = True
 
-    def update(self):
-        """ """
-        # raise Unauthorized if current user can not manage itemAssembly
+    def _check_auth(self):
+        """Raise Unauthorized if current user can not manage itemAssembly."""
         if not self.context.mayQuickEditItemAssembly():
             raise Unauthorized
 
+    def update(self):
+        """ """
+        self._check_auth()
         super(ManageItemAssemblyForm, self).update()
         # after calling parent's update, self.actions are available
         self.actions.get('cancel').addClass('standalone')
@@ -403,12 +405,7 @@ class ManageItemAssemblyForm(form.Form):
           The method actually do the job, set the itemAssembly on self.context
           and following items if defined
         """
-        # we check mayQuickEdit with bypassWritePermissionCheck=True
-        # so MeetingManagers are able to edit these infos on decided items
-        # until the linked meeting is closed
-        if not self.context.mayQuickEditItemAssembly():
-            raise Unauthorized
-
+        self._check_auth()
         # only update if default proposed value was changed
         item_assembly_def = item_assembly_default()
         item_excused_def = item_excused_default()
