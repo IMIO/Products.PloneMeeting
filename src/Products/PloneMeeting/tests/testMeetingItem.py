@@ -5511,7 +5511,7 @@ class testMeetingItem(PloneMeetingTestCase):
             performWorkflowAdaptations(cfg, logger=pm_logger)
         self.changeUser('pmCreator1')
         # creation time
-        text = '<p>Working external image <img src="http://www.imio.be/contact.png"/>.</p>'
+        text = '<p>Working external image <img src="https://i.picsum.photos/id/22/400/400.jpg"/>.</p>'
         pmFolder = self.getMeetingFolder()
         # do not use self.create to be sure that it works correctly with invokeFactory
         itemId = pmFolder.invokeFactory(cfg.getItemTypeName(),
@@ -5521,29 +5521,29 @@ class testMeetingItem(PloneMeetingTestCase):
         item = getattr(pmFolder, itemId)
         item.processForm()
         # contact.png was saved in the item
-        self.assertTrue('contact.png' in item.objectIds())
-        img = item.get('contact.png')
+        self.assertTrue('22-400x400.jpg' in item.objectIds())
+        img = item.get('22-400x400.jpg')
         # external image link was updated
         self.assertEqual(
             item.getRawDescription(),
             '<p>Working external image <img src="resolveuid/{0}">.</p>'.format(img.UID()))
 
         # test using the quickedit, test with field 'decision' where getRaw was overrided
-        decision = '<p>Working external image <img src="http://www.imio.be/mascotte-presentation.jpg"/>.</p>'
+        decision = '<p>Working external image <img src="https://i.picsum.photos/id/1025/400/300.jpg"/>.</p>'
         setFieldFromAjax(item, 'decision', decision)
-        self.assertTrue('mascotte-presentation.jpg' in item.objectIds())
-        img2 = item.get('mascotte-presentation.jpg')
+        self.assertTrue('1025-400x300.jpg' in item.objectIds())
+        img2 = item.get('1025-400x300.jpg')
         # external image link was updated
         self.assertEqual(
             item.getRawDecision(),
             '<p>Working external image <img src="resolveuid/{0}">.</p>'.format(img2.UID()))
 
         # test using at_post_edit_script, aka full edit form
-        decision = '<p>Working external image <img src="http://www.imio.be/spw.png"/>.</p>'
+        decision = '<p>Working external image <img src="https://i.picsum.photos/id/1035/600/400.jpg"/>.</p>'
         item.setDecision(decision)
         item._update_after_edit()
-        self.assertTrue('spw.png' in item.objectIds())
-        img3 = item.get('spw.png')
+        self.assertTrue('1035-600x400.jpg' in item.objectIds())
+        img3 = item.get('1035-600x400.jpg')
         # external image link was updated
         self.assertEqual(
             item.getRawDecision(),
@@ -5551,14 +5551,14 @@ class testMeetingItem(PloneMeetingTestCase):
 
         # link to unknown external image, like during copy/paste of content
         # that has a link to an unexisting image or so
-        decision = '<p>Not working external image <img src="http://www.imio.be/unknown_image.png">.</p>'
+        decision = '<p>Not working external image <img src="https://i.picsum.photos/id/449/400.png">.</p>'
         item.setDecision(decision)
         item._update_after_edit()
-        self.assertTrue('spw.png' in item.objectIds())
+        self.assertTrue('1035-600x400.jpg' in item.objectIds())
         # nothing was done
-        self.assertEqual(
+        self.assertListEqual(
             sorted(item.objectIds()),
-            ['contact.png', 'mascotte-presentation.jpg', 'spw.png'])
+            ['1025-400x300.jpg', '1035-600x400.jpg', '22-400x400.jpg'])
         self.assertEqual(item.getRawDecision(), decision)
 
     def test_pm_ItemInternalImagesStoredLocallyWhenItemDuplicated(self):
@@ -5582,19 +5582,19 @@ class testMeetingItem(PloneMeetingTestCase):
             '<p>Internal image <img src="{1}">.</p>' \
             '<p>Internal image 2 <img src="{2}">.</p>'
         text = text_pattern.format(
-            'http://www.imio.be/contact.png',
+            'https://i.picsum.photos/id/1025/400/300.jpg', # 1025-400x300.jpg
             img.absolute_url(),
             'resolveuid/{0}'.format(img2.UID()))
         item.setDescription(text)
         self.assertEqual(item.objectIds(), ['dot.gif', 'dot2.gif'])
         item._update_after_edit()
         # we have images saved locally
-        self.assertEqual(sorted(item.objectIds()), ['contact.png', 'dot.gif', 'dot2.gif'])
+        self.assertEqual(sorted(item.objectIds()), ['1025-400x300.jpg', 'dot.gif', 'dot2.gif'])
 
         # duplicate and check that uri are correct
         newItem = item.clone()
-        self.assertEqual(sorted(newItem.objectIds()), ['contact.png', 'dot.gif', 'dot2.gif'])
-        new_img = newItem.get('contact.png')
+        self.assertEqual(sorted(newItem.objectIds()), ['1025-400x300.jpg', 'dot.gif', 'dot2.gif'])
+        new_img = newItem.get('1025-400x300.jpg')
         new_img1 = newItem.get('dot.gif')
         new_img2 = newItem.get('dot2.gif')
         # every links are turned to resolveuid

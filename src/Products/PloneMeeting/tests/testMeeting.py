@@ -2547,7 +2547,7 @@ class testMeeting(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         self.presentItem(item)
         item.setPreferredMeeting(meeting.UID())
-        text = '<p>Text with image <img src="http://www.imio.be/contact.png"/>.</p>'
+        text = '<p>Text with image <img src="https://i.picsum.photos/id/1062/600/500.jpg"/>.</p>'
         item.setDecision(text)
         item._update_after_edit()
         self.deleteAsManager(meeting.UID())
@@ -2874,7 +2874,7 @@ class testMeeting(PloneMeetingTestCase):
         cfg = self.meetingConfig
         self.changeUser('pmManager')
         # creation time
-        text = '<p>Working external image <img src="http://www.imio.be/contact.png"/>.</p>'
+        text = '<p>Working external image <img src="https://i.picsum.photos/id/1062/600/500.jpg"/>.</p>'
         pmFolder = self.getMeetingFolder()
         # do not use self.create to be sure that it works correctly with invokeFactory
         meetingId = pmFolder.invokeFactory(cfg.getMeetingTypeName(),
@@ -2883,44 +2883,44 @@ class testMeeting(PloneMeetingTestCase):
                                            observations=text)
         meeting = getattr(pmFolder, meetingId)
         meeting.processForm()
-        self.assertTrue('contact.png' in meeting.objectIds())
-        img = meeting.get('contact.png')
+        self.assertTrue('1062-600x500.jpg' in meeting.objectIds())
+        img = meeting.get('1062-600x500.jpg')
         # link to image uses resolveuid
         self.assertEqual(
             meeting.getObservations(),
-            '<p>Working external image <img src="{0}" alt="contact.png" '
-            'title="contact.png" />.</p>'.format(img.absolute_url()))
+            '<p>Working external image <img src="{0}" alt="1062-600x500.jpg" '
+            'title="1062-600x500.jpg" />.</p>'.format(img.absolute_url()))
         self.assertEqual(
             meeting.getRawObservations(),
             '<p>Working external image <img src="resolveuid/{0}">.</p>'.format(img.UID()))
 
         # test using the quickedit
-        text = '<p>Working external image <img src="http://www.imio.be/mascotte-presentation.jpg"/>.</p>'
+        text = '<p>Working external image <img src="https://i.picsum.photos/id/1025/400/300.jpg"/>.</p>'
         setFieldFromAjax(meeting, 'observations', text)
-        self.assertTrue('mascotte-presentation.jpg' in meeting.objectIds())
-        img2 = meeting.get('mascotte-presentation.jpg')
+        self.assertTrue('1025-400x300.jpg' in meeting.objectIds())
+        img2 = meeting.get('1025-400x300.jpg')
 
         # link to image uses resolveuid
         self.assertEqual(
             meeting.getObservations(),
-            '<p>Working external image <img src="{0}" alt="mascotte-presentation.jpg" '
-            'title="mascotte-presentation.jpg" />.</p>'.format(img2.absolute_url()))
+            '<p>Working external image <img src="{0}" alt="1025-400x300.jpg" '
+            'title="1025-400x300.jpg" />.</p>'.format(img2.absolute_url()))
         self.assertEqual(
             meeting.getRawObservations(),
             '<p>Working external image <img src="resolveuid/{0}">.</p>'.format(img2.UID()))
 
         # test using processForm, aka full edit form
-        text = '<p>Working external image <img src="http://www.imio.be/spw.png"/>.</p>'
+        text = '<p>Working external image <img src="https://i.picsum.photos/id/22/400/400.jpg"/>.</p>'
         meeting.setObservations(text)
         meeting.processForm()
-        self.assertTrue('spw.png' in meeting.objectIds())
-        img3 = meeting.get('spw.png')
+        self.assertTrue('22-400x400.jpg' in meeting.objectIds())
+        img3 = meeting.get('22-400x400.jpg')
 
         # link to image uses resolveuid
         self.assertEqual(
             meeting.getObservations(),
-            '<p>Working external image <img src="{0}" alt="spw.png" '
-            'title="spw.png" />.</p>'.format(img3.absolute_url()))
+            '<p>Working external image <img src="{0}" alt="22-400x400.jpg" '
+            'title="22-400x400.jpg" />.</p>'.format(img3.absolute_url()))
         self.assertEqual(
             meeting.getRawObservations(),
             '<p>Working external image <img src="resolveuid/{0}">.</p>'.format(img3.UID()))
