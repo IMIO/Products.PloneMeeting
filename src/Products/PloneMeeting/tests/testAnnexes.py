@@ -419,7 +419,7 @@ class testAnnexes(PloneMeetingTestCase):
         self._checkElementConfidentialAnnexAccess(cfg, advice, annexNotConfidential, annexConfidential,
                                                   annexes_table, categorized_child)
 
-    def test_pm_AdviceGetCategorizedElementsWithConfidentialityForGroupInCharge(self):
+    def test_pm_AdviceGetCategorizedElementsWithConfidentialityForGroupsInCharge(self):
         ''' '''
         cfg = self.meetingConfig
         item_initial_state, item, advice, annexes_table, categorized_child, \
@@ -430,7 +430,7 @@ class testAnnexes(PloneMeetingTestCase):
 
         # does not fail in no group in charge
         self.assertFalse(proposingGroup.groups_in_charge)
-        cfg.setAdviceAnnexConfidentialVisibleFor(('reader_groupincharge', ))
+        cfg.setAdviceAnnexConfidentialVisibleFor(('reader_groupsincharge', ))
         update_all_categorized_elements(item)
         self._setUpGroupsInCharge(item)
         item.updateLocalRoles()
