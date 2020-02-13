@@ -192,7 +192,7 @@ class testAnnexes(PloneMeetingTestCase):
         self._checkElementConfidentialAnnexAccess(cfg, item, annexNotConfidential, annexConfidential,
                                                   annexes_table, categorized_child)
 
-    def test_pm_ItemGetCategorizedElementsWithConfidentialityForGroupInCharge(self):
+    def test_pm_ItemGetCategorizedElementsWithConfidentialityForGroupsInCharge(self):
         ''' '''
         cfg = self.meetingConfig
         item_initial_state, item, annexes_table, categorized_child, \
@@ -203,7 +203,7 @@ class testAnnexes(PloneMeetingTestCase):
 
         # does not fail in no group in charge
         self.assertFalse(proposingGroup.groups_in_charge)
-        cfg.setItemAnnexConfidentialVisibleFor(('reader_groupincharge', ))
+        cfg.setItemAnnexConfidentialVisibleFor(('reader_groupsincharge', ))
         update_all_categorized_elements(item)
         self._setUpGroupsInCharge(item)
 
@@ -257,6 +257,12 @@ class testAnnexes(PloneMeetingTestCase):
                                              annexes_table,
                                              categorized_child):
         """ """
+        # avoid wrong value in cfg.xxxAnnexConfidentialVisibleFor fields
+        for field_name in ('itemAnnexConfidentialVisibleFor',
+                           'adviceAnnexConfidentialVisibleFor',
+                           'meetingAnnexConfidentialVisibleFor'):
+            field = cfg.getField(field_name)
+            self.assertIsNone(field.validate(field.get(cfg), cfg))
         self.assertTrue(self.hasPermission(View, obj))
         self._checkMayAccessConfidentialAnnexes(obj, annexNotConfidential, annexConfidential,
                                                 annexes_table, categorized_child)
