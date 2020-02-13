@@ -818,7 +818,7 @@ def onAnnexSignedChanged(annex, event):
     annex = event.object
 
     # if parent is a MeetingItem, update the 'hasAnnexesToSign' index
-    parent = annex.getParentNode()
+    parent = annex.aq_parent
     if parent.meta_type == 'MeetingItem':
         parent.reindexObject(idxs=['hasAnnexesToSign'])
 

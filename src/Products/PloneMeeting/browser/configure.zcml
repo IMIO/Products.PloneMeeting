@@ -69,10 +69,17 @@
             permission="zope2.View"/>
     </configure>
 
-    <!-- Annexes table view -->
+    <!-- Annexes table view, override @@iconifiedcategory and make it available under name @@categorized-annexes -->
     <browser:page
         for="*"
         name="categorized-annexes"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        class=".overrides.CategorizedAnnexesView"
+        permission="zope2.View"
+        template="templates/categorized_annexes.pt" />
+    <browser:page
+        for="Products.PloneMeeting.interfaces.IMeetingContent"
+        name="iconifiedcategory"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         class=".overrides.CategorizedAnnexesView"
         permission="zope2.View"
@@ -904,6 +911,27 @@
           for="imio.annex.content.annex.IAnnex"
           layer="collective.iconifiedcategory.interfaces.ICollectiveIconifiedCategoryLayer"
           class="Products.PloneMeeting.browser.overrides.PMConfidentialChangeView"
+          permission="zope2.View"
+          />
+        <browser:page
+          name="iconified-publishable"
+          for="imio.annex.content.annex.IAnnex"
+          layer="collective.iconifiedcategory.interfaces.ICollectiveIconifiedCategoryLayer"
+          class="Products.PloneMeeting.browser.overrides.PMPublishableChangeView"
+          permission="zope2.View"
+          />
+        <browser:page
+          name="iconified-signed"
+          for="imio.annex.content.annex.IAnnex"
+          layer="collective.iconifiedcategory.interfaces.ICollectiveIconifiedCategoryLayer"
+          class="Products.PloneMeeting.browser.overrides.PMSignedChangeView"
+          permission="zope2.View"
+          />
+        <browser:page
+          name="iconified-print"
+          for="imio.annex.content.annex.IAnnex"
+          layer="collective.iconifiedcategory.interfaces.ICollectiveIconifiedCategoryLayer"
+          class="Products.PloneMeeting.browser.overrides.PMToPrintChangeView"
           permission="zope2.View"
           />
     </configure>

@@ -2147,6 +2147,23 @@ schema = Schema((
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
+    LinesField(
+        name='annexRestrictShownAndEditableAttributes',
+        widget=MultiSelectionWidget(
+            format="checkbox",
+            description="AnnexRestrictShownAndEditableAttributes",
+            description_msgid="annex_restrict_shown_and_editable_attributes_descr",
+            label='Annexrestrictshownandeditableattributes',
+            label_msgid='PloneMeeting_label_annexRestrictShownAndEditableAttributes',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="advices",
+        multiValued=1,
+        vocabulary_factory='Products.PloneMeeting.vocabularies.annex_restrict_shown_and_editable_attributes_vocabulary',
+        default=defValues.annexRestrictShownAndEditableAttributes,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
     BooleanField(
         name='ownerMayDeleteAnnexDecision',
         default=defValues.ownerMayDeleteAnnexDecision,
