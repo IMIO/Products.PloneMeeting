@@ -408,7 +408,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             if api.content.get_state(cfg) == 'active' and \
                self.checkMayView(cfg) and \
                (isManager or isPowerObserver or
-                    (check_using_groups and self.get_orgs_for_user(using_groups=cfg.getUsingGroups()))):
+                    (check_using_groups and self.get_orgs_for_user(using_groups=cfg.getUsingGroups(),
+                                                                   the_objects=False))):
                 res.append(cfg)
         return res
 
@@ -440,6 +441,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         if api.user.is_anonymous():
             return []
         user = userId and api.user.get(userId) or api.user.get_current()
+        if not hasattr(user, "getGroups"):
+            return []
         user_groups = user.getGroups()
         if org_uid:
             user_groups = [plone_group for plone_group in user_groups if plone_group.startswith(org_uid)]
@@ -1124,9 +1127,10 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         # Change the proposing group if the item owner does not belong to
         # the defined proposing group, except if p_keepProposingGroup is True
         if not keepProposingGroup:
-            userGroups = self.get_orgs_for_user(user_id=newOwnerId, suffixes=['creators', ])
-            if userGroups and newItem.getProposingGroup(True) not in userGroups:
-                newItem.setProposingGroup(userGroups[0].UID())
+            userGroupUids = self.get_orgs_for_user(
+                user_id=newOwnerId, suffixes=['creators', ], the_objects=False)
+            if userGroupUids and newItem.getProposingGroup(True) not in userGroupUids:
+                newItem.setProposingGroup(userGroupUids[0])
 
         if newOwnerId != loggedUserId:
             plone_utils = api.portal.get_tool('plone_utils')
@@ -1310,59 +1314,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         # Finally, prefix the date with "Meeting of" when required.
         if prefixed:
             res = translate('meeting_of', domain='PloneMeeting', context=self.REQUEST) + ' ' + res
-        return res
-
-    security.declarePublic('findSecondLanguage')
-
-    def findSecondLanguage(self):
-        '''The second language used is the second language in portal_languages.supported_langs
-           that is not the defaultLanguage considered as the 'first language'.'''
-        languagesTool = api.portal.get_tool('portal_languages')
-        supported_langs = languagesTool.getSupportedLanguages()
-        res = None
-        if len(supported_langs) == 2:
-            defaultLanguage = languagesTool.getDefaultLanguage()
-            for supported_lang in supported_langs:
-                if not supported_lang == defaultLanguage:
-                    res = supported_lang
-                    break
-        return res
-
-    security.declarePublic('showTogglePersons')
-
-    def showTogglePersons(self, context):
-        '''Under what circumstances must action 'toggle persons' be shown?'''
-        # If we are on a meeting return True
-        rq = context.REQUEST
-        cfg = context.portal_plonemeeting.getMeetingConfig(context)
-        if not cfg:
-            return
-        if 'attendees' not in cfg.getUsedMeetingAttributes():
-            return
-        if context.getLayout() in ('meeting_view', 'meetingitem_view'):
-            res = not rq['ACTUAL_URL'].endswith('_edit') and not rq['ACTUAL_URL'].endswith('_form')
-            if context.meta_type == 'MeetingItem':
-                return res and context.hasMeeting()
-            return res
-
-    security.declarePublic('getUserLanguage')
-
-    def getUserLanguage(self):
-        '''Gets the language (code) of the current user.'''
-        # Try first the "LANGUAGE" key from the request
-        res = self.REQUEST.get('LANGUAGE', None)
-        if res:
-            return res
-        # Try then the HTTP_ACCEPT_LANGUAGE key from the request, which stores
-        # language preferences as defined in the user's browser. Several
-        # languages can be listed, from most to less wanted.
-        res = self.REQUEST.get('HTTP_ACCEPT_LANGUAGE', None)
-        if not res:
-            return 'en'
-        if ',' in res:
-            res = res[:res.find(',')]
-        if '-' in res:
-            res = res[:res.find('-')]
         return res
 
     security.declareProtected(ModifyPortalContent, 'convertAnnexes')

@@ -108,6 +108,13 @@ class testViews(PloneMeetingTestCase):
         for brain in itemTemplates:
             itemTemplate = brain.getObject()
             itemTemplate()
+        # test when 'proposingGroupWithGroupInCharge' is used
+        usedItemAttrs = cfg.getUsedItemAttributes()
+        if 'proposingGroupWithGroupInCharge' not in usedItemAttrs:
+            cfg.setUsedItemAttributes(usedItemAttrs + ('proposingGroupWithGroupInCharge', ))
+        for brain in itemTemplates:
+            itemTemplate = brain.getObject()
+            itemTemplate()
 
     def test_pm_CreateItemFromTemplate(self):
         '''Test the createItemFromTemplate functionnality triggered from the plonemeeting portlet.'''

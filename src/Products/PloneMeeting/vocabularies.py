@@ -1413,6 +1413,29 @@ class ItemAllStatesVocabulary(object):
 ItemAllStatesVocabularyFactory = ItemAllStatesVocabulary()
 
 
+class AnnexRestrictShownAndEditableAttributesVocabulary(object):
+    """ """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        res = []
+        annex_attributes = ['confidentiality', 'to_be_printed', 'signed', 'publishable']
+        for annex_attr in annex_attributes:
+            for suffix in ('display', 'edit'):
+                term_id = '{0}_{1}'.format(annex_attr, suffix)
+                res.append(SimpleTerm(
+                    term_id,
+                    term_id,
+                    translate(term_id,
+                              domain='PloneMeeting',
+                              context=context.REQUEST)
+                ))
+        return SimpleVocabulary(res)
+
+
+AnnexRestrictShownAndEditableAttributesVocabularyFactory = AnnexRestrictShownAndEditableAttributesVocabulary()
+
+
 class KeepAccessToItemWhenAdviceIsGivenVocabulary(object):
     """ """
     implements(IVocabularyFactory)

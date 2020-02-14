@@ -1051,9 +1051,14 @@ class testContacts(PloneMeetingTestCase):
         self.assertEqual(agent_interne_hp.get_organization(), own_org)
         # we can import organizations into another, we imported 4 orgs under my org
         self.assertEqual(
-            own_org.objectIds(),
-            ['developers', 'vendors', 'endUsers',
-             'service-1', 'service-2', 'service-associe-1', 'service-associe-2'])
+            [org.id for org in own_org.objectValues()],
+            ['developers',
+             'vendors',
+             'endUsers',
+             'service-1',
+             'service-2',
+             'service-associe-1',
+             'service-associe-2'])
 
     def test_pm_Gender_and_number_from_position_type(self):
         """Return gender/number values depending on used position type."""
