@@ -19,6 +19,8 @@ Changelog
 - Fixed bug with item confidential annex shown to groupsInCharge that were actually not shown because of a typo in adapters._reader_groups (groupincharge was renamed to groupsincharge),
   the same typo was left in the tests so it was passing...  Test was adapted to double check that values stored in MeetingConfig are existing in field vocabulary
 - Added possibility to configure attributes of annexes (confidentiality, to_be_printed, ...) that will only be displayed and/or editable to MeetingManagers
+- Override ploneview.Plone.showEditableBorder to hide the green bar for folders stored in contacts directory
+- By default, hide the `sharing` tab everywhere
 
 4.1.15 (2020-01-10)
 -------------------

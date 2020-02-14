@@ -9,20 +9,18 @@
         for="*"
         view="plone.app.layout.globals.interfaces.IViewView"
         manager="plone.app.layout.viewlets.interfaces.IContentViews"
-        class="Products.PloneMeeting.browser.overrides.PloneMeetingContentActionsViewlet"
+        class="Products.PloneMeeting.browser.overrides.PMContentActionsViewlet"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
-        permission="cmf.ManagePortal"
-        />
+        permission="cmf.ManagePortal" />
 
     <browser:viewlet
         name="plone.contentactions"
         for="*"
         view="plone.app.content.browser.interfaces.IFolderContentsView"
         manager="plone.app.layout.viewlets.interfaces.IContentViews"
-        class="Products.PloneMeeting.browser.overrides.PloneMeetingContentActionsViewlet"
+        class="Products.PloneMeeting.browser.overrides.PMContentActionsViewlet"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
-        permission="cmf.ManagePortal"
-        />
+        permission="cmf.ManagePortal" />
 
     <browser:viewlet
         name="plone.global_sections"
@@ -30,8 +28,7 @@
         class=".browser.overrides.PMGlobalSectionsViewlet"
         template="browser/templates/sections.pt"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
-        permission="zope2.View"
-        />
+        permission="zope2.View" />
 
     <!-- Override imio.history document byline -->
     <browser:viewlet
@@ -39,8 +36,7 @@
         manager="plone.app.layout.viewlets.interfaces.IBelowContentTitle"
         class=".browser.overrides.PMDocumentBylineViewlet"
         layer="imio.history.interfaces.IImioHistoryLayer"
-        permission="zope2.View"
-        />
+        permission="zope2.View" />
 
     <browser:viewlet
         for="eea.facetednavigation.interfaces.IFacetedNavigable"
@@ -48,15 +44,13 @@
         manager="collective.eeafaceted.z3ctable.interfaces.ITopAboveNavManager"
         class="Products.PloneMeeting.browser.overrides.PMDashboardDocumentGeneratorLinksViewlet"
         layer="collective.eeafaceted.dashboard.interfaces.IFacetedDashboardLayer"
-        permission="zope2.View"
-        />
+        permission="zope2.View" />
 
     <browser:page
         name="overview-controlpanel"
         for="Products.CMFPlone.interfaces.IPloneSiteRoot"
         class=".browser.overrides.PloneMeetingOverviewControlPanel"
-        permission="plone.app.controlpanel.Overview"
-        />
+        permission="plone.app.controlpanel.Overview" />
 
     <!-- Folder contents -->
     <configure package="plone.app.content">
@@ -233,5 +227,12 @@
       name="transition-batch-action"
       class=".browser.overrides.PMTransitionBatchActionForm"
       permission="zope2.View" />
+
+  <browser:page
+      for="*"
+      name="plone"
+      class="Products.PloneMeeting.browser.overrides.PMPlone"
+      permission="zope.Public"
+      allowed_interface="Products.CMFPlone.browser.interfaces.IPlone" />
 
 </configure>

@@ -52,6 +52,7 @@ from Products.Archetypes.browser.utils import Utils
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.utils import _checkPermission
 from Products.CMFPlone.browser.navigation import CatalogNavigationTabs
+from Products.CMFPlone.browser.ploneview import Plone
 from Products.CMFPlone.utils import safe_unicode
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from Products.PloneMeeting import utils as pm_utils
@@ -159,7 +160,7 @@ class PMDocumentBylineViewlet(IHDocumentBylineViewlet):
         return True
 
 
-class PloneMeetingContentActionsViewlet(ContentActionsViewlet):
+class PMContentActionsViewlet(ContentActionsViewlet):
     '''
       Overrides the ContentActionsViewlet to hide it for some types.
     '''
@@ -178,6 +179,19 @@ class PloneMeetingContentActionsViewlet(ContentActionsViewlet):
            (self.context.portal_type == 'directory' and self.view.__name__ != 'folder_contents'):
             return ''
         return self.index()
+
+
+class PMPlone(Plone):
+    """ """
+
+    def showEditableBorder(self):
+        """Show green bar on some elements
+        """
+        if self.context.portal_type in ('Folder', 'directory'):
+            portal_url = api.portal.get().absolute_url()
+            if self.context.absolute_url().startswith(portal_url + '/contacts'):
+                return False
+        return super(PMPlone, self).showEditableBorder()
 
 
 class PMContentActionsPanelViewlet(ActionsPanelViewlet):
