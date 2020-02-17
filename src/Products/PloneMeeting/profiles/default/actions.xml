@@ -101,7 +101,8 @@
     <property name="visible">True</property>
    </object>
    <object name="local_roles" meta_type="CMF Action">
-    <property name="available_expr">python: not here.portal_plonemeeting.isInPloneMeeting(here, True)</property>
+    <property name="available_expr"></property>
+    <property name="visible">False</property>
    </object>
    <!-- Remove old eea.facetednavigation actions from object category -->
    <object name="faceted.configure" meta_type="CMF Action" remove="true">

@@ -190,6 +190,27 @@ class testSearches(PloneMeetingTestCase):
         self.assertEqual(len(collection.results()), 1)
         self.assertEqual(collection.results()[0].UID, item.UID())
 
+    def test_pm_SearchItemsToAdviceWithoutHiddenDuringRedactionAdapter(self):
+        '''Test the 'search-items-to-advice-without-hidden-during-redaction' adapter
+           that should return a list of items a user has to give an advice for but not
+           advice currently hidden during redaction.'''
+        # just check query as full search is tested in test_pm_SearchItemsToAdviceAdapter
+        # as adviser, query is correct
+        self.changeUser('pmAdviser1')
+        cfg = self.meetingConfig
+        adapter = getAdapter(cfg,
+                             ICompoundCriterionFilter,
+                             name='items-to-advice-without-hidden-during-redaction')
+        itemTypeName = cfg.getItemTypeName()
+        self.assertEqual(
+            adapter.query,
+            {'indexAdvisers': {
+                'query': ['{0}_advice_not_given'.format(self.developers_uid),
+                          'delay__{0}_advice_not_given'.format(self.developers_uid),
+                          '{0}_advice_asked_again'.format(self.developers_uid),
+                          'delay__{0}_advice_asked_again'.format(self.developers_uid)]},
+                'portal_type': {'query': itemTypeName}})
+
     def test_pm_SearchAdvisedItems(self):
         '''Test the 'search-advised-items' adapter.  This should return a list of items
            a user has already give an advice for.'''
@@ -958,6 +979,11 @@ class testSearches(PloneMeetingTestCase):
         vendorsItem = self.create('MeetingItem')
         self.assertEqual(vendorsItem.getProposingGroup(), self.vendors_uid)
         # present items
+        self.changeUser('admin')
+        # presenting item :
+        for tr in ('propose', 'prevalidate', 'validate', 'present'):
+            self.do(developersItem, tr)
+            self.do(vendorsItem, tr)
         self.changeUser('pmManager')
         self.presentItem(developersItem)
         self.presentItem(vendorsItem)

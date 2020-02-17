@@ -829,6 +829,11 @@ class BaseDGHV(object):
         # as amqp is activated when necessary
         from imio.zamqp.core.utils import next_scan_id
         scan_id = next_scan_id(file_portal_types=['annex', 'annexDecision'])
+        # append a special value to scan_id stored in REQUEST if it is not a stored value
+        if self.request.get('store_as_annex', '0') != '1':
+            temp_qr_code_msg = translate(
+                "Temporary QR code!", domain='PloneMeeting', context=self.request)
+            scan_id = u'{0}\n[{1}]'.format(scan_id, temp_qr_code_msg)
         # make the 'item_scan_id' value available in the REQUEST
         self.request.set(ITEM_SCAN_ID_NAME, scan_id)
         return scan_id
@@ -838,16 +843,25 @@ class BaseDGHV(object):
         user = api.user.get(user_id)
         return user and user.getProperty('fullname') or user_id
 
-    def printAssembly(self, striked=True):
+    def printAssembly(self, striked=True, attendees_by_type=True, **kwargs):
         '''Returns the assembly for this meeting or item.
            If p_striked is True, return striked assembly.'''
-        if self.context.meta_type == 'Meeting':
+        res = None
+        if self.context.meta_type == 'Meeting' and self.context.getAssembly():
             res = self.context.getAssembly()
-        else:
+        elif self.context.meta_type == 'MeetingItem' and self.context.getItemAssembly():
             res = self.context.getItemAssembly()
-        if striked:
-            res = toHTMLStrikedContent(res)
-        return res
+
+        if res:
+            if striked:
+                return toHTMLStrikedContent(res)
+            else:
+                return res
+
+        if attendees_by_type:
+            return self.print_attendees_by_type(group_position_type=True, **kwargs)
+        else:
+            return self.print_attendees(**kwargs)
 
     def _get_attendees(self):
         """ """
@@ -1168,6 +1182,63 @@ class BaseDGHV(object):
         helperView = obj.restrictedTraverse('@@document-generation')
         generation_helper_view = helperView._get_generation_context(self.getDGHV(obj), sub_pod_template)
         return generation_helper_view
+
+    def print_signatures_by_position(self, **kwargs):
+        """
+        Print signatures by position
+        :return: a dict with position as key and signature as value
+        like this {1 : 'The mayor,', 2: 'John Doe'}.
+        A dict is used to safely get a signature with the get method
+        """
+        signatures = None
+        if self.context.meta_type == 'Meeting' and self.context.getSignatures():
+            signatures = self.context.getSignatures()
+        elif self.context.meta_type == 'MeetingItem' and self.context.getItemSignatures():
+            signatures = self.context.getItemSignatures()
+
+        if signatures:
+            return OrderedDict({i: signature for i, signature in enumerate(signatures.split('\n'))})
+        else:
+            return self.print_signatories_by_position(**kwargs)
+
+    def print_signatories_by_position(self,
+                                      signature_format=(u'position_type', u'person'),
+                                      separator=u', ',
+                                      ender=''):
+        """
+        Print signatories by position
+        :return: a dict with position as key and signature as value
+        like this {1 : 'The mayor,', 2: 'John Doe'}
+        A dict is used to safely get a signature with the get method
+        """
+        signature_lines = OrderedDict()
+        if self.context.meta_type == 'Meeting':
+            signatories = self.context.getSignatories(theObjects=True, by_signature_number=True)
+        else:
+            signatories = self.context.getItemSignatories(theObjects=True, by_signature_number=True)
+
+        n_line = 0
+        for signatory in signatories.values():
+            for attr in signature_format:
+                if u'position_type' in attr:
+                    signature_lines[n_line] = signatory.get_prefix_for_gender_and_number(
+                        include_value=True,
+                        position_type_attr=attr)
+                elif attr == u'person':
+                    signature_lines[n_line] = signatory.get_person_title(include_person_title=False)
+                elif hasattr(signatory, attr):
+                    signature_lines[n_line] = attr
+                else:
+                    signature_lines[n_line] += signature_format
+
+                if attr != signature_format[-1]:  # if not last line of signatory
+                    signature_lines[n_line] += separator
+                else:
+                    signature_lines[n_line] += ender
+                n_line += 1
+
+        return signature_lines
+
 
 
 class FolderDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV):

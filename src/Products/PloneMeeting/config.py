@@ -39,6 +39,13 @@ try:
 except pkg_resources.DistributionNotFound:
     HAS_SOLR = False
 
+try:
+    HAS_CAT_PUBLISHABLE = True
+    from collective.iconifiedcategory.interfaces import ICategorizedPublishable
+except ImportError:
+    HAS_CAT_PUBLISHABLE = False
+
+
 __author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
 <g.bastien@imio.be>, Stephan GEULETTE <s.geulette@imio.be>"""
 __docformat__ = 'plaintext'

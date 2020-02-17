@@ -1247,8 +1247,8 @@ schema = Schema((
         name='itemAssembly',
         allowable_content_types=('text/plain',),
         widget=TextAreaWidget(
-            condition="python: here.getItemAssembly(real=True) or (here.portal_plonemeeting.isManager(here) and "
-            "here.hasMeeting() and here.getMeeting().attributeIsUsed('assembly'))",
+            condition="python: here.getItemAssembly(real=True) or "
+            "(here.hasMeeting() and here.getMeeting().attributeIsUsed('assembly'))",
             description="ItemAssemblyDescrMethod",
             description_msgid="item_assembly_descr",
             label_method="getLabelItemAssembly",
@@ -1263,8 +1263,8 @@ schema = Schema((
         name='itemAssemblyExcused',
         allowable_content_types=('text/plain',),
         widget=TextAreaWidget(
-            condition="python: here.getItemAssemblyExcused(real=True) or (here.portal_plonemeeting.isManager(here) and "
-            "here.hasMeeting() and here.getMeeting().attributeIsUsed('assemblyExcused'))",
+            condition="python: here.getItemAssemblyExcused(real=True) or "
+            "(here.hasMeeting() and here.getMeeting().attributeIsUsed('assemblyExcused'))",
             description="ItemAssemblyExcusedDescrMethod",
             description_msgid="item_assembly_excused_descr",
             label='Itemassemblyexcused',
@@ -1278,8 +1278,8 @@ schema = Schema((
         name='itemAssemblyAbsents',
         allowable_content_types=('text/plain',),
         widget=TextAreaWidget(
-            condition="python: here.getItemAssemblyAbsents(real=True) or (here.portal_plonemeeting.isManager(here) and "
-            "here.hasMeeting() and here.getMeeting().attributeIsUsed('assemblyAbsents'))",
+            condition="python: here.getItemAssemblyAbsents(real=True) or "
+            "(here.hasMeeting() and here.getMeeting().attributeIsUsed('assemblyAbsents'))",
             description="ItemAssemblyAbsentsDescrMethod",
             description_msgid="item_assembly_absents_descr",
             label='Itemassemblyabsents',
@@ -1293,8 +1293,8 @@ schema = Schema((
         name='itemAssemblyGuests',
         allowable_content_types=('text/plain',),
         widget=TextAreaWidget(
-            condition="python: here.getItemAssemblyGuests(real=True) or (here.portal_plonemeeting.isManager(here) and "
-            "here.hasMeeting() and here.getMeeting().attributeIsUsed('assemblyGuests'))",
+            condition="python: here.getItemAssemblyGuests(real=True) or "
+            "(here.hasMeeting() and here.getMeeting().attributeIsUsed('assemblyGuests'))",
             description="ItemAssemblyGuestsDescrMethod",
             description_msgid="item_assembly_guests_descr",
             label='Itemassemblyguests',
@@ -1308,8 +1308,8 @@ schema = Schema((
         name='itemSignatures',
         allowable_content_types=('text/plain',),
         widget=TextAreaWidget(
-            condition="python: here.getItemSignatures(real=True) or (here.portal_plonemeeting.isManager(here) and "
-                      "here.hasMeeting() and here.getMeeting().attributeIsUsed('signatures'))",
+            condition="python: here.getItemSignatures(real=True) or "
+            "(here.hasMeeting() and here.getMeeting().attributeIsUsed('signatures'))",
             description="ItemSignaturesDescrMethod",
             description_msgid="item_signatures_descr",
             label='Itemsignatures',
@@ -2323,10 +2323,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def setProposingGroupWithGroupInCharge(self, value, **kwargs):
         '''Overrides the field 'proposingGroupWithGroupInCharge' mutator to be able to
            set a correct 'proposingGroup' and 'groupsInCharge' from received value.'''
+        # value may be empty if used on an itemTemplate
+        proposingGroup = groupInCharge = ''
         if value:
             proposingGroup, groupInCharge = value.split('__groupincharge__')
-            self.setProposingGroup(proposingGroup)
-            self.setGroupsInCharge([groupInCharge])
+        self.setProposingGroup(proposingGroup)
+        self.setGroupsInCharge([groupInCharge])
         self.getField('proposingGroupWithGroupInCharge').set(self, value, **kwargs)
 
     def _adaptLinesValueToBeCompared(self, value):
@@ -3417,19 +3419,26 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             unrestrictedRemoveGivenObject(item)
             return True
 
-    def _checkMayQuickEdit(self, bypassWritePermissionCheck=False, permission=ModifyPortalContent, expression=''):
+    def _checkMayQuickEdit(self,
+                           bypassWritePermissionCheck=False,
+                           permission=ModifyPortalContent,
+                           expression='',
+                           onlyForManagers=False):
         """ """
         tool = api.portal.get_tool('portal_plonemeeting')
         member = api.user.get_current()
-        if (bypassWritePermissionCheck or member.has_permission(permission, self)) and \
+        res = False
+        if (not onlyForManagers or (onlyForManagers and tool.isManager(self))) and \
+           (bypassWritePermissionCheck or member.has_permission(permission, self)) and \
            _evaluateExpression(self, expression) and not \
            (self.hasMeeting() and self.getMeeting().queryState() in Meeting.meetingClosedStates) or \
            tool.isManager(self, realManagers=True):
-            return True
+            res = True
+        return res
 
     security.declarePublic('mayQuickEdit')
 
-    def mayQuickEdit(self, fieldName, bypassWritePermissionCheck=False):
+    def mayQuickEdit(self, fieldName, bypassWritePermissionCheck=False, onlyForManagers=False):
         '''Check if the current p_fieldName can be quick edited thru the meetingitem_view.
            By default, an item can be quickedited if the field condition is True (field is used,
            current user is Manager, current item is linekd to a meeting) and if the meeting
@@ -3440,15 +3449,17 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         return self._checkMayQuickEdit(
             bypassWritePermissionCheck=bypassWritePermissionCheck,
             permission=field.write_permission,
-            expression=self.Schema()[fieldName].widget.condition)
+            expression=self.Schema()[fieldName].widget.condition,
+            onlyForManagers=onlyForManagers)
 
     def mayQuickEditItemAssembly(self):
         """Show edit icon if itemAssembly or itemAssemblyGuests field editable."""
-        meeting = self.getMeeting()
-        return (meeting.attributeIsUsed('assembly') and
-                self.mayQuickEdit('itemAssembly', bypassWritePermissionCheck=True)) or \
-            (meeting.attributeIsUsed('assemblyGuests') and
-             self.mayQuickEdit('itemAssemblyGuests', bypassWritePermissionCheck=True))
+        return self.mayQuickEdit('itemAssembly', bypassWritePermissionCheck=True, onlyForManagers=True) or \
+            self.mayQuickEdit('itemAssemblyGuests', bypassWritePermissionCheck=True, onlyForManagers=True)
+
+    def mayQuickEditItemSignatures(self):
+        """Show edit icon if itemSignatures field editable."""
+        return self.mayQuickEdit('itemSignatures', bypassWritePermissionCheck=True, onlyForManagers=True)
 
     security.declareProtected(ModifyPortalContent, 'transformRichTextField')
 

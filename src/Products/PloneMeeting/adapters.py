@@ -1195,6 +1195,8 @@ class ItemsToCorrectAdapter(BaseItemsToCorrectAdapter):
 
 class ItemsToAdviceAdapter(CompoundCriterionBaseAdapter):
 
+    include_hidden_during_redaction = True
+
     @property
     @ram.cache(query_user_groups_cachekey)
     def query_itemstoadvice(self):
@@ -1207,11 +1209,13 @@ class ItemsToAdviceAdapter(CompoundCriterionBaseAdapter):
         indexAdvisers = [org_uid + '_advice_not_given' for org_uid in org_uids] + \
             ['delay__' + org_uid + '_advice_not_given' for org_uid in org_uids] + \
             [org_uid + '_advice_asked_again' for org_uid in org_uids] + \
-            ['delay__' + org_uid + '_advice_asked_again' for org_uid in org_uids] + \
-            ['{0}_advice_{1}'.format(org_uid, HIDDEN_DURING_REDACTION_ADVICE_VALUE)
-             for org_uid in org_uids] + \
-            ['delay__{0}_advice_{1}'.format(org_uid, HIDDEN_DURING_REDACTION_ADVICE_VALUE)
-             for org_uid in org_uids]
+            ['delay__' + org_uid + '_advice_asked_again' for org_uid in org_uids]
+        if self.include_hidden_during_redaction:
+            indexAdvisers += \
+                ['{0}_advice_{1}'.format(org_uid, HIDDEN_DURING_REDACTION_ADVICE_VALUE)
+                 for org_uid in org_uids] + \
+                ['delay__{0}_advice_{1}'.format(org_uid, HIDDEN_DURING_REDACTION_ADVICE_VALUE)
+                 for org_uid in org_uids]
         # Create query parameters
         return {'portal_type': {'query': self.cfg.getItemTypeName()},
                 # KeywordIndex 'indexAdvisers' use 'OR' by default
@@ -1219,6 +1223,11 @@ class ItemsToAdviceAdapter(CompoundCriterionBaseAdapter):
 
     # we may not ram.cache methods in same file with same name...
     query = query_itemstoadvice
+
+
+class ItemsToAdviceWithoutHiddenDuringRedactionAdapter(ItemsToAdviceAdapter):
+
+    include_hidden_during_redaction = False
 
 
 class ItemsToAdviceWithoutDelayAdapter(CompoundCriterionBaseAdapter):
@@ -1552,7 +1561,7 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
                     res.append(plone_group_id)
             elif visible_for == '{0}copy_groups'.format(READERPREFIX):
                 res = res + list(self.parent.getAllCopyGroups(auto_real_plone_group_ids=True))
-            elif visible_for == '{0}groupincharge'.format(READERPREFIX):
+            elif visible_for == '{0}groupsincharge'.format(READERPREFIX):
                 groupsInCharge = self.parent.getGroupsInCharge(theObjects=False, includeAuto=True)
                 for groupInCharge in groupsInCharge:
                     plone_group_id = get_plone_group_id(groupInCharge, 'observers')

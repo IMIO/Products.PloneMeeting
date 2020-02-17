@@ -24,12 +24,24 @@ Changelog
 
 - In events.onConfigOrPloneElementModified do not call _notifyContainerModified if event element is a PloneMeeting folder, a user personal folder that contains items and meetings
 - Adapted MeetingItem._update_after_edit to be able to pass only some indexes to reindex, adapted async methods (change itemlisttype, itemcompleteness, ...) accordingly.
-  By defaukt, MeetingItem._update_after_edit will do a full reindex but if some specific indexes are given, only these indexes are reindexed
+  By default, MeetingItem._update_after_edit will do a full reindex but if some specific indexes are given, only these indexes are reindexed
 - Avoid useless full reindex when RichText field is edited using quick edit and when annex is added/edited/removed
 - While using ToolPloneMeeting.get_orgs_for_user, use the_objects=False as much as possible as this method is cached, returned objects could behave weirdly
 - Avoid an error with zope users during install when `collective.indexing` is used
-- Changed the user recovery code so that it works with an "ldap" configuration. This change allows the use of notifications with an "ldap" configuration.
+- Changed the user recovery code so that it works with an "ldap" configuration. This change allows the use of notifications with an "ldap" configuration
 - Fix MeetingItem.getItemSignatories so it returns an empty dict when there is no signatories
+- Fixed item view template when using field `proposingGroupWithGroupInCharge`, it may be empty when used on an item template
+- In `BaseDGHV.get_scan_id`, append a special value 'Temporary' to generated QR code when is it generated and still not stored as annex as it is subject to change at next generation
+- Fixed bug with itemAssembly and itemSignatures edition where an item with redefined itemAssembly/itemSignatures in a non closed meeting was editable by anybody
+- Fixed bug with item confidential annex shown to groupsInCharge that were actually not shown because of a typo in adapters._reader_groups (groupincharge was renamed to groupsincharge),
+  the same typo was left in the tests so it was passing...  Test was adapted to double check that values stored in MeetingConfig are existing in field vocabulary
+- Added possibility to configure attributes of annexes (confidentiality, to_be_printed, ...) that will only be displayed and/or editable to MeetingManagers
+- Added new methods for formatting signatures, BaseDGHV.print_signatories_by_position and BaseDGHV.print_signatures_by_position.
+- Adapted BaseDGHV.printAssembly to be compatible with attendees and tested it
+- Override ploneview.Plone.showEditableBorder to hide the green bar for folders stored in contacts directory
+- By default, hide the `sharing` tab everywhere
+- Added `items-to-advice-without-hidden-during-redaction` CompoundCriterion adapter to be able to query items to advice but not consider advice hidden during redaction.
+  This is useful when advice have a workflow with several states where advice is hidden during redaction by default.  In this case the search only returns advice addable on item
 
 4.1.15 (2020-01-10)
 -------------------

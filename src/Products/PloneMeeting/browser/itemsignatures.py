@@ -145,15 +145,14 @@ class ManageItemSignaturesForm(form.Form):
     def handleCancel(self, action):
         self._finished = True
 
-    def update(self):
-        """ """
-        # we check mayQuickEdit with bypassWritePermissionCheck=True
-        # so MeetingManagers are able to edit these infos on decided items
-        # until the linked meeting is closed
-        if not self.context.mayQuickEdit('itemSignatures',
-                                         bypassWritePermissionCheck=True):
+    def _check_auth(self):
+        """Raise Unauthorized if current user can not manage itemSignatures."""
+        if not self.context.mayQuickEditItemSignatures():
             raise Unauthorized
 
+    def update(self):
+        """ """
+        self._check_auth()
         super(ManageItemSignaturesForm, self).update()
         # after calling parent's update, self.actions are available
         self.actions.get('cancel').addClass('standalone')
@@ -173,10 +172,7 @@ class ManageItemSignaturesForm(form.Form):
           The method actually do the job, set the itemSignatures
           on self.context and following items if defined
         """
-        if not self.context.mayQuickEdit('itemSignatures',
-                                         bypassWritePermissionCheck=True):
-            raise Unauthorized
-
+        self._check_auth()
         # only apply if different from meeting
         item_signatures_def = item_signatures_default()
         if self.item_signatures != item_signatures_def:

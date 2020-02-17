@@ -53,7 +53,10 @@
             <div class="discreet" tal:condition="python: 'proposingGroupWithGroupInCharge' in usedAttrs">
                 <span class="item_attribute_label"
                       i18n:translate="PloneMeeting_label_proposingGroupWithGroupInCharge"></span>:&nbsp;&nbsp;
-                <span tal:content="proposingGroup/Title" />&nbsp;(<span tal:content="python: context.getGroupsInCharge(theObjects=True, first=True).Title()" />)
+                <span tal:condition="nocall:proposingGroup"
+                      tal:content="proposingGroup/Title" />&nbsp;(<span tal:define="gic python: context.getGroupsInCharge(theObjects=True, first=True)"
+                                                                        tal:condition="nocall:gic"
+                                                                        tal:content="gic/Title" />)
                 <span tal:condition="not:nocall:proposingGroup">-</span>
             </div>
 
@@ -131,7 +134,7 @@
                 define="redefinedItemAssemblies python: context.redefinedItemAssemblies();
                         redefinedItemSignatures python: context.getItemSignatures(real=True) or context.getItemSignatories(real=True);
                         mayQuickEditItemAssembly context/mayQuickEditItemAssembly;
-                        mayQuickEditItemSignatures python: 'signatures' in usedMeetingAttrs and context.mayQuickEdit('itemSignatures', bypassWritePermissionCheck=True);">
+                        mayQuickEditItemSignatures context/mayQuickEditItemSignatures;">
               <div id="assembly-and-signatures"
                   onclick="togglePersonsCookie();;toggleDoc('collapsible-assembly-and-signatures');"
                   class="collapsible discreet">

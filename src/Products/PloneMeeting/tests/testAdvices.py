@@ -2664,21 +2664,21 @@ class testAdvices(PloneMeetingTestCase):
         # give advice
         self.changeUser('pmReviewer2')
         # creation time
-        text = u'<p>Working external image <img src="http://www.imio.be/contact.png"/>.</p>'
+        text = u'<p>Working external image <img src="https://i.picsum.photos/id/1025/400/300.jpg"/>.</p>'
         advice = createContentInContainer(item,
                                           'meetingadvice',
                                           **{'advice_group': self.vendors_uid,
                                              'advice_type': u'positive',
                                              'advice_hide_during_redaction': False,
                                              'advice_comment': RichTextValue(text)})
-        self.assertTrue('contact.png' in advice.objectIds())
+        self.assertTrue('1025-400x300.jpg' in advice.objectIds())
 
         # test using IObjectModifiedEvent event, aka using edit form
-        text = '<p>Working external image <img src="http://www.imio.be/spw.png"/>.</p>'
+        text = '<p>Working external image <img src="https://i.picsum.photos/id/1062/600/500.jpg"/>.</p>'
         advice.advice_comment = RichTextValue(text)
         # notify modified
         notify(ObjectModifiedEvent(advice))
-        self.assertTrue('spw.png' in advice.objectIds())
+        self.assertTrue('1062-600x500.jpg' in advice.objectIds())
 
     def test_pm_ManualVersioningEnabledForMeetingAdvicePortalTypes(self):
         """ """

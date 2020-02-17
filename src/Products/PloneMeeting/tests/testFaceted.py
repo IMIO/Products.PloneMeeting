@@ -668,6 +668,24 @@ class testFaceted(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         self.assertFalse(searchAllItems_path in vocab(searches))
 
+    def test_pm_SearchableTextQueryOnSpecialCharacters(self):
+        """Make sure it is possible to query on "décision" and "decision"."""
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem', title="SpecialDécision")
+        catalog = self.portal.portal_catalog
+        self.assertEqual(len(catalog(SearchableText="SpecialDécision")), 1)
+        self.assertEqual(len(catalog(SearchableText="specialdécision")), 1)
+        self.assertEqual(len(catalog(SearchableText="SpecialDecision")), 1)
+        self.assertEqual(len(catalog(SearchableText="specialdecision")), 1)
+        item.setTitle("SpecialDecision")
+        item.reindexObject()
+        self.assertEqual(len(catalog(SearchableText="SpecialDécision")), 1)
+        self.assertEqual(len(catalog(SearchableText="specialdécision")), 1)
+        self.assertEqual(len(catalog(SearchableText="SpecialDecision")), 1)
+        self.assertEqual(len(catalog(SearchableText="specialdecision")), 1)
+        # not found
+        self.assertEqual(len(catalog(SearchableText="specialdecisions")), 0)
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite
