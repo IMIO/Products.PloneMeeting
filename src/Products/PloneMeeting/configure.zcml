@@ -140,6 +140,10 @@
            provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
            name="items-to-advice" />
   <adapter for="*"
+           factory="Products.PloneMeeting.adapters.ItemsToAdviceWithoutHiddenDuringRedactionAdapter"
+           provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
+           name="items-to-advice-without-hidden-during-redaction" />
+  <adapter for="*"
            factory="Products.PloneMeeting.adapters.ItemsToAdviceWithoutDelayAdapter"
            provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
            name="items-to-advice-without-delay" />

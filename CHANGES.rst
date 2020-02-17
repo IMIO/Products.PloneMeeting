@@ -23,6 +23,8 @@ Changelog
 - Adapted BaseDGHV.printAssembly to be compatible with attendees and tested it
 - Override ploneview.Plone.showEditableBorder to hide the green bar for folders stored in contacts directory
 - By default, hide the `sharing` tab everywhere
+- Added `items-to-advice-without-hidden-during-redaction` CompoundCriterion adapter to be able to query items to advice but not consider advice hidden during redaction.
+  This is useful when advice have a workflow with several states where advice is hidden during redaction by default.  In this case the search only returns advice addable on item
 
 4.1.15 (2020-01-10)
 -------------------
