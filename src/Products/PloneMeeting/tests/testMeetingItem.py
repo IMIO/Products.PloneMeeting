@@ -5250,7 +5250,7 @@ class testMeetingItem(PloneMeetingTestCase):
         ordered_contacts = cfg.getField('orderedContacts').Vocabulary(cfg).keys()
         cfg.setOrderedContacts(ordered_contacts)
         self.changeUser('pmManager')
-        meeting = self.create('Meeting', date=DateTime())
+        self.create('Meeting', date=DateTime())
         item = self.create('MeetingItem')
         self.presentItem(item)
         template = self.meetingConfig.podtemplates.itemTemplate
@@ -5606,7 +5606,7 @@ class testMeetingItem(PloneMeetingTestCase):
             '<p>Internal image <img src="{1}">.</p>' \
             '<p>Internal image 2 <img src="{2}">.</p>'
         text = text_pattern.format(
-            'https://i.picsum.photos/id/1025/400/300.jpg', # 1025-400x300.jpg
+            'https://i.picsum.photos/id/1025/400/300.jpg',  # 1025-400x300.jpg
             img.absolute_url(),
             'resolveuid/{0}'.format(img2.UID()))
         item.setDescription(text)
