@@ -19,7 +19,12 @@ Changelog
 - Use roles 'Reviewer' and 'Contributor' in meetingadvice_workflow
 - Added bypass for users having 'Manage portal' in MeetingItemWorkflowConditions in 'mayWait_advices_from', 'mayValidate' and 'mayPresent'
 
-4.1.16 (unreleased)
+4.1.17 (unreleased)
+-------------------
+
+- In live search, colorize results depending on element's review_state
+
+4.1.16 (2020-02-18)
 -------------------
 
 - In events.onConfigOrPloneElementModified do not call _notifyContainerModified if event element is a PloneMeeting folder, a user personal folder that contains items and meetings
@@ -42,6 +47,9 @@ Changelog
 - By default, hide the `sharing` tab everywhere
 - Added `items-to-advice-without-hidden-during-redaction` CompoundCriterion adapter to be able to query items to advice but not consider advice hidden during redaction.
   This is useful when advice have a workflow with several states where advice is hidden during redaction by default.  In this case the search only returns advice addable on item
+- Optimized the email notification `You have been set in copy of an item` to not send several emails to the same e-mail address in case several groups are in copy and a user is in
+  these groups or when `group email addresses` are used
+- Added optional field `Meeting.convocationDate`
 
 4.1.15 (2020-01-10)
 -------------------

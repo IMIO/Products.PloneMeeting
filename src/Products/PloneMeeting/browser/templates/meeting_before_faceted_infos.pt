@@ -37,6 +37,12 @@
     <span tal:replace="python:context.getApprovalDate() and toLocalizedTime(context.getApprovalDate(), long_format=0) or '-'"></span>&nbsp;&nbsp;
   </tal:date>
 
+  <tal:comment replace="nothing">Convocation date</tal:comment>
+  <tal:date condition="python: ('convocationDate' in usedAttrs) or context.getConvocationDate()">
+    <span class="meeting_attribute_label" i18n:translate="PloneMeeting_label_convocationDate"></span>:&nbsp;&nbsp;
+    <span tal:replace="python:context.getConvocationDate() and toLocalizedTime(context.getConvocationDate(), long_format=0) or '-'"></span>&nbsp;&nbsp;
+  </tal:date>
+
   <tal:comment replace="nothing">Extraordinary session</tal:comment>
   <tal:extraordinarySession condition="python: ('extraordinarySession' in usedAttrs)">
     <span class="meeting_attribute_label" i18n:translate="PloneMeeting_label_extraordinarySession"></span>:&nbsp;&nbsp;

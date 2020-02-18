@@ -145,6 +145,7 @@
         <metal:field use-macro="python:here.widget('midDate', mode='edit')"/>
         <metal:field use-macro="python:here.widget('endDate', mode='edit')"/>
         <metal:field use-macro="python:here.widget('approvalDate', mode='edit')"/>
+        <metal:field use-macro="python:here.widget('convocationDate', mode='edit')"/>
         <metal:field use-macro="python:here.widget('deadlinePublish', mode='edit')"/>
         <metal:field use-macro="python:here.widget('deadlineFreeze', mode='edit')"/>
 
