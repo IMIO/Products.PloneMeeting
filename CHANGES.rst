@@ -5,8 +5,7 @@ Changelog
 4.1.17 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- In live search, colorize results depending on element's review_state
 
 4.1.16 (2020-02-18)
 -------------------

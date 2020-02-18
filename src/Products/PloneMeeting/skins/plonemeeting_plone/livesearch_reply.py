@@ -160,8 +160,9 @@ else:
         full_title = full_title.replace('"', '&quot;')
         klass = 'contenttype-%s' \
                     % ploneUtils.normalizeString(result.portal_type)
-        write('''<a href="%s" title="%s" class="%s">%s</a>'''
-                % (itemUrl, full_title, klass, display_title))
+        span_klass = 'state-%s' % result.review_state
+        write('''<a href="%s" title="%s" class="%s"><span class="%s">%s</span></a>'''
+                % (itemUrl, full_title, klass, span_klass, display_title))
         display_description = safe_unicode(result.Description)
         if len(display_description) > MAX_DESCRIPTION:
             display_description = ''.join(
