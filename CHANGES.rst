@@ -27,6 +27,7 @@ Changelog
   This is useful when advice have a workflow with several states where advice is hidden during redaction by default.  In this case the search only returns advice addable on item
 - Optimized the email notification `You have been set in copy of an item` to not send several emails to the same e-mail address in case several groups are in copy and a user is in
   these groups or when `group email addresses` are used
+- Added optional field `Meeting.convocationDate`
 
 4.1.15 (2020-01-10)
 -------------------

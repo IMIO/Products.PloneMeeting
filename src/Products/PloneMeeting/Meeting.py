@@ -397,10 +397,21 @@ schema = Schema((
     DateTimeField(
         name='approvalDate',
         widget=DateTimeField._properties['widget'](
-            condition="python: here.attributeIsUsed('approvalDate') and not here.isTemporary()",
+            condition="python: here.attributeIsUsed('approvalDate')",
             minute_step=1,
             label='Approvaldate',
             label_msgid='PloneMeeting_label_approvalDate',
+            i18n_domain='PloneMeeting',
+        ),
+        optional=True,
+    ),
+    DateTimeField(
+        name='convocationDate',
+        widget=DateTimeField._properties['widget'](
+            condition="python: here.attributeIsUsed('convocationDate')",
+            minute_step=1,
+            label='Convocationdate',
+            label_msgid='PloneMeeting_label_convocationDate',
             i18n_domain='PloneMeeting',
         ),
         optional=True,
