@@ -1320,7 +1320,7 @@ class PMCategoryVocabulary(CategoryVocabulary):
         if container.meta_type == 'MeetingItem':
             tool = api.portal.get_tool('portal_plonemeeting')
             isManager = tool.isManager(context)
-            res = []
+            tmp = []
             for subcat_brain in subcategories:
                 if not isManager:
                     subcat = subcat_brain.getObject()
@@ -1328,8 +1328,9 @@ class PMCategoryVocabulary(CategoryVocabulary):
                        (stored_content_category and
                             stored_content_category != calculate_category_id(subcat)):
                         continue
-                res.append(subcat_brain)
-        return res
+                tmp.append(subcat_brain)
+            subcategories = tmp
+        return subcategories
 
 
 class PMCategoryTitleVocabulary(CategoryTitleVocabulary, PMCategoryVocabulary):
