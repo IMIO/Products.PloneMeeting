@@ -1572,9 +1572,7 @@ class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV)
             return html_pattern.format(res)
         return res
 
-    def print_deliberation(self,
-                           xhtmlContents=[],
-                           **kwargs):
+    def print_deliberation(self, xhtmlContents=[], **kwargs):
         '''Print the full item deliberation.'''
         if not xhtmlContents:
             xhtmlContents = [self.context.getMotivation(), self.context.getDecision()]
