@@ -1471,6 +1471,7 @@ class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV)
         result = {}
         result['deliberation'] = self.print_deliberation()
         result['public_deliberation'] = self.print_public_deliberation()
+        result['public_deliberation_decided'] = self.print_public_deliberation_decided()
         return result
 
     def print_meeting_date(self, returnDateTime=False, noMeetingMarker='-', unrestricted=True):
@@ -1582,10 +1583,12 @@ class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV)
             xhtmlContents,
             **kwargs)
 
-    def print_public_deliberation(self,
-                                  xhtmlContents=[],
-                                  **kwargs):
+    def print_public_deliberation(self, xhtmlContents=[], **kwargs):
         '''Overridable method to return public deliberation.'''
+        return self.print_deliberation(xhtmlContents, **kwargs)
+
+    def print_public_deliberation_decided(self, xhtmlContents=[], **kwargs):
+        '''Overridable method to return public deliberation when decided.'''
         return self.print_deliberation(xhtmlContents, **kwargs)
 
 
