@@ -23,6 +23,10 @@ Changelog
 -------------------
 
 - In live search, colorize results depending on element's review_state
+- In overrided "collective.iconifiedcategory.categories", include the currently stored annex content_category no matter
+  it uses only_for_meeting_managers and current user is not a MeetingManager
+- Added method ItemDocumentGenerationHelperView.print_public_deliberation_decided to already existing print_deliberation and print_public_deliberation,
+  this will be used to render the body of an item when it is decided
 
 4.1.16 (2020-02-18)
 -------------------

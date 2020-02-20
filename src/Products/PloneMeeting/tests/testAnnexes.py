@@ -1261,6 +1261,17 @@ class testAnnexes(PloneMeetingTestCase):
         self.assertTrue(overhead_analysis_category_id in term_tokens)
         self.assertTrue(budget_analysis_subannex_category_id in term_tokens)
 
+        # if it is selected on an annex, then it is in the vocabulary
+        annex2 = self.addAnnex(item, annexType='overhead-analysis')
+        self.changeUser('pmCreator1')
+        term_tokens = [term.token for term in vocab(annex2)._terms]
+        self.assertTrue(overhead_analysis_category_id in term_tokens)
+        self.assertFalse(budget_analysis_subannex_category_id in term_tokens)
+        self.changeUser('pmManager')
+        term_tokens = [term.token for term in vocab(annex2)._terms]
+        self.assertTrue(overhead_analysis_category_id in term_tokens)
+        self.assertTrue(budget_analysis_subannex_category_id in term_tokens)
+
     def test_pm_Actions_panel_history_only_for_managers(self):
         """The 'history' icon in the actions panel is only shown to real Managers."""
         self.changeUser('pmCreator1')

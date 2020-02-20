@@ -12,6 +12,7 @@ from collective.documentgenerator.content.vocabulary import StyleTemplatesVocabu
 from collective.eeafaceted.collectionwidget.content.dashboardcollection import IDashboardCollection
 from collective.eeafaceted.collectionwidget.vocabulary import CachedCollectionVocabulary
 from collective.eeafaceted.dashboard.vocabulary import DashboardCollectionsVocabulary
+from collective.iconifiedcategory.utils import calculate_category_id
 from collective.iconifiedcategory.vocabularies import CategoryTitleVocabulary
 from collective.iconifiedcategory.vocabularies import CategoryVocabulary
 from DateTime import DateTime
@@ -1294,12 +1295,16 @@ class PMCategoryVocabulary(CategoryVocabulary):
         categories = super(PMCategoryVocabulary, self)._get_categories(context)
         # when adding an annex, context is the parent
         container = context
+        stored_content_category = None
         if IAnnex.providedBy(context):
             container = context.aq_parent
+            stored_content_category = context.content_category
         if container.meta_type == 'MeetingItem':
             tool = api.portal.get_tool('portal_plonemeeting')
             isManager = tool.isManager(context)
-            categories = [cat for cat in categories if not cat.only_for_meeting_managers or isManager]
+            categories = [cat for cat in categories if not cat.only_for_meeting_managers or
+                          isManager or
+                          (stored_content_category and stored_content_category == calculate_category_id(cat))]
         return categories
 
     def _get_subcategories(self, context, category):
@@ -1308,14 +1313,23 @@ class PMCategoryVocabulary(CategoryVocabulary):
         subcategories = super(PMCategoryVocabulary, self)._get_subcategories(context, category)
         # when adding an annex, context is the parent
         container = context
+        stored_content_category = None
         if IAnnex.providedBy(context):
             container = context.aq_parent
+            stored_content_category = context.content_category
         if container.meta_type == 'MeetingItem':
             tool = api.portal.get_tool('portal_plonemeeting')
             isManager = tool.isManager(context)
-            subcategories = [
-                subcat for subcat in subcategories
-                if not subcat.getObject().only_for_meeting_managers or isManager]
+            tmp = []
+            for subcat_brain in subcategories:
+                if not isManager:
+                    subcat = subcat_brain.getObject()
+                    if subcat.only_for_meeting_managers and \
+                       (stored_content_category and
+                            stored_content_category != calculate_category_id(subcat)):
+                        continue
+                tmp.append(subcat_brain)
+            subcategories = tmp
         return subcategories
 
 
