@@ -727,29 +727,6 @@ p.indent-firstline {text-indent: 40px;}
     font-size: 120%;
 }
 
-.todoSeeAll {
-    display: block;
-    text-align: right;
-    font-size: 95%;
-}
-
-.pod_template_icon_odt {
-    background: transparent url(&dtml-portal_url;/odt.png) no-repeat scroll 0 3px;
-    padding: 3px 0px 2px 20px;
-}
-.pod_template_icon_doc {
-    background: transparent url(&dtml-portal_url;/doc.png) no-repeat scroll 0 3px;
-    padding: 3px 0px 2px 20px;
-}
-.pod_template_icon_pdf {
-    background: transparent url(&dtml-portal_url;/pdf.png) no-repeat scroll 0 3px;
-    padding: 3px 0px 2px 20px;
-}
-.pod_template_icon_rtf {
-    background: transparent url(&dtml-portal_url;/rtf.png) no-repeat scroll 0 3px;
-    padding: 3px 0px 2px 20px;
-}
-
 .input_disabled {
     color: grey !important;
     border-color: lightgrey !important;
@@ -1541,6 +1518,14 @@ div.dashboard_annexes {
 #content div.categorized-elements a:hover,
 #content div.categorized-elements a:visited {
     padding: 0.2em 0.2em 0.3em !important;
+}
+
+/* avoid screen size change when editing element as CKeditor takes some seconds to load */
+div.field.ArchetypesRichWidget {
+   height: 650px;
+   background-image: url(&dtml-portal_url;/spinner_small.gif);
+   background-repeat: no-repeat;
+   background-position: center;
 }
 
 /* add cell padding to tables written in rich text fields (CKeditor) */

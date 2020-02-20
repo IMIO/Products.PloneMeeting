@@ -10,6 +10,7 @@ Changelog
   it uses only_for_meeting_managers and current user is not a MeetingManager
 - Added method ItemDocumentGenerationHelperView.print_public_deliberation_decided to already existing print_deliberation and print_public_deliberation,
   this will be used to render the body of an item when it is decided
+- Avoid screen size changes when editing an element with RichText fields as CKeditor takes some seconds to load, fix field height
 
 4.1.16 (2020-02-18)
 -------------------
