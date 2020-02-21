@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2a3 (unreleased)
+4.2a3 (2020-02-21)
 ------------------
 
 - Merged changes from 4.1.18
