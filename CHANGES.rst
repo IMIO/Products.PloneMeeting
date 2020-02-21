@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.1.17 (unreleased)
+4.1.17 (2020-02-21)
 -------------------
 
 - In live search, colorize results depending on element's review_state
