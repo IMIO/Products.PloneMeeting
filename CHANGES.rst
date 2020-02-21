@@ -5,8 +5,7 @@ Changelog
 4.2a3 (unreleased)
 ------------------
 
-- Nothing changed yet.
-
+- Merged changes from 4.1.18
 
 4.2a2 (2020-02-21)
 ------------------
@@ -24,7 +23,12 @@ Changelog
 - Use roles 'Reviewer' and 'Contributor' in meetingadvice_workflow
 - Added bypass for users having 'Manage portal' in MeetingItemWorkflowConditions in 'mayWait_advices_from', 'mayValidate' and 'mayPresent'
 
-4.1.17 (unreleased)
+4.1.18 (unreleased)
+-------------------
+
+- Use another msgid for WF history comments when item is created from an item template, this way old comments still works and new comments includes item template path and title
+
+4.1.17 (2020-02-21)
 -------------------
 
 - In live search, colorize results depending on element's review_state

@@ -64,7 +64,7 @@ class ItemTemplateView(BrowserView):
         member = api.user.get_current()
         template_path_and_title = safe_unicode(self._template_path_and_title(templateItem))
         cloneEventActionLabel = translate(
-            'create_meeting_item_from_template_comments',
+            'create_meeting_item_from_template_label_comments',
             domain='imio.history',
             mapping={'template_path_and_title': template_path_and_title, },
             context=self.request)
