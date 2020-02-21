@@ -3,9 +3,12 @@
 from plone import api
 from plone.app.layout.navigation.navtree import buildFolderTree
 from plone.app.layout.navigation.navtree import NavtreeStrategyBase
+from Products.CMFPlone.utils import safe_unicode
 from Products.Five.browser import BrowserView
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
+from Products.PloneMeeting.config import TOOL_FOLDER_ITEM_TEMPLATES
 from zope.component import getMultiAdapter
+from zope.i18n import translate
 
 
 class ItemTemplateView(BrowserView):
@@ -42,6 +45,16 @@ class ItemTemplateView(BrowserView):
             self.templatesTree = self.getTemplatesTree()
             return self.index()
 
+    def _template_path_and_title(self, templateItem):
+        """Return title of p_templateItem including name of
+           subfolders until 'itemtemplates' folder."""
+        titles = [templateItem.Title()]
+        parent = templateItem.aq_parent
+        while parent.getId() != TOOL_FOLDER_ITEM_TEMPLATES:
+            titles.insert(0, parent.Title())
+            parent = parent.aq_parent
+        return ' / '.join(titles)
+
     def createItemFromTemplate(self, templateUID):
         '''The user wants to create an item from a item template that lies in
            this meeting configuration. Item id is in the request.'''
@@ -49,8 +62,15 @@ class ItemTemplateView(BrowserView):
         templateItem = catalog(UID=templateUID)[0].getObject()
         # Create the new item by duplicating the template item
         member = api.user.get_current()
+        template_path_and_title = safe_unicode(self._template_path_and_title(templateItem))
+        cloneEventActionLabel = translate(
+            'create_meeting_item_from_template_comments',
+            domain='imio.history',
+            mapping={'template_path_and_title': template_path_and_title, },
+            context=self.request)
         newItem = templateItem.clone(newOwnerId=member.id,
                                      cloneEventAction='create_meeting_item_from_template',
+                                     cloneEventActionLabel=cloneEventActionLabel,
                                      destFolder=self.context,
                                      newPortalType=self.cfg.getItemTypeName(),
                                      keep_ftw_labels=True)

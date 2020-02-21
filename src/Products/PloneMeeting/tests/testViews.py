@@ -9,6 +9,7 @@ from datetime import datetime
 from ftw.labels.interfaces import ILabeling
 from ftw.labels.interfaces import ILabelJar
 from imio.helpers.cache import cleanRamCacheFor
+from imio.history.utils import getLastWFAction
 from os import path
 from persistent.mapping import PersistentMapping
 from plone import api
@@ -121,7 +122,7 @@ class testViews(PloneMeetingTestCase):
         cfg = self.meetingConfig
         self.changeUser('pmCreator1')
         self.getMeetingFolder()
-        folder = getattr(self.portal.Members.pmCreator1.mymeetings, self.meetingConfig.getId())
+        folder = self.getMeetingFolder()
         itemTemplateView = folder.restrictedTraverse('createitemfromtemplate')
         # the template we will use
         itemTemplates = cfg.getItemTemplates(filtered=True)
@@ -167,6 +168,25 @@ class testViews(PloneMeetingTestCase):
         userGroups = self.tool.get_orgs_for_user(suffixes=['creators'])
         self.assertEqual(newItem2.getProposingGroup(), userGroups[0].UID())
         self.assertEqual(newItem2.getPrivacy(), itemTemplate.getPrivacy())
+
+    def test_pm_CreateItemFromTemplateInSubfolderWithSpecialChars(self):
+        '''Test the createItemFromTemplate functionnality with subfolder when
+           subfolder title and itemTemplate title use special chars as it is used
+           to build the WF comments.'''
+        self.changeUser('siteadmin')
+        cfg = self.meetingConfig
+        folder = api.content.create(cfg.itemtemplates, type='Folder', id='folder', title='Conténer')
+        itemTemplate = self.create('MeetingItemTemplate', folder=folder)
+        itemTemplate.setTitle('Titlé')
+        itemTemplate.reindexObject(idxs=['Title'])
+        self.changeUser('pmCreator1')
+        mFolder = self.getMeetingFolder()
+        itemTemplateView = mFolder.restrictedTraverse('createitemfromtemplate')
+        newItem = itemTemplateView.createItemFromTemplate(itemTemplate.UID())
+        last_wf_comments = getLastWFAction(newItem)['comments']
+        self.assertEqual(
+            last_wf_comments,
+            u'This item has been created from item template "Cont\xe9ner / Titl\xe9".')
 
     def test_pm_ItemTemplateDeletedIfFirstEditCancelled(self):
         '''When creating an item from a template, if the user cancel first edition, the item is removed'''

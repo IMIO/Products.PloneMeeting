@@ -5640,10 +5640,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('clone')
 
     def clone(self, copyAnnexes=True, copyDecisionAnnexes=False, newOwnerId=None,
-              cloneEventAction=None, destFolder=None, copyFields=DEFAULT_COPIED_FIELDS,
-              newPortalType=None, keepProposingGroup=False, setCurrentAsPredecessor=False,
-              manualLinkToPredecessor=False, inheritAdvices=False, inheritedAdviceUids=[],
-              keep_ftw_labels=False):
+              cloneEventAction=None, cloneEventActionLabel=None, destFolder=None,
+              copyFields=DEFAULT_COPIED_FIELDS, newPortalType=None, keepProposingGroup=False,
+              setCurrentAsPredecessor=False, manualLinkToPredecessor=False,
+              inheritAdvices=False, inheritedAdviceUids=[], keep_ftw_labels=False):
         '''Clones me in the PloneMeetingFolder of the current user, or
            p_newOwnerId if given (this guy will also become owner of this
            item). If there is a p_cloneEventAction, an event will be included
@@ -5745,7 +5745,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if cloneEventAction:
             # We are sure that there is only one key in the workflow_history
             # because it was cleaned by ToolPloneMeeting.pasteItem
-            action_label = cloneEventAction + '_comments'
+            # use cloneEventActionLabel or generate a msgid based on cloneEventAction
+            action_label = cloneEventActionLabel or cloneEventAction + '_comments'
             add_wf_history_action(newItem,
                                   action_name=cloneEventAction,
                                   action_label=action_label,

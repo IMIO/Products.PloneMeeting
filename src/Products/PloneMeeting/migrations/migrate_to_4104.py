@@ -47,6 +47,8 @@ class Migrate_To_4104(Migrator):
         self._moveSearchAllDecisionsToSearchAllMeetings()
         if not from_migration_to_41:
             self.reindexIndexesFor(meta_type='Meeting')
+        # re-apply actions.xml to hide sharing (action name local_roles) everywhere
+        self.ps.runImportStepFromProfile('profile-Products.PloneMeeting:default', 'actions')
 
 
 def migrate(context):
