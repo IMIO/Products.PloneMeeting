@@ -5,8 +5,7 @@ Changelog
 4.1.18 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- Use another msgid for WF history comments when item is created from an item template, this way old comments still works and new comments includes item template path and title
 
 4.1.17 (2020-02-21)
 -------------------
