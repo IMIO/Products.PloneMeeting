@@ -737,12 +737,10 @@ def onAnnexAdded(annex, event):
             parent.sendMailIfRelevant('annexAdded', 'MeetingManager', isRole=True)
 
         # update parent modificationDate, it is used for caching and co
-        # and reindex parent SearchableText
-        # do not update 'hasAnnexesToPrint', it is done in
-        # onAnnexToPrintChanged called when adding an annex
+        # and reindex parent relevant indexes
         notifyModifiedAndReindex(
             parent,
-            extra_idxs=['SearchableText', 'hasAnnexesToSign'])
+            extra_idxs=['SearchableText', 'hasAnnexesToSign', 'hasAnnexesToPrint'])
 
 
 def onAnnexEditFinished(annex, event):
