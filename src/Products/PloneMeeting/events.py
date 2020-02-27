@@ -803,13 +803,14 @@ def onAnnexAttrChanged(annex, event):
     elif event.attr_name == 'to_sign':
         idxs.append('hasAnnexesToSign')
 
-    # update relevant indexes
-    parent = annex.aq_inner.aq_parent
-    notifyModifiedAndReindex(parent, extra_idxs=idxs)
+    # update relevant indexes if not event.is_created
+    if not event.is_created:
+        parent = annex.aq_inner.aq_parent
+        notifyModifiedAndReindex(parent, extra_idxs=idxs)
 
-    extras = 'annex={0} values={1}'.format(
-        annex.absolute_url_path(), str(event.new_values))
-    fplog('annex_attr_changed', extras=extras)
+        extras = 'annex={0} values={1}'.format(
+            annex.absolute_url_path(), str(event.new_values))
+        fplog('annex_attr_changed', extras=extras)
 
 
 def _annexToPrintChanged(annex, event):
