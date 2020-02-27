@@ -38,6 +38,7 @@ from Products.PloneMeeting.utils import AdviceAfterAddEvent
 from Products.PloneMeeting.utils import AdviceAfterModifyEvent
 from Products.PloneMeeting.utils import AdviceAfterTransitionEvent
 from Products.PloneMeeting.utils import applyOnTransitionFieldTransform
+from Products.PloneMeeting.utils import fplog
 from Products.PloneMeeting.utils import ItemAfterTransitionEvent
 from Products.PloneMeeting.utils import MeetingAfterTransitionEvent
 from Products.PloneMeeting.utils import meetingExecuteActionOnLinkedItems
@@ -737,9 +738,11 @@ def onAnnexAdded(annex, event):
 
         # update parent modificationDate, it is used for caching and co
         # and reindex parent SearchableText
+        # do not update 'hasAnnexesToPrint', it is done in
+        # onAnnexToPrintChanged called when adding an annex
         notifyModifiedAndReindex(
             parent,
-            extra_idxs=['SearchableText', 'hasAnnexesToPrint', 'hasAnnexesToSign'])
+            extra_idxs=['SearchableText', 'hasAnnexesToSign'])
 
 
 def onAnnexEditFinished(annex, event):
@@ -791,7 +794,25 @@ def onAnnexRemoved(annex, event):
     notifyModifiedAndReindex(parent, extra_idxs=['SearchableText', 'hasAnnexesToPrint', 'hasAnnexesToSign'])
 
 
-def onAnnexToPrintChanged(annex, event):
+def onAnnexAttrChanged(annex, event):
+    """ """
+    idxs = []
+    if event.attr_name == 'to_print':
+        _annexToPrintChanged(annex, event)
+        idxs.append('hasAnnexesToPrint')
+    elif event.attr_name == 'to_sign':
+        idxs.append('hasAnnexesToSign')
+
+    # update relevant indexes
+    parent = annex.aq_inner.aq_parent
+    notifyModifiedAndReindex(parent, extra_idxs=idxs)
+
+    extras = 'annex={0} values={1}'.format(
+        annex.absolute_url_path(), str(event.new_values))
+    fplog('annex_attr_changed', extras=extras)
+
+
+def _annexToPrintChanged(annex, event):
     """ """
     annex = event.object
 
@@ -805,21 +826,6 @@ def onAnnexToPrintChanged(annex, event):
             # queueJob manages the fact that annex is only converted again
             # if it was really modified (ModificationDate + md5 filehash)
             queueJob(annex)
-
-    # if parent is a MeetingItem, update the 'hasAnnexesToPrint' index
-    parent = annex.getParentNode()
-    if parent.meta_type == 'MeetingItem':
-        parent.reindexObject(idxs=['hasAnnexesToPrint'])
-
-
-def onAnnexSignedChanged(annex, event):
-    """ """
-    annex = event.object
-
-    # if parent is a MeetingItem, update the 'hasAnnexesToSign' index
-    parent = annex.aq_parent
-    if parent.meta_type == 'MeetingItem':
-        parent.reindexObject(idxs=['hasAnnexesToSign'])
 
 
 def onItemEditBegun(item, event):

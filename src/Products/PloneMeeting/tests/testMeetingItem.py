@@ -25,8 +25,7 @@
 from AccessControl import Unauthorized
 from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.contact.plonegroup.utils import get_plone_groups
-from collective.iconifiedcategory.event import IconifiedPrintChangedEvent
-from collective.iconifiedcategory.event import IconifiedSignedChangedEvent
+from collective.iconifiedcategory.event import IconifiedAttrChangedEvent
 from collective.iconifiedcategory.utils import calculate_category_id
 from collective.iconifiedcategory.utils import get_categories
 from collective.iconifiedcategory.utils import get_categorized_elements
@@ -5850,9 +5849,10 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(self.portal.portal_catalog(hasAnnexesToPrint='0', UID=item.UID()))
         # set to True
         annex.to_print = True
-        notify(IconifiedPrintChangedEvent(annex,
-                                          old_values={'to_print': False},
-                                          new_values={'to_print': True}))
+        notify(IconifiedAttrChangedEvent(annex,
+                                         attr_name='to_print',
+                                         old_values={'to_print': False},
+                                         new_values={'to_print': True}))
         self.assertTrue(self.portal.portal_catalog(hasAnnexesToPrint='1', UID=item.UID()))
         # remove the element
         self.portal.restrictedTraverse('@@delete_givenuid')(annex.UID())
@@ -5871,6 +5871,10 @@ class testMeetingItem(PloneMeetingTestCase):
         annex = self.addAnnex(item, to_print=True)
         self.assertTrue(annex.to_print)
         self.assertTrue(self.portal.portal_catalog(hasAnnexesToPrint='1', UID=item.UID()))
+        # when category.to_print is True
+        category.to_print = True
+        annex = self.addAnnex(item, to_print=True)
+        self.assertTrue(self.portal.portal_catalog(hasAnnexesToPrint='1', UID=item.UID()))
 
     def test_pm_HasAnnexesToSignIndex(self):
         """ """
@@ -5887,8 +5891,9 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(catalog(hasAnnexesToSign='-1', UID=item.UID()))
         # to_sign
         annex.to_sign = True
-        notify(IconifiedSignedChangedEvent(
+        notify(IconifiedAttrChangedEvent(
             annex,
+            attr_name='to_sign',
             old_values={'to_sign': False},
             new_values={'to_sign': True}))
         self.assertFalse(catalog(hasAnnexesToSign='1', UID=item.UID()))
@@ -5896,8 +5901,9 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertFalse(catalog(hasAnnexesToSign='-1', UID=item.UID()))
         # signed
         annex.signed = True
-        notify(IconifiedSignedChangedEvent(
+        notify(IconifiedAttrChangedEvent(
             annex,
+            attr_name='to_sign',
             old_values={'signed': False},
             new_values={'signed': True}))
         self.assertTrue(catalog(hasAnnexesToSign='1', UID=item.UID()))

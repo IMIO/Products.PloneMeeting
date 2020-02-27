@@ -7,6 +7,9 @@ from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.contact.plonegroup.utils import get_own_organization
 from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.excelexport.exportables.dexterityfields import get_exportable_for_fieldname
+from collective.fingerpointing.config import AUDIT_MESSAGE
+from collective.fingerpointing.logger import log_info
+from collective.fingerpointing.utils import get_request_information
 from collective.iconifiedcategory.interfaces import IIconifiedInfos
 from DateTime import DateTime
 from datetime import datetime
@@ -909,6 +912,13 @@ def notifyModifiedAndReindex(obj, extra_idxs=[], notify_event=False):
 
     if notify_event:
         notify(ObjectEditedEvent(obj))
+
+
+def fplog(action, extras):
+    """collective.fingerpointing add log message."""
+    # add logging message to fingerpointing log
+    user, ip = get_request_information()
+    log_info(AUDIT_MESSAGE.format(user, ip, action, extras))
 
 
 def transformAllRichTextFields(obj, onlyField=None):

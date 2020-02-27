@@ -147,12 +147,8 @@
               handler=".events.onAnnexEditFinished" />
 
  <subscriber for="imio.annex.content.annex.IAnnex
-                  collective.iconifiedcategory.interfaces.IIconifiedPrintChangedEvent"
-             handler=".events.onAnnexToPrintChanged" />
-
- <subscriber for="imio.annex.content.annex.IAnnex
-                  collective.iconifiedcategory.interfaces.IIconifiedSignedChangedEvent"
-             handler=".events.onAnnexSignedChanged" />
+                  collective.iconifiedcategory.interfaces.IIconifiedAttrChangedEvent"
+             handler=".events.onAnnexAttrChanged" />
 
   <subscriber for="imio.annex.content.annex.IAnnex
                    zope.lifecycleevent.IObjectModifiedEvent"

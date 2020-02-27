@@ -6,6 +6,7 @@ Changelog
 -------------------
 
 - Do no more _versionateAdvicesOnItemEdit on item when adding/removing an annex
+- Adapted code to use unique IconifiedAttrChangedEvent from collective.iconifiedcategory
 
 4.1.18 (2020-02-21)
 -------------------
