@@ -570,6 +570,7 @@ def onItemModified(item, event):
     '''Called when an item is modified.'''
     # if called because content was changed, like annex/advice added/removed
     # we bypass, no need to update references or rename id
+
     if not isinstance(event, ContainerModifiedEvent):
         meeting = item.getMeeting()
         if meeting:
@@ -719,13 +720,12 @@ def onAnnexAdded(annex, event):
     ''' '''
     # can be the case if migrating annexes or adding several annexes at once
     if not annex.REQUEST.get('defer_categorized_content_created_event'):
-        parent = annex.getParentNode()
+        parent = annex.aq_inner.aq_parent
+
         if '/++add++annex' in annex.REQUEST.getURL():
             annex.REQUEST.RESPONSE.redirect(parent.absolute_url() + '/@@categorized-annexes')
 
-        # if it is an annex added on an item, versionate given advices if necessary
         if parent.meta_type == 'MeetingItem':
-            parent._versionateAdvicesOnItemEdit()
             parent.updateHistory('add',
                                  annex,
                                  decisionRelated=annex.portal_type == 'annexDecision' and True or False)
@@ -781,7 +781,6 @@ def onAnnexRemoved(annex, event):
 
     # if it is an annex added on an item, versionate given advices if necessary
     if parent.meta_type == 'MeetingItem':
-        parent._versionateAdvicesOnItemEdit()
         parent.updateHistory('delete',
                              annex,
                              decisionRelated=annex.portal_type == 'annexDecision' and True or False)

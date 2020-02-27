@@ -537,7 +537,7 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
         meeting = self.context.getMeeting()
         if meeting:
             meetingModified = meeting.modified()
-        annotations = IAnnotations(self.context)
+        annotations = str(IAnnotations(self.context))
         cfg = self.tool.getMeetingConfig(self.context)
         cfg_modified = cfg.modified()
         userGroups = self.tool.get_plone_groups_for_user()

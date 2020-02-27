@@ -5,8 +5,7 @@ Changelog
 4.1.19 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- Do no more _versionateAdvicesOnItemEdit on item when adding/removing an annex
 
 4.1.18 (2020-02-21)
 -------------------
