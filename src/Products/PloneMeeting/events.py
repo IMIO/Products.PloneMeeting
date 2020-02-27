@@ -799,12 +799,14 @@ def onAnnexAttrChanged(annex, event):
     idxs = []
     if event.attr_name == 'to_print':
         _annexToPrintChanged(annex, event)
-        idxs.append('hasAnnexesToPrint')
-    elif event.attr_name == 'to_sign':
-        idxs.append('hasAnnexesToSign')
 
-    # update relevant indexes if not event.is_created
     if not event.is_created:
+        if event.attr_name == 'to_print':
+            idxs.append('hasAnnexesToPrint')
+        elif event.attr_name == 'to_sign':
+            idxs.append('hasAnnexesToSign')
+
+        # update relevant indexes if not event.is_created
         parent = annex.aq_inner.aq_parent
         notifyModifiedAndReindex(parent, extra_idxs=idxs)
 
