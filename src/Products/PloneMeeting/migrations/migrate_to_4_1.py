@@ -775,7 +775,7 @@ class Migrate_To_4_1(Migrator):
                     '{0}__groupincharge__{1}'.format(
                         proposing_group_org_uid, group_in_charge.UID()))
             else:
-                item.setProposingGroupWithGroupInCharge(u'')
+                item.getField('proposingGroupWithGroupInCharge').set(item, '')
             delattr(item, 'groupInCharge')
             # optionalAdvisers
             optionalAdvisers = item.getOptionalAdvisers()
