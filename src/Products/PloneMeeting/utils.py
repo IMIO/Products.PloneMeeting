@@ -1484,6 +1484,7 @@ def get_annexes(obj, portal_types=['annex', 'annexDecision']):
 def updateAnnexesAccess(container):
     """ """
     portal = api.portal.get()
+    visible_for_groups = []
     for k, v in getattr(container, 'categorized_elements', {}).items():
         # do not fail on 'Members', use unrestrictedTraverse
         try:
@@ -1493,8 +1494,13 @@ def updateAnnexesAccess(container):
             # before categorized_elements dict is updated
             v['visible_for_groups'] = []
             continue
-        adapter = getAdapter(annex, IIconifiedInfos)
-        v['visible_for_groups'] = adapter._visible_for_groups()
+        # visible_for_groups is the same for every annexes
+        if not visible_for_groups:
+            adapter = getAdapter(annex, IIconifiedInfos)
+            visible_for_groups = adapter._visible_for_groups()
+        v['visible_for_groups'] = visible_for_groups
+        adapter.context = annex
+        adapter._apply_visible_groups_security(visible_for_groups)
 
 
 def validate_item_assembly_value(value):
