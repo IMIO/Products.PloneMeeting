@@ -5223,7 +5223,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         notify(ItemLocalRolesUpdatedEvent(self, old_local_roles))
         # update annexes categorized_elements to store 'visible_for_groups'
         # do it only if local_roles changed
-        if old_local_roles != self.__ac_local_roles__:
+        # do not do it when isCreated, this is only possible when item duplicated
+        # in this case, annexes are correct
+        if not isCreated and old_local_roles != self.__ac_local_roles__:
             updateAnnexesAccess(self)
             # update categorized elements on contained advices too
             for advice in self.getAdvices():

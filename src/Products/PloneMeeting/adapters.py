@@ -1440,6 +1440,7 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
             self._apply_visible_groups_security(groups)
         return groups
 
+    @memoize
     def _compute_visible_for_groups(self):
         """ """
         groups = []

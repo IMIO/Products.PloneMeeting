@@ -97,6 +97,8 @@ class testAnnexes(PloneMeetingTestCase):
         cfg = self.meetingConfig
         cfgItemWF = self.wfTool.getWorkflowsFor(cfg.getItemTypeName())[0]
         item_initial_state = self.wfTool[cfgItemWF.getId()].initial_state
+        # make sure by default no access to items for powerobservers
+        self._setPowerObserverStates(states=[])
 
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
