@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from Acquisition import aq_base
 from AccessControl.Permission import Permission
 from appy.shared.diff import HtmlDiff
 from bs4 import BeautifulSoup
@@ -1484,7 +1485,7 @@ def get_annexes(obj, portal_types=['annex', 'annexDecision']):
 def updateAnnexesAccess(container):
     """ """
     portal = api.portal.get()
-    visible_for_groups = []
+    adapter = None
     for k, v in getattr(container, 'categorized_elements', {}).items():
         # do not fail on 'Members', use unrestrictedTraverse
         try:
@@ -1495,12 +1496,12 @@ def updateAnnexesAccess(container):
             v['visible_for_groups'] = []
             continue
         # visible_for_groups is the same for every annexes
-        if not visible_for_groups:
+        if not adapter:
             adapter = getAdapter(annex, IIconifiedInfos)
-            visible_for_groups = adapter._visible_for_groups()
-        v['visible_for_groups'] = visible_for_groups
-        adapter.context = annex
-        adapter._apply_visible_groups_security(visible_for_groups)
+        else:
+            adapter.context = annex
+            adapter.obj = aq_base(annex)
+        v['visible_for_groups'] = adapter._visible_for_groups()
 
 
 def validate_item_assembly_value(value):

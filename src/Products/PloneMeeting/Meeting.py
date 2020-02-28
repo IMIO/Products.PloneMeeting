@@ -77,6 +77,7 @@ from Products.PloneMeeting.utils import rememberPreviousData
 from Products.PloneMeeting.utils import setFieldFromAjax
 from Products.PloneMeeting.utils import toHTMLStrikedContent
 from Products.PloneMeeting.utils import transformAllRichTextFields
+from Products.PloneMeeting.utils import updateAnnexesAccess
 from Products.PloneMeeting.utils import validate_item_assembly_value
 from zope.component import getMultiAdapter
 from zope.event import notify
@@ -1778,7 +1779,9 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         _addManagedPermissions(self)
         # notify that localRoles have been updated
         notify(MeetingLocalRolesUpdatedEvent(self, old_local_roles))
-
+        # not really necessary here but easier
+        # update annexes categorized_elements to store 'visible_for_groups'
+        updateAnnexesAccess(self)
         # reindex object security except if avoid_reindex=True and localroles are the same
         avoid_reindex = kwargs.get('avoid_reindex', False)
         if not avoid_reindex or old_local_roles != self.__ac_local_roles__:

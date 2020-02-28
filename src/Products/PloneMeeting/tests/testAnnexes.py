@@ -124,10 +124,13 @@ class testAnnexes(PloneMeetingTestCase):
             annexNotConfidential, annexConfidential = self._setupConfidentialityOnItemAnnexes()
 
         # give budget impact editors view on item
-        item.__ac_local_roles__['{0}_{1}'.format(cfg.getId(), BUDGETIMPACTEDITORS_GROUP_SUFFIX)] = 'Reader'
-
+        cfg.setItemBudgetInfosStates([item_initial_state])
         cfg.setItemAnnexConfidentialVisibleFor(('configgroup_budgetimpacteditors', ))
-        update_all_categorized_elements(item)
+        item.updateLocalRoles()
+        # give budget impact editors view on item
+        # by default, budget impact editors local role will only give ability to edit budget infos, not to view item
+        item.__ac_local_roles__['{0}_{1}'.format(cfg.getId(), BUDGETIMPACTEDITORS_GROUP_SUFFIX)] = ['Reader']
+        item.reindexObjectSecurity()
 
         self.changeUser('budgetimpacteditor')
         self._checkElementConfidentialAnnexAccess(cfg, item, annexNotConfidential, annexConfidential,
@@ -333,6 +336,8 @@ class testAnnexes(PloneMeetingTestCase):
         cfg = self.meetingConfig
         cfgItemWF = self.wfTool.getWorkflowsFor(cfg.getItemTypeName())[0]
         item_initial_state = self.wfTool[cfgItemWF.getId()].initial_state
+        # make sure by default no access to items for powerobservers
+        self._setPowerObserverStates(states=[])
 
         cfg.setItemAdviceStates((item_initial_state, ))
         cfg.setItemAdviceEditStates((item_initial_state, ))
@@ -382,11 +387,13 @@ class testAnnexes(PloneMeetingTestCase):
         item_initial_state, item, advice, annexes_table, categorized_child, \
             annexNotConfidential, annexConfidential = self._setupConfidentialityOnAdviceAnnexes()
 
-        # give budget impact editors view on item
-        item.__ac_local_roles__['{0}_{1}'.format(cfg.getId(), BUDGETIMPACTEDITORS_GROUP_SUFFIX)] = 'Reader'
-
+        cfg.setItemBudgetInfosStates([item_initial_state])
         cfg.setAdviceAnnexConfidentialVisibleFor(('configgroup_budgetimpacteditors', ))
-        update_all_categorized_elements(advice)
+        item.updateLocalRoles()
+        # give budget impact editors view on item
+        # by default, budget impact editors local role will only give ability to edit budget infos, not to view item
+        item.__ac_local_roles__['{0}_{1}'.format(cfg.getId(), BUDGETIMPACTEDITORS_GROUP_SUFFIX)] = ['Reader']
+        item.reindexObjectSecurity()
 
         self.changeUser('budgetimpacteditor')
         self._checkElementConfidentialAnnexAccess(cfg, advice, annexNotConfidential, annexConfidential,
@@ -507,6 +514,8 @@ class testAnnexes(PloneMeetingTestCase):
         cfg = self.meetingConfig
         cfgMeetingWF = self.wfTool.getWorkflowsFor(cfg.getMeetingTypeName())[0]
         meeting_initial_state = self.wfTool[cfgMeetingWF.getId()].initial_state
+        # make sure by default no access to items for powerobservers
+        self._setPowerObserverStates(states=[])
 
         self.changeUser('pmManager')
         meeting = self.create('Meeting', date=DateTime('2016/10/10'))
