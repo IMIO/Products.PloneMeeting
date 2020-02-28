@@ -1777,7 +1777,10 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         # it is done on every edit because of 'meeting_access_on' TAL expression
         self._updatePowerObserversLocalRoles()
         # update annexes categorized_elements to store 'visible_for_groups'
-        updateAnnexesAccess(self)
+        # do it only if not here because triggering transition
+        triggered_by_transition = kwargs.get('triggered_by_transition', None)
+        if triggered_by_transition is None:
+            updateAnnexesAccess(self)
         _addManagedPermissions(self)
         # notify that localRoles have been updated
         notify(MeetingLocalRolesUpdatedEvent(self, old_local_roles))

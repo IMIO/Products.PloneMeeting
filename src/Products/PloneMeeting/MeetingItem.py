@@ -5216,11 +5216,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # we will give the current groupsInCharge _observers sub group access to this item
         self._updateGroupsInChargeLocalRoles()
         # update annexes categorized_elements to store 'visible_for_groups'
-        # do it only if local_roles changed
-        updateAnnexesAccess(self)
-        # update categorized elements on contained advices too
-        for advice in self.getAdvices():
-            updateAnnexesAccess(advice)
+        # do it only if not here because triggering transition
+        if triggered_by_transition is None:
+            updateAnnexesAccess(self)
+            # update categorized elements on contained advices too
+            for advice in self.getAdvices():
+                updateAnnexesAccess(advice)
         # manage automatically given permissions
         _addManagedPermissions(self)
         # clean borg.localroles caching
