@@ -77,7 +77,6 @@ from Products.PloneMeeting.utils import rememberPreviousData
 from Products.PloneMeeting.utils import setFieldFromAjax
 from Products.PloneMeeting.utils import toHTMLStrikedContent
 from Products.PloneMeeting.utils import transformAllRichTextFields
-from Products.PloneMeeting.utils import updateAnnexesAccess
 from Products.PloneMeeting.utils import validate_item_assembly_value
 from zope.component import getMultiAdapter
 from zope.event import notify
@@ -1776,11 +1775,6 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         # corresponding MeetingConfig.powerObsevers
         # it is done on every edit because of 'meeting_access_on' TAL expression
         self._updatePowerObserversLocalRoles()
-        # update annexes categorized_elements to store 'visible_for_groups'
-        # do it only if not here because triggering transition
-        triggered_by_transition = kwargs.get('triggered_by_transition', None)
-        if triggered_by_transition is None:
-            updateAnnexesAccess(self)
         _addManagedPermissions(self)
         # notify that localRoles have been updated
         notify(MeetingLocalRolesUpdatedEvent(self, old_local_roles))
