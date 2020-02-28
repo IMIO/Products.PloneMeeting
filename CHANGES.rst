@@ -7,6 +7,8 @@ Changelog
 
 - Do no more _versionateAdvicesOnItemEdit on item when adding/removing an annex
 - Adapted code to use unique IconifiedAttrChangedEvent from collective.iconifiedcategory
+- Added helper method utils.normalize_id
+- When storing POD template as annex, define the id to use and pass it to api.content.create or element is renamed and ObjectModifiedEvent is called 2 times
 
 4.1.18 (2020-02-21)
 -------------------

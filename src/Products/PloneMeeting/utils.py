@@ -29,6 +29,7 @@ from plone.app.textfield import RichText
 from plone.app.uuid.utils import uuidToObject
 from plone.autoform.interfaces import WRITE_PERMISSIONS_KEY
 from plone.dexterity.interfaces import IDexterityContent
+from plone.i18n.normalizer.interfaces import IIDNormalizer
 from plone.locking.events import unlockAfterModification
 from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.permissions import AccessContentsInformation
@@ -69,6 +70,7 @@ from Products.PloneMeeting.interfaces import IMeetingLocalRolesUpdatedEvent
 from Products.PloneMeeting.interfaces import IToolPloneMeetingCustom
 from zope.annotation import IAnnotations
 from zope.component import getAdapter
+from zope.component import getUtility
 from zope.component import queryUtility
 from zope.component.hooks import getSite
 from zope.component.interfaces import ObjectEvent
@@ -1689,6 +1691,13 @@ def normalize(string, acceptable=[]):
        - lowerized."""
     return ''.join(x for x in unicodedata.normalize('NFKD', string)
                    if unicodedata.category(x) != 'Mn').lower().strip()
+
+
+def normalize_id(id):
+    """ """
+    idnormalizer = getUtility(IIDNormalizer)
+    id = idnormalizer.normalize(id)
+    return id
 
 
 def add_wf_history_action(obj, action_name, action_label, user_id=None):
