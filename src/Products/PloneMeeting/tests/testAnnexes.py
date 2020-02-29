@@ -92,13 +92,13 @@ class testAnnexes(PloneMeetingTestCase):
         view.set_values({'confidential': 'true'})
         self.assertTrue(annex.confidential)
 
-    def _setupConfidentialityOnItemAnnexes(self):
+    def _setupConfidentialityOnItemAnnexes(self, powerObserverStates=[]):
         """ """
         cfg = self.meetingConfig
         cfgItemWF = self.wfTool.getWorkflowsFor(cfg.getItemTypeName())[0]
         item_initial_state = self.wfTool[cfgItemWF.getId()].initial_state
         # make sure by default no access to items for powerobservers
-        self._setPowerObserverStates(states=[])
+        self._setPowerObserverStates(states=powerObserverStates)
 
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
@@ -611,8 +611,8 @@ class testAnnexes(PloneMeetingTestCase):
         cfg.setItemAnnexConfidentialVisibleFor(('suffix_proposing_group_creators', ))
 
         item_initial_state, item, annexes_table, categorized_child, \
-            annexNotConfidential, annexConfidential = self._setupConfidentialityOnItemAnnexes()
-        self._setPowerObserverStates(states=(item_initial_state, ))
+            annexNotConfidential, annexConfidential = self._setupConfidentialityOnItemAnnexes(
+                powerObserverStates=(item_initial_state, ))
 
         view = annexConfidential.restrictedTraverse('@@iconified-confidential')
         view.attribute_mapping = {'confidential': 'confidential'}
