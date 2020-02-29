@@ -607,12 +607,12 @@ class testAnnexes(PloneMeetingTestCase):
         cfg = self.meetingConfig
         cfgItemWF = self.wfTool.getWorkflowsFor(cfg.getItemTypeName())[0]
         item_initial_state = self.wfTool[cfgItemWF.getId()].initial_state
-        self._setPowerObserverStates(states=(item_initial_state, ))
         # confidential annexes are visible by proposing group creators
         cfg.setItemAnnexConfidentialVisibleFor(('suffix_proposing_group_creators', ))
 
         item_initial_state, item, annexes_table, categorized_child, \
             annexNotConfidential, annexConfidential = self._setupConfidentialityOnItemAnnexes()
+        self._setPowerObserverStates(states=(item_initial_state, ))
 
         view = annexConfidential.restrictedTraverse('@@iconified-confidential')
         view.attribute_mapping = {'confidential': 'confidential'}
