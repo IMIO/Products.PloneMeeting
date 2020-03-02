@@ -53,7 +53,6 @@ from Products.PloneMeeting.browser.itemchangeorder import _is_integer
 from Products.PloneMeeting.browser.itemchangeorder import _to_integer
 from Products.PloneMeeting.browser.itemchangeorder import _use_same_integer
 from Products.PloneMeeting.config import PMMessageFactory as _
-from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import PROJECTNAME
 from Products.PloneMeeting.config import READER_USECASES
 from Products.PloneMeeting.interfaces import IMeetingWorkflowActions
@@ -830,17 +829,12 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         # before late state, accept items having any preferred meeting
         late_state = self.adapted().getLateState()
         if meeting.queryState() in self.getStatesBefore(late_state):
-            # Get meetings accepting items for which the date is lower or
+            # get items for which the getPreferredMeetingDate is lower or
             # equal to the date of this meeting (self)
-            catalog = api.portal.get_tool('portal_catalog')
-            meetings = catalog(
-                portal_type=cfg.getMeetingTypeName(),
-                getDate={'query': meeting.getDate(), 'range': 'max'}, )
-            meetingUids = [b.UID for b in meetings]
-            meetingUids.append(ITEM_NO_PREFERRED_MEETING_VALUE)
-            res.append({'i': 'getPreferredMeeting',
-                        'o': 'plone.app.querystring.operation.selection.is',
-                        'v': meetingUids})
+            # a no preferred meeting item getPreferredMeetingDate is 1950/01/01
+            res.append({'i': 'getPreferredMeetingDate',
+                        'o': 'plone.app.querystring.operation.date.lessThan',
+                        'v': meeting.getDate()})
         else:
             # after late state, only query items for which preferred meeting is self
             res.append({'i': 'getPreferredMeeting',

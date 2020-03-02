@@ -16,6 +16,7 @@ Changelog
 - Added adaptable method MeetingItem._is_complete relying on MeetingItem.completeness field
 - Defined CSS rule that manage RichText fields paragraph line height everywhere it is displayed (dashboard, view, CKeditor)
 - In `utils.cropHTML`, avoid visual encoding problems by making sure we have unicode before calling `BeautifulSoup`
+- Optimized avilable items query, avoid catalog query to find past meetings
 
 4.1.18 (2020-02-21)
 -------------------
