@@ -3561,7 +3561,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         self._sendAdviceToGiveMailIfRelevant(old_review_state, new_review_state)
         self._sendCopyGroupsMailIfRelevant(old_review_state, new_review_state)
 
-    def _sendAdviceToGiveMailIfRelevant(self, old_review_state, new_review_state):
+    def _sendAdviceToGiveMailIfRelevant(self,
+                                        old_review_state,
+                                        new_review_state,
+                                        force_resend_if_in_advice_review_states=False):
         '''A transition was fired on self, check if, in the new item state,
            advices need to be given, that had not to be given in the previous item state.'''
         tool = api.portal.get_tool('portal_plonemeeting')
@@ -3575,12 +3578,15 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 continue
             org = get_organization(org_uid)
             adviceStates = org.get_item_advice_states(cfg)
+            # If force_resend_if_in_review_states=True, check if current item review_state in adviceStates
+            # This is useful when asking advice again and item review_state does not change
             # Ignore advices that must not be given in the current item state
             # Ignore advices that already needed to be given in the previous item state
-            if new_review_state not in adviceStates or old_review_state in adviceStates:
+            if (new_review_state not in adviceStates or old_review_state in adviceStates) and \
+               (not force_resend_if_in_advice_review_states or old_review_state not in adviceStates):
                 continue
             # do not consider groups that already gave their advice
-            if not adviceInfo['type'] == 'not_given':
+            if adviceInfo['type'] not in ['not_given', 'asked_again']:
                 continue
             # Send a mail to every person from group _advisers.
             labelType = adviceInfo['optional'] and 'advice_optional' or 'advice_mandatory'
