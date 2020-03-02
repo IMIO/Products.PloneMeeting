@@ -209,7 +209,6 @@ body.cke_editable table.cke_show_border:not([border='0']):not([style*="border"])
 #content table.no-style-table table tr td,
 #content div.pmMoreInfo table[border='1'] tr th,
 #content div.pmMoreInfo table[border='1'] tr td {
-
     border: 1px solid black;
 }
 
@@ -1835,6 +1834,13 @@ div#held_position_back_refs {
 
 div.itemtemplate-infos, div.recurringitem-infos {
    padding-top: 1em;
+}
+
+/* space under paragraphs in rich text zones */
+#content div.pmMoreInfo div p,
+#content div[id^='hook_'] p,
+body#content.cke_editable div p {
+   line-height: 2em;
 }
 
 /* </dtml-with> */
