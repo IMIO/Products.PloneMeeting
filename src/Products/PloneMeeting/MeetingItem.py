@@ -1925,7 +1925,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('mayAskEmergency')
 
     def mayAskEmergency(self):
-        '''Returns True if current user may ask emergency for an item.'''
+        '''Check doc in interfaces.py.'''
         # by default, everybody able to edit the item can ask emergency
         item = self.getSelf()
         if item.isDefinedInTool():
@@ -1938,7 +1938,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('mayAcceptOrRefuseEmergency')
 
     def mayAcceptOrRefuseEmergency(self):
-        '''Returns True if current user may accept or refuse emergency if asked for an item.'''
+        '''Check doc in interfaces.py.'''
         # by default, only MeetingManagers can accept or refuse emergency
         item = self.getSelf()
         tool = api.portal.get_tool('portal_plonemeeting')
@@ -1950,8 +1950,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('mayEvaluateCompleteness')
 
     def mayEvaluateCompleteness(self):
-        '''Condition for editing 'completeness' field,
-           being able to define if item is 'complete' or 'incomplete'.'''
+        '''Check doc in interfaces.py.'''
         # user must be able to edit current item
         item = self.getSelf()
         if item.isDefinedInTool():
@@ -1967,9 +1966,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('mayAskCompletenessEvalAgain')
 
     def mayAskCompletenessEvalAgain(self):
-        '''Condition for editing 'completeness' field,
-           being able to ask completeness evaluation again when completeness
-           was 'incomplete'.'''
+        '''Check doc in interfaces.py.'''
         # user must be able to edit current item
         item = self.getSelf()
         if item.isDefinedInTool():
@@ -1981,6 +1978,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            not member.has_role(ITEM_COMPLETENESS_ASKERS, item):
             return False
         return True
+
+    def _is_complete(self):
+        '''Check doc in interfaces.py.'''
+        item = self.getSelf()
+        return item.getCompleteness() in ('completeness_complete',
+                                          'completeness_evaluation_not_required')
 
     security.declarePublic('mayEditAdviceConfidentiality')
 

@@ -13,6 +13,7 @@ Changelog
 - Optimized annex management to avoid useless process when adding/removing/changing attr value (to_print, confidential, ...) on annexes
 - Fixed migration to 4.1 while migrating Plone groups that may also contain other groups in addition to users
 - Fixed email notification `advice to give` when advice is `asked again` on an item in a review_state where advices are already giveable
+- Added adaptable method MeetingItem._is_complete relying on MeetingItem.completeness field
 
 4.1.18 (2020-02-21)
 -------------------
