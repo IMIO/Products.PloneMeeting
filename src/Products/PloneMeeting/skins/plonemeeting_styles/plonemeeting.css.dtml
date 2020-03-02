@@ -1840,7 +1840,7 @@ div.itemtemplate-infos, div.recurringitem-infos {
 #content div.pmMoreInfo div p,
 #content div[id^='hook_'] p,
 body#content.cke_editable div p {
-   line-height: 2em;
+   line-height: 1.5em;
 }
 
 /* </dtml-with> */

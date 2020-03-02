@@ -15,6 +15,7 @@ Changelog
 - Fixed email notification `advice to give` when advice is `asked again` on an item in a review_state where advices are already giveable
 - Added adaptable method MeetingItem._is_complete relying on MeetingItem.completeness field
 - Defined CSS rule that manage RichText fields paragraph line height everywhere it is displayed (dashboard, view, CKeditor)
+- In `utils.cropHTML`, avoid visual encoding problems by making sure we have unicode before calling `BeautifulSoup`
 
 4.1.18 (2020-02-21)
 -------------------

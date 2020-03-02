@@ -299,6 +299,7 @@ def fieldIsEmpty(name, obj, useParamValue=False, value=None):
 
 def cropHTML(html, length=400, ellipsis='...'):
     '''Crop given HTML and return valid HTML.'''
+    html = safe_unicode(html)
     cropped_content = BeautifulSoup(html[:length], 'html.parser').renderContents()
     return cropped_content
 
