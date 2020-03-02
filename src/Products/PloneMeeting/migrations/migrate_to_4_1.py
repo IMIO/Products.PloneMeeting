@@ -607,11 +607,11 @@ class Migrate_To_4_1(Migrator):
                 ori_plone_group = api.group.get(ori_plone_group_id)
                 if ori_plone_group:
                     new_plone_group = get_plone_group(org_uid, suffix)
-                    for member_id in ori_plone_group.getMemberIds():
-                        # manage no more existing users
-                        if not api.user.get(member_id):
-                            continue
-                        api.group.add_user(group=new_plone_group, username=member_id)
+                    # manage also rare cases where groups stored on groups
+                    for member_or_group in ori_plone_group.getGroupMembers():
+                        # no need to manage unexisting as getGroupMembers
+                        # only return found users/groups
+                        api.group.add_user(group=new_plone_group, user=member_or_group)
                     # remove original Plone group
                     portal_groups.removeGroup(ori_plone_group_id)
 

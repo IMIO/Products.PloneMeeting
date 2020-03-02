@@ -11,6 +11,7 @@ Changelog
 - When storing POD template as annex, define the id to use and pass it to api.content.create or element is renamed and ObjectModifiedEvent is called 2 times
 - Fixed migration to 4.1 that removed MeetingItem.proposingGroup when calling `item.setProposingGroupWithGroupInCharge(u'')`
 - Optimized annex management to avoid useless process when adding/removing/changing attr value (to_print, confidential, ...) on annexes
+- Fixed migration to 4.1 while migrating Plone groups that may also contain other groups in addition to users
 
 4.1.18 (2020-02-21)
 -------------------
