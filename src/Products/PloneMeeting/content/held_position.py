@@ -152,7 +152,7 @@ class PMHeldPosition(HeldPosition):
         person = self.get_person()
         firstname = person.firstname
         if abbreviate_firstname:
-            firstname = u"{0}.".format(firstname[:1])
+            firstname = person.firstname_abbreviated or u"{0}.".format(firstname[:1])
         person_title = u''
         if include_person_title:
             person_title = u'{0} '.format(person.person_title)
