@@ -91,6 +91,7 @@ class PMHeldPosition(HeldPosition):
                         include_defaults=False,
                         include_signature_number=False,
                         include_sub_organizations=True,
+                        abbreviate_firstname=False,
                         highlight=False):
         """Returns short name for held position :
            - the label if defined on held_position object or position title;
@@ -110,7 +111,8 @@ class PMHeldPosition(HeldPosition):
             while organization != root_organization:
                 sub_organizations.append(organization)
                 organization = organization.aq_parent
-        person_label = self.get_person_title()
+        person_label = self.get_person_short_title(include_person_title=True,
+                                                   abbreviate_firstname=abbreviate_firstname)
         held_position_label = self.get_label() or translate(
             'No label defined on held position',
             domain='PloneMeeting',
@@ -146,13 +148,13 @@ class PMHeldPosition(HeldPosition):
 
     def get_person_short_title(self,
                                include_person_title=False,
-                               abbreviate_firstname=True,
+                               abbreviate_firstname=False,
                                include_held_position_label=False):
         """ """
         person = self.get_person()
         firstname = person.firstname
         if abbreviate_firstname:
-            firstname = u"{0}.".format(firstname[:1])
+            firstname = person.firstname_abbreviated or person.firstname
         person_title = u''
         if include_person_title:
             person_title = u'{0} '.format(person.person_title)

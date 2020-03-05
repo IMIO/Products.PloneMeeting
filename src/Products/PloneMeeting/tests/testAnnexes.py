@@ -26,7 +26,7 @@ from AccessControl import Unauthorized
 from collective.contact.plonegroup.utils import get_plone_group
 from collective.documentviewer.config import CONVERTABLE_TYPES
 from collective.documentviewer.settings import GlobalSettings
-from collective.iconifiedcategory.event import IconifiedPrintChangedEvent
+from collective.iconifiedcategory.event import IconifiedAttrChangedEvent
 from collective.iconifiedcategory.interfaces import IIconifiedPreview
 from collective.iconifiedcategory.utils import calculate_category_id
 from collective.iconifiedcategory.utils import get_categorized_elements
@@ -92,11 +92,13 @@ class testAnnexes(PloneMeetingTestCase):
         view.set_values({'confidential': 'true'})
         self.assertTrue(annex.confidential)
 
-    def _setupConfidentialityOnItemAnnexes(self):
+    def _setupConfidentialityOnItemAnnexes(self, powerObserverStates=[]):
         """ """
         cfg = self.meetingConfig
         cfgItemWF = self.wfTool.getWorkflowsFor(cfg.getItemTypeName())[0]
         item_initial_state = self.wfTool[cfgItemWF.getId()].initial_state
+        # make sure by default no access to items for powerobservers
+        self._setPowerObserverStates(states=powerObserverStates)
 
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
@@ -122,10 +124,13 @@ class testAnnexes(PloneMeetingTestCase):
             annexNotConfidential, annexConfidential = self._setupConfidentialityOnItemAnnexes()
 
         # give budget impact editors view on item
-        item.__ac_local_roles__['{0}_{1}'.format(cfg.getId(), BUDGETIMPACTEDITORS_GROUP_SUFFIX)] = 'Reader'
-
+        cfg.setItemBudgetInfosStates([item_initial_state])
         cfg.setItemAnnexConfidentialVisibleFor(('configgroup_budgetimpacteditors', ))
-        update_all_categorized_elements(item)
+        item.updateLocalRoles()
+        # give budget impact editors view on item
+        # by default, budget impact editors local role will only give ability to edit budget infos, not to view item
+        item.__ac_local_roles__['{0}_{1}'.format(cfg.getId(), BUDGETIMPACTEDITORS_GROUP_SUFFIX)] = ['Reader']
+        item.reindexObjectSecurity()
 
         self.changeUser('budgetimpacteditor')
         self._checkElementConfidentialAnnexAccess(cfg, item, annexNotConfidential, annexConfidential,
@@ -331,6 +336,8 @@ class testAnnexes(PloneMeetingTestCase):
         cfg = self.meetingConfig
         cfgItemWF = self.wfTool.getWorkflowsFor(cfg.getItemTypeName())[0]
         item_initial_state = self.wfTool[cfgItemWF.getId()].initial_state
+        # make sure by default no access to items for powerobservers
+        self._setPowerObserverStates(states=[])
 
         cfg.setItemAdviceStates((item_initial_state, ))
         cfg.setItemAdviceEditStates((item_initial_state, ))
@@ -380,11 +387,13 @@ class testAnnexes(PloneMeetingTestCase):
         item_initial_state, item, advice, annexes_table, categorized_child, \
             annexNotConfidential, annexConfidential = self._setupConfidentialityOnAdviceAnnexes()
 
-        # give budget impact editors view on item
-        item.__ac_local_roles__['{0}_{1}'.format(cfg.getId(), BUDGETIMPACTEDITORS_GROUP_SUFFIX)] = 'Reader'
-
+        cfg.setItemBudgetInfosStates([item_initial_state])
         cfg.setAdviceAnnexConfidentialVisibleFor(('configgroup_budgetimpacteditors', ))
-        update_all_categorized_elements(advice)
+        item.updateLocalRoles()
+        # give budget impact editors view on item
+        # by default, budget impact editors local role will only give ability to edit budget infos, not to view item
+        item.__ac_local_roles__['{0}_{1}'.format(cfg.getId(), BUDGETIMPACTEDITORS_GROUP_SUFFIX)] = ['Reader']
+        item.reindexObjectSecurity()
 
         self.changeUser('budgetimpacteditor')
         self._checkElementConfidentialAnnexAccess(cfg, advice, annexNotConfidential, annexConfidential,
@@ -505,6 +514,8 @@ class testAnnexes(PloneMeetingTestCase):
         cfg = self.meetingConfig
         cfgMeetingWF = self.wfTool.getWorkflowsFor(cfg.getMeetingTypeName())[0]
         meeting_initial_state = self.wfTool[cfgMeetingWF.getId()].initial_state
+        # make sure by default no access to items for powerobservers
+        self._setPowerObserverStates(states=[])
 
         self.changeUser('pmManager')
         meeting = self.create('Meeting', date=DateTime('2016/10/10'))
@@ -596,12 +607,12 @@ class testAnnexes(PloneMeetingTestCase):
         cfg = self.meetingConfig
         cfgItemWF = self.wfTool.getWorkflowsFor(cfg.getItemTypeName())[0]
         item_initial_state = self.wfTool[cfgItemWF.getId()].initial_state
-        self._setPowerObserverStates(states=(item_initial_state, ))
         # confidential annexes are visible by proposing group creators
         cfg.setItemAnnexConfidentialVisibleFor(('suffix_proposing_group_creators', ))
 
         item_initial_state, item, annexes_table, categorized_child, \
-            annexNotConfidential, annexConfidential = self._setupConfidentialityOnItemAnnexes()
+            annexNotConfidential, annexConfidential = self._setupConfidentialityOnItemAnnexes(
+                powerObserverStates=(item_initial_state, ))
 
         view = annexConfidential.restrictedTraverse('@@iconified-confidential')
         view.attribute_mapping = {'confidential': 'confidential'}
@@ -831,18 +842,20 @@ class testAnnexes(PloneMeetingTestCase):
         self.assertFalse(converted_annex.to_print)
         self.assertFalse(IIconifiedPreview(converted_annex).converted)
         converted_annex.to_print = True
-        notify(IconifiedPrintChangedEvent(converted_annex,
-                                          old_values={'to_print': False},
-                                          new_values={'to_print': True}))
+        notify(IconifiedAttrChangedEvent(converted_annex,
+                                         attr_name='to_print',
+                                         old_values={'to_print': False},
+                                         new_values={'to_print': True}))
         self.assertTrue(converted_annex.to_print)
         self.assertTrue(IIconifiedPreview(converted_annex).converted)
 
         # if an annex is not 'to_print', it is not converted
         converted_annex2 = self.addAnnex(item)
         converted_annex2.to_print = False
-        notify(IconifiedPrintChangedEvent(converted_annex2,
-                                          old_values={'to_print': True},
-                                          new_values={'to_print': False}))
+        notify(IconifiedAttrChangedEvent(converted_annex2,
+                                         attr_name='to_print',
+                                         old_values={'to_print': True},
+                                         new_values={'to_print': False}))
         self.assertFalse(converted_annex2.to_print)
         self.assertFalse(IIconifiedPreview(converted_annex2).converted)
 

@@ -394,6 +394,21 @@ class testPerformances(PloneMeetingTestCase):
         for time in range(times):
             self.tool.getMeetingConfig(context, caching=caching)
 
+    def test_pm_IsManager(self):
+        '''Test ToolPloneMeeting.isManager method performances.
+           Need to comment manually ram.cache on ToolPloneMeeting.isManager
+           to see difference.  Performance is better with @ram.cache.'''
+        # create an item
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        self._isManager(item, 2000)
+
+    @timecall
+    def _isManager(self, context, times=1):
+        ''' '''
+        for time in range(times):
+            self.tool.isManager(context)
+
     def test_pm_GetAuthenticatedMember(self):
         '''Test performance between portal_membership.getAuthenticatedMember and
            plone_portal_state.member() and api.user.get_current.'''

@@ -144,6 +144,8 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         self.meetingConfig2 = getattr(self.tool, self.cfg2_id, None)
         # Set the default file and file type for adding annexes
         self.annexFile = u'FILE.txt'
+        self.annexFilePDF = u'file_correct.pdf'
+        self.annexFileCorruptedPDF = u'file_errorDuringConversion.pdf'
         self.annexFileType = 'financial-analysis'
         self.annexFileTypeDecision = 'decision-annex'
         self.annexFileTypeAdvice = 'advice-annex'
@@ -342,10 +344,11 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         if os.path.exists(newAnnexPath):
             os.remove(newAnnexPath)
 
-    def _annex_file_content(self):
+    def _annex_file_content(self, annexFile=None):
         current_path = os.path.dirname(__file__)
-        f = open(os.path.join(current_path, self.annexFile), 'r')
-        annex_file = namedfile.NamedBlobFile(f.read(), filename=self.annexFile)
+        annexFile = annexFile or self.annexFile
+        f = open(os.path.join(current_path, annexFile), 'r')
+        annex_file = namedfile.NamedBlobFile(f.read(), filename=annexFile)
         return annex_file
 
     def addAnnex(self,
@@ -356,7 +359,8 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                  to_print=False,
                  confidential=False,
                  to_sign=False,
-                 signed=False):
+                 signed=False,
+                 annexFile=None):
         '''Adds an annex to p_item.
            If no p_annexType is provided, self.annexFileType is used.
            If no p_annexTitle is specified, the predefined title of the annex type is used.'''
@@ -389,7 +393,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             container=context,
             portal_type=annexContentType,
             title=annexTitle or 'Annex',
-            file=self._annex_file_content(),
+            file=self._annex_file_content(annexFile=annexFile),
             content_category=annexTypeId,
             to_print=to_print,
             confidential=confidential,

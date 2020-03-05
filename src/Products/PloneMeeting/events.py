@@ -38,6 +38,7 @@ from Products.PloneMeeting.utils import AdviceAfterAddEvent
 from Products.PloneMeeting.utils import AdviceAfterModifyEvent
 from Products.PloneMeeting.utils import AdviceAfterTransitionEvent
 from Products.PloneMeeting.utils import applyOnTransitionFieldTransform
+from Products.PloneMeeting.utils import fplog
 from Products.PloneMeeting.utils import ItemAfterTransitionEvent
 from Products.PloneMeeting.utils import MeetingAfterTransitionEvent
 from Products.PloneMeeting.utils import meetingExecuteActionOnLinkedItems
@@ -576,6 +577,7 @@ def onItemModified(item, event):
     '''Called when an item is modified.'''
     # if called because content was changed, like annex/advice added/removed
     # we bypass, no need to update references or rename id
+
     if not isinstance(event, ContainerModifiedEvent):
         meeting = item.getMeeting()
         if meeting:
@@ -725,13 +727,12 @@ def onAnnexAdded(annex, event):
     ''' '''
     # can be the case if migrating annexes or adding several annexes at once
     if not annex.REQUEST.get('defer_categorized_content_created_event'):
-        parent = annex.getParentNode()
+        parent = annex.aq_inner.aq_parent
+
         if '/++add++annex' in annex.REQUEST.getURL():
             annex.REQUEST.RESPONSE.redirect(parent.absolute_url() + '/@@categorized-annexes')
 
-        # if it is an annex added on an item, versionate given advices if necessary
         if parent.meta_type == 'MeetingItem':
-            parent._versionateAdvicesOnItemEdit()
             parent.updateHistory('add',
                                  annex,
                                  decisionRelated=annex.portal_type == 'annexDecision' and True or False)
@@ -742,10 +743,10 @@ def onAnnexAdded(annex, event):
             parent.sendMailIfRelevant('annexAdded', 'meetingmanagers', isSuffix=True)
 
         # update parent modificationDate, it is used for caching and co
-        # and reindex parent SearchableText
+        # and reindex parent relevant indexes
         notifyModifiedAndReindex(
             parent,
-            extra_idxs=['SearchableText', 'hasAnnexesToPrint', 'hasAnnexesToSign'])
+            extra_idxs=['SearchableText', 'hasAnnexesToSign', 'hasAnnexesToPrint'])
 
 
 def onAnnexEditFinished(annex, event):
@@ -787,7 +788,6 @@ def onAnnexRemoved(annex, event):
 
     # if it is an annex added on an item, versionate given advices if necessary
     if parent.meta_type == 'MeetingItem':
-        parent._versionateAdvicesOnItemEdit()
         parent.updateHistory('delete',
                              annex,
                              decisionRelated=annex.portal_type == 'annexDecision' and True or False)
@@ -798,7 +798,28 @@ def onAnnexRemoved(annex, event):
     notifyModifiedAndReindex(parent, extra_idxs=['SearchableText', 'hasAnnexesToPrint', 'hasAnnexesToSign'])
 
 
-def onAnnexToPrintChanged(annex, event):
+def onAnnexAttrChanged(annex, event):
+    """ """
+    idxs = []
+    if event.attr_name == 'to_print':
+        _annexToPrintChanged(annex, event)
+
+    if not event.is_created:
+        if event.attr_name == 'to_print':
+            idxs.append('hasAnnexesToPrint')
+        elif event.attr_name == 'to_sign':
+            idxs.append('hasAnnexesToSign')
+
+        # update relevant indexes if not event.is_created
+        parent = annex.aq_inner.aq_parent
+        notifyModifiedAndReindex(parent, extra_idxs=idxs)
+
+        extras = 'annex={0} values={1}'.format(
+            annex.absolute_url_path(), str(event.new_values))
+        fplog('annex_attr_changed', extras=extras)
+
+
+def _annexToPrintChanged(annex, event):
     """ """
     annex = event.object
 
@@ -812,21 +833,6 @@ def onAnnexToPrintChanged(annex, event):
             # queueJob manages the fact that annex is only converted again
             # if it was really modified (ModificationDate + md5 filehash)
             queueJob(annex)
-
-    # if parent is a MeetingItem, update the 'hasAnnexesToPrint' index
-    parent = annex.getParentNode()
-    if parent.meta_type == 'MeetingItem':
-        parent.reindexObject(idxs=['hasAnnexesToPrint'])
-
-
-def onAnnexSignedChanged(annex, event):
-    """ """
-    annex = event.object
-
-    # if parent is a MeetingItem, update the 'hasAnnexesToSign' index
-    parent = annex.aq_parent
-    if parent.meta_type == 'MeetingItem':
-        parent.reindexObject(idxs=['hasAnnexesToSign'])
 
 
 def onItemEditBegun(item, event):

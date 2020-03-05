@@ -2022,7 +2022,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('mayAskEmergency')
 
     def mayAskEmergency(self):
-        '''Returns True if current user may ask emergency for an item.'''
+        '''Check doc in interfaces.py.'''
         # by default, everybody able to edit the item can ask emergency
         item = self.getSelf()
         if item.isDefinedInTool():
@@ -2035,7 +2035,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('mayAcceptOrRefuseEmergency')
 
     def mayAcceptOrRefuseEmergency(self):
-        '''Returns True if current user may accept or refuse emergency if asked for an item.'''
+        '''Check doc in interfaces.py.'''
         # by default, only MeetingManagers can accept or refuse emergency
         item = self.getSelf()
         tool = api.portal.get_tool('portal_plonemeeting')
@@ -2047,8 +2047,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('mayEvaluateCompleteness')
 
     def mayEvaluateCompleteness(self):
-        '''Condition for editing 'completeness' field,
-           being able to define if item is 'complete' or 'incomplete'.'''
+        '''Check doc in interfaces.py.'''
         # user must be able to edit current item
         item = self.getSelf()
         if item.isDefinedInTool():
@@ -2066,9 +2065,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('mayAskCompletenessEvalAgain')
 
     def mayAskCompletenessEvalAgain(self):
-        '''Condition for editing 'completeness' field,
-           being able to ask completeness evaluation again when completeness
-           was 'incomplete'.'''
+        '''Check doc in interfaces.py.'''
         # user must be able to edit current item
         item = self.getSelf()
         if item.isDefinedInTool():
@@ -2083,6 +2080,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            (tool.userIsAmong(ITEM_COMPLETENESS_ASKERS) or tool.isManager(item)):
             res = True
         return res
+
+    def _is_complete(self):
+        '''Check doc in interfaces.py.'''
+        item = self.getSelf()
+        return item.getCompleteness() in ('completeness_complete',
+                                          'completeness_evaluation_not_required')
 
     security.declarePublic('mayEditAdviceConfidentiality')
 
@@ -3663,7 +3666,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         self._sendAdviceToGiveMailIfRelevant(old_review_state, new_review_state)
         self._sendCopyGroupsMailIfRelevant(old_review_state, new_review_state)
 
-    def _sendAdviceToGiveMailIfRelevant(self, old_review_state, new_review_state):
+    def _sendAdviceToGiveMailIfRelevant(self,
+                                        old_review_state,
+                                        new_review_state,
+                                        force_resend_if_in_advice_review_states=False):
         '''A transition was fired on self, check if, in the new item state,
            advices need to be given, that had not to be given in the previous item state.'''
         tool = api.portal.get_tool('portal_plonemeeting')
@@ -3677,12 +3683,15 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 continue
             org = get_organization(org_uid)
             adviceStates = org.get_item_advice_states(cfg)
+            # If force_resend_if_in_review_states=True, check if current item review_state in adviceStates
+            # This is useful when asking advice again and item review_state does not change
             # Ignore advices that must not be given in the current item state
             # Ignore advices that already needed to be given in the previous item state
-            if new_review_state not in adviceStates or old_review_state in adviceStates:
+            if (new_review_state not in adviceStates or old_review_state in adviceStates) and \
+               (not force_resend_if_in_advice_review_states or old_review_state not in adviceStates):
                 continue
             # do not consider groups that already gave their advice
-            if not adviceInfo['type'] == 'not_given':
+            if adviceInfo['type'] not in ['not_given', 'asked_again']:
                 continue
             # Send a mail to every person from group _advisers.
             labelType = adviceInfo['optional'] and 'advice_optional' or 'advice_mandatory'
@@ -5346,18 +5355,21 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # update group in charge local roles
         # we will give the current groupsInCharge _observers sub group access to this item
         self._updateGroupsInChargeLocalRoles()
-        # update annexes categorized_elements to store 'visible_for_groups'
-        # do it only if local_roles changed
-        updateAnnexesAccess(self)
-        # update categorized elements on contained advices too
-        for advice in self.getAdvices():
-            updateAnnexesAccess(advice)
         # manage automatically given permissions
         _addManagedPermissions(self)
         # clean borg.localroles caching
         cleanMemoize(self, prefixes=['borg.localrole.workspace.checkLocalRolesAllowed'])
         # notify that localRoles have been updated
         notify(ItemLocalRolesUpdatedEvent(self, old_local_roles))
+        # update annexes categorized_elements to store 'visible_for_groups'
+        # do it only if local_roles changed
+        # do not do it when isCreated, this is only possible when item duplicated
+        # in this case, annexes are correct
+        if not isCreated and old_local_roles != self.__ac_local_roles__:
+            updateAnnexesAccess(self)
+            # update categorized elements on contained advices too
+            for advice in self.getAdvices():
+                updateAnnexesAccess(advice)
         # propagate Reader local_roles to sub elements
         # this way for example users have Reader role on item may view the advices
         self._propagateReaderAndMeetingManagerLocalRolesToSubObjects()

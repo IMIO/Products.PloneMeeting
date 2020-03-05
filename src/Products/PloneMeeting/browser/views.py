@@ -891,6 +891,7 @@ class BaseDGHV(object):
                         include_replace_by_held_position_label=True,
                         attendee_value_format=u"{0}, {1}",
                         attendee_type_format=u"<strong>{0}</strong>",
+                        abbreviate_firstname=False,
                         by_parent_org_first_format=None,
                         by_parent_org_format=u"<br /><strong><u>{0}</u></strong>",
                         custom_attendee_type_values={},
@@ -928,7 +929,8 @@ class BaseDGHV(object):
 
         res = OrderedDict()
         for contact in contacts:
-            res[contact] = contact.get_short_title(include_sub_organizations=False)
+            res[contact] = contact.get_short_title(include_sub_organizations=False,
+                                                   abbreviate_firstname=abbreviate_firstname)
 
         # manage group by sub organization
         if by_parent_org:
@@ -1238,7 +1240,6 @@ class BaseDGHV(object):
                 n_line += 1
 
         return signature_lines
-
 
 
 class FolderDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV):

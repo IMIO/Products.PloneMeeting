@@ -2484,7 +2484,7 @@ class testAdvices(PloneMeetingTestCase):
                           {'field_name': 'decision',
                            'field_content': '<p>Item decision</p>'}])
 
-        # advice is also versionated if some annex are added/removed
+        # advice are no more versionated when annex is added/removed
         annex = self.addAnnex(item)
         # was already versionated so no more
         h_metadata = pr.getHistoryMetadata(advice)
@@ -2494,16 +2494,16 @@ class testAdvices(PloneMeetingTestCase):
         notify(ObjectModifiedEvent(advice))
         self.changeUser('pmReviewer1')
         self.deleteAsManager(annex.UID())
-        # advice was versioned again
+        # advice was not versioned again
         h_metadata = pr.getHistoryMetadata(advice)
-        self.assertEqual(h_metadata._available, [0, 1, 2, 3])
-        # edit advice and add a new annex, advice will be versionated
+        self.assertEquals(h_metadata._available, [0, 1, 2])
+        # edit advice and add a new annex, advice will not be versionated
         self.changeUser('pmReviewer2')
         notify(ObjectModifiedEvent(advice))
         self.changeUser('pmReviewer1')
         annex = self.addAnnex(item)
         h_metadata = pr.getHistoryMetadata(advice)
-        self.assertEqual(h_metadata._available, [0, 1, 2, 3, 4])
+        self.assertEquals(h_metadata._available, [0, 1, 2])
 
     def _setupKeepAccessToItemWhenAdviceIsGiven(self):
         """Setup for testing aroung 'keepAccessToItemWhenAdviceIsGiven'."""

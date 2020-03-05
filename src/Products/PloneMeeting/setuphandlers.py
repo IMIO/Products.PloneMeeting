@@ -169,6 +169,10 @@ def postInstall(context):
     if hasattr(site, 'Members') and not wft.getInfoFor(site.Members, 'review_state') == 'private':
         wft.doActionFor(site.Members, 'retract')
 
+    # Make sure portal_plonemeeting permissions are correct regarding used WF
+    tool_wf = wft.getWorkflowsFor(site.portal_plonemeeting)[0]
+    tool_wf.updateRoleMappingsFor(site.portal_plonemeeting)
+
     # Make "Unauthorized" exceptions appear in the error log.
     site.error_log.setProperties(
         25, copy_to_zlog=1, ignored_exceptions=('NotFound', 'Redirect', 'Intercepted'))

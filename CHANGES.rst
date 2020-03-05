@@ -29,7 +29,26 @@ Changelog
 - Use roles 'Reviewer' and 'Contributor' in meetingadvice_workflow
 - Added bypass for users having 'Manage portal' in MeetingItemWorkflowConditions in 'mayWait_advices_from', 'mayValidate' and 'mayPresent'
 
-4.1.18 (unreleased)
+4.1.19 (unreleased)
+-------------------
+
+- Do no more _versionateAdvicesOnItemEdit on item when adding/removing an annex
+- Adapted code to use unique IconifiedAttrChangedEvent from collective.iconifiedcategory
+- Added helper method utils.normalize_id
+- When storing POD template as annex, define the id to use and pass it to api.content.create or element is renamed and ObjectModifiedEvent is called 2 times
+- Fixed migration to 4.1 that removed MeetingItem.proposingGroup when calling `item.setProposingGroupWithGroupInCharge(u'')`
+- Optimized annex management to avoid useless process when adding/removing/changing attr value (to_print, confidential, ...) on annexes
+- Fixed migration to 4.1 while migrating Plone groups that may also contain other groups in addition to users
+- Fixed email notification `advice to give` when advice is `asked again` on an item in a review_state where advices are already giveable
+- Added adaptable method MeetingItem._is_complete relying on MeetingItem.completeness field
+- Defined CSS rule that manage RichText fields paragraph line height everywhere it is displayed (dashboard, view, CKeditor)
+- In `utils.cropHTML`, avoid visual encoding problems by making sure we have unicode before calling `BeautifulSoup`
+- Optimized avilable items query, avoid catalog query to find past meetings
+- Added field person.firstname_abbreviated useable in documentgenerator helper print_attendees_by_type method
+- Added parameter annexFile=None to PloneMeetingTestCase.addAnnex, to be able to use another file than FILE.txt (like a pdf, a corrupted pdf, ...)
+- Give `View` access to `portal_plonemeeting` to role `Member` so application do not fail to render when logged in user is not member of any group
+
+4.1.18 (2020-02-21)
 -------------------
 
 - Use another msgid for WF history comments when item is created from an item template, this way old comments still works and new comments includes item template path and title

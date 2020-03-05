@@ -61,8 +61,10 @@ from Products.PloneMeeting.config import HAS_CAT_PUBLISHABLE
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.interfaces import IMeeting
 from Products.PloneMeeting.utils import get_annexes
+from Products.PloneMeeting.utils import normalize_id
 from Products.PloneMeeting.utils import sendMail
 from zope.annotation import IAnnotations
+from zope.container.interfaces import INameChooser
 from zope.i18n import translate
 from zope.interface import alsoProvides
 
@@ -537,7 +539,7 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
         meeting = self.context.getMeeting()
         if meeting:
             meetingModified = meeting.modified()
-        annotations = IAnnotations(self.context)
+        annotations = str(IAnnotations(self.context))
         cfg = self.tool.getMeetingConfig(self.context)
         cfg_modified = cfg.modified()
         userGroups = self.tool.get_plone_groups_for_user()
@@ -970,10 +972,14 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
         confidential_default = annex_type_group.confidentiality_activated and annex_type.confidential or False
         # if we find an annex_scan_id in the REQUEST, we use it on the created annex
         scan_id = self.request.get(ITEM_SCAN_ID_NAME, None)
+        title = self._get_stored_annex_title(pod_template)
+        id = normalize_id(title)
+        id = INameChooser(self.context).chooseName(id, self.context)
         annex = api.content.create(
             container=self.context,
             type=annex_portal_type,
-            title=self._get_stored_annex_title(pod_template),
+            id=id,
+            title=title,
             file=annex_file,
             content_category=annex_type_category_id,
             to_print=to_print_default,

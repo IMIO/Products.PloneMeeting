@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from Acquisition import aq_base
 from AccessControl.Permission import Permission
 from appy.shared.diff import HtmlDiff
 from bs4 import BeautifulSoup
@@ -10,6 +11,9 @@ from collective.contact.plonegroup.utils import get_own_organization
 from collective.contact.plonegroup.utils import get_plone_group
 from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.excelexport.exportables.dexterityfields import get_exportable_for_fieldname
+from collective.fingerpointing.config import AUDIT_MESSAGE
+from collective.fingerpointing.logger import log_info
+from collective.fingerpointing.utils import get_request_information
 from collective.iconifiedcategory.interfaces import IIconifiedInfos
 from DateTime import DateTime
 from datetime import datetime
@@ -29,6 +33,7 @@ from plone.app.textfield import RichText
 from plone.app.uuid.utils import uuidToObject
 from plone.autoform.interfaces import WRITE_PERMISSIONS_KEY
 from plone.dexterity.interfaces import IDexterityContent
+from plone.i18n.normalizer.interfaces import IIDNormalizer
 from plone.locking.events import unlockAfterModification
 from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.permissions import AccessContentsInformation
@@ -69,6 +74,7 @@ from Products.PloneMeeting.interfaces import IMeetingLocalRolesUpdatedEvent
 from Products.PloneMeeting.interfaces import IToolPloneMeetingCustom
 from zope.annotation import IAnnotations
 from zope.component import getAdapter
+from zope.component import getUtility
 from zope.component import queryUtility
 from zope.component.hooks import getSite
 from zope.component.interfaces import ObjectEvent
@@ -297,6 +303,7 @@ def fieldIsEmpty(name, obj, useParamValue=False, value=None):
 
 def cropHTML(html, length=400, ellipsis='...'):
     '''Crop given HTML and return valid HTML.'''
+    html = safe_unicode(html)
     cropped_content = BeautifulSoup(html[:length], 'html.parser').renderContents()
     return cropped_content
 
@@ -919,6 +926,13 @@ def notifyModifiedAndReindex(obj, extra_idxs=[], notify_event=False):
         notify(ObjectEditedEvent(obj))
 
 
+def fplog(action, extras):
+    """collective.fingerpointing add log message."""
+    # add logging message to fingerpointing log
+    user, ip = get_request_information()
+    log_info(AUDIT_MESSAGE.format(user, ip, action, extras))
+
+
 def transformAllRichTextFields(obj, onlyField=None):
     '''Potentially, all richtext fields defined on an item (description,
        decision, etc) or a meeting (observations, ...) may be transformed via the method
@@ -1480,6 +1494,7 @@ def get_annexes(obj, portal_types=['annex', 'annexDecision']):
 def updateAnnexesAccess(container):
     """ """
     portal = api.portal.get()
+    adapter = None
     for k, v in getattr(container, 'categorized_elements', {}).items():
         # do not fail on 'Members', use unrestrictedTraverse
         try:
@@ -1489,7 +1504,12 @@ def updateAnnexesAccess(container):
             # before categorized_elements dict is updated
             v['visible_for_groups'] = []
             continue
-        adapter = getAdapter(annex, IIconifiedInfos)
+        # visible_for_groups is the same for every annexes
+        if not adapter:
+            adapter = getAdapter(annex, IIconifiedInfos)
+        else:
+            adapter.context = annex
+            adapter.obj = aq_base(annex)
         v['visible_for_groups'] = adapter._visible_for_groups()
 
 
@@ -1783,6 +1803,13 @@ def normalize(string, acceptable=[]):
        - lowerized."""
     return ''.join(x for x in unicodedata.normalize('NFKD', string)
                    if unicodedata.category(x) != 'Mn').lower().strip()
+
+
+def normalize_id(id):
+    """ """
+    idnormalizer = getUtility(IIDNormalizer)
+    id = idnormalizer.normalize(id)
+    return id
 
 
 def add_wf_history_action(obj, action_name, action_label, user_id=None):

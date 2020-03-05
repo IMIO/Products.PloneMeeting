@@ -226,7 +226,7 @@ class ChangeAdviceAskedAgainView(BrowserView):
     def __call__(self):
         """ """
         parent = self.context.getParentNode()
-        if not self.context.advice_type == 'asked_again':
+        if self.context.advice_type != 'asked_again':
             # we are about to set advice to 'asked_again'
             if not parent.adapted().mayAskAdviceAgain(self.context):
                 raise Unauthorized
@@ -252,6 +252,10 @@ class ChangeAdviceAskedAgainView(BrowserView):
             self.request.RESPONSE.status = 200
 
         notify(ObjectModifiedEvent(self.context))
+        item_state = parent.queryState()
+        parent._sendAdviceToGiveMailIfRelevant(old_review_state=item_state,
+                                               new_review_state=item_state,
+                                               force_resend_if_in_advice_review_states=True)
 
 
 class AdviceConfidentialityView(BrowserView):

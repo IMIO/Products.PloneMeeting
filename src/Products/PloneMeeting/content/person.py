@@ -12,6 +12,12 @@ from zope import schema
 class IPMPerson(IPerson):
     """ """
 
+    form.order_before(firstname_abbreviated='gender')
+    firstname_abbreviated = schema.TextLine(
+        title=_("Firstname abbreviated"),
+        required=False,
+    )
+
     form.read_permission(userid='PloneMeeting.write_userid_field')
     form.write_permission(userid='PloneMeeting.write_userid_field')
     userid = schema.Choice(

@@ -197,6 +197,19 @@ class IMeetingItemDocumentation:
            the item over.  So if an item come back a second time (or more), to
            the same p_wf_state, we automatically set the same user than before
            if still available.  If not, we set that to ''.'''
+    def mayAskEmergency(self):
+        '''Returns True if current user may ask emergency for an item.'''
+    def mayAcceptOrRefuseEmergency(self):
+        '''Returns True if current user may accept or refuse emergency if asked for an item.'''
+    def mayEvaluateCompleteness(self):
+        '''Condition for editing 'completeness' field,
+           being able to define if item is 'complete' or 'incomplete'.'''
+    def mayAskCompletenessEvalAgain(self):
+        '''Condition for editing 'completeness' field,
+           being able to ask completeness evaluation again when completeness
+           was 'incomplete'.'''
+    def _is_complete(self):
+        '''Return True if item is complete when using MeetingItem.completeness.'''
     def mayTakeOver():
         '''This manage the condition that check if MeetingItem.takenOverBy
            may be edited by the current user.'''
