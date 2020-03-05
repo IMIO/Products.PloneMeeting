@@ -1069,6 +1069,16 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertTrue(self.tool.isPowerObserverForCfg(cfg, power_observer_type='restrictedpowerobservers'))
         self.assertFalse(self.tool.isPowerObserverForCfg(cfg, power_observer_type='unknown'))
 
+    def test_pm_ToolAccessibleByUsersWithoutGroups(self):
+        """Whe a user without any group logs in, he may access methods on portal_plonemeeting,
+           often use to manage shown CSS and tabs."""
+        self.createUser('test_user')
+        self.changeUser('test_user')
+        self.assertEqual(self.tool.get_plone_groups_for_user(), ['AuthenticatedUsers'])
+        self.assertTrue(self.tool())
+        self.assertRaises(Unauthorized, self.meetingConfig)
+        self.assertRaises(Unauthorized, self.meetingConfig2)
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite
