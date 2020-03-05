@@ -18,6 +18,7 @@ Changelog
 - In `utils.cropHTML`, avoid visual encoding problems by making sure we have unicode before calling `BeautifulSoup`
 - Optimized avilable items query, avoid catalog query to find past meetings
 - Added field person.firstname_abbreviated useable in documentgenerator helper print_attendees_by_type method
+- Added parameter annexFile=None to PloneMeetingTestCase.addAnnex, to be able to use another file than FILE.txt (like a pdf, a corrupted pdf, ...)
 
 4.1.18 (2020-02-21)
 -------------------
