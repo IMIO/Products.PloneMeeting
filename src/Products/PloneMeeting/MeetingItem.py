@@ -6334,6 +6334,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''See doc in utils.py.'''
         return getFieldVersion(self, fieldName, changes)
 
+    security.declarePrivate('getAdviceRelatedIndexes')
+
+    def getAdviceRelatedIndexes(self):
+        '''See doc in utils.py.'''
+        return ['indexAdvisers']
+
     security.declarePublic('lastValidatedBefore')
 
     def lastValidatedBefore(self, deadline):
