@@ -22,6 +22,8 @@ Changelog
 - Give `View` access to `portal_plonemeeting` to role `Member` so application do not fail to render when logged in user is not member of any group
 - Avoid item full reindex when advice is added/modified/removed, only reindex relevant indexes (added adaptable method `MeetingItem.getAdviceRelatedIndexes` to manage custom indexes to reindex)
 - When advice is added/modified/removed, clean the `Products.PloneMeeting.MeetingItem.modified` cachekey volatile to clear cache for portlet_todo
+- Adapted the way late items work: now an item is late for the selected preferred meeting and for every following meetings.  This way an item that was late for a meeting may also
+  be presented as late item for next meeting instead only being presentable to next non frozen meeting
 
 4.1.18 (2020-02-21)
 -------------------

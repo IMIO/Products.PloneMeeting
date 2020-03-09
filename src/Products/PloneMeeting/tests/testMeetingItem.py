@@ -2565,6 +2565,30 @@ class testMeetingItem(PloneMeetingTestCase):
             else:
                 self.failIf(lateItem.wfConditions().isLateFor(meeting))
 
+    def test_pm_IsLateForEveryFutureLateMeetings(self):
+        '''An item isLateFor selected preferredMeeting date and following meeting dates.'''
+        self.changeUser('pmManager')
+        before_meeting = self.create('Meeting', date=DateTime())
+        meeting = self.create('Meeting', date=DateTime() + 7)
+        after_meeting = self.create('Meeting', date=DateTime() + 14)
+        item = self.create('MeetingItem')
+        item.setPreferredMeeting(meeting.UID())
+        # meetings not frozen
+        self.assertFalse(item.wfConditions().isLateFor(before_meeting))
+        self.assertFalse(item.wfConditions().isLateFor(meeting))
+        self.assertFalse(item.wfConditions().isLateFor(after_meeting))
+        self.freezeMeeting(meeting)
+        # frozen meeting
+        self.assertFalse(item.wfConditions().isLateFor(before_meeting))
+        self.assertTrue(item.wfConditions().isLateFor(meeting))
+        self.assertFalse(item.wfConditions().isLateFor(after_meeting))
+        # every meeting frozen
+        self.freezeMeeting(before_meeting)
+        self.freezeMeeting(after_meeting)
+        self.assertFalse(item.wfConditions().isLateFor(before_meeting))
+        self.assertTrue(item.wfConditions().isLateFor(meeting))
+        self.assertTrue(item.wfConditions().isLateFor(after_meeting))
+
     def test_pm_ManageItemAssemblyAndSignatures(self):
         '''
           This tests the form that manage itemAssembly and that can apply it on several items.

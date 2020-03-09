@@ -356,10 +356,12 @@ class MeetingItemWorkflowConditions(object):
     def isLateFor(self, meeting):
         '''See doc in interfaces.py.'''
         if meeting:
-            late_state = meeting.adapted().getLateState()
-            if (meeting.queryState() not in meeting.getStatesBefore(late_state)) and \
-               (meeting.UID() == self.context.getPreferredMeeting()):
-                return True
+            preferred_meeting = self.context.getPreferredMeeting(theObject=True)
+            if preferred_meeting:
+                late_state = meeting.adapted().getLateState()
+                if (meeting.queryState() not in meeting.getStatesBefore(late_state)) and \
+                   (meeting.getDate() >= preferred_meeting.getDate()):
+                    return True
         return False
 
     def _hasAdvicesToGive(self, destination_state):
