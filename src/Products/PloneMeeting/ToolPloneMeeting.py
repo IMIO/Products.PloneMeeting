@@ -448,6 +448,23 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             user_groups = [plone_group for plone_group in user_groups if plone_group.startswith(org_uid)]
         return sorted(user_groups)
 
+    def group_is_not_empty_cachekey(method, self, org_uid, suffix, user_id=None):
+        '''cachekey method for self.group_is_not_empty.'''
+        date = get_cachekey_volatile('Products.PloneMeeting.ToolPloneMeeting.group_is_not_empty')
+        return (date,
+                self._users_groups_value(),
+                org_uid,
+                suffix,
+                user_id)
+
+    def group_is_not_empty(self, org_uid, suffix, user_id=None):
+        '''Is there any user in the group?'''
+        portal = api.portal.get()
+        plone_group_id = get_plone_group_id(org_uid, suffix)
+        # for performance reasons, check directly in source_groups stored data
+        group_users = portal.acl_users.source_groups._group_principal_map.get(plone_group_id, [])
+        return len(group_users) and not user_id or user_id in group_users
+
     def get_orgs_for_user_cachekey(method,
                                    self,
                                    user_id=None,

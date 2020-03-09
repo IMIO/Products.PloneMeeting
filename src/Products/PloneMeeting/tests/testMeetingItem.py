@@ -5341,18 +5341,6 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertFalse(catalog(downOrUpWorkflowAgain='up'))
         self.assertFalse(catalog(downOrUpWorkflowAgain='down'))
 
-    def test_pm_GroupIsNotEmpty(self):
-        '''Test the groupIsNotEmpty method.'''
-        pg = self.portal.portal_groups
-        dcGroup = pg.getGroupById('{0}_creators'.format(self.developers_uid))
-        dcMembers = dcGroup.getMemberIds()
-        self.changeUser('pmCreator1')
-        item = self.create('MeetingItem')
-        item.setCategory('development')
-        self.assertTrue(item.wfConditions()._groupIsNotEmpty('creators'))
-        self._removeAllMembers(dcGroup, dcMembers)
-        self.assertFalse(item.wfConditions()._groupIsNotEmpty('creators'))
-
     def test_pm_ItemRenamedWhileInInitialState(self):
         """As long as the item is in it's initial_state, the id is recomputed."""
         catalog = self.portal.portal_catalog
