@@ -3,8 +3,25 @@
 from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator
 
+import os
+
 
 class Migrate_To_4104(Migrator):
+
+    def _updateFacetedFilters(self):
+        """ """
+        logger.info("Updating faceted filters for every MeetingConfigs...")
+
+        xmlpath_items = os.path.join(
+            os.path.dirname(__file__),
+            '../faceted_conf/upgrade_step_4104_add_item_widgets.xml')
+
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            obj = cfg.searches.searches_items
+            # add new faceted filters for searches_items
+            obj.unrestrictedTraverse('@@faceted_exportimport').import_xml(
+                import_file=open(xmlpath_items))
+        logger.info('Done.')
 
     def _removeFieldToolPloneMeetingModelAdaptations(self):
         """Remove field ToolPloneMeeting.modelAdaptations."""
@@ -43,10 +60,13 @@ class Migrate_To_4104(Migrator):
 
     def run(self, from_migration_to_41=False):
         logger.info('Migrating to PloneMeeting 4104...')
+        self._updateFacetedFilters()
+        self.removeUnusedColumns(columns=['getItemIsSigned'])
         self._removeFieldToolPloneMeetingModelAdaptations()
         self._moveSearchAllDecisionsToSearchAllMeetings()
         if not from_migration_to_41:
-            self.reindexIndexesFor(meta_type='Meeting')
+            self.reindexIndexes(meta_types=['Meeting'])
+            self.reindexIndexes(idxs=['getItemIsSigned'], meta_types=['MeetingItem'])
         # re-apply actions.xml to hide sharing (action name local_roles) everywhere
         self.ps.runImportStepFromProfile('profile-Products.PloneMeeting:default', 'actions')
         # init new field MeetingItem.meetingManagersNotes
@@ -56,11 +76,13 @@ class Migrate_To_4104(Migrator):
 def migrate(context):
     '''This migration function will:
 
-       1) Remove field ToolPloneMeeting.modelAdaptations;
-       2) Remove DashboardCollection 'searchalldecisions' and add new DashboardCollection 'searchallmeetings';
-       3) Reindex every meetings if not called by the main migration to version 4.1;
-       4) Re-import actions.xml;
-       5) Init new HTML field 'MeetingItem.meetingManagersNotes'.
+       1) Update faceted filters for items (getItemIsSigned);
+       2) Remove catalog column 'getItemIsSigned';
+       3) Remove field ToolPloneMeeting.modelAdaptations;
+       4) Remove DashboardCollection 'searchalldecisions' and add new DashboardCollection 'searchallmeetings';
+       5) Reindex every meetings if not called by the main migration to version 4.1;
+       6) Re-import actions.xml;
+       7) Init new HTML field 'MeetingItem.meetingManagersNotes'.
     '''
     migrator = Migrate_To_4104(context)
     migrator.run()

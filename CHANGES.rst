@@ -27,6 +27,7 @@ Changelog
 - Moved `MeetingItemWorkflowConditions._groupIsNotEmpty` to `ToolPloneMeeting.group_is_not_empty` so it is easier to use everywhere
 - Added new field `MeetingItem.meetingManagersNotes` only viewable/editable by MeetingManagers
 - Changed the default condition in which an item may be signed (`MeetingItem.isSigned`), this is now possible as soon as an item is `validated`
+- Added faceted filter `Item is signed?`
 
 4.1.18 (2020-02-21)
 -------------------
