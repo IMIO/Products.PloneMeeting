@@ -24,6 +24,7 @@ from plone import api
 from Products.CMFPlone.utils import base_hasattr
 from Products.PloneMeeting.setuphandlers import columnInfos
 from Products.PloneMeeting.setuphandlers import indexInfos
+from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
 
 import logging
 
@@ -180,6 +181,15 @@ class Migrator(BaseMigrator):
         for field_name in field_names:
             if base_hasattr(self.tool, field_name):
                 delattr(self.tool, field_name)
+        logger.info('Done.')
+
+    def initNewHTMLFields(self, query):
+        '''Make sure the content_type is correctly set to 'text/html' for new xhtml fields.'''
+        logger.info('Initializing new HTML fields...')
+        brains = self.portal.portal_catalog(**query)
+        for brain in brains:
+            itemOrMeeting = brain.getObject()
+            forceHTMLContentTypeForEmptyRichFields(itemOrMeeting)
         logger.info('Done.')
 
     def _already_migrated(self, done=True):

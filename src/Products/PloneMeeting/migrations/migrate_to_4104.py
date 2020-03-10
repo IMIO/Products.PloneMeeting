@@ -49,6 +49,8 @@ class Migrate_To_4104(Migrator):
             self.reindexIndexesFor(meta_type='Meeting')
         # re-apply actions.xml to hide sharing (action name local_roles) everywhere
         self.ps.runImportStepFromProfile('profile-Products.PloneMeeting:default', 'actions')
+        # init new field MeetingItem.meetingManagersNotes
+        self.initNewHTMLFields(query={'meta_type': 'MeetingItem'})
 
 
 def migrate(context):
@@ -56,7 +58,9 @@ def migrate(context):
 
        1) Remove field ToolPloneMeeting.modelAdaptations;
        2) Remove DashboardCollection 'searchalldecisions' and add new DashboardCollection 'searchallmeetings';
-       3) Reindex every meetings if not called by the main migration to version 4.1.
+       3) Reindex every meetings if not called by the main migration to version 4.1;
+       4) Re-import actions.xml;
+       5) Init new HTML field 'MeetingItem.meetingManagersNotes'.
     '''
     migrator = Migrate_To_4104(context)
     migrator.run()
