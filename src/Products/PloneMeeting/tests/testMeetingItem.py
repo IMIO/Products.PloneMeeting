@@ -2313,21 +2313,19 @@ class testMeetingItem(PloneMeetingTestCase):
     def test_pm_ItemIsSigned(self):
         '''Test the functionnality around MeetingItem.itemIsSigned field.
            Check also the @@toggle_item_is_signed view that do some unrestricted things...'''
-        # Use the 'plonegov-assembly' meetingConfig
-        self.setMeetingConfig(self.meetingConfig2.getId())
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         item.setCategory('development')
         item.setDecision('<p>My decision</p>', mimetype='text/html')
         # MeetingMember can not setItemIsSigned
-        self.assertEqual(item.maySignItem(), False)
+        self.assertFalse(item.maySignItem())
         self.assertRaises(Unauthorized, item.setItemIsSigned, True)
         # Manager maySignItem when necessary
         self.changeUser('siteadmin')
         self.assertTrue(item.maySignItem())
         # MeetingManagers, item must be at least validated...
         self.changeUser('pmManager')
-        self.assertEqual(item.maySignItem(), False)
+        self.assertFalse(item.maySignItem())
         self.assertRaises(Unauthorized, item.setItemIsSigned, True)
         self.assertRaises(Unauthorized, item.restrictedTraverse('@@toggle_item_is_signed'), item.UID())
         self.assertRaises(Unauthorized, item.setItemIsSigned, True)
