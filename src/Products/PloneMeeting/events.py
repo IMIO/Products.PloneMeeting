@@ -350,6 +350,7 @@ def onRegistryModified(event):
             # invalidate cache for organizations related methods
             invalidate_cachekey_volatile_for('Products.PloneMeeting.ToolPloneMeeting.get_orgs_for_user')
             invalidate_cachekey_volatile_for('Products.PloneMeeting.ToolPloneMeeting.get_plone_groups_for_user')
+            invalidate_cachekey_volatile_for('Products.PloneMeeting.ToolPloneMeeting.group_is_not_empty')
             invalidate_cachekey_volatile_for('Products.PloneMeeting.ToolPloneMeeting.userIsAmong')
 
             old_set = set(event.oldValue)

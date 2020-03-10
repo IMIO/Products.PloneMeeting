@@ -172,15 +172,6 @@ class MeetingItemWorkflowConditions(object):
         obj = getCurrentMeetingObject(self.context)
         return isinstance(obj, Meeting)
 
-    def _groupIsNotEmpty(self, suffix, user_id=None):
-        '''Is there any user in the group?'''
-        group_uid = self.context.getProposingGroup()
-        portal = api.portal.get()
-        plone_group_id = get_plone_group_id(group_uid, suffix)
-        # for performance reasons, check directly in source_groups stored data
-        group_users = portal.acl_users.source_groups._group_principal_map.get(plone_group_id, [])
-        return len(group_users) and not user_id or user_id in group_users
-
     security.declarePublic('mayPropose')
 
     def mayPropose(self):
