@@ -2,6 +2,7 @@ from AccessControl import Unauthorized
 from plone import api
 from plone.memoize.view import memoize
 from Products.Five import BrowserView
+from Products.PloneMeeting.utils import notifyModifiedAndReindex
 from zope.component import getMultiAdapter
 from zope.i18n import translate
 
@@ -92,17 +93,15 @@ class ItemSign(BrowserView):
         if not self.context.adapted().maySignItem():
             raise Unauthorized
 
-        uid_catalog = api.portal.get_tool('uid_catalog')
         # do this as Manager
         with api.env.adopt_roles(['Manager', ]):
-            item = uid_catalog(UID=UID)[0].getObject()
-            itemIsSigned = not item.getItemIsSigned()
-            item.setItemIsSigned(itemIsSigned)
-            item.reindexObject(idxs=('getItemIsSigned',))
+            itemIsSigned = not self.context.getItemIsSigned()
+            self.context.setItemIsSigned(itemIsSigned)
+            notifyModifiedAndReindex(self.context, extra_idxs=['getItemIsSigned'])
 
         # check again if member can signItem now that it has been signed
         # by default, when an item is signed, it can not be unsigned
-        maySignItem = item.adapted().maySignItem()
+        maySignItem = self.context.adapted().maySignItem()
         if itemIsSigned:
             filename = 'itemIsSignedYes.png'
             name = 'itemIsSignedNo'

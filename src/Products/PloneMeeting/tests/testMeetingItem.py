@@ -2325,26 +2325,27 @@ class testMeetingItem(PloneMeetingTestCase):
         # Manager maySignItem when necessary
         self.changeUser('siteadmin')
         self.assertTrue(item.maySignItem())
-        # MeetingManagers neither, the item must be decided...
+        # MeetingManagers, item must be at least validated...
         self.changeUser('pmManager')
+        self.assertEqual(item.maySignItem(), False)
+        self.assertRaises(Unauthorized, item.setItemIsSigned, True)
+        self.assertRaises(Unauthorized, item.restrictedTraverse('@@toggle_item_is_signed'), item.UID())
         self.assertRaises(Unauthorized, item.setItemIsSigned, True)
         meetingDate = DateTime('2008/06/12 08:00:00')
         meeting = self.create('Meeting', date=meetingDate)
+        # a signed item can still be unsigned until the meeting is closed
+        self.validateItem(item)
+        self.assertTrue(item.maySignItem())
+        item.setItemIsSigned(True)
         self.presentItem(item)
-        self.assertEqual(item.maySignItem(), False)
-        self.assertRaises(Unauthorized, item.setItemIsSigned, True)
-        self.assertRaises(Unauthorized, item.restrictedTraverse('@@toggle_item_is_signed'), item.UID())
+        self.assertTrue(item.maySignItem())
         self.freezeMeeting(meeting)
-        self.assertEqual(item.maySignItem(), False)
-        self.assertRaises(Unauthorized, item.setItemIsSigned, True)
-        self.assertRaises(Unauthorized, item.restrictedTraverse('@@toggle_item_is_signed'), item.UID())
+        self.assertTrue(item.maySignItem())
         self.decideMeeting(meeting)
+        self.assertTrue(item.maySignItem())
         # depending on the workflow used, 'deciding' a meeting can 'accept' every not yet accepted items...
         if not item.queryState() == 'accepted':
             self.do(item, 'accept')
-        # now that the item is accepted, MeetingManagers can sign it
-        self.assertTrue(item.maySignItem())
-        item.setItemIsSigned(True)
         # a signed item can still be unsigned until the meeting is closed
         self.assertTrue(item.maySignItem())
         # call to @@toggle_item_is_signed will set it back to False (toggle)
