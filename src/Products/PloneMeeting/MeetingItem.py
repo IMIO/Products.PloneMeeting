@@ -187,7 +187,7 @@ class MeetingItemWorkflowConditions(object):
         found_last = False
         found_before_last = False
         for level in levels:
-            if self._groupIsNotEmpty(level['suffix']):
+            if self.tool.group_is_not_empty(self.context.getProposingGroup(), level['suffix']):
                 res = level['state']
                 if found_last:
                     found_before_last = True
@@ -206,7 +206,7 @@ class MeetingItemWorkflowConditions(object):
             # check if next validation level suffixed Plone group is not empty
             suffix = self.cfg.getItemWFValidationLevels(
                 state=destinationState, data='suffix', only_enabled=True)
-            res = self._groupIsNotEmpty(suffix)
+            res = self.tool.group_is_not_empty(self.context.getProposingGroup(), suffix)
         # check category after transition as transition could not be doable
         # at all and in this case, we would display a No button for a transition not doable...
         if res and not self.context.getCategory(theObject=True):
@@ -322,6 +322,7 @@ class MeetingItemWorkflowConditions(object):
         res = False
         meeting = self.context.getMeeting()
         if not meeting or (meeting and meeting.queryState() != 'closed'):
+            proposingGroup = self.context.getProposingGroup()
             # when item is validated, we may eventually send back to last validation state
             item_state = self.context.queryState()
             wfas = self.cfg.getWorkflowAdaptations()
@@ -335,7 +336,8 @@ class MeetingItemWorkflowConditions(object):
                     elif 'reviewers_take_back_validated_item' in self.cfg.getWorkflowAdaptations():
                         # is current user member of last validation level?
                         suffix = self.cfg.getItemWFValidationLevels(state=last_val_state, data='suffix')
-                        res = self._groupIsNotEmpty(suffix, user_id=api.user.get_current().id)
+                        res = self.tool.group_is_not_empty(
+                            proposingGroup, suffix, user_id=api.user.get_current().id)
             # using a 'waiting_advices_from_last_val_level_XXX' WFAdaptation,
             # we may only correct to the last validation level
             # a member of last validation level may trigger the transition to last level
@@ -355,7 +357,8 @@ class MeetingItemWorkflowConditions(object):
                            'waiting_advices_from_last_val_level_only_proposing_group_send_back' in wfas:
                             # is current user member of last validation level?
                             suffix = self.cfg.getItemWFValidationLevels(state=last_val_state, data='suffix')
-                            res = self._groupIsNotEmpty(suffix, user_id=api.user.get_current().id)
+                            res = self.tool.group_is_not_empty(
+                                proposingGroup, suffix, user_id=api.user.get_current().id)
                         # if not, maybe it is an adviser able to give an advice?
                         if not res:
                             if 'waiting_advices_from_last_val_level_adviser_and_proposing_group_send_back' in wfas or \
@@ -366,7 +369,7 @@ class MeetingItemWorkflowConditions(object):
                 # maybe destinationState is a validation state? in this case return True only if group not empty
                 suffix = self.cfg.getItemWFValidationLevels(state=destinationState, data='suffix')
                 res = _checkPermission(ReviewPortalContent, self.context) and \
-                    (not suffix or self._groupIsNotEmpty(suffix))
+                    (not suffix or self.tool.group_is_not_empty(proposingGroup, suffix))
         return res
 
     security.declarePublic('mayBackToMeeting')
@@ -1924,19 +1927,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Condition for showing the 'itemIsSigned' field on views.
            The attribute must be used and the item must be decided.'''
         return self.attributeIsUsed('itemIsSigned') and \
-<<<<<<< HEAD
-            self.queryState() in self.adapted()._itemIsSignedStates()
-
-    def _itemIsSignedStates(self):
-        """In which states must we show the itemIsSigned widget?
-           By default, when the item is decided, but this is made to be overrided."""
-        item = self.getSelf()
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(item)
-        return cfg.adapted().getItemDecidedStates()
-=======
             (self.hasMeeting() or self.queryState() == 'validated')
->>>>>>> origin/master
 
     security.declarePublic('mayChangeListType')
 
