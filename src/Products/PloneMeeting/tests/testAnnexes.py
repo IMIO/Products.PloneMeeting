@@ -92,7 +92,7 @@ class testAnnexes(PloneMeetingTestCase):
         view.set_values({'confidential': 'true'})
         self.assertTrue(annex.confidential)
 
-    def _setupConfidentialityOnItemAnnexes(self, powerObserverStates=[]):
+    def _setupConfidentialityOnItemAnnexes(self, powerObserverStates=[], copyGroups=[]):
         """ """
         cfg = self.meetingConfig
         cfgItemWF = self.wfTool.getWorkflowsFor(cfg.getItemTypeName())[0]
@@ -101,7 +101,7 @@ class testAnnexes(PloneMeetingTestCase):
         self._setPowerObserverStates(states=powerObserverStates)
 
         self.changeUser('pmCreator1')
-        item = self.create('MeetingItem')
+        item = self.create('MeetingItem', copyGroups=copyGroups)
         annex_config = get_config_root(item)
         annex_group = get_group(annex_config, item)
         annex_group.confidentiality_activated = True
@@ -953,6 +953,43 @@ class testAnnexes(PloneMeetingTestCase):
         clonedItem = item.clone()
         self.assertEqual(annex1.created(), clonedItem.objectValues()[0].created())
         self.assertEqual(annex2.created(), clonedItem.objectValues()[1].created())
+
+    def test_pm_ConfidentialAnnexesWhenItemDuplicated(self):
+        """When an item is duplicated, if there were confidential annexes, accesses are correct."""
+        cfg = self.meetingConfig
+        cfg.setUseCopies(True)
+        cfg.setSelectableCopyGroups((self.vendors_creators, ))
+        cfgItemWF = self.wfTool.getWorkflowsFor(cfg.getItemTypeName())[0]
+        item_initial_state = self.wfTool[cfgItemWF.getId()].initial_state
+        cfg.setItemCopyGroupsStates((item_initial_state, ))
+        cfg.setItemAnnexConfidentialVisibleFor((u'suffix_proposing_group_creators',
+                                                u'suffix_proposing_group_reviewers'))
+        item_initial_state, item, annexes_table, categorized_child, \
+            annexNotConfidential, annexConfidential = self._setupConfidentialityOnItemAnnexes(
+                copyGroups=(self.vendors_creators, ))
+        self.assertEqual(len(get_categorized_elements(item)), 2)
+        clonedItem = item.clone()
+        # every annexes are correctly viewable
+        self.assertEqual(len(get_categorized_elements(clonedItem)), 2)
+        # now a member not from proposingGroup duplicate the item because he may see it
+        self.changeUser('pmCreator2')
+        self.assertTrue(self.hasPermission(View, item))
+        # may only view one annex
+        self.assertEqual(len(get_categorized_elements(item)), 1)
+        clonedItem = item.clone()
+        self.assertEqual(len(get_categorized_elements(clonedItem)), 1)
+        # if may view confidential annex, it is kept
+        cfg.setItemAnnexConfidentialVisibleFor((u'suffix_proposing_group_creators',
+                                                u'suffix_proposing_group_reviewers',
+                                                u'reader_copy_groups'))
+        update_all_categorized_elements(item)
+        self.assertEqual(len(get_categorized_elements(item)), 2)
+        clonedItem = item.clone()
+        self.assertEqual(len(get_categorized_elements(clonedItem)), 2)
+        # check that local_roles regarding proposingGroup are correctly set on new annexes
+        item.setCopyGroups(())
+        clonedItem = item.clone()
+        self.assertEqual(len(get_categorized_elements(clonedItem)), 2)
 
     def test_pm_AnnexesDeletableByItemEditor(self):
         """annex/annexDecision may be deleted if user may edit the item."""

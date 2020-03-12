@@ -564,7 +564,8 @@ schema = Schema((
         ),
         schemata="data",
         multiValued=1,
-        vocabulary_factory='collective.contact.plonegroup.sorted_selected_organization_services',
+        vocabulary_factory='collective.contact.plonegroup.browser.settings.'
+                           'SortedSelectedOrganizationsElephantVocabulary',
         default=defValues.orderedGroupsInCharge,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
@@ -2312,7 +2313,8 @@ schema = Schema((
         ),
         schemata="advices",
         multiValued=1,
-        vocabulary_factory='collective.contact.plonegroup.sorted_selected_organization_services',
+        vocabulary_factory='collective.contact.plonegroup.browser.settings.'
+                           'SortedSelectedOrganizationsElephantVocabulary',
         default=defValues.usingGroups,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",

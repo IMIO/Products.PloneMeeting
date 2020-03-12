@@ -2321,38 +2321,37 @@ class testMeetingItem(PloneMeetingTestCase):
     def test_pm_ItemIsSigned(self):
         '''Test the functionnality around MeetingItem.itemIsSigned field.
            Check also the @@toggle_item_is_signed view that do some unrestricted things...'''
-        # Use the 'plonegov-assembly' meetingConfig
-        self.setMeetingConfig(self.meetingConfig2.getId())
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         item.setCategory('development')
         item.setDecision('<p>My decision</p>', mimetype='text/html')
         # MeetingMember can not setItemIsSigned
-        self.assertEqual(item.maySignItem(), False)
+        self.assertFalse(item.maySignItem())
         self.assertRaises(Unauthorized, item.setItemIsSigned, True)
         # Manager maySignItem when necessary
         self.changeUser('siteadmin')
         self.assertTrue(item.maySignItem())
-        # MeetingManagers neither, the item must be decided...
+        # MeetingManagers, item must be at least validated...
         self.changeUser('pmManager')
+        self.assertFalse(item.maySignItem())
+        self.assertRaises(Unauthorized, item.setItemIsSigned, True)
+        self.assertRaises(Unauthorized, item.restrictedTraverse('@@toggle_item_is_signed'), item.UID())
         self.assertRaises(Unauthorized, item.setItemIsSigned, True)
         meetingDate = DateTime('2008/06/12 08:00:00')
         meeting = self.create('Meeting', date=meetingDate)
+        # a signed item can still be unsigned until the meeting is closed
+        self.validateItem(item)
+        self.assertTrue(item.maySignItem())
+        item.setItemIsSigned(True)
         self.presentItem(item)
-        self.assertEqual(item.maySignItem(), False)
-        self.assertRaises(Unauthorized, item.setItemIsSigned, True)
-        self.assertRaises(Unauthorized, item.restrictedTraverse('@@toggle_item_is_signed'), item.UID())
+        self.assertTrue(item.maySignItem())
         self.freezeMeeting(meeting)
-        self.assertEqual(item.maySignItem(), False)
-        self.assertRaises(Unauthorized, item.setItemIsSigned, True)
-        self.assertRaises(Unauthorized, item.restrictedTraverse('@@toggle_item_is_signed'), item.UID())
+        self.assertTrue(item.maySignItem())
         self.decideMeeting(meeting)
+        self.assertTrue(item.maySignItem())
         # depending on the workflow used, 'deciding' a meeting can 'accept' every not yet accepted items...
         if not item.queryState() == 'accepted':
             self.do(item, 'accept')
-        # now that the item is accepted, MeetingManagers can sign it
-        self.assertTrue(item.maySignItem())
-        item.setItemIsSigned(True)
         # a signed item can still be unsigned until the meeting is closed
         self.assertTrue(item.maySignItem())
         # call to @@toggle_item_is_signed will set it back to False (toggle)
@@ -2572,6 +2571,30 @@ class testMeetingItem(PloneMeetingTestCase):
                 self.failUnless(lateItem.wfConditions().isLateFor(meeting))
             else:
                 self.failIf(lateItem.wfConditions().isLateFor(meeting))
+
+    def test_pm_IsLateForEveryFutureLateMeetings(self):
+        '''An item isLateFor selected preferredMeeting date and following meeting dates.'''
+        self.changeUser('pmManager')
+        before_meeting = self.create('Meeting', date=DateTime())
+        meeting = self.create('Meeting', date=DateTime() + 7)
+        after_meeting = self.create('Meeting', date=DateTime() + 14)
+        item = self.create('MeetingItem')
+        item.setPreferredMeeting(meeting.UID())
+        # meetings not frozen
+        self.assertFalse(item.wfConditions().isLateFor(before_meeting))
+        self.assertFalse(item.wfConditions().isLateFor(meeting))
+        self.assertFalse(item.wfConditions().isLateFor(after_meeting))
+        self.freezeMeeting(meeting)
+        # frozen meeting
+        self.assertFalse(item.wfConditions().isLateFor(before_meeting))
+        self.assertTrue(item.wfConditions().isLateFor(meeting))
+        self.assertFalse(item.wfConditions().isLateFor(after_meeting))
+        # every meeting frozen
+        self.freezeMeeting(before_meeting)
+        self.freezeMeeting(after_meeting)
+        self.assertFalse(item.wfConditions().isLateFor(before_meeting))
+        self.assertTrue(item.wfConditions().isLateFor(meeting))
+        self.assertTrue(item.wfConditions().isLateFor(after_meeting))
 
     def test_pm_ManageItemAssemblyAndSignatures(self):
         '''
@@ -4519,7 +4542,7 @@ class testMeetingItem(PloneMeetingTestCase):
             'itemAssemblyGuests', 'itemInitiator', 'itemIsSigned',
             'itemKeywords', 'itemNumber', 'itemReference',
             'itemSignatures', 'itemTags', 'listType', 'manuallyLinkedItems',
-            'meetingTransitionInsertingMe', 'inAndOutMoves', 'notes',
+            'meetingTransitionInsertingMe', 'inAndOutMoves', 'notes', 'meetingManagersNotes',
             'marginalNotes', 'observations', 'pollTypeObservations',
             'predecessor', 'preferredMeeting', 'proposingGroup',
             'takenOverBy', 'templateUsingGroups',
@@ -5329,18 +5352,6 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertFalse(item.downOrUpWorkflowAgain())
         self.assertFalse(catalog(downOrUpWorkflowAgain='up'))
         self.assertFalse(catalog(downOrUpWorkflowAgain='down'))
-
-    def test_pm_GroupIsNotEmpty(self):
-        '''Test the groupIsNotEmpty method.'''
-        pg = self.portal.portal_groups
-        dcGroup = pg.getGroupById('{0}_creators'.format(self.developers_uid))
-        dcMembers = dcGroup.getMemberIds()
-        self.changeUser('pmCreator1')
-        item = self.create('MeetingItem')
-        item.setCategory('development')
-        self.assertTrue(item.wfConditions()._groupIsNotEmpty('creators'))
-        self._removeAllMembers(dcGroup, dcMembers)
-        self.assertFalse(item.wfConditions()._groupIsNotEmpty('creators'))
 
     def test_pm_ItemRenamedWhileInInitialState(self):
         """As long as the item is in it's initial_state, the id is recomputed."""

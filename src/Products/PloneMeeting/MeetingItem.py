@@ -175,15 +175,6 @@ class MeetingItemWorkflowConditions(object):
         obj = getCurrentMeetingObject(self.context)
         return isinstance(obj, Meeting)
 
-    def _groupIsNotEmpty(self, suffix, user_id=None):
-        '''Is there any user in the group?'''
-        group_uid = self.context.getProposingGroup()
-        portal = api.portal.get()
-        plone_group_id = get_plone_group_id(group_uid, suffix)
-        # for performance reasons, check directly in source_groups stored data
-        group_users = portal.acl_users.source_groups._group_principal_map.get(plone_group_id, [])
-        return len(group_users) and not user_id or user_id in group_users
-
     def _getLastValidationState(self, before_last=False):
         '''Last validation state is validation level state defined in
            MeetingConfig.itemWFValidationLevels for which the linked
@@ -444,10 +435,12 @@ class MeetingItemWorkflowConditions(object):
     def isLateFor(self, meeting):
         '''See doc in interfaces.py.'''
         if meeting:
-            late_state = meeting.adapted().getLateState()
-            if (meeting.queryState() not in meeting.getStatesBefore(late_state)) and \
-               (meeting.UID() == self.context.getPreferredMeeting()):
-                return True
+            preferred_meeting = self.context.getPreferredMeeting(theObject=True)
+            if preferred_meeting:
+                late_state = meeting.adapted().getLateState()
+                if (meeting.queryState() not in meeting.getStatesBefore(late_state)) and \
+                   (meeting.getDate() >= preferred_meeting.getDate()):
+                    return True
         return False
 
     def _hasAdvicesToGive(self, destination_state):
@@ -1169,6 +1162,22 @@ schema = Schema((
         write_permission="PloneMeeting: Write item MeetingManager reserved fields",
     ),
     TextField(
+        name='meetingManagersNotes',
+        allowable_content_types=('text/html',),
+        widget=RichWidget(
+            condition="python: here.showMeetingManagerReservedField('meetingManagersNotes')",
+            description="MeetingManagersNotes",
+            description_msgid="meeting_managers_notes_descr",
+            label_msgid="PloneMeeting_label_meetingManagersNotes",
+            label='Meetingmanagersnotes',
+            i18n_domain='PloneMeeting',
+        ),
+        default_content_type="text/html",
+        default_output_type="text/x-html-safe",
+        optional=True,
+        write_permission="PloneMeeting: Write item MeetingManager reserved fields",
+    ),
+    TextField(
         name='internalNotes',
         allowable_content_types=('text/html',),
         widget=RichWidget(
@@ -1176,7 +1185,7 @@ schema = Schema((
             description_msgid="internal_notes_descr",
             condition="python: here.showInternalNotes()",
             label_msgid="PloneMeeting_label_internalNotes",
-            label='InternalNotes',
+            label='Internalnotes',
             i18n_domain='PloneMeeting',
         ),
         default_content_type="text/html",
@@ -1191,7 +1200,7 @@ schema = Schema((
             description_msgid="marginal_notes_descr",
             condition="python: here.attributeIsUsed('marginalNotes')",
             label_msgid="PloneMeeting_label_marginalNotes",
-            label='MarginalNotes',
+            label='Marginalnotes',
             i18n_domain='PloneMeeting',
         ),
         default_content_type="text/html",
@@ -1228,7 +1237,8 @@ schema = Schema((
         ),
         enforceVocabulary=True,
         multiValued=1,
-        vocabulary_factory='collective.contact.plonegroup.sorted_selected_organization_services',
+        vocabulary_factory='collective.contact.plonegroup.browser.settings.'
+                           'SortedSelectedOrganizationsElephantVocabulary',
     ),
     StringField(
         name='meetingTransitionInsertingMe',
@@ -1914,6 +1924,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Condition for showing the 'itemIsSigned' field on views.
            The attribute must be used and the item must be decided.'''
         return self.attributeIsUsed('itemIsSigned') and \
+<<<<<<< HEAD
             self.queryState() in self.adapted()._itemIsSignedStates()
 
     def _itemIsSignedStates(self):
@@ -1923,6 +1934,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(item)
         return cfg.adapted().getItemDecidedStates()
+=======
+            (self.hasMeeting() or self.queryState() == 'validated')
+>>>>>>> origin/master
 
     security.declarePublic('mayChangeListType')
 
@@ -6481,6 +6495,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def getFieldVersion(self, fieldName, changes=False):
         '''See doc in utils.py.'''
         return getFieldVersion(self, fieldName, changes)
+
+    security.declarePrivate('getAdviceRelatedIndexes')
+
+    def getAdviceRelatedIndexes(self):
+        '''See doc in utils.py.'''
+        return ['indexAdvisers']
 
     security.declarePublic('lastValidatedBefore')
 

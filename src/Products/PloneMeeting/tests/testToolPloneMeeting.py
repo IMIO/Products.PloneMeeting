@@ -1091,6 +1091,16 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertRaises(Unauthorized, self.meetingConfig)
         self.assertRaises(Unauthorized, self.meetingConfig2)
 
+    def test_pm_Group_is_not_empty(self):
+        '''Test the group_is_not_empty method.'''
+        pg = self.portal.portal_groups
+        dcGroup = pg.getGroupById('{0}_creators'.format(self.developers_uid))
+        dcMembers = dcGroup.getMemberIds()
+        self.changeUser('pmCreator1')
+        self.assertTrue(self.tool.group_is_not_empty(self.developers_uid, 'creators'))
+        self._removeAllMembers(dcGroup, dcMembers)
+        self.assertFalse(self.tool.group_is_not_empty(self.developers_uid, 'creators'))
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

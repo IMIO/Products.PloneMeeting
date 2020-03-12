@@ -47,6 +47,16 @@ Changelog
 - Added field person.firstname_abbreviated useable in documentgenerator helper print_attendees_by_type method
 - Added parameter annexFile=None to PloneMeetingTestCase.addAnnex, to be able to use another file than FILE.txt (like a pdf, a corrupted pdf, ...)
 - Give `View` access to `portal_plonemeeting` to role `Member` so application do not fail to render when logged in user is not member of any group
+- Avoid item full reindex when advice is added/modified/removed, only reindex relevant indexes (added adaptable method `MeetingItem.getAdviceRelatedIndexes` to manage custom indexes to reindex)
+- When advice is added/modified/removed, clean the `Products.PloneMeeting.MeetingItem.modified` cachekey volatile to clear cache for portlet_todo
+- Adapted the way late items work: now an item is late for the selected preferred meeting and for every following meetings.  This way an item that was late for a meeting may also
+  be presented as late item for next meeting instead only being presentable to next non frozen meeting
+- Moved `MeetingItemWorkflowConditions._groupIsNotEmpty` to `ToolPloneMeeting.group_is_not_empty` so it is easier to use everywhere
+- Added new field `MeetingItem.meetingManagersNotes` only viewable/editable by MeetingManagers
+- Changed the default condition in which an item may be signed (`MeetingItem.isSigned`), this is now possible as soon as an item is `validated`
+- Added faceted filter `Item is signed?`
+- Adapted code as vocabulary `collective.contact.plonegroup.sorted_selected_organization_services` was renamed to
+  `collective.contact.plonegroup.browser.settings.SortedSelectedOrganizationsElephantVocabulary`
 
 4.1.18 (2020-02-21)
 -------------------

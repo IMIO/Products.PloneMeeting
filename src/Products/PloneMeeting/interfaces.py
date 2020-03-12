@@ -326,6 +326,9 @@ class IMeetingItemDocumentation:
     def custom_validate_optionalAdvisers(value, storedOptionalAdvisers, removedAdvisers):
         '''This is called by MeetingItem.validate_optionalAdvisers and let
            a plugin validates selected optional advisers.'''
+    def getAdviceRelatedIndexes(self):
+        '''Return item indexes related to advices, by default
+           only the 'indexAdvisers' index is returned.'''
 
 
 class IMeetingItemWorkflowConditions(Interface):

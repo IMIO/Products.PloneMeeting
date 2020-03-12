@@ -72,8 +72,7 @@ logger = logging.getLogger('PloneMeeting')
 # this catalog query will find nothing, used in CompoundCriterion adapters when necessary
 def _find_nothing_query(portal_type):
     """ """
-    query = {'review_state': {'query': ['unknown_review_state', ]},
-             'portal_type': {'query': [portal_type, ]}, }
+    query = {'UID': {'query': 'dummy_unexisting_uid'}, }
     return query
 
 

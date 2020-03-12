@@ -259,6 +259,16 @@ def hasAnnexesToPrint(obj):
 
 
 @indexer(IMeetingItem)
+def getItemIsSigned(obj):
+    """
+      Index the getItemIsSigned but in a faceted boolean compatible way.
+    """
+    if obj.getItemIsSigned():
+        return '1'
+    return '0'
+
+
+@indexer(IMeetingItem)
 def hasAnnexesToSign(obj):
     """
       Index the fact that an item has annexes to_sign/signed.

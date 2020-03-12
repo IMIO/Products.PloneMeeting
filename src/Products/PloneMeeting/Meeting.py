@@ -770,7 +770,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         cfg = tool.getMeetingConfig(meeting)
         if meeting.queryState() not in cfg.adapted().getMeetingStatesAcceptingItems():
             # make sure the query returns nothing, add a dummy parameter
-            return [{'i': 'getPreferredMeeting',
+            return [{'i': 'UID',
                      'o': 'plone.app.querystring.operation.selection.is',
                      'v': 'dummy_unexisting_uid'}]
         res = [{'i': 'portal_type',
@@ -792,9 +792,9 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
                         'v': meeting.getDate()})
         else:
             # after late state, only query items for which preferred meeting is self
-            res.append({'i': 'getPreferredMeeting',
-                        'o': 'plone.app.querystring.operation.selection.is',
-                        'v': meeting.UID()})
+            res.append({'i': 'getPreferredMeetingDate',
+                        'o': 'plone.app.querystring.operation.date.between',
+                        'v': (DateTime('2000/01/01'), meeting.getDate())})
         return res
 
     security.declarePublic('getSort_on')

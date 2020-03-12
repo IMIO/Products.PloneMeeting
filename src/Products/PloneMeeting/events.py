@@ -354,6 +354,7 @@ def onRegistryModified(event):
             # invalidate cache for organizations related methods
             invalidate_cachekey_volatile_for('Products.PloneMeeting.ToolPloneMeeting.get_orgs_for_user')
             invalidate_cachekey_volatile_for('Products.PloneMeeting.ToolPloneMeeting.get_plone_groups_for_user')
+            invalidate_cachekey_volatile_for('Products.PloneMeeting.ToolPloneMeeting.group_is_not_empty')
             invalidate_cachekey_volatile_for('Products.PloneMeeting.ToolPloneMeeting.userIsAmong')
 
             old_set = set(event.oldValue)
@@ -627,6 +628,15 @@ def storeImagesLocallyDexterity(advice):
             advice.REQUEST.set('currentlyStoringExternalImages', False)
 
 
+def _advice_update_item(item):
+    ''' '''
+    # reindex advice related indexes
+    advice_related_indexes = item.adapted().getAdviceRelatedIndexes()
+    notifyModifiedAndReindex(item, extra_idxs=advice_related_indexes)
+    # invalidate portlet_todo cachekey
+    invalidate_cachekey_volatile_for('Products.PloneMeeting.MeetingItem.modified', get_again=True)
+
+
 def onAdviceAdded(advice, event):
     '''Called when a meetingadvice is added so we can warn parent item.'''
     # if advice is added because we are pasting, pass as we will remove the advices...
@@ -656,9 +666,8 @@ def onAdviceAdded(advice, event):
     if not http_referer.endswith('/edit') and not http_referer.endswith('/@@edit'):
         advice.REQUEST.RESPONSE.redirect(http_referer + '#adviceAndAnnexes')
 
-    # reindexObject in case for example we have custom indexes
-    # depending on the advice value
-    item.reindexObject()
+    # update item
+    _advice_update_item(item)
 
     # Send mail if relevant
     item.sendMailIfRelevant('adviceEdited', 'creators', isSuffix=True)
@@ -682,18 +691,15 @@ def onAdviceModified(advice, event):
     # after the onAviceModified event
     notify(AdviceAfterModifyEvent(advice))
 
-    # reindexObject in case for example we have custom indexes
-    # depending on the advice value
-    item.reindexObject()
+    # update item
+    _advice_update_item(item)
 
 
 def onAdviceEditFinished(advice, event):
     '''Called when a meetingadvice is edited and we are at the end of the editing process.'''
-    item = advice.getParentNode()
-    item.updateLocalRoles()
-
     # redirect to referer after edit if it is not the edit form
-    http_referer = item.REQUEST['HTTP_REFERER']
+    request = getRequest()
+    http_referer = request['HTTP_REFERER']
     if not http_referer.endswith('/edit') and not http_referer.endswith('/@@edit'):
         advice.REQUEST.RESPONSE.redirect(http_referer + '#adviceAndAnnexes')
 
@@ -718,9 +724,8 @@ def onAdviceRemoved(advice, event):
         # the newItem has an empty adviceIndex but can contain advices that will be removed
         logger.info('Removal of advice at %s raised TypeError.' % advice.absolute_url_path())
 
-    # reindexObject in case for example we have custom indexes
-    # depending on the advice value
-    item.reindexObject()
+    # update item
+    _advice_update_item(item)
 
 
 def onAnnexAdded(annex, event):

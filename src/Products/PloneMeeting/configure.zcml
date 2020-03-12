@@ -204,6 +204,7 @@
   <adapter name="getConfigId" factory=".indexes.getConfigId" />
   <adapter name="getCopyGroups" factory=".indexes.getCopyGroups" />
   <adapter name="getGroupsInCharge" factory=".indexes.getGroupsInCharge" />
+  <adapter name="getItemIsSigned" factory=".indexes.getItemIsSigned" />
   <adapter name="getPreferredMeetingDate" factory=".indexes.getPreferredMeetingDate" />
   <adapter name="getRawClassifier" factory=".indexes.getRawClassifier" />
   <adapter name="getTakenOverBy" factory=".indexes.getTakenOverBy" />

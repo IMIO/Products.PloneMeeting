@@ -1335,7 +1335,12 @@ class FolderDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGH
                by held position in the assembly.
         """
         for attendance in attendances_list:
-            value = (float(attendance['present']) / float(len(attendance['contexts']))) * 100
+            nb_present = float(attendance['present'])
+            nb_contexts = float(len(attendance['contexts']))
+            if nb_contexts > 0:
+                value = (nb_present / nb_contexts) * 100
+            else:
+                value = 0
             attendance['proportion'] = round(value, 2)
 
     def get_meeting_assembly_stats(self, brains):
@@ -1377,14 +1382,22 @@ class FolderDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGH
         cfg = self.appy_renderer.originalContext['meetingConfig']
 
         for contact in cfg.getOrderedContacts():
-            attendances[contact] = {}
+            position = api.content.uuidToObject(contact)
+            attendances[contact] = {'name': position.get_person_title(),
+                                    'function': position.get_label(),
+                                    'present': 0,
+                                    'absent': 0,
+                                    'excused': 0,
+                                    'contexts': set()}
 
         for brain in brains:
             meeting = brain.getObject()
             presents = meeting.getAttendees(True)
-            excused = meeting.getExcused(True)
-            absents = meeting.getAbsents(True)
-            _add_attendances_for_meeting(attendances, meeting, presents, excused, absents)
+
+            if presents:  # if there is no attendee it's useless to continue
+                excused = meeting.getExcused(True)
+                absents = meeting.getAbsents(True)
+                _add_attendances_for_meeting(attendances, meeting, presents, excused, absents)
 
         res = attendances.values()
         self._compute_attendances_proportion(res)

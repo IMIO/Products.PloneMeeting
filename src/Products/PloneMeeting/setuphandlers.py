@@ -84,7 +84,7 @@ columnInfos = ('getDate',
                'getProposingGroup', 'getGroupsInCharge', 'getAssociatedGroups',
                'getPreferredMeeting', 'getPreferredMeetingDate',
                'linkedMeetingDate', 'linkedMeetingUID',
-               'getItemIsSigned', 'title_or_id', 'toDiscuss',
+               'title_or_id', 'toDiscuss',
                'privacy', 'pollType', 'listType', 'getItemNumber',
                'getCategory', 'getRawClassifier')
 transformsToDisable = ['word_to_html', 'pdf_to_html', 'pdf_to_text']

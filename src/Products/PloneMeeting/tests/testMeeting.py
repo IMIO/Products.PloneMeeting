@@ -1952,7 +1952,35 @@ class testMeeting(PloneMeetingTestCase):
         self.closeMeeting(m1)
         self.assertTrue(m1.queryState() not in cfg.adapted().getMeetingStatesAcceptingItems())
         m1_query = queryparser.parseFormquery(m1, m1.adapted()._availableItemsQuery())
-        self.assertTrue(not catalog(m1_query))
+        self.assertFalse(catalog(m1_query))
+
+    def test_pm_LateItemsAreAvailableForLateMeetingAndFutureLateMeetings(self):
+        '''When an item is late for a meeting, it is late for it and every following late meetings.'''
+        catalog = self.portal.portal_catalog
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime())
+        after_meeting = self.create('Meeting', date=DateTime() + 7)
+        item1 = self.create('MeetingItem')
+        item2 = self.create('MeetingItem')
+        # meeting as preferredMeeting
+        item1.setPreferredMeeting(meeting.UID())
+        # after_meeting as preferredMeeting
+        item2.setPreferredMeeting(after_meeting.UID())
+        self.freezeMeeting(meeting)
+        self.validateItem(item1)
+        self.validateItem(item2)
+        self.freezeMeeting(after_meeting)
+        # item1 and item2 are late for after_meeting, but only item1 is late for meeting
+        meeting_query = queryparser.parseFormquery(
+            meeting, meeting.adapted()._availableItemsQuery())
+        self.assertEqual(
+            [brain.UID for brain in catalog(meeting_query)],
+            [item1.UID()])
+        after_meeting_query = queryparser.parseFormquery(
+            after_meeting, after_meeting.adapted()._availableItemsQuery())
+        self.assertEqual(
+            [brain.UID for brain in catalog(after_meeting_query)],
+            [item1.UID(), item2.UID()])
 
     def test_pm_PresentSeveralItems(self):
         """
