@@ -2,8 +2,8 @@ Changelog
 =========
 
 
-4.1.20 (unreleased)
--------------------
+4.1.19.1 (unreleased)
+---------------------
 
 - Adapted code to remove compatibility with `collective.iconifiedcategory<0.40` (before `publishable` was introduced)
 
