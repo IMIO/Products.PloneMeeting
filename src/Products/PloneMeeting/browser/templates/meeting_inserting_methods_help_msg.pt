@@ -19,7 +19,7 @@
 
   <tal:orgs tal:define="orgs view/orderedOrgs"
             tal:condition="orgs">
-    <h5 i18n:translate="">Ordered groups</h5>
+    <h5><span i18n:translate="">Ordered groups</span>:</h5>
     <ul tal:repeat="org orgs">
       <li tal:content="org/Title"></li>
     </ul>
@@ -27,7 +27,7 @@
 
   <tal:categories tal:define="categories view/orderedCategories"
                   tal:condition="categories">
-    <h5 i18n:translate="">Ordered categories</h5>
+    <h5><span i18n:translate="">Ordered categories</span>:</h5>
     <ul tal:repeat="category categories">
       <li tal:content="category/Title"></li>
     </ul>
