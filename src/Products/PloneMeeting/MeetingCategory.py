@@ -64,7 +64,8 @@ schema = Schema((
         ),
         enforceVocabulary=True,
         multiValued=1,
-        vocabulary_factory='collective.contact.plonegroup.sorted_selected_organization_services',
+        vocabulary_factory='collective.contact.plonegroup.browser.settings.'
+                           'SortedSelectedOrganizationsElephantVocabulary',
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
@@ -94,7 +95,8 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         multiValued=1,
-        vocabulary_factory='collective.contact.plonegroup.sorted_selected_organization_services',
+        vocabulary_factory='collective.contact.plonegroup.browser.settings.'
+                           'SortedSelectedOrganizationsElephantVocabulary',
     ),
 
 ),

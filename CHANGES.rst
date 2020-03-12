@@ -28,6 +28,8 @@ Changelog
 - Added new field `MeetingItem.meetingManagersNotes` only viewable/editable by MeetingManagers
 - Changed the default condition in which an item may be signed (`MeetingItem.isSigned`), this is now possible as soon as an item is `validated`
 - Added faceted filter `Item is signed?`
+- Adapted code as vocabulary `collective.contact.plonegroup.sorted_selected_organization_services` was renamed to
+  `collective.contact.plonegroup.browser.settings.SortedSelectedOrganizationsElephantVocabulary`
 
 4.1.18 (2020-02-21)
 -------------------
