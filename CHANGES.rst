@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.1.19.1 (unreleased)
+4.1.19.1 (2020-03-13)
 ---------------------
 
 - Adapted code to remove compatibility with `collective.iconifiedcategory<0.40` (before `publishable` was introduced)
