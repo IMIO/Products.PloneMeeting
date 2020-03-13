@@ -28,7 +28,7 @@ Changelog
 - Added adaptable method MeetingItem._is_complete relying on MeetingItem.completeness field
 - Defined CSS rule that manage RichText fields paragraph line height everywhere it is displayed (dashboard, view, CKeditor)
 - In `utils.cropHTML`, avoid visual encoding problems by making sure we have unicode before calling `BeautifulSoup`
-- Optimized avilable items query, avoid catalog query to find past meetings
+- Optimized available items query, avoid catalog query to find past meetings
 - Added field person.firstname_abbreviated useable in documentgenerator helper print_attendees_by_type method
 - Added parameter annexFile=None to PloneMeetingTestCase.addAnnex, to be able to use another file than FILE.txt (like a pdf, a corrupted pdf, ...)
 - Give `View` access to `portal_plonemeeting` to role `Member` so application do not fail to render when logged in user is not member of any group
