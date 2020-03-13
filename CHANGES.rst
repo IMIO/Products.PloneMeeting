@@ -6,6 +6,7 @@ Changelog
 ---------------------
 
 - Adapted code to remove compatibility with `collective.iconifiedcategory<0.40` (before `publishable` was introduced)
+- Fixed migration to 4.1 when Plone groups are stored in other Plone groups (used when `recursive_groups` plugin is enabled)
 
 4.1.19 (2020-03-12)
 -------------------
