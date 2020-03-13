@@ -18,14 +18,12 @@ from collective.eeafaceted.dashboard.browser.views import RenderTermPortletView
 from collective.iconifiedcategory import utils as collective_iconifiedcategory_utils
 from collective.iconifiedcategory.browser.actionview import BaseView as BaseActionView
 from collective.iconifiedcategory.browser.actionview import ConfidentialChangeView
+from collective.iconifiedcategory.browser.actionview import PublishableChangeView
 from collective.iconifiedcategory.browser.actionview import SignedChangeView
 from collective.iconifiedcategory.browser.actionview import ToPrintChangeView
 from collective.iconifiedcategory.browser.tabview import CategorizedTabView
 from collective.iconifiedcategory.browser.views import CategorizedChildInfosView
 from collective.iconifiedcategory.browser.views import CategorizedChildView
-from collective.iconifiedcategory.interfaces import ICategorizedConfidential
-from collective.iconifiedcategory.interfaces import ICategorizedPrint
-from collective.iconifiedcategory.interfaces import ICategorizedSigned
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from imio.actionspanel.browser.viewlets import ActionsPanelViewlet
 from imio.actionspanel.browser.views import ActionsPanelView
@@ -57,7 +55,6 @@ from Products.CMFPlone.utils import safe_unicode
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from Products.PloneMeeting import utils as pm_utils
 from Products.PloneMeeting.config import BARCODE_INSERTED_ATTR_ID
-from Products.PloneMeeting.config import HAS_CAT_PUBLISHABLE
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.interfaces import IMeeting
 from Products.PloneMeeting.utils import get_annexes
@@ -66,7 +63,6 @@ from Products.PloneMeeting.utils import sendMail
 from zope.annotation import IAnnotations
 from zope.container.interfaces import INameChooser
 from zope.i18n import translate
-from zope.interface import alsoProvides
 
 
 class PMFolderContentsView(FolderContentsView):
@@ -1090,23 +1086,6 @@ class CategorizedAnnexesView(CategorizedTabView):
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
 
-    def table_render(self, portal_type=None):
-        """To be removed when using collective.iconifiedcategory 0.39+"""
-        self.portal_type = portal_type
-        return super(CategorizedAnnexesView, self).table_render(portal_type=portal_type)
-
-    def _prepare_table_render(self, table, portal_type=None):
-        """To be removed when using collective.iconifiedcategory 0.39+"""
-        if self.show('confidentiality'):
-            alsoProvides(table, ICategorizedConfidential)
-        if self.show('to_be_printed'):
-            alsoProvides(table, ICategorizedPrint)
-        if HAS_CAT_PUBLISHABLE and self.show('publishable'):
-            from collective.iconifiedcategory.interfaces import ICategorizedPublishable
-            alsoProvides(table, ICategorizedPublishable)
-        if self.show('signed'):
-            alsoProvides(table, ICategorizedSigned)
-
     def _config(self):
         """ """
         if self.portal_type == 'annexDecision':
@@ -1116,13 +1095,6 @@ class CategorizedAnnexesView(CategorizedTabView):
         else:
             config = collective_iconifiedcategory_utils.get_config_root(self.context)
         return config
-
-    def show(self, action_type):
-        """To be removed when using collective.iconifiedcategory 0.39+"""
-        config = self._config()
-        attr_config = '{0}_activated'.format(action_type)
-        show = getattr(config, attr_config) and self._show_column(action_type)
-        return show
 
     def _show_column(self, action_type):
         """Made to be overrided."""
@@ -1228,13 +1200,6 @@ class PMCategorizedChildInfosView(CategorizedChildInfosView):
         """ """
         return "{0}/@@categorized-annexes".format(self.context.absolute_url())
 
-    def show(self, element, attr_prefix):
-        """To be removed when using collective.iconifiedcategory 0.39+"""
-        show = element['{0}_activated'.format(attr_prefix)] and self._show_detail(attr_prefix)
-        if show:
-            self.have_details_to_show = True
-        return show
-
     def _show_detail(self, detail_type):
         """ """
         annex_attr_config = '{0}_display'.format(detail_type)
@@ -1246,25 +1211,13 @@ class PMBaseActionView(BaseActionView):
     """ """
 
     def _get_config_attributes(self):
-        """To be removed when using collective.iconifiedcategory 0.39+"""
+        """ """
         category_group_attr_name = getattr(self, 'category_group_attr_name', None)
-        if category_group_attr_name is not None:
-            # get current type of action
-            # turn to_be_printed_activated to to_be_printed_edit/to_be_printed_display
-            # if an element is not displayed only to MeetingManagers, we consider it is ony editable as well
-            config_attr_display = category_group_attr_name.replace('_activated', '_display')
-            config_attr_edit = category_group_attr_name.replace('_activated', '_edit')
-        else:
-            # XXX when not using c.iconifiedcategory 0.39+
-            if 'to_print' in self.attribute_mapping:
-                config_attr_display = 'to_be_printed_display'
-                config_attr_edit = 'to_be_printed_edit'
-            elif 'confidential' in self.attribute_mapping:
-                config_attr_display = 'confidentiality_display'
-                config_attr_edit = 'confidentiality_edit'
-            else:
-                config_attr_display = 'signed_display'
-                config_attr_edit = 'signed_edit'
+        # get current type of action
+        # turn to_be_printed_activated to to_be_printed_edit/to_be_printed_display
+        # if an element is not displayed only to MeetingManagers, we consider it is ony editable as well
+        config_attr_display = category_group_attr_name.replace('_activated', '_display')
+        config_attr_edit = category_group_attr_name.replace('_activated', '_edit')
         return config_attr_display, config_attr_edit
 
     def _may_set_values(self, values, ):
@@ -1286,14 +1239,9 @@ class PMBaseActionView(BaseActionView):
 class PMConfidentialChangeView(ConfidentialChangeView, PMBaseActionView):
     """Override to use new base klass."""
 
-if HAS_CAT_PUBLISHABLE:
-    from collective.iconifiedcategory.browser.actionview import PublishableChangeView
 
-    class PMPublishableChangeView(PublishableChangeView, PMBaseActionView):
-        """Override to use new base klass."""
-else:
-    class PMPublishableChangeView(PMBaseActionView):
-        """ """
+class PMPublishableChangeView(PublishableChangeView, PMBaseActionView):
+    """Override to use new base klass."""
 
 
 class PMSignedChangeView(SignedChangeView, PMBaseActionView):

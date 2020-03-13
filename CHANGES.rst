@@ -5,8 +5,7 @@ Changelog
 4.2a4 (unreleased)
 ------------------
 
-- Nothing changed yet.
-
+- Merged changes from 4.1.19
 
 4.2a3 (2020-02-21)
 ------------------
@@ -29,7 +28,13 @@ Changelog
 - Use roles 'Reviewer' and 'Contributor' in meetingadvice_workflow
 - Added bypass for users having 'Manage portal' in MeetingItemWorkflowConditions in 'mayWait_advices_from', 'mayValidate' and 'mayPresent'
 
-4.1.19 (unreleased)
+4.1.19.1 (unreleased)
+---------------------
+
+- Adapted code to remove compatibility with `collective.iconifiedcategory<0.40` (before `publishable` was introduced)
+- Fixed migration to 4.1 when Plone groups are stored in other Plone groups (used when `recursive_groups` plugin is enabled)
+
+4.1.19 (2020-03-12)
 -------------------
 
 - Do no more _versionateAdvicesOnItemEdit on item when adding/removing an annex

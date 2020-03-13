@@ -33,6 +33,7 @@ from Products.PloneMeeting.migrations import Migrator
 from Products.PloneMeeting.profiles import MeetingConfigDescriptor
 from Products.PloneMeeting.utils import get_public_url
 from Products.PloneMeeting.utils import updateCollectionCriterion
+from Products.PlonePAS.tools.groupdata import GroupData
 from z3c.relationfield.relation import RelationValue
 from zope.component import getUtility
 from zope.i18n import translate
@@ -599,6 +600,7 @@ class Migrate_To_4_1(Migrator):
         logger.info('Transfering users to new Plone groups...')
         # transfer users to new Plone groups
         portal_groups = api.portal.get_tool('portal_groups')
+        ori_plone_group_ids_to_remove = []
         for mGroup in self.tool.objectValues('MeetingGroup'):
             org = own_org.get(mGroup.getId())
             org_uid = org.UID()
@@ -611,9 +613,18 @@ class Migrate_To_4_1(Migrator):
                     for member_or_group in ori_plone_group.getGroupMembers():
                         # no need to manage unexisting as getGroupMembers
                         # only return found users/groups
+                        # if member_or_group is a group, we need to get new group based on org_uid
+                        if isinstance(member_or_group, GroupData):
+                            ori_plone_subgroup_id, subgroup_suffix = member_or_group.getId().rsplit('_', 1)
+                            suborg = own_org.get(ori_plone_subgroup_id)
+                            suborg_uid = suborg.UID()
+                            new_plone_subgroup = get_plone_group(suborg_uid, subgroup_suffix)
+                            member_or_group = new_plone_subgroup
                         api.group.add_user(group=new_plone_group, user=member_or_group)
-                    # remove original Plone group
-                    portal_groups.removeGroup(ori_plone_group_id)
+                    # do not remove immediatelly as a group can be stored in another group
+                    ori_plone_group_ids_to_remove.append(ori_plone_group_id)
+        for ori_plone_group_id in ori_plone_group_ids_to_remove:
+            portal_groups.removeGroup(ori_plone_group_id)
 
         # now that every groups are migrated, we may migrate groups_in_charge
         # we have old MeetingGroup ids stored, we want organization UIDs
