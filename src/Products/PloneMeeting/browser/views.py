@@ -859,7 +859,10 @@ class BaseDGHV(object):
                 return res
 
         if attendees_by_type:
-            return self.print_attendees_by_type(group_position_type=True, **kwargs)
+            return self.print_attendees_by_type(
+                group_position_type=kwargs.pop('group_position_type', True),
+                **kwargs
+            )
         else:
             return self.print_attendees(**kwargs)
 
