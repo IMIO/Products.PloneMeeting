@@ -5,8 +5,7 @@ Changelog
 4.2a5 (unreleased)
 ------------------
 
-- Nothing changed yet.
-
+- Merged changes from 4.1.19.2
 
 4.2a4 (2020-03-13)
 ------------------
@@ -34,7 +33,12 @@ Changelog
 - Use roles 'Reviewer' and 'Contributor' in meetingadvice_workflow
 - Added bypass for users having 'Manage portal' in MeetingItemWorkflowConditions in 'mayWait_advices_from', 'mayValidate' and 'mayPresent'
 
-4.1.19.1 (unreleased)
+4.1.19.2 (2020-03-17)
+---------------------
+
+- Fixed a bug when redefining 'group_position_type' parameter in view.printAssembly and added a test
+
+4.1.19.1 (2020-03-13)
 ---------------------
 
 - Adapted code to remove compatibility with `collective.iconifiedcategory<0.40` (before `publishable` was introduced)
@@ -54,7 +58,7 @@ Changelog
 - Added adaptable method MeetingItem._is_complete relying on MeetingItem.completeness field
 - Defined CSS rule that manage RichText fields paragraph line height everywhere it is displayed (dashboard, view, CKeditor)
 - In `utils.cropHTML`, avoid visual encoding problems by making sure we have unicode before calling `BeautifulSoup`
-- Optimized avilable items query, avoid catalog query to find past meetings
+- Optimized available items query, avoid catalog query to find past meetings
 - Added field person.firstname_abbreviated useable in documentgenerator helper print_attendees_by_type method
 - Added parameter annexFile=None to PloneMeetingTestCase.addAnnex, to be able to use another file than FILE.txt (like a pdf, a corrupted pdf, ...)
 - Give `View` access to `portal_plonemeeting` to role `Member` so application do not fail to render when logged in user is not member of any group

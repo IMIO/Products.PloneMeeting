@@ -5277,7 +5277,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(helper.printAssembly(striked=True),
                          '<p>Assembly with <strike>striked</strike> part</p>')
 
-    def test_pm_printAssembly(self):
+    def test_pm_PrintAssembly(self):
         # Set up
         self.changeUser('siteadmin')
         cfg = self.meetingConfig
@@ -5295,7 +5295,7 @@ class testMeetingItem(PloneMeetingTestCase):
         view()
         helper = view.get_generation_context_helper()
 
-        printed_assembly = helper.printAssembly()
+        printed_assembly = helper.printAssembly(group_position_type=False)
         # Every attendee firstname and lastname must be in view.printAssembly()
         for attendee in item.getAttendees(theObjects=True):
             self.assertIn(attendee.get_person().firstname, printed_assembly)
