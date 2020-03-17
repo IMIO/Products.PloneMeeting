@@ -723,6 +723,7 @@ class testAnnexes(PloneMeetingTestCase):
         item = self.create('MeetingItem', title=ITEM_TITLE)
         item.setDescription(ITEM_DESCRIPTION)
         item.setDecision(ITEM_DECISION)
+        item.setMotivation('')
         self._manage_custom_searchable_fields(item)
         item.reindexObject(idxs=['SearchableText', ])
         catalog = self.portal.portal_catalog
