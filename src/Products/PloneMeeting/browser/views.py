@@ -843,7 +843,7 @@ class BaseDGHV(object):
         user = api.user.get(user_id)
         return user and user.getProperty('fullname') or user_id
 
-    def printAssembly(self, striked=True, attendees_by_type=True, **kwargs):
+    def printAssembly(self, striked=True, **kwargs):
         '''Returns the assembly for this meeting or item.
            If p_striked is True, return striked assembly.'''
         res = None
@@ -855,16 +855,12 @@ class BaseDGHV(object):
         if res:
             if striked:
                 return toHTMLStrikedContent(res)
-            else:
-                return res
+            return res
 
-        if attendees_by_type:
-            return self.print_attendees_by_type(
-                group_position_type=kwargs.pop('group_position_type', True),
-                **kwargs
-            )
-        else:
-            return self.print_attendees(**kwargs)
+        if kwargs.get('group_position_type'):
+            return self.print_attendees_by_type(**kwargs)
+
+        return self.print_attendees(**kwargs)
 
     def _get_attendees(self):
         """ """
