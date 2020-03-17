@@ -520,6 +520,9 @@ class testMeetingItem(PloneMeetingTestCase):
         # but we do not use portal_actionicons
         self.failIf(actionId in [ai.getActionId() for ai in self.portal.portal_actionicons.listActionIcons()])
 
+    def _check_cloned_motivation(self, base_item, cloned_item):
+        self.failIf(cloned_item.getMotivation())
+
     def test_pm_SendItemToOtherMCKeptFields(self):
         '''Test what fields are taken when sending to another MC, actually only fields
            enabled in both original and destination config.'''
@@ -550,7 +553,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(clonedItem.Title(), item.Title())
         self.assertEqual(clonedItem.Description(), item.Description())
         self.assertEqual(clonedItem.getDecision(), item.getDecision())
-        self.failIf(clonedItem.getMotivation())
+        self._check_cloned_motivation(item, clonedItem)
         self.failIf(clonedItem.getBudgetRelated())
         self.failIf(clonedItem.getBudgetInfos())
         self.failIf(clonedItem.getOtherMeetingConfigsClonableTo())
