@@ -2,11 +2,10 @@ Changelog
 =========
 
 
-4.1.20 (unreleased)
--------------------
+4.1.19.2 (unreleased)
+---------------------
 
 - Fixed a bug when redefining 'group_position_type' parameter in view.printAssembly and added a test
-
 
 4.1.19.1 (2020-03-13)
 ---------------------
