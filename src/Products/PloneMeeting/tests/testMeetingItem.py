@@ -5264,7 +5264,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(helper.printAssembly(striked=True),
                          '<p>Assembly with <strike>striked</strike> part</p>')
 
-    def test_pm_printAssembly(self):
+    def test_pm_PrintAssembly(self):
         # Set up
         self.changeUser('siteadmin')
         cfg = self.meetingConfig
