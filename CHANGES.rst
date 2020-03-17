@@ -5,7 +5,7 @@ Changelog
 4.1.20 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Small fixes in the test to improve MeetingLalouviere test run .
 
 
 4.1.19.2 (2020-03-17)
