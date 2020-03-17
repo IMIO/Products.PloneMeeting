@@ -843,25 +843,29 @@ class BaseDGHV(object):
         user = api.user.get(user_id)
         return user and user.getProperty('fullname') or user_id
 
-    def printAssembly(self, striked=True, attendees_by_type=True, **kwargs):
+    def printAssembly(self, striked=True, use_print_attendees_by_type=True, **kwargs):
         '''Returns the assembly for this meeting or item.
-           If p_striked is True, return striked assembly.'''
-        res = None
+           If p_striked is True, return striked assembly.
+           If use_print_attendees_by_type is True, we use print_attendees_by_type method instead of
+           print_attendees.'''
+        assembly = None
         if self.context.meta_type == 'Meeting' and self.context.getAssembly():
-            res = self.context.getAssembly()
+            assembly = self.context.getAssembly()
         elif self.context.meta_type == 'MeetingItem' and self.context.getItemAssembly():
-            res = self.context.getItemAssembly()
+            assembly = self.context.getItemAssembly()
 
-        if res:
+        if assembly:
             if striked:
-                return toHTMLStrikedContent(res)
-            else:
-                return res
+                return toHTMLStrikedContent(assembly)
+            return assembly
 
-        if attendees_by_type:
-            return self.print_attendees_by_type(group_position_type=True, **kwargs)
-        else:
-            return self.print_attendees(**kwargs)
+        if use_print_attendees_by_type:
+            return self.print_attendees_by_type(
+                # We set group_position_type at True by default because that's the most common case
+                group_position_type=kwargs.pop('group_position_type', True),
+                **kwargs
+            )
+        return self.print_attendees(**kwargs)
 
     def _get_attendees(self):
         """ """
