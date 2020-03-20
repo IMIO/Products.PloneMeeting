@@ -121,7 +121,8 @@ class ByeByeAttendeeForm(BaseAttendeeForm):
     fields = field.Fields(IByeByeAttendee)
 
     NOT_PRESENT_MAPPING = {'absent': 'itemAbsents',
-                           'excused': 'itemExcused'}
+                           'excused': 'itemExcused',
+                           'nonAttendee': 'itemNonAttendees'}
 
     def _doApply(self):
         """ """
@@ -207,10 +208,14 @@ class WelcomeAttendeeForm(BaseAttendeeForm):
 
     def _get_meeting_absent_attr(self):
         """ """
+        attr = None
         if self.person_uid in self.context.getItemAbsents():
-            return self.meeting.itemAbsents
+            attr = self.meeting.itemAbsents
+        elif self.person_uid in self.context.getItemExcused():
+            attr = self.meeting.itemExcused
         else:
-            return self.meeting.itemExcused
+            attr = self.meeting.itemNonAttendees
+        return attr
 
     def _doApply(self):
         """ """
@@ -237,6 +242,56 @@ class WelcomeAttendeeForm(BaseAttendeeForm):
 
 
 WelcomeAttendeeFormWrapper = wrap_form(WelcomeAttendeeForm)
+
+
+class IByeByeNonAttendee(IBaseAttendee):
+
+    apply_until_item_number = schema.TextLine(
+        title=_(u"Apply until item number"),
+        description=_(u"If you specify a number, this attendee will be defined as "
+                      u"non attendee from current item to entered item number. "
+                      u"Leave empty to only apply for current item."),
+        required=False,
+        constraint=validate_apply_until_item_number,)
+
+
+class ByeByeNonAttendeeForm(ByeByeAttendeeForm):
+    """ """
+
+    label = _(u'nonattendee_byebye')
+    schema = IByeByeNonAttendee
+    fields = field.Fields(IByeByeNonAttendee)
+    NOT_PRESENT_MAPPING = {'nonAttendee': 'itemNonAttendees'}
+    not_present_type = 'nonAttendee'
+
+
+ByeByeNonAttendeeFormWrapper = wrap_form(ByeByeNonAttendeeForm)
+
+
+class IWelcomeNonAttendee(IBaseAttendee):
+
+    apply_until_item_number = schema.TextLine(
+        title=_(u"Apply until item number"),
+        description=_(u"If you specify a number, this attendee will be defined as "
+                      u"attendee for the meeting from current item to entered item number. "
+                      u"Leave empty to only apply for current item."),
+        required=False,
+        constraint=validate_apply_until_item_number,)
+
+
+class WelcomeNonAttendeeForm(WelcomeAttendeeForm):
+    """ """
+
+    label = _(u"nonattendee_welcome")
+    schema = IWelcomeNonAttendee
+    fields = field.Fields(IWelcomeNonAttendee)
+
+    def _get_meeting_absent_attr(self):
+        """ """
+        return self.meeting.itemNonAttendees
+
+
+WelcomeNonAttendeeFormWrapper = wrap_form(WelcomeNonAttendeeForm)
 
 
 class IRedefinedSignatory(IBaseAttendee):

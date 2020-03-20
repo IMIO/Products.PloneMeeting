@@ -1911,8 +1911,11 @@ class DisplayMeetingItemNotPresent(BrowserView):
         """Returns the list of items the not_present_uid is absent for."""
         if self.not_present_type == 'absent':
             item_uids = self.meeting.getItemAbsents(by_persons=True).get(self.not_present_uid, [])
-        else:
+        elif self.not_present_type == 'excused':
             item_uids = self.meeting.getItemExcused(by_persons=True).get(self.not_present_uid, [])
+        else:
+            #nonAttendees
+            item_uids = self.meeting.getItemNonAttendees(by_persons=True).get(self.not_present_uid, [])
         catalog = api.portal.get_tool('portal_catalog')
         brains = catalog(UID=item_uids, sort_on='getItemNumber')
         objs = [brain.getObject() for brain in brains]

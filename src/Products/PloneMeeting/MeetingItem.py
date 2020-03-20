@@ -3112,6 +3112,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             res.append('itemAbsents')
         if self.getItemExcused(theObjects=True):
             res.append('itemExcused')
+        if self.getItemNonAttendees(theObjects=True):
+            res.append('itemNonAttendees')
         return res
 
     security.declarePublic('getItemAssembly')
@@ -3199,6 +3201,22 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         else:
             item_excused = tuple(meeting_item_excused)
         return item_excused
+
+    security.declarePublic('getItemNonAttendees')
+
+    def getItemNonAttendees(self, theObjects=False, **kwargs):
+        '''Gets the nonAttendees for this item.
+           Non attendees for an item are stored in the Meeting.itemNonAttendees dict.'''
+        res = []
+        if not self.hasMeeting():
+            return res
+        meeting = self.getMeeting()
+        meeting_item_nonAttendees = meeting.getItemNonAttendees().get(self.UID(), [])
+        if theObjects:
+            item_nonAttendees = meeting._getContacts(uids=meeting_item_nonAttendees, theObjects=theObjects)
+        else:
+            item_nonAttendees = tuple(meeting_item_nonAttendees)
+        return item_nonAttendees
 
     security.declarePublic('getItemSignatories')
 
@@ -5998,8 +6016,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         attendees = meeting.getAttendees(theObjects=False)
         itemAbsents = self.getItemAbsents()
         itemExcused = self.getItemExcused()
+        itemNonAttendees = self.getItemNonAttendees()
         attendees = [attendee for attendee in attendees
-                     if attendee not in itemAbsents + itemExcused]
+                     if attendee not in itemAbsents + itemExcused + itemNonAttendees]
         # get really present attendees now
         attendees = meeting._getContacts(uids=attendees, theObjects=theObjects)
         return attendees
@@ -6357,7 +6376,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return True
 
     def _mayChangeAttendees(self):
-        """Check that user may quickEdit itemAbsents/itemExcused."""
+        """Check that user may quickEdit itemAbsents/itemExcused/itemNonAttendees."""
         tool = api.portal.get_tool('portal_plonemeeting')
         return tool.isManager(self) and self._checkMayQuickEdit()
 
