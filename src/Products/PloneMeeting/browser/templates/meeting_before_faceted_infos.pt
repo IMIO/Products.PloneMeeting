@@ -82,10 +82,12 @@
                             absents context/getAbsents;
                             signers context/getSignatories;
                             useUserReplacements python: 'replacements' in usedAttrs;
+                            itemNonAttendees python: context.getItemNonAttendees(by_persons=True);
                             userReplacements context/getUserReplacements;
                             showExcused python: 'excused' in usedAttrs or excused;
                             showAbsents python: 'absents' in usedAttrs or absents;
                             showSignatories python: 'signatories' in usedAttrs or signers;
+                            showNonAttendees python: 'nonAttendee' in usedAttrs or itemNonAttendees;
                             itemAbsents python: context.getItemAbsents(by_persons=True);
                             itemExcused python: context.getItemExcused(by_persons=True);
                             itemSignatories python: context.getItemSignatories(by_signatories=True);">
@@ -94,10 +96,11 @@
          <tr>
            <th class="nosort"></th>
            <th class="nosort" i18n:translate="is_attendee"></th>
-           <th class="nosort" tal:condition="showExcused" i18n:translate="is_excused"></th>
-           <th class="nosort" tal:condition="showAbsents" i18n:translate="is_absent"></th>
-           <th class="nosort" tal:condition="showSignatories" i18n:translate="is_signer"></th>
-           <th class="nosort" tal:condition="useUserReplacements" i18n:translate="is_replaced"></th>
+           <th class="nosort" tal:condition="showExcused" i18n:translate="is_excused">Excused?</th>
+           <th class="nosort" tal:condition="showAbsents" i18n:translate="is_absent">Absent?</th>
+           <th class="nosort" tal:condition="showSignatories" i18n:translate="is_signer">Signer?</th>
+           <th class="nosort" tal:condition="useUserReplacements" i18n:translate="is_replaced">Replaced?</th>
+           <th class="nosort" tal:condition="showNonAttendees" i18n:translate="is_non_attendee">Non attendee?</th>
          </tr>
          </thead>
          <tbody>
@@ -118,7 +121,7 @@
              </td>
              <td align="center" tal:condition="showAbsents">
                <span tal:condition="python: aUid in absents" class="fa people-checked" ></span>
-               <span tal:condition="python: aUid in itemAbsents or aUid in itemAbsents"
+               <span tal:condition="python: aUid in itemAbsents"
                         class="tooltipster-meeting-item-not-present fa people-left people-action"
                         tal:attributes="data-base_url string:${context/absolute_url};
                                         data-not_present_uid string:${aUid};
@@ -141,6 +144,14 @@
                <span tal:condition="python: aUid in userReplacements" tal:content="python: context.displayUserReplacement(userReplacements[aUid])"></span>
                <span tal:condition="python: aUid in excused + absents and aUid not in userReplacements">-</span>
 
+             </td>
+             <td align="center" tal:condition="showNonAttendees">
+               <span tal:condition="python: aUid in itemNonAttendees"
+                        class="tooltipster-meeting-item-not-present fa people-left people-action"
+                        tal:attributes="data-base_url string:${context/absolute_url};
+                                        data-not_present_uid string:${aUid};
+                                        data-not_present_type string:non_attendee;">
+               </span>
              </td>
            </tal:defines>
          </tr>

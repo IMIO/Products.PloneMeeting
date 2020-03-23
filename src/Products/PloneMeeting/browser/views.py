@@ -874,18 +874,21 @@ class BaseDGHV(object):
             attendees = meeting.getAttendees()
             item_absents = []
             item_excused = []
+            item_non_attendees = meeting.getNonAttendees()
         else:
             # MeetingItem
             meeting = self.context.getMeeting()
             attendees = self.context.getAttendees()
             item_absents = self.context.getItemAbsents()
             item_excused = self.context.getItemExcused()
+            item_non_attendees = self.context.getItemNonAttendees()
         # generate content then group by sub organization if necessary
         contacts = meeting.getAllUsedHeldPositions()
         excused = meeting.getExcused()
         absents = meeting.getAbsents()
         replaced = meeting.getReplacements()
-        return meeting, attendees, item_absents, item_excused, contacts, excused, absents, replaced
+        return meeting, attendees, item_absents, item_excused, item_non_attendees, \
+            contacts, excused, absents, replaced
 
     def print_attendees(self,
                         by_attendee_type=False,
@@ -901,7 +904,8 @@ class BaseDGHV(object):
                         custom_attendee_type_values={},
                         custom_grouped_attendee_type_patterns={},
                         replaced_by_format={'M': u'<strong>remplacé par {0}</strong>',
-                                            'F': u'<strong>remplacée par {0}</strong>'}):
+                                            'F': u'<strong>remplacée par {0}</strong>'},
+                        ignore_non_attendees=True):
         """ """
 
         def _render_as_html(tree, by_parent_org=False):
@@ -919,20 +923,32 @@ class BaseDGHV(object):
                 first = False
             return u'<br />'.join(res)
 
-        attendee_type_values = {'attendee': {'M': u'présent', 'F': u'présente'},
-                                'excused': {'M': u'excusé', 'F': u'excusée'},
-                                'absent': {'M': u'absent', 'F': u'absente'},
-                                'replaced': {'M': u'remplacé', 'F': u'remplacée'},
-                                'item_absent': {'M': u'absent pour ce point', 'F': u'absente pour ce point'},
-                                'item_excused': {'M': u'excusé pour ce point', 'F': u'excusée pour ce point'},
+        attendee_type_values = {'attendee': {'M': u'présent',
+                                             'F': u'présente'},
+                                'excused': {'M': u'excusé',
+                                            'F': u'excusée'},
+                                'absent': {'M': u'absent',
+                                           'F': u'absente'},
+                                'replaced': {'M': u'remplacé',
+                                             'F': u'remplacée'},
+                                'item_absent': {'M': u'absent pour ce point',
+                                                'F': u'absente pour ce point'},
+                                'item_excused': {'M': u'excusé pour ce point',
+                                                 'F': u'excusée pour ce point'},
+                                'item_non_attendee': {'M': u'ne participe pas à ce point',
+                                                      'F': u'ne participe pas à ce point'},
                                 }
         attendee_type_values.update(custom_attendee_type_values)
 
         # initial values
-        meeting, attendees, item_absents, item_excused, contacts, excused, absents, replaced = self._get_attendees()
+        meeting, attendees, item_absents, item_excused, item_non_attendees, \
+            contacts, excused, absents, replaced = self._get_attendees()
 
         res = OrderedDict()
         for contact in contacts:
+            contact_uid = contact.UID()
+            if ignore_non_attendees and contact_uid in item_non_attendees:
+                continue
             res[contact] = contact.get_short_title(include_sub_organizations=False,
                                                    abbreviate_firstname=abbreviate_firstname)
 
@@ -955,7 +971,11 @@ class BaseDGHV(object):
             for contact, contact_value in contact_infos.items():
                 contact_uid = contact.UID()
                 contact_gender = contact.gender or 'M'
-                if contact_uid in attendees:
+                if contact_uid in item_non_attendees:
+                    res[org][contact] = attendee_value_format.format(
+                        res[org][contact],
+                        attendee_type_format.format(attendee_type_values['item_non_attendee'][contact_gender]))
+                elif contact_uid in attendees:
                     res[org][contact] = attendee_value_format.format(
                         res[org][contact],
                         attendee_type_format.format(attendee_type_values['attendee'][contact_gender]))
@@ -967,6 +987,10 @@ class BaseDGHV(object):
                     res[org][contact] = attendee_value_format.format(
                         res[org][contact],
                         attendee_type_format.format(attendee_type_values['absent'][contact_gender]))
+                elif contact_uid in item_absents:
+                    res[org][contact] = attendee_value_format.format(
+                        res[org][contact],
+                        attendee_type_format.format(attendee_type_values['item_absent'][contact_gender]))
                 elif contact_uid in item_absents:
                     res[org][contact] = attendee_value_format.format(
                         res[org][contact],
@@ -1010,9 +1034,11 @@ class BaseDGHV(object):
                                 include_person_title=True,
                                 abbreviate_firstname=False,
                                 included_attendee_types=['attendee', 'excused', 'absent',
-                                                         'replaced', 'item_excused', 'item_absent'],
+                                                         'replaced', 'item_excused', 'item_absent',
+                                                         'item_non_attendee'],
                                 striked_attendee_types=[],
-                                striked_attendee_pattern=u'<strike>{0}</strike>'):
+                                striked_attendee_pattern=u'<strike>{0}</strike>',
+                                ignore_non_attendees=True):
 
         def _buildContactsValue(meeting, contacts):
             """ """
@@ -1110,6 +1136,12 @@ class BaseDGHV(object):
                              'FS': u'<strong><u>Absente pour ce point&nbsp;:</u></strong>',
                              'FP': u'<strong><u>Absentes pour ce point&nbsp;:</u></strong>',
                              '*': u'<strong><u>Absents pour ce point&nbsp;:</u></strong>'}),
+            ('item_non_attendee',
+             {'MS': u'<strong><u>Ne participe pas à ce point&nbsp;:</u></strong>',
+              'MP': u'<strong><u>Ne participent pas à ce point&nbsp;:</u></strong>',
+              'FS': u'<strong><u>Ne participe pas à ce point&nbsp;:</u></strong>',
+              'FP': u'<strong><u>Ne participent pas à ce point&nbsp;:</u></strong>',
+              '*': u'<strong><u>Ne participent pas à ce point&nbsp;:</u></strong>'}),
         ])
         if not show_grouped_attendee_type:
             grouped_attendee_type_patterns.update(OrderedDict([
@@ -1120,17 +1152,22 @@ class BaseDGHV(object):
         if not show_item_grouped_attendee_type:
             grouped_attendee_type_patterns.update(OrderedDict([
                 ('item_absent', {'*': u''}),
-                ('item_excused', {'*': u''})]))
+                ('item_excused', {'*': u''}),
+                ('item_non_attendee', {'*': u''})]))
         grouped_attendee_type_patterns.update(custom_grouped_attendee_type_patterns)
 
         # initial values
-        meeting, attendees, item_absents, item_excused, contacts, excused, absents, replaced = self._get_attendees()
+        meeting, attendees, item_absents, item_excused, item_non_attendees, \
+            contacts, excused, absents, replaced = self._get_attendees()
 
         res = OrderedDict([(key, []) for key in grouped_attendee_type_patterns.keys()])
         striked_contact_uids = []
         for contact in contacts:
             contact_uid = contact.UID()
-            contact_attendee_type = contact_uid in item_absents and 'item_absent' or \
+            if ignore_non_attendees and contact_uid in item_non_attendees:
+                continue
+            contact_attendee_type = contact_uid in item_non_attendees and 'item_non_attendee' or \
+                contact_uid in item_absents and 'item_absent' or \
                 contact_uid in item_excused and 'item_excused' or \
                 contact_uid in attendees and 'attendee' or \
                 contact_uid in excused and 'excused' or \
@@ -1536,32 +1573,43 @@ class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV)
     def print_in_and_out_attendees(
             self,
             in_and_out_types=[],
+            merge_in_and_out_types=True,
+            merge_config={'left_before': 'non_attendee_before',
+                          'entered_before': 'attendee_again_before',
+                          'left_after': 'non_attendee_after',
+                          'entered_after': 'attendee_again_after'},
             patterns={'left_before': u'{0} quitte la séance avant la discussion du point.',
                       'entered_before': u'{0} rentre en séance avant la discussion du point.',
                       'left_after': u'{0} quitte la séance après la discussion du point.',
-                      'entered_after': u'{0} entre en séance après la discussion du point.'},
+                      'entered_after': u'{0} entre en séance après la discussion du point.',
+                      'non_attendee_before': u'{0} ne participe plus à la séance avant la discussion du point.',
+                      'attendee_again_before': u'{0} participe à nouveau à la séance avant la discussion du point.',
+                      'non_attendee_after': u'{0} ne participe plus à la séance après la discussion du point.',
+                      'attendee_again_after': u'{0} participe à nouveau à la séance après la discussion du point.'},
             include_person_title=True,
             render_as_html=True,
             html_pattern=u'<p>{0}</p>'):
         """Print in an out moves depending on the previous/next item.
            If p_in_and_out_types is given, only given types are considered among
            'left_before', 'entered_before', 'left_after' and 'entered_after'.
+           p_merge_in_and_out_types=True (default) will merge in_and_out_types for absent/excused and non_attendee
+           types so for example key 'left_before' will also contain elements of key 'non_attendee_before'.
            p_patterns rendering informations may be overrided.
            If person_full_title is True, include full_title in sentence, aka include 'Mister' prefix.
            If p_render_as_html is True, informations is returned with value as HTML, else,
            we return a list of sentences.
            p_html_pattern is the way HTML is rendered when p_render_as_html is True."""
         in_and_out = self.context.getInAndOutAttendees()
-        res_pattern = {in_and_out_type: [] for in_and_out_type in in_and_out.keys()
-                       if (not in_and_out_types or in_and_out_type in in_and_out_types)}
-        person_res = res_pattern.copy()
+        person_res = {in_and_out_type: [] for in_and_out_type in in_and_out.keys()
+                      if (not in_and_out_types or in_and_out_type in in_and_out_types)}
         for in_and_out_type, held_positions in in_and_out.items():
             for held_position in held_positions:
                 person_res[in_and_out_type].append(
                     held_position.get_person().get_full_title(
                         include_person_title=include_person_title))
+
         if render_as_html:
-            html_res = res_pattern.copy()
+            html_res = person_res.copy()
             for in_and_out_type, person_titles in person_res.items():
                 html_res[in_and_out_type] = '\n'.join(
                     [html_pattern.format(patterns[in_and_out_type].format(person_title))
@@ -1569,6 +1617,14 @@ class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV)
             res = html_res
         else:
             res = person_res.copy()
+
+        if merge_in_and_out_types:
+            tmp_res = {}
+            for k, v in merge_config.items():
+                tmp_res[k] = res[k]
+                tmp_res[k] += res[v]
+            res = tmp_res.copy()
+
         return res
 
     def print_copy_groups(self, suffixes=[], separator=', ', render_as_html=True, html_pattern='<p>{0}</p>'):
@@ -1909,12 +1965,12 @@ class DisplayMeetingItemNotPresent(BrowserView):
 
     def getItemsForNotPresent(self):
         """Returns the list of items the not_present_uid is absent for."""
+        item_uids = []
         if self.not_present_type == 'absent':
             item_uids = self.meeting.getItemAbsents(by_persons=True).get(self.not_present_uid, [])
         elif self.not_present_type == 'excused':
             item_uids = self.meeting.getItemExcused(by_persons=True).get(self.not_present_uid, [])
-        else:
-            #nonAttendees
+        elif self.not_present_type == 'non_attendee':
             item_uids = self.meeting.getItemNonAttendees(by_persons=True).get(self.not_present_uid, [])
         catalog = api.portal.get_tool('portal_catalog')
         brains = catalog(UID=item_uids, sort_on='getItemNumber')

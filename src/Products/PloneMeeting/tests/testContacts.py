@@ -380,21 +380,36 @@ class testContacts(PloneMeetingTestCase):
         meeting.itemAbsents[item1_uid] = [meeting_attendees[0]]
         meeting.itemExcused[item2_uid] = [meeting_attendees[0], meeting_attendees[1]]
         meeting.itemAbsents[item3_uid] = [meeting_attendees[1], meeting_attendees[2]]
-        self.assertEqual(item1.getInAndOutAttendees(theObjects=False),
-                         {'left_after': (meeting_attendees[1],),
-                          'entered_after': (),
-                          'left_before': (meeting_attendees[0],),
-                          'entered_before': ()})
-        self.assertEqual(item2.getInAndOutAttendees(theObjects=False),
-                         {'left_after': (meeting_attendees[2],),
-                          'entered_after': (meeting_attendees[0],),
-                          'left_before': (meeting_attendees[1],),
-                          'entered_before': ()})
-        self.assertEqual(item3.getInAndOutAttendees(theObjects=False),
-                         {'left_after': (),
-                          'entered_after': (),
-                          'left_before': (meeting_attendees[2],),
-                          'entered_before': (meeting_attendees[0],)})
+        self.assertEqual(
+            item1.getInAndOutAttendees(theObjects=False),
+            {'attendee_again_after': (),
+             'attendee_again_before': (),
+             'entered_after': (),
+             'entered_before': (),
+             'left_after': (meeting_attendees[1],),
+             'left_before': (meeting_attendees[0],),
+             'non_attendee_before': (),
+             'non_attendee_after': ()})
+        self.assertEqual(
+            item2.getInAndOutAttendees(theObjects=False),
+            {'attendee_again_after': (),
+             'attendee_again_before': (),
+             'entered_after': (meeting_attendees[0],),
+             'entered_before': (),
+             'left_after': (meeting_attendees[2],),
+             'left_before': (meeting_attendees[1],),
+             'non_attendee_before': (),
+             'non_attendee_after': ()})
+        self.assertEqual(
+            item3.getInAndOutAttendees(theObjects=False),
+            {'attendee_again_after': (),
+             'attendee_again_before': (),
+             'entered_after': (),
+             'entered_before': (meeting_attendees[0],),
+             'left_after': (),
+             'left_before': (meeting_attendees[2],),
+             'non_attendee_before': (),
+             'non_attendee_after': ()})
 
     def test_pm_ItemContactsWhenItemRemovedFromMeeting(self):
         '''When an item is removed from a meeting, redefined informations

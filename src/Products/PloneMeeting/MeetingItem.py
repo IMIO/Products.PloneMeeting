@@ -3256,32 +3256,62 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         res = {'left_before': (),
                'entered_before': (),
                'left_after': (),
-               'entered_after': ()}
+               'entered_after': (),
+               'non_attendee_before': (),
+               'attendee_again_before': (),
+               'non_attendee_after': (),
+               'attendee_again_after': ()}
         meeting = self.getMeeting()
         if meeting:
             items = meeting.getItems(ordered=True, unrestricted=True)
             item_index = items.index(self)
-            item_attendees = self.getAttendees(theObjects=theObjects)
             previous = None
+            absents = self.getItemAbsents(theObjects=theObjects)
+            excused = self.getItemExcused(theObjects=theObjects)
+            non_attendees = self.getItemNonAttendees(theObjects=theObjects)
             if item_index:
                 previous = items[item_index - 1]
-                previous_attendees = previous.getAttendees(theObjects=theObjects)
-                left_before = tuple(set(previous_attendees).difference(set(item_attendees)))
-                entered_before = tuple(set(item_attendees).difference(set(previous_attendees)))
+                # absents/excused
+                previous_absents = previous.getItemAbsents(theObjects=theObjects)
+                previous_excused = previous.getItemExcused(theObjects=theObjects)
+                left_before = tuple(set(absents + excused).difference(
+                    set(previous_absents + previous_excused)))
+                entered_before = tuple(set(previous_absents + previous_excused).difference(
+                    set(absents + excused)))
                 res['left_before'] = left_before
                 res['entered_before'] = entered_before
+                # non attendees
+                previous_non_attendee = previous.getItemNonAttendees(theObjects=theObjects)
+                non_attendee_before = tuple(set(non_attendees).difference(
+                    set(previous_non_attendee)))
+                attendee_again_before = tuple(set(previous_non_attendee).difference(
+                    set(non_attendees)))
+                res['non_attendee_before'] = non_attendee_before
+                res['attendee_again_before'] = attendee_again_before
             else:
                 # self is first item, get absents
-                res['left_before'] = self.getItemAbsents(theObjects=theObjects) + \
-                    self.getItemExcused(theObjects=theObjects)
+                res['left_before'] = absents + excused
             next = None
             if self != items[-1]:
                 next = items[item_index + 1]
-                next_attendees = next.getAttendees(theObjects=theObjects)
-                left_after = tuple(set(item_attendees).difference(set(next_attendees)))
-                entered_after = tuple(set(next_attendees).difference(set(item_attendees)))
+                # absents/excused
+                next_absents = next.getItemAbsents(theObjects=theObjects)
+                next_excused = next.getItemExcused(theObjects=theObjects)
+                left_after = tuple(set(next_absents + next_excused).difference(
+                    set(absents + excused)))
+                entered_after = tuple(set(absents + excused).difference(
+                    set(next_absents + next_excused)))
                 res['left_after'] = left_after
                 res['entered_after'] = entered_after
+                # non attendees
+                next_non_attendee = next.getItemNonAttendees(theObjects=theObjects)
+                non_attendee_after = tuple(set(next_non_attendee).difference(
+                    set(non_attendees)))
+                attendee_again_after = tuple(set(non_attendees).difference(
+                    set(next_non_attendee)))
+                res['non_attendee_after'] = non_attendee_after
+                res['attendee_again_after'] = attendee_again_after
+
         return res
 
     security.declarePublic('mustShowItemReference')
