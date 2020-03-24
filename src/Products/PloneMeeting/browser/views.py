@@ -1033,9 +1033,8 @@ class BaseDGHV(object):
                                 ignored_pos_type_ids=['default'],
                                 include_person_title=True,
                                 abbreviate_firstname=False,
-                                included_attendee_types=['attendee', 'excused', 'absent',
-                                                         'replaced', 'item_excused', 'item_absent',
-                                                         'item_non_attendee'],
+                                included_attendee_types=['attendee', 'excused', 'absent', 'replaced',
+                                                         'item_excused', 'item_absent', 'item_non_attendee'],
                                 striked_attendee_types=[],
                                 striked_attendee_pattern=u'<strike>{0}</strike>',
                                 ignore_non_attendees=True):
@@ -1182,12 +1181,12 @@ class BaseDGHV(object):
                     contact_attendee_type not in striked_attendee_types:
                 res[contact_attendee_type].append(contact)
 
-        # manage groupByParentOrg
+        # manage by_parent_org
         # if used or not, we output the same format to continue process easier
         for attendee_type, contacts in res.items():
             by_suborg_res = OrderedDict()
             for contact in contacts:
-                # include organization to have same format when using groupByParentOrg or not
+                # include organization to have same format when using by_parent_org or not
                 org = by_parent_org and contact.get_organization() or \
                     self.portal.contacts.get(PLONEGROUP_ORG)
                 if org not in by_suborg_res:
@@ -1578,14 +1577,7 @@ class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV)
                           'entered_before': 'attendee_again_before',
                           'left_after': 'non_attendee_after',
                           'entered_after': 'attendee_again_after'},
-            patterns={'left_before': u'{0} quitte la séance avant la discussion du point.',
-                      'entered_before': u'{0} rentre en séance avant la discussion du point.',
-                      'left_after': u'{0} quitte la séance après la discussion du point.',
-                      'entered_after': u'{0} entre en séance après la discussion du point.',
-                      'non_attendee_before': u'{0} ne participe plus à la séance avant la discussion du point.',
-                      'attendee_again_before': u'{0} participe à nouveau à la séance avant la discussion du point.',
-                      'non_attendee_after': u'{0} ne participe plus à la séance après la discussion du point.',
-                      'attendee_again_after': u'{0} participe à nouveau à la séance après la discussion du point.'},
+            custom_patterns={},
             include_person_title=True,
             render_as_html=True,
             html_pattern=u'<p>{0}</p>'):
@@ -1599,6 +1591,17 @@ class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV)
            If p_render_as_html is True, informations is returned with value as HTML, else,
            we return a list of sentences.
            p_html_pattern is the way HTML is rendered when p_render_as_html is True."""
+
+        patterns = {'left_before': u'{0} quitte la séance avant la discussion du point.',
+                    'entered_before': u'{0} rentre en séance avant la discussion du point.',
+                    'left_after': u'{0} quitte la séance après la discussion du point.',
+                    'entered_after': u'{0} entre en séance après la discussion du point.',
+                    'non_attendee_before': u'{0} ne participe plus à la séance avant la discussion du point.',
+                    'attendee_again_before': u'{0} participe à nouveau à la séance avant la discussion du point.',
+                    'non_attendee_after': u'{0} ne participe plus à la séance après la discussion du point.',
+                    'attendee_again_after': u'{0} participe à nouveau à la séance après la discussion du point.'}
+        patterns.update(custom_patterns)
+
         in_and_out = self.context.getInAndOutAttendees()
         person_res = {in_and_out_type: [] for in_and_out_type in in_and_out.keys()
                       if (not in_and_out_types or in_and_out_type in in_and_out_types)}

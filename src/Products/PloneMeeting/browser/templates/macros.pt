@@ -373,9 +373,10 @@ document.location.reload(true);
   </tr>
   </thead>
   <tbody>
-  <tr tal:repeat="mUser allUsers">
-    <tal:attendee define="aUid mUser/UID;
-                          isPresent python: aUid in itemAttendees">
+  <tal:loop repeat="mUser allUsers">
+  <tr tal:define="aUid mUser/UID;
+                  isPresent python: aUid in itemAttendees"
+      tal:attributes="class python: aUid in itemNonAttendees and 'item-non-attendee' or ''">
      <td><b tal:content="mUser/get_short_title"></b></td>
      <td align="center"
          tal:attributes="onmouseover python: 'setHiddenButton(\'%s\', \'visible\')' % aUid;
@@ -498,13 +499,13 @@ document.location.reload(true);
                  class="tooltipster-meeting-item-not-present fa people-left people-action"
                  tal:attributes="data-base_url string:${context/absolute_url};
                                  data-not_present_uid string:${aUid};
-                                 data-not_present_type string:nonAttendee;">
+                                 data-not_present_type string:non_attendee;">
         </span>
 
         <tal:comment replace="nothing">Remove info user being an item nonAttendee</tal:comment>
         <a href="#" class="link-overlay-pm" tal:attributes="href string:item_welcome_nonattendee_form?person_uid=${aUid}"
            tal:condition="python: context._mayChangeAttendees()">
-         <span class="fa people-remove-left people-action" title="person_welcome" i18n:attributes="title"
+         <span class="fa people-remove-left people-action" title="nonattendee_welcome" i18n:attributes="title"
              tal:attributes="id python: 'welcome_%s' % aUid;
                              name  python: 'welcome_%s' % aUid;" />
         </a>
@@ -551,8 +552,8 @@ document.location.reload(true);
      </td>
      <td align="center" tal:condition="python: showVotes and secret">-
      </td>
-    </tal:attendee>
   </tr>
+  </tal:loop>
   <tr tal:condition="not:allUsers">
    <td colspan="9">
      <span class="discreet no-attendees" i18n:translate="">Nothing to display.</span>

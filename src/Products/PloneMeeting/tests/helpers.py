@@ -162,11 +162,11 @@ class PloneMeetingTestingHelpers:
     def get_transitions_for_proposing_item(self, first_level=False):
         meetingConfigNumber = self._determinateUsedMeetingConfigNumber()
         if first_level:
-           return getattr(self,
-                   ('TRANSITIONS_FOR_PROPOSING_ITEM_FIRST_LEVEL_%d' % meetingConfigNumber))
+            return getattr(
+                self, ('TRANSITIONS_FOR_PROPOSING_ITEM_FIRST_LEVEL_%d' % meetingConfigNumber))
         else:
-           return getattr(self,
-                   ('TRANSITIONS_FOR_PROPOSING_ITEM_%d' % meetingConfigNumber))
+            return getattr(
+                self, ('TRANSITIONS_FOR_PROPOSING_ITEM_%d' % meetingConfigNumber))
 
     def proposeItem(self, item, first_level=False):
         '''Propose passed p_item using TRANSITIONS_FOR_PROPOSING_ITEM_x.
@@ -181,49 +181,56 @@ class PloneMeetingTestingHelpers:
            The p_meetingConfigNumber specify if we use meetingConfig or meetingConfig2, so
            the _x here above in TRANSITIONS_FOR_PREVALIDATING_ITEM_x is 1 or 2.'''
         meetingConfigNumber = self._determinateUsedMeetingConfigNumber()
-        self._doTransitionsFor(item, getattr(self, ('TRANSITIONS_FOR_PREVALIDATING_ITEM_%d' % meetingConfigNumber)))
+        self._doTransitionsFor(
+            item, getattr(self, ('TRANSITIONS_FOR_PREVALIDATING_ITEM_%d' % meetingConfigNumber)))
 
     def validateItem(self, item):
         '''Validate passed p_item using TRANSITIONS_FOR_VALIDATING_ITEM_x.
            The p_meetingConfigNumber specify if we use meetingConfig or meetingConfig2, so
            the _x here above in TRANSITIONS_FOR_VALIDATING_ITEM_x is 1 or 2.'''
         meetingConfigNumber = self._determinateUsedMeetingConfigNumber()
-        self._doTransitionsFor(item, getattr(self, ('TRANSITIONS_FOR_VALIDATING_ITEM_%d' % meetingConfigNumber)))
+        self._doTransitionsFor(
+            item, getattr(self, ('TRANSITIONS_FOR_VALIDATING_ITEM_%d' % meetingConfigNumber)))
 
     def presentItem(self, item):
         '''Present passed p_item using TRANSITIONS_FOR_PRESENTING_ITEM_x.
            The p_meetingConfigNumber specify if we use meetingConfig or meetingConfig2, so
            the _x here above in TRANSITIONS_FOR_PRESENTING_ITEM_x is 1 or 2.'''
         meetingConfigNumber = self._determinateUsedMeetingConfigNumber()
-        self._doTransitionsFor(item, getattr(self, ('TRANSITIONS_FOR_PRESENTING_ITEM_%d' % meetingConfigNumber)))
+        self._doTransitionsFor(
+            item, getattr(self, ('TRANSITIONS_FOR_PRESENTING_ITEM_%d' % meetingConfigNumber)))
 
     def publishMeeting(self, meeting):
         '''Publish passed p_meeting using TRANSITIONS_FOR_PUBLISHING_MEETING_x.
            The p_meetingConfigNumber specify if we use meetingConfig or meetingConfig2, so
            the _x here above in TRANSITIONS_FOR_PUBLISHING_MEETING_x is 1 or 2.'''
         meetingConfigNumber = self._determinateUsedMeetingConfigNumber()
-        self._doTransitionsFor(meeting, getattr(self, ('TRANSITIONS_FOR_PUBLISHING_MEETING_%d' % meetingConfigNumber)))
+        self._doTransitionsFor(
+            meeting, getattr(self, ('TRANSITIONS_FOR_PUBLISHING_MEETING_%d' % meetingConfigNumber)))
 
     def freezeMeeting(self, meeting):
         '''Freeze passed p_meeting using TRANSITIONS_FOR_FREEZING_MEETING_x.
            The p_meetingConfigNumber specify if we use meetingConfig or meetingConfig2, so
            the _x here above in TRANSITIONS_FOR_FREEZING_MEETING_x is 1 or 2.'''
         meetingConfigNumber = self._determinateUsedMeetingConfigNumber()
-        self._doTransitionsFor(meeting, getattr(self, ('TRANSITIONS_FOR_FREEZING_MEETING_%d' % meetingConfigNumber)))
+        self._doTransitionsFor(
+            meeting, getattr(self, ('TRANSITIONS_FOR_FREEZING_MEETING_%d' % meetingConfigNumber)))
 
     def decideMeeting(self, meeting):
         '''Decide passed p_meeting using TRANSITIONS_FOR_DECIDING_MEETING_x.
            The p_meetingConfigNumber specify if we use meetingConfig or meetingConfig2, so
            the _x here above in TRANSITIONS_FOR_DECIDING_MEETING_x is 1 or 2.'''
         meetingConfigNumber = self._determinateUsedMeetingConfigNumber()
-        self._doTransitionsFor(meeting, getattr(self, ('TRANSITIONS_FOR_DECIDING_MEETING_%d' % meetingConfigNumber)))
+        self._doTransitionsFor(
+            meeting, getattr(self, ('TRANSITIONS_FOR_DECIDING_MEETING_%d' % meetingConfigNumber)))
 
     def closeMeeting(self, meeting):
         '''Close passed p_meeting using TRANSITIONS_FOR_CLOSING_MEETING_x.
            The p_meetingConfigNumber specify if we use meetingConfig or meetingConfig2, so
            the _x here above in TRANSITIONS_FOR_CLOSING_MEETING_x is 1 or 2.'''
         meetingConfigNumber = self._determinateUsedMeetingConfigNumber()
-        self._doTransitionsFor(meeting, getattr(self, ('TRANSITIONS_FOR_CLOSING_MEETING_%d' % meetingConfigNumber)))
+        self._doTransitionsFor(
+            meeting, getattr(self, ('TRANSITIONS_FOR_CLOSING_MEETING_%d' % meetingConfigNumber)))
 
     def backToState(self, itemOrMeeting, state):
         """Set the p_item back to p_state.
@@ -302,7 +309,8 @@ class PloneMeetingTestingHelpers:
         for extra_user_id in user_ids:
             user = api.user.get(extra_user_id)
             # remove from every groups, bypass Plone groups (including virtual)
-            for group_id in [user_group_id for user_group_id in user.getGroups() if '_' in user_group_id]:
+            for group_id in [user_group_id for user_group_id in user.getGroups()
+                             if '_' in user_group_id]:
                 api.group.remove_user(groupname=group_id, username=extra_user_id)
         cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
 

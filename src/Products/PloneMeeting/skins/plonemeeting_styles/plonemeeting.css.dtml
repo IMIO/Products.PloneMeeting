@@ -1628,6 +1628,9 @@ table#faceted_table td.draggable {
 table#meeting_users select[id$="_replacement"] {
    width: 500px;
 }
+table#meeting_users tr.item-non-attendee {
+    color: gray;
+}
 table.listing tbody tr.odd.selected td,
 table.listing tbody tr.odd.dragging td,
 table.listing tbody tr.even.selected td,

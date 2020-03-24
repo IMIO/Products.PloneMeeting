@@ -357,9 +357,8 @@ class testContacts(PloneMeetingTestCase):
         self.assertEqual(item1.getItemAbsents(), (hp_uid, ))
         self.assertFalse(item2.getItemAbsents())
 
-    def test_pm_ItemInAndOutAttendees(self):
-        '''Returns information for an item about attendees that entered/left
-           the meeting before/after current item.'''
+    def _setupInAndOutAttendees(self):
+        """Setup a meeting with items and in and out (non) attendees."""
         cfg = self.meetingConfig
         # remove recurring items
         self._removeConfigObjectsFor(cfg)
@@ -379,7 +378,14 @@ class testContacts(PloneMeetingTestCase):
         self.assertEqual(meeting.getItems(ordered=True), [item1, item2, item3])
         meeting.itemAbsents[item1_uid] = [meeting_attendees[0]]
         meeting.itemExcused[item2_uid] = [meeting_attendees[0], meeting_attendees[1]]
+        meeting.itemNonAttendees[item2_uid] = [meeting_attendees[0]]
         meeting.itemAbsents[item3_uid] = [meeting_attendees[1], meeting_attendees[2]]
+        return meeting, meeting_attendees, item1, item2, item3
+
+    def test_pm_ItemInAndOutAttendees(self):
+        '''Returns information for an item about attendees and non attendees
+           that entered/left the meeting before/after current item.'''
+        meeting, meeting_attendees, item1, item2, item3 = self._setupInAndOutAttendees()
         self.assertEqual(
             item1.getInAndOutAttendees(theObjects=False),
             {'attendee_again_after': (),
@@ -389,27 +395,173 @@ class testContacts(PloneMeetingTestCase):
              'left_after': (meeting_attendees[1],),
              'left_before': (meeting_attendees[0],),
              'non_attendee_before': (),
-             'non_attendee_after': ()})
+             'non_attendee_after': (meeting_attendees[0],)})
         self.assertEqual(
             item2.getInAndOutAttendees(theObjects=False),
-            {'attendee_again_after': (),
+            {'attendee_again_after': (meeting_attendees[0],),
              'attendee_again_before': (),
              'entered_after': (meeting_attendees[0],),
              'entered_before': (),
              'left_after': (meeting_attendees[2],),
              'left_before': (meeting_attendees[1],),
-             'non_attendee_before': (),
+             'non_attendee_before': (meeting_attendees[0],),
              'non_attendee_after': ()})
         self.assertEqual(
             item3.getInAndOutAttendees(theObjects=False),
             {'attendee_again_after': (),
-             'attendee_again_before': (),
+             'attendee_again_before': (meeting_attendees[0],),
              'entered_after': (),
              'entered_before': (meeting_attendees[0],),
              'left_after': (),
              'left_before': (meeting_attendees[2],),
              'non_attendee_before': (),
              'non_attendee_after': ()})
+
+    def test_pm_Print_in_and_out_attendees(self):
+        """Test the print_in_and_out_attendees method."""
+        meeting, meeting_attendees, item1, item2, item3 = self._setupInAndOutAttendees()
+        view = item1.restrictedTraverse('document-generation')
+        helper = view.get_generation_context_helper()
+        # merge_in_and_out_types=False
+        self.assertEqual(
+            helper.print_in_and_out_attendees(merge_in_and_out_types=False),
+            {'attendee_again_after': '',
+             'attendee_again_before': '',
+             'entered_after': '',
+             'entered_before': '',
+             'left_after': u'<p>Monsieur Person2FirstName Person2LastName quitte la '
+                u's\xe9ance apr\xe8s la discussion du point.</p>',
+             'left_before': u'<p>Monsieur Person1FirstName Person1LastName quitte la '
+                u's\xe9ance avant la discussion du point.</p>',
+             'non_attendee_after': u'<p>Monsieur Person1FirstName Person1LastName ne '
+                u'participe plus \xe0 la s\xe9ance apr\xe8s la discussion du point.</p>',
+             'non_attendee_before': ''})
+        helper.context = item2
+        self.assertEqual(
+            helper.print_in_and_out_attendees(merge_in_and_out_types=False),
+            {'attendee_again_after': u'<p>Monsieur Person1FirstName Person1LastName participe '
+                u'\xe0 nouveau \xe0 la s\xe9ance apr\xe8s la discussion du point.</p>',
+             'attendee_again_before': '',
+             'entered_after': u'<p>Monsieur Person1FirstName Person1LastName entre en '
+                u's\xe9ance apr\xe8s la discussion du point.</p>',
+             'entered_before': '',
+             'left_after': u'<p>Monsieur Person3FirstName Person3LastName quitte la '
+                u's\xe9ance apr\xe8s la discussion du point.</p>',
+             'left_before': u'<p>Monsieur Person2FirstName Person2LastName quitte la '
+                u's\xe9ance avant la discussion du point.</p>',
+             'non_attendee_after': '',
+             'non_attendee_before': u'<p>Monsieur Person1FirstName Person1LastName ne '
+                u'participe plus \xe0 la s\xe9ance avant la discussion du point.</p>'})
+        helper.context = item3
+        self.assertEqual(
+            helper.print_in_and_out_attendees(merge_in_and_out_types=False),
+            {'attendee_again_after': '',
+             'attendee_again_before': u'<p>Monsieur Person1FirstName Person1LastName participe '
+                u'\xe0 nouveau \xe0 la s\xe9ance avant la discussion du point.</p>',
+             'entered_after': '',
+             'entered_before': u'<p>Monsieur Person1FirstName Person1LastName rentre en '
+                u's\xe9ance avant la discussion du point.</p>',
+             'left_after': '',
+             'left_before': u'<p>Monsieur Person3FirstName Person3LastName quitte la '
+                u's\xe9ance avant la discussion du point.</p>',
+             'non_attendee_after': '',
+             'non_attendee_before': ''})
+        # merge_in_and_out_types=False
+        helper.context = item1
+        self.assertEqual(
+            helper.print_in_and_out_attendees(merge_in_and_out_types=True),
+            {'entered_after': '',
+             'entered_before': '',
+             'left_after': u'<p>Monsieur Person2FirstName Person2LastName quitte la '
+                u's\xe9ance apr\xe8s la discussion du point.</p>'
+                u'<p>Monsieur Person1FirstName Person1LastName ne participe plus \xe0 la '
+                u's\xe9ance apr\xe8s la discussion du point.</p>',
+             'left_before': u'<p>Monsieur Person1FirstName Person1LastName quitte la '
+                u's\xe9ance avant la discussion du point.</p>'})
+        helper.context = item2
+        self.assertEqual(
+            helper.print_in_and_out_attendees(merge_in_and_out_types=True),
+            {'entered_after': u'<p>Monsieur Person1FirstName Person1LastName entre en '
+                u's\xe9ance apr\xe8s la discussion du point.</p>'
+                u'<p>Monsieur Person1FirstName Person1LastName participe \xe0 nouveau \xe0 la '
+                u's\xe9ance apr\xe8s la discussion du point.</p>',
+             'entered_before': '',
+             'left_after': u'<p>Monsieur Person3FirstName Person3LastName quitte la '
+                u's\xe9ance apr\xe8s la discussion du point.</p>',
+             'left_before': u'<p>Monsieur Person2FirstName Person2LastName quitte la '
+                u's\xe9ance avant la discussion du point.</p>'
+                u'<p>Monsieur Person1FirstName Person1LastName ne participe plus \xe0 la '
+                u's\xe9ance avant la discussion du point.</p>'})
+        helper.context = item3
+        self.assertEqual(
+            helper.print_in_and_out_attendees(merge_in_and_out_types=True),
+            {'entered_after': '',
+             'entered_before': u'<p>Monsieur Person1FirstName Person1LastName rentre en '
+                u's\xe9ance avant la discussion du point.</p>'
+                u'<p>Monsieur Person1FirstName Person1LastName participe \xe0 nouveau \xe0 la '
+                u's\xe9ance avant la discussion du point.</p>',
+             'left_after': '',
+             'left_before': u'<p>Monsieur Person3FirstName Person3LastName quitte la '
+                u's\xe9ance avant la discussion du point.</p>'})
+
+    def test_pm_Print_in_and_out_attendees_custom_patterns(self):
+        """Test the print_in_and_out_attendees method."""
+        meeting, meeting_attendees, item1, item2, item3 = self._setupInAndOutAttendees()
+        view = item1.restrictedTraverse('document-generation')
+        helper = view.get_generation_context_helper()
+        # no custom_patterns
+        self.assertEqual(
+            helper.print_in_and_out_attendees(),
+            {'entered_after': '',
+             'entered_before': '',
+             'left_after': u'<p>Monsieur Person2FirstName Person2LastName quitte la '
+                u's\xe9ance apr\xe8s la discussion du point.</p>'
+                u'<p>Monsieur Person1FirstName Person1LastName ne participe plus \xe0 la '
+                u's\xe9ance apr\xe8s la discussion du point.</p>',
+             'left_before': u'<p>Monsieur Person1FirstName Person1LastName quitte la '
+                u's\xe9ance avant la discussion du point.</p>'})
+        # custom_patterns, merge_in_and_out_types=True
+        self.assertEqual(
+            helper.print_in_and_out_attendees(
+                custom_patterns={'left_after': 'Custom pattern left_after',
+                                 'non_attendee_after': 'Custom pattern non_attendee_after',
+                                 'left_before': 'Custom pattern left_before'}),
+            {'entered_after': '',
+             'entered_before': '',
+             'left_after': u'<p>Custom pattern left_after</p>'
+                u'<p>Custom pattern non_attendee_after</p>',
+             'left_before': u'<p>Custom pattern left_before</p>'})
+        # custom_patterns, merge_in_and_out_types=False
+        self.assertEqual(
+            helper.print_in_and_out_attendees(
+                custom_patterns={'left_after': 'Custom pattern left_after',
+                                 'non_attendee_after': 'Custom pattern non_attendee_after',
+                                 'left_before': 'Custom pattern left_before'},
+                merge_in_and_out_types=False),
+            {'attendee_again_after': '',
+             'attendee_again_before': '',
+             'entered_after': '',
+             'entered_before': '',
+             'left_after': u'<p>Custom pattern left_after</p>',
+             'left_before': u'<p>Custom pattern left_before</p>',
+             'non_attendee_after': u'<p>Custom pattern non_attendee_after</p>',
+             'non_attendee_before': ''})
+
+        # partial custom_patterns, merge_in_and_out_types=False
+        self.assertEqual(
+            helper.print_in_and_out_attendees(
+                custom_patterns={'left_after': 'Custom pattern left_after',
+                                 'non_attendee_after': 'Custom pattern non_attendee_after'},
+                merge_in_and_out_types=False),
+            {'attendee_again_after': '',
+             'attendee_again_before': '',
+             'entered_after': '',
+             'entered_before': '',
+             'left_after': u'<p>Custom pattern left_after</p>',
+             'left_before': u'<p>Monsieur Person1FirstName Person1LastName quitte la '
+                u's\xe9ance avant la discussion du point.</p>',
+             'non_attendee_after': u'<p>Custom pattern non_attendee_after</p>',
+             'non_attendee_before': ''})
 
     def test_pm_ItemContactsWhenItemRemovedFromMeeting(self):
         '''When an item is removed from a meeting, redefined informations

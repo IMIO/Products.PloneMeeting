@@ -6046,9 +6046,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         attendees = meeting.getAttendees(theObjects=False)
         itemAbsents = self.getItemAbsents()
         itemExcused = self.getItemExcused()
-        itemNonAttendees = self.getItemNonAttendees()
         attendees = [attendee for attendee in attendees
-                     if attendee not in itemAbsents + itemExcused + itemNonAttendees]
+                     if attendee not in itemAbsents + itemExcused]
         # get really present attendees now
         attendees = meeting._getContacts(uids=attendees, theObjects=theObjects)
         return attendees
