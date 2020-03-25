@@ -6,6 +6,7 @@ Changelog
 -------------------
 
 - Small fixes in the test to improve MeetingLalouviere test run .
+- Fixed a misstyped condition in tests/helpers.py
 
 
 4.1.19.2 (2020-03-17)
