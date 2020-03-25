@@ -7,6 +7,7 @@ Changelog
 
 - Small fixes in the test to improve MeetingLalouviere test run
 - Added new type of presence for item attendee : non attendee, used to ignore an attendee when printing item assembly
+- Fixed a misstyped condition in tests/helpers.py
 
 4.1.19.2 (2020-03-17)
 ---------------------

@@ -123,11 +123,15 @@ class testContacts(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         self.changeUser('pmManager')
         meeting = self.create('Meeting', date=DateTime())
-        meeting_attendees = meeting.getAttendees()
+        # attendees not signatories
+        meeting_attendees = [hp for hp in meeting.getAttendees()
+                             if hp not in meeting.getSignatories()]
         self.assertTrue(meeting_attendees)
         byebye_form = item.restrictedTraverse('@@item_byebye_attendee_form').form_instance
         byebye_nonattendee_form = item.restrictedTraverse('@@item_byebye_nonattendee_form').form_instance
         signatory_form = item.restrictedTraverse('@@item_redefine_signatory_form').form_instance
+        signatory_form.person_uid = meeting_attendees[0]
+        signatory_form.meeting = meeting
         welcome_form = item.restrictedTraverse('@@item_welcome_attendee_form').form_instance
         welcome_nonattendee_form = item.restrictedTraverse('@@item_welcome_nonattendee_form').form_instance
         remove_signatory_form = item.restrictedTraverse('@@item_remove_redefined_signatory_form').form_instance
@@ -142,12 +146,15 @@ class testContacts(PloneMeetingTestCase):
                 self.assertTrue(welcome_form.mayChangeAttendees())
                 self.assertTrue(welcome_nonattendee_form.mayChangeAttendees())
                 self.assertTrue(remove_signatory_form.mayChangeAttendees())
-        _check('pmManager')
+        # False for everybody when item not in a meeting
+        _check('pmManager', should=False)
         _check('pmCreator1', should=False)
         self.presentItem(item)
+        # MeetingManagers may when item in a meeting
         _check('pmManager')
         _check('pmCreator1', should=False)
         self.closeMeeting(meeting)
+        # False for everybody when meeting is closed
         _check('pmManager', should=False)
         _check('pmCreator1', should=False)
 
@@ -177,12 +184,8 @@ class testContacts(PloneMeetingTestCase):
         self.assertFalse(meeting.getItemExcused(by_persons=True))
 
         # byebye person on item1 and item2
-        person1 = self.portal.contacts.get('person1')
-        hp1 = person1.get_held_positions()[0]
-        hp1_uid = hp1.UID()
-        person2 = self.portal.contacts.get('person2')
-        hp2 = person2.get_held_positions()[0]
-        hp2_uid = hp2.UID()
+        hp1_uid = meeting_attendees[0]
+        hp2_uid = meeting_attendees[1]
         byebye_form = item1.restrictedTraverse('@@item_byebye_attendee_form').form_instance
         byebye_nonattendee_form = item1.restrictedTraverse('@@item_byebye_nonattendee_form').form_instance
         byebye_form.meeting = meeting
