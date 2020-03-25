@@ -121,8 +121,7 @@ class ByeByeAttendeeForm(BaseAttendeeForm):
     fields = field.Fields(IByeByeAttendee)
 
     NOT_PRESENT_MAPPING = {'absent': 'itemAbsents',
-                           'excused': 'itemExcused',
-                           'nonAttendee': 'itemNonAttendees'}
+                           'excused': 'itemExcused'}
 
     def _doApply(self):
         """ """
@@ -205,6 +204,7 @@ class WelcomeAttendeeForm(BaseAttendeeForm):
     label = _(u"person_welcome")
     schema = IWelcomeAttendee
     fields = field.Fields(IWelcomeAttendee)
+    attendee_welcome_msg = _("Attendee has been set back present.")
 
     def _get_meeting_absent_attr(self):
         """ """
@@ -237,7 +237,7 @@ class WelcomeAttendeeForm(BaseAttendeeForm):
                 notifyModifiedAndReindex(item_to_update)
         notifyModifiedAndReindex(self.meeting)
         plone_utils = api.portal.get_tool('plone_utils')
-        plone_utils.addPortalMessage(_("Attendee has been set back present."))
+        plone_utils.addPortalMessage(self.attendee_welcome_msg)
         self._finished = True
 
 
@@ -261,8 +261,8 @@ class ByeByeNonAttendeeForm(ByeByeAttendeeForm):
     label = _(u'nonattendee_byebye')
     schema = IByeByeNonAttendee
     fields = field.Fields(IByeByeNonAttendee)
-    NOT_PRESENT_MAPPING = {'nonAttendee': 'itemNonAttendees'}
-    not_present_type = 'nonAttendee'
+    NOT_PRESENT_MAPPING = {'non_attendee': 'itemNonAttendees'}
+    not_present_type = 'non_attendee'
 
 
 ByeByeNonAttendeeFormWrapper = wrap_form(ByeByeNonAttendeeForm)
@@ -285,6 +285,7 @@ class WelcomeNonAttendeeForm(WelcomeAttendeeForm):
     label = _(u"nonattendee_welcome")
     schema = IWelcomeNonAttendee
     fields = field.Fields(IWelcomeNonAttendee)
+    attendee_welcome_msg = _("Attendee has been set back attendee.")
 
     def _get_meeting_absent_attr(self):
         """ """
