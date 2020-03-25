@@ -6407,7 +6407,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def _mayChangeAttendees(self):
         """Check that user may quickEdit itemAbsents/itemExcused/itemNonAttendees."""
         tool = api.portal.get_tool('portal_plonemeeting')
-        return tool.isManager(self) and self._checkMayQuickEdit()
+        return tool.isManager(self) and self.hasMeeting() and self._checkMayQuickEdit()
 
     security.declareProtected(ModifyPortalContent, 'ItemAssemblyDescrMethod')
 
