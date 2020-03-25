@@ -1,0 +1,7 @@
+[report]
+include =
+    src/Products.PloneMeeting/*
+omit =
+    */test*
+    */migrations/*
+    */upgrades/*
