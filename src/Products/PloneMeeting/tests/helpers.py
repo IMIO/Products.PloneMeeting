@@ -250,11 +250,7 @@ class PloneMeetingTestingHelpers:
         self.changeUser('admin')
         max_attempts = 20
         nb_attempts = 0
-<<<<<<< HEAD
-        while not itemOrMeeting.queryState() == state or nb_attempts <= max_attempts:
-=======
         while not itemOrMeeting.queryState() == state and nb_attempts <= max_attempts:
->>>>>>> origin/master
             nb_attempts += 1
             if not useDefinedWfPath:
                 transitions = self.transitions(itemOrMeeting)
