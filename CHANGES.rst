@@ -5,9 +5,12 @@ Changelog
 4.1.20 (unreleased)
 -------------------
 
-- Small fixes in the test to improve MeetingLalouviere test run .
+- Small fixes in the test to improve MeetingLalouviere test run
 - Fixed a misstyped condition in tests/helpers.py
-
+- Added new type of presence for item attendee (used to ignore an attendee on some items) :
+  - new meeting optional attribute `non attendee`;
+  - may be used in addition to `present/absent/excused` as even an absent attendee may be set non attendee for a specific item
+  - changed parameter `patterns` on `print_in_and_out_attendees` to `custom_patterns` to be able to redefine only one single pattern
 
 4.1.19.2 (2020-03-17)
 ---------------------

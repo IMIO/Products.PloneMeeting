@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from persistent.mapping import PersistentMapping
+from Products.CMFPlone.utils import base_hasattr
 from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator
 
@@ -58,12 +60,23 @@ class Migrate_To_4104(Migrator):
                 searchallmeetings.reindexObject()
         logger.info('Done.')
 
+    def _addItemNonAttendeesAttributeToMeetings(self):
+        """ """
+        logger.info("Adding new attribute \"itemNonAttendees\" to every meetings...")
+        brains = self.catalog(meta_type='Meeting')
+        for brain in brains:
+            meeting = brain.getObject()
+            if not base_hasattr(meeting, 'itemNonAttendees'):
+                meeting.itemNonAttendees = PersistentMapping()
+        logger.info('Done.')
+
     def run(self, from_migration_to_41=False):
         logger.info('Migrating to PloneMeeting 4104...')
         self._updateFacetedFilters()
         self.removeUnusedColumns(columns=['getItemIsSigned'])
         self._removeFieldToolPloneMeetingModelAdaptations()
         self._moveSearchAllDecisionsToSearchAllMeetings()
+        self._addItemNonAttendeesAttributeToMeetings()
         if not from_migration_to_41:
             self.reindexIndexes(meta_types=['Meeting'])
             self.reindexIndexes(idxs=['getItemIsSigned'], meta_types=['MeetingItem'])
@@ -80,9 +93,10 @@ def migrate(context):
        2) Remove catalog column 'getItemIsSigned';
        3) Remove field ToolPloneMeeting.modelAdaptations;
        4) Remove DashboardCollection 'searchalldecisions' and add new DashboardCollection 'searchallmeetings';
-       5) Reindex every meetings if not called by the main migration to version 4.1;
-       6) Re-import actions.xml;
-       7) Init new HTML field 'MeetingItem.meetingManagersNotes'.
+       5) Add new attribute 'itemNonAttendees' to every meetings;
+       6) Reindex every meetings if not called by the main migration to version 4.1;
+       7) Re-import actions.xml;
+       8) Init new HTML field 'MeetingItem.meetingManagersNotes'.
     '''
     migrator = Migrate_To_4104(context)
     migrator.run()

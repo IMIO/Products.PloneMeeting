@@ -419,6 +419,7 @@ class Migrate_To_4_1(Migrator):
                 meeting.orderedContacts = OrderedDict()
                 meeting.itemAbsents = PersistentMapping()
                 meeting.itemExcused = PersistentMapping()
+                meeting.itemNonAttendees = PersistentMapping()
                 meeting.itemSignatories = PersistentMapping()
                 # migrate MeetingUsers related fields
                 if not meeting.getAssembly():
