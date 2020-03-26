@@ -5,6 +5,7 @@ Changelog
 4.1.20 (unreleased)
 -------------------
 
+- Fix advanced search view with collective.solr
 - Small fixes in the test to improve MeetingLalouviere test run
 - Fixed a misstyped condition in tests/helpers.py
 - Added new type of presence for item attendee (used to ignore an attendee on some items) :
