@@ -13,6 +13,7 @@ Changelog
   - new meeting optional attribute `non attendee`;
   - may be used in addition to `present/absent/excused` as even an absent attendee may be set non attendee for a specific item
   - changed parameter `patterns` on `print_in_and_out_attendees` to `custom_patterns` to be able to redefine only one single pattern
+- Added MeetingConfig.removeAnnexesPreviewsOnMeetingClosure parameter, when True, annexes previews will be deleted upon meeting closure
 
 4.1.19.2 (2020-03-17)
 ---------------------
