@@ -1004,7 +1004,7 @@ schema = Schema((
         searchable=True,
         allowable_content_types=('text/html',),
         default_output_type="text/x-html-safe",
-        optional=False,
+        optional=True,
         write_permission="PloneMeeting: Write decision",
     ),
     BooleanField(
