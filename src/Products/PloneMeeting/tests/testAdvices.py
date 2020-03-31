@@ -2230,7 +2230,6 @@ class testAdvices(PloneMeetingTestCase):
         item.setDetailedDescription('<p>Item detailed description</p>')
         item.setMotivation('<p>Item motivation</p>')
         item.setDecision('<p>Item decision</p>')
-        item.setDecisionSuite('<p>Item decision suite</p>')
         self.proposeItem(item)
         # give advice
         self.changeUser('pmReviewer2')
@@ -2255,8 +2254,7 @@ class testAdvices(PloneMeetingTestCase):
                            {'field_name': 'description', 'field_content': '<p>Item description</p>'},
                            {'field_name': 'detailedDescription', 'field_content': '<p>Item detailed description</p>'},
                            {'field_name': 'motivation', 'field_content': '<p>Item motivation</p>'},
-                           {'field_name': 'decision', 'field_content': '<p>Item decision</p>'},
-                           {'field_name': 'decisionSuite', 'field_content': '<p>Item decision suite</p>'}])
+                           {'field_name': 'decision', 'field_content': '<p>Item decision</p>'}])
         # when giving advice for a second time, if advice is not edited, it is not versioned uselessly
         self.backToState(item, self._stateMappingFor('proposed'))
         self.assertEquals(advice.queryState(), 'advice_under_edit')
@@ -2278,8 +2276,7 @@ class testAdvices(PloneMeetingTestCase):
                            {'field_name': 'description', 'field_content': '<p>Item description</p>'},
                            {'field_name': 'detailedDescription', 'field_content': '<p>Item detailed description</p>'},
                            {'field_name': 'motivation', 'field_content': '<p>Item motivation</p>'},
-                           {'field_name': 'decision', 'field_content': '<p>Another decision</p>'},
-                           {'field_name': 'decisionSuite', 'field_content': '<p>Item decision suite</p>'}])
+                           {'field_name': 'decision', 'field_content': '<p>Another decision</p>'}])
 
     def test_pm_AdviceModificationDateKeptWhenAdviceHistorized(self):
         """Make sure historizing the advice will not change the advice modification date."""
@@ -2379,7 +2376,6 @@ class testAdvices(PloneMeetingTestCase):
         item.setDetailedDescription('<p>Item detailed description</p>')
         item.setMotivation('<p>Item motivation</p>')
         item.setDecision('<p>Item decision</p>')
-        item.setDecisionSuite('<p>Item decision suite</p>')
         self.proposeItem(item)
         # give advice
         self.changeUser('pmReviewer2')
@@ -2421,9 +2417,7 @@ class testAdvices(PloneMeetingTestCase):
                            {'field_name': 'motivation',
                             'field_content': '<p>Item motivation</p>'},
                            {'field_name': 'decision',
-                            'field_content': '<p>Item decision</p>'},
-                           {'field_name': 'decisionSuite',
-                            'field_content': '<p>Item decision suite</p>'}])
+                            'field_content': '<p>Item decision</p>'}])
 
         # when editing item a second time, if advice is not edited, it is not versioned uselessly
         self.request.form['detailedDescription'] = '<p>Item detailed description edited 2</p>'
@@ -2482,9 +2476,7 @@ class testAdvices(PloneMeetingTestCase):
                            {'field_name': 'motivation',
                             'field_content': '<p>Item motivation</p>'},
                            {'field_name': 'decision',
-                            'field_content': '<p>Item decision</p>'},
-                           {'field_name': 'decisionSuite',
-                            'field_content': '<p>Item decision suite</p>'}])
+                            'field_content': '<p>Item decision</p>'}])
 
         # advice are no more versionated when annex is added/removed
         annex = self.addAnnex(item)
