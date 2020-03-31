@@ -663,6 +663,7 @@ class testWorkflows(PloneMeetingTestCase):
            is closed, even if item is decided before the meeting is closed.'''
         self.changeUser('siteadmin')
         cfg = self.meetingConfig
+        cfg.setMeetingManagerMayCorrectClosedMeeting(True)
         # call updateLocalRoles on item only if it not already decided
         # as updateLocalRoles is called when item review_state changed
         self.assertTrue('accepted' in cfg.getItemDecidedStates())
@@ -686,7 +687,11 @@ class testWorkflows(PloneMeetingTestCase):
                 'item.updateLocalRoles()'},
              {'meeting_transition': 'close',
               'item_action': 'accept',
-              'tal_expression': ''}, ])
+              'tal_expression': ''},
+             {'meeting_transition': 'backToDecided',
+              'item_action': EXECUTE_EXPR_VALUE,
+              'tal_expression': 'python: item.updateLocalRoles()'},
+             ])
         # configure access of powerobservers only access if meeting is 'closed'
         cfg.setPowerObservers([
             {'item_access_on': 'python: item.getMeeting().queryState() == "closed"',
@@ -711,11 +716,27 @@ class testWorkflows(PloneMeetingTestCase):
         self.assertFalse(self.hasPermission(View, item1))
         self.assertFalse(self.hasPermission(View, item2))
         self.changeUser('pmManager')
-        self.closeMeeting(meeting)
+        self.decideMeeting(meeting)
+        # make sure we close as a MeetingManager
+        # this test that meetingExecuteActionOnLinkedItems execute TAL exprs as 'Manager'
+        self.do(meeting, 'close')
         # items are accepted
         self.assertEqual(item1.queryState(), 'accepted')
         self.assertEqual(item2.queryState(), 'accepted')
         # and powerobserver has also access to item1 that was already accepted before meeting was closed
+        self.changeUser('powerobserver1')
+        self.assertTrue(self.hasPermission(View, item1))
+        self.assertTrue(self.hasPermission(View, item2))
+        # when meeting set back to decided, items are no more viewable
+        self.changeUser('pmManager')
+        self.do(meeting, 'backToDecided')
+        self.changeUser('powerobserver1')
+        self.assertFalse(self.hasPermission(View, item1))
+        self.assertFalse(self.hasPermission(View, item2))
+        # and closed again
+        self.changeUser('pmManager')
+        self.do(meeting, 'close')
+        self.changeUser('powerobserver1')
         self.assertTrue(self.hasPermission(View, item1))
         self.assertTrue(self.hasPermission(View, item2))
 
