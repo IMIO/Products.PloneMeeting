@@ -19,6 +19,7 @@ Changelog
   to avoid permission problems, what is defined in the configuration must be applied.
   This makes the `a power observer may only access accepted items when meeting is closed` work when current user is a `MeetingManager`,
   not a `Manager`, instead having a permission error as `MeetingItem.updateLocalRoles` is protected with the `Modify portal content` permission
+- Added new optional field (decisionSuite) for item
 
 4.1.19.2 (2020-03-17)
 ---------------------
