@@ -13,7 +13,13 @@ Changelog
   - new meeting optional attribute `non attendee`;
   - may be used in addition to `present/absent/excused` as even an absent attendee may be set non attendee for a specific item;
   - changed parameter `patterns` on `print_in_and_out_attendees` to `custom_patterns` to be able to redefine only one single pattern
-- Added MeetingConfig.removeAnnexesPreviewsOnMeetingClosure parameter, when True, annexes previews will be deleted upon meeting closure,
+- Fixed `AskedAdvicesVocabulary` ram.cache cachekey to avoid same vocabulary used for 2 different MeetingConfigs
+  (the `indexAdvisers` term on DashboardCollection was using another MeetingConfig values)
+- Execute the `MeetingConfig.onMeetingTransitionItemActionToExecute` TAL expressions as `Manager` in `utils.meetingExecuteActionOnLinkedItems`
+  to avoid permission problems, what is defined in the configuration must be applied.
+  This makes the `a power observer may only access accepted items when meeting is closed` work when current user is a `MeetingManager`,
+  not a `Manager`, instead having a permission error as `MeetingItem.updateLocalRoles` is protected with the `Modify portal content` permission
+- Added `MeetingConfig.removeAnnexesPreviewsOnMeetingClosure` parameter, when True, annexes previews will be deleted upon meeting closure,
   added also action on portal_plonemeeting to be able to remove every annexes previews of every items in every closed meetings
 
 4.1.19.2 (2020-03-17)

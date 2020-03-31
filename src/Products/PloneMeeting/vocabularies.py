@@ -606,6 +606,7 @@ class AskedAdvicesVocabulary(object):
 
     def __call___cachekey(method, self, context):
         '''cachekey method for self.__call__.'''
+        context = get_context_with_request(context) or context
         date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.askedadvicesvocabulary')
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
