@@ -990,6 +990,23 @@ schema = Schema((
         optional=False,
         write_permission="PloneMeeting: Write decision",
     ),
+    TextField(
+        name='decisionSuite',
+        widget=RichWidget(
+            rows=15,
+            condition="python: here.attributeIsUsed('decisionSuite')",
+            label='DecisionSuite',
+            label_msgid='PloneMeeting_label_decisionSuite',
+            i18n_domain='PloneMeeting',
+        ),
+        default_content_type="text/html",
+        read_permission="PloneMeeting: Read decision",
+        searchable=True,
+        allowable_content_types=('text/html',),
+        default_output_type="text/x-html-safe",
+        optional=False,
+        write_permission="PloneMeeting: Write decision",
+    ),
     BooleanField(
         name='oralQuestion',
         default=False,
