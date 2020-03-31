@@ -410,7 +410,9 @@
           <td tal:define="field python:here.getField('keepOriginalToPrintOfClonedItems')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td></td>
+          <td tal:define="field python:here.getField('removeAnnexesPreviewsOnMeetingClosure')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
         </tr>
         <tr valign="top">
           <td tal:define="field python:here.getField('cssClassesToHide')">

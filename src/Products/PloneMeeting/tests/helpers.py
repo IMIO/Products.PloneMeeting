@@ -31,7 +31,8 @@ class PloneMeetingTestingHelpers:
     TRANSITIONS_FOR_ACCEPTING_ITEMS_MEETING_1 = TRANSITIONS_FOR_ACCEPTING_ITEMS_MEETING_2 = ('publish', 'freeze', )
     BACK_TO_WF_PATH_1 = BACK_TO_WF_PATH_2 = {
         # Meeting
-        'created': ('backToFrozen',
+        'created': ('backToDecided',
+                    'backToFrozen',
                     'backToPublished',
                     'backToCreated',),
         # MeetingItem

@@ -25,10 +25,13 @@
 from AccessControl import Unauthorized
 from collections import OrderedDict
 from collective.contact.plonegroup.utils import get_organization
+from collective.documentviewer.config import CONVERTABLE_TYPES
+from collective.documentviewer.settings import GlobalSettings
 from collective.eeafaceted.collectionwidget.utils import _get_criterion
 from collective.eeafaceted.collectionwidget.utils import _updateDefaultCollectionFor
 from collective.eeafaceted.collectionwidget.utils import getCollectionLinkCriterion
 from collective.iconifiedcategory.utils import get_category_object
+from collective.iconifiedcategory.utils import _categorized_elements
 from DateTime import DateTime
 from eea.facetednavigation.widgets.resultsperpage.widget import Widget as ResultsPerPageWidget
 from ftw.labels.interfaces import ILabeling
@@ -1969,6 +1972,37 @@ class testMeetingConfig(PloneMeetingTestCase):
         cfg.setPowerObservers(values)
         # the linked Plone group was removed
         self.assertFalse(api.group.get(plone_group_id))
+
+    def test_pm_RemoveAnnexesPreviewsOnMeetingClosure(self):
+        """When MeetingConfig.removeAnnexesPreviewsOnMeetingClosure is True,
+           previews of annexes are deleted when the meeting is closed."""
+        gsettings = GlobalSettings(self.portal)
+        gsettings.auto_convert = True
+        gsettings.auto_layout_file_types = CONVERTABLE_TYPES.keys()
+        cfg = self.meetingConfig
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime('2020/03/31'))
+        item = self.create('MeetingItem')
+        annex = self.addAnnex(item)
+        annex_decision = self.addAnnex(item, relatedTo='item_decision')
+        infos = _categorized_elements(item)
+        self.assertEqual(infos[annex.UID()]['preview_status'], 'converted')
+        self.assertEqual(infos[annex_decision.UID()]['preview_status'], 'converted')
+        # removeAnnexesPreviewsOnMeetingClosure=False
+        self.assertFalse(cfg.getRemoveAnnexesPreviewsOnMeetingClosure())
+        self.presentItem(item)
+        self.closeMeeting(meeting)
+        self.assertEqual(meeting.queryState(), 'closed')
+        self.assertEqual(infos[annex.UID()]['preview_status'], 'converted')
+        self.assertEqual(infos[annex_decision.UID()]['preview_status'], 'converted')
+        # removeAnnexesPreviewsOnMeetingClosure=True
+        cfg.setRemoveAnnexesPreviewsOnMeetingClosure(True)
+        self.backToState(meeting, 'created')
+        self.closeMeeting(meeting)
+        self.assertEqual(meeting.queryState(), 'closed')
+        infos = _categorized_elements(item)
+        self.assertEqual(infos[annex.UID()]['preview_status'], 'not_converted')
+        self.assertEqual(infos[annex_decision.UID()]['preview_status'], 'not_converted')
 
 
 def test_suite():

@@ -11,7 +11,7 @@ Changelog
 - Added new type of presence for item attendee (used to ignore an attendee on some items) :
 
   - new meeting optional attribute `non attendee`;
-  - may be used in addition to `present/absent/excused` as even an absent attendee may be set non attendee for a specific item
+  - may be used in addition to `present/absent/excused` as even an absent attendee may be set non attendee for a specific item;
   - changed parameter `patterns` on `print_in_and_out_attendees` to `custom_patterns` to be able to redefine only one single pattern
 - Added MeetingConfig.removeAnnexesPreviewsOnMeetingClosure parameter, when True, annexes previews will be deleted upon meeting closure
 
