@@ -200,15 +200,21 @@
       <table class="configActions">
         <tr valign="top">
           <td width="33%">
-            <form name="convertAnnexes" action="convertAnnexes">
+            <form name="convertAnnexesForm" action="convertAnnexes">
             <input class="context" type="submit" name="convertAnnexes"
+                   onclick="event.preventDefault(); if (confirm(window.eval('are_you_sure'))) {this.form.submit();}"
                    value="pm_convert_annexes" i18n:attributes="value"/>&nbsp;&nbsp;
+            </form>
+            <form name="removeAnnexesPreviewsForm" action="removeAnnexesPreviews">
+            <input class="context" type="submit" name="removeAnnexesPreviews"
+                   onclick="event.preventDefault(); if (confirm(window.eval('are_you_sure'))) {this.form.submit();}"
+                   value="pm_remove_annexes_previews" i18n:attributes="value"/>&nbsp;&nbsp;
             </form>
           </td>
           <td width="33%">
             <form name="updateAllLocalRolesForm" action="updateAllLocalRoles">
             <input class="context" type="submit" name="updateAllLocalRoles"
-                   onclick="event.preventDefault(); if (confirm(window.eval('are_you_sure'))) {document.forms.updateAllLocalRolesForm.submit();}"
+                   onclick="event.preventDefault(); if (confirm(window.eval('are_you_sure'))) {this.form.submit();}"
                    value="pm_update_all_local_roles" i18n:attributes="value"/>&nbsp;&nbsp;
             </form>
             <p class="discreet" style="color: red;" i18n:translate="pm_update_all_local_roles_warning">
@@ -218,6 +224,7 @@
           <td width="33%">
             <form name="invalidateAllCacheForm" action="invalidateAllCache">
             <input class="context" type="submit" name="invalidateAllCache"
+                   onclick="event.preventDefault(); if (confirm(window.eval('are_you_sure'))) {this.form.submit();}"
                    value="pm_invalidate_all_cache" i18n:attributes="value"/>&nbsp;&nbsp;
             </form>
             <p class="discreet" style="color: red;" i18n:translate="pm_invalidate_all_cache_warning">

@@ -17,7 +17,6 @@ from collections import OrderedDict
 from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.contact.plonegroup.config import get_registry_organizations
 from collective.eeafaceted.dashboard.utils import enableFacetedDashboardFor
-from collective.iconifiedcategory.interfaces import IIconifiedPreview
 from copy import deepcopy
 from DateTime import DateTime
 from DateTime.DateTime import _findLocalTimeZoneName
@@ -48,7 +47,6 @@ from Products.CMFCore.permissions import ReviewPortalContent
 from Products.CMFCore.utils import _checkPermission
 from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 from Products.CMFPlone.utils import base_hasattr
-from Products.CPUtils.Extensions.utils import remove_generated_previews
 from Products.PageTemplates.Expressions import SecureModuleImporter
 from Products.PloneMeeting.browser.itemchangeorder import _compute_value_to_add
 from Products.PloneMeeting.browser.itemchangeorder import _is_integer
@@ -281,11 +279,7 @@ class MeetingWorkflowActions(object):
                 annexes = get_annexes(item)
                 if annexes:
                     for annex in annexes:
-                        remove_generated_previews(annex)
-                        annex_infos = item.categorized_elements.get(annex.UID())
-                        if annex_infos:
-                            annex_infos['preview_status'] = IIconifiedPreview(annex).status
-                    item._p_changed = True
+                        self.tool._removeAnnexPreviewFor(item, annex)
                 extras = 'item={0} number_of_annexes={1}'.format(repr(item), len(annexes))
                 fplog('remove_annex_previews', extras=extras)
             msg = translate(

@@ -25,13 +25,11 @@
 from AccessControl import Unauthorized
 from collections import OrderedDict
 from collective.contact.plonegroup.utils import get_organization
-from collective.documentviewer.config import CONVERTABLE_TYPES
-from collective.documentviewer.settings import GlobalSettings
 from collective.eeafaceted.collectionwidget.utils import _get_criterion
 from collective.eeafaceted.collectionwidget.utils import _updateDefaultCollectionFor
 from collective.eeafaceted.collectionwidget.utils import getCollectionLinkCriterion
-from collective.iconifiedcategory.utils import get_category_object
 from collective.iconifiedcategory.utils import _categorized_elements
+from collective.iconifiedcategory.utils import get_category_object
 from DateTime import DateTime
 from eea.facetednavigation.widgets.resultsperpage.widget import Widget as ResultsPerPageWidget
 from ftw.labels.interfaces import ILabeling
@@ -1976,9 +1974,7 @@ class testMeetingConfig(PloneMeetingTestCase):
     def test_pm_RemoveAnnexesPreviewsOnMeetingClosure(self):
         """When MeetingConfig.removeAnnexesPreviewsOnMeetingClosure is True,
            previews of annexes are deleted when the meeting is closed."""
-        gsettings = GlobalSettings(self.portal)
-        gsettings.auto_convert = True
-        gsettings.auto_layout_file_types = CONVERTABLE_TYPES.keys()
+        self._enableAutoConvert()
         cfg = self.meetingConfig
         self.changeUser('pmManager')
         meeting = self.create('Meeting', date=DateTime('2020/03/31'))

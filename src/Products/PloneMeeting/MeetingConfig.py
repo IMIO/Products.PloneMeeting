@@ -6073,6 +6073,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             i = i + 1
             for advice in item.adviceIndex.itervalues():
                 advice['isConfidential'] = adviceConfidentialityDefault
+        logger.info('Done.')
         api.portal.show_message('Done.', request=self.REQUEST)
         return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
 

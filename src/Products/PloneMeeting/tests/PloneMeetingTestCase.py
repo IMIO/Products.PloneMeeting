@@ -25,6 +25,8 @@ from collections import OrderedDict
 from collective.contact.plonegroup.config import ORGANIZATIONS_REGISTRY
 from collective.contact.plonegroup.utils import get_own_organization
 from collective.contact.plonegroup.utils import get_plone_groups
+from collective.documentviewer.config import CONVERTABLE_TYPES
+from collective.documentviewer.settings import GlobalSettings
 from collective.iconifiedcategory.utils import calculate_category_id
 from collective.iconifiedcategory.utils import get_config_root
 from copy import deepcopy
@@ -563,3 +565,10 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                 else:
                     po_infos['meeting_access_on'] = access_on
         cfg.setPowerObservers(power_observers)
+
+    def _enableAutoConvert(self, enable=True):
+        """Enable collective.documentviewer auto_convert."""
+        gsettings = GlobalSettings(self.portal)
+        gsettings.auto_convert = enable
+        gsettings.auto_layout_file_types = CONVERTABLE_TYPES.keys()
+        return gsettings
