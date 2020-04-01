@@ -2137,6 +2137,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(self.hasPermission(View, item))
         self.assertTrue(self.hasPermission(View, meeting))
         # frozen items/meetings are accessible by both powerobs
+        self.changeUser('pmManager')
         self.freezeMeeting(meeting)
         self.assertEqual(item.queryState(), 'itemfrozen')
         self.changeUser('restrictedpowerobserver1')
