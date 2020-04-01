@@ -24,6 +24,7 @@ Changelog
   by default for Meeting related methods.  This way we avoid as much as possible hidden permission problems
 - Exclude SearchableText indexing for IAnnex objects
 - Make sure CKeditor panels are dispayed correctly in popups (adding/editing advice)
+- Moved parameter `MeetingConfig.meetingManagerMayCorrectClosedMeeting` to a workflowAdaptation `meetingmanager_correct_closed_meeting`
 
 4.1.19.2 (2020-03-17)
 ---------------------

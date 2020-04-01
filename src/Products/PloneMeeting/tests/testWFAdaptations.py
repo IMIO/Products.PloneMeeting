@@ -2836,6 +2836,48 @@ class testWFAdaptations(PloneMeetingTestCase):
             # duplicated_item emergency is no more asked
             self.assertEqual(duplicated_item.getEmergency(), 'no_emergency')
 
+    def test_pm_WFA_MeetingManagerCorrectClosedMeeting(self):
+        '''A closed meeting may be corrected by MeetingManagers
+           if 'meetingmanager_correct_closed_meeting' WFA is enabled.'''
+        # ease override by subproducts
+        cfg = self.meetingConfig
+        if 'meetingmanager_correct_closed_meeting' not in cfg.listWorkflowAdaptations():
+            return
+        self.changeUser('pmManager')
+        # check while the wfAdaptation is not activated
+        self._meetingmanager_correct_closed_meeting_inactive()
+        # activate the wfAdaptation and check
+        cfg.setWorkflowAdaptations(('meetingmanager_correct_closed_meeting', ))
+        performWorkflowAdaptations(cfg, logger=pm_logger)
+        self._meetingmanager_correct_closed_meeting_active()
+
+    def _meetingmanager_correct_closed_meeting_inactive(self):
+        '''Tests while 'meetingmanager_correct_closed_meeting' wfAdaptation is inactive.'''
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime('2019/04/09'))
+        self.closeMeeting(meeting)
+        self.assertEqual(meeting.queryState(), 'closed')
+        closed_meeting_msg = translate(u'closed_meeting_not_correctable_by_config',
+                                       domain='PloneMeeting',
+                                       context=self.request)
+        # No instance
+        may_correct = meeting.wfConditions().mayCorrect()
+        self.assertFalse(may_correct)
+        self.assertEqual(translate(may_correct.msg, domain='PloneMeeting', context=self.request),
+                         closed_meeting_msg)
+        # OK for Managers
+        self.changeUser('siteadmin')
+        self.assertTrue(meeting.wfConditions().mayCorrect())
+
+    def _meetingmanager_correct_closed_meeting_active(self):
+        '''Tests while 'meetingmanager_correct_closed_meeting' wfAdaptation is active.'''
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime('2019/04/09'))
+        self.closeMeeting(meeting)
+        self.assertTrue(meeting.wfConditions().mayCorrect())
+        self.changeUser('siteadmin')
+        self.assertTrue(meeting.wfConditions().mayCorrect())
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite
