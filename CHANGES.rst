@@ -5,6 +5,7 @@ Changelog
 4.1.20 (unreleased)
 -------------------
 
+- Add a button to save and continuing edition for rich text fields
 - Fix advanced search view with collective.solr
 - Small fixes in the test to improve MeetingLalouviere test run
 - Fixed a misstyped condition in tests/helpers.py
