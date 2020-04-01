@@ -220,7 +220,7 @@ def SearchableText(obj):
     res = []
     res.append(obj.SearchableText())
     for annex in get_annexes(obj):
-        res.append(annex.SearchableText())
+        res.append(annex.Title())
     res = ' '.join(res)
     return res or _marker
 

@@ -749,11 +749,11 @@ class testAnnexes(PloneMeetingTestCase):
         self.assertTrue(len(catalog(SearchableText=ITEM_TITLE)) == 1)
         self.assertTrue(len(catalog(SearchableText=ITEM_DESCRIPTION)) == 1)
         self.assertTrue(len(catalog(SearchableText=ITEM_DECISION)) == 1)
-        self.assertTrue(len(catalog(SearchableText=ANNEX_TITLE)) == 2)
+        self.assertTrue(len(catalog(SearchableText=ANNEX_TITLE)) == 1)
         indexable_wrapper = IndexableObjectWrapper(item, catalog)
         self.assertEquals(
             indexable_wrapper.SearchableText,
-            '{0}  <p>{1}</p>  <p>{2}</p>  {3} '.format(
+            '{0}  <p>{1}</p>  <p>{2}</p>  {3}'.format(
                 ITEM_TITLE, ITEM_DESCRIPTION, ITEM_DECISION, ANNEX_TITLE))
         itemRID = catalog(UID=item.UID())[0].getRID()
         self.assertEquals(index.getEntryForObject(itemRID),
@@ -780,7 +780,7 @@ class testAnnexes(PloneMeetingTestCase):
         self.assertFalse(catalog(SearchableText=ANNEX_TITLE))
         # add an annex
         annex = self.addAnnex(meeting, annexTitle=ANNEX_TITLE)
-        self.assertTrue(len(catalog(SearchableText=ANNEX_TITLE)) == 2)
+        self.assertTrue(len(catalog(SearchableText=ANNEX_TITLE)) == 1)
         # remove the annex
         self.portal.restrictedTraverse('@@delete_givenuid')(annex.UID())
         self.assertFalse(catalog(SearchableText=ANNEX_TITLE))
