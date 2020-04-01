@@ -719,7 +719,7 @@ class testWorkflows(PloneMeetingTestCase):
         self.decideMeeting(meeting)
         # make sure we close as a MeetingManager
         # this test that meetingExecuteActionOnLinkedItems execute TAL exprs as 'Manager'
-        self.do(meeting, 'close')
+        self.closeMeeting(meeting)
         # items are accepted
         self.assertEqual(item1.queryState(), 'accepted')
         self.assertEqual(item2.queryState(), 'accepted')
