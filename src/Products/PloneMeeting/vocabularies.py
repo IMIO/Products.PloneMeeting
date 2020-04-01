@@ -609,7 +609,10 @@ class AskedAdvicesVocabulary(object):
         context = get_context_with_request(context) or context
         date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.askedadvicesvocabulary')
         tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(context)
+        cfg = None
+        # when creating new Plone Site, context may be the Zope Application...
+        if hasattr(context, 'portal_type'):
+            cfg = tool.getMeetingConfig(context)
         return date, cfg
 
     @ram.cache(__call___cachekey)

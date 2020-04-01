@@ -544,6 +544,27 @@ class testFaceted(PloneMeetingTestCase):
         cfg.at_post_edit_script()
         self.assertEquals(len(vocab(pmFolder)), 6)
 
+    def test_pm_AskedAdvicesVocabularyWithWrongContext(self):
+        '''Test the "Products.PloneMeeting.vocabularies.askedadvicesvocabulary"
+           vocabulary, when receiving wrong context, may occur during site install or
+           DashboardCollection edit.'''
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        meeting = self.create('Meeting', date=DateTime('2020/04/01'))
+        cfg = self.meetingConfig
+        vocab = queryUtility(IVocabularyFactory, "Products.PloneMeeting.vocabularies.askedadvicesvocabulary")
+        # working context
+        pmFolder = self.getMeetingFolder()
+        self.assertEqual(len(vocab(pmFolder)), 2)
+        self.assertEqual(len(vocab(cfg)), 2)
+        self.assertEqual(len(vocab(item)), 2)
+        self.assertEqual(len(vocab(meeting)), 2)
+        # do not fail on weird context
+        self.assertEqual(len(vocab(self.portal)), 0)
+        self.assertEqual(len(vocab(self.portal.contacts)), 0)
+        self.assertEqual(len(vocab(self.app)), 0)
+        self.assertEqual(len(vocab(None)), 0)
+
     def test_pm_AskedAdvicesVocabulariesMCAware(self):
         '''Test the "Products.PloneMeeting.vocabularies.askedadvicesvocabulary"
            vocabulary, is MeetingConfig aware, especially because it is cached.'''
