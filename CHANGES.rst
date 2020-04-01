@@ -23,6 +23,7 @@ Changelog
 - In tests WF helpers (validateItem, decideMeeting, ...) added parameter as_manager, True by default for MeetingItem related methods and False
   by default for Meeting related methods.  This way we avoid as much as possible hidden permission problems
 - Exclude SearchableText indexing for IAnnex objects
+- Make sure CKeditor panels are dispayed correctly in popups (adding/editing advice)
 
 4.1.19.2 (2020-03-17)
 ---------------------
