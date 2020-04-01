@@ -9,6 +9,7 @@
 
 from collective.contact.core.content.organization import IOrganization
 from DateTime import DateTime
+from imio.annex.content.annex import IAnnex
 from imio.history.interfaces import IImioHistory
 from OFS.interfaces import IItem
 from plone import api
@@ -219,7 +220,7 @@ def SearchableText(obj):
     res = []
     res.append(obj.SearchableText())
     for annex in get_annexes(obj):
-        res.append(annex.SearchableText())
+        res.append(annex.Title())
     res = ' '.join(res)
     return res or _marker
 
@@ -233,6 +234,9 @@ def SearchableText_item(obj):
 def SearchableText_meeting(obj):
     return SearchableText(obj)
 
+@indexer(IAnnex)
+def SearchableText_annex(obj):
+    return _marker
 
 @indexer(IMeetingItem)
 def sendToAuthority(obj):

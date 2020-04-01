@@ -729,13 +729,13 @@ class testWorkflows(PloneMeetingTestCase):
         self.assertTrue(self.hasPermission(View, item2))
         # when meeting set back to decided, items are no more viewable
         self.changeUser('pmManager')
-        self.do(meeting, 'backToDecided')
+        self.backToState(meeting, 'decided')
         self.changeUser('powerobserver1')
         self.assertFalse(self.hasPermission(View, item1))
         self.assertFalse(self.hasPermission(View, item2))
         # and closed again
         self.changeUser('pmManager')
-        self.do(meeting, 'close')
+        self.closeMeeting(meeting)
         self.changeUser('powerobserver1')
         self.assertTrue(self.hasPermission(View, item1))
         self.assertTrue(self.hasPermission(View, item2))

@@ -14,7 +14,7 @@ Changelog
   - may be used in addition to `present/absent/excused` as even an absent attendee may be set non attendee for a specific item;
   - changed parameter `patterns` on `print_in_and_out_attendees` to `custom_patterns` to be able to redefine only one single pattern
 - Fixed `AskedAdvicesVocabulary` ram.cache cachekey to avoid same vocabulary used for 2 different MeetingConfigs
-  (the `indexAdvisers` term on DashboardCollection was using another MeetingConfig values)
+  (the `indexAdvisers` term on DashboardCollection was using another MeetingConfig values), moreover made it more robust in case weird context is received
 - Execute the `MeetingConfig.onMeetingTransitionItemActionToExecute` TAL expressions as `Manager` in `utils.meetingExecuteActionOnLinkedItems`
   to avoid permission problems, what is defined in the configuration must be applied.
   This makes the `a power observer may only access accepted items when meeting is closed` work when current user is a `MeetingManager`,
@@ -22,6 +22,8 @@ Changelog
 - Added new optional field (decisionSuite) for item
 - In tests WF helpers (validateItem, decideMeeting, ...) added parameter as_manager, True by default for MeetingItem related methods and False
   by default for Meeting related methods.  This way we avoid as much as possible hidden permission problems
+- Exclude SearchableText indexing for IAnnex objects
+- Make sure CKeditor panels are dispayed correctly in popups (adding/editing advice)
 - Added `MeetingConfig.removeAnnexesPreviewsOnMeetingClosure` parameter, when True, annexes previews will be deleted upon meeting closure,
   added also action on portal_plonemeeting to be able to remove every annexes previews of every items in every closed meetings
 
