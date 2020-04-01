@@ -168,71 +168,87 @@ class PloneMeetingTestingHelpers:
             return getattr(
                 self, ('TRANSITIONS_FOR_PROPOSING_ITEM_%d' % meetingConfigNumber))
 
-    def proposeItem(self, item, first_level=False):
+    def proposeItem(self, item, first_level=False, as_manager=True):
         '''Propose passed p_item using TRANSITIONS_FOR_PROPOSING_ITEM_x.
            The p_meetingConfigNumber specify if we use meetingConfig or meetingConfig2, so
            the _x here above in TRANSITIONS_FOR_PROPOSING_ITEM_x is 1 or 2.
            If p_first_level is True, we will use TRANSITIONS_FOR_PROPOSING_ITEM_FIRST_LEVEL_x,
            this makes it possible to reach an intermediate propose level.'''
-        self._doTransitionsFor(item, self.get_transitions_for_proposing_item(first_level))
+        self._doTransitionsFor(item,
+                               self.get_transitions_for_proposing_item(first_level),
+                               as_manager=as_manager)
 
-    def prevalidateItem(self, item):
+    def prevalidateItem(self, item, as_manager=True):
         '''Prevalidate passed p_item using TRANSITIONS_FOR_PREVALIDATING_ITEM_x.
            The p_meetingConfigNumber specify if we use meetingConfig or meetingConfig2, so
            the _x here above in TRANSITIONS_FOR_PREVALIDATING_ITEM_x is 1 or 2.'''
         meetingConfigNumber = self._determinateUsedMeetingConfigNumber()
         self._doTransitionsFor(
-            item, getattr(self, ('TRANSITIONS_FOR_PREVALIDATING_ITEM_%d' % meetingConfigNumber)))
+            item,
+            getattr(self, ('TRANSITIONS_FOR_PREVALIDATING_ITEM_%d' % meetingConfigNumber)),
+            as_manager=as_manager)
 
-    def validateItem(self, item):
+    def validateItem(self, item, as_manager=True):
         '''Validate passed p_item using TRANSITIONS_FOR_VALIDATING_ITEM_x.
            The p_meetingConfigNumber specify if we use meetingConfig or meetingConfig2, so
            the _x here above in TRANSITIONS_FOR_VALIDATING_ITEM_x is 1 or 2.'''
         meetingConfigNumber = self._determinateUsedMeetingConfigNumber()
         self._doTransitionsFor(
-            item, getattr(self, ('TRANSITIONS_FOR_VALIDATING_ITEM_%d' % meetingConfigNumber)))
+            item,
+            getattr(self, ('TRANSITIONS_FOR_VALIDATING_ITEM_%d' % meetingConfigNumber)),
+            as_manager=as_manager)
 
-    def presentItem(self, item):
+    def presentItem(self, item, as_manager=True):
         '''Present passed p_item using TRANSITIONS_FOR_PRESENTING_ITEM_x.
            The p_meetingConfigNumber specify if we use meetingConfig or meetingConfig2, so
            the _x here above in TRANSITIONS_FOR_PRESENTING_ITEM_x is 1 or 2.'''
         meetingConfigNumber = self._determinateUsedMeetingConfigNumber()
         self._doTransitionsFor(
-            item, getattr(self, ('TRANSITIONS_FOR_PRESENTING_ITEM_%d' % meetingConfigNumber)))
+            item,
+            getattr(self, ('TRANSITIONS_FOR_PRESENTING_ITEM_%d' % meetingConfigNumber)),
+            as_manager=as_manager)
 
-    def publishMeeting(self, meeting):
+    def publishMeeting(self, meeting, as_manager=False):
         '''Publish passed p_meeting using TRANSITIONS_FOR_PUBLISHING_MEETING_x.
            The p_meetingConfigNumber specify if we use meetingConfig or meetingConfig2, so
            the _x here above in TRANSITIONS_FOR_PUBLISHING_MEETING_x is 1 or 2.'''
         meetingConfigNumber = self._determinateUsedMeetingConfigNumber()
         self._doTransitionsFor(
-            meeting, getattr(self, ('TRANSITIONS_FOR_PUBLISHING_MEETING_%d' % meetingConfigNumber)))
+            meeting,
+            getattr(self, ('TRANSITIONS_FOR_PUBLISHING_MEETING_%d' % meetingConfigNumber)),
+            as_manager=as_manager)
 
-    def freezeMeeting(self, meeting):
+    def freezeMeeting(self, meeting, as_manager=False):
         '''Freeze passed p_meeting using TRANSITIONS_FOR_FREEZING_MEETING_x.
            The p_meetingConfigNumber specify if we use meetingConfig or meetingConfig2, so
            the _x here above in TRANSITIONS_FOR_FREEZING_MEETING_x is 1 or 2.'''
         meetingConfigNumber = self._determinateUsedMeetingConfigNumber()
         self._doTransitionsFor(
-            meeting, getattr(self, ('TRANSITIONS_FOR_FREEZING_MEETING_%d' % meetingConfigNumber)))
+            meeting,
+            getattr(self, ('TRANSITIONS_FOR_FREEZING_MEETING_%d' % meetingConfigNumber)),
+            as_manager=as_manager)
 
-    def decideMeeting(self, meeting):
+    def decideMeeting(self, meeting, as_manager=False):
         '''Decide passed p_meeting using TRANSITIONS_FOR_DECIDING_MEETING_x.
            The p_meetingConfigNumber specify if we use meetingConfig or meetingConfig2, so
            the _x here above in TRANSITIONS_FOR_DECIDING_MEETING_x is 1 or 2.'''
         meetingConfigNumber = self._determinateUsedMeetingConfigNumber()
         self._doTransitionsFor(
-            meeting, getattr(self, ('TRANSITIONS_FOR_DECIDING_MEETING_%d' % meetingConfigNumber)))
+            meeting,
+            getattr(self, ('TRANSITIONS_FOR_DECIDING_MEETING_%d' % meetingConfigNumber)),
+            as_manager=as_manager)
 
-    def closeMeeting(self, meeting):
+    def closeMeeting(self, meeting, as_manager=False):
         '''Close passed p_meeting using TRANSITIONS_FOR_CLOSING_MEETING_x.
            The p_meetingConfigNumber specify if we use meetingConfig or meetingConfig2, so
            the _x here above in TRANSITIONS_FOR_CLOSING_MEETING_x is 1 or 2.'''
         meetingConfigNumber = self._determinateUsedMeetingConfigNumber()
         self._doTransitionsFor(
-            meeting, getattr(self, ('TRANSITIONS_FOR_CLOSING_MEETING_%d' % meetingConfigNumber)))
+            meeting,
+            getattr(self, ('TRANSITIONS_FOR_CLOSING_MEETING_%d' % meetingConfigNumber)),
+            as_manager=as_manager)
 
-    def backToState(self, itemOrMeeting, state):
+    def backToState(self, itemOrMeeting, state, as_manager=False):
         """Set the p_item back to p_state.
            Given p_state MUST BE original state name, aka state existing in PloneMeeting workflow."""
         # if a wf path is defined in BACK_TO_WF_PATH_x to go to relevant state, use it
@@ -262,15 +278,17 @@ class PloneMeetingTestingHelpers:
             raise ValueError('impossible to go back to {}'.format(state))
         self.changeUser(currentUser)
 
-    def _doTransitionsFor(self, itemOrMeeting, transitions):
+    def _doTransitionsFor(self, itemOrMeeting, transitions, as_manager=False):
         """Helper that just trigger given p_transitions on given p_itemOrMeeting."""
         # do things as admin to avoid permission issues
-        currentUser = self.member.getId()
-        self.changeUser('admin')
+        if as_manager:
+            currentUser = self.member.getId()
+            self.changeUser('admin')
         for tr in transitions:
             if tr in self.transitions(itemOrMeeting):
                 self.do(itemOrMeeting, tr)
-        self.changeUser(currentUser)
+        if as_manager:
+            self.changeUser(currentUser)
 
     def _determinateUsedMeetingConfigNumber(self):
         """Helper method that check if we use meetingConfig or meetingConfig2."""
