@@ -1092,6 +1092,23 @@ schema = Schema((
         optional=False,
         write_permission="PloneMeeting: Write decision",
     ),
+    TextField(
+        name='decisionSuite',
+        widget=RichWidget(
+            rows=15,
+            condition="python: here.attributeIsUsed('decisionSuite')",
+            label='DecisionSuite',
+            label_msgid='PloneMeeting_label_decisionSuite',
+            i18n_domain='PloneMeeting',
+        ),
+        default_content_type="text/html",
+        read_permission="PloneMeeting: Read decision",
+        searchable=True,
+        allowable_content_types=('text/html',),
+        default_output_type="text/x-html-safe",
+        optional=True,
+        write_permission="PloneMeeting: Write decision",
+    ),
     BooleanField(
         name='oralQuestion',
         default=False,
@@ -3217,6 +3234,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             res.append('itemAbsents')
         if self.getItemExcused(theObjects=True):
             res.append('itemExcused')
+        if self.getItemNonAttendees(theObjects=True):
+            res.append('itemNonAttendees')
         return res
 
     security.declarePublic('getItemAssembly')
@@ -3305,6 +3324,22 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             item_excused = tuple(meeting_item_excused)
         return item_excused
 
+    security.declarePublic('getItemNonAttendees')
+
+    def getItemNonAttendees(self, theObjects=False, **kwargs):
+        '''Gets the nonAttendees for this item.
+           Non attendees for an item are stored in the Meeting.itemNonAttendees dict.'''
+        res = []
+        if not self.hasMeeting():
+            return res
+        meeting = self.getMeeting()
+        meeting_item_nonAttendees = meeting.getItemNonAttendees().get(self.UID(), [])
+        if theObjects:
+            item_nonAttendees = meeting._getContacts(uids=meeting_item_nonAttendees, theObjects=theObjects)
+        else:
+            item_nonAttendees = tuple(meeting_item_nonAttendees)
+        return item_nonAttendees
+
     security.declarePublic('getItemSignatories')
 
     def getItemSignatories(self, theObjects=False, by_signature_number=False, real=False, **kwargs):
@@ -3343,32 +3378,62 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         res = {'left_before': (),
                'entered_before': (),
                'left_after': (),
-               'entered_after': ()}
+               'entered_after': (),
+               'non_attendee_before': (),
+               'attendee_again_before': (),
+               'non_attendee_after': (),
+               'attendee_again_after': ()}
         meeting = self.getMeeting()
         if meeting:
             items = meeting.getItems(ordered=True, unrestricted=True)
             item_index = items.index(self)
-            item_attendees = self.getAttendees(theObjects=theObjects)
             previous = None
+            absents = self.getItemAbsents(theObjects=theObjects)
+            excused = self.getItemExcused(theObjects=theObjects)
+            non_attendees = self.getItemNonAttendees(theObjects=theObjects)
             if item_index:
                 previous = items[item_index - 1]
-                previous_attendees = previous.getAttendees(theObjects=theObjects)
-                left_before = tuple(set(previous_attendees).difference(set(item_attendees)))
-                entered_before = tuple(set(item_attendees).difference(set(previous_attendees)))
+                # absents/excused
+                previous_absents = previous.getItemAbsents(theObjects=theObjects)
+                previous_excused = previous.getItemExcused(theObjects=theObjects)
+                left_before = tuple(set(absents + excused).difference(
+                    set(previous_absents + previous_excused)))
+                entered_before = tuple(set(previous_absents + previous_excused).difference(
+                    set(absents + excused)))
                 res['left_before'] = left_before
                 res['entered_before'] = entered_before
+                # non attendees
+                previous_non_attendee = previous.getItemNonAttendees(theObjects=theObjects)
+                non_attendee_before = tuple(set(non_attendees).difference(
+                    set(previous_non_attendee)))
+                attendee_again_before = tuple(set(previous_non_attendee).difference(
+                    set(non_attendees)))
+                res['non_attendee_before'] = non_attendee_before
+                res['attendee_again_before'] = attendee_again_before
             else:
                 # self is first item, get absents
-                res['left_before'] = self.getItemAbsents(theObjects=theObjects) + \
-                    self.getItemExcused(theObjects=theObjects)
+                res['left_before'] = absents + excused
             next = None
             if self != items[-1]:
                 next = items[item_index + 1]
-                next_attendees = next.getAttendees(theObjects=theObjects)
-                left_after = tuple(set(item_attendees).difference(set(next_attendees)))
-                entered_after = tuple(set(next_attendees).difference(set(item_attendees)))
+                # absents/excused
+                next_absents = next.getItemAbsents(theObjects=theObjects)
+                next_excused = next.getItemExcused(theObjects=theObjects)
+                left_after = tuple(set(next_absents + next_excused).difference(
+                    set(absents + excused)))
+                entered_after = tuple(set(absents + excused).difference(
+                    set(next_absents + next_excused)))
                 res['left_after'] = left_after
                 res['entered_after'] = entered_after
+                # non attendees
+                next_non_attendee = next.getItemNonAttendees(theObjects=theObjects)
+                non_attendee_after = tuple(set(next_non_attendee).difference(
+                    set(non_attendees)))
+                attendee_again_after = tuple(set(non_attendees).difference(
+                    set(next_non_attendee)))
+                res['non_attendee_after'] = non_attendee_after
+                res['attendee_again_after'] = attendee_again_after
+
         return res
 
     security.declarePublic('mustShowItemReference')
@@ -6508,9 +6573,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return True
 
     def _mayChangeAttendees(self):
-        """Check that user may quickEdit itemAbsents/itemExcused."""
+        """Check that user may quickEdit itemAbsents/itemExcused/itemNonAttendees."""
         tool = api.portal.get_tool('portal_plonemeeting')
-        return tool.isManager(self) and self._checkMayQuickEdit()
+        return tool.isManager(self) and self.hasMeeting() and self._checkMayQuickEdit()
 
     security.declareProtected(ModifyPortalContent, 'ItemAssemblyDescrMethod')
 

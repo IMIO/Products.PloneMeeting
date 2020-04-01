@@ -419,6 +419,7 @@ class Migrate_To_4_1(Migrator):
                 meeting.orderedContacts = OrderedDict()
                 meeting.itemAbsents = PersistentMapping()
                 meeting.itemExcused = PersistentMapping()
+                meeting.itemNonAttendees = PersistentMapping()
                 meeting.itemSignatories = PersistentMapping()
                 # migrate MeetingUsers related fields
                 if not meeting.getAssembly():
@@ -601,6 +602,7 @@ class Migrate_To_4_1(Migrator):
         # transfer users to new Plone groups
         portal_groups = api.portal.get_tool('portal_groups')
         ori_plone_group_ids_to_remove = []
+        mc_ids = tuple([mc.getId() for mc in self.tool.objectValues('MeetingConfig')])
         for mGroup in self.tool.objectValues('MeetingGroup'):
             org = own_org.get(mGroup.getId())
             org_uid = org.UID()
@@ -617,9 +619,16 @@ class Migrate_To_4_1(Migrator):
                         if isinstance(member_or_group, GroupData):
                             ori_plone_subgroup_id, subgroup_suffix = member_or_group.getId().rsplit('_', 1)
                             suborg = own_org.get(ori_plone_subgroup_id)
-                            suborg_uid = suborg.UID()
-                            new_plone_subgroup = get_plone_group(suborg_uid, subgroup_suffix)
-                            member_or_group = new_plone_subgroup
+                            if suborg:
+                                suborg_uid = suborg.UID()
+                                new_plone_subgroup = get_plone_group(suborg_uid, subgroup_suffix)
+                                member_or_group = new_plone_subgroup
+                            else:
+                                # a group like 'meeting-config-id_meetingmanagers'
+                                if not member_or_group.getId().startswith(mc_ids):
+                                    self.warn(logger, 'Could not add group {0} to {1}'.format(
+                                        member_or_group.getId(), new_plone_group.getId()))
+                                    continue
                         api.group.add_user(group=new_plone_group, user=member_or_group)
                     # do not remove immediatelly as a group can be stored in another group
                     ori_plone_group_ids_to_remove.append(ori_plone_group_id)

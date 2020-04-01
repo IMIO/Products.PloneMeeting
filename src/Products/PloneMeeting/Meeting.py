@@ -975,6 +975,12 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         '''See docstring in previous method.'''
         return self._getContacts('absent', theObjects=theObjects)
 
+    security.declarePublic('getNonAttendees')
+
+    def getNonAttendees(self, theObjects=False):
+        '''See docstring in previous method.'''
+        return self._getContacts('nonAttendee', theObjects=theObjects)
+
     security.declarePublic('getSignatories')
 
     def getSignatories(self, theObjects=False, by_signature_number=False):
@@ -1023,6 +1029,12 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
     def getItemExcused(self, by_persons=False):
         ''' '''
         return self._get_item_not_present(self.itemExcused, by_persons=by_persons)
+
+    security.declarePublic('getItemNonAttendees')
+
+    def getItemNonAttendees(self, by_persons=False):
+        ''' '''
+        return self._get_item_not_present(self.itemNonAttendees, by_persons=by_persons)
 
     security.declarePublic('getItemSignatories')
 
@@ -1407,6 +1419,8 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             del self.itemAbsents[item_uid]
         if item_uid in self.itemExcused:
             del self.itemExcused[item_uid]
+        if item_uid in self.itemNonAttendees:
+            del self.itemNonAttendees[item_uid]
         if item_uid in self.itemSignatories:
             del self.itemSignatories[item_uid]
 
@@ -1583,8 +1597,12 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         for attendee_uid, attendee_type in attendees.items():
             if attendee_uid not in self.orderedContacts:
                 self.orderedContacts[attendee_uid] = \
-                    {'attendee': False, 'excused': False, 'absent': False,
-                     'signer': False, 'signature_number': None,
+                    {'attendee': False,
+                     'excused': False,
+                     'absent': False,
+                     'nonAttendee': False,
+                     'signer': False,
+                     'signature_number': None,
                      'replacement': None}
             self.orderedContacts[attendee_uid][attendee_type] = True
 
@@ -1643,6 +1661,8 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         self.itemAbsents = PersistentMapping()
         # place to store item excused
         self.itemExcused = PersistentMapping()
+        # place to store item non attendees
+        self.itemNonAttendees = PersistentMapping()
         # place to store item signatories
         self.itemSignatories = PersistentMapping()
         # place to store attendees when using contacts

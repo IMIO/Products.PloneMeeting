@@ -370,6 +370,18 @@
         name="item_welcome_attendee_form"
         class=".itemattendee.WelcomeAttendeeFormWrapper"
         permission="zope2.View" />
+    <browser:page
+        for="Products.PloneMeeting.interfaces.IMeetingItem"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        name="item_byebye_nonattendee_form"
+        class=".itemattendee.ByeByeNonAttendeeFormWrapper"
+        permission="zope2.View" />
+    <browser:page
+        for="Products.PloneMeeting.interfaces.IMeetingItem"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        name="item_welcome_nonattendee_form"
+        class=".itemattendee.WelcomeNonAttendeeFormWrapper"
+        permission="zope2.View" />
      <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingItem"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"

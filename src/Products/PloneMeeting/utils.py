@@ -1056,18 +1056,20 @@ def meetingExecuteActionOnLinkedItems(meeting, transitionId):
                         pass
                 else:
                     # execute the TAL expression, will not fail but log if an error occurs
-                    _evaluateExpression(
-                        item,
-                        expression=config['tal_expression'].strip(),
-                        roles_bypassing_expression=[],
-                        extra_expr_ctx={
-                            'pm_utils': SecureModuleImporter['Products.PloneMeeting.utils'],
-                            'imio_history_utils': SecureModuleImporter['imio.history.utils'],
-                            'tool': tool,
-                            'cfg': cfg,
-                            'item': item,
-                            'meeting': meeting},
-                        error_pattern=ITEM_EXECUTE_ACTION_ERROR)
+                    # do this as Manager to avoid permission problems, the configuration is supposed to be applied
+                    with api.env.adopt_roles(['Manager']):
+                        _evaluateExpression(
+                            item,
+                            expression=config['tal_expression'].strip(),
+                            roles_bypassing_expression=[],
+                            extra_expr_ctx={
+                                'pm_utils': SecureModuleImporter['Products.PloneMeeting.utils'],
+                                'imio_history_utils': SecureModuleImporter['imio.history.utils'],
+                                'tool': tool,
+                                'cfg': cfg,
+                                'item': item,
+                                'meeting': meeting},
+                            error_pattern=ITEM_EXECUTE_ACTION_ERROR)
 
 
 def computeCertifiedSignatures(signatures):

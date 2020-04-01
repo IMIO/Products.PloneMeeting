@@ -1545,9 +1545,11 @@ div.pmMoreInfo table[cellpadding='0'] tr th {
     padding: 0em !important;
 }
 
-/* increase height of CKeditor styles combobox */
-div.cke.cke_combopanel {
+/* increase height of CKeditor styles combobox,
+   increase also zIndex to make sure menu is viewable in FF when opened in a popup */
+div.cke.cke_combopanel, div.cke.cke_menu_panel {
     height: 300px;
+    z-index: 11000 !important;
 }
 
 div.cke_dialog_background_cover {
@@ -1625,6 +1627,9 @@ table#faceted_table td.draggable {
 }
 table#meeting_users select[id$="_replacement"] {
    width: 500px;
+}
+table#meeting_users tr.item-non-attendee {
+    color: gray;
 }
 table.listing tbody tr.odd.selected td,
 table.listing tbody tr.odd.dragging td,
