@@ -16,6 +16,12 @@
        i18n:attributes="title fastedit_save_changes"
        title="Save changes."
        tal:attributes="src string:$portal_url/save.gif;
+                       onClick python:'askAjaxChunk(\'hook_%s\', \'POST\', \'%s\', \'@@pm-macros\', \'saveAndEditField\', {}, getRichTextContent, initRichTextField)' % (fieldName, context.absolute_url())"/>
+  &nbsp;
+  <img style="cursor:pointer;"
+       i18n:attributes="title fastedit_save_and_exit_changes"
+       title="Save changes and exit."
+       tal:attributes="src string:$portal_url/save_and_exit.gif;
                        onClick python:'askAjaxChunk(\'hook_%s\', \'POST\', \'%s\', \'@@pm-macros\', \'saveField\', {}, getRichTextContent)' % (fieldName, context.absolute_url())"/>
   &nbsp;
   <img style="cursor: pointer;"
@@ -69,6 +75,19 @@
              dummy python: context.setFieldFromAjax(fieldName, request.get('fieldContent'));
              mayEdit python: member.has_permission(field.write_permission, context);">
  <metal:view use-macro="context/@@pm-macros/viewField"/>
+</metal:save>
+
+<tal:comment replace="nothing">
+  Save the content of an Archetypes field and return its edit view.
+  Requires a REQUEST with keys "fieldName" and "fieldContent".
+</tal:comment>
+<metal:save define-macro="saveAndEditField" i18n:domain="PloneMeeting"
+ tal:define="fieldName request/fieldName;
+             field python: context.getField(fieldName);
+             needToRefreshPage python: context.meta_type=='MeetingItem' and context.willInvalidateAdvices();
+             dummy python: context.setFieldFromAjax(fieldName, request.get('fieldContent'));
+             mayEdit python: member.has_permission(field.write_permission, context);">
+ <metal:view use-macro="context/@@pm-macros/editField"/>
 </metal:save>
 
 <tal:comment replace="nothing">Displays changes performed on a field.</tal:comment>
