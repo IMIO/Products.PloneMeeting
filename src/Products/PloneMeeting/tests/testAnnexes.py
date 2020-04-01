@@ -785,15 +785,65 @@ class testAnnexes(PloneMeetingTestCase):
         self.portal.restrictedTraverse('@@delete_givenuid')(annex.UID())
         self.assertFalse(catalog(SearchableText=ANNEX_TITLE))
 
-    def test_pm_AnnexesContentNotInAnnexSearchableText(self):
+    def test_pm_ItemAnnexesContentNotInAnnexSearchableText(self):
+        '''Annexes content is not indexed in any SearchableText.'''
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem', title='My beautifull item')
+        # add an annex
+        annex = self.addAnnex(item, annexTitle="Big bad text.txt", annexFile=u'annex_not_to_index.txt')
+        self.presentItem(item)
+        self.changeUser('pmManager')
+        catalog = self.portal.portal_catalog
+        # ensure this annex is indexed
+        annex.reindexObject()
+        self.assertEqual(len(catalog(UID=annex.UID())), 1)
+        brains = catalog(Title='Big bad text')
+        self.assertEqual(len(brains), 1)
+        self.assertEqual(brains[0].UID, annex.UID())
+        # ensure its SearchableText entry is empty
+        index = catalog.Indexes['SearchableText']
+        annexRID = catalog(UID=annex.UID())[0].getRID()
+        entry = index.getEntryForObject(annexRID)
+        self.assertIsNone(entry)
+        # ensure it can't be found while searching its content in case it is indexed on another context
+        self.assertEqual(len(catalog(SearchableText='If you')), 0)
+        self.assertEqual(len(catalog(SearchableText='you see')), 0)
+        self.assertEqual(len(catalog(SearchableText='see me')), 0)
+        self.assertEqual(len(catalog(SearchableText='me ...')), 0)
+        self.assertEqual(len(catalog(SearchableText='Well you')), 0)
+        self.assertEqual(len(catalog(SearchableText='you know')), 0)
+        self.assertEqual(len(catalog(SearchableText='know how')), 0)
+        self.assertEqual(len(catalog(SearchableText='how it')), 0)
+        self.assertEqual(len(catalog(SearchableText='it ends')), 0)
+
+    def test_pm_MeetingAnnexesContentNotInAnnexSearchableText(self):
         '''Annexes content is not indexed in any SearchableText.'''
         self.changeUser('pmManager')
-        meeting = self.create('Meeting')
+        meeting = self.create('Meeting', date=DateTime('2019/12/19'))
         catalog = self.portal.portal_catalog
         # add an annex
-        annex = self.addAnnex(meeting, annexFile=u'annex_not_to_index.txt')
-        brains = catalog(SearchableText='If you see this ...')
-        self.assertEqual(len(brains), 0)
+        annex = self.addAnnex(meeting, annexTitle="Big bad text.txt", annexFile=u'annex_not_to_index.txt')
+        # ensure this annex is indexed
+        annex.reindexObject()
+        self.assertEqual(len(catalog(UID=annex.UID())), 1)
+        brains = catalog(Title='Big bad text')
+        self.assertEqual(len(brains), 1)
+        self.assertEqual(brains[0].UID, annex.UID())
+        # ensure its SearchableText entry is empty
+        index = catalog.Indexes['SearchableText']
+        annexRID = catalog(UID=annex.UID())[0].getRID()
+        entry = index.getEntryForObject(annexRID)
+        self.assertIsNone(entry)
+        # ensure it can't be found while searching its content in case it is indexed on another context
+        self.assertEqual(len(catalog(SearchableText='If you')), 0)
+        self.assertEqual(len(catalog(SearchableText='you see')), 0)
+        self.assertEqual(len(catalog(SearchableText='see me')), 0)
+        self.assertEqual(len(catalog(SearchableText='me ...')), 0)
+        self.assertEqual(len(catalog(SearchableText='Well you')), 0)
+        self.assertEqual(len(catalog(SearchableText='you know')), 0)
+        self.assertEqual(len(catalog(SearchableText='know how')), 0)
+        self.assertEqual(len(catalog(SearchableText='how it')), 0)
+        self.assertEqual(len(catalog(SearchableText='it ends')), 0)
 
     def test_pm_AnnexesConvertedIfAutoConvertIsEnabled(self):
         """If collective.documentviewer 'auto_convert' is enabled,

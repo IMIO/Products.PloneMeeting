@@ -236,7 +236,7 @@ def SearchableText_meeting(obj):
 
 @indexer(IAnnex)
 def SearchableText_annex(obj):
-    return
+    return _marker
 
 @indexer(IMeetingItem)
 def sendToAuthority(obj):
