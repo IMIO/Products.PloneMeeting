@@ -19,6 +19,7 @@ Changelog
   to avoid permission problems, what is defined in the configuration must be applied.
   This makes the `a power observer may only access accepted items when meeting is closed` work when current user is a `MeetingManager`,
   not a `Manager`, instead having a permission error as `MeetingItem.updateLocalRoles` is protected with the `Modify portal content` permission
+- Added new optional field (decisionSuite) for item
 - In tests WF helpers (validateItem, decideMeeting, ...) added parameter as_manager, True by default for MeetingItem related methods and False
   by default for Meeting related methods.  This way we avoid as much as possible hidden permission problems
 
