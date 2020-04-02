@@ -64,6 +64,8 @@ from Products.PloneMeeting.utils import display_as_html
 from Products.PloneMeeting.utils import displaying_available_items
 from Products.PloneMeeting.utils import fieldIsEmpty
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
+from Products.PloneMeeting.utils import fplog
+from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getDateFromDelta
 from Products.PloneMeeting.utils import getFieldVersion
@@ -270,6 +272,21 @@ class MeetingWorkflowActions(object):
                                                   name='pm_unrestricted_methods')
         self.context.setFirstItemNumber(unrestrictedMethodsView.findFirstItemNumberForMeeting(self.context))
         self.context.updateItemReferences()
+        # remove annex previews of every items if relevant
+        if self.cfg.getRemoveAnnexesPreviewsOnMeetingClosure():
+            # add logging message to fingerpointing log
+            for item in self.context.getItems(ordered=True):
+                annexes = get_annexes(item)
+                if annexes:
+                    for annex in annexes:
+                        self.tool._removeAnnexPreviewFor(item, annex)
+                extras = 'item={0} number_of_annexes={1}'.format(repr(item), len(annexes))
+                fplog('remove_annex_previews', extras=extras)
+            msg = translate(
+                u"Preview of annexes were deleted upon meeting closure.",
+                domain='PloneMeeting',
+                context=self.context.REQUEST)
+            api.portal.show_message(msg, request=item.REQUEST)
 
     security.declarePrivate('doPublish_decisions')
 
