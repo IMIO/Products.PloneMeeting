@@ -37,6 +37,7 @@ Changelog
   - a RichText field is quickedited;
   - annex previews are removed (when closing meeting if relevant parameter is enabled)
 - Moved parameter `MeetingConfig.meetingManagerMayCorrectClosedMeeting` to a workflowAdaptation `meetingmanager_correct_closed_meeting`
+- Include plugin package name and versions in `@@overview-controlpanel` in addition to versions for `PloneMeeting` and `appy`
 
 4.1.19.2 (2020-03-17)
 ---------------------
