@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.1.20 (unreleased)
+4.1.20 (2020-04-02)
 -------------------
 
 - Add a button to save and continuing edition for rich text fields
