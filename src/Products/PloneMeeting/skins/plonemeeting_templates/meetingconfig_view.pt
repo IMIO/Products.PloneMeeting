@@ -730,8 +730,7 @@
           <td tal:define="field python:here.getField('meetingPresentItemWhenNoCurrentMeetingStates')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td tal:define="field python:here.getField('meetingManagerMayCorrectClosedMeeting')">
-            <span metal:use-macro="here/widgets/field/macros/view" />
+          <td>
           </td>
         </tr>
       </table>

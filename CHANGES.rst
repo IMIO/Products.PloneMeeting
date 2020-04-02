@@ -36,6 +36,7 @@ Changelog
   - an attribute of an annex is changed (to print, confidential, ...);
   - a RichText field is quickedited;
   - annex previews are removed (when closing meeting if relevant parameter is enabled)
+- Moved parameter `MeetingConfig.meetingManagerMayCorrectClosedMeeting` to a workflowAdaptation `meetingmanager_correct_closed_meeting`
 
 4.1.19.2 (2020-03-17)
 ---------------------
