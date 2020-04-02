@@ -1,13 +1,11 @@
 # -*- coding: utf-8 -*-
 
 from AccessControl import Unauthorized
-from collective.fingerpointing.config import AUDIT_MESSAGE
-from collective.fingerpointing.logger import log_info
-from collective.fingerpointing.utils import get_request_information
 from plone import api
 from Products.Five import BrowserView
 from Products.PloneMeeting.utils import _itemNumber_to_storedItemNumber
 from Products.PloneMeeting.utils import _storedItemNumber_to_itemNumber
+from Products.PloneMeeting.utils import fplog
 from zope.i18n import translate
 
 
@@ -333,14 +331,12 @@ class ChangeItemOrderView(BrowserView):
         meeting.notifyModified()
 
         # add logging message to fingerpointing log
-        user, ip = get_request_information()
-        action = 'change_item_order'
-        extras = 'item={0} meeting={1} original_position={2} new_position={3}'.format(
-            '/'.join(self.context.getPhysicalPath()),
-            '/'.join(meeting.getPhysicalPath()),
+        extras = 'object={0} meeting={1} original_position={2} new_position={3}'.format(
+            repr(self.context),
+            repr(meeting),
             _storedItemNumber_to_itemNumber(oldIndex, forceShowDecimal=False),
             self.context.getItemNumber(for_display=True))
-        log_info(AUDIT_MESSAGE.format(user, ip, action, extras))
+        fplog('change_item_order', extras=extras)
 
         # update item references starting from minus between oldIndex and new itemNumber
         meeting.updateItemReferences(startNumber=min(oldIndex, self.context.getItemNumber()))

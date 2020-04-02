@@ -27,6 +27,15 @@ Changelog
 - Make sure CKeditor panels are dispayed correctly in popups (adding/editing advice)
 - Added `MeetingConfig.removeAnnexesPreviewsOnMeetingClosure` parameter, when True, annexes previews will be deleted upon meeting closure,
   added also action on portal_plonemeeting to be able to remove every annexes previews of every items in every closed meetings
+- Added `utils.fplog`, an helper to add `collective.fingerpointing`-like log messages, adapted code to use it everywhere,
+  extra logging is available when :
+
+  - an item position changed on a meeting;
+  - an inherited advice is removed;
+  - an item is cloned (duplicated, sent to another MeetingConfig, ...);
+  - an attribute of an annex is changed (to print, confidential, ...);
+  - a RichText field is quickedited;
+  - annex previews are removed (when closing meeting if relevant parameter is enabled)
 
 4.1.19.2 (2020-03-17)
 ---------------------

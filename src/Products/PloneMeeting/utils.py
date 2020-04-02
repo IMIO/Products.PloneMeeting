@@ -899,6 +899,10 @@ def setFieldFromAjax(obj, fieldName, newValue):
     notifyModifiedAndReindex(obj, extra_idxs=extra_idxs)
     # just unlock, do not call ObjectEditedEvent because it does too much
     unlockAfterModification(obj, event={})
+    # add a fingerpointing log message
+    extras = 'object={0} field_name={1}'.format(
+        repr(obj), fieldName)
+    fplog('quickedit_field', extras=extras)
 
 
 def notifyModifiedAndReindex(obj, extra_idxs=[], notify_event=False):

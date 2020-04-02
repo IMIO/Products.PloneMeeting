@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from AccessControl import Unauthorized
-from collective.fingerpointing.config import AUDIT_MESSAGE
-from collective.fingerpointing.logger import log_info
-from collective.fingerpointing.utils import get_request_information
 from imio.actionspanel.utils import findViewableURL
 from imio.helpers.content import get_vocab
 from plone import api
@@ -13,6 +10,7 @@ from plone.supermodel import model
 from plone.z3cform.layout import wrap_form
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.utils import cleanMemoize
+from Products.PloneMeeting.utils import fplog
 from z3c.form import button
 from z3c.form import form
 from zope import schema
@@ -128,12 +126,11 @@ class AdviceRemoveInheritanceForm(AutoExtensibleForm, form.EditForm):
         self.request.RESPONSE.redirect(url)
 
         # add logging message to fingerpointing log
-        user, ip = get_request_information()
-        action = 'remove_advice_inheritance'
-        extras = 'item={0} advice_uid={1}'.format(
-            '/'.join(self.context.getPhysicalPath()), data['advice_uid'])
-        log_info(AUDIT_MESSAGE.format(user, ip, action, extras))
-
+        extras = 'object={0} advice_uid={1} inherited_advice_action={2}'.format(
+            repr(self.context),
+            data['advice_uid'],
+            data['inherited_advice_action'])
+        fplog('remove_advice_inheritance', extras=extras)
         return
 
     @button.buttonAndHandler(_('Cancel'), name='cancel')
