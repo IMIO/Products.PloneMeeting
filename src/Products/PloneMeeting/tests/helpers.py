@@ -249,7 +249,7 @@ class PloneMeetingTestingHelpers:
             getattr(self, ('TRANSITIONS_FOR_CLOSING_MEETING_%d' % meetingConfigNumber)),
             as_manager=as_manager)
 
-    def backToState(self, itemOrMeeting, state, as_manager=False):
+    def backToState(self, itemOrMeeting, state, as_manager=True):
         """Set the p_item back to p_state.
            Given p_state MUST BE original state name, aka state existing in PloneMeeting workflow."""
         # if a wf path is defined in BACK_TO_WF_PATH_x to go to relevant state, use it
@@ -263,8 +263,9 @@ class PloneMeetingTestingHelpers:
             transitions = BACK_TO_WF_PATH[state]
             useDefinedWfPath = True
         # do things as admin to avoid permission issues
-        currentUser = self.member.getId()
-        self.changeUser('admin')
+        if as_manager:
+            currentUser = self.member.getId()
+            self.changeUser('admin')
         max_attempts = 20
         nb_attempts = 0
         while not itemOrMeeting.queryState() == state and nb_attempts <= max_attempts:
@@ -277,7 +278,8 @@ class PloneMeetingTestingHelpers:
                     break
         if nb_attempts >= max_attempts:
             raise ValueError('impossible to go back to {}'.format(state))
-        self.changeUser(currentUser)
+        if as_manager:
+            self.changeUser(currentUser)
 
     def _doTransitionsFor(self, itemOrMeeting, transitions, as_manager=False):
         """Helper that just trigger given p_transitions on given p_itemOrMeeting."""
