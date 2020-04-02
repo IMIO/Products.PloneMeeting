@@ -24,8 +24,6 @@
 
 from AccessControl import Unauthorized
 from collective.contact.plonegroup.utils import get_plone_group
-from collective.documentviewer.config import CONVERTABLE_TYPES
-from collective.documentviewer.settings import GlobalSettings
 from collective.iconifiedcategory.event import IconifiedAttrChangedEvent
 from collective.iconifiedcategory.interfaces import IIconifiedPreview
 from collective.iconifiedcategory.utils import calculate_category_id
@@ -849,10 +847,7 @@ class testAnnexes(PloneMeetingTestCase):
     def test_pm_AnnexesConvertedIfAutoConvertIsEnabled(self):
         """If collective.documentviewer 'auto_convert' is enabled,
            the annexes and decision annexes are converted."""
-        gsettings = GlobalSettings(self.portal)
-        gsettings.auto_convert = True
-        gsettings.auto_layout_file_types = CONVERTABLE_TYPES.keys()
-
+        gsettings = self._enableAutoConvert()
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         self.annexFile = u'file_correct.pdf'
@@ -871,9 +866,7 @@ class testAnnexes(PloneMeetingTestCase):
         """If collective.documentviewer 'auto_convert' is disabled,
            annexes set 'to_print' is only converted if
            MeetingConfig.annexToPrintMode is 'enabled_for_printing'."""
-        gsettings = GlobalSettings(self.portal)
-        gsettings.auto_convert = False
-        gsettings.auto_layout_file_types = CONVERTABLE_TYPES.keys()
+        self._enableAutoConvert(enable=False)
         cfg = self.meetingConfig
         cfg.setAnnexToPrintMode('enabled_for_info')
 
@@ -927,9 +920,7 @@ class testAnnexes(PloneMeetingTestCase):
            if an annex is updated, it will be converted again onModified."""
         cfg = self.meetingConfig
         cfgId = cfg.getId()
-        gsettings = GlobalSettings(self.portal)
-        gsettings.auto_convert = True
-        gsettings.auto_layout_file_types = CONVERTABLE_TYPES.keys()
+        gsettings = self._enableAutoConvert()
         default_category = get_category_object(
             self.meetingConfig,
             '{0}-annexes_types_-_item_annexes_-_financial-analysis'.format(cfgId))

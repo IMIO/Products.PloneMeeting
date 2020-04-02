@@ -61,6 +61,7 @@ from Products.CMFCore.utils import _checkPermission
 from Products.CMFCore.utils import UniqueObject
 from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 from Products.CMFPlone.utils import safe_unicode
+from Products.CPUtils.Extensions.utils import remove_generated_previews
 from Products.DataGridField import DataGridField
 from Products.DataGridField.Column import Column
 from Products.PloneMeeting import logger
@@ -77,6 +78,7 @@ from Products.PloneMeeting.config import SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY
 from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.profiles import PloneMeetingConfiguration
 from Products.PloneMeeting.utils import add_wf_history_action
+from Products.PloneMeeting.utils import fplog
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getCustomSchemaFields
@@ -1361,6 +1363,47 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         api.portal.show_message('Done.', request=self.REQUEST)
         return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
 
+    def _removeAnnexPreviewFor(self, parent, annex):
+        ''' '''
+        remove_generated_previews(annex)
+        annex_infos = parent.categorized_elements.get(annex.UID())
+        if annex_infos:
+            annex_infos['preview_status'] = IIconifiedPreview(annex).status
+        parent._p_changed = True
+
+    security.declareProtected(ModifyPortalContent, 'removeAnnexesPreviews')
+
+    def removeAnnexesPreviews(self, query={'meta_type': 'Meeting',
+                                           'review_state': ('closed', ),
+                                           'sort_on': 'getDate'}):
+        '''Remove every annexes previews of items presented to closed meetings.'''
+        if not self.isManager(self, realManagers=True):
+            raise Unauthorized
+
+        catalog = api.portal.get_tool('portal_catalog')
+        # remove annexes previews of items of closed Meetings
+        brains = catalog(**query)
+        numberOfBrains = len(brains)
+        i = 1
+        for brain in brains:
+            meeting = brain.getObject()
+            logger.info('%d/%d Removing annexes of items of meeting %s at %s' %
+                        (i,
+                         numberOfBrains,
+                         brain.portal_type,
+                         '/'.join(meeting.getPhysicalPath())))
+            i = i + 1
+            for item in meeting.getItems(ordered=True):
+                annexes = get_annexes(item)
+                for annex in annexes:
+                    self._removeAnnexPreviewFor(item, annex)
+                extras = 'item={0} number_of_annexes={1}'.format(repr(item), len(annexes))
+                fplog('remove_annex_previews', extras=extras)
+
+        logger.info('Done.')
+        api.portal.show_message('Done.', request=self.REQUEST)
+        return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
+
     def auto_convert_annexes(self):
         """Return True if auto_convert is enabled in the c.documentviewer settings."""
         portal = api.portal.get()
@@ -1374,6 +1417,42 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     security.declareProtected(ModifyPortalContent, 'updateAllLocalRoles')
 
     def updateAllLocalRoles(self, meta_type=('Meeting', 'MeetingItem'), portal_type=(), **kw):
+        '''Update local_roles on Meeting and MeetingItem,
+           this is used to reflect configuration changes regarding access.'''
+        startTime = time.time()
+        catalog = api.portal.get_tool('portal_catalog')
+        query = {}
+        if meta_type:
+            query['meta_type'] = meta_type
+        if portal_type:
+            query['portal_type'] = portal_type
+        query.update(kw)
+        brains = catalog(**query)
+        numberOfBrains = len(brains)
+        i = 1
+        for brain in brains:
+            itemOrMeeting = brain.getObject()
+            logger.info('%d/%d Updating local roles of %s at %s' %
+                        (i,
+                         numberOfBrains,
+                         brain.portal_type,
+                         '/'.join(itemOrMeeting.getPhysicalPath())))
+            i = i + 1
+            indexes_to_update = itemOrMeeting.updateLocalRoles(avoid_reindex=True)
+            # if auto rules regarding copyGroups or groupsInCharge changed
+            # we could have more or less copyGroups/groupsInCharge so reindex relevant indexes
+            if indexes_to_update:
+                itemOrMeeting.reindexObject(idxs=indexes_to_update)
+
+        seconds = time.time() - startTime
+        logger.info('updateAllLocalRoles finished in %.2f seconds(s) (about %d minute(s)), that is %d by second.' %
+                    (seconds, round(float(seconds) / 60.0), numberOfBrains / seconds))
+        api.portal.show_message('Done.', request=self.REQUEST)
+        return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
+
+    security.declareProtected(ModifyPortalContent, 'updateAllLocalRoles')
+
+    def removeEveryPreviews(self, meta_type=('Meeting', 'MeetingItem'), portal_type=(), **kw):
         '''Update local_roles on Meeting and MeetingItem,
            this is used to reflect configuration changes regarding access.'''
         startTime = time.time()

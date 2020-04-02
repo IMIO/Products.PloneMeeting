@@ -28,7 +28,7 @@ class Migrate_To_4104(Migrator):
     def _removeFieldToolPloneMeetingModelAdaptations(self):
         """Remove field ToolPloneMeeting.modelAdaptations."""
         logger.info("Removing field ToolPloneMeeting.modelAdaptations...")
-        if hasattr(self.tool, 'modelAdaptations'):
+        if base_hasattr(self.tool, 'modelAdaptations'):
             delattr(self.tool, 'modelAdaptations')
         logger.info('Done.')
 
@@ -60,6 +60,19 @@ class Migrate_To_4104(Migrator):
                 searchallmeetings.reindexObject()
         logger.info('Done.')
 
+    def _moveMCParameterToWFA(self):
+        """MeetingConfig.meetingManagerMayCorrectClosedMeeting is moved to
+           MeetingConfig.workflowAdaptations called "meetingmanager_correct_closed_meeting"."""
+        logger.info("Moving MeetingConfig.meetingManagerMayCorrectClosedMeeting to "
+                    "workflowAdaptation 'meetingmanager_correct_closed_meeting'...")
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            if base_hasattr(cfg, 'meetingManagerMayCorrectClosedMeeting'):
+                if cfg.meetingManagerMayCorrectClosedMeeting is True:
+                    wfAdaptations = cfg.getWorkflowAdaptations()
+                    wfAdaptations = wfAdaptations + ('meetingmanager_correct_closed_meeting', )
+                    cfg.setWorkflowAdaptations(wfAdaptations)
+        logger.info('Done.')
+
     def _addItemNonAttendeesAttributeToMeetings(self):
         """ """
         logger.info("Adding new attribute \"itemNonAttendees\" to every meetings...")
@@ -76,6 +89,7 @@ class Migrate_To_4104(Migrator):
         self.removeUnusedColumns(columns=['getItemIsSigned'])
         self._removeFieldToolPloneMeetingModelAdaptations()
         self._moveSearchAllDecisionsToSearchAllMeetings()
+        self._moveMCParameterToWFA()
         self._addItemNonAttendeesAttributeToMeetings()
         if not from_migration_to_41:
             self.reindexIndexes(meta_types=['Meeting'])
@@ -93,10 +107,11 @@ def migrate(context):
        2) Remove catalog column 'getItemIsSigned';
        3) Remove field ToolPloneMeeting.modelAdaptations;
        4) Remove DashboardCollection 'searchalldecisions' and add new DashboardCollection 'searchallmeetings';
-       5) Add new attribute 'itemNonAttendees' to every meetings;
-       6) Reindex every meetings if not called by the main migration to version 4.1;
-       7) Re-import actions.xml;
-       8) Init new HTML field 'MeetingItem.meetingManagersNotes'.
+       5) Move MeetingConfig.meetingManagerMayCorrectClosedMeeting to a workflowAdaptation;
+       6) Add new attribute 'itemNonAttendees' to every meetings;
+       7) Reindex every meetings if not called by the main migration to version 4.1;
+       8) Re-import actions.xml;
+       9) Init new HTML field 'MeetingItem.meetingManagersNotes'.
     '''
     migrator = Migrate_To_4104(context)
     migrator.run()

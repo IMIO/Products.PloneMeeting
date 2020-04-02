@@ -819,9 +819,10 @@ def onAnnexAttrChanged(annex, event):
         parent = annex.aq_inner.aq_parent
         notifyModifiedAndReindex(parent, extra_idxs=idxs)
 
-        extras = 'annex={0} values={1}'.format(
-            annex.absolute_url_path(), str(event.new_values))
-        fplog('annex_attr_changed', extras=extras)
+        extras = 'object={0} values={1}'.format(
+            repr(annex),
+            ';'.join(['{0}:{1}'.format(k, v) for k, v in event.new_values.items()]))
+        fplog('change_annex_attr', extras=extras)
 
 
 def _annexToPrintChanged(annex, event):

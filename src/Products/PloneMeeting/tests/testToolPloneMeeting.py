@@ -24,6 +24,7 @@
 
 from AccessControl import Unauthorized
 from collective.contact.plonegroup.utils import get_organization
+from collective.iconifiedcategory.utils import _categorized_elements
 from collective.iconifiedcategory.utils import calculate_category_id
 from collective.iconifiedcategory.utils import get_categories
 from collective.iconifiedcategory.utils import get_categorized_elements
@@ -1100,6 +1101,33 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertTrue(self.tool.group_is_not_empty(self.developers_uid, 'creators'))
         self._removeAllMembers(dcGroup, dcMembers)
         self.assertFalse(self.tool.group_is_not_empty(self.developers_uid, 'creators'))
+
+    def test_pm_RemoveAnnexesPreviews(self):
+        """Remove annexes previews of every items in closed meetings."""
+        self._enableAutoConvert()
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime('2020/03/31'))
+        item = self.create('MeetingItem')
+        annex = self.addAnnex(item)
+        annex_decision = self.addAnnex(item, relatedTo='item_decision')
+        infos = _categorized_elements(item)
+        self.assertEqual(infos[annex.UID()]['preview_status'], 'converted')
+        self.assertEqual(infos[annex_decision.UID()]['preview_status'], 'converted')
+        self.presentItem(item)
+        # clean now and meeting not closed
+        self.assertNotEqual(meeting.queryState(), 'closed')
+        self.assertRaises(Unauthorized, self.tool.removeAnnexesPreviews)
+        self.changeUser('siteadmin')
+        self.tool.removeAnnexesPreviews()
+        # nothing done as meeting not closed
+        infos = _categorized_elements(item)
+        self.assertEqual(infos[annex.UID()]['preview_status'], 'converted')
+        self.assertEqual(infos[annex_decision.UID()]['preview_status'], 'converted')
+        self.closeMeeting(meeting)
+        self.tool.removeAnnexesPreviews()
+        infos = _categorized_elements(item)
+        self.assertEqual(infos[annex.UID()]['preview_status'], 'not_converted')
+        self.assertEqual(infos[annex_decision.UID()]['preview_status'], 'not_converted')
 
 
 def test_suite():

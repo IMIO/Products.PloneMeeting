@@ -981,6 +981,19 @@ schema = Schema((
         schemata="data",
         write_permission="PloneMeeting: Write risky config",
     ),
+    BooleanField(
+        name='removeAnnexesPreviewsOnMeetingClosure',
+        default=defValues.removeAnnexesPreviewsOnMeetingClosure,
+        widget=BooleanField._properties['widget'](
+            description="RemoveAnnexesPreviewsOnMeetingClosure",
+            description_msgid="remove_annexes_previews_on_meeting_closure_descr",
+            label='Removeannexespreviewsonmeetingclosure',
+            label_msgid='PloneMeeting_label_removeAnnexesPreviewsOnMeetingClosure',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="data",
+        write_permission="PloneMeeting: Write risky config",
+    ),
     TextField(
         name='cssClassesToHide',
         default=defValues.cssClassesToHide,
@@ -1334,19 +1347,6 @@ schema = Schema((
         vocabulary='listMeetingStates',
         default=defValues.meetingPresentItemWhenNoCurrentMeetingStates,
         enforceVocabulary=True,
-        write_permission="PloneMeeting: Write risky config",
-    ),
-    BooleanField(
-        name='meetingManagerMayCorrectClosedMeeting',
-        default=defValues.meetingManagerMayCorrectClosedMeeting,
-        widget=BooleanField._properties['widget'](
-            description="MeetingManagerMayCorrectClosedMeeting",
-            description_msgid="meeting_manager_may_correct_closed_meeting_descr",
-            label='meetingmanagermaycorrectclosedmeeting',
-            label_msgid='PloneMeeting_label_meetingManagerMayCorrectClosedMeeting',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="workflow",
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
@@ -2514,7 +2514,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                      'accepted_out_of_meeting',
                      'accepted_out_of_meeting_and_duplicated',
                      'accepted_out_of_meeting_emergency',
-                     'accepted_out_of_meeting_emergency_and_duplicated')
+                     'accepted_out_of_meeting_emergency_and_duplicated',
+                     'meetingmanager_correct_closed_meeting')
 
     def _searchesInfo(self):
         """Informations used to create DashboardCollections in the searches."""
@@ -6252,6 +6253,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             i = i + 1
             for advice in item.adviceIndex.itervalues():
                 advice['isConfidential'] = adviceConfidentialityDefault
+        logger.info('Done.')
         api.portal.show_message('Done.', request=self.REQUEST)
         return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
 

@@ -28,6 +28,7 @@ from collective.contact.plonegroup.utils import get_organization
 from collective.eeafaceted.collectionwidget.utils import _get_criterion
 from collective.eeafaceted.collectionwidget.utils import _updateDefaultCollectionFor
 from collective.eeafaceted.collectionwidget.utils import getCollectionLinkCriterion
+from collective.iconifiedcategory.utils import _categorized_elements
 from collective.iconifiedcategory.utils import get_category_object
 from copy import deepcopy
 from DateTime import DateTime
@@ -2015,6 +2016,35 @@ class testMeetingConfig(PloneMeetingTestCase):
         # delete item then validation is correct
         self.deleteAsManager(item.UID())
         self.failIf(cfg.validate_itemWFValidationLevels(values_disabled_proposed))
+
+    def test_pm_RemoveAnnexesPreviewsOnMeetingClosure(self):
+        """When MeetingConfig.removeAnnexesPreviewsOnMeetingClosure is True,
+           previews of annexes are deleted when the meeting is closed."""
+        self._enableAutoConvert()
+        cfg = self.meetingConfig
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime('2020/03/31'))
+        item = self.create('MeetingItem')
+        annex = self.addAnnex(item)
+        annex_decision = self.addAnnex(item, relatedTo='item_decision')
+        infos = _categorized_elements(item)
+        self.assertEqual(infos[annex.UID()]['preview_status'], 'converted')
+        self.assertEqual(infos[annex_decision.UID()]['preview_status'], 'converted')
+        # removeAnnexesPreviewsOnMeetingClosure=False
+        self.assertFalse(cfg.getRemoveAnnexesPreviewsOnMeetingClosure())
+        self.presentItem(item)
+        self.closeMeeting(meeting)
+        self.assertEqual(meeting.queryState(), 'closed')
+        self.assertEqual(infos[annex.UID()]['preview_status'], 'converted')
+        self.assertEqual(infos[annex_decision.UID()]['preview_status'], 'converted')
+        # removeAnnexesPreviewsOnMeetingClosure=True
+        cfg.setRemoveAnnexesPreviewsOnMeetingClosure(True)
+        self.backToState(meeting, 'created')
+        self.closeMeeting(meeting)
+        self.assertEqual(meeting.queryState(), 'closed')
+        infos = _categorized_elements(item)
+        self.assertEqual(infos[annex.UID()]['preview_status'], 'not_converted')
+        self.assertEqual(infos[annex_decision.UID()]['preview_status'], 'not_converted')
 
 
 def test_suite():

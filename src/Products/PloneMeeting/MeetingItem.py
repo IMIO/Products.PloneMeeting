@@ -15,9 +15,6 @@ from collective.contact.plonegroup.utils import get_organization
 from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_plone_group
 from collective.contact.plonegroup.utils import get_plone_group_id
-from collective.fingerpointing.config import AUDIT_MESSAGE
-from collective.fingerpointing.logger import log_info
-from collective.fingerpointing.utils import get_request_information
 from copy import deepcopy
 from DateTime import DateTime
 from datetime import datetime
@@ -100,6 +97,7 @@ from Products.PloneMeeting.utils import decodeDelayAwareId
 from Products.PloneMeeting.utils import display_as_html
 from Products.PloneMeeting.utils import fieldIsEmpty
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
+from Products.PloneMeeting.utils import fplog
 from Products.PloneMeeting.utils import get_every_back_references
 from Products.PloneMeeting.utils import getCurrentMeetingObject
 from Products.PloneMeeting.utils import getCustomAdapter
@@ -5840,11 +5838,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         notify(ItemDuplicatedEvent(self, newItem))
 
         # add logging message to fingerpointing log
-        user, ip = get_request_information()
-        action = 'clone_item'
-        extras = 'item={0} clone_event={1}'.format(
-            newItem.absolute_url_path(), cloneEventAction)
-        log_info(AUDIT_MESSAGE.format(user, ip, action, extras))
+        extras = 'object={0} clone_event={1}'.format(
+            repr(newItem), cloneEventAction)
+        fplog('clone_item', extras=extras)
         return newItem
 
     security.declarePublic('doCloneToOtherMeetingConfig')
