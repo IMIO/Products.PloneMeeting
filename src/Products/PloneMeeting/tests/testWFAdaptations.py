@@ -66,6 +66,7 @@ class testWFAdaptations(PloneMeetingTestCase):
                            'hide_decisions_when_under_writing',
                            'items_come_validated',
                            'mark_not_applicable',
+                           'meetingmanager_correct_closed_meeting',
                            'no_global_observation',
                            'no_proposal',
                            'no_publication',
