@@ -64,6 +64,8 @@ from zope.annotation import IAnnotations
 from zope.container.interfaces import INameChooser
 from zope.i18n import translate
 
+import sys
+
 
 class PMFolderContentsView(FolderContentsView):
     """
@@ -364,6 +366,16 @@ class PloneMeetingOverviewControlPanel(OverviewControlPanel):
         appy_version = api.env.get_distribution('appy')._version
         versions.insert(0, 'appy %s' % appy_version)
         versions.insert(0, 'PloneMeeting %s' % pm_version)
+        # display versions of package begining with Products.Meeting*
+        plugin_package_names = []
+        for package_name in sys.modules.keys():
+            if package_name.startswith('Products.Meeting'):
+                real_package_name = '.'.join(package_name.split('.')[0:2])
+                if real_package_name not in plugin_package_names:
+                    plugin_package_names.append(real_package_name)
+        for plugin_package_name in plugin_package_names:
+            version = api.env.get_distribution(plugin_package_name)._version
+            versions.insert(1, "%s %s" % (plugin_package_name.split('.')[1], version))
         return versions
 
 

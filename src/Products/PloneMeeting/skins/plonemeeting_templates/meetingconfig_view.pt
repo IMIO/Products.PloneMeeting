@@ -130,7 +130,7 @@
             <input class="context"
                    type="submit" name="updateAnnexConfidentiality"
                    value="pm_update_annex_confidentiality"
-                   onclick="event.preventDefault(); if (confirm(window.eval('are_you_sure'))) {document.forms.updateAnnexConfidentialityForm.submit();}"
+                   onclick="event.preventDefault(); if (confirm(window.eval('are_you_sure'))) {this.form.submit();}"
                    i18n:attributes="value"/>&nbsp;&nbsp;
             </form>
             <p class="discreet" style="color: red;" i18n:translate="pm_update_annex_confidentiality_warning">
@@ -143,7 +143,7 @@
                    type="submit"
                    name="updateAdviceConfidentiality"
                    value="pm_update_advice_confidentiality"
-                   onclick="event.preventDefault(); if (confirm(window.eval('are_you_sure'))) {document.forms.updateAdviceConfidentialityForm.submit();}"
+                   onclick="event.preventDefault(); if (confirm(window.eval('are_you_sure'))) {this.form.submit();}"
                    i18n:attributes="value"/>&nbsp;&nbsp;
             </form>
             <p class="discreet" style="color: red;" i18n:translate="pm_update_advice_confidentiality_warning">
@@ -170,7 +170,7 @@
                    type="submit"
                    name="updatePersonalLabels"
                    value="pm_update_personal_labels"
-                   onclick="event.preventDefault(); if (confirm(window.eval('are_you_sure'))) {document.forms.updatePersonalLabelsForm.submit();}"
+                   onclick="event.preventDefault(); if (confirm(window.eval('are_you_sure'))) {this.form.submit();}"
                    i18n:attributes="value"/>&nbsp;&nbsp;
             </form>
             <p class="discreet" style="color: red;" i18n:translate="pm_update_personal_labels_warning">
@@ -183,7 +183,7 @@
             <input class="context"
                    type="submit" name="checkPodTemplates"
                    value="pm_check_pod_templates"
-                   onclick="event.preventDefault(); if (confirm(window.eval('are_you_sure'))) {document.forms.checkPodTemplatesForm.submit();}"
+                   onclick="event.preventDefault(); if (confirm(window.eval('are_you_sure'))) {this.form.submit();}"
                    i18n:attributes="value"/>&nbsp;&nbsp;
             </form>
             <p class="discreet" style="color: red;" i18n:translate="pm_check_pod_templates_warning">
@@ -196,7 +196,7 @@
             <input type="hidden" tal:attributes="value context/getMeetingTypeName" name="portal_type:list" />
             <input type="hidden" tal:attributes="value context/getItemTypeName" name="portal_type:list" />
             <input class="context" type="submit" name="updateAllLocalRoles"
-                   onclick="event.preventDefault(); if (confirm(window.eval('are_you_sure'))) {document.forms.updateAllLocalRolesForm.submit();}"
+                   onclick="event.preventDefault(); if (confirm(window.eval('are_you_sure'))) {this.form.submit();}"
                    value="mc_update_all_local_roles" i18n:attributes="value"/>&nbsp;&nbsp;
             </form>
             <p class="discreet" style="color: red;" i18n:translate="mc_update_all_local_roles_warning">
@@ -410,7 +410,9 @@
           <td tal:define="field python:here.getField('keepOriginalToPrintOfClonedItems')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td></td>
+          <td tal:define="field python:here.getField('removeAnnexesPreviewsOnMeetingClosure')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
         </tr>
         <tr valign="top">
           <td tal:define="field python:here.getField('cssClassesToHide')">
@@ -728,8 +730,7 @@
           <td tal:define="field python:here.getField('meetingPresentItemWhenNoCurrentMeetingStates')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td tal:define="field python:here.getField('meetingManagerMayCorrectClosedMeeting')">
-            <span metal:use-macro="here/widgets/field/macros/view" />
+          <td>
           </td>
         </tr>
       </table>

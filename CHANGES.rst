@@ -2,18 +2,47 @@ Changelog
 =========
 
 
-4.1.20 (unreleased)
+4.1.21 (unreleased)
 -------------------
 
+- Added new optional field (decisionSuite) for item
+
+4.1.20 (2020-04-02)
+-------------------
+
+- Add a button to save and continuing edition for rich text fields
 - Fix advanced search view with collective.solr
 - Small fixes in the test to improve MeetingLalouviere test run
 - Fixed a misstyped condition in tests/helpers.py
 - Added new type of presence for item attendee (used to ignore an attendee on some items) :
 
   - new meeting optional attribute `non attendee`;
-  - may be used in addition to `present/absent/excused` as even an absent attendee may be set non attendee for a specific item
+  - may be used in addition to `present/absent/excused` as even an absent attendee may be set non attendee for a specific item;
   - changed parameter `patterns` on `print_in_and_out_attendees` to `custom_patterns` to be able to redefine only one single pattern
+- Fixed `AskedAdvicesVocabulary` ram.cache cachekey to avoid same vocabulary used for 2 different MeetingConfigs
+  (the `indexAdvisers` term on DashboardCollection was using another MeetingConfig values), moreover made it more robust in case weird context is received
+- Execute the `MeetingConfig.onMeetingTransitionItemActionToExecute` TAL expressions as `Manager` in `utils.meetingExecuteActionOnLinkedItems`
+  to avoid permission problems, what is defined in the configuration must be applied.
+  This makes the `a power observer may only access accepted items when meeting is closed` work when current user is a `MeetingManager`,
+  not a `Manager`, instead having a permission error as `MeetingItem.updateLocalRoles` is protected with the `Modify portal content` permission
 - Added new optional field (decisionSuite) for item
+- In tests WF helpers (validateItem, decideMeeting, backToState, ...) added parameter as_manager, True by default for MeetingItem related methods and
+  for backToStaten and False by default for Meeting related methods.  This way we avoid as much as possible hidden permission problems
+- Exclude SearchableText indexing for IAnnex objects
+- Make sure CKeditor panels are dispayed correctly in popups (adding/editing advice)
+- Added `MeetingConfig.removeAnnexesPreviewsOnMeetingClosure` parameter, when True, annexes previews will be deleted upon meeting closure,
+  added also action on portal_plonemeeting to be able to remove every annexes previews of every items in every closed meetings
+- Added `utils.fplog`, an helper to add `collective.fingerpointing`-like log messages, adapted code to use it everywhere,
+  extra logging is available when :
+
+  - an item position changed on a meeting;
+  - an inherited advice is removed;
+  - an item is cloned (duplicated, sent to another MeetingConfig, ...);
+  - an attribute of an annex is changed (to print, confidential, ...);
+  - a RichText field is quickedited;
+  - annex previews are removed (when closing meeting if relevant parameter is enabled)
+- Moved parameter `MeetingConfig.meetingManagerMayCorrectClosedMeeting` to a workflowAdaptation `meetingmanager_correct_closed_meeting`
+- Include plugin package name and versions in `@@overview-controlpanel` in addition to versions for `PloneMeeting` and `appy`
 
 4.1.19.2 (2020-03-17)
 ---------------------

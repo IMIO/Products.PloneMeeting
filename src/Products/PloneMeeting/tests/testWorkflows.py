@@ -663,6 +663,9 @@ class testWorkflows(PloneMeetingTestCase):
            is closed, even if item is decided before the meeting is closed.'''
         self.changeUser('siteadmin')
         cfg = self.meetingConfig
+        if 'meetingmanager_correct_closed_meeting' in cfg.listWorkflowAdaptations():
+            cfg.setWorkflowAdaptations(cfg.getWorkflowAdaptations() +
+                                       ('meetingmanager_correct_closed_meeting', ))
         # call updateLocalRoles on item only if it not already decided
         # as updateLocalRoles is called when item review_state changed
         self.assertTrue('accepted' in cfg.getItemDecidedStates())
@@ -686,7 +689,11 @@ class testWorkflows(PloneMeetingTestCase):
                 'item.updateLocalRoles()'},
              {'meeting_transition': 'close',
               'item_action': 'accept',
-              'tal_expression': ''}, ])
+              'tal_expression': ''},
+             {'meeting_transition': 'backToDecided',
+              'item_action': EXECUTE_EXPR_VALUE,
+              'tal_expression': 'python: item.updateLocalRoles()'},
+             ])
         # configure access of powerobservers only access if meeting is 'closed'
         cfg.setPowerObservers([
             {'item_access_on': 'python: item.getMeeting().queryState() == "closed"',
@@ -711,11 +718,27 @@ class testWorkflows(PloneMeetingTestCase):
         self.assertFalse(self.hasPermission(View, item1))
         self.assertFalse(self.hasPermission(View, item2))
         self.changeUser('pmManager')
+        self.decideMeeting(meeting)
+        # make sure we close as a MeetingManager
+        # this test that meetingExecuteActionOnLinkedItems execute TAL exprs as 'Manager'
         self.closeMeeting(meeting)
         # items are accepted
         self.assertEqual(item1.queryState(), 'accepted')
         self.assertEqual(item2.queryState(), 'accepted')
         # and powerobserver has also access to item1 that was already accepted before meeting was closed
+        self.changeUser('powerobserver1')
+        self.assertTrue(self.hasPermission(View, item1))
+        self.assertTrue(self.hasPermission(View, item2))
+        # when meeting set back to decided, items are no more viewable
+        self.changeUser('pmManager')
+        self.backToState(meeting, 'decided')
+        self.changeUser('powerobserver1')
+        self.assertFalse(self.hasPermission(View, item1))
+        self.assertFalse(self.hasPermission(View, item2))
+        # and closed again
+        self.changeUser('pmManager')
+        self.closeMeeting(meeting)
+        self.changeUser('powerobserver1')
         self.assertTrue(self.hasPermission(View, item1))
         self.assertTrue(self.hasPermission(View, item2))
 
@@ -810,33 +833,6 @@ class testWorkflows(PloneMeetingTestCase):
                         if state not in states:
                             pm_logger.info('test_pm_MeetingReviewersValuesAreCorrect: '
                                            'state {0} not found in wf {1}'.format(state, wf.getId()))
-
-    def test_pm_CorrectClosedMeeting(self):
-        """A closed meeting may be corrected by MeetingManagers
-           if MeetingConfig.meetingManagerMayCorrectClosedMeeting is True."""
-        cfg = self.meetingConfig
-        self.assertFalse(cfg.getMeetingManagerMayCorrectClosedMeeting())
-        self.changeUser('pmManager')
-        meeting = self.create('Meeting', date=DateTime('2019/04/09'))
-        self.closeMeeting(meeting)
-        self.assertEqual(meeting.queryState(), 'closed')
-        closed_meeting_msg = translate(u'closed_meeting_not_correctable_by_config',
-                                       domain='PloneMeeting',
-                                       context=self.request)
-        # No instance
-        may_correct = meeting.wfConditions().mayCorrect()
-        self.assertFalse(may_correct)
-        self.assertEqual(translate(may_correct.msg, domain='PloneMeeting', context=self.request),
-                         closed_meeting_msg)
-        # OK for Managers
-        self.changeUser('siteadmin')
-        self.assertTrue(meeting.wfConditions().mayCorrect())
-        # enable for MeetingManagers
-        cfg.setMeetingManagerMayCorrectClosedMeeting(True)
-        self.changeUser('pmManager')
-        self.assertTrue(meeting.wfConditions().mayCorrect())
-        self.changeUser('siteadmin')
-        self.assertTrue(meeting.wfConditions().mayCorrect())
 
 
 def test_suite():

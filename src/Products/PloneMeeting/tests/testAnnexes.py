@@ -24,8 +24,6 @@
 
 from AccessControl import Unauthorized
 from collective.contact.plonegroup.utils import get_plone_group
-from collective.documentviewer.config import CONVERTABLE_TYPES
-from collective.documentviewer.settings import GlobalSettings
 from collective.iconifiedcategory.event import IconifiedAttrChangedEvent
 from collective.iconifiedcategory.interfaces import IIconifiedPreview
 from collective.iconifiedcategory.utils import calculate_category_id
@@ -749,11 +747,11 @@ class testAnnexes(PloneMeetingTestCase):
         self.assertTrue(len(catalog(SearchableText=ITEM_TITLE)) == 1)
         self.assertTrue(len(catalog(SearchableText=ITEM_DESCRIPTION)) == 1)
         self.assertTrue(len(catalog(SearchableText=ITEM_DECISION)) == 1)
-        self.assertTrue(len(catalog(SearchableText=ANNEX_TITLE)) == 2)
+        self.assertTrue(len(catalog(SearchableText=ANNEX_TITLE)) == 1)
         indexable_wrapper = IndexableObjectWrapper(item, catalog)
         self.assertEquals(
             indexable_wrapper.SearchableText,
-            '{0}  <p>{1}</p>  <p>{2}</p>  {3} '.format(
+            '{0}  <p>{1}</p>  <p>{2}</p>  {3}'.format(
                 ITEM_TITLE, ITEM_DESCRIPTION, ITEM_DECISION, ANNEX_TITLE))
         itemRID = catalog(UID=item.UID())[0].getRID()
         self.assertEquals(index.getEntryForObject(itemRID),
@@ -780,18 +778,75 @@ class testAnnexes(PloneMeetingTestCase):
         self.assertFalse(catalog(SearchableText=ANNEX_TITLE))
         # add an annex
         annex = self.addAnnex(meeting, annexTitle=ANNEX_TITLE)
-        self.assertTrue(len(catalog(SearchableText=ANNEX_TITLE)) == 2)
+        self.assertTrue(len(catalog(SearchableText=ANNEX_TITLE)) == 1)
         # remove the annex
         self.portal.restrictedTraverse('@@delete_givenuid')(annex.UID())
         self.assertFalse(catalog(SearchableText=ANNEX_TITLE))
 
+    def test_pm_ItemAnnexesContentNotInAnnexSearchableText(self):
+        '''Annexes content is not indexed in any SearchableText.'''
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem', title='My beautifull item')
+        # add an annex
+        annex = self.addAnnex(item, annexTitle="Big bad text.txt", annexFile=u'annex_not_to_index.txt')
+        self.presentItem(item)
+        self.changeUser('pmManager')
+        catalog = self.portal.portal_catalog
+        # ensure this annex is indexed
+        annex.reindexObject()
+        self.assertEqual(len(catalog(UID=annex.UID())), 1)
+        brains = catalog(Title='Big bad text')
+        self.assertEqual(len(brains), 1)
+        self.assertEqual(brains[0].UID, annex.UID())
+        # ensure its SearchableText entry is empty
+        index = catalog.Indexes['SearchableText']
+        annexRID = catalog(UID=annex.UID())[0].getRID()
+        entry = index.getEntryForObject(annexRID)
+        self.assertIsNone(entry)
+        # ensure it can't be found while searching its content in case it is indexed on another context
+        self.assertEqual(len(catalog(SearchableText='If you')), 0)
+        self.assertEqual(len(catalog(SearchableText='you see')), 0)
+        self.assertEqual(len(catalog(SearchableText='see me')), 0)
+        self.assertEqual(len(catalog(SearchableText='me ...')), 0)
+        self.assertEqual(len(catalog(SearchableText='Well you')), 0)
+        self.assertEqual(len(catalog(SearchableText='you know')), 0)
+        self.assertEqual(len(catalog(SearchableText='know how')), 0)
+        self.assertEqual(len(catalog(SearchableText='how it')), 0)
+        self.assertEqual(len(catalog(SearchableText='it ends')), 0)
+
+    def test_pm_MeetingAnnexesContentNotInAnnexSearchableText(self):
+        '''Annexes content is not indexed in any SearchableText.'''
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime('2019/12/19'))
+        catalog = self.portal.portal_catalog
+        # add an annex
+        annex = self.addAnnex(meeting, annexTitle="Big bad text.txt", annexFile=u'annex_not_to_index.txt')
+        # ensure this annex is indexed
+        annex.reindexObject()
+        self.assertEqual(len(catalog(UID=annex.UID())), 1)
+        brains = catalog(Title='Big bad text')
+        self.assertEqual(len(brains), 1)
+        self.assertEqual(brains[0].UID, annex.UID())
+        # ensure its SearchableText entry is empty
+        index = catalog.Indexes['SearchableText']
+        annexRID = catalog(UID=annex.UID())[0].getRID()
+        entry = index.getEntryForObject(annexRID)
+        self.assertIsNone(entry)
+        # ensure it can't be found while searching its content in case it is indexed on another context
+        self.assertEqual(len(catalog(SearchableText='If you')), 0)
+        self.assertEqual(len(catalog(SearchableText='you see')), 0)
+        self.assertEqual(len(catalog(SearchableText='see me')), 0)
+        self.assertEqual(len(catalog(SearchableText='me ...')), 0)
+        self.assertEqual(len(catalog(SearchableText='Well you')), 0)
+        self.assertEqual(len(catalog(SearchableText='you know')), 0)
+        self.assertEqual(len(catalog(SearchableText='know how')), 0)
+        self.assertEqual(len(catalog(SearchableText='how it')), 0)
+        self.assertEqual(len(catalog(SearchableText='it ends')), 0)
+
     def test_pm_AnnexesConvertedIfAutoConvertIsEnabled(self):
         """If collective.documentviewer 'auto_convert' is enabled,
            the annexes and decision annexes are converted."""
-        gsettings = GlobalSettings(self.portal)
-        gsettings.auto_convert = True
-        gsettings.auto_layout_file_types = CONVERTABLE_TYPES.keys()
-
+        gsettings = self._enableAutoConvert()
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         self.annexFile = u'file_correct.pdf'
@@ -810,9 +865,7 @@ class testAnnexes(PloneMeetingTestCase):
         """If collective.documentviewer 'auto_convert' is disabled,
            annexes set 'to_print' is only converted if
            MeetingConfig.annexToPrintMode is 'enabled_for_printing'."""
-        gsettings = GlobalSettings(self.portal)
-        gsettings.auto_convert = False
-        gsettings.auto_layout_file_types = CONVERTABLE_TYPES.keys()
+        self._enableAutoConvert(enable=False)
         cfg = self.meetingConfig
         cfg.setAnnexToPrintMode('enabled_for_info')
 
@@ -866,9 +919,7 @@ class testAnnexes(PloneMeetingTestCase):
            if an annex is updated, it will be converted again onModified."""
         cfg = self.meetingConfig
         cfgId = cfg.getId()
-        gsettings = GlobalSettings(self.portal)
-        gsettings.auto_convert = True
-        gsettings.auto_layout_file_types = CONVERTABLE_TYPES.keys()
+        gsettings = self._enableAutoConvert()
         default_category = get_category_object(
             self.meetingConfig,
             '{0}-annexes_types_-_item_annexes_-_financial-analysis'.format(cfgId))

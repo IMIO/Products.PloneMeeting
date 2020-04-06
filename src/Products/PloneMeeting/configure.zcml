@@ -217,6 +217,7 @@
   <adapter name="reviewProcessInfo" factory=".indexes.reviewProcessInfo" />
   <adapter name="SearchableText" factory=".indexes.SearchableText_item" />
   <adapter name="SearchableText" factory=".indexes.SearchableText_meeting" />
+  <adapter name="SearchableText" factory=".indexes.SearchableText_annex" />
   <adapter name="sendToAuthority" factory=".indexes.sendToAuthority" />
   <adapter name="sentToInfos" factory=".indexes.sentToInfos" />
   <adapter name="sortable_title" factory=".indexes.sortable_title" />

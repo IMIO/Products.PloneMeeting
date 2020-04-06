@@ -2137,6 +2137,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(self.hasPermission(View, item))
         self.assertTrue(self.hasPermission(View, meeting))
         # frozen items/meetings are accessible by both powerobs
+        self.changeUser('pmManager')
         self.freezeMeeting(meeting)
         self.assertEqual(item.queryState(), 'itemfrozen')
         self.changeUser('restrictedpowerobserver1')
@@ -2147,8 +2148,8 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(self.hasPermission(View, meeting))
         # decide the meeting and refuse the item, meeting accessible to both
         # but refused item only accessible to restricted powerob
-        self.decideMeeting(meeting)
         self.changeUser('pmManager')
+        self.decideMeeting(meeting)
         self.do(item, 'refuse')
         self.changeUser('restrictedpowerobserver1')
         self.assertTrue(self.hasPermission(View, item))

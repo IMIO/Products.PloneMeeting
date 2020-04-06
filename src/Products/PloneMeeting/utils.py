@@ -899,6 +899,10 @@ def setFieldFromAjax(obj, fieldName, newValue):
     notifyModifiedAndReindex(obj, extra_idxs=extra_idxs)
     # just unlock, do not call ObjectEditedEvent because it does too much
     unlockAfterModification(obj, event={})
+    # add a fingerpointing log message
+    extras = 'object={0} field_name={1}'.format(
+        repr(obj), fieldName)
+    fplog('quickedit_field', extras=extras)
 
 
 def notifyModifiedAndReindex(obj, extra_idxs=[], notify_event=False):
@@ -1048,18 +1052,20 @@ def meetingExecuteActionOnLinkedItems(meeting, transitionId):
                         pass
                 else:
                     # execute the TAL expression, will not fail but log if an error occurs
-                    _evaluateExpression(
-                        item,
-                        expression=config['tal_expression'].strip(),
-                        roles_bypassing_expression=[],
-                        extra_expr_ctx={
-                            'pm_utils': SecureModuleImporter['Products.PloneMeeting.utils'],
-                            'imio_history_utils': SecureModuleImporter['imio.history.utils'],
-                            'tool': tool,
-                            'cfg': cfg,
-                            'item': item,
-                            'meeting': meeting},
-                        error_pattern=ITEM_EXECUTE_ACTION_ERROR)
+                    # do this as Manager to avoid permission problems, the configuration is supposed to be applied
+                    with api.env.adopt_roles(['Manager']):
+                        _evaluateExpression(
+                            item,
+                            expression=config['tal_expression'].strip(),
+                            roles_bypassing_expression=[],
+                            extra_expr_ctx={
+                                'pm_utils': SecureModuleImporter['Products.PloneMeeting.utils'],
+                                'imio_history_utils': SecureModuleImporter['imio.history.utils'],
+                                'tool': tool,
+                                'cfg': cfg,
+                                'item': item,
+                                'meeting': meeting},
+                            error_pattern=ITEM_EXECUTE_ACTION_ERROR)
 
 
 def computeCertifiedSignatures(signatures):
