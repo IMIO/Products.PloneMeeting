@@ -5,8 +5,7 @@ Changelog
 4.1.21 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- Added new optional field (decisionSuite) for item
 
 4.1.20 (2020-04-02)
 -------------------

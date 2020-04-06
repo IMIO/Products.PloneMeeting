@@ -124,6 +124,9 @@
     <tal:field define="fieldName python: 'decision'">
       <metal:f use-macro="context/@@pm-macros/editContentField"/>
     </tal:field>
+    <tal:field define="fieldName python: 'decisionSuite'">
+      <metal:f use-macro="context/@@pm-macros/editContentField"/>
+    </tal:field>
     <tal:field define="fieldName python: 'inAndOutMoves'">
       <metal:f use-macro="context/@@pm-macros/editContentField"/>
     </tal:field>
