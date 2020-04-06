@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.1.20.1 (unreleased)
+4.1.20.1 (2020-04-06)
 ---------------------
 
 - Added new optional field (decisionSuite) for item
