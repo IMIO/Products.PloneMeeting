@@ -2849,7 +2849,6 @@ class testWFAdaptations(PloneMeetingTestCase):
         self._meetingmanager_correct_closed_meeting_inactive()
         # activate the wfAdaptation and check
         cfg.setWorkflowAdaptations(('meetingmanager_correct_closed_meeting', ))
-        performWorkflowAdaptations(cfg, logger=pm_logger)
         self._meetingmanager_correct_closed_meeting_active()
 
     def _meetingmanager_correct_closed_meeting_inactive(self):
