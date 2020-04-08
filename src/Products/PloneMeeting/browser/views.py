@@ -859,9 +859,9 @@ class BaseDGHV(object):
         elif self.context.meta_type == 'MeetingItem' and self.context.getItemAssembly():
             assembly = self.context.getItemAssembly()
 
-        if assembly and striked:
-            return toHTMLStrikedContent(assembly)
-        elif assembly:
+        if assembly:
+            if striked:
+                return toHTMLStrikedContent(assembly)
             return assembly
 
         if use_print_attendees_by_type:
