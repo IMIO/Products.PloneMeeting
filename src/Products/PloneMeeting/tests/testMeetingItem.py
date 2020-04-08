@@ -5278,14 +5278,15 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmManager')
         self.create('Meeting', date=DateTime())
         item = self.create('MeetingItem')
-        self.presentItem(item)
         template = self.meetingConfig.podtemplates.itemTemplate
         self.request.set('template_uid', template.UID())
         self.request.set('output_format', 'odt')
         view = item.restrictedTraverse('@@document-generation')
         view()
         helper = view.get_generation_context_helper()
-
+        # printAssembly shouldn't fail if the item is not in a meeting
+        self.assertEqual('', helper.printAssembly())
+        self.presentItem(item)
         printed_assembly = helper.printAssembly(group_position_type=False)
         # Every attendee firstname and lastname must be in view.printAssembly()
         for attendee in item.getAttendees(theObjects=True):

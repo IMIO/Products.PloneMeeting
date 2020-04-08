@@ -5,7 +5,7 @@ Changelog
 4.1.20.3 (unreleased)
 ---------------------
 
-- Nothing changed yet.
+- Fixed view.printAssembly method that failed when a meeting item was not in a meeting
 
 
 4.1.20.2 (2020-04-08)
