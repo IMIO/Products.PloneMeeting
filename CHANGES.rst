@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.1.20.2 (unreleased)
+4.1.20.2 (2020-04-08)
 ---------------------
 
 - Fixed `collective.documentgenerator` helper methods `print_attendees` and `print_attendees_by_type`:
