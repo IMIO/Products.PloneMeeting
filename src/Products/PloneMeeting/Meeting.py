@@ -1037,12 +1037,6 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         '''See docstring in previous method.'''
         return self._getContacts('absent', theObjects=theObjects)
 
-    security.declarePublic('getNonAttendees')
-
-    def getNonAttendees(self, theObjects=False):
-        '''See docstring in previous method.'''
-        return self._getContacts('nonAttendee', theObjects=theObjects)
-
     security.declarePublic('getSignatories')
 
     def getSignatories(self, theObjects=False, by_signature_number=False):
@@ -1662,7 +1656,6 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
                     {'attendee': False,
                      'excused': False,
                      'absent': False,
-                     'nonAttendee': False,
                      'signer': False,
                      'signature_number': None,
                      'replacement': None}

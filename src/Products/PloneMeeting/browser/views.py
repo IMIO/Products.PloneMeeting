@@ -874,7 +874,7 @@ class BaseDGHV(object):
             attendees = meeting.getAttendees()
             item_absents = []
             item_excused = []
-            item_non_attendees = meeting.getNonAttendees()
+            item_non_attendees = meeting.getItemNonAttendees()
         else:
             # MeetingItem
             meeting = self.context.getMeeting()

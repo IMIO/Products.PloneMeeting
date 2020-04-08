@@ -2,11 +2,11 @@ Changelog
 =========
 
 
-4.1.21 (unreleased)
--------------------
+4.1.20.2 (unreleased)
+---------------------
 
-- Nothing changed yet.
-
+- Fixed `collective.documentgenerator` helper methods `print_attendees` and `print_attendees_by_type` and
+  removed useless method `Meeting.getNonAttendees`, nonAttendee is only relevant on item, so we use `Meeting.getItemNonAttendees`.
 
 4.1.20.1 (2020-04-06)
 ---------------------

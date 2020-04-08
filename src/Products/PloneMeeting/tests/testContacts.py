@@ -652,6 +652,61 @@ class testContacts(PloneMeetingTestCase):
              'non_attendee_after': u'<p>Custom pattern non_attendee_after</p>',
              'non_attendee_before': ''})
 
+    def test_pm_Print_attendees(self):
+        """Basic test for the print_attendees method."""
+        meeting, meeting_attendees, item1, item2, item3 = self._setupInAndOutAttendees()
+        # item
+        view = item1.restrictedTraverse('document-generation')
+        helper = view.get_generation_context_helper()
+        self.assertEqual(
+            helper.print_attendees(),
+            u'Monsieur Person1FirstName Person1LastName, '
+            u'Assembly member 1, <strong>absent pour ce point</strong><br />'
+            u'Monsieur Person2FirstName Person2LastName, '
+            u'Assembly member 2, <strong>pr\xe9sent</strong><br />'
+            u'Monsieur Person3FirstName Person3LastName, '
+            u'Assembly member 3, <strong>pr\xe9sent</strong><br />'
+            u'Monsieur Person4FirstName Person4LastName, '
+            u'Assembly member 4, <strong>pr\xe9sent</strong>')
+        # meeting
+        view = meeting.restrictedTraverse('document-generation')
+        helper = view.get_generation_context_helper()
+        self.assertEqual(
+            helper.print_attendees(),
+            u'Monsieur Person1FirstName Person1LastName, Assembly member 1, '
+            u'<strong>pr\xe9sent</strong><br />'
+            u'Monsieur Person2FirstName Person2LastName, Assembly member 2, '
+            u'<strong>pr\xe9sent</strong><br />'
+            u'Monsieur Person3FirstName Person3LastName, Assembly member 3, '
+            u'<strong>pr\xe9sent</strong><br />'
+            u'Monsieur Person4FirstName Person4LastName, Assembly member 4, '
+            u'<strong>pr\xe9sent</strong>')
+
+    def test_pm_Print_attendees_by_type(self):
+        """Basic test for the print_attendees method."""
+        meeting, meeting_attendees, item1, item2, item3 = self._setupInAndOutAttendees()
+        # item
+        view = item1.restrictedTraverse('document-generation')
+        helper = view.get_generation_context_helper()
+        self.assertEqual(
+            helper.print_attendees_by_type(),
+            u'<strong><u>Pr\xe9sents&nbsp;:</u></strong><br />'
+            u'Monsieur Person2FirstName Person2LastName, Assembly member 2, '
+            u'Monsieur Person3FirstName Person3LastName, Assembly member 3, '
+            u'Monsieur Person4FirstName Person4LastName, Assembly member 4;<br />'
+            u'<strong><u>Absent pour ce point&nbsp;:</u></strong><br />'
+            u'Monsieur Person1FirstName Person1LastName, Assembly member 1;')
+        # meeting
+        view = meeting.restrictedTraverse('document-generation')
+        helper = view.get_generation_context_helper()
+        self.assertEqual(
+            helper.print_attendees_by_type(),
+            u'<strong><u>Pr\xe9sents&nbsp;:</u></strong><br />'
+            u'Monsieur Person1FirstName Person1LastName, Assembly member 1, '
+            u'Monsieur Person2FirstName Person2LastName, Assembly member 2, '
+            u'Monsieur Person3FirstName Person3LastName, Assembly member 3, '
+            u'Monsieur Person4FirstName Person4LastName, Assembly member 4;')
+
     def test_pm_ItemContactsWhenItemRemovedFromMeeting(self):
         '''When an item is removed from a meeting, redefined informations
            regarding item absents/excused and signatories are reinitialized.'''
