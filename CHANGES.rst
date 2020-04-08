@@ -6,7 +6,7 @@ Changelog
 ---------------------
 
 - Fixed view.printAssembly method that failed when a meeting item was not in a meeting
-- Fixed test_pm_ItemStrikedAssembly to test printAssembly method when a meeting item in not in a meeting
+- Fixed test_pm_ItemStrikedAssembly to test printAssembly method when a meeting item is not in a meeting
 
 
 4.1.20.2 (2020-04-08)
