@@ -894,6 +894,7 @@ class BaseDGHV(object):
                         by_attendee_type=False,
                         by_parent_org=False,
                         render_as_html=True,
+                        escape_for_html=True,
                         show_replaced_by=True,
                         include_replace_by_held_position_label=True,
                         attendee_value_format=u"{0}, {1}",
@@ -949,8 +950,11 @@ class BaseDGHV(object):
             contact_uid = contact.UID()
             if ignore_non_attendees and contact_uid in item_non_attendees:
                 continue
-            res[contact] = contact.get_short_title(include_sub_organizations=False,
-                                                   abbreviate_firstname=abbreviate_firstname)
+            contact_short_title = contact.get_short_title(include_sub_organizations=False,
+                                                          abbreviate_firstname=abbreviate_firstname)
+            if escape_for_html:
+                contact_short_title = cgi.escape(contact_short_title)
+            res[contact] = contact_short_title
 
         # manage group by sub organization
         if by_parent_org:
@@ -1022,6 +1026,7 @@ class BaseDGHV(object):
                                 pos_attendee_separator=', ',
                                 single_pos_attendee_ender=';',
                                 render_as_html=True,
+                                escape_for_html=True,
                                 position_type_format=u", {0};",
                                 show_grouped_attendee_type=True,
                                 show_item_grouped_attendee_type=True,
@@ -1047,6 +1052,8 @@ class BaseDGHV(object):
                     include_person_title=include_person_title,
                     abbreviate_firstname=abbreviate_firstname,
                     include_held_position_label=not group_position_type)
+                if escape_for_html:
+                    contact_value = cgi.escape(contact_value)
                 contact_uid = contact.UID()
                 if contact_uid in striked_contact_uids:
                     contact_value = striked_attendee_pattern.format(contact_value)
@@ -1079,6 +1086,8 @@ class BaseDGHV(object):
                                 # manage when we have no position_type but a label
                                 if hp.position_type == u'default' and u'default' not in ignored_pos_type_ids:
                                     position_type_value = hp.get_label()
+                                    if escape_for_html:
+                                        position_type_value = cgi.escape(position_type_value)
                                 else:
                                     position_type_value = contacts[0].gender_and_number_from_position_type()[gn]
                             grouped_contacts_value = _buildContactsValue(meeting, contacts)

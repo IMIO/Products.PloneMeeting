@@ -667,7 +667,7 @@ class testContacts(PloneMeetingTestCase):
             u'Monsieur Person3FirstName Person3LastName, '
             u'Assembly member 3, <strong>pr\xe9sent</strong><br />'
             u'Monsieur Person4FirstName Person4LastName, '
-            u'Assembly member 4, <strong>pr\xe9sent</strong>')
+            u'Assembly member 4 &amp; 5, <strong>pr\xe9sent</strong>')
         # meeting
         view = meeting.restrictedTraverse('document-generation')
         helper = view.get_generation_context_helper()
@@ -679,7 +679,7 @@ class testContacts(PloneMeetingTestCase):
             u'<strong>pr\xe9sent</strong><br />'
             u'Monsieur Person3FirstName Person3LastName, Assembly member 3, '
             u'<strong>pr\xe9sent</strong><br />'
-            u'Monsieur Person4FirstName Person4LastName, Assembly member 4, '
+            u'Monsieur Person4FirstName Person4LastName, Assembly member 4 &amp; 5, '
             u'<strong>pr\xe9sent</strong>')
 
     def test_pm_Print_attendees_by_type(self):
@@ -693,7 +693,7 @@ class testContacts(PloneMeetingTestCase):
             u'<strong><u>Pr\xe9sents&nbsp;:</u></strong><br />'
             u'Monsieur Person2FirstName Person2LastName, Assembly member 2, '
             u'Monsieur Person3FirstName Person3LastName, Assembly member 3, '
-            u'Monsieur Person4FirstName Person4LastName, Assembly member 4;<br />'
+            u'Monsieur Person4FirstName Person4LastName, Assembly member 4 &amp; 5;<br />'
             u'<strong><u>Absent pour ce point&nbsp;:</u></strong><br />'
             u'Monsieur Person1FirstName Person1LastName, Assembly member 1;')
         # meeting
@@ -705,7 +705,7 @@ class testContacts(PloneMeetingTestCase):
             u'Monsieur Person1FirstName Person1LastName, Assembly member 1, '
             u'Monsieur Person2FirstName Person2LastName, Assembly member 2, '
             u'Monsieur Person3FirstName Person3LastName, Assembly member 3, '
-            u'Monsieur Person4FirstName Person4LastName, Assembly member 4;')
+            u'Monsieur Person4FirstName Person4LastName, Assembly member 4 &amp; 5;')
 
     def test_pm_ItemContactsWhenItemRemovedFromMeeting(self):
         '''When an item is removed from a meeting, redefined informations

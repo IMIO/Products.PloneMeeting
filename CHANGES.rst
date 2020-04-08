@@ -5,8 +5,10 @@ Changelog
 4.1.20.2 (unreleased)
 ---------------------
 
-- Fixed `collective.documentgenerator` helper methods `print_attendees` and `print_attendees_by_type` and
-  removed useless method `Meeting.getNonAttendees`, nonAttendee is only relevant on item, so we use `Meeting.getItemNonAttendees`.
+- Fixed `collective.documentgenerator` helper methods `print_attendees` and `print_attendees_by_type`:
+
+  - removed useless method `Meeting.getNonAttendees`, nonAttendee is only relevant on item, so we use `Meeting.getItemNonAttendees`;
+  - added parameter `escape_for_html=True` to both methods that will escape characters not compatible with `appy.pod`.
 
 4.1.20.1 (2020-04-06)
 ---------------------
