@@ -22,6 +22,7 @@ from Products.CMFCore.ActionInformation import Action
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.Five import zcml
+from Products.PloneMeeting.config import ADVICE_STATES_ALIVE
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.etags import ConfigModified
 from Products.PloneMeeting.etags import ContextModified
@@ -378,7 +379,7 @@ class testViews(PloneMeetingTestCase):
         # no advice
         self.create('MeetingItem')
         # if we use the query, it will return nothing for now...
-        self.assertTrue(not catalog(**query))
+        self.assertFalse(catalog(**query))
 
         # no delay-aware advice
         itemWithNonDelayAwareAdvices = self.create('MeetingItem')
@@ -452,6 +453,114 @@ class testViews(PloneMeetingTestCase):
         itemWithDelayAwareAdvice.updateLocalRoles()
         self.assertTrue(not catalog(**query))
 
+    def test_pm_UpdateDelayAwareAdvicesComputeQuery(self):
+        '''
+          The computed query only consider organizations for which a delay aware advice is configured.
+        '''
+        cfg = self.meetingConfig
+        cfg2 = self.meetingConfig2
+        self.changeUser('admin')
+        # for now, no customAdvisers
+        for mc in self.tool.objectValues('MeetingConfig'):
+            self.assertFalse(mc.getCustomAdvisers())
+        query = self.portal.restrictedTraverse('@@update-delay-aware-advices')._computeQuery()
+        self.assertEqual(query, {'indexAdvisers': ['dummy']})
+        # define customAdvisers in cfg1, only one delay aware for vendors
+        cfg.setCustomAdvisers(
+            [{'row_id': 'unique_id_123',
+              'org': self.vendors_uid,
+              'gives_auto_advice_on': '',
+              'for_item_created_from': '2012/01/01',
+              'for_item_created_until': '',
+              'delay': '5',
+              'delay_label': '5 days'},
+             {'row_id': 'unique_id_456',
+              'org': self.vendors_uid,
+              'gives_auto_advice_on': 'here/getBudgetRelated',
+              'for_item_created_from': '2012/01/01',
+              'for_item_created_until': '',
+              'delay': '',
+              'delay_label': ''}, ])
+        query = self.portal.restrictedTraverse('@@update-delay-aware-advices')._computeQuery()
+        self.assertEqual(
+            query,
+            {'indexAdvisers': ['delay__{0}_{1}'.format(self.vendors_uid, advice_state)
+                               for advice_state in ('advice_not_given', ) + ADVICE_STATES_ALIVE]})
+        # define customAdvisers in cfg2, also for vendors
+        cfg2.setCustomAdvisers(
+            [{'row_id': 'unique_id_123',
+              'org': self.developers_uid,
+              'gives_auto_advice_on': 'python:True',
+              'for_item_created_from': '2012/01/01',
+              'for_item_created_until': '',
+              'delay': '',
+              'delay_label': ''},
+             {'row_id': 'unique_id_456',
+              'org': self.vendors_uid,
+              'gives_auto_advice_on': '',
+              'for_item_created_from': '2012/01/01',
+              'for_item_created_until': '',
+              'delay': '10',
+              'delay_label': '10 days'}, ])
+        # the query is the same when vendors defined in cfg alone or cfg and cfg2
+        query = self.portal.restrictedTraverse('@@update-delay-aware-advices')._computeQuery()
+        self.assertEqual(
+            sorted(query),
+            sorted({'indexAdvisers':
+                   ['delay__{0}_{1}'.format(self.vendors_uid, advice_state)
+                    for advice_state in ('advice_not_given', ) + ADVICE_STATES_ALIVE]}))
+        # now define customAdvisers for developers
+        cfg2.setCustomAdvisers(
+            [{'row_id': 'unique_id_123',
+              'org': self.vendors_uid,
+              'gives_auto_advice_on': 'python:True',
+              'for_item_created_from': '2012/01/01',
+              'for_item_created_until': '',
+              'delay': '',
+              'delay_label': ''},
+             {'row_id': 'unique_id_456',
+              'org': self.developers_uid,
+              'gives_auto_advice_on': '',
+              'for_item_created_from': '2012/01/01',
+              'for_item_created_until': '',
+              'delay': '10',
+              'delay_label': '10 days'}, ])
+        query = self.portal.restrictedTraverse('@@update-delay-aware-advices')._computeQuery()
+        # check len because sorted removes duplicates
+        self.assertEqual(len(query['indexAdvisers']), 2 * (1 + len(ADVICE_STATES_ALIVE)))
+        self.assertEqual(
+            sorted(query),
+            sorted({'indexAdvisers':
+                    ['delay__{0}_{1}'.format(self.vendors_uid, advice_state)
+                     for advice_state in ('advice_not_given', ) + ADVICE_STATES_ALIVE] +
+                    ['delay__{0}_{1}'.format(self.developers_uid, advice_state)
+                     for advice_state in ('advice_not_given', ) + ADVICE_STATES_ALIVE]}))
+        # if org delay aware in several MeetingConfigs, line is only shown one time
+        cfg2.setCustomAdvisers(
+            [{'row_id': 'unique_id_123',
+              'org': self.vendors_uid,
+              'gives_auto_advice_on': 'python:True',
+              'for_item_created_from': '2012/01/01',
+              'for_item_created_until': '',
+              'delay': '3',
+              'delay_label': '3 days'},
+             {'row_id': 'unique_id_456',
+              'org': self.developers_uid,
+              'gives_auto_advice_on': '',
+              'for_item_created_from': '2012/01/01',
+              'for_item_created_until': '',
+              'delay': '10',
+              'delay_label': '10 days'}, ])
+        query = self.portal.restrictedTraverse('@@update-delay-aware-advices')._computeQuery()
+        self.assertEqual(len(query['indexAdvisers']), 2 * (1 + len(ADVICE_STATES_ALIVE)))
+        self.assertEqual(
+            sorted(query),
+            sorted({'indexAdvisers':
+                    ['delay__{0}_{1}'.format(self.vendors_uid, advice_state)
+                     for advice_state in ('advice_not_given', ) + ADVICE_STATES_ALIVE] +
+                    ['delay__{0}_{1}'.format(self.developers_uid, advice_state)
+                     for advice_state in ('advice_not_given', ) + ADVICE_STATES_ALIVE]}))
+
     def test_pm_UpdateDelayAwareAdvicesUpdateAllAdvices(self):
         """Test the _updateAllAdvices method that update every advices.
            It is used to update every delay aware advices every night."""
@@ -476,6 +585,7 @@ class testViews(PloneMeetingTestCase):
         # check that item modified is not changed when advice updated
         item1_original_modified = item1.modified()
         item2_original_modified = item2.modified()
+        # _updateAllAdvices called with query={} (default)
         self.portal.restrictedTraverse('@@update-delay-aware-advices')._updateAllAdvices()
         self.assertFalse(self.developers_advisers in item1.__ac_local_roles__)
         self.assertTrue(self.developers_advisers in item2.__ac_local_roles__)

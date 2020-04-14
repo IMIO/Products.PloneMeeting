@@ -6,7 +6,8 @@ Changelog
 -------------------
 
 - In `ToolPloneMeeting.pasteItem`, use `adopt_roles('Manager')` instead giving local role `Manager` to the `logged in user`.
-  [gbastien]
+- Optimize `UpdateDelayAwareAdvicesView._computeQuery` to only consider organizations for which a delay aware advice is configured,
+  this avoid very long queries that does not please `solr`
 
 4.1.20.2 (2020-04-08)
 ---------------------
