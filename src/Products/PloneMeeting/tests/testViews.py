@@ -79,22 +79,22 @@ class testViews(PloneMeetingTestCase):
         self.request.form['form.HTTP_REFERER'] = self.request.RESPONSE.getHeader('location')
         self.request.form['form.buttons.cancel'] = True
         view()
-        self.assertEquals(self.request.RESPONSE.status, 302)
-        self.assertEquals(self.request.RESPONSE.getHeader('location'),
-                          self.request.form.get('form.HTTP_REFERER'))
+        self.assertEqual(self.request.RESPONSE.status, 302)
+        self.assertEqual(self.request.RESPONSE.getHeader('location'),
+                         self.request.form.get('form.HTTP_REFERER'))
 
         # create an item from an itemTemplate
         self.request.RESPONSE.setStatus(200)
         self.request.RESPONSE.setHeader('location', '')
-        self.assertEquals(self.request.RESPONSE.status, 200)
+        self.assertEqual(self.request.RESPONSE.status, 200)
         itemTemplate = view.templatesTree['children'][0]['item']
         self.request.form['templateUID'] = itemTemplate.UID
         view()
         # user was redirected to the new created item edit form
-        self.assertEquals(self.request.RESPONSE.status, 302)
-        self.assertEquals(self.request.RESPONSE.getHeader('location'),
-                          '{0}/{1}/edit'.format(pmFolder.absolute_url(),
-                                                itemTemplate.getId))
+        self.assertEqual(self.request.RESPONSE.status, 302)
+        self.assertEqual(self.request.RESPONSE.getHeader('location'),
+                         '{0}/{1}/edit'.format(pmFolder.absolute_url(),
+                                               itemTemplate.getId))
         # one item created in the user pmFolder
         self.assertEqual(len(pmFolder.objectValues('MeetingItem')), 1)
         self.assertEqual(pmFolder.objectValues('MeetingItem')[0].getId(), itemTemplate.getId)
@@ -281,16 +281,16 @@ class testViews(PloneMeetingTestCase):
         view = pmFolder.restrictedTraverse('@@createitemfromtemplate')
         view()
         # we have one isolated itemtemplate and complete path the itemtemplate in subsubfolder
-        self.assertEquals(len(view.templatesTree['children']),
-                          2)
-        self.assertEquals(view.templatesTree['children'][0]['item'].id,
-                          'template1')
-        self.assertEquals(view.templatesTree['children'][1]['item'].id,
-                          'subfolder')
-        self.assertEquals(view.templatesTree['children'][1]['children'][0]['item'].id,
-                          'subsubfolder')
-        self.assertEquals(view.templatesTree['children'][1]['children'][0]['children'][0]['item'].id,
-                          'o1')
+        self.assertEqual(len(view.templatesTree['children']),
+                         2)
+        self.assertEqual(view.templatesTree['children'][0]['item'].id,
+                         'template1')
+        self.assertEqual(view.templatesTree['children'][1]['item'].id,
+                         'subfolder')
+        self.assertEqual(view.templatesTree['children'][1]['children'][0]['item'].id,
+                         'subsubfolder')
+        self.assertEqual(view.templatesTree['children'][1]['children'][0]['children'][0]['item'].id,
+                         'o1')
         self.assertTrue(view.displayShowHideAllLinks())
 
     def test_pm_JSVariables(self):
@@ -315,31 +315,30 @@ class testViews(PloneMeetingTestCase):
         # new_value is verified
         self.assertRaises(KeyError, view, new_value='some_wrong_value')
         # right, change listType value
-        self.assertEquals(item.getListType(), u'normal')
+        self.assertEqual(item.getListType(), u'normal')
         self.assertTrue(self.portal.portal_catalog(UID=item.UID(), listType=u'normal'))
         view('late')
         # value changed and item reindexed
-        self.assertEquals(item.getListType(), u'late')
+        self.assertEqual(item.getListType(), u'late')
         self.assertTrue(self.portal.portal_catalog(UID=item.UID(), listType=u'late'))
         # a specific subscriber is triggered when listType value changed
         # register a subscriber (onItemListTypeChanged) that will actually change item title
         # and set it to 'old_listType - new_listType'
         zcml.load_config('tests/events.zcml', products_plonemeeting)
-        self.assertEquals(item.Title(), 'Item title')
+        self.assertEqual(item.Title(), 'Item title')
         view('normal')
-        self.assertEquals(item.Title(), 'late - normal')
-        self.assertEquals(item.getListType(), u'normal')
+        self.assertEqual(item.Title(), 'late - normal')
+        self.assertEqual(item.getListType(), u'normal')
         self.assertTrue(self.portal.portal_catalog(UID=item.UID(), listType=u'normal'))
         # if title is 'late - normal' call to subscriber will raise an error
         # this way, we test that when an error occur in the event, the listType is not changed
         view('late')
         # not changed and a portal_message is added
-        self.assertEquals(item.Title(), 'late - normal')
-        self.assertEquals(item.getListType(), u'normal')
+        self.assertEqual(item.Title(), 'late - normal')
+        self.assertEqual(item.getListType(), u'normal')
         self.assertTrue(self.portal.portal_catalog(UID=item.UID(), listType=u'normal'))
         messages = IStatusMessage(self.request).show()
-        self.assertEquals(messages[-1].message,
-                          SAMPLE_ERROR_MESSAGE)
+        self.assertEqual(messages[-1].message, SAMPLE_ERROR_MESSAGE)
         # cleanUp zmcl.load_config because it impact other tests
         zcml.cleanUp()
 
@@ -604,16 +603,16 @@ class testViews(PloneMeetingTestCase):
         # define mailing_lists
         # False condition
         template.mailing_lists = "list1;python:False;user1@test.be\nlist2;python:False;user1@test.be"
-        self.assertEquals(self.tool.getAvailableMailingLists(item, template), [])
+        self.assertEqual(self.tool.getAvailableMailingLists(item, template), [])
         # wrong TAL condition, the list is there with error
         template.mailing_lists = "list1;python:wrong_expression;user1@test.be\nlist2;python:False;user1@test.be"
         error_msg = translate('Mailing lists are not correctly defined, original error is \"${error}\"',
                               mapping={'error': u'name \'wrong_expression\' is not defined', },
                               context=self.request)
-        self.assertEquals(self.tool.getAvailableMailingLists(item, template), [error_msg])
+        self.assertEqual(self.tool.getAvailableMailingLists(item, template), [error_msg])
         # correct and True condition
         template.mailing_lists = "list1;python:True;user1@test.be\nlist2;python:False;user1@test.be"
-        self.assertEquals(self.tool.getAvailableMailingLists(item, template), ['list1'])
+        self.assertEqual(self.tool.getAvailableMailingLists(item, template), ['list1'])
 
         # call the document-generation view
         self.request.set('template_uid', template.UID())
@@ -639,7 +638,7 @@ class testViews(PloneMeetingTestCase):
         self.assertNotEquals(messages[-1].message, msg)
         view()
         messages = IStatusMessage(self.request).show()
-        self.assertEquals(messages[-1].message, msg)
+        self.assertEqual(messages[-1].message, msg)
 
     def test_pm_SendPodTemplateToMailingListRecipient(self):
         """Recipients may be defined using several ways :
@@ -795,8 +794,8 @@ class testViews(PloneMeetingTestCase):
         cfg.setItemsListVisibleFields(('MeetingItem.description',
                                        'MeetingItem.motivation',
                                        'MeetingItem.decision'))
-        self.assertEquals(view.getItemsListVisibleFields().keys(),
-                          ['description', 'motivation', 'decision'])
+        self.assertEqual(view.getItemsListVisibleFields().keys(),
+                         ['description', 'motivation', 'decision'])
 
     def _setupPrintXhtml(self):
         """ """
@@ -819,39 +818,39 @@ class testViews(PloneMeetingTestCase):
         '''Test the method that will ease print of XHTML content into Pod templates.'''
         item, motivation, decision, helper = self._setupPrintXhtml()
         # test with one single xhtmlContent
-        self.assertEquals(helper.printXhtml(item, decision),
-                          item.getDecision())
+        self.assertEqual(helper.printXhtml(item, decision),
+                         item.getDecision())
         # several xhtmlContent
-        self.assertEquals(helper.printXhtml(item, [motivation, decision]),
-                          motivation + decision)
+        self.assertEqual(helper.printXhtml(item, [motivation, decision]),
+                         motivation + decision)
         # use 'separator'
-        self.assertEquals(helper.printXhtml(item, [motivation, 'separator', decision]),
-                          motivation + '<p>&nbsp;</p>' + decision)
+        self.assertEqual(helper.printXhtml(item, [motivation, 'separator', decision]),
+                         motivation + '<p>&nbsp;</p>' + decision)
         # use 'separator' with a fonctionnal usecase
-        self.assertEquals(helper.printXhtml(item, [motivation,
-                                                   'separator',
-                                                   '<p>DECIDE :</p>',
-                                                   'separator',
-                                                   decision]),
-                          motivation + '<p>&nbsp;</p><p>DECIDE :</p><p>&nbsp;</p>' + decision)
+        self.assertEqual(helper.printXhtml(item, [motivation,
+                                                  'separator',
+                                                  '<p>DECIDE :</p>',
+                                                  'separator',
+                                                  decision]),
+                         motivation + '<p>&nbsp;</p><p>DECIDE :</p><p>&nbsp;</p>' + decision)
 
     def test_pm_PrintXhtmlSeparator(self):
         ''' '''
         item, motivation, decision, helper = self._setupPrintXhtml()
 
         # use 'separator' and change 'separatorValue', insert 2 empty lines
-        self.assertEquals(helper.printXhtml(item,
-                                            [motivation, 'separator', decision],
-                                            separatorValue='<p>&nbsp;</p><p>&nbsp;</p>'),
-                          motivation + '<p>&nbsp;</p><p>&nbsp;</p>' + decision)
+        self.assertEqual(helper.printXhtml(item,
+                                           [motivation, 'separator', decision],
+                                           separatorValue='<p>&nbsp;</p><p>&nbsp;</p>'),
+                         motivation + '<p>&nbsp;</p><p>&nbsp;</p>' + decision)
         # use keepWithNext
         # special characters are turned to HTML entities decimal representation
-        self.assertEquals(helper.printXhtml(item,
-                                            [motivation, 'separator', decision],
-                                            keepWithNext=True),
-                          '<p class="ParaKWN">The motivation using UTF-8 characters : &#232;&#224;.</p>'
-                          '<p class="ParaKWN">&#160;</p>'
-                          '<p class="ParaKWN">The d&#233;cision using UTF-8 characters.</p>')
+        self.assertEqual(helper.printXhtml(item,
+                                           [motivation, 'separator', decision],
+                                           keepWithNext=True),
+                         '<p class="ParaKWN">The motivation using UTF-8 characters : &#232;&#224;.</p>'
+                         '<p class="ParaKWN">&#160;</p>'
+                         '<p class="ParaKWN">The d&#233;cision using UTF-8 characters.</p>')
 
     def test_pm_PrintXhtmlImageSrcToPaths(self):
         ''' '''
@@ -864,43 +863,43 @@ class testViews(PloneMeetingTestCase):
         img = getattr(item, img_id)
         img_blob_path = img.getBlobWrapper().blob._p_blob_committed
         text = "<p>Text with image <img src='{0}'/> and more text.".format(img.absolute_url())
-        self.assertEquals(helper.printXhtml(item,
-                                            [motivation, 'separator', decision, 'separator', text],
-                                            image_src_to_paths=True,
-                                            keepWithNext=True,
-                                            keepWithNextNumberOfChars=60),
-                          '<p>The motivation using UTF-8 characters : &#232;&#224;.</p>'
-                          '<p>&#160;</p>'
-                          '<p class="ParaKWN">The d&#233;cision using UTF-8 characters.</p>'
-                          '<p class="ParaKWN">&#160;</p>'
-                          '<p class="ParaKWN">Text with image <img src="{0}" /> and more text.</p>'
-                          .format(img_blob_path))
+        self.assertEqual(helper.printXhtml(item,
+                                           [motivation, 'separator', decision, 'separator', text],
+                                           image_src_to_paths=True,
+                                           keepWithNext=True,
+                                           keepWithNextNumberOfChars=60),
+                         '<p>The motivation using UTF-8 characters : &#232;&#224;.</p>'
+                         '<p>&#160;</p>'
+                         '<p class="ParaKWN">The d&#233;cision using UTF-8 characters.</p>'
+                         '<p class="ParaKWN">&#160;</p>'
+                         '<p class="ParaKWN">Text with image <img src="{0}" /> and more text.</p>'
+                         .format(img_blob_path))
 
     def test_pm_PrintXhtmlAddCSSClass(self):
         ''' '''
         item, motivation, decision, helper = self._setupPrintXhtml()
         # use 'addCSSClass'
-        self.assertEquals(helper.printXhtml(item,
-                                            [motivation,
-                                             'separator',
-                                             '<p>DECIDE :</p>',
-                                             'separator',
-                                             decision],
-                                            addCSSClass='sample'),
-                          '<p class="sample">The motivation using UTF-8 characters : &#232;&#224;.</p>'
-                          '<p class="sample">&#160;</p>'
-                          '<p class="sample">DECIDE :</p>'
-                          '<p class="sample">&#160;</p>'
-                          '<p class="sample">The d&#233;cision using UTF-8 characters.</p>')
+        self.assertEqual(helper.printXhtml(item,
+                                           [motivation,
+                                            'separator',
+                                            '<p>DECIDE :</p>',
+                                            'separator',
+                                            decision],
+                                           addCSSClass='sample'),
+                         '<p class="sample">The motivation using UTF-8 characters : &#232;&#224;.</p>'
+                         '<p class="sample">&#160;</p>'
+                         '<p class="sample">DECIDE :</p>'
+                         '<p class="sample">&#160;</p>'
+                         '<p class="sample">The d&#233;cision using UTF-8 characters.</p>')
 
     def test_pm_PrintXhtmlUseSafeHTML(self):
         '''safe_html will do result XHTML compliant.'''
         item, motivation, decision, helper = self._setupPrintXhtml()
         # use_safe_html is True by default
-        self.assertEquals(
+        self.assertEqual(
             helper.printXhtml(item, [motivation, '<br>']),
             motivation + '<br />')
-        self.assertEquals(
+        self.assertEqual(
             helper.printXhtml(item, [motivation, '<br>'], use_safe_html=False),
             motivation + '<br>')
 
