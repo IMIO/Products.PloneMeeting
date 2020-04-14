@@ -71,6 +71,7 @@ class Migrate_To_4104(Migrator):
                     wfAdaptations = cfg.getWorkflowAdaptations()
                     wfAdaptations = wfAdaptations + ('meetingmanager_correct_closed_meeting', )
                     cfg.setWorkflowAdaptations(wfAdaptations)
+                delattr(cfg, 'meetingManagerMayCorrectClosedMeeting')
         logger.info('Done.')
 
     def _addItemNonAttendeesAttributeToMeetings(self):

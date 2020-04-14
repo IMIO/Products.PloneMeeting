@@ -1259,7 +1259,7 @@ schema = Schema((
         ),
         enforceVocabulary=True,
         multiValued=1,
-        vocabulary='listCopyGroups',
+        vocabulary_factory='Products.PloneMeeting.vocabularies.itemcopygroupsvocabulary',
     ),
     StringField(
         name='pollType',
@@ -4309,20 +4309,30 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def displayCopyGroups(self):
         '''Display copy groups on the item view, especially the link showing users of a group.'''
         portal_url = api.portal.get().absolute_url()
-        # get copyGroups vocabulary and patch it
-        copyGroupsVocab = self.listCopyGroups(include_auto=True)
-        patched_vocab = []
-        for term_id, term_title in copyGroupsVocab.items():
+        copyGroupsVocab = get_vocab(
+            self,
+            self.getField('copyGroups').vocabulary_factory,
+            **{'include_auto': True, })
+        res = []
+        allCopyGroups = self.getAllCopyGroups()
+        for term in copyGroupsVocab._terms:
+            if term.value not in allCopyGroups:
+                continue
             # auto copyGroups are prefixed with AUTO_COPY_GROUP_PREFIX
-            real_group_id = self._realCopyGroupId(term_id)
-            patched_vocab.append((term_id, '{0} {1}'.format(
-                term_title,
-                "<acronym><a onclick='event.preventDefault()' class='tooltipster-group-users deactivated' "
-                "style='display: inline-block; padding: 0'"
-                "href='#' data-group_id='{0}' data-base_url='{1}'><img src='{1}/group_users.png' /></a></acronym>"
-                .format(real_group_id, portal_url))))
-        patched_vocab = DisplayList(patched_vocab)
-        return self.displayValue(patched_vocab, self.getAllCopyGroups())
+            real_group_id = self._realCopyGroupId(term.value)
+            res.append(u'{0} {1}'.format(
+                # highlight [auto]
+                term.title.replace(
+                    u'[auto]',
+                    u'<strong class="auto_info" title="{0}">[auto]</strong>'.format(
+                        translate('This copy group was set automatically by the application',
+                                  domain='PloneMeeting',
+                                  context=self.REQUEST))),
+                u"<acronym><a onclick='event.preventDefault()' class='tooltipster-group-users deactivated' "
+                u"style='display: inline-block; padding: 0'"
+                u"href='#' data-group_id='{0}' data-base_url='{1}'><img src='{1}/group_users.png' /></a></acronym>"
+                .format(real_group_id, portal_url)))
+        return u', '.join(res)
 
     security.declarePublic('displayAdvisers')
 
@@ -4331,6 +4341,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         portal_url = api.portal.get().absolute_url()
         advisers_by_type = self.getAdvicesByType(include_not_asked=False)
         res = []
+        auto_advice = u' <strong class="auto_info" title="{0}">[auto]</strong>'.format(
+            translate('This advice was asked automatically by the application',
+                      domain='PloneMeeting',
+                      context=self.REQUEST))
         for advice_type, advisers in advisers_by_type.items():
             for adviser in advisers:
                 value = u"{0} <acronym><a onclick='event.preventDefault()' " \
@@ -4338,7 +4352,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     u"style='display: inline-block; padding: 0'" \
                     u"href='#' data-group_id='{1}' data-base_url='{2}'>" \
                     u"<img src='{2}/group_users.png' /></a></acronym>".format(
-                        adviser['name'] + (not adviser['optional'] and u' [auto]' or u''),
+                        adviser['name'] + (not adviser['optional'] and auto_advice or u''),
                         get_plone_group_id(adviser['id'], 'advisers'),
                         portal_url)
                 res.append(value)
@@ -5329,12 +5343,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # Add the local roles corresponding to the selected copyGroups.
         # We give the 'Reader' role to the selected groups.
         # This will give them a read-only access to the item.
-        copyGroups = self.getCopyGroups() + tuple(self.autoCopyGroups)
-        if copyGroups:
-            for copyGroup in copyGroups:
-                # auto added copy groups are prefixed by AUTO_COPY_GROUP_PREFIX
-                copyGroupId = self._realCopyGroupId(copyGroup)
-                self.manage_addLocalRoles(copyGroupId, (READER_USECASES['copy_groups'],))
+        copyGroupIds = self.getAllCopyGroups(auto_real_plone_group_ids=True)
+        for copyGroupId in copyGroupIds:
+            self.manage_addLocalRoles(copyGroupId, (READER_USECASES['copy_groups'],))
 
     def _updatePowerObserversLocalRoles(self):
         '''Give local roles to the groups defined in MeetingConfig.powerObservers.'''
@@ -5481,50 +5492,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             sibling = {key: value and value.getItemNumber or None
                        for key, value in sibling.items()}
         return sibling.get(whichItem, sibling)
-
-    security.declarePrivate('listCopyGroups')
-
-    def listCopyGroups(self, include_auto=False):
-        '''Lists the groups that will be selectable to be in copy for this
-           item.  If p_include_auto is True, we add terms regarding self.autoCopyGroups.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self)
-        portal_groups = api.portal.get_tool('portal_groups')
-        res = []
-        for groupId in cfg.getSelectableCopyGroups():
-            group = portal_groups.getGroupById(groupId)
-            res.append((groupId, group.getProperty('title')))
-
-        # make sure groups already selected for the current item
-        # and maybe not in the vocabulary are added to it so
-        # the field is correctly displayed while editing/viewing it
-        copyGroups = self.getCopyGroups()
-        if copyGroups:
-            copyGroupsInVocab = [copyGroup[0] for copyGroup in res]
-            for groupId in copyGroups:
-                if groupId not in copyGroupsInVocab:
-                    realGroupId = self._realCopyGroupId(groupId)
-                    group = portal_groups.getGroupById(realGroupId)
-                    if group:
-                        if realGroupId == groupId:
-                            res.append((groupId, group.getProperty('title')))
-                        else:
-                            # auto copy group
-                            res.append((groupId, group.getProperty('title') + ' [auto]'))
-                    else:
-                        res.append((groupId, groupId))
-
-        # include terms for autoCopyGroups if relevant
-        if include_auto and self.autoCopyGroups:
-            for autoGroupId in self.autoCopyGroups:
-                groupId = self._realCopyGroupId(autoGroupId)
-                group = portal_groups.getGroupById(groupId)
-                if group:
-                    res.append((autoGroupId, group.getProperty('title') + ' [auto]'))
-                else:
-                    res.append((autoGroupId, autoGroupId))
-
-        return DisplayList(tuple(res)).sortedByValue()
 
     def showDuplicateItemAction_cachekey(method, self, brain=False):
         '''cachekey method for self.showDuplicateItemAction.'''
