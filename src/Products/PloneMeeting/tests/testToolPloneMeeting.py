@@ -153,7 +153,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         item1.setBudgetInfos('<p>My budget</p>')
         workingFolder = item1.getParentNode()
         clonedItem = item1.clone()
-        self.assertEquals(
+        self.assertEqual(
             set([item1, clonedItem]), set(workingFolder.objectValues('MeetingItem')))
         # Test that some fields are kept...
         self.failUnless(clonedItem.Title() == item1.Title())
@@ -169,7 +169,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         clonedItem = item1.clone()
         # The item is cloned in the pmCreator1 personal folder.
-        self.assertEquals(
+        self.assertEqual(
             set([clonedItem]), set(clonedItem.getParentNode().objectValues('MeetingItem')))
         # during the cloning process, the 'Manager' role is given on the new item
         # so every things that need to be done on it are done, make sure at the end
@@ -188,7 +188,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         workingFolder = item1.getParentNode()
         # clone copyAnnexes=True and copyDecisionAnnexes=False by default
         clonedItem = item1.clone()
-        self.assertEquals(
+        self.assertEqual(
             set([item1, clonedItem]), set(workingFolder.objectValues('MeetingItem')))
         # Check that the annexes have been cloned, too.
         self.assertEqual(len(get_categorized_elements(clonedItem)), 1)
@@ -198,24 +198,24 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertTrue(self.meetingConfig.getKeepOriginalToPrintOfClonedItems())
         self.assertTrue(newAnnex.to_print)
         newAnnexesUids = [annex.UID() for annex in clonedItem.objectValues()]
-        self.assertEquals(
+        self.assertEqual(
             [annex.UID() for annex in get_categorized_elements(clonedItem, result_type='objects')],
             newAnnexesUids)
-        self.assertEquals(clonedItem.categorized_elements.keys(), newAnnexesUids)
-        self.assertEquals(len(clonedItem.categorized_elements), 1)
+        self.assertEqual(clonedItem.categorized_elements.keys(), newAnnexesUids)
+        self.assertEqual(len(clonedItem.categorized_elements), 1)
         # Test that an item viewable by a different user (another member of the
         # same group) can be pasted too if it contains things. item1 is viewable
         # by pmCreator1 too. And Also tests cloning without annex copying.
         self.changeUser('pmCreator1')
         clonedItem2 = item1.clone(copyAnnexes=False)
-        self.assertEquals(len(clonedItem2.categorized_elements), 0)
-        self.assertEquals(set([clonedItem2]),
-                          set(clonedItem2.getParentNode().objectValues('MeetingItem')))
+        self.assertEqual(len(clonedItem2.categorized_elements), 0)
+        self.assertEqual(set([clonedItem2]),
+                         set(clonedItem2.getParentNode().objectValues('MeetingItem')))
 
         # test when only keeping decision annexes
         clonedItem3 = item1.clone(copyAnnexes=False, copyDecisionAnnexes=True)
-        self.assertEquals(len(clonedItem3.categorized_elements), 1)
-        self.assertEquals(get_annexes(clonedItem3)[0].portal_type, 'annexDecision')
+        self.assertEqual(len(clonedItem3.categorized_elements), 1)
+        self.assertEqual(get_annexes(clonedItem3)[0].portal_type, 'annexDecision')
 
     def test_pm_CloneItemWithContentNotRemovableByPermission(self):
         '''Clones a given item in parent item folder. Here we test that even
@@ -310,28 +310,28 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         res1.at_post_create_script()
         res2 = self.tool.pasteItem(destFolder, copiedData2)
         res2.at_post_create_script()
-        self.assertEquals(set([item1, item2, res1, res2]),
-                          set(destFolder.objectValues('MeetingItem')))
+        self.assertEqual(set([item1, item2, res1, res2]),
+                         set(destFolder.objectValues('MeetingItem')))
         # By default, the history is kept by the copy/paste so we should have 2
         # values relative to the 'itemcreated' action
         # But here, the workflow_history is cleaned by ToolPloneMeeting.pasteItem
         # and only contains informations about the current workflow and the actions in it
         itemWorkflowId = self.wfTool.getWorkflowsFor(res1)[0].getId()
         # The workflow_history only contains one action, the 'itemcreated' action
-        self.assertEquals(len(res1.workflow_history[itemWorkflowId]), 1)
-        self.assertEquals(len(res2.workflow_history[itemWorkflowId]), 1)
+        self.assertEqual(len(res1.workflow_history[itemWorkflowId]), 1)
+        self.assertEqual(len(res2.workflow_history[itemWorkflowId]), 1)
         # Annexes are copied for item1
         # and that existing references are correctly kept
-        self.assertEquals(len(get_annexes(res1)), 2)
+        self.assertEqual(len(get_annexes(res1)), 2)
         # Check also that the annexIndex is correct
-        self.assertEquals(len(get_categorized_elements(res1)), 2)
+        self.assertEqual(len(get_categorized_elements(res1)), 2)
         res1AnnexesUids = [annex['UID'] for annex in get_categorized_elements(res1)]
         item1AnnexesUids = [annex['UID'] for annex in get_categorized_elements(item1)]
         self.failIf(len(set(item1AnnexesUids).intersection(set(res1AnnexesUids))) != 0)
         # Now check item2 : no annexes nor given advices
-        self.assertEquals(len(get_categorized_elements(res2)), 0)
-        self.assertEquals(len(res2.getGivenAdvices()), 0)
-        self.assertEquals(len(res2.adviceIndex), 0)
+        self.assertEqual(len(get_categorized_elements(res2)), 0)
+        self.assertEqual(len(res2.getGivenAdvices()), 0)
+        self.assertEqual(len(res2.adviceIndex), 0)
         # Now check that annex types are kept
         self.failUnless(get_annexes(res1)[0].content_category)
         self.failUnless(get_annexes(res1)[1].content_category)
@@ -820,46 +820,46 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.changeUser('pmManager')
         meeting = self.create('Meeting', date=DateTime('2015/05/05'))
         self.portal.portal_languages.setDefaultLanguage('en')
-        self.assertEquals(self.tool.formatMeetingDate(meeting),
-                          u'05 may 2015')
-        self.assertEquals(self.tool.formatMeetingDate(meeting, short=True),
-                          u'05/05/2015')
+        self.assertEqual(self.tool.formatMeetingDate(meeting),
+                         u'05 may 2015')
+        self.assertEqual(self.tool.formatMeetingDate(meeting, short=True),
+                         u'05/05/2015')
         # hours are not shown if actually 0h00
-        self.assertEquals(self.tool.formatMeetingDate(meeting, short=True, withHour=True),
-                          u'05/05/2015')
-        self.assertEquals(self.tool.formatMeetingDate(meeting, short=True, withHour=True, prefixed=True),
-                          u'Meeting of 05/05/2015')
+        self.assertEqual(self.tool.formatMeetingDate(meeting, short=True, withHour=True),
+                         u'05/05/2015')
+        self.assertEqual(self.tool.formatMeetingDate(meeting, short=True, withHour=True, prefixed=True),
+                         u'Meeting of 05/05/2015')
 
         # add hours to the meeting date
         meeting.setDate('2015/05/05 14:30')
-        self.assertEquals(self.tool.formatMeetingDate(meeting),
-                          u'05 may 2015')
-        self.assertEquals(self.tool.formatMeetingDate(meeting, short=True),
-                          u'05/05/2015')
-        self.assertEquals(self.tool.formatMeetingDate(meeting, short=True, withHour=True),
-                          u'05/05/2015 (14:30)')
-        self.assertEquals(self.tool.formatMeetingDate(meeting, short=True, withHour=True, prefixed=True),
-                          u'Meeting of 05/05/2015 (14:30)')
+        self.assertEqual(self.tool.formatMeetingDate(meeting),
+                         u'05 may 2015')
+        self.assertEqual(self.tool.formatMeetingDate(meeting, short=True),
+                         u'05/05/2015')
+        self.assertEqual(self.tool.formatMeetingDate(meeting, short=True, withHour=True),
+                         u'05/05/2015 (14:30)')
+        self.assertEqual(self.tool.formatMeetingDate(meeting, short=True, withHour=True, prefixed=True),
+                         u'Meeting of 05/05/2015 (14:30)')
 
         # withWeekDayName
-        self.assertEquals(self.tool.formatMeetingDate(meeting, withWeekDayName=True),
-                          u'Tuesday 05 may 2015')
-        self.assertEquals(self.tool.formatMeetingDate(meeting, short=True, withWeekDayName=True),
-                          u'Tuesday 05/05/2015')
-        self.assertEquals(self.tool.formatMeetingDate(meeting, short=True, withHour=True, withWeekDayName=True),
-                          u'Tuesday 05/05/2015 (14:30)')
-        self.assertEquals(self.tool.formatMeetingDate(meeting,
-                                                      short=True,
-                                                      withHour=True,
-                                                      prefixed=True,
-                                                      withWeekDayName=True),
-                          u'Meeting of Tuesday 05/05/2015 (14:30)')
-        self.assertEquals(self.tool.formatMeetingDate(meeting,
-                                                      short=False,
-                                                      withHour=True,
-                                                      prefixed=True,
-                                                      withWeekDayName=True),
-                          u'Meeting of Tuesday 05 may 2015 (14:30)')
+        self.assertEqual(self.tool.formatMeetingDate(meeting, withWeekDayName=True),
+                         u'Tuesday 05 may 2015')
+        self.assertEqual(self.tool.formatMeetingDate(meeting, short=True, withWeekDayName=True),
+                         u'Tuesday 05/05/2015')
+        self.assertEqual(self.tool.formatMeetingDate(meeting, short=True, withHour=True, withWeekDayName=True),
+                         u'Tuesday 05/05/2015 (14:30)')
+        self.assertEqual(self.tool.formatMeetingDate(meeting,
+                                                     short=True,
+                                                     withHour=True,
+                                                     prefixed=True,
+                                                     withWeekDayName=True),
+                         u'Meeting of Tuesday 05/05/2015 (14:30)')
+        self.assertEqual(self.tool.formatMeetingDate(meeting,
+                                                     short=False,
+                                                     withHour=True,
+                                                     prefixed=True,
+                                                     withWeekDayName=True),
+                         u'Meeting of Tuesday 05 may 2015 (14:30)')
 
     def test_pm_ShowHolidaysWarning(self):
         """Method that shows the 'warning holidays' message."""
