@@ -5,8 +5,8 @@ Changelog
 4.1.21 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- In `ToolPloneMeeting.pasteItem`, use `adopt_roles('Manager')` instead giving local role `Manager` to the `logged in user`.
+  [gbastien]
 
 4.1.20.2 (2020-04-08)
 ---------------------

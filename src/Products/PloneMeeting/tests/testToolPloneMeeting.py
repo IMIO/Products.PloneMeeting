@@ -307,6 +307,8 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         copiedData1 = destFolder.manage_copyObjects(ids=[item1.id, ])
         copiedData2 = destFolder.manage_copyObjects(ids=[item2.id, ])
         res1 = self.tool.pasteItem(destFolder, copiedData1, copyAnnexes=True)
+        # Manager role given during paste was removed
+        self.assertFalse('Manager' in res1.__ac_local_roles__['pmCreator1'])
         res1.at_post_create_script()
         res2 = self.tool.pasteItem(destFolder, copiedData2)
         res2.at_post_create_script()
