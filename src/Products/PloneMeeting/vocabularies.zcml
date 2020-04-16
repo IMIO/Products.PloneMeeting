@@ -21,6 +21,10 @@
            name="Products.PloneMeeting.vocabularies.associatedgroupsvocabulary" />
   <utility component=".vocabularies.ItemAssociatedGroupsVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.itemassociatedgroupsvocabulary" />
+  <utility component=".vocabularies.CopyGroupsVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.copygroupsvocabulary" />
+  <utility component=".vocabularies.ItemCopyGroupsVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.itemcopygroupsvocabulary" />
   <utility component=".vocabularies.GroupsInChargeVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.groupsinchargevocabulary" />
   <utility component=".vocabularies.ItemGroupsInChargeVocabularyFactory"
