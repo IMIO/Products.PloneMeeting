@@ -2,12 +2,22 @@ Changelog
 =========
 
 
-4.1.20.3 (unreleased)
----------------------
+4.1.21 (unreleased)
+-------------------
 
+- In `ToolPloneMeeting.pasteItem`, use `adopt_roles('Manager')` instead giving local role `Manager` to the `logged in user`.
+- Optimize `UpdateDelayAwareAdvicesView._computeQuery` to only consider organizations for which a delay aware advice is configured,
+  this avoid very long queries that does not please `solr`
+- Added faceted filter `Copy groups`:
+
+  - Added `Products.PloneMeeting.vocabularies.copygroupsvocabulary` (faceted) and
+    `Products.PloneMeeting.vocabularies.itemcopygroupsvocabulary` (MeetingItem) vocabularies
+  - moved `MeetingItem.copyGroup` vocabulary from `listCopyGroups` to `Products.PloneMeeting.vocabularies.itemcopygroupsvocabulary`
+  - factorized the way advices and copy groups are displayed on item view (`displayAdvisers/displayCopyGroups`)
+  - adapted tests accordingly
+- Display `portal_setup` profile version for PloneMeeting related packages in `@@overview-controlpanel`
 - Fixed view.printAssembly method that failed when a meeting item was not in a meeting
 - Fixed test_pm_ItemStrikedAssembly to test printAssembly method when a meeting item is not in a meeting
-
 
 4.1.20.2 (2020-04-08)
 ---------------------

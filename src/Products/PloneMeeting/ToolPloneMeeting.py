@@ -1017,147 +1017,147 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             raise PloneMeetingError('Could not copy.')
 
         # Let the logged user do everything on the newly created item
-        newItem.manage_addLocalRoles(loggedUserId, ('Manager',))
-        newItem.setCreators((newOwnerId,))
-        # The creation date is kept, redefine it
-        newItem.setCreationDate(DateTime())
+        with api.env.adopt_roles(['Manager']):
+            newItem.setCreators((newOwnerId,))
+            # The creation date is kept, redefine it
+            newItem.setCreationDate(DateTime())
 
-        # Change the new item portal_type dynamically (wooow) if needed
-        if newPortalType:
-            newItem.portal_type = newPortalType
-            # Rename the workflow used in workflow_history because the used workflow
-            # has changed (more than probably)
-            oldWFName = wftool.getWorkflowsFor(copiedItem)[0].id
-            newWFName = wftool.getWorkflowsFor(newItem)[0].id
-            oldHistory = newItem.workflow_history
-            tmpDict = PersistentMapping({newWFName: oldHistory[oldWFName]})
-            # make sure current review_state is right, in case initial_state
-            # of newPortalType WF is not the same as original portal_type WF, correct this
-            newItemWF = wftool.getWorkflowsFor(newItem)[0]
-            if tmpDict[newWFName][0]['review_state'] != newItemWF.initial_state:
-                # in this case, the current wf state is wrong, we will correct it
-                tmpDict[newWFName][0]['review_state'] = newItemWF.initial_state
-            newItem.workflow_history = tmpDict
-            # update security settings of new item as workflow permissions could have changed...
-            newItemWF.updateRoleMappingsFor(newItem)
+            # Change the new item portal_type dynamically (wooow) if needed
+            if newPortalType:
+                newItem.portal_type = newPortalType
+                # Rename the workflow used in workflow_history because the used workflow
+                # has changed (more than probably)
+                oldWFName = wftool.getWorkflowsFor(copiedItem)[0].id
+                newWFName = wftool.getWorkflowsFor(newItem)[0].id
+                oldHistory = newItem.workflow_history
+                tmpDict = PersistentMapping({newWFName: oldHistory[oldWFName]})
+                # make sure current review_state is right, in case initial_state
+                # of newPortalType WF is not the same as original portal_type WF, correct this
+                newItemWF = wftool.getWorkflowsFor(newItem)[0]
+                if tmpDict[newWFName][0]['review_state'] != newItemWF.initial_state:
+                    # in this case, the current wf state is wrong, we will correct it
+                    tmpDict[newWFName][0]['review_state'] = newItemWF.initial_state
+                newItem.workflow_history = tmpDict
+                # update security settings of new item as workflow permissions could have changed...
+                newItemWF.updateRoleMappingsFor(newItem)
 
-        # remove contained meetingadvices
-        newItem._removeEveryContainedAdvices()
+            # remove contained meetingadvices
+            newItem._removeEveryContainedAdvices()
 
-        # manage ftw.labels
-        annotations = IAnnotations(newItem)
-        if not keep_ftw_labels and FTW_LABELS_ANNOTATION_KEY in annotations:
-            del annotations[FTW_LABELS_ANNOTATION_KEY]
+            # manage ftw.labels
+            annotations = IAnnotations(newItem)
+            if not keep_ftw_labels and FTW_LABELS_ANNOTATION_KEY in annotations:
+                del annotations[FTW_LABELS_ANNOTATION_KEY]
 
-        # Set fields not in the copyFields list to their default value
-        # 'id' and  'proposingGroup' will be kept in anyway
-        fieldsToKeep = ['id', 'proposingGroup', ] + copyFields
-        # remove 'category/classifier' from fieldsToKeep if it is disabled
-        if 'category' in fieldsToKeep:
-            category = copiedItem.getCategory(real=True, theObject=True)
-            if category and not category.isSelectable(userId=loggedUserId):
-                fieldsToKeep.remove('category')
-        if 'classifier' in fieldsToKeep:
-            category = copiedItem.getClassifier()
-            if category and not category.isSelectable(userId=loggedUserId):
-                fieldsToKeep.remove('classifier')
+            # Set fields not in the copyFields list to their default value
+            # 'id' and  'proposingGroup' will be kept in anyway
+            fieldsToKeep = ['id', 'proposingGroup', ] + copyFields
+            # remove 'category/classifier' from fieldsToKeep if it is disabled
+            if 'category' in fieldsToKeep:
+                category = copiedItem.getCategory(real=True, theObject=True)
+                if category and not category.isSelectable(userId=loggedUserId):
+                    fieldsToKeep.remove('category')
+            if 'classifier' in fieldsToKeep:
+                category = copiedItem.getClassifier()
+                if category and not category.isSelectable(userId=loggedUserId):
+                    fieldsToKeep.remove('classifier')
 
-        for field in newItem.Schema().filterFields(isMetadata=False):
-            if field.getName() not in fieldsToKeep:
-                # Set the field to its default value
-                field.set(newItem, field.getDefault(newItem))
+            for field in newItem.Schema().filterFields(isMetadata=False):
+                if field.getName() not in fieldsToKeep:
+                    # Set the field to its default value
+                    field.set(newItem, field.getDefault(newItem))
 
-        # Set some default values that could not be initialized properly
-        if 'toDiscuss' in copyFields and destMeetingConfig.getToDiscussSetOnItemInsert():
-            toDiscussDefault = destMeetingConfig.getToDiscussDefault()
-            newItem.setToDiscuss(toDiscussDefault)
-        if 'classifier' in copyFields:
-            newItem.getField('classifier').set(
-                newItem, copiedItem.getClassifier())
+            # Set some default values that could not be initialized properly
+            if 'toDiscuss' in copyFields and destMeetingConfig.getToDiscussSetOnItemInsert():
+                toDiscussDefault = destMeetingConfig.getToDiscussDefault()
+                newItem.setToDiscuss(toDiscussDefault)
+            if 'classifier' in copyFields:
+                newItem.getField('classifier').set(
+                    newItem, copiedItem.getClassifier())
 
-        # remove every contained images as it will be added again by storeImagesLocally
-        # disable linkintegrity if enabled
-        original_link_integrity = disable_link_integrity_checks()
-        images = [img for img in newItem.objectValues() if img.portal_type == 'Image']
-        for image in images:
-            unrestrictedRemoveGivenObject(image)
-        restore_link_integrity_checks(original_link_integrity)
+            # remove every contained images as it will be added again by storeImagesLocally
+            # disable linkintegrity if enabled
+            original_link_integrity = disable_link_integrity_checks()
+            images = [img for img in newItem.objectValues() if img.portal_type == 'Image']
+            for image in images:
+                unrestrictedRemoveGivenObject(image)
+            restore_link_integrity_checks(original_link_integrity)
 
-        # Manage annexes.
-        # remove relevant annexes then manage kept ones, we remove kept annexes
-        # if we can not find a corresponding annexType in the destMeetingConfig
-        plone_utils = api.portal.get_tool('plone_utils')
-        if copyAnnexes is False:
-            # Delete the annexes that have been copied.
-            for annex in get_annexes(newItem, portal_types=['annex']):
-                unrestrictedRemoveGivenObject(annex)
-        if copyDecisionAnnexes is False:
-            # Delete the decision annexes that have been copied.
-            for annex in get_annexes(newItem, portal_types=['annexDecision']):
-                unrestrictedRemoveGivenObject(annex)
-        # if we have left annexes, we manage it
-        if get_annexes(newItem):
-            # manage the otherMCCorrespondence
-            oldAnnexes = get_categorized_elements(copiedItem, result_type='objects')
-            for oldAnnex in oldAnnexes:
-                newAnnex = getattr(newItem, oldAnnex.getId(), None)
-                if not newAnnex:
-                    # this annex was removed
-                    continue
-                # In case the item is copied from another MeetingConfig, we need
-                # to update every annex.content_category because it still refers
-                # the annexType in the old MeetingConfig the item is copied from
-                if newPortalType:
-                    originCfg = self.getMeetingConfig(copiedItem)
-                    if not self._updateContentCategoryAfterSentToOtherMeetingConfig(newAnnex, originCfg):
-                        msg = translate('annex_not_kept_because_no_available_annex_type_warning',
-                                        mapping={'annexTitle': safe_unicode(newAnnex.Title()),
-                                                 'cfg': safe_unicode(destMeetingConfig.Title())},
-                                        domain='PloneMeeting',
-                                        context=self.REQUEST)
-                        plone_utils.addPortalMessage(msg, 'warning')
-                        unrestrictedRemoveGivenObject(newAnnex)
-                        continue
-
-                # initialize to_print correctly regarding configuration
-                if not destMeetingConfig.getKeepOriginalToPrintOfClonedItems():
-                    newAnnex.to_print = \
-                        get_category_object(newAnnex, newAnnex.content_category).to_print
-
-        # Change the proposing group if the item owner does not belong to
-        # the defined proposing group, except if p_keepProposingGroup is True
-        if not keepProposingGroup:
-            userGroupUids = self.get_orgs_for_user(
-                user_id=newOwnerId, suffixes=['creators', ], the_objects=False)
-            if userGroupUids and newItem.getProposingGroup(True) not in userGroupUids:
-                newItem.setProposingGroup(userGroupUids[0])
-
-        if newOwnerId != loggedUserId:
+            # Manage annexes.
+            # remove relevant annexes then manage kept ones, we remove kept annexes
+            # if we can not find a corresponding annexType in the destMeetingConfig
             plone_utils = api.portal.get_tool('plone_utils')
-            plone_utils.changeOwnershipOf(newItem, newOwnerId)
+            if copyAnnexes is False:
+                # Delete the annexes that have been copied.
+                for annex in get_annexes(newItem, portal_types=['annex']):
+                    unrestrictedRemoveGivenObject(annex)
+            if copyDecisionAnnexes is False:
+                # Delete the decision annexes that have been copied.
+                for annex in get_annexes(newItem, portal_types=['annexDecision']):
+                    unrestrictedRemoveGivenObject(annex)
+            # if we have left annexes, we manage it
+            if get_annexes(newItem):
+                # manage the otherMCCorrespondence
+                oldAnnexes = get_categorized_elements(copiedItem, result_type='objects')
+                for oldAnnex in oldAnnexes:
+                    newAnnex = getattr(newItem, oldAnnex.getId(), None)
+                    if not newAnnex:
+                        # this annex was removed
+                        continue
+                    # In case the item is copied from another MeetingConfig, we need
+                    # to update every annex.content_category because it still refers
+                    # the annexType in the old MeetingConfig the item is copied from
+                    if newPortalType:
+                        originCfg = self.getMeetingConfig(copiedItem)
+                        if not self._updateContentCategoryAfterSentToOtherMeetingConfig(newAnnex, originCfg):
+                            msg = translate('annex_not_kept_because_no_available_annex_type_warning',
+                                            mapping={'annexTitle': safe_unicode(newAnnex.Title()),
+                                                     'cfg': safe_unicode(destMeetingConfig.Title())},
+                                            domain='PloneMeeting',
+                                            context=self.REQUEST)
+                            plone_utils.addPortalMessage(msg, 'warning')
+                            unrestrictedRemoveGivenObject(newAnnex)
+                            continue
 
-        # update annex index after every user/groups things are setup
-        # because annexes confidentiality relies on all this
-        update_all_categorized_elements(newItem)
-        # remove defered call to 'update_all_categorized_elements'
-        self.REQUEST.set('defer_update_categorized_elements', False)
-        self.REQUEST.set('defer_categorized_content_created_event', False)
+                    # initialize to_print correctly regarding configuration
+                    if not destMeetingConfig.getKeepOriginalToPrintOfClonedItems():
+                        newAnnex.to_print = \
+                            get_category_object(newAnnex, newAnnex.content_category).to_print
 
-        # The copy/paste has transferred history. We must clean the history
-        # of the cloned object then add the 'Creation' event.
-        wfName = wftool.getWorkflowsFor(newItem)[0].id
-        newItem.workflow_history[wfName] = ()
-        add_wf_history_action(newItem,
-                              action_name=None,
-                              action_label=None,
-                              user_id=newOwnerId or newItem.Creator())
+            # Change the proposing group if the item owner does not belong to
+            # the defined proposing group, except if p_keepProposingGroup is True
+            if not keepProposingGroup:
+                userGroupUids = self.get_orgs_for_user(
+                    user_id=newOwnerId, suffixes=['creators', ], the_objects=False)
+                if userGroupUids and newItem.getProposingGroup(True) not in userGroupUids:
+                    newItem.setProposingGroup(userGroupUids[0])
 
-        # The copy/paste has transferred annotations, we do not need them.
-        for ann in annotations:
-            if ann.startswith(SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY):
-                del annotations[ann]
+            if newOwnerId != loggedUserId:
+                plone_utils = api.portal.get_tool('plone_utils')
+                plone_utils.changeOwnershipOf(newItem, newOwnerId)
 
-        self.REQUEST.set('currentlyPastingItems', False)
+            # update annex index after every user/groups things are setup
+            # because annexes confidentiality relies on all this
+            update_all_categorized_elements(newItem)
+            # remove defered call to 'update_all_categorized_elements'
+            self.REQUEST.set('defer_update_categorized_elements', False)
+            self.REQUEST.set('defer_categorized_content_created_event', False)
+
+            # The copy/paste has transferred history. We must clean the history
+            # of the cloned object then add the 'Creation' event.
+            wfName = wftool.getWorkflowsFor(newItem)[0].id
+            newItem.workflow_history[wfName] = ()
+            add_wf_history_action(newItem,
+                                  action_name=None,
+                                  action_label=None,
+                                  user_id=newOwnerId or newItem.Creator())
+
+            # The copy/paste has transferred annotations, we do not need them.
+            for ann in annotations:
+                if ann.startswith(SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY):
+                    del annotations[ann]
+
+            self.REQUEST.set('currentlyPastingItems', False)
         return newItem
 
     def _updateContentCategoryAfterSentToOtherMeetingConfig(self, annex, originCfg):

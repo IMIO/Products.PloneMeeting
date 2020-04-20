@@ -521,22 +521,30 @@ class UpdateDelayAwareAdvicesView(BrowserView):
           Compute the catalog query to execute to get only relevant items to update,
           so items with delay-aware advices still addable/editable.
         '''
-        # compute the indexAdvisers index, take every orgs, including disabled ones
-        # then constuct every possibles cases, by default there is 2 possible values :
+        # compute the indexAdvisers index, take every customAdvisers, including disabled ones
+        # then construct every possibles cases, by default there is 2 possible values :
         # delay__orgUid1__advice_not_given, delay__orgUid1__advice_under_edit
         # delay__orgUid2__advice_not_given, delay__orgUid2__advice_under_edit
         # ...
-        orgs = get_organizations(only_selected=False)
-        org_uids = [org.UID() for org in orgs]
         indexAdvisers = []
-        for org_uid in org_uids:
-            # advice giveable but not given
-            indexAdvisers.append("delay__%s_advice_not_given" % org_uid)
-            # now advice given and still editable
-            for advice_state in ADVICE_STATES_ALIVE:
-                indexAdvisers.append("delay__%s_%s" % (org_uid, advice_state))
+        tool = api.portal.get_tool('portal_plonemeeting')
+        for cfg in tool.objectValues('MeetingConfig'):
+            for row in cfg.getCustomAdvisers():
+                isDelayAware = bool(row['delay'])
+                if isDelayAware:
+                    org_uid = row['org']
+                    # advice giveable but not given
+                    advice_not_given_value = "delay__{0}_advice_not_given".format(org_uid)
+                    # avoid duplicates
+                    if advice_not_given_value in indexAdvisers:
+                        continue
+                    indexAdvisers.append(advice_not_given_value)
+                    # now advice given and still editable
+                    for advice_state in ADVICE_STATES_ALIVE:
+                        indexAdvisers.append("delay__{0}_{1}".format(org_uid, advice_state))
         query = {}
-        query['indexAdvisers'] = indexAdvisers
+        # if no indexAdvisers, query on 'dummy' to avoid query on empty value
+        query['indexAdvisers'] = indexAdvisers or ['dummy']
         return query
 
     def _updateAllAdvices(self, query={}):
@@ -664,6 +672,7 @@ class BaseDGHV(object):
             xhtmlFinal = xhtmlContents
 
         # manage image_src_to_paths
+        # turning http link to image to blob path will avoid unauthorized by appy.pod
         if image_src_to_paths:
             xhtmlFinal = imagesToPath(context, xhtmlFinal)
 

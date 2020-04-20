@@ -1132,7 +1132,7 @@ class testContacts(PloneMeetingTestCase):
             only_factory=True)
         self.assertTrue(self.developers_uid in item.Vocabulary('associatedGroups')[0])
         self.assertTrue(self.developers_uid in item.listProposingGroups())
-        self.assertTrue(self.developers_reviewers in item.listCopyGroups())
+        self.assertTrue(self.developers_reviewers in item.Vocabulary('copyGroups')[0])
         self.assertTrue(self.developers_uid in advisers_vocab_factory(item))
         self.assertTrue(self.tool.userIsAmong(['creators']))
         # after deactivation, the group is no more useable...
@@ -1143,7 +1143,7 @@ class testContacts(PloneMeetingTestCase):
         # remove proposingGroup or it will appear in the vocabulary as 'developers' is currently used...
         item.setProposingGroup('')
         self.assertFalse(self.developers_uid in item.listProposingGroups())
-        self.assertFalse(self.developers_reviewers in item.listCopyGroups())
+        self.assertFalse(self.developers_reviewers in item.Vocabulary('copyGroups')[0])
         self.assertFalse(self.developers_uid in advisers_vocab_factory(item))
         self.assertFalse(self.tool.userIsAmong(['creators']))
 

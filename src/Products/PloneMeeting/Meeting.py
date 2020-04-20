@@ -101,9 +101,6 @@ logger = logging.getLogger('PloneMeeting')
 # PloneMeetingError-related constants -----------------------------------------
 BEFOREDELETE_ERROR = 'A BeforeDeleteException was raised by "%s" while ' \
     'trying to delete a meeting with id "%s"'
-NO_SECOND_LANGUAGE_ERROR = 'Unable to find the second supported language in ' \
-    'portal_languages, either only one language is supported, or more than 2 languages' \
-    'are supported.  Please contact system administrator.'
 
 
 # Adapters ---------------------------------------------------------------------
