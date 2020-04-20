@@ -559,13 +559,13 @@ class AskedAdvicesVocabulary(object):
                 res.append(REAL_ORG_UID_PATTERN.format(customAdviser['org']))
 
         # classic advisers
-        orgs = [org for org in get_organizations(only_selected=True)
-                if org.UID() in self.cfg.getSelectableAdvisers()]
+        org_uids = [org_uid for org_uid in get_organizations(only_selected=True, the_objects=False)
+                    if org_uid in self.cfg.getSelectableAdvisers()]
         if not active:
-            orgs = [org for org in get_organizations(only_selected=False)
-                    if org not in orgs and org.UID() in self.cfg.getSelectableAdvisers()]
-        for org in orgs:
-            formatted = REAL_ORG_UID_PATTERN.format(org.UID())
+            org_uids = [org_uid for org_uid in get_organizations(only_selected=False, the_objects=False)
+                        if org_uid not in org_uids and org_uid in self.cfg.getSelectableAdvisers()]
+        for org_uid in org_uids:
+            formatted = REAL_ORG_UID_PATTERN.format(org_uid)
             res.append(formatted)
 
         # remove duplicates

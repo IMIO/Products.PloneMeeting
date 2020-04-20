@@ -8,7 +8,6 @@
 #
 
 from appy.shared.diff import HtmlDiff
-from collective.contact.plonegroup.utils import get_organization
 from collective.contact.plonegroup.utils import get_own_organization
 from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.documentgenerator.adapters import GenerablePODTemplatesAdapter
@@ -942,7 +941,7 @@ class BaseItemsToValidateOfHighestHierarchicLevelAdapter(CompoundCriterionBaseAd
         for plone_group_id in userPloneGroupIds:
             if plone_group_id.endswith('_%s' % highestReviewerLevel):
                 # append group name without suffix
-                org_uid = get_organization(plone_group_id).UID()
+                org_uid = plone_group_id.split('_')[0]
                 review_states = [
                     '{0}{1}'.format(prefix_review_state, review_state) for review_state in review_states]
                 reviewProcessInfo = [
@@ -1076,7 +1075,7 @@ class BaseItemsToValidateOfMyReviewerGroupsAdapter(CompoundCriterionBaseAdapter)
                          'pre_validation_keep_reviewer_permissions' in self.cfg.getWorkflowAdaptations()) and \
                        review_states == ['proposed']:
                         review_states = ['prevalidated']
-                    org_uid = get_organization(userPloneGroupId).UID()
+                    org_uid = userPloneGroupId.split('_')[0]
                     review_states = [
                         '%s%s' % (prefix_review_state, review_state) for review_state in review_states]
                     reviewProcessInfo = [

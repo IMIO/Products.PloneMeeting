@@ -280,14 +280,14 @@ class PMOrganization(Organization):
             except ValueError:
                 index = 0
             return index
-        orgs = get_organizations(only_selected=True)
-        i = _get_index(orgs, self)
+        org_uids = get_organizations(only_selected=True, the_objects=False)
+        i = _get_index(org_uids, self.UID())
         # if we received associated_org_uids we must consider associated group
         # that has the lowest position
         if associated_org_uids:
             # if we have MeetingConfig.orderedAssociatedOrganizations, we use it
             # either we use organizations selected in plonegroup
-            org_uids = cfg.getOrderedAssociatedOrganizations() or [org.UID() for org in orgs]
+            org_uids = cfg.getOrderedAssociatedOrganizations() or org_uids
             # orgs are sorted so, the first we find, we return it
             for org_uid in org_uids:
                 if org_uid in associated_org_uids:

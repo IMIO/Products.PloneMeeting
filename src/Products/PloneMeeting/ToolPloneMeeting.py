@@ -499,7 +499,9 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
            orgs the user is in using those suffixes.'''
         res = []
         user_plone_group_ids = self.get_plone_groups_for_user(user_id)
-        orgs = get_organizations(only_selected=only_selected, kept_org_uids=using_groups, the_objects=the_objects)
+        orgs = get_organizations(only_selected=only_selected,
+                                 kept_org_uids=using_groups,
+                                 the_objects=the_objects)
         for org in orgs:
             org_uid = the_objects and org.UID() or org
             for suffix in get_all_suffixes(org_uid):
@@ -555,8 +557,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                         "a tuple or list of suffixes, but we received '{0}'".format(suffixes))
 
         using_groups = cfg and cfg.getUsingGroups() or []
-        activeOrgUids = [org.UID() for org in get_organizations(
-            only_selected=True, kept_org_uids=using_groups)]
+        activeOrgUids = [org_uid for org_uid in get_organizations(
+            only_selected=True, the_objects=False, kept_org_uids=using_groups)]
         res = False
         for plone_group_id in self.get_plone_groups_for_user():
             # check if the plone_group_id ends with a least one of the p_suffixes

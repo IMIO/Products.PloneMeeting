@@ -5,8 +5,8 @@ Changelog
 4.1.22 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- Optimized calls to `collective.contact.plonegroup.utils.get_organizations` and `collective.contact.plonegroup.utils.get_organization`,
+  do it with `the_objects=False` anytime possible, and avoid calling it when we have the `plone_group_id` and we need the `organization UID`
 
 4.1.21 (2020-04-20)
 -------------------

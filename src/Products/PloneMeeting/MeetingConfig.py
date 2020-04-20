@@ -5770,9 +5770,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def listSelectableCopyGroups(self):
         '''Returns a list of groups that can be selected on an item as copy for the item.'''
         res = []
-        orgs = get_organizations()
-        for org in orgs:
-            plone_groups = get_plone_groups(org.UID())
+        org_uids = get_organizations(the_objects=False)
+        for org_uid in org_uids:
+            plone_groups = get_plone_groups(org_uid)
             for plone_group in plone_groups:
                 res.append((plone_group.id, plone_group.getProperty('title')))
         return DisplayList(tuple(res)).sortedByValue()
