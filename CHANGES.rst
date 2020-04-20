@@ -16,6 +16,8 @@ Changelog
   - factorized the way advices and copy groups are displayed on item view (`displayAdvisers/displayCopyGroups`)
   - adapted tests accordingly
 - Display `portal_setup` profile version for PloneMeeting related packages in `@@overview-controlpanel`
+- Fixed view.printAssembly method that failed when a meeting item was not in a meeting
+- Fixed test_pm_ItemStrikedAssembly to test printAssembly method when a meeting item is not in a meeting
 
 4.1.20.2 (2020-04-08)
 ---------------------

@@ -5268,6 +5268,8 @@ class testMeetingItem(PloneMeetingTestCase):
 
     def test_pm_ItemStrikedAssembly(self):
         """Test use of utils.toHTMLStrikedContent for itemAssembly."""
+        self.changeUser('pmManager')
+        self.create('Meeting', date=DateTime())
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         template = self.meetingConfig.podtemplates.itemTemplate
@@ -5277,7 +5279,9 @@ class testMeetingItem(PloneMeetingTestCase):
         view = item.restrictedTraverse('@@document-generation')
         view()
         helper = view.get_generation_context_helper()
-
+        # No meeting case
+        self.assertEqual(helper.printAssembly(striked=True), '')
+        self.presentItem(item)
         item.setItemAssembly('Simple assembly')
         self.assertEqual(helper.printAssembly(striked=True),
                          '<p>Simple assembly</p>')
@@ -5296,14 +5300,15 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmManager')
         self.create('Meeting', date=DateTime())
         item = self.create('MeetingItem')
-        self.presentItem(item)
         template = self.meetingConfig.podtemplates.itemTemplate
         self.request.set('template_uid', template.UID())
         self.request.set('output_format', 'odt')
         view = item.restrictedTraverse('@@document-generation')
         view()
         helper = view.get_generation_context_helper()
-
+        # printAssembly shouldn't fail if the item is not in a meeting
+        self.assertEqual(helper.printAssembly(), '')
+        self.presentItem(item)
         printed_assembly = helper.printAssembly(group_position_type=False)
         # Every attendee firstname and lastname must be in view.printAssembly()
         for attendee in item.getAttendees(theObjects=True):

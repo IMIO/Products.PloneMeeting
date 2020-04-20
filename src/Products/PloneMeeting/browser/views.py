@@ -857,6 +857,11 @@ class BaseDGHV(object):
            If p_striked is True, return striked assembly.
            If use_print_attendees_by_type is True, we use print_attendees_by_type method instead of
            print_attendees.'''
+
+        if self.context.meta_type == 'MeetingItem' and not self.context.hasMeeting():
+            # There is nothing to print in this case
+            return ''
+
         assembly = None
         if self.context.meta_type == 'Meeting' and self.context.getAssembly():
             assembly = self.context.getAssembly()
