@@ -521,22 +521,30 @@ class UpdateDelayAwareAdvicesView(BrowserView):
           Compute the catalog query to execute to get only relevant items to update,
           so items with delay-aware advices still addable/editable.
         '''
-        # compute the indexAdvisers index, take every orgs, including disabled ones
-        # then constuct every possibles cases, by default there is 2 possible values :
+        # compute the indexAdvisers index, take every customAdvisers, including disabled ones
+        # then construct every possibles cases, by default there is 2 possible values :
         # delay__orgUid1__advice_not_given, delay__orgUid1__advice_under_edit
         # delay__orgUid2__advice_not_given, delay__orgUid2__advice_under_edit
         # ...
-        orgs = get_organizations(only_selected=False)
-        org_uids = [org.UID() for org in orgs]
         indexAdvisers = []
-        for org_uid in org_uids:
-            # advice giveable but not given
-            indexAdvisers.append("delay__%s_advice_not_given" % org_uid)
-            # now advice given and still editable
-            for advice_state in ADVICE_STATES_ALIVE:
-                indexAdvisers.append("delay__%s_%s" % (org_uid, advice_state))
+        tool = api.portal.get_tool('portal_plonemeeting')
+        for cfg in tool.objectValues('MeetingConfig'):
+            for row in cfg.getCustomAdvisers():
+                isDelayAware = bool(row['delay'])
+                if isDelayAware:
+                    org_uid = row['org']
+                    # advice giveable but not given
+                    advice_not_given_value = "delay__{0}_advice_not_given".format(org_uid)
+                    # avoid duplicates
+                    if advice_not_given_value in indexAdvisers:
+                        continue
+                    indexAdvisers.append(advice_not_given_value)
+                    # now advice given and still editable
+                    for advice_state in ADVICE_STATES_ALIVE:
+                        indexAdvisers.append("delay__{0}_{1}".format(org_uid, advice_state))
         query = {}
-        query['indexAdvisers'] = indexAdvisers
+        # if no indexAdvisers, query on 'dummy' to avoid query on empty value
+        query['indexAdvisers'] = indexAdvisers or ['dummy']
         return query
 
     def _updateAllAdvices(self, query={}):
@@ -664,6 +672,7 @@ class BaseDGHV(object):
             xhtmlFinal = xhtmlContents
 
         # manage image_src_to_paths
+        # turning http link to image to blob path will avoid unauthorized by appy.pod
         if image_src_to_paths:
             xhtmlFinal = imagesToPath(context, xhtmlFinal)
 
@@ -848,6 +857,11 @@ class BaseDGHV(object):
            If p_striked is True, return striked assembly.
            If use_print_attendees_by_type is True, we use print_attendees_by_type method instead of
            print_attendees.'''
+
+        if self.context.meta_type == 'MeetingItem' and not self.context.hasMeeting():
+            # There is nothing to print in this case
+            return ''
+
         assembly = None
         if self.context.meta_type == 'Meeting' and self.context.getAssembly():
             assembly = self.context.getAssembly()
@@ -874,7 +888,7 @@ class BaseDGHV(object):
             attendees = meeting.getAttendees()
             item_absents = []
             item_excused = []
-            item_non_attendees = meeting.getNonAttendees()
+            item_non_attendees = meeting.getItemNonAttendees()
         else:
             # MeetingItem
             meeting = self.context.getMeeting()
@@ -894,6 +908,7 @@ class BaseDGHV(object):
                         by_attendee_type=False,
                         by_parent_org=False,
                         render_as_html=True,
+                        escape_for_html=True,
                         show_replaced_by=True,
                         include_replace_by_held_position_label=True,
                         attendee_value_format=u"{0}, {1}",
@@ -949,8 +964,11 @@ class BaseDGHV(object):
             contact_uid = contact.UID()
             if ignore_non_attendees and contact_uid in item_non_attendees:
                 continue
-            res[contact] = contact.get_short_title(include_sub_organizations=False,
-                                                   abbreviate_firstname=abbreviate_firstname)
+            contact_short_title = contact.get_short_title(include_sub_organizations=False,
+                                                          abbreviate_firstname=abbreviate_firstname)
+            if escape_for_html:
+                contact_short_title = cgi.escape(contact_short_title)
+            res[contact] = contact_short_title
 
         # manage group by sub organization
         if by_parent_org:
@@ -1022,6 +1040,7 @@ class BaseDGHV(object):
                                 pos_attendee_separator=', ',
                                 single_pos_attendee_ender=';',
                                 render_as_html=True,
+                                escape_for_html=True,
                                 position_type_format=u", {0};",
                                 show_grouped_attendee_type=True,
                                 show_item_grouped_attendee_type=True,
@@ -1047,6 +1066,8 @@ class BaseDGHV(object):
                     include_person_title=include_person_title,
                     abbreviate_firstname=abbreviate_firstname,
                     include_held_position_label=not group_position_type)
+                if escape_for_html:
+                    contact_value = cgi.escape(contact_value)
                 contact_uid = contact.UID()
                 if contact_uid in striked_contact_uids:
                     contact_value = striked_attendee_pattern.format(contact_value)
@@ -1079,6 +1100,8 @@ class BaseDGHV(object):
                                 # manage when we have no position_type but a label
                                 if hp.position_type == u'default' and u'default' not in ignored_pos_type_ids:
                                     position_type_value = hp.get_label()
+                                    if escape_for_html:
+                                        position_type_value = cgi.escape(position_type_value)
                                 else:
                                     position_type_value = contacts[0].gender_and_number_from_position_type()[gn]
                             grouped_contacts_value = _buildContactsValue(meeting, contacts)

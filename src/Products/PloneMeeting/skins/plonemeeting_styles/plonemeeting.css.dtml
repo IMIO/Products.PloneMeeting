@@ -258,25 +258,28 @@ div.pm_search_no_result_info {
 #archetypes-fieldname-title2 input { font-size: 160%; width:99%;}
 /* display input for entering TAL expression as large as possible */
 input#form-widgets-as_copy_group_on {
-   width: 99%;
+    width: 99%;
 }
+/* when hovering [auto] on item view */
+strong.auto_info {
+    cursor: help;
+}
+
 .navigateItem {
     text-align: center;
     clear: both;
     margin-top: 0.5em;
 }
-
 .navigateItem img {
     vertical-align: baseline;
 }
 
-
 /* makes pm_workflowstate displays correctly on the right of byline */
 div#viewlet-below-content-title {
-   height: 1em;
+    height: 1em;
 }
 div#plone-document-byline {
-  float: left;
+    float: left;
 }
 div.pm_workflowstate {
     float: right;

@@ -3091,7 +3091,7 @@ class testMeetingItem(PloneMeetingTestCase):
         cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
         self.assertTrue(m2UID not in item.listMeetingsAcceptingItems().keys())
 
-    def test_pm_ListCopyGroups(self):
+    def test_pm_CopyGroupsVocabulary(self):
         '''
           This is the vocabulary for the field "copyGroups".
           Check that we still have the stored value in the vocabulary, aka if the stored value
@@ -3102,22 +3102,35 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmManager')
         # create an item to test the vocabulary
         item = self.create('MeetingItem')
-        self.assertEqual(item.listCopyGroups().keys(), [self.developers_reviewers, self.vendors_reviewers])
-        self.assertEqual(item.listCopyGroups().values(), ['Developers (Reviewers)', 'Vendors (Reviewers)'])
+        vocab_factory = get_vocab(
+            item,
+            item.getField('copyGroups').vocabulary_factory,
+            only_factory=True)
+        vocab_keys = [term.token for term in vocab_factory(item)._terms]
+        vocab_values = [term.title for term in vocab_factory(item)._terms]
+        self.assertEqual(vocab_keys, [self.developers_reviewers, self.vendors_reviewers])
+        self.assertEqual(vocab_values, ['Developers (Reviewers)', 'Vendors (Reviewers)'])
         # now select the 'developers_reviewers' as copyGroup for the item
         item.setCopyGroups((self.developers_reviewers, ))
         # still the complete vocabulary
-        self.assertEqual(item.listCopyGroups().keys(), [self.developers_reviewers, self.vendors_reviewers])
-        self.assertEqual(item.listCopyGroups().values(), ['Developers (Reviewers)', 'Vendors (Reviewers)'])
+        vocab_keys = [term.token for term in vocab_factory(item)._terms]
+        vocab_values = [term.title for term in vocab_factory(item)._terms]
+        self.assertEqual(vocab_keys, [self.developers_reviewers, self.vendors_reviewers])
+        self.assertEqual(vocab_values, ['Developers (Reviewers)', 'Vendors (Reviewers)'])
         # remove developers_reviewers from selectableCopyGroups in the meetingConfig
         cfg.setSelectableCopyGroups((self.vendors_reviewers, ))
+        cfg.at_post_edit_script()
         # still in the vocabulary because selected on the item
-        self.assertEqual(item.listCopyGroups().keys(), [self.developers_reviewers, self.vendors_reviewers])
-        self.assertEqual(item.listCopyGroups().values(), ['Developers (Reviewers)', 'Vendors (Reviewers)'])
+        vocab_keys = [term.token for term in vocab_factory(item)._terms]
+        vocab_values = [term.title for term in vocab_factory(item)._terms]
+        self.assertEqual(vocab_keys, [self.developers_reviewers, self.vendors_reviewers])
+        self.assertEqual(vocab_values, ['Developers (Reviewers)', 'Vendors (Reviewers)'])
         # unselect 'developers_reviewers' on the item, it will not appear anymore in the vocabulary
         item.setCopyGroups(())
-        self.assertEqual(item.listCopyGroups().keys(), [self.vendors_reviewers, ])
-        self.assertEqual(item.listCopyGroups().values(), ['Vendors (Reviewers)'])
+        vocab_keys = [term.token for term in vocab_factory(item)._terms]
+        vocab_values = [term.title for term in vocab_factory(item)._terms]
+        self.assertEqual(vocab_keys, [self.vendors_reviewers, ])
+        self.assertEqual(vocab_values, ['Vendors (Reviewers)'])
 
         # test with autoCopyGroups and the include_auto=False parameter
         self.vendors.as_copy_group_on = "python: item.getProposingGroup() == " \
@@ -3125,13 +3138,17 @@ class testMeetingItem(PloneMeetingTestCase):
         item._update_after_edit()
         self.assertEqual(item.autoCopyGroups, ['auto__{0}'.format(self.vendors_observers),
                                                'auto__{0}'.format(self.vendors_advisers)])
-        self.assertEqual(item.listCopyGroups().keys(), [self.vendors_reviewers])
-        self.assertEqual(item.listCopyGroups().values(), ['Vendors (Reviewers)'])
-        self.assertEqual(item.listCopyGroups(include_auto=True).keys(),
+        vocab_keys = [term.token for term in vocab_factory(item)._terms]
+        vocab_values = [term.title for term in vocab_factory(item)._terms]
+        self.assertEqual(vocab_keys, [self.vendors_reviewers])
+        self.assertEqual(vocab_values, ['Vendors (Reviewers)'])
+        vocab_keys = [term.token for term in vocab_factory(item, include_auto=True)._terms]
+        vocab_values = [term.title for term in vocab_factory(item, include_auto=True)._terms]
+        self.assertEqual(vocab_keys,
                          ['auto__{0}'.format(self.vendors_advisers),
                           'auto__{0}'.format(self.vendors_observers),
                           self.vendors_reviewers])
-        self.assertEqual(item.listCopyGroups(include_auto=True).values(),
+        self.assertEqual(vocab_values,
                          ['Vendors (Advisers) [auto]',
                           'Vendors (Observers) [auto]',
                           'Vendors (Reviewers)'])
@@ -3309,7 +3326,7 @@ class testMeetingItem(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         vocab_factory = get_vocab(
             item,
-            'Products.PloneMeeting.vocabularies.itemoptionaladvicesvocabulary',
+            item.getField('optionalAdvisers').vocabulary_factory,
             only_factory=True)
         # relies on MeetingConfig.selectableAdvisers
         self.assertEqual(cfg.getSelectableAdvisers(), (self.developers_uid, self.vendors_uid))
@@ -3376,9 +3393,10 @@ class testMeetingItem(PloneMeetingTestCase):
         # by default, nothing is defined as delay-aware adviser in the configuration
         cfg = self.meetingConfig
         self.failIf(cfg.getCustomAdvisers())
-        vocab_factory = get_vocab(item,
-                                  'Products.PloneMeeting.vocabularies.itemoptionaladvicesvocabulary',
-                                  only_factory=True)
+        vocab_factory = get_vocab(
+            item,
+            item.getField('optionalAdvisers').vocabulary_factory,
+            only_factory=True)
         vocab_keys = [term.token for term in vocab_factory(item)._terms]
         self.assertEqual(vocab_keys, [self.developers_uid, self.vendors_uid])
         # now define some delay-aware advisers in MeetingConfig.customAdvisers
@@ -5263,6 +5281,8 @@ class testMeetingItem(PloneMeetingTestCase):
 
     def test_pm_ItemStrikedAssembly(self):
         """Test use of utils.toHTMLStrikedContent for itemAssembly."""
+        self.changeUser('pmManager')
+        self.create('Meeting', date=DateTime())
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         template = self.meetingConfig.podtemplates.itemTemplate
@@ -5272,7 +5292,9 @@ class testMeetingItem(PloneMeetingTestCase):
         view = item.restrictedTraverse('@@document-generation')
         view()
         helper = view.get_generation_context_helper()
-
+        # No meeting case
+        self.assertEqual(helper.printAssembly(striked=True), '')
+        self.presentItem(item)
         item.setItemAssembly('Simple assembly')
         self.assertEqual(helper.printAssembly(striked=True),
                          '<p>Simple assembly</p>')
@@ -5291,14 +5313,15 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmManager')
         self.create('Meeting', date=DateTime())
         item = self.create('MeetingItem')
-        self.presentItem(item)
         template = self.meetingConfig.podtemplates.itemTemplate
         self.request.set('template_uid', template.UID())
         self.request.set('output_format', 'odt')
         view = item.restrictedTraverse('@@document-generation')
         view()
         helper = view.get_generation_context_helper()
-
+        # printAssembly shouldn't fail if the item is not in a meeting
+        self.assertEqual(helper.printAssembly(), '')
+        self.presentItem(item)
         printed_assembly = helper.printAssembly(group_position_type=False)
         # Every attendee firstname and lastname must be in view.printAssembly()
         for attendee in item.getAttendees(theObjects=True):

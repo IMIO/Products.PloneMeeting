@@ -101,9 +101,6 @@ logger = logging.getLogger('PloneMeeting')
 # PloneMeetingError-related constants -----------------------------------------
 BEFOREDELETE_ERROR = 'A BeforeDeleteException was raised by "%s" while ' \
     'trying to delete a meeting with id "%s"'
-NO_SECOND_LANGUAGE_ERROR = 'Unable to find the second supported language in ' \
-    'portal_languages, either only one language is supported, or more than 2 languages' \
-    'are supported.  Please contact system administrator.'
 
 
 # Adapters ---------------------------------------------------------------------
@@ -992,12 +989,6 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         '''See docstring in previous method.'''
         return self._getContacts('absent', theObjects=theObjects)
 
-    security.declarePublic('getNonAttendees')
-
-    def getNonAttendees(self, theObjects=False):
-        '''See docstring in previous method.'''
-        return self._getContacts('nonAttendee', theObjects=theObjects)
-
     security.declarePublic('getSignatories')
 
     def getSignatories(self, theObjects=False, by_signature_number=False):
@@ -1617,7 +1608,6 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
                     {'attendee': False,
                      'excused': False,
                      'absent': False,
-                     'nonAttendee': False,
                      'signer': False,
                      'signature_number': None,
                      'replacement': None}

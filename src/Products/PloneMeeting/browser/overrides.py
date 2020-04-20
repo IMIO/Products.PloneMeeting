@@ -362,11 +362,18 @@ class PloneMeetingOverviewControlPanel(OverviewControlPanel):
     '''
     def version_overview(self):
         versions = super(PloneMeetingOverviewControlPanel, self).version_overview()
-        pm_version = api.env.get_distribution('Products.PloneMeeting')._version
+        # appy
         appy_version = api.env.get_distribution('appy')._version
         versions.insert(0, 'appy %s' % appy_version)
-        versions.insert(0, 'PloneMeeting %s' % pm_version)
-        # display versions of package begining with Products.Meeting*
+        # PM
+        pm_version = api.env.get_distribution('Products.PloneMeeting')._version
+        ps = api.portal.get_tool('portal_setup')
+        pm_ps_version = ps.getVersionForProfile('Products.PloneMeeting:default')
+        pm_ps_last_version = ps.getLastVersionForProfile('Products.PloneMeeting:default')[0]
+        if pm_ps_last_version != pm_ps_version:
+            pm_ps_version = '!!!%s/%s!!! Please launch upgrade steps!!!' % (pm_ps_last_version, pm_ps_version)
+        versions.insert(0, 'PloneMeeting %s (%s)' % (pm_version, pm_ps_version))
+        # display versions of package begining with Products.Meeting*, plugins
         plugin_package_names = []
         for package_name in sys.modules.keys():
             if package_name.startswith('Products.Meeting'):
@@ -374,8 +381,11 @@ class PloneMeetingOverviewControlPanel(OverviewControlPanel):
                 if real_package_name not in plugin_package_names:
                     plugin_package_names.append(real_package_name)
         for plugin_package_name in plugin_package_names:
-            version = api.env.get_distribution(plugin_package_name)._version
-            versions.insert(1, "%s %s" % (plugin_package_name.split('.')[1], version))
+            plugin_version = api.env.get_distribution(plugin_package_name)._version
+            plugin_ps_version = ps.getVersionForProfile('%s:default' % plugin_package_name)
+            versions.insert(1, "%s %s (%s)" % (plugin_package_name.split('.')[1],
+                                               plugin_version,
+                                               plugin_ps_version))
         return versions
 
 

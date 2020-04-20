@@ -22,6 +22,7 @@ from Products.CMFCore.ActionInformation import Action
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.Five import zcml
+from Products.PloneMeeting.config import ADVICE_STATES_ALIVE
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.etags import ConfigModified
 from Products.PloneMeeting.etags import ContextModified
@@ -78,22 +79,22 @@ class testViews(PloneMeetingTestCase):
         self.request.form['form.HTTP_REFERER'] = self.request.RESPONSE.getHeader('location')
         self.request.form['form.buttons.cancel'] = True
         view()
-        self.assertEquals(self.request.RESPONSE.status, 302)
-        self.assertEquals(self.request.RESPONSE.getHeader('location'),
-                          self.request.form.get('form.HTTP_REFERER'))
+        self.assertEqual(self.request.RESPONSE.status, 302)
+        self.assertEqual(self.request.RESPONSE.getHeader('location'),
+                         self.request.form.get('form.HTTP_REFERER'))
 
         # create an item from an itemTemplate
         self.request.RESPONSE.setStatus(200)
         self.request.RESPONSE.setHeader('location', '')
-        self.assertEquals(self.request.RESPONSE.status, 200)
+        self.assertEqual(self.request.RESPONSE.status, 200)
         itemTemplate = view.templatesTree['children'][0]['item']
         self.request.form['templateUID'] = itemTemplate.UID
         view()
         # user was redirected to the new created item edit form
-        self.assertEquals(self.request.RESPONSE.status, 302)
-        self.assertEquals(self.request.RESPONSE.getHeader('location'),
-                          '{0}/{1}/edit'.format(pmFolder.absolute_url(),
-                                                itemTemplate.getId))
+        self.assertEqual(self.request.RESPONSE.status, 302)
+        self.assertEqual(self.request.RESPONSE.getHeader('location'),
+                         '{0}/{1}/edit'.format(pmFolder.absolute_url(),
+                                               itemTemplate.getId))
         # one item created in the user pmFolder
         self.assertEqual(len(pmFolder.objectValues('MeetingItem')), 1)
         self.assertEqual(pmFolder.objectValues('MeetingItem')[0].getId(), itemTemplate.getId)
@@ -280,16 +281,16 @@ class testViews(PloneMeetingTestCase):
         view = pmFolder.restrictedTraverse('@@createitemfromtemplate')
         view()
         # we have one isolated itemtemplate and complete path the itemtemplate in subsubfolder
-        self.assertEquals(len(view.templatesTree['children']),
-                          2)
-        self.assertEquals(view.templatesTree['children'][0]['item'].id,
-                          'template1')
-        self.assertEquals(view.templatesTree['children'][1]['item'].id,
-                          'subfolder')
-        self.assertEquals(view.templatesTree['children'][1]['children'][0]['item'].id,
-                          'subsubfolder')
-        self.assertEquals(view.templatesTree['children'][1]['children'][0]['children'][0]['item'].id,
-                          'o1')
+        self.assertEqual(len(view.templatesTree['children']),
+                         2)
+        self.assertEqual(view.templatesTree['children'][0]['item'].id,
+                         'template1')
+        self.assertEqual(view.templatesTree['children'][1]['item'].id,
+                         'subfolder')
+        self.assertEqual(view.templatesTree['children'][1]['children'][0]['item'].id,
+                         'subsubfolder')
+        self.assertEqual(view.templatesTree['children'][1]['children'][0]['children'][0]['item'].id,
+                         'o1')
         self.assertTrue(view.displayShowHideAllLinks())
 
     def test_pm_JSVariables(self):
@@ -314,31 +315,30 @@ class testViews(PloneMeetingTestCase):
         # new_value is verified
         self.assertRaises(KeyError, view, new_value='some_wrong_value')
         # right, change listType value
-        self.assertEquals(item.getListType(), u'normal')
+        self.assertEqual(item.getListType(), u'normal')
         self.assertTrue(self.portal.portal_catalog(UID=item.UID(), listType=u'normal'))
         view('late')
         # value changed and item reindexed
-        self.assertEquals(item.getListType(), u'late')
+        self.assertEqual(item.getListType(), u'late')
         self.assertTrue(self.portal.portal_catalog(UID=item.UID(), listType=u'late'))
         # a specific subscriber is triggered when listType value changed
         # register a subscriber (onItemListTypeChanged) that will actually change item title
         # and set it to 'old_listType - new_listType'
         zcml.load_config('tests/events.zcml', products_plonemeeting)
-        self.assertEquals(item.Title(), 'Item title')
+        self.assertEqual(item.Title(), 'Item title')
         view('normal')
-        self.assertEquals(item.Title(), 'late - normal')
-        self.assertEquals(item.getListType(), u'normal')
+        self.assertEqual(item.Title(), 'late - normal')
+        self.assertEqual(item.getListType(), u'normal')
         self.assertTrue(self.portal.portal_catalog(UID=item.UID(), listType=u'normal'))
         # if title is 'late - normal' call to subscriber will raise an error
         # this way, we test that when an error occur in the event, the listType is not changed
         view('late')
         # not changed and a portal_message is added
-        self.assertEquals(item.Title(), 'late - normal')
-        self.assertEquals(item.getListType(), u'normal')
+        self.assertEqual(item.Title(), 'late - normal')
+        self.assertEqual(item.getListType(), u'normal')
         self.assertTrue(self.portal.portal_catalog(UID=item.UID(), listType=u'normal'))
         messages = IStatusMessage(self.request).show()
-        self.assertEquals(messages[-1].message,
-                          SAMPLE_ERROR_MESSAGE)
+        self.assertEqual(messages[-1].message, SAMPLE_ERROR_MESSAGE)
         # cleanUp zmcl.load_config because it impact other tests
         zcml.cleanUp()
 
@@ -378,7 +378,7 @@ class testViews(PloneMeetingTestCase):
         # no advice
         self.create('MeetingItem')
         # if we use the query, it will return nothing for now...
-        self.assertTrue(not catalog(**query))
+        self.assertFalse(catalog(**query))
 
         # no delay-aware advice
         itemWithNonDelayAwareAdvices = self.create('MeetingItem')
@@ -452,6 +452,114 @@ class testViews(PloneMeetingTestCase):
         itemWithDelayAwareAdvice.updateLocalRoles()
         self.assertTrue(not catalog(**query))
 
+    def test_pm_UpdateDelayAwareAdvicesComputeQuery(self):
+        '''
+          The computed query only consider organizations for which a delay aware advice is configured.
+        '''
+        cfg = self.meetingConfig
+        cfg2 = self.meetingConfig2
+        self.changeUser('admin')
+        # for now, no customAdvisers
+        for mc in self.tool.objectValues('MeetingConfig'):
+            self.assertFalse(mc.getCustomAdvisers())
+        query = self.portal.restrictedTraverse('@@update-delay-aware-advices')._computeQuery()
+        self.assertEqual(query, {'indexAdvisers': ['dummy']})
+        # define customAdvisers in cfg1, only one delay aware for vendors
+        cfg.setCustomAdvisers(
+            [{'row_id': 'unique_id_123',
+              'org': self.vendors_uid,
+              'gives_auto_advice_on': '',
+              'for_item_created_from': '2012/01/01',
+              'for_item_created_until': '',
+              'delay': '5',
+              'delay_label': '5 days'},
+             {'row_id': 'unique_id_456',
+              'org': self.vendors_uid,
+              'gives_auto_advice_on': 'here/getBudgetRelated',
+              'for_item_created_from': '2012/01/01',
+              'for_item_created_until': '',
+              'delay': '',
+              'delay_label': ''}, ])
+        query = self.portal.restrictedTraverse('@@update-delay-aware-advices')._computeQuery()
+        self.assertEqual(
+            query,
+            {'indexAdvisers': ['delay__{0}_{1}'.format(self.vendors_uid, advice_state)
+                               for advice_state in ('advice_not_given', ) + ADVICE_STATES_ALIVE]})
+        # define customAdvisers in cfg2, also for vendors
+        cfg2.setCustomAdvisers(
+            [{'row_id': 'unique_id_123',
+              'org': self.developers_uid,
+              'gives_auto_advice_on': 'python:True',
+              'for_item_created_from': '2012/01/01',
+              'for_item_created_until': '',
+              'delay': '',
+              'delay_label': ''},
+             {'row_id': 'unique_id_456',
+              'org': self.vendors_uid,
+              'gives_auto_advice_on': '',
+              'for_item_created_from': '2012/01/01',
+              'for_item_created_until': '',
+              'delay': '10',
+              'delay_label': '10 days'}, ])
+        # the query is the same when vendors defined in cfg alone or cfg and cfg2
+        query = self.portal.restrictedTraverse('@@update-delay-aware-advices')._computeQuery()
+        self.assertEqual(
+            sorted(query),
+            sorted({'indexAdvisers':
+                   ['delay__{0}_{1}'.format(self.vendors_uid, advice_state)
+                    for advice_state in ('advice_not_given', ) + ADVICE_STATES_ALIVE]}))
+        # now define customAdvisers for developers
+        cfg2.setCustomAdvisers(
+            [{'row_id': 'unique_id_123',
+              'org': self.vendors_uid,
+              'gives_auto_advice_on': 'python:True',
+              'for_item_created_from': '2012/01/01',
+              'for_item_created_until': '',
+              'delay': '',
+              'delay_label': ''},
+             {'row_id': 'unique_id_456',
+              'org': self.developers_uid,
+              'gives_auto_advice_on': '',
+              'for_item_created_from': '2012/01/01',
+              'for_item_created_until': '',
+              'delay': '10',
+              'delay_label': '10 days'}, ])
+        query = self.portal.restrictedTraverse('@@update-delay-aware-advices')._computeQuery()
+        # check len because sorted removes duplicates
+        self.assertEqual(len(query['indexAdvisers']), 2 * (1 + len(ADVICE_STATES_ALIVE)))
+        self.assertEqual(
+            sorted(query),
+            sorted({'indexAdvisers':
+                    ['delay__{0}_{1}'.format(self.vendors_uid, advice_state)
+                     for advice_state in ('advice_not_given', ) + ADVICE_STATES_ALIVE] +
+                    ['delay__{0}_{1}'.format(self.developers_uid, advice_state)
+                     for advice_state in ('advice_not_given', ) + ADVICE_STATES_ALIVE]}))
+        # if org delay aware in several MeetingConfigs, line is only shown one time
+        cfg2.setCustomAdvisers(
+            [{'row_id': 'unique_id_123',
+              'org': self.vendors_uid,
+              'gives_auto_advice_on': 'python:True',
+              'for_item_created_from': '2012/01/01',
+              'for_item_created_until': '',
+              'delay': '3',
+              'delay_label': '3 days'},
+             {'row_id': 'unique_id_456',
+              'org': self.developers_uid,
+              'gives_auto_advice_on': '',
+              'for_item_created_from': '2012/01/01',
+              'for_item_created_until': '',
+              'delay': '10',
+              'delay_label': '10 days'}, ])
+        query = self.portal.restrictedTraverse('@@update-delay-aware-advices')._computeQuery()
+        self.assertEqual(len(query['indexAdvisers']), 2 * (1 + len(ADVICE_STATES_ALIVE)))
+        self.assertEqual(
+            sorted(query),
+            sorted({'indexAdvisers':
+                    ['delay__{0}_{1}'.format(self.vendors_uid, advice_state)
+                     for advice_state in ('advice_not_given', ) + ADVICE_STATES_ALIVE] +
+                    ['delay__{0}_{1}'.format(self.developers_uid, advice_state)
+                     for advice_state in ('advice_not_given', ) + ADVICE_STATES_ALIVE]}))
+
     def test_pm_UpdateDelayAwareAdvicesUpdateAllAdvices(self):
         """Test the _updateAllAdvices method that update every advices.
            It is used to update every delay aware advices every night."""
@@ -476,6 +584,7 @@ class testViews(PloneMeetingTestCase):
         # check that item modified is not changed when advice updated
         item1_original_modified = item1.modified()
         item2_original_modified = item2.modified()
+        # _updateAllAdvices called with query={} (default)
         self.portal.restrictedTraverse('@@update-delay-aware-advices')._updateAllAdvices()
         self.assertFalse(self.developers_advisers in item1.__ac_local_roles__)
         self.assertTrue(self.developers_advisers in item2.__ac_local_roles__)
@@ -494,16 +603,16 @@ class testViews(PloneMeetingTestCase):
         # define mailing_lists
         # False condition
         template.mailing_lists = "list1;python:False;user1@test.be\nlist2;python:False;user1@test.be"
-        self.assertEquals(self.tool.getAvailableMailingLists(item, template), [])
+        self.assertEqual(self.tool.getAvailableMailingLists(item, template), [])
         # wrong TAL condition, the list is there with error
         template.mailing_lists = "list1;python:wrong_expression;user1@test.be\nlist2;python:False;user1@test.be"
         error_msg = translate('Mailing lists are not correctly defined, original error is \"${error}\"',
                               mapping={'error': u'name \'wrong_expression\' is not defined', },
                               context=self.request)
-        self.assertEquals(self.tool.getAvailableMailingLists(item, template), [error_msg])
+        self.assertEqual(self.tool.getAvailableMailingLists(item, template), [error_msg])
         # correct and True condition
         template.mailing_lists = "list1;python:True;user1@test.be\nlist2;python:False;user1@test.be"
-        self.assertEquals(self.tool.getAvailableMailingLists(item, template), ['list1'])
+        self.assertEqual(self.tool.getAvailableMailingLists(item, template), ['list1'])
 
         # call the document-generation view
         self.request.set('template_uid', template.UID())
@@ -529,7 +638,7 @@ class testViews(PloneMeetingTestCase):
         self.assertNotEquals(messages[-1].message, msg)
         view()
         messages = IStatusMessage(self.request).show()
-        self.assertEquals(messages[-1].message, msg)
+        self.assertEqual(messages[-1].message, msg)
 
     def test_pm_SendPodTemplateToMailingListRecipient(self):
         """Recipients may be defined using several ways :
@@ -685,8 +794,8 @@ class testViews(PloneMeetingTestCase):
         cfg.setItemsListVisibleFields(('MeetingItem.description',
                                        'MeetingItem.motivation',
                                        'MeetingItem.decision'))
-        self.assertEquals(view.getItemsListVisibleFields().keys(),
-                          ['description', 'motivation', 'decision'])
+        self.assertEqual(view.getItemsListVisibleFields().keys(),
+                         ['description', 'motivation', 'decision'])
 
     def _setupPrintXhtml(self):
         """ """
@@ -709,39 +818,39 @@ class testViews(PloneMeetingTestCase):
         '''Test the method that will ease print of XHTML content into Pod templates.'''
         item, motivation, decision, helper = self._setupPrintXhtml()
         # test with one single xhtmlContent
-        self.assertEquals(helper.printXhtml(item, decision),
-                          item.getDecision())
+        self.assertEqual(helper.printXhtml(item, decision),
+                         item.getDecision())
         # several xhtmlContent
-        self.assertEquals(helper.printXhtml(item, [motivation, decision]),
-                          motivation + decision)
+        self.assertEqual(helper.printXhtml(item, [motivation, decision]),
+                         motivation + decision)
         # use 'separator'
-        self.assertEquals(helper.printXhtml(item, [motivation, 'separator', decision]),
-                          motivation + '<p>&nbsp;</p>' + decision)
+        self.assertEqual(helper.printXhtml(item, [motivation, 'separator', decision]),
+                         motivation + '<p>&nbsp;</p>' + decision)
         # use 'separator' with a fonctionnal usecase
-        self.assertEquals(helper.printXhtml(item, [motivation,
-                                                   'separator',
-                                                   '<p>DECIDE :</p>',
-                                                   'separator',
-                                                   decision]),
-                          motivation + '<p>&nbsp;</p><p>DECIDE :</p><p>&nbsp;</p>' + decision)
+        self.assertEqual(helper.printXhtml(item, [motivation,
+                                                  'separator',
+                                                  '<p>DECIDE :</p>',
+                                                  'separator',
+                                                  decision]),
+                         motivation + '<p>&nbsp;</p><p>DECIDE :</p><p>&nbsp;</p>' + decision)
 
     def test_pm_PrintXhtmlSeparator(self):
         ''' '''
         item, motivation, decision, helper = self._setupPrintXhtml()
 
         # use 'separator' and change 'separatorValue', insert 2 empty lines
-        self.assertEquals(helper.printXhtml(item,
-                                            [motivation, 'separator', decision],
-                                            separatorValue='<p>&nbsp;</p><p>&nbsp;</p>'),
-                          motivation + '<p>&nbsp;</p><p>&nbsp;</p>' + decision)
+        self.assertEqual(helper.printXhtml(item,
+                                           [motivation, 'separator', decision],
+                                           separatorValue='<p>&nbsp;</p><p>&nbsp;</p>'),
+                         motivation + '<p>&nbsp;</p><p>&nbsp;</p>' + decision)
         # use keepWithNext
         # special characters are turned to HTML entities decimal representation
-        self.assertEquals(helper.printXhtml(item,
-                                            [motivation, 'separator', decision],
-                                            keepWithNext=True),
-                          '<p class="ParaKWN">The motivation using UTF-8 characters : &#232;&#224;.</p>'
-                          '<p class="ParaKWN">&#160;</p>'
-                          '<p class="ParaKWN">The d&#233;cision using UTF-8 characters.</p>')
+        self.assertEqual(helper.printXhtml(item,
+                                           [motivation, 'separator', decision],
+                                           keepWithNext=True),
+                         '<p class="ParaKWN">The motivation using UTF-8 characters : &#232;&#224;.</p>'
+                         '<p class="ParaKWN">&#160;</p>'
+                         '<p class="ParaKWN">The d&#233;cision using UTF-8 characters.</p>')
 
     def test_pm_PrintXhtmlImageSrcToPaths(self):
         ''' '''
@@ -754,43 +863,43 @@ class testViews(PloneMeetingTestCase):
         img = getattr(item, img_id)
         img_blob_path = img.getBlobWrapper().blob._p_blob_committed
         text = "<p>Text with image <img src='{0}'/> and more text.".format(img.absolute_url())
-        self.assertEquals(helper.printXhtml(item,
-                                            [motivation, 'separator', decision, 'separator', text],
-                                            image_src_to_paths=True,
-                                            keepWithNext=True,
-                                            keepWithNextNumberOfChars=60),
-                          '<p>The motivation using UTF-8 characters : &#232;&#224;.</p>'
-                          '<p>&#160;</p>'
-                          '<p class="ParaKWN">The d&#233;cision using UTF-8 characters.</p>'
-                          '<p class="ParaKWN">&#160;</p>'
-                          '<p class="ParaKWN">Text with image <img src="{0}" /> and more text.</p>'
-                          .format(img_blob_path))
+        self.assertEqual(helper.printXhtml(item,
+                                           [motivation, 'separator', decision, 'separator', text],
+                                           image_src_to_paths=True,
+                                           keepWithNext=True,
+                                           keepWithNextNumberOfChars=60),
+                         '<p>The motivation using UTF-8 characters : &#232;&#224;.</p>'
+                         '<p>&#160;</p>'
+                         '<p class="ParaKWN">The d&#233;cision using UTF-8 characters.</p>'
+                         '<p class="ParaKWN">&#160;</p>'
+                         '<p class="ParaKWN">Text with image <img src="{0}" /> and more text.</p>'
+                         .format(img_blob_path))
 
     def test_pm_PrintXhtmlAddCSSClass(self):
         ''' '''
         item, motivation, decision, helper = self._setupPrintXhtml()
         # use 'addCSSClass'
-        self.assertEquals(helper.printXhtml(item,
-                                            [motivation,
-                                             'separator',
-                                             '<p>DECIDE :</p>',
-                                             'separator',
-                                             decision],
-                                            addCSSClass='sample'),
-                          '<p class="sample">The motivation using UTF-8 characters : &#232;&#224;.</p>'
-                          '<p class="sample">&#160;</p>'
-                          '<p class="sample">DECIDE :</p>'
-                          '<p class="sample">&#160;</p>'
-                          '<p class="sample">The d&#233;cision using UTF-8 characters.</p>')
+        self.assertEqual(helper.printXhtml(item,
+                                           [motivation,
+                                            'separator',
+                                            '<p>DECIDE :</p>',
+                                            'separator',
+                                            decision],
+                                           addCSSClass='sample'),
+                         '<p class="sample">The motivation using UTF-8 characters : &#232;&#224;.</p>'
+                         '<p class="sample">&#160;</p>'
+                         '<p class="sample">DECIDE :</p>'
+                         '<p class="sample">&#160;</p>'
+                         '<p class="sample">The d&#233;cision using UTF-8 characters.</p>')
 
     def test_pm_PrintXhtmlUseSafeHTML(self):
         '''safe_html will do result XHTML compliant.'''
         item, motivation, decision, helper = self._setupPrintXhtml()
         # use_safe_html is True by default
-        self.assertEquals(
+        self.assertEqual(
             helper.printXhtml(item, [motivation, '<br>']),
             motivation + '<br />')
-        self.assertEquals(
+        self.assertEqual(
             helper.printXhtml(item, [motivation, '<br>'], use_safe_html=False),
             motivation + '<br>')
 

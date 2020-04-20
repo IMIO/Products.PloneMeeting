@@ -319,7 +319,7 @@ class ItemGroupsInChargeVocabulary(GroupsInChargeVocabulary):
         sort = True
         if 'groupsInCharge' in cfg.getItemFieldsToKeepConfigSortingFor():
             sort = False
-        terms = super(ItemGroupsInChargeVocabulary, self).__call__(context, sort=sort)._terms
+        terms = list(super(ItemGroupsInChargeVocabulary, self).__call__(context, sort=sort)._terms)
 
         # when used on an item, manage missing terms, selected on item
         # but removed from orderedGroupsInCharge or from plonegroup
@@ -1647,7 +1647,9 @@ class AssociatedGroupsVocabulary(object):
     def __call___cachekey(method, self, context, sort=True):
         '''cachekey method for self.__call__.'''
         date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.associatedgroupsvocabulary')
-        return date, sort
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        return date, sort, cfg
 
     @ram.cache(__call___cachekey)
     def __call__(self, context, sort=True):
@@ -1681,13 +1683,15 @@ class ItemAssociatedGroupsVocabulary(AssociatedGroupsVocabulary):
     implements(IVocabularyFactory)
 
     def __call__(self, context):
-        """ """
+        """This is not ram.cached."""
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         sort = True
         if 'associatedGroups' in cfg.getItemFieldsToKeepConfigSortingFor():
             sort = False
         terms = super(ItemAssociatedGroupsVocabulary, self).__call__(context, sort=sort)._terms
+        # make sure we have a copy of _terms because we will add some
+        terms = list(terms)
         # when used on an item, manage missing terms, selected on item
         # but removed from orderedAssociatedOrganizations or from plonegroup
         stored_terms = context.getAssociatedGroups()
@@ -1704,3 +1708,84 @@ class ItemAssociatedGroupsVocabulary(AssociatedGroupsVocabulary):
 
 
 ItemAssociatedGroupsVocabularyFactory = ItemAssociatedGroupsVocabulary()
+
+
+class CopyGroupsVocabulary(object):
+    """ """
+    implements(IVocabularyFactory)
+
+    def __call___cachekey(method, self, context):
+        '''cachekey method for self.__call__.'''
+        date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.copygroupsvocabulary')
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        return date, cfg
+
+    @ram.cache(__call___cachekey)
+    def __call__(self, context):
+        '''Lists the groups that will be selectable to be in copy for this
+           item.  If p_include_auto is True, we add terms regarding self.autoCopyGroups.'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        portal_groups = api.portal.get_tool('portal_groups')
+        terms = []
+        for groupId in cfg.getSelectableCopyGroups():
+            group = portal_groups.getGroupById(groupId)
+            terms.append(SimpleTerm(groupId, groupId, safe_unicode(group.getProperty('title'))))
+
+        terms = humansorted(terms, key=attrgetter('title'))
+        return SimpleVocabulary(terms)
+
+
+CopyGroupsVocabularyFactory = CopyGroupsVocabulary()
+
+
+class ItemCopyGroupsVocabulary(CopyGroupsVocabulary):
+    """Manage missing terms if context is a MeetingItem."""
+
+    implements(IVocabularyFactory)
+
+    def __call__(self, context, include_auto=False):
+        """This is not ram.cached."""
+        terms = super(ItemCopyGroupsVocabulary, self).__call__(context)._terms
+        # make sure we have a copy of _terms because we will add some
+        terms = list(terms)
+        # include terms for autoCopyGroups if relevant
+        portal_groups = api.portal.get_tool('portal_groups')
+        if include_auto and context.autoCopyGroups:
+            for autoGroupId in context.autoCopyGroups:
+                groupId = context._realCopyGroupId(autoGroupId)
+                group = portal_groups.getGroupById(groupId)
+                if group:
+                    terms.append(SimpleTerm(autoGroupId,
+                                            autoGroupId,
+                                            safe_unicode(group.getProperty('title')) + u' [auto]'))
+                else:
+                    terms.append(SimpleTerm(autoGroupId, autoGroupId, autoGroupId))
+
+        # manage missing terms
+        copyGroups = context.getCopyGroups()
+        if copyGroups:
+            copyGroupsInVocab = [term.value for term in terms]
+            for groupId in copyGroups:
+                if groupId not in copyGroupsInVocab:
+                    realGroupId = context._realCopyGroupId(groupId)
+                    group = portal_groups.getGroupById(realGroupId)
+                    if group:
+                        if realGroupId == groupId:
+                            terms.append(
+                                SimpleTerm(groupId, groupId, safe_unicode(group.getProperty('title'))))
+                        else:
+                            # auto copy group
+                            terms.append(
+                                SimpleTerm(groupId,
+                                           groupId,
+                                           safe_unicode(group.getProperty('title')) + u' [auto]'))
+                    else:
+                        terms.append(SimpleTerm(groupId, groupId, groupId))
+
+        terms = humansorted(terms, key=attrgetter('title'))
+        return SimpleVocabulary(terms)
+
+
+ItemCopyGroupsVocabularyFactory = ItemCopyGroupsVocabulary()
