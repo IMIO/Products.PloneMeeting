@@ -672,6 +672,7 @@ class BaseDGHV(object):
             xhtmlFinal = xhtmlContents
 
         # manage image_src_to_paths
+        # turning http link to image to blob path will avoid unauthorized by appy.pod
         if image_src_to_paths:
             xhtmlFinal = imagesToPath(context, xhtmlFinal)
 

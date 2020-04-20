@@ -15,6 +15,7 @@ Changelog
   - moved `MeetingItem.copyGroup` vocabulary from `listCopyGroups` to `Products.PloneMeeting.vocabularies.itemcopygroupsvocabulary`
   - factorized the way advices and copy groups are displayed on item view (`displayAdvisers/displayCopyGroups`)
   - adapted tests accordingly
+- Display `portal_setup` profile version for PloneMeeting related packages in `@@overview-controlpanel`
 
 4.1.20.2 (2020-04-08)
 ---------------------
