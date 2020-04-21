@@ -9,6 +9,7 @@ Changelog
   do it with `the_objects=False` anytime possible, and avoid calling it when we have the `plone_group_id` and we need the `organization UID`
 - Added migration that fixes wrong paths in `portal_catalog` (paths ending with '/' because an added annex was reindexing the parent) and
   annexes without a `content_category` that occured with wrong `ConflictError` management in `collective.quickupload` (`imio.annex`)
+- Fixed `MeetingItem._checkMayQuickEdit` that was giving access to `Manager` even when field condition was `False`
 
 4.1.21 (2020-04-20)
 -------------------
