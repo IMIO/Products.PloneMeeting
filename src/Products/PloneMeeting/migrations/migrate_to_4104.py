@@ -84,6 +84,39 @@ class Migrate_To_4104(Migrator):
                 meeting.itemNonAttendees = PersistentMapping()
         logger.info('Done.')
 
+    def _removeBrokenAnnexes(self):
+        """ """
+        logger.info("Remove broken annexes, annexes uploaded withtout a content_category...")
+        brains = self.catalog(portal_type=['annex', 'annexDecision'])
+        i = 0
+        for brain in brains:
+            if not brain.content_category_uid:
+                annex = brain.getObject()
+                logger.info('In _removeBrokenAnnexes, removed %s' % brain.getPath())
+                annex.aq_parent.manage_delObjects(ids=[annex.getId()])
+                i += 1
+        self.warn(logger, 'In _removeBrokenAnnexes, removed %s annexes' % i)
+        logger.info('Done.')
+
+    def _uncatalogWrongBrains(self):
+        """Probably because before we reindexed parent upon annex add/edit/delete,
+           some wrong paths are stored in catalog, these paths ends with '/' and does not have
+           a correct UID."""
+        logger.info("Uncataloging wrong brains...")
+        i = 0
+        for path in self.catalog._catalog.uids.keys():
+            if path.endswith('/'):
+                rid = self.catalog._catalog.uids[path]
+                metadata = self.catalog._catalog.getMetadataForRID(rid)
+                if metadata['UID'] is None:
+                    self.catalog._catalog.uncatalogObject(path)
+                    logger.info('In _uncatalogWrongBrains, uncataloged %s' % path)
+                    i += 1
+        if i:
+            self.warn(logger, 'In _uncatalogWrongBrains, uncataloged %s paths' % i)
+        logger.info('Done.')
+        return i or -1
+
     def run(self, from_migration_to_41=False):
         logger.info('Migrating to PloneMeeting 4104...')
         self._updateFacetedFilters()
@@ -92,6 +125,10 @@ class Migrate_To_4104(Migrator):
         self._moveSearchAllDecisionsToSearchAllMeetings()
         self._moveMCParameterToWFA()
         self._addItemNonAttendeesAttributeToMeetings()
+        # need to uncatalog wrong brains as long as there are wrong brains to uncatalog...
+        uncatalogued = 0
+        while uncatalogued != -1:
+            uncatalogued = self._uncatalogWrongBrains()
         if not from_migration_to_41:
             self.reindexIndexes(meta_types=['Meeting'])
             self.reindexIndexes(idxs=['getItemIsSigned'], meta_types=['MeetingItem'])
@@ -99,6 +136,8 @@ class Migrate_To_4104(Migrator):
         self.ps.runImportStepFromProfile('profile-Products.PloneMeeting:default', 'actions')
         # init new field MeetingItem.meetingManagersNotes
         self.initNewHTMLFields(query={'meta_type': 'MeetingItem'})
+        self._removeBrokenAnnexes()
+        self.upgradeAll()
 
 
 def migrate(context):
@@ -112,7 +151,9 @@ def migrate(context):
        6) Add new attribute 'itemNonAttendees' to every meetings;
        7) Reindex every meetings if not called by the main migration to version 4.1;
        8) Re-import actions.xml;
-       9) Init new HTML field 'MeetingItem.meetingManagersNotes'.
+       9) Init new HTML field 'MeetingItem.meetingManagersNotes';
+       10) Remove broken annexes with no content_category defined, this was due to quickupload ConflictError management;
+       11) Install every pending upgrades.
     '''
     migrator = Migrate_To_4104(context)
     migrator.run()
