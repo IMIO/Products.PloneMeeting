@@ -3396,9 +3396,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         res = False
         if (not onlyForManagers or (onlyForManagers and tool.isManager(self))) and \
            (bypassWritePermissionCheck or member.has_permission(permission, self)) and \
-           _evaluateExpression(self, expression) and not \
-           (self.hasMeeting() and self.getMeeting().queryState() in Meeting.meetingClosedStates) or \
-           tool.isManager(self, realManagers=True):
+           (_evaluateExpression(self, expression)) and \
+           (not (self.hasMeeting() and self.getMeeting().queryState() in Meeting.meetingClosedStates) or
+                tool.isManager(self, realManagers=True)):
             res = True
         return res
 
