@@ -1888,15 +1888,13 @@ class MeetingStoreItemsPodTemplateAsAnnexBatchActionForm(BaseBatchActionForm):
         pod_template = getattr(self.cfg.podtemplates, template_id)
 
         num_of_generated_templates = 0
+        self.request.set('store_as_annex', '1')
         for brain in self.brains:
             item = brain.getObject()
             generation_view = item.restrictedTraverse('@@document-generation')
-            generated_template = generation_view(template_uid=pod_template.UID(),
-                                                 output_format=output_format)
-            res = generation_view.storePodTemplateAsAnnex(
-                generated_template,
-                pod_template,
-                output_format,
+            res = generation_view(
+                template_uid=pod_template.UID(),
+                output_format=output_format,
                 return_portal_msg_code=True)
             if not res:
                 num_of_generated_templates += 1
@@ -1915,6 +1913,7 @@ class MeetingStoreItemsPodTemplateAsAnnexBatchActionForm(BaseBatchActionForm):
                         context=self.request,
                         default="Stored ${number_of_annexes} annexes.")
         api.portal.show_message(msg, request=self.request)
+        self.request.set('store_as_annex', '0')
 
 
 class UpdateLocalRolesBatchActionForm(BaseBatchActionForm):

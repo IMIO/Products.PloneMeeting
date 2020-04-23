@@ -852,7 +852,7 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
         generation_context['itemUids'] = generation_context.get('uids', [])
         return generation_context
 
-    def generate_and_download_doc(self, pod_template, output_format):
+    def generate_and_download_doc(self, pod_template, output_format, **kwargs):
         """ """
         generated_template = super(
             PMDocumentGenerationView, self).generate_and_download_doc(
@@ -864,9 +864,11 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
             return self._sendPodTemplate(generated_template)
         # check if we need to store the generated document
         elif self.request.get('store_as_annex', '0') == '1':
+            return_portal_msg_code = kwargs.get('return_portal_msg_code', False)
             return self.storePodTemplateAsAnnex(generated_template,
                                                 pod_template,
-                                                output_format)
+                                                output_format,
+                                                return_portal_msg_code=return_portal_msg_code)
         else:
             return generated_template
 

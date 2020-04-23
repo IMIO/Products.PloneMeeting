@@ -11,6 +11,7 @@ Changelog
   annexes without a `content_category` that occured with wrong `ConflictError` management in `collective.quickupload` (`imio.annex`)
 - Fixed `MeetingItem._checkMayQuickEdit` that was giving access to `Manager` even when field condition was `False`
 - Added upgrade step to 4105
+- Fixed bug in batch action `StoreItemsPodTemplateAsAnnex` that kept `Temporary QR code` label in stored annex
 
 4.1.21 (2020-04-20)
 -------------------
