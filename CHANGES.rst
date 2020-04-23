@@ -12,6 +12,7 @@ Changelog
 - Fixed `MeetingItem._checkMayQuickEdit` that was giving access to `Manager` even when field condition was `False`
 - Added upgrade step to 4105
 - Fixed bug in batch action `StoreItemsPodTemplateAsAnnex` that kept `Temporary QR code` label in stored annex
+- Make `catalog` available on `self` in `tests`
 
 4.1.21 (2020-04-20)
 -------------------

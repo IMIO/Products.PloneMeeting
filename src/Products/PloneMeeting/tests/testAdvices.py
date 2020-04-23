@@ -535,11 +535,11 @@ class testAdvices(PloneMeetingTestCase):
                  '{0}_advice_not_given'.format(self.developers_uid),
                  'not_given']))
         itemUID = item.UID()
-        brains = self.portal.portal_catalog(
+        brains = self.catalog(
             indexAdvisers='{0}_advice_not_given'.format(self.developers_uid))
         self.assertEquals(len(brains), 1)
         self.assertEquals(brains[0].UID, itemUID)
-        brains = self.portal.portal_catalog(indexAdvisers='delay_row_id__unique_id_123')
+        brains = self.catalog(indexAdvisers='delay_row_id__unique_id_123')
         self.assertEquals(len(brains), 1)
         self.assertEquals(brains[0].UID, itemUID)
         # create the advice
@@ -562,7 +562,7 @@ class testAdvices(PloneMeetingTestCase):
                  'not_given',
                  'positive'])
         )
-        brains = self.portal.portal_catalog(indexAdvisers='{0}_advice_under_edit'.format(self.developers_uid))
+        brains = self.catalog(indexAdvisers='{0}_advice_under_edit'.format(self.developers_uid))
         self.assertEquals(len(brains), 1)
         self.assertEquals(brains[0].UID, itemUID)
 
@@ -583,7 +583,7 @@ class testAdvices(PloneMeetingTestCase):
                  'real_org_uid__{0}'.format(self.developers_uid),
                  'real_org_uid__{0}__hidden_during_redaction'.format(self.developers_uid)])
         )
-        brains = self.portal.portal_catalog(
+        brains = self.catalog(
             indexAdvisers='real_org_uid__{0}__hidden_during_redaction'.format(self.developers_uid))
         self.assertEquals(len(brains), 1)
         self.assertEquals(brains[0].UID, itemUID)
@@ -602,7 +602,7 @@ class testAdvices(PloneMeetingTestCase):
                  'real_org_uid__{0}'.format(self.developers_uid),
                  'real_org_uid__{0}__considered_not_given_hidden_during_redaction'.format(self.developers_uid)])
         )
-        brains = self.portal.portal_catalog(
+        brains = self.catalog(
             indexAdvisers='real_org_uid__{0}__considered_not_given_hidden_during_redaction'.format(
                 self.developers_uid))
         self.assertEquals(len(brains), 1)
@@ -629,7 +629,7 @@ class testAdvices(PloneMeetingTestCase):
                  'positive'])
         )
         # the index in the portal_catalog is updated too
-        brains = self.portal.portal_catalog(
+        brains = self.catalog(
             indexAdvisers='delay__{0}_advice_under_edit'.format(self.vendors_uid))
         self.assertEquals(len(brains), 1)
         self.assertEquals(brains[0].UID, itemUID)
@@ -696,11 +696,11 @@ class testAdvices(PloneMeetingTestCase):
                  'not_given'])
         )
         # the index in the portal_catalog is updated too
-        brains = self.portal.portal_catalog(
+        brains = self.catalog(
             indexAdvisers='delay__{0}_advice_not_given'.format(self.vendors_uid))
         self.assertEquals(len(brains), 1)
         self.assertEquals(brains[0].UID, itemUID)
-        brains = self.portal.portal_catalog(
+        brains = self.catalog(
             indexAdvisers='{0}_advice_not_given'.format(self.developers_uid))
         self.assertEquals(len(brains), 1)
         self.assertEquals(brains[0].UID, itemUID)
@@ -738,21 +738,20 @@ class testAdvices(PloneMeetingTestCase):
         item3.updateLocalRoles()
 
         # query not_given advices
-        catalog = self.portal.portal_catalog
         self.assertEquals(
-            set([brain.UID for brain in catalog(
+            set([brain.UID for brain in self.catalog(
                 indexAdvisers='not_given')]),
             set([item1.UID(), item2.UID()]))
         self.assertEquals(
-            set([brain.UID for brain in catalog(
+            set([brain.UID for brain in self.catalog(
                 indexAdvisers='real_org_uid__{0}'.format(self.developers_uid))]),
             set([item1.UID(), item2.UID()]))
         self.assertEquals(
-            set([brain.UID for brain in catalog(
+            set([brain.UID for brain in self.catalog(
                 indexAdvisers='real_org_uid__{0}__not_given'.format(self.developers_uid))]),
             set([item1.UID(), item2.UID()]))
         self.assertEquals(
-            set([brain.UID for brain in catalog(
+            set([brain.UID for brain in self.catalog(
                 indexAdvisers='real_org_uid__{0}__not_given'.format(self.vendors_uid))]),
             set([item1.UID()]))
 
@@ -769,27 +768,27 @@ class testAdvices(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         # item1 still have vendors advice not given
         self.assertEquals(
-            set([brain.UID for brain in catalog(
+            set([brain.UID for brain in self.catalog(
                 indexAdvisers='not_given')]),
             set([item1.UID(), item2.UID()]))
         self.assertEquals(
-            set([brain.UID for brain in catalog(
+            set([brain.UID for brain in self.catalog(
                 indexAdvisers=['not_given', 'positive'])]),
             set([item1.UID(), item2.UID()]))
         self.assertEquals(
-            set([brain.UID for brain in catalog(
+            set([brain.UID for brain in self.catalog(
                 indexAdvisers='real_org_uid__{0}'.format(self.developers_uid))]),
             set([item1.UID(), item2.UID()]))
         self.assertEquals(
-            set([brain.UID for brain in catalog(
+            set([brain.UID for brain in self.catalog(
                 indexAdvisers='real_org_uid__{0}__not_given'.format(self.developers_uid))]),
             set([item2.UID()]))
         self.assertEquals(
-            set([brain.UID for brain in catalog(
+            set([brain.UID for brain in self.catalog(
                 indexAdvisers='real_org_uid__{0}__positive'.format(self.developers_uid))]),
             set([item1.UID()]))
         self.assertEquals(
-            set([brain.UID for brain in catalog(
+            set([brain.UID for brain in self.catalog(
                 indexAdvisers='real_org_uid__{0}__not_given'.format(self.vendors_uid))]),
             set([item1.UID()]))
 
@@ -805,31 +804,31 @@ class testAdvices(PloneMeetingTestCase):
                                     'advice_comment': RichTextValue(u'My comment')})
         # query not given and positive advices
         self.assertEquals(
-            set([brain.UID for brain in catalog(
+            set([brain.UID for brain in self.catalog(
                 indexAdvisers=['not_given'])]),
             set([item1.UID()]))
         self.assertEquals(
-            set([brain.UID for brain in catalog(
+            set([brain.UID for brain in self.catalog(
                 indexAdvisers=['positive'])]),
             set([item1.UID()]))
         self.assertEquals(
-            set([brain.UID for brain in catalog(
+            set([brain.UID for brain in self.catalog(
                 indexAdvisers=['negative'])]),
             set([item2.UID()]))
         self.assertEquals(
-            set([brain.UID for brain in catalog(
+            set([brain.UID for brain in self.catalog(
                 indexAdvisers='real_org_uid__{0}'.format(self.developers_uid))]),
             set([item1.UID(), item2.UID()]))
         self.assertEquals(
-            set([brain.UID for brain in catalog(
+            set([brain.UID for brain in self.catalog(
                 indexAdvisers='real_org_uid__{0}__negative'.format(self.developers_uid))]),
             set([item2.UID()]))
         self.assertEquals(
-            set([brain.UID for brain in catalog(
+            set([brain.UID for brain in self.catalog(
                 indexAdvisers='real_org_uid__{0}__positive'.format(self.developers_uid))]),
             set([item1.UID()]))
         self.assertEquals(
-            set([brain.UID for brain in catalog(
+            set([brain.UID for brain in self.catalog(
                 indexAdvisers='real_org_uid__{0}__not_given'.format(self.vendors_uid))]),
             set([item1.UID()]))
 
