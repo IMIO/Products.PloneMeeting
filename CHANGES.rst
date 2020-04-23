@@ -13,6 +13,8 @@ Changelog
 - Added upgrade step to 4105
 - Fixed bug in batch action `StoreItemsPodTemplateAsAnnex` that kept `Temporary QR code` label in stored annex
 - Make `catalog` available on `self` in `tests`
+- Optimized the `Quick edit save and continue` functionnality by using `CKEditor` `AjaxSave plugin` to save data
+  so the field is not reloaded and the user editing the content stays where he was
 
 4.1.21 (2020-04-20)
 -------------------
