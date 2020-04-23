@@ -1447,6 +1447,78 @@ class testAnnexes(PloneMeetingTestCase):
         no_annex_left_rendered = view()
         self.assertEqual(no_annex_left_rendered, no_annex_rendered)
 
+    def test_pm_AddingAnnexesDoesNotCreateWrongCatalogPaths(self):
+        """A bug due to reindeing parent when annex added was adding
+           wrong path to the catalog._catalog.uids, check that it is no more the case."""
+        cfg = self.meetingConfig
+        self.changeUser('siteadmin')
+        cfg.setItemAdviceStates(['itemcreated'])
+        cfg.setItemAdviceEditStates(['itemcreated'])
+        cfg.setItemAdviceViewStates(['itemcreated'])
+
+        def _check_catalog(step=1):
+            # avoid problems regarding permissions, for example
+            # pmManager does not have access to disabled messages from collective.messagesviewlet
+            self.changeUser('siteadmin')
+            # number of path is correct, just "step" added
+            self.number_of_paths += step
+            self.assertEqual(len(self.catalog._catalog.uids), self.number_of_paths)
+            self.assertEqual(len(self.catalog()), self.number_of_paths)
+            # no paths ending with '/'
+            self.assertFalse([path for path in self.catalog._catalog.uids.keys()
+                              if path.endswith('/')])
+            self.changeUser('pmManager')
+
+        self.changeUser('pmManager')
+        # make sure pmManager folders are created
+        self.getMeetingFolder()
+        self.number_of_paths = len(self.catalog._catalog.uids)
+        # Item
+        item = self.create('MeetingItem')
+        _check_catalog()
+        item_annex = self.addAnnex(item)
+        _check_catalog()
+        self.addAnnex(item, relatedTo='item_decision')
+        _check_catalog()
+        # Meeting
+        meeting = self.create('Meeting', date=DateTime('2020/04/23'))
+        # meeting + 2 recurring items
+        self.assertEqual(len(meeting.getItems()), 2)
+        _check_catalog(step=3)
+        meeting_annex = self.addAnnex(meeting)
+        _check_catalog()
+        # advice
+        item.setOptionalAdvisers([self.developers_uid])
+        item._update_after_edit()
+        _check_catalog(step=0)
+        advice = createContentInContainer(
+            item,
+            'meetingadvice',
+            **{'advice_group': self.developers_uid,
+               'advice_type': u'positive',
+               'advice_comment': RichTextValue(u'My comment')})
+        _check_catalog()
+        advice_annex = self.addAnnex(advice)
+        _check_catalog()
+        # removal of everything
+        self.portal.restrictedTraverse('@@delete_givenuid')(item_annex.UID())
+        _check_catalog(step=-1)
+        self.portal.restrictedTraverse('@@delete_givenuid')(advice_annex.UID())
+        _check_catalog(step=-1)
+        self.portal.restrictedTraverse('@@delete_givenuid')(advice.UID())
+        _check_catalog(step=-1)
+        # remove item will also remove decision annex
+        self.portal.restrictedTraverse('@@delete_givenuid')(item.UID())
+        _check_catalog(step=-2)
+        self.portal.restrictedTraverse('@@delete_givenuid')(meeting_annex.UID())
+        _check_catalog(step=-1)
+        # may only remove an empty meeting, remove 2 recurring items
+        for meeting_item in meeting.getItems():
+            self.portal.restrictedTraverse('@@delete_givenuid')(meeting_item.UID())
+            _check_catalog(step=-1)
+        self.portal.restrictedTraverse('@@delete_givenuid')(meeting.UID())
+        _check_catalog(step=-1)
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite
