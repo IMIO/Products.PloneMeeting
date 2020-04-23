@@ -877,28 +877,35 @@ def getHistoryTexts(obj, event):
     return res
 
 
-def setFieldFromAjax(obj, fieldName, newValue):
+def setFieldFromAjax(obj, fieldName, newValue, remember=True, tranform=True, reindex=True, unlock=True):
     '''Sets on p_obj the content of a field whose name is p_fieldName and whose
        new value is p_fieldValue. This method is called by Ajax pages.'''
     field = obj.getField(fieldName)
-    # Keep old value, we might need to historize it.
-    previousData = rememberPreviousData(obj, fieldName)
-    field.getMutator(obj)(newValue, content_type='text/html')
-    # Potentially store it in object history
-    if previousData:
-        addDataChange(obj, previousData)
-    # Apply XHTML transforms when relevant
-    transformAllRichTextFields(obj, onlyField=fieldName)
-    # only reindex relevant indexes aka SearchableText + field specific index if exists
-    index_names = api.portal.get_tool('portal_catalog').indexes()
-    extra_idxs = ['SearchableText']
-    if fieldName in index_names:
-        extra_idxs.append(fieldName)
-    if field.accessor in index_names:
-        extra_idxs.append(field.accessor)
-    notifyModifiedAndReindex(obj, extra_idxs=extra_idxs)
-    # just unlock, do not call ObjectEditedEvent because it does too much
-    unlockAfterModification(obj, event={})
+    if remember:
+        # Keep old value, we might need to historize it.
+        previousData = rememberPreviousData(obj, fieldName)
+        field.getMutator(obj)(newValue, content_type='text/html')
+        # Potentially store it in object history
+        if previousData:
+            addDataChange(obj, previousData)
+    else:
+        field.getMutator(obj)(newValue, content_type='text/html')
+
+    if tranform:
+        # Apply XHTML transforms when relevant
+        transformAllRichTextFields(obj, onlyField=fieldName)
+    if reindex:
+        # only reindex relevant indexes aka SearchableText + field specific index if exists
+        index_names = api.portal.get_tool('portal_catalog').indexes()
+        extra_idxs = ['SearchableText']
+        if fieldName in index_names:
+            extra_idxs.append(fieldName)
+        if field.accessor in index_names:
+            extra_idxs.append(field.accessor)
+        notifyModifiedAndReindex(obj, extra_idxs=extra_idxs)
+    if unlock:
+        # just unlock, do not call ObjectEditedEvent because it does too much
+        unlockAfterModification(obj, event={})
     # add a fingerpointing log message
     extras = 'object={0} field_name={1}'.format(
         repr(obj), fieldName)

@@ -69,6 +69,16 @@
             permission="zope2.View"/>
     </configure>
 
+    <!-- Override collective.ckeditor cke-save to handle more than just saving -->
+    <configure package="collective.ckeditor">
+        <browser:page
+            name="cke-save"
+            for="Products.PloneMeeting.interfaces.IMeetingContent"
+            class="Products.PloneMeeting.browser.overrides.PMAjaxSave"
+            attribute="AT_save"
+            permission="cmf.ModifyPortalContent"/>
+    </configure>
+
     <!-- Annexes table view, override @@iconifiedcategory and make it available under name @@categorized-annexes -->
     <browser:page
         for="*"

@@ -5,6 +5,7 @@ from Acquisition import aq_base
 from archetypes.referencebrowserwidget.browser.view import ReferenceBrowserPopup
 from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.ckeditor.browser.ckeditorfinder import CKFinder
+from collective.ckeditor.browser.ckeditorview import AjaxSave
 from collective.contact.core import utils as contact_core_utils
 from collective.contact.plonegroup import utils as contact_plonegroup_utils
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
@@ -60,6 +61,7 @@ from Products.PloneMeeting.interfaces import IMeeting
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import normalize_id
 from Products.PloneMeeting.utils import sendMail
+from Products.PloneMeeting.utils import setFieldFromAjax
 from zope.annotation import IAnnotations
 from zope.container.interfaces import INameChooser
 from zope.i18n import translate
@@ -1462,3 +1464,16 @@ class PMUsersOverviewControlPanel(PMBaseOverviewControlPanel, UsersOverviewContr
 
 class PMGroupsOverviewControlPanel(PMBaseOverviewControlPanel, GroupsOverviewControlPanel):
     """See PMBaseOverviewControlPanel docstring."""
+
+
+class PMAjaxSave(AjaxSave):
+    """Override collective.ckeditor ajaxsave to use setFieldFromAjax."""
+
+    def AT_save(self, fieldname, text):
+        setFieldFromAjax(self.context,
+                         fieldname,
+                         text,
+                         remember=False,
+                         tranform=True,
+                         reindex=True,
+                         unlock=False)
