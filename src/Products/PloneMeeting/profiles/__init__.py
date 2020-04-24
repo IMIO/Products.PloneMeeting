@@ -655,7 +655,7 @@ class MeetingConfigDescriptor(Descriptor):
         # columns shown on items listings.  Order is important!
         self.itemColumns = ['Creator', 'CreationDate', 'review_state',
                             'getProposingGroup', 'linkedMeetingDate', 'actions']
-        self.itemActionsColumnConfig = ['history']
+        self.itemActionsColumnConfig = ['delete', 'history']
         # columns shown on meetings listings.  Order is important!
         self.meetingColumns = ['Creator', 'CreationDate', 'review_state', 'actions']
         # searches display on portlet_todo

@@ -72,16 +72,4 @@
          visible="True">
   <permission value="Copy or Move"/>
  </action>
- <action title="Duplicate and keep link"
-         i18n:attributes="title"
-         action_id="duplicate_and_keep_link"
-         category="object_buttons"
-         condition_expr="python:object.showDuplicateItemAction()"
-         icon_expr="string:${portal_url}/duplicate_and_keep_link.gif"
-         url_expr="string:${object_url}/onDuplicateAndKeepLink"
-         visible="True">
-  <permission value="Copy or Move"/>
- </action>
-<!-- ##code-section FOOT -->
-<!-- ##/code-section FOOT -->
 </object>

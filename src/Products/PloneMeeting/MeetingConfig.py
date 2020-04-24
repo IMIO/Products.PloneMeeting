@@ -1343,6 +1343,7 @@ schema = Schema((
         widget=MultiSelectionWidget(
             description="ItemActionsColumnConfig",
             description_msgid="item_actions_column_config_descr",
+            format="checkbox",
             label='Itemactionscolumnconfig',
             label_msgid='PloneMeeting_label_itemActionsColumnConfig',
             i18n_domain='PloneMeeting',
@@ -4442,6 +4443,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def listItemActionsColumnConfig(self):
         d = "PloneMeeting"
         res = DisplayList((
+            ("delete", translate('Delete', domain=d, context=self.REQUEST)),
             ("duplicate", translate('Duplicate', domain=d, context=self.REQUEST)),
             ("history", translate('History', domain=d, context=self.REQUEST)),
         ))

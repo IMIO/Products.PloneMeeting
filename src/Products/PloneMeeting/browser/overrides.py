@@ -505,6 +505,7 @@ class BaseActionsPanelView(ActionsPanelView):
                                   'update_categorized_elements',
                                   'update_and_sort_categorized_elements')
         self.tool = api.portal.get_tool('portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(self.context)
 
     @memoize_contextless
     def _transitionsToConfirm(self):
@@ -514,9 +515,8 @@ class BaseActionsPanelView(ActionsPanelView):
           This is relevant for Meeting and MeetingItem.
         """
         toConfirm = []
-        cfg = self.tool.getMeetingConfig(self.context)
-        if cfg:
-            toConfirm = cfg.getTransitionsToConfirm()
+        if self.cfg:
+            toConfirm = self.cfg.getTransitionsToConfirm()
         return toConfirm
 
 
@@ -526,11 +526,17 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
     """
     def __init__(self, context, request):
         super(MeetingItemActionsPanelView, self).__init__(context, request)
-        self.SECTIONS_TO_RENDER = ('renderEdit',
+        self.SECTIONS_TO_RENDER = ['renderEdit',
                                    'renderTransitions',
                                    'renderOwnDelete',
                                    'renderActions',
-                                   'renderHistory', )
+                                   'renderHistory']
+        itemActionsColumnConfig = self.cfg.getItemActionsColumnConfig()
+        if 'delete' not in itemActionsColumnConfig:
+            self.SECTIONS_TO_RENDER.remove('renderOwnDelete')
+        if 'history' not in itemActionsColumnConfig:
+            self.SECTIONS_TO_RENDER.remove('renderHistory')
+        self.SECTIONS_TO_RENDER = tuple(self.SECTIONS_TO_RENDER)
 
     def __call___cachekey(method,
                           self,
@@ -560,8 +566,7 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
         if meeting:
             meetingModified = meeting.modified()
         annotations = str(IAnnotations(self.context))
-        cfg = self.tool.getMeetingConfig(self.context)
-        cfg_modified = cfg.modified()
+        cfg_modified = self.cfg.modified()
         userGroups = self.tool.get_plone_groups_for_user()
         # if item is validated, the 'present' action could appear if a meeting
         # is now available for the item to be inserted into
@@ -592,9 +597,10 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
         """
           Redefined to add ram.cache...
         """
-        # hide 'duplicate' actions when showing icons
+        # hide 'duplicate' actions when showing icons if not in cfg.itemActionsColumnConfig
         if useIcons:
-            self.IGNORABLE_ACTIONS += ('duplicate', 'duplicate_and_keep_link', )
+            if 'duplicate' not in self.cfg.getItemActionsColumnConfig():
+                self.IGNORABLE_ACTIONS += ('duplicate', )
 
         return super(MeetingItemActionsPanelView, self).\
             __call__(useIcons=useIcons,
@@ -649,8 +655,7 @@ class MeetingActionsPanelView(BaseActionsPanelView):
            - cfg modified;
            - different item or user;
            - user groups changed.'''
-        cfg = self.tool.getMeetingConfig(self.context)
-        cfg_modified = cfg.modified()
+        cfg_modified = self.cfg.modified()
         userGroups = self.tool.get_plone_groups_for_user()
         date = get_cachekey_volatile(
             'Products.PloneMeeting.Meeting.UID.{0}'.format(self.context.UID()))
@@ -770,6 +775,7 @@ class ConfigActionsPanelView(ActionsPanelView):
             self.SECTIONS_TO_RENDER += ('renderLinkedPloneGroups', )
 
         self.tool = api.portal.get_tool('portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(self.context)
 
     def _returnTo(self, ):
         """What URL should I return to after moving the element and page is refreshed."""
@@ -788,8 +794,7 @@ class ConfigActionsPanelView(ActionsPanelView):
             return "#organization"
 
         # most are used on the 'data' fieldset, use this as default
-        cfg = self.tool.getMeetingConfig(self.context)
-        return "{0}/?pageName=data#{1}".format(cfg.absolute_url(), folderId)
+        return "{0}/?pageName=data#{1}".format(self.cfg.absolute_url(), folderId)
 
     def mayEdit(self):
         """
