@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 
+from ftw.labels.interfaces import ILabelSupport
+from persistent.mapping import PersistentMapping
 from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator
+from zope.annotation.interfaces import IAnnotations
 
 
 class Migrate_To_4105(Migrator):
@@ -18,7 +21,7 @@ class Migrate_To_4105(Migrator):
                 annex.aq_parent.manage_delObjects(ids=[annex.getId()])
                 i += 1
         if i:
-            self.warn(logger, 'In _removeBrokenAnnexes, removed %s annexes' % i)
+            self.warn(logger, 'In _removeBrokenAnnexes, removed %s annexe(s)' % i)
         logger.info('Done.')
 
     def _uncatalogWrongBrains(self):
@@ -36,9 +39,28 @@ class Migrate_To_4105(Migrator):
                     logger.info('In _uncatalogWrongBrains, uncataloged %s' % path)
                     i += 1
         if i:
-            self.warn(logger, 'In _uncatalogWrongBrains, uncataloged %s paths' % i)
+            self.warn(logger, 'In _uncatalogWrongBrains, uncataloged %s path(s)' % i)
         logger.info('Done.')
         return i or -1
+
+    def _cleanFTWLabels(self):
+        """This fix partial migrations of stored ftw.labels:labeling that are
+           still PersistentList and not PersistentMapping."""
+        logger.info("Cleaning ftw.labels wrong annotations...")
+        brains = self.catalog(object_provides=ILabelSupport.__identifier__)
+        i = 0
+        for brain in brains:
+            obj = brain.getObject()
+            annotations = IAnnotations(obj)
+            if 'ftw.labels:labeling' in annotations and \
+               not isinstance(annotations['ftw.labels:labeling'], PersistentMapping):
+                del annotations['ftw.labels:labeling']
+                obj.reindexObject(idxs=['labels'])
+                logger.info('In _cleanFTWLabels, cleaned %s' % brain.getPath())
+                i += 1
+        if i:
+            self.warn(logger, 'In _cleanFTWLabels, cleaned %s element(s)' % i)
+        logger.info('Done.')
 
     def run(self, from_migration_to_41=False):
         logger.info('Migrating to PloneMeeting 4105...')
@@ -47,6 +69,7 @@ class Migrate_To_4105(Migrator):
         while uncatalogued != -1:
             uncatalogued = self._uncatalogWrongBrains()
         self._removeBrokenAnnexes()
+        self._cleanFTWLabels()
         self.upgradeAll()
 
 
@@ -55,7 +78,8 @@ def migrate(context):
 
        1) Clean wrong paths in catalog (ending with '/');
        2) Remove broken annexes with no content_category defined due to quickupload ConflictError management;
-       3) Install every pending upgrades.
+       3) Clean ftw.labels empty annotations, this make sure to not have any PersistentList stored;
+       4) Install every pending upgrades.
     '''
     migrator = Migrate_To_4105(context)
     migrator.run()

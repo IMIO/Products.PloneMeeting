@@ -2,11 +2,10 @@ Changelog
 =========
 
 
-4.1.23 (unreleased)
--------------------
+4.1.22.1 (unreleased)
+---------------------
 
-- Nothing changed yet.
-
+- Added upgrade step in upgrade to 4105 to clean `ftw.labels` annotation if it was not migrated to a `PersistendMapping`
 
 4.1.22 (2020-04-24)
 -------------------
