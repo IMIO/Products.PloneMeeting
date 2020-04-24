@@ -1514,8 +1514,11 @@ class testAnnexes(PloneMeetingTestCase):
         _check_catalog(step=-1)
         # may only remove an empty meeting, remove 2 recurring items
         for meeting_item in meeting.getItems():
+            # set it back to 'itemcreated' in case item only deletable in 'itemcreated'
+            self.backToState(meeting_item, 'itemcreated')
             self.portal.restrictedTraverse('@@delete_givenuid')(meeting_item.UID())
             _check_catalog(step=-1)
+        self.changeUser('pmManager')
         self.portal.restrictedTraverse('@@delete_givenuid')(meeting.UID())
         _check_catalog(step=-1)
 
