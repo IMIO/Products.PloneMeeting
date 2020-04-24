@@ -25,6 +25,7 @@ from Products.CMFPlone.utils import base_hasattr
 from Products.PloneMeeting.setuphandlers import columnInfos
 from Products.PloneMeeting.setuphandlers import indexInfos
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
+from Products.ZCatalog.ProgressHandler import ZLogHandler
 
 import logging
 
@@ -187,9 +188,15 @@ class Migrator(BaseMigrator):
         '''Make sure the content_type is correctly set to 'text/html' for new xhtml fields.'''
         logger.info('Initializing new HTML fields...')
         brains = self.portal.portal_catalog(**query)
+        pghandler = ZLogHandler(steps=100)
+        pghandler.init('Initializing new HTML fields', len(brains))
+        i = 0
         for brain in brains:
+            i += 1
+            pghandler.report(i)
             itemOrMeeting = brain.getObject()
             forceHTMLContentTypeForEmptyRichFields(itemOrMeeting)
+        pghandler.finish()
         logger.info('Done.')
 
     def _already_migrated(self, done=True):

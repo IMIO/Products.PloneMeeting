@@ -4,6 +4,7 @@ from ftw.labels.interfaces import ILabelSupport
 from persistent.mapping import PersistentMapping
 from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator
+from Products.ZCatalog.ProgressHandler import ZLogHandler
 from zope.annotation.interfaces import IAnnotations
 
 
@@ -48,8 +49,13 @@ class Migrate_To_4105(Migrator):
            still PersistentList and not PersistentMapping."""
         logger.info("Cleaning ftw.labels wrong annotations...")
         brains = self.catalog(object_provides=ILabelSupport.__identifier__)
+        pghandler = ZLogHandler(steps=100)
+        pghandler.init('Cleaning ftw.labels wrong annotations...', len(brains))
         i = 0
+        cleaned = 0
         for brain in brains:
+            i += 1
+            pghandler.report(i)
             obj = brain.getObject()
             annotations = IAnnotations(obj)
             if 'ftw.labels:labeling' in annotations and \
@@ -57,9 +63,10 @@ class Migrate_To_4105(Migrator):
                 del annotations['ftw.labels:labeling']
                 obj.reindexObject(idxs=['labels'])
                 logger.info('In _cleanFTWLabels, cleaned %s' % brain.getPath())
-                i += 1
-        if i:
-            self.warn(logger, 'In _cleanFTWLabels, cleaned %s element(s)' % i)
+                cleaned += 1
+        if cleaned:
+            self.warn(logger, 'In _cleanFTWLabels, cleaned %s element(s)' % cleaned)
+        pghandler.finish()
         logger.info('Done.')
 
     def run(self, from_migration_to_41=False):
