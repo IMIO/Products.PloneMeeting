@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.1.22 (unreleased)
+4.1.22 (2020-04-24)
 -------------------
 
 - Optimized calls to `collective.contact.plonegroup.utils.get_organizations` and `collective.contact.plonegroup.utils.get_organization`,
