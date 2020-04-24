@@ -1338,6 +1338,22 @@ schema = Schema((
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
+        name='itemActionsColumnConfig',
+        default=defValues.itemActionsColumnConfig,
+        widget=MultiSelectionWidget(
+            description="ItemActionsColumnConfig",
+            description_msgid="item_actions_column_config_descr",
+            label='Itemactionscolumnconfig',
+            label_msgid='PloneMeeting_label_itemActionsColumnConfig',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="gui",
+        multiValued=1,
+        vocabulary='listItemActionsColumnConfig',
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    LinesField(
         name='meetingColumns',
         widget=MultiSelectionWidget(
             description="MeetingColumns",
@@ -4420,6 +4436,16 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def _extraMeetingRelatedColumns(self):
         """ """
         return []
+
+    security.declarePrivate('listItemActionsColumnConfig')
+
+    def listItemActionsColumnConfig(self):
+        d = "PloneMeeting"
+        res = DisplayList((
+            ("duplicate", translate('Duplicate', domain=d, context=self.REQUEST)),
+            ("history", translate('History', domain=d, context=self.REQUEST)),
+        ))
+        return res
 
     security.declarePrivate('listVotesEncoders')
 
