@@ -2,11 +2,15 @@ Changelog
 =========
 
 
-4.1.23 (unreleased)
--------------------
+4.1.22.2 (unreleased)
+---------------------
 
-- Nothing changed yet.
+- Added `ZLogHandler` in `Migrator.initNewHTMLFields` and in `Migrate_To_4105._cleanFTWLabels` as these steps may take some time
 
+4.1.22.1 (2020-04-24)
+---------------------
+
+- Added upgrade step in upgrade to 4105 to clean `ftw.labels` annotation if it was not migrated to a `PersistendMapping`
 
 4.1.22 (2020-04-24)
 -------------------
