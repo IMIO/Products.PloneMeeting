@@ -6,6 +6,8 @@ Changelog
 ---------------------
 
 - Added `ZLogHandler` in `Migrator.initNewHTMLFields` and in `Migrate_To_4105._cleanFTWLabels` as these steps may take some time
+- Moved `MeetingInsertingMethodsHelpMsgView` logic from `__init__` to `__call__` because errors are swallowed in `__init__`,
+  moreover display `Groups in charge` next to `Group title`
 
 4.1.22.1 (2020-04-24)
 ---------------------

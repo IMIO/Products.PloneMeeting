@@ -345,14 +345,20 @@ class MeetingInsertingMethodsHelpMsgView(BrowserView):
     """ """
 
     def __init__(self, context, request):
+        """Initialize relevant data in index instead __init__
+           because errors are hidden when occuring in __init__..."""
         self.context = context
         self.request = request
         self.portal_url = api.portal.get().absolute_url()
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
+
+    def __call__(self):
+        """Do business code in __call__ because errors are swallowed in __init__."""
         self.inserting_methods_fields_mapping = ITEM_INSERT_METHODS.copy()
         self.inserting_methods_fields_mapping.update(
             self.cfg.adapted().extraInsertingMethods().copy())
+        return super(MeetingInsertingMethodsHelpMsgView, self).__call__()
 
     def fieldsToDisplay(self):
         """Depending on used inserting methods, display relevant fields."""
@@ -364,14 +370,18 @@ class MeetingInsertingMethodsHelpMsgView(BrowserView):
         return res
 
     def orderedOrgs(self):
-        """Display organizations if one of the selected inserting methods relies on organizations."""
-        orgs = []
+        """Display organizations if one of the selected inserting methods relies on organizations.
+           Returns a list of tuples, with organization title as first element and
+           goupsInCharge organizations titles as second element."""
+        res = []
         orgs_inserting_methods = [
             method['insertingMethod'] for method in self.cfg.getInsertingMethodsOnAddItem()
             if 'organization' in self.inserting_methods_fields_mapping[method['insertingMethod']]]
         if orgs_inserting_methods:
             orgs = get_organizations(only_selected=True)
-        return orgs
+            res = [(org.Title(), ', '.join([gic.Title() for gic in org.get_groups_in_charge(the_objects=True)] or ''))
+                   for org in orgs]
+        return res
 
     def orderedCategories(self):
         """Display categories if one of the selected inserting methods relies on categories."""

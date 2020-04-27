@@ -19,6 +19,7 @@ from DateTime import DateTime
 from datetime import datetime
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.helpers.content import get_vocab
+from imio.helpers.content import uuidsToObjects
 from imio.history.utils import getLastWFAction
 from imio.prettylink.interfaces import IPrettyLink
 from natsort import realsorted
@@ -2945,7 +2946,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             res = [res[0]]
 
         if theObjects:
-            res = [get_organization(org_uid) for org_uid in res]
+            res = uuidsToObjects(res, ordered=True)
 
         if res and first:
             res = res[0]

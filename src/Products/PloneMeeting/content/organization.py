@@ -7,6 +7,7 @@ from collective.contact.plonegroup.interfaces import IPloneGroupContact
 from collective.contact.plonegroup.utils import get_organizations
 from collective.z3cform.datagridfield import DataGridFieldFactory
 from collective.z3cform.datagridfield import DictRow
+from imio.helpers.content import uuidsToObjects
 from plone.autoform import directives as form
 from plone.dexterity.schema import DexteritySchemaPolicy
 from plone.supermodel import model
@@ -175,9 +176,12 @@ class PMOrganization(Organization):
         """Accessor so it can be called in a TAL expression."""
         return self.acronym
 
-    def get_groups_in_charge(self):
+    def get_groups_in_charge(self, the_objects=False):
         """Accessor so it can be called in a TAL expression."""
-        return self.groups_in_charge
+        res = self.groups_in_charge
+        if the_objects:
+            res = uuidsToObjects(res, ordered=True)
+        return res
 
     def get_full_title(self, separator=u' / ', first_index=0, force_separator=False):
         """Override to change default first_index from 0 to 1 for IPloneGroupContact,
