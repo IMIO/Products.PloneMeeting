@@ -6,6 +6,8 @@ Changelog
 ---------------------
 
 - Added `ZLogHandler` in `Migrator.initNewHTMLFields` and in `Migrate_To_4105._cleanFTWLabels` as these steps may take some time
+- Moved `MeetingInsertingMethodsHelpMsgView` logic from `__init__` to `__call__` because errors are swallowed in `__init__`,
+  moreover display `Groups in charge` next to `Group title`
 - Refactored the Duplicate item functionnality :
 
   - Only one button `Duplicate item` left, the `Duplicate and keep link` button was removed

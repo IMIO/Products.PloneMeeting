@@ -148,7 +148,8 @@ jQuery(document).ready(function($) {
     tooltipster_helper(selector='.tooltipster-inserting-methods-helper-msg',
                        view_name='@@display-inserting-methods-helper-msg',
                        data_parameters=[],
-                       options={trigger: 'click'});
+                       options={position: 'bottom',
+                                trigger: 'click'});
     // item absents on meeting_view
     tooltipster_helper(selector='.tooltipster-meeting-item-not-present',
                        view_name='@@display-meeting-item-not-present',

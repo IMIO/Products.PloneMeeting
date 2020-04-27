@@ -3191,6 +3191,22 @@ class testMeeting(PloneMeetingTestCase):
         self.assertEqual(meeting.getLayout(), 'meeting_view')
         self.assertEqual(IFacetedLayout(meeting).layout, 'faceted-table-items')
 
+    def test_pm_MeetingInsertingMethodsHelpMsgView(self):
+        '''Test the @@display-inserting-methods-helper-msg view.'''
+        cfg = self.meetingConfig
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime('2020/04/27'))
+        view = meeting.restrictedTraverse('@@display-inserting-methods-helper-msg')
+        # just call the view to check that it is displayed without errors
+        self.assertTrue(view())
+        # define as much inserting methods as possible
+        inserting_methods = cfg.listInsertingMethods().keys()
+        if 'at_the_end' in inserting_methods:
+            inserting_methods.remove('at_the_end')
+        inserting_methods = [{'insertingMethod': 'on_proposing_groups', 'reverse': '0'}
+                             for inserting_method in inserting_methods]
+        cfg.setInsertingMethodsOnAddItem(inserting_methods)
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite
