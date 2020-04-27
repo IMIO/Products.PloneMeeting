@@ -531,12 +531,6 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
                                    'renderOwnDelete',
                                    'renderActions',
                                    'renderHistory']
-        itemActionsColumnConfig = self.cfg.getItemActionsColumnConfig()
-        if 'delete' not in itemActionsColumnConfig:
-            self.SECTIONS_TO_RENDER.remove('renderOwnDelete')
-        if 'history' not in itemActionsColumnConfig:
-            self.SECTIONS_TO_RENDER.remove('renderHistory')
-        self.SECTIONS_TO_RENDER = tuple(self.SECTIONS_TO_RENDER)
 
     def __call___cachekey(method,
                           self,
@@ -597,10 +591,17 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
         """
           Redefined to add ram.cache...
         """
-        # hide 'duplicate' actions when showing icons if not in cfg.itemActionsColumnConfig
+        # check actions to display in icons mode
         if useIcons:
-            if 'duplicate' not in self.cfg.getItemActionsColumnConfig():
+            # hide 'duplicate' actions when showing icons if not in cfg.itemActionsColumnConfig
+            itemActionsColumnConfig = self.cfg.getItemActionsColumnConfig()
+            if 'duplicate' not in itemActionsColumnConfig:
                 self.IGNORABLE_ACTIONS += ('duplicate', )
+            if 'delete' not in itemActionsColumnConfig:
+                self.SECTIONS_TO_RENDER.remove('renderOwnDelete')
+            if 'history' not in itemActionsColumnConfig:
+                self.SECTIONS_TO_RENDER.remove('renderHistory')
+            self.SECTIONS_TO_RENDER = tuple(self.SECTIONS_TO_RENDER)
 
         return super(MeetingItemActionsPanelView, self).\
             __call__(useIcons=useIcons,

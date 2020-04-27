@@ -6,6 +6,15 @@ Changelog
 ---------------------
 
 - Added `ZLogHandler` in `Migrator.initNewHTMLFields` and in `Migrate_To_4105._cleanFTWLabels` as these steps may take some time
+- Refactored the Duplicate item functionnality :
+
+  - Only one button `Duplicate item` left, the `Duplicate and keep link` button was removed
+  - Added parameters `keptAnnexIds` and `keptDecisionAnnexIds` to `MeetingItem.clone`
+  - On click, a popup is displayed with following options :
+
+    - Keep a link to original item?
+    - Select annexes to keep
+    - Select decision annexes to keep
 
 4.1.22.1 (2020-04-24)
 ---------------------

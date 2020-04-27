@@ -5539,7 +5539,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
               cloneEventAction=None, cloneEventActionLabel=None, destFolder=None,
               copyFields=DEFAULT_COPIED_FIELDS, newPortalType=None, keepProposingGroup=False,
               setCurrentAsPredecessor=False, manualLinkToPredecessor=False,
-              inheritAdvices=False, inheritedAdviceUids=[], keep_ftw_labels=False):
+              inheritAdvices=False, inheritedAdviceUids=[], keep_ftw_labels=False,
+              keptAnnexIds=[], keptDecisionAnnexIds=[]):
         '''Clones me in the PloneMeetingFolder of the current user, or
            p_newOwnerId if given (this guy will also become owner of this
            item). If there is a p_cloneEventAction, an event will be included
@@ -5556,7 +5557,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            a manualLink to the predecessor, otherwise, the 'ItemPredecessor' reference is used
            and the link is unbreakable (at least thru the UI).
            If p_inheritAdvices is True, advices will be inherited from predecessor,
-           this also needs p_setCurrentAsPredecessor=True and p_manualLinkToPredecessor=False.'''
+           this also needs p_setCurrentAsPredecessor=True and p_manualLinkToPredecessor=False.
+           When p_copyAnnexes=True, we may give a p_keptAnnexIds, if so, only annexes
+           with those ids are kept, if not, every annexes are kept.
+           Same for p_copyDecisionAnnexes/p_keptDecisionAnnexIds.'''
 
         # check if may clone
         self._mayClone(cloneEventAction)
@@ -5592,12 +5596,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             cloned_to_same_mc, cloned_from_item_template)
 
         # clone
-        newItem = tool.pasteItem(destFolder, copiedData, copyAnnexes=copyAnnexes,
+        newItem = tool.pasteItem(destFolder,
+                                 copiedData,
+                                 copyAnnexes=copyAnnexes,
                                  copyDecisionAnnexes=copyDecisionAnnexes,
                                  newOwnerId=newOwnerId, copyFields=copyFields,
                                  newPortalType=newPortalType,
                                  keepProposingGroup=keepProposingGroup,
-                                 keep_ftw_labels=keep_ftw_labels)
+                                 keep_ftw_labels=keep_ftw_labels,
+                                 keptAnnexIds=keptAnnexIds,
+                                 keptDecisionAnnexIds=keptDecisionAnnexIds)
 
         # special handling for some fields kept when cloned_to_same_mc
         # we check that used values on original item are still useable for cloned item

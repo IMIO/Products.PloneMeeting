@@ -5070,7 +5070,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         for mctct in self.getMeetingConfigsToCloneTo():
             configId = mctct['meeting_config']
             actionId = self._getCloneToOtherMCActionId(configId, self.getId())
-            urlExpr = "string:javascript:event.preventDefault();callViewAndReload(base_url='${object_url}', " \
+            urlExpr = "string:javascript:callViewAndReload(base_url='${object_url}', " \
                 "view_name='doCloneToOtherMeetingConfig', " \
                 "params={'destMeetingConfigId': '%s'});" % configId
             availExpr = 'python: object.meta_type == "MeetingItem" and ' \

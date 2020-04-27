@@ -199,6 +199,17 @@ class Migrator(BaseMigrator):
         pghandler.finish()
         logger.info('Done.')
 
+    def reloadMeetingConfigs(self, full=False):
+        '''Reload MeetingConfigs, either only portal_types related parameters,
+           or full reload (at_post_edit_script).'''
+        logger.info("Reloading every MeetingConfigs (full={0}...".format(repr(full)))
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            if full:
+                cfg.at_post_edit_script()
+            else:
+                cfg.registerPortalTypes()
+        logger.info('Done.')
+
     def _already_migrated(self, done=True):
         """Called when a migration is executed several times..."""
         self.already_migrated = True

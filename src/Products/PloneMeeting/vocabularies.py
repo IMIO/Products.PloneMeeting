@@ -13,6 +13,7 @@ from collective.eeafaceted.collectionwidget.content.dashboardcollection import I
 from collective.eeafaceted.collectionwidget.vocabulary import CachedCollectionVocabulary
 from collective.eeafaceted.dashboard.vocabulary import DashboardCollectionsVocabulary
 from collective.iconifiedcategory.utils import calculate_category_id
+from collective.iconifiedcategory.utils import get_categorized_elements
 from collective.iconifiedcategory.vocabularies import CategoryTitleVocabulary
 from collective.iconifiedcategory.vocabularies import CategoryVocabulary
 from DateTime import DateTime
@@ -1789,3 +1790,37 @@ class ItemCopyGroupsVocabulary(CopyGroupsVocabulary):
 
 
 ItemCopyGroupsVocabularyFactory = ItemCopyGroupsVocabulary()
+
+
+class ContainedAnnexesVocabulary(object):
+    """ """
+
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """ """
+        terms = []
+        for annex in get_categorized_elements(context, portal_type='annex'):
+            terms.append(SimpleTerm(annex['id'],
+                                    annex['id'],
+                                    '<img src="copy_icon.png" />[{0}] {1}'.format(annex['category_title'], annex['title'])))
+        return SimpleVocabulary(terms)
+
+ContainedAnnexesVocabularyFactory = ContainedAnnexesVocabulary()
+
+
+class ContainedDecisionAnnexesVocabulary(object):
+    """ """
+
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """ """
+        terms = []
+        for annex in get_categorized_elements(context, portal_type='annexDecision'):
+            terms.append(SimpleTerm(annex['id'],
+                                    annex['id'],
+                                    '[{0}] {1}'.format(annex['category_title'], annex['title'])))
+        return SimpleVocabulary(terms)
+
+ContainedDecisionAnnexesVocabularyFactory = ContainedDecisionAnnexesVocabulary()

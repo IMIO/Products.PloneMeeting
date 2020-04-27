@@ -68,7 +68,7 @@
          category="object_buttons"
          condition_expr="python:object.showDuplicateItemAction()"
          icon_expr="string:${portal_url}/copy_icon.gif"
-         url_expr="string:${object_url}/onDuplicate"
+         url_expr="string:${object_url}/item_duplicate_form"
          visible="True">
   <permission value="Copy or Move"/>
  </action>

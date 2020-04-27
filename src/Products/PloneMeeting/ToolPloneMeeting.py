@@ -975,7 +975,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     def pasteItem(self, destFolder, copiedData,
                   copyAnnexes=False, copyDecisionAnnexes=False,
                   newOwnerId=None, copyFields=DEFAULT_COPIED_FIELDS,
-                  newPortalType=None, keepProposingGroup=False, keep_ftw_labels=False):
+                  newPortalType=None, keepProposingGroup=False, keep_ftw_labels=False,
+                  keptAnnexIds=[], keptDecisionAnnexIds=[]):
         '''Paste objects (previously copied) in destFolder. If p_newOwnerId
            is specified, it will become the new owner of the item.
            This method does NOT manage after creation calls like at_post_create_script.'''
@@ -1089,14 +1090,16 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             # remove relevant annexes then manage kept ones, we remove kept annexes
             # if we can not find a corresponding annexType in the destMeetingConfig
             plone_utils = api.portal.get_tool('plone_utils')
-            if copyAnnexes is False:
+            if copyAnnexes is False or keptAnnexIds:
                 # Delete the annexes that have been copied.
                 for annex in get_annexes(newItem, portal_types=['annex']):
-                    unrestrictedRemoveGivenObject(annex)
-            if copyDecisionAnnexes is False:
+                    if copyAnnexes is False or annex.getId() not in keptAnnexIds:
+                        unrestrictedRemoveGivenObject(annex)
+            if copyDecisionAnnexes is False or keptDecisionAnnexIds:
                 # Delete the decision annexes that have been copied.
                 for annex in get_annexes(newItem, portal_types=['annexDecision']):
-                    unrestrictedRemoveGivenObject(annex)
+                    if copyDecisionAnnexes is False or annex.getId() not in keptDecisionAnnexIds:
+                        unrestrictedRemoveGivenObject(annex)
             # if we have left annexes, we manage it
             if get_annexes(newItem):
                 # manage the otherMCCorrespondence

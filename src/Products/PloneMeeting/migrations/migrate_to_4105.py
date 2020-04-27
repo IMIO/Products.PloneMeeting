@@ -77,6 +77,11 @@ class Migrate_To_4105(Migrator):
             uncatalogued = self._uncatalogWrongBrains()
         self._removeBrokenAnnexes()
         self._cleanFTWLabels()
+        # reapply MeetingItem.xml before reloadMeetingConfigs
+        # that will remove the 'Duplicate and keep link' action
+        self.ps.runImportStepFromProfile('profile-Products.PloneMeeting:default', 'typeinfo')
+        # reload MeetingConfigs as some actions changed
+        self.reloadMeetingConfigs()
         self.upgradeAll()
 
 

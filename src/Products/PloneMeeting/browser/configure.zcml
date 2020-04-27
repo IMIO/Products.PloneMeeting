@@ -783,6 +783,15 @@
         permission="zope2.View"
       />
 
+    <!-- Form that manage item duplication -->
+    <browser:page
+        for="Products.PloneMeeting.interfaces.IMeetingItem"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        name="item_duplicate_form"
+        class=".itemduplicate.DuplicateItemFormWrapper"
+        permission="zope2.View"
+      />
+
     <!-- Display the go_to_meeting imgSelectBox in the plonemeeting portlet -->
     <browser:page
         for="*"
