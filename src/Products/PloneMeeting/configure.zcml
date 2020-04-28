@@ -44,6 +44,7 @@
   <include package=".documentgenerator" />
   <include package=".filters" />
   <include package=".ftw_labels" />
+  <include package=".widgets" />
 
   <include file="columns.zcml" />
   <include file="events.zcml" />

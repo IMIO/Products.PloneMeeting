@@ -104,4 +104,10 @@
   <utility component=".vocabularies.PMConditionAwareCollectionVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.conditionawarecollectionvocabulary" />
 
+  <!-- Vocabularies used in item_duplicate_form -->
+  <utility component=".vocabularies.ContainedAnnexesVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.contained_annexes_vocabulary" />
+  <utility component=".vocabularies.ContainedDecisionAnnexesVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.contained_decision_annexes_vocabulary" />
+
 </configure>

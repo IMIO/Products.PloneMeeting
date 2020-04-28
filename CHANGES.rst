@@ -8,6 +8,19 @@ Changelog
 - Added `ZLogHandler` in `Migrator.initNewHTMLFields` and in `Migrate_To_4105._cleanFTWLabels` as these steps may take some time
 - Moved `MeetingInsertingMethodsHelpMsgView` logic from `__init__` to `__call__` because errors are swallowed in `__init__`,
   moreover display `Groups in charge` next to `Group title`
+- Refactored the Duplicate item functionnality :
+
+  - Only one button `Duplicate item` left, the `Duplicate and keep link` button was removed
+  - Added possibility to display the `Duplicate item` action in dashboards, added `MeetingConfig.itemActionsColumnConfig` to be able
+    to show it or not in addition to actions `Delete` and `History`
+  - Added parameters `keptAnnexIds` and `keptDecisionAnnexIds` to `MeetingItem.clone`
+  - Added custom widget `PMCheckBoxFieldWidget` that manages `Select/unselect all`,
+    rendering HTML as value label and display a clear message when field empty
+  - On click, a popup is displayed with following options :
+
+    - Keep a link to original item?
+    - Select annexes to keep
+    - Select decision annexes to keep
 
 4.1.22.1 (2020-04-24)
 ---------------------

@@ -18,7 +18,7 @@
                        useUserReplacements python: 'replacements' in usedAttrs;">
 
       <script language="javascript">
-      // some checkbowes may not be checked toghether
+      // some checkboxes may not be checked toghether
       var only_one_selected = ['attendee', 'excused', 'absent'];
       function showOrHideReplField(userId, hide_select, enable_user) {
         // Shows of hides "replacement" field for p_userId, depending on p_show.
