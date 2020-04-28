@@ -11,7 +11,11 @@ Changelog
 - Refactored the Duplicate item functionnality :
 
   - Only one button `Duplicate item` left, the `Duplicate and keep link` button was removed
+  - Added possibility to display the `Duplicate item` action in dashboards, added `MeetingConfig.itemActionsColumnConfig` to be able
+    to show it or not in addition to actions `Delete` and `History`
   - Added parameters `keptAnnexIds` and `keptDecisionAnnexIds` to `MeetingItem.clone`
+  - Added custom widget `PMCheckBoxFieldWidget` that manages `Select/unselect all`,
+    rendering HTML as value label and display a clear message when field empty
   - On click, a popup is displayed with following options :
 
     - Keep a link to original item?

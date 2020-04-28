@@ -14,6 +14,7 @@ from collective.eeafaceted.collectionwidget.vocabulary import CachedCollectionVo
 from collective.eeafaceted.dashboard.vocabulary import DashboardCollectionsVocabulary
 from collective.iconifiedcategory.utils import calculate_category_id
 from collective.iconifiedcategory.utils import get_categorized_elements
+from collective.iconifiedcategory.utils import render_filesize
 from collective.iconifiedcategory.vocabularies import CategoryTitleVocabulary
 from collective.iconifiedcategory.vocabularies import CategoryVocabulary
 from DateTime import DateTime
@@ -1797,30 +1798,38 @@ class ContainedAnnexesVocabulary(object):
 
     implements(IVocabularyFactory)
 
-    def __call__(self, context):
+    def __call__(self, context, portal_type='annex'):
         """ """
+        portal_url = api.portal.get().absolute_url()
         terms = []
-        for annex in get_categorized_elements(context, portal_type='annex'):
+        i = 1
+        for annex in get_categorized_elements(context, portal_type=portal_type):
+            # term title is annex icon, number and title
+            term_title = u'{0}. <img src="{1}/{2}" title="{3}"> {4}'.format(
+                str(i),
+                portal_url,
+                annex['icon_url'],
+                safe_unicode(annex['category_title']),
+                safe_unicode(annex['title']))
+            i += 1
+            if annex['warn_filesize']:
+                term_title += u' ({0})'.format(render_filesize(annex['filesize']))
             terms.append(SimpleTerm(annex['id'],
                                     annex['id'],
-                                    '<img src="copy_icon.png" />[{0}] {1}'.format(annex['category_title'], annex['title'])))
+                                    term_title))
         return SimpleVocabulary(terms)
 
 ContainedAnnexesVocabularyFactory = ContainedAnnexesVocabulary()
 
 
-class ContainedDecisionAnnexesVocabulary(object):
+class ContainedDecisionAnnexesVocabulary(ContainedAnnexesVocabulary):
     """ """
 
     implements(IVocabularyFactory)
 
-    def __call__(self, context):
+    def __call__(self, context, portal_type='annexDecision'):
         """ """
-        terms = []
-        for annex in get_categorized_elements(context, portal_type='annexDecision'):
-            terms.append(SimpleTerm(annex['id'],
-                                    annex['id'],
-                                    '[{0}] {1}'.format(annex['category_title'], annex['title'])))
-        return SimpleVocabulary(terms)
+        terms = super(ContainedDecisionAnnexesVocabulary, self).__call__(context, portal_type=portal_type)
+        return terms
 
 ContainedDecisionAnnexesVocabularyFactory = ContainedDecisionAnnexesVocabulary()

@@ -2431,12 +2431,14 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertRaises(Unauthorized, secretItem.meetingitem_view)
         self.failIf(secretHeadingItem.adapted().isPrivacyViewable())
         self.assertRaises(Unauthorized, secretHeadingItem.meetingitem_view)
-        # if we try to clone a not privacy viewable item, it raises Unauthorized
-        self.assertRaises(Unauthorized, secretItem.onDuplicate)
-        self.assertRaises(Unauthorized, secretItem.onDuplicateAndKeepLink)
+        # if we try to duplicate a not privacy viewable item, it raises Unauthorized
+        secretItem_form = secretItem.restrictedTraverse('@@item_duplicate_form').form_instance
+        secretHeadingItem_form = secretHeadingItem.restrictedTraverse('@@item_duplicate_form').form_instance
+        self.assertRaises(Unauthorized, secretItem_form)
+        self.assertRaises(Unauthorized, secretItem_form.update)
         self.assertRaises(Unauthorized, secretItem.checkPrivacyViewable)
-        self.assertRaises(Unauthorized, secretHeadingItem.onDuplicate)
-        self.assertRaises(Unauthorized, secretHeadingItem.onDuplicateAndKeepLink)
+        self.assertRaises(Unauthorized, secretHeadingItem_form)
+        self.assertRaises(Unauthorized, secretHeadingItem_form.update)
         self.assertRaises(Unauthorized, secretHeadingItem.checkPrivacyViewable)
         # if we try to download an annex of a private item, it raises Unauthorized
         self.assertRaises(Unauthorized, secretAnnex.restrictedTraverse('@@download'))
@@ -2486,28 +2488,59 @@ class testMeetingItem(PloneMeetingTestCase):
         self.failIf(secretHeadingItem.adapted().isPrivacyViewable())
         self.failUnless(publicHeadingItem.adapted().isPrivacyViewable())
 
-    def test_pm_OnDuplicateAndOnDuplicateAndKeepLink(self):
-        """ """
+    def test_pm_ItemDuplicateForm(self):
+        """Test the @@item_duplicate_form"""
         cfg = self.meetingConfig
         cfg.setEnableItemDuplication(False)
 
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         # unable to duplicate as functionnality disabled
+        form = item.restrictedTraverse('@@item_duplicate_form').form_instance
         self.assertFalse(item.showDuplicateItemAction())
-        self.assertRaises(Unauthorized, item.onDuplicate)
-        self.assertRaises(Unauthorized, item.onDuplicateAndKeepLink)
+        self.assertRaises(Unauthorized, form)
+        self.assertRaises(Unauthorized, form.update)
 
         # enables it and check again
         cfg.setEnableItemDuplication(True)
         # clean cache as showDuplicateItemAction is ram cached
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.showDuplicateItemAction')
         self.assertTrue(item.showDuplicateItemAction())
-        item.onDuplicate()
+        self.assertIsNone(form._check_auth())
+        # keep_link=False
+        data = {'keep_link': False, 'annex_ids': [], 'annex_decision_ids': []}
+        newItem = form._doApply(data)
         self.assertFalse(item.getBRefs())
-        new_item_url = item.onDuplicateAndKeepLink()
-        new_item = self.portal.unrestrictedTraverse(new_item_url.replace(self.app.absolute_url(), ''))
-        self.assertEqual(item.getBRefs(), [new_item])
+        # keep_link=True
+        data['keep_link'] = True
+        newItem = form._doApply(data)
+        self.assertEqual(item.getBRefs(), [newItem])
+        # clone with annexes
+        annex1 = self.addAnnex(item)
+        annex1_id = annex1.getId()
+        annex2 = self.addAnnex(item)
+        annex2_id = annex2.getId()
+        decision_annex1 = self.addAnnex(item, relatedTo='item_decision')
+        decision_annex1_id = decision_annex1.getId()
+        decision_annex2 = self.addAnnex(item, relatedTo='item_decision')
+        decision_annex2_id = decision_annex2.getId()
+        # define nothing, no annexes kept
+        newItem = form._doApply(data)
+        self.assertEqual(get_annexes(newItem), [])
+        # keep every annexes
+        data['annex_ids'] = [annex1_id, annex2_id]
+        data['annex_decision_ids'] = [decision_annex1_id, decision_annex2_id]
+        newItem = form._doApply(data)
+        self.assertEqual(
+            [annex.getId() for annex in get_annexes(newItem)],
+            [annex1_id, annex2_id, decision_annex1_id, decision_annex2_id])
+        # keep some annexes
+        data['annex_ids'] = [annex2_id]
+        data['annex_decision_ids'] = [decision_annex1_id]
+        newItem = form._doApply(data)
+        self.assertEqual(
+            [annex.getId() for annex in get_annexes(newItem)],
+            [annex2_id, decision_annex1_id])
 
         # only creators may clone an item
         self.proposeItem(item)
@@ -2515,8 +2548,15 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(self.hasPermission(View, item))
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.showDuplicateItemAction')
         self.assertFalse(item.showDuplicateItemAction())
-        self.assertRaises(Unauthorized, item.onDuplicate)
-        self.assertRaises(Unauthorized, item.onDuplicateAndKeepLink)
+        self.assertRaises(Unauthorized, form)
+        self.assertRaises(Unauthorized, form.update)
+        # a Manager may not clone an item neither
+        self.changeUser('siteadmin')
+        self.assertTrue(self.hasPermission(View, item))
+        cleanRamCacheFor('Products.PloneMeeting.MeetingItem.showDuplicateItemAction')
+        self.assertFalse(item.showDuplicateItemAction())
+        self.assertRaises(Unauthorized, form)
+        self.assertRaises(Unauthorized, form.update)
 
     def test_pm_IsLateFor(self):
         '''

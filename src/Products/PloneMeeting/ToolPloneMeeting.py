@@ -1089,7 +1089,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             # Manage annexes.
             # remove relevant annexes then manage kept ones, we remove kept annexes
             # if we can not find a corresponding annexType in the destMeetingConfig
-            plone_utils = api.portal.get_tool('plone_utils')
             if copyAnnexes is False or keptAnnexIds:
                 # Delete the annexes that have been copied.
                 for annex in get_annexes(newItem, portal_types=['annex']):
@@ -1101,6 +1100,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     if copyDecisionAnnexes is False or annex.getId() not in keptDecisionAnnexIds:
                         unrestrictedRemoveGivenObject(annex)
             # if we have left annexes, we manage it
+            plone_utils = api.portal.get_tool('plone_utils')
             if get_annexes(newItem):
                 # manage the otherMCCorrespondence
                 oldAnnexes = get_categorized_elements(copiedItem, result_type='objects')
@@ -1138,7 +1138,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     newItem.setProposingGroup(userGroupUids[0])
 
             if newOwnerId != loggedUserId:
-                plone_utils = api.portal.get_tool('plone_utils')
                 plone_utils.changeOwnershipOf(newItem, newOwnerId)
 
             # update annex index after every user/groups things are setup

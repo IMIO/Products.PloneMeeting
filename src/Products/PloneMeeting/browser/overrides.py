@@ -595,12 +595,23 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
         if useIcons:
             # hide 'duplicate' actions when showing icons if not in cfg.itemActionsColumnConfig
             itemActionsColumnConfig = self.cfg.getItemActionsColumnConfig()
-            if 'duplicate' not in itemActionsColumnConfig:
-                self.IGNORABLE_ACTIONS += ('duplicate', )
-            if 'delete' not in itemActionsColumnConfig:
-                self.SECTIONS_TO_RENDER.remove('renderOwnDelete')
-            if 'history' not in itemActionsColumnConfig:
-                self.SECTIONS_TO_RENDER.remove('renderHistory')
+            isMeetingManager = self.tool.isManager(self.context)
+            isManager = self.tool.isManager(self.context, realManagers=True)
+            if not (
+                (isMeetingManager and 'meetingmanager_duplicate' in itemActionsColumnConfig) or
+                (isManager and 'manager_duplicate' in itemActionsColumnConfig) or
+                    ('duplicate' in itemActionsColumnConfig)):
+                        self.IGNORABLE_ACTIONS += ('duplicate', )
+            if not (
+                (isMeetingManager and 'meetingmanager_delete' in itemActionsColumnConfig) or
+                (isManager and 'manager_delete' in itemActionsColumnConfig) or
+                    ('delete' in itemActionsColumnConfig)):
+                        self.SECTIONS_TO_RENDER.remove('renderOwnDelete')
+            if not (
+                (isMeetingManager and 'meetingmanager_history' in itemActionsColumnConfig) or
+                (isManager and 'manager_history' in itemActionsColumnConfig) or
+                    ('history' in itemActionsColumnConfig)):
+                        self.SECTIONS_TO_RENDER.remove('renderHistory')
             self.SECTIONS_TO_RENDER = tuple(self.SECTIONS_TO_RENDER)
 
         return super(MeetingItemActionsPanelView, self).\

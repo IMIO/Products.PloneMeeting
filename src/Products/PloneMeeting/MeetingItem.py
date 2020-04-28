@@ -5946,32 +5946,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     return brains[0]
         return None
 
-    security.declarePublic('onDuplicate')
-
-    def onDuplicate(self):
-        '''This method is triggered when the users clicks on
-           "duplicate item".'''
-        user = api.user.get_current()
-        newItem = self.clone(newOwnerId=user.id, cloneEventAction=DUPLICATE_EVENT_ACTION)
-        self.plone_utils.addPortalMessage(
-            translate('item_duplicated', domain='PloneMeeting', context=self.REQUEST))
-        return self.REQUEST.RESPONSE.redirect(newItem.absolute_url())
-
-    security.declarePublic('onDuplicateAndKeepLink')
-
-    def onDuplicateAndKeepLink(self):
-        '''This method is triggered when the users clicks on
-           "duplicate item and keep link".'''
-        user = api.user.get_current()
-        newItem = self.clone(newOwnerId=user.id,
-                             cloneEventAction=DUPLICATE_AND_KEEP_LINK_EVENT_ACTION,
-                             setCurrentAsPredecessor=True,
-                             manualLinkToPredecessor=True)
-        plone_utils = api.portal.get_tool('plone_utils')
-        plone_utils.addPortalMessage(
-            translate('item_duplicated_and_link_kept', domain='PloneMeeting', context=self.REQUEST))
-        return self.REQUEST.RESPONSE.redirect(newItem.absolute_url())
-
     security.declarePrivate('manage_beforeDelete')
 
     def manage_beforeDelete(self, item, container):

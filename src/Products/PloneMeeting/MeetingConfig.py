@@ -1338,40 +1338,6 @@ schema = Schema((
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
-        name='itemActionsColumnConfig',
-        default=defValues.itemActionsColumnConfig,
-        widget=MultiSelectionWidget(
-            description="ItemActionsColumnConfig",
-            description_msgid="item_actions_column_config_descr",
-            format="checkbox",
-            label='Itemactionscolumnconfig',
-            label_msgid='PloneMeeting_label_itemActionsColumnConfig',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="gui",
-        multiValued=1,
-        vocabulary='listItemActionsColumnConfig',
-        enforceVocabulary=True,
-        write_permission="PloneMeeting: Write risky config",
-    ),
-    LinesField(
-        name='meetingColumns',
-        widget=MultiSelectionWidget(
-            description="MeetingColumns",
-            description_msgid="meeting_columns_descr",
-            format="checkbox",
-            label='Meetingcolumns',
-            label_msgid='PloneMeeting_label_meetingColumns',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="gui",
-        multiValued=1,
-        vocabulary='listMeetingColumns',
-        default=defValues.meetingColumns,
-        enforceVocabulary=True,
-        write_permission="PloneMeeting: Write risky config",
-    ),
-    LinesField(
         name='availableItemsListVisibleColumns',
         widget=MultiSelectionWidget(
             description="availableItemsListVisibleColumns",
@@ -1402,6 +1368,40 @@ schema = Schema((
         multiValued=1,
         vocabulary='listItemsListVisibleColumns',
         default=defValues.itemsListVisibleColumns,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    LinesField(
+        name='itemActionsColumnConfig',
+        default=defValues.itemActionsColumnConfig,
+        widget=MultiSelectionWidget(
+            description="ItemActionsColumnConfig",
+            description_msgid="item_actions_column_config_descr",
+            format="checkbox",
+            label='Itemactionscolumnconfig',
+            label_msgid='PloneMeeting_label_itemActionsColumnConfig',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="gui",
+        multiValued=1,
+        vocabulary='listItemActionsColumnConfig',
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    LinesField(
+        name='meetingColumns',
+        widget=MultiSelectionWidget(
+            description="MeetingColumns",
+            description_msgid="meeting_columns_descr",
+            format="checkbox",
+            label='Meetingcolumns',
+            label_msgid='PloneMeeting_label_meetingColumns',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="gui",
+        multiValued=1,
+        vocabulary='listMeetingColumns',
+        default=defValues.meetingColumns,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
@@ -4442,11 +4442,16 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     def listItemActionsColumnConfig(self):
         d = "PloneMeeting"
-        res = DisplayList((
-            ("delete", translate('Delete', domain=d, context=self.REQUEST)),
-            ("duplicate", translate('Duplicate', domain=d, context=self.REQUEST)),
-            ("history", translate('History', domain=d, context=self.REQUEST)),
-        ))
+        res = DisplayList(())
+        for prefix, translatable_value in (('', ''),
+                                           ('meetingmanager_', ' (MeetingManager)'),
+                                           ('manager_', ' (Manager)')):
+            res.add(prefix + "delete",
+                    translate('Item action delete' + translatable_value, domain=d, context=self.REQUEST))
+            res.add(prefix + "duplicate",
+                    translate('Item action duplicate' + translatable_value, domain=d, context=self.REQUEST))
+            res.add(prefix + "history",
+                    translate('Item action history' + translatable_value, domain=d, context=self.REQUEST))
         return res
 
     security.declarePrivate('listVotesEncoders')

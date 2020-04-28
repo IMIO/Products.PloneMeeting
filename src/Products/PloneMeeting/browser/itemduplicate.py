@@ -21,6 +21,7 @@
 #
 
 from AccessControl import Unauthorized
+from imio.helpers.content import get_vocab
 from plone import api
 from plone.z3cform.layout import wrap_form
 from Products.PloneMeeting.config import DUPLICATE_AND_KEEP_LINK_EVENT_ACTION
@@ -30,10 +31,22 @@ from Products.PloneMeeting.interfaces import IRedirect
 from z3c.form import button
 from z3c.form import field
 from z3c.form import form as z3c_form
+from z3c.form.browser.radio import RadioFieldWidget
 from zope import schema
 from zope.i18n import translate
-from z3c.form.browser.checkbox import CheckBoxFieldWidget
+from zope.interface import provider
+from Products.PloneMeeting.widgets.pm_checkbox import PMCheckBoxFieldWidget
 from plone.directives import form
+from zope.schema._bootstrapinterfaces import IContextAwareDefaultFactory
+
+
+@provider(IContextAwareDefaultFactory)
+def annex_ids_default(context):
+    """Select every annexes by default."""
+    vocab = get_vocab(
+        context,
+        u"Products.PloneMeeting.vocabularies.contained_annexes_vocabulary")
+    return vocab.by_token.keys()
 
 
 class IDuplicateItem(form.Schema):
@@ -43,12 +56,14 @@ class IDuplicateItem(form.Schema):
         title=_(u'Keep link?'),
         description=_(""),
         required=False,
+        default=False,
     )
 
     annex_ids = schema.List(
         title=_(u"Annexes to keep"),
         description=_(u""),
         required=False,
+        defaultFactory=annex_ids_default,
         value_type=schema.Choice(
             vocabulary=u"Products.PloneMeeting.vocabularies.contained_annexes_vocabulary"),
     )
@@ -65,8 +80,9 @@ class IDuplicateItem(form.Schema):
 class DuplicateItemForm(z3c_form.Form):
     """ """
     fields = field.Fields(IDuplicateItem)
-    fields["annex_ids"].widgetFactory = CheckBoxFieldWidget
-    fields["annex_decision_ids"].widgetFactory = CheckBoxFieldWidget
+    fields["keep_link"].widgetFactory = RadioFieldWidget
+    fields["annex_ids"].widgetFactory = PMCheckBoxFieldWidget
+    fields["annex_decision_ids"].widgetFactory = PMCheckBoxFieldWidget
 
     ignoreContext = True  # don't use context to get widget data
 
@@ -83,10 +99,15 @@ class DuplicateItemForm(z3c_form.Form):
 
     @button.buttonAndHandler(_('Apply'), name='apply_duplicate_item')
     def handleApply(self, action):
+        self._check_auth()
         data, errors = self.extractData()
         if errors:
             self.status = self.formErrorsMessage
             return
+        self._doApply(data)
+
+    def _doApply(self, data):
+        """ """
         user = api.user.get_current()
         cloneEventAction = DUPLICATE_EVENT_ACTION
         setCurrentAsPredecessor = False
@@ -96,9 +117,13 @@ class DuplicateItemForm(z3c_form.Form):
             setCurrentAsPredecessor = True
             manualLinkToPredecessor = True
 
+        # as passing empty keptAnnexIds/keptDecisionAnnexIds ignores it
+        # if we unselect every annexes, we force copyAnnexes/copyDecisionAnnexes to False
+        copyAnnexes = data['annex_ids'] and True or False
+        copyDecisionAnnexes = data['annex_decision_ids'] and True or False
         newItem = self.context.clone(
-            copyAnnexes=True,
-            copyDecisionAnnexes=True,
+            copyAnnexes=copyAnnexes,
+            copyDecisionAnnexes=copyDecisionAnnexes,
             newOwnerId=user.id,
             cloneEventAction=cloneEventAction,
             setCurrentAsPredecessor=setCurrentAsPredecessor,
@@ -110,6 +135,7 @@ class DuplicateItemForm(z3c_form.Form):
             translate('item_duplicated', domain='PloneMeeting', context=self.request),
             request=self.request)
         self._finished = True
+        return newItem
 
     @button.buttonAndHandler(_('Cancel'), name='cancel')
     def handleCancel(self, action):
