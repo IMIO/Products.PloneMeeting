@@ -5,13 +5,12 @@ Changelog
 4.1.23.2 (unreleased)
 ---------------------
 
-- Nothing changed yet.
-
+- In `MeetingItem.xml`, REALLY remove the action having id `duplicate_and_keep_link`...
 
 4.1.23.1 (2020-04-29)
 ---------------------
 
-- In `MeetingItem.xml` , remove the action having id `duplicate_and_keep_link`.
+- In `MeetingItem.xml`, remove the action having id `duplicate_and_keep_link`.
 
 4.1.23 (2020-04-29)
 -------------------
