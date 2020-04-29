@@ -23,6 +23,7 @@ Changelog
     - Select decision annexes to keep
 - In `vocabularies.BaseHeldPositionsVocabulary`, query only `held_positions` that are in `review_state` `active`,
   moreover, display the `WorkflowState` viewlet on `person view` and `held_position view`
+- Fixed `showAddAnnex` and `showAddAnnexDecision` in `@@categorized-annexes`, rely on the `content_category` field vocabulary
 
 4.1.22.1 (2020-04-24)
 ---------------------
