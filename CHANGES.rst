@@ -7,6 +7,7 @@ Changelog
 
 - Merged changes from 4.1.20
 - Merged changes from 4.1.21
+- Merged changes from 4.1.22
 
 4.2a5 (2020-03-17)
 ------------------
@@ -38,6 +39,45 @@ Changelog
       we only use common roles (Reader, Editor, Reviewer and Contributor)
 - Use roles 'Reviewer' and 'Contributor' in meetingadvice_workflow
 - Added bypass for users having 'Manage portal' in MeetingItemWorkflowConditions in 'mayWait_advices_from', 'mayValidate' and 'mayPresent'
+
+4.1.22.2 (unreleased)
+---------------------
+
+- Added `ZLogHandler` in `Migrator.initNewHTMLFields` and in `Migrate_To_4105._cleanFTWLabels` as these steps may take some time
+- Moved `MeetingInsertingMethodsHelpMsgView` logic from `__init__` to `__call__` because errors are swallowed in `__init__`,
+  moreover display `Groups in charge` next to `Group title`
+- Refactored the Duplicate item functionnality :
+
+  - Only one button `Duplicate item` left, the `Duplicate and keep link` button was removed
+  - Added possibility to display the `Duplicate item` action in dashboards, added `MeetingConfig.itemActionsColumnConfig` to be able
+    to show it or not in addition to actions `Delete` and `History`
+  - Added parameters `keptAnnexIds` and `keptDecisionAnnexIds` to `MeetingItem.clone`
+  - Added custom widget `PMCheckBoxFieldWidget` that manages `Select/unselect all`,
+    rendering HTML as value label and display a clear message when field empty
+  - On click, a popup is displayed with following options :
+
+    - Keep a link to original item?
+    - Select annexes to keep
+    - Select decision annexes to keep
+
+4.1.22.1 (2020-04-24)
+---------------------
+
+- Added upgrade step in upgrade to 4105 to clean `ftw.labels` annotation if it was not migrated to a `PersistendMapping`
+
+4.1.22 (2020-04-24)
+-------------------
+
+- Optimized calls to `collective.contact.plonegroup.utils.get_organizations` and `collective.contact.plonegroup.utils.get_organization`,
+  do it with `the_objects=False` anytime possible, and avoid calling it when we have the `plone_group_id` and we need the `organization UID`
+- Added migration that fixes wrong paths in `portal_catalog` (paths ending with '/' because an added annex was reindexing the parent) and
+  annexes without a `content_category` that occured with wrong `ConflictError` management in `collective.quickupload` (`imio.annex`)
+- Fixed `MeetingItem._checkMayQuickEdit` that was giving access to `Manager` even when field condition was `False`
+- Added upgrade step to 4105
+- Fixed bug in batch action `StoreItemsPodTemplateAsAnnex` that kept `Temporary QR code` label in stored annex
+- Make `catalog` available on `self` in `tests`
+- Optimized the `Quick edit save and continue` functionnality by using `CKEditor` `AjaxSave plugin` to save data
+  so the field is not reloaded and the user editing the content stays where he was
 
 4.1.21 (2020-04-20)
 -------------------

@@ -21,7 +21,9 @@
             tal:condition="orgs">
     <h5><span i18n:translate="">Ordered groups</span>:</h5>
     <ul tal:repeat="org orgs">
-      <li tal:content="org/Title"></li>
+      <li><span tal:content="python:org[0]">Organization title</span>
+          (<span i18n:translate="PloneMeeting_label_groupsInCharge" />:
+           <span tal:content="python:org[1]">Groups in charge</span>)</li>
     </ul>
   </tal:orgs>
 

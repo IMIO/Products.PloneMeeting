@@ -56,14 +56,14 @@ class testColumns(PloneMeetingTestCase):
         self.addAnnex(publicItem)
         publicItem.setPrivacy('public')
         publicItem._update_after_edit()
-        publicBrain = self.portal.portal_catalog(UID=publicItem.UID())[0]
+        publicBrain = self.catalog(UID=publicItem.UID())[0]
         secretItem = self.create('MeetingItem',
                                  title='Secret item title',
                                  description='Secret item description')
         self.addAnnex(secretItem)
         secretItem.setPrivacy('secret')
         secretItem._update_after_edit()
-        secretBrain = self.portal.portal_catalog(UID=secretItem.UID())[0]
+        secretBrain = self.catalog(UID=secretItem.UID())[0]
 
         meetingFolder = self.getMeetingFolder()
         faceted_table = meetingFolder.restrictedTraverse('faceted-table-view')
@@ -116,8 +116,8 @@ class testColumns(PloneMeetingTestCase):
         annex1 = self.addAnnex(item)
         annex2 = self.addAnnex(item)
 
-        annex1_brain = self.portal.portal_catalog(UID=annex1.UID())[0]
-        annex2_brain = self.portal.portal_catalog(UID=annex2.UID())[0]
+        annex1_brain = self.catalog(UID=annex1.UID())[0]
+        annex2_brain = self.catalog(UID=annex2.UID())[0]
         meetingFolder = self.getMeetingFolder()
         faceted_table = meetingFolder.restrictedTraverse('faceted-table-view')
         column = PMAnnexActionsColumn(meetingFolder, self.portal.REQUEST, faceted_table)
@@ -146,8 +146,8 @@ class testColumns(PloneMeetingTestCase):
         self.assertTrue(self.hasPermission(AddAnnexDecision, item))
         annexDecision1 = self.addAnnex(item, relatedTo='item_decision')
         annexDecision2 = self.addAnnex(item, relatedTo='item_decision')
-        annexDecision1_brain = self.portal.portal_catalog(UID=annexDecision1.UID())[0]
-        annexDecision2_brain = self.portal.portal_catalog(UID=annexDecision2.UID())[0]
+        annexDecision1_brain = self.catalog(UID=annexDecision1.UID())[0]
+        annexDecision2_brain = self.catalog(UID=annexDecision2.UID())[0]
         renderedColumnAnnex1 = column.renderCell(annex1_brain)
         renderedColumnAnnex2 = column.renderCell(annex2_brain)
         renderedColumnDecisionAnnex1 = column.renderCell(annexDecision1_brain)
@@ -192,12 +192,12 @@ class testColumns(PloneMeetingTestCase):
         faceted_table = meetingFolder.restrictedTraverse('faceted-table-view')
         column = ItemLinkedMeetingColumn(meetingFolder, self.portal.REQUEST, faceted_table)
         # item not linked to a meeting
-        item_brain = self.portal.portal_catalog(UID=item.UID())[0]
+        item_brain = self.catalog(UID=item.UID())[0]
         self.assertEqual(column.renderCell(item_brain), u'-')
         self.presentItem(item)
 
         # linked and viewable
-        item_brain = self.portal.portal_catalog(UID=item.UID())[0]
+        item_brain = self.catalog(UID=item.UID())[0]
         self.assertTrue(u"<span class='pretty_link_content state-created'>" in column.renderCell(item_brain))
         # linked but not viewable
         self.changeUser('powerobserver1')

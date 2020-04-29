@@ -1225,9 +1225,8 @@ class testMeetingConfig(PloneMeetingTestCase):
         itemInConfig = cfg.getRecurringItems()[0]
         item = self.create('MeetingItem')
         # the item's getIcon metadata is correct
-        itemBrain = self.portal.portal_catalog(UID=item.UID())[0]
-        itemInConfigBrain = self.portal.portal_catalog(UID=itemInConfig.UID(),
-                                                       isDefinedInTool=True)[0]
+        itemBrain = self.catalog(UID=item.UID())[0]
+        itemInConfigBrain = self.catalog(UID=itemInConfig.UID(), isDefinedInTool=True)[0]
         self.assertTrue(itemBrain.getIcon == getIcon(item)())
         self.assertTrue(itemInConfigBrain.getIcon == getIcon(itemInConfig)())
         otherColor = ITEM_ICON_COLORS[0]
@@ -1239,9 +1238,8 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.assertTrue(itemType.icon_expr_object)
         self.assertTrue(itemType.icon_expr.endswith(otherColorIconName))
         # 'getIcon' metadata was updated
-        itemBrain = self.portal.portal_catalog(UID=item.UID())[0]
-        itemInConfigBrain = self.portal.portal_catalog(UID=itemInConfig.UID(),
-                                                       isDefinedInTool=True)[0]
+        itemBrain = self.catalog(UID=item.UID())[0]
+        itemInConfigBrain = self.catalog(UID=itemInConfig.UID(), isDefinedInTool=True)[0]
         self.assertTrue(itemBrain.getIcon == getIcon(item)())
         self.assertTrue(itemInConfigBrain.getIcon == getIcon(itemInConfig)())
 

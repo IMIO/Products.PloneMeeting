@@ -22,7 +22,7 @@
        i18n:attributes="title fastedit_save_changes"
        title="Save changes."
        tal:attributes="src string:$portal_url/save.gif;
-                       onClick python:'askAjaxChunk(\'hook_%s\', \'POST\', \'%s\', \'@@pm-macros\', \'saveAndEditField\', {}, getRichTextContent, initRichTextField)' % (fieldName, context.absolute_url())"/>
+                       onClick string:CKEDITOR.instances['${fieldName}'].execCommand('ajaxsave', 'saveCmd');"/>
   &nbsp;
   <img style="cursor: pointer;"
        i18n:attributes="title fastedit_cancel"

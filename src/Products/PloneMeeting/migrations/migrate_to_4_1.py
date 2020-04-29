@@ -389,11 +389,23 @@ class Migrate_To_4_1(Migrator):
             # first migrate MeetingUsers
             logger.info('Migrating MeetingUsers...')
             mu_hp_mappings = {}
+            wfTool = api.portal.get_tool('portal_workflow')
             for mu in cfg.meetingusers.objectValues('MeetingUser'):
+                gender = mu.getGender().upper()
+                if gender == u'M':
+                    person_title = u'Mr'
+                else:
+                    person_title = u'Mrs'
+                splitted_name = mu.title.split(u' ')
                 person_data = {
                     'id': mu.getId(),
-                    'lastname': mu.title,
-                    'gender': mu.getGender().upper()}
+                    'lastname': splitted_name[-1],
+                    'firstname': u' '.join(splitted_name[0:-1]).strip(),
+                    'gender': gender,
+                    'person_title': translate(person_title,
+                                              domain='collective.contact.core',
+                                              context=self.request)
+                }
                 hp_data = {
                     'id': mu.getId() + '_hp1',
                     'position': RelationValue(intids.getId(own_org)),
@@ -406,6 +418,9 @@ class Migrate_To_4_1(Migrator):
                     hp = api.content.create(container=person, type='held_position', **hp_data)
                 else:
                     hp = contacts.get(person_data['id']).get(hp_data['id'])
+
+                if wfTool.getInfoFor(mu, 'review_state') == 'inactive':
+                    self.portal.portal_workflow.doActionFor(hp, 'deactivate')
                 mu_hp_mappings[mu.getId()] = hp.UID()
 
             # migrate Meetings

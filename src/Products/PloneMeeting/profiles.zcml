@@ -76,6 +76,14 @@
       profile="Products.PloneMeeting:default" />
 
   <genericsetup:upgradeStep
+      title="Go to PloneMeeting 4105"
+      description=""
+      source="4104"
+      destination="4105"
+      handler="Products.PloneMeeting.migrations.migrate_to_4105.migrate"
+      profile="Products.PloneMeeting:default" />
+
+  <genericsetup:upgradeStep
       title="Go to PloneMeeting 4200"
       description=""
       source="*"

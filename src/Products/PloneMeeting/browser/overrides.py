@@ -5,6 +5,7 @@ from Acquisition import aq_base
 from archetypes.referencebrowserwidget.browser.view import ReferenceBrowserPopup
 from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.ckeditor.browser.ckeditorfinder import CKFinder
+from collective.ckeditor.browser.ckeditorview import AjaxSave
 from collective.contact.core import utils as contact_core_utils
 from collective.contact.plonegroup import utils as contact_plonegroup_utils
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
@@ -60,6 +61,7 @@ from Products.PloneMeeting.interfaces import IMeeting
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import normalize_id
 from Products.PloneMeeting.utils import sendMail
+from Products.PloneMeeting.utils import setFieldFromAjax
 from zope.annotation import IAnnotations
 from zope.container.interfaces import INameChooser
 from zope.i18n import translate
@@ -503,6 +505,7 @@ class BaseActionsPanelView(ActionsPanelView):
                                   'update_categorized_elements',
                                   'update_and_sort_categorized_elements')
         self.tool = api.portal.get_tool('portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(self.context)
 
     @memoize_contextless
     def _transitionsToConfirm(self):
@@ -512,9 +515,8 @@ class BaseActionsPanelView(ActionsPanelView):
           This is relevant for Meeting and MeetingItem.
         """
         toConfirm = []
-        cfg = self.tool.getMeetingConfig(self.context)
-        if cfg:
-            toConfirm = cfg.getTransitionsToConfirm()
+        if self.cfg:
+            toConfirm = self.cfg.getTransitionsToConfirm()
         return toConfirm
 
 
@@ -524,11 +526,11 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
     """
     def __init__(self, context, request):
         super(MeetingItemActionsPanelView, self).__init__(context, request)
-        self.SECTIONS_TO_RENDER = ('renderEdit',
+        self.SECTIONS_TO_RENDER = ['renderEdit',
                                    'renderTransitions',
                                    'renderOwnDelete',
                                    'renderActions',
-                                   'renderHistory', )
+                                   'renderHistory']
 
     def __call___cachekey(method,
                           self,
@@ -558,8 +560,7 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
         if meeting:
             meetingModified = meeting.modified()
         annotations = str(IAnnotations(self.context))
-        cfg = self.tool.getMeetingConfig(self.context)
-        cfg_modified = cfg.modified()
+        cfg_modified = self.cfg.modified()
         userGroups = self.tool.get_plone_groups_for_user()
         # if item is validated, the 'present' action could appear if a meeting
         # is now available for the item to be inserted into
@@ -590,9 +591,28 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
         """
           Redefined to add ram.cache...
         """
-        # hide 'duplicate' actions when showing icons
+        # check actions to display in icons mode
         if useIcons:
-            self.IGNORABLE_ACTIONS += ('duplicate', 'duplicate_and_keep_link', )
+            # hide 'duplicate' actions when showing icons if not in cfg.itemActionsColumnConfig
+            itemActionsColumnConfig = self.cfg.getItemActionsColumnConfig()
+            isMeetingManager = self.tool.isManager(self.context)
+            isManager = self.tool.isManager(self.context, realManagers=True)
+            if not (
+                (isMeetingManager and 'meetingmanager_duplicate' in itemActionsColumnConfig) or
+                (isManager and 'manager_duplicate' in itemActionsColumnConfig) or
+                    ('duplicate' in itemActionsColumnConfig)):
+                        self.IGNORABLE_ACTIONS += ('duplicate', )
+            if not (
+                (isMeetingManager and 'meetingmanager_delete' in itemActionsColumnConfig) or
+                (isManager and 'manager_delete' in itemActionsColumnConfig) or
+                    ('delete' in itemActionsColumnConfig)):
+                        self.SECTIONS_TO_RENDER.remove('renderOwnDelete')
+            if not (
+                (isMeetingManager and 'meetingmanager_history' in itemActionsColumnConfig) or
+                (isManager and 'manager_history' in itemActionsColumnConfig) or
+                    ('history' in itemActionsColumnConfig)):
+                        self.SECTIONS_TO_RENDER.remove('renderHistory')
+            self.SECTIONS_TO_RENDER = tuple(self.SECTIONS_TO_RENDER)
 
         return super(MeetingItemActionsPanelView, self).\
             __call__(useIcons=useIcons,
@@ -647,8 +667,7 @@ class MeetingActionsPanelView(BaseActionsPanelView):
            - cfg modified;
            - different item or user;
            - user groups changed.'''
-        cfg = self.tool.getMeetingConfig(self.context)
-        cfg_modified = cfg.modified()
+        cfg_modified = self.cfg.modified()
         userGroups = self.tool.get_plone_groups_for_user()
         date = get_cachekey_volatile(
             'Products.PloneMeeting.Meeting.UID.{0}'.format(self.context.UID()))
@@ -768,6 +787,7 @@ class ConfigActionsPanelView(ActionsPanelView):
             self.SECTIONS_TO_RENDER += ('renderLinkedPloneGroups', )
 
         self.tool = api.portal.get_tool('portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(self.context)
 
     def _returnTo(self, ):
         """What URL should I return to after moving the element and page is refreshed."""
@@ -786,8 +806,7 @@ class ConfigActionsPanelView(ActionsPanelView):
             return "#organization"
 
         # most are used on the 'data' fieldset, use this as default
-        cfg = self.tool.getMeetingConfig(self.context)
-        return "{0}/?pageName=data#{1}".format(cfg.absolute_url(), folderId)
+        return "{0}/?pageName=data#{1}".format(self.cfg.absolute_url(), folderId)
 
     def mayEdit(self):
         """
@@ -852,7 +871,7 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
         generation_context['itemUids'] = generation_context.get('uids', [])
         return generation_context
 
-    def generate_and_download_doc(self, pod_template, output_format):
+    def generate_and_download_doc(self, pod_template, output_format, **kwargs):
         """ """
         generated_template = super(
             PMDocumentGenerationView, self).generate_and_download_doc(
@@ -864,9 +883,11 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
             return self._sendPodTemplate(generated_template)
         # check if we need to store the generated document
         elif self.request.get('store_as_annex', '0') == '1':
+            return_portal_msg_code = kwargs.get('return_portal_msg_code', False)
             return self.storePodTemplateAsAnnex(generated_template,
                                                 pod_template,
-                                                output_format)
+                                                output_format,
+                                                return_portal_msg_code=return_portal_msg_code)
         else:
             return generated_template
 
@@ -1460,3 +1481,16 @@ class PMUsersOverviewControlPanel(PMBaseOverviewControlPanel, UsersOverviewContr
 
 class PMGroupsOverviewControlPanel(PMBaseOverviewControlPanel, GroupsOverviewControlPanel):
     """See PMBaseOverviewControlPanel docstring."""
+
+
+class PMAjaxSave(AjaxSave):
+    """Override collective.ckeditor ajaxsave to use setFieldFromAjax."""
+
+    def AT_save(self, fieldname, text):
+        setFieldFromAjax(self.context,
+                         fieldname,
+                         text,
+                         remember=False,
+                         tranform=True,
+                         reindex=True,
+                         unlock=False)

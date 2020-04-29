@@ -68,6 +68,18 @@ function contentHistory() {
   });
 }
 
+// the duplicate item action
+function duplicateItem() {
+    jQuery(function($) {
+        // Content history popup
+        $('.apButtonAction_form_duplicate').prepOverlay({
+           subtype: 'ajax',
+           closeselector: '[name="form.buttons.cancel"]',
+        });
+  });
+}
+
+
 // common overlays
 // the content history popup
 function pmCommonOverlays(selector_prefix='') {
@@ -130,12 +142,14 @@ jQuery(document).ready(function($) {
     emergencyChange();
     completenessChange();
     availableMailingLists();
+    duplicateItem();
 
     // inserting methods infos on meeting_view
     tooltipster_helper(selector='.tooltipster-inserting-methods-helper-msg',
                        view_name='@@display-inserting-methods-helper-msg',
                        data_parameters=[],
-                       options={trigger: 'click'});
+                       options={position: 'bottom',
+                                trigger: 'click'});
     // item absents on meeting_view
     tooltipster_helper(selector='.tooltipster-meeting-item-not-present',
                        view_name='@@display-meeting-item-not-present',
@@ -154,6 +168,7 @@ function initializeDashboard(){
     advicesInfos();
     adviceAddEdit();
     contentHistory();
+    duplicateItem();
     pmCommonOverlays();
     listTypeChange();
 }

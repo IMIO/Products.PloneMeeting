@@ -725,19 +725,18 @@ class testAnnexes(PloneMeetingTestCase):
         item.setMotivation('')
         self._manage_custom_searchable_fields(item)
         item.reindexObject(idxs=['SearchableText', ])
-        catalog = self.portal.portal_catalog
-        index = catalog.Indexes['SearchableText']
-        self.assertTrue(len(catalog(SearchableText=ITEM_TITLE)) == 1)
-        self.assertTrue(len(catalog(SearchableText=ITEM_DESCRIPTION)) == 1)
-        self.assertTrue(len(catalog(SearchableText=ITEM_DECISION)) == 1)
-        self.assertFalse(catalog(SearchableText=ANNEX_TITLE))
-        indexable_wrapper = IndexableObjectWrapper(item, catalog)
+        index = self.catalog.Indexes['SearchableText']
+        self.assertTrue(len(self.catalog(SearchableText=ITEM_TITLE)) == 1)
+        self.assertTrue(len(self.catalog(SearchableText=ITEM_DESCRIPTION)) == 1)
+        self.assertTrue(len(self.catalog(SearchableText=ITEM_DECISION)) == 1)
+        self.assertFalse(self.catalog(SearchableText=ANNEX_TITLE))
+        indexable_wrapper = IndexableObjectWrapper(item, self.catalog)
         self.assertEquals(
             indexable_wrapper.SearchableText,
             '{0}  <p>{1}</p>  <p>{2}</p> '.format(
                 ITEM_TITLE, ITEM_DESCRIPTION, ITEM_DECISION)
         )
-        itemRID = catalog(UID=item.UID())[0].getRID()
+        itemRID = self.catalog(UID=item.UID())[0].getRID()
         self.assertEquals(index.getEntryForObject(itemRID),
                           [ITEM_TITLE.lower(), 'p', 'item', 'description', 'text', 'p',
                            'p', 'item', 'decision', 'text', 'p'])
@@ -745,44 +744,43 @@ class testAnnexes(PloneMeetingTestCase):
         # add an annex and test that the annex title is found in the item's SearchableText
         annex = self.addAnnex(item, annexTitle=ANNEX_TITLE)
         # now querying for ANNEX_TITLE will return the relevant item
-        self.assertTrue(len(catalog(SearchableText=ITEM_TITLE)) == 1)
-        self.assertTrue(len(catalog(SearchableText=ITEM_DESCRIPTION)) == 1)
-        self.assertTrue(len(catalog(SearchableText=ITEM_DECISION)) == 1)
-        self.assertTrue(len(catalog(SearchableText=ANNEX_TITLE)) == 1)
-        indexable_wrapper = IndexableObjectWrapper(item, catalog)
+        self.assertTrue(len(self.catalog(SearchableText=ITEM_TITLE)) == 1)
+        self.assertTrue(len(self.catalog(SearchableText=ITEM_DESCRIPTION)) == 1)
+        self.assertTrue(len(self.catalog(SearchableText=ITEM_DECISION)) == 1)
+        self.assertTrue(len(self.catalog(SearchableText=ANNEX_TITLE)) == 1)
+        indexable_wrapper = IndexableObjectWrapper(item, self.catalog)
         self.assertEquals(
             indexable_wrapper.SearchableText,
             '{0}  <p>{1}</p>  <p>{2}</p>  {3}'.format(
                 ITEM_TITLE, ITEM_DESCRIPTION, ITEM_DECISION, ANNEX_TITLE))
-        itemRID = catalog(UID=item.UID())[0].getRID()
+        itemRID = self.catalog(UID=item.UID())[0].getRID()
         self.assertEquals(index.getEntryForObject(itemRID),
                           [ITEM_TITLE.lower(), 'p', 'item', 'description', 'text', 'p',
                            'p', 'item', 'decision', 'text', 'p', ANNEX_TITLE.lower()])
         # works also when clear and rebuild catalog
-        self.portal.portal_catalog.clearFindAndRebuild()
-        itemRID = catalog(UID=item.UID())[0].getRID()
+        self.catalog.clearFindAndRebuild()
+        itemRID = self.catalog(UID=item.UID())[0].getRID()
         self.assertEquals(index.getEntryForObject(itemRID),
                           [ITEM_TITLE.lower(), 'p', 'item', 'description', 'text', 'p',
                            'p', 'item', 'decision', 'text', 'p', ANNEX_TITLE.lower()])
         # if we remove the annex, the item is not found anymore when querying
         # on removed annex's title
         self.portal.restrictedTraverse('@@delete_givenuid')(annex.UID())
-        self.assertTrue(catalog(SearchableText=ITEM_TITLE))
-        self.assertFalse(catalog(SearchableText=ANNEX_TITLE))
+        self.assertTrue(self.catalog(SearchableText=ITEM_TITLE))
+        self.assertFalse(self.catalog(SearchableText=ANNEX_TITLE))
 
     def test_pm_AnnexesTitleFoundInMeetingSearchableText(self):
         '''Annexes title is indexed in the meeting SearchableText.'''
         ANNEX_TITLE = "SpecialAnnexTitle"
         self.changeUser('pmManager')
         meeting = self.create('Meeting', date=DateTime('2019/12/19'))
-        catalog = self.portal.portal_catalog
-        self.assertFalse(catalog(SearchableText=ANNEX_TITLE))
+        self.assertFalse(self.catalog(SearchableText=ANNEX_TITLE))
         # add an annex
         annex = self.addAnnex(meeting, annexTitle=ANNEX_TITLE)
-        self.assertTrue(len(catalog(SearchableText=ANNEX_TITLE)) == 1)
+        self.assertTrue(len(self.catalog(SearchableText=ANNEX_TITLE)) == 1)
         # remove the annex
         self.portal.restrictedTraverse('@@delete_givenuid')(annex.UID())
-        self.assertFalse(catalog(SearchableText=ANNEX_TITLE))
+        self.assertFalse(self.catalog(SearchableText=ANNEX_TITLE))
 
     def test_pm_ItemAnnexesContentNotInAnnexSearchableText(self):
         '''Annexes content is not indexed in any SearchableText.'''
@@ -792,57 +790,55 @@ class testAnnexes(PloneMeetingTestCase):
         annex = self.addAnnex(item, annexTitle="Big bad text.txt", annexFile=u'annex_not_to_index.txt')
         self.presentItem(item)
         self.changeUser('pmManager')
-        catalog = self.portal.portal_catalog
         # ensure this annex is indexed
         annex.reindexObject()
-        self.assertEqual(len(catalog(UID=annex.UID())), 1)
-        brains = catalog(Title='Big bad text')
+        self.assertEqual(len(self.catalog(UID=annex.UID())), 1)
+        brains = self.catalog(Title='Big bad text')
         self.assertEqual(len(brains), 1)
         self.assertEqual(brains[0].UID, annex.UID())
         # ensure its SearchableText entry is empty
-        index = catalog.Indexes['SearchableText']
-        annexRID = catalog(UID=annex.UID())[0].getRID()
+        index = self.catalog.Indexes['SearchableText']
+        annexRID = self.catalog(UID=annex.UID())[0].getRID()
         entry = index.getEntryForObject(annexRID)
         self.assertIsNone(entry)
         # ensure it can't be found while searching its content in case it is indexed on another context
-        self.assertEqual(len(catalog(SearchableText='If you')), 0)
-        self.assertEqual(len(catalog(SearchableText='you see')), 0)
-        self.assertEqual(len(catalog(SearchableText='see me')), 0)
-        self.assertEqual(len(catalog(SearchableText='me ...')), 0)
-        self.assertEqual(len(catalog(SearchableText='Well you')), 0)
-        self.assertEqual(len(catalog(SearchableText='you know')), 0)
-        self.assertEqual(len(catalog(SearchableText='know how')), 0)
-        self.assertEqual(len(catalog(SearchableText='how it')), 0)
-        self.assertEqual(len(catalog(SearchableText='it ends')), 0)
+        self.assertEqual(len(self.catalog(SearchableText='If you')), 0)
+        self.assertEqual(len(self.catalog(SearchableText='you see')), 0)
+        self.assertEqual(len(self.catalog(SearchableText='see me')), 0)
+        self.assertEqual(len(self.catalog(SearchableText='me ...')), 0)
+        self.assertEqual(len(self.catalog(SearchableText='Well you')), 0)
+        self.assertEqual(len(self.catalog(SearchableText='you know')), 0)
+        self.assertEqual(len(self.catalog(SearchableText='know how')), 0)
+        self.assertEqual(len(self.catalog(SearchableText='how it')), 0)
+        self.assertEqual(len(self.catalog(SearchableText='it ends')), 0)
 
     def test_pm_MeetingAnnexesContentNotInAnnexSearchableText(self):
         '''Annexes content is not indexed in any SearchableText.'''
         self.changeUser('pmManager')
         meeting = self.create('Meeting', date=DateTime('2019/12/19'))
-        catalog = self.portal.portal_catalog
         # add an annex
         annex = self.addAnnex(meeting, annexTitle="Big bad text.txt", annexFile=u'annex_not_to_index.txt')
         # ensure this annex is indexed
         annex.reindexObject()
-        self.assertEqual(len(catalog(UID=annex.UID())), 1)
-        brains = catalog(Title='Big bad text')
+        self.assertEqual(len(self.catalog(UID=annex.UID())), 1)
+        brains = self.catalog(Title='Big bad text')
         self.assertEqual(len(brains), 1)
         self.assertEqual(brains[0].UID, annex.UID())
         # ensure its SearchableText entry is empty
-        index = catalog.Indexes['SearchableText']
-        annexRID = catalog(UID=annex.UID())[0].getRID()
+        index = self.catalog.Indexes['SearchableText']
+        annexRID = self.catalog(UID=annex.UID())[0].getRID()
         entry = index.getEntryForObject(annexRID)
         self.assertIsNone(entry)
         # ensure it can't be found while searching its content in case it is indexed on another context
-        self.assertEqual(len(catalog(SearchableText='If you')), 0)
-        self.assertEqual(len(catalog(SearchableText='you see')), 0)
-        self.assertEqual(len(catalog(SearchableText='see me')), 0)
-        self.assertEqual(len(catalog(SearchableText='me ...')), 0)
-        self.assertEqual(len(catalog(SearchableText='Well you')), 0)
-        self.assertEqual(len(catalog(SearchableText='you know')), 0)
-        self.assertEqual(len(catalog(SearchableText='know how')), 0)
-        self.assertEqual(len(catalog(SearchableText='how it')), 0)
-        self.assertEqual(len(catalog(SearchableText='it ends')), 0)
+        self.assertEqual(len(self.catalog(SearchableText='If you')), 0)
+        self.assertEqual(len(self.catalog(SearchableText='you see')), 0)
+        self.assertEqual(len(self.catalog(SearchableText='see me')), 0)
+        self.assertEqual(len(self.catalog(SearchableText='me ...')), 0)
+        self.assertEqual(len(self.catalog(SearchableText='Well you')), 0)
+        self.assertEqual(len(self.catalog(SearchableText='you know')), 0)
+        self.assertEqual(len(self.catalog(SearchableText='know how')), 0)
+        self.assertEqual(len(self.catalog(SearchableText='how it')), 0)
+        self.assertEqual(len(self.catalog(SearchableText='it ends')), 0)
 
     def test_pm_AnnexesConvertedIfAutoConvertIsEnabled(self):
         """If collective.documentviewer 'auto_convert' is enabled,
@@ -1380,7 +1376,7 @@ class testAnnexes(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         annex = self.addAnnex(item)
-        annex_brain = self.portal.portal_catalog(UID=annex.UID())[0]
+        annex_brain = self.catalog(UID=annex.UID())[0]
         column = ActionsColumn(self.portal, self.request, self)
         self.assertFalse('@@historyview' in column.renderCell(annex_brain))
         self.changeUser('pmManager')
@@ -1391,35 +1387,33 @@ class testAnnexes(PloneMeetingTestCase):
     def test_pm_ParentModificationDateUpdatedWhenAnnexChanged(self):
         """When an annex is added/modified/removed, the parent modification date is updated."""
 
-        catalog = api.portal.get_tool('portal_catalog')
-
         def _check_parent_modified(parent, parent_modified, annex):
             """ """
             parent_uid = parent.UID()
             # modification date was updated
             self.assertNotEqual(parent_modified, item.modified())
             parent_modified = parent.modified()
-            self.assertEqual(catalog(UID=parent_uid)[0].modified, parent_modified)
+            self.assertEqual(self.catalog(UID=parent_uid)[0].modified, parent_modified)
 
             # edit the annex
             notify(ObjectModifiedEvent(annex))
             # modification date was updated
             self.assertNotEqual(parent_modified, item.modified())
             parent_modified = parent.modified()
-            self.assertEqual(catalog(UID=parent_uid)[0].modified, parent_modified)
+            self.assertEqual(self.catalog(UID=parent_uid)[0].modified, parent_modified)
 
             # remove an annex
             self.portal.restrictedTraverse('@@delete_givenuid')(annex.UID())
             # modification date was updated
             self.assertNotEqual(parent_modified, item.modified())
             parent_modified = parent.modified()
-            self.assertEqual(catalog(UID=parent_uid)[0].modified, parent_modified)
+            self.assertEqual(self.catalog(UID=parent_uid)[0].modified, parent_modified)
 
         # on MeetingItem
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         parent_modified = item.modified()
-        self.assertEqual(catalog(UID=item.UID())[0].modified, parent_modified)
+        self.assertEqual(self.catalog(UID=item.UID())[0].modified, parent_modified)
         # add an annex
         annex = self.addAnnex(item)
         _check_parent_modified(item, parent_modified, annex)
@@ -1431,7 +1425,7 @@ class testAnnexes(PloneMeetingTestCase):
         self.changeUser('pmManager')
         meeting = self.create('Meeting', date=DateTime('2018/03/19'))
         parent_modified = meeting.modified()
-        self.assertEqual(catalog(UID=meeting.UID())[0].modified, parent_modified)
+        self.assertEqual(self.catalog(UID=meeting.UID())[0].modified, parent_modified)
         # add an annex
         annex = self.addAnnex(meeting)
         _check_parent_modified(meeting, parent_modified, annex)
@@ -1456,6 +1450,81 @@ class testAnnexes(PloneMeetingTestCase):
         self.deleteAsManager(annex2.UID())
         no_annex_left_rendered = view()
         self.assertEqual(no_annex_left_rendered, no_annex_rendered)
+
+    def test_pm_AddingAnnexesDoesNotCreateWrongCatalogPaths(self):
+        """A bug due to reindeing parent when annex added was adding
+           wrong path to the catalog._catalog.uids, check that it is no more the case."""
+        cfg = self.meetingConfig
+        self.changeUser('siteadmin')
+        cfg.setItemAdviceStates(['itemcreated'])
+        cfg.setItemAdviceEditStates(['itemcreated'])
+        cfg.setItemAdviceViewStates(['itemcreated'])
+
+        def _check_catalog(step=1):
+            # avoid problems regarding permissions, for example
+            # pmManager does not have access to disabled messages from collective.messagesviewlet
+            self.changeUser('siteadmin')
+            # number of path is correct, just "step" added
+            self.number_of_paths += step
+            self.assertEqual(len(self.catalog._catalog.uids), self.number_of_paths)
+            self.assertEqual(len(self.catalog()), self.number_of_paths)
+            # no paths ending with '/'
+            self.assertFalse([path for path in self.catalog._catalog.uids.keys()
+                              if path.endswith('/')])
+            self.changeUser('pmManager')
+
+        self.changeUser('pmManager')
+        # make sure pmManager folders are created
+        self.getMeetingFolder()
+        self.number_of_paths = len(self.catalog._catalog.uids)
+        # Item
+        item = self.create('MeetingItem')
+        _check_catalog()
+        item_annex = self.addAnnex(item)
+        _check_catalog()
+        self.addAnnex(item, relatedTo='item_decision')
+        _check_catalog()
+        # Meeting
+        meeting = self.create('Meeting', date=DateTime('2020/04/23'))
+        # meeting + 2 recurring items
+        self.assertEqual(len(meeting.getItems()), 2)
+        _check_catalog(step=3)
+        meeting_annex = self.addAnnex(meeting)
+        _check_catalog()
+        # advice
+        item.setOptionalAdvisers([self.developers_uid])
+        item._update_after_edit()
+        _check_catalog(step=0)
+        advice = createContentInContainer(
+            item,
+            'meetingadvice',
+            **{'advice_group': self.developers_uid,
+               'advice_type': u'positive',
+               'advice_comment': RichTextValue(u'My comment')})
+        _check_catalog()
+        advice_annex = self.addAnnex(advice)
+        _check_catalog()
+        # removal of everything
+        self.portal.restrictedTraverse('@@delete_givenuid')(item_annex.UID())
+        _check_catalog(step=-1)
+        self.portal.restrictedTraverse('@@delete_givenuid')(advice_annex.UID())
+        _check_catalog(step=-1)
+        self.portal.restrictedTraverse('@@delete_givenuid')(advice.UID())
+        _check_catalog(step=-1)
+        # remove item will also remove decision annex
+        self.portal.restrictedTraverse('@@delete_givenuid')(item.UID())
+        _check_catalog(step=-2)
+        self.portal.restrictedTraverse('@@delete_givenuid')(meeting_annex.UID())
+        _check_catalog(step=-1)
+        # may only remove an empty meeting, remove 2 recurring items
+        for meeting_item in meeting.getItems():
+            # set it back to 'itemcreated' in case item only deletable in 'itemcreated'
+            self.backToState(meeting_item, 'itemcreated')
+            self.portal.restrictedTraverse('@@delete_givenuid')(meeting_item.UID())
+            _check_catalog(step=-1)
+        self.changeUser('pmManager')
+        self.portal.restrictedTraverse('@@delete_givenuid')(meeting.UID())
+        _check_catalog(step=-1)
 
 
 def test_suite():

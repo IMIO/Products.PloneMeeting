@@ -105,7 +105,7 @@ class testViews(PloneMeetingTestCase):
            (possible on an item template but not on a item in the application).'''
         self.changeUser('siteadmin')
         cfg = self.meetingConfig
-        itemTemplates = self.portal.portal_catalog(
+        itemTemplates = self.catalog(
             portal_type=cfg.getItemTypeName(configType='MeetingItemTemplate'))
         for brain in itemTemplates:
             itemTemplate = brain.getObject()
@@ -316,11 +316,11 @@ class testViews(PloneMeetingTestCase):
         self.assertRaises(KeyError, view, new_value='some_wrong_value')
         # right, change listType value
         self.assertEqual(item.getListType(), u'normal')
-        self.assertTrue(self.portal.portal_catalog(UID=item.UID(), listType=u'normal'))
+        self.assertTrue(self.catalog(UID=item.UID(), listType=u'normal'))
         view('late')
         # value changed and item reindexed
         self.assertEqual(item.getListType(), u'late')
-        self.assertTrue(self.portal.portal_catalog(UID=item.UID(), listType=u'late'))
+        self.assertTrue(self.catalog(UID=item.UID(), listType=u'late'))
         # a specific subscriber is triggered when listType value changed
         # register a subscriber (onItemListTypeChanged) that will actually change item title
         # and set it to 'old_listType - new_listType'
@@ -329,14 +329,14 @@ class testViews(PloneMeetingTestCase):
         view('normal')
         self.assertEqual(item.Title(), 'late - normal')
         self.assertEqual(item.getListType(), u'normal')
-        self.assertTrue(self.portal.portal_catalog(UID=item.UID(), listType=u'normal'))
+        self.assertTrue(self.catalog(UID=item.UID(), listType=u'normal'))
         # if title is 'late - normal' call to subscriber will raise an error
         # this way, we test that when an error occur in the event, the listType is not changed
         view('late')
         # not changed and a portal_message is added
         self.assertEqual(item.Title(), 'late - normal')
         self.assertEqual(item.getListType(), u'normal')
-        self.assertTrue(self.portal.portal_catalog(UID=item.UID(), listType=u'normal'))
+        self.assertTrue(self.catalog(UID=item.UID(), listType=u'normal'))
         messages = IStatusMessage(self.request).show()
         self.assertEqual(messages[-1].message, SAMPLE_ERROR_MESSAGE)
         # cleanUp zmcl.load_config because it impact other tests
@@ -354,7 +354,6 @@ class testViews(PloneMeetingTestCase):
         # item1 : no advice
         # item2 : one optional advice, one automatic advice, none delay-aware
         # item3 : one delay-aware advice
-        catalog = api.portal.get_tool('portal_catalog')
         self.changeUser('admin')
         self.meetingConfig.setCustomAdvisers(
             [{'row_id': 'unique_id_123',
@@ -378,7 +377,7 @@ class testViews(PloneMeetingTestCase):
         # no advice
         self.create('MeetingItem')
         # if we use the query, it will return nothing for now...
-        self.assertFalse(catalog(**query))
+        self.assertFalse(self.catalog(**query))
 
         # no delay-aware advice
         itemWithNonDelayAwareAdvices = self.create('MeetingItem')
@@ -399,12 +398,12 @@ class testViews(PloneMeetingTestCase):
         self.proposeItem(itemWithDelayAwareAdvice)
         self.assertTrue(itemWithDelayAwareAdvice.adviceIndex[self.vendors_uid]['advice_addable'])
         # this time the element is returned
-        self.assertTrue(len(catalog(**query)) == 1)
-        self.assertTrue(catalog(**query)[0].UID == itemWithDelayAwareAdvice.UID())
+        self.assertTrue(len(self.catalog(**query)) == 1)
+        self.assertTrue(self.catalog(**query)[0].UID == itemWithDelayAwareAdvice.UID())
         # if item3 is no more giveable, the query will not return it anymore
         self.validateItem(itemWithDelayAwareAdvice)
         self.assertTrue(not itemWithDelayAwareAdvice.adviceIndex[self.vendors_uid]['advice_addable'])
-        self.assertTrue(not catalog(**query))
+        self.assertTrue(not self.catalog(**query))
         # back to proposed, add it
         self.backToState(itemWithDelayAwareAdvice, self._stateMappingFor('proposed'))
         createContentInContainer(itemWithDelayAwareAdvice,
@@ -415,27 +414,27 @@ class testViews(PloneMeetingTestCase):
         self.assertTrue(not itemWithDelayAwareAdvice.adviceIndex[self.vendors_uid]['advice_addable'])
         self.assertTrue(itemWithDelayAwareAdvice.adviceIndex[self.vendors_uid]['advice_editable'])
         # an editable item will found by the query
-        self.assertTrue(len(catalog(**query)) == 1)
-        self.assertTrue(catalog(**query)[0].UID == itemWithDelayAwareAdvice.UID())
+        self.assertTrue(len(self.catalog(**query)) == 1)
+        self.assertTrue(self.catalog(**query)[0].UID == itemWithDelayAwareAdvice.UID())
         # even once updated, it will still be found
         itemWithDelayAwareAdvice.updateLocalRoles()
-        self.assertTrue(catalog(**query)[0].UID == itemWithDelayAwareAdvice.UID())
+        self.assertTrue(self.catalog(**query)[0].UID == itemWithDelayAwareAdvice.UID())
 
         # makes it no more editable
         self.backToState(itemWithDelayAwareAdvice, self._stateMappingFor('itemcreated'))
         self.assertTrue(not itemWithDelayAwareAdvice.adviceIndex[self.vendors_uid]['advice_editable'])
-        self.assertTrue(not catalog(**query))
+        self.assertTrue(not self.catalog(**query))
 
         # makes it giveable again and timed_out, it should still be found
         self.proposeItem(itemWithDelayAwareAdvice)
         itemWithDelayAwareAdvice.adviceIndex[self.vendors_uid]['delay_started_on'] = datetime(2016, 1, 1)
-        self.assertTrue(catalog(**query)[0].UID == itemWithDelayAwareAdvice.UID())
+        self.assertTrue(self.catalog(**query)[0].UID == itemWithDelayAwareAdvice.UID())
         # even if a reindexObject occurs in between, still found
         itemWithDelayAwareAdvice.reindexObject()
-        self.assertTrue(catalog(**query)[0].UID == itemWithDelayAwareAdvice.UID())
+        self.assertTrue(self.catalog(**query)[0].UID == itemWithDelayAwareAdvice.UID())
         # but once updated, it is not found anymore
         itemWithDelayAwareAdvice.updateLocalRoles()
-        self.assertTrue(not catalog(**query))
+        self.assertTrue(not self.catalog(**query))
 
         # try with an not_given timed_out advice as indexAdvisers behaves differently
         # remove meetingadvice, back to not timed_out, updateLocalRoles then proceed
@@ -444,13 +443,13 @@ class testViews(PloneMeetingTestCase):
         itemWithDelayAwareAdvice.updateLocalRoles()
         # found for now
         itemWithDelayAwareAdvice.adviceIndex[self.vendors_uid]['delay_started_on'] = datetime(2016, 1, 1)
-        self.assertTrue(catalog(**query)[0].UID == itemWithDelayAwareAdvice.UID())
+        self.assertTrue(self.catalog(**query)[0].UID == itemWithDelayAwareAdvice.UID())
         # even if a reindexObject occurs in between, still found
         itemWithDelayAwareAdvice.reindexObject()
-        self.assertTrue(catalog(**query)[0].UID == itemWithDelayAwareAdvice.UID())
+        self.assertTrue(self.catalog(**query)[0].UID == itemWithDelayAwareAdvice.UID())
         # but once updated, it is not found anymore
         itemWithDelayAwareAdvice.updateLocalRoles()
-        self.assertTrue(not catalog(**query))
+        self.assertTrue(not self.catalog(**query))
 
     def test_pm_UpdateDelayAwareAdvicesComputeQuery(self):
         '''
@@ -1531,7 +1530,7 @@ class testViews(PloneMeetingTestCase):
 
     def test_pm_get_all_items_dghv(self):
         self._setUpDashBoard()
-        brains = self.meetingConfig.portal_catalog(meta_type="MeetingItem")
+        brains = self.catalog(meta_type="MeetingItem")
         result = self.helper.get_all_items_dghv(brains)
         itemList = [brain.getObject() for brain in brains]
         self.assertListEqual(itemList, [view.real_context for view in result])
@@ -1540,7 +1539,7 @@ class testViews(PloneMeetingTestCase):
         cfg = self.meetingConfig
 
         def compute_data(item, advisorUids=None):
-            brains = self.portal.portal_catalog(meta_type="MeetingItem")
+            brains = self.catalog(meta_type="MeetingItem")
             result = self.helper.get_all_items_dghv_with_advice(brains, advisorUids)
             itemList = [brain.getObject() for brain in brains]
             index = itemList.index(item)
@@ -1561,7 +1560,7 @@ class testViews(PloneMeetingTestCase):
                 self.assertIsNone(result[index]['advice'])
 
         self._setUpDashBoard()
-        brains = self.portal.portal_catalog(meta_type="MeetingItem")
+        brains = self.catalog(meta_type="MeetingItem")
         result = self.helper.get_all_items_dghv_with_advice(brains)
         itemList = [brain.getObject() for brain in brains]
         self.assertListEqual(itemList, [itemRes['itemView'].real_context for itemRes in result])

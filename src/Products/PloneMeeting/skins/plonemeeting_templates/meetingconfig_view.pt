@@ -745,18 +745,21 @@
           <td width="33%" tal:define="field python:here.getField('itemColumns')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td width="33%" tal:define="field python:here.getField('meetingColumns')">
+          <td width="33%" tal:define="field python:here.getField('availableItemsListVisibleColumns')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td width="33%"></td>
+          <td width="34%" tal:define="field python:here.getField('itemsListVisibleColumns')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
         </tr>
         <tr valign="top">
-          <td tal:define="field python:here.getField('itemsListVisibleColumns')">
+          <td tal:define="field python:here.getField('itemActionsColumnConfig')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td tal:define="field python:here.getField('availableItemsListVisibleColumns')">
+          <td tal:define="field python:here.getField('meetingColumns')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
+
           <td></td>
         </tr>
         <tr valign="top">

@@ -801,22 +801,21 @@ class testToolPloneMeeting(PloneMeetingTestCase):
                                      states=('created', ))
         self.tool.updateAllLocalRoles()
         # local roles and catalog are updated
-        catalog = self.portal.portal_catalog
         self.changeUser('powerobserver1')
         self.assertFalse('%s_powerobservers' % cfg.getId() in item1.__ac_local_roles__)
-        self.assertFalse(catalog(UID=item1.UID()))
+        self.assertFalse(self.catalog(UID=item1.UID()))
         self.assertTrue('%s_powerobservers' % cfg.getId() in item2.__ac_local_roles__)
-        self.assertTrue(catalog(UID=item2.UID()))
+        self.assertTrue(self.catalog(UID=item2.UID()))
         self.assertFalse('%s_powerobservers' % cfg.getId() in meeting.__ac_local_roles__)
-        self.assertFalse(catalog(UID=meeting.UID()))
+        self.assertFalse(self.catalog(UID=meeting.UID()))
 
         self.changeUser('restrictedpowerobserver1')
         self.assertTrue('%s_restrictedpowerobservers' % cfg.getId() in item1.__ac_local_roles__)
-        self.assertTrue(catalog(UID=item1.UID()))
+        self.assertTrue(self.catalog(UID=item1.UID()))
         self.assertFalse('%s_restrictedpowerobservers' % cfg.getId() in item2.__ac_local_roles__)
-        self.assertFalse(catalog(UID=item2.UID()))
+        self.assertFalse(self.catalog(UID=item2.UID()))
         self.assertTrue('%s_restrictedpowerobservers' % cfg.getId() in meeting.__ac_local_roles__)
-        self.assertTrue(catalog(UID=meeting.UID()))
+        self.assertTrue(self.catalog(UID=meeting.UID()))
 
     def test_pm_FormatMeetingDate(self):
         """Test the formatMeetingDate method."""

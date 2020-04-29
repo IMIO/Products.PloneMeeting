@@ -53,7 +53,6 @@ from Products import PloneMeeting as products_plonemeeting
 from Products.CMFCore.permissions import AddPortalContent
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
-from Products.CMFCore.utils import getToolByName
 from Products.Five import zcml
 from Products.PloneMeeting.browser.itemassembly import item_assembly_default
 from Products.PloneMeeting.browser.itemassembly import validate_item_assembly
@@ -465,7 +464,7 @@ class testMeetingItem(PloneMeetingTestCase):
         annotations = IAnnotations(item)
         annotationKey = item._getSentToOtherMCAnnotationKey(otherMeetingConfigId)
         newUID = annotations[annotationKey]
-        newItem = self.portal.portal_catalog(UID=newUID)[0].getObject()
+        newItem = self.catalog(UID=newUID)[0].getObject()
         itemWorkflowId = self.wfTool.getWorkflowsFor(newItem)[0].getId()
         self.assertEqual(len(newItem.workflow_history[itemWorkflowId]), 2)
         # the workflow_history contains the intial transition to 'itemcreated' with None action
@@ -714,8 +713,7 @@ class testMeetingItem(PloneMeetingTestCase):
                                    decisionAnnex2.content_category)
         self.assertEqual(cat1, cat2)
         # correctly used for content_category_uid index
-        catalog = self.portal.portal_catalog
-        uids_using_cat = [brain.UID for brain in catalog(content_category_uid=cat1.UID())]
+        uids_using_cat = [brain.UID for brain in self.catalog(content_category_uid=cat1.UID())]
         self.assertTrue(decisionAnnex1.UID() in uids_using_cat)
         self.assertTrue(decisionAnnex2.UID() in uids_using_cat)
 
@@ -727,20 +725,19 @@ class testMeetingItem(PloneMeetingTestCase):
 
         originalItem = data['originalItem']
         newItem = data['newItem']
-        catalog = self.portal.portal_catalog
         # originalItem was sent
         cloned_to_cfg2 = '{0}__cloned_to'.format(cfg2Id)
         self.assertEqual(sentToInfos(originalItem)(), [cloned_to_cfg2])
-        self.assertTrue(catalog(UID=originalItem.UID(), sentToInfos=[cloned_to_cfg2]))
+        self.assertTrue(self.catalog(UID=originalItem.UID(), sentToInfos=[cloned_to_cfg2]))
         # newItem is not sendable to any MC
         self.assertFalse(newItem.getOtherMeetingConfigsClonableTo())
         self.assertEqual(sentToInfos(newItem)(), ['not_to_be_cloned_to'])
-        self.assertTrue(catalog(UID=newItem.UID(), sentToInfos=['not_to_be_cloned_to']))
+        self.assertTrue(self.catalog(UID=newItem.UID(), sentToInfos=['not_to_be_cloned_to']))
         # if we delete sent item, sentToInfos changed and index is updated
         self.deleteAsManager(newItem.UID())
         clonable_to_cfg2 = '{0}__clonable_to'.format(cfg2Id)
         self.assertEqual(sentToInfos(originalItem)(), [clonable_to_cfg2])
-        self.assertTrue(catalog(UID=originalItem.UID(), sentToInfos=[clonable_to_cfg2]))
+        self.assertTrue(self.catalog(UID=originalItem.UID(), sentToInfos=[clonable_to_cfg2]))
 
     def test_pm_SendItemToOtherMCWithoutDefinedAnnexType(self):
         '''When cloning an item to another meetingConfig or to the same meetingConfig,
@@ -1364,8 +1361,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # make sure sentToInfos index was updated on original item
         cloned_to_cfg2 = '{0}__cloned_to'.format(cfg2Id)
         self.assertEqual(sentToInfos(item)(), [cloned_to_cfg2])
-        self.assertEqual(self.portal.portal_catalog(UID=item.UID(),
-                                                    sentToInfos=[cloned_to_cfg2])[0].UID,
+        self.assertEqual(self.catalog(UID=item.UID(), sentToInfos=[cloned_to_cfg2])[0].UID,
                          item.UID())
 
     def test_pm_SendItemToOtherMCTransitionsTriggeredOnlyWhenAutomaticOrHasMeeting(self):
@@ -1995,10 +1991,9 @@ class testMeetingItem(PloneMeetingTestCase):
         i1.setCopyGroups((self.vendors_reviewers,))
         i1.processForm()
         # getCopyGroups is a KeywordIndex, test different cases
-        catalog = self.portal.portal_catalog
-        self.assertEqual(len(catalog(getCopyGroups=self.vendors_reviewers)), 1)
-        self.assertEqual(len(catalog(getCopyGroups=self.vendors_creators)), 0)
-        self.assertEqual(len(catalog(getCopyGroups=(self.vendors_creators, self.vendors_reviewers,))), 1)
+        self.assertEqual(len(self.catalog(getCopyGroups=self.vendors_reviewers)), 1)
+        self.assertEqual(len(self.catalog(getCopyGroups=self.vendors_creators)), 0)
+        self.assertEqual(len(self.catalog(getCopyGroups=(self.vendors_creators, self.vendors_reviewers,))), 1)
         # Vendors reviewers can see the item now
         self.changeUser('pmCreator2')
         self.failIf(self.hasPermission(View, i1))
@@ -2022,7 +2017,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # remove copyGroups
         i1.setCopyGroups(())
         i1.processForm()
-        self.assertEqual(len(catalog(getCopyGroups=self.vendors_reviewers)), 0)
+        self.assertEqual(len(self.catalog(getCopyGroups=self.vendors_reviewers)), 0)
         # Vendors can not see the item anymore
         self.changeUser('pmCreator2')
         self.failIf(self.hasPermission(View, i1))
@@ -2444,12 +2439,14 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertRaises(Unauthorized, secretItem.meetingitem_view)
         self.failIf(secretHeadingItem.adapted().isPrivacyViewable())
         self.assertRaises(Unauthorized, secretHeadingItem.meetingitem_view)
-        # if we try to clone a not privacy viewable item, it raises Unauthorized
-        self.assertRaises(Unauthorized, secretItem.onDuplicate)
-        self.assertRaises(Unauthorized, secretItem.onDuplicateAndKeepLink)
+        # if we try to duplicate a not privacy viewable item, it raises Unauthorized
+        secretItem_form = secretItem.restrictedTraverse('@@item_duplicate_form').form_instance
+        secretHeadingItem_form = secretHeadingItem.restrictedTraverse('@@item_duplicate_form').form_instance
+        self.assertRaises(Unauthorized, secretItem_form)
+        self.assertRaises(Unauthorized, secretItem_form.update)
         self.assertRaises(Unauthorized, secretItem.checkPrivacyViewable)
-        self.assertRaises(Unauthorized, secretHeadingItem.onDuplicate)
-        self.assertRaises(Unauthorized, secretHeadingItem.onDuplicateAndKeepLink)
+        self.assertRaises(Unauthorized, secretHeadingItem_form)
+        self.assertRaises(Unauthorized, secretHeadingItem_form.update)
         self.assertRaises(Unauthorized, secretHeadingItem.checkPrivacyViewable)
         # if we try to download an annex of a private item, it raises Unauthorized
         self.assertRaises(Unauthorized, secretAnnex.restrictedTraverse('@@download'))
@@ -2499,28 +2496,59 @@ class testMeetingItem(PloneMeetingTestCase):
         self.failIf(secretHeadingItem.adapted().isPrivacyViewable())
         self.failUnless(publicHeadingItem.adapted().isPrivacyViewable())
 
-    def test_pm_OnDuplicateAndOnDuplicateAndKeepLink(self):
-        """ """
+    def test_pm_ItemDuplicateForm(self):
+        """Test the @@item_duplicate_form"""
         cfg = self.meetingConfig
         cfg.setEnableItemDuplication(False)
 
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         # unable to duplicate as functionnality disabled
+        form = item.restrictedTraverse('@@item_duplicate_form').form_instance
         self.assertFalse(item.showDuplicateItemAction())
-        self.assertRaises(Unauthorized, item.onDuplicate)
-        self.assertRaises(Unauthorized, item.onDuplicateAndKeepLink)
+        self.assertRaises(Unauthorized, form)
+        self.assertRaises(Unauthorized, form.update)
 
         # enables it and check again
         cfg.setEnableItemDuplication(True)
         # clean cache as showDuplicateItemAction is ram cached
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.showDuplicateItemAction')
         self.assertTrue(item.showDuplicateItemAction())
-        item.onDuplicate()
+        self.assertIsNone(form._check_auth())
+        # keep_link=False
+        data = {'keep_link': False, 'annex_ids': [], 'annex_decision_ids': []}
+        newItem = form._doApply(data)
         self.assertFalse(item.getBRefs())
-        new_item_url = item.onDuplicateAndKeepLink()
-        new_item = self.portal.unrestrictedTraverse(new_item_url.replace(self.app.absolute_url(), ''))
-        self.assertEqual(item.getBRefs(), [new_item])
+        # keep_link=True
+        data['keep_link'] = True
+        newItem = form._doApply(data)
+        self.assertEqual(item.getBRefs(), [newItem])
+        # clone with annexes
+        annex1 = self.addAnnex(item)
+        annex1_id = annex1.getId()
+        annex2 = self.addAnnex(item)
+        annex2_id = annex2.getId()
+        decision_annex1 = self.addAnnex(item, relatedTo='item_decision')
+        decision_annex1_id = decision_annex1.getId()
+        decision_annex2 = self.addAnnex(item, relatedTo='item_decision')
+        decision_annex2_id = decision_annex2.getId()
+        # define nothing, no annexes kept
+        newItem = form._doApply(data)
+        self.assertEqual(get_annexes(newItem), [])
+        # keep every annexes
+        data['annex_ids'] = [annex1_id, annex2_id]
+        data['annex_decision_ids'] = [decision_annex1_id, decision_annex2_id]
+        newItem = form._doApply(data)
+        self.assertEqual(
+            [annex.getId() for annex in get_annexes(newItem)],
+            [annex1_id, annex2_id, decision_annex1_id, decision_annex2_id])
+        # keep some annexes
+        data['annex_ids'] = [annex2_id]
+        data['annex_decision_ids'] = [decision_annex1_id]
+        newItem = form._doApply(data)
+        self.assertEqual(
+            [annex.getId() for annex in get_annexes(newItem)],
+            [annex2_id, decision_annex1_id])
 
         # only creators may clone an item
         self.proposeItem(item)
@@ -2528,8 +2556,15 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(self.hasPermission(View, item))
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.showDuplicateItemAction')
         self.assertFalse(item.showDuplicateItemAction())
-        self.assertRaises(Unauthorized, item.onDuplicate)
-        self.assertRaises(Unauthorized, item.onDuplicateAndKeepLink)
+        self.assertRaises(Unauthorized, form)
+        self.assertRaises(Unauthorized, form.update)
+        # a Manager may not clone an item neither
+        self.changeUser('siteadmin')
+        self.assertTrue(self.hasPermission(View, item))
+        cleanRamCacheFor('Products.PloneMeeting.MeetingItem.showDuplicateItemAction')
+        self.assertFalse(item.showDuplicateItemAction())
+        self.assertRaises(Unauthorized, form)
+        self.assertRaises(Unauthorized, form.update)
 
     def test_pm_IsLateFor(self):
         '''
@@ -5340,11 +5375,10 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
         itemUID = item.UID()
-        catalog = getToolByName(self.portal, 'portal_catalog')
         # downOrUpWorkflowAgain is catalogued
-        self.assertTrue(catalog(UID=itemUID))
-        self.assertFalse(catalog(downOrUpWorkflowAgain='up'))
-        self.assertFalse(catalog(downOrUpWorkflowAgain='down'))
+        self.assertTrue(self.catalog(UID=itemUID))
+        self.assertFalse(self.catalog(downOrUpWorkflowAgain='up'))
+        self.assertFalse(self.catalog(downOrUpWorkflowAgain='down'))
         self.assertFalse(item.downOrUpWorkflowAgain())
         self.proposeItem(item)
         self.assertFalse(item.downOrUpWorkflowAgain())
@@ -5352,8 +5386,8 @@ class testMeetingItem(PloneMeetingTestCase):
         # it will be 'down' if sent back to 'itemcreated'
         self.backToState(item, 'itemcreated')
         self.assertEqual(item.downOrUpWorkflowAgain(), 'down')
-        self.assertEqual(catalog(downOrUpWorkflowAgain='down')[0].UID, itemUID)
-        self.assertFalse(catalog(downOrUpWorkflowAgain='up'))
+        self.assertEqual(self.catalog(downOrUpWorkflowAgain='down')[0].UID, itemUID)
+        self.assertFalse(self.catalog(downOrUpWorkflowAgain='up'))
         # test when a non WF-related action is inserted in the workflow_history
         # it is the case for example while sending item to other meetingConfig
         self.changeUser('pmManager')
@@ -5366,8 +5400,8 @@ class testMeetingItem(PloneMeetingTestCase):
         # it will be 'up' if proposed again
         self.proposeItem(item)
         self.assertEqual(item.downOrUpWorkflowAgain(), 'up')
-        self.assertEqual(catalog(downOrUpWorkflowAgain='up')[0].UID, itemUID)
-        self.assertFalse(catalog(downOrUpWorkflowAgain='down'))
+        self.assertEqual(self.catalog(downOrUpWorkflowAgain='up')[0].UID, itemUID)
+        self.assertFalse(self.catalog(downOrUpWorkflowAgain='down'))
         # insert non WF-related event
         self.deleteAsManager(newItem.UID())
         item.cloneToOtherMeetingConfig(cfg2Id)
@@ -5377,12 +5411,11 @@ class testMeetingItem(PloneMeetingTestCase):
         # no more when item is validated and +
         self.validateItem(item)
         self.assertFalse(item.downOrUpWorkflowAgain())
-        self.assertFalse(catalog(downOrUpWorkflowAgain='up'))
-        self.assertFalse(catalog(downOrUpWorkflowAgain='down'))
+        self.assertFalse(self.catalog(downOrUpWorkflowAgain='up'))
+        self.assertFalse(self.catalog(downOrUpWorkflowAgain='down'))
 
     def test_pm_ItemRenamedWhileInInitialState(self):
         """As long as the item is in it's initial_state, the id is recomputed."""
-        catalog = self.portal.portal_catalog
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         item.setTitle('My new title')
@@ -5390,7 +5423,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # id as been recomputed
         self.assertEqual(item.getId(), 'my-new-title')
         # correctly recatalogued
-        self.assertEqual(catalog(getId=item.getId())[0].UID, item.UID())
+        self.assertEqual(self.catalog(getId=item.getId())[0].UID, item.UID())
 
         # another creator of same group may also edit the item
         self.changeUser('pmCreator1b')
@@ -5400,7 +5433,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # id as been recomputed
         self.assertEqual(item.getId(), 'my-new-title-b')
         # correctly recatalogued
-        self.assertEqual(catalog(getId=item.getId())[0].UID, item.UID())
+        self.assertEqual(self.catalog(getId=item.getId())[0].UID, item.UID())
 
         # id is recomputer as long as item is in it's initial_state
         # thereafter, as link to item could have been sent by mail or so, we do not change it
@@ -5709,12 +5742,12 @@ class testMeetingItem(PloneMeetingTestCase):
         item.updateLocalRoles()
         self.assertFalse('pmCreator2' in item.__ac_local_roles__)
         # item is found by a query
-        self.assertTrue(self.portal.portal_catalog(UID=item.UID()))
+        self.assertTrue(self.catalog(UID=item.UID()))
 
         # pmCreator2 does not have access for now
         self.changeUser('pmCreator2')
         self.assertFalse(self.hasPermission(View, item))
-        self.assertFalse(self.portal.portal_catalog(UID=item.UID()))
+        self.assertFalse(self.catalog(UID=item.UID()))
 
         # load subscriber and updateLocalRoles
         zcml.load_config('tests/events.zcml', products_plonemeeting)
@@ -5722,7 +5755,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # pmCreator2 has access now
         self.assertTrue('pmCreator2' in item.__ac_local_roles__)
         self.assertTrue(self.hasPermission(View, item))
-        self.assertTrue(self.portal.portal_catalog(UID=item.UID()))
+        self.assertTrue(self.catalog(UID=item.UID()))
 
         # propose the item, still ok
         self.changeUser('pmCreator1')
@@ -5730,7 +5763,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmCreator2')
         self.assertTrue('pmCreator2' in item.__ac_local_roles__)
         self.assertTrue(self.hasPermission(View, item))
-        self.assertTrue(self.portal.portal_catalog(UID=item.UID()))
+        self.assertTrue(self.catalog(UID=item.UID()))
 
         # cleanUp zmcl.load_config because it impact other tests
         zcml.cleanUp()
@@ -5893,18 +5926,18 @@ class testMeetingItem(PloneMeetingTestCase):
         annex = self.addAnnex(item)
         # False by default
         self.assertFalse(annex.to_print)
-        self.assertFalse(self.portal.portal_catalog(hasAnnexesToPrint='1', UID=item.UID()))
-        self.assertTrue(self.portal.portal_catalog(hasAnnexesToPrint='0', UID=item.UID()))
+        self.assertFalse(self.catalog(hasAnnexesToPrint='1', UID=item.UID()))
+        self.assertTrue(self.catalog(hasAnnexesToPrint='0', UID=item.UID()))
         # set to True
         annex.to_print = True
         notify(IconifiedAttrChangedEvent(annex,
                                          attr_name='to_print',
                                          old_values={'to_print': False},
                                          new_values={'to_print': True}))
-        self.assertTrue(self.portal.portal_catalog(hasAnnexesToPrint='1', UID=item.UID()))
+        self.assertTrue(self.catalog(hasAnnexesToPrint='1', UID=item.UID()))
         # remove the element
         self.portal.restrictedTraverse('@@delete_givenuid')(annex.UID())
-        self.assertFalse(self.portal.portal_catalog(hasAnnexesToPrint='1', UID=item.UID()))
+        self.assertFalse(self.catalog(hasAnnexesToPrint='1', UID=item.UID()))
 
         # add an annex that is directly 'to_print'
         # this is only done if to_be_printed_activated on CategoryGroup
@@ -5913,20 +5946,19 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertFalse(category_group.to_be_printed_activated)
         annex = self.addAnnex(item, to_print=True)
         self.assertFalse(annex.to_print)
-        self.assertFalse(self.portal.portal_catalog(hasAnnexesToPrint='1', UID=item.UID()))
+        self.assertFalse(self.catalog(hasAnnexesToPrint='1', UID=item.UID()))
         # enable to_print
         category_group.to_be_printed_activated = True
         annex = self.addAnnex(item, to_print=True)
         self.assertTrue(annex.to_print)
-        self.assertTrue(self.portal.portal_catalog(hasAnnexesToPrint='1', UID=item.UID()))
+        self.assertTrue(self.catalog(hasAnnexesToPrint='1', UID=item.UID()))
         # when category.to_print is True
         category.to_print = True
         annex = self.addAnnex(item, to_print=True)
-        self.assertTrue(self.portal.portal_catalog(hasAnnexesToPrint='1', UID=item.UID()))
+        self.assertTrue(self.catalog(hasAnnexesToPrint='1', UID=item.UID()))
 
     def test_pm_HasAnnexesToSignIndex(self):
         """ """
-        catalog = self.portal.portal_catalog
         cfg = self.meetingConfig
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
@@ -5934,9 +5966,9 @@ class testMeetingItem(PloneMeetingTestCase):
         # False by default
         self.assertFalse(annex.to_sign)
         self.assertFalse(annex.signed)
-        self.assertFalse(catalog(hasAnnexesToSign='1', UID=item.UID()))
-        self.assertFalse(catalog(hasAnnexesToSign='0', UID=item.UID()))
-        self.assertTrue(catalog(hasAnnexesToSign='-1', UID=item.UID()))
+        self.assertFalse(self.catalog(hasAnnexesToSign='1', UID=item.UID()))
+        self.assertFalse(self.catalog(hasAnnexesToSign='0', UID=item.UID()))
+        self.assertTrue(self.catalog(hasAnnexesToSign='-1', UID=item.UID()))
         # to_sign
         annex.to_sign = True
         notify(IconifiedAttrChangedEvent(
@@ -5944,9 +5976,9 @@ class testMeetingItem(PloneMeetingTestCase):
             attr_name='to_sign',
             old_values={'to_sign': False},
             new_values={'to_sign': True}))
-        self.assertFalse(catalog(hasAnnexesToSign='1', UID=item.UID()))
-        self.assertTrue(catalog(hasAnnexesToSign='0', UID=item.UID()))
-        self.assertFalse(catalog(hasAnnexesToSign='-1', UID=item.UID()))
+        self.assertFalse(self.catalog(hasAnnexesToSign='1', UID=item.UID()))
+        self.assertTrue(self.catalog(hasAnnexesToSign='0', UID=item.UID()))
+        self.assertFalse(self.catalog(hasAnnexesToSign='-1', UID=item.UID()))
         # signed
         annex.signed = True
         notify(IconifiedAttrChangedEvent(
@@ -5954,14 +5986,14 @@ class testMeetingItem(PloneMeetingTestCase):
             attr_name='to_sign',
             old_values={'signed': False},
             new_values={'signed': True}))
-        self.assertTrue(catalog(hasAnnexesToSign='1', UID=item.UID()))
-        self.assertFalse(catalog(hasAnnexesToSign='0', UID=item.UID()))
-        self.assertFalse(catalog(hasAnnexesToSign='-1', UID=item.UID()))
+        self.assertTrue(self.catalog(hasAnnexesToSign='1', UID=item.UID()))
+        self.assertFalse(self.catalog(hasAnnexesToSign='0', UID=item.UID()))
+        self.assertFalse(self.catalog(hasAnnexesToSign='-1', UID=item.UID()))
         # remove the element
         self.portal.restrictedTraverse('@@delete_givenuid')(annex.UID())
-        self.assertFalse(catalog(hasAnnexesToSign='1', UID=item.UID()))
-        self.assertFalse(catalog(hasAnnexesToSign='0', UID=item.UID()))
-        self.assertFalse(catalog(hasAnnexesToSign='-1', UID=item.UID()))
+        self.assertFalse(self.catalog(hasAnnexesToSign='1', UID=item.UID()))
+        self.assertFalse(self.catalog(hasAnnexesToSign='0', UID=item.UID()))
+        self.assertFalse(self.catalog(hasAnnexesToSign='-1', UID=item.UID()))
 
         # add an annex that is directly 'to_sign'
         # this is only done if to_be_signed_activated on CategoryGroup
@@ -5970,12 +6002,12 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertFalse(category_group.signed_activated)
         annex = self.addAnnex(item, to_sign=True)
         self.assertFalse(annex.to_sign)
-        self.assertFalse(catalog(hasAnnexesToSign='0', UID=item.UID()))
+        self.assertFalse(self.catalog(hasAnnexesToSign='0', UID=item.UID()))
         # enable to_sign
         category_group.signed_activated = True
         annex = self.addAnnex(item, to_sign=True)
         self.assertTrue(annex.to_sign)
-        self.assertTrue(catalog(hasAnnexesToSign='0', UID=item.UID()))
+        self.assertTrue(self.catalog(hasAnnexesToSign='0', UID=item.UID()))
 
     def test_pm_HideCssClasses(self):
         """ """
@@ -6231,7 +6263,6 @@ class testMeetingItem(PloneMeetingTestCase):
 
     def test_pm_ItemReferenceAdaptedWhenItemInsertedOrRemovedOrDeletedFromMeeting(self):
         """Item reference is set when item is inserted into a meeting."""
-        catalog = api.portal.get_tool('portal_catalog')
         # remove recurring items in self.meetingConfig
         self._removeConfigObjectsFor(self.meetingConfig)
         self.changeUser('pmManager')
@@ -6241,36 +6272,36 @@ class testMeetingItem(PloneMeetingTestCase):
         self.freezeMeeting(meeting)
         self.assertEqual(item.getItemReference(), 'Ref. 20170303/1')
         # correct in catalog too
-        self.assertEqual(catalog(SearchableText=item.getItemReference())[0].UID,
+        self.assertEqual(self.catalog(SearchableText=item.getItemReference())[0].UID,
                          item.UID())
         # insert a second item
         item2 = self.create('MeetingItem', title='Item2 title')
         self.presentItem(item2)
         self.assertEqual(item2.getItemReference(), 'Ref. 20170303/2')
-        self.assertEqual(catalog(SearchableText=item2.getItemReference())[0].UID,
+        self.assertEqual(self.catalog(SearchableText=item2.getItemReference())[0].UID,
                          item2.UID())
         # insert a third item
         item3 = self.create('MeetingItem', title='Item3 title')
         self.presentItem(item3)
         self.assertEqual(item3.getItemReference(), 'Ref. 20170303/3')
-        self.assertEqual(catalog(SearchableText=item3.getItemReference())[0].UID,
+        self.assertEqual(self.catalog(SearchableText=item3.getItemReference())[0].UID,
                          item3.UID())
 
         # if we remove item2, third item reference is adapted
         self.backToState(item2, 'validated')
         self.assertEqual(item2.getItemReference(), '')
         self.assertEqual(item.getItemReference(), 'Ref. 20170303/1')
-        self.assertEqual(catalog(SearchableText=item.getItemReference())[0].UID,
+        self.assertEqual(self.catalog(SearchableText=item.getItemReference())[0].UID,
                          item.UID())
         self.assertEqual(item3.getItemReference(), 'Ref. 20170303/2')
-        self.assertEqual(catalog(SearchableText=item3.getItemReference())[0].UID,
+        self.assertEqual(self.catalog(SearchableText=item3.getItemReference())[0].UID,
                          item3.UID())
 
         # removing last item works
         old_itemReference = item3.getItemReference()
         self.backToState(item3, 'validated')
         self.assertEqual(item3.getItemReference(), '')
-        self.assertEqual(len(catalog(SearchableText=old_itemReference)), 0)
+        self.assertEqual(len(self.catalog(SearchableText=old_itemReference)), 0)
 
         # insert a new item and delete item1
         item4 = self.create('MeetingItem', title='Item4 title')
@@ -6332,7 +6363,6 @@ class testMeetingItem(PloneMeetingTestCase):
 
     def test_pm_ItemReferenceUpdateWhenItemPositionChangedOnMeeting(self):
         """When an item position changed in the meeting, the itemReference is updated."""
-        catalog = api.portal.get_tool('portal_catalog')
         # remove recurring items in self.meetingConfig
         self._removeConfigObjectsFor(self.meetingConfig)
         self.changeUser('pmManager')
@@ -6358,13 +6388,13 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(item3.getItemReference(), 'Ref. 20170303/2')
         self.assertEqual(item2.getItemReference(), 'Ref. 20170303/3')
         self.assertEqual(item4.getItemReference(), 'Ref. 20170303/4')
-        self.assertEqual(catalog(SearchableText=item1.getItemReference())[0].UID,
+        self.assertEqual(self.catalog(SearchableText=item1.getItemReference())[0].UID,
                          item1.UID())
-        self.assertEqual(catalog(SearchableText=item2.getItemReference())[0].UID,
+        self.assertEqual(self.catalog(SearchableText=item2.getItemReference())[0].UID,
                          item2.UID())
-        self.assertEqual(catalog(SearchableText=item3.getItemReference())[0].UID,
+        self.assertEqual(self.catalog(SearchableText=item3.getItemReference())[0].UID,
                          item3.UID())
-        self.assertEqual(catalog(SearchableText=item4.getItemReference())[0].UID,
+        self.assertEqual(self.catalog(SearchableText=item4.getItemReference())[0].UID,
                          item4.UID())
         # move item1 to 4th position
         view = item1.restrictedTraverse('@@change-item-order')
@@ -6373,13 +6403,13 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(item2.getItemReference(), 'Ref. 20170303/2')
         self.assertEqual(item4.getItemReference(), 'Ref. 20170303/3')
         self.assertEqual(item1.getItemReference(), 'Ref. 20170303/4')
-        self.assertEqual(catalog(SearchableText=item1.getItemReference())[0].UID,
+        self.assertEqual(self.catalog(SearchableText=item1.getItemReference())[0].UID,
                          item1.UID())
-        self.assertEqual(catalog(SearchableText=item2.getItemReference())[0].UID,
+        self.assertEqual(self.catalog(SearchableText=item2.getItemReference())[0].UID,
                          item2.UID())
-        self.assertEqual(catalog(SearchableText=item3.getItemReference())[0].UID,
+        self.assertEqual(self.catalog(SearchableText=item3.getItemReference())[0].UID,
                          item3.UID())
-        self.assertEqual(catalog(SearchableText=item4.getItemReference())[0].UID,
+        self.assertEqual(self.catalog(SearchableText=item4.getItemReference())[0].UID,
                          item4.UID())
 
     def test_pm_ItemReferenceUpdateWhenSpecificMeetingFieldsModified(self):
@@ -6492,7 +6522,6 @@ class testMeetingItem(PloneMeetingTestCase):
 
     def test_pm_ItemReferenceFoundInItemSearchableText(self):
         """ """
-        catalog = api.portal.get_tool('portal_catalog')
         # remove recurring items in self.meetingConfig
         self._removeConfigObjectsFor(self.meetingConfig)
         self.changeUser('pmManager')
@@ -6512,19 +6541,19 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(item4.getItemReference(), 'Ref. 20170303/4')
         # query in catalog
         # item1
-        brains_item1_ref = catalog(SearchableText=item1.getItemReference())
+        brains_item1_ref = self.catalog(SearchableText=item1.getItemReference())
         self.assertEqual(len(brains_item1_ref), 1)
         self.assertEqual(brains_item1_ref[0].UID, item1.UID())
         # item2
-        brains_item2_ref = catalog(SearchableText=item2.getItemReference())
+        brains_item2_ref = self.catalog(SearchableText=item2.getItemReference())
         self.assertEqual(len(brains_item2_ref), 1)
         self.assertEqual(brains_item2_ref[0].UID, item2.UID())
         # item3
-        brains_item3_ref = catalog(SearchableText=item3.getItemReference())
+        brains_item3_ref = self.catalog(SearchableText=item3.getItemReference())
         self.assertEqual(len(brains_item3_ref), 1)
         self.assertEqual(brains_item3_ref[0].UID, item3.UID())
         # item4
-        brains_item4_ref = catalog(SearchableText=item4.getItemReference())
+        brains_item4_ref = self.catalog(SearchableText=item4.getItemReference())
         self.assertEqual(len(brains_item4_ref), 1)
         self.assertEqual(brains_item4_ref[0].UID, item4.UID())
 

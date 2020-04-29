@@ -69,6 +69,16 @@
             permission="zope2.View"/>
     </configure>
 
+    <!-- Override collective.ckeditor cke-save to handle more than just saving -->
+    <configure package="collective.ckeditor">
+        <browser:page
+            name="cke-save"
+            for="Products.PloneMeeting.interfaces.IMeetingContent"
+            class="Products.PloneMeeting.browser.overrides.PMAjaxSave"
+            attribute="AT_save"
+            permission="cmf.ModifyPortalContent"/>
+    </configure>
+
     <!-- Annexes table view, override @@iconifiedcategory and make it available under name @@categorized-annexes -->
     <browser:page
         for="*"
@@ -770,6 +780,15 @@
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         name="manage_item_signatures_form"
         class=".itemsignatures.ManageItemSignaturesFormWrapper"
+        permission="zope2.View"
+      />
+
+    <!-- Form that manage item duplication -->
+    <browser:page
+        for="Products.PloneMeeting.interfaces.IMeetingItem"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        name="item_duplicate_form"
+        class=".itemduplicate.DuplicateItemFormWrapper"
         permission="zope2.View"
       />
 

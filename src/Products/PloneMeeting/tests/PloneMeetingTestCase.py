@@ -119,6 +119,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         # https://dev.plone.org/ticket/11673
         notify(BeforeTraverseEvent(self.portal, self.request))
         self.tool = self.portal.portal_plonemeeting
+        self.catalog = self.portal.portal_catalog
         self.wfTool = self.portal.portal_workflow
         self.own_org = get_own_organization()
         # make organizations easily available thru their id and store uid

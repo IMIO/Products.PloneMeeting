@@ -1861,7 +1861,6 @@ class testMeeting(PloneMeetingTestCase):
 
     def _checkAvailableItems(self):
         """Helper method for test_pm_AvailableItems."""
-        catalog = self.portal.portal_catalog
         cfg = self.meetingConfig
         # create 3 meetings
         # we can do every steps as a MeetingManager
@@ -1903,28 +1902,28 @@ class testMeeting(PloneMeetingTestCase):
         m3_query = queryparser.parseFormquery(m3, m3.adapted()._availableItemsQuery())
         wf_name = self.wfTool.getWorkflowsFor(i1)[0].getId()
         if not self.wfTool[wf_name].initial_state == 'validated':
-            self.assertEquals(len(catalog(m1_query)), 0)
-            self.assertEquals(len(catalog(m2_query)), 0)
-            self.assertEquals(len(catalog(m3_query)), 0)
+            self.assertEquals(len(self.catalog(m1_query)), 0)
+            self.assertEquals(len(self.catalog(m2_query)), 0)
+            self.assertEquals(len(self.catalog(m3_query)), 0)
         # validate the items
         for item in (i1, i2, i3):
             self.validateItem(item)
         # now, check that available items have some respect
         # the first meeting has only one item, the one with no preferred meeting selected
         m1_query = queryparser.parseFormquery(m1, m1.adapted()._availableItemsQuery())
-        itemTitles = [brain.Title for brain in catalog(m1_query)]
+        itemTitles = [brain.Title for brain in self.catalog(m1_query)]
         self.assertEquals(itemTitles, ['i1', ])
         # the second meeting has 2 items, the no preferred meeting one and the i2
         # for wich we selected this meeting as preferred
         m2_query = queryparser.parseFormquery(m2, m2.adapted()._availableItemsQuery())
-        itemTitles = [brain.Title for brain in catalog(m2_query)]
+        itemTitles = [brain.Title for brain in self.catalog(m2_query)]
         self.assertEquals(set(itemTitles), set(['i1', 'i2', ]))
         # the third has 3 items
         # --> no preferred meeting item
         # --> the second item because the meeting date is in the future
         # --> the i3 where we selected m3 as preferred meeting
         m3_query = queryparser.parseFormquery(m3, m3.adapted()._availableItemsQuery())
-        itemTitles = [brain.Title for brain in catalog(m3_query)]
+        itemTitles = [brain.Title for brain in self.catalog(m3_query)]
         self.assertEquals(set(itemTitles), set(['i1', 'i2', 'i3', ]))
 
         # if a meeting is frozen, it will only accept late items
@@ -1933,7 +1932,7 @@ class testMeeting(PloneMeetingTestCase):
         self.presentItem(i1)
         self.freezeMeeting(m1)
         m1_query = queryparser.parseFormquery(m1, m1.adapted()._availableItemsQuery())
-        self.assertTrue(not catalog(m1_query))
+        self.assertTrue(not self.catalog(m1_query))
         # turn i2 into a late item
         proposedState = self._stateMappingFor('proposed')
         # if current workflow does not use late items, we pass this test...
@@ -1946,17 +1945,16 @@ class testMeeting(PloneMeetingTestCase):
             # i1 is a late item
             self.assertTrue(i2.wfConditions().isLateFor(m1))
             m1_query = queryparser.parseFormquery(m1, m1.adapted()._availableItemsQuery())
-            self.assertTrue([brain.UID for brain in catalog(m1_query)] == [i2.UID()])
+            self.assertTrue([brain.UID for brain in self.catalog(m1_query)] == [i2.UID()])
 
         # if a meeting is not in a state accepting items, it does not accept items anymore
         self.closeMeeting(m1)
         self.assertTrue(m1.queryState() not in cfg.adapted().getMeetingStatesAcceptingItems())
         m1_query = queryparser.parseFormquery(m1, m1.adapted()._availableItemsQuery())
-        self.assertFalse(catalog(m1_query))
+        self.assertFalse(self.catalog(m1_query))
 
     def test_pm_LateItemsAreAvailableForLateMeetingAndFutureLateMeetings(self):
         '''When an item is late for a meeting, it is late for it and every following late meetings.'''
-        catalog = self.portal.portal_catalog
         self.changeUser('pmManager')
         meeting = self.create('Meeting', date=DateTime())
         after_meeting = self.create('Meeting', date=DateTime() + 7)
@@ -1974,12 +1972,12 @@ class testMeeting(PloneMeetingTestCase):
         meeting_query = queryparser.parseFormquery(
             meeting, meeting.adapted()._availableItemsQuery())
         self.assertEqual(
-            [brain.UID for brain in catalog(meeting_query)],
+            [brain.UID for brain in self.catalog(meeting_query)],
             [item1.UID()])
         after_meeting_query = queryparser.parseFormquery(
             after_meeting, after_meeting.adapted()._availableItemsQuery())
         self.assertEqual(
-            [brain.UID for brain in catalog(after_meeting_query)],
+            [brain.UID for brain in self.catalog(after_meeting_query)],
             [item1.UID(), item2.UID()])
 
     def test_pm_PresentSeveralItems(self):
@@ -2599,7 +2597,7 @@ class testMeeting(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         item.setPreferredMeeting(meetingUID)
         item.reindexObject(idxs=['getPreferredMeeting'])
-        items = self.portal.portal_catalog(getPreferredMeeting=meetingUID)
+        items = self.catalog(getPreferredMeeting=meetingUID)
         self.assertTrue(len(items) == 1)
         self.assertTrue(items[0].UID == item.UID())
 
@@ -2611,7 +2609,7 @@ class testMeeting(PloneMeetingTestCase):
 
         # no items found
         self.changeUser('pmCreator2')
-        items = self.portal.portal_catalog(getPreferredMeeting=meetingUID)
+        items = self.catalog(getPreferredMeeting=meetingUID)
         self.assertFalse(items)
         # the preferred meeting of the item is now 'whatever'
         self.assertTrue(item.getPreferredMeeting() == ITEM_NO_PREFERRED_MEETING_VALUE)
@@ -2804,28 +2802,27 @@ class testMeeting(PloneMeetingTestCase):
         self.changeUser('pmManager')
         meeting = self.create('Meeting', date=DateTime())
         item = self.create('MeetingItem')
-        catalog = self.portal.portal_catalog
-        itemBrain = catalog(UID=item.UID())[0]
+        itemBrain = self.catalog(UID=item.UID())[0]
         # by default, if no preferred/linked meeting, the date is '1950/01/01'
         self.assertEquals(itemBrain.linkedMeetingDate, DateTime('1950/01/01'))
         self.assertEquals(itemBrain.getPreferredMeetingDate, DateTime('1950/01/01'))
         item.setPreferredMeeting(meeting.UID())
         self.presentItem(item)
-        itemBrain = catalog(UID=item.UID())[0]
+        itemBrain = self.catalog(UID=item.UID())[0]
         self.assertEquals(itemBrain.linkedMeetingDate, meeting.getDate())
         self.assertEquals(itemBrain.getPreferredMeetingDate, meeting.getDate())
 
         # right, change meeting's date and check again
         newDate = DateTime('2015/05/05')
         meeting.setDate(newDate)
-        itemBrain = catalog(UID=item.UID())[0]
+        itemBrain = self.catalog(UID=item.UID())[0]
         self.assertEquals(itemBrain.linkedMeetingDate, meeting.getDate())
         self.assertEquals(itemBrain.getPreferredMeetingDate, meeting.getDate())
 
         # if item is removed from the meeting, it falls back to 1950
         self.do(item, 'backToValidated')
         self.assertEquals(item.queryState(), 'validated')
-        itemBrain = catalog(UID=item.UID())[0]
+        itemBrain = self.catalog(UID=item.UID())[0]
         self.assertEquals(itemBrain.linkedMeetingDate, DateTime('1950/01/01'))
         # preferredMeetingDate is still the meetingDate
         self.assertEquals(itemBrain.getPreferredMeetingDate, meeting.getDate())
@@ -2833,7 +2830,7 @@ class testMeeting(PloneMeetingTestCase):
         # when a meeting is removed, preferredMeetingDate is updated on items
         self.deleteAsManager(meeting.UID())
         self.assertEquals(item.getPreferredMeeting(), ITEM_NO_PREFERRED_MEETING_VALUE)
-        itemBrain = catalog(UID=item.UID())[0]
+        itemBrain = self.catalog(UID=item.UID())[0]
         self.assertEquals(itemBrain.linkedMeetingDate, DateTime('1950/01/01'))
         self.assertEquals(itemBrain.getPreferredMeetingDate, DateTime('1950/01/01'))
 
@@ -2964,7 +2961,7 @@ class testMeeting(PloneMeetingTestCase):
         meeting.updateLocalRoles()
         self.assertFalse('pmCreator2' in meeting.__ac_local_roles__)
         # item is found by a query
-        self.assertTrue(self.portal.portal_catalog(UID=meeting.UID()))
+        self.assertTrue(self.catalog(UID=meeting.UID()))
 
         # pmCreator2 may not edit the meeting for now
         self.changeUser('pmCreator2')
@@ -3193,6 +3190,22 @@ class testMeeting(PloneMeetingTestCase):
         meeting = self.create('Meeting', date=DateTime('2019/11/27'))
         self.assertEqual(meeting.getLayout(), 'meeting_view')
         self.assertEqual(IFacetedLayout(meeting).layout, 'faceted-table-items')
+
+    def test_pm_MeetingInsertingMethodsHelpMsgView(self):
+        '''Test the @@display-inserting-methods-helper-msg view.'''
+        cfg = self.meetingConfig
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime('2020/04/27'))
+        view = meeting.restrictedTraverse('@@display-inserting-methods-helper-msg')
+        # just call the view to check that it is displayed without errors
+        self.assertTrue(view())
+        # define as much inserting methods as possible
+        inserting_methods = cfg.listInsertingMethods().keys()
+        if 'at_the_end' in inserting_methods:
+            inserting_methods.remove('at_the_end')
+        inserting_methods = [{'insertingMethod': 'on_proposing_groups', 'reverse': '0'}
+                             for inserting_method in inserting_methods]
+        cfg.setInsertingMethodsOnAddItem(inserting_methods)
 
 
 def test_suite():

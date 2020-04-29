@@ -7,6 +7,7 @@ from collective.contact.plonegroup.interfaces import IPloneGroupContact
 from collective.contact.plonegroup.utils import get_organizations
 from collective.z3cform.datagridfield import DataGridFieldFactory
 from collective.z3cform.datagridfield import DictRow
+from imio.helpers.content import uuidsToObjects
 from plone.autoform import directives as form
 from plone.dexterity.schema import DexteritySchemaPolicy
 from plone.supermodel import model
@@ -175,9 +176,12 @@ class PMOrganization(Organization):
         """Accessor so it can be called in a TAL expression."""
         return self.acronym
 
-    def get_groups_in_charge(self):
+    def get_groups_in_charge(self, the_objects=False):
         """Accessor so it can be called in a TAL expression."""
-        return self.groups_in_charge
+        res = self.groups_in_charge
+        if the_objects:
+            res = uuidsToObjects(res, ordered=True)
+        return res
 
     def get_full_title(self, separator=u' / ', first_index=0, force_separator=False):
         """Override to change default first_index from 0 to 1 for IPloneGroupContact,
@@ -280,14 +284,14 @@ class PMOrganization(Organization):
             except ValueError:
                 index = 0
             return index
-        orgs = get_organizations(only_selected=True)
-        i = _get_index(orgs, self)
+        org_uids = get_organizations(only_selected=True, the_objects=False)
+        i = _get_index(org_uids, self.UID())
         # if we received associated_org_uids we must consider associated group
         # that has the lowest position
         if associated_org_uids:
             # if we have MeetingConfig.orderedAssociatedOrganizations, we use it
             # either we use organizations selected in plonegroup
-            org_uids = cfg.getOrderedAssociatedOrganizations() or [org.UID() for org in orgs]
+            org_uids = cfg.getOrderedAssociatedOrganizations() or org_uids
             # orgs are sorted so, the first we find, we return it
             for org_uid in org_uids:
                 if org_uid in associated_org_uids:

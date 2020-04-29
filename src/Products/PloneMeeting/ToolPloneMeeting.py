@@ -499,7 +499,9 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
            orgs the user is in using those suffixes.'''
         res = []
         user_plone_group_ids = self.get_plone_groups_for_user(user_id)
-        orgs = get_organizations(only_selected=only_selected, kept_org_uids=using_groups, the_objects=the_objects)
+        orgs = get_organizations(only_selected=only_selected,
+                                 kept_org_uids=using_groups,
+                                 the_objects=the_objects)
         for org in orgs:
             org_uid = the_objects and org.UID() or org
             for suffix in get_all_suffixes(org_uid):
@@ -556,8 +558,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             return
 
         using_groups = cfg and cfg.getUsingGroups() or []
-        activeOrgUids = [org.UID() for org in get_organizations(
-            only_selected=True, kept_org_uids=using_groups)]
+        activeOrgUids = [org_uid for org_uid in get_organizations(
+            only_selected=True, the_objects=False, kept_org_uids=using_groups)]
         res = False
         for plone_group_id in self.get_plone_groups_for_user():
             # check if the plone_group_id ends with a least one of the p_suffixes
@@ -974,7 +976,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     def pasteItem(self, destFolder, copiedData,
                   copyAnnexes=False, copyDecisionAnnexes=False,
                   newOwnerId=None, copyFields=DEFAULT_COPIED_FIELDS,
-                  newPortalType=None, keepProposingGroup=False, keep_ftw_labels=False):
+                  newPortalType=None, keepProposingGroup=False, keep_ftw_labels=False,
+                  keptAnnexIds=[], keptDecisionAnnexIds=[]):
         '''Paste objects (previously copied) in destFolder. If p_newOwnerId
            is specified, it will become the new owner of the item.
            This method does NOT manage after creation calls like at_post_create_script.'''
@@ -1087,16 +1090,18 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             # Manage annexes.
             # remove relevant annexes then manage kept ones, we remove kept annexes
             # if we can not find a corresponding annexType in the destMeetingConfig
-            plone_utils = api.portal.get_tool('plone_utils')
-            if copyAnnexes is False:
+            if copyAnnexes is False or keptAnnexIds:
                 # Delete the annexes that have been copied.
                 for annex in get_annexes(newItem, portal_types=['annex']):
-                    unrestrictedRemoveGivenObject(annex)
-            if copyDecisionAnnexes is False:
+                    if copyAnnexes is False or annex.getId() not in keptAnnexIds:
+                        unrestrictedRemoveGivenObject(annex)
+            if copyDecisionAnnexes is False or keptDecisionAnnexIds:
                 # Delete the decision annexes that have been copied.
                 for annex in get_annexes(newItem, portal_types=['annexDecision']):
-                    unrestrictedRemoveGivenObject(annex)
+                    if copyDecisionAnnexes is False or annex.getId() not in keptDecisionAnnexIds:
+                        unrestrictedRemoveGivenObject(annex)
             # if we have left annexes, we manage it
+            plone_utils = api.portal.get_tool('plone_utils')
             if get_annexes(newItem):
                 # manage the otherMCCorrespondence
                 oldAnnexes = get_categorized_elements(copiedItem, result_type='objects')
@@ -1134,7 +1139,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     newItem.setProposingGroup(userGroupUids[0])
 
             if newOwnerId != loggedUserId:
-                plone_utils = api.portal.get_tool('plone_utils')
                 plone_utils.changeOwnershipOf(newItem, newOwnerId)
 
             # update annex index after every user/groups things are setup
