@@ -2,11 +2,10 @@ Changelog
 =========
 
 
-4.1.24 (unreleased)
--------------------
+4.1.23.1 (unreleased)
+---------------------
 
-- Nothing changed yet.
-
+- In `MeetingItem.xml` , remove the action having id `duplicate_and_keep_link`.
 
 4.1.23 (2020-04-29)
 -------------------
