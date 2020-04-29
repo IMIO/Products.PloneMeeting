@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.1.23 (unreleased)
+4.1.23 (2020-04-29)
 -------------------
 
 - Added `ZLogHandler` in `Migrator.initNewHTMLFields` and in `Migrate_To_4105._cleanFTWLabels` as these steps may take some time
