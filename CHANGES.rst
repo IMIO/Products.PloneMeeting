@@ -21,7 +21,8 @@ Changelog
     - Keep a link to original item?
     - Select annexes to keep
     - Select decision annexes to keep
-- In `vocabularies.BaseHeldPositionsVocabulary`, query only `held_positions` that are in `review_state` `active`
+- In `vocabularies.BaseHeldPositionsVocabulary`, query only `held_positions` that are in `review_state` `active`,
+  moreover, display the `WorkflowState` viewlet on `person view` and `held_position view`
 
 4.1.22.1 (2020-04-24)
 ---------------------

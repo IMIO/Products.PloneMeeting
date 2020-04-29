@@ -1893,6 +1893,12 @@ form.kssattr-formname-item_duplicate_form div#formfield-form-widgets-keep_link s
    font-weight: bold;
 }
 
+/* hide the edit yellow pencil on person and held_position in the viewlet-above-content-title next to workflow_state */
+body.portaltype-person a.edit-person,
+body.portaltype-held_position a.edit-held_position {
+   display: none;
+}
+
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */
