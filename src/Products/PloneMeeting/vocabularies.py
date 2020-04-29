@@ -1546,7 +1546,8 @@ class BaseHeldPositionsVocabulary(object):
                  pattern=u"{0}"):
         catalog = api.portal.get_tool('portal_catalog')
         query = {'portal_type': 'held_position',
-                 'sort_on': 'sortable_title'}
+                 'sort_on': 'sortable_title',
+                 'review_state': 'active'}
         if uids:
             query['UID'] = uids
         brains = catalog(**query)
