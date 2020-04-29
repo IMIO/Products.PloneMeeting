@@ -2,8 +2,8 @@ Changelog
 =========
 
 
-4.1.22.2 (unreleased)
----------------------
+4.1.23 (unreleased)
+-------------------
 
 - Added `ZLogHandler` in `Migrator.initNewHTMLFields` and in `Migrate_To_4105._cleanFTWLabels` as these steps may take some time
 - Moved `MeetingInsertingMethodsHelpMsgView` logic from `__init__` to `__call__` because errors are swallowed in `__init__`,
