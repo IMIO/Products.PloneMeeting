@@ -62,5 +62,15 @@
          visible="True">
   <permission value="View"/>
  </action>
+ <action title="Duplicate"
+         i18n:attributes="title"
+         action_id="duplicate"
+         category="object_buttons"
+         condition_expr="python:object.showDuplicateItemAction()"
+         icon_expr="string:${portal_url}/copy_icon.gif"
+         url_expr="string:${object_url}/item_duplicate_form"
+         visible="True">
+  <permission value="Copy or Move"/>
+ </action>
  <action remove="True" action_id="duplicate_and_keep_link" />
 </object>
