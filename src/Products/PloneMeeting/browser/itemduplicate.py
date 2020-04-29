@@ -87,7 +87,7 @@ class DuplicateItemForm(z3c_form.Form):
     ignoreContext = True  # don't use context to get widget data
 
     label = _(u"Duplicate item")
-    description = u''
+    description = _('Disabled (greyed) annexes will not be kept on the new duplicated item.')
     _finished = False
 
     def __init__(self, context, request):
@@ -106,6 +106,25 @@ class DuplicateItemForm(z3c_form.Form):
             return
         self._doApply(data)
 
+    def _check_data(self, data):
+        """Make sure annex_ids/annex_decision_ids are correct.
+           As some values are disabled in the UI, a user could try
+           to surround this, raise Unauthorized in this case."""
+        annex_vocab = get_vocab(
+            self.context,
+            'Products.PloneMeeting.vocabularies.contained_annexes_vocabulary')
+        annex_term_ids = [term.token for term in annex_vocab if not term.disabled]
+        for annex_id in data['annex_ids']:
+            if annex_id not in annex_term_ids:
+                raise Unauthorized
+        decision_annex_vocab = get_vocab(
+            self.context,
+            'Products.PloneMeeting.vocabularies.contained_decision_annexes_vocabulary')
+        decision_annex_term_ids = [term.token for term in decision_annex_vocab if not term.disabled]
+        for decision_annex_id in data['annex_decision_ids']:
+            if decision_annex_id not in decision_annex_term_ids:
+                raise Unauthorized
+
     def _doApply(self, data):
         """ """
         user = api.user.get_current()
@@ -116,6 +135,8 @@ class DuplicateItemForm(z3c_form.Form):
             cloneEventAction = DUPLICATE_AND_KEEP_LINK_EVENT_ACTION
             setCurrentAsPredecessor = True
             manualLinkToPredecessor = True
+        # make sure data is correct
+        self._check_data(data)
 
         # as passing empty keptAnnexIds/keptDecisionAnnexIds ignores it
         # if we unselect every annexes, we force copyAnnexes/copyDecisionAnnexes to False

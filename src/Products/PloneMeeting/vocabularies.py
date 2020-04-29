@@ -22,6 +22,7 @@ from eea.facetednavigation.interfaces import IFacetedNavigable
 from imio.annex.content.annex import IAnnex
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.content import uuidsToObjects
+from imio.helpers.content import get_vocab
 from natsort import humansorted
 from operator import attrgetter
 from plone import api
@@ -1804,6 +1805,10 @@ class ContainedAnnexesVocabulary(object):
         portal_url = api.portal.get().absolute_url()
         terms = []
         i = 1
+        categories_vocab = get_vocab(
+            context,
+            'collective.iconifiedcategory.categories',
+            use_category_uid_as_token=True)
         for annex in get_categorized_elements(context, portal_type=portal_type):
             # term title is annex icon, number and title
             term_title = u'{0}. <img src="{1}/{2}" title="{3}"> {4}'.format(
@@ -1815,9 +1820,24 @@ class ContainedAnnexesVocabulary(object):
             i += 1
             if annex['warn_filesize']:
                 term_title += u' ({0})'.format(render_filesize(annex['filesize']))
-            terms.append(SimpleTerm(annex['id'],
-                                    annex['id'],
-                                    term_title))
+            term = SimpleTerm(annex['id'], annex['id'], term_title)
+            # check if user able to keep this annex :
+            # - annex may not hold a scan_id
+            annex_obj = getattr(context, annex['id'])
+            if getattr(annex_obj, 'scan_id', None):
+                term.disabled = True
+                term.title += translate(' [holds scan_id]',
+                                        domain='PloneMeeting',
+                                        context=context.REQUEST)
+            # - annexType must be among current user selectable annex types
+            elif annex['category_uid'] not in categories_vocab:
+                term.disabled = True
+                term.title += translate(' [reserved MeetingManagers]',
+                                        domain='PloneMeeting',
+                                        context=context.REQUEST)
+            else:
+                term.disabled = False
+            terms.append(term)
         return SimpleVocabulary(terms)
 
 ContainedAnnexesVocabularyFactory = ContainedAnnexesVocabulary()
@@ -1830,7 +1850,9 @@ class ContainedDecisionAnnexesVocabulary(ContainedAnnexesVocabulary):
 
     def __call__(self, context, portal_type='annexDecision'):
         """ """
+        context.REQUEST['force_use_item_decision_annexes_group'] = True
         terms = super(ContainedDecisionAnnexesVocabulary, self).__call__(context, portal_type=portal_type)
+        context.REQUEST['force_use_item_decision_annexes_group'] = False
         return terms
 
 ContainedDecisionAnnexesVocabularyFactory = ContainedDecisionAnnexesVocabulary()

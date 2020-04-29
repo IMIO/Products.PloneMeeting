@@ -21,6 +21,8 @@ Changelog
     - Keep a link to original item?
     - Select annexes to keep
     - Select decision annexes to keep
+    - Annexes and decision annexes that will not be kept because using a scan_id or used annex_type is restricted to MeetingManagers
+      and current user is not a MeetingManager will be displayed greyed
 - In `vocabularies.BaseHeldPositionsVocabulary`, query only `held_positions` that are in `review_state` `active`,
   moreover, display the `WorkflowState` viewlet on `person view` and `held_position view`
 - Fixed `showAddAnnex` and `showAddAnnexDecision` in `@@categorized-annexes`, rely on the `content_category` field vocabulary
