@@ -22,6 +22,8 @@ Changelog
     - Select annexes to keep
     - Select decision annexes to keep
 
+- Fix MeetingUser migration when no gender setted
+
 4.1.22.1 (2020-04-24)
 ---------------------
 

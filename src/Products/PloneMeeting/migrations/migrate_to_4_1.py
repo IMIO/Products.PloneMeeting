@@ -394,8 +394,10 @@ class Migrate_To_4_1(Migrator):
                 gender = mu.getGender().upper()
                 if gender == u'M':
                     person_title = u'Mr'
-                else:
+                elif gender == u'F':
                     person_title = u'Mrs'
+                else:
+                    person_title = u'-'
                 splitted_name = mu.title.split(u' ')
                 person_data = {
                     'id': mu.getId(),
