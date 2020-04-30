@@ -2,8 +2,24 @@ Changelog
 =========
 
 
-4.1.22.2 (unreleased)
+4.1.23.3 (unreleased)
 ---------------------
+
+- Nothing changed yet.
+
+
+4.1.23.2 (2020-04-29)
+---------------------
+
+- In `MeetingItem.xml`, REALLY remove the action having id `duplicate_and_keep_link`...
+
+4.1.23.1 (2020-04-29)
+---------------------
+
+- In `MeetingItem.xml`, remove the action having id `duplicate_and_keep_link`.
+
+4.1.23 (2020-04-29)
+-------------------
 
 - Added `ZLogHandler` in `Migrator.initNewHTMLFields` and in `Migrate_To_4105._cleanFTWLabels` as these steps may take some time
 - Moved `MeetingInsertingMethodsHelpMsgView` logic from `__init__` to `__call__` because errors are swallowed in `__init__`,
@@ -21,6 +37,11 @@ Changelog
     - Keep a link to original item?
     - Select annexes to keep
     - Select decision annexes to keep
+    - Annexes and decision annexes that will not be kept because using a scan_id or used annex_type is restricted to MeetingManagers
+      and current user is not a MeetingManager will be displayed greyed
+- In `vocabularies.BaseHeldPositionsVocabulary`, query only `held_positions` that are in `review_state` `active`,
+  moreover, display the `WorkflowState` viewlet on `person view` and `held_position view`
+- Fixed `showAddAnnex` and `showAddAnnexDecision` in `@@categorized-annexes`, rely on the `content_category` field vocabulary
 
 - Fix MeetingUser migration when no gender setted
 

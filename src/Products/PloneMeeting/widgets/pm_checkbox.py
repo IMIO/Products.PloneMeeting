@@ -22,6 +22,17 @@ class PMCheckBoxWidget(CheckBoxWidget):
         """ """
         return api.portal.get().absolute_url()
 
+    @property
+    def items(self):
+        """Manage disabled/readonly on some items."""
+        items = super(PMCheckBoxWidget, self).items
+        terms = self.terms
+        for item in items:
+            term = terms.getTermByToken(item['value'])
+            item['disabled'] = getattr(term, 'disabled', False)
+            item['readonly'] = getattr(term, 'readonly', False)
+        return items
+
 
 @implementer(IFieldWidget)
 def PMCheckBoxFieldWidget(field, request):

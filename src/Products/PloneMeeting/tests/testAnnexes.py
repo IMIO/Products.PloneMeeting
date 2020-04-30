@@ -1279,18 +1279,24 @@ class testAnnexes(PloneMeetingTestCase):
         self.assertFalse(view.showAddAnnexDecision())
         self.assertTrue(view.showAnnexesSection())
         self.assertTrue(view.showDecisionAnnexesSection())
+        # ok for reviewer
+        self.changeUser('pmReviewer1')
+        self.assertTrue(view.showAddAnnex())
+        self.assertTrue(view.showAddAnnexDecision())
+        self.assertTrue(view.showAnnexesSection())
+        self.assertTrue(view.showDecisionAnnexesSection())
 
         # annexDecision section is shown if annexDecision are stored or if
         # annexDecision annex types are available (active), disable the annexDecision annex types
         for annex_type in cfg.annexes_types.item_decision_annexes.objectValues():
             annex_type.enabled = False
             annex_type.reindexObject(idxs=['enabled'])
-        # view._annexDecisionCategories is memoized
         view = item.restrictedTraverse('@@categorized-annexes')
         # showDecisionAnnexesSection still True because annexDecision exists
         self.assertTrue(view.showDecisionAnnexesSection())
+        self.assertTrue(view.showAddAnnex())
+        self.assertFalse(view.showAddAnnexDecision())
         self.deleteAsManager(annexDecision.UID())
-        # view._annexDecisionCategories is memoized
         view = item.restrictedTraverse('@@categorized-annexes')
         self.assertFalse(view.showDecisionAnnexesSection())
 
@@ -1328,6 +1334,7 @@ class testAnnexes(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         annex = self.addAnnex(item)
+        view = item.restrictedTraverse('@@categorized-annexes')
 
         # we will make 'only_for_meeting_managers' the 'overhead-analysis' category
         # and the 'budget-analysis_-_budget-analysis-sub-annex' subcategory
@@ -1349,12 +1356,16 @@ class testAnnexes(PloneMeetingTestCase):
         term_tokens = [term.token for term in vocab(annex)._terms]
         self.assertFalse(overhead_analysis_category_id in term_tokens)
         self.assertFalse(budget_analysis_subannex_category_id in term_tokens)
+        self.assertTrue(view.showAddAnnex())
+        self.assertTrue(view.showAddAnnexDecision())
 
         # in vocabulary for a MeetingManager
         self.changeUser('pmManager')
         term_tokens = [term.token for term in vocab(annex)._terms]
         self.assertTrue(overhead_analysis_category_id in term_tokens)
         self.assertTrue(budget_analysis_subannex_category_id in term_tokens)
+        self.assertTrue(view.showAddAnnex())
+        self.assertTrue(view.showAddAnnexDecision())
 
         # if it is selected on an annex, then it is in the vocabulary
         annex2 = self.addAnnex(item, annexType='overhead-analysis')
@@ -1366,6 +1377,20 @@ class testAnnexes(PloneMeetingTestCase):
         term_tokens = [term.token for term in vocab(annex2)._terms]
         self.assertTrue(overhead_analysis_category_id in term_tokens)
         self.assertTrue(budget_analysis_subannex_category_id in term_tokens)
+
+        # restrict every annexTypes and decisionAnnexTypes
+        self.changeUser('pmCreator1')
+        for annex_type in cfg.annexes_types.item_annexes.objectValues():
+            annex_type.only_for_meeting_managers = True
+        for annex_type in cfg.annexes_types.item_decision_annexes.objectValues():
+            annex_type.only_for_meeting_managers = True
+        self.assertFalse(view.showAddAnnex())
+        self.assertFalse(view.showAddAnnexDecision())
+        self.assertFalse(vocab(item))
+        self.changeUser('pmManager')
+        self.assertTrue(view.showAddAnnex())
+        self.assertTrue(view.showAddAnnexDecision())
+        self.assertTrue(vocab(item))
 
     def test_pm_Actions_panel_history_only_for_managers(self):
         """The 'history' icon in the actions panel is only shown to real Managers."""
