@@ -47,10 +47,10 @@ class Migrate_To_4105(Migrator):
     def _cleanFTWLabels(self):
         """This fix partial migrations of stored ftw.labels:labeling that are
            still PersistentList and not PersistentMapping."""
-        logger.info("Cleaning ftw.labels wrong annotations...")
         brains = self.catalog(object_provides=ILabelSupport.__identifier__)
         pghandler = ZLogHandler(steps=100)
-        pghandler.init('Cleaning ftw.labels wrong annotations...', len(brains))
+        pghandler.info("Cleaning ftw.labels wrong annotations...")
+        pghandler.init('clean_ftw_labels', len(brains))
         i = 0
         cleaned = 0
         for brain in brains:
