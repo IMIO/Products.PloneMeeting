@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.1.23.3 (unreleased)
+4.1.23.3 (2020-04-30)
 ---------------------
 
 - Added ram.cache for `PMCategoryVocabulary.__call__`, the vocabulary used for annex `content_category`,
