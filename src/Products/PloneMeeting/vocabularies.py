@@ -14,6 +14,8 @@ from collective.eeafaceted.collectionwidget.vocabulary import CachedCollectionVo
 from collective.eeafaceted.dashboard.vocabulary import DashboardCollectionsVocabulary
 from collective.iconifiedcategory.utils import calculate_category_id
 from collective.iconifiedcategory.utils import get_categorized_elements
+from collective.iconifiedcategory.utils import get_config_root
+from collective.iconifiedcategory.utils import get_group
 from collective.iconifiedcategory.utils import render_filesize
 from collective.iconifiedcategory.vocabularies import CategoryTitleVocabulary
 from collective.iconifiedcategory.vocabularies import CategoryVocabulary
@@ -1321,6 +1323,31 @@ class PMCategoryVocabulary(CategoryVocabulary):
     """Override to take into account field 'only_for_meeting_managers' on the category
        for annexes added on items."""
 
+    def __call___cachekey(method, self, context, use_category_uid_as_token=False):
+        '''cachekey method for self.__call__.'''
+        annex_config = get_config_root(context)
+        annex_group = get_group(annex_config, context)
+        # when a ContentCategory is added/edited/removed, the MeetingConfig is modified
+        tool = api.portal.get_tool('portal_plonemeeting')
+        isManager = tool.isManager(context)
+        cfg = tool.getMeetingConfig(context)
+        # if context is an annex, cache on context.UID() + context.modified() to manage stored term
+        context_uid = None
+        context_modified = None
+        if IAnnex.providedBy(context):
+            context_uid = context.UID()
+            context_modified = context.modified()
+        # invalidate if user groups changed
+        user_plone_groups = tool.get_plone_groups_for_user()
+        return annex_group.getId(), \
+            isManager, cfg.modified(), use_category_uid_as_token, \
+            context_uid, context_modified, user_plone_groups
+
+    @ram.cache(__call___cachekey)
+    def __call__(self, context, use_category_uid_as_token=False):
+        return super(PMCategoryVocabulary, self).__call__(
+            context, use_category_uid_as_token=use_category_uid_as_token)
+
     def _get_categories(self, context):
         """ """
         categories = super(PMCategoryVocabulary, self)._get_categories(context)
@@ -1598,20 +1625,23 @@ SelectableAssemblyMembersVocabularyFactory = SelectableAssemblyMembersVocabulary
 class SelectableItemInitiatorsVocabulary(BaseHeldPositionsVocabulary):
     """ """
     def __call__(self, context):
-        res = super(SelectableItemInitiatorsVocabulary, self).__call__(context, usage='asker')
+        terms = super(SelectableItemInitiatorsVocabulary, self).__call__(context, usage='asker')
         if IMeetingConfig.providedBy(context):
             stored_terms = context.getOrderedItemInitiators()
         else:
             # MeetingItem
             stored_terms = context.getItemInitiator()
         # add missing terms
-        missing_term_uids = [uid for uid in stored_terms if uid not in res]
-        res = res._terms
+        missing_term_uids = [uid for uid in stored_terms if uid not in terms]
+        terms = terms._terms
         if missing_term_uids:
             missing_terms = super(SelectableItemInitiatorsVocabulary, self).__call__(
                 context, usage=None, uids=missing_term_uids, highlight_missing=True)
-            res += missing_terms._terms
-        return SimpleVocabulary(res)
+            terms += missing_terms._terms
+        # include also organizations
+        org_terms = EveryOrganizationsVocabulary(context)
+        terms += org_terms._terms
+        return SimpleVocabulary(terms)
 
 
 SelectableItemInitiatorsVocabularyFactory = SelectableItemInitiatorsVocabulary()

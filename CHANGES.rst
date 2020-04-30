@@ -5,8 +5,8 @@ Changelog
 4.1.23.3 (unreleased)
 ---------------------
 
-- Nothing changed yet.
-
+- Added ram.cache for `PMCategoryVocabulary.__call__`, the vocabulary used for annex `content_category`,
+  this is useful for the `@@item_duplicate_form` that calls it many times
 
 4.1.23.2 (2020-04-29)
 ---------------------

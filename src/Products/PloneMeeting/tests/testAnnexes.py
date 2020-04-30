@@ -1290,6 +1290,8 @@ class testAnnexes(PloneMeetingTestCase):
         # annexDecision annex types are available (active), disable the annexDecision annex types
         for annex_type in cfg.annexes_types.item_decision_annexes.objectValues():
             annex_type.enabled = False
+            # manage cache
+            notify(ObjectModifiedEvent(annex_type))
             annex_type.reindexObject(idxs=['enabled'])
         view = item.restrictedTraverse('@@categorized-annexes')
         # showDecisionAnnexesSection still True because annexDecision exists
@@ -1350,7 +1352,10 @@ class testAnnexes(PloneMeetingTestCase):
 
         # hide the 2 categories
         overhead_analysis.only_for_meeting_managers = True
+        # manage cache
+        notify(ObjectModifiedEvent(overhead_analysis))
         budget_analysis_subannex.only_for_meeting_managers = True
+        notify(ObjectModifiedEvent(budget_analysis_subannex))
 
         # no more in vocabulary for 'pmCreator1'
         term_tokens = [term.token for term in vocab(annex)._terms]
@@ -1382,7 +1387,11 @@ class testAnnexes(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         for annex_type in cfg.annexes_types.item_annexes.objectValues():
             annex_type.only_for_meeting_managers = True
+            # manage cache
+            notify(ObjectModifiedEvent(annex_type))
         for annex_type in cfg.annexes_types.item_decision_annexes.objectValues():
+            # manage cache
+            notify(ObjectModifiedEvent(annex_type))
             annex_type.only_for_meeting_managers = True
         self.assertFalse(view.showAddAnnex())
         self.assertFalse(view.showAddAnnexDecision())
