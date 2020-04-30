@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from ftw.labels.interfaces import ILabelSupport
+from ftw.labels.labeling import ILabeling
 from persistent.mapping import PersistentMapping
 from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator
@@ -15,11 +16,17 @@ class Migrate_To_4105(Migrator):
         logger.info("Remove broken annexes, annexes uploaded withtout a content_category...")
         brains = self.catalog(portal_type=['annex', 'annexDecision'])
         i = 0
+        idxs = ['modified', 'ModificationDate', 'Date']
         for brain in brains:
             if not brain.content_category_uid:
                 annex = brain.getObject()
                 logger.info('In _removeBrokenAnnexes, removed %s' % brain.getPath())
-                annex.aq_parent.manage_delObjects(ids=[annex.getId()])
+                # make sure parent is not modified
+                parent = annex.aq_parent
+                parent_modified = parent.modified()
+                parent.manage_delObjects(ids=[annex.getId()])
+                parent.setModificationDate(parent_modified)
+                parent.reindexObject(idxs=idxs)
                 i += 1
         if i:
             self.warn(logger, 'In _removeBrokenAnnexes, removed %s annexe(s)' % i)
@@ -47,10 +54,10 @@ class Migrate_To_4105(Migrator):
     def _cleanFTWLabels(self):
         """This fix partial migrations of stored ftw.labels:labeling that are
            still PersistentList and not PersistentMapping."""
+        logger.info("Cleaning ftw.labels wrong annotations...")
         brains = self.catalog(object_provides=ILabelSupport.__identifier__)
         pghandler = ZLogHandler(steps=100)
-        pghandler.info("Cleaning ftw.labels wrong annotations...")
-        pghandler.init('clean_ftw_labels', len(brains))
+        pghandler.init('Cleaning ftw.labels wrong annotations...', len(brains))
         i = 0
         cleaned = 0
         for brain in brains:
@@ -60,9 +67,16 @@ class Migrate_To_4105(Migrator):
             annotations = IAnnotations(obj)
             if 'ftw.labels:labeling' in annotations and \
                not isinstance(annotations['ftw.labels:labeling'], PersistentMapping):
-                del annotations['ftw.labels:labeling']
+                if annotations['ftw.labels:labeling']:
+                    labeling = ILabeling(obj)
+                    old_values = [label for label in labeling.storage]
+                    del annotations['ftw.labels:labeling']
+                    labeling._storage = None
+                    labeling.update(old_values)
+                    logger.info('In _cleanFTWLabels, cleaned %s' % brain.getPath())
+                else:
+                    del annotations['ftw.labels:labeling']
                 obj.reindexObject(idxs=['labels'])
-                logger.info('In _cleanFTWLabels, cleaned %s' % brain.getPath())
                 cleaned += 1
         if cleaned:
             self.warn(logger, 'In _cleanFTWLabels, cleaned %s element(s)' % cleaned)
