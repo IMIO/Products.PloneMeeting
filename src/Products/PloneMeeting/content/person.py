@@ -26,7 +26,7 @@ class IPMPerson(IPerson):
                       u'application like for example scanned signature or '
                       u'telephone number, select it here.'),
         required=False,
-        vocabulary=u'plone.app.vocabularies.Users',
+        vocabulary=u'Products.PloneMeeting.Users',
     )
 
     model.fieldset('app_parameters',

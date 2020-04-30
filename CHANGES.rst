@@ -7,6 +7,8 @@ Changelog
 
 - Added ram.cache for `PMCategoryVocabulary.__call__`, the vocabulary used for annex `content_category`,
   this is useful for the `@@item_duplicate_form` that calls it many times
+- Added vocabulary `Products.PloneMeeting.Users` and using it for `person.userid` field,
+  this vocabulary displays the fullname and the userid
 
 4.1.23.2 (2020-04-29)
 ---------------------

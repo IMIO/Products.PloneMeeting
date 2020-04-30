@@ -28,6 +28,7 @@ from imio.helpers.content import get_vocab
 from natsort import humansorted
 from operator import attrgetter
 from plone import api
+from plone.app.vocabularies.users import UsersFactory
 from plone.memoize import ram
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.config import PMMessageFactory as _
@@ -1886,3 +1887,17 @@ class ContainedDecisionAnnexesVocabulary(ContainedAnnexesVocabulary):
         return terms
 
 ContainedDecisionAnnexesVocabularyFactory = ContainedDecisionAnnexesVocabulary()
+
+
+class PMUsers(UsersFactory):
+    """Append ' (userid)' to term title."""
+
+    def __call__(self, context, query=''):
+        lazy_generator = super(PMUsers, self).__call__(context, query=query)._terms
+        terms = []
+        for term in lazy_generator:
+            term.title = term.title + ' ({0})'.format(term.token)
+            terms.append(term)
+        return SimpleVocabulary(terms)
+
+PMUsersFactory = PMUsers()
