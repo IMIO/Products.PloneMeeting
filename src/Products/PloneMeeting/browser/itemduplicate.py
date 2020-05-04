@@ -197,11 +197,11 @@ class DuplicateItemForm(z3c_form.Form):
         permission_roles = initial_state.permission_roles[add_permission]
         # compatibility PM4.1/PM4.2
         # XXX to be adapted in PM4.2, remove 'MeetingMember' and be more accurate
-        # indeed maybe Editor does not have permission, but another role of current
+        # indeed maybe Contributor does not have permission, but another role of current
         # user has it...
         res = False
         if 'MeetingMember' in permission_roles or \
-           'Editor' in permission_roles:
+           'Contributor' in permission_roles:
             res = True
         return res
 
