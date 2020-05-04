@@ -83,22 +83,6 @@ class Migrate_To_4105(Migrator):
         pghandler.finish()
         logger.info('Done.')
 
-    def _updateOrgsDashboardCollectionColumns(self):
-        """Replace the 'pretty_link' column with the 'org_pretty_link_with_additional_infos'."""
-        logger.info("Updating dashboard organization collections to replace the \"pretty_link\" "
-                    "column by the\"org_pretty_link_with_additional_infos\" column ...")
-        hps_searches_folder = self.portal.contacts.get('hps-searches')
-        persons_searches_folder = self.portal.contacts.get('persons-searches')
-        # hide the 'review_state' column for orgs related collections
-        for org_coll in hps_searches_folder.objectValues() + persons_searches_folder.objectValues():
-            if 'org_pretty_link_with_additional_infos' not in org_coll.customViewFields:
-                # make sure 'pretty_link' column no more present
-                customViewFields = [col_name for col_name in org_coll.customViewFields
-                                    if col_name != u'pretty_link']
-                customViewFields.insert(1, u'org_pretty_link_with_additional_infos')
-                org_coll.customViewFields = customViewFields
-        logger.info('Done.')
-
     def run(self, from_migration_to_41=False):
         logger.info('Migrating to PloneMeeting 4105...')
         # need to uncatalog wrong brains as long as there are wrong brains to uncatalog...
@@ -107,7 +91,6 @@ class Migrate_To_4105(Migrator):
             uncatalogued = self._uncatalogWrongBrains()
         self._removeBrokenAnnexes()
         self._cleanFTWLabels()
-        self._updateOrgsDashboardCollectionColumns()
         # reapply MeetingItem.xml before reloadMeetingConfigs
         # that will remove the 'Duplicate and keep link' action
         self.ps.runImportStepFromProfile('profile-Products.PloneMeeting:default', 'typeinfo')
@@ -122,9 +105,8 @@ def migrate(context):
        1) Clean wrong paths in catalog (ending with '/');
        2) Remove broken annexes with no content_category defined due to quickupload ConflictError management;
        3) Clean ftw.labels empty annotations, this make sure to not have any PersistentList stored;
-       4) Use the 'org_pretty_link_with_additional_infos' column for person and held_position collections;
-       5) Update portal_types to remove action 'Duplicate and keep link' for MeetingItem portal_types;
-       6) Install every pending upgrades.
+       4) Update portal_types to remove action 'Duplicate and keep link' for MeetingItem portal_types;
+       5) Install every pending upgrades.
     '''
     migrator = Migrate_To_4105(context)
     migrator.run()
