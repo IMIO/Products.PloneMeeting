@@ -13,6 +13,8 @@ Changelog
 - Added upgrade step to 4106
 - Added `Migrate_To_4106._umarkCreationFlagForEveryItems` to make sure existing items have `at_creation_flag=False`
   or it breaks `MeetingItem.setTakenOverBy/MeetingItem.setHistorizedTakenOverBy`
+- Relying on `plone.formwidget.namedfile>2.0.2` required by `collective.eeafaceted.z3ctable` also fixes the problem in `PloneMeeting`,
+  no need to patch url anymore in `additionalInformations` macro for `DX content`
 
 4.1.23.3 (2020-04-30)
 ---------------------
