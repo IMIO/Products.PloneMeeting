@@ -2,6 +2,7 @@
 
 from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator
+from Products.ZCatalog.ProgressHandler import ZLogHandler
 
 
 class Migrate_To_4106(Migrator):
@@ -22,15 +23,32 @@ class Migrate_To_4106(Migrator):
                 org_coll.customViewFields = customViewFields
         logger.info('Done.')
 
+    def _umarkCreationFlagForEveryItems(self):
+        """ """
+        brains = self.catalog(meta_type='MeetingItem')
+        pghandler = ZLogHandler(steps=100)
+        pghandler.init('Cleaning ftw.labels wrong annotations...', len(brains))
+        pghandler.info("Unmarking _at_creation_flag for every items...")
+        i = 0
+        for brain in brains:
+            i += 1
+            pghandler.report(i)
+            item = brain.getObject()
+            item.unmarkCreationFlag()
+        pghandler.finish()
+        logger.info('Done.')
+
     def run(self, from_migration_to_41=False):
         logger.info('Migrating to PloneMeeting 4106...')
         self._updateOrgsDashboardCollectionColumns()
+        self._umarkCreationFlagForEveryItems()
 
 
 def migrate(context):
     '''This migration function will:
 
-       1) Update dashboards displaying persons and held_positions.
+       1) Update dashboards displaying persons and held_positions;
+       2) Unmark creation flag for every items.
     '''
     migrator = Migrate_To_4106(context)
     migrator.run()

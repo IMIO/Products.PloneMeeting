@@ -11,6 +11,8 @@ Changelog
 - In `@@item_duplicate_form`, disable annexes if user does not have the permission to `Add annex/Add annexDecision` on future created item
 - Use `OrgaPrettyLinkWithAdditionalInfosColumn` instead `PrettyLinkColumn` in dashboards displaying `persons` and `held_positions`.
 - Added upgrade step to 4106
+- Added `Migrate_To_4106._umarkCreationFlagForEveryItems` to make sure existing items have `at_creation_flag=False`
+  or it breaks `MeetingItem.setTakenOverBy/MeetingItem.setHistorizedTakenOverBy`
 
 4.1.23.3 (2020-04-30)
 ---------------------
