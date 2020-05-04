@@ -2,8 +2,8 @@ Changelog
 =========
 
 
-4.1.23.4 (unreleased)
----------------------
+4.1.24 (unreleased)
+-------------------
 
 - In `Migrate_To_4105._cleanFTWLabels`, be sure to keep old values in case still a `PersistentList` instead removing the annotation
 - In `Migrate_To_4105._removeBrokenAnnexes`, manage parent's modification date to keep old value because removing an annex
