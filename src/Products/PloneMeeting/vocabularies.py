@@ -42,6 +42,7 @@ from Products.PloneMeeting.indexes import REAL_ORG_UID_PATTERN
 from Products.PloneMeeting.interfaces import IMeetingConfig
 from Products.PloneMeeting.utils import decodeDelayAwareId
 from Products.PloneMeeting.utils import get_context_with_request
+from z3c.form.interfaces import NO_VALUE
 from zope.globalrequest import getRequest
 from zope.i18n import translate
 from zope.interface import implements
@@ -1572,11 +1573,13 @@ class BaseHeldPositionsVocabulary(object):
                  include_usages=True,
                  include_defaults=True,
                  include_signature_number=True,
-                 pattern=u"{0}"):
+                 pattern=u"{0}",
+                 review_state=['active']):
         catalog = api.portal.get_tool('portal_catalog')
         query = {'portal_type': 'held_position',
-                 'sort_on': 'sortable_title',
-                 'review_state': 'active'}
+                 'sort_on': 'sortable_title'}
+        if review_state:
+            query['review_state'] = review_state
         if uids:
             query['UID'] = uids
         brains = catalog(**query)
@@ -1616,8 +1619,33 @@ SelectableHeldPositionsVocabularyFactory = SelectableHeldPositionsVocabulary()
 class SelectableAssemblyMembersVocabulary(BaseHeldPositionsVocabulary):
     """ """
     def __call__(self, context, usage=None, uids=[]):
-        res = super(SelectableAssemblyMembersVocabulary, self).__call__(context, usage='assemblyMember')
-        return res
+        terms = super(SelectableAssemblyMembersVocabulary, self).__call__(context, usage='assemblyMember')
+        stored_terms = []
+        if IMeetingConfig.providedBy(context):
+            stored_terms = context.getOrderedContacts()
+        else:
+            # IOrganization or the datagrid field of it...
+            # stored in datagridfield 'certified_signatures'
+            if context != NO_VALUE:
+                if isinstance(context, dict):
+                    data = [context]
+                else:
+                    data = context.get_certified_signatures()
+                stored_held_positions = tuple(set(
+                    [elt['held_position'] for elt in data if elt['held_position']]))
+                stored_terms = stored_held_positions
+        # add missing terms
+        missing_term_uids = [uid for uid in stored_terms if uid not in terms]
+        terms = terms._terms
+        if missing_term_uids:
+            missing_terms = super(SelectableAssemblyMembersVocabulary, self).__call__(
+                context,
+                usage=None,
+                uids=missing_term_uids,
+                highlight_missing=True,
+                review_state=[])
+            terms += missing_terms._terms
+        return SimpleVocabulary(terms)
 
 
 SelectableAssemblyMembersVocabularyFactory = SelectableAssemblyMembersVocabulary()
@@ -1637,7 +1665,11 @@ class SelectableItemInitiatorsVocabulary(BaseHeldPositionsVocabulary):
         terms = terms._terms
         if missing_term_uids:
             missing_terms = super(SelectableItemInitiatorsVocabulary, self).__call__(
-                context, usage=None, uids=missing_term_uids, highlight_missing=True)
+                context,
+                usage=None,
+                uids=missing_term_uids,
+                highlight_missing=True,
+                review_state=[])
             terms += missing_terms._terms
         return SimpleVocabulary(terms)
 

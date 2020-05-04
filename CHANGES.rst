@@ -19,6 +19,8 @@ Changelog
   `proposingGroup`, keep it on new created item
 - Use `plonemeeting_activity_managers_workflow` instead `collective_contact_core_workflow` for `person` and `held_position` portal_types because
   when using `collective_contact_core_workflow`, an element in state `deactivated` is no more viewable by `Member`
+- Manage missing terms for `SelectableAssemblyMembersVocabulary` and `SelectableItemInitiatorsVocabulary` as now, inactive `held_position` objects
+  are no more returned by default by these vocabularies (only `active` elements are returned)
 
 4.1.23.3 (2020-04-30)
 ---------------------
