@@ -31,6 +31,7 @@ from imio.actionspanel.browser.views import ActionsPanelView
 from imio.annex import utils as imio_annex_utils
 from imio.dashboard.browser.overrides import IDRenderCategoryView
 from imio.dashboard.interfaces import IContactsDashboard
+from imio.helpers.content import get_vocab
 from imio.helpers.cache import get_cachekey_volatile
 from imio.history import utils as imio_history_utils
 from imio.history.browser.views import IHContentHistoryView
@@ -45,7 +46,6 @@ from plone.app.controlpanel.usergroups import UsersOverviewControlPanel
 from plone.app.layout.viewlets.common import ContentActionsViewlet
 from plone.app.layout.viewlets.common import GlobalSectionsViewlet
 from plone.memoize import ram
-from plone.memoize.instance import memoize
 from plone.memoize.view import memoize_contextless
 from Products.Archetypes.browser.utils import Utils
 from Products.CMFCore.permissions import ModifyPortalContent
@@ -1149,23 +1149,17 @@ class CategorizedAnnexesView(CategorizedTabView):
         """ """
         portal_types = api.portal.get_tool('portal_types')
         annexTypeInfo = portal_types['annex']
-        return annexTypeInfo in self.context.allowedContentTypes() and \
-            collective_iconifiedcategory_utils.get_categories(self.context)
+        vocab = get_vocab(self.context, 'collective.iconifiedcategory.categories')
+        return annexTypeInfo in self.context.allowedContentTypes() and len(vocab)
 
     def showAddAnnexDecision(self):
         """ """
         portal_types = api.portal.get_tool('portal_types')
         annexTypeInfo = portal_types['annexDecision']
-        return annexTypeInfo in self.context.allowedContentTypes() and \
-            self._annexDecisionCategories()
-
-    @memoize
-    def _annexDecisionCategories(self):
-        """ """
         self.request.set('force_use_item_decision_annexes_group', True)
-        categories = collective_iconifiedcategory_utils.get_categories(self.context)
+        vocab = get_vocab(self.context, 'collective.iconifiedcategory.categories')
         self.request.set('force_use_item_decision_annexes_group', False)
-        return categories
+        return annexTypeInfo in self.context.allowedContentTypes() and len(vocab)
 
     def showAnnexesSection(self):
         """ """
@@ -1177,7 +1171,7 @@ class CategorizedAnnexesView(CategorizedTabView):
         # are some decisionAnnex annex types available in the configuration
         if self.context.meta_type == 'MeetingItem' and \
             (get_annexes(self.context, portal_types=['annexDecision']) or
-             self._annexDecisionCategories()):
+             self.showAddAnnexDecision()):
             return True
         return False
 

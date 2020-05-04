@@ -2566,6 +2566,61 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertRaises(Unauthorized, form)
         self.assertRaises(Unauthorized, form.update)
 
+    def test_pm_ItemDuplicateFormOnlyKeepRelevantAnnexes(self):
+        """Test the @@item_duplicate_form that will only let keep annexes that :
+           - have no scan_id;
+           - use an annex_type that current user may use."""
+        cfg = self.meetingConfig
+        cfg.setEnableItemDuplication(True)
+        dec_annex_type = cfg.annexes_types.item_decision_annexes.get('decision-annex')
+        dec_annex_type.only_for_meeting_managers = True
+
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        annex_scan_id = self.addAnnex(item)
+        annex_scan_id.scan_id = '013999900000001'
+        annex_scan_id_id = annex_scan_id.getId()
+        annex_decision_meeting_manager = self.addAnnex(item, relatedTo='item_decision')
+        annex_decision_meeting_manager_id = annex_decision_meeting_manager.getId()
+
+        # terms are disabled
+        annex_vocab = get_vocab(
+            item, u"Products.PloneMeeting.vocabularies.contained_annexes_vocabulary")
+        annex_decision_vocab = get_vocab(
+            item, u"Products.PloneMeeting.vocabularies.contained_decision_annexes_vocabulary")
+        self.assertEqual(len(annex_vocab), 1)
+        self.assertTrue(annex_vocab._terms[0].disabled)
+        self.assertEqual(len(annex_decision_vocab), 1)
+        self.assertTrue(annex_decision_vocab._terms[0].disabled)
+        # trying to duplicate an item with those annexes will raise Unauthorized for pmCreator
+        form = item.restrictedTraverse('@@item_duplicate_form').form_instance
+        data = {'keep_link': False, 'annex_ids': [], 'annex_decision_ids': []}
+        data['annex_ids'] = [annex_scan_id_id]
+        self.assertRaises(Unauthorized, form._doApply, data)
+        data['annex_ids'] = []
+        data['annex_decision_ids'] = [annex_decision_meeting_manager_id]
+        self.assertRaises(Unauthorized, form._doApply, data)
+        data['annex_decision_ids'] = []
+        newItem = form._doApply(data)
+        self.assertEqual(newItem.objectIds(), [])
+        # able to keep annex_decision_meeting_manager for pmManager
+        self.changeUser('pmManager')
+        annex_vocab = get_vocab(
+            item, u"Products.PloneMeeting.vocabularies.contained_annexes_vocabulary")
+        annex_decision_vocab = get_vocab(
+            item, u"Products.PloneMeeting.vocabularies.contained_decision_annexes_vocabulary")
+        self.assertEqual(len(annex_vocab), 1)
+        self.assertTrue(annex_vocab._terms[0].disabled)
+        self.assertEqual(len(annex_decision_vocab), 1)
+        self.assertFalse(annex_decision_vocab._terms[0].disabled)
+        data = {'keep_link': False, 'annex_ids': [], 'annex_decision_ids': []}
+        data['annex_ids'] = [annex_scan_id_id]
+        self.assertRaises(Unauthorized, form._doApply, data)
+        data['annex_ids'] = []
+        data['annex_decision_ids'] = [annex_decision_meeting_manager_id]
+        newItem = form._doApply(data)
+        self.assertEqual(newItem.objectIds(), [annex_decision_meeting_manager_id])
+
     def test_pm_IsLateFor(self):
         '''
           Test the isLateFor method, so when an item is considered as late when it

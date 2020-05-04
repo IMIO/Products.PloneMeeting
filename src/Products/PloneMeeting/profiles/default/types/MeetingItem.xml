@@ -72,4 +72,8 @@
          visible="True">
   <permission value="Copy or Move"/>
  </action>
+ <action action_id="duplicate_and_keep_link"
+         category="object_buttons"
+         remove="True">
+ </action>
 </object>

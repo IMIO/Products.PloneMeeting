@@ -14,6 +14,8 @@ from collective.eeafaceted.collectionwidget.vocabulary import CachedCollectionVo
 from collective.eeafaceted.dashboard.vocabulary import DashboardCollectionsVocabulary
 from collective.iconifiedcategory.utils import calculate_category_id
 from collective.iconifiedcategory.utils import get_categorized_elements
+from collective.iconifiedcategory.utils import get_config_root
+from collective.iconifiedcategory.utils import get_group
 from collective.iconifiedcategory.utils import render_filesize
 from collective.iconifiedcategory.vocabularies import CategoryTitleVocabulary
 from collective.iconifiedcategory.vocabularies import CategoryVocabulary
@@ -22,9 +24,11 @@ from eea.facetednavigation.interfaces import IFacetedNavigable
 from imio.annex.content.annex import IAnnex
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.content import uuidsToObjects
+from imio.helpers.content import get_vocab
 from natsort import humansorted
 from operator import attrgetter
 from plone import api
+from plone.app.vocabularies.users import UsersFactory
 from plone.memoize import ram
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.config import PMMessageFactory as _
@@ -1320,6 +1324,31 @@ class PMCategoryVocabulary(CategoryVocabulary):
     """Override to take into account field 'only_for_meeting_managers' on the category
        for annexes added on items."""
 
+    def __call___cachekey(method, self, context, use_category_uid_as_token=False):
+        '''cachekey method for self.__call__.'''
+        annex_config = get_config_root(context)
+        annex_group = get_group(annex_config, context)
+        # when a ContentCategory is added/edited/removed, the MeetingConfig is modified
+        tool = api.portal.get_tool('portal_plonemeeting')
+        isManager = tool.isManager(context)
+        cfg = tool.getMeetingConfig(context)
+        # if context is an annex, cache on context.UID() + context.modified() to manage stored term
+        context_uid = None
+        context_modified = None
+        if IAnnex.providedBy(context):
+            context_uid = context.UID()
+            context_modified = context.modified()
+        # invalidate if user groups changed
+        user_plone_groups = tool.get_plone_groups_for_user()
+        return annex_group.getId(), \
+            isManager, cfg.modified(), use_category_uid_as_token, \
+            context_uid, context_modified, user_plone_groups
+
+    @ram.cache(__call___cachekey)
+    def __call__(self, context, use_category_uid_as_token=False):
+        return super(PMCategoryVocabulary, self).__call__(
+            context, use_category_uid_as_token=use_category_uid_as_token)
+
     def _get_categories(self, context):
         """ """
         categories = super(PMCategoryVocabulary, self)._get_categories(context)
@@ -1546,7 +1575,8 @@ class BaseHeldPositionsVocabulary(object):
                  pattern=u"{0}"):
         catalog = api.portal.get_tool('portal_catalog')
         query = {'portal_type': 'held_position',
-                 'sort_on': 'sortable_title'}
+                 'sort_on': 'sortable_title',
+                 'review_state': 'active'}
         if uids:
             query['UID'] = uids
         brains = catalog(**query)
@@ -1596,20 +1626,23 @@ SelectableAssemblyMembersVocabularyFactory = SelectableAssemblyMembersVocabulary
 class SelectableItemInitiatorsVocabulary(BaseHeldPositionsVocabulary):
     """ """
     def __call__(self, context):
-        res = super(SelectableItemInitiatorsVocabulary, self).__call__(context, usage='asker')
+        terms = super(SelectableItemInitiatorsVocabulary, self).__call__(context, usage='asker')
         if IMeetingConfig.providedBy(context):
             stored_terms = context.getOrderedItemInitiators()
         else:
             # MeetingItem
             stored_terms = context.getItemInitiator()
         # add missing terms
-        missing_term_uids = [uid for uid in stored_terms if uid not in res]
-        res = res._terms
+        missing_term_uids = [uid for uid in stored_terms if uid not in terms]
+        terms = terms._terms
         if missing_term_uids:
             missing_terms = super(SelectableItemInitiatorsVocabulary, self).__call__(
                 context, usage=None, uids=missing_term_uids, highlight_missing=True)
-            res += missing_terms._terms
-        return SimpleVocabulary(res)
+            terms += missing_terms._terms
+        # include also organizations
+        org_terms = EveryOrganizationsVocabulary(context)
+        terms += org_terms._terms
+        return SimpleVocabulary(terms)
 
 
 SelectableItemInitiatorsVocabularyFactory = SelectableItemInitiatorsVocabulary()
@@ -1803,6 +1836,10 @@ class ContainedAnnexesVocabulary(object):
         portal_url = api.portal.get().absolute_url()
         terms = []
         i = 1
+        categories_vocab = get_vocab(
+            context,
+            'collective.iconifiedcategory.categories',
+            use_category_uid_as_token=True)
         for annex in get_categorized_elements(context, portal_type=portal_type):
             # term title is annex icon, number and title
             term_title = u'{0}. <img src="{1}/{2}" title="{3}"> {4}'.format(
@@ -1814,9 +1851,24 @@ class ContainedAnnexesVocabulary(object):
             i += 1
             if annex['warn_filesize']:
                 term_title += u' ({0})'.format(render_filesize(annex['filesize']))
-            terms.append(SimpleTerm(annex['id'],
-                                    annex['id'],
-                                    term_title))
+            term = SimpleTerm(annex['id'], annex['id'], term_title)
+            # check if user able to keep this annex :
+            # - annex may not hold a scan_id
+            annex_obj = getattr(context, annex['id'])
+            if getattr(annex_obj, 'scan_id', None):
+                term.disabled = True
+                term.title += translate(' [holds scan_id]',
+                                        domain='PloneMeeting',
+                                        context=context.REQUEST)
+            # - annexType must be among current user selectable annex types
+            elif annex['category_uid'] not in categories_vocab:
+                term.disabled = True
+                term.title += translate(' [reserved MeetingManagers]',
+                                        domain='PloneMeeting',
+                                        context=context.REQUEST)
+            else:
+                term.disabled = False
+            terms.append(term)
         return SimpleVocabulary(terms)
 
 ContainedAnnexesVocabularyFactory = ContainedAnnexesVocabulary()
@@ -1829,7 +1881,23 @@ class ContainedDecisionAnnexesVocabulary(ContainedAnnexesVocabulary):
 
     def __call__(self, context, portal_type='annexDecision'):
         """ """
+        context.REQUEST['force_use_item_decision_annexes_group'] = True
         terms = super(ContainedDecisionAnnexesVocabulary, self).__call__(context, portal_type=portal_type)
+        context.REQUEST['force_use_item_decision_annexes_group'] = False
         return terms
 
 ContainedDecisionAnnexesVocabularyFactory = ContainedDecisionAnnexesVocabulary()
+
+
+class PMUsers(UsersFactory):
+    """Append ' (userid)' to term title."""
+
+    def __call__(self, context, query=''):
+        lazy_generator = super(PMUsers, self).__call__(context, query=query)._terms
+        terms = []
+        for term in lazy_generator:
+            term.title = term.title + ' ({0})'.format(term.token)
+            terms.append(term)
+        return SimpleVocabulary(terms)
+
+PMUsersFactory = PMUsers()
