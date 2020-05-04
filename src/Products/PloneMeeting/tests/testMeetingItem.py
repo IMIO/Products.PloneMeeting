@@ -59,6 +59,7 @@ from Products.PloneMeeting.browser.itemassembly import validate_item_assembly
 from Products.PloneMeeting.browser.itemsignatures import item_signatures_default
 from Products.PloneMeeting.config import ADD_SUBCONTENT_PERMISSIONS
 from Products.PloneMeeting.config import AddAnnex
+from Products.PloneMeeting.config import AddAnnexDecision
 from Products.PloneMeeting.config import DEFAULT_COPIED_FIELDS
 from Products.PloneMeeting.config import DUPLICATE_AND_KEEP_LINK_EVENT_ACTION
 from Products.PloneMeeting.config import EXTRA_COPIED_FIELDS_FROM_ITEM_TEMPLATE
@@ -2514,13 +2515,16 @@ class testMeetingItem(PloneMeetingTestCase):
         # clean cache as showDuplicateItemAction is ram cached
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.showDuplicateItemAction')
         self.assertTrue(item.showDuplicateItemAction())
+        form.update()
         self.assertIsNone(form._check_auth())
         # keep_link=False
         data = {'keep_link': False, 'annex_ids': [], 'annex_decision_ids': []}
+        form.update()
         newItem = form._doApply(data)
         self.assertFalse(item.getBRefs())
         # keep_link=True
         data['keep_link'] = True
+        form.update()
         newItem = form._doApply(data)
         self.assertEqual(item.getBRefs(), [newItem])
         # clone with annexes
@@ -2538,6 +2542,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # keep every annexes
         data['annex_ids'] = [annex1_id, annex2_id]
         data['annex_decision_ids'] = [decision_annex1_id, decision_annex2_id]
+        form.update()
         newItem = form._doApply(data)
         self.assertEqual(
             [annex.getId() for annex in get_annexes(newItem)],
@@ -2545,6 +2550,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # keep some annexes
         data['annex_ids'] = [annex2_id]
         data['annex_decision_ids'] = [decision_annex1_id]
+        form.update()
         newItem = form._doApply(data)
         self.assertEqual(
             [annex.getId() for annex in get_annexes(newItem)],
@@ -2596,11 +2602,14 @@ class testMeetingItem(PloneMeetingTestCase):
         form = item.restrictedTraverse('@@item_duplicate_form').form_instance
         data = {'keep_link': False, 'annex_ids': [], 'annex_decision_ids': []}
         data['annex_ids'] = [annex_scan_id_id]
+        form.update()
         self.assertRaises(Unauthorized, form._doApply, data)
         data['annex_ids'] = []
         data['annex_decision_ids'] = [annex_decision_meeting_manager_id]
+        form.update()
         self.assertRaises(Unauthorized, form._doApply, data)
         data['annex_decision_ids'] = []
+        form.update()
         newItem = form._doApply(data)
         self.assertEqual(newItem.objectIds(), [])
         # able to keep annex_decision_meeting_manager for pmManager
@@ -2615,11 +2624,41 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertFalse(annex_decision_vocab._terms[0].disabled)
         data = {'keep_link': False, 'annex_ids': [], 'annex_decision_ids': []}
         data['annex_ids'] = [annex_scan_id_id]
+        form.update()
         self.assertRaises(Unauthorized, form._doApply, data)
         data['annex_ids'] = []
         data['annex_decision_ids'] = [annex_decision_meeting_manager_id]
+        form.update()
         newItem = form._doApply(data)
         self.assertEqual(newItem.objectIds(), [annex_decision_meeting_manager_id])
+
+    def test_pm_ItemDuplicateFormAnnexesDisabledIfNotPermissionToAddAnnex(self):
+        """Test the @@item_duplicate_form that will only let keep annexes if
+           current user has 'Add annex' permission on future created item."""
+        cfg = self.meetingConfig
+        cfg.setEnableItemDuplication(True)
+        # create item and check that annexes are disabled
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        annex_decision = self.addAnnex(item, relatedTo='item_decision')
+        annex_decision_id = annex_decision.getId()
+        # check normal
+        form = item.restrictedTraverse('@@item_duplicate_form').form_instance
+        data = {'keep_link': False, 'annex_ids': [], 'annex_decision_ids': []}
+        data['annex_decision_ids'] = [annex_decision_id]
+        form.update()
+        newItem = form._doApply(data)
+        self.assertEqual(newItem.objectIds(), [annex_decision_id])
+        # make MeetingMember not having permission to Add annex decision on created item anymore
+        wf = self.wfTool.getWorkflowsFor(cfg.getItemTypeName())[0]
+        initial_state = wf.states[wf.initial_state]
+        initial_state.permission_roles[AddAnnexDecision] = ('Manager', )
+        # check, no more possible
+        form.update()
+        self.assertRaises(Unauthorized, form._doApply, data)
+        data['annex_decision_ids'] = []
+        newItem = form._doApply(data)
+        self.assertEqual(newItem.objectIds(), [])
 
     def test_pm_IsLateFor(self):
         '''

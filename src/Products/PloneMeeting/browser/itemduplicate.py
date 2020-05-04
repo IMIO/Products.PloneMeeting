@@ -23,21 +23,23 @@
 from AccessControl import Unauthorized
 from imio.helpers.content import get_vocab
 from plone import api
+from plone.directives import form
 from plone.z3cform.layout import wrap_form
+from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import DUPLICATE_AND_KEEP_LINK_EVENT_ACTION
 from Products.PloneMeeting.config import DUPLICATE_EVENT_ACTION
-from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import IRedirect
+from Products.PloneMeeting.widgets.pm_checkbox import PMCheckBoxFieldWidget
+from z3c.form import form as z3c_form
 from z3c.form import button
 from z3c.form import field
-from z3c.form import form as z3c_form
 from z3c.form.browser.radio import RadioFieldWidget
 from zope import schema
+from zope.component import queryUtility
 from zope.i18n import translate
 from zope.interface import provider
-from Products.PloneMeeting.widgets.pm_checkbox import PMCheckBoxFieldWidget
-from plone.directives import form
 from zope.schema._bootstrapinterfaces import IContextAwareDefaultFactory
+from zope.security.interfaces import IPermission
 
 
 @provider(IContextAwareDefaultFactory)
@@ -110,17 +112,15 @@ class DuplicateItemForm(z3c_form.Form):
         """Make sure annex_ids/annex_decision_ids are correct.
            As some values are disabled in the UI, a user could try
            to surround this, raise Unauthorized in this case."""
-        annex_vocab = get_vocab(
-            self.context,
-            'Products.PloneMeeting.vocabularies.contained_annexes_vocabulary')
-        annex_term_ids = [term.token for term in annex_vocab if not term.disabled]
+        annex_terms = self.widgets['annex_ids'].terms
+        annex_term_ids = [term.token for term in annex_terms
+                          if not term.disabled]
         for annex_id in data['annex_ids']:
             if annex_id not in annex_term_ids:
                 raise Unauthorized
-        decision_annex_vocab = get_vocab(
-            self.context,
-            'Products.PloneMeeting.vocabularies.contained_decision_annexes_vocabulary')
-        decision_annex_term_ids = [term.token for term in decision_annex_vocab if not term.disabled]
+        decision_annex_terms = self.widgets['annex_decision_ids'].terms
+        decision_annex_term_ids = [term.token for term in decision_annex_terms
+                                   if not term.disabled]
         for decision_annex_id in data['annex_decision_ids']:
             if decision_annex_id not in decision_annex_term_ids:
                 raise Unauthorized
@@ -172,6 +172,38 @@ class DuplicateItemForm(z3c_form.Form):
     def updateWidgets(self):
         # XXX manipulate self.fields BEFORE doing form.Form.updateWidgets
         z3c_form.Form.updateWidgets(self)
+        # disable values if current user not able to add annex ou annexDecision
+        if not self._user_able_to_add():
+            for term in self.widgets['annex_ids'].terms:
+                term.disabled = True
+                term.title = term.title + u' [Not allowed by application permissions]'
+        elif not self._user_able_to_add(annex_portal_type='annexDecision'):
+            for term in self.widgets['annex_decision_ids'].terms:
+                term.disabled = True
+                term.title = term.title + u' [Not allowed by application permissions]'
+
+    def _user_able_to_add(self, annex_portal_type='annex'):
+        """Is current user able to add given p_annex_portal_type
+           on newly created item?"""
+        # does MeetingMember have Add annex when item created?
+        typesTool = api.portal.get_tool('portal_types')
+        wfTool = api.portal.get_tool('portal_workflow')
+        item_wf = wfTool.getWorkflowsFor(self.context)[0]
+        initial_state = item_wf.states.get(item_wf.initial_state)
+        add_permission = typesTool.get(annex_portal_type).add_permission
+        # add_permission is a z3 like permission (PloneMeeting.AddAnnex),
+        # need the permission title (u'PloneMeeting: Add annex')
+        add_permission = queryUtility(IPermission, add_permission).title
+        permission_roles = initial_state.permission_roles[add_permission]
+        # compatibility PM4.1/PM4.2
+        # XXX to be adapted in PM4.2, remove 'MeetingMember' and be more accurate
+        # indeed maybe Editor does not have permission, but another role of current
+        # user has it...
+        res = False
+        if 'MeetingMember' in permission_roles or \
+           'Editor' in permission_roles:
+            res = True
+        return res
 
     def _check_auth(self):
         """Raise Unauthorized if current user may not duplicate the item."""
