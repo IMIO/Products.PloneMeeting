@@ -189,6 +189,39 @@ class testViews(PloneMeetingTestCase):
             last_wf_comments,
             u'This item has been created from item template "Cont\xe9ner / Titl\xe9".')
 
+    def test_pm_CreateItemFromTemplateKeepsProposingGroup(self):
+        '''When item create from itemTemplate, if proposingGroup defined on itemTemplate,
+           it is kept if current user is creator for this proposingGroup.'''
+        cfg = self.meetingConfig
+        self.changeUser('pmManager')
+        self.getMeetingFolder()
+        folder = self.getMeetingFolder()
+        itemTemplateView = folder.restrictedTraverse('createitemfromtemplate')
+        itemTemplates = cfg.getItemTemplates(filtered=True)
+        itemTemplate = itemTemplates[0].getObject()
+        itemTemplateUID = itemTemplate.UID()
+
+        # itemTemplate created without proposingGroup,
+        # first proposingGroup of user is used
+        self.assertEqual(itemTemplate.getProposingGroup(), '')
+        newItem = itemTemplateView.createItemFromTemplate(itemTemplateUID)
+        self.assertEqual(newItem.getProposingGroup(), self.developers_uid)
+        # use vendors as proposingGroup, if user is not creator for it,
+        # it's first proposingGroup is used, even if member 'advisers' for proposingGroup
+        itemTemplate.setProposingGroup(self.vendors_uid)
+        self.assertTrue(self.developers_creators in self.member.getGroups())
+        self.assertTrue(self.vendors_advisers in self.member.getGroups())
+        self.assertFalse(self.vendors_creators in self.member.getGroups())
+        newItem = itemTemplateView.createItemFromTemplate(itemTemplateUID)
+        self.assertEqual(newItem.getProposingGroup(), self.developers_uid)
+        # when current member is creator for it, then it is kept
+        itemTemplate.setProposingGroup(self.vendors_uid)
+        self._addPrincipalToGroup(self.member.getId(), self.vendors_creators)
+        self.assertTrue(self.developers_creators in self.member.getGroups())
+        self.assertTrue(self.vendors_creators in self.member.getGroups())
+        newItem = itemTemplateView.createItemFromTemplate(itemTemplateUID)
+        self.assertEqual(newItem.getProposingGroup(), self.vendors_uid)
+
     def test_pm_ItemTemplateDeletedIfFirstEditCancelled(self):
         '''When creating an item from a template, if the user cancel first edition, the item is removed'''
         cfg = self.meetingConfig

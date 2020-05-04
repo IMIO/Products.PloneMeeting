@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from collective.contact.plonegroup.utils import get_plone_group_id
 from plone import api
 from plone.app.layout.navigation.navtree import buildFolderTree
 from plone.app.layout.navigation.navtree import NavtreeStrategyBase
@@ -68,11 +69,18 @@ class ItemTemplateView(BrowserView):
             domain='imio.history',
             mapping={'template_path_and_title': template_path_and_title, },
             context=self.request)
+        # if a proposingGroup is defined on itemTemplate and current user is creator
+        # for this proposingGroup, we keep it
+        keepProposingGroup = False
+        proposingGroup = templateItem.getProposingGroup()
+        if get_plone_group_id(proposingGroup, 'creators') in member.getGroups():
+            keepProposingGroup = True
         newItem = templateItem.clone(newOwnerId=member.id,
                                      cloneEventAction='create_meeting_item_from_template',
                                      cloneEventActionLabel=cloneEventActionLabel,
                                      destFolder=self.context,
                                      newPortalType=self.cfg.getItemTypeName(),
+                                     keepProposingGroup=keepProposingGroup,
                                      keep_ftw_labels=True)
         # set _at_creation_flag to True so if user cancel first edit, it will be removed
         newItem._at_creation_flag = True

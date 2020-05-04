@@ -15,6 +15,8 @@ Changelog
   or it breaks `MeetingItem.setTakenOverBy/MeetingItem.setHistorizedTakenOverBy`
 - Relying on `plone.formwidget.namedfile>2.0.2` required by `collective.eeafaceted.z3ctable` also fixes the problem in `PloneMeeting`,
   no need to patch url anymore in `additionalInformations` macro for `DX content`
+- When creating an item from an `itemTemplate`, if a `proposingGroup` is defined on the `itemTemplate` and current user is creator for this
+  `proposingGroup`, keep it on new created item
 
 4.1.23.3 (2020-04-30)
 ---------------------
