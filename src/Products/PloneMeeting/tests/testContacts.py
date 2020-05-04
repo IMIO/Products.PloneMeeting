@@ -1481,6 +1481,28 @@ class testContacts(PloneMeetingTestCase):
         # remove it
         own_org.manage_delObjects([new_org_id])
 
+    def test_pm_InactiveHeldPositionsStillViewableOnMeeting(self):
+        """If an held_position is disabled, it is still viewable on existing meetings."""
+        cfg = self.meetingConfig
+        # remove recurring items
+        self._removeConfigObjectsFor(cfg)
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime())
+        meeting_attendees = meeting.getAttendees(theObjects=True)
+        self.assertEqual(len(meeting_attendees), 4)
+        hp = meeting_attendees[0]
+        # deactivate an held_position
+        self.changeUser('siteadmin')
+        self.do(hp, 'deactivate')
+        # still viewable by MeetingManagers
+        self.changeUser('pmManager')
+        meeting_attendees = meeting.getAttendees(theObjects=True)
+        self.assertEqual(len(meeting_attendees), 4)
+        # and other users
+        self.changeUser('pmCreator1')
+        meeting_attendees = meeting.getAttendees(theObjects=True)
+        self.assertEqual(len(meeting_attendees), 4)
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

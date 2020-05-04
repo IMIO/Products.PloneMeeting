@@ -1639,9 +1639,6 @@ class SelectableItemInitiatorsVocabulary(BaseHeldPositionsVocabulary):
             missing_terms = super(SelectableItemInitiatorsVocabulary, self).__call__(
                 context, usage=None, uids=missing_term_uids, highlight_missing=True)
             terms += missing_terms._terms
-        # include also organizations
-        org_terms = EveryOrganizationsVocabulary(context)
-        terms += org_terms._terms
         return SimpleVocabulary(terms)
 
 

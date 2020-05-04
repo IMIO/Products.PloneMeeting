@@ -17,6 +17,8 @@ Changelog
   no need to patch url anymore in `additionalInformations` macro for `DX content`
 - When creating an item from an `itemTemplate`, if a `proposingGroup` is defined on the `itemTemplate` and current user is creator for this
   `proposingGroup`, keep it on new created item
+- Use `plonemeeting_activity_managers_workflow` instead `collective_contact_core_workflow` for `person` and `held_position` portal_types because
+  when using `collective_contact_core_workflow`, an element in state `deactivated` is no more viewable by `Member`
 
 4.1.23.3 (2020-04-30)
 ---------------------
