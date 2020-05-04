@@ -1,0 +1,37 @@
+# -*- coding: utf-8 -*-
+
+from Products.PloneMeeting.migrations import logger
+from Products.PloneMeeting.migrations import Migrator
+
+
+class Migrate_To_4106(Migrator):
+
+    def _updateOrgsDashboardCollectionColumns(self):
+        """Replace the 'pretty_link' column with the 'org_pretty_link_with_additional_infos'."""
+        logger.info("Updating dashboard organization collections to replace the \"pretty_link\" "
+                    "column by the\"org_pretty_link_with_additional_infos\" column ...")
+        hps_searches_folder = self.portal.contacts.get('hps-searches')
+        persons_searches_folder = self.portal.contacts.get('persons-searches')
+        # hide the 'review_state' column for orgs related collections
+        for org_coll in hps_searches_folder.objectValues() + persons_searches_folder.objectValues():
+            if 'org_pretty_link_with_additional_infos' not in org_coll.customViewFields:
+                # make sure 'pretty_link' column no more present
+                customViewFields = [col_name for col_name in org_coll.customViewFields
+                                    if col_name != u'pretty_link']
+                customViewFields.insert(1, u'org_pretty_link_with_additional_infos')
+                org_coll.customViewFields = customViewFields
+        logger.info('Done.')
+
+    def run(self, from_migration_to_41=False):
+        logger.info('Migrating to PloneMeeting 4106...')
+        self._updateOrgsDashboardCollectionColumns()
+
+
+def migrate(context):
+    '''This migration function will:
+
+       1) Update dashboards displaying persons and held_positions.
+    '''
+    migrator = Migrate_To_4106(context)
+    migrator.run()
+    migrator.finish()

@@ -202,7 +202,7 @@ class Migrator(BaseMigrator):
     def reloadMeetingConfigs(self, full=False):
         '''Reload MeetingConfigs, either only portal_types related parameters,
            or full reload (at_post_edit_script).'''
-        logger.info("Reloading every MeetingConfigs (full={0}...".format(repr(full)))
+        logger.info("Reloading every MeetingConfigs (full={0})...".format(repr(full)))
         for cfg in self.tool.objectValues('MeetingConfig'):
             if full:
                 cfg.at_post_edit_script()

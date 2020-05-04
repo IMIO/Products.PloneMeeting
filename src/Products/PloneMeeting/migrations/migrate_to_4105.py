@@ -105,7 +105,8 @@ def migrate(context):
        1) Clean wrong paths in catalog (ending with '/');
        2) Remove broken annexes with no content_category defined due to quickupload ConflictError management;
        3) Clean ftw.labels empty annotations, this make sure to not have any PersistentList stored;
-       4) Install every pending upgrades.
+       4) Update portal_types to remove action 'Duplicate and keep link' for MeetingItem portal_types;
+       5) Install every pending upgrades.
     '''
     migrator = Migrate_To_4105(context)
     migrator.run()
