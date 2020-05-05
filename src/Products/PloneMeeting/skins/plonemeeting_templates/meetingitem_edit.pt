@@ -41,7 +41,6 @@
     <metal:field use-macro="python:here.widget('classifier', mode='edit')"/>
 
     <metal:field use-macro="python:here.widget('toDiscuss', mode='edit')"/>
-    <metal:field use-macro="python:here.widget('itemIsSigned', mode='edit')"/>
     <metal:field use-macro="python:here.widget('pollType', mode='edit')"/>
     <metal:field use-macro="python:here.widget('pollTypeObservations', mode='edit')"/>
     <metal:field use-macro="python:here.widget('manuallyLinkedItems', mode='edit')"/>

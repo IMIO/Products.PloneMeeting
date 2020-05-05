@@ -24,6 +24,7 @@ Changelog
 - Renamed `Products.PloneMeeting.vocabularies.selectableassociatedorganizationsvocabulary` to
   `Products.PloneMeeting.vocabularies.detailedorganizationsvocabulary` so it is easier to reuse in other contexts
 - Added possibility to select organizations as item initiators (`MeetingItem.itemInitiator`) in addition to held positions
+- Removed field `MeetingItem.itemIsSigned` from `meetingitem_edit`, it is managed thru the `meetingitem_view`
 
 4.1.23.3 (2020-04-30)
 ---------------------
