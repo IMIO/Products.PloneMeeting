@@ -43,8 +43,15 @@ class Migrate_To_4105(Migrator):
                 rid = self.catalog._catalog.uids[path]
                 metadata = self.catalog._catalog.getMetadataForRID(rid)
                 if metadata['UID'] is None:
-                    self.catalog._catalog.uncatalogObject(path)
                     logger.info('In _uncatalogWrongBrains, uncataloged %s' % path)
+                    self.catalog._catalog.uncatalogObject(path)
+                    # fix UUIDIndex if correct path exists (without ending "/")
+                    correct_rid = self.catalog._catalog.uids.get(path[:-1], None)
+                    if correct_rid:
+                        obj = self.catalog.getobject(correct_rid)
+                        index = self.catalog._catalog.getIndex('UID')
+                        index.unindex_object(correct_rid)
+                        index.index_object(correct_rid, obj)
                     i += 1
         if i:
             self.warn(logger, 'In _uncatalogWrongBrains, uncataloged %s path(s)' % i)

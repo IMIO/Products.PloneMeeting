@@ -25,6 +25,7 @@ Changelog
   `Products.PloneMeeting.vocabularies.detailedorganizationsvocabulary` so it is easier to reuse in other contexts
 - Added possibility to select organizations as item initiators (`MeetingItem.itemInitiator`) in addition to held positions
 - Removed field `MeetingItem.itemIsSigned` from `meetingitem_edit`, it is managed thru the `meetingitem_view`
+- Fix `Migrate_To_4105._uncatalogWrongBrains` that was breaking the `UID` index for existing objects
 
 4.1.23.3 (2020-04-30)
 ---------------------
