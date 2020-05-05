@@ -359,7 +359,7 @@ def postInstall(context):
 def activate_solr_and_reindex_if_available(site):
     if HAS_SOLR:
         """ activate solr indexing and reindex the existing content """
-        from collective.solr.utils import activate
+        from collective.solr.utils import activate, getConfig
         if not site.portal_quickinstaller.isProductInstalled('collective.solr'):
             site.portal_setup.runAllImportStepsFromProfile('profile-collective.solr:default')
 
@@ -367,6 +367,8 @@ def activate_solr_and_reindex_if_available(site):
         if solr_activated:
             return
         activate(True)
+        config = getConfig()
+        config.async_indexing = True
         api.portal.set_registry_record('collective.solr.required', [u''])
         port = int(os.environ['SOLR_PORT'])
         api.portal.set_registry_record('collective.solr.port', port)
