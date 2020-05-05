@@ -1654,15 +1654,17 @@ SelectableAssemblyMembersVocabularyFactory = SelectableAssemblyMembersVocabulary
 class SelectableItemInitiatorsVocabulary(BaseHeldPositionsVocabulary):
     """ """
     def __call__(self, context):
-        terms = super(SelectableItemInitiatorsVocabulary, self).__call__(context, usage='asker')
+        terms = super(SelectableItemInitiatorsVocabulary, self).__call__(
+            context, usage='asker')
         if IMeetingConfig.providedBy(context):
             stored_terms = context.getOrderedItemInitiators()
         else:
             # MeetingItem
             stored_terms = context.getItemInitiator()
-        # add missing terms
+        # add missing terms as inactive held_positions are not in the vocabulary
         missing_term_uids = [uid for uid in stored_terms if uid not in terms]
-        terms = terms._terms
+        # do not modify original terms
+        terms = list(terms._terms)
         if missing_term_uids:
             missing_terms = super(SelectableItemInitiatorsVocabulary, self).__call__(
                 context,
@@ -1671,20 +1673,24 @@ class SelectableItemInitiatorsVocabulary(BaseHeldPositionsVocabulary):
                 highlight_missing=True,
                 review_state=[])
             terms += missing_terms._terms
+        # add selectable organizations
+        terms += list(get_vocab(
+            context,
+            'Products.PloneMeeting.vocabularies.detailedorganizationsvocabulary')._terms)
         return SimpleVocabulary(terms)
 
 
 SelectableItemInitiatorsVocabularyFactory = SelectableItemInitiatorsVocabulary()
 
 
-class SelectableAssociatedOrganizationsVocabulary(EveryOrganizationsVocabulary):
+class PMDetailedEveryOrganizationsVocabulary(EveryOrganizationsVocabulary):
     """Use BaseOrganizationServicesVocabulary and call it from contacts directory then
        adapt title of the terms to show organizations that are in plonegroup and others that are not."""
     implements(IVocabularyFactory)
 
     def __call__(self, context):
         """ """
-        terms = super(SelectableAssociatedOrganizationsVocabulary, self).__call__(context)
+        terms = super(PMDetailedEveryOrganizationsVocabulary, self).__call__(context)
         selected_orgs = get_registry_organizations()
         own_org_uid = get_own_organization().UID()
         res = []
@@ -1701,7 +1707,7 @@ class SelectableAssociatedOrganizationsVocabulary(EveryOrganizationsVocabulary):
         return SimpleVocabulary(res)
 
 
-SelectableAssociatedOrganizationsVocabularyFactory = SelectableAssociatedOrganizationsVocabulary()
+PMDetailedEveryOrganizationsVocabularyFactory = PMDetailedEveryOrganizationsVocabulary()
 
 
 class AssociatedGroupsVocabulary(object):

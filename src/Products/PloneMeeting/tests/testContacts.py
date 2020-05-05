@@ -921,7 +921,8 @@ class testContacts(PloneMeetingTestCase):
         # item.getGroupsInCharge
         # item.adviceIndex
         # item.getCopyGroups
-        # so check the 5 possible "states"
+        # item.itemInitiator
+        # so check the 6 possible "states"
 
         # first check when the item is using 'proposingGroup', it is the case here
         # for item, make sure other conditions are False
@@ -929,6 +930,7 @@ class testContacts(PloneMeetingTestCase):
         item.setOptionalAdvisers(())
         self.assertTrue(self.developers_advisers not in item.adviceIndex)
         item.setCopyGroups(())
+        item.setItemInitiator(())
         item._update_after_edit()
         transaction.commit()
         with self.assertRaises(BeforeDeleteException) as cm:
@@ -975,8 +977,18 @@ class testContacts(PloneMeetingTestCase):
                 self.developers_uid, catch_before_delete_exception=False)
         self.assertEquals(cm.exception.message, can_not_delete_organization_meetingitem)
 
-        # check with item having copyGroups
+        # check with item having itemInitiator
         self._tearDownGroupsInCharge(item)
+        item.setItemInitiator((self.developers_uid, ))
+        item._update_after_edit()
+        transaction.commit()
+        with self.assertRaises(BeforeDeleteException) as cm:
+            self.portal.restrictedTraverse('@@delete_givenuid')(
+                self.developers_uid, catch_before_delete_exception=False)
+        self.assertEquals(cm.exception.message, can_not_delete_organization_meetingitem)
+
+        # check with item having copyGroups
+        item.setItemInitiator(())
         cfg.setUseCopies(True)
         item.setCopyGroups((self.developers_reviewers, ))
         item._update_after_edit()

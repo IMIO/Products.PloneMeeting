@@ -307,6 +307,7 @@ def onOrgWillBeRemoved(current_org, event):
         item = brain.getObject()
         if (item.getProposingGroup() == current_org_uid) or \
            (current_org_uid in item.getAssociatedGroups()) or \
+           (current_org_uid in item.getItemInitiator()) or \
            (current_org_uid in item.getGroupsInCharge()) or \
            (current_org_uid in item.adviceIndex) or \
            (current_org_uid in item.getTemplateUsingGroups()) or \
@@ -1007,14 +1008,19 @@ def onDashboardCollectionAdded(collection, event):
 
 def _is_held_pos_uid_used_by(held_pos_uid, obj):
     """ """
+    res = False
     if obj.meta_type == 'MeetingConfig':
-        if held_pos_uid in obj.getOrderedContacts():
-            return True
-    if obj.meta_type == 'Meeting':
+        if held_pos_uid in obj.getOrderedContacts() or \
+           held_pos_uid in obj.getOrderedItemInitiators():
+            res = True
+    elif obj.meta_type == 'Meeting':
         orderedContacts = getattr(obj, 'orderedContacts', {})
         if held_pos_uid in orderedContacts:
-            return True
-    return False
+            res = True
+    elif obj.meta_type == 'MeetingItem':
+        if held_pos_uid in obj.getItemInitiator():
+            res = True
+    return res
 
 
 def onHeldPositionRemoved(held_pos, event):
@@ -1036,6 +1042,15 @@ def onHeldPositionRemoved(held_pos, event):
             meeting = brain.getObject()
             if _is_held_pos_uid_used_by(held_pos_uid, meeting):
                 using_obj = meeting
+                break
+    # check items
+    if not using_obj:
+        catalog = api.portal.get_tool('portal_catalog')
+        brains = catalog(meta_type='MeetingItem')
+        for brain in brains:
+            item = brain.getObject()
+            if _is_held_pos_uid_used_by(held_pos_uid, item):
+                using_obj = item
                 break
 
     if using_obj:

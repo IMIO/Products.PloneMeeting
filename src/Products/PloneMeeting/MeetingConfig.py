@@ -548,7 +548,7 @@ schema = Schema((
         ),
         schemata="data",
         multiValued=1,
-        vocabulary_factory='Products.PloneMeeting.vocabularies.selectableassociatedorganizationsvocabulary',
+        vocabulary_factory='Products.PloneMeeting.vocabularies.detailedorganizationsvocabulary',
         default=defValues.orderedAssociatedOrganizations,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",

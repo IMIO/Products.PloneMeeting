@@ -3971,17 +3971,19 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('listItemInitiators')
 
     def listItemInitiators(self):
-        ''' '''
+        '''Initiator may be an organization or a held_position.'''
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         res = []
         # missing terms
-        catalog = api.portal.get_tool('portal_catalog')
         stored_terms = self.getItemInitiator()
         missing_term_uids = [uid for uid in stored_terms if uid not in cfg.getOrderedItemInitiators()]
-        missing_terms = [brain.getObject() for brain in catalog(UID=missing_term_uids)]
-        for hp in cfg.getOrderedItemInitiators(theObjects=True) + missing_terms:
-            res.append((hp.UID(), hp.get_short_title()))
+        missing_terms = uuidsToObjects(missing_term_uids)
+        for org_or_hp in cfg.getOrderedItemInitiators(theObjects=True) + missing_terms:
+            if org_or_hp.portal_type == 'organization':
+                res.append((org_or_hp.UID(), org_or_hp.Title()))
+            else:
+                res.append((org_or_hp.UID(), org_or_hp.get_short_title()))
         return DisplayList(res)
 
     security.declarePrivate('getAdvices')
