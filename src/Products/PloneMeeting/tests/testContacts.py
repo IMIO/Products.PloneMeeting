@@ -10,6 +10,7 @@ from imio.helpers.content import get_vocab
 from imio.helpers.content import validate_fields
 from OFS.ObjectManager import BeforeDeleteException
 from plone import api
+from Products.CMFCore.permissions import View
 from Products.PloneMeeting.content.source import PMContactSourceBinder
 from Products.PloneMeeting.Extensions.imports import import_contacts
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
@@ -1496,7 +1497,10 @@ class testContacts(PloneMeetingTestCase):
     def test_pm_InactiveHeldPositionsStillViewableOnMeeting(self):
         """If an held_position is disabled, it is still viewable on existing meetings."""
         cfg = self.meetingConfig
-        # remove recurring items
+        # give access to powerobservers to meeting when it is created
+        self._setPowerObserverStates(
+            field_name='meeting_states',
+            states=(self._stateMappingFor('created', meta_type='Meeting'),))
         self._removeConfigObjectsFor(cfg)
         self.changeUser('pmManager')
         meeting = self.create('Meeting', date=DateTime())
@@ -1512,6 +1516,10 @@ class testContacts(PloneMeetingTestCase):
         self.assertEqual(len(meeting_attendees), 4)
         # and other users
         self.changeUser('pmCreator1')
+        meeting_attendees = meeting.getAttendees(theObjects=True)
+        self.assertEqual(len(meeting_attendees), 4)
+        self.changeUser('powerobserver1')
+        self.assertTrue(self.hasPermission(View, meeting))
         meeting_attendees = meeting.getAttendees(theObjects=True)
         self.assertEqual(len(meeting_attendees), 4)
 
