@@ -1406,6 +1406,23 @@ schema = Schema((
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
+        name='displayAvailableItemsTo',
+        widget=MultiSelectionWidget(
+            description="DisplayAvailableItemsTo",
+            description_msgid="display_available_items_to_descr",
+            format="checkbox",
+            label='Displayavailableitemsto',
+            label_msgid='PloneMeeting_label_displayAvailableItemsTo',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="gui",
+        multiValued=1,
+        vocabulary='listDisplayAvailableItemsTo',
+        default=defValues.displayAvailableItemsTo,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    LinesField(
         name='itemsListVisibleFields',
         widget=InAndOutWidget(
             description="ItemsListVisibleFields",
@@ -4437,6 +4454,16 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def _extraMeetingRelatedColumns(self):
         """ """
         return []
+
+    security.declarePrivate('listDisplayAvailableItemsTo')
+
+    def listDisplayAvailableItemsTo(self):
+        d = "PloneMeeting"
+        res = DisplayList((
+            ("app_users", translate('available_items_to_app_users', domain=d, context=self.REQUEST)),
+            ("theVoterHimself", translate('the_voter_himself', domain=d, context=self.REQUEST)),
+        ))
+        return res
 
     security.declarePrivate('listItemActionsColumnConfig')
 
