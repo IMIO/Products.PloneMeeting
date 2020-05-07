@@ -36,6 +36,8 @@ class testContacts(PloneMeetingTestCase):
         # enable attendees and signatories fields for Meeting
         cfg = self.meetingConfig
         cfg.setUsedMeetingAttributes(('attendees', 'excused', 'absents', 'signatories', ))
+        # enable itemInitiator fields for MeetingItem
+        cfg.setUsedItemAttributes(('attendees', 'excused', 'absents', 'signatories', 'itemInitiator'))
         # select orderedContacts
         ordered_contacts = cfg.getField('orderedContacts').Vocabulary(cfg).keys()
         cfg.setOrderedContacts(ordered_contacts)
@@ -89,10 +91,11 @@ class testContacts(PloneMeetingTestCase):
         self.assertEqual(
             meeting.getAllUsedHeldPositions(), meeting.getAttendees(theObjects=True))
 
-    def test_pm_CanNotDeleteUsedHeldPosition(self):
+    def test_pm_CanNotRemoveUsedHeldPosition(self):
         ''' '''
         cfg = self.meetingConfig
         self.changeUser('pmManager')
+        # test that held positition cannot be delete if used for assembly
         meeting = self.create('Meeting', date=DateTime())
         person = self.portal.contacts.get('person1')
         hp = person.get_held_positions()[0]
@@ -112,6 +115,28 @@ class testContacts(PloneMeetingTestCase):
         # unselect hp from meeting, now it is deletable
         del meeting.orderedContacts[hp.UID()]
         self.assertFalse(hp_uid in meeting.getAttendees())
+
+        # test that held positition cannot be delete if used for itemInitiator
+        cfg.setOrderedItemInitiators((hp_uid,))
+        item = self.create('MeetingItem', date=DateTime())
+        self.presentItem(item)
+        item.setItemInitiator((hp_uid,))
+
+        # hp not deletable because used in MC and meeting item
+        self.changeUser('siteadmin')
+        self.assertRaises(Redirect, api.content.delete, hp)
+
+        # unselect from MeetingConfig.orderedItemInitiators,
+        # still not deletable because used by a meeting item
+        orderedItemInitiators = list(cfg.getOrderedItemInitiators())
+        orderedItemInitiators.remove(hp_uid)
+        cfg.setOrderedItemInitiators(orderedItemInitiators)
+        self.assertRaises(Redirect, api.content.delete, hp)
+
+        # unselect hp from meeting item, now it is deletable
+        item.setItemInitiator(())
+
+        # assert held position can be properly deleted
         api.content.delete(hp)
         self.assertFalse(person.get_held_positions())
 
