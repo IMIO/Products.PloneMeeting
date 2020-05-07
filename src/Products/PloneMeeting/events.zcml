@@ -175,7 +175,7 @@
               handler=".events.onOrgAddBegun" />
   <subscriber for="Products.PloneMeeting.content.held_position.IPMHeldPosition
                    OFS.interfaces.IObjectWillBeRemovedEvent"
-              handler=".events.onHeldPositionRemoved" />
+              handler=".events.onHeldPositionWillBeRemoved" />
 
   <!-- DashboardCollection events -->
   <subscriber for="collective.eeafaceted.collectionwidget.interfaces.IDashboardCollection
