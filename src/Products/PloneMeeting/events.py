@@ -1023,7 +1023,7 @@ def _is_held_pos_uid_used_by(held_pos_uid, obj):
     return res
 
 
-def onHeldPositionRemoved(held_pos, event):
+def onHeldPositionWillBeRemoved(held_pos, event):
     '''Do not delete a held_position that have been used on a meeting or
        is selected in a MeetingConfig.orderedContacts.'''
     held_pos_uid = held_pos.UID()
