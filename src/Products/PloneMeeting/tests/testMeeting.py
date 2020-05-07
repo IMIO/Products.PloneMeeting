@@ -3262,7 +3262,7 @@ class testMeeting(PloneMeetingTestCase):
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
         item_uid = item.UID()
-        self.validate(item)
+        self.validateItem(item)
         meeting = self.create('Meeting', date=DateTime('2020/05/07'))
         # change current URL so displaying_available_items is True
         self.request['URL'] = meeting.absolute_url() + '/@@meeting_available_items_view'
@@ -3277,7 +3277,6 @@ class testMeeting(PloneMeetingTestCase):
         self.assertTrue(item_uid in result)
         self.changeUser('pmCreator1')
         result = view()
-        view.update()
         self.assertFalse('presentSelectedItems' in result)
         self.assertFalse('forceInsertNormal' in result)
         self.assertTrue(item_uid in result)
