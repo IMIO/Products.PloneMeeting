@@ -230,7 +230,7 @@ class ItemLinkedMeetingColumn(BaseColumn):
             meeting = catalog(UID=getattr(item, self.meeting_uid_attr))[0].getObject()
             prettyLinker = IPrettyLink(meeting)
             prettyLinker.target = '_parent'
-            res = prettyLinker.getPrettyLink()
+            res = prettyLinker.getLink()
 
         if self.use_caching:
             self._store_cached_result(value, res)

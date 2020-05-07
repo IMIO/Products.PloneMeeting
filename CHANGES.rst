@@ -30,6 +30,7 @@ Changelog
 
   - added parameter `MeetingConfig.displayAvailableItemsTo`, possibility to select `Application users` and every `Power obsevers` profiles;
   - renamed adaptatble method `Meeting.showRemoveSelectedItemsAction` to `Meeting.showInsertOrRemoveSelectedItemsAction`.
+- Fixed links displayed in table of available items on `meeting_view` so it is correctly opened outside the available items `iframe`
 
 4.1.23.3 (2020-04-30)
 ---------------------

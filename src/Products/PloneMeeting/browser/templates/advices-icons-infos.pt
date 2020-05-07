@@ -148,12 +148,14 @@
                     <a href="edit"
                        tal:condition="not: adviceIsLocked"
                        class="link-overlay-pm-advice"
+                       target='_parent'
                        tal:attributes="href string:${obj_absolute_url}/edit">
                       <img i18n:attributes="title" title="advice_edit"
                            tal:attributes="src string:${view/portal_url}/edit.png;" />
                     </a>
                     <a href="view"
                        tal:condition="adviceIsLocked"
+                       target='_parent'
                        tal:attributes="href string:${obj_absolute_url}/view">
                       <img i18n:attributes="title" title="Locked"
                            i18n:domain="plone"
@@ -175,6 +177,7 @@
                   </tal:editableOrLocked>
                   <td tal:condition="python: view.tool.showAnnexesTab(obj)" align="right" width="20px" class="noPadding">
                     <a href="#"
+                       target='_parent'
                        tal:attributes="href string:${obj_absolute_url}/@@categorized-annexes">
                       <img src="manage_annexes.gif"
                            i18n:attributes="title" title="Manage advice annexes"
@@ -195,6 +198,7 @@
                 </tal:mayEdit>
                 <td align="right" width="20px" class="noPadding" tal:condition="nocall:obj">
                   <a href="view"
+                     target='_parent'
                      tal:attributes="href string:${obj_absolute_url}/view">
                     <img i18n:attributes="title" title="Advice advanced management screen"
                          tal:attributes="src string:${view/portal_url}/advice_manage.png;" />
@@ -250,6 +254,7 @@
               <tr tal:condition="python: adviceType != 'not_given'">
                 <td class="table_widget_value preview_advice_container">
                     <a href="#"
+                       target='_parent'
                        class="link-overlay-pm-preview-advice"
                        tal:condition="adviceHolderIsViewable"
                        tal:attributes="href string:${obj_absolute_url}/view">
