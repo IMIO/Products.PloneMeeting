@@ -91,10 +91,11 @@ class testContacts(PloneMeetingTestCase):
         self.assertEqual(
             meeting.getAllUsedHeldPositions(), meeting.getAttendees(theObjects=True))
 
-    def test_pm_CanNotDeleteUsedAssemblyHeldPosition(self):
+    def test_pm_CanNotRemoveUsedHeldPosition(self):
         ''' '''
         cfg = self.meetingConfig
         self.changeUser('pmManager')
+        # test that held positition cannot be delete if used for assembly
         meeting = self.create('Meeting', date=DateTime())
         person = self.portal.contacts.get('person1')
         hp = person.get_held_positions()[0]
@@ -114,21 +115,11 @@ class testContacts(PloneMeetingTestCase):
         # unselect hp from meeting, now it is deletable
         del meeting.orderedContacts[hp.UID()]
         self.assertFalse(hp_uid in meeting.getAttendees())
-        api.content.delete(hp)
-        self.assertFalse(person.get_held_positions())
 
-    def test_pm_CanNotDeleteUsedItemInitiatorHeldPosition(self):
-        cfg = self.meetingConfig
-        self.changeUser('pmManager')
-        person = self.portal.contacts.get('person1')
-        hp = person.get_held_positions()[0]
-        hp_uid = hp.UID()
+        # test that held positition cannot be delete if used for itemInitiator
         cfg.setOrderedItemInitiators((hp_uid,))
         item = self.create('MeetingItem', date=DateTime())
         self.presentItem(item)
-        orderedContacts = list(cfg.getOrderedContacts())
-        orderedContacts.remove(hp_uid)
-        cfg.setOrderedContacts(orderedContacts)
         item.setItemInitiator((hp_uid,))
 
         # hp not deletable because used in MC and meeting item
@@ -144,6 +135,8 @@ class testContacts(PloneMeetingTestCase):
 
         # unselect hp from meeting item, now it is deletable
         item.setItemInitiator(())
+
+        # assert held position can be properly deleted
         api.content.delete(hp)
         self.assertFalse(person.get_held_positions())
 
