@@ -460,9 +460,9 @@ class IMeetingDocumentation:
            meeting.startDate if used).'''
     def onEdit(isCreated):
         '''This method is called every time a meeting is created or updated.'''
-    def showRemoveSelectedItemsAction():
-        '''Return True/False if the 'Remove selected items' action must be displayed
-           on the meeting view displaying presented items.'''
+    def showInsertOrRemoveSelectedItemsAction():
+        '''Return True/False if the 'Remove selected items' or 'Present selected items'
+           action must be displayed on the meeting view displaying presented items.'''
     def _check_insert_order_cache(cfg):
         '''This method is made to check if Meeting caching of items insert order
            is still valid.  Returns True if cache was invalidated, False otherwise.'''

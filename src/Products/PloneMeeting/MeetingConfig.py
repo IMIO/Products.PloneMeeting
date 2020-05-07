@@ -146,6 +146,8 @@ CONFIGGROUPPREFIX = 'configgroup_'
 PROPOSINGGROUPPREFIX = 'suffix_proposing_group_'
 READERPREFIX = 'reader_'
 SUFFIXPROFILEPREFIX = 'suffix_profile_'
+POWEROBSERVERPREFIX = 'powerobserver__'
+
 
 schema = Schema((
 
@@ -4460,9 +4462,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def listDisplayAvailableItemsTo(self):
         d = "PloneMeeting"
         res = DisplayList((
-            ("app_users", translate('available_items_to_app_users', domain=d, context=self.REQUEST)),
-            ("theVoterHimself", translate('the_voter_himself', domain=d, context=self.REQUEST)),
+            ("app_users", translate('app_users', domain=d, context=self.REQUEST)),
         ))
+        for po_infos in self.getPowerObservers():
+            res.add('{0}{1}'.format(POWEROBSERVERPREFIX, po_infos['row_id']),
+                    po_infos['label'])
         return res
 
     security.declarePrivate('listItemActionsColumnConfig')

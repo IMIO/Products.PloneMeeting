@@ -53,7 +53,7 @@
         name="force-insert-normal"
         manager="collective.eeafaceted.z3ctable.interfaces.IBottomAboveNavManager"
         class=".viewlets.ForceInsertNormal"
-        permission="zope2.View" />
+        permission="cmf.ModifyPortalContent" />
     <browser:viewlet
         name="held_position_back_references"
         manager="plone.app.layout.viewlets.interfaces.IBelowContentBody"

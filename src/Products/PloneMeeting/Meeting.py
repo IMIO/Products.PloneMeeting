@@ -127,9 +127,8 @@ class MeetingWorkflowConditions(object):
     security.declarePublic('mayAcceptItems')
 
     def mayAcceptItems(self):
-        if _checkPermission(ReviewPortalContent, self.context):
-            if self.context.queryState() in self.cfg.adapted().getMeetingStatesAcceptingItems():
-                return True
+        if self.context.queryState() in self.cfg.adapted().getMeetingStatesAcceptingItems():
+            return True
 
     security.declarePublic('mayPublish')
 
@@ -2095,9 +2094,9 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             self._v_previousData = rememberPreviousData(self)
         return OrderedBaseFolder.processForm(self, *args, **kwargs)
 
-    security.declarePublic('showRemoveSelectedItemsAction')
+    security.declarePublic('showInsertOrRemoveSelectedItemsAction')
 
-    def showRemoveSelectedItemsAction(self):
+    def showInsertOrRemoveSelectedItemsAction(self):
         '''See doc in interfaces.py.'''
         meeting = self.getSelf()
         member = api.user.get_current()
