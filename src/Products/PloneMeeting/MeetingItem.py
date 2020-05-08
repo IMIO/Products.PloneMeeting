@@ -125,6 +125,7 @@ from zope.i18n import translate
 from zope.interface import implements
 from zope.schema.interfaces import IVocabularyFactory
 
+import itertools
 import logging
 
 
@@ -2483,6 +2484,18 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # Bypass privacy check for (Meeting)Manager
         if tool.isManager(item):
             return True
+
+        # now check if among local_roles, a role is giving view access to the item
+        # for a group that current user is member of except powerobservers groups
+        userGroups = tool.get_plone_groups_for_user()
+        po_suffixes = tuple(po['row_id'] for po in cfg.getPowerObservers())
+        itemUserRoles = [roles for group_id, roles in item.__ac_local_roles__.items()
+                         if group_id in userGroups and not group_id.endswith(po_suffixes)]
+        # merge lists and remove duplicates
+        itemUserRoles = set(list(itertools.chain.from_iterable(itemUserRoles)))
+        if itemUserRoles.intersection(item._View_Permission):
+            return True
+
         # check if current user is a power observer in MeetingConfig.restrictAccessToSecretItemsTo
         isAPowerObserver = tool.isPowerObserverForCfg(cfg)
         for power_observer_type in cfg.getRestrictAccessToSecretItemsTo():
@@ -2491,24 +2504,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # a power observer not in restrictAccessToSecretItemsTo?
         if isAPowerObserver:
             return True
-        # Check that the user belongs to the proposing group.
-        proposingGroup = item.getProposingGroup()
-        userInProposingGroup = tool.get_plone_groups_for_user(org_uid=proposingGroup)
-        if userInProposingGroup:
-            return True
-        # Check if the user is in the copyGroups
-        userGroups = tool.get_plone_groups_for_user()
-        if set(item.getAllCopyGroups(auto_real_plone_group_ids=True)).intersection(userGroups):
-            return True
-        # Check if the user has advices to add or give for item
-        # we have userGroups, get groups he is adviser for and
-        # check if in item.adviceIndex
-        userAdviserGroups = [userGroup for userGroup in userGroups if userGroup.endswith('_advisers')]
-        for userAdviserGroup in userAdviserGroups:
-            org_uid = userAdviserGroup.replace('_advisers', '')
-            if org_uid in item.adviceIndex and \
-               item.adviceIndex[org_uid]['item_viewable_by_advisers']:
-                return True
 
     def isViewable(self):
         """ """

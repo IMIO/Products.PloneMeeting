@@ -2489,6 +2489,29 @@ class testMeetingItem(PloneMeetingTestCase):
         self.failIf(secretHeadingItem.adapted().isPrivacyViewable())
         self.failUnless(publicHeadingItem.adapted().isPrivacyViewable())
 
+    def test_pm_IsPrivacyViewableViewAccessTakePrecedenceOverPowerObserversRestrictions(self):
+        """Make sure if a user has access to an item because in it's proposingGroup
+           for example and is also powerobserver that is restricted by
+           MeetingConfig.restrictAccessToSecretItemsTo, item isPrivacyViewable."""
+        cfg = self.meetingConfig
+        self._setPowerObserverStates(observer_type='restrictedpowerobservers',
+                                     states=('validated', ))
+        cfg.setRestrictAccessToSecretItems(True)
+        self.assertTrue('restrictedpowerobservers' in cfg.getRestrictAccessToSecretItemsTo())
+        self._addPrincipalToGroup('restrictedpowerobserver1', self.developers_creators)
+        # create his personal area because he is a creator now
+        _createMemberarea(self.portal, 'restrictedpowerobserver1')
+        # restrictedpowerobserver1 is restrictedpowerobservers and creator
+        self.changeUser('restrictedpowerobserver1')
+        item = self.create('MeetingItem', privacy='secret')
+        self.assertEqual(item.getPrivacy(), 'secret')
+        self.assertTrue(item.adapted().isPrivacyViewable())
+        self.validateItem(item)
+        self.assertTrue(item.adapted().isPrivacyViewable())
+        self._removePrincipalFromGroup('restrictedpowerobserver1', self.developers_creators)
+        cleanRamCacheFor('Products.PloneMeeting.MeetingItem.isPrivacyViewable')
+        self.assertFalse(item.adapted().isPrivacyViewable())
+
     def test_pm_ItemDuplicateForm(self):
         """Test the @@item_duplicate_form"""
         cfg = self.meetingConfig
