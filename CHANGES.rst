@@ -39,6 +39,10 @@ Changelog
   - Instead checking if current user in `proposingGroup`, `copyGroups`, ... just check if it has `View` access on item;
   - Test for `powerobservers` restriction (`MeetingConfig.restrictAccessToSecretItemsTo`) at the end to avoid an item creator
     that is also a powerobserver not having access to it's item.
+- Removed `MeetingItem.sendMailIfRelevant`, use `utils.sendMailIfRelevant` instead
+- Added email notification `adviceEditedOwner` that will notify the item owner when an advice is added/edited
+  in addition to existing `adviceEdited` that notifies every creators of the item `proposingGroup`
+- Added email notification `temPostponedNextMeeting` that will notify the item `proposingGroup` creators that item has been postponed next meeting
 
 4.1.23.3 (2020-04-30)
 ---------------------

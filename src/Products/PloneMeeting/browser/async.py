@@ -10,6 +10,7 @@ from Products.Five import BrowserView
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from Products.PloneMeeting.config import WriteBudgetInfos
 from Products.PloneMeeting.utils import notifyModifiedAndReindex
+from Products.PloneMeeting.utils import sendMailIfRelevant
 from zope.i18n import translate
 
 
@@ -77,7 +78,10 @@ class Discuss(BrowserView):
         if discussAction == 'ask':
             # I must send a mail to MeetingManagers for notifying them that a reviewer
             # wants to discuss this item.
-            sendMailEnabled = item.sendMailIfRelevant('askDiscussItem', 'MeetingManager', isRole=True)
+            sendMailEnabled = sendMailIfRelevant(item,
+                                                 'askDiscussItem',
+                                                 'MeetingManager',
+                                                 isRole=True)
             if sendMailEnabled:
                 msgId = 'to_discuss_ask_mail_sent'
             else:

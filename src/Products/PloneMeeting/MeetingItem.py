@@ -505,7 +505,7 @@ class MeetingItemWorkflowActions(object):
         # insert the item into the meeting
         self._insertItem(meeting)
         # We may have to send a mail.
-        self.context.sendMailIfRelevant('itemPresented', 'MeetingMember', isRole=True)
+        sendMailIfRelevant(self.context, 'itemPresented', 'MeetingMember', isRole=True)
 
     def _insertItem(self, meeting):
         """ """
@@ -613,7 +613,7 @@ class MeetingItemWorkflowActions(object):
            the copy is automatically validated and will be linked to this one.'''
         clonedItem = self._duplicateAndValidate(cloneEventAction='create_from_postponed_next_meeting')
         # Send, if configured, a mail to the person who created the item
-        clonedItem.sendMailIfRelevant('itemPostponedNextMeeting', 'Owner', isRole=True)
+        sendMailIfRelevant(clonedItem, 'itemPostponedNextMeeting', 'MeetingMember', isRole=True)
 
     security.declarePrivate('doDelay')
 
@@ -628,7 +628,7 @@ class MeetingItemWorkflowActions(object):
                                         keepProposingGroup=True,
                                         setCurrentAsPredecessor=True)
         # Send, if configured, a mail to the person who created the item
-        clonedItem.sendMailIfRelevant('itemDelayed', 'MeetingMember', isRole=True)
+        sendMailIfRelevant(clonedItem, 'itemDelayed', 'MeetingMember', isRole=True)
 
     security.declarePrivate('doCorrect')
 
@@ -641,7 +641,7 @@ class MeetingItemWorkflowActions(object):
         # Remove item from meeting if necessary when going to a state where item is not linked to a meeting
         if stateChange.new_state.id in ITEM_STATES_NOT_LINKED_TO_MEETING and self.context.hasMeeting():
             # We may have to send a mail
-            self.context.sendMailIfRelevant('itemUnpresented', 'MeetingMember', isRole=True)
+            sendMailIfRelevant(self.context, 'itemUnpresented', 'MeetingMember', isRole=True)
             # remove the item from the meeting
             self.context.getMeeting().removeItem(self.context)
         # if an item was returned to proposing group for corrections and that
@@ -649,7 +649,7 @@ class MeetingItemWorkflowActions(object):
         # send an email to warn the MeetingManagers if relevant
         if stateChange.old_state.id.startswith("returned_to_proposing_group"):
             # We may have to send a mail.
-            self.context.sendMailIfRelevant('returnedToMeetingManagers', 'MeetingManager', isRole=True)
+            sendMailIfRelevant(self.context, 'returnedToMeetingManagers', 'MeetingManager', isRole=True)
 
         if 'decide_item_when_back_to_meeting_from_returned_to_proposing_group' in self.cfg.getWorkflowAdaptations() \
                 and stateChange.transition.getId() == 'backTo_itemfrozen_from_returned_to_proposing_group' \
@@ -673,7 +673,7 @@ class MeetingItemWorkflowActions(object):
 
     def doReturn_to_proposing_group(self, stateChange):
         '''Send an email when returned to proposing group if relevant...'''
-        self.context.sendMailIfRelevant('returnedToProposingGroup', 'MeetingMember', isRole=True)
+        sendMailIfRelevant(self.context, 'returnedToProposingGroup', 'MeetingMember', isRole=True)
 
     security.declarePrivate('doGoTo_returned_to_proposing_group_proposed')
 
@@ -3614,12 +3614,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''
         raise NotImplementedError
 
-    security.declarePublic('sendMailIfRelevant')
-
-    def sendMailIfRelevant(self, event, permissionOrRole, isRole=False, customEvent=False, mapping={}):
-        return sendMailIfRelevant(self, event, permissionOrRole, isRole,
-                                  customEvent, mapping)
-
     def sendStateDependingMailIfRelevant(self, old_review_state, new_review_state):
         """Send notifications that depends on old/new review_state."""
         self._sendAdviceToGiveMailIfRelevant(old_review_state, new_review_state)
@@ -5858,8 +5852,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         # Send an email to the user being able to modify the new item if relevant
         mapping = {'meetingConfigTitle': destMeetingConfig.Title(), }
-        newItem.sendMailIfRelevant('itemClonedToThisMC', ModifyPortalContent,
-                                   isRole=False, mapping=mapping)
+        sendMailIfRelevant(newItem,
+                           'itemClonedToThisMC',
+                           ModifyPortalContent,
+                           isRole=False,
+                           mapping=mapping)
         plone_utils.addPortalMessage(
             translate('sendto_success',
                       mapping={'cfgTitle': safe_unicode(destMeetingConfig.Title())},

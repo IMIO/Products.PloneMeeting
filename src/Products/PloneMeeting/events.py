@@ -666,7 +666,8 @@ def onAdviceAdded(advice, event):
     _advice_update_item(item)
 
     # Send mail if relevant
-    item.sendMailIfRelevant('adviceEdited', 'MeetingMember', isRole=True)
+    sendMailIfRelevant(item, 'adviceEdited', 'MeetingMember', isRole=True)
+    sendMailIfRelevant(item, 'adviceEditedOwner', 'Owner', isRole=True)
 
 
 def onAdviceModified(advice, event):
@@ -689,6 +690,10 @@ def onAdviceModified(advice, event):
 
     # update item
     _advice_update_item(item)
+
+    # Send mail if relevant
+    sendMailIfRelevant(item, 'adviceEdited', 'MeetingMember', isRole=True)
+    sendMailIfRelevant(item, 'adviceEditedOwner', 'Owner', isRole=True)
 
 
 def onAdviceEditFinished(advice, event):
@@ -741,7 +746,7 @@ def onAnnexAdded(annex, event):
                 parent.updateLocalRoles(invalidate=True)
 
             # Potentially I must notify MeetingManagers through email.
-            parent.sendMailIfRelevant('annexAdded', 'MeetingManager', isRole=True)
+            sendMailIfRelevant(parent, 'annexAdded', 'MeetingManager', isRole=True)
 
         # update parent modificationDate, it is used for caching and co
         # and reindex parent relevant indexes
