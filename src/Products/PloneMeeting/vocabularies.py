@@ -1927,12 +1927,29 @@ ContainedDecisionAnnexesVocabularyFactory = ContainedDecisionAnnexesVocabulary()
 class PMUsers(UsersFactory):
     """Append ' (userid)' to term title."""
 
+    def _user_fullname(self, userid):
+        """ """
+        storage = self.mutable_properties._storage
+        data = storage.get(userid, None)
+        if data is not None:
+            return data.get('fullname', '') or userid
+        else:
+            return userid
+
     def __call__(self, context, query=''):
-        lazy_generator = super(PMUsers, self).__call__(context, query=query)._terms
+        acl_users = api.portal.get_tool('acl_users')
+        self.mutable_properties = acl_users.mutable_properties
+        users = acl_users.searchUsers(sort_by='')
         terms = []
-        for term in lazy_generator:
-            term.title = term.title + ' ({0})'.format(term.token)
-            terms.append(term)
+        # manage duplicates, this can be the case when using LDAP and same userid in source_users
+        userids = []
+        for user in users:
+            if user['id'] not in userids:
+                userids.append(user['id'])
+                term_title = u'{0} ({1})'.format(safe_unicode(self._user_fullname(user['id'])), user['id'])
+                term = SimpleTerm(user['id'], user['id'], term_title)
+                terms.append(term)
+        terms = humansorted(terms, key=attrgetter('title'))
         return SimpleVocabulary(terms)
 
 PMUsersFactory = PMUsers()

@@ -5,8 +5,7 @@ Changelog
 4.1.25 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- Fixed `PMUsers` vocabulary to avoid duplicates when using `LDAP` where same userid  may be defined in `LDAP` and in `source_users`.
 
 4.1.24 (2020-05-08)
 -------------------
