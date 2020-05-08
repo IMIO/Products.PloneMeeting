@@ -590,13 +590,16 @@ class UpdateDelayAwareAdvicesView(BrowserView):
         brains = catalog(**query)
         numberOfBrains = len(brains)
         i = 1
+        logger.info('Updating adviceIndex for %s items' % str(numberOfBrains))
         for brain in brains:
             item = brain.getObject()
-            logger.info('%d/%d Updating adviceIndex of item at %s' % (i,
-                                                                      numberOfBrains,
-                                                                      '/'.join(item.getPhysicalPath())))
+            logger.info('%d/%d Updating adviceIndex of item at %s' % (
+                i,
+                numberOfBrains,
+                '/'.join(item.getPhysicalPath())))
             i = i + 1
             item.updateLocalRoles()
+        logger.info('Done.')
 
 
 class DeleteHistoryEventView(BrowserView):

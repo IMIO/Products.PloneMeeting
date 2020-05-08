@@ -32,6 +32,8 @@ Changelog
   - renamed adaptatble method `Meeting.showRemoveSelectedItemsAction` to `Meeting.showInsertOrRemoveSelectedItemsAction`.
 - Fixed links displayed in table of available items on `meeting_view` so it is correctly opened outside the available items `iframe`
 - When duplicating an item, keep original `proposingGroup` if current user is creator for it, if not, creator first `proposingGroup` is used
+- While updating delay-aware advices during night cron, add logging even if 0 items to update
+  or we can not see if there was nothing to do or wrong configuration
 
 4.1.23.3 (2020-04-30)
 ---------------------
