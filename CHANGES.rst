@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.1.24 (unreleased)
+4.1.24 (2020-05-08)
 -------------------
 
 - In `Migrate_To_4105._cleanFTWLabels`, be sure to keep old values in case still a `PersistentList` instead removing the annotation
