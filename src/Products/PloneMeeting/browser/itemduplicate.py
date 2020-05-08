@@ -21,6 +21,7 @@
 #
 
 from AccessControl import Unauthorized
+from collective.contact.plonegroup.utils import get_plone_group_id
 from imio.helpers.content import get_vocab
 from plone import api
 from plone.directives import form
@@ -127,6 +128,7 @@ class DuplicateItemForm(z3c_form.Form):
 
     def _doApply(self, data):
         """ """
+        tool = api.portal.get_tool('portal_plonemeeting')
         user = api.user.get_current()
         cloneEventAction = DUPLICATE_EVENT_ACTION
         setCurrentAsPredecessor = False
@@ -142,11 +144,17 @@ class DuplicateItemForm(z3c_form.Form):
         # if we unselect every annexes, we force copyAnnexes/copyDecisionAnnexes to False
         copyAnnexes = data['annex_ids'] and True or False
         copyDecisionAnnexes = data['annex_decision_ids'] and True or False
+        # keep proposingGroup if current user creator for it
+        keepProposingGroup = False
+        proposingGroup = self.context.getProposingGroup()
+        if get_plone_group_id(proposingGroup, 'creators') in tool.get_plone_groups_for_user():
+            keepProposingGroup = True
         newItem = self.context.clone(
             copyAnnexes=copyAnnexes,
             copyDecisionAnnexes=copyDecisionAnnexes,
             newOwnerId=user.id,
             cloneEventAction=cloneEventAction,
+            keepProposingGroup=keepProposingGroup,
             setCurrentAsPredecessor=setCurrentAsPredecessor,
             manualLinkToPredecessor=manualLinkToPredecessor,
             keptAnnexIds=data['annex_ids'],

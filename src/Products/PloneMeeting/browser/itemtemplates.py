@@ -73,7 +73,7 @@ class ItemTemplateView(BrowserView):
         # for this proposingGroup, we keep it
         keepProposingGroup = False
         proposingGroup = templateItem.getProposingGroup()
-        if get_plone_group_id(proposingGroup, 'creators') in member.getGroups():
+        if get_plone_group_id(proposingGroup, 'creators') in self.tool.get_plone_groups_for_user():
             keepProposingGroup = True
         newItem = templateItem.clone(newOwnerId=member.id,
                                      cloneEventAction='create_meeting_item_from_template',

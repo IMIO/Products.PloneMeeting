@@ -2652,6 +2652,33 @@ class testMeetingItem(PloneMeetingTestCase):
         newItem = form._doApply(data)
         self.assertEqual(newItem.objectIds(), [])
 
+    def test_pm_ItemDuplicateFormKeepsProposingGroupIfRelevant(self):
+        """Test the @@item_duplicate_form that will keep original proposingGroup
+           if current user is creator for it, or if not, that will switch to
+           first proposingGroup of the user."""
+        cfg = self.meetingConfig
+        cfg.setUseCopies(True)
+        cfg.setSelectableCopyGroups((self.vendors_creators, ))
+        cfg.setItemCopyGroupsStates(('itemcreated', 'validated', ))
+        cfg.setEnableItemDuplication(True)
+        self._addPrincipalToGroup('pmCreator1', self.vendors_creators)
+        # pmCreator1 may create items for both groups
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.assertEqual(item.getProposingGroup(), self.developers_uid)
+        form = item.restrictedTraverse('@@item_duplicate_form').form_instance
+        data = {'keep_link': False, 'annex_ids': [], 'annex_decision_ids': []}
+        form.update()
+        newItem = form._doApply(data)
+        self.assertEqual(item.getProposingGroup(), newItem.getProposingGroup())
+        # now when proposingGroup is vendors
+        item.setProposingGroup(self.vendors_uid)
+        item._update_after_edit()
+        form.update()
+        newItem = form._doApply(data)
+        self.assertEqual(item.getProposingGroup(), self.vendors_uid)
+        self.assertEqual(item.getProposingGroup(), newItem.getProposingGroup())
+
     def test_pm_IsLateFor(self):
         '''
           Test the isLateFor method, so when an item is considered as late when it

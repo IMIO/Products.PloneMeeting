@@ -447,7 +447,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             return []
         user_groups = user.getGroups()
         if org_uid:
-            user_groups = [plone_group for plone_group in user_groups if plone_group.startswith(org_uid)]
+            user_groups = [plone_group for plone_group in user_groups
+                           if plone_group.startswith(org_uid)]
         return sorted(user_groups)
 
     def group_is_not_empty_cachekey(method, self, org_uid, suffix, user_id=None):
