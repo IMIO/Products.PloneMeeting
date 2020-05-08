@@ -419,7 +419,8 @@ class MeetingConfigDescriptor(Descriptor):
                          'recordItemHistoryStates', 'usedMeetingAttributes',
                          'historizedMeetingAttributes', 'recordMeetingHistoryStates',
                          'availableItemsListVisibleColumns', 'itemsListVisibleColumns', 'itemsListVisibleFields',
-                         'itemColumns', 'itemActionsColumnConfig', 'meetingColumns', 'toDoListSearches',
+                         'itemColumns', 'itemActionsColumnConfig', 'meetingColumns',
+                         'displayAvailableItemsTo', 'toDoListSearches',
                          'dashboardItemsListingsFilters', 'dashboardMeetingAvailableItemsFilters',
                          'dashboardMeetingLinkedItemsFilters', 'groupsHiddenInDashboardFilter',
                          'usersHiddenInDashboardFilter', 'workflowAdaptations', 'transitionsToConfirm',
@@ -658,6 +659,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.itemActionsColumnConfig = ['delete', 'history']
         # columns shown on meetings listings.  Order is important!
         self.meetingColumns = ['Creator', 'CreationDate', 'review_state', 'actions']
+        self.displayAvailableItemsTo = []
         # searches display on portlet_todo
         self.toDoListSearches = []
         # advanced filters shown

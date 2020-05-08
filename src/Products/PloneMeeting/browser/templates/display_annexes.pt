@@ -11,6 +11,7 @@
                 <div style="float: left; height: 26px;">-</div>
                 <div style="float: right;">
                   <a tal:define="anchor_name python: view.annex_portal_type == 'annex' and 'annexes' or 'annexes_decision'"
+                     target='_parent'
                      tal:attributes="href string:${context/absolute_url}/@@categorized-annexes#${anchor_name}">
                     <img class="categorized_elements_more_infos_icon"
                          src="more_infos.png"

@@ -146,6 +146,8 @@ CONFIGGROUPPREFIX = 'configgroup_'
 PROPOSINGGROUPPREFIX = 'suffix_proposing_group_'
 READERPREFIX = 'reader_'
 SUFFIXPROFILEPREFIX = 'suffix_profile_'
+POWEROBSERVERPREFIX = 'powerobserver__'
+
 
 schema = Schema((
 
@@ -1402,6 +1404,23 @@ schema = Schema((
         multiValued=1,
         vocabulary='listMeetingColumns',
         default=defValues.meetingColumns,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    LinesField(
+        name='displayAvailableItemsTo',
+        widget=MultiSelectionWidget(
+            description="DisplayAvailableItemsTo",
+            description_msgid="display_available_items_to_descr",
+            format="checkbox",
+            label='Displayavailableitemsto',
+            label_msgid='PloneMeeting_label_displayAvailableItemsTo',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="gui",
+        multiValued=1,
+        vocabulary='listDisplayAvailableItemsTo',
+        default=defValues.displayAvailableItemsTo,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
@@ -4437,6 +4456,18 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def _extraMeetingRelatedColumns(self):
         """ """
         return []
+
+    security.declarePrivate('listDisplayAvailableItemsTo')
+
+    def listDisplayAvailableItemsTo(self):
+        d = "PloneMeeting"
+        res = DisplayList((
+            ("app_users", translate('app_users', domain=d, context=self.REQUEST)),
+        ))
+        for po_infos in self.getPowerObservers():
+            res.add('{0}{1}'.format(POWEROBSERVERPREFIX, po_infos['row_id']),
+                    po_infos['label'])
+        return res
 
     security.declarePrivate('listItemActionsColumnConfig')
 

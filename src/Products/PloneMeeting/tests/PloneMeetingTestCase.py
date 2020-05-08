@@ -573,3 +573,17 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         gsettings.auto_convert = enable
         gsettings.auto_layout_file_types = CONVERTABLE_TYPES.keys()
         return gsettings
+
+    def _enableField(self, field_name, cfg=None, related_to='MeetingItem'):
+        """ """
+        cfg = cfg or self.meetingConfig
+        if related_to == 'MeetingItem':
+            usedItemAttrs = cfg.getUsedItemAttributes()
+            if field_name not in usedItemAttrs:
+                usedItemAttrs += (field_name, )
+                cfg.setUsedItemAttributes(usedItemAttrs)
+        elif related_to == 'Meeting':
+            usedMeetingAttrs = cfg.getUsedMeetingAttributes()
+            if field_name not in usedMeetingAttrs:
+                usedMeetingAttrs += (field_name, )
+                cfg.setUsedMeetingAttributes(usedMeetingAttrs)

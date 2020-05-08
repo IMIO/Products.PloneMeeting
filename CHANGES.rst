@@ -26,6 +26,11 @@ Changelog
 - Added possibility to select organizations as item initiators (`MeetingItem.itemInitiator`) in addition to held positions
 - Removed field `MeetingItem.itemIsSigned` from `meetingitem_edit`, it is managed thru the `meetingitem_view`
 - Fix `Migrate_To_4105._uncatalogWrongBrains` that was breaking the `UID` index for existing objects
+- Added possibility to display available items on meeting view to other users than (Meeting)Managers :
+
+  - added parameter `MeetingConfig.displayAvailableItemsTo`, possibility to select `Application users` and every `Power obsevers` profiles;
+  - renamed adaptatble method `Meeting.showRemoveSelectedItemsAction` to `Meeting.showInsertOrRemoveSelectedItemsAction`.
+- Fixed links displayed in table of available items on `meeting_view` so it is correctly opened outside the available items `iframe`
 
 4.1.23.3 (2020-04-30)
 ---------------------
