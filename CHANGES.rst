@@ -2,10 +2,12 @@ Changelog
 =========
 
 
-4.1.25 (unreleased)
--------------------
+4.1.24.1 (unreleased)
+---------------------
 
-- Fixed `PMUsers` vocabulary to avoid duplicates when using `LDAP` where same userid  may be defined in `LDAP` and in `source_users`.
+- Fixed `PMUsers` vocabulary to avoid duplicates when using `LDAP` where same userid  may be defined in `LDAP` and in `source_users`
+- Relaunch steps `_moveMCParameterToWFA` and `_addItemNonAttendeesAttributeToMeetings` from `Migrate_To_4104` in `Migrate_To_4105`
+  for some instances that had been deployed in between
 
 4.1.24 (2020-05-08)
 -------------------
@@ -14,7 +16,7 @@ Changelog
 - In `Migrate_To_4105._removeBrokenAnnexes`, manage parent's modification date to keep old value because removing an annex
   will `notifyModifiedAndReindex` it's container
 - In `@@item_duplicate_form`, disable annexes if user does not have the permission to `Add annex/Add annexDecision` on future created item
-- Use `OrgaPrettyLinkWithAdditionalInfosColumn` instead `PrettyLinkColumn` in dashboards displaying `persons` and `held_positions`.
+- Use `OrgaPrettyLinkWithAdditionalInfosColumn` instead `PrettyLinkColumn` in dashboards displaying `persons` and `held_positions`
 - Added upgrade step to 4106
 - Added `Migrate_To_4106._umarkCreationFlagForEveryItems` to make sure existing items have `at_creation_flag=False`
   or it breaks `MeetingItem.setTakenOverBy/MeetingItem.setHistorizedTakenOverBy`

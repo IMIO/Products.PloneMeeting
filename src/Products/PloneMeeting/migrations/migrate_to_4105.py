@@ -4,12 +4,12 @@ from ftw.labels.interfaces import ILabelSupport
 from ftw.labels.labeling import ILabeling
 from persistent.mapping import PersistentMapping
 from Products.PloneMeeting.migrations import logger
-from Products.PloneMeeting.migrations import Migrator
+from Products.PloneMeeting.migrations.migrate_to_4104 import Migrate_To_4104
 from Products.ZCatalog.ProgressHandler import ZLogHandler
 from zope.annotation.interfaces import IAnnotations
 
 
-class Migrate_To_4105(Migrator):
+class Migrate_To_4105(Migrate_To_4104):
 
     def _removeBrokenAnnexes(self):
         """ """
@@ -98,6 +98,9 @@ class Migrate_To_4105(Migrator):
             uncatalogued = self._uncatalogWrongBrains()
         self._removeBrokenAnnexes()
         self._cleanFTWLabels()
+        # from Migrate_To_4104
+        self._moveMCParameterToWFA()
+        self._addItemNonAttendeesAttributeToMeetings()
         # reapply MeetingItem.xml before reloadMeetingConfigs
         # that will remove the 'Duplicate and keep link' action
         self.ps.runImportStepFromProfile('profile-Products.PloneMeeting:default', 'typeinfo')
@@ -112,8 +115,10 @@ def migrate(context):
        1) Clean wrong paths in catalog (ending with '/');
        2) Remove broken annexes with no content_category defined due to quickupload ConflictError management;
        3) Clean ftw.labels empty annotations, this make sure to not have any PersistentList stored;
-       4) Update portal_types to remove action 'Duplicate and keep link' for MeetingItem portal_types;
-       5) Install every pending upgrades.
+       5) From Migrate_To_4104, move MeetingConfig.meetingManagerMayCorrectClosedMeeting to a workflowAdaptation;
+       6) From Migrate_To_4104, add new attribute 'itemNonAttendees' to every meetings;
+       7) Update portal_types to remove action 'Duplicate and keep link' for MeetingItem portal_types;
+       8) Install every pending upgrades.
     '''
     migrator = Migrate_To_4105(context)
     migrator.run()
