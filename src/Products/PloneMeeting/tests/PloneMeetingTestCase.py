@@ -41,6 +41,7 @@ from plone.app.testing.helpers import setRoles
 from plone.dexterity.utils import createContentInContainer
 from Products.Five.browser import BrowserView
 from Products.PloneMeeting.config import DEFAULT_USER_PASSWORD
+from Products.PloneMeeting.config import ITEM_DEFAULT_TEMPLATE_ID
 from Products.PloneMeeting.config import TOOL_FOLDER_ANNEX_TYPES
 from Products.PloneMeeting.Meeting import Meeting_schema
 from Products.PloneMeeting.MeetingItem import MeetingItem_schema
@@ -492,6 +493,13 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                 subfolder = getattr(subfolder, subfolderId)
             objectIds_to_remove = []
             for obj in subfolder.objectValues():
+                # can not remove the ITEM_DEFAULT_TEMPLATE_ID
+                if folderId == 'itemtemplates' and \
+                   obj.getId() == ITEM_DEFAULT_TEMPLATE_ID \
+                   and obj.queryState() == 'active':
+                    # disable it instead removing it
+                    api.content.transition(obj, 'deactivate')
+                    continue
                 objectIds_to_remove.append(obj.getId())
             subfolder.manage_delObjects(ids=objectIds_to_remove)
         self.changeUser(currentUser)

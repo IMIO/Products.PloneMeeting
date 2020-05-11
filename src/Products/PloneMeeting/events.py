@@ -24,6 +24,7 @@ from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import BARCODE_INSERTED_ATTR_ID
 from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
+from Products.PloneMeeting.config import ITEM_DEFAULT_TEMPLATE_ID
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.config import ITEMTEMPLATESMANAGERS_GROUP_SUFFIX
@@ -589,7 +590,9 @@ def onItemModified(item, event):
         # reactivate rename_after_creation as long as item is in it's initial_state
         # if not currently creating an element.  Indeed adding an image to an item
         # that is in the creation process will trigger modified event
-        if item._at_rename_after_creation and not item.checkCreationFlag():
+        if item._at_rename_after_creation and \
+           not item.checkCreationFlag() and \
+           not (item.isDefinedInTool() and item.getId() == ITEM_DEFAULT_TEMPLATE_ID):
             wfTool = api.portal.get_tool('portal_workflow')
             itemWF = wfTool.getWorkflowsFor(item)[0]
             initial_state = itemWF.initial_state
@@ -844,14 +847,11 @@ def _annexToPrintChanged(annex, event):
 
 def onItemEditBegun(item, event):
     '''When an item edit begun, if it is an item in creation, we check that
-       if MeetingConfig.itemCreatedOnlyUsingTemplate is True, the user is not trying to create
-       an fresh item not from an item template.  Do not check this for items added to the
+       the user is not trying to create an fresh item not from an item template.
+       Do not check this for items added to the
        configuration (recurring items and item templates).'''
     if item.isTemporary() and not item.isDefinedInTool():
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(item)
-        if cfg.getItemCreatedOnlyUsingTemplate():
-            raise Unauthorized
+        raise Unauthorized
 
 
 def onItemEditCancelled(item, event):
@@ -861,6 +861,27 @@ def onItemEditCancelled(item, event):
     if item._at_creation_flag and not item.isTemporary():
         parent = item.getParentNode()
         parent.manage_delObjects(ids=[item.getId()])
+
+
+def onItemWillBeRemoved(item, event):
+    '''Do not remove the ITEM_DEFAULT_TEMPLATE_ID.'''
+    # If we are trying to remove the whole Plone Site, bypass this hook.
+    if event.object.meta_type == 'Plone Site':
+        return
+
+    # can not remove the default item template
+    if item.isDefinedInTool(item_type='itemtemplate') and \
+       item.getId() == ITEM_DEFAULT_TEMPLATE_ID:
+        msg = translate(
+            u"You cannot delete the default item template, "
+            u"but you can deactivate it if necessary!",
+            domain='PloneMeeting',
+            context=item.REQUEST)
+        api.portal.show_message(
+            message=msg,
+            request=item.REQUEST,
+            type='error')
+        raise Redirect(item.REQUEST.get('HTTP_REFERER'))
 
 
 def onItemRemoved(item, event):
@@ -1031,6 +1052,10 @@ def _is_held_pos_uid_used_by(held_pos_uid, obj):
 def onHeldPositionWillBeRemoved(held_pos, event):
     '''Do not delete a held_position that have been used on a meeting or
        is selected in a MeetingConfig.orderedContacts.'''
+    # If we are trying to remove the whole Plone Site, bypass this hook.
+    if event.object.meta_type == 'Plone Site':
+        return
+
     held_pos_uid = held_pos.UID()
     # first check MeetingConfigs
     tool = api.portal.get_tool('portal_plonemeeting')

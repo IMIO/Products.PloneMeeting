@@ -8,6 +8,11 @@ Changelog
 - Fixed `PMUsers` vocabulary to avoid duplicates when using `LDAP` where same userid  may be defined in `LDAP` and in `source_users`
 - Relaunch steps `_moveMCParameterToWFA` and `_addItemNonAttendeesAttributeToMeetings` from `Migrate_To_4104` in `Migrate_To_4105`
   for some instances that had been deployed in between
+- Refactored the way a blank item is created to avoid impossibility to insert image durint creation :
+
+  - every items, blank or not are created from an item template, this avoid use of `portal_factory`;
+  - a special not removale `Default item template` is added in the `MeetingConfig` and is used as basis for creating a blank item;
+  - parameter `MeetingConfig.itemCreatedOnlyUsingTemplate` is removed, deactivating the `Default item template` is the equivalent.
 
 4.1.24 (2020-05-08)
 -------------------

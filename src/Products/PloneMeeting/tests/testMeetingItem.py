@@ -65,6 +65,7 @@ from Products.PloneMeeting.config import DUPLICATE_AND_KEEP_LINK_EVENT_ACTION
 from Products.PloneMeeting.config import EXTRA_COPIED_FIELDS_FROM_ITEM_TEMPLATE
 from Products.PloneMeeting.config import EXTRA_COPIED_FIELDS_SAME_MC
 from Products.PloneMeeting.config import HISTORY_COMMENT_NOT_VIEWABLE
+from Products.PloneMeeting.config import ITEM_DEFAULT_TEMPLATE_ID
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
 from Products.PloneMeeting.config import READER_USECASES
@@ -85,6 +86,7 @@ from Products.PloneMeeting.utils import ON_TRANSITION_TRANSFORM_TAL_EXPR_ERROR
 from Products.PloneMeeting.utils import setFieldFromAjax
 from Products.PluginIndexes.common.UnIndex import _marker
 from Products.statusmessages.interfaces import IStatusMessage
+from zExceptions import Redirect
 from zope.annotation.interfaces import IAnnotations
 from zope.component import getAdapter
 from zope.event import notify
@@ -4663,19 +4665,12 @@ class testMeetingItem(PloneMeetingTestCase):
            using createObject?type_name=MeetingItemXXX, he gets Unauthorized, except
            if the item is added in the configuration, for managing item templates for example.'''
         cfg = self.meetingConfig
-        # make sure user may add an item without a template for now
-        cfg.setItemCreatedOnlyUsingTemplate(False)
         self.changeUser('pmCreator1')
         pmFolder = self.getMeetingFolder()
         # create an item in portal_factory
         itemTypeName = cfg.getItemTypeName()
         temp_item = pmFolder.restrictedTraverse('portal_factory/{0}/tmp_id'.format(itemTypeName))
-        # in AT, the EditBegunEvent is triggered on the edit form by the @@at_lifecycle_view
-        # accessing it for now does work on an item in the creation process
         self.assertTrue(temp_item._at_creation_flag)
-        self.assertIsNone(temp_item.restrictedTraverse('@@at_lifecycle_view').begin_edit())
-        # now make only item creation possible using a template
-        cfg.setItemCreatedOnlyUsingTemplate(True)
         self.assertRaises(Unauthorized, temp_item.restrictedTraverse('@@at_lifecycle_view').begin_edit)
         # create an item from a template
         view = pmFolder.restrictedTraverse('@@createitemfromtemplate')
@@ -5613,6 +5608,35 @@ class testMeetingItem(PloneMeetingTestCase):
         download_view = self.portal.unrestrictedTraverse(
             str(item.categorized_elements.values()[0]['download_url']))
         self.assertEqual(download_view().read(), 'Testing file\n')
+
+    def test_pm_ItemRenamedExceptedDefaultItemTemplate(self):
+        """The default item template id is never changed, but other item templates do."""
+        cfg = self.meetingConfig
+        self.changeUser('templatemanager1')
+        # create new item template
+        itemTemplate = self.create('MeetingItemTemplate')
+        self.assertEqual(itemTemplate.getId(), 'o1')
+        itemTemplate.setTitle('My new template title')
+        notify(ObjectModifiedEvent(itemTemplate))
+        self.assertEqual(itemTemplate.getId(), 'my-new-template-title')
+        # default item template does not change
+        default_template = cfg.itemtemplates.get(ITEM_DEFAULT_TEMPLATE_ID)
+        self.assertEqual(default_template.getId(), ITEM_DEFAULT_TEMPLATE_ID)
+        self.assertEqual(default_template.Title(), 'Default ' + cfg.Title() + ' item')
+        default_template.setTitle('My new default template title')
+        notify(ObjectModifiedEvent(default_template))
+        self.assertEqual(default_template.getId(), ITEM_DEFAULT_TEMPLATE_ID)
+        self.assertEqual(default_template.Title(), 'My new default template title')
+        # creating an item from the default item template behaves normally
+        self.changeUser('pmCreator1')
+        pmFolder = self.getMeetingFolder()
+        view = pmFolder.restrictedTraverse('@@createitemfromtemplate')
+        newItem = view.createItemFromTemplate(default_template.UID())
+        self.assertEqual(newItem.getId(), 'default-empty-item-template')
+        newItem.setTitle('My new item title')
+        # save button
+        newItem.processForm()
+        self.assertEqual(newItem.getId(), 'my-new-item-title')
 
     def _notAbleToAddSubContent(self, item):
         for add_subcontent_perm in ADD_SUBCONTENT_PERMISSIONS:
@@ -6746,6 +6770,17 @@ class testMeetingItem(PloneMeetingTestCase):
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.attributeIsUsed')
         self.assertTrue(widget.testCondition(item.aq_inner.aq_parent, self.portal, item))
         self.assertTrue(item.adapted().showObservations())
+
+    def test_pm_DefaultItemTemplateNotRemovable(self):
+        """The default item template may not be removed."""
+        cfg = self.meetingConfig
+        default_template = cfg.itemtemplates.get(ITEM_DEFAULT_TEMPLATE_ID)
+        # not deletable as Manager...
+        self.changeUser('siteadmin')
+        self.assertRaises(Redirect, api.content.delete, default_template)
+        # ... nor as item templates manager
+        self.changeUser('templatemanager1')
+        self.assertRaises(Redirect, api.content.delete, default_template)
 
 
 def test_suite():

@@ -9,8 +9,9 @@
          tal:condition="userIsAmongCreators">
         <a id="newItemCreation" href="#"
            style="display: inline;"
-           tal:condition="not: cfg/getItemCreatedOnlyUsingTemplate"
-           tal:attributes="href string:${meetingFolder/absolute_url}/createObject?type_name=MeetingItem${cfg/getShortName};">
+           tal:define="defaultUID view/_get_default_item_template_UID"
+           tal:condition="defaultUID"
+           tal:attributes="href string:${meetingFolder/absolute_url}/@@createitemfromtemplate?templateUID=${defaultUID}">
             <img tal:attributes="src string:$portal_url/new.png"
               title="create_meeting_item" i18n:attributes="title" />
         </a>

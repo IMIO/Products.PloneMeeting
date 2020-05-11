@@ -17,6 +17,10 @@
               handler=".events.onItemModified" />
 
   <subscriber for=".interfaces.IMeetingItem
+                   OFS.interfaces.IObjectWillBeRemovedEvent"
+              handler=".events.onItemWillBeRemoved" />
+
+  <subscriber for=".interfaces.IMeetingItem
                    zope.container.interfaces.IObjectRemovedEvent"
               handler=".events.onItemRemoved" />
 

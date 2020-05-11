@@ -204,6 +204,8 @@ TOOL_FOLDER_POD_TEMPLATES = 'podtemplates'
 
 ITEM_NO_PREFERRED_MEETING_VALUE = "whatever"
 
+ITEM_DEFAULT_TEMPLATE_ID = "default-empty-item-template"
+
 # default fields kept when an item is cloned
 DEFAULT_COPIED_FIELDS = ['title', 'description', 'detailedDescription', 'motivation',
                          'decision', 'decisionSuite', 'budgetInfos', 'budgetRelated', 'sendToAuthority',

@@ -487,7 +487,6 @@ class MeetingConfigDescriptor(Descriptor):
         # the identifier of the current form may be specified here
         # (ie 'P5', 'CC00_06'...)
         self.configVersion = ''
-        self.itemCreatedOnlyUsingTemplate = False
         self.annexToPrintMode = 'enabled_for_info'
         self.keepOriginalToPrintOfClonedItems = True
         self.removeAnnexesPreviewsOnMeetingClosure = False
