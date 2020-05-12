@@ -60,6 +60,7 @@ from Products.PloneMeeting.config import ITEM_DEFAULT_TEMPLATE_ID
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.interfaces import IMeeting
 from Products.PloneMeeting.utils import get_annexes
+from Products.PloneMeeting.utils import is_editing
 from Products.PloneMeeting.utils import normalize_id
 from Products.PloneMeeting.utils import sendMail
 from Products.PloneMeeting.utils import setFieldFromAjax
@@ -489,6 +490,9 @@ class PMRenderCategoryView(IDRenderCategoryView):
         self.cfg = self.tool.getMeetingConfig(self.context)
         self.member = api.user.get_current()
         return super(PMRenderCategoryView, self).__call__(widget)
+
+    def _is_editing(self):
+        return is_editing()
 
     def templateItems(self):
         '''Check if there are item templates defined or not.'''
