@@ -185,7 +185,7 @@
             <tr tal:repeat="mUser allUsers">
                   <td class="draggable">⣿</td>
                   <tal:defines define="muid mUser/UID;">
-                    <td><img tal:attributes="src string:${mUser/getIcon}" /> <b tal:content="mUser/get_short_title"></b></td>
+                    <td><img tal:attributes="src string:${mUser/getIconURL}" /> <b tal:content="mUser/get_short_title"></b></td>
                     <td align="center">
                       <input type="checkbox" class="noborder"
                              tal:define="cbid python: 'muser_%s_attendee' % muid;"
@@ -255,7 +255,7 @@
                                   tal:condition="python: ouid != muid"
                                   tal:content="oUser/get_short_title"
                                   tal:attributes="value value;
-                                                  data-icon string:held_position_icon.png;
+                                                  data-icon string:${portal_url}/held_position_icon.png;
                                                   style python: test(show, '', 'display:none');
                                                   selected python: test(errors, value in request.get('meeting_replacements', []), (muid in userReplacements) and (userReplacements[muid]==ouid))" >
                           </option>
