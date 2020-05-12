@@ -390,7 +390,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         item.setBudgetRelated(True)
         item._update_after_edit()
         # the automatic advice has been asked
-        self.assertEquals(item.adviceIndex[self.developers_uid]['row_id'], 'unique_id_123')
+        self.assertEqual(item.adviceIndex[self.developers_uid]['row_id'], 'unique_id_123')
         # current config is still valid
         self.failIf(cfg.validate_customAdvisers([originalCustomAdvisers, ]))
         # now we can not change a logical field, aka
@@ -439,7 +439,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                                        mapping={'item_url': item.absolute_url(),
                                                 'adviser_group': 'Developers', },
                                        context=self.portal.REQUEST)
-        self.assertEquals(cfg.validate_customAdvisers([]), can_not_remove_msg)
+        self.assertEqual(cfg.validate_customAdvisers([]), can_not_remove_msg)
 
         # if the 'for_item_created_until' date was set, it validates if not changed
         # even if the 'for_item_created_until' is now past
@@ -530,8 +530,7 @@ class testMeetingConfig(PloneMeetingTestCase):
             mapping={'groupName': org.get_full_title()},
             context=self.portal.REQUEST)
         customAdvisers[0]['is_linked_to_previous_row'] = '1'
-        self.assertEquals(cfg.validate_customAdvisers(customAdvisers),
-                          first_row_msg)
+        self.assertEqual(cfg.validate_customAdvisers(customAdvisers), first_row_msg)
         customAdvisers[0]['is_linked_to_previous_row'] = '0'
 
         # check that 'is_linked_to_previous_row'
@@ -555,8 +554,7 @@ class testMeetingConfig(PloneMeetingTestCase):
             domain='PloneMeeting',
             mapping={'groupName': org.get_full_title()},
             context=self.portal.REQUEST)
-        self.assertEquals(cfg.validate_customAdvisers(customAdvisers),
-                          row_not_delay_aware_msg)
+        self.assertEqual(cfg.validate_customAdvisers(customAdvisers), row_not_delay_aware_msg)
 
         # check that 'is_linked_to_previous_row'
         # can only be set if previous row is also a delay-aware row
@@ -568,8 +566,7 @@ class testMeetingConfig(PloneMeetingTestCase):
             domain='PloneMeeting',
             mapping={'groupName': org.get_full_title()},
             context=self.portal.REQUEST)
-        self.assertEquals(cfg.validate_customAdvisers(customAdvisers),
-                          previous_row_not_delay_aware_msg)
+        self.assertEqual(cfg.validate_customAdvisers(customAdvisers), previous_row_not_delay_aware_msg)
 
         # check that if previous row use another group, it does not validate
         # make first row a delay-aware advice, then change group
@@ -581,8 +578,7 @@ class testMeetingConfig(PloneMeetingTestCase):
             domain='PloneMeeting',
             mapping={'groupName': org.get_full_title()},
             context=self.portal.REQUEST)
-        self.assertEquals(cfg.validate_customAdvisers(customAdvisers),
-                          previous_row_not_same_group_msg)
+        self.assertEqual(cfg.validate_customAdvisers(customAdvisers), previous_row_not_same_group_msg)
 
         # check that 'is_linked_to_previous_row' value can be changed
         # while NOT already in use by created items
@@ -723,8 +719,7 @@ class testMeetingConfig(PloneMeetingTestCase):
             context=self.portal.REQUEST)
         # we need to invalidate ram.cache of _findLinkedRowsFor
         cfg.setModificationDate(DateTime())
-        self.assertEquals(cfg.validate_customAdvisers(customAdvisers),
-                          isolated_row_msg)
+        self.assertEqual(cfg.validate_customAdvisers(customAdvisers), isolated_row_msg)
         customAdvisers[1]['is_linked_to_previous_row'] = '1'
 
         # now it will not be possible anymore to change value, position of any element
@@ -737,8 +732,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                                                   'column_old_data': '1',
                                                   'column_name': 'Is linked to previous row?'},
                                          context=self.portal.REQUEST)
-        self.assertEquals(cfg.validate_customAdvisers(customAdvisers),
-                          changed_used_row_msg)
+        self.assertEqual(cfg.validate_customAdvisers(customAdvisers), changed_used_row_msg)
         customAdvisers[2]['is_linked_to_previous_row'] = '1'
         # change position of second and third rows
         customAdvisers[1], customAdvisers[2] = customAdvisers[2], customAdvisers[1]
@@ -749,8 +743,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                                         mapping={'item_url': item.absolute_url(),
                                                  'adviser_group': 'Vendors'},
                                         context=self.portal.REQUEST)
-        self.assertEquals(cfg.validate_customAdvisers(customAdvisers),
-                          changed_row_pos_msg)
+        self.assertEqual(cfg.validate_customAdvisers(customAdvisers), changed_row_pos_msg)
         # recover right order
         customAdvisers[1], customAdvisers[2] = customAdvisers[2], customAdvisers[1]
 
@@ -758,8 +751,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         # delete second row (unused but in the chain)
         secondRow = customAdvisers.pop(1)
         # while removing a row in a chain, it consider first that the chain was changed
-        self.assertEquals(cfg.validate_customAdvisers(customAdvisers),
-                          changed_row_pos_msg)
+        self.assertEqual(cfg.validate_customAdvisers(customAdvisers), changed_row_pos_msg)
         customAdvisers.insert(1, secondRow)
         # delete third row (used)
         thirdRow = customAdvisers.pop(2)
@@ -768,7 +760,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                                        mapping={'item_url': item.absolute_url(),
                                                 'adviser_group': 'Vendors', },
                                        context=self.portal.REQUEST)
-        self.assertEquals(cfg.validate_customAdvisers(customAdvisers), can_not_remove_msg)
+        self.assertEqual(cfg.validate_customAdvisers(customAdvisers), can_not_remove_msg)
         customAdvisers.insert(2, thirdRow)
         # we can remove the before last row, chained but unused
         customAdvisers.pop(3)
@@ -797,7 +789,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                                        mapping={'item_url': item.absolute_url(),
                                                 'adviser_group': 'Developers', },
                                        context=self.portal.REQUEST)
-        self.assertEquals(cfg.validate_customAdvisers(customAdvisers), can_not_remove_msg)
+        self.assertEqual(cfg.validate_customAdvisers(customAdvisers), can_not_remove_msg)
 
     def test_pm_Validate_transitionsForPresentingAnItem(self):
         '''Test the MeetingConfig.transitionsForPresentingAnItem validation.
@@ -814,17 +806,16 @@ class testMeetingConfig(PloneMeetingTestCase):
         required_error_msg = PloneMessageFactory(u'error_required',
                                                  default=u'${name} is required, please correct.',
                                                  mapping={'name': label})
-        self.assertEquals(cfg.validate_transitionsForPresentingAnItem([]), required_error_msg)
+        self.assertEqual(cfg.validate_transitionsForPresentingAnItem([]), required_error_msg)
         # if first provided transition is wrong, it fails with a specific message
         first_transition_error_msg = _('first_transition_must_leave_wf_initial_state')
-        self.assertEquals(cfg.validate_transitionsForPresentingAnItem(['not_a_transition_leaving_initial_state']),
-                          first_transition_error_msg)
+        self.assertEqual(cfg.validate_transitionsForPresentingAnItem(['not_a_transition_leaving_initial_state']),
+                         first_transition_error_msg)
         # if the given sequence is not right, it fails
         wrong_sequence_error_msg = _('given_wf_path_does_not_lead_to_present')
         sequence = list(cfg.getTransitionsForPresentingAnItem())
         sequence.insert(1, 'wrong_transition')
-        self.assertEquals(cfg.validate_transitionsForPresentingAnItem(sequence),
-                          wrong_sequence_error_msg)
+        self.assertEqual(cfg.validate_transitionsForPresentingAnItem(sequence), wrong_sequence_error_msg)
         # XXX for this test, we need at least 2 transitions in the sequence
         # as we will remove last transition from the sequence and if we only have
         # one transition, it leads to the required_error message instead
@@ -834,8 +825,8 @@ class testMeetingConfig(PloneMeetingTestCase):
             return
         last_transition_error_msg = _('last_transition_must_result_in_presented_state')
         sequence_with_last_removed = list(cfg.getTransitionsForPresentingAnItem())[:-1]
-        self.assertEquals(cfg.validate_transitionsForPresentingAnItem(sequence_with_last_removed),
-                          last_transition_error_msg)
+        self.assertEqual(cfg.validate_transitionsForPresentingAnItem(sequence_with_last_removed),
+                         last_transition_error_msg)
 
     def test_pm_Validate_insertingMethodsOnAddItem(self):
         '''Test the MeetingConfig.insertingMethodsOnAddItem validation.
@@ -1062,7 +1053,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.failIf(cfg.validate_listTypes(values))
         values.remove(DEFAULT_LIST_TYPES[0])
         missing_default_msg = _('error_list_types_missing_default')
-        self.assertEquals(cfg.validate_listTypes(values), missing_default_msg)
+        self.assertEqual(cfg.validate_listTypes(values), missing_default_msg)
 
         # used one may not be removed
         values = list(DEFAULT_LIST_TYPES)
@@ -1077,7 +1068,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         item.reindexObject()
         already_used_msg = _('error_list_types_identifier_removed_already_used',
                              mapping={'url': item.absolute_url()})
-        self.assertEquals(cfg.validate_listTypes(values), already_used_msg)
+        self.assertEqual(cfg.validate_listTypes(values), already_used_msg)
         self.failIf(cfg.validate_listTypes(valuesWithExtra))
         # if no more used, removeable
         self.portal.restrictedTraverse('@@delete_givenuid')(item.UID())
@@ -1090,13 +1081,13 @@ class testMeetingConfig(PloneMeetingTestCase):
         valuesWithWrongFormat.append({'identifier': 'extra wrong',
                                       'label': 'Extra wrong'})
         wrong_format_msg = _('error_list_types_wrong_identifier_format')
-        self.assertEquals(cfg.validate_listTypes(valuesWithWrongFormat), wrong_format_msg)
+        self.assertEqual(cfg.validate_listTypes(valuesWithWrongFormat), wrong_format_msg)
 
         # already used identifier
         valuesWithDouble = list(values)
         valuesWithDouble.append(values[0])
         double_msg = _('error_list_types_same_identifier')
-        self.assertEquals(cfg.validate_listTypes(valuesWithDouble), double_msg)
+        self.assertEqual(cfg.validate_listTypes(valuesWithDouble), double_msg)
         self.failIf(cfg.validate_listTypes(values))
 
     def test_pm_Validate_onMeetingTransitionItemActionToExecute(self):
@@ -1151,7 +1142,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         # try to add a topic name 'searchmyitems' that already exist...
         self.assertTrue(hasattr(cfg.searches.searches_items, 'searchmyitems'))
         searchInfo = cfg._searchesInfo().items()[0]
-        self.assertEquals(searchInfo[0], 'searchmyitems')
+        self.assertEqual(searchInfo[0], 'searchmyitems')
         self.meetingConfig.createSearches(OrderedDict((searchInfo, )))
         # we can evrn call it again with full searchesInfo
         cfg.createSearches(cfg._searchesInfo())
@@ -1258,44 +1249,30 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.changeUser('pmManager')
         self.assertRaises(Unauthorized, self.tool.manage_delObjects, [cfgId, ])
 
-        # fails if items left in the meetingConfig
-        # we have recurring items
-        self.changeUser('admin')
-        self.assertTrue(cfg.getRecurringItems())
-        with self.assertRaises(BeforeDeleteException) as cm:
-            self.tool.manage_delObjects([cfgId, ])
-        can_not_delete_meetingitem_container = \
-            translate('can_not_delete_meetingitem_container',
-                      domain="plone",
-                      context=self.request)
-        self.assertEquals(cm.exception.message, can_not_delete_meetingitem_container)
-        self._removeConfigObjectsFor(cfg)
-        import ipdb; ipdb.set_trace()
-
         # fails if a meeting exists
         self.changeUser('pmManager')
         meeting = self.create('Meeting', date='2008/06/23 15:39:00')
-        self.changeUser('admin')
+        self.changeUser('siteadmin')
         with self.assertRaises(BeforeDeleteException) as cm:
             self.tool.manage_delObjects([cfgId, ])
         can_not_delete_meetingconfig_meeting = \
             translate('can_not_delete_meetingconfig_meeting',
                       domain="plone",
                       context=self.request)
-        self.assertEquals(cm.exception.message, can_not_delete_meetingconfig_meeting)
+        self.assertEqual(cm.exception.message, can_not_delete_meetingconfig_meeting)
         self.portal.restrictedTraverse('@@delete_givenuid')(meeting.UID())
 
         # fails if an item exists
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
-        self.changeUser('admin')
+        self.changeUser('siteadmin')
         with self.assertRaises(BeforeDeleteException) as cm:
             self.tool.manage_delObjects([cfgId, ])
         can_not_delete_meetingconfig_meetingitem = \
             translate('can_not_delete_meetingconfig_meetingitem',
                       domain="plone",
                       context=self.request)
-        self.assertEquals(cm.exception.message, can_not_delete_meetingconfig_meetingitem)
+        self.assertEqual(cm.exception.message, can_not_delete_meetingconfig_meetingitem)
         self.portal.restrictedTraverse('@@delete_givenuid')(item.UID())
 
         # fails if another element than searches_xxx folder exists in the pmFolders
@@ -1303,14 +1280,14 @@ class testMeetingConfig(PloneMeetingTestCase):
         pmFolder = self.tool.getPloneMeetingFolder(cfgId)
         afileId = pmFolder.invokeFactory('File', id='afile')
         afile = getattr(pmFolder, afileId)
-        self.changeUser('admin')
+        self.changeUser('siteadmin')
         with self.assertRaises(BeforeDeleteException) as cm:
             self.tool.manage_delObjects([cfgId, ])
         can_not_delete_meetingconfig_meetingfolder = \
             translate('can_not_delete_meetingconfig_meetingfolder',
                       domain="plone",
                       context=self.request)
-        self.assertEquals(cm.exception.message, can_not_delete_meetingconfig_meetingfolder)
+        self.assertEqual(cm.exception.message, can_not_delete_meetingconfig_meetingfolder)
         self.portal.restrictedTraverse('@@delete_givenuid')(afile.UID())
 
         # fails if used in another MeetingConfig (meetingConfigsToCloneTo)
@@ -1321,7 +1298,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                       mapping={'other_config_title': cfg2.Title()},
                       domain="plone",
                       context=self.request)
-        self.assertEquals(cm.exception.message, can_not_delete_meetingconfig_meetingconfig)
+        self.assertEqual(cm.exception.message, can_not_delete_meetingconfig_meetingconfig)
         cfg2.setMeetingConfigsToCloneTo(())
 
         # fails if an annex_type is used by another MeetingConfig annex_type in other_mc_correspondences
@@ -1335,11 +1312,14 @@ class testMeetingConfig(PloneMeetingTestCase):
                       mapping={'other_config_title': safe_unicode(cfg.Title())},
                       domain="plone",
                       context=self.request)
-        self.assertEquals(cm.exception.message, can_not_delete_meetingconfig_annex_types)
+        self.assertEqual(cm.exception.message, can_not_delete_meetingconfig_annex_types)
         annex_types = _itemAnnexTypes(cfg)
         for annex_type in annex_types:
             annex_type.other_mc_correspondences = set()
 
+        # items stored in MeetingConfig (recurring, itemtemplates) do not avoid removal
+        self.assertTrue(cfg.recurringitems.objectIds())
+        self.assertTrue(cfg.itemtemplates.objectIds())
         # everything ok, MeetingConfig may be deleted
         self.assertTrue(cfgId in self.tool.objectIds() and cfg2Id in self.tool.objectIds())
         self.tool.manage_delObjects([cfgId, cfg2Id])
@@ -1376,7 +1356,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         # this created 5 groups
         created_groups = [groupId for groupId in self.portal.portal_groups.listGroupIds()
                           if groupId.startswith(newCfgId)]
-        self.assertEquals(len(created_groups), 5)
+        self.assertEqual(len(created_groups), 5)
         # remove the MeetingConfig, groups are removed as well
         self.tool.restrictedTraverse('@@delete_givenuid')(newCfg.UID())
         self.assertFalse(newCfgId in self.tool.objectIds())
@@ -1425,7 +1405,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         itemColumns = list(cfg.getItemColumns())
         for column in DEFAULT_ITEM_COLUMNS:
             itemColumns.insert(column['position'], column['name'])
-        self.assertEquals(newItemCol.customViewFields, tuple(itemColumns))
+        self.assertEqual(newItemCol.customViewFields, tuple(itemColumns))
         # meeting related collection
         newMeetingColId = searches.searches_meetings.invokeFactory('DashboardCollection', id='newMeetingCol')
         newMeetingCol = getattr(searches.searches_meetings, newMeetingColId)
@@ -1433,12 +1413,12 @@ class testMeetingConfig(PloneMeetingTestCase):
         meetingColumns = list(cfg.getMeetingColumns())
         for column in DEFAULT_MEETING_COLUMNS:
             meetingColumns.insert(column['position'], column['name'])
-        self.assertEquals(newMeetingCol.customViewFields, tuple(meetingColumns))
+        self.assertEqual(newMeetingCol.customViewFields, tuple(meetingColumns))
         # decision related collection
         newDecisionColId = searches.searches_decisions.invokeFactory('DashboardCollection', id='newDecisionCol')
         newDecisionCol = getattr(searches.searches_decisions, newDecisionColId)
         newDecisionCol.processForm(values={'dummy': None})
-        self.assertEquals(newDecisionCol.customViewFields, tuple(meetingColumns))
+        self.assertEqual(newDecisionCol.customViewFields, tuple(meetingColumns))
 
     def test_pm_WorkflowsForGeneratedTypes(self):
         """Workflows used for the generated Meeting and MeetigItem portal_types
@@ -1448,15 +1428,15 @@ class testMeetingConfig(PloneMeetingTestCase):
         cfg = self.meetingConfig
         itemWF = self.wfTool.getWorkflowsFor(cfg.getItemTypeName())[0]
         meetingWF = self.wfTool.getWorkflowsFor(cfg.getMeetingTypeName())[0]
-        self.assertEquals(itemWF.id, '{0}__{1}'.format(cfg.getId(), cfg.getItemWorkflow()))
-        self.assertEquals(itemWF.title, '{0}__{1}'.format(cfg.getId(), cfg.getItemWorkflow()))
-        self.assertEquals(meetingWF.id, '{0}__{1}'.format(cfg.getId(), cfg.getMeetingWorkflow()))
-        self.assertEquals(meetingWF.title, '{0}__{1}'.format(cfg.getId(), cfg.getMeetingWorkflow()))
+        self.assertEqual(itemWF.id, '{0}__{1}'.format(cfg.getId(), cfg.getItemWorkflow()))
+        self.assertEqual(itemWF.title, '{0}__{1}'.format(cfg.getId(), cfg.getItemWorkflow()))
+        self.assertEqual(meetingWF.id, '{0}__{1}'.format(cfg.getId(), cfg.getMeetingWorkflow()))
+        self.assertEqual(meetingWF.title, '{0}__{1}'.format(cfg.getId(), cfg.getMeetingWorkflow()))
         # MeetingItemTemplate and MeetingItemRecurring continue to use the activation_workflow
         itemRecurringWF = self.wfTool.getWorkflowsFor(cfg.getItemTypeName('MeetingItemRecurring'))[0]
         itemTemplateWF = self.wfTool.getWorkflowsFor(cfg.getItemTypeName('MeetingItemTemplate'))[0]
-        self.assertEquals(itemRecurringWF.id, 'plonemeeting_activity_managers_workflow')
-        self.assertEquals(itemTemplateWF.id, 'plonemeeting_activity_managers_workflow')
+        self.assertEqual(itemRecurringWF.id, 'plonemeeting_activity_managers_workflow')
+        self.assertEqual(itemTemplateWF.id, 'plonemeeting_activity_managers_workflow')
 
     def test_pm_UpdateAnnexConfidentiality(self):
         """Test the 'updateAnnexConfidentiality' method that will initialize every existing
