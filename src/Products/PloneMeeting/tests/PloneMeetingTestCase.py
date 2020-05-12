@@ -495,10 +495,10 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             for obj in subfolder.objectValues():
                 # can not remove the ITEM_DEFAULT_TEMPLATE_ID
                 if folderId == 'itemtemplates' and \
-                   obj.getId() == ITEM_DEFAULT_TEMPLATE_ID \
-                   and obj.queryState() == 'active':
-                    # disable it instead removing it
-                    api.content.transition(obj, 'deactivate')
+                   obj.getId() == ITEM_DEFAULT_TEMPLATE_ID:
+                    if obj.queryState() == 'active':
+                        # disable it instead removing it
+                        api.content.transition(obj, 'deactivate')
                     continue
                 objectIds_to_remove.append(obj.getId())
             subfolder.manage_delObjects(ids=objectIds_to_remove)

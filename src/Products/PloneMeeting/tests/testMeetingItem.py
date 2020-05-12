@@ -5622,7 +5622,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # default item template does not change
         default_template = cfg.itemtemplates.get(ITEM_DEFAULT_TEMPLATE_ID)
         self.assertEqual(default_template.getId(), ITEM_DEFAULT_TEMPLATE_ID)
-        self.assertEqual(default_template.Title(), 'Default ' + cfg.Title() + ' item')
+        self.assertEqual(default_template.Title(), 'Default ' + cfg.Title() + ' item template')
         default_template.setTitle('My new default template title')
         notify(ObjectModifiedEvent(default_template))
         self.assertEqual(default_template.getId(), ITEM_DEFAULT_TEMPLATE_ID)
@@ -5632,7 +5632,7 @@ class testMeetingItem(PloneMeetingTestCase):
         pmFolder = self.getMeetingFolder()
         view = pmFolder.restrictedTraverse('@@createitemfromtemplate')
         newItem = view.createItemFromTemplate(default_template.UID())
-        self.assertEqual(newItem.getId(), 'default-empty-item-template')
+        self.assertEqual(newItem.getId(), ITEM_DEFAULT_TEMPLATE_ID)
         newItem.setTitle('My new item title')
         # save button
         newItem.processForm()

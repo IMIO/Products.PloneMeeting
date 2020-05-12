@@ -865,8 +865,8 @@ def onItemEditCancelled(item, event):
 
 def onItemWillBeRemoved(item, event):
     '''Do not remove the ITEM_DEFAULT_TEMPLATE_ID.'''
-    # If we are trying to remove the whole Plone Site, bypass this hook.
-    if event.object.meta_type == 'Plone Site':
+    # If we are trying to remove the whole Plone Site or a MeetingConfig, bypass this hook.
+    if event.object.meta_type in ['Plone Site', 'MeetingConfig']:
         return
 
     # can not remove the default item template

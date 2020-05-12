@@ -1270,6 +1270,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                       context=self.request)
         self.assertEquals(cm.exception.message, can_not_delete_meetingitem_container)
         self._removeConfigObjectsFor(cfg)
+        import ipdb; ipdb.set_trace()
 
         # fails if a meeting exists
         self.changeUser('pmManager')
@@ -1548,9 +1549,9 @@ class testMeetingConfig(PloneMeetingTestCase):
         item_template = cfg.itemtemplates.objectValues()[0]
         copied_data = cfg.itemtemplates.manage_copyObjects(ids=[item_template.getId()])
         # pastable locally
-        self.assertEqual(len(cfg.itemtemplates.objectIds()), 2)
-        cfg.itemtemplates.manage_pasteObjects(copied_data)
         self.assertEqual(len(cfg.itemtemplates.objectIds()), 3)
+        cfg.itemtemplates.manage_pasteObjects(copied_data)
+        self.assertEqual(len(cfg.itemtemplates.objectIds()), 4)
         # but not to another MC
         self.assertRaises(Unauthorized,
                           cfg2.itemtemplates.manage_pasteObjects, copied_data)
