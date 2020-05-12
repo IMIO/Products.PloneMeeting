@@ -5289,11 +5289,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         default_template = None
         if item_templates_folder:
             if ITEM_DEFAULT_TEMPLATE_ID not in item_templates_folder.objectIds():
-                item_template_title = translate('Default ${cfg_title} item',
+                item_template_title = translate('Default ${cfg_title} item template',
                                                 domain='PloneMeeting',
                                                 mapping={'cfg_title': safe_unicode(self.Title()), },
                                                 context=self.REQUEST,
-                                                default="Default ${cfg_title} item")
+                                                default="Default ${cfg_title} item template")
                 default_template = api.content.create(
                     container=item_templates_folder,
                     type=self.getItemTypeName(configType='MeetingItemTemplate'),
