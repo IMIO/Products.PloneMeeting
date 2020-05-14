@@ -26,12 +26,17 @@ class Migrate_To_4107(Migrator):
     def run(self, from_migration_to_41=False):
         logger.info('Migrating to PloneMeeting 4107...')
         self._moveToItemCreatedOnlyUsingTemplate()
+        # Make sure every relevant portal_types are correctly registered in portal_factory
+        self.ps.runImportStepFromProfile('profile-Products.PloneMeeting:default', 'factorytool')
+        # This will register portal_types to portal_factory
+        self.reloadMeetingConfigs()
 
 
 def migrate(context):
     '''This migration function will:
 
-       1) Remove field 'itemCreatedOnlyUsingTemplate' from every MeetingConfigs.
+       1) Remove field 'itemCreatedOnlyUsingTemplate' from every MeetingConfigs;
+       2) Make sure every relevant portal_types are correctly registered in portal_factory.
     '''
     migrator = Migrate_To_4107(context)
     migrator.run()

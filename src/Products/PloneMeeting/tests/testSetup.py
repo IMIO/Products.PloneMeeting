@@ -212,6 +212,18 @@ class testSetup(PloneMeetingTestCase):
         self.assertEqual(set(plone_utils.getUserFriendlyTypes()),
                          set(expected))
 
+    def test_pm_FactoryTypes(self):
+        """Every MeetingItem and Meeting portal_types are using portal_factory.
+           Every Meeting* portal_types should be registered."""
+        portal_factory = api.portal.get_tool('portal_factory')
+        factory_types = portal_factory.getFactoryTypes().keys()
+        portal_types = api.portal.get_tool('portal_types')
+        # every portal_types starting with Meeting, MeetingCategory,
+        # MeetingConfig, MeetingItemRecurringXXX, ...
+        meeting_types = [pt for pt in portal_types if pt.startswith('Meeting')]
+        for meeting_type in meeting_types:
+            self.failIf(set(meeting_types).difference(factory_types))
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

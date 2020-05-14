@@ -9,9 +9,11 @@ Changelog
 
   - every items, blank or not are created from an item template, this avoid use of `portal_factory`;
   - a special not removale `Default item template` is added in the `MeetingConfig` and is used as basis for creating a blank item;
-  - parameter `MeetingConfig.itemCreatedOnlyUsingTemplate` is removed, deactivating the `Default item template` is the equivalent.
+  - parameter `MeetingConfig.itemCreatedOnlyUsingTemplate` is removed, deactivating the `Default item template` is the equivalent;
+  - Added upgrade step to 4107
 - A MeetingConfig may be removed even if still containing items (recurring items, item templates), only real items are now considered
 - Avoid multiple clicks when creating a new item, icon is disabled after click and when an edition is in progress
+- Make sure every `MeetingItemRecurring` and `MeetingItemTemplate` `portal_types` are registered in `portal_factory`
 
 4.1.24.1 (2020-05-14)
 ---------------------
