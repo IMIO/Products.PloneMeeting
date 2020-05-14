@@ -5,7 +5,7 @@ Changelog
 4.1.25 (unreleased)
 -------------------
 
-- Refactored the way a blank item is created to avoid impossibility to insert image durint creation :
+- Refactored the way a blank item is created to avoid impossibility to insert image during creation :
 
   - every items, blank or not are created from an item template, this avoid use of `portal_factory`;
   - a special not removale `Default item template` is added in the `MeetingConfig` and is used as basis for creating a blank item;
