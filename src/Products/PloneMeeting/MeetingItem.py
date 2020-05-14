@@ -2668,7 +2668,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePrivate('listProposingGroups')
 
-    def listProposingGroups(self):
+    def listProposingGroups(self, include_stored=True):
         '''This is used as vocabulary for field 'proposingGroup'.
            Return the organization(s) the user is creator for.
            If this item is being created or edited in portal_plonemeeting (as a
@@ -2685,7 +2685,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         res = DisplayList(tuple([(org.UID(), org.get_full_title(first_index=1)) for org in orgs]))
         # make sure current selected proposingGroup is listed here
         proposingGroup = self.getProposingGroup()
-        if proposingGroup and proposingGroup not in res.keys():
+        if include_stored and proposingGroup and proposingGroup not in res.keys():
             current_org = self.getProposingGroup(theObject=True)
             res.add(current_org.UID(), current_org.get_full_title())
         # add a 'make_a_choice' value when used on an itemtemplate
@@ -2699,9 +2699,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePrivate('listProposingGroupsWithGroupsInCharge')
 
-    def listProposingGroupsWithGroupsInCharge(self):
+    def listProposingGroupsWithGroupsInCharge(self, include_stored=True):
         '''Like self.listProposingGroups but appends the various possible groups in charge.'''
-        base_res = self.listProposingGroups()
+        base_res = self.listProposingGroups(include_stored=include_stored)
         res = []
         active_org_uids = get_registry_organizations()
         for k, v in base_res.items():

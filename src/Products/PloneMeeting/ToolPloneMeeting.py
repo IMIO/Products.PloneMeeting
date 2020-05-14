@@ -1133,10 +1133,18 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             # Change the proposing group if the item owner does not belong to
             # the defined proposing group, except if p_keepProposingGroup is True
             if not keepProposingGroup:
-                userGroupUids = self.get_orgs_for_user(
-                    user_id=newOwnerId, suffixes=['creators', ], the_objects=False)
-                if userGroupUids and newItem.getProposingGroup(True) not in userGroupUids:
-                    newItem.setProposingGroup(userGroupUids[0])
+                # proposingGroupWithGroupInCharge
+                if newItem.attributeIsUsed('proposingGroupWithGroupInCharge'):
+                    userProposingGroupUids = newItem.listProposingGroupsWithGroupsInCharge(
+                        include_stored=False).keys()
+                    if userProposingGroupUids:
+                        newItem.setProposingGroupWithGroupInCharge(userProposingGroupUids[0])
+                else:
+                    # proposingGroup
+                    userProposingGroupUids = newItem.listProposingGroups(
+                        include_stored=False).keys()
+                    if userProposingGroupUids:
+                        newItem.setProposingGroup(userProposingGroupUids[0])
 
             if newOwnerId != loggedUserId:
                 plone_utils.changeOwnershipOf(newItem, newOwnerId)

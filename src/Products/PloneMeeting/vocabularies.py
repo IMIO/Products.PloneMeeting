@@ -1871,39 +1871,41 @@ class ContainedAnnexesVocabulary(object):
         portal_url = api.portal.get().absolute_url()
         terms = []
         i = 1
-        categories_vocab = get_vocab(
-            context,
-            'collective.iconifiedcategory.categories',
-            use_category_uid_as_token=True)
-        for annex in get_categorized_elements(context, portal_type=portal_type):
-            # term title is annex icon, number and title
-            term_title = u'{0}. <img src="{1}/{2}" title="{3}"> {4}'.format(
-                str(i),
-                portal_url,
-                annex['icon_url'],
-                safe_unicode(annex['category_title']),
-                safe_unicode(annex['title']))
-            i += 1
-            if annex['warn_filesize']:
-                term_title += u' ({0})'.format(render_filesize(annex['filesize']))
-            term = SimpleTerm(annex['id'], annex['id'], term_title)
-            # check if user able to keep this annex :
-            # - annex may not hold a scan_id
-            annex_obj = getattr(context, annex['id'])
-            if getattr(annex_obj, 'scan_id', None):
-                term.disabled = True
-                term.title += translate(' [holds scan_id]',
-                                        domain='PloneMeeting',
-                                        context=context.REQUEST)
-            # - annexType must be among current user selectable annex types
-            elif annex['category_uid'] not in categories_vocab:
-                term.disabled = True
-                term.title += translate(' [reserved MeetingManagers]',
-                                        domain='PloneMeeting',
-                                        context=context.REQUEST)
-            else:
-                term.disabled = False
-            terms.append(term)
+        annexes = get_categorized_elements(context, portal_type=portal_type)
+        if annexes:
+            categories_vocab = get_vocab(
+                context,
+                'collective.iconifiedcategory.categories',
+                use_category_uid_as_token=True)
+            for annex in annexes:
+                # term title is annex icon, number and title
+                term_title = u'{0}. <img src="{1}/{2}" title="{3}"> {4}'.format(
+                    str(i),
+                    portal_url,
+                    annex['icon_url'],
+                    safe_unicode(annex['category_title']),
+                    safe_unicode(annex['title']))
+                i += 1
+                if annex['warn_filesize']:
+                    term_title += u' ({0})'.format(render_filesize(annex['filesize']))
+                term = SimpleTerm(annex['id'], annex['id'], term_title)
+                # check if user able to keep this annex :
+                # - annex may not hold a scan_id
+                annex_obj = getattr(context, annex['id'])
+                if getattr(annex_obj, 'scan_id', None):
+                    term.disabled = True
+                    term.title += translate(' [holds scan_id]',
+                                            domain='PloneMeeting',
+                                            context=context.REQUEST)
+                # - annexType must be among current user selectable annex types
+                elif annex['category_uid'] not in categories_vocab:
+                    term.disabled = True
+                    term.title += translate(' [reserved MeetingManagers]',
+                                            domain='PloneMeeting',
+                                            context=context.REQUEST)
+                else:
+                    term.disabled = False
+                terms.append(term)
         return SimpleVocabulary(terms)
 
 ContainedAnnexesVocabularyFactory = ContainedAnnexesVocabulary()

@@ -2,14 +2,9 @@ Changelog
 =========
 
 
-4.1.24.1 (unreleased)
----------------------
+4.1.25 (unreleased)
+-------------------
 
-- Fixed `PMUsers` vocabulary to avoid duplicates when using `LDAP` where same userid  may be defined in `LDAP` and in `source_users`
-- Relaunch steps `_moveMCParameterToWFA` and `_addItemNonAttendeesAttributeToMeetings` from `Migrate_To_4104` in `Migrate_To_4105`
-  for some instances that had been deployed in between
-- Use getIconURL to display held_position icon on meeting edit instead getIcon as the first returns full absolute_url of the icon and the last,
-  only relative URL of the icon
 - Refactored the way a blank item is created to avoid impossibility to insert image durint creation :
 
   - every items, blank or not are created from an item template, this avoid use of `portal_factory`;
@@ -17,6 +12,20 @@ Changelog
   - parameter `MeetingConfig.itemCreatedOnlyUsingTemplate` is removed, deactivating the `Default item template` is the equivalent.
 - A MeetingConfig may be removed even if still containing items (recurring items, item templates), only real items are now considered
 - Avoid multiple clicks when creating a new item, icon is disabled after click and when an edition is in progress
+
+4.1.24.1 (2020-05-14)
+---------------------
+
+- Fixed `PMUsers` vocabulary to avoid duplicates when using `LDAP` where same userid  may be defined in `LDAP` and in `source_users`
+- Relaunch steps `_moveMCParameterToWFA` and `_addItemNonAttendeesAttributeToMeetings` from `Migrate_To_4104` in `Migrate_To_4105`
+  for some instances that had been deployed in between
+- Use getIconURL to display held_position icon on meeting edit instead getIcon as the first returns full absolute_url of the icon and the last,
+  only relative URL of the icon
+- In `vocabularies.ContainedAnnexesVocabulary`, only get `collective.iconifiedcategory.categories` vocab when actually having annexes
+- When cloning an item with `keepProposingGroup=False` and using field `MeetingItem.proposingGroupWithGroupInCharge`, make sure new set data
+  for `proposingGroup/proposingGroupWithGroupInCharge/groupsInCharge` are correct and complete.
+  Added parameter `include_stored=True` to `MeetingItem.listProposingGroups` and `MeetingItem.listProposingGroupsWithGroupsInCharge`
+- Ignore schemata `settings` while editing an element, this avoid `MeetingItem` edit form to display a `Settings` tab when using `collective.solr`
 
 4.1.24 (2020-05-08)
 -------------------

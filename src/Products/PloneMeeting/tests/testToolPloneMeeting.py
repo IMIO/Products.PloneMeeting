@@ -118,13 +118,13 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         cfgId = self.meetingConfig.getId()
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
-        self.assertTrue(self.tool.getMeetingConfig(item).getId() == cfgId)
+        self.assertEqual(self.tool.getMeetingConfig(item).getId(), cfgId)
         annex = self.addAnnex(item)
-        self.assertTrue(self.tool.getMeetingConfig(annex).getId() == cfgId)
+        self.assertEqual(self.tool.getMeetingConfig(annex).getId(), cfgId)
         meeting = self.create('Meeting', date=DateTime('2012/05/05'))
-        self.assertTrue(self.tool.getMeetingConfig(meeting).getId() == cfgId)
+        self.assertEqual(self.tool.getMeetingConfig(meeting).getId(), cfgId)
         # returns None if called with an element outside the application
-        self.assertTrue(not self.tool.getMeetingConfig(self.portal))
+        self.failIf(self.tool.getMeetingConfig(self.portal))
 
     def test_pm_GetDefaultMeetingConfig(self):
         '''Test the ToolPloneMeeting.getDefaultMeetingConfig method
@@ -135,13 +135,13 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         self.assertTrue(cfg.getIsDefault())
         self.assertTrue(not cfg2.getIsDefault())
-        self.assertTrue(self.tool.getDefaultMeetingConfig().getId() == cfg.getId())
+        self.assertEqual(self.tool.getDefaultMeetingConfig().getId(), cfg.getId())
         # if we change default config, it works
         cfg2.setIsDefault(True)
         cfg2.at_post_edit_script()
         self.assertTrue(not cfg.getIsDefault())
         self.assertTrue(cfg2.getIsDefault())
-        self.assertTrue(self.tool.getDefaultMeetingConfig().getId() == cfg2.getId())
+        self.assertEqual(self.tool.getDefaultMeetingConfig().getId(), cfg2.getId())
 
     def test_pm_CloneItem(self):
         '''Clones a given item in parent item folder.'''
@@ -156,14 +156,14 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertEqual(
             set([item1, clonedItem]), set(workingFolder.objectValues('MeetingItem')))
         # Test that some fields are kept...
-        self.failUnless(clonedItem.Title() == item1.Title())
-        self.failUnless(clonedItem.getCategory() == item1.getCategory())
-        self.failUnless(clonedItem.getBudgetRelated() == item1.getBudgetRelated())
-        self.failUnless(clonedItem.getBudgetInfos() == item1.getBudgetInfos())
+        self.assertEqual(clonedItem.Title(), item1.Title())
+        self.assertEqual(clonedItem.getCategory(), item1.getCategory())
+        self.assertEqual(clonedItem.getBudgetRelated(), item1.getBudgetRelated())
+        self.assertEqual(clonedItem.getBudgetInfos(), item1.getBudgetInfos())
         # ... but not others
         self.failIf(clonedItem.getItemKeywords() == item1.getItemKeywords())
         # The default value is set for unkept fields
-        self.failUnless(clonedItem.getPreferredMeeting() == ITEM_NO_PREFERRED_MEETING_VALUE)
+        self.assertEqual(clonedItem.getPreferredMeeting(), ITEM_NO_PREFERRED_MEETING_VALUE)
         # Test that an item viewable by a different user (another member of the
         # same group) can be pasted too. item1 is viewable by pmCreator1 too.
         self.changeUser('pmCreator1')
@@ -174,7 +174,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         # during the cloning process, the 'Manager' role is given on the new item
         # so every things that need to be done on it are done, make sure at the end
         # the role is no more given...
-        self.assertTrue(not self.hasPermission(ManagePortal, clonedItem))
+        self.failIf(self.hasPermission(ManagePortal, clonedItem))
 
     def test_pm_CloneItemWithAnnexes(self):
         '''Clones a given item containing annexes in parent item folder.'''
@@ -243,18 +243,18 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         # 'pmCreator1' as newOwnerId
         self.changeUser('admin')
         self.portal.acl_users.source_users.removeUser('pmCreator1')
-        self.assertTrue('pmCreator1' not in self.portal.acl_users.source_users.listUserIds())
+        self.failIf('pmCreator1' in self.portal.acl_users.source_users.listUserIds())
         # now clone the item using 'pmCreator1' as newOwnerId
         self.changeUser('pmManager')
         clonedItem = item.clone(newOwnerId='pmCreator1')
-        self.assertTrue(clonedItem.Creator() == 'pmManager')
+        self.assertEqual(clonedItem.Creator(), 'pmManager')
         # it does not fail neither if we pass a userId that does not
         # even have a meeting folder
-        self.assertTrue(not hasattr(self.portal.Members, 'unexisting_member_id'))
+        self.failIf(hasattr(self.portal.Members, 'unexisting_member_id'))
         clonedItem = item.clone(newOwnerId='unexisting_member_id')
-        self.assertTrue(clonedItem.Creator() == 'pmManager')
+        self.assertEqual(clonedItem.Creator(), 'pmManager')
 
-    def test_pm_CloneItemKeepingProposingGroup(self):
+    def test_pm_CloneItemKeepProposingGroup(self):
         '''When cloning an item, by default, if user duplicating the item is not member of
            the proposingGroup of the original item, the new item will automatically use
            the first proposing group of the user so he can edit it.  If p_keepProposingGroup is True
@@ -266,20 +266,50 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         # create an item for vendors
         self.changeUser('pmCreator2')
         item = self.create('MeetingItem')
-        self.assertTrue(item.getProposingGroup() == self.vendors_uid)
+        self.assertEqual(item.getProposingGroup(), self.vendors_uid)
         # validate it
         self.proposeItem(item)
         self.changeUser('pmReviewer2')
         self.validateItem(item)
         # 'pmManager' is not creator for 'vendors'
         self.changeUser('pmManager')
-        self.assertTrue(self.vendors_creators not in self.member.getGroups())
+        self.failIf(self.vendors_creators in self.member.getGroups())
         # clone it without keeping the proposingGroup
         clonedItem = item.clone()
-        self.assertTrue(clonedItem.getProposingGroup() == self.developers_uid)
+        self.assertEqual(clonedItem.getProposingGroup(), self.developers_uid)
         # clone it keeping the proposingGroup
         clonedItem = item.clone(keepProposingGroup=True)
-        self.assertTrue(clonedItem.getProposingGroup() == self.vendors_uid)
+        self.assertEqual(clonedItem.getProposingGroup(), self.vendors_uid)
+
+    def test_pm_CloneItemKeepProposingGroupWithGroupInCharge(self):
+        '''Test keepProposingGroup when using field proposingGroupWithGroupInCharge.'''
+        self._enableField('proposingGroupWithGroupInCharge')
+        # set vendors in charge of dev and vice versa
+        self.developers.groups_in_charge = (self.vendors_uid, )
+        self.vendors.groups_in_charge = (self.developers_uid, )
+        self.changeUser('pmCreator2')
+        item = self.create('MeetingItem')
+        item.setProposingGroupWithGroupInCharge(item.listProposingGroupsWithGroupsInCharge()[0])
+        self.assertEqual(item.getProposingGroupWithGroupInCharge(),
+                         '{0}__groupincharge__{1}'.format(self.vendors_uid, self.developers_uid))
+        self.assertEqual(item.getProposingGroup(), self.vendors_uid)
+        self.assertEqual(item.getGroupsInCharge(), [self.developers_uid])
+        # clone as pmManager that is not creator for vendors
+        self.validateItem(item)
+        self.changeUser('pmManager')
+        self.failIf(self.vendors_creators in self.member.getGroups())
+        # clone it keeping the proposingGroup
+        clonedItem = item.clone(keepProposingGroup=True)
+        self.assertEqual(clonedItem.getProposingGroup(), self.vendors_uid)
+        self.assertEqual(clonedItem.getGroupsInCharge(), [self.developers_uid])
+        self.assertEqual(clonedItem.getProposingGroupWithGroupInCharge(),
+                         '{0}__groupincharge__{1}'.format(self.vendors_uid, self.developers_uid))
+        # clone it without keeping the proposingGroup
+        clonedItem = item.clone()
+        self.assertEqual(clonedItem.getProposingGroup(), self.developers_uid)
+        self.assertEqual(clonedItem.getGroupsInCharge(), [self.vendors_uid])
+        self.assertEqual(clonedItem.getProposingGroupWithGroupInCharge(),
+                         '{0}__groupincharge__{1}'.format(self.developers_uid, self.vendors_uid))
 
     def test_pm_PasteItem(self):
         '''Paste an item (previously copied) in destFolder.'''

@@ -2677,7 +2677,7 @@ class testMeetingItem(PloneMeetingTestCase):
         newItem = form._doApply(data)
         self.assertEqual(newItem.objectIds(), [])
 
-    def test_pm_ItemDuplicateFormKeepsProposingGroupIfRelevant(self):
+    def test_pm_ItemDuplicateFormKeepProposingGroupIfRelevant(self):
         """Test the @@item_duplicate_form that will keep original proposingGroup
            if current user is creator for it, or if not, that will switch to
            first proposingGroup of the user."""

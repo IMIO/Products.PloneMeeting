@@ -234,3 +234,4 @@ class Migrator(BaseMigrator):
             cfg.setEnableAdviceInvalidation(self.cfgsAdvicesInvalidation[cfgId])
         self.tool.invalidateAllCache()
         BaseMigrator.finish(self)
+        logger.info('======================================================================')
