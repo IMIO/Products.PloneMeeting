@@ -5,8 +5,13 @@ Changelog
 4.1.25 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Refactored the way a blank item is created to avoid impossibility to insert image during creation :
 
+  - every items, blank or not are created from an item template, this avoid use of `portal_factory`;
+  - a special not removale `Default item template` is added in the `MeetingConfig` and is used as basis for creating a blank item;
+  - parameter `MeetingConfig.itemCreatedOnlyUsingTemplate` is removed, deactivating the `Default item template` is the equivalent.
+- A MeetingConfig may be removed even if still containing items (recurring items, item templates), only real items are now considered
+- Avoid multiple clicks when creating a new item, icon is disabled after click and when an edition is in progress
 
 4.1.24.1 (2020-05-14)
 ---------------------

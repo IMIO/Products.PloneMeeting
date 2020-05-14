@@ -72,6 +72,7 @@ from Products.PloneMeeting.config import DEFAULT_ITEM_COLUMNS
 from Products.PloneMeeting.config import DEFAULT_LIST_TYPES
 from Products.PloneMeeting.config import DEFAULT_MEETING_COLUMNS
 from Products.PloneMeeting.config import EXECUTE_EXPR_VALUE
+from Products.PloneMeeting.config import ITEM_DEFAULT_TEMPLATE_ID
 from Products.PloneMeeting.config import ITEM_ICON_COLORS
 from Products.PloneMeeting.config import ITEM_INSERT_METHODS
 from Products.PloneMeeting.config import ITEMTEMPLATESMANAGERS_GROUP_SUFFIX
@@ -278,18 +279,6 @@ schema = Schema((
             description_msgid="config_version_descr",
             label='Configversion',
             label_msgid='PloneMeeting_label_configVersion',
-            i18n_domain='PloneMeeting',
-        ),
-        write_permission="PloneMeeting: Write risky config",
-    ),
-    BooleanField(
-        name='itemCreatedOnlyUsingTemplate',
-        default=defValues.itemCreatedOnlyUsingTemplate,
-        widget=BooleanField._properties['widget'](
-            description="ItemCreatedOnlyUsingTemplate",
-            description_msgid="item_created_only_using_template_descr",
-            label='Itemcreatedonlyusingtemplate',
-            label_msgid='PloneMeeting_label_itemCreatedOnlyUsingTemplate',
             i18n_domain='PloneMeeting',
         ),
         write_permission="PloneMeeting: Write risky config",
@@ -5252,10 +5241,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
            corresponds to this meeting config.'''
         # Register the portal types that are specific to this meeting config.
         self.registerPortalTypes()
-        # Create the subfolders
-        self._createSubFolders()
         # Set a property allowing to know in which MeetingConfig we are
         self.manage_addProperty(MEETING_CONFIG, self.id, 'string')
+        # Create the subfolders
+        self._createSubFolders()
         # Create the collections related to this meeting config
         self.createSearches(self._searchesInfo())
         # define default search for faceted
@@ -5292,6 +5281,33 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # Make sure we have 'text/html' for every Rich fields
         forceHTMLContentTypeForEmptyRichFields(self)
         self.adapted().onEdit(isCreated=False)  # Call sub-product code if any
+
+    def _create_default_item_template(self):
+        """Create the default item template for this MeetingConfig.
+           Return the default_template if it was created, None otherwise."""
+        item_templates_folder = getattr(self, TOOL_FOLDER_ITEM_TEMPLATES, None)
+        default_template = None
+        if item_templates_folder:
+            if ITEM_DEFAULT_TEMPLATE_ID not in item_templates_folder.objectIds():
+                item_template_title = translate('Default ${cfg_title} item template',
+                                                domain='PloneMeeting',
+                                                mapping={'cfg_title': safe_unicode(self.Title()), },
+                                                context=self.REQUEST,
+                                                default="Default ${cfg_title} item template")
+                default_template = api.content.create(
+                    container=item_templates_folder,
+                    type=self.getItemTypeName(configType='MeetingItemTemplate'),
+                    id=ITEM_DEFAULT_TEMPLATE_ID,
+                    title=item_template_title)
+        return default_template
+
+    def get_default_item_template(self, ignore_inactive=True):
+        """Return the default item template if it is active."""
+        item_templates = self.get(TOOL_FOLDER_ITEM_TEMPLATES)
+        default_template = item_templates.get(ITEM_DEFAULT_TEMPLATE_ID, None)
+        if default_template and ignore_inactive and default_template.queryState() == 'inactive':
+            default_template = None
+        return default_template
 
     def _createSubFolders(self):
         '''
@@ -5332,6 +5348,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 portletAssignmentMapping[name] = navPortlet
                 # use folder_contents layout
                 folder.setLayout('folder_contents')
+                # create the default item template
+                self._create_default_item_template()
 
             folder.setTitle(translate(folderTitle,
                                       domain="PloneMeeting",

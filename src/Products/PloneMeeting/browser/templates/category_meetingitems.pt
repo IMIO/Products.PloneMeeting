@@ -2,28 +2,45 @@
                      cfg python: view.cfg;
                      userIsAmongCreators python: tool.userIsAmong(['creators'], cfg=cfg);
                      meetingFolder python: cfg.getPloneMeetingFolder(cfg.getId());
-                     portal_url python: tool.getParentNode().absolute_url();
-                     templateItems view/templateItems;"
+                     portal_url python: tool.getParentNode().absolute_url();"
              i18n:domain="PloneMeeting">
     <div class="portlet_add_icons"
-         tal:condition="userIsAmongCreators">
-        <a id="newItemCreation" href="#"
-           style="display: inline;"
-           tal:condition="not: cfg/getItemCreatedOnlyUsingTemplate"
-           tal:attributes="href string:${meetingFolder/absolute_url}/createObject?type_name=MeetingItem${cfg/getShortName};">
-            <img tal:attributes="src string:$portal_url/new.png"
-              title="create_meeting_item" i18n:attributes="title" />
-        </a>
+         tal:condition="python: userIsAmongCreators">
+    <tal:global_defines define="is_editing view/_is_editing;">
+        <tal:defines define="defaultUID view/_get_default_item_template_UID;">
+            <a id="newItemCreation" href="#"
+               tal:condition="python: defaultUID and not is_editing"
+               onclick="if (!this.clicked){this.clicked = true; setTimeout(function(){this.clicked = false;} ,10000); this.children[0].src=this.children[0].src.replace('new.png', 'new_greyed.png');return true;} return false"
+               tal:attributes="href string:${meetingFolder/absolute_url}/@@createitemfromtemplate?templateUID=${defaultUID}">
+                <img tal:attributes="src string:$portal_url/new.png"
+                  title="create_meeting_item" i18n:attributes="title" />
+            </a>
+            <span id="newItemCreationDisabledDuringEdit"
+               tal:condition="python: defaultUID and is_editing">
+                <img tal:attributes="src string:$portal_url/new_greyed.png"
+                  title="create_meeting_item_disabled_during_edit" i18n:attributes="title" />
+            </span>
+        </tal:defines>
         <tal:comment replace="nothing">Create a new item from a template</tal:comment>
-        <a id="newTemplateItemCreation" class="link-overlay-pm" style="display: inline; padding-left: 0;"
-           href="@@createitemfromtemplate" tal:attributes="href string:${meetingFolder/absolute_url}/@@createitemfromtemplate"
-           tal:condition="templateItems">
-        <img style="cursor:pointer"
-             tal:attributes="src string:$portal_url/new_from.png"
-             title="create_meeting_item_from_template"
-             i18n:domain="plone"
-             i18n:attributes="title"/>
-        </a>
+        <tal:create_from_template condition="view/templateItems">
+            <a id="newTemplateItemCreation"
+               class="link-overlay-pm"
+               tal:condition="not:is_editing"
+               href="@@createitemfromtemplate"
+               tal:attributes="href string:${meetingFolder/absolute_url}/@@createitemfromtemplate">
+                <img tal:attributes="src string:$portal_url/new_from.png"
+                     title="create_meeting_item_from_template"
+                     i18n:domain="plone"
+                     i18n:attributes="title"/>
+            </a>
+            <span id="newTemplateItemCreationDisabledDuringEdit"
+                  tal:condition="is_editing">
+                <img tal:attributes="src string:$portal_url/new_from_greyed.png"
+                     title="create_meeting_item_from_template_disabled_during_edit"
+                     i18n:attributes="title"/>
+            </span>
+        </tal:create_from_template>
+    </tal:global_defines>
     </div>
     <div class="title" tal:content="context/Title">Category title</div>
 </tal:defines>

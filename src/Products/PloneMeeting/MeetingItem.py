@@ -5947,9 +5947,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            possible to remove a folder containing objects you can not
            remove.'''
         # If we are here, everything has already been checked before.
-        # Just check that the item is myself or a Plone Site.
+        # Just check that the item is myself, a Plone Site or removing a MeetingConfig.
         # We can remove an item directly, not "through" his container.
-        if item.meta_type not in ['Plone Site', 'MeetingItem', ]:
+        if item.meta_type not in ['Plone Site', 'MeetingConfig', 'MeetingItem', ]:
             user = api.user.get_current()
             logger.warn(BEFOREDELETE_ERROR % (user.getId(), self.id))
             raise BeforeDeleteException(
@@ -5958,7 +5958,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                           context=item.REQUEST))
         # if we are not removing the site and we are not in the creation process of
         # an item, manage predecessor
-        if not item.meta_type == 'Plone Site' and not item._at_creation_flag:
+        if item.meta_type not in ['Plone Site', 'MeetingConfig'] and not item._at_creation_flag:
             # If the item has a predecessor in another meetingConfig we must remove
             # the annotation on the predecessor specifying it.
             predecessor = self.getPredecessor()

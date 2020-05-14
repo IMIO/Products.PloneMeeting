@@ -4,14 +4,22 @@
                      portal_url python: tool.getParentNode().absolute_url();
                      member view/member;"
              i18n:domain="PloneMeeting">
-    <div class="portlet_add_icons">
-        <a id="newMeetingCreation" href="#"
-           style="display: inline;"
-           tal:condition="python: member.has_permission('PloneMeeting: Add Meeting', meetingFolder)"
-           tal:attributes="href string:${meetingFolder/absolute_url}/createObject?type_name=Meeting${cfg/getShortName};">
-            <img tal:attributes="src string:$portal_url/new.png"
-              title="create_meeting" i18n:attributes="title" />
-        </a>
+    <div class="portlet_add_icons"
+         tal:condition="python: member.has_permission('PloneMeeting: Add Meeting', meetingFolder)">
+        <tal:defines define="is_editing view/_is_editing;">
+            <a id="newMeetingCreation" href="#"
+               tal:condition="not:is_editing"
+               onclick="if (!this.clicked){this.clicked = true; setTimeout(function(){this.clicked = false;} ,10000); this.children[0].src=this.children[0].src.replace('new.png', 'new_greyed.png');return true;} return false"
+               tal:attributes="href string:${meetingFolder/absolute_url}/createObject?type_name=Meeting${cfg/getShortName};">
+                <img tal:attributes="src string:$portal_url/new.png"
+                  title="create_meeting" i18n:attributes="title" />
+            </a>
+            <span id="newMeetingCreationDisabledDuringEdit"
+                  tal:condition="is_editing">
+                <img tal:attributes="src string:$portal_url/new_greyed.png"
+                  title="create_meeting_disabled_during_edit" i18n:attributes="title" />
+            </span>
+        </tal:defines>
     </div>
     <div class="title" tal:content="context/Title">Category title</div>
 </tal:defines>

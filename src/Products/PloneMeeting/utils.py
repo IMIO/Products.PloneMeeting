@@ -1744,6 +1744,19 @@ def add_wf_history_action(obj, action_name, action_label, user_id=None):
     obj.workflow_history[wfName] = obj.workflow_history[wfName] + (newEvent, )
 
 
+def is_editing():
+    """Return True if currently editing something."""
+    request = getRequest()
+    url = request.get('URL', '')
+    edit_ends = ['/edit', '/base_edit', '/@@edit']
+    res = False
+    for edit_end in edit_ends:
+        if url.endswith(edit_end):
+            res = True
+            break
+    return res
+
+
 class AdvicesUpdatedEvent(ObjectEvent):
     implements(IAdvicesUpdatedEvent)
 

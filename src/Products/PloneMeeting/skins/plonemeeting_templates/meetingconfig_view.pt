@@ -92,8 +92,7 @@
           <td tal:define="field python:here.getField('configVersion')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td tal:define="field python:here.getField('itemCreatedOnlyUsingTemplate')">
-            <span metal:use-macro="here/widgets/field/macros/view" />
+          <td>
           </td>
           <td>
           </td>
@@ -667,6 +666,16 @@
                tal:attributes="src string:${portal_url}/manage.png;"/>
           <a href="itemtemplates" i18n:translate="">Manage item templates</a>
         </h4>
+        <p tal:define="default_template python:context.get_default_item_template(ignore_inactive=False);
+                       default_template_review_state default_template/queryState"
+           i18n:translate="">The default item template <span i18n:name="default_template_title"><img tal:attributes="src default_template/getIconURL" />
+          <a tal:attributes="href default_template/absolute_url;
+                             class string:contenttype-${default_template/portal_type} state-${default_template_review_state}"
+             tal:content="default_template/Title">Default item template title</a></span> is <span i18n:name="default_template_review_state"
+                tal:content="default_template_review_state"
+                tal:attributes="class string:state-${default_template_review_state}"
+                i18n:domain="plone"
+                i18n:translate="">review_state</span>.</p>
       </fieldset>
     </tal:data>
 

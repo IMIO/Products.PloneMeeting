@@ -33,7 +33,12 @@ class ItemTemplateView(BrowserView):
         cancelled = form.get('form.buttons.cancel', False)
         if templateUID:
             newItem = self.createItemFromTemplate(templateUID)
-            return self.request.RESPONSE.redirect(newItem.absolute_url() + '/edit')
+            newItemUrl = newItem.absolute_url() + '/edit'
+            # remove title if we are adding an item using default item template
+            default_template = self.cfg.get_default_item_template()
+            if default_template and templateUID == default_template.UID():
+                newItemUrl += '?title='
+            return self.request.RESPONSE.redirect(newItemUrl)
         elif cancelled:
             # the only way to enter here is the popup overlay not to be shown
             # because while using the popup overlay, the jQ function take care of hidding it
