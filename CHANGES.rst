@@ -11,6 +11,8 @@ Changelog
 - Use getIconURL to display held_position icon on meeting edit instead getIcon as the first returns full absolute_url of the icon and the last,
   only relative URL of the icon
 - In `vocabularies.ContainedAnnexesVocabulary`, only get `collective.iconifiedcategory.categories` vocab when actually having annexes
+- When cloning an item with `keepProposingGroup=False` and using field `MeetingItem.proposingGroupWithGroupInCharge`, make sure new set data
+  for `proposingGroup/proposingGroupWithGroupInCharge/groupsInCharge` are correct and complete
 
 4.1.24 (2020-05-08)
 -------------------
