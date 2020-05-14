@@ -10,6 +10,7 @@ Changelog
   for some instances that had been deployed in between
 - Use getIconURL to display held_position icon on meeting edit instead getIcon as the first returns full absolute_url of the icon and the last,
   only relative URL of the icon
+- In `vocabularies.ContainedAnnexesVocabulary`, only get `collective.iconifiedcategory.categories` vocab when actually having annexes
 
 4.1.24 (2020-05-08)
 -------------------
