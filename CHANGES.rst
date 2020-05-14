@@ -14,6 +14,7 @@ Changelog
 - When cloning an item with `keepProposingGroup=False` and using field `MeetingItem.proposingGroupWithGroupInCharge`, make sure new set data
   for `proposingGroup/proposingGroupWithGroupInCharge/groupsInCharge` are correct and complete.
   Added parameter `include_stored=True` to `MeetingItem.listProposingGroups` and `MeetingItem.listProposingGroupsWithGroupsInCharge`
+- Ignore schemata `settings` while editing an element, this avoid `MeetingItem` edit form to display a `Settings` tab when using `collective.solr`
 
 4.1.24 (2020-05-08)
 -------------------
