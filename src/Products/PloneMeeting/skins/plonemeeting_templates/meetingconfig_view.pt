@@ -27,7 +27,7 @@
                                   pageName request/pageName|string:default;
                                   member context/@@plone_portal_state/member;
                                   schematas here/Schemata;
-                                  fieldsets python:[key for key in schematas.keys() if (key not in ('metadata', 'votes'))];
+                                  fieldsets python:[key for key in schematas.keys() if (key not in ('metadata', 'votes', 'settings'))];
                                   displayable_fieldsets python: list(fieldsets);">
 
     <tal:hideToNonManagers condition="nocall:isManager">
