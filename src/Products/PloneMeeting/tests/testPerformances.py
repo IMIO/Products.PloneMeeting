@@ -663,13 +663,19 @@ class testPerformances(PloneMeetingTestCase):
             2, 50, with_meeting=False, as_uids=False)
         for item in items:
             # duplicate it 2 times
+            pm_logger.info('Duplicate item first time without annexes.')
             self._duplicateItem(item)
+            pm_logger.info('Duplicate item first time with annexes.')
+            self._duplicateItem(item, copyAnnexes=True)
+            pm_logger.info('Duplicate item second time without annexes.')
             self._duplicateItem(item)
+            pm_logger.info('Duplicate item second time with annexes.')
+            self._duplicateItem(item, copyAnnexes=True)
 
     @timecall
-    def _duplicateItem(self, item):
+    def _duplicateItem(self, item, copyAnnexes=False):
         '''Helper method that actually duplicated given p_item.'''
-        item.clone(copyAnnexes=True)
+        item.clone(copyAnnexes=copyAnnexes)
 
 
 def test_suite():
