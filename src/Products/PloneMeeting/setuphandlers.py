@@ -271,8 +271,9 @@ def postInstall(context):
     # and update the indexAdvisers index in portal_catalog
     cron_configlet = queryUtility(ICronConfiguration, 'cron4plone_config')
     if not cron_configlet.cronjobs:
-        # add a cron job that will be launched at 00:00
-        cron_configlet.cronjobs = [u'0 0 * * portal/@@update-delay-aware-advices']
+        # add a cron job that will be launched at 02:00 so set 01:45
+        # Syntax: m h dom mon command.
+        cron_configlet.cronjobs = [u'45 1 * * portal/@@update-delay-aware-advices']
 
     # add a collective.messagesviewlet message that will be used to warn MeetingManagers
     # that there are no more holidays in the configuration in less that 2 months

@@ -17,6 +17,7 @@ Changelog
 - Ignore schemata `settings` while viewing the MeetingConfig (meetingconfig_view) to avoid displaying tab `Settings` when using `collective.solr`
 - Adapted `PMConditionAwareCollectionVocabulary` regarding changes in `collective.eeafaceted.collectionwidget`
   where `_cache_invalidation_key` method now receives a new parameter `real_context`
+- Configured `cron4plone` cron job executing `@@update-delay-aware-advices` hours to `01:45` so will be executed at `02:00` (check every hours)
 
 4.1.24.1 (2020-05-14)
 ---------------------
