@@ -20,6 +20,7 @@ Changelog
 - Configured `cron4plone` cron job executing `@@update-delay-aware-advices` hours to `01:45` so will be executed at `02:00` (check every hours)
 - Fixed JS bug that could break dashboard when deleting an item,
   call to `updateNumberOfItems` should only be made when deleting an item on the meeting view
+- In `Migrate_To_4105._uncatalogWrongBrains` do not break when getting `correct_rid` if it does not exist in `portal_catalog`
 
 4.1.24.1 (2020-05-14)
 ---------------------
