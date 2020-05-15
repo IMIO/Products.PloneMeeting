@@ -54,9 +54,10 @@ from zope.schema.vocabulary import SimpleVocabulary
 class PMConditionAwareCollectionVocabulary(CachedCollectionVocabulary):
     implements(IVocabularyFactory)
 
-    def _cache_invalidation_key(self, context):
+    def _cache_invalidation_key(self, context, real_context):
         """Take also into account current user groups."""
-        original_checks = super(PMConditionAwareCollectionVocabulary, self)._cache_invalidation_key(context)
+        original_checks = super(PMConditionAwareCollectionVocabulary, self)._cache_invalidation_key(
+            context, real_context)
         tool = api.portal.get_tool('portal_plonemeeting')
         user_plone_groups = tool.get_plone_groups_for_user()
         return original_checks + (user_plone_groups, )

@@ -15,6 +15,8 @@ Changelog
 - Avoid multiple clicks when creating a new item, icon is disabled after click and when an edition is in progress
 - Make sure every `MeetingItemRecurring` and `MeetingItemTemplate` `portal_types` are registered in `portal_factory`
 - Ignore schemata `settings` while viewing the MeetingConfig (meetingconfig_view) to avoid displaying tab `Settings` when using `collective.solr`
+- Adapted `PMConditionAwareCollectionVocabulary` regarding changes in `collective.eeafaceted.collectionwidget`
+  where `_cache_invalidation_key` method now receives a new parameter `real_context`
 
 4.1.24.1 (2020-05-14)
 ---------------------
