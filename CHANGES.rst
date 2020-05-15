@@ -18,6 +18,8 @@ Changelog
 - Adapted `PMConditionAwareCollectionVocabulary` regarding changes in `collective.eeafaceted.collectionwidget`
   where `_cache_invalidation_key` method now receives a new parameter `real_context`
 - Configured `cron4plone` cron job executing `@@update-delay-aware-advices` hours to `01:45` so will be executed at `02:00` (check every hours)
+- Fixed JS bug that could break dashboard when deleting an item,
+  call to `updateNumberOfItems` should only be made when deleting an item on the meeting view
 
 4.1.24.1 (2020-05-14)
 ---------------------

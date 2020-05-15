@@ -626,18 +626,20 @@ $(document).on('ap_delete_givenuid', updateNumberOfItems);
 
 // update the number of items displayed on the meeting_view when items have been presented/removed of the meeting
 function updateNumberOfItems() {
-  // get numberOfItems using an ajax call
-  response = $.ajax({
-    url: document.baseURI + '/numberOfItems',
-    dataType: 'html',
-    cache: false,
-    async: true,
-    success: function(data) {
-      parent.$('.meeting_number_of_items').each(function() {
-        this.innerHTML = data;
-      });
-    },
-  });
+  // get numberOfItems using an ajax call if on the meeting_view
+  if (parent.$('.meeting_number_of_items').length) {
+    response = $.ajax({
+      url: document.baseURI + '/numberOfItems',
+      dataType: 'html',
+      cache: false,
+      async: true,
+      success: function(data) {
+        parent.$('.meeting_number_of_items').each(function() {
+          this.innerHTML = data;
+        });
+      },
+    });
+  }
 }
 
 // when clicking on the input#forceInsertNormal, update the 'pmForceInsertNormal' cookie
