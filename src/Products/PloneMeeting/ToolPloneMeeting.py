@@ -998,7 +998,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         self.REQUEST.set('pm_pasteItem_copyAnnexes', copyAnnexes)
         self.REQUEST.set('pm_pasteItem_copyDecisionAnnexes', copyDecisionAnnexes)
         self.REQUEST.set('pm_pasteItem_keptAnnexIds', keptAnnexIds)
-        self.REQUEST.set('pm_pasteItem_keptDecisionAnnexIds', keptAnnexIds)
+        self.REQUEST.set('pm_pasteItem_keptDecisionAnnexIds', keptDecisionAnnexIds)
         # Perform the paste
         pasteResult = destFolder.manage_pasteObjects(copiedData)
         # Restore the previous local roles for this user
