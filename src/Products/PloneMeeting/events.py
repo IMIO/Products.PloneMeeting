@@ -40,6 +40,7 @@ from Products.PloneMeeting.utils import AdviceAfterModifyEvent
 from Products.PloneMeeting.utils import AdviceAfterTransitionEvent
 from Products.PloneMeeting.utils import applyOnTransitionFieldTransform
 from Products.PloneMeeting.utils import fplog
+from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import ItemAfterTransitionEvent
 from Products.PloneMeeting.utils import MeetingAfterTransitionEvent
 from Products.PloneMeeting.utils import meetingExecuteActionOnLinkedItems
@@ -516,6 +517,37 @@ def _check_item_pasted_in_cfg(item):
         itemTemplatePortalType = cfg.getItemTypeName(configType='MeetingItemTemplate')
         if item.portal_type not in (recurringItemPortalType, itemTemplatePortalType):
             raise Unauthorized()
+
+
+def onItemCopied(item, event):
+    """Notified during paste, when new item freshly created."""
+    request = getRequest()
+    copyAnnexes = request.get('pm_pasteItem_copyAnnexes', False)
+    copyDecisionAnnexes = request.get('pm_pasteItem_copyDecisionAnnexes', False)
+    keptAnnexIds = request.get('pm_pasteItem_keptAnnexIds', [])
+    keptDecisionAnnexIds = request.get('pm_pasteItem_keptDecisionAnnexIds', [])
+
+    # Manage annexes.
+    # remove relevant annexes then manage kept ones, we remove kept annexes
+    # if we can not find a corresponding annexType in the destMeetingConfig
+    if copyAnnexes is False or keptAnnexIds:
+        # Delete the annexes that have been copied.
+        for annex in get_annexes(item, portal_types=['annex']):
+            annex_id = annex.getId()
+            if copyAnnexes is False or annex_id not in keptAnnexIds:
+                item._delObject(annex_id, suppress_events=True)
+    if copyDecisionAnnexes is False or keptDecisionAnnexIds:
+        # Delete the decision annexes that have been copied.
+        for annex in get_annexes(item, portal_types=['annexDecision']):
+            annex_id = annex.getId()
+            if copyDecisionAnnexes is False or annex_id not in keptDecisionAnnexIds:
+                item._delObject(annex_id, suppress_events=True)
+
+    # remove every contained images as it will be added again by storeImagesLocally
+    # disable linkintegrity if enabled
+    image_ids = [img.getId() for img in item.objectValues() if img.portal_type == 'Image']
+    for image_id in image_ids:
+        item._delObject(image_id, suppress_events=True)
 
 
 def onItemMoved(item, event):

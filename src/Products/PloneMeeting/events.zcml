@@ -25,6 +25,10 @@
               handler=".events.onItemRemoved" />
 
   <subscriber for=".interfaces.IMeetingItem
+                   zope.lifecycleevent.ObjectCopiedEvent"
+              handler=".events.onItemCopied" />
+
+  <subscriber for=".interfaces.IMeetingItem
                    zope.lifecycleevent.ObjectMovedEvent"
               handler=".events.onItemMoved" />
 
