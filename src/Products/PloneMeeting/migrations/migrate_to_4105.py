@@ -48,10 +48,16 @@ class Migrate_To_4105(Migrate_To_4104):
                     # fix UUIDIndex if correct path exists (without ending "/")
                     correct_rid = self.catalog._catalog.uids.get(path[:-1], None)
                     if correct_rid:
-                        obj = self.catalog.getobject(correct_rid)
-                        index = self.catalog._catalog.getIndex('UID')
-                        index.unindex_object(correct_rid)
-                        index.index_object(correct_rid, obj)
+                        try:
+                            obj = self.catalog.getobject(correct_rid)
+                            index = self.catalog._catalog.getIndex('UID')
+                            index.unindex_object(correct_rid)
+                            index.index_object(correct_rid, obj)
+                        except AttributeError:
+                            self.warn(
+                                logger,
+                                'In _uncatalogWrongBrains, could not get correct_rid %s at %s'
+                                % (correct_rid, path[:-1]))
                     i += 1
         if i:
             self.warn(logger, 'In _uncatalogWrongBrains, uncataloged %s path(s)' % i)
