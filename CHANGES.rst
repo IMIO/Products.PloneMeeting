@@ -20,6 +20,8 @@ Changelog
 - Configured `cron4plone` cron job executing `@@update-delay-aware-advices` hours to `01:45` so will be executed at `02:00` (check every hours)
 - Fixed JS bug that could break dashboard when deleting an item,
   call to `updateNumberOfItems` should only be made when deleting an item on the meeting view
+- Optimized item duplication process, remove images and relevant annexes (that are not kept) using `_delObject(suppress_events=True)`
+  in `zope.lifecycleevent.ObjectCopiedEvent` `onItemCopied` event handler
 
 4.1.24.1 (2020-05-14)
 ---------------------
