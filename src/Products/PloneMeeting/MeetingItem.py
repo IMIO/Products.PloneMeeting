@@ -4527,11 +4527,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def _removeEveryContainedAdvices(self):
         """Remove every contained advices."""
-        ids = []
         for advice in self.getAdvices():
-            self._grantPermissionToRole(DeleteObjects, 'Authenticated', advice)
-            ids.append(advice.getId())
-        self.manage_delObjects(ids=ids)
+            self._delObject(advice.getId(), suppress_events=True)
 
     def _adviceDelayIsTimedOut(self, groupId, computeNewDelayInfos=False):
         """Returns True if given p_advice is delay-aware and delay is timed out.

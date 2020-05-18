@@ -543,6 +543,9 @@ def onItemCopied(item, event):
             if copyDecisionAnnexes is False or annex_id not in keptDecisionAnnexIds:
                 item._delObject(annex_id, suppress_events=True)
 
+    # remove contained meetingadvices
+    item._removeEveryContainedAdvices()
+
     # remove every contained images as it will be added again by storeImagesLocally
     # disable linkintegrity if enabled
     image_ids = [img.getId() for img in item.objectValues() if img.portal_type == 'Image']

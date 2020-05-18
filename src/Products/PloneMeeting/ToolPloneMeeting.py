@@ -1049,9 +1049,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 # update security settings of new item as workflow permissions could have changed...
                 newItemWF.updateRoleMappingsFor(newItem)
 
-            # remove contained meetingadvices
-            newItem._removeEveryContainedAdvices()
-
             # manage ftw.labels
             annotations = IAnnotations(newItem)
             if not keep_ftw_labels and FTW_LABELS_ANNOTATION_KEY in annotations:
