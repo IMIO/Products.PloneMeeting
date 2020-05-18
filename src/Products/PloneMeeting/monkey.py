@@ -1,5 +1,6 @@
 
 from Acquisition import aq_base
+from imio.annex.content.annex import Annex
 from plone import api
 from plone.app.querystring import queryparser
 from Products.Archetypes.BaseObject import BaseObject
@@ -116,3 +117,11 @@ def _listAllowedRolesAndUsers(self, user):
 
 CatalogTool._listAllowedRolesAndUsers = _listAllowedRolesAndUsers
 logger.info("Monkey patching Products.CMFPlone.CatalogTool.CatalogTool (_listAllowedRolesAndUsers)")
+
+
+def _getCatalogTool(self):
+    """Temporary moneypatch so annex are not indexed in portal_catalog."""
+    return None
+
+Annex._getCatalogTool = _getCatalogTool
+logger.info("Monkey patching imio.annex.content.annex.Annex (_getCatalogTool)")
