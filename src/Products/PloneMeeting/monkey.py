@@ -2,6 +2,7 @@
 from Acquisition import aq_base
 from imio.annex.content.annex import Annex
 from plone import api
+from plone.api.exc import InvalidParameterError
 from plone.app.querystring import queryparser
 from Products.Archetypes.BaseObject import BaseObject
 from Products.CMFPlone.CatalogTool import CatalogTool
@@ -87,7 +88,7 @@ def _listAllowedRolesAndUsers(self, user):
     """Monkeypatch to use ToolPloneMeeting.get_plone_groups_for_user instead getGroups.
        Moreover store this in the REQUEST."""
     data = None
-    key = "catalog-listAllowedRolesAndUsers"
+    key = "catalog-listAllowedRolesAndUsers-{0}".format(user.getId())
     # async does not have a REQUEST
     if hasattr(self, 'REQUEST'):
         cache = IAnnotations(self.REQUEST)
@@ -103,8 +104,11 @@ def _listAllowedRolesAndUsers(self, user):
         # XXX change, replaced getGroups by tool.get_plone_groups_for_user
         # if hasattr(aq_base(user), 'getGroups'):
         #     groups = ['user:%s' % x for x in user.getGroups()]
-        tool = api.portal.get_tool('portal_plonemeeting')
-        groups = tool.get_plone_groups_for_user()
+        try:
+            tool = api.portal.get_tool('portal_plonemeeting')
+            groups = tool.get_plone_groups_for_user()
+        except InvalidParameterError:
+            groups = user.getGroups()
         if groups:
             groups = ['user:%s' % x for x in groups]
             result = result + groups
