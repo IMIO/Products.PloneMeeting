@@ -234,9 +234,11 @@ def SearchableText_item(obj):
 def SearchableText_meeting(obj):
     return SearchableText(obj)
 
+
 @indexer(IAnnex)
 def SearchableText_annex(obj):
     return _marker
+
 
 @indexer(IMeetingItem)
 def sendToAuthority(obj):

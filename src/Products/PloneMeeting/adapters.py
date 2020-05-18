@@ -1391,10 +1391,12 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
 
     def get_infos(self, category, limited=False):
         """A the 'visible_for_groups' info."""
+        if not limited:
+            visible_for_groups = self._visible_for_groups()
         infos = super(PMCategorizedObjectInfoAdapter, self).get_infos(
             category, limited=limited)
         if not limited:
-            infos['visible_for_groups'] = self._visible_for_groups()
+            infos['visible_for_groups'] = visible_for_groups
         return infos
 
     def _apply_visible_groups_security(self, group_ids):
