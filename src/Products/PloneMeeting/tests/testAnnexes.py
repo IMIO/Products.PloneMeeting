@@ -303,8 +303,7 @@ class testAnnexes(PloneMeetingTestCase):
         """ """
         # current user may see every annexes
         self.assertEqual(set([elt['UID'] for elt in get_categorized_elements(obj)]),
-                         set((annexNotConfidential.UID(),
-                              annexConfidential.UID())))
+                         set((annexNotConfidential.UID(), annexConfidential.UID())))
         self.assertTrue('Annex not confidential' in annexes_table())
         self.assertTrue('Annex confidential' in annexes_table())
         categorized_child.update()

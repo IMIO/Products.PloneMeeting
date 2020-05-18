@@ -1516,6 +1516,7 @@ def updateAnnexesAccess(container):
             adapter.context = annex
             adapter.obj = aq_base(annex)
         v['visible_for_groups'] = adapter._visible_for_groups()
+        v['allowedRolesAndUsers'] = adapter._allowedRolesAndUsers
 
 
 def validate_item_assembly_value(value):
