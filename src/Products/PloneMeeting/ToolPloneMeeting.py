@@ -36,6 +36,8 @@ from imio.helpers.cache import cleanRamCache
 from imio.helpers.cache import cleanVocabularyCacheFor
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import invalidate_cachekey_volatile_for
+from imio.helpers.content import disable_link_integrity_checks
+from imio.helpers.content import restore_link_integrity_checks
 from imio.prettylink.interfaces import IPrettyLink
 from OFS import CopySupport
 from persistent.mapping import PersistentMapping
@@ -993,12 +995,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         # make sure 'update_all_categorized_elements' is not called while processing annexes
         self.REQUEST.set('defer_update_categorized_elements', True)
         self.REQUEST.set('defer_categorized_content_created_event', True)
-        # store keptAnnexIds and keptDecisionAnnexIds in REQUEST
-        # so it can be used by onItemCopied event so we optimize removal process
-        self.REQUEST.set('pm_pasteItem_copyAnnexes', copyAnnexes)
-        self.REQUEST.set('pm_pasteItem_copyDecisionAnnexes', copyDecisionAnnexes)
-        self.REQUEST.set('pm_pasteItem_keptAnnexIds', keptAnnexIds)
-        self.REQUEST.set('pm_pasteItem_keptDecisionAnnexIds', keptAnnexIds)
         # Perform the paste
         pasteResult = destFolder.manage_pasteObjects(copiedData)
         # Restore the previous local roles for this user
@@ -1083,6 +1079,27 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 newItem.getField('classifier').set(
                     newItem, copiedItem.getClassifier())
 
+            # remove every contained images as it will be added again by storeImagesLocally
+            # disable linkintegrity if enabled
+            original_link_integrity = disable_link_integrity_checks()
+            images = [img for img in newItem.objectValues() if img.portal_type == 'Image']
+            for image in images:
+                unrestrictedRemoveGivenObject(image)
+            restore_link_integrity_checks(original_link_integrity)
+
+            # Manage annexes.
+            # remove relevant annexes then manage kept ones, we remove kept annexes
+            # if we can not find a corresponding annexType in the destMeetingConfig
+            if copyAnnexes is False or keptAnnexIds:
+                # Delete the annexes that have been copied.
+                for annex in get_annexes(newItem, portal_types=['annex']):
+                    if copyAnnexes is False or annex.getId() not in keptAnnexIds:
+                        unrestrictedRemoveGivenObject(annex)
+            if copyDecisionAnnexes is False or keptDecisionAnnexIds:
+                # Delete the decision annexes that have been copied.
+                for annex in get_annexes(newItem, portal_types=['annexDecision']):
+                    if copyDecisionAnnexes is False or annex.getId() not in keptDecisionAnnexIds:
+                        unrestrictedRemoveGivenObject(annex)
             # if we have left annexes, we manage it
             plone_utils = api.portal.get_tool('plone_utils')
             if get_annexes(newItem):
