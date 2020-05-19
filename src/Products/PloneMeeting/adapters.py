@@ -1534,8 +1534,8 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
 class PMCategorizedObjectAdapter(CategorizedObjectAdapter):
     """ """
 
-    def __init__(self, context, request, brain):
-        super(PMCategorizedObjectAdapter, self).__init__(context, request, brain)
+    def __init__(self, context, request, categorized_obj):
+        super(PMCategorizedObjectAdapter, self).__init__(context, request, categorized_obj)
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
 
@@ -1548,7 +1548,7 @@ class PMCategorizedObjectAdapter(CategorizedObjectAdapter):
             return False
 
         # bypass if not confidential
-        infos = self.context.categorized_elements[self.brain.UID]
+        infos = self.context.categorized_elements[self.categorized_obj.UID()]
         if not infos['confidential']:
             return True
 

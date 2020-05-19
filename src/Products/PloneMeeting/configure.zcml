@@ -235,15 +235,7 @@
   <adapter
     for="Products.PloneMeeting.interfaces.IMeetingContent
          zope.publisher.interfaces.browser.IBrowserRequest
-         Products.ZCatalog.interfaces.ICatalogBrain"
-    provides="collective.iconifiedcategory.interfaces.IIconifiedContent"
-    factory=".adapters.PMCategorizedObjectAdapter"
-    />
-
-  <adapter zcml:condition="installed collective.solr"
-    for="Products.PloneMeeting.interfaces.IMeetingContent
-         zope.publisher.interfaces.browser.IBrowserRequest
-         collective.solr.flare.PloneFlare"
+         collective.iconifiedcategory.behaviors.iconifiedcategorization.IIconifiedCategorizationMarker"
     provides="collective.iconifiedcategory.interfaces.IIconifiedContent"
     factory=".adapters.PMCategorizedObjectAdapter"
     />
