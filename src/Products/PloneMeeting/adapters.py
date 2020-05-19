@@ -1426,7 +1426,7 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
                 for grp_id in group_ids:
                     self.context.manage_addLocalRoles(
                         grp_id, (READER_USECASES['confidentialannex'], ))
-            self.context.reindexObjectSecurity()
+            # self.context.reindexObjectSecurity()
 
     def _visible_for_groups(self):
         """ """
