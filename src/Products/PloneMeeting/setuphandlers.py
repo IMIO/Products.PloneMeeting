@@ -43,9 +43,9 @@ __docformat__ = 'plaintext'
 logger = logging.getLogger('PloneMeeting: setuphandlers')
 
 folderViews = ('folder_contents', )
-# Indexes used by PloneMeeting
 # XXX warning, do ONLY use ZCTextIndex for real text values,
 # NOT returning empty tuple/list like () or [] but empty values like ''
+# Indexes used by PloneMeeting, to create in portal_catalog
 indexInfos = {
     # MeetingItem-related indexes
     'getCategory': ('FieldIndex', {}),
@@ -87,6 +87,20 @@ columnInfos = ('getDate',
                'title_or_id', 'toDiscuss',
                'privacy', 'pollType', 'listType', 'getItemNumber',
                'getCategory', 'getRawClassifier')
+# Indexes to create in lookup_catalog
+lookupIndexInfos = {
+    # base indexes
+    'id': ('FieldIndex', {}),
+    'Title': ('FieldIndex', {}),
+    'UID': ('UUIDIndex', {}),
+    'Type': ('FieldIndex', {}),
+    'portal_type': ('FieldIndex', {}),
+    'path': ('ExtendedPathIndex', {}),
+    # custom
+    'content_category_uid': ('KeywordIndex', {}), }
+# Metadata to create in lookup_catalog
+lookupColumnInfos = ('id', 'Title', 'UID', 'Type', 'portal_type')
+
 transformsToDisable = ['word_to_html', 'pdf_to_html', 'pdf_to_text']
 
 
@@ -154,6 +168,9 @@ def postInstall(context):
     # Create or update indexes
     addOrUpdateIndexes(site, indexInfos)
     addOrUpdateColumns(site, columnInfos)
+    # Create or update indexes in the lookup_catalog
+    addOrUpdateIndexes(site, lookupIndexInfos, catalog_id='lookup_catalog')
+    addOrUpdateColumns(site, lookupColumnInfos, catalog_id='lookup_catalog')
 
     # We add meetingfolder_redirect_view and folder_contents to the list of
     # available views for type "Folder".
