@@ -91,7 +91,7 @@ columnInfos = ('getDate',
 lookupIndexInfos = {
     # base indexes
     'id': ('FieldIndex', {}),
-    'Title': ('FieldIndex', {}),
+    'Title': ('ZCTextIndex', {}),
     'UID': ('UUIDIndex', {}),
     'Type': ('FieldIndex', {}),
     'portal_type': ('FieldIndex', {}),
