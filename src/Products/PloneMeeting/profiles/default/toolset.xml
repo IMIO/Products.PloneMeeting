@@ -2,7 +2,6 @@
 <tool-setup>
  <required tool_id="portal_plonemeeting"
            class="Products.PloneMeeting.ToolPloneMeeting.ToolPloneMeeting"/>
- <required tool_id="lookup_catalog"
-           class="Products.PloneMeeting.catalogs.LookupCatalogTool"/>
-
+ <!--required tool_id="lookup_catalog"
+           class="Products.PloneMeeting.catalogs.LookupCatalogTool"/-->
 </tool-setup>

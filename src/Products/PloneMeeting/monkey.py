@@ -126,7 +126,7 @@ logger.info("Monkey patching Products.CMFPlone.CatalogTool.CatalogTool (_listAll
 
 def _getCatalogTool(self):
     """Temporary moneypatch so annex are not indexed in portal_catalog."""
-    return api.portal.get_tool('lookup_catalog')
+    return None
 
 Annex._getCatalogTool = _getCatalogTool
 logger.info("Monkey patching imio.annex.content.annex.Annex (_getCatalogTool)")

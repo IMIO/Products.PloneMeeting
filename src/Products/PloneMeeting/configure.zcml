@@ -225,6 +225,8 @@
   <adapter name="templateUsingGroups" factory=".indexes.templateUsingGroups" />
   <adapter name="title_or_id" factory=".indexes.title_or_id" />
   <adapter name="get_full_title" factory=".indexes.get_full_title" />
+  <adapter name="contained_uids" factory=".indexes.contained_uids_item" />
+  <adapter name="contained_uids" factory=".indexes.contained_uids_meeting" />
 
   <adapter
     for="imio.annex.content.annex.IAnnex"

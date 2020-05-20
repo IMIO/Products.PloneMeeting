@@ -10,6 +10,7 @@
 from collective.contact.core.content.organization import IOrganization
 from DateTime import DateTime
 from imio.annex.content.annex import IAnnex
+from imio.helpers.content import _contained_objects
 from imio.history.interfaces import IImioHistory
 from OFS.interfaces import IItem
 from plone import api
@@ -419,3 +420,19 @@ def get_full_title(obj):
     '''By default we hide the "My organization" level, but not in the indexed
        value as it is used in the contact widget.'''
     return obj.get_full_title(force_separator=True)
+
+
+@indexer(IMeeting)
+def contained_uids_meeting(obj):
+    """
+      Indexes the UID of every contained elements.
+    """
+    return [contained.UID() for contained in _contained_objects(obj)] or _marker
+
+
+@indexer(IMeetingItem)
+def contained_uids_item(obj):
+    """
+      Indexes the UID of every contained elements.
+    """
+    return [contained.UID() for contained in _contained_objects(obj)] or _marker
