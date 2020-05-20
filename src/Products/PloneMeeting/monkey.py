@@ -7,6 +7,7 @@ from plone.app.querystring import queryparser
 from Products.Archetypes.BaseObject import BaseObject
 from Products.CMFPlone.CatalogTool import CatalogTool
 from Products.PloneMeeting import logger
+from Products.PloneMeeting.content.advice import MeetingAdvice
 from Products.PortalTransforms.cache import Cache
 from zope.annotation import IAnnotations
 
@@ -129,3 +130,5 @@ def _getCatalogTool(self):
 
 Annex._getCatalogTool = _getCatalogTool
 logger.info("Monkey patching imio.annex.content.annex.Annex (_getCatalogTool)")
+MeetingAdvice._getCatalogTool = _getCatalogTool
+logger.info("Monkey patching Products.PloneMeeting.content.advice.MeetingAdvice (_getCatalogTool)")
