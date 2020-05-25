@@ -32,6 +32,7 @@ from collective.iconifiedcategory.utils import get_categorized_elements
 from collective.iconifiedcategory.utils import get_category_object
 from collective.iconifiedcategory.utils import get_config_root
 from collective.iconifiedcategory.utils import get_group
+from collective.iconifiedcategory.utils import has_relations
 from collective.iconifiedcategory.utils import update_all_categorized_elements
 from DateTime import DateTime
 from imio.actionspanel.interfaces import IContentDeletable
@@ -51,6 +52,7 @@ from Products.PloneMeeting.MeetingConfig import SUFFIXPROFILEPREFIX
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
 from time import sleep
+from zExceptions import Redirect
 from zope.annotation import IAnnotations
 from zope.component import queryUtility
 from zope.event import notify
@@ -1534,6 +1536,49 @@ class testAnnexes(PloneMeetingTestCase):
         self.changeUser('pmManager')
         self.portal.restrictedTraverse('@@delete_givenuid')(meeting.UID())
         _check_catalog(step=-1)
+
+    def test_pm_AnnexContentCategoryUIDIndex(self):
+        """As annexes are not indexed, the content_category_uid index is indexed on
+           the indexed parent (item or meeting).
+           Various checks like may delete ContentCategory are done regarding this."""
+        cfg = self.meetingConfig
+        self.changeUser('pmManager')
+        annex_category = cfg.annexes_types.item_annexes.get('financial-analysis')
+        annex_category_uid = annex_category.UID()
+        self.assertFalse(has_relations(annex_category))
+        item = self.create('MeetingItem')
+        item_uid = item.UID()
+        annex1 = self.addAnnex(item)
+        # content_category_uid indexed on parent
+        self.assertEqual(get_category_object(annex1, annex1.content_category), annex_category)
+        brains = self.catalog(content_category_uid=annex_category_uid)
+        self.assertEqual(len(brains), 1)
+        self.assertEqual(brains[0].UID, item_uid)
+        self.assertTrue(has_relations(annex_category))
+        # ContentCategory may not be removed
+        self.assertRaises(Redirect, self.deleteAsManager, annex_category_uid)
+        # removal raising exception will unindex the element, reindex it
+        annex_category.reindexObject()
+        # add another annex
+        annex2 = self.addAnnex(item)
+        self.assertEqual(get_category_object(annex2, annex2.content_category), annex_category)
+        brains = self.catalog(content_category_uid=annex_category_uid)
+        self.assertEqual(len(brains), 1)
+        self.assertEqual(brains[0].UID, item_uid)
+        self.assertTrue(has_relations(annex_category))
+        # remove annex2
+        self.portal.restrictedTraverse('@@delete_givenuid')(annex2.UID())
+        brains = self.catalog(content_category_uid=annex_category_uid)
+        self.assertEqual(len(brains), 1)
+        self.assertEqual(brains[0].UID, item_uid)
+        self.assertTrue(has_relations(annex_category))
+        # remove annex1
+        self.portal.restrictedTraverse('@@delete_givenuid')(annex1.UID())
+        brains = self.catalog(content_category_uid=annex_category_uid)
+        self.assertEqual(len(brains), 0)
+        self.assertFalse(has_relations(annex_category))
+        # ContentCategory may be removed
+        self.deleteAsManager(annex_category_uid)
 
 
 def test_suite():
