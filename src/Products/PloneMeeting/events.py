@@ -755,7 +755,7 @@ def onAnnexAdded(annex, event):
         # and reindex parent relevant indexes
         notifyModifiedAndReindex(
             parent,
-            extra_idxs=['SearchableText', 'hasAnnexesToSign', 'hasAnnexesToPrint'])
+            extra_idxs=['SearchableText', 'hasAnnexesToSign', 'hasAnnexesToPrint', 'contained_uids'])
 
 
 def onAnnexEditFinished(annex, event):
@@ -804,7 +804,10 @@ def onAnnexRemoved(annex, event):
             parent.updateLocalRoles(invalidate=True)
 
     # update modification date and SearchableText
-    notifyModifiedAndReindex(parent, extra_idxs=['SearchableText', 'hasAnnexesToPrint', 'hasAnnexesToSign'])
+    notifyModifiedAndReindex(parent, extra_idxs=['SearchableText',
+                                                 'hasAnnexesToPrint',
+                                                 'hasAnnexesToSign',
+                                                 'contained_uids'])
 
 
 def onAnnexAttrChanged(annex, event):

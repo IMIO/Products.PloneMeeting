@@ -6345,7 +6345,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def getAdviceRelatedIndexes(self):
         '''See doc in utils.py.'''
-        return ['indexAdvisers']
+        return ['indexAdvisers', 'contained_uids']
 
     security.declarePublic('lastValidatedBefore')
 
