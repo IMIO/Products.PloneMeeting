@@ -3,6 +3,7 @@
 from collective.eeafaceted.batchactions.interfaces import IBatchActionsMarker
 from collective.eeafaceted.collectionwidget.interfaces import ICollectiveEeafacetedCollectionwidgetLayer
 from ftw.labels.interfaces import ILabelSupport
+from imio.helpers.interfaces import IContainerOfUnindexedElementsMarker
 from zope.component.interfaces import IObjectEvent
 from zope.interface import Interface
 
@@ -94,7 +95,7 @@ class IPloneElement(Interface):
     """
 
 
-class IMeetingContent(Interface):
+class IMeetingContent(IContainerOfUnindexedElementsMarker):
     """Base marker interface for every content related elements
     """
 

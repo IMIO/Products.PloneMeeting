@@ -227,7 +227,9 @@
   <adapter name="get_full_title" factory=".indexes.get_full_title" />
   <adapter name="contained_uids" factory=".indexes.contained_uids_item" />
   <adapter name="contained_uids" factory=".indexes.contained_uids_meeting" />
-  <adapter name="content_category_uid" factory=".indexes.content_category_uid" />
+  <!-- content_category_uid for Meeting and MeetingItem until these are DX -->
+  <adapter name="content_category_uid" factory=".indexes.content_category_uid_item" />
+  <adapter name="content_category_uid" factory=".indexes.content_category_uid_meeting" />
 
   <adapter
     for="imio.annex.content.annex.IAnnex"

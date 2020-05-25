@@ -712,9 +712,10 @@ class testMeetingItem(PloneMeetingTestCase):
                                    decisionAnnex2.content_category)
         self.assertEqual(cat1, cat2)
         # correctly used for content_category_uid index
+        # as annexes are not indexed, the brain will be the parent, the item
         uids_using_cat = [brain.UID for brain in self.catalog(content_category_uid=cat1.UID())]
-        self.assertTrue(decisionAnnex1.UID() in uids_using_cat)
-        self.assertTrue(decisionAnnex2.UID() in uids_using_cat)
+        newItem = data['newItem']
+        self.assertTrue(newItem.UID() in uids_using_cat)
 
     def test_pm_SentToInfosIndex(self):
         """The fact that an item is sendable/sent to another MC is indexed."""
