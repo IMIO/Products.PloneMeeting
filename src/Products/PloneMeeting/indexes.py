@@ -8,6 +8,8 @@
 #
 
 from collective.contact.core.content.organization import IOrganization
+from collective.iconifiedcategory.behaviors.iconifiedcategorization import IIconifiedCategorizationMarker
+from collective.iconifiedcategory.utils import get_category_object
 from DateTime import DateTime
 from imio.annex.content.annex import IAnnex
 from imio.helpers.content import _contained_objects
@@ -436,3 +438,13 @@ def contained_uids_item(obj):
       Indexes the UID of every contained elements.
     """
     return [contained.UID() for contained in _contained_objects(obj)] or _marker
+
+
+@indexer(IMeetingItem)
+def content_category_uid(obj):
+    """
+      Indexes content_category used by every contained annexes.
+    """
+    return list(set([get_category_object(contained_obj, contained_obj.content_category).UID()
+                     for contained_obj in _contained_objects(obj)
+                     if IIconifiedCategorizationMarker.providedBy(contained_obj)])) or _marker

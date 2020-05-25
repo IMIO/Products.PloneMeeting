@@ -227,6 +227,7 @@
   <adapter name="get_full_title" factory=".indexes.get_full_title" />
   <adapter name="contained_uids" factory=".indexes.contained_uids_item" />
   <adapter name="contained_uids" factory=".indexes.contained_uids_meeting" />
+  <adapter name="content_category_uid" factory=".indexes.content_category_uid" />
 
   <adapter
     for="imio.annex.content.annex.IAnnex"

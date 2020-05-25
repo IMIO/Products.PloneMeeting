@@ -755,7 +755,11 @@ def onAnnexAdded(annex, event):
         # and reindex parent relevant indexes
         notifyModifiedAndReindex(
             parent,
-            extra_idxs=['SearchableText', 'hasAnnexesToSign', 'hasAnnexesToPrint', 'contained_uids'])
+            extra_idxs=['SearchableText',
+                        'hasAnnexesToSign',
+                        'hasAnnexesToPrint',
+                        'contained_uids',
+                        'content_category_uid'])
 
 
 def onAnnexEditFinished(annex, event):
@@ -807,7 +811,8 @@ def onAnnexRemoved(annex, event):
     notifyModifiedAndReindex(parent, extra_idxs=['SearchableText',
                                                  'hasAnnexesToPrint',
                                                  'hasAnnexesToSign',
-                                                 'contained_uids'])
+                                                 'contained_uids',
+                                                 'content_category_uid'])
 
 
 def onAnnexAttrChanged(annex, event):
