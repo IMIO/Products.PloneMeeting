@@ -45,6 +45,8 @@ class Migrate_To_4107(Migrator):
         self._moveToItemCreatedOnlyUsingTemplate()
         self._registerMeetingFactoryTypes()
         self._updateUpdateDelayAwareAdvicecsCronJobTime()
+        # reapply typeinfo as imio.zamqp.pm typeinfo was merged into Products.PloneMeeting
+        self.ps.runImportStepFromProfile('profile-Products.PloneMeeting:default', 'typeinfo')
 
 
 def migrate(context):
@@ -52,7 +54,8 @@ def migrate(context):
 
        1) Remove field 'itemCreatedOnlyUsingTemplate' from every MeetingConfigs;
        2) Make sure every relevant portal_types are correctly registered in portal_factory;
-       3) Set @@update-delay-aware-advices cronjob time to 01:45.
+       3) Set @@update-delay-aware-advices cronjob time to 01:45;
+       4) Re-apply typeinfo to include imio.zamqp.pm informations.
     '''
     migrator = Migrate_To_4107(context)
     migrator.run()
