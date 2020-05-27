@@ -21,7 +21,8 @@ Changelog
 - Fixed JS bug that could break dashboard when deleting an item,
   call to `updateNumberOfItems` should only be made when deleting an item on the meeting view
 - In `Migrate_To_4105._uncatalogWrongBrains` do not break when getting `correct_rid` if it does not exist in `portal_catalog`
-- Simplified types XML files when using `imio.zamqp.pm` or not, it leaded to wrong configuration when GS profile order was not correct
+- Simplified types XML files when using `imio.zamqp.pm` or not, it led to wrong configuration when GS profile order was not correct.
+  `imio.zamqp.pm` is now a direct dependency of `Products.PloneMeeting`
 
 4.1.24.1 (2020-05-14)
 ---------------------
