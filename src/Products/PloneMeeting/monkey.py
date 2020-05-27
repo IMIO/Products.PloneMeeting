@@ -1,7 +1,11 @@
 
 from Acquisition import aq_base
+from collective.documentviewer.settings import Settings
+from collective.documentviewer.views import PDFFiles
+from collective.documentviewer.views import PDFTraverseBlobFile
 from imio.annex.content.annex import Annex
 from imio.helpers.cache import get_cachekey_volatile
+from imio.helpers.content import uuidsToObjects
 from plone import api
 from plone.api.exc import InvalidParameterError
 from plone.app.querystring import queryparser
@@ -11,6 +15,9 @@ from Products.CMFPlone.CatalogTool import CatalogTool
 from Products.PloneMeeting import logger
 from Products.PloneMeeting.content.advice import MeetingAdvice
 from Products.PortalTransforms.cache import Cache
+from zExceptions import NotFound
+
+import os
 
 
 def _patched_equal(context, row):
@@ -136,3 +143,65 @@ Annex._getCatalogTool = _getCatalogTool
 logger.info("Monkey patching imio.annex.content.annex.Annex (_getCatalogTool)")
 MeetingAdvice._getCatalogTool = _getCatalogTool
 logger.info("Monkey patching Products.PloneMeeting.content.advice.MeetingAdvice (_getCatalogTool)")
+
+
+def publishTraverse(self, request, name):
+    if len(self.previous) > 2:
+        raise NotFound
+
+    if len(name) == 1:
+        if len(self.previous) == 0:
+            previous = [name]
+        else:
+            previous = self.previous
+            previous.append(name)
+
+        self.context.path = os.path.join(self.context.path, name)
+        files = PDFFiles(self.context, request, previous)
+        files.__parent__ = self
+        return files.__of__(self)
+
+    if len(self.previous) == 2 and (self.previous[0] != name[0] or
+       self.previous[1] != name[1:2]):
+        # make sure the first two were a sub-set of the uid
+        raise NotFound
+
+#        uidcat = getToolByName(self.site, 'uid_catalog')
+#        brains = uidcat(UID=name)
+#        Dexterity items are not indexed in uid_catalog
+
+    # XXX begin changes by PloneMeeting
+#        cat = getToolByName(self.site, 'portal_catalog')
+#        brains = cat.unrestrictedSearchResults(UID=name)
+#        if len(brains) == 0:
+#            raise NotFound
+
+#        fileobj = brains[0].getObject()
+#        getObject raise Unauthorized because we are Anonymous in the traverser
+#        fileobj = brains[0]._unrestrictedGetObject()
+
+    objs = uuidsToObjects(uuids=[name], check_contained_uids=True, unrestricted=True)
+    if len(objs) == 0:
+        raise NotFound
+    fileobj = objs[0]
+    # XXX end changes by PloneMeeting
+
+    settings = Settings(fileobj)
+    if settings.storage_type == 'Blob':
+        fi = PDFTraverseBlobFile(fileobj, settings, request)
+        fi.__parent__ = self
+        return fi.__of__(self)
+    else:
+        # so permission checks for file object are applied
+        # to file resource
+        self.__roles__ = tuple(fileobj.__roles__) + ()
+        if settings.obfuscated_filepath:
+            # check if this thing isn't published...
+            self.context.path = os.path.join(self.context.path, name)
+            name = settings.obfuscate_secret
+
+        fi = super(PDFFiles, self).publishTraverse(request, name)
+        return fi
+
+PDFFiles.publishTraverse = publishTraverse
+logger.info("Monkey patching collective.documentviewer.views.PDFFiles (publishTraverse)")
