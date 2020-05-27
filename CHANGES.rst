@@ -21,6 +21,10 @@ Changelog
 - Fixed JS bug that could break dashboard when deleting an item,
   call to `updateNumberOfItems` should only be made when deleting an item on the meeting view
 - In `Migrate_To_4105._uncatalogWrongBrains` do not break when getting `correct_rid` if it does not exist in `portal_catalog`
+- Simplified types XML files when using `imio.zamqp.pm` or not, it led to wrong configuration when GS profile order was not correct.
+  `imio.zamqp.pm` is now a direct dependency of `Products.PloneMeeting`
+- Added `utils._base_extra_expr_ctx` to use each time we use `collective.behavior.talcondition.utils._evaluateExpression`,
+  it will return base extra context for the TAL expression, including `tool`, `cfg`, `pm_utils` and `imio_history_utils`
 
 4.1.24.1 (2020-05-14)
 ---------------------

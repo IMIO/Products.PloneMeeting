@@ -89,12 +89,9 @@ class PMConditionAwareCollectionVocabulary(CachedCollectionVocabulary):
         # XXX end change
 
     def _extra_expr_ctx(self):
-        """Define some values that will be available in the TALCondition expression."""
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self.context)
-        return {'tool': tool,
-                'cfg': cfg,
-                'fromPortletTodo': False}
+        """Manage 'fromPortletTodo', other useful values will be added
+           by TALCondition.complete_extra_expr_ctx."""
+        return {'fromPortletTodo': False, }
 
 
 PMConditionAwareCollectionVocabularyFactory = PMConditionAwareCollectionVocabulary()

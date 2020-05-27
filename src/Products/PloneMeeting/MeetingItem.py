@@ -54,7 +54,6 @@ from Products.CMFCore.utils import _checkPermission
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 from Products.CMFPlone.utils import safe_unicode
-from Products.PageTemplates.Expressions import SecureModuleImporter
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import AddAdvice
 from Products.PloneMeeting.config import AUTO_COPY_GROUP_PREFIX
@@ -86,6 +85,7 @@ from Products.PloneMeeting.interfaces import IMeetingItemWorkflowConditions
 from Products.PloneMeeting.Meeting import Meeting
 from Products.PloneMeeting.model.adaptations import RETURN_TO_PROPOSING_GROUP_MAPPINGS
 from Products.PloneMeeting.utils import _addManagedPermissions
+from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import _storedItemNumber_to_itemNumber
 from Products.PloneMeeting.utils import add_wf_history_action
 from Products.PloneMeeting.utils import addDataChange
@@ -3041,13 +3041,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         item = self.getSelf()
         meeting = item.getMeeting()
         if self.adapted()._mayUpdateItemReference():
-            tool = api.portal.get_tool('portal_plonemeeting')
-            cfg = tool.getMeetingConfig(item)
+            extra_expr_ctx = _base_extra_expr_ctx(item)
+            extra_expr_ctx.update({'item': item, 'meeting': meeting})
+            cfg = extra_expr_ctx['cfg']
             res = _evaluateExpression(item,
                                       expression=cfg.getItemReferenceFormat().strip(),
                                       roles_bypassing_expression=[],
-                                      extra_expr_ctx={'item': item,
-                                                      'meeting': meeting})
+                                      extra_expr_ctx=extra_expr_ctx)
             # make sure we do not have None
             res = res or ''
 
@@ -3814,8 +3814,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            evaluating the TAL expression on current MeetingConfig.customAdvisers and checking if
            corresponding group contains at least one adviser.
            The method returns a list of dict containing adviser infos.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self)
+        extra_expr_ctx = _base_extra_expr_ctx(self)
+        cfg = extra_expr_ctx['cfg']
         res = []
         for customAdviser in cfg.getCustomAdvisers():
             # check if there is something to evaluate...
@@ -3833,18 +3833,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # Check that the TAL expression on the group returns True
             eRes = False
             org = get_organization(customAdviser['org'])
+            extra_expr_ctx.update({'item': self, 'org': org, 'org_uid': customAdviser['org']})
             eRes = _evaluateExpression(
                 self,
                 expression=customAdviser['gives_auto_advice_on'],
                 roles_bypassing_expression=[],
-                extra_expr_ctx={
-                    'item': self,
-                    'org': org,
-                    'org_uid': customAdviser['org'],
-                    'pm_utils': SecureModuleImporter['Products.PloneMeeting.utils'],
-                    'imio_history_utils': SecureModuleImporter['imio.history.utils'],
-                    'tool': tool,
-                    'cfg': cfg},
+                extra_expr_ctx=extra_expr_ctx,
                 empty_expr_is_true=False,
                 error_pattern=AUTOMATIC_ADVICE_CONDITION_ERROR)
 
@@ -3891,8 +3885,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            prefixed with AUTO_COPY_GROUP_PREFIX.'''
         # empty stored autoCopyGroups
         self.autoCopyGroups = PersistentList()
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self)
+        extra_expr_ctx = _base_extra_expr_ctx(self)
+        cfg = extra_expr_ctx['cfg']
         using_groups = cfg.getUsingGroups()
         # store in the REQUEST the fact that we found an expression
         # to evaluate.  If it is not the case, this will speed up
@@ -3913,17 +3907,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     continue
                 # store in the REQUEST fact that there is at least one expression to evaluate
                 ann[req_key] = True
+                extra_expr_ctx.update({'item': self, 'isCreated': isCreated})
                 suffixes = _evaluateExpression(
                     self,
                     expression=org.as_copy_group_on,
                     roles_bypassing_expression=[],
-                    extra_expr_ctx={
-                        'item': self,
-                        'isCreated': isCreated,
-                        'pm_utils': SecureModuleImporter['Products.PloneMeeting.utils'],
-                        'imio_history_utils': SecureModuleImporter['imio.history.utils'],
-                        'tool': tool,
-                        'cfg': cfg},
+                    extra_expr_ctx=extra_expr_ctx,
                     empty_expr_is_true=False,
                     error_pattern=AS_COPYGROUP_CONDITION_ERROR)
                 if not suffixes or not isinstance(suffixes, (tuple, list)):
@@ -3940,19 +3929,15 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     auto_plone_group_id = '{0}{1}'.format(AUTO_COPY_GROUP_PREFIX, plone_group_id)
                     self.autoCopyGroups.append(auto_plone_group_id)
 
-    def _evalAdviceAvailableOn(self, available_on_expr, tool, cfg, mayEdit=True):
+    def _evalAdviceAvailableOn(self, available_on_expr, mayEdit=True):
         """ """
+        extra_expr_ctx = _base_extra_expr_ctx(self)
+        extra_expr_ctx.update({'item': self, 'mayEdit': mayEdit})
         res = _evaluateExpression(
             self,
             expression=available_on_expr,
             roles_bypassing_expression=[],
-            extra_expr_ctx={
-                'item': self,
-                'pm_utils': SecureModuleImporter['Products.PloneMeeting.utils'],
-                'imio_history_utils': SecureModuleImporter['imio.history.utils'],
-                'tool': tool,
-                'cfg': cfg,
-                'mayEdit': mayEdit},
+            extra_expr_ctx=extra_expr_ctx,
             empty_expr_is_true=True,
             error_pattern=ADVICE_AVAILABLE_ON_CONDITION_ERROR)
         return res
@@ -5341,20 +5326,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def _updatePowerObserversLocalRoles(self):
         '''Give local roles to the groups defined in MeetingConfig.powerObservers.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self)
+        extra_expr_ctx = _base_extra_expr_ctx(self)
+        extra_expr_ctx.update({'item': self, })
+        cfg = extra_expr_ctx['cfg']
         cfg_id = cfg.getId()
         itemState = self.queryState()
         for po_infos in cfg.getPowerObservers():
             if itemState in po_infos['item_states'] and \
                _evaluateExpression(self,
                                    expression=po_infos['item_access_on'],
-                                   extra_expr_ctx={
-                                       'item': self,
-                                       'pm_utils': SecureModuleImporter['Products.PloneMeeting.utils'],
-                                       'imio_history_utils': SecureModuleImporter['imio.history.utils'],
-                                       'tool': tool,
-                                       'cfg': cfg}):
+                                   extra_expr_ctx=extra_expr_ctx):
                 powerObserversGroupId = "%s_%s" % (cfg_id, po_infos['row_id'])
                 self.manage_addLocalRoles(powerObserversGroupId, (READER_USECASES['powerobservers'],))
 

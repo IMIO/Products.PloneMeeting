@@ -18,11 +18,14 @@
  <property name="default_view_fallback">False</property>
  <property name="add_permission">PloneMeeting.AddAnnexDecision</property>
  <property name="klass">imio.annex.content.annex.Annex</property>
- <property name="behaviors">
-  <element value="plone.app.content.interfaces.INameFromTitle"/>
-  <element value="plone.app.lockingbehavior.behaviors.ILocking" />
+
+ <property name="behaviors" purge="True">
+  <element value="plone.app.dexterity.behaviors.filename.INameFromFileName"/>
+  <element value="plone.app.lockingbehavior.behaviors.ILocking"/>
   <element value="collective.iconifiedcategory.behaviors.iconifiedcategorization.IIconifiedCategorization"/>
+  <element value="imio.annex.behaviors.IScanFieldsHiddenToSignAndSigned"/>
  </property>
+
  <property name="schema"></property>
  <property name="model_source">
      &lt;model xmlns:security="http://namespaces.plone.org/supermodel/security" xmlns:marshal="http://namespaces.plone.org/supermodel/marshal" xmlns:form="http://namespaces.plone.org/supermodel/form" xmlns="http://namespaces.plone.org/supermodel/schema" xmlns:i18n="http://xml.zope.org/namespaces/i18n" i18n:domain="PloneMeeting"&gt;
@@ -55,4 +58,16 @@
     url_expr="string:${object/absolute_url}/view" visible="True">
   <permission value="Manage portal"/>
  </action>
+ <action title="Insert barcode"
+         action_id="insert_barcode"
+         category="object_buttons"
+         condition_expr="object/@@insert-barcode/may_insert_barcode"
+         description="Inserts a barcode in a PDF file."
+         icon_expr="string:${portal_url}/++resource++imio.zamqp.pm/barcode.png"
+         link_target=""
+         url_expr="string:${object/absolute_url}/@@insert-barcode"
+         visible="True">
+  <permission value="Modify portal content"/>
+ </action>
+
 </object>

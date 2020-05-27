@@ -1,17 +1,34 @@
 <?xml version="1.0"?>
 <object name="annex" meta_type="Dexterity FTI" i18n:domain="imio.annex"
    xmlns:i18n="http://xml.zope.org/namespaces/i18n">
-    <property name="add_permission">PloneMeeting.AddAnnex</property>
-    <property name="schema"></property>
-    <property name="model_source">
-        &lt;model xmlns:security="http://namespaces.plone.org/supermodel/security" xmlns:marshal="http://namespaces.plone.org/supermodel/marshal" xmlns:form="http://namespaces.plone.org/supermodel/form" xmlns="http://namespaces.plone.org/supermodel/schema" xmlns:i18n="http://xml.zope.org/namespaces/i18n" i18n:domain="PloneMeeting"&gt;
-          &lt;schema based-on="imio.annex.content.annex.IAnnex"&gt;
-            &lt;field name="used_pod_template_id" type="zope.schema.TextLine" form:mode="z3c.form.interfaces.IForm:hidden"&gt;
-              &lt;title i18n:translate=""&gt;used_pod_template_id&lt;/title&gt;
-              &lt;description i18n:translate=""&gt;used_pod_template_id_descr&lt;/description&gt;
-              &lt;required&gt;False&lt;/required&gt;
-            &lt;/field&gt;
-          &lt;/schema&gt;
-        &lt;/model&gt;
-    </property>
+   <property name="add_permission">PloneMeeting.AddAnnex</property>
+   <property name="schema"></property>
+   <property name="behaviors" purge="True">
+    <element value="plone.app.dexterity.behaviors.filename.INameFromFileName"/>
+    <element value="plone.app.lockingbehavior.behaviors.ILocking"/>
+    <element value="collective.iconifiedcategory.behaviors.iconifiedcategorization.IIconifiedCategorization"/>
+    <element value="imio.annex.behaviors.IScanFieldsHiddenToSignAndSigned"/>
+   </property>
+   <property name="model_source">
+       &lt;model xmlns:security="http://namespaces.plone.org/supermodel/security" xmlns:marshal="http://namespaces.plone.org/supermodel/marshal" xmlns:form="http://namespaces.plone.org/supermodel/form" xmlns="http://namespaces.plone.org/supermodel/schema" xmlns:i18n="http://xml.zope.org/namespaces/i18n" i18n:domain="PloneMeeting"&gt;
+         &lt;schema based-on="imio.annex.content.annex.IAnnex"&gt;
+           &lt;field name="used_pod_template_id" type="zope.schema.TextLine" form:mode="z3c.form.interfaces.IForm:hidden"&gt;
+             &lt;title i18n:translate=""&gt;used_pod_template_id&lt;/title&gt;
+             &lt;description i18n:translate=""&gt;used_pod_template_id_descr&lt;/description&gt;
+             &lt;required&gt;False&lt;/required&gt;
+           &lt;/field&gt;
+         &lt;/schema&gt;
+       &lt;/model&gt;
+   </property>
+   <action title="Insert barcode"
+           action_id="insert_barcode"
+           category="object_buttons"
+           condition_expr="object/@@insert-barcode/may_insert_barcode"
+           description="Inserts a barcode in a PDF file."
+           icon_expr="string:${portal_url}/++resource++imio.zamqp.pm/barcode.png"
+           link_target=""
+           url_expr="string:${object/absolute_url}/@@insert-barcode"
+           visible="True">
+    <permission value="Modify portal content"/>
+   </action>
 </object>

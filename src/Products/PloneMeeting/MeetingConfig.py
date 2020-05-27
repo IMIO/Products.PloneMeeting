@@ -6295,8 +6295,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # check the 'available_on' TAL expression when an item is provided
             eRes = True
             if item:
-                eRes = item._evalAdviceAvailableOn(
-                    customAdviserConfig['available_on'], tool=self.aq_parent, cfg=self)
+                eRes = item._evalAdviceAvailableOn(customAdviserConfig['available_on'])
 
             if not eRes:
                 continue
