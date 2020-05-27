@@ -39,7 +39,9 @@ setup(name='Products.PloneMeeting',
                                 'profilehooks',
                                 'plone.app.robotframework',
                                 'Products.CMFPlacefulWorkflow'],
-                          templates=['Genshi', ]),
+                          templates=['Genshi', ],
+                          # temp backward compat
+                          amqp=[]),
       install_requires=[
           'appy > 0.8.0',
           'beautifulsoup4',
