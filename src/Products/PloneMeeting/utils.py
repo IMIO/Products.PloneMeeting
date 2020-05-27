@@ -1004,22 +1004,20 @@ def applyOnTransitionFieldTransform(obj, transitionId):
     tool = api.portal.get_tool(TOOL_ID)
     cfg = tool.getMeetingConfig(obj)
     idxs = []
+    base_extra_expr_ctx = _base_extra_expr_ctx(obj)
     for transform in cfg.getOnTransitionFieldTransforms():
         tal_expr = transform['tal_expression'].strip()
         if transform['transition'] == transitionId and \
            transform['field_name'].split('.')[0] == obj.meta_type and \
            tal_expr:
             try:
+                extra_expr_ctx = {'item': obj, }
+                extra_expr_ctx.update(base_extra_expr_ctx)
                 res = _evaluateExpression(
                     obj,
                     expression=tal_expr,
                     roles_bypassing_expression=[],
-                    extra_expr_ctx={
-                        'item': obj,
-                        'pm_utils': SecureModuleImporter['Products.PloneMeeting.utils'],
-                        'imio_history_utils': SecureModuleImporter['imio.history.utils'],
-                        'tool': tool,
-                        'cfg': cfg},
+                    extra_expr_ctx=extra_expr_ctx,
                     empty_expr_is_true=False,
                     raise_on_error=True)
             except Exception, e:
@@ -1042,8 +1040,8 @@ def meetingExecuteActionOnLinkedItems(meeting, transitionId):
       check if we need to trigger an action on linked items
       defined in MeetingConfig.meetingExecuteActionOnLinkedItems.
     '''
-    tool = api.portal.get_tool(TOOL_ID)
-    cfg = tool.getMeetingConfig(meeting)
+    base_extra_expr_ctx = _base_extra_expr_ctx(meeting)
+    cfg = base_extra_expr_ctx['cfg']
     wfTool = api.portal.get_tool('portal_workflow')
     wf_comment = _('wf_transition_triggered_by_application')
     for config in cfg.getOnMeetingTransitionItemActionToExecute():
@@ -1061,17 +1059,13 @@ def meetingExecuteActionOnLinkedItems(meeting, transitionId):
                     # execute the TAL expression, will not fail but log if an error occurs
                     # do this as Manager to avoid permission problems, the configuration is supposed to be applied
                     with api.env.adopt_roles(['Manager']):
+                        extra_expr_ctx = {'item': item, 'meeting': meeting}
+                        extra_expr_ctx.update(base_extra_expr_ctx)
                         _evaluateExpression(
                             item,
                             expression=config['tal_expression'].strip(),
                             roles_bypassing_expression=[],
-                            extra_expr_ctx={
-                                'pm_utils': SecureModuleImporter['Products.PloneMeeting.utils'],
-                                'imio_history_utils': SecureModuleImporter['imio.history.utils'],
-                                'tool': tool,
-                                'cfg': cfg,
-                                'item': item,
-                                'meeting': meeting},
+                            extra_expr_ctx=extra_expr_ctx,
                             error_pattern=ITEM_EXECUTE_ACTION_ERROR)
 
 
@@ -1755,6 +1749,17 @@ def is_editing():
             res = True
             break
     return res
+
+
+def _base_extra_expr_ctx(obj):
+    """ """
+    tool = api.portal.get_tool('portal_plonemeeting')
+    cfg = tool.getMeetingConfig(obj)
+    data = {'tool': tool,
+            'cfg': cfg,
+            'pm_utils': SecureModuleImporter['Products.PloneMeeting.utils'],
+            'imio_history_utils': SecureModuleImporter['imio.history.utils'], }
+    return data
 
 
 class AdvicesUpdatedEvent(ObjectEvent):

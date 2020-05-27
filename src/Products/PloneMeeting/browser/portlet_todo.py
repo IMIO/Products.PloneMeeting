@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from collective.behavior.talcondition.behavior import ITALCondition
 from collective.behavior.talcondition.interfaces import ITALConditionable
-from collective.behavior.talcondition.utils import evaluateExpressionFor
 from collective.eeafaceted.collectionwidget.utils import _get_criterion
 from collective.eeafaceted.collectionwidget.utils import getCollectionLinkCriterion
 from collective.eeafaceted.dashboard.browser.facetedcollectionportlet import Renderer as FacetedRenderer
@@ -112,22 +112,18 @@ class Renderer(base.Renderer, FacetedRenderer):
         res = []
         if not self.cfg:
             return res
-        member = api.user.get_current()
         # add a special key 'fromPortletTodo' in the extra_expr_ctx specifying
         # that we are querying available searches from the portlet_todo,
         # this way, we can use a different condition to display search in the
         # portlet_todo, for example shown for everyone in the
         # portlet_plonemeeting but only for some users in the portlet_todo
         # or only shown in the portlet_todo
-        data = {'member': member,
-                'tool': self.tool,
-                'cfg': self.cfg,
-                'fromPortletTodo': True}
+        data = {'fromPortletTodo': True, }
 
         for search in self.cfg.getToDoListSearches(theObjects=True):
             if ITALConditionable.providedBy(search):
                 data.update({'obj': search})
-                if not evaluateExpressionFor(search, extra_expr_ctx=data):
+                if not ITALCondition(search).evaluate(extra_expr_ctx=data):
                     continue
             res.append('/'.join(search.getPhysicalPath()))
         return res
