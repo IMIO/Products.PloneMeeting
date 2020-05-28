@@ -25,6 +25,7 @@ Changelog
   `imio.zamqp.pm` is now a direct dependency of `Products.PloneMeeting`
 - Added `utils._base_extra_expr_ctx` to use each time we use `collective.behavior.talcondition.utils._evaluateExpression`,
   it will return base extra context for the TAL expression, including `tool`, `cfg`, `pm_utils` and `imio_history_utils`
+- In testing `PMLayer`, check if user exists before creating his memberarea as this layer is used by external packages (`imio.pm.wsclient`)
 
 4.1.24.1 (2020-05-14)
 ---------------------

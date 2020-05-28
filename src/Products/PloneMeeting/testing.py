@@ -7,6 +7,7 @@
 # GNU General Public License (GPL)
 #
 
+from plone import api
 from plone.app.robotframework.testing import REMOTE_LIBRARY_BUNDLE_FIXTURE
 from plone.app.testing import FunctionalTesting
 from plone.app.testing import IntegrationTesting
@@ -42,7 +43,9 @@ class PMLayer(PloneWithPackageLayer):
                        'pmCreator2',
                        'siteadmin',
                        'powerobserver1'):
-            _createMemberarea(portal, userId)
+            # this layer is used by imio.pm.wsclient
+            if api.user.get(userId):
+                _createMemberarea(portal, userId)
 
 
 PM_ZCML = zca.ZCMLSandbox(filename="testing.zcml",
