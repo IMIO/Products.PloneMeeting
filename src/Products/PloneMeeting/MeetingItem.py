@@ -56,7 +56,6 @@ from Products.CMFCore.utils import _checkPermission
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 from Products.CMFPlone.utils import safe_unicode
-from Products.PageTemplates.Expressions import SecureModuleImporter
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import AddAdvice
 from Products.PloneMeeting.config import AUTO_COPY_GROUP_PREFIX
@@ -88,6 +87,7 @@ from Products.PloneMeeting.interfaces import IMeetingItemWorkflowConditions
 from Products.PloneMeeting.Meeting import Meeting
 from Products.PloneMeeting.model.adaptations import RETURN_TO_PROPOSING_GROUP_MAPPINGS
 from Products.PloneMeeting.utils import _addManagedPermissions
+from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import _storedItemNumber_to_itemNumber
 from Products.PloneMeeting.utils import add_wf_history_action
 from Products.PloneMeeting.utils import addDataChange
@@ -128,6 +128,7 @@ from zope.i18n import translate
 from zope.interface import implements
 from zope.schema.interfaces import IVocabularyFactory
 
+import itertools
 import logging
 
 
@@ -616,7 +617,7 @@ class MeetingItemWorkflowActions(object):
         # insert the item into the meeting
         self._insertItem(meeting)
         # We may have to send a mail.
-        self.context.sendMailIfRelevant('itemPresented', 'creators', isSuffix=True)
+        sendMailIfRelevant(self.context, 'itemPresented', 'creators', isSuffix=True)
 
     def _insertItem(self, meeting):
         """ """
@@ -724,7 +725,7 @@ class MeetingItemWorkflowActions(object):
            the copy is automatically validated and will be linked to this one.'''
         clonedItem = self._duplicateAndValidate(cloneEventAction='create_from_postponed_next_meeting')
         # Send, if configured, a mail to the person who created the item
-        clonedItem.sendMailIfRelevant('itemPostponedNextMeeting', 'creators', isSuffix=True)
+        sendMailIfRelevant(clonedItem, 'itemPostponedNextMeeting', 'creators', isSuffix=True)
 
     security.declarePrivate('doDelay')
 
@@ -739,7 +740,7 @@ class MeetingItemWorkflowActions(object):
                                         keepProposingGroup=True,
                                         setCurrentAsPredecessor=True)
         # Send, if configured, a mail to the person who created the item
-        clonedItem.sendMailIfRelevant('itemDelayed', 'creators', isSuffix=True)
+        sendMailIfRelevant(clonedItem, 'itemDelayed', 'creators', isSuffix=True)
 
     security.declarePrivate('doCorrect')
 
@@ -752,7 +753,7 @@ class MeetingItemWorkflowActions(object):
         # Remove item from meeting if necessary when going to a state where item is not linked to a meeting
         if stateChange.new_state.id in ITEM_STATES_NOT_LINKED_TO_MEETING and self.context.hasMeeting():
             # We may have to send a mail
-            self.context.sendMailIfRelevant('itemUnpresented', 'creators', isSuffix=True)
+            sendMailIfRelevant(self.context, 'itemUnpresented', 'creators', isSuffix=True)
             # remove the item from the meeting
             self.context.getMeeting().removeItem(self.context)
         # if an item was returned to proposing group for corrections and that
@@ -760,7 +761,7 @@ class MeetingItemWorkflowActions(object):
         # send an email to warn the MeetingManagers if relevant
         if stateChange.old_state.id.startswith("returned_to_proposing_group"):
             # We may have to send a mail.
-            self.context.sendMailIfRelevant('returnedToMeetingManagers', 'meetingmanagers', isSuffix=True)
+            sendMailIfRelevant(self.context, 'returnedToMeetingManagers', 'meetingmanagers', isSuffix=True)
 
         if 'decide_item_when_back_to_meeting_from_returned_to_proposing_group' in self.cfg.getWorkflowAdaptations() \
                 and stateChange.transition.getId() == 'backTo_itemfrozen_from_returned_to_proposing_group' \
@@ -779,7 +780,13 @@ class MeetingItemWorkflowActions(object):
 
     def doReturn_to_proposing_group(self, stateChange):
         '''Send an email when returned to proposing group if relevant...'''
-        self.context.sendMailIfRelevant('returnedToProposingGroup', 'creators', isSuffix=True)
+        sendMailIfRelevant(self.context, 'returnedToProposingGroup', 'creators', isSuffix=True)
+
+    security.declarePrivate('doGoTo_returned_to_proposing_group_proposed')
+
+    def doGoTo_returned_to_proposing_group_proposed(self, stateChange):
+        pass
+>>>>>>> origin/master
 
     security.declarePrivate('doGoTo_returned_to_proposing_group')
 
@@ -2588,6 +2595,18 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # Bypass privacy check for (Meeting)Manager
         if tool.isManager(item):
             return True
+
+        # now check if among local_roles, a role is giving view access to the item
+        # for a group that current user is member of except powerobservers groups
+        userGroups = tool.get_plone_groups_for_user()
+        po_suffixes = tuple(po['row_id'] for po in cfg.getPowerObservers())
+        itemUserRoles = [roles for group_id, roles in item.__ac_local_roles__.items()
+                         if group_id in userGroups and not group_id.endswith(po_suffixes)]
+        # merge lists and remove duplicates
+        itemUserRoles = set(list(itertools.chain.from_iterable(itemUserRoles)))
+        if itemUserRoles.intersection(item._View_Permission):
+            return True
+
         # check if current user is a power observer in MeetingConfig.restrictAccessToSecretItemsTo
         isAPowerObserver = tool.isPowerObserverForCfg(cfg)
         for power_observer_type in cfg.getRestrictAccessToSecretItemsTo():
@@ -2596,24 +2615,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # a power observer not in restrictAccessToSecretItemsTo?
         if isAPowerObserver:
             return True
-        # Check that the user belongs to the proposing group.
-        proposingGroup = item.getProposingGroup()
-        userInProposingGroup = tool.get_plone_groups_for_user(org_uid=proposingGroup)
-        if userInProposingGroup:
-            return True
-        # Check if the user is in the copyGroups
-        userGroups = tool.get_plone_groups_for_user()
-        if set(item.getAllCopyGroups(auto_real_plone_group_ids=True)).intersection(userGroups):
-            return True
-        # Check if the user has advices to add or give for item
-        # we have userGroups, get groups he is adviser for and
-        # check if in item.adviceIndex
-        userAdviserGroups = [userGroup for userGroup in userGroups if userGroup.endswith('_advisers')]
-        for userAdviserGroup in userAdviserGroups:
-            org_uid = userAdviserGroup.replace('_advisers', '')
-            if org_uid in item.adviceIndex and \
-               item.adviceIndex[org_uid]['item_viewable_by_advisers']:
-                return True
 
     def isViewable(self):
         """ """
@@ -2778,7 +2779,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePrivate('listProposingGroups')
 
-    def listProposingGroups(self):
+    def listProposingGroups(self, include_stored=True):
         '''This is used as vocabulary for field 'proposingGroup'.
            Return the organization(s) the user is creator for.
            If this item is being created or edited in portal_plonemeeting (as a
@@ -2795,7 +2796,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         res = DisplayList(tuple([(org.UID(), org.get_full_title(first_index=1)) for org in orgs]))
         # make sure current selected proposingGroup is listed here
         proposingGroup = self.getProposingGroup()
-        if proposingGroup and proposingGroup not in res.keys():
+        if include_stored and proposingGroup and proposingGroup not in res.keys():
             current_org = self.getProposingGroup(theObject=True)
             res.add(current_org.UID(), current_org.get_full_title())
         # add a 'make_a_choice' value when used on an itemtemplate
@@ -2809,9 +2810,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePrivate('listProposingGroupsWithGroupsInCharge')
 
-    def listProposingGroupsWithGroupsInCharge(self):
+    def listProposingGroupsWithGroupsInCharge(self, include_stored=True):
         '''Like self.listProposingGroups but appends the various possible groups in charge.'''
-        base_res = self.listProposingGroups()
+        base_res = self.listProposingGroups(include_stored=include_stored)
         res = []
         active_org_uids = get_registry_organizations()
         for k, v in base_res.items():
@@ -3151,13 +3152,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         item = self.getSelf()
         meeting = item.getMeeting()
         if self.adapted()._mayUpdateItemReference():
-            tool = api.portal.get_tool('portal_plonemeeting')
-            cfg = tool.getMeetingConfig(item)
+            extra_expr_ctx = _base_extra_expr_ctx(item)
+            extra_expr_ctx.update({'item': item, 'meeting': meeting})
+            cfg = extra_expr_ctx['cfg']
             res = _evaluateExpression(item,
                                       expression=cfg.getItemReferenceFormat().strip(),
                                       roles_bypassing_expression=[],
-                                      extra_expr_ctx={'item': item,
-                                                      'meeting': meeting})
+                                      extra_expr_ctx=extra_expr_ctx)
             # make sure we do not have None
             res = res or ''
 
@@ -3724,12 +3725,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''
         raise NotImplementedError
 
-    security.declarePublic('sendMailIfRelevant')
-
-    def sendMailIfRelevant(self, event, permissionOrSuffix, isSuffix=False, customEvent=False, mapping={}):
-        return sendMailIfRelevant(self, event, permissionOrSuffix, isSuffix,
-                                  customEvent, mapping)
-
     def sendStateDependingMailIfRelevant(self, old_review_state, new_review_state):
         """Send notifications that depends on old/new review_state."""
         self._sendAdviceToGiveMailIfRelevant(old_review_state, new_review_state)
@@ -3930,8 +3925,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            evaluating the TAL expression on current MeetingConfig.customAdvisers and checking if
            corresponding group contains at least one adviser.
            The method returns a list of dict containing adviser infos.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self)
+        extra_expr_ctx = _base_extra_expr_ctx(self)
+        cfg = extra_expr_ctx['cfg']
         res = []
         for customAdviser in cfg.getCustomAdvisers():
             # check if there is something to evaluate...
@@ -3949,18 +3944,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # Check that the TAL expression on the group returns True
             eRes = False
             org = get_organization(customAdviser['org'])
+            extra_expr_ctx.update({'item': self, 'org': org, 'org_uid': customAdviser['org']})
             eRes = _evaluateExpression(
                 self,
                 expression=customAdviser['gives_auto_advice_on'],
                 roles_bypassing_expression=[],
-                extra_expr_ctx={
-                    'item': self,
-                    'org': org,
-                    'org_uid': customAdviser['org'],
-                    'pm_utils': SecureModuleImporter['Products.PloneMeeting.utils'],
-                    'imio_history_utils': SecureModuleImporter['imio.history.utils'],
-                    'tool': tool,
-                    'cfg': cfg},
+                extra_expr_ctx=extra_expr_ctx,
                 empty_expr_is_true=False,
                 error_pattern=AUTOMATIC_ADVICE_CONDITION_ERROR)
 
@@ -4007,8 +3996,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            prefixed with AUTO_COPY_GROUP_PREFIX.'''
         # empty stored autoCopyGroups
         self.autoCopyGroups = PersistentList()
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self)
+        extra_expr_ctx = _base_extra_expr_ctx(self)
+        cfg = extra_expr_ctx['cfg']
         using_groups = cfg.getUsingGroups()
         # store in the REQUEST the fact that we found an expression
         # to evaluate.  If it is not the case, this will speed up
@@ -4029,17 +4018,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     continue
                 # store in the REQUEST fact that there is at least one expression to evaluate
                 ann[req_key] = True
+                extra_expr_ctx.update({'item': self, 'isCreated': isCreated})
                 suffixes = _evaluateExpression(
                     self,
                     expression=org.as_copy_group_on,
                     roles_bypassing_expression=[],
-                    extra_expr_ctx={
-                        'item': self,
-                        'isCreated': isCreated,
-                        'pm_utils': SecureModuleImporter['Products.PloneMeeting.utils'],
-                        'imio_history_utils': SecureModuleImporter['imio.history.utils'],
-                        'tool': tool,
-                        'cfg': cfg},
+                    extra_expr_ctx=extra_expr_ctx,
                     empty_expr_is_true=False,
                     error_pattern=AS_COPYGROUP_CONDITION_ERROR)
                 if not suffixes or not isinstance(suffixes, (tuple, list)):
@@ -4056,19 +4040,15 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     auto_plone_group_id = '{0}{1}'.format(AUTO_COPY_GROUP_PREFIX, plone_group_id)
                     self.autoCopyGroups.append(auto_plone_group_id)
 
-    def _evalAdviceAvailableOn(self, available_on_expr, tool, cfg, mayEdit=True):
+    def _evalAdviceAvailableOn(self, available_on_expr, mayEdit=True):
         """ """
+        extra_expr_ctx = _base_extra_expr_ctx(self)
+        extra_expr_ctx.update({'item': self, 'mayEdit': mayEdit})
         res = _evaluateExpression(
             self,
             expression=available_on_expr,
             roles_bypassing_expression=[],
-            extra_expr_ctx={
-                'item': self,
-                'pm_utils': SecureModuleImporter['Products.PloneMeeting.utils'],
-                'imio_history_utils': SecureModuleImporter['imio.history.utils'],
-                'tool': tool,
-                'cfg': cfg,
-                'mayEdit': mayEdit},
+            extra_expr_ctx=extra_expr_ctx,
             empty_expr_is_true=True,
             error_pattern=ADVICE_AVAILABLE_ON_CONDITION_ERROR)
         return res
@@ -4076,17 +4056,19 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('listItemInitiators')
 
     def listItemInitiators(self):
-        ''' '''
+        '''Initiator may be an organization or a held_position.'''
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         res = []
         # missing terms
-        catalog = api.portal.get_tool('portal_catalog')
         stored_terms = self.getItemInitiator()
         missing_term_uids = [uid for uid in stored_terms if uid not in cfg.getOrderedItemInitiators()]
-        missing_terms = [brain.getObject() for brain in catalog(UID=missing_term_uids)]
-        for hp in cfg.getOrderedItemInitiators(theObjects=True) + missing_terms:
-            res.append((hp.UID(), hp.get_short_title()))
+        missing_terms = uuidsToObjects(missing_term_uids)
+        for org_or_hp in cfg.getOrderedItemInitiators(theObjects=True) + missing_terms:
+            if org_or_hp.portal_type == 'organization':
+                res.append((org_or_hp.UID(), org_or_hp.Title()))
+            else:
+                res.append((org_or_hp.UID(), org_or_hp.get_short_title()))
         return DisplayList(res)
 
     security.declarePrivate('getAdvices')
@@ -5501,20 +5483,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def _updatePowerObserversLocalRoles(self):
         '''Give local roles to the groups defined in MeetingConfig.powerObservers.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self)
+        extra_expr_ctx = _base_extra_expr_ctx(self)
+        extra_expr_ctx.update({'item': self, })
+        cfg = extra_expr_ctx['cfg']
         cfg_id = cfg.getId()
         itemState = self.queryState()
         for po_infos in cfg.getPowerObservers():
             if itemState in po_infos['item_states'] and \
                _evaluateExpression(self,
                                    expression=po_infos['item_access_on'],
-                                   extra_expr_ctx={
-                                       'item': self,
-                                       'pm_utils': SecureModuleImporter['Products.PloneMeeting.utils'],
-                                       'imio_history_utils': SecureModuleImporter['imio.history.utils'],
-                                       'tool': tool,
-                                       'cfg': cfg}):
+                                   extra_expr_ctx=extra_expr_ctx):
                 powerObserversGroupId = "%s_%s" % (cfg_id, po_infos['row_id'])
                 self.manage_addLocalRoles(powerObserversGroupId, (READER_USECASES['powerobservers'],))
 
@@ -6012,8 +5990,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         # Send an email to the user being able to modify the new item if relevant
         mapping = {'meetingConfigTitle': destMeetingConfig.Title(), }
-        newItem.sendMailIfRelevant('itemClonedToThisMC', ModifyPortalContent,
-                                   isSuffix=False, mapping=mapping)
+        sendMailIfRelevant(newItem,
+                           'itemClonedToThisMC',
+                           ModifyPortalContent,
+                           isSuffix=False,
+                           mapping=mapping)
         plone_utils.addPortalMessage(
             translate('sendto_success',
                       mapping={'cfgTitle': safe_unicode(destMeetingConfig.Title())},
@@ -6104,9 +6085,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            possible to remove a folder containing objects you can not
            remove.'''
         # If we are here, everything has already been checked before.
-        # Just check that the item is myself or a Plone Site.
+        # Just check that the item is myself, a Plone Site or removing a MeetingConfig.
         # We can remove an item directly, not "through" his container.
-        if item.meta_type not in ['Plone Site', 'MeetingItem', ]:
+        if item.meta_type not in ['Plone Site', 'MeetingConfig', 'MeetingItem', ]:
             user = api.user.get_current()
             logger.warn(BEFOREDELETE_ERROR % (user.getId(), self.id))
             raise BeforeDeleteException(
@@ -6115,7 +6096,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                           context=item.REQUEST))
         # if we are not removing the site and we are not in the creation process of
         # an item, manage predecessor
-        if not item.meta_type == 'Plone Site' and not item._at_creation_flag:
+        if item.meta_type not in ['Plone Site', 'MeetingConfig'] and not item._at_creation_flag:
             # If the item has a predecessor in another meetingConfig we must remove
             # the annotation on the predecessor specifying it.
             predecessor = self.getPredecessor()

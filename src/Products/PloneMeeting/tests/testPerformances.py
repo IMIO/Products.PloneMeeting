@@ -665,6 +665,26 @@ class testPerformances(PloneMeetingTestCase):
         '''Helper method that actually update local roles on items.'''
         self.tool.updateAllLocalRoles(**{'UID': uids})
 
+    def test_pm_DuplicateItemWith50Annexes(self):
+        '''Duplicate an item containing 50 annexes.'''
+        dummy_meeting, items = self._setupMeetingItemsWithAnnexes(
+            2, 50, with_meeting=False, as_uids=False)
+        for item in items:
+            # duplicate it 2 times
+            pm_logger.info('Duplicate item first time without annexes.')
+            self._duplicateItem(item)
+            pm_logger.info('Duplicate item first time with annexes.')
+            self._duplicateItem(item, copyAnnexes=True)
+            pm_logger.info('Duplicate item second time without annexes.')
+            self._duplicateItem(item)
+            pm_logger.info('Duplicate item second time with annexes.')
+            self._duplicateItem(item, copyAnnexes=True)
+
+    @timecall
+    def _duplicateItem(self, item, copyAnnexes=False):
+        '''Helper method that actually duplicated given p_item.'''
+        item.clone(copyAnnexes=copyAnnexes)
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

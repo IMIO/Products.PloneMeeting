@@ -3,7 +3,8 @@
                                                                          i18n:name="groupname"
                                                                          tal:content="view/group_title">group title</span></span>
     <acronym tal:condition="python: view.tool.isManager(context, realManagers=True)">
-        <a tal:attributes="href string:${view/portal_url}/@@usergroup-groupprefs?searchstring=${view/group_title}">
+        <a target='_parent'
+           tal:attributes="href string:${view/portal_url}/@@usergroup-groupprefs?searchstring=${view/group_title}">
             <img width="16" height="16" tal:attributes="src string:${view/portal_url}/group.png" title="View linked Plone groups" i18n:attributes="title" />
         </a>
     </acronym>

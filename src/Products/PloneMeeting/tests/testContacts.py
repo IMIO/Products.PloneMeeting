@@ -10,6 +10,7 @@ from imio.helpers.content import get_vocab
 from imio.helpers.content import validate_fields
 from OFS.ObjectManager import BeforeDeleteException
 from plone import api
+from Products.CMFCore.permissions import View
 from Products.PloneMeeting.content.source import PMContactSourceBinder
 from Products.PloneMeeting.Extensions.imports import import_contacts
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
@@ -35,6 +36,8 @@ class testContacts(PloneMeetingTestCase):
         # enable attendees and signatories fields for Meeting
         cfg = self.meetingConfig
         cfg.setUsedMeetingAttributes(('attendees', 'excused', 'absents', 'signatories', ))
+        # enable itemInitiator fields for MeetingItem
+        cfg.setUsedItemAttributes(('attendees', 'excused', 'absents', 'signatories', 'itemInitiator'))
         # select orderedContacts
         ordered_contacts = cfg.getField('orderedContacts').Vocabulary(cfg).keys()
         cfg.setOrderedContacts(ordered_contacts)
@@ -88,10 +91,11 @@ class testContacts(PloneMeetingTestCase):
         self.assertEqual(
             meeting.getAllUsedHeldPositions(), meeting.getAttendees(theObjects=True))
 
-    def test_pm_CanNotDeleteUsedHeldPosition(self):
+    def test_pm_CanNotRemoveUsedHeldPosition(self):
         ''' '''
         cfg = self.meetingConfig
         self.changeUser('pmManager')
+        # test that held positition cannot be delete if used for assembly
         meeting = self.create('Meeting', date=DateTime())
         person = self.portal.contacts.get('person1')
         hp = person.get_held_positions()[0]
@@ -111,6 +115,28 @@ class testContacts(PloneMeetingTestCase):
         # unselect hp from meeting, now it is deletable
         del meeting.orderedContacts[hp.UID()]
         self.assertFalse(hp_uid in meeting.getAttendees())
+
+        # test that held positition cannot be delete if used for itemInitiator
+        cfg.setOrderedItemInitiators((hp_uid,))
+        item = self.create('MeetingItem', date=DateTime())
+        self.presentItem(item)
+        item.setItemInitiator((hp_uid,))
+
+        # hp not deletable because used in MC and meeting item
+        self.changeUser('siteadmin')
+        self.assertRaises(Redirect, api.content.delete, hp)
+
+        # unselect from MeetingConfig.orderedItemInitiators,
+        # still not deletable because used by a meeting item
+        orderedItemInitiators = list(cfg.getOrderedItemInitiators())
+        orderedItemInitiators.remove(hp_uid)
+        cfg.setOrderedItemInitiators(orderedItemInitiators)
+        self.assertRaises(Redirect, api.content.delete, hp)
+
+        # unselect hp from meeting item, now it is deletable
+        item.setItemInitiator(())
+
+        # assert held position can be properly deleted
         api.content.delete(hp)
         self.assertFalse(person.get_held_positions())
 
@@ -921,7 +947,8 @@ class testContacts(PloneMeetingTestCase):
         # item.getGroupsInCharge
         # item.adviceIndex
         # item.getCopyGroups
-        # so check the 5 possible "states"
+        # item.itemInitiator
+        # so check the 6 possible "states"
 
         # first check when the item is using 'proposingGroup', it is the case here
         # for item, make sure other conditions are False
@@ -929,6 +956,7 @@ class testContacts(PloneMeetingTestCase):
         item.setOptionalAdvisers(())
         self.assertTrue(self.developers_advisers not in item.adviceIndex)
         item.setCopyGroups(())
+        item.setItemInitiator(())
         item._update_after_edit()
         transaction.commit()
         with self.assertRaises(BeforeDeleteException) as cm:
@@ -975,8 +1003,18 @@ class testContacts(PloneMeetingTestCase):
                 self.developers_uid, catch_before_delete_exception=False)
         self.assertEquals(cm.exception.message, can_not_delete_organization_meetingitem)
 
-        # check with item having copyGroups
+        # check with item having itemInitiator
         self._tearDownGroupsInCharge(item)
+        item.setItemInitiator((self.developers_uid, ))
+        item._update_after_edit()
+        transaction.commit()
+        with self.assertRaises(BeforeDeleteException) as cm:
+            self.portal.restrictedTraverse('@@delete_givenuid')(
+                self.developers_uid, catch_before_delete_exception=False)
+        self.assertEquals(cm.exception.message, can_not_delete_organization_meetingitem)
+
+        # check with item having copyGroups
+        item.setItemInitiator(())
         cfg.setUseCopies(True)
         item.setCopyGroups((self.developers_reviewers, ))
         item._update_after_edit()
@@ -1480,6 +1518,35 @@ class testContacts(PloneMeetingTestCase):
         new_org_id = new_org.getId()
         # remove it
         own_org.manage_delObjects([new_org_id])
+
+    def test_pm_InactiveHeldPositionsStillViewableOnMeeting(self):
+        """If an held_position is disabled, it is still viewable on existing meetings."""
+        cfg = self.meetingConfig
+        # give access to powerobservers to meeting when it is created
+        self._setPowerObserverStates(
+            field_name='meeting_states',
+            states=(self._stateMappingFor('created', meta_type='Meeting'),))
+        self._removeConfigObjectsFor(cfg)
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime())
+        meeting_attendees = meeting.getAttendees(theObjects=True)
+        self.assertEqual(len(meeting_attendees), 4)
+        hp = meeting_attendees[0]
+        # deactivate an held_position
+        self.changeUser('siteadmin')
+        self.do(hp, 'deactivate')
+        # still viewable by MeetingManagers
+        self.changeUser('pmManager')
+        meeting_attendees = meeting.getAttendees(theObjects=True)
+        self.assertEqual(len(meeting_attendees), 4)
+        # and other users
+        self.changeUser('pmCreator1')
+        meeting_attendees = meeting.getAttendees(theObjects=True)
+        self.assertEqual(len(meeting_attendees), 4)
+        self.changeUser('powerobserver1')
+        self.assertTrue(self.hasPermission(View, meeting))
+        meeting_attendees = meeting.getAttendees(theObjects=True)
+        self.assertEqual(len(meeting_attendees), 4)
 
 
 def test_suite():

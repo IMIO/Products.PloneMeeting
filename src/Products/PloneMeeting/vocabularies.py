@@ -42,6 +42,7 @@ from Products.PloneMeeting.indexes import REAL_ORG_UID_PATTERN
 from Products.PloneMeeting.interfaces import IMeetingConfig
 from Products.PloneMeeting.utils import decodeDelayAwareId
 from Products.PloneMeeting.utils import get_context_with_request
+from z3c.form.interfaces import NO_VALUE
 from zope.globalrequest import getRequest
 from zope.i18n import translate
 from zope.interface import implements
@@ -53,9 +54,10 @@ from zope.schema.vocabulary import SimpleVocabulary
 class PMConditionAwareCollectionVocabulary(CachedCollectionVocabulary):
     implements(IVocabularyFactory)
 
-    def _cache_invalidation_key(self, context):
+    def _cache_invalidation_key(self, context, real_context):
         """Take also into account current user groups."""
-        original_checks = super(PMConditionAwareCollectionVocabulary, self)._cache_invalidation_key(context)
+        original_checks = super(PMConditionAwareCollectionVocabulary, self)._cache_invalidation_key(
+            context, real_context)
         tool = api.portal.get_tool('portal_plonemeeting')
         user_plone_groups = tool.get_plone_groups_for_user()
         return original_checks + (user_plone_groups, )
@@ -87,12 +89,9 @@ class PMConditionAwareCollectionVocabulary(CachedCollectionVocabulary):
         # XXX end change
 
     def _extra_expr_ctx(self):
-        """Define some values that will be available in the TALCondition expression."""
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self.context)
-        return {'tool': tool,
-                'cfg': cfg,
-                'fromPortletTodo': False}
+        """Manage 'fromPortletTodo', other useful values will be added
+           by TALCondition.complete_extra_expr_ctx."""
+        return {'fromPortletTodo': False, }
 
 
 PMConditionAwareCollectionVocabularyFactory = PMConditionAwareCollectionVocabulary()
@@ -1572,11 +1571,13 @@ class BaseHeldPositionsVocabulary(object):
                  include_usages=True,
                  include_defaults=True,
                  include_signature_number=True,
-                 pattern=u"{0}"):
+                 pattern=u"{0}",
+                 review_state=['active']):
         catalog = api.portal.get_tool('portal_catalog')
         query = {'portal_type': 'held_position',
-                 'sort_on': 'sortable_title',
-                 'review_state': 'active'}
+                 'sort_on': 'sortable_title'}
+        if review_state:
+            query['review_state'] = review_state
         if uids:
             query['UID'] = uids
         brains = catalog(**query)
@@ -1616,8 +1617,33 @@ SelectableHeldPositionsVocabularyFactory = SelectableHeldPositionsVocabulary()
 class SelectableAssemblyMembersVocabulary(BaseHeldPositionsVocabulary):
     """ """
     def __call__(self, context, usage=None, uids=[]):
-        res = super(SelectableAssemblyMembersVocabulary, self).__call__(context, usage='assemblyMember')
-        return res
+        terms = super(SelectableAssemblyMembersVocabulary, self).__call__(context, usage='assemblyMember')
+        stored_terms = []
+        if IMeetingConfig.providedBy(context):
+            stored_terms = context.getOrderedContacts()
+        else:
+            # IOrganization or the datagrid field of it...
+            # stored in datagridfield 'certified_signatures'
+            if context != NO_VALUE:
+                if isinstance(context, dict):
+                    data = [context]
+                else:
+                    data = context.get_certified_signatures()
+                stored_held_positions = tuple(set(
+                    [elt['held_position'] for elt in data if elt['held_position']]))
+                stored_terms = stored_held_positions
+        # add missing terms
+        missing_term_uids = [uid for uid in stored_terms if uid not in terms]
+        terms = terms._terms
+        if missing_term_uids:
+            missing_terms = super(SelectableAssemblyMembersVocabulary, self).__call__(
+                context,
+                usage=None,
+                uids=missing_term_uids,
+                highlight_missing=True,
+                review_state=[])
+            terms += missing_terms._terms
+        return SimpleVocabulary(terms)
 
 
 SelectableAssemblyMembersVocabularyFactory = SelectableAssemblyMembersVocabulary()
@@ -1626,36 +1652,43 @@ SelectableAssemblyMembersVocabularyFactory = SelectableAssemblyMembersVocabulary
 class SelectableItemInitiatorsVocabulary(BaseHeldPositionsVocabulary):
     """ """
     def __call__(self, context):
-        terms = super(SelectableItemInitiatorsVocabulary, self).__call__(context, usage='asker')
+        terms = super(SelectableItemInitiatorsVocabulary, self).__call__(
+            context, usage='asker')
         if IMeetingConfig.providedBy(context):
             stored_terms = context.getOrderedItemInitiators()
         else:
             # MeetingItem
             stored_terms = context.getItemInitiator()
-        # add missing terms
+        # add missing terms as inactive held_positions are not in the vocabulary
         missing_term_uids = [uid for uid in stored_terms if uid not in terms]
-        terms = terms._terms
+        # do not modify original terms
+        terms = list(terms._terms)
         if missing_term_uids:
             missing_terms = super(SelectableItemInitiatorsVocabulary, self).__call__(
-                context, usage=None, uids=missing_term_uids, highlight_missing=True)
+                context,
+                usage=None,
+                uids=missing_term_uids,
+                highlight_missing=True,
+                review_state=[])
             terms += missing_terms._terms
-        # include also organizations
-        org_terms = EveryOrganizationsVocabulary(context)
-        terms += org_terms._terms
+        # add selectable organizations
+        terms += list(get_vocab(
+            context,
+            'Products.PloneMeeting.vocabularies.detailedorganizationsvocabulary')._terms)
         return SimpleVocabulary(terms)
 
 
 SelectableItemInitiatorsVocabularyFactory = SelectableItemInitiatorsVocabulary()
 
 
-class SelectableAssociatedOrganizationsVocabulary(EveryOrganizationsVocabulary):
+class PMDetailedEveryOrganizationsVocabulary(EveryOrganizationsVocabulary):
     """Use BaseOrganizationServicesVocabulary and call it from contacts directory then
        adapt title of the terms to show organizations that are in plonegroup and others that are not."""
     implements(IVocabularyFactory)
 
     def __call__(self, context):
         """ """
-        terms = super(SelectableAssociatedOrganizationsVocabulary, self).__call__(context)
+        terms = super(PMDetailedEveryOrganizationsVocabulary, self).__call__(context)
         selected_orgs = get_registry_organizations()
         own_org_uid = get_own_organization().UID()
         res = []
@@ -1672,7 +1705,7 @@ class SelectableAssociatedOrganizationsVocabulary(EveryOrganizationsVocabulary):
         return SimpleVocabulary(res)
 
 
-SelectableAssociatedOrganizationsVocabularyFactory = SelectableAssociatedOrganizationsVocabulary()
+PMDetailedEveryOrganizationsVocabularyFactory = PMDetailedEveryOrganizationsVocabulary()
 
 
 class AssociatedGroupsVocabulary(object):
@@ -1836,39 +1869,41 @@ class ContainedAnnexesVocabulary(object):
         portal_url = api.portal.get().absolute_url()
         terms = []
         i = 1
-        categories_vocab = get_vocab(
-            context,
-            'collective.iconifiedcategory.categories',
-            use_category_uid_as_token=True)
-        for annex in get_categorized_elements(context, portal_type=portal_type):
-            # term title is annex icon, number and title
-            term_title = u'{0}. <img src="{1}/{2}" title="{3}"> {4}'.format(
-                str(i),
-                portal_url,
-                annex['icon_url'],
-                safe_unicode(annex['category_title']),
-                safe_unicode(annex['title']))
-            i += 1
-            if annex['warn_filesize']:
-                term_title += u' ({0})'.format(render_filesize(annex['filesize']))
-            term = SimpleTerm(annex['id'], annex['id'], term_title)
-            # check if user able to keep this annex :
-            # - annex may not hold a scan_id
-            annex_obj = getattr(context, annex['id'])
-            if getattr(annex_obj, 'scan_id', None):
-                term.disabled = True
-                term.title += translate(' [holds scan_id]',
-                                        domain='PloneMeeting',
-                                        context=context.REQUEST)
-            # - annexType must be among current user selectable annex types
-            elif annex['category_uid'] not in categories_vocab:
-                term.disabled = True
-                term.title += translate(' [reserved MeetingManagers]',
-                                        domain='PloneMeeting',
-                                        context=context.REQUEST)
-            else:
-                term.disabled = False
-            terms.append(term)
+        annexes = get_categorized_elements(context, portal_type=portal_type)
+        if annexes:
+            categories_vocab = get_vocab(
+                context,
+                'collective.iconifiedcategory.categories',
+                use_category_uid_as_token=True)
+            for annex in annexes:
+                # term title is annex icon, number and title
+                term_title = u'{0}. <img src="{1}/{2}" title="{3}"> {4}'.format(
+                    str(i),
+                    portal_url,
+                    annex['icon_url'],
+                    safe_unicode(annex['category_title']),
+                    safe_unicode(annex['title']))
+                i += 1
+                if annex['warn_filesize']:
+                    term_title += u' ({0})'.format(render_filesize(annex['filesize']))
+                term = SimpleTerm(annex['id'], annex['id'], term_title)
+                # check if user able to keep this annex :
+                # - annex may not hold a scan_id
+                annex_obj = getattr(context, annex['id'])
+                if getattr(annex_obj, 'scan_id', None):
+                    term.disabled = True
+                    term.title += translate(' [holds scan_id]',
+                                            domain='PloneMeeting',
+                                            context=context.REQUEST)
+                # - annexType must be among current user selectable annex types
+                elif annex['category_uid'] not in categories_vocab:
+                    term.disabled = True
+                    term.title += translate(' [reserved MeetingManagers]',
+                                            domain='PloneMeeting',
+                                            context=context.REQUEST)
+                else:
+                    term.disabled = False
+                terms.append(term)
         return SimpleVocabulary(terms)
 
 ContainedAnnexesVocabularyFactory = ContainedAnnexesVocabulary()
@@ -1892,12 +1927,29 @@ ContainedDecisionAnnexesVocabularyFactory = ContainedDecisionAnnexesVocabulary()
 class PMUsers(UsersFactory):
     """Append ' (userid)' to term title."""
 
+    def _user_fullname(self, userid):
+        """ """
+        storage = self.mutable_properties._storage
+        data = storage.get(userid, None)
+        if data is not None:
+            return data.get('fullname', '') or userid
+        else:
+            return userid
+
     def __call__(self, context, query=''):
-        lazy_generator = super(PMUsers, self).__call__(context, query=query)._terms
+        acl_users = api.portal.get_tool('acl_users')
+        self.mutable_properties = acl_users.mutable_properties
+        users = acl_users.searchUsers(sort_by='')
         terms = []
-        for term in lazy_generator:
-            term.title = term.title + ' ({0})'.format(term.token)
-            terms.append(term)
+        # manage duplicates, this can be the case when using LDAP and same userid in source_users
+        userids = []
+        for user in users:
+            if user['id'] not in userids:
+                userids.append(user['id'])
+                term_title = u'{0} ({1})'.format(safe_unicode(self._user_fullname(user['id'])), user['id'])
+                term = SimpleTerm(user['id'], user['id'], term_title)
+                terms.append(term)
+        terms = humansorted(terms, key=attrgetter('title'))
         return SimpleVocabulary(terms)
 
 PMUsersFactory = PMUsers()

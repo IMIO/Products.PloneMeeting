@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from collective.contact.plonegroup.utils import get_plone_group_id
 from plone import api
 from plone.app.layout.navigation.navtree import buildFolderTree
 from plone.app.layout.navigation.navtree import NavtreeStrategyBase
@@ -32,7 +33,12 @@ class ItemTemplateView(BrowserView):
         cancelled = form.get('form.buttons.cancel', False)
         if templateUID:
             newItem = self.createItemFromTemplate(templateUID)
-            return self.request.RESPONSE.redirect(newItem.absolute_url() + '/edit')
+            newItemUrl = newItem.absolute_url() + '/edit'
+            # remove title if we are adding an item using default item template
+            default_template = self.cfg.get_default_item_template()
+            if default_template and templateUID == default_template.UID():
+                newItemUrl += '?title='
+            return self.request.RESPONSE.redirect(newItemUrl)
         elif cancelled:
             # the only way to enter here is the popup overlay not to be shown
             # because while using the popup overlay, the jQ function take care of hidding it
@@ -68,11 +74,18 @@ class ItemTemplateView(BrowserView):
             domain='imio.history',
             mapping={'template_path_and_title': template_path_and_title, },
             context=self.request)
+        # if a proposingGroup is defined on itemTemplate and current user is creator
+        # for this proposingGroup, we keep it
+        keepProposingGroup = False
+        proposingGroup = templateItem.getProposingGroup()
+        if get_plone_group_id(proposingGroup, 'creators') in self.tool.get_plone_groups_for_user():
+            keepProposingGroup = True
         newItem = templateItem.clone(newOwnerId=member.id,
                                      cloneEventAction='create_meeting_item_from_template',
                                      cloneEventActionLabel=cloneEventActionLabel,
                                      destFolder=self.context,
                                      newPortalType=self.cfg.getItemTypeName(),
+                                     keepProposingGroup=keepProposingGroup,
                                      keep_ftw_labels=True)
         # set _at_creation_flag to True so if user cancel first edit, it will be removed
         newItem._at_creation_flag = True

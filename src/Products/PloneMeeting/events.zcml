@@ -17,6 +17,10 @@
               handler=".events.onItemModified" />
 
   <subscriber for=".interfaces.IMeetingItem
+                   OFS.interfaces.IObjectWillBeRemovedEvent"
+              handler=".events.onItemWillBeRemoved" />
+
+  <subscriber for=".interfaces.IMeetingItem
                    zope.container.interfaces.IObjectRemovedEvent"
               handler=".events.onItemRemoved" />
 
@@ -175,7 +179,7 @@
               handler=".events.onOrgAddBegun" />
   <subscriber for="Products.PloneMeeting.content.held_position.IPMHeldPosition
                    OFS.interfaces.IObjectWillBeRemovedEvent"
-              handler=".events.onHeldPositionRemoved" />
+              handler=".events.onHeldPositionWillBeRemoved" />
 
   <!-- DashboardCollection events -->
   <subscriber for="collective.eeafaceted.collectionwidget.interfaces.IDashboardCollection

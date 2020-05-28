@@ -77,6 +77,7 @@ from Products.PloneMeeting.config import ROOT_FOLDER
 from Products.PloneMeeting.config import SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY
 from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.profiles import PloneMeetingConfiguration
+from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import add_wf_history_action
 from Products.PloneMeeting.utils import fplog
 from Products.PloneMeeting.utils import get_annexes
@@ -447,7 +448,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             return []
         user_groups = user.getGroups()
         if org_uid:
-            user_groups = [plone_group for plone_group in user_groups if plone_group.startswith(org_uid)]
+            user_groups = [plone_group for plone_group in user_groups
+                           if plone_group.startswith(org_uid)]
         return sorted(user_groups)
 
     def group_is_not_empty_cachekey(method, self, org_uid, suffix, user_id=None):
@@ -1133,10 +1135,18 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             # Change the proposing group if the item owner does not belong to
             # the defined proposing group, except if p_keepProposingGroup is True
             if not keepProposingGroup:
-                userGroupUids = self.get_orgs_for_user(
-                    user_id=newOwnerId, suffixes=['creators', ], the_objects=False)
-                if userGroupUids and newItem.getProposingGroup(True) not in userGroupUids:
-                    newItem.setProposingGroup(userGroupUids[0])
+                # proposingGroupWithGroupInCharge
+                if newItem.attributeIsUsed('proposingGroupWithGroupInCharge'):
+                    userProposingGroupUids = newItem.listProposingGroupsWithGroupsInCharge(
+                        include_stored=False).keys()
+                    if userProposingGroupUids:
+                        newItem.setProposingGroupWithGroupInCharge(userProposingGroupUids[0])
+                else:
+                    # proposingGroup
+                    userProposingGroupUids = newItem.listProposingGroups(
+                        include_stored=False).keys()
+                    if userProposingGroupUids:
+                        newItem.setProposingGroup(userProposingGroupUids[0])
 
             if newOwnerId != loggedUserId:
                 plone_utils.changeOwnershipOf(newItem, newOwnerId)
@@ -1524,18 +1534,14 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         if not mailing_lists:
             return res
         try:
+            extra_expr_ctx = _base_extra_expr_ctx(obj)
+            extra_expr_ctx.update({'obj': obj, })
             for line in mailing_lists.split('\n'):
                 name, expression, userIds = line.split(';')
-                member = api.user.get_current()
-                cfg = self.getMeetingConfig(obj)
-                data = {'obj': obj,
-                        'member': member,
-                        'tool': self,
-                        'cfg': cfg}
                 if not expression or _evaluateExpression(obj,
                                                          expression,
                                                          roles_bypassing_expression=[],
-                                                         extra_expr_ctx=data,
+                                                         extra_expr_ctx=extra_expr_ctx,
                                                          raise_on_error=True):
                     res.append(name.strip())
         except Exception, exc:

@@ -1571,12 +1571,12 @@ table.cke_dialog {
 /* hide collective.documentviewer message on various portaltypes
    that says that element is still not converted. Only hide it on the view
    so error messages are displayed on the edit form. */
-body.template-documentviewer.portaltype-configurablepodtemplate dl.portalMessage,
-body.template-documentviewer.portaltype-contentcategory dl.portalMessage,
-body.template-documentviewer.portaltype-dashboardpodtemplate dl.portalMessage,
-body.template-documentviewer.portaltype-file dl.portalMessage,
-body.template-documentviewer.portaltype-itemannexcontentcategory dl.portalMessage,
-body.template-documentviewer.portaltype-styletemplate dl.portalMessage {
+body.template-documentviewer.portaltype-configurablepodtemplate dl.portalMessage.info:last-of-type,
+body.template-documentviewer.portaltype-contentcategory dl.portalMessage.info:last-of-type,
+body.template-documentviewer.portaltype-dashboardpodtemplate dl.portalMessage.info:last-of-type,
+body.template-documentviewer.portaltype-file dl.portalMessage.info:last-of-type,
+body.template-documentviewer.portaltype-itemannexcontentcategory dl.portalMessage.info:last-of-type,
+body.template-documentviewer.portaltype-styletemplate dl.portalMessage.info:last-of-type {
    display: none;
 }
 
@@ -1757,7 +1757,10 @@ p#download_vcard {
 .template-folder_contents.portaltype-directory ul#contentActionMenus li dl:not([id='plone-contentmenu-factories']) {
    display: none;
 }
-
+/* in folder_contents, align input correctly */
+#content table.listing input {
+   vertical-align: middle;
+}
 
 /* hide app_parameters for plonegroup root organization,
    show it whan adding a new organization (context is plonegroup-organization) */
@@ -1896,6 +1899,24 @@ body.portaltype-person a.edit-person,
 body.portaltype-held_position a.edit-held_position {
    display: none;
 }
+
+a#newItemCreation,
+span#newItemCreationDisabledDuringEdit,
+a#newMeetingCreation,
+span#newMeetingCreationDisabledDuringEdit {
+   display: inline;
+}
+span#newItemCreationDisabledDuringEdit,
+span#newMeetingCreationDisabledDuringEdit,
+span#newTemplateItemCreationDisabledDuringEdit {
+   cursor: help;
+}
+a#newTemplateItemCreation,
+span#newTemplateItemCreationDisabledDuringEdit {
+   display: inline;
+   padding-left: 0;
+}
+
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */

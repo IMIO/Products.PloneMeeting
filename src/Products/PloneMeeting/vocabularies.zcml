@@ -79,8 +79,8 @@
            name="Products.PloneMeeting.vocabularies.selectableassemblymembersvocabulary" />
   <utility component=".vocabularies.SelectableItemInitiatorsVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.selectableiteminitiatorsvocabulary" />
-  <utility component=".vocabularies.SelectableAssociatedOrganizationsVocabularyFactory"
-           name="Products.PloneMeeting.vocabularies.selectableassociatedorganizationsvocabulary" />
+  <utility component=".vocabularies.PMDetailedEveryOrganizationsVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.detailedorganizationsvocabulary" />
   <utility component=".vocabularies.ItemNotPresentTypeVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.not_present_type_vocabulary" />
   <utility component=".vocabularies.AnnexRestrictShownAndEditableAttributesVocabularyFactory"

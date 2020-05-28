@@ -41,6 +41,7 @@ from Products.PloneMeeting.config import DEFAULT_LIST_TYPES
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
+from Products.PloneMeeting.MeetingConfig import POWEROBSERVERPREFIX
 from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
@@ -3206,6 +3207,79 @@ class testMeeting(PloneMeetingTestCase):
         inserting_methods = [{'insertingMethod': 'on_proposing_groups', 'reverse': '0'}
                              for inserting_method in inserting_methods]
         cfg.setInsertingMethodsOnAddItem(inserting_methods)
+
+    def test_pm_ShowAvailableItems(self):
+        """Test when available items are displayed on the meeting_view."""
+        cfg = self.meetingConfig
+        # give access to powerobservers to meeting when it is created
+        self._setPowerObserverStates(
+            field_name='meeting_states',
+            states=(self._stateMappingFor('created', meta_type='Meeting'),))
+
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime('2020/05/07'))
+        view = meeting.restrictedTraverse('@@meeting_view')
+        view.update()
+        self.assertTrue(view.showAvailableItems())
+        # for users and powerobservers
+        self.assertEqual(cfg.getDisplayAvailableItemsTo(), ())
+        self.changeUser('pmCreator1')
+        view.update()
+        self.assertFalse(view.showAvailableItems())
+        self.changeUser('powerobserver1')
+        view.update()
+        self.assertFalse(view.showAvailableItems())
+        # enable for users
+        cfg.setDisplayAvailableItemsTo(('app_users', ))
+        self.changeUser('pmCreator1')
+        view.update()
+        self.assertTrue(view.showAvailableItems())
+        self.changeUser('powerobserver1')
+        view.update()
+        self.assertFalse(view.showAvailableItems())
+        # enable for users and powerobservers
+        cfg.setDisplayAvailableItemsTo(('app_users', POWEROBSERVERPREFIX + 'powerobservers'))
+        self.changeUser('pmCreator1')
+        view.update()
+        self.assertTrue(view.showAvailableItems())
+        self.changeUser('powerobserver1')
+        view.update()
+        self.assertTrue(view.showAvailableItems())
+        # enable for powerobservers only
+        cfg.setDisplayAvailableItemsTo((POWEROBSERVERPREFIX + 'powerobservers', ))
+        self.changeUser('pmCreator1')
+        view.update()
+        self.assertFalse(view.showAvailableItems())
+        self.changeUser('powerobserver1')
+        view.update()
+        self.assertTrue(view.showAvailableItems())
+
+    def test_pm_AvailableItemsShownInformations(self):
+        """When available items shown to other users than MeetingManagers,
+           MeetingManagers reserved functionnality is not shown."""
+        cfg = self.meetingConfig
+        cfg.setDisplayAvailableItemsTo(('app_users', ))
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        item_uid = item.UID()
+        self.validateItem(item)
+        meeting = self.create('Meeting', date=DateTime('2020/05/07'))
+        # change current URL so displaying_available_items is True
+        self.request['URL'] = meeting.absolute_url() + '/@@meeting_available_items_view'
+        view = meeting.restrictedTraverse('@@faceted_query')
+        # check :
+        # present several item
+        # force insert normal
+        # validated item is there
+        result = view()
+        self.assertTrue('presentSelectedItems' in result)
+        self.assertTrue('forceInsertNormal' in result)
+        self.assertTrue(item_uid in result)
+        self.changeUser('pmCreator1')
+        result = view()
+        self.assertFalse('presentSelectedItems' in result)
+        self.assertFalse('forceInsertNormal' in result)
+        self.assertTrue(item_uid in result)
 
 
 def test_suite():

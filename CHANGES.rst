@@ -9,6 +9,8 @@ Changelog
 - Merged changes from 4.1.21
 - Merged changes from 4.1.22
 - Merged changes from 4.1.23
+- Merged changes from 4.1.24
+- Merged changes from 4.1.25
 
 4.2a5 (2020-03-17)
 ------------------
@@ -41,13 +43,86 @@ Changelog
 - Use roles 'Reviewer' and 'Contributor' in meetingadvice_workflow
 - Added bypass for users having 'Manage portal' in MeetingItemWorkflowConditions in 'mayWait_advices_from', 'mayValidate' and 'mayPresent'
 
-4.1.23.4 (unreleased)
+4.1.25 (unreleased)
+-------------------
+
+- Refactored the way a blank item is created to avoid impossibility to insert image during creation :
+
+  - every items, blank or not are created from an item template, this avoid use of `portal_factory`;
+  - a special not removale `Default item template` is added in the `MeetingConfig` and is used as basis for creating a blank item;
+  - parameter `MeetingConfig.itemCreatedOnlyUsingTemplate` is removed, deactivating the `Default item template` is the equivalent;
+  - Added upgrade step to 4107
+- A MeetingConfig may be removed even if still containing items (recurring items, item templates), only real items are now considered
+- Avoid multiple clicks when creating a new item, icon is disabled after click and when an edition is in progress
+- Make sure every `MeetingItemRecurring` and `MeetingItemTemplate` `portal_types` are registered in `portal_factory`
+- Ignore schemata `settings` while viewing the MeetingConfig (meetingconfig_view) to avoid displaying tab `Settings` when using `collective.solr`
+- Adapted `PMConditionAwareCollectionVocabulary` regarding changes in `collective.eeafaceted.collectionwidget`
+  where `_cache_invalidation_key` method now receives a new parameter `real_context`
+- Configured `cron4plone` cron job executing `@@update-delay-aware-advices` hours to `01:45` so will be executed at `02:00` (check every hours)
+- Fixed JS bug that could break dashboard when deleting an item,
+  call to `updateNumberOfItems` should only be made when deleting an item on the meeting view
+- In `Migrate_To_4105._uncatalogWrongBrains` do not break when getting `correct_rid` if it does not exist in `portal_catalog`
+- Simplified types XML files when using `imio.zamqp.pm` or not, it led to wrong configuration when GS profile order was not correct.
+  `imio.zamqp.pm` is now a direct dependency of `Products.PloneMeeting`
+- Added `utils._base_extra_expr_ctx` to use each time we use `collective.behavior.talcondition.utils._evaluateExpression`,
+  it will return base extra context for the TAL expression, including `tool`, `cfg`, `pm_utils` and `imio_history_utils`
+- In testing `PMLayer`, check if user exists before creating his memberarea as this layer is used by external packages (`imio.pm.wsclient`)
+
+4.1.24.1 (2020-05-14)
 ---------------------
+
+- Fixed `PMUsers` vocabulary to avoid duplicates when using `LDAP` where same userid  may be defined in `LDAP` and in `source_users`
+- Relaunch steps `_moveMCParameterToWFA` and `_addItemNonAttendeesAttributeToMeetings` from `Migrate_To_4104` in `Migrate_To_4105`
+  for some instances that had been deployed in between
+- Use getIconURL to display held_position icon on meeting edit instead getIcon as the first returns full absolute_url of the icon and the last,
+  only relative URL of the icon
+- In `vocabularies.ContainedAnnexesVocabulary`, only get `collective.iconifiedcategory.categories` vocab when actually having annexes
+- When cloning an item with `keepProposingGroup=False` and using field `MeetingItem.proposingGroupWithGroupInCharge`, make sure new set data
+  for `proposingGroup/proposingGroupWithGroupInCharge/groupsInCharge` are correct and complete.
+  Added parameter `include_stored=True` to `MeetingItem.listProposingGroups` and `MeetingItem.listProposingGroupsWithGroupsInCharge`
+- Ignore schemata `settings` while editing an element, this avoid `MeetingItem` edit form to display a `Settings` tab when using `collective.solr`
+
+4.1.24 (2020-05-08)
+-------------------
 
 - In `Migrate_To_4105._cleanFTWLabels`, be sure to keep old values in case still a `PersistentList` instead removing the annotation
 - In `Migrate_To_4105._removeBrokenAnnexes`, manage parent's modification date to keep old value because removing an annex
   will `notifyModifiedAndReindex` it's container
 - In `@@item_duplicate_form`, disable annexes if user does not have the permission to `Add annex/Add annexDecision` on future created item
+- Use `OrgaPrettyLinkWithAdditionalInfosColumn` instead `PrettyLinkColumn` in dashboards displaying `persons` and `held_positions`
+- Added upgrade step to 4106
+- Added `Migrate_To_4106._umarkCreationFlagForEveryItems` to make sure existing items have `at_creation_flag=False`
+  or it breaks `MeetingItem.setTakenOverBy/MeetingItem.setHistorizedTakenOverBy`
+- Relying on `plone.formwidget.namedfile>2.0.2` required by `collective.eeafaceted.z3ctable` also fixes the problem in `PloneMeeting`,
+  no need to patch url anymore in `additionalInformations` macro for `DX content`
+- When creating an item from an `itemTemplate`, if a `proposingGroup` is defined on the `itemTemplate` and current user is creator for this
+  `proposingGroup`, keep it on new created item
+- Use `plonemeeting_activity_managers_workflow` instead `collective_contact_core_workflow` for `person` and `held_position` portal_types because
+  when using `collective_contact_core_workflow`, an element in state `deactivated` is no more viewable by `Member`
+- Manage missing terms for `SelectableAssemblyMembersVocabulary` and `SelectableItemInitiatorsVocabulary` as now, inactive `held_position` objects
+  are no more returned by default by these vocabularies (only `active` elements are returned)
+- Renamed `Products.PloneMeeting.vocabularies.selectableassociatedorganizationsvocabulary` to
+  `Products.PloneMeeting.vocabularies.detailedorganizationsvocabulary` so it is easier to reuse in other contexts
+- Added possibility to select organizations as item initiators (`MeetingItem.itemInitiator`) in addition to held positions
+- Removed field `MeetingItem.itemIsSigned` from `meetingitem_edit`, it is managed thru the `meetingitem_view`
+- Fix `Migrate_To_4105._uncatalogWrongBrains` that was breaking the `UID` index for existing objects
+- Added possibility to display available items on meeting view to other users than (Meeting)Managers :
+
+  - added parameter `MeetingConfig.displayAvailableItemsTo`, possibility to select `Application users` and every `Power obsevers` profiles;
+  - renamed adaptatble method `Meeting.showRemoveSelectedItemsAction` to `Meeting.showInsertOrRemoveSelectedItemsAction`.
+- Fixed links displayed in table of available items on `meeting_view` so it is correctly opened outside the available items `iframe`
+- When duplicating an item, keep original `proposingGroup` if current user is creator for it, if not, creator first `proposingGroup` is used
+- While updating `delay-aware advices` during night cron, add logging even if 0 items to update
+  or we can not see if there was nothing to do or wrong configuration
+- Refactored `MeetingItem.isPrivacyViewable` method :
+
+  - Instead checking if current user in `proposingGroup`, `copyGroups`, ... just check if it has `View` access on item;
+  - Test for `powerobservers` restriction (`MeetingConfig.restrictAccessToSecretItemsTo`) at the end to avoid an item creator
+    that is also a powerobserver not having access to it's item.
+- Removed `MeetingItem.sendMailIfRelevant`, use `utils.sendMailIfRelevant` instead
+- Added email notification `adviceEditedOwner` that will notify the item owner when an advice is added/edited
+  in addition to existing `adviceEdited` that notifies every creators of the item `proposingGroup`
+- Added email notification `temPostponedNextMeeting` that will notify the item `proposingGroup` creators that item has been postponed next meeting
 
 4.1.23.3 (2020-04-30)
 ---------------------

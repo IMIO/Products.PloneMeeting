@@ -678,16 +678,17 @@ class testFaceted(PloneMeetingTestCase):
         searchAllItems = searches.searches_items.searchallitems
         searchAllItems_path = searchAllItems.absolute_url_path()
         self.changeUser('pmCreator1')
+        pmFolder = self.getMeetingFolder()
         vocab = queryUtility(IVocabularyFactory,
                              "Products.PloneMeeting.vocabularies.conditionawarecollectionvocabulary")
-        self.assertTrue(searchAllItems_path in vocab(searches))
+        self.assertTrue(searchAllItems_path in vocab(searches, real_context=pmFolder))
         # disable it then test again
         self.changeUser('siteadmin')
         searchAllItems.enabled = False
         # invalidate vocabulary cache
         notify(ObjectModifiedEvent(searchAllItems))
         self.changeUser('pmCreator1')
-        self.assertFalse(searchAllItems_path in vocab(searches))
+        self.assertFalse(searchAllItems_path in vocab(searches, real_context=pmFolder))
 
     def test_pm_SearchableTextQueryOnSpecialCharacters(self):
         """Make sure it is possible to query on "décision" and "decision"."""

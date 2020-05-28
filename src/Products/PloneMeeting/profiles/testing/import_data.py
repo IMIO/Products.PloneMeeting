@@ -209,6 +209,15 @@ budgetimpacteditor = UserDescriptor('budgetimpacteditor',
 cfg1_budgetimpacteditors = PloneGroupDescriptor('cfg1_budgetimpacteditors', 'cfg1_budgetimpacteditors', [])
 budgetimpacteditor.ploneGroups = [cfg1_budgetimpacteditors,
                                   cfg1_powerobservers]
+# item templates manager
+templatemanager1 = UserDescriptor('templatemanager1',
+                                  [],
+                                  email="templatemanager1@plonemeeting.org",
+                                  fullname='M. Template Manager1')
+cfg1_templatemanagers = PloneGroupDescriptor('cfg1_itemtemplatesmanagers',
+                                             'cfg1_itemtemplatesmanagers',
+                                             [])
+templatemanager1.ploneGroups = [cfg1_templatemanagers]
 
 developers = OrgDescriptor('developers', 'Developers', u'Devel')
 developers.creators.append(pmCreator1)
@@ -437,7 +446,7 @@ data.persons = [person1, person2, person3, person4]
 data.usersOutsideGroups = [siteadmin, cadranel, voter1, voter2,
                            powerobserver1, powerobserver2,
                            restrictedpowerobserver1, restrictedpowerobserver2,
-                           budgetimpacteditor]
+                           budgetimpacteditor, templatemanager1]
 contactsTemplate = PodTemplateDescriptor('contactsTemplate', 'Export organizations', dashboard=True)
 contactsTemplate.odt_file = 'organizations-export.ods'
 contactsTemplate.pod_formats = ['ods', 'xls']

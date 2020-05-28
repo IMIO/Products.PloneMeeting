@@ -515,14 +515,14 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
         logger.warn(str(ee))
 
 
-def sendMailIfRelevant(obj, event, permissionOrSuffix, isSuffix=False,
-                       customEvent=False, mapping={}):
+def sendMailIfRelevant(obj, event, permissionOrSuffixOrRole, isSuffix=False,
+                       customEvent=False, mapping={}, isRole=False):
     '''An p_event just occurred on meeting or item p_obj. If the corresponding
        meeting config specifies that a mail needs to be sent, this function
        will send a mail. The mail subject and body are defined from i18n labels
-       that derive from the event name. if p_isSuffix is True, p_permissionOrSuffix
+       that derive from the event name. if p_isSuffix is True, p_permissionOrSuffixOrRole
        is a suffix, and the mail will be sent to every members of this sufixed group (relevant for item).
-       If p_isSuffix is False, p_permissionOrSuffix is a permission and the mail will
+       If p_isSuffix is False, p_permissionOrSuffixOrRole is a permission and the mail will
        be sent to everyone having this permission.  Some mapping can be received
        and used afterward in mail subject and mail body translations.
 
@@ -549,15 +549,18 @@ def sendMailIfRelevant(obj, event, permissionOrSuffix, isSuffix=False,
     userIds = []
     if isSuffix:
         org = obj.adapted()._getGroupManagingItem(obj.queryState())
-        plone_group = get_plone_group(org.UID(), permissionOrSuffix)
+        plone_group = get_plone_group(org.UID(), permissionOrSuffixOrRole)
         if not plone_group:
             # maybe the suffix is a MeetingConfig related suffix, like _meetingmanagers
-            plone_group = get_plone_group(cfg.getId(), permissionOrSuffix)
+            plone_group = get_plone_group(cfg.getId(), permissionOrSuffixOrRole)
         if plone_group:
             userIds = plone_group.getGroupMemberIds()
     else:
-        # Warning "_members" returns all users (even deleted users), the filter must do this afterwards.
-        userIds = api.portal.get_tool('portal_memberdata')._members
+        if isRole and (permissionOrSuffixOrRole == 'Owner'):
+            userIds = [obj.Creator()]
+        else:
+            # Warning "_members" returns all users (even deleted users), the filter must do this afterwards.
+            userIds = api.portal.get_tool('portal_memberdata')._members
     for userId in userIds:
         user = membershipTool.getMemberById(userId)
         # do not warn user doing the action
@@ -567,8 +570,12 @@ def sendMailIfRelevant(obj, event, permissionOrSuffix, isSuffix=False,
             continue
         # Does the user have the corresponding permission on p_obj ?
         if not isSuffix:
-            if not api.user.has_permission(permission=permissionOrSuffix, obj=obj, user=user):
-                continue
+            if not isRole:
+                if not api.user.has_permission(permission=permissionOrSuffixOrRole, obj=obj, user=user):
+                    continue
+            else:
+                if not user.has_role(permissionOrSuffixOrRole, obj):
+                    continue
 
         recipient = tool.getMailRecipient(user)
         # Must we avoid sending mail to this recipient for some custom reason?
@@ -1009,25 +1016,21 @@ def applyOnTransitionFieldTransform(obj, transitionId):
     '''
       Apply onTransitionFieldTransforms defined in the corresponding obj MeetingConfig.
     '''
-    tool = api.portal.get_tool(TOOL_ID)
-    cfg = tool.getMeetingConfig(obj)
     idxs = []
+    extra_expr_ctx = _base_extra_expr_ctx(obj)
+    cfg = extra_expr_ctx['cfg']
     for transform in cfg.getOnTransitionFieldTransforms():
         tal_expr = transform['tal_expression'].strip()
         if transform['transition'] == transitionId and \
            transform['field_name'].split('.')[0] == obj.meta_type and \
            tal_expr:
             try:
+                extra_expr_ctx.update({'item': obj, })
                 res = _evaluateExpression(
                     obj,
                     expression=tal_expr,
                     roles_bypassing_expression=[],
-                    extra_expr_ctx={
-                        'item': obj,
-                        'pm_utils': SecureModuleImporter['Products.PloneMeeting.utils'],
-                        'imio_history_utils': SecureModuleImporter['imio.history.utils'],
-                        'tool': tool,
-                        'cfg': cfg},
+                    extra_expr_ctx=extra_expr_ctx,
                     empty_expr_is_true=False,
                     raise_on_error=True)
             except Exception, e:
@@ -1050,8 +1053,8 @@ def meetingExecuteActionOnLinkedItems(meeting, transitionId):
       check if we need to trigger an action on linked items
       defined in MeetingConfig.meetingExecuteActionOnLinkedItems.
     '''
-    tool = api.portal.get_tool(TOOL_ID)
-    cfg = tool.getMeetingConfig(meeting)
+    extra_expr_ctx = _base_extra_expr_ctx(meeting)
+    cfg = extra_expr_ctx['cfg']
     wfTool = api.portal.get_tool('portal_workflow')
     wf_comment = _('wf_transition_triggered_by_application')
     for config in cfg.getOnMeetingTransitionItemActionToExecute():
@@ -1069,17 +1072,12 @@ def meetingExecuteActionOnLinkedItems(meeting, transitionId):
                     # execute the TAL expression, will not fail but log if an error occurs
                     # do this as Manager to avoid permission problems, the configuration is supposed to be applied
                     with api.env.adopt_roles(['Manager']):
+                        extra_expr_ctx.update({'item': item, 'meeting': meeting})
                         _evaluateExpression(
                             item,
                             expression=config['tal_expression'].strip(),
                             roles_bypassing_expression=[],
-                            extra_expr_ctx={
-                                'pm_utils': SecureModuleImporter['Products.PloneMeeting.utils'],
-                                'imio_history_utils': SecureModuleImporter['imio.history.utils'],
-                                'tool': tool,
-                                'cfg': cfg,
-                                'item': item,
-                                'meeting': meeting},
+                            extra_expr_ctx=extra_expr_ctx,
                             error_pattern=ITEM_EXECUTE_ACTION_ERROR)
 
 
@@ -1846,6 +1844,30 @@ def add_wf_history_action(obj, action_name, action_label, user_id=None):
     newEvent['time'] = DateTime()
     newEvent['review_state'] = review_state_id
     obj.workflow_history[wfName] = obj.workflow_history[wfName] + (newEvent, )
+
+
+def is_editing():
+    """Return True if currently editing something."""
+    request = getRequest()
+    url = request.get('URL', '')
+    edit_ends = ['/edit', '/base_edit', '/@@edit']
+    res = False
+    for edit_end in edit_ends:
+        if url.endswith(edit_end):
+            res = True
+            break
+    return res
+
+
+def _base_extra_expr_ctx(obj):
+    """ """
+    tool = api.portal.get_tool('portal_plonemeeting')
+    cfg = tool.getMeetingConfig(obj)
+    data = {'tool': tool,
+            'cfg': cfg,
+            'pm_utils': SecureModuleImporter['Products.PloneMeeting.utils'],
+            'imio_history_utils': SecureModuleImporter['imio.history.utils'], }
+    return data
 
 
 class AdvicesUpdatedEvent(ObjectEvent):

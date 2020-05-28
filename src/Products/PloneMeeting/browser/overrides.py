@@ -56,9 +56,12 @@ from Products.CMFPlone.utils import safe_unicode
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from Products.PloneMeeting import utils as pm_utils
 from Products.PloneMeeting.config import BARCODE_INSERTED_ATTR_ID
+from Products.PloneMeeting.config import ITEM_DEFAULT_TEMPLATE_ID
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.interfaces import IMeeting
+from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import get_annexes
+from Products.PloneMeeting.utils import is_editing
 from Products.PloneMeeting.utils import normalize_id
 from Products.PloneMeeting.utils import sendMail
 from Products.PloneMeeting.utils import setFieldFromAjax
@@ -478,15 +481,29 @@ class PMRenderCategoryView(IDRenderCategoryView):
                 return ViewPageTemplateFile("templates/category_meetings.pt")
         return category_template
 
+    def _get_default_item_template_UID(self):
+        """Return the default item template if it is active."""
+        default_template = self.cfg.get_default_item_template()
+        return default_template and default_template.UID()
+
     def __call__(self, widget):
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
         self.member = api.user.get_current()
         return super(PMRenderCategoryView, self).__call__(widget)
 
+    def _is_editing(self):
+        return is_editing()
+
     def templateItems(self):
         '''Check if there are item templates defined or not.'''
-        return bool(self.cfg.getItemTemplates(as_brains=True, onlyActive=True))
+        itemTemplates = self.cfg.getItemTemplates(as_brains=True, onlyActive=True)
+        res = False
+        # if only one and it is the ITEM_DEFAULT_TEMPLATE_ID
+        if len(itemTemplates) > 1 or \
+           (len(itemTemplates) == 1 and itemTemplates[0].id != ITEM_DEFAULT_TEMPLATE_ID):
+            res = True
+        return res
 
 
 class BaseActionsPanelView(ActionsPanelView):
@@ -1034,21 +1051,23 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
         """Generates the stored annex title using the ConfigurablePODTemplate.store_as_annex_title_expr.
            If empty, we just return the ConfigurablePODTemplate title."""
         value = pod_template.store_as_annex_title_expr
+        extra_expr_ctx = _base_extra_expr_ctx(self.context)
+        extra_expr_ctx.update({'obj': self.context, 'pod_template': pod_template})
         evaluatedExpr = _evaluateExpression(
             self.context,
             expression=value and value.strip() or '',
-            extra_expr_ctx={'obj': self.context,
-                            'member': api.user.get_current(),
-                            'pod_template': pod_template},
+            extra_expr_ctx=extra_expr_ctx,
             empty_expr_is_true=False)
         return evaluatedExpr or pod_template.Title()
 
     def _extractRecipients(self, values):
         """ """
         # compile userIds in case we have a TAL expression
-        tool = api.portal.get_tool('portal_plonemeeting')
         recipients = []
         userIdsOrEmailAddresses = []
+        extra_expr_ctx = _base_extra_expr_ctx(self.context)
+        extra_expr_ctx.update({'obj': self.context, })
+        tool = extra_expr_ctx['tool']
         for value in values.strip().split(','):
             # value may be a TAL expression returning a list of userIds or email addresses
             # or a group (of users)
@@ -1058,10 +1077,7 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
                 evaluatedExpr = _evaluateExpression(
                     self.context,
                     expression=value.strip(),
-                    extra_expr_ctx={'obj': self.context,
-                                    'member': api.user.get_current(),
-                                    'tool': tool,
-                                    'cfg': tool.getMeetingConfig(self.context)},)
+                    extra_expr_ctx=extra_expr_ctx)
                 userIdsOrEmailAddresses += list(evaluatedExpr)
             elif value.startswith('group:'):
                 group = api.group.get(value[6:])

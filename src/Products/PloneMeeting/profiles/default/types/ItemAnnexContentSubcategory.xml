@@ -45,7 +45,7 @@
        &lt;/schema&gt;
      &lt;/model&gt;
   </property>
-  <property name="schema_policy">subcategory_schema_policy</property>
+  <property name="schema_policy">subcategory_zamqp_schema_policy</property>
   <property name="behaviors" purge="false">
     <element value="plone.app.content.interfaces.INameFromTitle"/>
     <element value="plone.app.dexterity.behaviors.metadata.IBasic"/>

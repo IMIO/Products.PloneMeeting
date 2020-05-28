@@ -3,6 +3,7 @@
 from collections import OrderedDict
 from collective.contact.core.utils import get_gender_and_number
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
+from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_organization
 from collective.contact.plonegroup.utils import get_organizations
 from collective.documentgenerator.helper.archetypes import ATDocumentGenerationHelperView
@@ -36,6 +37,7 @@ from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.indexes import _to_coded_adviser_index
 from Products.PloneMeeting.interfaces import IMeeting
+from Products.PloneMeeting.MeetingConfig import POWEROBSERVERPREFIX
 from Products.PloneMeeting.utils import _itemNumber_to_storedItemNumber
 from Products.PloneMeeting.utils import _storedItemNumber_to_itemNumber
 from Products.PloneMeeting.utils import get_annexes
@@ -297,19 +299,40 @@ class MeetingView(FacetedContainerView):
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
 
-    def __call__(self):
+    def update(self):
         """ """
         # initialize member in call because it is Anonymous in __init__ of view...
         self.member = api.user.get_current()
+
+    def __call__(self):
+        """ """
+        self.update()
         return super(MeetingView, self).__call__()
 
     def showPage(self):
         """Display page to current user?"""
         return self.tool.showMeetingView()
 
+    def _displayAvailableItemsTo(self):
+        """Check if current user profile is selected in MeetingConfig.displayAvailableItemsTo."""
+        displayAvailableItemsTo = self.cfg.getDisplayAvailableItemsTo()
+        suffixes = []
+        res = False
+        for value in displayAvailableItemsTo:
+            if value == 'app_users':
+                suffixes += get_all_suffixes()
+            if value.startswith(POWEROBSERVERPREFIX):
+                suffixes.append(value.split(POWEROBSERVERPREFIX)[1])
+        if suffixes:
+            tool = api.portal.get_tool('portal_plonemeeting')
+            res = tool.userIsAmong(suffixes)
+        return res
+
     def showAvailableItems(self):
         """Show the available items part?"""
-        return self.member.has_permission(ModifyPortalContent, self.context) and \
+        return (
+            self.member.has_permission(ModifyPortalContent, self.context) or
+            self._displayAvailableItemsTo()) and \
             self.context.wfConditions().mayAcceptItems()
 
 
@@ -567,13 +590,16 @@ class UpdateDelayAwareAdvicesView(BrowserView):
         brains = catalog(**query)
         numberOfBrains = len(brains)
         i = 1
+        logger.info('Updating adviceIndex for %s items' % str(numberOfBrains))
         for brain in brains:
             item = brain.getObject()
-            logger.info('%d/%d Updating adviceIndex of item at %s' % (i,
-                                                                      numberOfBrains,
-                                                                      '/'.join(item.getPhysicalPath())))
+            logger.info('%d/%d Updating adviceIndex of item at %s' % (
+                i,
+                numberOfBrains,
+                '/'.join(item.getPhysicalPath())))
             i = i + 1
             item.updateLocalRoles()
+        logger.info('Done.')
 
 
 class DeleteHistoryEventView(BrowserView):

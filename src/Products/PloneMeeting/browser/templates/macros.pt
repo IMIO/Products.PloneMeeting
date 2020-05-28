@@ -759,9 +759,6 @@ non metadata fields.  We receive 'obj' and 'excludedFields' that is a list of fi
 This works for an AT and for a DX.</tal:comment>
 <tal:defines define="isDexterity python: obj.getTypeInfo().meta_type == 'Dexterity FTI';">
   <tal:dx condition="isDexterity">
-    <tal:comment replace="nothing">Need to patch url for links to downloadable files to work...</tal:comment>
-    <tal:patch_url define="oldURL context/REQUEST/getURL;
-                           dummy python: context.REQUEST.set('URL', obj.absolute_url() + '/view')">
     <tal:loop
         define="view python: obj.restrictedTraverse('view');
                 dummy python: view.update();
@@ -777,8 +774,6 @@ This works for an AT and for a DX.</tal:comment>
         </div>
        </tal:widget_loop>
     </tal:loop>
-    <tal:unpatch_url define="dummy python: context.REQUEST.set('URL', oldURL)" />
-    </tal:patch_url>
   </tal:dx>
   <tal:at condition="not: isDexterity">
     <tal:loop

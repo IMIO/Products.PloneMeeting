@@ -71,6 +71,7 @@ from Products.PloneMeeting.config import DEFAULT_ITEM_COLUMNS
 from Products.PloneMeeting.config import DEFAULT_LIST_TYPES
 from Products.PloneMeeting.config import DEFAULT_MEETING_COLUMNS
 from Products.PloneMeeting.config import EXECUTE_EXPR_VALUE
+from Products.PloneMeeting.config import ITEM_DEFAULT_TEMPLATE_ID
 from Products.PloneMeeting.config import ITEM_ICON_COLORS
 from Products.PloneMeeting.config import ITEM_INSERT_METHODS
 from Products.PloneMeeting.config import ITEMTEMPLATESMANAGERS_GROUP_SUFFIX
@@ -145,6 +146,8 @@ CONFIGGROUPPREFIX = 'configgroup_'
 PROPOSINGGROUPPREFIX = 'suffix_proposing_group_'
 READERPREFIX = 'reader_'
 SUFFIXPROFILEPREFIX = 'suffix_profile_'
+POWEROBSERVERPREFIX = 'powerobserver__'
+
 
 schema = Schema((
 
@@ -275,18 +278,6 @@ schema = Schema((
             description_msgid="config_version_descr",
             label='Configversion',
             label_msgid='PloneMeeting_label_configVersion',
-            i18n_domain='PloneMeeting',
-        ),
-        write_permission="PloneMeeting: Write risky config",
-    ),
-    BooleanField(
-        name='itemCreatedOnlyUsingTemplate',
-        default=defValues.itemCreatedOnlyUsingTemplate,
-        widget=BooleanField._properties['widget'](
-            description="ItemCreatedOnlyUsingTemplate",
-            description_msgid="item_created_only_using_template_descr",
-            label='Itemcreatedonlyusingtemplate',
-            label_msgid='PloneMeeting_label_itemCreatedOnlyUsingTemplate',
             i18n_domain='PloneMeeting',
         ),
         write_permission="PloneMeeting: Write risky config",
@@ -547,7 +538,7 @@ schema = Schema((
         ),
         schemata="data",
         multiValued=1,
-        vocabulary_factory='Products.PloneMeeting.vocabularies.selectableassociatedorganizationsvocabulary',
+        vocabulary_factory='Products.PloneMeeting.vocabularies.detailedorganizationsvocabulary',
         default=defValues.orderedAssociatedOrganizations,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
@@ -1431,6 +1422,23 @@ schema = Schema((
         multiValued=1,
         vocabulary='listMeetingColumns',
         default=defValues.meetingColumns,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    LinesField(
+        name='displayAvailableItemsTo',
+        widget=MultiSelectionWidget(
+            description="DisplayAvailableItemsTo",
+            description_msgid="display_available_items_to_descr",
+            format="checkbox",
+            label='Displayavailableitemsto',
+            label_msgid='PloneMeeting_label_displayAvailableItemsTo',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="gui",
+        multiValued=1,
+        vocabulary='listDisplayAvailableItemsTo',
+        default=defValues.displayAvailableItemsTo,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
@@ -4608,6 +4616,18 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         """ """
         return []
 
+    security.declarePrivate('listDisplayAvailableItemsTo')
+
+    def listDisplayAvailableItemsTo(self):
+        d = "PloneMeeting"
+        res = DisplayList((
+            ("app_users", translate('app_users', domain=d, context=self.REQUEST)),
+        ))
+        for po_infos in self.getPowerObservers():
+            res.add('{0}{1}'.format(POWEROBSERVERPREFIX, po_infos['row_id']),
+                    po_infos['label'])
+        return res
+
     security.declarePrivate('listItemActionsColumnConfig')
 
     def listItemActionsColumnConfig(self):
@@ -5388,10 +5408,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
            corresponds to this meeting config.'''
         # Register the portal types that are specific to this meeting config.
         self.registerPortalTypes()
-        # Create the subfolders
-        self._createSubFolders()
         # Set a property allowing to know in which MeetingConfig we are
         self.manage_addProperty(MEETING_CONFIG, self.id, 'string')
+        # Create the subfolders
+        self._createSubFolders()
         # Create the collections related to this meeting config
         self.createSearches(self._searchesInfo())
         # define default search for faceted
@@ -5428,6 +5448,33 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # Make sure we have 'text/html' for every Rich fields
         forceHTMLContentTypeForEmptyRichFields(self)
         self.adapted().onEdit(isCreated=False)  # Call sub-product code if any
+
+    def _create_default_item_template(self):
+        """Create the default item template for this MeetingConfig.
+           Return the default_template if it was created, None otherwise."""
+        item_templates_folder = getattr(self, TOOL_FOLDER_ITEM_TEMPLATES, None)
+        default_template = None
+        if item_templates_folder:
+            if ITEM_DEFAULT_TEMPLATE_ID not in item_templates_folder.objectIds():
+                item_template_title = translate('Default ${cfg_title} item template',
+                                                domain='PloneMeeting',
+                                                mapping={'cfg_title': safe_unicode(self.Title()), },
+                                                context=self.REQUEST,
+                                                default="Default ${cfg_title} item template")
+                default_template = api.content.create(
+                    container=item_templates_folder,
+                    type=self.getItemTypeName(configType='MeetingItemTemplate'),
+                    id=ITEM_DEFAULT_TEMPLATE_ID,
+                    title=item_template_title)
+        return default_template
+
+    def get_default_item_template(self, ignore_inactive=True):
+        """Return the default item template if it is active."""
+        item_templates = self.get(TOOL_FOLDER_ITEM_TEMPLATES)
+        default_template = item_templates.get(ITEM_DEFAULT_TEMPLATE_ID, None)
+        if default_template and ignore_inactive and default_template.queryState() == 'inactive':
+            default_template = None
+        return default_template
 
     def _createSubFolders(self):
         '''
@@ -5468,6 +5515,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 portletAssignmentMapping[name] = navPortlet
                 # use folder_contents layout
                 folder.setLayout('folder_contents')
+                # create the default item template
+                self._create_default_item_template()
 
             folder.setTitle(translate(folderTitle,
                                       domain="PloneMeeting",
@@ -5819,7 +5868,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             ("itemDelayed", translate('event_item_delayed',
                                       domain=d,
                                       context=self.REQUEST)),
-            ("itemPostponedNextMeeting", translate('event_item_postponed_next_meeing',
+            ("itemPostponedNextMeeting", translate('event_item_postponed_next_meeting',
                                                    domain=d,
                                                    context=self.REQUEST)),
             ("annexAdded", translate('event_add_annex',
@@ -5832,6 +5881,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             ("adviceEdited", translate('event_add_advice',
                                        domain=d,
                                        context=self.REQUEST)),
+            ("adviceEditedOwner", translate('event_add_advice_owner',
+                                            domain=d,
+                                            context=self.REQUEST)),
             ("adviceInvalidated", translate('event_invalidate_advice',
                                             domain=d,
                                             context=self.REQUEST)),
@@ -6433,8 +6485,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # check the 'available_on' TAL expression when an item is provided
             eRes = True
             if item:
-                eRes = item._evalAdviceAvailableOn(
-                    customAdviserConfig['available_on'], tool=self.aq_parent, cfg=self)
+                eRes = item._evalAdviceAvailableOn(customAdviserConfig['available_on'])
 
             if not eRes:
                 continue

@@ -65,6 +65,7 @@ from Products.PloneMeeting.config import DUPLICATE_AND_KEEP_LINK_EVENT_ACTION
 from Products.PloneMeeting.config import EXTRA_COPIED_FIELDS_FROM_ITEM_TEMPLATE
 from Products.PloneMeeting.config import EXTRA_COPIED_FIELDS_SAME_MC
 from Products.PloneMeeting.config import HISTORY_COMMENT_NOT_VIEWABLE
+from Products.PloneMeeting.config import ITEM_DEFAULT_TEMPLATE_ID
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
 from Products.PloneMeeting.config import READER_USECASES
@@ -85,6 +86,7 @@ from Products.PloneMeeting.utils import ON_TRANSITION_TRANSFORM_TAL_EXPR_ERROR
 from Products.PloneMeeting.utils import setFieldFromAjax
 from Products.PluginIndexes.common.UnIndex import _marker
 from Products.statusmessages.interfaces import IStatusMessage
+from zExceptions import Redirect
 from zope.annotation.interfaces import IAnnotations
 from zope.component import getAdapter
 from zope.event import notify
@@ -2497,6 +2499,29 @@ class testMeetingItem(PloneMeetingTestCase):
         self.failIf(secretHeadingItem.adapted().isPrivacyViewable())
         self.failUnless(publicHeadingItem.adapted().isPrivacyViewable())
 
+    def test_pm_IsPrivacyViewableViewAccessTakePrecedenceOverPowerObserversRestrictions(self):
+        """Make sure if a user has access to an item because in it's proposingGroup
+           for example and is also powerobserver that is restricted by
+           MeetingConfig.restrictAccessToSecretItemsTo, item isPrivacyViewable."""
+        cfg = self.meetingConfig
+        self._setPowerObserverStates(observer_type='restrictedpowerobservers',
+                                     states=('validated', ))
+        cfg.setRestrictAccessToSecretItems(True)
+        self.assertTrue('restrictedpowerobservers' in cfg.getRestrictAccessToSecretItemsTo())
+        self._addPrincipalToGroup('restrictedpowerobserver1', self.developers_creators)
+        # create his personal area because he is a creator now
+        _createMemberarea(self.portal, 'restrictedpowerobserver1')
+        # restrictedpowerobserver1 is restrictedpowerobservers and creator
+        self.changeUser('restrictedpowerobserver1')
+        item = self.create('MeetingItem', privacy='secret')
+        self.assertEqual(item.getPrivacy(), 'secret')
+        self.assertTrue(item.adapted().isPrivacyViewable())
+        self.validateItem(item)
+        self.assertTrue(item.adapted().isPrivacyViewable())
+        self._removePrincipalFromGroup('restrictedpowerobserver1', self.developers_creators)
+        cleanRamCacheFor('Products.PloneMeeting.MeetingItem.isPrivacyViewable')
+        self.assertFalse(item.adapted().isPrivacyViewable())
+
     def test_pm_ItemDuplicateForm(self):
         """Test the @@item_duplicate_form"""
         cfg = self.meetingConfig
@@ -2659,6 +2684,33 @@ class testMeetingItem(PloneMeetingTestCase):
         data['annex_decision_ids'] = []
         newItem = form._doApply(data)
         self.assertEqual(newItem.objectIds(), [])
+
+    def test_pm_ItemDuplicateFormKeepProposingGroupIfRelevant(self):
+        """Test the @@item_duplicate_form that will keep original proposingGroup
+           if current user is creator for it, or if not, that will switch to
+           first proposingGroup of the user."""
+        cfg = self.meetingConfig
+        cfg.setUseCopies(True)
+        cfg.setSelectableCopyGroups((self.vendors_creators, ))
+        cfg.setItemCopyGroupsStates(('itemcreated', 'validated', ))
+        cfg.setEnableItemDuplication(True)
+        self._addPrincipalToGroup('pmCreator1', self.vendors_creators)
+        # pmCreator1 may create items for both groups
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.assertEqual(item.getProposingGroup(), self.developers_uid)
+        form = item.restrictedTraverse('@@item_duplicate_form').form_instance
+        data = {'keep_link': False, 'annex_ids': [], 'annex_decision_ids': []}
+        form.update()
+        newItem = form._doApply(data)
+        self.assertEqual(item.getProposingGroup(), newItem.getProposingGroup())
+        # now when proposingGroup is vendors
+        item.setProposingGroup(self.vendors_uid)
+        item._update_after_edit()
+        form.update()
+        newItem = form._doApply(data)
+        self.assertEqual(item.getProposingGroup(), self.vendors_uid)
+        self.assertEqual(item.getProposingGroup(), newItem.getProposingGroup())
 
     def test_pm_IsLateFor(self):
         '''
@@ -4626,19 +4678,12 @@ class testMeetingItem(PloneMeetingTestCase):
            using createObject?type_name=MeetingItemXXX, he gets Unauthorized, except
            if the item is added in the configuration, for managing item templates for example.'''
         cfg = self.meetingConfig
-        # make sure user may add an item without a template for now
-        cfg.setItemCreatedOnlyUsingTemplate(False)
         self.changeUser('pmCreator1')
         pmFolder = self.getMeetingFolder()
         # create an item in portal_factory
         itemTypeName = cfg.getItemTypeName()
         temp_item = pmFolder.restrictedTraverse('portal_factory/{0}/tmp_id'.format(itemTypeName))
-        # in AT, the EditBegunEvent is triggered on the edit form by the @@at_lifecycle_view
-        # accessing it for now does work on an item in the creation process
         self.assertTrue(temp_item._at_creation_flag)
-        self.assertIsNone(temp_item.restrictedTraverse('@@at_lifecycle_view').begin_edit())
-        # now make only item creation possible using a template
-        cfg.setItemCreatedOnlyUsingTemplate(True)
         self.assertRaises(Unauthorized, temp_item.restrictedTraverse('@@at_lifecycle_view').begin_edit)
         # create an item from a template
         view = pmFolder.restrictedTraverse('@@createitemfromtemplate')
@@ -5576,6 +5621,35 @@ class testMeetingItem(PloneMeetingTestCase):
         download_view = self.portal.unrestrictedTraverse(
             str(item.categorized_elements.values()[0]['download_url']))
         self.assertEqual(download_view().read(), 'Testing file\n')
+
+    def test_pm_ItemRenamedExceptedDefaultItemTemplate(self):
+        """The default item template id is never changed, but other item templates do."""
+        cfg = self.meetingConfig
+        self.changeUser('templatemanager1')
+        # create new item template
+        itemTemplate = self.create('MeetingItemTemplate')
+        self.assertEqual(itemTemplate.getId(), 'o1')
+        itemTemplate.setTitle('My new template title')
+        notify(ObjectModifiedEvent(itemTemplate))
+        self.assertEqual(itemTemplate.getId(), 'my-new-template-title')
+        # default item template does not change
+        default_template = cfg.itemtemplates.get(ITEM_DEFAULT_TEMPLATE_ID)
+        self.assertEqual(default_template.getId(), ITEM_DEFAULT_TEMPLATE_ID)
+        self.assertEqual(default_template.Title(), 'Default ' + cfg.Title() + ' item template')
+        default_template.setTitle('My new default template title')
+        notify(ObjectModifiedEvent(default_template))
+        self.assertEqual(default_template.getId(), ITEM_DEFAULT_TEMPLATE_ID)
+        self.assertEqual(default_template.Title(), 'My new default template title')
+        # creating an item from the default item template behaves normally
+        self.changeUser('pmCreator1')
+        pmFolder = self.getMeetingFolder()
+        view = pmFolder.restrictedTraverse('@@createitemfromtemplate')
+        newItem = view.createItemFromTemplate(default_template.UID())
+        self.assertEqual(newItem.getId(), ITEM_DEFAULT_TEMPLATE_ID)
+        newItem.setTitle('My new item title')
+        # save button
+        newItem.processForm()
+        self.assertEqual(newItem.getId(), 'my-new-item-title')
 
     def _notAbleToAddSubContent(self, item):
         for add_subcontent_perm in ADD_SUBCONTENT_PERMISSIONS:
@@ -6706,6 +6780,17 @@ class testMeetingItem(PloneMeetingTestCase):
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.attributeIsUsed')
         self.assertTrue(widget.testCondition(item.aq_inner.aq_parent, self.portal, item))
         self.assertTrue(item.adapted().showObservations())
+
+    def test_pm_DefaultItemTemplateNotRemovable(self):
+        """The default item template may not be removed."""
+        cfg = self.meetingConfig
+        default_template = cfg.itemtemplates.get(ITEM_DEFAULT_TEMPLATE_ID)
+        # not deletable as Manager...
+        self.changeUser('siteadmin')
+        self.assertRaises(Redirect, api.content.delete, default_template)
+        # ... nor as item templates manager
+        self.changeUser('templatemanager1')
+        self.assertRaises(Redirect, api.content.delete, default_template)
 
 
 def test_suite():

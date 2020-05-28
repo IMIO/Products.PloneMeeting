@@ -47,7 +47,6 @@ from Products.CMFCore.permissions import ReviewPortalContent
 from Products.CMFCore.utils import _checkPermission
 from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 from Products.CMFPlone.utils import base_hasattr
-from Products.PageTemplates.Expressions import SecureModuleImporter
 from Products.PloneMeeting.browser.itemchangeorder import _compute_value_to_add
 from Products.PloneMeeting.browser.itemchangeorder import _is_integer
 from Products.PloneMeeting.browser.itemchangeorder import _to_integer
@@ -58,6 +57,7 @@ from Products.PloneMeeting.config import READER_USECASES
 from Products.PloneMeeting.interfaces import IMeetingWorkflowActions
 from Products.PloneMeeting.interfaces import IMeetingWorkflowConditions
 from Products.PloneMeeting.utils import _addManagedPermissions
+from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import addDataChange
 from Products.PloneMeeting.utils import addRecurringItemsIfRelevant
 from Products.PloneMeeting.utils import display_as_html
@@ -117,9 +117,8 @@ class MeetingWorkflowConditions(object):
     security.declarePublic('mayAcceptItems')
 
     def mayAcceptItems(self):
-        if _checkPermission(ReviewPortalContent, self.context):
-            if self.context.queryState() in self.cfg.adapted().getMeetingStatesAcceptingItems():
-                return True
+        if self.context.queryState() in self.cfg.adapted().getMeetingStatesAcceptingItems():
+            return True
 
     security.declarePublic('mayPublish')
 
@@ -1765,20 +1764,17 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
 
     def _updatePowerObserversLocalRoles(self):
         '''Give local roles to the groups defined in MeetingConfig.powerObservers.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self)
-        itemState = self.queryState()
+        extra_expr_ctx = _base_extra_expr_ctx(self)
+        extra_expr_ctx.update({'meeting': self, })
+        cfg = extra_expr_ctx['cfg']
+        cfg_id = cfg.getId()
+        meetingState = self.queryState()
         for po_infos in cfg.getPowerObservers():
-            if itemState in po_infos['meeting_states'] and \
+            if meetingState in po_infos['meeting_states'] and \
                _evaluateExpression(self,
                                    expression=po_infos['meeting_access_on'],
-                                   extra_expr_ctx={
-                                       'meeting': self,
-                                       'pm_utils': SecureModuleImporter['Products.PloneMeeting.utils'],
-                                       'imio_history_utils': SecureModuleImporter['imio.history.utils'],
-                                       'tool': tool,
-                                       'cfg': cfg}):
-                powerObserversGroupId = "%s_%s" % (cfg.getId(), po_infos['row_id'])
+                                   extra_expr_ctx=extra_expr_ctx):
+                powerObserversGroupId = "%s_%s" % (cfg_id, po_infos['row_id'])
                 self.manage_addLocalRoles(powerObserversGroupId, (READER_USECASES['powerobservers'],))
 
     security.declareProtected(ModifyPortalContent, 'transformRichTextField')
@@ -2050,9 +2046,9 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             self._v_previousData = rememberPreviousData(self)
         return OrderedBaseFolder.processForm(self, *args, **kwargs)
 
-    security.declarePublic('showRemoveSelectedItemsAction')
+    security.declarePublic('showInsertOrRemoveSelectedItemsAction')
 
-    def showRemoveSelectedItemsAction(self):
+    def showInsertOrRemoveSelectedItemsAction(self):
         '''See doc in interfaces.py.'''
         meeting = self.getSelf()
         member = api.user.get_current()
