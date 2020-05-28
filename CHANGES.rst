@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.1.25 (unreleased)
+4.1.25 (2020-05-28)
 -------------------
 
 - Refactored the way a blank item is created to avoid impossibility to insert image during creation :
