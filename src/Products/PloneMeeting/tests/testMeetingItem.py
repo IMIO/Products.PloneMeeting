@@ -2518,7 +2518,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(item.adapted().isPrivacyViewable())
         self.validateItem(item)
         self.assertTrue(item.adapted().isPrivacyViewable())
-        self._removePrincipalFromGroup('restrictedpowerobserver1', self.developers_creators)
+        self._removePrincipalFromGroups('restrictedpowerobserver1', [self.developers_creators])
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.isPrivacyViewable')
         self.assertFalse(item.adapted().isPrivacyViewable())
 
