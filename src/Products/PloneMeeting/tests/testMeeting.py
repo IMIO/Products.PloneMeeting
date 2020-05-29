@@ -79,62 +79,62 @@ class testMeeting(PloneMeetingTestCase):
                 expectedInsertOrderIndexes = [[2], [2], [3], [3], [4]]
             self.setMeetingConfig(meetingConfig)
             meeting = self._createMeetingWithItems()
-            self.assertEquals([item.getId() for item in meeting.getItems(ordered=True)],
-                              expected)
+            self.assertEqual([item.getId() for item in meeting.getItems(ordered=True)],
+                             expected)
             # insert order is determined by computing an index value
-            self.assertEquals([item._getInsertOrder(self.meetingConfig)
-                               for item in meeting.getItems(ordered=True)],
-                              expectedInsertOrderIndexes)
+            self.assertEqual([item._getInsertOrder(self.meetingConfig)
+                              for item in meeting.getItems(ordered=True)],
+                             expectedInsertOrderIndexes)
 
     def test_pm_InsertItemWithSubNumbers(self):
         '''Test how it behaves while inserting new items in a meeting
            that contains subnumbers (item with numbe rlike '5.1').'''
         # insert item following proposingGroup (default)
         cfg = self.meetingConfig
-        self.assertEquals(cfg.getInsertingMethodsOnAddItem(),
-                          ({'insertingMethod': 'on_proposing_groups',
-                            'reverse': '0'}, ))
+        self.assertEqual(cfg.getInsertingMethodsOnAddItem(),
+                         ({'insertingMethod': 'on_proposing_groups',
+                           'reverse': '0'}, ))
         self.changeUser('pmManager')
         meeting = self._createMeetingWithItems()
-        self.assertEquals([item.getProposingGroup() for item in meeting.getItems(ordered=True)],
-                          [self.developers_uid, self.developers_uid, self.developers_uid, self.developers_uid,
-                           self.vendors_uid, self.vendors_uid, self.vendors_uid])
-        self.assertEquals([item.getItemNumber() for item in meeting.getItems(ordered=True)],
-                          [100, 200, 300, 400, 500, 600, 700])
+        self.assertEqual([item.getProposingGroup() for item in meeting.getItems(ordered=True)],
+                         [self.developers_uid, self.developers_uid, self.developers_uid, self.developers_uid,
+                          self.vendors_uid, self.vendors_uid, self.vendors_uid])
+        self.assertEqual([item.getItemNumber() for item in meeting.getItems(ordered=True)],
+                         [100, 200, 300, 400, 500, 600, 700])
 
         # change number of second item of developers from 200 to 101, use @@change-item-number
         # it will not change anyhthing as new inserted item is inserted after
         secondItem = meeting.getItems(ordered=True)[1]
         view = secondItem.restrictedTraverse('@@change-item-order')
         view('number', '1.1')
-        self.assertEquals([item.getItemNumber() for item in meeting.getItems(ordered=True)],
-                          [100, 101, 200, 300, 400, 500, 600])
-        self.assertEquals([item.getProposingGroup() for item in meeting.getItems(ordered=True)],
-                          [self.developers_uid, self.developers_uid, self.developers_uid, self.developers_uid,
-                           self.vendors_uid, self.vendors_uid, self.vendors_uid])
+        self.assertEqual([item.getItemNumber() for item in meeting.getItems(ordered=True)],
+                         [100, 101, 200, 300, 400, 500, 600])
+        self.assertEqual([item.getProposingGroup() for item in meeting.getItems(ordered=True)],
+                         [self.developers_uid, self.developers_uid, self.developers_uid, self.developers_uid,
+                          self.vendors_uid, self.vendors_uid, self.vendors_uid])
         # insert a new item
         newItem1 = self.create('MeetingItem')
         self.presentItem(newItem1)
-        self.assertEquals(newItem1.getItemNumber(), 400)
-        self.assertEquals([item.getItemNumber() for item in meeting.getItems(ordered=True)],
-                          [100, 101, 200, 300, 400, 500, 600, 700])
-        self.assertEquals([item.getProposingGroup() for item in meeting.getItems(ordered=True)],
-                          [self.developers_uid, self.developers_uid, self.developers_uid,
-                           self.developers_uid, self.developers_uid,
-                           self.vendors_uid, self.vendors_uid, self.vendors_uid])
+        self.assertEqual(newItem1.getItemNumber(), 400)
+        self.assertEqual([item.getItemNumber() for item in meeting.getItems(ordered=True)],
+                         [100, 101, 200, 300, 400, 500, 600, 700])
+        self.assertEqual([item.getProposingGroup() for item in meeting.getItems(ordered=True)],
+                         [self.developers_uid, self.developers_uid, self.developers_uid,
+                          self.developers_uid, self.developers_uid,
+                          self.vendors_uid, self.vendors_uid, self.vendors_uid])
 
         # change 400 to 301 then insert a new item
         # insert a new item
         view = newItem1.restrictedTraverse('@@change-item-order')
         view('number', '3.1')
-        self.assertEquals([item.getItemNumber() for item in meeting.getItems(ordered=True)],
-                          [100, 101, 200, 300, 301, 400, 500, 600])
+        self.assertEqual([item.getItemNumber() for item in meeting.getItems(ordered=True)],
+                         [100, 101, 200, 300, 301, 400, 500, 600])
         newItem2 = self.create('MeetingItem')
         self.presentItem(newItem2)
         # the item will take very next integer value
-        self.assertEquals(newItem2.getItemNumber(), 400)
-        self.assertEquals([item.getItemNumber() for item in meeting.getItems(ordered=True)],
-                          [100, 101, 200, 300, 301, 400, 500, 600, 700])
+        self.assertEqual(newItem2.getItemNumber(), 400)
+        self.assertEqual([item.getItemNumber() for item in meeting.getItems(ordered=True)],
+                         [100, 101, 200, 300, 301, 400, 500, 600, 700])
 
         # now do new item inserted between suite of subnumbers
         # it should insert itself in this suite
@@ -143,19 +143,19 @@ class testMeeting(PloneMeetingTestCase):
         item400 = meeting.getItemByNumber(400)
         view = item400.restrictedTraverse('@@change-item-order')
         view('number', '3.3')
-        self.assertEquals([item.getItemNumber() for item in meeting.getItems(ordered=True)],
-                          [100, 101, 200, 300, 301, 302, 303, 400, 500])
+        self.assertEqual([item.getItemNumber() for item in meeting.getItems(ordered=True)],
+                         [100, 101, 200, 300, 301, 302, 303, 400, 500])
         # item 302 is 'developers' and 303 is 'vendors'
-        self.assertEquals(meeting.getItemByNumber(302).getProposingGroup(),
-                          self.developers_uid)
-        self.assertEquals(meeting.getItemByNumber(303).getProposingGroup(),
-                          self.vendors_uid)
+        self.assertEqual(meeting.getItemByNumber(302).getProposingGroup(),
+                         self.developers_uid)
+        self.assertEqual(meeting.getItemByNumber(303).getProposingGroup(),
+                         self.vendors_uid)
         newItem3 = self.create('MeetingItem')
         self.presentItem(newItem3)
         # has been inserted before in place of item number 303 that is now 304
-        self.assertEquals(newItem3.getItemNumber(), 303)
-        self.assertEquals([item.getItemNumber() for item in meeting.getItems(ordered=True)],
-                          [100, 101, 200, 300, 301, 302, 303, 304, 400, 500])
+        self.assertEqual(newItem3.getItemNumber(), 303)
+        self.assertEqual([item.getItemNumber() for item in meeting.getItems(ordered=True)],
+                         [100, 101, 200, 300, 301, 302, 303, 304, 400, 500])
 
         # insert an new item between a master and a subnumber
         # prepare items
@@ -190,33 +190,33 @@ class testMeeting(PloneMeetingTestCase):
         item10 = items[9]
         item10.setItemNumber(703)
         item10.reindexObject(idxs=['getItemNumber'])
-        self.assertEquals([item.getProposingGroup() for item in meeting.getItems(ordered=True)],
-                          [self.developers_uid, self.developers_uid, self.developers_uid, self.developers_uid,
-                           self.developers_uid, self.developers_uid, self.developers_uid,
-                           self.vendors_uid, self.vendors_uid, self.vendors_uid])
+        self.assertEqual([item.getProposingGroup() for item in meeting.getItems(ordered=True)],
+                         [self.developers_uid, self.developers_uid, self.developers_uid, self.developers_uid,
+                          self.developers_uid, self.developers_uid, self.developers_uid,
+                          self.vendors_uid, self.vendors_uid, self.vendors_uid])
         # insert a new item, it will be inserted between 700 and 701
         newItem4 = self.create('MeetingItem')
         self.presentItem(newItem4)
-        self.assertEquals([item.getItemNumber() for item in meeting.getItems(ordered=True)],
-                          [100, 200, 300, 400, 500, 600, 700, 701, 702, 703, 704])
-        self.assertEquals(newItem4.getItemNumber(), 701)
+        self.assertEqual([item.getItemNumber() for item in meeting.getItems(ordered=True)],
+                         [100, 200, 300, 400, 500, 600, 700, 701, 702, 703, 704])
+        self.assertEqual(newItem4.getItemNumber(), 701)
 
         # insert an item that will take an integer number and there are subnumbers after
         # insert an item that will place itself on position 300, turn current 300 proposingGroup to 'vendors'
-        self.assertEquals(item3.getItemNumber(), 300)
+        self.assertEqual(item3.getItemNumber(), 300)
         item3.setProposingGroup(self.vendors_uid)
         item3._update_after_edit()
         newItem5 = self.create('MeetingItem')
-        self.assertEquals(newItem5.getProposingGroup(), self.developers_uid)
+        self.assertEqual(newItem5.getProposingGroup(), self.developers_uid)
         self.presentItem(newItem5)
-        self.assertEquals([item.getItemNumber() for item in meeting.getItems(ordered=True)],
-                          [100, 200, 300, 400, 500, 600, 700, 800, 801, 802, 803, 804])
-        self.assertEquals(newItem5.getItemNumber(), 300)
-        self.assertEquals([item.getProposingGroup() for item in meeting.getItems(ordered=True)],
-                          [self.developers_uid, self.developers_uid, self.developers_uid,
-                           self.vendors_uid, self.developers_uid, self.developers_uid,
-                           self.developers_uid, self.developers_uid, self.developers_uid,
-                           self.vendors_uid, self.vendors_uid, self.vendors_uid])
+        self.assertEqual([item.getItemNumber() for item in meeting.getItems(ordered=True)],
+                         [100, 200, 300, 400, 500, 600, 700, 800, 801, 802, 803, 804])
+        self.assertEqual(newItem5.getItemNumber(), 300)
+        self.assertEqual([item.getProposingGroup() for item in meeting.getItems(ordered=True)],
+                         [self.developers_uid, self.developers_uid, self.developers_uid,
+                          self.vendors_uid, self.developers_uid, self.developers_uid,
+                          self.developers_uid, self.developers_uid, self.developers_uid,
+                          self.vendors_uid, self.vendors_uid, self.vendors_uid])
 
     def test_pm_InsertItemOnListTypes(self):
         '''Test inserting an item using the "on_list_type" sorting methods.
@@ -231,22 +231,22 @@ class testMeeting(PloneMeetingTestCase):
         self.changeUser('pmManager')
         meeting = self._createMeetingWithItems()
         orderedItems = meeting.getItems(ordered=True)
-        self.assertEquals([item.getId() for item in orderedItems],
-                          ['recItem1', 'recItem2', 'item-1', 'item-2', 'item-3', 'item-4', 'item-5'])
+        self.assertEqual([item.getId() for item in orderedItems],
+                         ['recItem1', 'recItem2', 'item-1', 'item-2', 'item-3', 'item-4', 'item-5'])
         # all these items are 'normal' items
-        self.assertEquals([item.getListType() for item in orderedItems],
-                          ['normal', 'normal', 'normal', 'normal', 'normal', 'normal', 'normal'])
+        self.assertEqual([item.getListType() for item in orderedItems],
+                         ['normal', 'normal', 'normal', 'normal', 'normal', 'normal', 'normal'])
         # set listType of '03' to 'addendum' then add a normal item
         o3 = orderedItems[3]
         o3.setListType('addendum')
         o3.reindexObject(idxs=['listType', ])
-        self.assertEquals([item.getListType() for item in orderedItems],
-                          ['normal', 'normal', 'normal', 'addendum', 'normal', 'normal', 'normal'])
+        self.assertEqual([item.getListType() for item in orderedItems],
+                         ['normal', 'normal', 'normal', 'addendum', 'normal', 'normal', 'normal'])
         normalItem = self.create('MeetingItem')
         self.presentItem(normalItem)
         # inserted at the end
         orderedItems = meeting.getItems(ordered=True)
-        self.assertEquals(orderedItems[-1], normalItem)
+        self.assertEqual(orderedItems[-1], normalItem)
 
         # insert a late item
         lateItem = self.create('MeetingItem')
@@ -255,7 +255,7 @@ class testMeeting(PloneMeetingTestCase):
         self.presentItem(lateItem)
         # inserted at the end
         orderedItems = meeting.getItems(ordered=True)
-        self.assertEquals(orderedItems[-1], lateItem)
+        self.assertEqual(orderedItems[-1], lateItem)
 
         # but if we 'used_in_inserting_method' for 'addendum', then the new item is inserted before
         cfg.setListTypes(DEFAULT_LIST_TYPES + [{'identifier': 'addendum',
@@ -265,13 +265,13 @@ class testMeeting(PloneMeetingTestCase):
         lateItem2.setPreferredMeeting(meeting.UID())
         self.presentItem(lateItem2)
         orderedItems = meeting.getItems(ordered=True)
-        self.assertEquals(orderedItems[3], lateItem2)
-        self.assertEquals([item.getListType() for item in orderedItems],
-                          ['normal', 'normal', 'normal', 'late', 'addendum',
-                           'normal', 'normal', 'normal', 'normal', 'late'])
-        self.assertEquals([item.getId() for item in orderedItems],
-                          ['recItem1', 'recItem2', 'item-1', 'o4', 'item-2',
-                           'item-3', 'item-4', 'item-5', 'o2', 'o3'])
+        self.assertEqual(orderedItems[3], lateItem2)
+        self.assertEqual([item.getListType() for item in orderedItems],
+                         ['normal', 'normal', 'normal', 'late', 'addendum',
+                          'normal', 'normal', 'normal', 'normal', 'late'])
+        self.assertEqual([item.getId() for item in orderedItems],
+                         ['recItem1', 'recItem2', 'item-1', 'o4', 'item-2',
+                          'item-3', 'item-4', 'item-5', 'o2', 'o3'])
 
         # does not break if none of the listTypes 'used_in_inserting_method'
         listTypes = cfg.getListTypes()
@@ -284,11 +284,11 @@ class testMeeting(PloneMeetingTestCase):
         self.presentItem(normalItem2)
         # inserted at the end
         orderedItems = meeting.getItems(ordered=True)
-        self.assertEquals(orderedItems[-1], normalItem2)
-        self.assertEquals(normalItem2.getListType(), 'normal')
-        self.assertEquals([item.getListType() for item in orderedItems],
-                          ['normal', 'normal', 'normal', 'late', 'addendum',
-                           'normal', 'normal', 'normal', 'normal', 'late', 'normal'])
+        self.assertEqual(orderedItems[-1], normalItem2)
+        self.assertEqual(normalItem2.getListType(), 'normal')
+        self.assertEqual([item.getListType() for item in orderedItems],
+                         ['normal', 'normal', 'normal', 'late', 'addendum',
+                          'normal', 'normal', 'normal', 'normal', 'late', 'normal'])
 
     def test_pm_InsertItemOnListTypeThenProposingGroup(self):
         '''Test inserting an item using the "on_list_type" then "on_proposing_group" sorting methods.'''
@@ -299,14 +299,14 @@ class testMeeting(PloneMeetingTestCase):
         self.changeUser('pmManager')
         meeting = self._createMeetingWithItems()
         orderedItems = meeting.getItems(ordered=True)
-        self.assertEquals([item.getId() for item in orderedItems],
-                          ['recItem1', 'recItem2', 'item-2', 'item-4', 'item-1', 'item-3', 'item-5'])
+        self.assertEqual([item.getId() for item in orderedItems],
+                         ['recItem1', 'recItem2', 'item-2', 'item-4', 'item-1', 'item-3', 'item-5'])
         # all these items are 'normal' items
-        self.assertEquals([item.getListType() for item in orderedItems],
-                          ['normal', 'normal', 'normal', 'normal', 'normal', 'normal', 'normal'])
-        self.assertEquals([item.getProposingGroup() for item in orderedItems],
-                          [self.developers_uid, self.developers_uid, self.developers_uid,
-                           self.developers_uid, self.vendors_uid, self.vendors_uid, self.vendors_uid])
+        self.assertEqual([item.getListType() for item in orderedItems],
+                         ['normal', 'normal', 'normal', 'normal', 'normal', 'normal', 'normal'])
+        self.assertEqual([item.getProposingGroup() for item in orderedItems],
+                         [self.developers_uid, self.developers_uid, self.developers_uid,
+                          self.developers_uid, self.vendors_uid, self.vendors_uid, self.vendors_uid])
         # ok, now insert some late items using different proposingGroups
         lateItem1 = self.create('MeetingItem')
         lateItem1.setProposingGroup(self.vendors_uid)
@@ -327,13 +327,13 @@ class testMeeting(PloneMeetingTestCase):
         self.presentItem(lateItem4)
         # we now have late items all at the end of the meeting
         orderedItems = meeting.getItems(ordered=True)
-        self.assertEquals([item.getListType() for item in orderedItems],
-                          ['normal', 'normal', 'normal', 'normal', 'normal', 'normal', 'normal',
-                           'late', 'late', 'late', 'late'])
-        self.assertEquals([item.getProposingGroup() for item in orderedItems],
-                          [self.developers_uid, self.developers_uid, self.developers_uid, self.developers_uid,
-                           self.vendors_uid, self.vendors_uid, self.vendors_uid, self.developers_uid,
-                           self.developers_uid, self.vendors_uid, self.vendors_uid])
+        self.assertEqual([item.getListType() for item in orderedItems],
+                         ['normal', 'normal', 'normal', 'normal', 'normal', 'normal', 'normal',
+                          'late', 'late', 'late', 'late'])
+        self.assertEqual([item.getProposingGroup() for item in orderedItems],
+                         [self.developers_uid, self.developers_uid, self.developers_uid, self.developers_uid,
+                          self.vendors_uid, self.vendors_uid, self.vendors_uid, self.developers_uid,
+                          self.developers_uid, self.vendors_uid, self.vendors_uid])
 
     def test_pm_InsertItemOnProposingGroupsWithDisabledGroup(self):
         '''Test that inserting an item using the "on_proposing_groups" sorting method
@@ -344,8 +344,8 @@ class testMeeting(PloneMeetingTestCase):
         self.changeUser('pmManager')
         meeting = self._createMeetingWithItems()
         orderedItems = meeting.getItems(ordered=True)
-        self.assertEquals([item.getId() for item in orderedItems],
-                          ['recItem1', 'recItem2', 'item-2', 'item-4', 'item-1', 'item-3', 'item-5'])
+        self.assertEqual([item.getId() for item in orderedItems],
+                         ['recItem1', 'recItem2', 'item-2', 'item-4', 'item-1', 'item-3', 'item-5'])
         # now disable the group used by 3 last items 'o2', 'o4' and 'o6', that is 'vendors'
         self.assertTrue(orderedItems[-1].getProposingGroup() == self.vendors_uid)
         self.assertTrue(orderedItems[-2].getProposingGroup() == self.vendors_uid)
@@ -362,20 +362,20 @@ class testMeeting(PloneMeetingTestCase):
         self.assertEqual(newItem.getId(), 'o2')
         # first of all, it works, and the item is inserted in the meeting,
         # here at the beginning as index is 0 for disabled orgs
-        self.assertEquals([item.getId() for item in meeting.getItems(ordered=True)],
-                          ['o2', 'recItem1', 'recItem2', 'item-2',
-                           'item-4', 'item-1', 'item-3', 'item-5'])
-        self.assertEquals([item.getProposingGroup(True).id for item in meeting.getItems(ordered=True)],
-                          ['vendors', 'developers', 'developers', 'developers', 'developers',
-                           'vendors', 'vendors', 'vendors'])
+        self.assertEqual([item.getId() for item in meeting.getItems(ordered=True)],
+                         ['o2', 'recItem1', 'recItem2', 'item-2',
+                          'item-4', 'item-1', 'item-3', 'item-5'])
+        self.assertEqual([item.getProposingGroup(True).id for item in meeting.getItems(ordered=True)],
+                         ['vendors', 'developers', 'developers', 'developers', 'developers',
+                          'vendors', 'vendors', 'vendors'])
 
     def test_pm_InsertItemCategories(self):
         '''Sort method tested here is "on_categories".'''
         self.changeUser('pmManager')
         self.setMeetingConfig(self.meetingConfig2.getId())
         meeting = self._createMeetingWithItems()
-        self.assertEquals([item.getId() for item in meeting.getItems(ordered=True)],
-                          ['item-2', 'item-3', 'item-4', 'item-5', 'item-1'])
+        self.assertEqual([item.getId() for item in meeting.getItems(ordered=True)],
+                         ['item-2', 'item-3', 'item-4', 'item-5', 'item-1'])
 
     def test_pm_InsertItemOnCategoriesWithDisabledCategory(self):
         '''Test that inserting an item using the "on_categories" sorting method
@@ -384,8 +384,8 @@ class testMeeting(PloneMeetingTestCase):
         self.changeUser('pmManager')
         self.setMeetingConfig(self.meetingConfig2.getId())
         meeting = self._createMeetingWithItems()
-        self.assertEquals([item.getId() for item in meeting.getItems(ordered=True)],
-                          ['item-2', 'item-3', 'item-4', 'item-5', 'item-1'])
+        self.assertEqual([item.getId() for item in meeting.getItems(ordered=True)],
+                         ['item-2', 'item-3', 'item-4', 'item-5', 'item-1'])
         # now disable the category used for items 'o3' and 'o4', that is 'development'
         # and insert a new item
         self.changeUser('admin')
@@ -399,8 +399,8 @@ class testMeeting(PloneMeetingTestCase):
         newItem.setDecision('<p>Default decision</p>')
         self.presentItem(newItem)
         # first of all, it works, and the item is inserted at the right position
-        self.assertEquals([item.getId() for item in meeting.getItems(ordered=True)],
-                          ['item-2', 'item-3', 'item-4', 'item-5', newItem.getId(), 'item-1'])
+        self.assertEqual([item.getId() for item in meeting.getItems(ordered=True)],
+                         ['item-2', 'item-3', 'item-4', 'item-5', newItem.getId(), 'item-1'])
         # now test while inserting items using a disabled category
         # remove newItem, change his category for a disabled one and present it again
         self.backToState(newItem, self._stateMappingFor('validated'))
@@ -409,8 +409,8 @@ class testMeeting(PloneMeetingTestCase):
         newItem._update_after_edit()
         self.assertEqual(newItem.getCategory(), 'development')
         self.presentItem(newItem)
-        self.assertEquals([item.getId() for item in meeting.getItems(ordered=True)],
-                          ['item-2', 'item-3', newItem.getId(), 'item-4', 'item-5', 'item-1'])
+        self.assertEqual([item.getId() for item in meeting.getItems(ordered=True)],
+                         ['item-2', 'item-3', newItem.getId(), 'item-4', 'item-5', 'item-1'])
 
     def test_pm_InsertItemAllGroups(self):
         '''Sort method tested here is "on_all_groups".
@@ -422,16 +422,16 @@ class testMeeting(PloneMeetingTestCase):
         meeting = self._createMeetingWithItems()
         orderedItems = meeting.getItems(ordered=True)
         # 'o2' as got an associated group 'developers' even if main proposing group is 'vendors'
-        self.assertEquals([item.getId() for item in orderedItems],
-                          ['recItem1', 'recItem2', 'item-1', 'item-2', 'item-4', 'item-3', 'item-5'])
+        self.assertEqual([item.getId() for item in orderedItems],
+                         ['recItem1', 'recItem2', 'item-1', 'item-2', 'item-4', 'item-3', 'item-5'])
         # so 'o2' is inserted in 'developers' items even if it has the 'vendors' proposing group
-        self.assertEquals([item.getProposingGroup() for item in orderedItems],
-                          [self.developers_uid, self.developers_uid, self.vendors_uid,
-                           self.developers_uid, self.developers_uid, self.vendors_uid,
-                           self.vendors_uid])
+        self.assertEqual([item.getProposingGroup() for item in orderedItems],
+                         [self.developers_uid, self.developers_uid, self.vendors_uid,
+                          self.developers_uid, self.developers_uid, self.vendors_uid,
+                          self.vendors_uid])
         # because 'o2' has 'developers' in his associatedGroups
-        self.assertEquals([item.getAssociatedGroups() for item in orderedItems],
-                          [(), (), (self.developers_uid,), (), (), (), ()])
+        self.assertEqual([item.getAssociatedGroups() for item in orderedItems],
+                         [(), (), (self.developers_uid,), (), (), (), ()])
 
     def test_pm_InsertItemOnAllGroupsWithDisabledGroup(self):
         '''Sort method tested here is "on_all_groups" but with an associated group and
@@ -477,15 +477,15 @@ class testMeeting(PloneMeetingTestCase):
                                            'reverse': '0'}, ))
         # when groupsInCharge are not defined for some proposingGroups, items are inserted at the beginning
         meeting = self._createMeetingWithItems()
-        self.assertEquals([(item.getProposingGroup(), item.getGroupsInCharge())
-                           for item in meeting.getItems(ordered=True)],
-                          [(self.developers_uid, []),
-                           (self.developers_uid, []),
-                           (self.vendors_uid, []),
-                           (self.developers_uid, []),
-                           (self.vendors_uid, []),
-                           (self.developers_uid, []),
-                           (self.vendors_uid, [])])
+        self.assertEqual([(item.getProposingGroup(), item.getGroupsInCharge())
+                          for item in meeting.getItems(ordered=True)],
+                         [(self.developers_uid, []),
+                          (self.developers_uid, []),
+                          (self.vendors_uid, []),
+                          (self.developers_uid, []),
+                          (self.vendors_uid, []),
+                          (self.developers_uid, []),
+                          (self.vendors_uid, [])])
 
         # configure groups to define groups in charge
         gic1 = self.create(
@@ -512,15 +512,15 @@ class testMeeting(PloneMeetingTestCase):
 
         # no reverse
         meeting = self._createMeetingWithItems()
-        self.assertEquals([(item.getProposingGroup(), item.getGroupsInCharge())
-                           for item in meeting.getItems(ordered=True)],
-                          [(self.vendors_uid, [gic1_uid]),
-                           (self.vendors_uid, [gic1_uid]),
-                           (self.vendors_uid, [gic1_uid]),
-                           (self.developers_uid, [gic2_uid]),
-                           (self.developers_uid, [gic2_uid]),
-                           (self.developers_uid, [gic2_uid]),
-                           (self.developers_uid, [gic2_uid])])
+        self.assertEqual([(item.getProposingGroup(), item.getGroupsInCharge())
+                          for item in meeting.getItems(ordered=True)],
+                         [(self.vendors_uid, [gic1_uid]),
+                          (self.vendors_uid, [gic1_uid]),
+                          (self.vendors_uid, [gic1_uid]),
+                          (self.developers_uid, [gic2_uid]),
+                          (self.developers_uid, [gic2_uid]),
+                          (self.developers_uid, [gic2_uid]),
+                          (self.developers_uid, [gic2_uid])])
         self.vendors.groups_in_charge = (gic2_uid,)
         self.developers.groups_in_charge = (gic1_uid,)
         # make sure recurring items are correctly configured
@@ -528,31 +528,31 @@ class testMeeting(PloneMeetingTestCase):
             recurring_item.setProposingGroupWithGroupInCharge(
                 '{0}__groupincharge__{1}'.format(self.developers_uid, gic1_uid))
         meeting2 = self._createMeetingWithItems()
-        self.assertEquals([(item.getProposingGroup(),
-                           item.getGroupsInCharge())
-                           for item in meeting2.getItems(ordered=True)],
-                          [(self.developers_uid, [gic1_uid]),
-                           (self.developers_uid, [gic1_uid]),
-                           (self.developers_uid, [gic1_uid]),
-                           (self.developers_uid, [gic1_uid]),
-                           (self.vendors_uid, [gic2_uid]),
-                           (self.vendors_uid, [gic2_uid]),
-                           (self.vendors_uid, [gic2_uid])])
+        self.assertEqual([(item.getProposingGroup(),
+                          item.getGroupsInCharge())
+                          for item in meeting2.getItems(ordered=True)],
+                         [(self.developers_uid, [gic1_uid]),
+                          (self.developers_uid, [gic1_uid]),
+                          (self.developers_uid, [gic1_uid]),
+                          (self.developers_uid, [gic1_uid]),
+                          (self.vendors_uid, [gic2_uid]),
+                          (self.vendors_uid, [gic2_uid]),
+                          (self.vendors_uid, [gic2_uid])])
 
         # reverse
         cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_groups_in_charge',
                                            'reverse': '1'}, ))
         meeting3 = self._createMeetingWithItems()
-        self.assertEquals([(item.getProposingGroup(),
-                           item.getGroupsInCharge())
-                           for item in meeting3.getItems(ordered=True)],
-                          [(self.vendors_uid, [gic2_uid]),
-                           (self.vendors_uid, [gic2_uid]),
-                           (self.vendors_uid, [gic2_uid]),
-                           (self.developers_uid, [gic1_uid]),
-                           (self.developers_uid, [gic1_uid]),
-                           (self.developers_uid, [gic1_uid]),
-                           (self.developers_uid, [gic1_uid])])
+        self.assertEqual([(item.getProposingGroup(),
+                          item.getGroupsInCharge())
+                          for item in meeting3.getItems(ordered=True)],
+                         [(self.vendors_uid, [gic2_uid]),
+                          (self.vendors_uid, [gic2_uid]),
+                          (self.vendors_uid, [gic2_uid]),
+                          (self.developers_uid, [gic1_uid]),
+                          (self.developers_uid, [gic1_uid]),
+                          (self.developers_uid, [gic1_uid]),
+                          (self.developers_uid, [gic1_uid])])
 
         # it follows groupsInCharge order in the configuration, change it and test again
         # invert position of gic1 and gic2
@@ -564,32 +564,32 @@ class testMeeting(PloneMeetingTestCase):
         cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_groups_in_charge',
                                            'reverse': '0'}, ))
         meeting4 = self._createMeetingWithItems()
-        self.assertEquals([(item.getProposingGroup(),
-                           item.getGroupsInCharge())
-                           for item in meeting4.getItems(ordered=True)],
-                          [(self.vendors_uid, [gic2_uid]),
-                           (self.vendors_uid, [gic2_uid]),
-                           (self.vendors_uid, [gic2_uid]),
-                           (self.developers_uid, [gic1_uid]),
-                           (self.developers_uid, [gic1_uid]),
-                           (self.developers_uid, [gic1_uid]),
-                           (self.developers_uid, [gic1_uid])])
+        self.assertEqual([(item.getProposingGroup(),
+                          item.getGroupsInCharge())
+                          for item in meeting4.getItems(ordered=True)],
+                         [(self.vendors_uid, [gic2_uid]),
+                          (self.vendors_uid, [gic2_uid]),
+                          (self.vendors_uid, [gic2_uid]),
+                          (self.developers_uid, [gic1_uid]),
+                          (self.developers_uid, [gic1_uid]),
+                          (self.developers_uid, [gic1_uid]),
+                          (self.developers_uid, [gic1_uid])])
 
         # if a group is not selected, it does not break but the index is 0
         # so it is inserted at the beginning
         self._select_organization(gic1_uid, remove=True)
         meeting5 = self._createMeetingWithItems()
-        self.assertEquals([(item.getProposingGroup(),
-                           item.getGroupsInCharge(),
-                           item.getItemNumber())
-                           for item in meeting5.getItems(ordered=True)],
-                          [(self.developers_uid, [gic1_uid], 100),
-                           (self.developers_uid, [gic1_uid], 200),
-                           (self.developers_uid, [gic1_uid], 300),
-                           (self.developers_uid, [gic1_uid], 400),
-                           (self.vendors_uid, [gic2_uid], 500),
-                           (self.vendors_uid, [gic2_uid], 600),
-                           (self.vendors_uid, [gic2_uid], 700)])
+        self.assertEqual([(item.getProposingGroup(),
+                          item.getGroupsInCharge(),
+                          item.getItemNumber())
+                          for item in meeting5.getItems(ordered=True)],
+                         [(self.developers_uid, [gic1_uid], 100),
+                          (self.developers_uid, [gic1_uid], 200),
+                          (self.developers_uid, [gic1_uid], 300),
+                          (self.developers_uid, [gic1_uid], 400),
+                          (self.vendors_uid, [gic2_uid], 500),
+                          (self.vendors_uid, [gic2_uid], 600),
+                          (self.vendors_uid, [gic2_uid], 700)])
 
     def test_pm_InsertItemOnSeveralGroupsInCharge(self):
         '''Here we test when several groupsInCharge selected, so when the MeetingItem.groupsInCharge
@@ -795,19 +795,19 @@ class testMeeting(PloneMeetingTestCase):
         # on_privacy_public
         cfg.setSelectablePrivacies(('public', 'secret'))
         meeting = self._createMeetingWithItems()
-        self.assertEquals([item.getId() for item in meeting.getItems(ordered=True)],
-                          ['recItem1', 'recItem2', 'item-2', 'item-1', 'item-5', 'item-4', 'item-3'])
-        self.assertEquals([item.getPrivacy() for item in meeting.getItems(ordered=True)],
-                          ['public', 'public', 'public', 'public', 'public', 'secret', 'secret'])
+        self.assertEqual([item.getId() for item in meeting.getItems(ordered=True)],
+                         ['recItem1', 'recItem2', 'item-2', 'item-1', 'item-5', 'item-4', 'item-3'])
+        self.assertEqual([item.getPrivacy() for item in meeting.getItems(ordered=True)],
+                         ['public', 'public', 'public', 'public', 'public', 'secret', 'secret'])
 
         # on_privacy_secret
         cfg.setSelectablePrivacies(('secret', 'public'))
         meeting = self._createMeetingWithItems()
-        self.assertEquals([item.getId() for item in meeting.getItems(ordered=True)],
-                          ['item-4-1', 'item-3-1', 'copy_of_recItem1', 'copy_of_recItem2',
-                           'item-2-1', 'item-1-1', 'item-5-1'])
-        self.assertEquals([item.getPrivacy() for item in meeting.getItems(ordered=True)],
-                          ['secret', 'secret', 'public', 'public', 'public', 'public', 'public'])
+        self.assertEqual([item.getId() for item in meeting.getItems(ordered=True)],
+                         ['item-4-1', 'item-3-1', 'copy_of_recItem1', 'copy_of_recItem2',
+                          'item-2-1', 'item-1-1', 'item-5-1'])
+        self.assertEqual([item.getPrivacy() for item in meeting.getItems(ordered=True)],
+                         ['secret', 'secret', 'public', 'public', 'public', 'public', 'public'])
 
     def test_pm_InsertItemOnPrivacyUsingHeading(self):
         '''Sort method tested here is "on_privacy" when values '_heading' are used.'''
@@ -824,8 +824,9 @@ class testMeeting(PloneMeetingTestCase):
                                           privacy='secret_heading',
                                           category='research')
         self.presentItem(secret_heading_item)
-        self.assertEquals([item.getPrivacy() for item in meeting.getItems(ordered=True)],
-                          ['secret_heading', 'public', 'public', 'public', 'public', 'public', 'secret', 'secret'])
+        self.assertEqual([item.getPrivacy() for item in meeting.getItems(ordered=True)],
+                         ['secret_heading', 'public', 'public', 'public',
+                          'public', 'public', 'secret', 'secret'])
 
         # on_privacy with public_heading before
         cfg.setSelectablePrivacies(('public_heading', 'secret', 'public'))
@@ -835,8 +836,9 @@ class testMeeting(PloneMeetingTestCase):
                                           privacy='public_heading',
                                           category='research')
         self.presentItem(public_heading_item)
-        self.assertEquals([item.getPrivacy() for item in meeting2.getItems(ordered=True)],
-                          ['public_heading', 'secret', 'secret', 'public', 'public', 'public', 'public', 'public'])
+        self.assertEqual([item.getPrivacy() for item in meeting2.getItems(ordered=True)],
+                         ['public_heading', 'secret', 'secret', 'public',
+                          'public', 'public', 'public', 'public'])
 
     def test_pm_InsertItemOnPollType(self):
         '''Sort method tested here is "on_poll_type" not reverse and reverse.'''
@@ -847,14 +849,16 @@ class testMeeting(PloneMeetingTestCase):
         cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_poll_type',
                                            'reverse': '0'}, ))
         meeting = self._createMeetingWithItems()
-        self.assertEquals([item.getPollType() for item in meeting.getItems(ordered=True)],
-                          ['freehand', 'freehand', 'freehand', 'freehand', 'no_vote', 'secret', 'secret_separated'])
+        self.assertEqual([item.getPollType() for item in meeting.getItems(ordered=True)],
+                         ['freehand', 'freehand', 'freehand', 'freehand',
+                          'no_vote', 'secret', 'secret_separated'])
         # on_polltype reverse
         cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_poll_type',
                                            'reverse': '1'}, ))
         meeting = self._createMeetingWithItems()
-        self.assertEquals([item.getPollType() for item in meeting.getItems(ordered=True)],
-                          ['secret_separated', 'secret', 'no_vote', 'freehand', 'freehand', 'freehand', 'freehand'])
+        self.assertEqual([item.getPollType() for item in meeting.getItems(ordered=True)],
+                         ['secret_separated', 'secret', 'no_vote',
+                          'freehand', 'freehand', 'freehand', 'freehand'])
 
     def test_pm_InsertItemOnPrivacyThenProposingGroupsWithDisabledGroup(self):
         '''Sort method tested here is "on_privacy_then_proposing_groups" but
@@ -900,24 +904,24 @@ class testMeeting(PloneMeetingTestCase):
                                                          {'insertingMethod': 'on_categories',
                                                           'reverse': '0'},))
         meeting = self._createMeetingWithItems()
-        self.assertEquals([(item.getPrivacy(), item.getCategory()) for item in meeting.getItems(ordered=True)],
-                          [('public', 'development'),
-                           ('public', 'events'),
-                           ('public', 'research'),
-                           ('secret', 'development'),
-                           ('secret', 'events')])
+        self.assertEqual([(item.getPrivacy(), item.getCategory()) for item in meeting.getItems(ordered=True)],
+                         [('public', 'development'),
+                          ('public', 'events'),
+                          ('public', 'research'),
+                          ('secret', 'development'),
+                          ('secret', 'events')])
         # on_privacy_secret
         self.meetingConfig.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_privacy',
                                                           'reverse': '1'},
                                                          {'insertingMethod': 'on_categories',
                                                           'reverse': '0'},))
         meeting = self._createMeetingWithItems()
-        self.assertEquals([(item.getPrivacy(), item.getCategory()) for item in meeting.getItems(ordered=True)],
-                          [('secret', 'development'),
-                           ('secret', 'events'),
-                           ('public', 'development'),
-                           ('public', 'events'),
-                           ('public', 'research')])
+        self.assertEqual([(item.getPrivacy(), item.getCategory()) for item in meeting.getItems(ordered=True)],
+                         [('secret', 'development'),
+                          ('secret', 'events'),
+                          ('public', 'development'),
+                          ('public', 'events'),
+                          ('public', 'research')])
         # test insertion of an item with large difference between to levels
         # of order, here 'privacy' can take 2 different values and category
         # can take 6 values
@@ -927,13 +931,13 @@ class testMeeting(PloneMeetingTestCase):
         # use 'projects' category
         newItem.setCategory('projects')
         self.presentItem(newItem)
-        self.assertEquals([(item.getPrivacy(), item.getCategory()) for item in meeting.getItems(ordered=True)],
-                          [('secret', 'development'),
-                           ('secret', 'events'),
-                           ('secret', 'projects'),
-                           ('public', 'development'),
-                           ('public', 'events'),
-                           ('public', 'research')])
+        self.assertEqual([(item.getPrivacy(), item.getCategory()) for item in meeting.getItems(ordered=True)],
+                         [('secret', 'development'),
+                          ('secret', 'events'),
+                          ('secret', 'projects'),
+                          ('public', 'development'),
+                          ('public', 'events'),
+                          ('public', 'research')])
 
     def test_pm_InsertItemOnPrivacyThenCategoriesWithDisabledCategory(self):
         '''Sort method tested here is "on_privacy_then_categories" but
@@ -946,12 +950,12 @@ class testMeeting(PloneMeetingTestCase):
                                                          {'insertingMethod': 'on_categories',
                                                           'reverse': '0'},))
         meeting = self._createMeetingWithItems()
-        self.assertEquals([(item.getPrivacy(), item.getCategory()) for item in meeting.getItems(ordered=True)],
-                          [('public', 'development'),
-                           ('public', 'events'),
-                           ('public', 'research'),
-                           ('secret', 'development'),
-                           ('secret', 'events')])
+        self.assertEqual([(item.getPrivacy(), item.getCategory()) for item in meeting.getItems(ordered=True)],
+                         [('public', 'development'),
+                          ('public', 'events'),
+                          ('public', 'research'),
+                          ('secret', 'development'),
+                          ('secret', 'events')])
         # we can also insert an item using a disabled category
         self.changeUser('admin')
         self.do(self.meetingConfig.categories.development, 'deactivate')
@@ -963,14 +967,14 @@ class testMeeting(PloneMeetingTestCase):
         newItem.setPrivacy('secret')
         self.presentItem(newItem)
         # it will be inserted at the end of 'secret/development' items
-        self.assertEquals([(item.getId(), item.getPrivacy(), item.getCategory())
-                           for item in meeting.getItems(ordered=True)],
-                          [('item-2', 'public', 'development'),
-                           ('item-5', 'public', 'events'),
-                           ('item-1', 'public', 'research'),
-                           ('item-3', 'secret', 'development'),
-                           (newItem.getId(), 'secret', 'development'),
-                           ('item-4', 'secret', 'events')])
+        self.assertEqual([(item.getId(), item.getPrivacy(), item.getCategory())
+                          for item in meeting.getItems(ordered=True)],
+                         [('item-2', 'public', 'development'),
+                          ('item-5', 'public', 'events'),
+                          ('item-1', 'public', 'research'),
+                          ('item-3', 'secret', 'development'),
+                          (newItem.getId(), 'secret', 'development'),
+                          ('item-4', 'secret', 'events')])
 
     def test_pm_InsertItemByCategoriesThenProposingGroups(self):
         '''Sort method tested here is "on_categories" then "on_proposing_groups".'''
@@ -1011,24 +1015,25 @@ class testMeeting(PloneMeetingTestCase):
         for itemData in data:
             item = self.create('MeetingItem', **itemData)
             self.presentItem(item)
-        self.assertEquals([anItem.getId() for anItem in meeting.getItems(ordered=True)],
-                          ['o7', 'o6', 'o3', 'o10', 'o9', 'o5', 'o8', 'o14', 'o4', 'o13', 'o2', 'o11', 'o12'])
+        self.assertEqual([anItem.getId() for anItem in meeting.getItems(ordered=True)],
+                         ['o7', 'o6', 'o3', 'o10', 'o9', 'o5', 'o8',
+                          'o14', 'o4', 'o13', 'o2', 'o11', 'o12'])
         # items are correctly sorted first by categories, then within a category, by proposing group
-        self.assertEquals([(anItem.getCategory(), anItem.getProposingGroup()) for
-                           anItem in meeting.getItems(ordered=True)],
-                          [('deployment', self.vendors_uid),
-                           ('development', self.developers_uid),
-                           ('development', self.vendors_uid),
-                           ('events', self.developers_uid),
-                           ('events', self.vendors_uid),
-                           ('projects', self.developers_uid),
-                           ('projects', self.developers_uid),
-                           ('projects', self.developers_uid),
-                           ('projects', self.vendors_uid),
-                           ('projects', self.vendors_uid),
-                           ('marketing', self.developers_uid),
-                           ('marketing', self.vendors_uid),
-                           ('marketing', self.vendors_uid)])
+        self.assertEqual([(anItem.getCategory(), anItem.getProposingGroup()) for
+                          anItem in meeting.getItems(ordered=True)],
+                         [('deployment', self.vendors_uid),
+                          ('development', self.developers_uid),
+                          ('development', self.vendors_uid),
+                          ('events', self.developers_uid),
+                          ('events', self.vendors_uid),
+                          ('projects', self.developers_uid),
+                          ('projects', self.developers_uid),
+                          ('projects', self.developers_uid),
+                          ('projects', self.vendors_uid),
+                          ('projects', self.vendors_uid),
+                          ('marketing', self.developers_uid),
+                          ('marketing', self.vendors_uid),
+                          ('marketing', self.vendors_uid)])
 
     def test_pm_InsertItemOnToDiscuss(self):
         '''Sort method tested here is "on_to_discuss".'''
@@ -1061,11 +1066,13 @@ class testMeeting(PloneMeetingTestCase):
             item = self.create('MeetingItem', **itemData)
             self.presentItem(item)
 
-        self.assertEquals([anItem.getId() for anItem in meeting.getItems(ordered=True)],
-                          ['recItem1', 'recItem2', 'o2', 'o3', 'o6', 'o8', 'o9', 'o4', 'o5', 'o7', 'o10'])
+        self.assertEqual([anItem.getId() for anItem in meeting.getItems(ordered=True)],
+                         ['recItem1', 'recItem2', 'o2', 'o3', 'o6',
+                          'o8', 'o9', 'o4', 'o5', 'o7', 'o10'])
         # items are correctly sorted first toDiscuss then not toDiscuss
-        self.assertEquals([anItem.getToDiscuss() for anItem in meeting.getItems(ordered=True)],
-                          [True, True, True, True, True, True, True, False, False, False, False])
+        self.assertEqual([anItem.getToDiscuss() for anItem in meeting.getItems(ordered=True)],
+                         [True, True, True, True, True, True,
+                          True, False, False, False, False])
 
         # now if 'reverse' is activated
         cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_to_discuss',
@@ -1078,8 +1085,9 @@ class testMeeting(PloneMeetingTestCase):
         for itemToPresent in itemsToPresent:
             self.presentItem(itemToPresent)
         # items are correctly sorted first not toDiscuss then toDiscuss
-        self.assertEquals([item.getToDiscuss() for item in meeting.getItems(ordered=True)],
-                          [False, False, False, False, True, True, True, True, True, True, True])
+        self.assertEqual([item.getToDiscuss() for item in meeting.getItems(ordered=True)],
+                         [False, False, False, False, True, True,
+                          True, True, True, True, True])
 
     def test_pm_InsertItemInToDiscussThenProposingGroup(self):
         '''Test when inserting first 'on_to_discuss' then 'on_proposing_group'.'''
@@ -1114,19 +1122,19 @@ class testMeeting(PloneMeetingTestCase):
             self.presentItem(item)
 
         # items are correctly sorted first toDiscuss/proposingGroup then not toDiscuss/proposingGroup
-        self.assertEquals([(anItem.getToDiscuss(), anItem.getProposingGroup()) for
-                           anItem in meeting.getItems(ordered=True)],
-                          [(True, self.developers_uid),
-                           (True, self.developers_uid),
-                           (True, self.developers_uid),
-                           (True, self.developers_uid),
-                           (True, self.developers_uid),
-                           (True, self.vendors_uid),
-                           (True, self.vendors_uid),
-                           (False, self.developers_uid),
-                           (False, self.developers_uid),
-                           (False, self.vendors_uid),
-                           (False, self.vendors_uid)])
+        self.assertEqual([(anItem.getToDiscuss(), anItem.getProposingGroup()) for
+                          anItem in meeting.getItems(ordered=True)],
+                         [(True, self.developers_uid),
+                          (True, self.developers_uid),
+                          (True, self.developers_uid),
+                          (True, self.developers_uid),
+                          (True, self.developers_uid),
+                          (True, self.vendors_uid),
+                          (True, self.vendors_uid),
+                          (False, self.developers_uid),
+                          (False, self.developers_uid),
+                          (False, self.vendors_uid),
+                          (False, self.vendors_uid)])
 
     def test_pm_InsertItemOnToOtherMCToCloneTo(self):
         '''Sort method tested here is "on_other_mc_to_clone_to".'''
@@ -1155,10 +1163,10 @@ class testMeeting(PloneMeetingTestCase):
             item = self.create('MeetingItem', **itemData)
             self.presentItem(item)
         # items are correctly sorted first items to send to cfg2 then items not to send
-        self.assertEquals([anItem.getOtherMeetingConfigsClonableTo() for
-                           anItem in meeting.getItems(ordered=True)],
-                          [(cfg2Id, ), (cfg2Id, ), (cfg2Id, ), (cfg2Id, ),
-                           (cfg2Id, ), (cfg2Id, ), (), (), (), (), ()])
+        self.assertEqual([anItem.getOtherMeetingConfigsClonableTo() for
+                          anItem in meeting.getItems(ordered=True)],
+                         [(cfg2Id, ), (cfg2Id, ), (cfg2Id, ), (cfg2Id, ),
+                          (cfg2Id, ), (cfg2Id, ), (), (), (), (), ()])
 
     def test_pm_InsertItemOnCategoriesThenOnToOtherMCToCloneTo(self):
         '''Sort method tested here is "on_categories" then "on_other_mc_to_clone_to".'''
@@ -1434,8 +1442,7 @@ class testMeeting(PloneMeetingTestCase):
         self.assertFalse(item2.isLate())
 
         # items were inserted in right order
-        self.assertEquals(meeting.getItems(ordered=True),
-                          [item2, item1])
+        self.assertEqual(meeting.getItems(ordered=True), [item2, item1])
 
     def test_pm_InsertItemOnItemTitle(self):
         """Test when inserting item in a meeting using 'on_item_title' insertion method."""
@@ -1564,9 +1571,9 @@ class testMeeting(PloneMeetingTestCase):
            depending on proposing group."""
         self.changeUser('pmManager')
         cfg = self.meetingConfig
-        self.assertEquals(cfg.getInsertingMethodsOnAddItem(),
-                          ({'insertingMethod': 'on_proposing_groups',
-                            'reverse': '0'}, ))
+        self.assertEqual(cfg.getInsertingMethodsOnAddItem(),
+                         ({'insertingMethod': 'on_proposing_groups',
+                           'reverse': '0'}, ))
         meeting = self.create('Meeting', date=DateTime('2019/01/08'))
         item = self.create('MeetingItem')
         self.presentItem(item)
@@ -1701,13 +1708,13 @@ class testMeeting(PloneMeetingTestCase):
         before_late_states = meeting.getStatesBefore(late_state)
         self.assertTrue(meeting.queryState() in before_late_states)
         self.presentItem(normalItem)
-        self.assertEquals(normalItem.getListType(), 'normal')
+        self.assertEqual(normalItem.getListType(), 'normal')
 
         # freeze the meeting and insert the late item
         self.freezeMeeting(meeting)
         self.assertFalse(meeting.queryState() in before_late_states)
         self.presentItem(lateItem)
-        self.assertEquals(lateItem.getListType(), 'late')
+        self.assertEqual(lateItem.getListType(), 'late')
 
         # remove the late item, put the meeting back to a non frozen state
         # and insert it again, it will be inserted as a normal item
@@ -1715,41 +1722,41 @@ class testMeeting(PloneMeetingTestCase):
         self.backToState(lateItem, 'validated')
         self.assertTrue(meeting.queryState() in before_late_states)
         self.presentItem(lateItem)
-        self.assertEquals(lateItem.getListType(), 'normal')
+        self.assertEqual(lateItem.getListType(), 'normal')
 
     def test_pm_RemoveOrDeleteLinkedItem(self):
         '''Test that removing or deleting a linked item works.'''
         self.changeUser('pmManager')
         meeting = self._createMeetingWithItems()
-        self.assertEquals([item.getId() for item in meeting.getItems(ordered=True)],
-                          ['recItem1', 'recItem2', 'item-2', 'item-4', 'item-1', 'item-3', 'item-5'])
-        self.assertEquals([item.getItemNumber() for item in meeting.getItems(ordered=True)],
-                          [100, 200, 300, 400, 500, 600, 700])
+        self.assertEqual([item.getId() for item in meeting.getItems(ordered=True)],
+                         ['recItem1', 'recItem2', 'item-2', 'item-4', 'item-1', 'item-3', 'item-5'])
+        self.assertEqual([item.getItemNumber() for item in meeting.getItems(ordered=True)],
+                         [100, 200, 300, 400, 500, 600, 700])
 
         # remove an item
         item4 = getattr(meeting, 'item-4')
         meeting.removeItem(item4)
-        self.assertEquals([item.getId() for item in meeting.getItems(ordered=True)],
-                          ['recItem1', 'recItem2', 'item-2', 'item-1', 'item-3', 'item-5'])
-        self.assertEquals([item.getItemNumber() for item in meeting.getItems(ordered=True)],
-                          [100, 200, 300, 400, 500, 600])
+        self.assertEqual([item.getId() for item in meeting.getItems(ordered=True)],
+                         ['recItem1', 'recItem2', 'item-2', 'item-1', 'item-3', 'item-5'])
+        self.assertEqual([item.getItemNumber() for item in meeting.getItems(ordered=True)],
+                         [100, 200, 300, 400, 500, 600])
 
         # delete a linked item
         item3 = getattr(meeting, 'item-3')
         # do this as 'Manager' in case 'MeetingManager' can not delete the item in used item workflow
         self.deleteAsManager(item3.UID())
-        self.assertEquals([item.getId() for item in meeting.getItems(ordered=True)],
-                          ['recItem1', 'recItem2', 'item-2', 'item-1', 'item-5'])
-        self.assertEquals([item.getItemNumber() for item in meeting.getItems(ordered=True)],
-                          [100, 200, 300, 400, 500])
+        self.assertEqual([item.getId() for item in meeting.getItems(ordered=True)],
+                         ['recItem1', 'recItem2', 'item-2', 'item-1', 'item-5'])
+        self.assertEqual([item.getItemNumber() for item in meeting.getItems(ordered=True)],
+                         [100, 200, 300, 400, 500])
 
     def test_pm_RemoveItemWithSubnumbers(self):
         '''Test removing items using subnumbers.'''
         self.changeUser('pmManager')
         meeting = self._createMeetingWithItems()
         item1, item2, item3, item4, item5, item6, item7 = meeting.getItems(ordered=True)
-        self.assertEquals([item.getItemNumber() for item in meeting.getItems(ordered=True)],
-                          [100, 200, 300, 400, 500, 600, 700])
+        self.assertEqual([item.getItemNumber() for item in meeting.getItems(ordered=True)],
+                         [100, 200, 300, 400, 500, 600, 700])
         # prepare items
         item3.setItemNumber(201)
         item3.reindexObject(idxs=['getItemNumber'])
@@ -1761,31 +1768,31 @@ class testMeeting(PloneMeetingTestCase):
         item6.reindexObject(idxs=['getItemNumber'])
         item7.setItemNumber(300)
         item7.reindexObject(idxs=['getItemNumber'])
-        self.assertEquals([item.getItemNumber() for item in meeting.getItems(ordered=True)],
-                          [100, 200, 201, 202, 203, 204, 300])
+        self.assertEqual([item.getItemNumber() for item in meeting.getItems(ordered=True)],
+                         [100, 200, 201, 202, 203, 204, 300])
 
         # remove item 203
         self.do(item5, 'backToValidated')
-        self.assertEquals([item.getItemNumber() for item in meeting.getItems(ordered=True)],
-                          [100, 200, 201, 202, 203, 300])
+        self.assertEqual([item.getItemNumber() for item in meeting.getItems(ordered=True)],
+                         [100, 200, 201, 202, 203, 300])
 
         # remove 203 (again :-p)
-        self.assertEquals(item6.getItemNumber(), 203)
+        self.assertEqual(item6.getItemNumber(), 203)
         self.do(item6, 'backToValidated')
-        self.assertEquals([item.getItemNumber() for item in meeting.getItems(ordered=True)],
-                          [100, 200, 201, 202, 300])
+        self.assertEqual([item.getItemNumber() for item in meeting.getItems(ordered=True)],
+                         [100, 200, 201, 202, 300])
 
         # remove 200
-        self.assertEquals(item2.getItemNumber(), 200)
+        self.assertEqual(item2.getItemNumber(), 200)
         self.do(item2, 'backToValidated')
-        self.assertEquals([item.getItemNumber() for item in meeting.getItems(ordered=True)],
-                          [100, 200, 201, 300])
+        self.assertEqual([item.getItemNumber() for item in meeting.getItems(ordered=True)],
+                         [100, 200, 201, 300])
 
         # remove 201
-        self.assertEquals(item4.getItemNumber(), 201)
+        self.assertEqual(item4.getItemNumber(), 201)
         self.do(item4, 'backToValidated')
-        self.assertEquals([item.getItemNumber() for item in meeting.getItems(ordered=True)],
-                          [100, 200, 300])
+        self.assertEqual([item.getItemNumber() for item in meeting.getItems(ordered=True)],
+                         [100, 200, 300])
 
     def test_pm_RemoveItemWithSubnumbersRemovedItemBeforeSubnumbers(self):
         '''Test removing items using subnumbers if removed item is before items with subnumbers.
@@ -1793,42 +1800,42 @@ class testMeeting(PloneMeetingTestCase):
         self.changeUser('pmManager')
         meeting = self._createMeetingWithItems()
         item1, item2, item3, item4, item5, item6, item7 = meeting.getItems(ordered=True)
-        self.assertEquals([item.getItemNumber() for item in meeting.getItems(ordered=True)],
-                          [100, 200, 300, 400, 500, 600, 700])
+        self.assertEqual([item.getItemNumber() for item in meeting.getItems(ordered=True)],
+                         [100, 200, 300, 400, 500, 600, 700])
 
         # create 301 and 302
         # move 400 to 301
-        self.assertEquals(item4.getItemNumber(), 400)
+        self.assertEqual(item4.getItemNumber(), 400)
         view = item4.restrictedTraverse('@@change-item-order')
         view('number', '3.1')
-        self.assertEquals(item4.getItemNumber(), 301)
+        self.assertEqual(item4.getItemNumber(), 301)
         # move new 400 to 302
-        self.assertEquals(item5.getItemNumber(), 400)
+        self.assertEqual(item5.getItemNumber(), 400)
         view = item5.restrictedTraverse('@@change-item-order')
         view('number', '3.2')
-        self.assertEquals([item.getItemNumber() for item in meeting.getItems(ordered=True)],
-                          [100, 200, 300, 301, 302, 400, 500])
+        self.assertEqual([item.getItemNumber() for item in meeting.getItems(ordered=True)],
+                         [100, 200, 300, 301, 302, 400, 500])
 
         # no remove item with number 200
-        self.assertEquals(item2.getItemNumber(), 200)
+        self.assertEqual(item2.getItemNumber(), 200)
         self.do(item2, 'backToValidated')
-        self.assertEquals([item.getItemNumber() for item in meeting.getItems(ordered=True)],
-                          [100, 200, 201, 202, 300, 400])
+        self.assertEqual([item.getItemNumber() for item in meeting.getItems(ordered=True)],
+                         [100, 200, 201, 202, 300, 400])
 
     def test_pm_MeetingNumbers(self):
         '''Tests that meetings receive correctly their numbers from the config
            when they are published.'''
         self.changeUser('pmManager')
         m1 = self._createMeetingWithItems()
-        self.assertEquals(self.meetingConfig.getLastMeetingNumber(), 0)
-        self.assertEquals(m1.getMeetingNumber(), -1)
+        self.assertEqual(self.meetingConfig.getLastMeetingNumber(), 0)
+        self.assertEqual(m1.getMeetingNumber(), -1)
         self.publishMeeting(m1)
-        self.assertEquals(m1.getMeetingNumber(), 1)
-        self.assertEquals(self.meetingConfig.getLastMeetingNumber(), 1)
+        self.assertEqual(m1.getMeetingNumber(), 1)
+        self.assertEqual(self.meetingConfig.getLastMeetingNumber(), 1)
         m2 = self._createMeetingWithItems()
         self.publishMeeting(m2)
-        self.assertEquals(m2.getMeetingNumber(), 2)
-        self.assertEquals(self.meetingConfig.getLastMeetingNumber(), 2)
+        self.assertEqual(m2.getMeetingNumber(), 2)
+        self.assertEqual(self.meetingConfig.getLastMeetingNumber(), 2)
 
     def test_pm_NumberOfItems(self):
         '''Tests that number of items returns number of normal and late items.'''
@@ -1903,9 +1910,9 @@ class testMeeting(PloneMeetingTestCase):
         m3_query = queryparser.parseFormquery(m3, m3.adapted()._availableItemsQuery())
         wf_name = self.wfTool.getWorkflowsFor(i1)[0].getId()
         if not self.wfTool[wf_name].initial_state == 'validated':
-            self.assertEquals(len(self.catalog(m1_query)), 0)
-            self.assertEquals(len(self.catalog(m2_query)), 0)
-            self.assertEquals(len(self.catalog(m3_query)), 0)
+            self.assertEqual(len(self.catalog(m1_query)), 0)
+            self.assertEqual(len(self.catalog(m2_query)), 0)
+            self.assertEqual(len(self.catalog(m3_query)), 0)
         # validate the items
         for item in (i1, i2, i3):
             self.validateItem(item)
@@ -1913,19 +1920,19 @@ class testMeeting(PloneMeetingTestCase):
         # the first meeting has only one item, the one with no preferred meeting selected
         m1_query = queryparser.parseFormquery(m1, m1.adapted()._availableItemsQuery())
         itemTitles = [brain.Title for brain in self.catalog(m1_query)]
-        self.assertEquals(itemTitles, ['i1', ])
+        self.assertEqual(itemTitles, ['i1', ])
         # the second meeting has 2 items, the no preferred meeting one and the i2
         # for wich we selected this meeting as preferred
         m2_query = queryparser.parseFormquery(m2, m2.adapted()._availableItemsQuery())
         itemTitles = [brain.Title for brain in self.catalog(m2_query)]
-        self.assertEquals(set(itemTitles), set(['i1', 'i2', ]))
+        self.assertEqual(set(itemTitles), set(['i1', 'i2', ]))
         # the third has 3 items
         # --> no preferred meeting item
         # --> the second item because the meeting date is in the future
         # --> the i3 where we selected m3 as preferred meeting
         m3_query = queryparser.parseFormquery(m3, m3.adapted()._availableItemsQuery())
         itemTitles = [brain.Title for brain in self.catalog(m3_query)]
-        self.assertEquals(set(itemTitles), set(['i1', 'i2', 'i3', ]))
+        self.assertEqual(set(itemTitles), set(['i1', 'i2', 'i3', ]))
 
         # if a meeting is frozen, it will only accept late items
         # to be able to freeze a meeting, it must contains at least one item...
@@ -2000,18 +2007,18 @@ class testMeeting(PloneMeetingTestCase):
         self.assertFalse(meeting.getItems())
         # every items are 'validated'
         for item in items:
-            self.assertEquals(item.queryState(), 'validated')
+            self.assertEqual(item.queryState(), 'validated')
             self.assertFalse(item.hasMeeting())
         # present items
         presentView = meeting.restrictedTraverse('@@present-several-items')
         # we can present one single item...
         presentView([items[0].UID()])
-        self.assertEquals(items[0].queryState(), 'presented')
+        self.assertEqual(items[0].queryState(), 'presented')
         # or many items
         presentView([item.UID() for item in items[1:]])
         # every items are 'presented' in the meeting
         for item in items:
-            self.assertEquals(item.queryState(), 'presented')
+            self.assertEqual(item.queryState(), 'presented')
             self.assertTrue(item.hasMeeting())
 
     def test_pm_PresentSeveralItemsWithAutoSendToOtherMCUntilPresented(self):
@@ -2075,14 +2082,14 @@ class testMeeting(PloneMeetingTestCase):
         for item in items:
             self.assertTrue(item.queryState() == 'presented')
         # numbering is correct
-        self.assertEquals(
+        self.assertEqual(
             [numberedItem.getItemNumber(for_display=True) for numberedItem in meeting.getItems(ordered=True)],
             ['1', '2', '3', '4', '5', '6', '7'])
         removeView = meeting.restrictedTraverse('@@remove-several-items')
         # the view can receive a single uid (as a string) or several as a list of uids
         removeView(meeting.getItems()[0].UID())
         # numbering is correct
-        self.assertEquals(
+        self.assertEqual(
             [numberedItem.getItemNumber(for_display=True) for numberedItem in meeting.getItems(ordered=True)],
             ['1', '2', '3', '4', '5', '6'])
         # remove every items left
@@ -2096,7 +2103,7 @@ class testMeeting(PloneMeetingTestCase):
         meeting2 = self._createMeetingWithItems()
         self.closeMeeting(meeting2)
         # numbering is correct
-        self.assertEquals(
+        self.assertEqual(
             [numberedItem.getItemNumber(for_display=True) for numberedItem in meeting2.getItems(ordered=True)],
             ['1', '2', '3', '4', '5', '6', '7'])
         # every items are in a final state
@@ -2107,7 +2114,7 @@ class testMeeting(PloneMeetingTestCase):
         removeView = meeting2.restrictedTraverse('@@remove-several-items')
         removeView([item.UID() for item in meeting2.getItems()])
         # numbering is correct
-        self.assertEquals(
+        self.assertEqual(
             [numberedItem.getItemNumber(for_display=True) for numberedItem in meeting2.getItems(ordered=True)],
             ['1', '2', '3', '4', '5', '6', '7'])
         # items state was not changed
@@ -2227,35 +2234,35 @@ class testMeeting(PloneMeetingTestCase):
         self.freezeMeeting(meeting2)
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject')
         cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
-        self.assertEquals(item.getMeetingToInsertIntoWhenNoCurrentMeetingObject(), meeting)
-        self.assertEquals(item2.getMeetingToInsertIntoWhenNoCurrentMeetingObject(), meeting)
+        self.assertEqual(item.getMeetingToInsertIntoWhenNoCurrentMeetingObject(), meeting)
+        self.assertEqual(item2.getMeetingToInsertIntoWhenNoCurrentMeetingObject(), meeting)
 
         # make frozen meetings accept items
         cfg.setMeetingPresentItemWhenNoCurrentMeetingStates(('created', 'frozen', ))
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject')
         cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
-        self.assertEquals(item.getMeetingToInsertIntoWhenNoCurrentMeetingObject(), meeting)
+        self.assertEqual(item.getMeetingToInsertIntoWhenNoCurrentMeetingObject(), meeting)
         # preferred meeting is preferred if available
-        self.assertEquals(item2.getMeetingToInsertIntoWhenNoCurrentMeetingObject(), meeting2)
+        self.assertEqual(item2.getMeetingToInsertIntoWhenNoCurrentMeetingObject(), meeting2)
         # if meeting2 is no more frozen, item2 will take meeting
         self.decideMeeting(meeting2)
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject')
         cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
-        self.assertEquals(item.getMeetingToInsertIntoWhenNoCurrentMeetingObject(), meeting)
-        self.assertEquals(item2.getMeetingToInsertIntoWhenNoCurrentMeetingObject(), meeting)
+        self.assertEqual(item.getMeetingToInsertIntoWhenNoCurrentMeetingObject(), meeting)
+        self.assertEqual(item2.getMeetingToInsertIntoWhenNoCurrentMeetingObject(), meeting)
 
         # except if no meetingPresentItemWhenNoCurrentMeetingStates
         cfg.setMeetingPresentItemWhenNoCurrentMeetingStates(())
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject')
         cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
-        self.assertEquals(item.getMeetingToInsertIntoWhenNoCurrentMeetingObject(), meeting)
-        self.assertEquals(item2.getMeetingToInsertIntoWhenNoCurrentMeetingObject(), meeting2)
+        self.assertEqual(item.getMeetingToInsertIntoWhenNoCurrentMeetingObject(), meeting)
+        self.assertEqual(item2.getMeetingToInsertIntoWhenNoCurrentMeetingObject(), meeting2)
 
         # present items, it is presented in the right meeting
         self.presentItem(item)
-        self.assertEquals(item.getMeeting(), meeting)
+        self.assertEqual(item.getMeeting(), meeting)
         self.presentItem(item2)
-        self.assertEquals(item2.getMeeting(), meeting2)
+        self.assertEqual(item2.getMeeting(), meeting2)
 
     def test_pm_PresentItemWhenNoPublishedMeetingAndNextMeetingInFutureIsFrozen(self):
         '''If next meeting in future is frozen and it is not the preferredMeeting of an item,
@@ -2342,15 +2349,15 @@ class testMeeting(PloneMeetingTestCase):
         self.assertIsNone(m2.validate_date(meetingDate2Value))
         # now try to use meetingDate1 for m2
         # it does not validate but returns warning message
-        self.assertEquals(m2.validate_date(meetingDate1Value),
-                          translate('meeting_with_same_date_exists',
-                                    domain='PloneMeeting',
-                                    context=self.request))
+        self.assertEqual(m2.validate_date(meetingDate1Value),
+                         translate('meeting_with_same_date_exists',
+                                   domain='PloneMeeting',
+                                   context=self.request))
         # same if we use meetingDate2 for m1
-        self.assertEquals(m1.validate_date(meetingDate2Value),
-                          translate('meeting_with_same_date_exists',
-                                    domain='PloneMeeting',
-                                    context=self.request))
+        self.assertEqual(m1.validate_date(meetingDate2Value),
+                         translate('meeting_with_same_date_exists',
+                                   domain='PloneMeeting',
+                                   context=self.request))
         # but everything is right for lambda dates
         self.assertIsNone(m1.validate_date('2013/06/06 16:00'))
         self.assertIsNone(m2.validate_date('2013/12/06 16:00'))
@@ -2362,19 +2369,19 @@ class testMeeting(PloneMeetingTestCase):
         # m1 and m3 dates are the same but with different timezone
         m1Date = m1.getDate()
         m3Date = m3.getDate()
-        self.assertEquals(m1Date.year(), m3Date.year())
-        self.assertEquals(m1Date.month(), m3Date.month())
-        self.assertEquals(m1Date.day(), m3Date.day())
-        self.assertEquals(m1Date.hour(), m3Date.hour())
-        self.assertEquals(m1Date.minute(), m3Date.minute())
+        self.assertEqual(m1Date.year(), m3Date.year())
+        self.assertEqual(m1Date.month(), m3Date.month())
+        self.assertEqual(m1Date.day(), m3Date.day())
+        self.assertEqual(m1Date.hour(), m3Date.hour())
+        self.assertEqual(m1Date.minute(), m3Date.minute())
         # but in reality, as m1 and m3 are not in the same timezone, they are different
         self.assertNotEquals(m1Date, m3Date)
         # so if we try to validate, even if not the same, it does not
         # validate because these are same dates in different timezones...
-        self.assertEquals(m3.validate_date(meetingDate1Value),
-                          translate('meeting_with_same_date_exists',
-                                    domain='PloneMeeting',
-                                    context=self.request))
+        self.assertEqual(m3.validate_date(meetingDate1Value),
+                         translate('meeting_with_same_date_exists',
+                                   domain='PloneMeeting',
+                                   context=self.request))
 
     def test_pm_Validate_place(self):
         """
@@ -2449,8 +2456,8 @@ class testMeeting(PloneMeetingTestCase):
         # we have MeetingItems as theObjects=True by default
         self.assertTrue(isinstance(itemsInOrder[0], MeetingItem))
         # items are ordered
-        self.assertEquals([item.getItemNumber() for item in itemsInOrder],
-                          [100, 200, 300, 400, 500, 600, 700])
+        self.assertEqual([item.getItemNumber() for item in itemsInOrder],
+                         [100, 200, 300, 400, 500, 600, 700])
         itemUids = [item.UID() for item in itemsInOrder]
 
         # remove some items UID then pass it to getItems
@@ -2469,8 +2476,8 @@ class testMeeting(PloneMeetingTestCase):
         # we have brains
         self.assertTrue(isinstance(brainsInOrder[0], AbstractCatalogBrain))
         # items are ordered
-        self.assertEquals([brain.getItemNumber for brain in brainsInOrder],
-                          [100, 200, 300, 400, 500, 600, 700])
+        self.assertEqual([brain.getItemNumber for brain in brainsInOrder],
+                         [100, 200, 300, 400, 500, 600, 700])
         self.assertTrue(len(meeting.getItems(uids=itemUids, theObjects=False)) == 4)
         # we can specify the listType
         self.assertTrue(len(meeting.getItems(listTypes=['normal'], theObjects=False)) == 7)
@@ -2745,8 +2752,8 @@ class testMeeting(PloneMeetingTestCase):
         # create meetings after
         meeting2 = self.create('Meeting', date=DateTime('2015/01/20'))
         meeting3 = self.create('Meeting', date=DateTime('2015/01/25'))
-        self.assertEquals(meeting.getNextMeeting(), meeting2)
-        self.assertEquals(meeting2.getNextMeeting(), meeting3)
+        self.assertEqual(meeting.getNextMeeting(), meeting2)
+        self.assertEqual(meeting2.getNextMeeting(), meeting3)
         self.assertFalse(meeting3.getNextMeeting())
 
         self.assertFalse(meeting.getNextMeeting(cfgId=cfg2Id))
@@ -2768,15 +2775,15 @@ class testMeeting(PloneMeetingTestCase):
         # create meetings after
         meeting2 = self.create('Meeting', date=DateTime('2014/12/25'))
         meeting3 = self.create('Meeting', date=DateTime('2014/12/20'))
-        self.assertEquals(meeting.getPreviousMeeting(), meeting2)
-        self.assertEquals(meeting2.getPreviousMeeting(), meeting3)
+        self.assertEqual(meeting.getPreviousMeeting(), meeting2)
+        self.assertEqual(meeting2.getPreviousMeeting(), meeting3)
         self.assertFalse(meeting3.getPreviousMeeting())
 
         # very old meeting, previous meeting is searched by default with max 60 days
         meeting4 = self.create('Meeting', date=meeting3.getDate() - 61)
         # still no meeting
         self.assertFalse(meeting3.getPreviousMeeting())
-        self.assertEquals(meeting3.getPreviousMeeting(searchMeetingsInterval=61), meeting4)
+        self.assertEqual(meeting3.getPreviousMeeting(searchMeetingsInterval=61), meeting4)
 
     def test_pm_MeetingStrikedAssembly(self):
         """Test use of utils.toHTMLStrikedContent for assembly."""
@@ -2805,50 +2812,50 @@ class testMeeting(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         itemBrain = self.catalog(UID=item.UID())[0]
         # by default, if no preferred/linked meeting, the date is '1950/01/01'
-        self.assertEquals(itemBrain.linkedMeetingDate, DateTime('1950/01/01'))
-        self.assertEquals(itemBrain.getPreferredMeetingDate, DateTime('1950/01/01'))
+        self.assertEqual(itemBrain.linkedMeetingDate, DateTime('1950/01/01'))
+        self.assertEqual(itemBrain.getPreferredMeetingDate, DateTime('1950/01/01'))
         item.setPreferredMeeting(meeting.UID())
         self.presentItem(item)
         itemBrain = self.catalog(UID=item.UID())[0]
-        self.assertEquals(itemBrain.linkedMeetingDate, meeting.getDate())
-        self.assertEquals(itemBrain.getPreferredMeetingDate, meeting.getDate())
+        self.assertEqual(itemBrain.linkedMeetingDate, meeting.getDate())
+        self.assertEqual(itemBrain.getPreferredMeetingDate, meeting.getDate())
 
         # right, change meeting's date and check again
         newDate = DateTime('2015/05/05')
         meeting.setDate(newDate)
         itemBrain = self.catalog(UID=item.UID())[0]
-        self.assertEquals(itemBrain.linkedMeetingDate, meeting.getDate())
-        self.assertEquals(itemBrain.getPreferredMeetingDate, meeting.getDate())
+        self.assertEqual(itemBrain.linkedMeetingDate, meeting.getDate())
+        self.assertEqual(itemBrain.getPreferredMeetingDate, meeting.getDate())
 
         # if item is removed from the meeting, it falls back to 1950
         self.do(item, 'backToValidated')
-        self.assertEquals(item.queryState(), 'validated')
+        self.assertEqual(item.queryState(), 'validated')
         itemBrain = self.catalog(UID=item.UID())[0]
-        self.assertEquals(itemBrain.linkedMeetingDate, DateTime('1950/01/01'))
+        self.assertEqual(itemBrain.linkedMeetingDate, DateTime('1950/01/01'))
         # preferredMeetingDate is still the meetingDate
-        self.assertEquals(itemBrain.getPreferredMeetingDate, meeting.getDate())
+        self.assertEqual(itemBrain.getPreferredMeetingDate, meeting.getDate())
 
         # when a meeting is removed, preferredMeetingDate is updated on items
         self.deleteAsManager(meeting.UID())
-        self.assertEquals(item.getPreferredMeeting(), ITEM_NO_PREFERRED_MEETING_VALUE)
+        self.assertEqual(item.getPreferredMeeting(), ITEM_NO_PREFERRED_MEETING_VALUE)
         itemBrain = self.catalog(UID=item.UID())[0]
-        self.assertEquals(itemBrain.linkedMeetingDate, DateTime('1950/01/01'))
-        self.assertEquals(itemBrain.getPreferredMeetingDate, DateTime('1950/01/01'))
+        self.assertEqual(itemBrain.linkedMeetingDate, DateTime('1950/01/01'))
+        self.assertEqual(itemBrain.getPreferredMeetingDate, DateTime('1950/01/01'))
 
     def test_pm_GetFirstItemNumberIgnoresSubnumbers(self):
         """When computing the firstItemNumber of a meeting,
            it will ignores subnumbers of previous meetings."""
         self.changeUser('pmManager')
         meeting1 = self._createMeetingWithItems(meetingDate=DateTime('2012/05/05'))
-        self.assertEquals(len(meeting1.getItems()), 7)
+        self.assertEqual(len(meeting1.getItems()), 7)
         meeting2 = self._createMeetingWithItems(meetingDate=DateTime('2012/06/06'))
-        self.assertEquals(len(meeting2.getItems()), 7)
+        self.assertEqual(len(meeting2.getItems()), 7)
         meeting3 = self._createMeetingWithItems(meetingDate=DateTime('2012/07/07'))
-        self.assertEquals(len(meeting3.getItems()), 7)
+        self.assertEqual(len(meeting3.getItems()), 7)
 
         # all normal numbered items
         unrestricted_view = meeting3.restrictedTraverse('@@pm_unrestricted_methods')
-        self.assertEquals(unrestricted_view.findFirstItemNumberForMeeting(meeting3), 15)
+        self.assertEqual(unrestricted_view.findFirstItemNumberForMeeting(meeting3), 15)
 
         # put some subnumbers for meeting1
         meeting1_item2 = meeting1.getItems(ordered=True)[1]
@@ -2857,12 +2864,12 @@ class testMeeting(PloneMeetingTestCase):
         change_order_view('number', '1.1')
         change_order_view = meeting1_item7.restrictedTraverse('@@change-item-order')
         change_order_view('number', '5.1')
-        self.assertEquals([item.getItemNumber() for item in meeting1.getItems(ordered=True)],
-                          [100, 101, 200, 300, 400, 500, 501])
+        self.assertEqual([item.getItemNumber() for item in meeting1.getItems(ordered=True)],
+                         [100, 101, 200, 300, 400, 500, 501])
         # call to 'findFirstItemNumberForMeeting' is memoized
         self.cleanMemoize()
         # now meeting1 last number is considered 5
-        self.assertEquals(unrestricted_view.findFirstItemNumberForMeeting(meeting3), 13)
+        self.assertEqual(unrestricted_view.findFirstItemNumberForMeeting(meeting3), 13)
 
     def test_pm_MeetingAddImagePermission(self):
         """A user able to edit at least one RichText field must be able to add images."""
@@ -3065,7 +3072,7 @@ class testMeeting(PloneMeetingTestCase):
         translatedMeetingTypeTitle = translate(self.portal.portal_types[meeting.portal_type].title,
                                                domain='plone',
                                                context=self.portal.REQUEST)
-        self.assertEquals(
+        self.assertEqual(
             meeting.getPrettyLink(showContentIcon=True, prefixed=True),
             u"<a class='pretty_link' title='Meeting of 05/05/2015 (12:35)' "
             "href='http://nohost/plone/Members/pmManager/mymeetings/{0}/o1' target='_self'>"
