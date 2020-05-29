@@ -786,7 +786,6 @@ class MeetingItemWorkflowActions(object):
 
     def doGoTo_returned_to_proposing_group_proposed(self, stateChange):
         pass
->>>>>>> origin/master
 
     security.declarePrivate('doGoTo_returned_to_proposing_group')
 
