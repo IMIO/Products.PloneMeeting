@@ -23,7 +23,6 @@ from collective.contact.plonegroup.config import set_registry_organizations
 from collective.contact.plonegroup.utils import get_organizations
 from copy import deepcopy
 from DateTime import DateTime
-from DateTime.DateTime import _findLocalTimeZoneName
 from eea.facetednavigation.interfaces import IFacetedLayout
 from imio.helpers.cache import cleanRamCacheFor
 from os import path
@@ -2328,60 +2327,40 @@ class testMeeting(PloneMeetingTestCase):
           Test the Meeting.date validator "validate_date" : validates that 2 meetings can
           not occur the same day at the same hour.
         """
-        # find current timezone
-        currentTimeZone = DateTime.timezone(DateTime())
-        otherTimeZone = (currentTimeZone is _findLocalTimeZoneName(0)) and \
-            _findLocalTimeZoneName(1) or _findLocalTimeZoneName(0)
-        # create a meeting
+        def _to_value(date):
+            return date.strftime('%Y-%m-%d %H:%M')
+
         self.changeUser('pmManager')
-        meetingDate1 = '2013/01/01 12:00 %s' % currentTimeZone
-        # value to validate is without GMT+x
-        meetingDate1Value = '2013/01/01 12:00'
-        m1 = self.create('Meeting', date=DateTime(meetingDate1))
+        m1 = self.create('Meeting', date=DateTime('2020/05/29 11:00'))
         # for now it validates as only one meeting exists
-        self.assertIsNone(m1.validate_date(meetingDate1Value))
+        self.assertIsNone(m1.validate_date(_to_value(m1.getDate())))
         # create a second meeting with another date
-        meetingDate2 = '2013/11/05 15:00 %s' % otherTimeZone
-        # value to validate is without GMT+x
-        meetingDate2Value = '2013/11/05 15:00'
-        m2 = self.create('Meeting', date=DateTime(meetingDate2))
+        m2 = self.create('Meeting', date=DateTime('2020/02/04'))
         # validates also as it is another date than m1's one
-        self.assertIsNone(m2.validate_date(meetingDate2Value))
-        # now try to use meetingDate1 for m2
+        self.assertIsNone(m2.validate_date(_to_value(m2.getDate())))
+        # now try to use m1 date for m2
         # it does not validate but returns warning message
-        self.assertEqual(m2.validate_date(meetingDate1Value),
+        self.assertEqual(m2.validate_date(_to_value(m1.getDate())),
                          translate('meeting_with_same_date_exists',
                                    domain='PloneMeeting',
                                    context=self.request))
-        # same if we use meetingDate2 for m1
-        self.assertEqual(m1.validate_date(meetingDate2Value),
+        # same if we use m2 date for m1
+        self.assertEqual(m1.validate_date(_to_value(m2.getDate())),
                          translate('meeting_with_same_date_exists',
                                    domain='PloneMeeting',
                                    context=self.request))
         # but everything is right for lambda dates
-        self.assertIsNone(m1.validate_date('2013/06/06 16:00'))
-        self.assertIsNone(m2.validate_date('2013/12/06 16:00'))
-        # now test that we can not create 2 meetings with same date
-        # using different timezones.  Create a meeting that use same
-        # date as m1 but with otherTimeZone
-        meetingDate3 = '2013/01/01 12:00 %s' % otherTimeZone
-        m3 = self.create('Meeting', date=DateTime(meetingDate3))
-        # m1 and m3 dates are the same but with different timezone
-        m1Date = m1.getDate()
-        m3Date = m3.getDate()
-        self.assertEqual(m1Date.year(), m3Date.year())
-        self.assertEqual(m1Date.month(), m3Date.month())
-        self.assertEqual(m1Date.day(), m3Date.day())
-        self.assertEqual(m1Date.hour(), m3Date.hour())
-        self.assertEqual(m1Date.minute(), m3Date.minute())
-        # but in reality, as m1 and m3 are not in the same timezone, they are different
-        self.assertNotEquals(m1Date, m3Date)
-        # so if we try to validate, even if not the same, it does not
-        # validate because these are same dates in different timezones...
-        self.assertEqual(m3.validate_date(meetingDate1Value),
-                         translate('meeting_with_same_date_exists',
-                                   domain='PloneMeeting',
-                                   context=self.request))
+        self.assertIsNone(m1.validate_date('2013-03-06 16:00'))
+        self.assertIsNone(m2.validate_date('2013-08-06 16:00'))
+        # still ok with one hour more or less
+        m1_before = '2020-05-29 10:00'
+        self.assertIsNone(m1.validate_date(m1_before))
+        m1_after = '2020-05-29 12:00'
+        self.assertIsNone(m1.validate_date(m1_after))
+        m2_before = '2020-02-03 23:00'
+        self.assertIsNone(m1.validate_date(m2_before))
+        m2_after = '2020-02-04 01:00'
+        self.assertIsNone(m1.validate_date(m2_after))
 
     def test_pm_Validate_place(self):
         """

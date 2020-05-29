@@ -2,11 +2,12 @@ Changelog
 =========
 
 
-4.1.26 (unreleased)
--------------------
+4.1.25.1 (unreleased)
+---------------------
 
-- Nothing changed yet.
-
+- Fixed `Meeting.validate_date` that checks that another meeting does not already use date.
+  Now it is possible to create 2 meetings one hour apart, more over we avoid `portal_catalog` search with
+  `getDate=list of dates` that breaks `collective.solr` (`DateIndex` receiving a list of dates)
 
 4.1.25 (2020-05-28)
 -------------------
