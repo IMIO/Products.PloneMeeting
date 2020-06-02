@@ -538,7 +538,7 @@ def onItemCloned(item, event):
     _check_item_pasted_in_cfg(item)
 
 
-def onItemAdded(item, event):
+def onItemInitialized(item, event):
     '''This method is called every time a MeetingItem is created, even in
        portal_factory. Local roles defined on an item define who may view
        or edit it. But at the time the item is created in portal_factory,

@@ -5,8 +5,10 @@ Changelog
 4.1.26 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- Use `Products.Archetypes.interfaces.IObjectInitializedEvent` instead `zope.lifecycleevent.interfaces.IObjectAddedEvent`
+  to initialize freshly created item to make `plone.restapi` happy or item is not initialized and attributes
+  like `adviceIndex` are not added
+  [gbastien]
 
 4.1.25.1 (2020-06-02)
 ---------------------
