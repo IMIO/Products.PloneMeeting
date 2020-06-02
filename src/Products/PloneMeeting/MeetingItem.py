@@ -957,7 +957,7 @@ schema = Schema((
         ),
         multiValued=1,
         vocabulary_factory='Products.PloneMeeting.vocabularies.itemoptionaladvicesvocabulary',
-        enforceVocabulary=False,
+        enforceVocabulary=True,
     ),
     TextField(
         name='motivation',
@@ -1679,7 +1679,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             else:
                 adviser_real_uid = adviser
             # when advices are inherited, we can not ask another one for same adviser
-            if adviser_real_uid in self.adviceIndex and \
+            if adviser_real_uid in getattr(self, 'adviceIndex', {}) and \
                self.adviceIndex[adviser_real_uid]['inherited']:
                 # use getAdviceData for because we do not have every correct values
                 # stored for an inherited advice, especially 'not_asked'

@@ -742,6 +742,8 @@ class ItemOptionalAdvicesVocabulary(object):
                 for optionalAdviser in optionalAdvisers:
                     if optionalAdviser not in optionalAdvisersInVocab:
                         org = get_organization(optionalAdviser)
+                        if not org:
+                            continue
                         if '__rowid__' in optionalAdviser:
                             org_uid, row_id = decodeDelayAwareId(optionalAdviser)
                             delay = cfg._dataForCustomAdviserRowId(row_id)['delay']
