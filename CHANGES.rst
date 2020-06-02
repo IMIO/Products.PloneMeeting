@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.1.25.1 (unreleased)
+4.1.25.1 (2020-06-02)
 ---------------------
 
 - Fixed `Meeting.validate_date` that checks that another meeting does not already use date.
