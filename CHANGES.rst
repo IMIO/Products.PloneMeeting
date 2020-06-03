@@ -1869,10 +1869,6 @@ Changelog
 - Added possibility to decide several items at once when on a decided meeting
 - Meeting's start date, mid date and end date have a granularity of 1 minute instead of 5 minutes
 
-2.1.4dev
---------
-- Nothing yet
-
 2.1.3 (2012-10-03)
 ------------------
 - Make the input showing the item number on the meeting view larger so 3-digit numbers are displayed correctly
