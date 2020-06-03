@@ -9,6 +9,7 @@ Changelog
   to initialize freshly created item to make `plone.restapi` happy or item is not initialized and attributes
   like `adviceIndex` are not added.  With `plone.restapi`, validation is done before `ObjectInitializedEvent` is called
   [gbastien]
+- Added missing icon `wait_advices_from.png`
 
 4.1.25.1 (2020-06-02)
 ---------------------
