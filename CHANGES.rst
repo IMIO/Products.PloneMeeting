@@ -10,6 +10,8 @@ Changelog
   like `adviceIndex` are not added.  With `plone.restapi`, validation is done before `ObjectInitializedEvent` is called
   [gbastien]
 - Added missing icon `wait_advices_from.png`
+- Do not fail in `vocabularies.PMCategoryVocabulary` when creating an annex using `plone.restapi`,
+  validation is done before annex is fully initialized
 
 4.1.25.1 (2020-06-02)
 ---------------------
