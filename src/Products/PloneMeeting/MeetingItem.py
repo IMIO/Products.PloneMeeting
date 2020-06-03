@@ -5393,7 +5393,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             self._v_previousData = rememberPreviousData(self)
             # Historize advice that were still not, this way we ensure that
             # given advices are historized with right item data
-            self._versionateAdvicesOnItemEdit()
+            if hasattr(self, 'adviceIndex'):
+                self._versionateAdvicesOnItemEdit()
         return BaseFolder.processForm(self, data=data, metadata=metadata, REQUEST=REQUEST, values=values)
 
     security.declarePublic('showOptionalAdvisers')
