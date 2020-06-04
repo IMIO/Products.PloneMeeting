@@ -109,14 +109,14 @@ class testSetup(PloneMeetingTestCase):
             for cfg in tool.objectValues('MeetingConfig'):
                 view = cfg.restrictedTraverse('@@check-pod-templates')
                 messages = view.manageMessages()
-                self.assertEquals(messages['error'], [])
-                self.assertEquals(messages['no_pod_portal_types'], [])
+                self.assertEqual(messages['error'], [])
+                self.assertEqual(messages['no_pod_portal_types'], [])
                 # check that there are no new keys in messages
-                self.assertEquals(messages.keys(),
-                                  ['error', 'no_obj_found',
-                                   'no_pod_portal_types', 'not_enabled',
-                                   'dashboard_templates_not_managed',
-                                   'style_templates_not_managed', 'clean'])
+                self.assertEqual(messages.keys(),
+                                 ['error', 'no_obj_found',
+                                  'no_pod_portal_types', 'not_enabled',
+                                  'dashboard_templates_not_managed',
+                                  'style_templates_not_managed', 'clean'])
                 # access application to check that not errors are raised,
                 # especially regarding the searches displayed in the collection portlet
                 # make sure extra searches are added
