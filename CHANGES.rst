@@ -12,6 +12,8 @@ Changelog
 - Added missing icon `wait_advices_from.png`
 - Do not fail in `vocabularies.PMCategoryVocabulary` when creating an annex using `plone.restapi`,
   validation is done before annex is fully initialized
+- Set `enforceVocabulary=True` for `MeetingItem.proposingGroup`, `MeetingItem.proposingGroupWithGroupInCharge`, `MeetingItem.groupsInCharge`
+  and `MeetingItem.optionalAdvisers` so validation is done correctly when using `plone.restapi`
 
 4.1.25.1 (2020-06-02)
 ---------------------

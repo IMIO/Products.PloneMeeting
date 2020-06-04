@@ -829,6 +829,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         vocabulary='listProposingGroups',
+        enforceVocabulary=True,
     ),
     StringField(
         name='proposingGroupWithGroupInCharge',
@@ -841,6 +842,7 @@ schema = Schema((
         ),
         optional=True,
         vocabulary='listProposingGroupsWithGroupsInCharge',
+        enforceVocabulary=True,
     ),
     LinesField(
         name='groupsInCharge',
@@ -857,6 +859,7 @@ schema = Schema((
         optional=True,
         multiValued=1,
         vocabulary_factory='Products.PloneMeeting.vocabularies.itemgroupsinchargevocabulary',
+        enforceVocabulary=True,
     ),
     LinesField(
         name='associatedGroups',
@@ -873,6 +876,7 @@ schema = Schema((
         optional=True,
         multiValued=1,
         vocabulary_factory='Products.PloneMeeting.vocabularies.itemassociatedgroupsvocabulary',
+        enforceVocabulary=True,
     ),
     StringField(
         name='listType',
