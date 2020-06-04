@@ -2019,6 +2019,9 @@ class testMeeting(PloneMeetingTestCase):
         for item in items:
             self.assertEqual(item.queryState(), 'presented')
             self.assertTrue(item.hasMeeting())
+        self.assertEqual(
+            [item.getItemNumber(for_display=True) for item in meeting.getItems(ordered=True)],
+            ['1', '2', '3', '4', '5', '6', '7'])
 
     def test_pm_PresentSeveralItemsWithAutoSendToOtherMCUntilPresented(self):
         """Test that while presenting several items and some of the items
