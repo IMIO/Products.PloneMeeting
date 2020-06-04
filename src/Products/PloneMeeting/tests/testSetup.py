@@ -24,6 +24,7 @@
 
 from plone import api
 from Products.GenericSetup.context import DirectoryImportContext
+from Products.PloneMeeting.config import HAS_SOLR
 from Products.PloneMeeting.exportimport.content import ToolInitializer
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
@@ -223,6 +224,18 @@ class testSetup(PloneMeetingTestCase):
         meeting_types = [pt for pt in portal_types if pt.startswith('Meeting')]
         for meeting_type in meeting_types:
             self.failIf(set(meeting_types).difference(factory_types))
+
+    def test_pm_EnsureSolrActivated(self):
+        """ """
+        pm_logger.info("HAS_SOLR %s" % HAS_SOLR)
+        cfg = self.meetingConfig
+        self.changeUser('pmManager')
+        self.create('MeetingItem')
+        brains = self.catalog(portal_type=cfg.getItemTypeName())
+        if HAS_SOLR:
+            self.assertEqual(brains[0].__class__.__name__, 'PloneFlare')
+        else:
+            self.assertEqual(brains[0].__class__.__name__, 'mybrains')
 
 
 def test_suite():
