@@ -538,14 +538,17 @@ def onItemCloned(item, event):
     _check_item_pasted_in_cfg(item)
 
 
-def onItemInitialized(item, event):
+def item_added_or_initialized(item):
     '''This method is called every time a MeetingItem is created, even in
        portal_factory. Local roles defined on an item define who may view
        or edit it. But at the time the item is created in portal_factory,
        local roles are not defined yet. So here we add a temporary local
        role to the currently logged user that allows him to create the
        item. In item.at_post_create_script we will remove this temp local
-       role.'''
+       role.
+       To manage every cases, we need to do this in both Initialized and Added event
+       because some are triggered in some cases and not others...
+       Especially for plone.restapi that calls Initialized then do the validation.'''
     user = api.user.get_current()
     item.manage_addLocalRoles(user.getId(), ('MeetingMember',))
     # Add a place to store adviceIndex
@@ -563,6 +566,16 @@ def onItemInitialized(item, event):
         alsoProvides(item, IConfigElement)
     else:
         noLongerProvides(item, IConfigElement)
+
+
+def onItemInitialized(item, event):
+    ''' '''
+    item_added_or_initialized(item)
+
+
+def onItemAdded(item, event):
+    ''' '''
+    item_added_or_initialized(item)
 
 
 def onItemWillBeAdded(item, event):

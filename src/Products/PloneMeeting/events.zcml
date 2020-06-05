@@ -13,6 +13,10 @@
               handler=".events.onItemInitialized" />
 
   <subscriber for=".interfaces.IMeetingItem
+                   zope.lifecycleevent.interfaces.IObjectAddedEvent"
+              handler=".events.onItemAdded" />
+
+  <subscriber for=".interfaces.IMeetingItem
                    zope.lifecycleevent.IObjectModifiedEvent"
               handler=".events.onItemModified" />
 
