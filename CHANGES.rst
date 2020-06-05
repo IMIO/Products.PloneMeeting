@@ -2,7 +2,29 @@ Changelog
 =========
 
 
-4.1.25 (unreleased)
+4.1.26 (unreleased)
+-------------------
+
+- Use `Products.Archetypes.interfaces.IObjectInitializedEvent` and `zope.lifecycleevent.interfaces.IObjectAddedEvent`
+  to initialize freshly created item to make `plone.restapi` happy or item is not initialized and attributes
+  like `adviceIndex` are not added.  With `plone.restapi`, validation is done after `ObjectInitializedEvent` but before `ObjectAddedEvent`
+  [gbastien]
+- Added missing icon `wait_advices_from.png`
+- Do not fail in `vocabularies.PMCategoryVocabulary` when creating an annex using `plone.restapi`,
+  validation is done before annex is fully initialized
+- Set `enforceVocabulary=True` for `MeetingItem.proposingGroup`, `MeetingItem.proposingGroupWithGroupInCharge`, `MeetingItem.groupsInCharge`
+  and `MeetingItem.optionalAdvisers` so validation is done correctly when using `plone.restapi`
+- Optimized item duplication process, remove images, advices and relevant annexes (that are not kept) using `_delObject(suppress_events=True)`
+  in `zope.lifecycleevent.ObjectCopiedEvent` `onItemCopied` event handler
+
+4.1.25.1 (2020-06-02)
+---------------------
+
+- Fixed `Meeting.validate_date` that checks that another meeting does not already use date.
+  Now it is possible to create 2 meetings one hour apart, more over we avoid `portal_catalog` search with
+  `getDate=list of dates` that breaks `collective.solr` (`DateIndex` receiving a list of dates)
+
+4.1.25 (2020-05-28)
 -------------------
 
 - Refactored the way a blank item is created to avoid impossibility to insert image during creation :
@@ -21,8 +43,11 @@ Changelog
 - Fixed JS bug that could break dashboard when deleting an item,
   call to `updateNumberOfItems` should only be made when deleting an item on the meeting view
 - In `Migrate_To_4105._uncatalogWrongBrains` do not break when getting `correct_rid` if it does not exist in `portal_catalog`
-- Optimized item duplication process, remove images, advices and relevant annexes (that are not kept) using `_delObject(suppress_events=True)`
-  in `zope.lifecycleevent.ObjectCopiedEvent` `onItemCopied` event handler
+- Simplified types XML files when using `imio.zamqp.pm` or not, it led to wrong configuration when GS profile order was not correct.
+  `imio.zamqp.pm` is now a direct dependency of `Products.PloneMeeting`
+- Added `utils._base_extra_expr_ctx` to use each time we use `collective.behavior.talcondition.utils._evaluateExpression`,
+  it will return base extra context for the TAL expression, including `tool`, `cfg`, `pm_utils` and `imio_history_utils`
+- In testing `PMLayer`, check if user exists before creating his memberarea as this layer is used by external packages (`imio.pm.wsclient`)
 
 4.1.24.1 (2020-05-14)
 ---------------------
@@ -1847,10 +1872,6 @@ Changelog
 - Copy groups to add automatically is now evaluated at each item edition, not only on creation
 - Added possibility to decide several items at once when on a decided meeting
 - Meeting's start date, mid date and end date have a granularity of 1 minute instead of 5 minutes
-
-2.1.4dev
---------
-- Nothing yet
 
 2.1.3 (2012-10-03)
 ------------------

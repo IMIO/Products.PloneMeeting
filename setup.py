@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-version = '4.1.25.dev0'
+version = '4.1.26.dev0'
 
 setup(name='Products.PloneMeeting',
       version=version,
@@ -40,7 +40,8 @@ setup(name='Products.PloneMeeting',
                                 'plone.app.robotframework',
                                 'Products.CMFPlacefulWorkflow'],
                           templates=['Genshi', ],
-                          amqp=['imio.zamqp.pm']),
+                          # temp backward compat
+                          amqp=[]),
       install_requires=[
           'appy > 0.8.0',
           'beautifulsoup4',
@@ -68,6 +69,7 @@ setup(name='Products.PloneMeeting',
           'imio.helpers',
           'imio.migrator',
           'imio.pyutils',
+          'imio.zamqp.pm',
           'plone.app.lockingbehavior',
           'plone.app.versioningbehavior',
           'plone.directives.form',

@@ -4669,9 +4669,9 @@ class testMeetingItem(PloneMeetingTestCase):
         pmFolder = self.getMeetingFolder()
         # create an item in portal_factory
         itemTypeName = cfg.getItemTypeName()
-        temp_item = pmFolder.restrictedTraverse('portal_factory/{0}/tmp_id'.format(itemTypeName))
+        temp_item = pmFolder.unrestrictedTraverse('portal_factory/{0}/tmp_id'.format(itemTypeName))
         self.assertTrue(temp_item._at_creation_flag)
-        self.assertRaises(Unauthorized, temp_item.restrictedTraverse('@@at_lifecycle_view').begin_edit)
+        self.assertRaises(Unauthorized, temp_item.unrestrictedTraverse('@@at_lifecycle_view').begin_edit)
         # create an item from a template
         view = pmFolder.restrictedTraverse('@@createitemfromtemplate')
         itemTemplate = cfg.getItemTemplates(as_brains=False)[0]

@@ -30,6 +30,7 @@ from operator import attrgetter
 from plone import api
 from plone.app.vocabularies.users import UsersFactory
 from plone.memoize import ram
+from plone.uuid.interfaces import ATTRIBUTE_NAME
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import CONSIDERED_NOT_GIVEN_ADVICE_VALUE
@@ -89,12 +90,9 @@ class PMConditionAwareCollectionVocabulary(CachedCollectionVocabulary):
         # XXX end change
 
     def _extra_expr_ctx(self):
-        """Define some values that will be available in the TALCondition expression."""
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self.context)
-        return {'tool': tool,
-                'cfg': cfg,
-                'fromPortletTodo': False}
+        """Manage 'fromPortletTodo', other useful values will be added
+           by TALCondition.complete_extra_expr_ctx."""
+        return {'fromPortletTodo': False, }
 
 
 PMConditionAwareCollectionVocabularyFactory = PMConditionAwareCollectionVocabulary()
@@ -745,6 +743,8 @@ class ItemOptionalAdvicesVocabulary(object):
                 for optionalAdviser in optionalAdvisers:
                     if optionalAdviser not in optionalAdvisersInVocab:
                         org = get_organization(optionalAdviser)
+                        if not org:
+                            continue
                         if '__rowid__' in optionalAdviser:
                             org_uid, row_id = decodeDelayAwareId(optionalAdviser)
                             delay = cfg._dataForCustomAdviserRowId(row_id)['delay']
@@ -1337,7 +1337,9 @@ class PMCategoryVocabulary(CategoryVocabulary):
         # if context is an annex, cache on context.UID() + context.modified() to manage stored term
         context_uid = None
         context_modified = None
-        if IAnnex.providedBy(context):
+        # with plone.restapi, validation is done before context fully initialized
+        # during validation, vocabulary for field content_category is called
+        if IAnnex.providedBy(context) and getattr(context, ATTRIBUTE_NAME, None):
             context_uid = context.UID()
             context_modified = context.modified()
         # invalidate if user groups changed
@@ -1359,7 +1361,7 @@ class PMCategoryVocabulary(CategoryVocabulary):
         stored_content_category = None
         if IAnnex.providedBy(context):
             container = context.aq_parent
-            stored_content_category = context.content_category
+            stored_content_category = getattr(context, 'content_category', None)
         if container.meta_type == 'MeetingItem':
             tool = api.portal.get_tool('portal_plonemeeting')
             isManager = tool.isManager(context)
@@ -1377,7 +1379,7 @@ class PMCategoryVocabulary(CategoryVocabulary):
         stored_content_category = None
         if IAnnex.providedBy(context):
             container = context.aq_parent
-            stored_content_category = context.content_category
+            stored_content_category = getattr(context, 'content_category', None)
         if container.meta_type == 'MeetingItem':
             tool = api.portal.get_tool('portal_plonemeeting')
             isManager = tool.isManager(context)

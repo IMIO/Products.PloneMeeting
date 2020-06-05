@@ -7,6 +7,7 @@
 # GNU General Public License (GPL)
 #
 
+from plone import api
 from plone.app.robotframework.testing import REMOTE_LIBRARY_BUNDLE_FIXTURE
 from plone.app.testing import FunctionalTesting
 from plone.app.testing import IntegrationTesting
@@ -14,12 +15,23 @@ from plone.app.testing import PloneWithPackageLayer
 from plone.app.testing.bbb import _createMemberarea
 from plone.testing import z2
 from plone.testing import zca
+from Products.CMFPlone.utils import base_hasattr
 from zope.globalrequest.local import setLocal
 
 import Products.PloneMeeting
 
 
 class PMLayer(PloneWithPackageLayer):
+
+    def setUpZope(self, app, configurationContext):
+        from App.config import _config
+        if not base_hasattr(_config, 'product_config'):
+            _config.product_config = {
+                'imio.zamqp.core':
+                {'ws_url': 'http://localhost:6543', 'ws_password': 'test',
+                 'ws_login': 'testuser', 'routing_key': '019999',
+                 'client_id': '019999'}}
+        super(PMLayer, self).setUpZope(app, configurationContext)
 
     def setUpPloneSite(self, portal):
         setLocal('request', portal.REQUEST)
@@ -31,7 +43,9 @@ class PMLayer(PloneWithPackageLayer):
                        'pmCreator2',
                        'siteadmin',
                        'powerobserver1'):
-            _createMemberarea(portal, userId)
+            # this layer is used by imio.pm.wsclient
+            if api.user.get(userId):
+                _createMemberarea(portal, userId)
 
 
 PM_ZCML = zca.ZCMLSandbox(filename="testing.zcml",

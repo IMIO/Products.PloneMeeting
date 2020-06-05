@@ -61,7 +61,8 @@ class AdviceDelaysView(BrowserView):
         else:
             # advice is automatic, only Managers and MeetingManagers can change an automatic advice delay
             # and only if the advice still could not be given or if it is currently editable
-            if not self.tool.isManager(self.context) or not _checkPermission(ModifyPortalContent, self.context):
+            if not self.tool.isManager(self.context) or \
+               not _checkPermission(ModifyPortalContent, self.context):
                 return False
 
         return True
@@ -71,7 +72,8 @@ class AdviceDelaysView(BrowserView):
            p_mayEdit is passed so it can be used in the expression,
            indeed, we have 2 usecases here :
            - either we have users able to edit and we want to restrict some values;
-           - or we have users not able to edit but we want to let them the possibility to change an advice delay.'''
+           - or we have users not able to edit but we want to let them the possibility
+             to change an advice delay.'''
         res = []
         # evaluate the 'available_on' TAL expression defined on each linkedRows
         availableLinkedRows = []
@@ -83,8 +85,7 @@ class AdviceDelaysView(BrowserView):
         for linkedRow in linkedRows:
             eRes = mayEdit
             if linkedRow['available_on']:
-                eRes = self.context._evalAdviceAvailableOn(
-                    linkedRow['available_on'], self.tool, self.cfg, mayEdit=mayEdit)
+                eRes = self.context._evalAdviceAvailableOn(linkedRow['available_on'], mayEdit=mayEdit)
             if eRes:
                 availableLinkedRows.append(linkedRow)
         self.request.set('managing_available_delays', False)

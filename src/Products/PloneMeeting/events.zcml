@@ -9,6 +9,10 @@
               handler=".events.onItemWillBeAdded" />
 
   <subscriber for=".interfaces.IMeetingItem
+                   Products.Archetypes.interfaces.IObjectInitializedEvent"
+              handler=".events.onItemInitialized" />
+
+  <subscriber for=".interfaces.IMeetingItem
                    zope.lifecycleevent.interfaces.IObjectAddedEvent"
               handler=".events.onItemAdded" />
 

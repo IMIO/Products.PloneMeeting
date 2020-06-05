@@ -75,6 +75,7 @@ from Products.PloneMeeting.config import ROOT_FOLDER
 from Products.PloneMeeting.config import SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY
 from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.profiles import PloneMeetingConfiguration
+from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import add_wf_history_action
 from Products.PloneMeeting.utils import fplog
 from Products.PloneMeeting.utils import get_annexes
@@ -1512,18 +1513,14 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         if not mailing_lists:
             return res
         try:
+            extra_expr_ctx = _base_extra_expr_ctx(obj)
+            extra_expr_ctx.update({'obj': obj, })
             for line in mailing_lists.split('\n'):
                 name, expression, userIds = line.split(';')
-                member = api.user.get_current()
-                cfg = self.getMeetingConfig(obj)
-                data = {'obj': obj,
-                        'member': member,
-                        'tool': self,
-                        'cfg': cfg}
                 if not expression or _evaluateExpression(obj,
                                                          expression,
                                                          roles_bypassing_expression=[],
-                                                         extra_expr_ctx=data,
+                                                         extra_expr_ctx=extra_expr_ctx,
                                                          raise_on_error=True):
                     res.append(name.strip())
         except Exception, exc:
