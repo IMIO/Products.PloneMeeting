@@ -21,6 +21,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA.
 #
+import os
 
 from plone import api
 from Products.GenericSetup.context import DirectoryImportContext
@@ -233,9 +234,16 @@ class testSetup(PloneMeetingTestCase):
         self.create('MeetingItem')
         brains = self.catalog(portal_type=cfg.getItemTypeName())
         if HAS_SOLR:
+            self.assertTrue(self.portal.portal_quickinstaller.isProductInstalled('collective.solr'),
+                            msg="collective.solr is not installed")
+            self.assertTrue(api.portal.get_registry_record('collective.solr.active'),
+                            msg="collective.solr is not active")
+            self.assertEqual(api.portal.get_registry_record('collective.solr.port'), int(os.environ['SOLR_PORT']))
+            self.assertEqual(api.portal.get_registry_record('collective.solr.required'), [u''])
             self.assertEqual(brains[0].__class__.__name__, 'PloneFlare')
         else:
             self.assertEqual(brains[0].__class__.__name__, 'mybrains')
+            pm_logger.info("HAS_SOLR is False so there is nothing more to check")
 
 
 def test_suite():
