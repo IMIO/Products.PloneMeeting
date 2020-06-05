@@ -7,13 +7,17 @@ Changelog
 
 - Use `Products.Archetypes.interfaces.IObjectInitializedEvent` and `zope.lifecycleevent.interfaces.IObjectAddedEvent`
   to initialize freshly created item to make `plone.restapi` happy or item is not initialized and attributes
-  like `adviceIndex` are not added.  With `plone.restapi`, validation is done after `ObjectInitializedEvent` but before `ObjectAddedEvent`
+  like `adviceIndex` are not added.  With `plone.restapi`, validation is done after `ObjectInitializedEvent` but before `ObjectAddedEvent`.
+  Implement also `MeetingItem.initializeArchetype` in which we call `events.item_added_or_initialized` or
+  some fields are not writable for `plone.restapi` because `MeetingMember` role is not given...
   [gbastien]
 - Added missing icon `wait_advices_from.png`
 - Do not fail in `vocabularies.PMCategoryVocabulary` when creating an annex using `plone.restapi`,
   validation is done before annex is fully initialized
 - Set `enforceVocabulary=True` for `MeetingItem.proposingGroup`, `MeetingItem.proposingGroupWithGroupInCharge`, `MeetingItem.groupsInCharge`
   and `MeetingItem.optionalAdvisers` so validation is done correctly when using `plone.restapi`
+- Make `Meeting` and `MeetingItem` implements `IATMeetingContent(IMeetingContent)` instead `IMeetingContent` to be able to define an adapter
+  for `AT` contents only
 
 4.1.25.1 (2020-06-02)
 ---------------------

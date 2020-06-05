@@ -79,6 +79,7 @@ from Products.PloneMeeting.config import PROJECTNAME
 from Products.PloneMeeting.config import READER_USECASES
 from Products.PloneMeeting.config import SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY
 from Products.PloneMeeting.config import WriteMarginalNotes
+from Products.PloneMeeting.events import item_added_or_initialized
 from Products.PloneMeeting.interfaces import IMeetingItem
 from Products.PloneMeeting.interfaces import IMeetingItemWorkflowActions
 from Products.PloneMeeting.interfaces import IMeetingItemWorkflowConditions
@@ -5387,6 +5388,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            advice_info['hidden_during_redaction']:
             is_given = False
         return is_given
+
+    security.declareProtected(ModifyPortalContent, 'initializeArchetype')
+
+    def initializeArchetype(self, **kwargs):
+        '''Override to call item_added_or_initialized to make plone.restapi happy.'''
+        item_added_or_initialized(self)
+        return BaseFolder.initializeArchetype(self, **kwargs)
 
     security.declareProtected(ModifyPortalContent, 'processForm')
 

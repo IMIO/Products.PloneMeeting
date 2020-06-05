@@ -99,12 +99,17 @@ class IMeetingContent(Interface):
     """
 
 
-class IMeetingItem(IMeetingContent, ILabelSupport):
+class IATMeetingContent(IMeetingContent):
+    """Base marker interface for AT content related elements
+    """
+
+
+class IMeetingItem(IATMeetingContent, ILabelSupport):
     """Marker interface for .MeetingItem.MeetingItem
     """
 
 
-class IMeeting(IMeetingContent):
+class IMeeting(IATMeetingContent):
     """Marker interface for .Meeting.Meeting
     """
 
