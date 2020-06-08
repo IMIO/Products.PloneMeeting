@@ -1514,6 +1514,69 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(itemWithManualLink.getRawManuallyLinkedItems(),
                          [item.UID()])
 
+    def test_pm_CloneItemWithAdvices(self):
+        '''When an item is cloned with option inheritAdvices=False.
+           New advices are asked on resulting item and adviceIndex is correct.'''
+        cfg = self.meetingConfig
+        customAdvisers = [{'row_id': 'unique_id_123',
+                           'org': self.developers_uid,
+                           'gives_auto_advice_on': '',
+                           'for_item_created_from': '2012/01/01',
+                           'is_linked_to_previous_row': '1',
+                           'delay': '5'},
+                          {'row_id': 'unique_id_456',
+                           'org': self.developers_uid,
+                           'gives_auto_advice_on': '',
+                           'for_item_created_from': '2012/01/01',
+                           'is_linked_to_previous_row': '1',
+                           'delay': '10'}]
+        cfg.setCustomAdvisers(customAdvisers)
+        cfg.setItemAdviceStates(('validated', ))
+        cfg.setItemAdviceEditStates(('validated', ))
+        cfg.setItemAdviceViewStates(('validated', ))
+        cfg.at_post_edit_script()
+
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        item.setOptionalAdvisers(
+            (self.vendors_uid,
+             '{0}__rowid__unique_id_123'.format(self.developers_uid)))
+        self.validateItem(item)
+        # give advices
+        self.changeUser('pmAdviser1')
+        createContentInContainer(item,
+                                 'meetingadvice',
+                                 **{'advice_group': self.developers_uid,
+                                    'advice_type': u'positive',
+                                    'advice_hide_during_redaction': False,
+                                    'advice_comment': RichTextValue(u'My comment')})
+        self.changeUser('pmReviewer2')
+        createContentInContainer(item,
+                                 'meetingadvice',
+                                 **{'advice_group': self.vendors_uid,
+                                    'advice_type': u'positive',
+                                    'advice_hide_during_redaction': False,
+                                    'advice_comment': RichTextValue(u'My comment')})
+        # clone item
+        self.changeUser('pmCreator1')
+        clonedItem = item.clone()
+        for adviceInfo in clonedItem.adviceIndex.values():
+            self.assertFalse(adviceInfo['advice_addable'])
+            self.assertFalse(adviceInfo['advice_editable'])
+            self.assertIsNone(adviceInfo['advice_given_on'])
+            self.assertIsNone(adviceInfo['delay_started_on'])
+            self.assertIsNone(adviceInfo['delay_stopped_on'])
+            if adviceInfo['delay_infos']:
+                self.assertIsNone(adviceInfo['delay_infos']['delay_status_when_stopped'])
+                self.assertIsNone(adviceInfo['delay_infos']['limit_date'])
+                self.assertIsNone(adviceInfo['delay_infos']['delay_when_stopped'])
+                self.assertEqual(adviceInfo['delay_infos']['delay_status'], 'not_yet_giveable')
+                self.assertEqual(adviceInfo['delay_infos']['delay'], 5)
+                self.assertEqual(adviceInfo['delay_infos']['left_delay'], 5)
+            else:
+                self.assertEqual(adviceInfo['delay_infos'], {})
+            self.assertEqual(adviceInfo['type'], 'not_given')
+
     def test_pm_CloneItemWithInheritAdvices(self):
         '''When an item is cloned with option inheritAdvices=True.
            It also needs to be linked to predecessor by an automatic link,
