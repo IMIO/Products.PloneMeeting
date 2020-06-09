@@ -18,6 +18,8 @@ Changelog
   and `MeetingItem.optionalAdvisers` so validation is done correctly when using `plone.restapi`
 - Make `Meeting` and `MeetingItem` implements `IATMeetingContent(IMeetingContent)` instead `IMeetingContent` to be able to define an adapter
   for `AT` contents only
+- Optimized item duplication process, remove images, advices and relevant annexes (that are not kept) using `_delObject(suppress_events=True)`
+  in `zope.lifecycleevent.ObjectCopiedEvent` `onItemCopied` event handler
 
 4.1.25.1 (2020-06-02)
 ---------------------
