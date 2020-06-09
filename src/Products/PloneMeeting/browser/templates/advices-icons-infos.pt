@@ -303,7 +303,7 @@
                                                                                                                                    i18n:translate=""
                                                                                                                                    i18n:domain="plone"
                                                                                                                                    tal:content="item_state_infos/state_title"
-                                                                                                                                   tal:attributes="class string:label-state-${item_review_state}"></span>).</span>
+                                                                                                                                   tal:attributes="class string:state-${item_review_state}"></span>).</span>
                     <br /><span tal:condition="advice/delay_infos"
                                 class="discreet"
                                 i18n:translate="">Once viewable, the adviser will have <span style="font-weight: bold;" i18n:name="advice_delay" tal:content="advice/delay_infos/delay">15</span> days to give the advice.</span>
@@ -314,7 +314,7 @@
                                                                                                        i18n:translate=""
                                                                                                        i18n:domain="plone"
                                                                                                        tal:content="item_state_infos/state_title"
-                                                                                                       tal:attributes="class string:label-state-${item_review_state}"></span>)</span>.
+                                                                                                       tal:attributes="class string:state-${item_review_state}"></span>)</span>.
 
                 </tal:itemViewableButNoMoreAdviseableWithoutDelay>
                 <tal:itemViewableButNoMoreAdviseableWithDelay condition="python: not adviceAlterable and advice['item_viewable_by_advisers'] and advice['delay_infos'] and not advice['delay_infos']['delay_status'] == 'timed_out' and not advice['advice_addable']">
@@ -324,7 +324,7 @@
                              i18n:translate=""
                              i18n:domain="plone"
                              tal:content="item_state_infos/state_title"
-                             tal:attributes="class string:label-state-${item_review_state}"></span>)
+                             tal:attributes="class string:state-${item_review_state}"></span>)
                     </span>,
                     <tal:advice_was_not_given_during_delay tal:condition="advice/delay_stopped_on">
                     <span class="discreet"
