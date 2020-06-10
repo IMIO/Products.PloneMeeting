@@ -20,6 +20,7 @@ Changelog
   for `AT` contents only
 - Optimized item duplication process, remove images, advices and relevant annexes (that are not kept) using `_delObject(suppress_events=True)`
   in `zope.lifecycleevent.ObjectCopiedEvent` `onItemCopied` event handler
+- In `MeetingConfig.getMeetingsAcceptingItems`, extracted computation of catalog query into `MeetingConfig._getMeetingsAcceptingItemsQuery`
 
 4.1.25.1 (2020-06-02)
 ---------------------
