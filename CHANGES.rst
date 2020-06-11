@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.1.26 (unreleased)
+4.1.26 (2020-06-11)
 -------------------
 
 - Use `Products.Archetypes.interfaces.IObjectInitializedEvent` and `zope.lifecycleevent.interfaces.IObjectAddedEvent`
