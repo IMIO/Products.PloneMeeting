@@ -5,8 +5,7 @@ Changelog
 4.1.27 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- Reworked `wait_advices_from.png` so it is correctly displayed with a background
 
 4.1.26 (2020-06-11)
 -------------------
@@ -16,7 +15,6 @@ Changelog
   like `adviceIndex` are not added.  With `plone.restapi`, validation is done after `ObjectInitializedEvent` but before `ObjectAddedEvent`.
   Implement also `MeetingItem.initializeArchetype` in which we call `events.item_added_or_initialized` or
   some fields are not writable for `plone.restapi` because `MeetingMember` role is not given...
-  [gbastien]
 - Added missing icon `wait_advices_from.png`
 - Do not fail in `vocabularies.PMCategoryVocabulary` when creating an annex using `plone.restapi`,
   validation is done before annex is fully initialized
