@@ -22,6 +22,7 @@ Changelog
   in `zope.lifecycleevent.ObjectCopiedEvent` `onItemCopied` event handler
 - In `MeetingConfig.getMeetingsAcceptingItems`, extracted computation of catalog query into `MeetingConfig._getMeetingsAcceptingItemsQuery`
 - An item may be taken over by members of the `proposingGroup` when it is decided
+- Include `permissions.zcml` of package `plone.app.controlpanel` before loading `plone.restapi`
 
 4.1.25.1 (2020-06-02)
 ---------------------
