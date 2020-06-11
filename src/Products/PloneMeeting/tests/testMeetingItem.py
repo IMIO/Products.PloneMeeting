@@ -4060,6 +4060,29 @@ class testMeetingItem(PloneMeetingTestCase):
         view.toggle(takenOverByFrom=item.getTakenOverBy())
         self.assertTrue(not item.getTakenOverBy())
 
+    def test_pm_MayTakeOverDecidedItem(self):
+        """By default, a decided item may be taken over by a member of the proposingGroup."""
+        cfg = self.meetingConfig
+        self.assertTrue('accepted' in cfg.getItemDecidedStates())
+        self.assertTrue('delayed' in cfg.getItemDecidedStates())
+        self.changeUser('pmCreator1')
+        item1 = self.create('MeetingItem', decision=self.decisionText)
+        item2 = self.create('MeetingItem', decision=self.decisionText)
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime('2020/06/11'))
+        self.presentItem(item1)
+        self.presentItem(item2)
+        self.changeUser('pmCreator1')
+        self.assertFalse(item1.adapted().mayTakeOver())
+        self.assertFalse(item2.adapted().mayTakeOver())
+        self.changeUser('pmManager')
+        self.decideMeeting(meeting)
+        self.do(item1, 'accept')
+        self.do(item2, 'delay')
+        self.changeUser('pmCreator1')
+        self.assertTrue(item1.adapted().mayTakeOver())
+        self.assertTrue(item2.adapted().mayTakeOver())
+
     def test_pm_HistorizedTakenOverBy(self):
         '''Test the functionnality under takenOverBy that will automatically set back original
            user that took over item first time.  So if a user take over an item in state1, it is saved.

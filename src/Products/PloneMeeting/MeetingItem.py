@@ -1894,7 +1894,20 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Check doc in interfaces.py.'''
         item = self.getSelf()
         wfTool = api.portal.get_tool('portal_workflow')
-        return bool(wfTool.getTransitionsFor(item))
+        res = False
+        # user have WF transitions to trigger
+        if bool(wfTool.getTransitionsFor(item)):
+            res = True
+        else:
+            # item is decided and user is member of the proposingGroup
+            tool = api.portal.get_tool('portal_plonemeeting')
+            cfg = tool.getMeetingConfig(item)
+            item_state = item.queryState()
+            if item_state in cfg.getItemDecidedStates() and \
+               item.adapted()._getGroupManagingItem(item_state, theObject=False) in \
+               tool.get_orgs_for_user(the_objects=False):
+                res = True
+        return res
 
     security.declareProtected(ModifyPortalContent, 'setTakenOverBy')
 
