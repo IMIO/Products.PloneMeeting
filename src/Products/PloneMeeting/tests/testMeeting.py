@@ -2563,7 +2563,7 @@ class testMeeting(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         self.presentItem(item)
         item.setPreferredMeeting(meeting.UID())
-        text = '<p>Text with image <img src="https://i.picsum.photos/id/1062/600/500.jpg"/>.</p>'
+        text = '<p>Text with image <img src="%s"/>.</p>' % self.external_image4
         item.setDecision(text)
         item._update_after_edit()
         self.deleteAsManager(meeting.UID())
@@ -2889,7 +2889,7 @@ class testMeeting(PloneMeetingTestCase):
         cfg = self.meetingConfig
         self.changeUser('pmManager')
         # creation time
-        text = '<p>Working external image <img src="https://i.picsum.photos/id/1062/600/500.jpg"/>.</p>'
+        text = '<p>Working external image <img src="%s"/>.</p>' % self.external_image4
         pmFolder = self.getMeetingFolder()
         # do not use self.create to be sure that it works correctly with invokeFactory
         meetingId = pmFolder.invokeFactory(cfg.getMeetingTypeName(),
@@ -2910,7 +2910,7 @@ class testMeeting(PloneMeetingTestCase):
             '<p>Working external image <img src="resolveuid/{0}">.</p>'.format(img.UID()))
 
         # test using the quickedit
-        text = '<p>Working external image <img src="https://i.picsum.photos/id/1025/400/300.jpg"/>.</p>'
+        text = '<p>Working external image <img src="%s"/>.</p>' % self.external_image2
         setFieldFromAjax(meeting, 'observations', text)
         self.assertTrue('1025-400x300.jpg' in meeting.objectIds())
         img2 = meeting.get('1025-400x300.jpg')
@@ -2925,7 +2925,7 @@ class testMeeting(PloneMeetingTestCase):
             '<p>Working external image <img src="resolveuid/{0}">.</p>'.format(img2.UID()))
 
         # test using processForm, aka full edit form
-        text = '<p>Working external image <img src="https://i.picsum.photos/id/22/400/400.jpg"/>.</p>'
+        text = '<p>Working external image <img src="%s"/>.</p>' % self.external_image1
         meeting.setObservations(text)
         meeting.processForm()
         self.assertTrue('22-400x400.jpg' in meeting.objectIds())
