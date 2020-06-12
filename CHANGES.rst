@@ -2,8 +2,8 @@ Changelog
 =========
 
 
-4.1.27 (unreleased)
--------------------
+4.1.26.1 (unreleased)
+---------------------
 
 - Reworked `wait_advices_from.png` so it is correctly displayed with a background
 - Search plone groups based on org UID instead of title to avoid mismatch.
