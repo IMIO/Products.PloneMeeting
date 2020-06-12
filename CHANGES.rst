@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.1.26.1 (unreleased)
+4.1.26.1 (2020-06-12)
 ---------------------
 
 - Reworked `wait_advices_from.png` so it is correctly displayed with a background
