@@ -112,7 +112,8 @@ class Migrate_To_4105(Migrate_To_4104):
         self.ps.runImportStepFromProfile('profile-Products.PloneMeeting:default', 'typeinfo')
         # reload MeetingConfigs as some actions changed
         self.reloadMeetingConfigs()
-        self.upgradeAll()
+        self.upgradeAll(omit=['Products.PloneMeeting:default',
+                              self.profile_name.replace('profile-', '')])
 
 
 def migrate(context):
