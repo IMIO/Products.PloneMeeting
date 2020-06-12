@@ -6,6 +6,8 @@ Changelog
 -------------------
 
 - Reworked `wait_advices_from.png` so it is correctly displayed with a background
+- Search plone groups based on org UID instead of title to avoid mismatch.
+  [odelaere]
 
 4.1.26 (2020-06-11)
 -------------------
