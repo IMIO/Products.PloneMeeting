@@ -22,12 +22,16 @@ class Migrate_To_4108(Migrator):
     def run(self, from_migration_to_41=False):
         logger.info('Migrating to PloneMeeting 4108...')
         self._correctDashboardCollectionsQuery()
+        # fix wrong condition for 'searchmyitemstakenover'
+        # that used omittedSuffixes instead omitted_suffixes
+        self.updateTALConditions(old_word='omittedSuffixes', new_word='omitted_suffixes')
 
 
 def migrate(context):
     '''This migration function will:
 
-       1) Make sure format of DashboardCollection.query is correct.
+       1) Make sure format of DashboardCollection.query is correct;
+       2) Fix condition for 'searchmyitemstakenover'.
     '''
     migrator = Migrate_To_4108(context)
     migrator.run()
