@@ -1650,13 +1650,13 @@ def duplicate_portal_type(portalTypeName, duplicatedPortalTypeId):
     return duplicatedPortalType
 
 
-def org_id_to_uid(org_info, raise_on_error=True):
+def org_id_to_uid(org_info, raise_on_error=True, ignore_underscore=False):
     """Returns the corresponding org based value for given org_info based value.
        'developers', will return 'orguid'.
        'developers_creators' will return 'orguid_creators'."""
     own_org = get_own_organization()
     try:
-        if '_' in org_info:
+        if '_' in org_info and not ignore_underscore:
             org_path, suffix = org_info.split('_')
             org = own_org.restrictedTraverse(org_path.encode('utf-8'))
             return get_plone_group_id(org.UID(), suffix)
