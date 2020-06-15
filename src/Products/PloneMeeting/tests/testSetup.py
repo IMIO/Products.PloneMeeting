@@ -21,9 +21,11 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA.
 #
+import os
 
 from plone import api
 from Products.GenericSetup.context import DirectoryImportContext
+from Products.PloneMeeting.config import HAS_SOLR
 from Products.PloneMeeting.exportimport.content import ToolInitializer
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
@@ -108,14 +110,14 @@ class testSetup(PloneMeetingTestCase):
             for cfg in tool.objectValues('MeetingConfig'):
                 view = cfg.restrictedTraverse('@@check-pod-templates')
                 messages = view.manageMessages()
-                self.assertEquals(messages['error'], [])
-                self.assertEquals(messages['no_pod_portal_types'], [])
+                self.assertEqual(messages['error'], [])
+                self.assertEqual(messages['no_pod_portal_types'], [])
                 # check that there are no new keys in messages
-                self.assertEquals(messages.keys(),
-                                  ['error', 'no_obj_found',
-                                   'no_pod_portal_types', 'not_enabled',
-                                   'dashboard_templates_not_managed',
-                                   'style_templates_not_managed', 'clean'])
+                self.assertEqual(messages.keys(),
+                                 ['error', 'no_obj_found',
+                                  'no_pod_portal_types', 'not_enabled',
+                                  'dashboard_templates_not_managed',
+                                  'style_templates_not_managed', 'clean'])
                 # access application to check that not errors are raised,
                 # especially regarding the searches displayed in the collection portlet
                 # make sure extra searches are added
@@ -223,6 +225,25 @@ class testSetup(PloneMeetingTestCase):
         meeting_types = [pt for pt in portal_types if pt.startswith('Meeting')]
         for meeting_type in meeting_types:
             self.failIf(set(meeting_types).difference(factory_types))
+
+    def test_pm_EnsureSolrActivated(self):
+        """ """
+        pm_logger.info("HAS_SOLR %s" % HAS_SOLR)
+        cfg = self.meetingConfig
+        self.changeUser('pmManager')
+        self.create('MeetingItem')
+        brains = self.catalog(portal_type=cfg.getItemTypeName())
+        if HAS_SOLR:
+            self.assertTrue(self.portal.portal_quickinstaller.isProductInstalled('collective.solr'),
+                            msg="collective.solr is not installed")
+            self.assertTrue(api.portal.get_registry_record('collective.solr.active'),
+                            msg="collective.solr is not active")
+            self.assertEqual(api.portal.get_registry_record('collective.solr.port'), int(os.environ['SOLR_PORT']))
+            self.assertEqual(api.portal.get_registry_record('collective.solr.required'), [u''])
+            self.assertEqual(brains[0].__class__.__name__, 'PloneFlare')
+        else:
+            self.assertEqual(brains[0].__class__.__name__, 'mybrains')
+            pm_logger.info("HAS_SOLR is False so there is nothing more to check")
 
 
 def test_suite():

@@ -2,6 +2,7 @@ Changelog
 =========
 
 
+<<<<<<< HEAD
 4.2a6 (unreleased)
 ------------------
 
@@ -11,6 +12,7 @@ Changelog
 - Merged changes from 4.1.23
 - Merged changes from 4.1.24
 - Merged changes from 4.1.25
+- Merged changes from 4.1.26
 
 4.2a5 (2020-03-17)
 ------------------
@@ -43,7 +45,50 @@ Changelog
 - Use roles 'Reviewer' and 'Contributor' in meetingadvice_workflow
 - Added bypass for users having 'Manage portal' in MeetingItemWorkflowConditions in 'mayWait_advices_from', 'mayValidate' and 'mayPresent'
 
-4.1.25 (unreleased)
+4.1.26.2 (unreleased)
+---------------------
+
+- Fixed bug in `DashboardCollection` stored `query`, instead list of `<dict>`, was sometimes list of `<instance>`
+ (???), added upgrade step to 4108, this is necessary for `plone.restapi` to serialize `DashboardCollection` to json
+
+4.1.26.1 (2020-06-12)
+---------------------
+
+- Reworked `wait_advices_from.png` so it is correctly displayed with a background
+- Search plone groups based on org UID instead of title to avoid mismatch.
+  [odelaere]
+- Fix `Migrate_To_4105`, call to `upgradeAll` should always omit profiles `Products.PloneMeeting` and `self.profile_name`
+- Display `DashboardCollection` id next to title on `MeetingConfig` view
+
+4.1.26 (2020-06-11)
+-------------------
+
+- Use `Products.Archetypes.interfaces.IObjectInitializedEvent` and `zope.lifecycleevent.interfaces.IObjectAddedEvent`
+  to initialize freshly created item to make `plone.restapi` happy or item is not initialized and attributes
+  like `adviceIndex` are not added.  With `plone.restapi`, validation is done after `ObjectInitializedEvent` but before `ObjectAddedEvent`.
+  Implement also `MeetingItem.initializeArchetype` in which we call `events.item_added_or_initialized` or
+  some fields are not writable for `plone.restapi` because `MeetingMember` role is not given...
+- Added missing icon `wait_advices_from.png`
+- Do not fail in `vocabularies.PMCategoryVocabulary` when creating an annex using `plone.restapi`,
+  validation is done before annex is fully initialized
+- Set `enforceVocabulary=True` for `MeetingItem.proposingGroup`, `MeetingItem.proposingGroupWithGroupInCharge`, `MeetingItem.groupsInCharge`
+  and `MeetingItem.optionalAdvisers` so validation is done correctly when using `plone.restapi`
+- Make `Meeting` and `MeetingItem` implements `IATMeetingContent(IMeetingContent)` instead `IMeetingContent` to be able to define an adapter
+  for `AT` contents only
+- Optimized item duplication process, remove images, advices and relevant annexes (that are not kept) using `_delObject(suppress_events=True)`
+  in `zope.lifecycleevent.ObjectCopiedEvent` `onItemCopied` event handler
+- In `MeetingConfig.getMeetingsAcceptingItems`, extracted computation of catalog query into `MeetingConfig._getMeetingsAcceptingItemsQuery`
+- An item may be taken over by members of the `proposingGroup` when it is decided
+- Include `permissions.zcml` of package `plone.app.controlpanel` before loading `plone.restapi`
+
+4.1.25.1 (2020-06-02)
+---------------------
+
+- Fixed `Meeting.validate_date` that checks that another meeting does not already use date.
+  Now it is possible to create 2 meetings one hour apart, more over we avoid `portal_catalog` search with
+  `getDate=list of dates` that breaks `collective.solr` (`DateIndex` receiving a list of dates)
+
+4.1.25 (2020-05-28)
 -------------------
 
 - Refactored the way a blank item is created to avoid impossibility to insert image during creation :
@@ -1891,10 +1936,6 @@ Changelog
 - Copy groups to add automatically is now evaluated at each item edition, not only on creation
 - Added possibility to decide several items at once when on a decided meeting
 - Meeting's start date, mid date and end date have a granularity of 1 minute instead of 5 minutes
-
-2.1.4dev
---------
-- Nothing yet
 
 2.1.3 (2012-10-03)
 ------------------

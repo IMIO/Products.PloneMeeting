@@ -1825,7 +1825,10 @@ def normalize_id(id):
 
 def add_wf_history_action(obj, action_name, action_label, user_id=None):
     wfTool = api.portal.get_tool('portal_workflow')
-    wf = wfTool.getWorkflowsFor(obj)[0]
+    wfs = wfTool.getWorkflowsFor(obj)
+    if not wfs:
+        return
+    wf = wfs[0]
     wfName = wf.id
     # get review_state from last event if any
     events = obj.workflow_history[wfName]

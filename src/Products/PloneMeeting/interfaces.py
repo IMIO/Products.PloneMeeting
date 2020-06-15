@@ -99,12 +99,17 @@ class IMeetingContent(Interface):
     """
 
 
-class IMeetingItem(IMeetingContent, ILabelSupport):
+class IATMeetingContent(IMeetingContent):
+    """Base marker interface for AT content related elements
+    """
+
+
+class IMeetingItem(IATMeetingContent, ILabelSupport):
     """Marker interface for .MeetingItem.MeetingItem
     """
 
 
-class IMeeting(IMeetingContent):
+class IMeeting(IATMeetingContent):
     """Marker interface for .Meeting.Meeting
     """
 
@@ -212,7 +217,10 @@ class IMeetingItemDocumentation:
         '''Return True if item is complete when using MeetingItem.completeness.'''
     def mayTakeOver():
         '''This manage the condition that check if MeetingItem.takenOverBy
-           may be edited by the current user.'''
+           may be edited by the current user.
+           By default, item may be taken over :
+           - if user has WF transitions to trigger;
+           - if user is member of the proposing group (any subgroups).'''
     def transformRichTextField(fieldName, richContent):
         '''This method is called every time an item is created or updated. It
            allows you to modify the content of any "richtext" attribute

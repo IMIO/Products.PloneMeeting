@@ -9,6 +9,10 @@
               handler=".events.onItemWillBeAdded" />
 
   <subscriber for=".interfaces.IMeetingItem
+                   Products.Archetypes.interfaces.IObjectInitializedEvent"
+              handler=".events.onItemInitialized" />
+
+  <subscriber for=".interfaces.IMeetingItem
                    zope.lifecycleevent.interfaces.IObjectAddedEvent"
               handler=".events.onItemAdded" />
 
@@ -23,6 +27,10 @@
   <subscriber for=".interfaces.IMeetingItem
                    zope.container.interfaces.IObjectRemovedEvent"
               handler=".events.onItemRemoved" />
+
+  <subscriber for=".interfaces.IMeetingItem
+                   zope.lifecycleevent.ObjectCopiedEvent"
+              handler=".events.onItemCopied" />
 
   <subscriber for=".interfaces.IMeetingItem
                    zope.lifecycleevent.ObjectMovedEvent"

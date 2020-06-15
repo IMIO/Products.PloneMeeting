@@ -2663,7 +2663,7 @@ class testAdvices(PloneMeetingTestCase):
         # give advice
         self.changeUser('pmReviewer2')
         # creation time
-        text = u'<p>Working external image <img src="https://i.picsum.photos/id/1025/400/300.jpg"/>.</p>'
+        text = u'<p>Working external image <img src="%s"/>.</p>' % self.external_image2
         advice = createContentInContainer(item,
                                           'meetingadvice',
                                           **{'advice_group': self.vendors_uid,
@@ -2673,7 +2673,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue('1025-400x300.jpg' in advice.objectIds())
 
         # test using IObjectModifiedEvent event, aka using edit form
-        text = '<p>Working external image <img src="https://i.picsum.photos/id/1062/600/500.jpg"/>.</p>'
+        text = '<p>Working external image <img src="%s"/>.</p>' % self.external_image4
         advice.advice_comment = RichTextValue(text)
         # notify modified
         notify(ObjectModifiedEvent(advice))

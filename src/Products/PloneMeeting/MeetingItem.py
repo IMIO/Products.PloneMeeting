@@ -47,7 +47,6 @@ from Products.Archetypes.atapi import StringField
 from Products.Archetypes.atapi import StringWidget
 from Products.Archetypes.atapi import TextAreaWidget
 from Products.Archetypes.atapi import TextField
-from Products.CMFCore.permissions import DeleteObjects
 from Products.CMFCore.permissions import ManagePortal
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import ReviewPortalContent
@@ -81,6 +80,7 @@ from Products.PloneMeeting.config import PROJECTNAME
 from Products.PloneMeeting.config import READER_USECASES
 from Products.PloneMeeting.config import SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY
 from Products.PloneMeeting.config import WriteMarginalNotes
+from Products.PloneMeeting.events import item_added_or_initialized
 from Products.PloneMeeting.interfaces import IMeetingItem
 from Products.PloneMeeting.interfaces import IMeetingItemWorkflowActions
 from Products.PloneMeeting.interfaces import IMeetingItemWorkflowConditions
@@ -936,6 +936,7 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         vocabulary='listProposingGroups',
+        enforceVocabulary=True,
     ),
     StringField(
         name='proposingGroupWithGroupInCharge',
@@ -948,6 +949,7 @@ schema = Schema((
         ),
         optional=True,
         vocabulary='listProposingGroupsWithGroupsInCharge',
+        enforceVocabulary=True,
     ),
     LinesField(
         name='groupsInCharge',
@@ -964,6 +966,7 @@ schema = Schema((
         optional=True,
         multiValued=1,
         vocabulary_factory='Products.PloneMeeting.vocabularies.itemgroupsinchargevocabulary',
+        enforceVocabulary=True,
     ),
     LinesField(
         name='associatedGroups',
@@ -980,6 +983,7 @@ schema = Schema((
         optional=True,
         multiValued=1,
         vocabulary_factory='Products.PloneMeeting.vocabularies.itemassociatedgroupsvocabulary',
+        enforceVocabulary=True,
     ),
     StringField(
         name='listType',
@@ -1064,7 +1068,7 @@ schema = Schema((
         ),
         multiValued=1,
         vocabulary_factory='Products.PloneMeeting.vocabularies.itemoptionaladvicesvocabulary',
-        enforceVocabulary=False,
+        enforceVocabulary=True,
     ),
     TextField(
         name='motivation',
@@ -1784,7 +1788,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             else:
                 adviser_real_uid = adviser
             # when advices are inherited, we can not ask another one for same adviser
-            if adviser_real_uid in self.adviceIndex and \
+            if adviser_real_uid in getattr(self, 'adviceIndex', {}) and \
                self.adviceIndex[adviser_real_uid]['inherited']:
                 # use getAdviceData for because we do not have every correct values
                 # stored for an inherited advice, especially 'not_asked'
@@ -1995,7 +1999,20 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Check doc in interfaces.py.'''
         item = self.getSelf()
         wfTool = api.portal.get_tool('portal_workflow')
-        return bool(wfTool.getTransitionsFor(item))
+        res = False
+        # user have WF transitions to trigger
+        if bool(wfTool.getTransitionsFor(item)):
+            res = True
+        else:
+            # item is decided and user is member of the proposingGroup
+            tool = api.portal.get_tool('portal_plonemeeting')
+            cfg = tool.getMeetingConfig(item)
+            item_state = item.queryState()
+            if item_state in cfg.getItemDecidedStates() and \
+               item.adapted()._getGroupManagingItem(item_state, theObject=False) in \
+               tool.get_orgs_for_user(the_objects=False):
+                res = True
+        return res
 
     security.declareProtected(ModifyPortalContent, 'setTakenOverBy')
 
@@ -4626,11 +4643,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def _removeEveryContainedAdvices(self):
         """Remove every contained advices."""
-        ids = []
         for advice in self.getAdvices():
-            self._grantPermissionToRole(DeleteObjects, 'Authenticated', advice)
-            ids.append(advice.getId())
-        self.manage_delObjects(ids=ids)
+            self._delObject(advice.getId(), suppress_events=True)
 
     def _adviceDelayIsTimedOut(self, groupId, computeNewDelayInfos=False):
         """Returns True if given p_advice is delay-aware and delay is timed out.
@@ -5540,6 +5554,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             is_given = False
         return is_given
 
+    security.declareProtected(ModifyPortalContent, 'initializeArchetype')
+
+    def initializeArchetype(self, **kwargs):
+        '''Override to call item_added_or_initialized to make plone.restapi happy.'''
+        item_added_or_initialized(self)
+        return BaseFolder.initializeArchetype(self, **kwargs)
+
     security.declareProtected(ModifyPortalContent, 'processForm')
 
     def processForm(self, data=1, metadata=0, REQUEST=None, values=None):
@@ -5549,7 +5570,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             self._v_previousData = rememberPreviousData(self)
             # Historize advice that were still not, this way we ensure that
             # given advices are historized with right item data
-            self._versionateAdvicesOnItemEdit()
+            if hasattr(self, 'adviceIndex'):
+                self._versionateAdvicesOnItemEdit()
         return BaseFolder.processForm(self, data=data, metadata=metadata, REQUEST=REQUEST, values=values)
 
     security.declarePublic('showOptionalAdvisers')

@@ -19,7 +19,6 @@ from collective.contact.plonegroup.config import get_registry_organizations
 from collective.eeafaceted.dashboard.utils import enableFacetedDashboardFor
 from copy import deepcopy
 from DateTime import DateTime
-from DateTime.DateTime import _findLocalTimeZoneName
 from imio.helpers.cache import cleanRamCacheFor
 from imio.helpers.cache import invalidate_cachekey_volatile_for
 from imio.prettylink.interfaces import IPrettyLink
@@ -846,14 +845,11 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         catalog = api.portal.get_tool('portal_catalog')
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        # add GMT+x value
-        localizedValue0 = value + ' ' + _findLocalTimeZoneName(0)
-        localizedValue1 = value + ' ' + _findLocalTimeZoneName(1)
-        # make sure we look for existing meetings in both possible
-        # time zones because if we just changed timezone, we could create
-        # another meeting with same date of an existing that was created with previous timezone...
-        otherMeetings = catalog(portal_type=cfg.getMeetingTypeName(),
-                                getDate=(DateTime(localizedValue0), DateTime(localizedValue1), ))
+        # DateTime('2020-05-28 11:00') will result in DateTime('2020/05/28 11:00:00 GMT+0')
+        # DateTime('2020/05/28 11:00') will result in DateTime('2020/05/28 11:00:00 GMT+2')
+        # so make sure value uses "/" instead "-"
+        value = value.replace("-", "/")
+        otherMeetings = catalog(portal_type=cfg.getMeetingTypeName(), getDate=DateTime(value))
         if otherMeetings:
             for m in otherMeetings:
                 if m.getObject() != self:
