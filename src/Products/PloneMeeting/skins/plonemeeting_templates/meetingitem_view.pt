@@ -41,13 +41,25 @@
         <td width="50%" style="padding-right: 0.5em;" tal:define="proposingGroup python: context.getProposingGroup(theObject=True)">
 
             <tal:comment replace="nothing">Proposing group (when proposingGroupWithGroupInCharge is not used)</tal:comment>
-            <div class="discreet" tal:condition="python: not 'proposingGroupWithGroupInCharge' in usedAttrs">
-                <span class="item_attribute_label"
-                      i18n:translate="PloneMeeting_label_proposingGroup"></span>:&nbsp;&nbsp;
-                <span tal:condition="nocall:proposingGroup"
-                      tal:content="proposingGroup/Title" />
-                <span tal:condition="not:nocall:proposingGroup">-</span>
-            </div>
+            <tal:proposingGroupAndGroupInCharge condition="python: not 'proposingGroupWithGroupInCharge' in usedAttrs">
+              <div class="discreet">
+                  <span class="item_attribute_label"
+                        i18n:translate="PloneMeeting_label_proposingGroup"></span>:&nbsp;&nbsp;
+                  <span tal:condition="nocall:proposingGroup"
+                        tal:content="proposingGroup/Title" />
+                  <span tal:condition="not:nocall:proposingGroup">-</span>
+              </div>
+              <tal:comment replace="nothing">Groups in charge</tal:comment>
+              <div class="discreet" tal:condition="groupsInCharge"
+                                    tal:define="groupsInCharge python: context.getGroupsInCharge(includeAuto=True);">
+                  <span class="item_attribute_label"
+                        i18n:translate="PloneMeeting_label_groupsInCharge"></span>:&nbsp;&nbsp;
+                  <tal:displayGroupsInCharge condition="groupsInCharge">
+                      <span tal:content="python: context.displayValue(context.Vocabulary('groupsInCharge')[0], groupsInCharge)" />
+                  </tal:displayGroupsInCharge>
+                  <span tal:condition="not: groupsInCharge">-</span>
+              </div>
+            </tal:proposingGroupAndGroupInCharge>
 
             <tal:comment replace="nothing">Proposing group (when proposingGroupWithGroupInCharge is used)</tal:comment>
             <div class="discreet" tal:condition="python: 'proposingGroupWithGroupInCharge' in usedAttrs">
@@ -58,17 +70,6 @@
                                                                         tal:condition="nocall:gic"
                                                                         tal:content="gic/Title" />)
                 <span tal:condition="not:nocall:proposingGroup">-</span>
-            </div>
-
-            <tal:comment replace="nothing">Groups in charge</tal:comment>
-            <div class="discreet" tal:condition="python: 'groupsInCharge' in usedAttrs"
-                                  tal:define="groupsInCharge context/getGroupsInCharge;">
-                <span class="item_attribute_label"
-                      i18n:translate="PloneMeeting_label_groupsInCharge"></span>:&nbsp;&nbsp;
-                <tal:displayGroupsInCharge condition="groupsInCharge">
-                    <span metal:use-macro="python: here.widget('groupsInCharge', mode='view')" />
-                </tal:displayGroupsInCharge>
-                <span tal:condition="not: groupsInCharge">-</span>
             </div>
 
             <tal:comment replace="nothing">Associated groups</tal:comment>
