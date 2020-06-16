@@ -15,6 +15,7 @@ Changelog
   `MeetingConfig.includeGroupsInChargeDefinedOnProposingGroup=True` or from the category when
   `MeetingConfig.includeGroupsInChargeDefinedOnCategory=True`.
   Set `autoInclude=True` by default instead `False` for `MeetingItem.getGroupsInCharge`
+- Fix email_from_address in migration 4108 so it is unique for each customers and helps to lower the spam score.
 
 4.1.26.1 (2020-06-12)
 ---------------------

@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
+from plone.app.controlpanel.mail import MailControlPanelAdapter
 from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator
+from Products.PloneMeeting.utils import get_public_url
 from copy import deepcopy
 
 
@@ -19,12 +21,22 @@ class Migrate_To_4108(Migrator):
                     search.setQuery(query)
         logger.info('Done.')
 
+    def fix_email_from_address(self):
+        mail_panel_adapter = MailControlPanelAdapter(self.portal)
+        mail_address = mail_panel_adapter.get_email_from_address().strip()
+        if mail_address.endswith("@imio.be"):
+            public_url = get_public_url(self.portal)
+            mail_address = public_url.replace("https://", "")\
+                .replace("-pm.imio-app", "-delib@imio")
+        mail_panel_adapter.set_email_from_address(mail_address.strip())
+
     def run(self, from_migration_to_41=False):
         logger.info('Migrating to PloneMeeting 4108...')
         self._correctDashboardCollectionsQuery()
         # fix wrong condition for 'searchmyitemstakenover'
         # that used omittedSuffixes instead omitted_suffixes
         self.updateTALConditions(old_word='omittedSuffixes', new_word='omitted_suffixes')
+        self.fix_email_from_address()
 
 
 def migrate(context):
@@ -32,6 +44,7 @@ def migrate(context):
 
        1) Make sure format of DashboardCollection.query is correct;
        2) Fix condition for 'searchmyitemstakenover'.
+       3) Fix mail sender address.
     '''
     migrator = Migrate_To_4108(context)
     migrator.run()
