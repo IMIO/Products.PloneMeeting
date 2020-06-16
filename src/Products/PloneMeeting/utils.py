@@ -1653,7 +1653,11 @@ def duplicate_portal_type(portalTypeName, duplicatedPortalTypeId):
 def org_id_to_uid(org_info, raise_on_error=True, ignore_underscore=False):
     """Returns the corresponding org based value for given org_info based value.
        'developers', will return 'orguid'.
-       'developers_creators' will return 'orguid_creators'."""
+       'developers_creators' will return 'orguid_creators'.
+       If p_ignore_underscore=True, we specifically do not want to manage
+       something like 'developers_creators' but we have an organization with
+       a '_' in it's id which is not possible by default except when
+       organizations were imported."""
     own_org = get_own_organization()
     try:
         if '_' in org_info and not ignore_underscore:
