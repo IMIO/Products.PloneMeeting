@@ -51,6 +51,7 @@ from Products.PloneMeeting.MeetingConfig import PROPOSINGGROUPPREFIX
 from Products.PloneMeeting.MeetingConfig import SUFFIXPROFILEPREFIX
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
+from tempfile import mkdtemp
 from time import sleep
 from zExceptions import Redirect
 from zope.annotation import IAnnotations
@@ -834,6 +835,23 @@ class testAnnexes(PloneMeetingTestCase):
         not_converted_annex = self.addAnnex(item)
         self.assertFalse(not_converted_annex.to_print)
         self.assertFalse(IIconifiedPreview(not_converted_annex).converted)
+
+    def test_pm_AnnexesConvertedIsPreviewable(self):
+        """The preview work as expected."""
+        gsettings = self._enableAutoConvert()
+        _dir = mkdtemp()
+        gsettings.storage_location = _dir
+        gsettings.storage_type = 'File'
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.annexFile = u'file_correct.pdf'
+        annex = self.addAnnex(item)
+        annex_uid = annex.UID()
+        path = '@@dvpdffiles/%s/%s/%s/small/dump_1.%s' % (
+            annex_uid[0], annex_uid[1], annex_uid, gsettings.pdf_image_format)
+        image_dump = self.portal.unrestrictedTraverse(path)
+        # we get an image
+        self.assertEqual(image_dump.context.content_type, 'image/%s' % gsettings.pdf_image_format)
 
     def test_pm_AnnexesConvertedDependingOnAnnexToPrintMode(self):
         """If collective.documentviewer 'auto_convert' is disabled,

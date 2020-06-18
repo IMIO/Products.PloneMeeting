@@ -2580,7 +2580,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_reversed': True,
                     'showNumberOfItems': False,
                     'tal_condition': "python: 'takenOverBy' in cfg.getUsedItemAttributes() "
-                                     "and (tool.get_orgs_for_user(omittedSuffixes=['observers', ], "
+                                     "and (tool.get_orgs_for_user(omitted_suffixes=['observers', ], "
                                      "the_objects=False) or tool.isManager(here))",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
@@ -6219,16 +6219,16 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''cachekey method for self.getMeetingsAcceptingItems.'''
         return (self, str(self.REQUEST._debug), review_states, inTheFuture)
 
-    @ram.cache(getMeetingsAcceptingItems_cachekey)
-    def getMeetingsAcceptingItems(self, review_states=('created', 'frozen'), inTheFuture=False):
-        '''Returns meetings accepting items.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        catalog = api.portal.get_tool('portal_catalog')
+    def _getMeetingsAcceptingItemsQuery(self, review_states=('created', 'frozen'), inTheFuture=False):
+        '''Compute the catalog query to get meeting accepting items.'''
         # If the current user is a meetingManager (or a Manager),
         # he is able to add a meetingitem to a 'decided' meeting.
         # except if we specifically restricted given p_review_states.
+        tool = api.portal.get_tool('portal_plonemeeting')
         if review_states == ('created', 'frozen') and tool.isManager(self):
             review_states += self.adapted().getMeetingStatesAcceptingItems()
+            # remove duplicates
+            review_states = tuple(set(review_states))
 
         query = {'portal_type': self.getMeetingTypeName(),
                  'review_state': review_states,
@@ -6240,6 +6240,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         if inTheFuture:
             query['getDate'] = {'query': DateTime(), 'range': 'min'}
 
+        return query
+
+    @ram.cache(getMeetingsAcceptingItems_cachekey)
+    def getMeetingsAcceptingItems(self, review_states=('created', 'frozen'), inTheFuture=False):
+        '''Returns meetings accepting items.'''
+        catalog = api.portal.get_tool('portal_catalog')
+        query = self._getMeetingsAcceptingItemsQuery(review_states, inTheFuture)
         return catalog.unrestrictedSearchResults(**query)
 
     def update_cfgs(self, field_name, cfg_ids=[], reload=False):

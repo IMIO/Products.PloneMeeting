@@ -1651,13 +1651,17 @@ def duplicate_portal_type(portalTypeName, duplicatedPortalTypeId):
     return duplicatedPortalType
 
 
-def org_id_to_uid(org_info, raise_on_error=True):
+def org_id_to_uid(org_info, raise_on_error=True, ignore_underscore=False):
     """Returns the corresponding org based value for given org_info based value.
        'developers', will return 'orguid'.
-       'developers_creators' will return 'orguid_creators'."""
+       'developers_creators' will return 'orguid_creators'.
+       If p_ignore_underscore=True, we specifically do not want to manage
+       something like 'developers_creators' but we have an organization with
+       a '_' in it's id which is not possible by default except when
+       organizations were imported."""
     own_org = get_own_organization()
     try:
-        if '_' in org_info:
+        if '_' in org_info and not ignore_underscore:
             org_path, suffix = org_info.split('_')
             org = own_org.restrictedTraverse(org_path.encode('utf-8'))
             return get_plone_group_id(org.UID(), suffix)
@@ -1715,7 +1719,10 @@ def normalize_id(id):
 
 def add_wf_history_action(obj, action_name, action_label, user_id=None):
     wfTool = api.portal.get_tool('portal_workflow')
-    wf = wfTool.getWorkflowsFor(obj)[0]
+    wfs = wfTool.getWorkflowsFor(obj)
+    if not wfs:
+        return
+    wf = wfs[0]
     wfName = wf.id
     # get review_state from last event if any
     events = obj.workflow_history[wfName]

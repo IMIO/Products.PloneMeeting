@@ -40,6 +40,7 @@ from Products.PloneMeeting.utils import AdviceAfterModifyEvent
 from Products.PloneMeeting.utils import AdviceAfterTransitionEvent
 from Products.PloneMeeting.utils import applyOnTransitionFieldTransform
 from Products.PloneMeeting.utils import fplog
+from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import ItemAfterTransitionEvent
 from Products.PloneMeeting.utils import MeetingAfterTransitionEvent
 from Products.PloneMeeting.utils import meetingExecuteActionOnLinkedItems
@@ -518,6 +519,40 @@ def _check_item_pasted_in_cfg(item):
             raise Unauthorized()
 
 
+def onItemCopied(item, event):
+    """Notified during paste, when new item freshly created."""
+    request = getRequest()
+    copyAnnexes = request.get('pm_pasteItem_copyAnnexes', False)
+    copyDecisionAnnexes = request.get('pm_pasteItem_copyDecisionAnnexes', False)
+    keptAnnexIds = request.get('pm_pasteItem_keptAnnexIds', [])
+    keptDecisionAnnexIds = request.get('pm_pasteItem_keptDecisionAnnexIds', [])
+
+    # Manage annexes.
+    # remove relevant annexes then manage kept ones, we remove kept annexes
+    # if we can not find a corresponding annexType in the destMeetingConfig
+    if copyAnnexes is False or keptAnnexIds:
+        # Delete the annexes that have been copied.
+        for annex in get_annexes(item, portal_types=['annex']):
+            annex_id = annex.getId()
+            if copyAnnexes is False or annex_id not in keptAnnexIds:
+                item._delObject(annex_id, suppress_events=True)
+    if copyDecisionAnnexes is False or keptDecisionAnnexIds:
+        # Delete the decision annexes that have been copied.
+        for annex in get_annexes(item, portal_types=['annexDecision']):
+            annex_id = annex.getId()
+            if copyDecisionAnnexes is False or annex_id not in keptDecisionAnnexIds:
+                item._delObject(annex_id, suppress_events=True)
+
+    # remove contained meetingadvices
+    item._removeEveryContainedAdvices()
+
+    # remove every contained images as it will be added again by storeImagesLocally
+    # disable linkintegrity if enabled
+    image_ids = [img.getId() for img in item.objectValues() if img.portal_type == 'Image']
+    for image_id in image_ids:
+        item._delObject(image_id, suppress_events=True)
+
+
 def onItemMoved(item, event):
     '''Called when an item is cut/pasted.'''
     # this is also called when removing an item, in this case, we do nothing
@@ -538,14 +573,18 @@ def onItemCloned(item, event):
     _check_item_pasted_in_cfg(item)
 
 
-def onItemAdded(item, event):
+def item_added_or_initialized(item):
     '''This method is called every time a MeetingItem is created, even in
        portal_factory. Local roles defined on an item define who may view
        or edit it. But at the time the item is created in portal_factory,
        local roles are not defined yet. So here we add a temporary local
        role to the currently logged user that allows him to create the
        item. In item.at_post_create_script we will remove this temp local
-       role.'''
+       role.
+       To manage every cases, we need to do this in both Initialized and Added event
+       because some are triggered in some cases and not others...
+       Especially for plone.restapi that calls Initialized then do the validation.'''
+    # make sure workflow mapping is applied, plone.restapi needs it...
     user = api.user.get_current()
     item.manage_addLocalRoles(user.getId(), ('MeetingMember',))
     # Add a place to store adviceIndex
@@ -563,6 +602,16 @@ def onItemAdded(item, event):
         alsoProvides(item, IConfigElement)
     else:
         noLongerProvides(item, IConfigElement)
+
+
+def onItemInitialized(item, event):
+    ''' '''
+    item_added_or_initialized(item)
+
+
+def onItemAdded(item, event):
+    ''' '''
+    item_added_or_initialized(item)
 
 
 def onItemWillBeAdded(item, event):

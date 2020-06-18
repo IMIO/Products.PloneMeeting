@@ -1515,6 +1515,69 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(itemWithManualLink.getRawManuallyLinkedItems(),
                          [item.UID()])
 
+    def test_pm_CloneItemWithAdvices(self):
+        '''When an item is cloned with option inheritAdvices=False.
+           New advices are asked on resulting item and adviceIndex is correct.'''
+        cfg = self.meetingConfig
+        customAdvisers = [{'row_id': 'unique_id_123',
+                           'org': self.developers_uid,
+                           'gives_auto_advice_on': '',
+                           'for_item_created_from': '2012/01/01',
+                           'is_linked_to_previous_row': '1',
+                           'delay': '5'},
+                          {'row_id': 'unique_id_456',
+                           'org': self.developers_uid,
+                           'gives_auto_advice_on': '',
+                           'for_item_created_from': '2012/01/01',
+                           'is_linked_to_previous_row': '1',
+                           'delay': '10'}]
+        cfg.setCustomAdvisers(customAdvisers)
+        cfg.setItemAdviceStates(('validated', ))
+        cfg.setItemAdviceEditStates(('validated', ))
+        cfg.setItemAdviceViewStates(('validated', ))
+        cfg.at_post_edit_script()
+
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        item.setOptionalAdvisers(
+            (self.vendors_uid,
+             '{0}__rowid__unique_id_123'.format(self.developers_uid)))
+        self.validateItem(item)
+        # give advices
+        self.changeUser('pmAdviser1')
+        createContentInContainer(item,
+                                 'meetingadvice',
+                                 **{'advice_group': self.developers_uid,
+                                    'advice_type': u'positive',
+                                    'advice_hide_during_redaction': False,
+                                    'advice_comment': RichTextValue(u'My comment')})
+        self.changeUser('pmReviewer2')
+        createContentInContainer(item,
+                                 'meetingadvice',
+                                 **{'advice_group': self.vendors_uid,
+                                    'advice_type': u'positive',
+                                    'advice_hide_during_redaction': False,
+                                    'advice_comment': RichTextValue(u'My comment')})
+        # clone item
+        self.changeUser('pmCreator1')
+        clonedItem = item.clone()
+        for adviceInfo in clonedItem.adviceIndex.values():
+            self.assertFalse(adviceInfo['advice_addable'])
+            self.assertFalse(adviceInfo['advice_editable'])
+            self.assertIsNone(adviceInfo['advice_given_on'])
+            self.assertIsNone(adviceInfo['delay_started_on'])
+            self.assertIsNone(adviceInfo['delay_stopped_on'])
+            if adviceInfo['delay_infos']:
+                self.assertIsNone(adviceInfo['delay_infos']['delay_status_when_stopped'])
+                self.assertIsNone(adviceInfo['delay_infos']['limit_date'])
+                self.assertIsNone(adviceInfo['delay_infos']['delay_when_stopped'])
+                self.assertEqual(adviceInfo['delay_infos']['delay_status'], 'not_yet_giveable')
+                self.assertEqual(adviceInfo['delay_infos']['delay'], 5)
+                self.assertEqual(adviceInfo['delay_infos']['left_delay'], 5)
+            else:
+                self.assertEqual(adviceInfo['delay_infos'], {})
+            self.assertEqual(adviceInfo['type'], 'not_given')
+
     def test_pm_CloneItemWithInheritAdvices(self):
         '''When an item is cloned with option inheritAdvices=True.
            It also needs to be linked to predecessor by an automatic link,
@@ -3998,6 +4061,29 @@ class testMeetingItem(PloneMeetingTestCase):
         view.toggle(takenOverByFrom=item.getTakenOverBy())
         self.assertTrue(not item.getTakenOverBy())
 
+    def test_pm_MayTakeOverDecidedItem(self):
+        """By default, a decided item may be taken over by a member of the proposingGroup."""
+        cfg = self.meetingConfig
+        self.assertTrue('accepted' in cfg.getItemDecidedStates())
+        self.assertTrue('delayed' in cfg.getItemDecidedStates())
+        self.changeUser('pmCreator1')
+        item1 = self.create('MeetingItem', decision=self.decisionText)
+        item2 = self.create('MeetingItem', decision=self.decisionText)
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime('2020/06/11'))
+        self.presentItem(item1)
+        self.presentItem(item2)
+        self.changeUser('pmCreator1')
+        self.assertFalse(item1.adapted().mayTakeOver())
+        self.assertFalse(item2.adapted().mayTakeOver())
+        self.changeUser('pmManager')
+        self.decideMeeting(meeting)
+        self.do(item1, 'accept')
+        self.do(item2, 'delay')
+        self.changeUser('pmCreator1')
+        self.assertTrue(item1.adapted().mayTakeOver())
+        self.assertTrue(item2.adapted().mayTakeOver())
+
     def test_pm_HistorizedTakenOverBy(self):
         '''Test the functionnality under takenOverBy that will automatically set back original
            user that took over item first time.  So if a user take over an item in state1, it is saved.
@@ -4670,9 +4756,9 @@ class testMeetingItem(PloneMeetingTestCase):
         pmFolder = self.getMeetingFolder()
         # create an item in portal_factory
         itemTypeName = cfg.getItemTypeName()
-        temp_item = pmFolder.restrictedTraverse('portal_factory/{0}/tmp_id'.format(itemTypeName))
+        temp_item = pmFolder.unrestrictedTraverse('portal_factory/{0}/tmp_id'.format(itemTypeName))
         self.assertTrue(temp_item._at_creation_flag)
-        self.assertRaises(Unauthorized, temp_item.restrictedTraverse('@@at_lifecycle_view').begin_edit)
+        self.assertRaises(Unauthorized, temp_item.unrestrictedTraverse('@@at_lifecycle_view').begin_edit)
         # create an item from a template
         view = pmFolder.restrictedTraverse('@@createitemfromtemplate')
         itemTemplate = cfg.getItemTemplates(as_brains=False)[0]
@@ -5774,7 +5860,7 @@ class testMeetingItem(PloneMeetingTestCase):
             performWorkflowAdaptations(cfg, logger=pm_logger)
         self.changeUser('pmCreator1')
         # creation time
-        text = '<p>Working external image <img src="https://i.picsum.photos/id/22/400/400.jpg"/>.</p>'
+        text = '<p>Working external image <img src="%s"/>.</p>' % self.external_image1
         pmFolder = self.getMeetingFolder()
         # do not use self.create to be sure that it works correctly with invokeFactory
         itemId = pmFolder.invokeFactory(cfg.getItemTypeName(),
@@ -5792,7 +5878,7 @@ class testMeetingItem(PloneMeetingTestCase):
             '<p>Working external image <img src="resolveuid/{0}">.</p>'.format(img.UID()))
 
         # test using the quickedit, test with field 'decision' where getRaw was overrided
-        decision = '<p>Working external image <img src="https://i.picsum.photos/id/1025/400/300.jpg"/>.</p>'
+        decision = '<p>Working external image <img src="%s"/>.</p>' % self.external_image2
         setFieldFromAjax(item, 'decision', decision)
         self.assertTrue('1025-400x300.jpg' in item.objectIds())
         img2 = item.get('1025-400x300.jpg')
@@ -5802,7 +5888,7 @@ class testMeetingItem(PloneMeetingTestCase):
             '<p>Working external image <img src="resolveuid/{0}">.</p>'.format(img2.UID()))
 
         # test using at_post_edit_script, aka full edit form
-        decision = '<p>Working external image <img src="https://i.picsum.photos/id/1035/600/400.jpg"/>.</p>'
+        decision = '<p>Working external image <img src="%s"/>.</p>' % self.external_image3
         item.setDecision(decision)
         item._update_after_edit()
         self.assertTrue('1035-600x400.jpg' in item.objectIds())
@@ -5845,7 +5931,7 @@ class testMeetingItem(PloneMeetingTestCase):
             '<p>Internal image <img src="{1}">.</p>' \
             '<p>Internal image 2 <img src="{2}">.</p>'
         text = text_pattern.format(
-            'https://i.picsum.photos/id/1025/400/300.jpg',  # 1025-400x300.jpg
+            self.external_image2,  # 1025-400x300.jpg
             img.absolute_url(),
             'resolveuid/{0}'.format(img2.UID()))
         item.setDescription(text)

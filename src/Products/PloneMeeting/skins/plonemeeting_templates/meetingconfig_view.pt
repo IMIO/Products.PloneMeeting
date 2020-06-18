@@ -314,7 +314,16 @@
           <td tal:define="field python:here.getField('orderedAssociatedOrganizations')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
+          <td></td>
+        </tr>
+        <tr valign="top">
           <td tal:define="field python:here.getField('orderedGroupsInCharge')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td tal:define="field python:here.getField('includeGroupsInChargeDefinedOnProposingGroup')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td tal:define="field python:here.getField('includeGroupsInChargeDefinedOnCategory')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
         </tr>
@@ -875,6 +884,7 @@
                   valign="top">
                 <td>
                   <h5><a tal:attributes="href obj/absolute_url" tal:content="obj/Title">Collection title</a></h5>
+                  (<span tal:content="obj/getId">Collection id</span>)
                   <div class="discreet" tal:define="descr obj/Description" tal:condition="descr" tal:content="descr">Collection description</div>
                 </td>
                 <td>

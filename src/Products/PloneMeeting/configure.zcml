@@ -8,6 +8,7 @@
 
   <!-- load "imio.pm.locales" first so translations are overrided -->
   <include package="imio.pm.locales"/>
+  <include package="plone.app.controlpanel" file="permissions.zcml" /> <!-- need for restapi 6.13.1 -->
   <include package="imio.annex"/>
   <include package="communesplone.layout"/>
   <include package="Products.PasswordStrength" />

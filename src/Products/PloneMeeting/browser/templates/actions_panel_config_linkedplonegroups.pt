@@ -2,7 +2,7 @@
 
   <tal:comment replace="nothing">Icon</tal:comment>
   <a tal:condition="view/useIcons"
-     tal:attributes="href string:${view/portal_url}/@@usergroup-groupprefs?searchstring=${view/context/Title} (">
+     tal:attributes="href string:${view/portal_url}/@@usergroup-groupprefs?searchstring=${view/context/UID}_">
     <img src="group.png" tal:attributes="src string:${view/portal_url}/group.png" title="View linked Plone groups" i18n:attributes="title" />
   </a>
 
@@ -12,5 +12,5 @@
          type="button"
          i18n:attributes="value"
          value="View linked Plone groups"
-         tal:attributes="onClick string:window.open('${view/portal_url}/@@usergroup-groupprefs?searchstring=${view/context/Title} (', '_parent');"/>
+         tal:attributes="onClick string:window.open('${view/portal_url}/@@usergroup-groupprefs?searchstring=${view/context/UID}_', '_parent');"/>
 </td>
