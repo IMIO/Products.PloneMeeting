@@ -18,6 +18,7 @@ Changelog
 - Fix `email_from_address` in migration 4108 so it is unique for each customers and helps to lower the spam score.
 - Set `MeetingItem.getGroupsInCharge(autoInclude=True)` by default instead `autoInclude=False` so calling the accessor without parameter
   returns `groupsInCharge` stored on `proposingGroup` or `category`
+- Display `DashboardCollection` UID on the `MeetingConfig` view
 
 4.1.26.1 (2020-06-12)
 ---------------------

@@ -909,6 +909,12 @@
                     <span tal:content="python: obj.showNumberOfItems and 'boolean_value_true' or 'boolean_value_false'"
                           i18n:translate="">Show number of items in filter</span>
                   </div>
+                  <div>
+                    <label class="formQuestion">
+                      <span>UID</span>
+                    </label> :
+                    <span tal:content="obj/UID">Show number of items in filter</span>
+                  </div>
                 </td>
                 <td>
                   <span tal:content="obj/tal_condition">TAL Condition</span>
