@@ -172,42 +172,61 @@ class MeetingItemWorkflowConditions(object):
         obj = getCurrentMeetingObject(self.context)
         return isinstance(obj, Meeting)
 
+    def _check_required_data(self):
+        ''' '''
+        msg = None
+        if not self.context.getCategory(theObject=True):
+            msg = No(_('required_category_ko'))
+        elif self.context.attributeIsUsed('groupsInCharge') and not self.context.getGroupsInCharge():
+            msg = No(_('required_groupsInCharge_ko'))
+        return msg
+
     security.declarePublic('mayPropose')
 
     def mayPropose(self):
         '''We may propose an item if the workflow permits it and if the
            necessary fields are filled.  In the case an item is transferred from
            another meetingConfig, the category could not be defined.'''
-        if not self.context.getCategory(theObject=True):
-            return No(_('required_category_ko'))
+        res = False
         if _checkPermission(ReviewPortalContent, self.context):
-            return True
+            res = True
+            msg = self._check_required_data()
+            if msg is not None:
+                res = msg
+        return res
 
     security.declarePublic('mayPrevalidate')
 
     def mayPrevalidate(self):
+        res = False
         if _checkPermission(ReviewPortalContent, self.context):
-            return True
+            res = True
+            msg = self._check_required_data()
+            if msg is not None:
+                res = msg
+        return res
 
     security.declarePublic('mayValidate')
 
     def mayValidate(self):
+        res = False
         if _checkPermission(ReviewPortalContent, self.context):
-            return True
+            res = True
+            msg = self._check_required_data()
+            if msg is not None:
+                res = msg
+        return res
 
     security.declarePublic('mayPresent')
 
     def mayPresent(self):
-        # if WFAdaptation 'items_come_validated' is enabled, an item
-        # could miss it's category
-        if not self.context.getCategory(theObject=True):
-            return No(_('required_category_ko'))
         # only MeetingManagers may present an item, the 'Review portal content'
         # permission is not enough as MeetingReviewer may have the 'Review portal content'
         # when using the 'reviewers_take_back_validated_item' wfAdaptation
         if not _checkPermission(ReviewPortalContent, self.context) or \
            not self.tool.isManager(self.context):
             return False
+
         # We may present the item if Plone currently publishes a meeting.
         # Indeed, an item may only be presented within a meeting.
         # if we are not on a meeting, try to get the next meeting accepting items
@@ -215,13 +234,20 @@ class MeetingItemWorkflowConditions(object):
             meeting = self.context.getMeetingToInsertIntoWhenNoCurrentMeetingObject()
             return bool(meeting)
 
+        # if WFAdaptation 'items_come_validated' is enabled, an item
+        # could miss it's category
+        msg = self._check_required_data()
+        if msg is not None:
+            return msg
+
         # here we are sure that we have a meeting that will accept the item
         # Verify if all automatic advices have been given on this item.
-        res = True  # for now...
         if self.context.enforceAdviceMandatoriness() and \
            not self.context.mandatoryAdvicesAreOk():
-            res = No(_('mandatory_advice_ko'))
-        return res
+            return No(_('mandatory_advice_ko'))
+
+        # all checks passed
+        return True
 
     security.declarePublic('mayDecide')
 
@@ -372,14 +398,14 @@ class MeetingItemWorkflowConditions(object):
     def _mayWaitAdvices(self, destination_state):
         """Helper method used in every mayWait_advices_from_ guards."""
         res = False
-        if not self.context.getCategory(theObject=True):
-            return No(_('required_category_ko'))
-        # check if there are advices to give in destination state
-        hasAdvicesToGive = self._hasAdvicesToGive(destination_state)
-        if not hasAdvicesToGive:
-            res = No(_('advice_required_to_ask_advices'))
-        elif _checkPermission(ReviewPortalContent, self.context):
+        if _checkPermission(ReviewPortalContent, self.context):
             res = True
+        msg = self._check_required_data()
+        if msg is not None:
+            res = msg
+        elif not self._hasAdvicesToGive(destination_state):
+            # check if there are advices to give in destination state
+            res = No(_('advice_required_to_ask_advices'))
         return res
 
     def _getWaitingAdvicesStateFrom(self, originStateId):

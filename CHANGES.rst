@@ -21,6 +21,8 @@ Changelog
 - Display `DashboardCollection` UID on the `MeetingConfig` view
 - When cloning item to another `MeetingConfig`, keep `copyGroups` by default
   (`copyGroups` moved from `config.EXTRA_COPIED_FIELDS_SAME_MC` to `config.DEFAULT_COPIED_FIELDS`)
+- Factorized check about required data to be able to trigger a transition on an item in `MeetingItemWorkflowConditions._check_required_data`,
+  this way we check if `category/groupsInCharge` are correct
 
 4.1.26.1 (2020-06-12)
 ---------------------
