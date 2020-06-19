@@ -19,6 +19,8 @@ Changelog
 - Set `MeetingItem.getGroupsInCharge(autoInclude=True)` by default instead `autoInclude=False` so calling the accessor without parameter
   returns `groupsInCharge` stored on `proposingGroup` or `category`
 - Display `DashboardCollection` UID on the `MeetingConfig` view
+- When cloning item to another `MeetingConfig`, keep `copyGroups` by default
+  (`copyGroups` moved from `config.EXTRA_COPIED_FIELDS_SAME_MC` to `config.DEFAULT_COPIED_FIELDS`)
 
 4.1.26.1 (2020-06-12)
 ---------------------
