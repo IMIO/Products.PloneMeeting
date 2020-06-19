@@ -834,6 +834,26 @@ class testWorkflows(PloneMeetingTestCase):
                             pm_logger.info('test_pm_MeetingReviewersValuesAreCorrect: '
                                            'state {0} not found in wf {1}'.format(state, wf.getId()))
 
+    def test_pm_RequiredDataToTriggerTransition(self):
+        """When MeetingItem.category or MeetingItem.groupsInCharge is used,
+           it is required to trigger a transition."""
+        cfg = self.meetingConfig
+        cfg.setUseGroupsAsCategories(False)
+        self._enableField('groupsInCharge')
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        # groupsInCharge
+        self.assertTrue(item.getCategory(theObject=True))
+        self.assertFalse(item.getGroupsInCharge())
+        self.assertFalse(self.transitions(item))
+        item.setGroupsInCharge((self.vendors_uid, ))
+        self.assertTrue(self.transitions(item))
+        # category
+        item.setCategory('')
+        self.assertFalse(self.transitions(item))
+        item.setCategory('development')
+        self.assertTrue(self.transitions(item))
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite
