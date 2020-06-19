@@ -2620,7 +2620,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_reversed': True,
                     'showNumberOfItems': False,
                     'tal_condition': "python: 'takenOverBy' in cfg.getUsedItemAttributes() "
-                                     "and (tool.get_orgs_for_user(omittedSuffixes=['observers', ], "
+                                     "and (tool.get_orgs_for_user(omitted_suffixes=['observers', ], "
                                      "the_objects=False) or tool.isManager(here))",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),

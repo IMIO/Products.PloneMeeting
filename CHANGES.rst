@@ -2,7 +2,6 @@ Changelog
 =========
 
 
-<<<<<<< HEAD
 4.2a6 (unreleased)
 ------------------
 
@@ -50,6 +49,20 @@ Changelog
 
 - Fixed bug in `DashboardCollection` stored `query`, instead list of `<dict>`, was sometimes list of `<instance>`
  (???), added upgrade step to 4108, this is necessary for `plone.restapi` to serialize `DashboardCollection` to json
+- Fixed wrong `TAL condition` used for `DashboardCollection` `searchmyitemstakenover` (replaced `omittedSuffixed` by `omitted_suffixes`)
+- Added parameter `ignore_underscore=False` to `utils.org_id_to_uid`, when an underscore is present, the value is considered
+  something like `developers_creators`, if it is actually an organization id containing an `_` (which is not possible by default),
+  then set `ignore_underscore=True` to get it.
+- Display `groupsInCharge` on the item view : when field `MeetingItem.groupsInCharge` is used, from the proposingGroup when
+  `MeetingConfig.includeGroupsInChargeDefinedOnProposingGroup=True` or from the category when
+  `MeetingConfig.includeGroupsInChargeDefinedOnCategory=True`.
+  Set `autoInclude=True` by default instead `False` for `MeetingItem.getGroupsInCharge`
+- Fix `email_from_address` in migration 4108 so it is unique for each customers and helps to lower the spam score.
+- Set `MeetingItem.getGroupsInCharge(autoInclude=True)` by default instead `autoInclude=False` so calling the accessor without parameter
+  returns `groupsInCharge` stored on `proposingGroup` or `category`
+- Display `DashboardCollection` UID on the `MeetingConfig` view
+- When cloning item to another `MeetingConfig`, keep `copyGroups` by default
+  (`copyGroups` moved from `config.EXTRA_COPIED_FIELDS_SAME_MC` to `config.DEFAULT_COPIED_FIELDS`)
 
 4.1.26.1 (2020-06-12)
 ---------------------

@@ -3031,7 +3031,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                           fromOrgIfEmpty=False,
                           fromCatIfEmpty=False,
                           first=False,
-                          includeAuto=False,
+                          includeAuto=True,
                           **kwargs):
         '''Redefine field MeetingItem.groupsInCharge accessor to be able to return
            groupsInCharge id or the real orgs if p_theObjects is True.

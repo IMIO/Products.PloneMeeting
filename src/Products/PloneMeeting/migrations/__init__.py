@@ -125,6 +125,7 @@ class Migrator(BaseMigrator):
 
     def updateTALConditions(self, old_word, new_word):
         """Update every elements having a tal_condition, replace given old_word by new_word."""
+        logger.info('Updating TAL conditions, replacing "{0}" by "{1}"'.format(old_word, new_word))
         for brain in api.content.find(
                 object_provides='collective.behavior.talcondition.interfaces.ITALConditionable'):
             obj = brain.getObject()
@@ -133,6 +134,9 @@ class Migrator(BaseMigrator):
             if tal_condition and old_word in tal_condition:
                 tal_condition = tal_condition.replace(old_word, new_word)
                 adapted.set_tal_condition(tal_condition)
+                logger.info('Word "{0}" was replaced by "{1}" for element "{2}"'.format(
+                    old_word, new_word, repr(obj)))
+        logger.info('Done.')
 
     def updateHolidays(self):
         '''Update holidays using default holidays.'''

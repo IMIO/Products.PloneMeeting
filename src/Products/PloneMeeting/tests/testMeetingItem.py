@@ -4856,15 +4856,16 @@ class testMeetingItem(PloneMeetingTestCase):
         '''Test that relevant fields are kept when an item is created from an itemTemplate.
            DEFAULT_COPIED_FIELDS and EXTRA_COPIED_FIELDS_SAME_MC are kept.'''
         cfg = self.meetingConfig
+        self._enableField('associatedGroups')
         # configure the itemTemplate
         self.changeUser('siteadmin')
         cfg.setUseCopies(True)
         itemTemplate = cfg.getItemTemplates(as_brains=False)[0]
-        # check that 'title' and 'copyGroups' field are kept
-        # title is in DEFAULT_COPIED_FIELDS and copyGroups in EXTRA_COPIED_FIELDS_SAME_MC
+        # check that 'title' and 'associatedGroups' field are kept
+        # title is in DEFAULT_COPIED_FIELDS and associatedGroups in EXTRA_COPIED_FIELDS_SAME_MC
         self.assertTrue('title' in DEFAULT_COPIED_FIELDS)
-        self.assertTrue('copyGroups' in EXTRA_COPIED_FIELDS_SAME_MC)
-        itemTemplate.setCopyGroups((self.developers_reviewers,))
+        self.assertTrue('associatedGroups' in EXTRA_COPIED_FIELDS_SAME_MC)
+        itemTemplate.setAssociatedGroups((self.developers_uid,))
         itemTemplate.setObservations('<p>obs</p>')
         itemTemplate.setInAndOutMoves('<p>in-out</p>')
         itemTemplate.setNotes('<p>notes</p>')
@@ -4877,8 +4878,8 @@ class testMeetingItem(PloneMeetingTestCase):
         itemFromTemplate = view.createItemFromTemplate(itemTemplate.UID())
         self.assertEqual(itemTemplate.Title(),
                          itemFromTemplate.Title())
-        self.assertEqual(itemTemplate.getCopyGroups(),
-                         itemFromTemplate.getCopyGroups())
+        self.assertEqual(itemTemplate.getAssociatedGroups(),
+                         itemFromTemplate.getAssociatedGroups())
         # testing EXTRA_COPIED_FIELDS_FROM_ITEM_TEMPLATE
         self.assertTrue('observations' in EXTRA_COPIED_FIELDS_FROM_ITEM_TEMPLATE)
         self.assertTrue('inAndOutMoves' in EXTRA_COPIED_FIELDS_FROM_ITEM_TEMPLATE)
@@ -4898,20 +4899,22 @@ class testMeetingItem(PloneMeetingTestCase):
         '''Test that relevant fields are kept when an item is created as a recurring item.
            DEFAULT_COPIED_FIELDS and EXTRA_COPIED_FIELDS_SAME_MC are kept.'''
         # configure the recItem
+        cfg = self.meetingConfig
         self.changeUser('siteadmin')
-        self.meetingConfig.setUseCopies(True)
+        self._enableField('associatedGroups')
+        cfg.setUseCopies(True)
         # just keep one recurring item
-        recurringItems = self.meetingConfig.getRecurringItems()
+        recurringItems = cfg.getRecurringItems()
         toDelete = [item.getId() for item in recurringItems[1:]]
-        self.meetingConfig.recurringitems.manage_delObjects(ids=toDelete)
+        cfg.recurringitems.manage_delObjects(ids=toDelete)
         recItem = recurringItems[0]
         recItem.setTitle('Rec item title')
-        recItem.setCopyGroups((self.developers_reviewers,))
+        recItem.setAssociatedGroups((self.developers_uid,))
         recItem.setMeetingTransitionInsertingMe('_init_')
-        # check that 'title' and 'copyGroups' field are kept
-        # title is in DEFAULT_COPIED_FIELDS and copyGroups in EXTRA_COPIED_FIELDS_SAME_MC
+        # check that 'title' and 'associatedGroups' field are kept
+        # title is in DEFAULT_COPIED_FIELDS and associatedGroups in EXTRA_COPIED_FIELDS_SAME_MC
         self.assertTrue('title' in DEFAULT_COPIED_FIELDS)
-        self.assertTrue('copyGroups' in EXTRA_COPIED_FIELDS_SAME_MC)
+        self.assertTrue('associatedGroups' in EXTRA_COPIED_FIELDS_SAME_MC)
 
         # create a meeting, this will add recItem
         self.changeUser('pmManager')
@@ -4919,7 +4922,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(len(meeting.getItems()), 1)
         itemFromRecItems = meeting.getItems()[0]
         self.assertEqual(recItem.Title(), itemFromRecItems.Title())
-        self.assertEqual(recItem.getCopyGroups(), itemFromRecItems.getCopyGroups())
+        self.assertEqual(recItem.getAssociatedGroups(), itemFromRecItems.getAssociatedGroups())
 
     def test_pm_CopiedFieldsWhenSentToOtherMC(self):
         '''Test that relevant fields are kept when an item is sent to another mc.
@@ -4927,11 +4930,16 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('siteadmin')
         self.meetingConfig.setUseCopies(True)
         self.meetingConfig2.setUseCopies(True)
+        self.meetingConfig.setUseAdvices(True)
+        self.meetingConfig2.setUseAdvices(True)
         self._removeConfigObjectsFor(self.meetingConfig)
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
         item.setTitle('Item to be cloned title')
+        # will be kept
         item.setCopyGroups((self.developers_reviewers,))
+        # will not be kept
+        item.setOptionalAdvisers((self.developers_uid,))
         meeting = self.create('Meeting', date='2015/01/01')
         item.setDecision('<p>My decision</p>', mimetype='text/html')
         cfg2Id = self.meetingConfig2.getId()
@@ -4941,10 +4949,31 @@ class testMeetingItem(PloneMeetingTestCase):
         self.do(item, 'accept')
         clonedItem = item.getItemClonedToOtherMC(cfg2Id)
         self.assertEqual(clonedItem.Title(), item.Title())
-        self.assertNotEquals(clonedItem.getCopyGroups(),
-                             item.getCopyGroups())
-        # actually, no copyGroups
-        self.assertFalse(clonedItem.getCopyGroups())
+        self.assertEqual(clonedItem.getCopyGroups(), item.getCopyGroups())
+        # optionalAdvisers were not kept
+        self.assertEqual(item.getOptionalAdvisers(), (self.developers_uid,))
+        self.assertEqual(clonedItem.getOptionalAdvisers(), ())
+
+    def test_pm_CopiedFieldsWhenSentToOtherMCCopyGroups(self):
+        '''Only relevant copyGroups are kept, aka copyGroups selectable
+           in destination MeetingConfig.'''
+        self.changeUser('siteadmin')
+        cfg = self.meetingConfig
+        cfg.setItemManualSentToOtherMCStates(('itemcreated', ))
+        cfg2 = self.meetingConfig2
+        cfg2Id = self.meetingConfig2.getId()
+        cfg.setUseCopies(True)
+        cfg2.setUseCopies(True)
+        cfg.setSelectableCopyGroups((self.developers_reviewers, self.vendors_reviewers))
+        cfg2.setSelectableCopyGroups((self.vendors_reviewers, ))
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        item.setCopyGroups((self.developers_reviewers, self.vendors_reviewers))
+        item.setOtherMeetingConfigsClonableTo((cfg2Id,))
+        clonedItem = item.cloneToOtherMeetingConfig(cfg2Id)
+        # only selectable copyGroups were kept
+        self.assertEqual(item.getCopyGroups(), (self.developers_reviewers, self.vendors_reviewers))
+        self.assertEqual(clonedItem.getCopyGroups(), (self.vendors_reviewers, ))
 
     def test_pm_CopiedFieldsOtherMeetingConfigsClonableToWhenDuplicated(self):
         '''Make sure field MeetingItem.otherMeetingConfigsClonableTo is not kept
