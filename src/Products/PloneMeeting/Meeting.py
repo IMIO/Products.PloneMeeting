@@ -801,21 +801,15 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             adapted.link_pattern = link_pattern
         return adapted.getLink()
 
-    security.declarePublic('getRawQuery')
+    security.declarePublic('getItemsBaseQuery')
 
-    def getRawQuery(self, force_linked_items_query=False, **kwargs):
+    def getItemsBaseQuery(self, force_linked_items_query=False, **kwargs):
         """ """
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self)
-
         # available items?
         if displaying_available_items(self) and not force_linked_items_query:
             res = self._availableItemsQuery()
         else:
-            res = [{'i': 'portal_type',
-                    'o': 'plone.app.querystring.operation.selection.is',
-                    'v': cfg.getItemTypeName()},
-                   {'i': 'linkedMeetingUID',
+            res = [{'i': 'linkedMeetingUID',
                     'o': 'plone.app.querystring.operation.selection.is',
                     'v': self.UID()}, ]
         return res
@@ -1211,13 +1205,13 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
            - returned ordered (by getItemNumber) if p_ordered is True;
            - if p_theObjects is True, MeetingItem objects are returned, else, brains are returned;
            - if p_unrestricted is True it will return every items, not checking permission;
-           - if p_force_linked_items_query is True, it will call self.getRawQuery with
+           - if p_force_linked_items_query is True, it will call self.getItemsBaseQuery with
              same parameter and force use of query showing linked items, not displaying
              available items.
         '''
         # execute the query using the portal_catalog
         catalog = api.portal.get_tool('portal_catalog')
-        catalog_query = self.getRawQuery(force_linked_items_query=force_linked_items_query)
+        catalog_query = self.getItemsBaseQuery(force_linked_items_query=force_linked_items_query)
         if listTypes:
             catalog_query.append({'i': 'listType',
                                   'o': 'plone.app.querystring.operation.selection.is',

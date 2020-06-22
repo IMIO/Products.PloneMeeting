@@ -24,6 +24,8 @@ Changelog
 - Factorized check about required data to be able to trigger a transition on an item in `MeetingItemWorkflowConditions._check_required_data`,
   this way we check if `category/groupsInCharge` are correct
 - Added `collective.fingerpointing` log message when using `ToolPloneMeeting.updateAllLocalRoles` so we know who and how much
+- Renamed `Meeting.getRawQuery` to `Meeting.getItemsBaseQuery`, moreover simplified it to only use `linkedMeetingUID` index to query items,
+  remove useless index `portal_type` from query as `linkedMeetingUID` is sure to be unique
 
 4.1.26.1 (2020-06-12)
 ---------------------
