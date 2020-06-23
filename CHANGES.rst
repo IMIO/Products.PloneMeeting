@@ -24,7 +24,7 @@ Changelog
 - Factorized check about required data to be able to trigger a transition on an item in `MeetingItemWorkflowConditions._check_required_data`,
   this way we check if `category/groupsInCharge` are correct
 - Added `collective.fingerpointing` log message when using `ToolPloneMeeting.updateAllLocalRoles` so we know who and how much
-- Renamed `Meeting.getRawQuery` to `Meeting.getItemsBaseQuery`, moreover simplified it to only use `linkedMeetingUID` index to query items,
+- Simplified `Meeting.getRawQuery` to only use `linkedMeetingUID` index to query items,
   remove useless index `portal_type` from query as `linkedMeetingUID` is sure to be unique
 - Adapted override of `generationlinks.pt` regarding changes in `collective.eeafaceted.dashboard` (`pod_template.max_objects` attribute)
 
