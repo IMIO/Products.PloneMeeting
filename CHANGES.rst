@@ -27,6 +27,7 @@ Changelog
 - Simplified `Meeting.getRawQuery` to only use `linkedMeetingUID` index to query items,
   remove useless index `portal_type` from query as `linkedMeetingUID` is sure to be unique
 - Adapted override of `generationlinks.pt` regarding changes in `collective.eeafaceted.dashboard` (`pod_template.max_objects` attribute)
+- Validate `directory.position_types` to check that a used `position_type` (by a `held_position`) can not be removed
 
 4.1.26.1 (2020-06-12)
 ---------------------
