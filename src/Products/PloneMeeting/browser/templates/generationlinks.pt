@@ -20,7 +20,7 @@
            style="cursor: pointer">
             <img src="#"
              tal:attributes="src string:${view/portal_url}/++resource++collective.documentgenerator/${infos/output_format}.png" />
-            <span tal:replace="infos/title">Template title</span> (<span class="highlightValue" ><span tal:replace="infos/max">500</span> max</span>)
+            <span tal:replace="infos/title">Template title</span>
         </a>
 
         <tal:comment replace="nothing">XXX Added by PloneMeting : send the document by email.</tal:comment>
