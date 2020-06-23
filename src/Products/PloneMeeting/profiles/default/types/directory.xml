@@ -6,4 +6,5 @@
   <element value="organization"/>
   <element value="DashboardPODTemplate"/>
  </property>
+ <property name="schema_policy">schema_policy_pm_directory</property>
 </object>
