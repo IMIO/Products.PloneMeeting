@@ -1980,7 +1980,9 @@ class testViews(PloneMeetingTestCase):
                                     manager_name='plone.abovecontentbody',
                                     viewlet_name='document-generation-link')
         viewlet.update()
-        self.assertTrue(viewlet.render())
+        rendered = viewlet.render()
+        self.assertTrue(cfg.podtemplates.itemTemplate.UID() in rendered)
+        self.assertTrue('store_as_annex' in rendered)
         # meeting, does not use DashboardPODTemplates
         meeting = self.create('Meeting', date=DateTime('2019/11/26'))
         meeting_adapter = getAdapter(meeting, IGenerablePODTemplates)
@@ -1991,7 +1993,9 @@ class testViews(PloneMeetingTestCase):
                                     manager_name='plone.abovecontentbody',
                                     viewlet_name='document-generation-link')
         viewlet.update()
-        self.assertTrue(viewlet.render())
+        rendered = viewlet.render()
+        self.assertTrue(cfg.podtemplates.agendaTemplate.UID() in rendered)
+        self.assertTrue('store_as_annex' in rendered)
         # advice
         # by defaut, no POD template for advice, enable itemTemplate
         cfg.podtemplates.itemTemplate.pod_portal_types = [u'meetingadvice']
@@ -2003,7 +2007,9 @@ class testViews(PloneMeetingTestCase):
                                     manager_name='plone.abovecontentbody',
                                     viewlet_name='document-generation-link')
         viewlet.update()
-        self.assertTrue(viewlet.render())
+        rendered = viewlet.render()
+        self.assertTrue(cfg.podtemplates.itemTemplate.UID() in rendered)
+        self.assertTrue('store_as_annex' in rendered)
 
     def test_pm_dashboard_document_generation_link_viewlet_on_contacts(self):
         """Dashboard POD templates are available on contacts dashboards."""
