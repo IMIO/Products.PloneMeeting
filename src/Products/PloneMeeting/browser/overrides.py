@@ -350,8 +350,6 @@ class PMDocumentGeneratorLinksViewlet(DocumentGeneratorLinksViewlet, BaseGenerat
 class PMDashboardDocumentGeneratorLinksViewlet(DashboardDocumentGeneratorLinksViewlet, BaseGeneratorLinksViewlet):
     """ """
 
-    render = ViewPageTemplateFile('templates/generationlinks.pt')
-
     def available(self):
         """
             Do not display it on Meeting faceted (available/presented items)
