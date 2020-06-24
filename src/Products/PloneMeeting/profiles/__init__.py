@@ -482,6 +482,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.lastMeetingNumber = 0
         # Reinitialise the meeting number every year ?
         self.yearlyInitMeetingNumber = False
+        self.redirectToNextMeeting = False
         # If this meeting config corresponds to an organization that identifies
         # its successive forms (ie 5th Parliament, City council 2000-2006, etc),
         # the identifier of the current form may be specified here

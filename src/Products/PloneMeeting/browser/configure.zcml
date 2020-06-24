@@ -1052,5 +1052,14 @@
             />
     </configure>
 
+    <browser:page
+          name="defaultview"
+          for="*"
+          layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+          class="Products.PloneMeeting.browser.views.RedirectToMeeting"
+          attribute="redirect"
+          permission="zope2.View"
+          />
+
 </configure>
 

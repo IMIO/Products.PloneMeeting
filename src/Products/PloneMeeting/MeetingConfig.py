@@ -256,6 +256,18 @@ schema = Schema((
         ),
         write_permission="PloneMeeting: Write risky config",
     ),
+    BooleanField(
+        name='redirectToNextMeeting',
+        default=defValues.yearlyInitMeetingNumber,
+        widget=BooleanField._properties['widget'](
+            description="RedirectToNextMeeting",
+            description_msgid="redirect_to_next_meeting_desc",
+            label='RedirectToNextMeeting',
+            label_msgid='PloneMeeting_label_redirectToNextMeeting',
+            i18n_domain='PloneMeeting',
+        ),
+        write_permission="PloneMeeting: Write risky config",
+    ),
     TextField(
         name='budgetDefault',
         widget=RichWidget(
