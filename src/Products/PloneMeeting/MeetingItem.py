@@ -4487,10 +4487,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 else:
                     msgid = 'advice_hidden_during_redaction_considered_not_given_help'
                 data[advId]['type'] = advice_type
-                data[advId]['comment'] = translate(
+                msg = translate(
                     msgid=msgid,
                     domain='PloneMeeting',
                     context=self.REQUEST)
+                data[advId]['comment'] = msg
+                data[advId]['observations'] = msg
 
             # optimize some saved data
             data[advId]['type_translated'] = translate(data[advId]['type'],

@@ -19,6 +19,7 @@ Changelog
 4.1.27.1 (2020-06-24)
 ---------------------
 
+- In `MeetingItem.getAdviceDataFor`, hide also `observations`, like it is already the case for `comment`' when `hide_advices_under_redaction=True` and advice is currently under redaction, see #MPMPHAI-56
 - In `MeetingItem.getAdviceDataFor`, hide also `observations`, like it is already the case for `comment`' when
   `hide_advices_under_redaction=True` and advice is currently under redaction
 
