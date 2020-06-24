@@ -2865,18 +2865,21 @@ class testAdvices(PloneMeetingTestCase):
                                           **{'advice_group': self.vendors_uid,
                                              'advice_type': u'positive',
                                              'advice_hide_during_redaction': False,
-                                             'advice_comment': RichTextValue(u'My comment')})
+                                             'advice_comment': RichTextValue(u'My comment'),
+                                             'advice_observations': RichTextValue(u'My observations'), })
 
         # if advice is not hidden, advisers as well as any other user may access advice comment
         advice_data = item.getAdviceDataFor(item, adviser_uid=self.vendors_uid)
         self.assertEqual(advice_data['type'], 'positive')
         self.assertEqual(advice_data['type_translated'], u'Positive')
         self.assertEqual(advice_data['comment'], 'My comment')
+        self.assertEqual(advice_data['observations'], 'My observations')
         self.changeUser('pmCreator1')
         advice_data = item.getAdviceDataFor(item, adviser_uid=self.vendors_uid)
         self.assertEqual(advice_data['type'], 'positive')
         self.assertEqual(advice_data['type_translated'], u'Positive')
         self.assertEqual(advice_data['comment'], 'My comment')
+        self.assertEqual(advice_data['observations'], 'My observations')
 
         # hide advice
         self.changeUser('pmReviewer2')
@@ -2890,17 +2893,19 @@ class testAdvices(PloneMeetingTestCase):
             item, adviser_uid=self.vendors_uid, show_hidden_advice_data_to_group_advisers=False)
         self.assertEqual(hidden_advice_data['type'], 'hidden_during_redaction')
         self.assertEqual(hidden_advice_data['type_translated'], u'Hidden during redaction')
-        self.assertEqual(
-            hidden_advice_data['comment'],
-            translate('advice_hidden_during_redaction_help',
-                      domain='PloneMeeting',
-                      context=self.request))
+        hidden_help_msg = translate(
+            'advice_hidden_during_redaction_help',
+            domain='PloneMeeting',
+            context=self.request)
+        self.assertEqual(hidden_advice_data['comment'], hidden_help_msg)
+        self.assertEqual(hidden_advice_data['observations'], hidden_help_msg)
         # access by adviser
         # shown data
         shown_advice_data = item.getAdviceDataFor(item, adviser_uid=self.vendors_uid)
         self.assertEqual(shown_advice_data['type'], 'positive')
         self.assertEqual(shown_advice_data['type_translated'], u'Positive')
         self.assertEqual(shown_advice_data['comment'], 'My comment')
+        self.assertEqual(shown_advice_data['observations'], 'My observations')
 
         # access by non adviser
         # hidden data
@@ -2908,11 +2913,8 @@ class testAdvices(PloneMeetingTestCase):
         hidden_advice_data = item.getAdviceDataFor(item, adviser_uid=self.vendors_uid)
         self.assertEqual(hidden_advice_data['type'], 'hidden_during_redaction')
         self.assertEqual(hidden_advice_data['type_translated'], u'Hidden during redaction')
-        self.assertEqual(
-            hidden_advice_data['comment'],
-            translate('advice_hidden_during_redaction_help',
-                      domain='PloneMeeting',
-                      context=self.request))
+        self.assertEqual(hidden_advice_data['comment'], hidden_help_msg)
+        self.assertEqual(hidden_advice_data['observations'], hidden_help_msg)
         # access by non adviser
         # shown data
         shown_advice_data = item.getAdviceDataFor(
@@ -2920,6 +2922,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertEqual(shown_advice_data['type'], 'positive')
         self.assertEqual(shown_advice_data['type_translated'], u'Positive')
         self.assertEqual(shown_advice_data['comment'], 'My comment')
+        self.assertEqual(shown_advice_data['observations'], 'My observations')
 
         # when advice is considered not_given because hidden during redaction, data is correct
         # hidden data
@@ -2927,11 +2930,12 @@ class testAdvices(PloneMeetingTestCase):
         hidden_advice_data = item.getAdviceDataFor(item, adviser_uid=self.vendors_uid)
         self.assertEqual(hidden_advice_data['type'], 'considered_not_given_hidden_during_redaction')
         self.assertEqual(hidden_advice_data['type_translated'], u'Considered not given because hidden during redaction')
-        self.assertEqual(
-            hidden_advice_data['comment'],
-            translate('advice_hidden_during_redaction_considered_not_given_help',
-                      domain='PloneMeeting',
-                      context=self.request))
+        considered_not_given_msg = translate(
+            'advice_hidden_during_redaction_considered_not_given_help',
+            domain='PloneMeeting',
+            context=self.request)
+        self.assertEqual(hidden_advice_data['comment'], considered_not_given_msg)
+        self.assertEqual(hidden_advice_data['observations'], considered_not_given_msg)
 
     def test_pm_GetAdviceDataForInheritedAdvice(self):
         '''Test the getAdviceDataFor method when the advice is inherited.'''

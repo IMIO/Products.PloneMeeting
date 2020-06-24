@@ -2,11 +2,11 @@ Changelog
 =========
 
 
-4.1.28 (unreleased)
--------------------
+4.1.27.1 (unreleased)
+---------------------
 
-- Nothing changed yet.
-
+- In `MeetingItem.getAdviceDataFor`, hide also `observations`, like it is already the case for `comment`' when
+  `hide_advices_under_redaction=True` and advice is currently under redaction
 
 4.1.27 (2020-06-24)
 -------------------
