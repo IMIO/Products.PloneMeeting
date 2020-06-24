@@ -1424,6 +1424,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         brains = catalog(**query)
         numberOfBrains = len(brains)
         i = 1
+        extras = 'number_of_elements={0}'.format(numberOfBrains)
+        fplog('update_all_localroles', extras=extras)
         for brain in brains:
             itemOrMeeting = brain.getObject()
             logger.info('%d/%d Updating local roles of %s at %s' %
@@ -1444,7 +1446,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         api.portal.show_message('Done.', request=self.REQUEST)
         return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
 
-    security.declareProtected(ModifyPortalContent, 'updateAllLocalRoles')
+    security.declareProtected(ModifyPortalContent, 'removeEveryPreviews')
 
     def removeEveryPreviews(self, meta_type=('Meeting', 'MeetingItem'), portal_type=(), **kw):
         '''Update local_roles on Meeting and MeetingItem,

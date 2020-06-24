@@ -759,18 +759,12 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('getRawQuery')
 
     def getRawQuery(self, force_linked_items_query=False, **kwargs):
-        """ """
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self)
-
+        """Override default getRawQuery to manage our own."""
         # available items?
         if displaying_available_items(self) and not force_linked_items_query:
             res = self._availableItemsQuery()
         else:
-            res = [{'i': 'portal_type',
-                    'o': 'plone.app.querystring.operation.selection.is',
-                    'v': cfg.getItemTypeName()},
-                   {'i': 'linkedMeetingUID',
+            res = [{'i': 'linkedMeetingUID',
                     'o': 'plone.app.querystring.operation.selection.is',
                     'v': self.UID()}, ]
         return res

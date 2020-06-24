@@ -46,8 +46,8 @@ Changelog
 - Use roles 'Reviewer' and 'Contributor' in meetingadvice_workflow
 - Added bypass for users having 'Manage portal' in MeetingItemWorkflowConditions in 'mayWait_advices_from', 'mayValidate' and 'mayPresent'
 
-4.1.26.2 (unreleased)
----------------------
+4.1.27 (unreleased)
+-------------------
 
 - Fixed bug in `DashboardCollection` stored `query`, instead list of `<dict>`, was sometimes list of `<instance>`
  (???), added upgrade step to 4108, this is necessary for `plone.restapi` to serialize `DashboardCollection` to json
@@ -67,6 +67,11 @@ Changelog
   (`copyGroups` moved from `config.EXTRA_COPIED_FIELDS_SAME_MC` to `config.DEFAULT_COPIED_FIELDS`)
 - Factorized check about required data to be able to trigger a transition on an item in `MeetingItemWorkflowConditions._check_required_data`,
   this way we check if `category/groupsInCharge` are correct
+- Added `collective.fingerpointing` log message when using `ToolPloneMeeting.updateAllLocalRoles` so we know who and how much
+- Simplified `Meeting.getRawQuery` to only use `linkedMeetingUID` index to query items,
+  remove useless index `portal_type` from query as `linkedMeetingUID` is sure to be unique
+- Adapted override of `generationlinks.pt` regarding changes in `collective.eeafaceted.dashboard` (`pod_template.max_objects` attribute)
+- Validate `directory.position_types` to check that a used `position_type` (by a `held_position`) can not be removed
 
 4.1.26.1 (2020-06-12)
 ---------------------

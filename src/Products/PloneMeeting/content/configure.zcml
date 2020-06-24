@@ -21,6 +21,8 @@
     <!-- Schema policies -->
     <utility factory=".advice.MeetingAdviceSchemaPolicy"
              name="schema_policy_meetingadvice" />
+    <utility factory=".directory.PMDirectorySchemaPolicy"
+             name="schema_policy_pm_directory" />
     <utility factory=".held_position.PMHeldPositionSchemaPolicy"
              name="schema_policy_pm_held_position" />
     <utility factory=".organization.PMOrganizationSchemaPolicy"

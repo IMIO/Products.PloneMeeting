@@ -1975,17 +1975,41 @@ class testViews(PloneMeetingTestCase):
         item_adapter = getAdapter(item, IGenerablePODTemplates)
         item_generable_ids = [template.getId() for template in item_adapter.get_generable_templates()]
         self.assertEqual(item_generable_ids, ['itemTemplate'])
+        # render viewlet on item
+        viewlet = self._get_viewlet(context=item,
+                                    manager_name='plone.abovecontentbody',
+                                    viewlet_name='document-generation-link')
+        viewlet.update()
+        rendered = viewlet.render()
+        self.assertTrue(cfg.podtemplates.itemTemplate.UID() in rendered)
+        self.assertTrue('store_as_annex' in rendered)
         # meeting, does not use DashboardPODTemplates
         meeting = self.create('Meeting', date=DateTime('2019/11/26'))
         meeting_adapter = getAdapter(meeting, IGenerablePODTemplates)
         meeting_generable_ids = [template.getId() for template in meeting_adapter.get_generable_templates()]
         self.assertEqual(meeting_generable_ids, ['agendaTemplate', 'allItemTemplate'])
+        # render viewlet on meeting
+        viewlet = self._get_viewlet(context=meeting,
+                                    manager_name='plone.abovecontentbody',
+                                    viewlet_name='document-generation-link')
+        viewlet.update()
+        rendered = viewlet.render()
+        self.assertTrue(cfg.podtemplates.agendaTemplate.UID() in rendered)
+        self.assertTrue('store_as_annex' in rendered)
         # advice
         # by defaut, no POD template for advice, enable itemTemplate
         cfg.podtemplates.itemTemplate.pod_portal_types = [u'meetingadvice']
         advice_adapter = getAdapter(advice, IGenerablePODTemplates)
         advice_generable_ids = [template.getId() for template in advice_adapter.get_generable_templates()]
         self.assertEqual(advice_generable_ids, ['itemTemplate'])
+        # render viewlet on advice
+        viewlet = self._get_viewlet(context=advice,
+                                    manager_name='plone.abovecontentbody',
+                                    viewlet_name='document-generation-link')
+        viewlet.update()
+        rendered = viewlet.render()
+        self.assertTrue(cfg.podtemplates.itemTemplate.UID() in rendered)
+        self.assertTrue('store_as_annex' in rendered)
 
     def test_pm_dashboard_document_generation_link_viewlet_on_contacts(self):
         """Dashboard POD templates are available on contacts dashboards."""
