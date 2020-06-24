@@ -13,7 +13,7 @@ Changelog
 - Merged changes from 4.1.25
 - Merged changes from 4.1.26
 - Merged changes from 4.1.26.1
-- Merged changes from 4.1.26.2
+- Merged changes from 4.1.27
 
 4.2a5 (2020-03-17)
 ------------------
@@ -46,11 +46,17 @@ Changelog
 - Use roles 'Reviewer' and 'Contributor' in meetingadvice_workflow
 - Added bypass for users having 'Manage portal' in MeetingItemWorkflowConditions in 'mayWait_advices_from', 'mayValidate' and 'mayPresent'
 
-4.1.27 (unreleased)
+4.1.28 (unreleased)
+-------------------
+
+- Nothing changed yet.
+
+
+4.1.27 (2020-06-24)
 -------------------
 
 - Fixed bug in `DashboardCollection` stored `query`, instead list of `<dict>`, was sometimes list of `<instance>`
- (???), added upgrade step to 4108, this is necessary for `plone.restapi` to serialize `DashboardCollection` to json
+  (???), added upgrade step to 4108, this is necessary for `plone.restapi` to serialize `DashboardCollection` to json
 - Fixed wrong `TAL condition` used for `DashboardCollection` `searchmyitemstakenover` (replaced `omittedSuffixed` by `omitted_suffixes`)
 - Added parameter `ignore_underscore=False` to `utils.org_id_to_uid`, when an underscore is present, the value is considered
   something like `developers_creators`, if it is actually an organization id containing an `_` (which is not possible by default),
