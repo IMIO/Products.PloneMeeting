@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.1.27.1 (unreleased)
+4.1.27.1 (2020-06-24)
 ---------------------
 
 - In `MeetingItem.getAdviceDataFor`, hide also `observations`, like it is already the case for `comment`' when
