@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.1.27 (unreleased)
+4.1.27 (2020-06-24)
 -------------------
 
 - Fixed bug in `DashboardCollection` stored `query`, instead list of `<dict>`, was sometimes list of `<instance>`
