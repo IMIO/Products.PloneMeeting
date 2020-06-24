@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-version = '4.1.27'
+version = '4.1.28.dev0'
 
 setup(name='Products.PloneMeeting',
       version=version,
