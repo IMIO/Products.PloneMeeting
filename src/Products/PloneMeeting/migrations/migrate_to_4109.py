@@ -4,7 +4,6 @@ from plone.app.controlpanel.mail import MailControlPanelAdapter
 from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator
 from Products.PloneMeeting.utils import get_public_url
-from copy import deepcopy
 
 
 class Migrate_To_4109(Migrator):
