@@ -7,6 +7,7 @@ Changelog
 
 - Adapted `CheckPodTemplatesView` so generation helper view is correctly initialized when generating pod template on meeting,
   this would have shown the `max_objects` bug in `collective.eeafaceted.dashboard` `_get_generation_context` method
+- Force email sender address in migration 4109
 
 4.1.27.1 (2020-06-24)
 ---------------------
