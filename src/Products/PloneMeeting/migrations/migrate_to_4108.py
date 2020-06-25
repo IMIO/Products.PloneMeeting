@@ -46,7 +46,8 @@ def migrate(context):
 
        1) Make sure format of DashboardCollection.query is correct;
        2) Fix condition for 'searchmyitemstakenover'.
-       3) Fix mail sender address.
+       3) Fix mail sender address;
+       4) Re-apply typeinfo step to update directory schema policy.
     '''
     migrator = Migrate_To_4108(context)
     migrator.run()
