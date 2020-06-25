@@ -1788,6 +1788,10 @@ class CheckPodTemplatesView(BrowserView):
                 continue
 
             for obj in objs:
+                if obj.meta_type == 'Meeting':
+                    self.request.form['facetedQuery'] = []
+                elif 'facetedQuery' in self.request.form:
+                    del self.request.form['facetedQuery']
                 view = obj.restrictedTraverse('@@document-generation')
                 self.request.set('template_uid', pod_template.UID())
                 output_format = pod_template.pod_formats[0]
