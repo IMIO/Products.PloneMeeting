@@ -6,8 +6,39 @@ Changelog
 -------------------
 
 - Add 'redirectToNextMeeting' option.
-
 - Moved `Meeting.getNextMeeting` logic to `utils.get_next_meeting` so it can be used from outside a `Meeting` instance
+- Moved `Meeting.getNextMeeting` logic to `utils.get_next_meeting` so it can be used from outside a `Meeting` instance,
+  moreover, make negative `dateGap` work, this is useful to get `Meeting` of today when meeting have no hours defined
+- Make sure the faceted ajax spinner is visible when loading available items on a meeting or page seems somewhat stucked
+- A `MeetingConfig` used in another `MeetingConfig.meetingConfigsToCloneTo` can not be deactivated
+- When CSS style `border:none;` on a table, no matter border on cells are defined, tables rendered by `appy.pod`
+  do not have a border, so displaying it as dotted border in `CKeditor`
+- In `@@display-group-users`, if group contains another group, display group's title instead group id (or group id if no title),
+  moreover clearly differenciate using `user.png/group.png` icon when member is a user or a group
+- Enabled column `PloneGroupUsersGroupsColumn` on contacts dashboard displaying organizations
+- Enabled `allow_reorder` for `organization.certified_signatures` DataGridField
+- Use `ram.cache` for `SelectableAssemblyMembersVocabulary` used in `organization.certified_signatures` DataGridField
+  so it renders faster in dashboards displaying organizations
+- Make `organization`/`person`/`held_position` implements `IConfigElement` so we may use `_invalidateCachedVocabularies`
+  to invalidate cached vocabularies and it is not necessary to write event handlers for these cases
+- Added `group-users` icon next to `proposingGroup` to display every Plone groups members to members of the `proposingGroup` only
+- Added `collective.fingerpointing` log message when managing item `assembly/signatures/attendees/signatories`
+- Fixed bug in `itemPeople` macro displayed on `meetingitem_view`, when field Meeting `itemNonAttendees` is enabled,
+  the column header was correctly hidden but the column cells were displayed
+- Moved JS function `toggleDoc` to `imio.helpers` under name `toggleDetails`
+- Cleaned `plonemeeting.css`, removed useless styles definition
+- In `contacts` management, show clearly that icons in portlet will add new `organization/held_position` by using icons with a `+`
+- Validate `plonegroup` settings for `functions` so it is not possible to remove or disable a function that is used in
+  `MeetingConfig.selectableCopyGroups` or `MeetingItem.copyGroups`
+- Migrate `MeetingCategory` from AT to DX :
+
+  - New portal_type is `meetingcategory`;
+  - Field `MeetingItem.classifier` was moved from ReferenceField to StringField;
+  - Added new `MeetingConfig.insertingMethodsOnAddItem` named `on_classifiers`;
+  - Removed magic in `MeetingConfig.getCategories` that returned organizations when
+    `MeetingConfig.useGroupsAsCategories` was `True`, now it returns only categories, moreover parameter `classifiers` is
+    renamed to `catType` that may be `all`/`categories`/`classifiers`.
+- In every migrations, call `cleanRegistries` at the end by default so `JS/CSS` are recompiled
 
 4.1.27.2 (2020-06-25)
 ---------------------
