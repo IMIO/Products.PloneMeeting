@@ -2,8 +2,8 @@ Changelog
 =========
 
 
-4.1.28 (unreleased)
--------------------
+4.1.27.2 (unreleased)
+---------------------
 
 - Add 'redirectToNextMeeting' option.
 - Moved `Meeting.getNextMeeting` logic to `utils.get_next_meeting` so it can be used from outside a `Meeting` instance
