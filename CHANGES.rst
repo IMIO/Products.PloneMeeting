@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.1.27.2 (unreleased)
+4.1.27.2 (2020-06-25)
 ---------------------
 
 - Adapted `CheckPodTemplatesView` so generation helper view is correctly initialized when generating pod template on meeting,
