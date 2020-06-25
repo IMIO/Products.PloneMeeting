@@ -10,12 +10,14 @@ from copy import deepcopy
 class Migrate_To_4109(Migrator):
 
     def force_email_from_address(self):
+        logger.info("Fixing email from address...")
         mail_panel_adapter = MailControlPanelAdapter(self.portal)
         public_url = get_public_url(self.portal)
         mail_address = public_url.replace("https://", "")
         index = mail_address.index("-pm")
         mail_address = "%s-delib@imio.be" % mail_address[:index]
         mail_panel_adapter.set_email_from_address(mail_address)
+        logger.info('Done.')
 
     def run(self, from_migration_to_41=False):
         logger.info('Migrating to PloneMeeting 4109...')
