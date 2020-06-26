@@ -11,6 +11,7 @@ from imio.helpers.content import validate_fields
 from OFS.ObjectManager import BeforeDeleteException
 from plone import api
 from Products.CMFCore.permissions import View
+from Products.PloneMeeting.content.directory import IPMDirectory
 from Products.PloneMeeting.content.source import PMContactSourceBinder
 from Products.PloneMeeting.Extensions.imports import import_contacts
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
@@ -19,6 +20,7 @@ from z3c.relationfield.relation import RelationValue
 from zExceptions import Redirect
 from zope.component import getUtility
 from zope.i18n import translate
+from zope.interface import Invalid
 from zope.intid.interfaces import IIntIds
 
 import os
@@ -1547,6 +1549,38 @@ class testContacts(PloneMeetingTestCase):
         self.assertTrue(self.hasPermission(View, meeting))
         meeting_attendees = meeting.getAttendees(theObjects=True)
         self.assertEqual(len(meeting_attendees), 4)
+
+    def test_pm_directory_position_types_invariant(self):
+        class DummyData(object):
+            def __init__(self, context, position_types):
+                self.__context__ = context
+                self.position_types = position_types
+
+        position_types = self.portal.contacts.position_types
+        self.assertEqual(position_types, [{'token': 'default', 'name': u'D\xe9faut'}])
+        hp = self.portal.contacts.person1.held_pos1
+        self.assertEqual(hp.position_type, 'default')
+        invariant = IPMDirectory.getTaggedValue('invariants')[0]
+
+        # can not remove used position_type
+        data = DummyData(self.portal.contacts, position_types=[])
+        with self.assertRaises(Invalid) as cm:
+            invariant(data)
+        error_msg = translate(
+            msgid="removed_position_type_in_use_error",
+            mapping={'removed_position_type': hp.position_type,
+                     'hp_url': hp.absolute_url()},
+            domain='PloneMeeting',
+            context=self.request)
+        self.assertEqual(cm.exception.message, error_msg)
+
+        # adding new value or removing an unused one is ok
+        position_types2 = position_types + [{'token': 'default2', 'name': u'D\xe9faut2'}]
+        self.portal.contacts.position_types = position_types2
+        data = DummyData(self.portal.contacts, position_types2)
+        self.assertIsNone(invariant(data))
+        data = DummyData(self.portal.contacts, position_types)
+        self.assertIsNone(invariant(data))
 
 
 def test_suite():

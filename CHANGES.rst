@@ -2,11 +2,30 @@ Changelog
 =========
 
 
-4.1.26.2 (unreleased)
+4.1.27.3 (unreleased)
 ---------------------
 
+- Nothing changed yet.
+
+
+4.1.27.2 (2020-06-25)
+---------------------
+
+- Adapted `CheckPodTemplatesView` so generation helper view is correctly initialized when generating pod template on meeting,
+  this would have shown the `max_objects` bug in `collective.eeafaceted.dashboard` `_get_generation_context` method
+- Force email sender address in upgrade step to 4109
+
+4.1.27.1 (2020-06-24)
+---------------------
+
+- In `MeetingItem.getAdviceDataFor`, hide also `observations`, like it is already the case for `comment`' when
+  `hide_advices_under_redaction=True` and advice is currently under redaction
+
+4.1.27 (2020-06-24)
+-------------------
+
 - Fixed bug in `DashboardCollection` stored `query`, instead list of `<dict>`, was sometimes list of `<instance>`
- (???), added upgrade step to 4108, this is necessary for `plone.restapi` to serialize `DashboardCollection` to json
+  (???), added upgrade step to 4108, this is necessary for `plone.restapi` to serialize `DashboardCollection` to json
 - Fixed wrong `TAL condition` used for `DashboardCollection` `searchmyitemstakenover` (replaced `omittedSuffixed` by `omitted_suffixes`)
 - Added parameter `ignore_underscore=False` to `utils.org_id_to_uid`, when an underscore is present, the value is considered
   something like `developers_creators`, if it is actually an organization id containing an `_` (which is not possible by default),
@@ -21,6 +40,13 @@ Changelog
 - Display `DashboardCollection` UID on the `MeetingConfig` view
 - When cloning item to another `MeetingConfig`, keep `copyGroups` by default
   (`copyGroups` moved from `config.EXTRA_COPIED_FIELDS_SAME_MC` to `config.DEFAULT_COPIED_FIELDS`)
+- Factorized check about required data to be able to trigger a transition on an item in `MeetingItemWorkflowConditions._check_required_data`,
+  this way we check if `category/groupsInCharge` are correct
+- Added `collective.fingerpointing` log message when using `ToolPloneMeeting.updateAllLocalRoles` so we know who and how much
+- Simplified `Meeting.getRawQuery` to only use `linkedMeetingUID` index to query items,
+  remove useless index `portal_type` from query as `linkedMeetingUID` is sure to be unique
+- Adapted override of `generationlinks.pt` regarding changes in `collective.eeafaceted.dashboard` (`pod_template.max_objects` attribute)
+- Validate `directory.position_types` to check that a used `position_type` (by a `held_position`) can not be removed
 
 4.1.26.1 (2020-06-12)
 ---------------------

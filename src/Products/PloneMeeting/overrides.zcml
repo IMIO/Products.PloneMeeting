@@ -38,13 +38,16 @@
         layer="imio.history.interfaces.IImioHistoryLayer"
         permission="zope2.View" />
 
-    <browser:viewlet
-        for="eea.facetednavigation.interfaces.IFacetedNavigable"
-        name="dashboard-document-generation-link"
-        manager="collective.eeafaceted.z3ctable.interfaces.ITopAboveNavManager"
-        class="Products.PloneMeeting.browser.overrides.PMDashboardDocumentGeneratorLinksViewlet"
-        layer="collective.eeafaceted.dashboard.interfaces.IFacetedDashboardLayer"
-        permission="zope2.View" />
+    <configure package="collective.eeafaceted.dashboard.browser">
+      <browser:viewlet
+          for="eea.facetednavigation.interfaces.IFacetedNavigable"
+          name="dashboard-document-generation-link"
+          manager="collective.eeafaceted.z3ctable.interfaces.ITopAboveNavManager"
+          class="Products.PloneMeeting.browser.overrides.PMDashboardDocumentGeneratorLinksViewlet"
+          template="templates/generationlinks.pt"
+          layer="collective.eeafaceted.dashboard.interfaces.IFacetedDashboardLayer"
+          permission="zope2.View" />
+    </configure>
 
     <browser:page
         name="overview-controlpanel"

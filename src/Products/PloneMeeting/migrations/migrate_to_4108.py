@@ -29,13 +29,15 @@ class Migrate_To_4108(Migrator):
         logger.info('Done.')
 
     def fix_email_from_address(self):
+        logger.info("Fixing email from address...")
         mail_panel_adapter = MailControlPanelAdapter(self.portal)
         mail_address = mail_panel_adapter.get_email_from_address().strip()
-        if mail_address.endswith("@imio.be"):
+        if "imio.be" in mail_address:
             public_url = get_public_url(self.portal)
             mail_address = public_url.replace("https://", "")\
                 .replace("-pm.imio-app", "-delib@imio")
-        mail_panel_adapter.set_email_from_address(mail_address.strip())
+        mail_panel_adapter.set_email_from_address(mail_address.strip(" /."))
+        logger.info('Done.')
 
     def run(self, from_migration_to_41=False):
         logger.info('Migrating to PloneMeeting 4108...')
@@ -52,7 +54,8 @@ def migrate(context):
 
        1) Make sure format of DashboardCollection.query is correct;
        2) Fix condition for 'searchmyitemstakenover'.
-       3) Fix mail sender address.
+       3) Fix mail sender address;
+       4) Re-apply typeinfo step to update directory schema policy.
     '''
     migrator = Migrate_To_4108(context)
     migrator.run()
