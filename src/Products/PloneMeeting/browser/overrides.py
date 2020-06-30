@@ -25,6 +25,7 @@ from collective.iconifiedcategory.browser.actionview import ToPrintChangeView
 from collective.iconifiedcategory.browser.tabview import CategorizedTabView
 from collective.iconifiedcategory.browser.views import CategorizedChildInfosView
 from collective.iconifiedcategory.browser.views import CategorizedChildView
+from datetime import datetime
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from imio.actionspanel.browser.viewlets import ActionsPanelViewlet
 from imio.actionspanel.browser.views import ActionsPanelView
@@ -434,6 +435,29 @@ class PMFacetedContainerView(FacetedDashboardView):
     def __call__(self):
         """Make sure a user, even a Manager that is not the Zope Manager is redirected
            to it's own pmFolder if it is on the pmFolder of another user."""
+        if self.cfg.redirectToNextMeeting:
+            if ('searches_items' in self.request.steps) and ('facetednavigation_view' in self.request.steps) and not (self.request.get('no_redirect')):
+
+                meetingDate = datetime.now()
+                meetingTypeName = self.cfg.getMeetingTypeName()
+                catalog = api.portal.get_tool('portal_catalog')
+
+                # find every meetings after meetingDate
+                brains = catalog(portal_type=meetingTypeName,
+                                 getDate={'query': meetingDate, 'range': 'min'},
+                                 sort_on='getDate')
+                re = None
+                for brain in brains:
+                    if datetime(brain.getDate.year(),
+                                brain.getDate.month(),
+                                brain.getDate.day(),
+                                brain.getDate.hour(),
+                                brain.getDate.minute()) > meetingDate:
+                        re = brain
+                        break
+                if re:
+                    self.request.RESPONSE.redirect(re.getURL())
+
         res = super(PMFacetedContainerView, self).__call__()
 
         if self.request.RESPONSE.status == 302 and \
