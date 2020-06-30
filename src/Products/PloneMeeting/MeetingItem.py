@@ -3531,7 +3531,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             res = 1
             category = self.getCategory(True)
             if category:
-                res = category.getOrder(onlySelectable=False)
+                res = category.get_order(only_selectable=False)
         elif insertMethod == 'on_proposing_groups':
             org = self.getProposingGroup(True)
             res = org.get_order()

@@ -1190,3 +1190,56 @@ def onFacetedGlobalSettingsChanged(folder, event):
     """ """
     # set modification date on every containers
     _notifyContainerModified(folder)
+
+
+def onCagtegoryAdded(category, event):
+    ''' '''
+    category._invalidateCachedVocabularies()
+
+
+def onCagtegoryModified(category, event):
+    ''' '''
+    category._invalidateCachedVocabularies()
+
+
+def onCategoryWillBeRemoved(category, event):
+    '''Checks if the current MeetingCategory can be deleted:
+      - it can not be linked to an existing meetingItem (normal item,
+        recurring item or item template);
+      - it can not be used in field 'categoryMappingsWhenCloningToOtherMC'
+        of another MeetingCategory.'''
+    # If we are trying to remove the whole Plone Site, bypass this hook.
+    # bypass also if we are in the creation process
+    if event.object.meta_type == 'Plone Site':
+        return
+
+    tool = api.portal.get_tool('portal_plonemeeting')
+    cfg = tool.getMeetingConfig(category)
+    catalog = api.portal.get_tool('portal_catalog')
+    brains = catalog(
+        portal_type=(
+            cfg.getItemTypeName(),
+            cfg.getItemTypeName(configType='MeetingItemRecurring'),
+            cfg.getItemTypeName(configType='MeetingItemTemplate')),
+        getCategory=category.getId())
+    if brains:
+        # linked to an existing item, we can not delete it
+        msg = translate(
+            "can_not_delete_meetingcategory_meetingitem",
+            domain="plone",
+            mapping={'url': brains[0].getURL()},
+            context=category.REQUEST)
+        raise BeforeDeleteException(msg)
+    # check field category_mappings_when_cloning_to_other_mc of other MC categories
+    cat_mapping_id = '{0}.{1}'.format(cfg.getId(), category.getId())
+    for other_cfg in tool.objectValues('MeetingConfig'):
+        if other_cfg == cfg:
+            continue
+        for other_cat in other_cfg.getCategories(onlySelectable=False, caching=False):
+            if cat_mapping_id in other_cat.category_mappings_when_cloning_to_other_mc():
+                msg = translate(
+                    "can_not_delete_meetingcategory_other_category_mapping",
+                    domain="plone",
+                    mapping={'url': other_cat.absolute_url()},
+                    context=category.REQUEST)
+                raise BeforeDeleteException(msg)

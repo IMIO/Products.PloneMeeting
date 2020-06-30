@@ -17,10 +17,16 @@
       provides="zope.schema.interfaces.IVocabularyFactory"
       factory=".advice.AdviceTypeVocabulary"
       name="Products.PloneMeeting.content.advice.advice_type_vocabulary" />
+    <utility
+      provides="zope.schema.interfaces.IVocabularyFactory"
+      factory=".category.CategoriesOfOtherMCsVocabulary"
+      name="Products.PloneMeeting.content.category.collective.category_mapping_when_cloning_to_other_mc_vocabulary" />
 
     <!-- Schema policies -->
     <utility factory=".advice.MeetingAdviceSchemaPolicy"
              name="schema_policy_meetingadvice" />
+    <utility factory=".category.MeetingCategorySchemaPolicy"
+             name="schema_policy_meetingcategory" />
     <utility factory=".directory.PMDirectorySchemaPolicy"
              name="schema_policy_pm_directory" />
     <utility factory=".held_position.PMHeldPositionSchemaPolicy"

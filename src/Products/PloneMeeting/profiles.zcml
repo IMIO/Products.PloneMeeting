@@ -115,4 +115,12 @@
       handler="Products.PloneMeeting.migrations.migrate_to_4109.migrate"
       profile="Products.PloneMeeting:default" />
 
+  <genericsetup:upgradeStep
+      title="Go to PloneMeeting 4110"
+      description=""
+      source="4109"
+      destination="4110"
+      handler="Products.PloneMeeting.migrations.migrate_to_4110.migrate"
+      profile="Products.PloneMeeting:default" />
+
 </configure>

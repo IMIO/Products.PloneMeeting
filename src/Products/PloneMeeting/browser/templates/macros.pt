@@ -791,7 +791,7 @@ This works for an AT and for a DX.</tal:comment>
 <tal:comment replace="nothing">Macro used to display categories and classifiers in a MeetingConfig.
 The parameter "cFolder" is the folder containing categories.</tal:comment>
 <tal:defines define="cFolderUrl cFolder/absolute_url;
-                     objs python: cFolder.objectValues('MeetingCategory');
+                     objs python: cFolder.objectValues();
                      threshold python: not 'show_every_categories' in context.REQUEST and 50 or 0;
                      too_much_cats python: threshold and len(objs) > threshold;">
 <table class="listing nosort" align="right" width="100%">
@@ -812,9 +812,9 @@ The parameter "cFolder" is the folder containing categories.</tal:comment>
     </td>
   </tr>
   <tal:loop repeat="obj objs" condition="python: not threshold or len(objs) <= threshold">
-  <tr tal:define="isActive python: here.portal_workflow.getInfoFor(obj, 'review_state') == 'active';
-                    oddrow repeat/obj/odd;
-                    classOddEven python: oddrow and 'even' or 'odd';" valign="top"
+  <tr tal:define="isActive obj/enabled;
+                  oddrow repeat/obj/odd;
+                  classOddEven python: oddrow and 'even' or 'odd';" valign="top"
         tal:attributes="class python: not isActive and classOddEven+' state-inactive' or classOddEven"
         class="#">
     <td>
@@ -826,7 +826,7 @@ The parameter "cFolder" is the folder containing categories.</tal:comment>
             <metal:addtionalInformations use-macro="here/@@pm-macros/additionalInformations" />
         </tal:additionalInformations>
     </td>
-    <td tal:content="obj/getCategoryId"></td>
+    <td tal:content="obj/category_id"></td>
     <td i18n:domain="plone">
       <span tal:condition="isActive" i18n:translate="">Yes</span>
       <span tal:condition="not: isActive" i18n:translate="">No</span>

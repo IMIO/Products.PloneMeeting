@@ -5818,11 +5818,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 catFolder = self.categories
             res = []
             if onlySelectable:
-                for cat in catFolder.objectValues('MeetingCategory'):
-                    if cat.adapted().isSelectable(userId=userId):
+                for cat in catFolder.objectValues():
+                    if cat.is_selectable(userId=userId):
                         res.append(cat)
             else:
-                res = catFolder.objectValues('MeetingCategory')
+                res = catFolder.objectValues()
             # be coherent as objectValues returns a LazyMap
             data = list(res)
             if caching:
