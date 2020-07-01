@@ -5798,22 +5798,16 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             data = cache.get(key, None)
         if data is None:
             data = []
-            if self.getUseGroupsAsCategories():
-                data = get_organizations()
-                if caching:
-                    cache[key] = data
-                return data
-            else:
+            if not self.getUseGroupsAsCategories():
                 catFolder = self.categories
-            res = []
-            if onlySelectable:
-                for cat in catFolder.objectValues():
-                    if cat.is_selectable(userId=userId):
-                        res.append(cat)
-            else:
-                res = catFolder.objectValues()
+                if onlySelectable:
+                    for cat in catFolder.objectValues():
+                        if cat.is_selectable(userId=userId):
+                            data.append(cat)
+                else:
+                    data = catFolder.objectValues()
             # be coherent as objectValues returns a LazyMap
-            data = list(res)
+            data = list(data)
             if caching:
                 cache[key] = data
         return data

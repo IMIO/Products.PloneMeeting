@@ -112,22 +112,20 @@ class MeetingCategory(Item):
     security.declarePublic('is_selectable')
 
     def is_selectable(self, userId):
-        '''See documentation in interfaces.py.'''
-        cat = self.getSelf()
+        '''Check if category may be used :
+           - enabled;
+           - current user in using_groups or current user is Manager.'''
         tool = api.portal.get_tool('portal_plonemeeting')
-        wfTool = api.portal.get_tool('portal_workflow')
-        state = wfTool.getInfoFor(cat, 'review_state')
-        isUsing = bool(state == 'active')
-        usingGroups = cat.getUsingGroups()
-        # If we have usingGroups make sure userId is creator for one of it
-        if isUsing and usingGroups and not tool.isManager(cat, realManagers=True):
-            cfg = tool.getMeetingConfig(cat)
+        # If we have using_groups make sure userId is creator for one of it
+        selectable = self.enabled
+        if selectable and self.get_using_groups() and not tool.isManager(self, realManagers=True):
+            cfg = tool.getMeetingConfig(self)
             selectable_orgs = tool.get_selectable_orgs(cfg, user_id=userId)
             keys = [selectable_org.UID() for selectable_org in selectable_orgs]
             # Check intersection between self.usingGroups and orgs for which
             # the current user is creator
-            isUsing = bool(set(usingGroups).intersection(keys))
-        return isUsing
+            selectable = bool(set(self.get_using_groups()).intersection(keys))
+        return selectable
 
     def get_groups_in_charge(self, the_objects=False):
         """ """
