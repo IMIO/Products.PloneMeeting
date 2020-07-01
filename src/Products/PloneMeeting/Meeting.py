@@ -68,6 +68,7 @@ from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getDateFromDelta
 from Products.PloneMeeting.utils import getFieldVersion
+from Products.PloneMeeting.utils import get_next_meeting
 from Products.PloneMeeting.utils import getStatesBefore
 from Products.PloneMeeting.utils import getWorkflowAdapter
 from Products.PloneMeeting.utils import hasHistory
@@ -2051,26 +2052,12 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
            with meeting from the current config.
            p_dateGap is the number of 'dead days' following the date of
            the current meeting in which we do not look for next meeting'''
-        meetingDate = self.getDate()
         tool = api.portal.get_tool('portal_plonemeeting')
         if not cfgId:
             cfg = tool.getMeetingConfig(self)
         else:
             cfg = getattr(tool, cfgId)
-        meetingTypeName = cfg.getMeetingTypeName()
-        catalog = api.portal.get_tool('portal_catalog')
-        # find every meetings after self.getDate
-        brains = catalog(portal_type=meetingTypeName,
-                         getDate={'query': meetingDate + dateGap, 'range': 'min'},
-                         sort_on='getDate')
-        res = None
-        for brain in brains:
-            if brain.getDate > meetingDate:
-                res = brain
-                break
-        if res:
-            res = res.getObject()
-        return res
+        return get_next_meeting(meetingDate=self.getDate(), cfg=cfg, dateGap=dateGap)
 
     security.declareProtected(ModifyPortalContent, 'processForm')
 
