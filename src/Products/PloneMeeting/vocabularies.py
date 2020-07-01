@@ -114,8 +114,8 @@ class ItemCategoriesVocabulary(object):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         categories = cfg.getCategories(classifiers=classifiers, onlySelectable=False, caching=False)
-        activeCategories = [cat for cat in categories if api.content.get_state(cat) == 'active']
-        notActiveCategories = [cat for cat in categories if not api.content.get_state(cat) == 'active']
+        activeCategories = [cat for cat in categories if cat.enabled]
+        notActiveCategories = [cat for cat in categories if not cat.enabled]
         res_active = []
         for category in activeCategories:
             term_id = classifiers and category.UID() or category.getId()

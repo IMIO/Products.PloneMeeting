@@ -76,6 +76,10 @@
                    OFS.interfaces.IObjectWillBeRemovedEvent"
               handler=".events.onConfigWillBeRemoved" />
 
+  <subscriber for=".content.category.IMeetingCategory
+                   OFS.interfaces.IObjectWillBeRemovedEvent"
+              handler=".events.onCategoryWillBeRemoved" />
+
   <subscriber for=".content.organization.IPMOrganization
                    zope.lifecycleevent.interfaces.IObjectAddedEvent"
               handler=".events.onOrgCreated" />

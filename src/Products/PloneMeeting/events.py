@@ -1192,22 +1192,12 @@ def onFacetedGlobalSettingsChanged(folder, event):
     _notifyContainerModified(folder)
 
 
-def onCagtegoryAdded(category, event):
-    ''' '''
-    category._invalidateCachedVocabularies()
-
-
-def onCagtegoryModified(category, event):
-    ''' '''
-    category._invalidateCachedVocabularies()
-
-
 def onCategoryWillBeRemoved(category, event):
-    '''Checks if the current MeetingCategory can be deleted:
+    '''Checks if the current p_category can be deleted:
       - it can not be linked to an existing meetingItem (normal item,
         recurring item or item template);
-      - it can not be used in field 'categoryMappingsWhenCloningToOtherMC'
-        of another MeetingCategory.'''
+      - it can not be used in field 'category_mapping_when_cloning_to_other_mc'
+        of another meetingcategory.'''
     # If we are trying to remove the whole Plone Site, bypass this hook.
     # bypass also if we are in the creation process
     if event.object.meta_type == 'Plone Site':
@@ -1230,13 +1220,13 @@ def onCategoryWillBeRemoved(category, event):
             mapping={'url': brains[0].getURL()},
             context=category.REQUEST)
         raise BeforeDeleteException(msg)
-    # check field category_mappings_when_cloning_to_other_mc of other MC categories
+    # check field category_mapping_when_cloning_to_other_mc of other MC categories
     cat_mapping_id = '{0}.{1}'.format(cfg.getId(), category.getId())
     for other_cfg in tool.objectValues('MeetingConfig'):
         if other_cfg == cfg:
             continue
         for other_cat in other_cfg.getCategories(onlySelectable=False, caching=False):
-            if cat_mapping_id in other_cat.category_mappings_when_cloning_to_other_mc():
+            if cat_mapping_id in other_cat.category_mapping_when_cloning_to_other_mc:
                 msg = translate(
                     "can_not_delete_meetingcategory_other_category_mapping",
                     domain="plone",

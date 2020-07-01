@@ -3,6 +3,7 @@
 from plone import api
 from plone.app.contenttypes.migration.dxmigration import ContentMigrator
 from plone.app.contenttypes.migration.migration import migrate as pac_migrate
+from Products.CMFPlone.interfaces.constrains import IConstrainTypes
 from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator
 
@@ -36,7 +37,26 @@ class Migrate_To_4110(Migrator):
         self.ps.runImportStepFromProfile('profile-Products.PloneMeeting:default', 'typeinfo')
         # make sure no workflow used for meetingcategory
         self.wfTool.setChainForPortalTypes(('meetingcategory', ), ('', ))
+        # adapt allowed_types for each MeetingConfig.categories/MeetingConfig.classifiers folders
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            for folder_id in ('categories', 'classifiers'):
+                folder = cfg.get(folder_id)
+                constrain = IConstrainTypes(folder)
+                constrain.setConstrainTypesMode(1)
+                allowedTypes = ['meetingcategory']
+                constrain.setLocallyAllowedTypes(allowedTypes)
+                constrain.setImmediatelyAddableTypes(allowedTypes)
+        # migrate to DX
         pac_migrate(self.portal, MeetingCategoryMigrator)
+        self.removeUnusedPortalTypes(portal_types=['MeetingCategory'])
+        # add meetingcategory to types_not_searched
+        props = api.portal.get_tool('portal_properties').site_properties
+        nsTypes = props.getProperty('types_not_searched')
+        if 'meetingcategory' not in nsTypes:
+            nsTypes = list(nsTypes)
+            # MeetingCategory was removed by removeUnusedPortalTypes
+            nsTypes.append('meetingcategory')
+            props.manage_changeProperties(types_not_searched=tuple(nsTypes))
 
     def run(self, from_migration_to_41=False):
         logger.info('Migrating to PloneMeeting 4110...')

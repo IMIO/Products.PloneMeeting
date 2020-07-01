@@ -842,7 +842,7 @@ schema = Schema((
         ),
         multiValued=False,
         relationship="ItemClassification",
-        allowed_types=('MeetingCategory',),
+        allowed_types=('meetingcategory',),
         optional=True,
     ),
     StringField(

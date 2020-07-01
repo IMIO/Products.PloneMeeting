@@ -103,7 +103,7 @@ class testMeetingItem(PloneMeetingTestCase):
     def test_pm_SelectableCategories(self):
         '''Categories are available if isSelectable returns True.  By default,
            isSelectable will return active categories for wich intersection
-           between MeetingCategory.usingGroups and current member
+           between meetingcategory.using_groups and current member
            proposingGroups is not empty.'''
         # Use MeetingCategory as categories
         self.changeUser('admin')
@@ -132,14 +132,14 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual([cat.id for cat in cfg.getCategories(classifiers=True)], expectedClassifiers)
         # Specify that a category is restricted to some groups pmCreator1 is not creator for
         self.changeUser('admin')
-        cfg.categories.maintenance.setUsingGroups((self.vendors_uid,))
-        cfg.classifiers.classifier1.setUsingGroups((self.vendors_uid,))
+        cfg.categories.maintenance.using_groups = (self.vendors_uid,)
+        cfg.classifiers.classifier1.using_groups = (self.vendors_uid,)
         expectedCategories.remove('maintenance')
         expectedClassifiers.remove('classifier1')
         # getCategories has caching in the REQUEST, we need to wipe this out
         self.cleanMemoize()
         self.changeUser('pmCreator1')
-        # if current user is not creator for one of the usingGroups defined for the category, he can not use it
+        # if current user is not creator for one of the using_groups defined for the category, he can not use it
         self.assertEqual([cat.id for cat in cfg.getCategories()], expectedCategories)
         self.assertEqual([cat.id for cat in cfg.getCategories(classifiers=True)], expectedClassifiers)
         # cfg.getCategories can receive a userId
@@ -148,8 +148,8 @@ class testMeetingItem(PloneMeetingTestCase):
         # here above we restrict the use of 'maintenance' to vendors too...
         expectedCategories.insert(0, 'maintenance')
         self.assertEqual([cat.id for cat in cfg.getCategories(userId='pmCreator2')], expectedCategories)
-        # change usingGroup for 'subproducts'
-        cfg.categories.subproducts.setUsingGroups((self.developers_uid,))
+        # change using_groups for 'subproducts'
+        cfg.categories.subproducts.using_groups = (self.developers_uid,)
         expectedCategories.remove('subproducts')
         # getCategories has caching in the REQUEST, we need to wipe this out
         self.cleanMemoize()
@@ -316,7 +316,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(READER_USECASES['groupsincharge'] in item.__ac_local_roles__[self.vendors_observers])
 
     def test_pm_GroupsInChargeFromCategory(self):
-        '''Groups in charge defined on the item category MeetingCategory is taken into
+        '''Groups in charge defined on the item category is taken into
            account by MeetingItem.getGroupsInCharge and get local_roles on item
            if MeetingConfig.includeGroupsInChargeDefinedOnCategory.'''
         cfg = self.meetingConfig
@@ -324,7 +324,7 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg.setIncludeGroupsInChargeDefinedOnCategory(False)
         cfg.setItemGroupsInChargeStates((self._stateMappingFor('itemcreated'), ))
         development = cfg.categories.development
-        development.setGroupsInCharge([self.vendors_uid])
+        development.groups_in_charge = [self.vendors_uid]
 
         # create an item
         self.changeUser('pmCreator1')
@@ -3520,7 +3520,7 @@ class testMeetingItem(PloneMeetingTestCase):
                 'cat10': '10. Category',
                 'cat101': '10.1 Category'}
         for cat_id, cat_title in data.items():
-            self.create('MeetingCategory', id=cat_id, title=cat_title)
+            self.create('meetingcategory', id=cat_id, title=cat_title)
 
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
@@ -3537,7 +3537,7 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg = self.meetingConfig
         cfg.setUseGroupsAsCategories(False)
         self.changeUser('siteadmin')
-        self.create('MeetingCategory', id='cat1', title='Category 1')
+        self.create('meetingcategory', id='cat1', title='Category 1')
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
 

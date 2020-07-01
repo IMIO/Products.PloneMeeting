@@ -108,7 +108,7 @@ class testFaceted(PloneMeetingTestCase):
 
         # if we add/remove a category, then the cache is cleaned too
         # add a category
-        newCat = self.create('MeetingCategory',
+        newCat = self.create('meetingcategory',
                              id='new-category',
                              title='New category')
         # cache was cleaned, the new value is available
@@ -118,7 +118,8 @@ class testFaceted(PloneMeetingTestCase):
             [u'Events', u'New category', u'New title', u'Research topics'])
 
         # disable a category
-        self.do(newCat, 'deactivate')
+        newCat.enabled = False
+        newCat.reindexObject(idxs=['enabled'])
         self.assertEqual(
             [term.title for term in vocab(pmFolder)],
             [u'Events', u'New title', u'Research topics', u'New category (Inactive)'])
@@ -164,10 +165,10 @@ class testFaceted(PloneMeetingTestCase):
 
         # if we add/remove a category, then the cache is cleaned too
         # add a classifier
-        newClassifier = self.create('MeetingCategory',
+        newClassifier = self.create('meetingcategory',
                                     id='newclassifier',
                                     title='New classifier',
-                                    isClassifier=True)
+                                    is_classifier=True)
         # cache was cleaned, the new value is available
         terms = vocab(pmFolder)
         self.assertEqual(
@@ -175,7 +176,8 @@ class testFaceted(PloneMeetingTestCase):
             [u'Classifier 2', u'Classifier 3', u'New classifier', u'New title'])
 
         # disable a category
-        self.do(newClassifier, 'deactivate')
+        newClassifier.enbled = False
+        newClassifier.reindexObject(idxs=['enabled'])
         self.assertEqual(
             [term.title for term in vocab(pmFolder)],
             [u'Classifier 2', u'Classifier 3', u'New title', u'New classifier (Inactive)'])

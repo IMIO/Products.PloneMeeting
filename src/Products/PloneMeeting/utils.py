@@ -62,7 +62,6 @@ from Products.PloneMeeting.interfaces import IItemDuplicatedToOtherMCEvent
 from Products.PloneMeeting.interfaces import IItemListTypeChangedEvent
 from Products.PloneMeeting.interfaces import IItemLocalRolesUpdatedEvent
 from Products.PloneMeeting.interfaces import IMeetingAfterTransitionEvent
-from Products.PloneMeeting.interfaces import IMeetingCategoryCustom
 from Products.PloneMeeting.interfaces import IMeetingConfigCustom
 from Products.PloneMeeting.interfaces import IMeetingCustom
 from Products.PloneMeeting.interfaces import IMeetingGroupCustom
@@ -118,7 +117,6 @@ adaptables = {
     # No (condition or action) workflow-related adapters are defined for the
     # following content types; only a Custom adapter.
     'MeetingAdvice': {'method': 'getAdvice', 'interface': None},
-    'MeetingCategory': {'method': None, 'interface': IMeetingCategoryCustom},
     'MeetingConfig': {'method': None, 'interface': IMeetingConfigCustom},
     'MeetingGroup': {'method': None, 'interface': IMeetingGroupCustom},
     'ToolPloneMeeting': {'method': None, 'interface': IToolPloneMeetingCustom},

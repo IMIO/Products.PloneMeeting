@@ -7,12 +7,12 @@ from plone.autoform import directives as form
 from plone.dexterity.content import Item
 from plone.dexterity.schema import DexteritySchemaPolicy
 from Products.PloneMeeting.config import PMMessageFactory as _
+from Products.PloneMeeting.interfaces import IConfigElement
 from z3c.form.browser.checkbox import CheckBoxFieldWidget
 from z3c.form.browser.radio import RadioFieldWidget
 from zope import schema
 from zope.i18n import translate
 from zope.interface import implements
-from zope.interface import Interface
 from zope.interface import Invalid
 from zope.interface import invariant
 from zope.schema.interfaces import IVocabularyFactory
@@ -20,7 +20,7 @@ from zope.schema.vocabulary import SimpleTerm
 from zope.schema.vocabulary import SimpleVocabulary
 
 
-class IMeetingCategory(Interface):
+class IMeetingCategory(IConfigElement):
     """
         MeetingCategory schema
     """
@@ -43,11 +43,11 @@ class IMeetingCategory(Interface):
 
     form.widget('category_mapping_when_cloning_to_other_mc', CheckBoxFieldWidget, multiple='multiple')
     category_mapping_when_cloning_to_other_mc = schema.List(
-        title=_("PloneMeeting_label_categoryMappingsWhenCloningToOtherMC"),
+        title=_("PloneMeeting_label_category_mapping_when_cloning_to_other_mc"),
         description=_("category_mapping_when_cloning_to_other_mc_descr"),
         value_type=schema.Choice(
             vocabulary="Products.PloneMeeting.content.category."
-            "collective.category_mapping_when_cloning_to_other_mc_vocabulary"),
+            "category_mapping_when_cloning_to_other_mc_vocabulary"),
         required=False,
     )
 
@@ -147,8 +147,15 @@ class MeetingCategorySchemaPolicy(DexteritySchemaPolicy):
 class CategoriesOfOtherMCsVocabulary(object):
     implements(IVocabularyFactory)
 
+    def _is_classifier(self, context):
+        '''Depending on context (container or meetingcategory), return if is a classifier.'''
+        if context.portal_type == 'meetingcategory':
+            return context.is_classifier()
+        else:
+            return context.getId() == 'classifiers'
+
     def __call__(self, context):
-        '''Vocabulary for 'categoryMappingsWhenCloningToOtherMC' field, it returns
+        '''Vocabulary for 'category_mapping_when_cloning_to_other_mc' field, it returns
            a list of available categories by available MC the items of the current MC
            can be sent to, like :
            - otherMC1 : category 1
@@ -168,7 +175,7 @@ class CategoriesOfOtherMCsVocabulary(object):
                 continue
             otherMCId = otherMCObj.getId()
             otherMCTitle = otherMCObj.Title()
-            for category in otherMCObj.getCategories(classifiers=context.is_classifier()):
+            for category in otherMCObj.getCategories(classifiers=self._is_classifier(context)):
                 cat_id = '%s.%s' % (otherMCId, category.getId())
                 cat_title = '%s -> %s' % (otherMCTitle, category.Title())
                 terms.append(SimpleTerm(cat_id, cat_id, cat_title))

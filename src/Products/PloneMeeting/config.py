@@ -79,7 +79,6 @@ setDefaultRoles(DEFAULT_ADD_CONTENT_PERMISSION, ('Manager', 'Owner', 'Contributo
 ADD_CONTENT_PERMISSIONS = {
     'MeetingItem': AddItem,
     'Meeting': AddMeeting,
-    'MeetingCategory': 'PloneMeeting: Manage configuration',
     'MeetingConfig': 'PloneMeeting: Manage configuration',
     'MeetingGroup': 'PloneMeeting: Manage configuration',
 }

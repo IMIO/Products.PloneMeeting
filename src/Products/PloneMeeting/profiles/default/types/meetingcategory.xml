@@ -3,7 +3,7 @@
    xmlns:i18n="http://xml.zope.org/namespaces/i18n">
  <property name="title" i18n:translate="">MeetingCategory</property>
  <property name="description" i18n:translate=""></property>
- <property name="icon_expr">string:${portal_url}/meetingcategory.png</property>
+ <property name="icon_expr"></property>
  <property name="factory">meetingcategory</property>
  <property name="add_view_expr">string:${folder_url}/++add++meetingcategory</property>
  <property name="link_target"></property>
@@ -24,8 +24,8 @@
  <property name="schema_policy">schema_policy_meetingcategory</property>
  <property name="klass">Products.PloneMeeting.content.category.MeetingCategory</property>
  <property name="behaviors">
+  <element value="plone.app.dexterity.behaviors.metadata.IBasic" />
   <element value="plone.app.content.interfaces.INameFromTitle" />
-  <element value="plone.app.lockingbehavior.behaviors.ILocking" />
  </property>
  <property name="schema"></property>
  <property name="model_source">

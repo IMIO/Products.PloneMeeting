@@ -252,7 +252,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                objectType,
                folder=None,
                autoAddCategory=True,
-               isClassifier=False,
+               is_classifier=False,
                **attrs):
         '''Creates an instance of a meeting (if p_objectType is 'Meeting') or
            meeting item (if p_objectType is 'MeetingItem') and
@@ -283,11 +283,17 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                 attrs['item_advice_view_states'] = []
             if 'certified_signatures' not in attrs:
                 attrs['certified_signatures'] = []
-        elif objectType == 'MeetingCategory':
-            if isClassifier:
+        elif objectType == 'meetingcategory':
+            if is_classifier:
                 folder = cfg.classifiers
             else:
                 folder = cfg.categories
+            if 'groups_in_charge' not in attrs:
+                attrs['groups_in_charge'] = []
+            if 'using_groups' not in attrs:
+                attrs['using_groups'] = []
+            if 'category_mapping_when_cloning_to_other_mc' not in attrs:
+                attrs['category_mapping_when_cloning_to_other_mc'] = []
         elif objectType == 'ConfigurablePODTemplate':
             folder = cfg.podtemplates
         else:

@@ -1036,10 +1036,10 @@ class testContacts(PloneMeetingTestCase):
         # the group is actually removed
         self.failIf(self.developers in self.own_org)
 
-        # 4) fails when used in a MeetingCategory.usingGroups or MeetingCategory.groupsInCharge
+        # 4) fails when used in a meetingcategory.using_groups or meetingcategory.groups_in_charge
         # usingGroups
         cat = cfg2.categories.subproducts
-        self.assertTrue(self.vendors_uid in cat.getUsingGroups())
+        self.assertTrue(self.vendors_uid in cat.using_groups)
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(
                 self.vendors_uid, catch_before_delete_exception=False)
@@ -1048,9 +1048,9 @@ class testContacts(PloneMeetingTestCase):
                                     domain='plone',
                                     mapping={'url': cat.absolute_url()},
                                     context=self.portal.REQUEST))
-        cat.setUsingGroups([])
+        cat.using_groups = ()
         # groupsInCharge
-        cat.setGroupsInCharge([self.vendors_uid])
+        cat.groups_in_charge = [self.vendors_uid]
         transaction.commit()
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(
@@ -1060,7 +1060,7 @@ class testContacts(PloneMeetingTestCase):
                                     domain='plone',
                                     mapping={'url': cat.absolute_url()},
                                     context=self.portal.REQUEST))
-        cat.setGroupsInCharge([])
+        cat.groups_in_charge = ()
 
         # 5) removing a used group in the configuration fails too
         # remove item because it uses 'vendors'

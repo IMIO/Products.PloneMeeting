@@ -20,7 +20,7 @@
     <utility
       provides="zope.schema.interfaces.IVocabularyFactory"
       factory=".category.CategoriesOfOtherMCsVocabulary"
-      name="Products.PloneMeeting.content.category.collective.category_mapping_when_cloning_to_other_mc_vocabulary" />
+      name="Products.PloneMeeting.content.category.category_mapping_when_cloning_to_other_mc_vocabulary" />
 
     <!-- Schema policies -->
     <utility factory=".advice.MeetingAdviceSchemaPolicy"

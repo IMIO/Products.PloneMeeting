@@ -2442,11 +2442,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     # Information about each sub-folder that will be created within a meeting config.
     subFoldersInfo = {
         TOOL_FOLDER_CATEGORIES: (('Categories', 'Folder'),
-                                 ('MeetingCategory', ),
+                                 ('meetingcategory', ),
                                  ()
                                  ),
         TOOL_FOLDER_CLASSIFIERS: (('Classifiers', 'Folder'),
-                                  ('MeetingCategory', ),
+                                  ('meetingcategory', ),
                                   ()
                                   ),
         TOOL_FOLDER_SEARCHES: (('Searches', 'Folder'),
@@ -5795,7 +5795,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''Returns the categories defined for this meeting config or the
            classifiers if p_classifiers is True. If p_onlySelectable is True,
            there will be a check to see if the category is available to the
-           current user, otherwise, we return every existing MeetingCategories.
+           current user, otherwise, we return every existing meetingcategories.
            If a p_userId is given, it will be used to be passed to isSelectable'''
         data = None
         if caching:
