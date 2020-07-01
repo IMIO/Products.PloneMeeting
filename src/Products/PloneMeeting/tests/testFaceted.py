@@ -101,7 +101,7 @@ class testFaceted(PloneMeetingTestCase):
         self.assertNotEquals(terms.by_token['development'].title,
                              cfg.categories.development.title)
         # right correctly edit the category, the vocabulary is invalidated
-        dev.at_post_edit_script()
+        notify(ObjectModifiedEvent(dev))
         terms = vocab(pmFolder)
         self.assertEqual(terms.by_token['development'].title,
                          cfg.categories.development.title)
@@ -118,8 +118,7 @@ class testFaceted(PloneMeetingTestCase):
             [u'Events', u'New category', u'New title', u'Research topics'])
 
         # disable a category
-        newCat.enabled = False
-        newCat.reindexObject(idxs=['enabled'])
+        self._disableObj(newCat)
         self.assertEqual(
             [term.title for term in vocab(pmFolder)],
             [u'Events', u'New title', u'Research topics', u'New category (Inactive)'])
@@ -134,67 +133,6 @@ class testFaceted(PloneMeetingTestCase):
         self.assertEqual(
             [term.title for term in vocab(pmFolder)],
             [u'Events', u'New title', u'Research topics'])
-
-    def test_pm_ItemClassifiersVocabulary(self):
-        '''Test the "Products.PloneMeeting.vocabularies.classifiersvocabulary"
-           vocabulary, especially because it is cached. It relies on the categoriesvocabulary.'''
-        self.changeUser('siteadmin')
-        pmFolder = self.getMeetingFolder()
-        cfg = self.meetingConfig
-        cfg.setUseGroupsAsCategories(False)
-        vocab = queryUtility(IVocabularyFactory,
-                             "Products.PloneMeeting.vocabularies.classifiersvocabulary")
-        # once get, it is cached
-        terms = vocab(pmFolder)
-        # every existing categories are shown, no matter it is disabled
-        nbOfCategories = len(cfg.getCategories(classifiers=True, onlySelectable=False, caching=False))
-        self.assertEqual(len(terms), nbOfCategories)
-        # here we make sure it is cached by changing a category title
-        # manually without using the processForm way
-        classifier1 = cfg.classifiers.classifier1
-        classifier1.title = u'New title'
-        terms = vocab(pmFolder)
-        classifier1_UID = classifier1.UID()
-        self.assertNotEquals(terms.by_token[classifier1_UID].title,
-                             cfg.categories.development.title)
-        # right correctly edit the category, the vocabulary is invalidated
-        classifier1.at_post_edit_script()
-        terms = vocab(pmFolder)
-        self.assertEqual(terms.by_token[classifier1_UID].title,
-                         cfg.classifiers.classifier1.title)
-
-        # if we add/remove a category, then the cache is cleaned too
-        # add a classifier
-        newClassifier = self.create('meetingcategory',
-                                    id='newclassifier',
-                                    title='New classifier',
-                                    is_classifier=True)
-        # cache was cleaned, the new value is available
-        terms = vocab(pmFolder)
-        self.assertEqual(
-            [term.title for term in vocab(pmFolder)],
-            [u'Classifier 2', u'Classifier 3', u'New classifier', u'New title'])
-
-        # disable a category
-        newClassifier.enbled = False
-        newClassifier.reindexObject(idxs=['enabled'])
-        self.assertEqual(
-            [term.title for term in vocab(pmFolder)],
-            [u'Classifier 2', u'Classifier 3', u'New title', u'New classifier (Inactive)'])
-        # term.value is the category id
-        self.assertEqual(
-            [term.value for term in vocab(pmFolder)],
-            [cfg.classifiers.classifier2.UID(),
-             cfg.classifiers.classifier3.UID(),
-             cfg.classifiers.classifier1.UID(),
-             cfg.classifiers.newclassifier.UID()])
-
-        # remove a category
-        self.portal.restrictedTraverse('@@delete_givenuid')(newClassifier.UID())
-        # cache was cleaned
-        self.assertEqual(
-            [term.title for term in vocab(pmFolder)],
-            [u'Classifier 2', u'Classifier 3', u'New title'])
 
     def test_pm_ItemCategoriesVocabularyMCAware(self):
         '''Test that "Products.PloneMeeting.vocabularies.categoriesvocabulary"
@@ -686,9 +624,7 @@ class testFaceted(PloneMeetingTestCase):
         self.assertTrue(searchAllItems_path in vocab(searches, real_context=pmFolder))
         # disable it then test again
         self.changeUser('siteadmin')
-        searchAllItems.enabled = False
-        # invalidate vocabulary cache
-        notify(ObjectModifiedEvent(searchAllItems))
+        self._disableObj(searchAllItems, notify_event=True)
         self.changeUser('pmCreator1')
         self.assertFalse(searchAllItems_path in vocab(searches, real_context=pmFolder))
 

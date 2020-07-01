@@ -53,11 +53,6 @@ marketing = CategoryDescriptor('marketing', 'Marketing', category_id='marketing'
 subproducts = CategoryDescriptor('subproducts', 'Subproducts wishes',
                                  category_id='subproducts', using_groups=('vendors',))
 
-# Classifiers
-classifier1 = CategoryDescriptor('classifier1', 'Classifier 1')
-classifier2 = CategoryDescriptor('classifier2', 'Classifier 2')
-classifier3 = CategoryDescriptor('classifier3', 'Classifier 3')
-
 # Annex types
 overheadAnalysisSubtype = ItemAnnexSubTypeDescriptor(
     'overhead-analysis-sub-annex',
@@ -287,7 +282,6 @@ meetingPma.assembly = 'Gauthier Bastien, Gilles Demaret, Kilian Soree, ' \
                       'Godefroid Chapelle, Gaetan Deberdt, Gaetan Delannay'
 meetingPma.signatures = 'Bill Gates, Steve Jobs'
 meetingPma.categories = [development, research, events]
-meetingPma.classifiers = [classifier1, classifier2, classifier3]
 meetingPma.annexTypes = [financialAnalysis, budgetAnalysisCfg1, overheadAnalysis,
                          itemAnnex, decisionAnnex, marketingAnalysis,
                          adviceAnnex, adviceLegalAnalysis, meetingAnnex]
@@ -403,7 +397,6 @@ meetingPga.assembly = 'Bill Gates, Steve Jobs'
 meetingPga.signatures = 'Bill Gates, Steve Jobs'
 meetingPga.categories = [deployment, maintenance, development, events,
                          research, projects, marketing, subproducts]
-meetingPga.classifiers = [classifier1, classifier2, classifier3]
 meetingPga.annexTypes = [financialAnalysis, legalAnalysis,
                          budgetAnalysisCfg2, itemAnnex, decisionAnnex,
                          adviceAnnex, adviceLegalAnalysis, meetingAnnex]

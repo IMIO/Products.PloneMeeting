@@ -1,23 +1,4 @@
 # -*- coding: utf-8 -*-
-# ------------------------------------------------------------------------------
-# Copyright (c) 2007 PloneGov
-# GNU General Public License (GPL)
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
-# 02110-1301, USA.
-#
 
 from collective.contact.plonegroup.config import get_registry_functions
 from collective.contact.plonegroup.config import get_registry_organizations
@@ -48,7 +29,6 @@ from Products.PloneMeeting.config import PROJECTNAME
 from Products.PloneMeeting.config import registerClasses
 from Products.PloneMeeting.config import TOOL_FOLDER_ANNEX_TYPES
 from Products.PloneMeeting.config import TOOL_FOLDER_CATEGORIES
-from Products.PloneMeeting.config import TOOL_FOLDER_CLASSIFIERS
 from Products.PloneMeeting.config import TOOL_FOLDER_ITEM_TEMPLATES
 from Products.PloneMeeting.config import TOOL_FOLDER_POD_TEMPLATES
 from Products.PloneMeeting.config import TOOL_FOLDER_RECURRING_ITEMS
@@ -398,11 +378,9 @@ class ToolInitializer:
 
         if not configData.active:
             self.portal.portal_wokflow.doActionFor(cfg, 'deactivate')
-        # Adds the sub-objects within the config: categories, classifiers,...
+        # Adds the sub-objects within the config: categories, items in config, ...
         for descr in configData.categories:
-            self.addCategory(cfg, descr, False)
-        for descr in configData.classifiers:
-            self.addCategory(cfg, descr, True)
+            self.addCategory(cfg, descr)
         for descr in configData.recurringItems:
             self.addItemToConfig(cfg, descr)
         for descr in configData.itemTemplates:
@@ -439,13 +417,9 @@ class ToolInitializer:
             cfg.annexes_types.meeting_annexes.confidentiality_activated = True
         return cfg
 
-    def addCategory(self, cfg, descr, classifier=False):
-        '''Creates a category or a classifier (depending on p_classifier) from
-           p_descr, a CategoryDescriptor instance.'''
-        if classifier:
-            folder = getattr(cfg, TOOL_FOLDER_CLASSIFIERS)
-        else:
-            folder = getattr(cfg, TOOL_FOLDER_CATEGORIES)
+    def addCategory(self, cfg, descr):
+        '''Creates a category from p_descr, a CategoryDescriptor instance.'''
+        folder = getattr(cfg, TOOL_FOLDER_CATEGORIES)
         data = descr.getData()
         cat = api.content.create(container=folder,
                                  type='meetingcategory',

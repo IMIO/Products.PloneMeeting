@@ -691,7 +691,6 @@ class MeetingConfigDescriptor(Descriptor):
 
         # MeetingConfig sub-objects --------------------------------------------
         self.categories = []  # ~[CategoryDescriptor]~
-        self.classifiers = []  # ~[CategoryDescriptor]~
         self.recurringItems = []  # ~[RecurringItemDescriptor]~
         self.itemTemplates = []  # ~[ItemTemplateDescriptor]~
         self.annexTypes = []

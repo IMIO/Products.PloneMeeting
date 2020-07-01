@@ -21,6 +21,7 @@
 #
 
 from AccessControl.SecurityManagement import getSecurityManager
+from Products.CMFPlone.utils import base_hasattr
 from collections import OrderedDict
 from collective.contact.plonegroup.config import ORGANIZATIONS_REGISTRY
 from collective.contact.plonegroup.utils import get_own_organization
@@ -52,6 +53,7 @@ from Products.PloneMeeting.utils import reviewersFor
 from z3c.form.testing import TestRequest as z3c_form_TestRequest
 from zope.component import getMultiAdapter
 from zope.event import notify
+from zope.lifecycleevent import ObjectModifiedEvent
 from zope.traversing.interfaces import BeforeTraverseEvent
 from zope.viewlet.interfaces import IViewletManager
 
@@ -252,7 +254,6 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                objectType,
                folder=None,
                autoAddCategory=True,
-               is_classifier=False,
                **attrs):
         '''Creates an instance of a meeting (if p_objectType is 'Meeting') or
            meeting item (if p_objectType is 'MeetingItem') and
@@ -284,10 +285,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             if 'certified_signatures' not in attrs:
                 attrs['certified_signatures'] = []
         elif objectType == 'meetingcategory':
-            if is_classifier:
-                folder = cfg.classifiers
-            else:
-                folder = cfg.categories
+            folder = cfg.categories
             if 'groups_in_charge' not in attrs:
                 attrs['groups_in_charge'] = []
             if 'using_groups' not in attrs:
@@ -606,3 +604,16 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             if field_name not in usedMeetingAttrs:
                 usedMeetingAttrs += (field_name, )
                 cfg.setUsedMeetingAttributes(usedMeetingAttrs)
+
+    def _disableObj(self, obj, notify_event=True):
+        """ """
+        # using field 'enabled'
+        if base_hasattr(obj, 'enabled'):
+            obj.enabled = False
+            obj.reindexObject(idxs=['enabled'])
+        else:
+            # using workflow
+            self.do(obj, 'deactivate')
+        if notify_event:
+            # manage cache
+            notify(ObjectModifiedEvent(obj))

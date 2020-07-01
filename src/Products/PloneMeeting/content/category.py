@@ -2,6 +2,7 @@
 
 from AccessControl import ClassSecurityInfo
 from imio.helpers.cache import invalidate_cachekey_volatile_for
+from imio.helpers.content import uuidsToObjects
 from plone import api
 from plone.autoform import directives as form
 from plone.dexterity.content import Item
@@ -87,13 +88,6 @@ class MeetingCategory(Item):
     implements(IMeetingCategory)
     security = ClassSecurityInfo()
 
-    security.declarePublic('is_classifier')
-
-    def is_classifier(self):
-        '''Return True if current category is a classifier,
-           False if it is a normal category.'''
-        return self.aq_inner.aq_parent.getId() == 'classifiers'
-
     security.declarePublic('get_order')
 
     def get_order(self, only_selectable=True):
@@ -105,8 +99,7 @@ class MeetingCategory(Item):
             # restricted to some groups, we pass onlySelectable=False
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(self)
-            i = cfg.getCategories(
-                classifiers=self.is_classifier(), onlySelectable=only_selectable).index(self)
+            i = cfg.getCategories(onlySelectable=only_selectable).index(self)
         except ValueError:
             i = None
         return i
@@ -136,6 +129,20 @@ class MeetingCategory(Item):
             isUsing = bool(set(usingGroups).intersection(keys))
         return isUsing
 
+    def get_groups_in_charge(self, the_objects=False):
+        """ """
+        res = self.groups_in_charge
+        if the_objects:
+            res = uuidsToObjects(res, ordered=True)
+        return res
+
+    def get_using_groups(self, the_objects=False):
+        """ """
+        res = self.using_groups
+        if the_objects:
+            res = uuidsToObjects(res, ordered=True)
+        return res
+
 
 class MeetingCategorySchemaPolicy(DexteritySchemaPolicy):
     """ """
@@ -146,13 +153,6 @@ class MeetingCategorySchemaPolicy(DexteritySchemaPolicy):
 
 class CategoriesOfOtherMCsVocabulary(object):
     implements(IVocabularyFactory)
-
-    def _is_classifier(self, context):
-        '''Depending on context (container or meetingcategory), return if is a classifier.'''
-        if context.portal_type == 'meetingcategory':
-            return context.is_classifier()
-        else:
-            return context.getId() == 'classifiers'
 
     def __call__(self, context):
         '''Vocabulary for 'category_mapping_when_cloning_to_other_mc' field, it returns
@@ -175,7 +175,7 @@ class CategoriesOfOtherMCsVocabulary(object):
                 continue
             otherMCId = otherMCObj.getId()
             otherMCTitle = otherMCObj.Title()
-            for category in otherMCObj.getCategories(classifiers=self._is_classifier(context)):
+            for category in otherMCObj.getCategories():
                 cat_id = '%s.%s' % (otherMCId, category.getId())
                 cat_title = '%s -> %s' % (otherMCTitle, category.Title())
                 terms.append(SimpleTerm(cat_id, cat_id, cat_title))

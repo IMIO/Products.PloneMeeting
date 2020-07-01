@@ -33,11 +33,6 @@ class ItemCategoryColumn(VocabularyColumn):
         return css_classes
 
 
-class ItemClassifierColumn(VocabularyColumn):
-    """A column that display the MeetingItem.classifier."""
-    vocabulary = u'Products.PloneMeeting.vocabularies.classifiersvocabulary'
-
-
 class ItemProposingGroupColumn(VocabularyColumn):
     """A column that display the MeetingItem.proposingGroup."""
     vocabulary = u'Products.PloneMeeting.vocabularies.proposinggroupsvocabulary'

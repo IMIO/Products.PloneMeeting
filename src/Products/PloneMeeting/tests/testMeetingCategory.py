@@ -80,8 +80,7 @@ class testMeetingCategory(PloneMeetingTestCase):
                           cfg2.categories.manage_delObjects,
                           [catWithMappingCfg2Id])
         # same if cat using cat2 is disabled
-        catWithMappingCfg.enabled = False
-        catWithMappingCfg.reindexObject(idxs=['enabled'])
+        self._disableObj(catWithMappingCfg)
         self.assertRaises(BeforeDeleteException,
                           cfg2.categories.manage_delObjects,
                           [catWithMappingCfg2Id])
@@ -162,7 +161,7 @@ class testMeetingCategory(PloneMeetingTestCase):
         self.assertIsNone(invariant(data))
 
     def test_pm_CategoryContainerModifiedOnAnyAction(self):
-        """The MeetingCategory container (categories/classifiers) is modified
+        """The MeetingCategory container (categories) is modified
            upon any category changes (add/edit/transition/remove)."""
         self.changeUser('siteadmin')
         cfg = self.meetingConfig

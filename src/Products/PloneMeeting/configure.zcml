@@ -207,7 +207,6 @@
   <adapter name="getGroupsInCharge" factory=".indexes.getGroupsInCharge" />
   <adapter name="getItemIsSigned" factory=".indexes.getItemIsSigned" />
   <adapter name="getPreferredMeetingDate" factory=".indexes.getPreferredMeetingDate" />
-  <adapter name="getRawClassifier" factory=".indexes.getRawClassifier" />
   <adapter name="getTakenOverBy" factory=".indexes.getTakenOverBy" />
   <adapter name="hasAnnexesToPrint" factory=".indexes.hasAnnexesToPrint" />
   <adapter name="hasAnnexesToSign" factory=".indexes.hasAnnexesToSign" />

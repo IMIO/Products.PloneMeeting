@@ -33,12 +33,11 @@
     <tal:field define="fieldName python: 'detailedDescription';">
       <metal:f use-macro="context/@@pm-macros/editContentField"/>
     </tal:field>
-    <tal:comment replace="nothing">Proposing group, category, classifier, toDiscuss</tal:comment>
+    <tal:comment replace="nothing">Proposing group, category, toDiscuss</tal:comment>
     <metal:field use-macro="python:here.widget('proposingGroup', mode='edit')"/>
     <metal:field use-macro="python:here.widget('proposingGroupWithGroupInCharge', mode='edit')"/>
     <metal:field use-macro="python:here.widget('groupsInCharge', mode='edit')"/>
     <metal:field use-macro="python:here.widget('category', mode='edit')"/>
-    <metal:field use-macro="python:here.widget('classifier', mode='edit')"/>
 
     <metal:field use-macro="python:here.widget('toDiscuss', mode='edit')"/>
     <metal:field use-macro="python:here.widget('pollType', mode='edit')"/>

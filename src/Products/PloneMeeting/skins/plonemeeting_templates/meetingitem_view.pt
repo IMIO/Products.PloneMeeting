@@ -83,16 +83,6 @@
                 <span tal:condition="not: associatedGroups">-</span>
             </div>
 
-            <tal:comment replace="nothing">Classifier</tal:comment>
-            <div class="discreet"
-                 tal:condition="python: 'classifier' in usedAttrs"
-                 tal:define="classifier context/getClassifier">
-                <span class="item_attribute_label"
-                      i18n:translate="PloneMeeting_label_classifier"></span>:&nbsp;&nbsp;
-                <span tal:condition="nocall:classifier" tal:content="classifier/Title">-</span>
-                <span tal:condition="not:nocall:classifier">-</span>
-            </div>
-
             <tal:comment replace="nothing">Category</tal:comment>
             <tal:category condition="not:meetingConfig/getUseGroupsAsCategories">
             <div class="discreet"

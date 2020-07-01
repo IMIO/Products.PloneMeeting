@@ -1307,10 +1307,7 @@ class testAnnexes(PloneMeetingTestCase):
         # annexDecision section is shown if annexDecision are stored or if
         # annexDecision annex types are available (active), disable the annexDecision annex types
         for annex_type in cfg.annexes_types.item_decision_annexes.objectValues():
-            annex_type.enabled = False
-            # manage cache
-            notify(ObjectModifiedEvent(annex_type))
-            annex_type.reindexObject(idxs=['enabled'])
+            self._disableObj(annex_type, notify_event=True)
         view = item.restrictedTraverse('@@categorized-annexes')
         # showDecisionAnnexesSection still True because annexDecision exists
         self.assertTrue(view.showDecisionAnnexesSection())

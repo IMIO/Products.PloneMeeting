@@ -788,7 +788,7 @@ This works for an AT and for a DX.</tal:comment>
 </metal:additionalInformations>
 
 <metal:categoriesInMeetingConfig define-macro="categoriesInConfig" i18n:domain="PloneMeeting">
-<tal:comment replace="nothing">Macro used to display categories and classifiers in a MeetingConfig.
+<tal:comment replace="nothing">Macro used to display categories in a MeetingConfig.
 The parameter "cFolder" is the folder containing categories.</tal:comment>
 <tal:defines define="cFolderUrl cFolder/absolute_url;
                      objs python: cFolder.objectValues();

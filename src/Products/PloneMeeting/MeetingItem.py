@@ -822,29 +822,6 @@ schema = Schema((
         ),
         vocabulary='listCategories',
     ),
-    ReferenceField(
-        name='classifier',
-        keepReferencesOnCopy=True,
-        widget=ReferenceBrowserWidget(
-            description="Classifier",
-            description_msgid="item_classifier_descr",
-            condition="python: here.attributeIsUsed('classifier')",
-            allow_search=True,
-            allow_browse=False,
-            startup_directory_method="classifierStartupDirectory",
-            force_close_on_insert=True,
-            restrict_browsing_to_startup_directory=True,
-            base_query="classifierBaseQuery",
-            show_results_without_query=True,
-            label='Classifier',
-            label_msgid='PloneMeeting_label_classifier',
-            i18n_domain='PloneMeeting',
-        ),
-        multiValued=False,
-        relationship="ItemClassification",
-        allowed_types=('meetingcategory',),
-        optional=True,
-    ),
     StringField(
         name='proposingGroup',
         widget=SelectionWidget(
@@ -1738,32 +1715,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''See doc in interfaces.py.'''
         pass
 
-    security.declarePrivate('validate_classifier')
-
-    def validate_classifier(self, value):
-        '''If classifiers are used, they are mandatory.'''
-        if self.attributeIsUsed('classifier') and not value:
-            return translate('category_required', domain='PloneMeeting', context=self.REQUEST)
-
-    def classifierStartupDirectory(self):
-        '''Returns the startup_directory for the classifier referencebrowserwidget.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        portal_url = api.portal.get_tool('portal_url')
-        cfg = tool.getMeetingConfig(self)
-        return portal_url.getRelativeContentURL(cfg.classifiers)
-
-    security.declarePublic('classifierBaseQuery')
-
-    def classifierBaseQuery(self):
-        '''base_query for the 'classifier' field.
-           Here, we restrict the widget to search in the MeetingConfig's classifiers directory only.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self)
-        query = {}
-        query['path'] = {'query': '/'.join(cfg.getPhysicalPath() + ('classifiers',))}
-        query['review_state'] = 'active'
-        return query
-
     security.declarePublic('manuallyLinkedItemsBaseQuery')
 
     def manuallyLinkedItemsBaseQuery(self):
@@ -2258,17 +2209,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # add a value in the REQUEST to specify that updateItemReferences is needed
             self.REQUEST.set('need_Meeting_updateItemReferences', True)
         self.getField('category').set(self, value, **kwargs)
-
-    security.declareProtected(ModifyPortalContent, 'setClassifier')
-
-    def setClassifier(self, value, **kwargs):
-        '''Overrides the field 'classifier' mutator to be able to
-           updateItemReferences if value changed.'''
-        current_classifier = self.getField('classifier').getRaw(self, **kwargs)
-        if not value == current_classifier:
-            # add a value in the REQUEST to specify that updateItemReferences is needed
-            self.REQUEST.set('need_Meeting_updateItemReferences', True)
-        self.getField('classifier').set(self, value, **kwargs)
 
     security.declareProtected(ModifyPortalContent, 'setProposingGroup')
 
@@ -2974,7 +2914,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             category = self.getCategory(theObject=True, real=True)
             if category:
                 cat_groups_in_charge = [
-                    gic_uid for gic_uid in category.getGroupsInCharge()
+                    gic_uid for gic_uid in category.get_groups_in_charge()
                     if gic_uid not in res]
                 if cat_groups_in_charge:
                     res += list(cat_groups_in_charge)
@@ -5787,7 +5727,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            not destMeetingConfig.getUseGroupsAsCategories():
             originalCategory = self.getCategory(theObject=True)
             # find out if something is defined when sending an item to destMeetingConfig
-            for destCat in originalCategory.getCategoryMappingsWhenCloningToOtherMC():
+            for destCat in originalCategory.category_mapping_when_cloning_to_other_mc:
                 if destCat.split('.')[0] == destMeetingConfigId:
                     # we found a mapping defined for the new category, apply it
                     # get the category so it fails if it does not exist (that should not be possible...)

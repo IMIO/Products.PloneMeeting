@@ -236,7 +236,7 @@ def onOrgWillBeRemoved(current_org, event):
       - it can not be linked to an existing MeetingItem;
       - it can not be used in a existing ItemTemplate.templateUsingGroups;
       - it can not be referenced in an existing MeetingConfig;
-      - it can not be used in an existing MeetingCategory.usingGroups;
+      - it can not be used in an existing MeetingCategory.using_groups/groups_in_charge;
       - it can not be used as groupInCharge of another organization;
       - it can not be used as groupInCharge of a category;
       - the linked ploneGroups must be empty of members.'''
@@ -252,7 +252,7 @@ def onOrgWillBeRemoved(current_org, event):
     current_org_uid = current_org.UID()
 
     for org in get_organizations(only_selected=False):
-        if current_org_uid in org.groups_in_charge:
+        if current_org_uid in org.get_groups_in_charge():
             raise BeforeDeleteException(translate("can_not_delete_organization_groupsincharge",
                                                   mapping={'org_url': org.absolute_url()},
                                                   domain="plone",
@@ -278,10 +278,9 @@ def onOrgWillBeRemoved(current_org, event):
                                                       mapping={'cfg_url': mc.absolute_url()},
                                                       domain="plone",
                                                       context=request))
-        categories = mc.categories.objectValues('MeetingCategory')
-        classifiers = mc.classifiers.objectValues('MeetingCategory')
-        for cat in tuple(categories) + tuple(classifiers):
-            if current_org_uid in cat.getUsingGroups() or current_org_uid in cat.getGroupsInCharge():
+        categories = mc.getCategories(onlySelectable=False, caching=False)
+        for cat in categories:
+            if current_org_uid in cat.get_using_groups() or current_org_uid in cat.get_groups_in_charge():
                 raise BeforeDeleteException(translate("can_not_delete_organization_meetingcategory",
                                                       mapping={'url': cat.absolute_url()},
                                                       domain="plone",

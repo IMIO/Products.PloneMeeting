@@ -1159,7 +1159,7 @@ class testContacts(PloneMeetingTestCase):
         # unselect it
         self._select_organization(self.vendors_uid, remove=True)
         # remove it from subproducts category usingGroups
-        cfg2.categories.subproducts.setUsingGroups(())
+        cfg2.categories.subproducts.using_groups = ()
         # now we can delete it...
         self.portal.restrictedTraverse('@@delete_givenuid')(
             self.vendors_uid, catch_before_delete_exception=False)

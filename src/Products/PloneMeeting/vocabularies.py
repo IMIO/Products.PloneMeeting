@@ -101,24 +101,24 @@ PMConditionAwareCollectionVocabularyFactory = PMConditionAwareCollectionVocabula
 class ItemCategoriesVocabulary(object):
     implements(IVocabularyFactory)
 
-    def __call___cachekey(method, self, context, classifiers=False):
+    def __call___cachekey(method, self, context):
         '''cachekey method for self.__call__.'''
         date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.categoriesvocabulary')
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        return date, cfg, classifiers
+        return date, cfg
 
     @ram.cache(__call___cachekey)
-    def __call__(self, context, classifiers=False):
+    def __call__(self, context):
         """ """
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        categories = cfg.getCategories(classifiers=classifiers, onlySelectable=False, caching=False)
+        categories = cfg.getCategories(onlySelectable=False, caching=False)
         activeCategories = [cat for cat in categories if cat.enabled]
         notActiveCategories = [cat for cat in categories if not cat.enabled]
         res_active = []
         for category in activeCategories:
-            term_id = classifiers and category.UID() or category.getId()
+            term_id = category.getId()
             res_active.append(
                 SimpleTerm(term_id,
                            term_id,
@@ -129,7 +129,7 @@ class ItemCategoriesVocabulary(object):
 
         res_not_active = []
         for category in notActiveCategories:
-            term_id = classifiers and category.UID() or category.getId()
+            term_id = category.getId()
             res_not_active.append(
                 SimpleTerm(term_id,
                            term_id,
@@ -144,17 +144,6 @@ class ItemCategoriesVocabulary(object):
 
 
 ItemCategoriesVocabularyFactory = ItemCategoriesVocabulary()
-
-
-class ItemClassifiersVocabulary(ItemCategoriesVocabulary):
-    implements(IVocabularyFactory)
-
-    def __call__(self, context, classifiers=True):
-        """ """
-        return super(ItemClassifiersVocabulary, self).__call__(context, classifiers=True)
-
-
-ItemClassifiersVocabularyFactory = ItemClassifiersVocabulary()
 
 
 class ItemProposingGroupsVocabulary(object):
@@ -287,8 +276,7 @@ class GroupsInChargeVocabulary(object):
                         res.append(group_in_charge)
             # categories
             if not cfg.getUseGroupsAsCategories():
-                classifiers = 'classifier' in cfg.getUsedItemAttributes()
-                categories = cfg.getCategories(classifiers=classifiers, onlySelectable=False, caching=False)
+                categories = cfg.getCategories(onlySelectable=False, caching=False)
                 for cat in categories:
                     for group_in_charge_uid in cat.getGroupsInCharge():
                         group_in_charge = get_organization(group_in_charge_uid)

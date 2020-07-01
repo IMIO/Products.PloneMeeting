@@ -194,7 +194,6 @@ MEETING_CONFIG = "meeting_config"
 
 TOOL_ID = "portal_plonemeeting"
 TOOL_FOLDER_CATEGORIES = 'categories'
-TOOL_FOLDER_CLASSIFIERS = 'classifiers'
 TOOL_FOLDER_SEARCHES = 'searches'
 TOOL_FOLDER_RECURRING_ITEMS = "recurringitems"
 TOOL_FOLDER_ITEM_TEMPLATES = "itemtemplates"
@@ -211,7 +210,7 @@ DEFAULT_COPIED_FIELDS = ['title', 'description', 'detailedDescription', 'motivat
                          'groupsInCharge', 'proposingGroupWithGroupInCharge', 'copyGroups']
 # extra fields kept when an item is cloned in the same meeting config,
 # so not the case when sent to another meeting config
-EXTRA_COPIED_FIELDS_SAME_MC = ['associatedGroups', 'classifier', 'category',
+EXTRA_COPIED_FIELDS_SAME_MC = ['associatedGroups', 'category',
                                'optionalAdvisers', 'otherMeetingConfigsClonableTo',
                                'otherMeetingConfigsClonableToPrivacy', 'oralQuestion',
                                'toDiscuss', 'privacy', 'pollType', 'textCheckList']

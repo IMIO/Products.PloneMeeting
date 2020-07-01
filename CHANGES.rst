@@ -2,11 +2,13 @@ Changelog
 =========
 
 
-4.1.27.3 (unreleased)
----------------------
+4.1.28 (unreleased)
+-------------------
 
-- Nothing changed yet.
+- Migrate `MeetingCategory` from AT to DX :
 
+  - New portal_type is `meetingcategory`;
+  - Field `MeetingItem.classifier` and related functionnality was removed.
 
 4.1.27.2 (2020-06-25)
 ---------------------

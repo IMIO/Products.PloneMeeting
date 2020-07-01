@@ -389,7 +389,7 @@ class testMeeting(PloneMeetingTestCase):
         # and insert a new item
         self.changeUser('admin')
         self.assertTrue(meeting.getItems(ordered=True)[0].getCategory(), 'development')
-        self.do(self.meetingConfig.categories.development, 'deactivate')
+        self._disableObj(self.meetingConfig.categories.development)
         self.changeUser('pmManager')
         newItem = self.create('MeetingItem')
         # Use the category of 'o5' and 'o6' that is 'events' so the new item will
@@ -957,7 +957,7 @@ class testMeeting(PloneMeetingTestCase):
                           ('secret', 'events')])
         # we can also insert an item using a disabled category
         self.changeUser('admin')
-        self.do(self.meetingConfig.categories.development, 'deactivate')
+        self._disableObj(self.meetingConfig.categories.development)
         self.changeUser('pmManager')
         newItem = self.create('MeetingItem')
         newItem.setProposingGroup(self.vendors_uid)
@@ -1626,7 +1626,7 @@ class testMeeting(PloneMeetingTestCase):
         self.assertEqual(meeting.getItemInsertOrder(item, cfg), [1])
         # disable category, it does not change because for performance reasons,
         # we consider every categories when computing insert order, but the cache was cleaned
-        self.do(cfg.categories.development, 'deactivate')
+        self._disableObj(cfg.categories.development)
         # the cache is invalidated
         self.assertTrue(meeting._check_insert_order_cache(cfg))
         self.assertEqual(meeting.getItemInsertOrder(item, cfg), [1])

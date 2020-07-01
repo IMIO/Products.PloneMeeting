@@ -64,14 +64,6 @@
      for="zope.interface.Interface
           zope.publisher.interfaces.browser.IBrowserRequest
           collective.eeafaceted.z3ctable.interfaces.IFacetedTable"
-     factory=".columns.ItemClassifierColumn"
-     provides="collective.eeafaceted.z3ctable.interfaces.IFacetedColumn"
-     name="getRawClassifier" />
-
-  <adapter
-     for="zope.interface.Interface
-          zope.publisher.interfaces.browser.IBrowserRequest
-          collective.eeafaceted.z3ctable.interfaces.IFacetedTable"
      factory=".columns.ItemLinkedMeetingColumn"
      provides="collective.eeafaceted.z3ctable.interfaces.IFacetedColumn"
      name="linkedMeetingDate" />

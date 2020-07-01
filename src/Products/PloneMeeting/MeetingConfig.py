@@ -84,7 +84,6 @@ from Products.PloneMeeting.config import PROJECTNAME
 from Products.PloneMeeting.config import READER_USECASES
 from Products.PloneMeeting.config import TOOL_FOLDER_ANNEX_TYPES
 from Products.PloneMeeting.config import TOOL_FOLDER_CATEGORIES
-from Products.PloneMeeting.config import TOOL_FOLDER_CLASSIFIERS
 from Products.PloneMeeting.config import TOOL_FOLDER_ITEM_TEMPLATES
 from Products.PloneMeeting.config import TOOL_FOLDER_POD_TEMPLATES
 from Products.PloneMeeting.config import TOOL_FOLDER_RECURRING_ITEMS
@@ -2445,10 +2444,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                  ('meetingcategory', ),
                                  ()
                                  ),
-        TOOL_FOLDER_CLASSIFIERS: (('Classifiers', 'Folder'),
-                                  ('meetingcategory', ),
-                                  ()
-                                  ),
         TOOL_FOLDER_SEARCHES: (('Searches', 'Folder'),
                                ('Folder', ),
                                # 'items' is a reserved word
@@ -4337,8 +4332,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 translate('header_review_state_title_descr', domain=d, context=self.REQUEST)),
             ("getCategory",
                 translate("header_getCategory", domain=d, context=self.REQUEST)),
-            ("getRawClassifier",
-                translate("header_getRawClassifier", domain=d, context=self.REQUEST)),
             ("getProposingGroup",
                 translate("header_getProposingGroup", domain=d, context=self.REQUEST)),
             ("proposing_group_acronym",
@@ -5791,25 +5784,21 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getCategories')
 
-    def getCategories(self, classifiers=False, onlySelectable=True, userId=None, caching=True):
-        '''Returns the categories defined for this meeting config or the
-           classifiers if p_classifiers is True. If p_onlySelectable is True,
-           there will be a check to see if the category is available to the
-           current user, otherwise, we return every existing meetingcategories.
+    def getCategories(self, onlySelectable=True, userId=None, caching=True):
+        '''Returns the categories defined for this meeting config.
+           If p_onlySelectable is True, there will be a check to see if the category
+           is available to the current user, otherwise, we return every existing categories.
            If a p_userId is given, it will be used to be passed to isSelectable'''
         data = None
         if caching:
-            key = "meeting-config-getcategories-%s-%s-%s-%s" % (self.getId(),
-                                                                str(classifiers),
-                                                                str(onlySelectable),
-                                                                str(userId))
+            key = "meeting-config-getcategories-%s-%s-%s" % (self.getId(),
+                                                             str(onlySelectable),
+                                                             str(userId))
             cache = IAnnotations(self.REQUEST)
             data = cache.get(key, None)
         if data is None:
             data = []
-            if classifiers:
-                catFolder = self.classifiers
-            elif self.getUseGroupsAsCategories():
+            if self.getUseGroupsAsCategories():
                 data = get_organizations()
                 if caching:
                     cache[key] = data
