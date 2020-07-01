@@ -80,7 +80,8 @@ class testMeetingCategory(PloneMeetingTestCase):
                           cfg2.categories.manage_delObjects,
                           [catWithMappingCfg2Id])
         # same if cat using cat2 is disabled
-        self.do(catWithMappingCfg, 'deactivate')
+        catWithMappingCfg.enabled = False
+        catWithMappingCfg.reindexObject(idxs=['enabled'])
         self.assertRaises(BeforeDeleteException,
                           cfg2.categories.manage_delObjects,
                           [catWithMappingCfg2Id])
