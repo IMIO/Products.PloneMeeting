@@ -436,7 +436,7 @@ class PMFacetedContainerView(FacetedDashboardView):
     def __call__(self):
         """Make sure a user, even a Manager that is not the Zope Manager is redirected
            to it's own pmFolder if it is on the pmFolder of another user."""
-        if self.cfg.getRedirectToNextMeeting():
+        if self.cfg and self.cfg.getRedirectToNextMeeting():
             if ('searches_items' in self.request.steps) and ('facetednavigation_view' in self.request.steps) and not (self.request.get('no_redirect')):
 
                 dt = date.today()
