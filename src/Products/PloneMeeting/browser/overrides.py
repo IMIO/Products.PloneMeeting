@@ -25,6 +25,7 @@ from collective.iconifiedcategory.browser.actionview import ToPrintChangeView
 from collective.iconifiedcategory.browser.tabview import CategorizedTabView
 from collective.iconifiedcategory.browser.views import CategorizedChildInfosView
 from collective.iconifiedcategory.browser.views import CategorizedChildView
+from datetime import date
 from datetime import datetime
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from imio.actionspanel.browser.viewlets import ActionsPanelViewlet
@@ -435,10 +436,11 @@ class PMFacetedContainerView(FacetedDashboardView):
     def __call__(self):
         """Make sure a user, even a Manager that is not the Zope Manager is redirected
            to it's own pmFolder if it is on the pmFolder of another user."""
-        if self.cfg.redirectToNextMeeting:
+        if self.cfg.getRedirectToNextMeeting():
             if ('searches_items' in self.request.steps) and ('facetednavigation_view' in self.request.steps) and not (self.request.get('no_redirect')):
 
-                meetingDate = datetime.now()
+                dt = date.today()
+                meetingDate = (datetime.combine(dt, datetime.min.time()))
                 meetingTypeName = self.cfg.getMeetingTypeName()
                 catalog = api.portal.get_tool('portal_catalog')
 
