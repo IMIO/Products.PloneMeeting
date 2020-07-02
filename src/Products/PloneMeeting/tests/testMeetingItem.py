@@ -146,10 +146,10 @@ class testMeetingItem(PloneMeetingTestCase):
         self.cleanMemoize()
         self.assertEqual([cat.id for cat in cfg.getCategories(userId='pmCreator2')], expectedCategories)
 
-        # if useGroupsAsCategories is on, getCategories will return proposingGroups
+        # if useGroupsAsCategories is on, getCategories will return nothing
         self.cleanMemoize()
         cfg.setUseGroupsAsCategories(True)
-        self.assertEqual([cat.UID() for cat in cfg.getCategories()], [self.developers_uid, self.vendors_uid])
+        self.assertEqual(cfg.getCategories(), [])
 
     def test_pm_ListProposingGroups(self):
         '''Check MeetingItem.proposingGroup vocabulary.'''
@@ -1305,9 +1305,8 @@ class testMeetingItem(PloneMeetingTestCase):
         originalItem = data['originalItem']
         originalItemCat = getattr(self.meetingConfig.categories, originalItem.getCategory())
         catIdOfMC2Mapped = self.meetingConfig2.categories.objectIds()[0]
-        originalItemCat.setCategoryMappingsWhenCloningToOtherMC(('%s.%s' %
-                                                                 (self.meetingConfig2.getId(),
-                                                                  catIdOfMC2Mapped), ))
+        originalItemCat.category_mapping_when_cloning_to_other_mc = (
+            '%s.%s' % (self.meetingConfig2.getId(), catIdOfMC2Mapped), )
         # delete newItem and send originalItem again
         # do this as 'Manager' in case 'MeetingManager' can not delete the item in used item workflow
         self.deleteAsManager(newItem.UID())

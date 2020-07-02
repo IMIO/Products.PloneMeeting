@@ -106,25 +106,26 @@ class testMeetingCategory(PloneMeetingTestCase):
         # by default, items of meetingConfig can be sent to meetingConfig2
         # as meetingConfig2 use categories, it will appear in a category of meetingConfig
         aCatInMC = cfg.categories.development
-        catmc1_vocab = get_vocab(
-            aCatInMC, u"Products.PloneMeeting.content.category."
+        vocab_factory = get_vocab(
+            None, u"Products.PloneMeeting.content.category."
             "category_mapping_when_cloning_to_other_mc_vocabulary", only_factory=True)
-        self.assertEqual(len(catmc1_vocab(aCatInMC)), 8)
+        self.assertEqual(len(vocab_factory(aCatInMC)), 6)
+        # only terms of cfg2
+        self.assertFalse([term for term in vocab_factory(aCatInMC) if cfg2.getId() not in term.token])
         # but as meetingConfig does not use categories, a category of meetingConfig2 will not see it
         aCatInMC2 = cfg2.categories.deployment
-        catmc2_vocab = get_vocab(
-            aCatInMC2, u"Products.PloneMeeting.content.category."
-            "category_mapping_when_cloning_to_other_mc_vocabulary", only_factory=True)
-        self.assertEqual(len(catmc2_vocab(aCatInMC2)), 0)
+        self.assertEqual(len(vocab_factory(aCatInMC2)), 0)
         # activate categories in both meetingConfigs
         cfg.setUseGroupsAsCategories(False)
         # still not enough...
-        self.assertEqual(len(catmc2_vocab(aCatInMC2)), 0)
+        self.assertEqual(len(vocab_factory(aCatInMC2)), 0)
         # ... we must also specify that elements of self.meetingConfig2 can be sent to self.meetingConfig
         cfg2.setMeetingConfigsToCloneTo(
             ({'meeting_config': '%s' % cfg.getId(),
               'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL}, ))
-        self.assertEqual(len(catmc2_vocab(aCatInMC2)), 3)
+        self.assertEqual(len(vocab_factory(aCatInMC2)), 3)
+        # only terms of cfg
+        self.assertFalse([term for term in vocab_factory(aCatInMC2) if cfg.getId() not in term.token])
 
     def test_pm_validate_category_mapping_when_cloning_to_other_mc(self):
         '''Test the 'category_mapping_when_cloning_to_other_mc' invariant.
