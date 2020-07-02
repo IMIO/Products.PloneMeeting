@@ -38,6 +38,11 @@ Changelog
     renamed to `catType` that may be `all`/`categories`/`classifiers`.
 - In every migrations, call `cleanRegistries` at the end by default so `JS/CSS` are recompiled
 
+- Add 'redirectToNextMeeting' option.
+
+- Moved `Meeting.getNextMeeting` logic to `utils.get_next_meeting` so it can be used from outside a `Meeting` instance
+
+
 4.1.27.2 (2020-06-25)
 ---------------------
 
