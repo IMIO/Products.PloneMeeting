@@ -446,17 +446,8 @@ class PMFacetedContainerView(FacetedDashboardView):
                 brains = catalog(portal_type=meetingTypeName,
                                  getDate={'query': meetingDate, 'range': 'min'},
                                  sort_on='getDate')
-                re = None
-                for brain in brains:
-                    if datetime(brain.getDate.year(),
-                                brain.getDate.month(),
-                                brain.getDate.day(),
-                                brain.getDate.hour(),
-                                brain.getDate.minute()) > meetingDate:
-                        re = brain
-                        break
-                if re:
-                    self.request.RESPONSE.redirect(re.getURL())
+                if brains:
+                    self.request.RESPONSE.redirect(brains[0].getURL())
 
         res = super(PMFacetedContainerView, self).__call__()
 
