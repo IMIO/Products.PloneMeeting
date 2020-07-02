@@ -5,6 +5,7 @@ Changelog
 4.1.28 (unreleased)
 -------------------
 
+- Moved `Meeting.getNextMeeting` logic to `utils.get_next_meeting` so it can be used from outside a `Meeting` instance
 - Migrate `MeetingCategory` from AT to DX :
 
   - New portal_type is `meetingcategory`;
