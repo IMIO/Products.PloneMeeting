@@ -210,6 +210,7 @@ class PMConfigActionsPanelViewlet(ActionsPanelViewlet):
     """Render actionspanel viewlet differently for elements of the MeetingConfig."""
 
     backPages = {'categories': 'data',
+                 'classifiers': 'data',
                  'itemtemplates': 'data',
                  'podtemplates': 'doc',
                  'recurringitems': 'data', }

@@ -279,7 +279,8 @@ def onOrgWillBeRemoved(current_org, event):
                                                       domain="plone",
                                                       context=request))
         categories = mc.categories.objectValues()
-        for cat in categories:
+        classifiers = mc.classifiers.objectValues()
+        for cat in categories + classifiers:
             if current_org_uid in cat.get_using_groups() or current_org_uid in cat.get_groups_in_charge():
                 raise BeforeDeleteException(translate("can_not_delete_organization_meetingcategory",
                                                       mapping={'url': cat.absolute_url()},

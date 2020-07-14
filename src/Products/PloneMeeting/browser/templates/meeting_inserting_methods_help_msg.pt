@@ -35,4 +35,12 @@
     </ul>
   </tal:categories>
 
+  <tal:classifiers tal:define="classifiers view/orderedClassifiers"
+                   tal:condition="classifiers">
+    <h5><span i18n:translate="">Ordered classifiers</span>:</h5>
+    <ul tal:repeat="classifier classifiers">
+      <li tal:content="classifier/Title"></li>
+    </ul>
+  </tal:classifiers>
+
 </div>

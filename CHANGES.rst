@@ -9,7 +9,8 @@ Changelog
 - Migrate `MeetingCategory` from AT to DX :
 
   - New portal_type is `meetingcategory`;
-  - Field `MeetingItem.classifier` and related functionnality was removed;
+  - Field `MeetingItem.classifier` was moved from ReferenceField to StringField;
+  - Added new MeetingConfig.insertingMethodsOnAddItem `on_classifiers`;
   - Removed magic in `MeetingConfig.getCategories` that returned organizations when
    `MeetingConfig.useGroupsAsCategories` is True, now it returns only categories or an empty list.
 

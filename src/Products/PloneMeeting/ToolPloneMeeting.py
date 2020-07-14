@@ -1063,6 +1063,11 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 category = copiedItem.getCategory(real=True, theObject=True)
                 if category and not category.is_selectable(userId=loggedUserId):
                     fieldsToKeep.remove('category')
+            # remove 'classifier' from fieldsToKeep if it is disabled
+            if 'classifier' in fieldsToKeep:
+                classifier = copiedItem.getClassifier()
+                if classifier and not classifier.is_selectable(userId=loggedUserId):
+                    fieldsToKeep.remove('classifier')
 
             for field in newItem.Schema().filterFields(isMetadata=False):
                 if field.getName() not in fieldsToKeep:

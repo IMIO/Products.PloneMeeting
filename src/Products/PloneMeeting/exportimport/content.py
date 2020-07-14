@@ -29,6 +29,7 @@ from Products.PloneMeeting.config import PROJECTNAME
 from Products.PloneMeeting.config import registerClasses
 from Products.PloneMeeting.config import TOOL_FOLDER_ANNEX_TYPES
 from Products.PloneMeeting.config import TOOL_FOLDER_CATEGORIES
+from Products.PloneMeeting.config import TOOL_FOLDER_CLASSIFIERS
 from Products.PloneMeeting.config import TOOL_FOLDER_ITEM_TEMPLATES
 from Products.PloneMeeting.config import TOOL_FOLDER_POD_TEMPLATES
 from Products.PloneMeeting.config import TOOL_FOLDER_RECURRING_ITEMS
@@ -378,9 +379,11 @@ class ToolInitializer:
 
         if not configData.active:
             self.portal.portal_wokflow.doActionFor(cfg, 'deactivate')
-        # Adds the sub-objects within the config: categories, items in config, ...
+        # Adds the sub-objects within the config: categories, classifiers, items in config, ...
         for descr in configData.categories:
             self.addCategory(cfg, descr)
+        for descr in configData.classifiers:
+            self.addCategory(cfg, descr, classifier=True)
         for descr in configData.recurringItems:
             self.addItemToConfig(cfg, descr)
         for descr in configData.itemTemplates:
@@ -417,9 +420,14 @@ class ToolInitializer:
             cfg.annexes_types.meeting_annexes.confidentiality_activated = True
         return cfg
 
-    def addCategory(self, cfg, descr):
-        '''Creates a category from p_descr, a CategoryDescriptor instance.'''
-        folder = getattr(cfg, TOOL_FOLDER_CATEGORIES)
+    def addCategory(self, cfg, descr, classifier=False):
+        '''Creates a category or a classifier (depending on p_classifier) from
+           p_descr, a CategoryDescriptor instance.'''
+        if classifier:
+            folder = getattr(cfg, TOOL_FOLDER_CLASSIFIERS)
+        else:
+            folder = getattr(cfg, TOOL_FOLDER_CATEGORIES)
+
         data = descr.getData()
         cat = api.content.create(container=folder,
                                  type='meetingcategory',

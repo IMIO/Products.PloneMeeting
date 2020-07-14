@@ -162,7 +162,7 @@ class testMeetingCategory(PloneMeetingTestCase):
         self.assertIsNone(invariant(data))
 
     def test_pm_CategoryContainerModifiedOnAnyAction(self):
-        """The MeetingCategory container (categories) is modified
+        """The MeetingCategory container (categories/classifiers) is modified
            upon any category changes (add/edit/transition/remove)."""
         self.changeUser('siteadmin')
         cfg = self.meetingConfig

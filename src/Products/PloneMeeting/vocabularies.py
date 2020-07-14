@@ -101,19 +101,19 @@ PMConditionAwareCollectionVocabularyFactory = PMConditionAwareCollectionVocabula
 class ItemCategoriesVocabulary(object):
     implements(IVocabularyFactory)
 
-    def __call___cachekey(method, self, context):
+    def __call___cachekey(method, self, context, classifiers=False):
         '''cachekey method for self.__call__.'''
         date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.categoriesvocabulary')
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        return date, cfg
+        return date, cfg, classifiers
 
     @ram.cache(__call___cachekey)
-    def __call__(self, context):
+    def __call__(self, context, classifiers=False):
         """ """
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        categories = cfg.getCategories(onlySelectable=False, caching=False)
+        categories = cfg.getCategories(classifiers=classifiers, onlySelectable=False, caching=False)
         activeCategories = [cat for cat in categories if cat.enabled]
         notActiveCategories = [cat for cat in categories if not cat.enabled]
         res_active = []
@@ -144,6 +144,17 @@ class ItemCategoriesVocabulary(object):
 
 
 ItemCategoriesVocabularyFactory = ItemCategoriesVocabulary()
+
+
+class ItemClassifiersVocabulary(ItemCategoriesVocabulary):
+    implements(IVocabularyFactory)
+
+    def __call__(self, context, classifiers=True):
+        """ """
+        return super(ItemClassifiersVocabulary, self).__call__(context, classifiers=True)
+
+
+ItemClassifiersVocabularyFactory = ItemClassifiersVocabulary()
 
 
 class ItemProposingGroupsVocabulary(object):
@@ -277,6 +288,11 @@ class GroupsInChargeVocabulary(object):
             # categories
             if not cfg.getUseGroupsAsCategories():
                 categories = cfg.getCategories(onlySelectable=False, caching=False)
+                # add classifiers when using it
+                if 'classifier' in cfg.getUsedItemAttributes():
+                    categories += cfg.getCategories(classifiers=True,
+                                                    onlySelectable=False,
+                                                    caching=False)
                 for cat in categories:
                     for group_in_charge_uid in cat.getGroupsInCharge():
                         group_in_charge = get_organization(group_in_charge_uid)

@@ -51,6 +51,7 @@ indexInfos = {
     'getCategory': ('FieldIndex', {}),
     'getItemIsSigned': ('FieldIndex', {}),
     'getItemNumber': ('FieldIndex', {}),
+    'getRawClassifier': ('FieldIndex', {}),
     'getProposingGroup': ('FieldIndex', {}),
     'getGroupsInCharge': ('KeywordIndex', {}),
     'getAssociatedGroups': ('KeywordIndex', {}),
@@ -84,8 +85,8 @@ columnInfos = ('getDate',
                'getPreferredMeeting', 'getPreferredMeetingDate',
                'linkedMeetingDate', 'linkedMeetingUID',
                'title_or_id', 'toDiscuss',
-               'privacy', 'pollType', 'listType',
-               'getItemNumber', 'getCategory')
+               'privacy', 'pollType', 'listType', 'getItemNumber',
+               'getCategory', 'getRawClassifier')
 transformsToDisable = ['word_to_html', 'pdf_to_html', 'pdf_to_text']
 
 

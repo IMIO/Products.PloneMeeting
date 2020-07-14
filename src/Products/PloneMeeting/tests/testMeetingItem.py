@@ -113,26 +113,34 @@ class testMeetingItem(PloneMeetingTestCase):
         # create an item for test
         self.changeUser('pmCreator1')
         expectedCategories = ['deployment', 'maintenance', 'development', 'events', 'research', 'projects', ]
+        expectedClassifiers = ['classifier1', 'classifier2', 'classifier3', ]
         # By default, every categories are selectable
         self.assertEqual([cat.id for cat in cfg.getCategories()], expectedCategories)
+        self.assertEqual([cat.id for cat in cfg.getCategories(classifiers=True)], expectedClassifiers)
         # Deactivate a category
         self.changeUser('admin')
         self._disableObj(cfg.categories.deployment)
+        self._disableObj(cfg.classifiers.classifier2)
         expectedCategories.remove('deployment')
+        expectedClassifiers.remove('classifier2')
         # getCategories has caching in the REQUEST, we need to wipe this out
         self.cleanMemoize()
         self.changeUser('pmCreator1')
         # A deactivated category will not be returned by getCategories no matter an item is given or not
         self.assertEqual([cat.id for cat in cfg.getCategories()], expectedCategories)
+        self.assertEqual([cat.id for cat in cfg.getCategories(classifiers=True)], expectedClassifiers)
         # Specify that a category is restricted to some groups pmCreator1 is not creator for
         self.changeUser('admin')
         cfg.categories.maintenance.using_groups = (self.vendors_uid,)
+        cfg.classifiers.classifier1.using_groups = (self.vendors_uid,)
         expectedCategories.remove('maintenance')
+        expectedClassifiers.remove('classifier1')
         # getCategories has caching in the REQUEST, we need to wipe this out
         self.cleanMemoize()
         self.changeUser('pmCreator1')
         # if current user is not creator for one of the using_groups defined for the category, he can not use it
         self.assertEqual([cat.id for cat in cfg.getCategories()], expectedCategories)
+        self.assertEqual([cat.id for cat in cfg.getCategories(classifiers=True)], expectedClassifiers)
         # cfg.getCategories can receive a userId
         # pmCreator2 has an extra category called subproducts
         expectedCategories.append('subproducts')
@@ -146,10 +154,13 @@ class testMeetingItem(PloneMeetingTestCase):
         self.cleanMemoize()
         self.assertEqual([cat.id for cat in cfg.getCategories(userId='pmCreator2')], expectedCategories)
 
-        # if useGroupsAsCategories is on, getCategories will return nothing
-        self.cleanMemoize()
+        # if useGroupsAsCategories is on, getCategories will still return categories
         cfg.setUseGroupsAsCategories(True)
-        self.assertEqual(cfg.getCategories(), [])
+        self.cleanMemoize()
+        expectedCategories.remove('maintenance')
+        expectedCategories.append('subproducts')
+        self.assertEqual([cat.id for cat in cfg.getCategories()], expectedCategories)
+        self.assertEqual([cat.id for cat in cfg.getCategories(classifiers=True)], expectedClassifiers)
 
     def test_pm_ListProposingGroups(self):
         '''Check MeetingItem.proposingGroup vocabulary.'''
@@ -432,7 +443,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # the original item is no more sendable to the same meetingConfig
         self.failIf(item.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
         # while cloning to another meetingConfig, some fields that are normally kept
-        # while duplicating an item are no more kept, like category that
+        # while duplicating an item are no more kept, like category or classifier that
         # depends on the meetingConfig the item is in
         self.assertNotEqual(newItem.getCategory(), item.getCategory())
         # if we remove the newItem, the reference in the original item annotation is removed
@@ -6575,7 +6586,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(item4.getItemReference(), 'Ref. 20170303/1')
 
     def test_pm_ItemReferenceUpdateWhenSpecificItemFieldsModified(self):
-        """When a item is modified, if 'category', 'proposingGroup'
+        """When a item is modified, if 'category', 'classifier', 'proposingGroup'
            or 'otherMeetingConfigsClonableTo' field is changed, we need to update
            every itemReference starting from current item."""
         self.changeUser('siteadmin')
@@ -6591,6 +6602,7 @@ class testMeetingItem(PloneMeetingTestCase):
             "python: here.getMeeting().getDate().strftime('%Y%m%d') + '/' + "
             "str(here.getProposingGroup(True).get_acronym()) + '/' + "
             "str(here.getCategory()) + '/' + "
+            "str(here.getRawClassifier() and here.getClassifier(theObject=True).getId() or '-') + '/' + "
             "('/'.join(here.getOtherMeetingConfigsClonableTo()) or '-') + '/' + "
             "here.Title() + '/' + "
             "str(here.getItemNumber(relativeTo='meetingConfig', for_display=True))")
@@ -6599,25 +6611,29 @@ class testMeetingItem(PloneMeetingTestCase):
         meeting = self.create('Meeting', date=DateTime('2017/03/03'))
         self.presentItem(item)
         self.freezeMeeting(meeting)
-        self.assertEqual(item.getItemReference(), '20170303/Devel/development/-/Title1/1')
+        self.assertEqual(item.getItemReference(), '20170303/Devel/development/-/-/Title1/1')
         # change category
         item.setCategory('research')
         item._update_after_edit()
-        self.assertEqual(item.getItemReference(), '20170303/Devel/research/-/Title1/1')
+        self.assertEqual(item.getItemReference(), '20170303/Devel/research/-/-/Title1/1')
+        # change classifier
+        item.setClassifier('classifier1')
+        item._update_after_edit()
+        self.assertEqual(item.getItemReference(), '20170303/Devel/research/classifier1/-/Title1/1')
         # change proposingGroup
         item.setProposingGroup(self.vendors_uid)
         item._update_after_edit()
-        self.assertEqual(item.getItemReference(), '20170303/Devil/research/-/Title1/1')
+        self.assertEqual(item.getItemReference(), '20170303/Devil/research/classifier1/-/Title1/1')
         # change otherMeetingConfigsClonableTo
         item.setOtherMeetingConfigsClonableTo((cfg2Id,))
         item._update_after_edit()
         self.assertEqual(item.getItemReference(),
-                         '20170303/Devil/research/{0}/Title1/1'.format(cfg2Id))
+                         '20170303/Devil/research/classifier1/{0}/Title1/1'.format(cfg2Id))
         # changing the Title will not update the reference
         item.setTitle('Title2')
         item._update_after_edit()
         self.assertEqual(item.getItemReference(),
-                         '20170303/Devil/research/{0}/Title1/1'.format(cfg2Id))
+                         '20170303/Devil/research/classifier1/{0}/Title1/1'.format(cfg2Id))
 
     def test_pm_ItemReferenceUpdateWhenItemPositionChangedOnMeeting(self):
         """When an item position changed in the meeting, the itemReference is updated."""

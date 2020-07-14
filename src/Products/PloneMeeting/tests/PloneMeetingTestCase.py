@@ -254,6 +254,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                objectType,
                folder=None,
                autoAddCategory=True,
+               is_classifier=False,
                **attrs):
         '''Creates an instance of a meeting (if p_objectType is 'Meeting') or
            meeting item (if p_objectType is 'MeetingItem') and
@@ -285,7 +286,11 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             if 'certified_signatures' not in attrs:
                 attrs['certified_signatures'] = []
         elif objectType == 'meetingcategory':
-            folder = cfg.categories
+            if is_classifier:
+                folder = cfg.classifiers
+            else:
+                folder = cfg.categories
+
             if 'groups_in_charge' not in attrs:
                 attrs['groups_in_charge'] = []
             if 'using_groups' not in attrs:

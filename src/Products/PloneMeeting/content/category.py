@@ -88,6 +88,13 @@ class MeetingCategory(Item):
     implements(IMeetingCategory)
     security = ClassSecurityInfo()
 
+    security.declarePublic('is_classifier')
+
+    def is_classifier(self):
+        '''Return True if current category is a classifier,
+           False if it is a normal category.'''
+        return self.aq_inner.aq_parent.getId() == 'classifiers'
+
     security.declarePublic('get_order')
 
     def get_order(self, only_selectable=True):
@@ -99,7 +106,8 @@ class MeetingCategory(Item):
             # restricted to some groups, we pass onlySelectable=False
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(self)
-            i = cfg.getCategories(onlySelectable=only_selectable).index(self)
+            i = cfg.getCategories(
+                classifiers=self.is_classifier(), onlySelectable=only_selectable).index(self)
         except ValueError:
             i = None
         return i
@@ -152,6 +160,13 @@ class MeetingCategorySchemaPolicy(DexteritySchemaPolicy):
 class CategoriesOfOtherMCsVocabulary(object):
     implements(IVocabularyFactory)
 
+    def _is_classifier(self, context):
+        '''Depending on context (container or meetingcategory), return if it is a classifier.'''
+        if context.portal_type == 'meetingcategory':
+            return context.is_classifier()
+        else:
+            return context.getId() == 'classifiers'
+
     def __call__(self, context):
         '''Vocabulary for 'category_mapping_when_cloning_to_other_mc' field, it returns
            a list of available categories by available MC the items of the current MC
@@ -173,7 +188,7 @@ class CategoriesOfOtherMCsVocabulary(object):
                 continue
             otherMCId = otherMCObj.getId()
             otherMCTitle = otherMCObj.Title()
-            for category in otherMCObj.getCategories():
+            for category in otherMCObj.getCategories(classifiers=self._is_classifier(context)):
                 cat_id = '%s.%s' % (otherMCId, category.getId())
                 cat_title = '%s -> %s' % (otherMCTitle, category.Title())
                 terms.append(SimpleTerm(cat_id, cat_id, cat_title))

@@ -370,11 +370,19 @@ class testMeeting(PloneMeetingTestCase):
 
     def test_pm_InsertItemCategories(self):
         '''Sort method tested here is "on_categories".'''
+        cfg = self.meetingConfig
+        cfg.setUseGroupsAsCategories(False)
+        cfg.setInsertingMethodsOnAddItem(
+            ({'insertingMethod': 'on_categories', 'reverse': '0'}, ))
         self.changeUser('pmManager')
-        self.setMeetingConfig(self.meetingConfig2.getId())
         meeting = self._createMeetingWithItems()
-        self.assertEqual([item.getId() for item in meeting.getItems(ordered=True)],
-                         ['item-2', 'item-3', 'item-4', 'item-5', 'item-1'])
+        ordered_items = meeting.getItems(ordered=True)
+        self.assertEqual(
+            [item.getId() for item in ordered_items],
+            ['item-2', 'item-3', 'item-1', 'item-4', 'item-5'])
+        self.assertEqual(
+            [item.getCategory() for item in ordered_items],
+            ['development', 'development', 'research', 'events', 'events'])
 
     def test_pm_InsertItemOnCategoriesWithDisabledCategory(self):
         '''Test that inserting an item using the "on_categories" sorting method
@@ -410,6 +418,22 @@ class testMeeting(PloneMeetingTestCase):
         self.presentItem(newItem)
         self.assertEqual([item.getId() for item in meeting.getItems(ordered=True)],
                          ['item-2', 'item-3', newItem.getId(), 'item-4', 'item-5', 'item-1'])
+
+    def test_pm_InsertItemClassifiers(self):
+        '''Sort method tested here is "on_classifiers".'''
+        self.meetingConfig.setInsertingMethodsOnAddItem(
+            ({'insertingMethod': 'on_classifiers', 'reverse': '0'}, ))
+        self.changeUser('pmManager')
+        meeting = self._createMeetingWithItems()
+        ordered_items = meeting.getItems(ordered=True)
+        self.assertEqual([item.getId() for item in ordered_items],
+                         ['item-4', 'item-5', 'recItem1', 'recItem2', 'item-2', 'item-3', 'item-1'])
+        # items with no classifier (recurring items here) are inserted at position 0
+        self.assertEqual([item.getClassifier() for item in ordered_items],
+                         ['classifier1', 'classifier1',
+                          '', '',
+                          'classifier2', 'classifier2',
+                          'classifier3'])
 
     def test_pm_InsertItemAllGroups(self):
         '''Sort method tested here is "on_all_groups".

@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 
-from eea.facetednavigation.interfaces import ICriteria
 from plone import api
 from plone.app.contenttypes.migration.dxmigration import ContentMigrator
 from plone.app.contenttypes.migration.migration import migrate as pac_migrate
 from Products.CMFPlone.interfaces.constrains import IConstrainTypes
 from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator
+from Products.ZCatalog.ProgressHandler import ZLogHandler
 
 
 class MeetingCategoryMigrator(ContentMigrator):
@@ -39,20 +39,41 @@ class Migrate_To_4110(Migrator):
         if 'meetingcategory' in self.portal.portal_types:
             return self._already_migrated()
 
-        # remove classifiers
-        self._removeItemClassifier()
+        # update item classifier
+        # migrate references
+        pghandler = ZLogHandler(steps=100)
+        brains = self.portal.reference_catalog(relationship='ItemClassification')
+        pghandler.init('Updating field MeetingItem.classifier...', len(brains))
+        pghandler.info('Updating field MeetingItem.classifier...')
+        i = 0
+        for brain in brains:
+            i += 1
+            pghandler.report(i)
+            relation = brain.getObject()
+            item = relation.getSourceObject()
+            classifier = relation.getTargetObject()
+            item.setClassifier(classifier.getId())
+            item.reindexObject(idxs=['getRawClassifier'])
+        # deleteReferences in a second phase
+        for brain in brains:
+            relation = brain.getObject()
+            item = relation.getSourceObject()
+            item.deleteReferences('ItemClassification')
+        pghandler.finish()
 
+        logger.info('Migrating categories and classifiers in configuration...')
         # make sure new portal_type meetingcategory is installed
         self.ps.runImportStepFromProfile('profile-Products.PloneMeeting:default', 'typeinfo')
         # make sure no workflow used for meetingcategory
         self.wfTool.setChainForPortalTypes(('meetingcategory', ), ('', ))
-        # adapt allowed_types for each MeetingConfig.categories folders
+        # adapt allowed_types for each MeetingConfig.categories/classifiers folders
         for cfg in self.tool.objectValues('MeetingConfig'):
-            constrain = IConstrainTypes(cfg.categories)
-            constrain.setConstrainTypesMode(1)
-            allowedTypes = ['meetingcategory']
-            constrain.setLocallyAllowedTypes(allowedTypes)
-            constrain.setImmediatelyAddableTypes(allowedTypes)
+            for folder_id in ('categories', 'classifiers'):
+                constrain = IConstrainTypes(getattr(cfg, folder_id))
+                constrain.setConstrainTypesMode(1)
+                allowedTypes = ['meetingcategory']
+                constrain.setLocallyAllowedTypes(allowedTypes)
+                constrain.setImmediatelyAddableTypes(allowedTypes)
         # migrate to DX
         pac_migrate(self.portal, MeetingCategoryMigrator)
         self.removeUnusedPortalTypes(portal_types=['MeetingCategory'])
@@ -66,41 +87,6 @@ class Migrate_To_4110(Migrator):
             props.manage_changeProperties(types_not_searched=tuple(nsTypes))
 
         logger.info('Done.')
-
-    def _removeItemClassifier(self):
-        '''Remove field MeetingItem.classifier and related configuration.'''
-        logger.info('Removing reference field MeetingItem.classifier...')
-        # first check if classifiers were never used...
-        # to do so, add check_classifier_references to hidden submited form in manage_upgrades
-        if self.request.get('check_classifier_references'):
-            references = self.portal.reference_catalog(relationship='ItemClassification')
-            if references:
-                item = references[0].getObject().getSourceObject()
-                raise Exception(
-                    "Unable to remove MeetingItem.classifier field as it is used for %s!"
-                    % item.absolute_url())
-
-        # remove indexes
-        self.removeUnusedIndexes(indexes=['getRawClassifier'])
-        self.removeUnusedColumns(columns=['getRawClassifier'])
-        # remove references
-        for brain in self.catalog(meta_type='MeetingItem'):
-            item = brain.getObject()
-            item.deleteReferences('ItemClassification')
-        # remove column and filter from dashboards
-        self.cleanItemColumns(to_remove=['getRawClassifier'])
-        self.cleanItemFilters(to_remove=['c24'])
-        self.cleanUsedItemAttributes(to_remove=['classifier'])
-        # remove faceted filter and classifiers folder
-        for cfg in self.tool.objectValues('MeetingConfig'):
-            # remove filter c24
-            criteria = ICriteria(cfg.searches.searches_items)
-            criterion = criteria.get('c24')
-            if not criterion.index == 'getRawClassifier':
-                raise Exception("Unable to remove faceted criterion getRawClassifier!")
-            criterion = criteria.delete('c24')
-            # delete "classifiers" folder
-            cfg.manage_delObjects(ids=['classifiers'])
 
     def run(self, from_migration_to_41=False):
         logger.info('Migrating to PloneMeeting 4110...')

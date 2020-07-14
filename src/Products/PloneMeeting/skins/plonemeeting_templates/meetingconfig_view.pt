@@ -586,17 +586,36 @@
       <a name="categories"></a>
       <fieldset>
         <legend>
-          <span i18n:translate="Categories"></span>
+         <span i18n:translate="Categories"></span>
           <a href="#"
              title="add_object"
              i18n:attributes="title"
              tal:condition="isRealManager"
-             tal:attributes="href string:${context_url}/categories/++add++meetingcategory">
-            <img src="#" tal:attributes="src string:${portal_url}/new.png" />
+             tal:attributes="href string:${context_url}/categories/createObject?type_name=MeetingCategory">
+            <img src="#" tal:attributes="src string:$portal_url/new.png" />
           </a>
         </legend>
         <p class="discreet" i18n:translate="categories_descr"></p><br />
         <tal:defines define="cFolder python:context.categories;">
+          <metal:addtionalInformations use-macro="here/@@pm-macros/categoriesInConfig" />
+        </tal:defines>
+      </fieldset>
+
+      <tal:comment replace="nothing">Classifiers</tal:comment>
+      <a name="classifiers"></a>
+      <fieldset>
+        <legend>
+         <span i18n:translate="Classifiers"></span>
+          <a href="#"
+             title="add_object"
+             i18n:attributes="title"
+             tal:condition="isRealManager"
+             tal:attributes="href string:${context_url}/classifiers/createObject?type_name=MeetingCategory">
+            <img src="#" tal:attributes="src string:$portal_url/new.png" />
+          </a>
+        </legend>
+        <p class="discreet" i18n:translate="classifiers_descr"></p><br />
+        <tal:defines define="cFolder python:context.classifiers;">
           <metal:addtionalInformations use-macro="here/@@pm-macros/categoriesInConfig" />
         </tal:defines>
       </fieldset>
@@ -840,13 +859,14 @@
                     <span i18n:translate="config_search_title">Searches
                       <span i18n:name="search_title" tal:content="cFolder/Title">Folder title</span>
                     </span>
-                    <a href="#"
-                       title="add_object"
-                       i18n:attributes="title"
-                       tal:condition="isRealManager"
-                       tal:attributes="href string:${cFolderUrl}/++add++DashboardCollection">
-                      <img src="#" tal:attributes="src string:${portal_url}/new.png" />
-                    </a>
+                    <input type="image"
+                           style="cursor:pointer"
+                           class="imageInput"
+                           tal:attributes="
+                              onClick python: 'href: window.location=\'%s/++add++DashboardCollection\'' % cFolderUrl;
+                              src string:$portal_url/new.png"
+                 title="add_object" i18n:attributes="title"
+                 tal:condition="isRealManager"/>
                 </th>
                 <th class="nosort" width="400px" i18n:translate="heading_criteria">Criteria</th>
                 <th class="nosort" i18n:translate="">Condition</th>
