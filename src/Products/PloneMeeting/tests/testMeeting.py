@@ -421,13 +421,14 @@ class testMeeting(PloneMeetingTestCase):
 
     def test_pm_InsertItemClassifiers(self):
         '''Sort method tested here is "on_classifiers".'''
+        self._enableField('classifier')
         self.meetingConfig.setInsertingMethodsOnAddItem(
             ({'insertingMethod': 'on_classifiers', 'reverse': '0'}, ))
         self.changeUser('pmManager')
         meeting = self._createMeetingWithItems()
         ordered_items = meeting.getItems(ordered=True)
         self.assertEqual([item.getId() for item in ordered_items],
-                         ['item-4', 'item-5', 'recItem1', 'recItem2', 'item-2', 'item-3', 'item-1'])
+                         ['item-4', 'item-5', 'item-2', 'item-3', 'item-1'])
         # items with no classifier (recurring items here) are inserted at position 0
         self.assertEqual([item.getClassifier() for item in ordered_items],
                          ['classifier1', 'classifier1',

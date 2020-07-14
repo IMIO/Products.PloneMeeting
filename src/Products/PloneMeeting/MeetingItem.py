@@ -177,6 +177,8 @@ class MeetingItemWorkflowConditions(object):
         msg = None
         if not self.context.getCategory(theObject=True):
             msg = No(_('required_category_ko'))
+        elif self.context.attributeIsUsed('classifier') and not self.context.getClassifier():
+            msg = No(_('required_classifier_ko'))
         elif self.context.attributeIsUsed('groupsInCharge') and not self.context.getGroupsInCharge():
             msg = No(_('required_groupsInCharge_ko'))
         return msg
