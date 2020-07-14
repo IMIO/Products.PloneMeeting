@@ -432,7 +432,6 @@ class testMeeting(PloneMeetingTestCase):
         # items with no classifier (recurring items here) are inserted at position 0
         self.assertEqual([item.getClassifier() for item in ordered_items],
                          ['classifier1', 'classifier1',
-                          '', '',
                           'classifier2', 'classifier2',
                           'classifier3'])
 
