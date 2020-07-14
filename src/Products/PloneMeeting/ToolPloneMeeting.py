@@ -1065,7 +1065,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     fieldsToKeep.remove('category')
             # remove 'classifier' from fieldsToKeep if it is disabled
             if 'classifier' in fieldsToKeep:
-                classifier = copiedItem.getClassifier()
+                classifier = copiedItem.getClassifier(theObject=True)
                 if classifier and not classifier.is_selectable(userId=loggedUserId):
                     fieldsToKeep.remove('classifier')
 

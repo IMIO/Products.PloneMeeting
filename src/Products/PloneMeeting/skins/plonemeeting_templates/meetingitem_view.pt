@@ -89,7 +89,7 @@
                  tal:define="cat python: context.getCategory(True)">
                 <span class="item_attribute_label"
                       tal:condition="not: meetingConfig/getUseGroupsAsCategories"
-                      i18n:translate="MeetingCategory"></span>:&nbsp;&nbsp;
+                      i18n:translate="PloneMeeting_label_category"></span>:&nbsp;&nbsp;
                 <span tal:condition="nocall:cat" tal:content="cat/Title"></span>
             </div>
             </tal:category>
