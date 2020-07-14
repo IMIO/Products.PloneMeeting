@@ -10,9 +10,9 @@ Changelog
 
   - New portal_type is `meetingcategory`;
   - Field `MeetingItem.classifier` was moved from ReferenceField to StringField;
-  - Added new MeetingConfig.insertingMethodsOnAddItem `on_classifiers`;
+  - Added new `MeetingConfig.insertingMethodsOnAddItem` named `on_classifiers`;
   - Removed magic in `MeetingConfig.getCategories` that returned organizations when
-   `MeetingConfig.useGroupsAsCategories` is True, now it returns only categories or an empty list.
+    `MeetingConfig.useGroupsAsCategories` was True, now it returns only categories.
 
 4.1.27.2 (2020-06-25)
 ---------------------
