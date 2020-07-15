@@ -106,8 +106,9 @@ class MeetingCategory(Item):
             # restricted to some groups, we pass onlySelectable=False
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(self)
+            catType = self.is_classifier() and 'classifiers' or 'categories'
             i = cfg.getCategories(
-                classifiers=self.is_classifier(), onlySelectable=only_selectable).index(self)
+                catType=catType, onlySelectable=only_selectable).index(self)
         except ValueError:
             i = None
         return i
@@ -182,13 +183,14 @@ class CategoriesOfOtherMCsVocabulary(object):
         cfg = tool.getMeetingConfig(context)
         # get every other MC the items of this MC can be sent to
         otherMCs = cfg.getMeetingConfigsToCloneTo()
+        catType = self._is_classifier(context) and 'classifiers' or 'categories'
         for otherMC in otherMCs:
             otherMCObj = getattr(tool, otherMC['meeting_config'])
             if otherMCObj.getUseGroupsAsCategories():
                 continue
             otherMCId = otherMCObj.getId()
             otherMCTitle = otherMCObj.Title()
-            for category in otherMCObj.getCategories(classifiers=self._is_classifier(context)):
+            for category in otherMCObj.getCategories(catType=catType):
                 cat_id = '%s.%s' % (otherMCId, category.getId())
                 cat_title = '%s -> %s' % (otherMCTitle, category.Title())
                 terms.append(SimpleTerm(cat_id, cat_id, cat_title))

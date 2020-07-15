@@ -116,7 +116,7 @@ class testMeetingItem(PloneMeetingTestCase):
         expectedClassifiers = ['classifier1', 'classifier2', 'classifier3', ]
         # By default, every categories are selectable
         self.assertEqual([cat.id for cat in cfg.getCategories()], expectedCategories)
-        self.assertEqual([cat.id for cat in cfg.getCategories(classifiers=True)], expectedClassifiers)
+        self.assertEqual([cat.id for cat in cfg.getCategories(catType='classifiers')], expectedClassifiers)
         # Deactivate a category
         self.changeUser('admin')
         self._disableObj(cfg.categories.deployment)
@@ -128,7 +128,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         # A deactivated category will not be returned by getCategories no matter an item is given or not
         self.assertEqual([cat.id for cat in cfg.getCategories()], expectedCategories)
-        self.assertEqual([cat.id for cat in cfg.getCategories(classifiers=True)], expectedClassifiers)
+        self.assertEqual([cat.id for cat in cfg.getCategories(catType='classifiers')], expectedClassifiers)
         # Specify that a category is restricted to some groups pmCreator1 is not creator for
         self.changeUser('admin')
         cfg.categories.maintenance.using_groups = (self.vendors_uid,)
@@ -140,7 +140,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         # if current user is not creator for one of the using_groups defined for the category, he can not use it
         self.assertEqual([cat.id for cat in cfg.getCategories()], expectedCategories)
-        self.assertEqual([cat.id for cat in cfg.getCategories(classifiers=True)], expectedClassifiers)
+        self.assertEqual([cat.id for cat in cfg.getCategories(catType='classifiers')], expectedClassifiers)
         # cfg.getCategories can receive a userId
         # pmCreator2 has an extra category called subproducts
         expectedCategories.append('subproducts')
@@ -160,7 +160,7 @@ class testMeetingItem(PloneMeetingTestCase):
         expectedCategories.remove('maintenance')
         expectedCategories.append('subproducts')
         self.assertEqual([cat.id for cat in cfg.getCategories()], expectedCategories)
-        self.assertEqual([cat.id for cat in cfg.getCategories(classifiers=True)], expectedClassifiers)
+        self.assertEqual([cat.id for cat in cfg.getCategories(catType='classifiers')], expectedClassifiers)
 
     def test_pm_ListProposingGroups(self):
         '''Check MeetingItem.proposingGroup vocabulary.'''

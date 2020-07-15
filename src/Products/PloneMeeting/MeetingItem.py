@@ -2855,7 +2855,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         res = []
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        for cat in cfg.getCategories(classifiers=classifiers):
+        catType = classifiers and 'classifiers' and 'categories'
+        for cat in cfg.getCategories(catType=catType):
             res.append((cat.id, safe_unicode(cat.Title())))
 
         # make sure current category is listed here

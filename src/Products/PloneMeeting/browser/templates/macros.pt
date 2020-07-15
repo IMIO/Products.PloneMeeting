@@ -841,7 +841,7 @@ The parameter "cFolder" is the folder containing categories.</tal:comment>
   You can <a i18n:name="force_display" i18n:translate="categories_force_display" href=".?pageName=data&show_every_categories=1#categories">force display</a> of every categories.
 </p>
 <p i18n:translate="categories_use_folder_contents" tal:condition="isRealManager">
-  You can <a i18n:name="force_display" i18n:translate="categories_force_display" href="./?pageName=data&show_every_categories=1">force display</a> of every categories or you may use the <a i18n:name="folder_contents_link" i18n:translate="categories_folder_contents_view" href="#" tal:attributes="href string:${cFolder/absolute_url}/folder_contents">"Folder contents" view</a> to manage categories.
+  You can <a i18n:name="force_display" i18n:translate="categories_force_display" href="./?pageName=data&show_every_categories=1">force display</a> of every categories or you may use the <a i18n:name="folder_contents_link" i18n:translate="categories_folder_contents_view" href="#" tal:attributes="href string:${cFolder/absolute_url}/folder_contents">"Folder contents" view</a> to manage elements order.
 </p>
 </tal:defines>
 </metal:categoriesInMeetingConfig>

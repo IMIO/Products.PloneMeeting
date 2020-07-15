@@ -113,7 +113,8 @@ class ItemCategoriesVocabulary(object):
         """ """
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        categories = cfg.getCategories(classifiers=classifiers, onlySelectable=False, caching=False)
+        catType = classifiers and 'classifiers' or 'categories'
+        categories = cfg.getCategories(catType=catType, onlySelectable=False, caching=False)
         activeCategories = [cat for cat in categories if cat.enabled]
         notActiveCategories = [cat for cat in categories if not cat.enabled]
         res_active = []
@@ -290,7 +291,7 @@ class GroupsInChargeVocabulary(object):
                 categories = cfg.getCategories(onlySelectable=False, caching=False)
                 # add classifiers when using it
                 if 'classifier' in cfg.getUsedItemAttributes():
-                    categories += cfg.getCategories(classifiers=True,
+                    categories += cfg.getCategories(catType='classifiers',
                                                     onlySelectable=False,
                                                     caching=False)
                 for cat in categories:

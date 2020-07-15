@@ -5793,30 +5793,34 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getCategories')
 
-    def getCategories(self, classifiers=False, onlySelectable=True, userId=None, caching=True):
+    def getCategories(self, catType='categories', onlySelectable=True, userId=None, caching=True):
         '''Returns the categories defined for this meeting config.
            If p_onlySelectable is True, there will be a check to see if the category
            is available to the current user, otherwise, we return every existing categories.
-           If a p_userId is given, it will be used to be passed to isSelectable'''
+           If a p_userId is given, it will be used to be passed to isSelectable.
+           p_catType may be 'categories' (default), then returns categories, 'classifiers',
+           then returns classifiers or 'all', then return every categories and classifiers.'''
         data = None
         if caching:
             key = "meeting-config-getcategories-%s-%s-%s-%s" % (
-                self.getId(), str(classifiers), str(onlySelectable), str(userId))
+                self.getId(), str(catType), str(onlySelectable), str(userId))
             cache = IAnnotations(self.REQUEST)
             data = cache.get(key, None)
         if data is None:
             data = []
-            if classifiers:
-                catFolder = self.classifiers
+            if catType == 'all':
+                categories = self.categories.objectValues() + self.classifiers.objectValues()
+            elif catType == 'classifiers':
+                categories = self.classifiers.objectValues()
             else:
-                catFolder = self.categories
+                categories = self.categories.objectValues()
 
             if onlySelectable:
-                for cat in catFolder.objectValues():
+                for cat in categories:
                     if cat.is_selectable(userId=userId):
                         data.append(cat)
             else:
-                data = catFolder.objectValues()
+                data = categories
             # be coherent as objectValues returns a LazyMap
             data = list(data)
             if caching:

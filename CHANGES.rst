@@ -12,7 +12,8 @@ Changelog
   - Field `MeetingItem.classifier` was moved from ReferenceField to StringField;
   - Added new `MeetingConfig.insertingMethodsOnAddItem` named `on_classifiers`;
   - Removed magic in `MeetingConfig.getCategories` that returned organizations when
-    `MeetingConfig.useGroupsAsCategories` was True, now it returns only categories.
+    `MeetingConfig.useGroupsAsCategories` was `True`, now it returns only categories, moreover parameter `classifiers` is
+    renamed to `catType` that may be `all`/`categories`/`classifiers`.
 
 4.1.27.2 (2020-06-25)
 ---------------------

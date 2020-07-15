@@ -591,7 +591,7 @@
              title="add_object"
              i18n:attributes="title"
              tal:condition="isRealManager"
-             tal:attributes="href string:${context_url}/categories/createObject?type_name=MeetingCategory">
+             tal:attributes="href string:${context_url}/categories/++add++meetingcategory">
             <img src="#" tal:attributes="src string:$portal_url/new.png" />
           </a>
         </legend>
@@ -610,7 +610,7 @@
              title="add_object"
              i18n:attributes="title"
              tal:condition="isRealManager"
-             tal:attributes="href string:${context_url}/classifiers/createObject?type_name=MeetingCategory">
+             tal:attributes="href string:${context_url}/classifiers/++add++meetingcategory">
             <img src="#" tal:attributes="src string:$portal_url/new.png" />
           </a>
         </legend>

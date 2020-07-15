@@ -423,7 +423,7 @@ class MeetingInsertingMethodsHelpMsgView(BrowserView):
             method['insertingMethod'] for method in self.cfg.getInsertingMethodsOnAddItem()
             if 'classifier' in self.inserting_methods_fields_mapping[method['insertingMethod']]]
         if classifiers_inserting_methods:
-            classifiers = self.cfg.getCategories(classifiers=True)
+            classifiers = self.cfg.getCategories(catType='classifiers')
         return classifiers
 
 

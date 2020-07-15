@@ -278,9 +278,7 @@ def onOrgWillBeRemoved(current_org, event):
                                                       mapping={'cfg_url': mc.absolute_url()},
                                                       domain="plone",
                                                       context=request))
-        categories = mc.categories.objectValues()
-        classifiers = mc.classifiers.objectValues()
-        for cat in categories + classifiers:
+        for cat in mc.getCategories(catType='all', onlySelectable=False, caching=False):
             if current_org_uid in cat.get_using_groups() or current_org_uid in cat.get_groups_in_charge():
                 raise BeforeDeleteException(translate("can_not_delete_organization_meetingcategory",
                                                       mapping={'url': cat.absolute_url()},
@@ -1212,6 +1210,12 @@ def onCategoryWillBeRemoved(category, event):
             cfg.getItemTypeName(configType='MeetingItemRecurring'),
             cfg.getItemTypeName(configType='MeetingItemTemplate')),
         getCategory=category.getId())
+    brains += catalog(
+        portal_type=(
+            cfg.getItemTypeName(),
+            cfg.getItemTypeName(configType='MeetingItemRecurring'),
+            cfg.getItemTypeName(configType='MeetingItemTemplate')),
+        getRawClassifier=category.getId())
     if brains:
         # linked to an existing item, we can not delete it
         msg = translate(
@@ -1222,10 +1226,11 @@ def onCategoryWillBeRemoved(category, event):
         raise BeforeDeleteException(msg)
     # check field category_mapping_when_cloning_to_other_mc of other MC categories
     cat_mapping_id = '{0}.{1}'.format(cfg.getId(), category.getId())
+    catType = category.is_classifier() and 'classifiers' or 'categories'
     for other_cfg in tool.objectValues('MeetingConfig'):
         if other_cfg == cfg:
             continue
-        for other_cat in other_cfg.getCategories(onlySelectable=False, caching=False):
+        for other_cat in other_cfg.getCategories(catType=catType, onlySelectable=False, caching=False):
             if cat_mapping_id in other_cat.category_mapping_when_cloning_to_other_mc:
                 msg = translate(
                     "can_not_delete_meetingcategory_other_category_mapping",
