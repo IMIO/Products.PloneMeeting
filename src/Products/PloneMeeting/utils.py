@@ -1763,8 +1763,9 @@ def get_next_meeting(meetingDate, cfg, dateGap=0):
     meetingTypeName = cfg.getMeetingTypeName()
     catalog = api.portal.get_tool('portal_catalog')
     # find every meetings after self.getDate
+    meetingDate += dateGap
     brains = catalog(portal_type=meetingTypeName,
-                     getDate={'query': meetingDate + dateGap, 'range': 'min'},
+                     getDate={'query': meetingDate, 'range': 'min'},
                      sort_on='getDate')
     res = None
     for brain in brains:

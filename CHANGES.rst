@@ -5,7 +5,8 @@ Changelog
 4.1.28 (unreleased)
 -------------------
 
-- Moved `Meeting.getNextMeeting` logic to `utils.get_next_meeting` so it can be used from outside a `Meeting` instance
+- Moved `Meeting.getNextMeeting` logic to `utils.get_next_meeting` so it can be used from outside a `Meeting` instance,
+  moreover, make negative `dateGap` work, this is useful to get `Meeting` of today when meeting have no hours defined
 
 4.1.27.2 (2020-06-25)
 ---------------------
