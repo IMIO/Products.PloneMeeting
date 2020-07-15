@@ -52,6 +52,10 @@
                    Products.DCWorkflow.interfaces.IBeforeTransitionEvent"
               handler=".events.onMeetingBeforeTransition" />
 
+  <subscriber for=".interfaces.IMeetingConfig
+                   Products.DCWorkflow.interfaces.IBeforeTransitionEvent"
+              handler=".events.onConfigBeforeTransition" />
+
   <subscriber for=".interfaces.IMeetingItem
                    Products.Archetypes.interfaces.IEditBegunEvent"
               handler=".events.onItemEditBegun" />
