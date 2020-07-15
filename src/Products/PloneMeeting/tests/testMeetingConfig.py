@@ -1997,8 +1997,9 @@ class testMeetingConfig(PloneMeetingTestCase):
             self.do(cfg2, 'deactivate')
         self.assertEqual(
             translate(cm.exception.message),
-            'Can not disable a meeting configuration used in another, '
-            'please check field "Meeting configs to clone items to" in meeting configuration "%s"!' % cfg.Title())
+            u'Can not disable a meeting configuration used in another, '
+            'please check field "Meeting configs to clone items to" in meeting configuration "%s"!'
+            % safe_unicode(cfg.Title()))
         # still 'active'
         self.assertEqual(api.content.get_state(cfg2), 'active')
         # make it deactivable
