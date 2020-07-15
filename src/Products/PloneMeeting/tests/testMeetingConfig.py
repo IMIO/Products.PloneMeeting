@@ -38,6 +38,7 @@ from imio.helpers.content import get_vocab
 from OFS.ObjectManager import BeforeDeleteException
 from plone import api
 from Products.CMFCore.permissions import ModifyPortalContent
+from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFPlone import PloneMessageFactory
 from Products.CMFPlone.CatalogTool import getIcon
 from Products.CMFPlone.utils import safe_unicode
@@ -1978,6 +1979,33 @@ class testMeetingConfig(PloneMeetingTestCase):
         infos = _categorized_elements(item)
         self.assertEqual(infos[annex.UID()]['preview_status'], 'not_converted')
         self.assertEqual(infos[annex_decision.UID()]['preview_status'], 'not_converted')
+
+    def test_pm_CanNotDeactivateConfigUsedInAnotherConfig(self):
+        """A MeetingConfig will not be deactivated if used in another
+           MeetingConfig.meetingConfigsToCloneTo."""
+        cfg = self.meetingConfig
+        cfg2 = self.meetingConfig2
+        self.changeUser('siteadmin')
+        # add special characters into cfg/cfg2 titles
+        cfg.setTitle(cfg.Title() + "hé")
+        cfg2.setTitle(cfg.Title() + "hé")
+        self.assertEqual(cfg.getMeetingConfigsToCloneTo()[0]['meeting_config'],
+                         cfg2.getId())
+        self.assertEqual(api.content.get_state(cfg2), 'active')
+        # can not be deactivated
+        with self.assertRaises(WorkflowException) as cm:
+            self.do(cfg2, 'deactivate')
+        self.assertEqual(
+            translate(cm.exception.message),
+            u'Can not disable a meeting configuration used in another, '
+            'please check field "Meeting configs to clone items to" in meeting configuration "%s"!'
+            % safe_unicode(cfg.Title()))
+        # still 'active'
+        self.assertEqual(api.content.get_state(cfg2), 'active')
+        # make it deactivable
+        cfg.setMeetingConfigsToCloneTo(())
+        self.do(cfg2, 'deactivate')
+        self.assertEqual(api.content.get_state(cfg2), 'inactive')
 
 
 def test_suite():
