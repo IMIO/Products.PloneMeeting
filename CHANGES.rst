@@ -5,7 +5,10 @@ Changelog
 4.1.28 (unreleased)
 -------------------
 
-- Moved `Meeting.getNextMeeting` logic to `utils.get_next_meeting` so it can be used from outside a `Meeting` instance
+- Moved `Meeting.getNextMeeting` logic to `utils.get_next_meeting` so it can be used from outside a `Meeting` instance,
+  moreover, make negative `dateGap` work, this is useful to get `Meeting` of today when meeting have no hours defined
+- Make sure the faceted ajax spinner is visible when loading available items on a meeting or page seems somewhat stucked
+- A `MeetingConfig` used in another `MeetingConfig.meetingConfigsToCloneTo` can not be deactivated
 - Migrate `MeetingCategory` from AT to DX :
 
   - New portal_type is `meetingcategory`;

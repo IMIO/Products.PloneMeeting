@@ -1919,6 +1919,11 @@ span#newTemplateItemCreationDisabledDuringEdit {
    padding-left: 0;
 }
 
+/* make sure ajax spinner is diaplayed in available items iframe */
+body.template-meeting_available_items_view div#ajax-spinner {
+   top: -35px;
+}
+
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */

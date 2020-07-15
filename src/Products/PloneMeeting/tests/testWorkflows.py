@@ -71,7 +71,7 @@ class testWorkflows(PloneMeetingTestCase):
         self.failUnless(self.hasPermission(AccessContentsInformation, item))
         pmFolder = self.tool.getPloneMeetingFolder(cfg.getId())
         myItems = cfg.searches.searches_items.searchmyitems.results()
-        self.assertEquals(len(myItems), 1)
+        self.assertEqual(len(myItems), 1)
         self.changeUser('pmManager')
         # The manager may not see the item yet except if item is already 'validated'
         # this could be the case if item initial_state is 'validated' or when using
@@ -142,13 +142,13 @@ class testWorkflows(PloneMeetingTestCase):
         transaction.commit()
         self.portal.restrictedTraverse('@@delete_givenuid')(pmManagerFolder.UID())
         messages = statusMessages.show()
-        self.assertEquals(len(messages), 1)
+        self.assertEqual(len(messages), 1)
         can_not_delete_meetingitem_container = \
             translate('can_not_delete_meetingitem_container',
                       domain="plone",
                       context=self.request)
         # commit transaction because a failed delete will abort transaction
-        self.assertEquals(
+        self.assertEqual(
             messages[0].message, can_not_delete_meetingitem_container + u' (BeforeDeleteException)')
         # The folder should not have been deleted...
         self.failUnless(hasattr(pmManagerFolder, item.getId()))
@@ -159,22 +159,22 @@ class testWorkflows(PloneMeetingTestCase):
                           pmManagerFolder)
         self.failUnless(hasattr(pmManagerFolder, item.getId()))
         self.failUnless(hasattr(pmManagerFolder, meeting.getId()))
-        self.assertEquals(len(pmManagerFolder.objectValues('MeetingItem')), 1)
-        self.assertEquals(len(pmManagerFolder.objectValues('Meeting')), 1)
+        self.assertEqual(len(pmManagerFolder.objectValues('MeetingItem')), 1)
+        self.assertEqual(len(pmManagerFolder.objectValues('Meeting')), 1)
         # Now, remove things in the good order. Remove the item and check
         # do this as 'Manager' in case 'MeetingManager' can not delete the item in used item workflow
         self.deleteAsManager(item.UID())
         self.changeUser('pmManager')
-        self.assertEquals(len(pmManagerFolder.objectValues('MeetingItem')), 0)
-        self.assertEquals(len(pmManagerFolder.objectValues('Meeting')), 1)
+        self.assertEqual(len(pmManagerFolder.objectValues('MeetingItem')), 0)
+        self.assertEqual(len(pmManagerFolder.objectValues('Meeting')), 1)
         # Try to remove the folder again but with a contained meeting only
         self.assertRaises(BeforeDeleteException,
                           unrestrictedRemoveGivenObject,
                           pmManagerFolder)
         # Remove the meeting
         self.portal.restrictedTraverse('@@delete_givenuid')(meeting.UID())
-        self.assertEquals(len(pmManagerFolder.objectValues('MeetingItem')), 0)
-        self.assertEquals(len(pmManagerFolder.objectValues('Meeting')), 0)
+        self.assertEqual(len(pmManagerFolder.objectValues('MeetingItem')), 0)
+        self.assertEqual(len(pmManagerFolder.objectValues('Meeting')), 0)
         # Check that now that the pmManagerFolder is empty, we can remove it.
         pmManagerFolderParent = pmManagerFolder.getParentNode()
         self.portal.restrictedTraverse('@@delete_givenuid')(pmManagerFolder.UID())
@@ -266,25 +266,25 @@ class testWorkflows(PloneMeetingTestCase):
         item3.setDecision(self.decisionText)
         self.addAnnex(item2, relatedTo='item_decision')
         # check that a delayed item is duplicated
-        self.assertEquals(len(item3.getBRefs('ItemPredecessor')), 0)
+        self.assertEqual(len(item3.getBRefs('ItemPredecessor')), 0)
         self.do(item3, 'delay')
         # the duplicated item has item3 as predecessor
         duplicatedItem = item3.getBRefs('ItemPredecessor')[0]
-        self.assertEquals(duplicatedItem.getPredecessor().UID(), item3.UID())
+        self.assertEqual(duplicatedItem.getPredecessor().UID(), item3.UID())
         # When a meeting is decided, items are at least set to 'itemfrozen'
         self.do(meeting, 'decide')
-        self.assertEquals(item1.queryState(), 'itemfrozen')
-        self.assertEquals(item2.queryState(), 'itemfrozen')
+        self.assertEqual(item1.queryState(), 'itemfrozen')
+        self.assertEqual(item2.queryState(), 'itemfrozen')
         # An already decided item keep his given decision
-        self.assertEquals(item3.queryState(), 'delayed')
+        self.assertEqual(item3.queryState(), 'delayed')
         self.failIf(len(self.transitions(meeting)) != 2)
         # When a meeting is closed, items without a decision are automatically 'accepted'
         self.do(meeting, 'close')
-        self.assertEquals(item1.queryState(), 'confirmed')
-        self.assertEquals(item2.queryState(), 'confirmed')
+        self.assertEqual(item1.queryState(), 'confirmed')
+        self.assertEqual(item2.queryState(), 'confirmed')
         self.do(meeting, 'archive')
-        self.assertEquals(item1.queryState(), 'itemarchived')
-        self.assertEquals(item2.queryState(), 'itemarchived')
+        self.assertEqual(item1.queryState(), 'itemarchived')
+        self.assertEqual(item2.queryState(), 'itemarchived')
 
     def test_pm_WorkflowPermissions(self):
         '''This test checks whether workflow permissions are correct while
@@ -410,7 +410,7 @@ class testWorkflows(PloneMeetingTestCase):
         # The recurring items must have as owner the meeting creator
         # Moreover, _at_rename_after_creation is correct
         for item in meeting.getItems():
-            self.assertEquals(item.getOwner().getId(), 'pmManager')
+            self.assertEqual(item.getOwner().getId(), 'pmManager')
             self.assertEqual(item._at_rename_after_creation, MeetingItem._at_rename_after_creation)
         # 1 recurring item is inserted at meeting creation
         self.failIf(len(meeting.getItems()) != 3)
@@ -755,8 +755,8 @@ class testWorkflows(PloneMeetingTestCase):
         self.do(item, 'return_to_proposing_group')
         with self.assertRaises(WorkflowException) as cm:
             self.closeMeeting(meeting)
-        self.assertEquals(cm.exception.message,
-                          'Can not close a meeting containing items returned to proposing group!')
+        self.assertEqual(cm.exception.message,
+                         'Can not close a meeting containing items returned to proposing group!')
         # if no item returned anymore, closable
         self.do(item, 'backTo_itemfrozen_from_returned_to_proposing_group')
         # Meeting.getItems is memoized and cache is not invalidated when an item's state changed
