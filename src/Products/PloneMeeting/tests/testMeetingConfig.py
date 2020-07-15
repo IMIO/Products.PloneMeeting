@@ -2003,7 +2003,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         # still 'active'
         self.assertEqual(api.content.get_state(cfg2), 'active')
         # make it deactivable
-        cfg.getMeetingConfigsToCloneTo(())
+        cfg.setMeetingConfigsToCloneTo(())
         self.do(cfg2, 'deactivate')
         self.assertEqual(api.content.get_state(cfg2), 'inactive')
 
