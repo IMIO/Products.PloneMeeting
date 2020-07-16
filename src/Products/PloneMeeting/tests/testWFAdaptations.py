@@ -2501,7 +2501,7 @@ class testWFAdaptations(PloneMeetingTestCase):
 
         if not will_be_cloned:
             # no predecessor was set
-            self.assertEqual(item.successors(the_objects=False), [])
+            self.assertEqual(item.get_successors(the_objects=False), [])
         else:
             # item was duplicated and new item is in it's initial state
             linked_item = item.get_successors()[0]

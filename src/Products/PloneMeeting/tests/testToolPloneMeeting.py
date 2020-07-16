@@ -448,6 +448,8 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertTrue(self.tool.showPloneMeetingTab(cfg2))
         # If we disable one meetingConfig, it is no more shown
         self.changeUser('admin')
+        # to be deactivated, a MeetingConfig can not be used in another
+        cfg.setMeetingConfigsToCloneTo(())
         self.do(cfg2, 'deactivate')
         transaction.commit()
         self.changeUser('restrictedpowerobserver2')
