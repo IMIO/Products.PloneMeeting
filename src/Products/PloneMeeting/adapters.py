@@ -258,7 +258,7 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
         return self._getLink()
 
     def _predecessorFromOtherMC(self):
-        predecessor = self.context.getPredecessor()
+        predecessor = self.context.get_predecessor()
         if predecessor and predecessor.portal_type != self.context.portal_type:
             return predecessor
         return None

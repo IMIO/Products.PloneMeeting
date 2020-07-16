@@ -266,11 +266,11 @@ class testWorkflows(PloneMeetingTestCase):
         item3.setDecision(self.decisionText)
         self.addAnnex(item2, relatedTo='item_decision')
         # check that a delayed item is duplicated
-        self.assertEqual(len(item3.getBRefs('ItemPredecessor')), 0)
+        self.assertEqual(item3.get_successors(), [])
         self.do(item3, 'delay')
         # the duplicated item has item3 as predecessor
-        duplicatedItem = item3.getBRefs('ItemPredecessor')[0]
-        self.assertEqual(duplicatedItem.getPredecessor().UID(), item3.UID())
+        duplicatedItem = item3.get_successors()[0]
+        self.assertEqual(duplicatedItem.get_predecessor(the_object=False), item3.UID())
         # When a meeting is decided, items are at least set to 'itemfrozen'
         self.do(meeting, 'decide')
         self.assertEqual(item1.queryState(), 'itemfrozen')

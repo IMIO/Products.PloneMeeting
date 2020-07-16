@@ -1573,17 +1573,6 @@ def reviewersFor(workflow_id=None):
     return MEETINGREVIEWERS.get('*')
 
 
-def get_every_back_references(obj, relationship):
-    '''Loop recursievely thru every back reference of type p_relationship
-       for p_obj and return it.'''
-    def get_back_references(back_refs, res=[]):
-        for back_obj in back_refs:
-            res.append(back_obj)
-            get_back_references(back_obj.getBRefs(relationship), res)
-        return res
-    return get_back_references(obj.getBRefs(relationship))
-
-
 def getStatesBefore(obj, review_state_id):
     """
       Returns states before the p_review_state_id state.

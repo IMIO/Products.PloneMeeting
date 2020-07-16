@@ -574,6 +574,9 @@ def onItemCopied(item, event):
     for image_id in image_ids:
         item._delObject(image_id, suppress_events=True)
 
+    # remove predecessor infos
+    item.set_predecessor(None)
+
 
 def onItemMoved(item, event):
     '''Called when an item is cut/pasted.'''
@@ -953,6 +956,14 @@ def onItemWillBeRemoved(item, event):
             request=item.REQUEST,
             type='error')
         raise Redirect(item.REQUEST.get('HTTP_REFERER'))
+
+    # update item predecessor and successors
+    predecessor = item.get_predecessor()
+    if predecessor:
+        predecessor.linked_successor_uids.remove(item.UID())
+    successors = item.get_successors()
+    for successor in successors:
+        successor.linked_predecessor_uid = None
 
 
 def onItemRemoved(item, event):
