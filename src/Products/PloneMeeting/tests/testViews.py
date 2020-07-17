@@ -1200,12 +1200,16 @@ class testViews(PloneMeetingTestCase):
         view(group_id=self.developers_creators)
         self.assertEqual(
             view.group_users(),
-            'M. PMCreator One<br />M. PMCreator One bee<br />M. PMManager')
+            "<img src='http://nohost/plone/user.png'> M. PMCreator One<br />"
+            "<img src='http://nohost/plone/user.png'> M. PMCreator One bee<br />"
+            "<img src='http://nohost/plone/user.png'> M. PMManager")
         # add a 'not found' user, will not be displayed
         self._make_not_found_user()
         self.assertEqual(
             view.group_users(),
-            'M. PMCreator One<br />M. PMCreator One bee<br />M. PMManager')
+            "<img src='http://nohost/plone/user.png'> M. PMCreator One<br />"
+            "<img src='http://nohost/plone/user.png'> M. PMCreator One bee<br />"
+            "<img src='http://nohost/plone/user.png'> M. PMManager")
 
     def test_pm_MeetingStoreItemsPodTemplateAsAnnexBatchActionForm_may_store(self):
         """By default only available if something defined in
