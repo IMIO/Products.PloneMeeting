@@ -11,6 +11,8 @@ Changelog
 - A `MeetingConfig` used in another `MeetingConfig.meetingConfigsToCloneTo` can not be deactivated
 - When CSS style `border:none;` on a table, no matter border on cells are defined, tables rendered by `appy.pod`
   do not have a border, so displaying it as dotted border in `CKeditor`
+- In `@@display-group-users`, if group contains another group, display group's title instead group id (or group id if no title),
+  moreover clearly differenciate using `user.png/group.png` icon when member is a user or a group
 
 4.1.27.2 (2020-06-25)
 ---------------------
