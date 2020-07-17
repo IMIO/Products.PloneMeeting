@@ -3563,6 +3563,35 @@ class testMeetingItem(PloneMeetingTestCase):
                           u'Events',
                           u'Category 1'])
 
+    def test_pm_ListClassifiersKeepConfigSorting(self):
+        """If 'classifier' selected in MeetingConfig.itemFieldsToKeepConfigSortingFor,
+           the vocabulary keeps config order, not sorted alphabetically."""
+        cfg = self.meetingConfig
+        self._enableField('classifier')
+        self.changeUser('siteadmin')
+        self.create('meetingcategory',
+                    id='classifier0',
+                    title='Classifier 0',
+                    is_classifier=True)
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+
+        # not in itemFieldsToKeepConfigSortingFor for now
+        self.assertFalse('classifier' in cfg.getItemFieldsToKeepConfigSortingFor())
+        self.assertEqual(item.Vocabulary('classifier')[0].values(),
+                         [u'--- Make a choice ---',
+                          u'Classifier 0',
+                          u'Classifier 1',
+                          u'Classifier 2',
+                          u'Classifier 3'])
+        cfg.setItemFieldsToKeepConfigSortingFor(('classifier', ))
+        self.assertEqual(item.Vocabulary('classifier')[0].values(),
+                         [u'--- Make a choice ---',
+                          u'Classifier 1',
+                          u'Classifier 2',
+                          u'Classifier 3',
+                          u'Classifier 0'])
+
     def test_pm_OptionalAdvisersVocabulary(self):
         '''
           This is the vocabulary for the field "optionalAdvisers".
