@@ -9,6 +9,8 @@ Changelog
   moreover, make negative `dateGap` work, this is useful to get `Meeting` of today when meeting have no hours defined
 - Make sure the faceted ajax spinner is visible when loading available items on a meeting or page seems somewhat stucked
 - A `MeetingConfig` used in another `MeetingConfig.meetingConfigsToCloneTo` can not be deactivated
+- When CSS style `border:none;` on a table, no matter border on cells are defined, tables rendered by `appy.pod`
+  do not have a border, so displaying it as dotted border in `CKeditor`
 - Migrate `MeetingCategory` from AT to DX :
 
   - New portal_type is `meetingcategory`;
