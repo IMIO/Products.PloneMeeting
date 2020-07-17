@@ -26,6 +26,7 @@ from Products.CMFCore.permissions import ManagePortal
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.CMFCore.utils import _checkPermission
+from Products.CMFPlone.utils import base_hasattr
 from Products.CMFPlone.utils import safe_unicode
 from Products.Five import BrowserView
 from Products.PloneMeeting import logger
@@ -1788,6 +1789,10 @@ class CheckPodTemplatesView(BrowserView):
                 continue
 
             for obj in objs:
+                if obj.meta_type == 'Meeting':
+                    self.request.form['facetedQuery'] = []
+                elif 'facetedQuery' in self.request.form:
+                    del self.request.form['facetedQuery']
                 view = obj.restrictedTraverse('@@document-generation')
                 self.request.set('template_uid', pod_template.UID())
                 output_format = pod_template.pod_formats[0]
@@ -1845,8 +1850,14 @@ class DisplayGroupUsersView(BrowserView):
     def group_users(self):
         """ """
         res = []
+        patterns = {}
+        patterns[0] = "<img src='%s/user.png'> " % self.portal_url
+        patterns[1] = "<img src='%s/group.png'> " % self.portal_url
         for member in self.group.getAllGroupMembers():
-            res.append(member.getProperty('fullname') or member.getId())
+            # member may be a user or group
+            isGroup = base_hasattr(member, 'isGroup') and member.isGroup() or 0
+            member_title = member.getProperty('fullname') or member.getProperty('title') or member.getId()
+            res.append(patterns[isGroup] + member_title)
         res.sort()
         return "<br />".join(res)
 

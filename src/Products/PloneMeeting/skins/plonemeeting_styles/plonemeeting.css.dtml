@@ -176,7 +176,9 @@ dl.portlet .ploneMeetingSelectDropdownIcon {
     padding-left: 5px;
 }
 
-/* show table using border="0" or border:none */
+/* show table using border="0" or border:none
+   we use !important so even if border are defined on cells, it is displayed
+   as dotted grey because appy.pod will not render it neither */
 #content div[id^='hook_'] table[border='0'] tr th,
 #content div[id^='hook_'] table[border='0'] tr td,
 #content div[id^='hook_'] table[style*='border: none'] tr th,
@@ -195,7 +197,7 @@ dl.portlet .ploneMeetingSelectDropdownIcon {
 #content div[id^='hook_'] table[style*='border-collapse:collapse; border:none'] tr td,
 #content div.pmMoreInfo table[border='0'] tr th,
 #content div.pmMoreInfo table[border='0'] tr td {
-    border: 1px dotted darkgrey;
+    border: 1px dotted darkgrey !important;
 }
 /* table for which attribute "border" is not given will be rendered with borders by appy.pod */
 /* make sure table borders in pmMoreInfo (when using the "more infos" icon) are displayed */
@@ -1915,6 +1917,11 @@ a#newTemplateItemCreation,
 span#newTemplateItemCreationDisabledDuringEdit {
    display: inline;
    padding-left: 0;
+}
+
+/* make sure ajax spinner is diaplayed in available items iframe */
+body.template-meeting_available_items_view div#ajax-spinner {
+   top: -35px;
 }
 
 /* </dtml-with> */

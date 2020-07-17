@@ -60,8 +60,21 @@ Changelog
 4.1.28 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Moved `Meeting.getNextMeeting` logic to `utils.get_next_meeting` so it can be used from outside a `Meeting` instance,
+  moreover, make negative `dateGap` work, this is useful to get `Meeting` of today when meeting have no hours defined
+- Make sure the faceted ajax spinner is visible when loading available items on a meeting or page seems somewhat stucked
+- A `MeetingConfig` used in another `MeetingConfig.meetingConfigsToCloneTo` can not be deactivated
+- When CSS style `border:none;` on a table, no matter border on cells are defined, tables rendered by `appy.pod`
+  do not have a border, so displaying it as dotted border in `CKeditor`
+- In `@@display-group-users`, if group contains another group, display group's title instead group id (or group id if no title),
+  moreover clearly differenciate using `user.png/group.png` icon when member is a user or a group
 
+4.1.27.2 (2020-06-25)
+---------------------
+
+- Adapted `CheckPodTemplatesView` so generation helper view is correctly initialized when generating pod template on meeting,
+  this would have shown the `max_objects` bug in `collective.eeafaceted.dashboard` `_get_generation_context` method
+- Force email sender address in upgrade step to 4109
 
 4.1.27.1 (2020-06-24)
 ---------------------

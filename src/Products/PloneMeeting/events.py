@@ -213,6 +213,28 @@ def onMeetingBeforeTransition(meeting, event):
                 raise WorkflowException(msg)
 
 
+def onConfigBeforeTransition(config, event):
+    '''Called before a transition is triggered on a MeetingConfig.'''
+    # when raising exceptions in a WF script, this needs to be done in the
+    # before transition or state is changed?
+    if event.new_state.id == 'inactive':
+        tool = api.portal.get_tool('portal_plonemeeting')
+        # raise a WorkflowException in case current config is used in other cfg meetingConfigsToCloneTo
+        config_id = config.getId()
+        for other_cfg in tool.objectValues('MeetingConfig'):
+            if other_cfg == config:
+                continue
+            meetingConfigs = [v['meeting_config'] for v in other_cfg.getMeetingConfigsToCloneTo()]
+            if config_id in meetingConfigs:
+                msg = _('Can not disable a meeting configuration used in another, '
+                        'please check field "${field_title}" in meeting configuration "${other_cfg_title}"!',
+                        mapping={'field_title': translate('PloneMeeting_label_meetingConfigsToCloneTo',
+                                                          domain='PloneMeeting',
+                                                          context=config.REQUEST),
+                                 'other_cfg_title': safe_unicode(other_cfg.Title())})
+                raise WorkflowException(msg)
+
+
 def _invalidateOrgRelatedCachedVocabularies():
     '''Clean cache for vocabularies using organizations.'''
     invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.proposinggroupsvocabulary")

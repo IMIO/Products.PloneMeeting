@@ -1866,6 +1866,28 @@ def is_editing():
     return res
 
 
+def get_next_meeting(meetingDate, cfg, dateGap=0):
+    '''Gets the next meeting based on meetingDate DateTime.
+       p_cfg is used to know in which MeetingConfig to query next meeting.
+       p_dateGap is the number of 'dead days' following the date of
+       the current meeting in which we do not look for next meeting'''
+    meetingTypeName = cfg.getMeetingTypeName()
+    catalog = api.portal.get_tool('portal_catalog')
+    # find every meetings after self.getDate
+    meetingDate += dateGap
+    brains = catalog(portal_type=meetingTypeName,
+                     getDate={'query': meetingDate, 'range': 'min'},
+                     sort_on='getDate')
+    res = None
+    for brain in brains:
+        if brain.getDate > meetingDate:
+            res = brain
+            break
+    if res:
+        res = res.getObject()
+    return res
+
+
 def _base_extra_expr_ctx(obj):
     """ """
     tool = api.portal.get_tool('portal_plonemeeting')
