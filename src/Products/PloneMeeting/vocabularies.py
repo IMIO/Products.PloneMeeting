@@ -1621,6 +1621,13 @@ SelectableHeldPositionsVocabularyFactory = SelectableHeldPositionsVocabulary()
 
 class SelectableAssemblyMembersVocabulary(BaseHeldPositionsVocabulary):
     """ """
+
+    def __call___cachekey(method, self, context, usage=None, uids=[]):
+        '''cachekey method for self.__call__.'''
+        date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.selectableassemblymembersvocabulary')
+        return date, str(context), usage, uids
+
+    @ram.cache(__call___cachekey)
     def __call__(self, context, usage=None, uids=[]):
         terms = super(SelectableAssemblyMembersVocabulary, self).__call__(context, usage='assemblyMember')
         stored_terms = []
