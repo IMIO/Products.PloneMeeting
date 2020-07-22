@@ -14,6 +14,9 @@ Changelog
 - In `@@display-group-users`, if group contains another group, display group's title instead group id (or group id if no title),
   moreover clearly differenciate using `user.png/group.png` icon when member is a user or a group
 - Enabled column `PloneGroupUsersGroupsColumn` on contacts dashboard displaying organizations
+- Enabled `allow_reorder` for `organization.certified_signatures` DataGridField
+- Use `ram.cache` for `SelectableAssemblyMembersVocabulary` used in `organization.certified_signatures` DataGridField
+  so it renders faster in dashboards displaying organizations
 
 4.1.27.2 (2020-06-25)
 ---------------------

@@ -132,7 +132,7 @@ class IPMOrganization(IOrganization):
 
     form.read_permission(certified_signatures='PloneMeeting.manage_internal_organization_fields')
     form.write_permission(certified_signatures='PloneMeeting.manage_internal_organization_fields')
-    form.widget('certified_signatures', DataGridFieldFactory)
+    form.widget('certified_signatures', DataGridFieldFactory, allow_reorder=True)
     certified_signatures = schema.List(
         title=_(u'PloneMeeting_label_group_certifiedSignatures'),
         description=_("group_certified_signatures_descr"),
