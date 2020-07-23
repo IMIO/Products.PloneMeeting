@@ -17,6 +17,8 @@ Changelog
 - Enabled `allow_reorder` for `organization.certified_signatures` DataGridField
 - Use `ram.cache` for `SelectableAssemblyMembersVocabulary` used in `organization.certified_signatures` DataGridField
   so it renders faster in dashboards displaying organizations
+- Make `organization`/`person`/`held_position` implements `IConfigElement` so we may use `_invalidateCachedVocabularies`
+  to invalidate cached vocabularies and it is not necessary to write event handlers for these cases
 
 4.1.27.2 (2020-06-25)
 ---------------------
