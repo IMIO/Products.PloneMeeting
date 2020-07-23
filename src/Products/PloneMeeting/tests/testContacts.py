@@ -85,6 +85,7 @@ class testContacts(PloneMeetingTestCase):
         # select new hp
         ordered_contacts = cfg.getField('orderedContacts').Vocabulary(cfg).keys()
         cfg.setOrderedContacts(ordered_contacts)
+        import ipdb; ipdb.set_trace()
         self.assertEqual(
             meeting.getAllUsedHeldPositions() + (new_hp, ),
             meeting.getAllUsedHeldPositions(include_new=True))
