@@ -108,6 +108,33 @@
     </div>
     <div style='clear: both'></div>
 
+    <tal:otherMeetingConfigsClonableToFields condition="python: context.adapted().showAdvancedClonableToOtherMCs()">
+        <script type="text/javascript">
+          $("input[id^='otherMeetingConfigsClonableTo_'").bind( "click", function() {
+          var otherMeetingConfigsClonableToFields = $('#otherMeetingConfigsClonableToFields');
+          if (this.checked) {
+              otherMeetingConfigsClonableToFields.fadeIn();
+          }
+          else {
+              otherMeetingConfigsClonableToFields.fadeOut("normal", function() {
+                  $(this).hide();
+              });
+          };
+          });
+        </script>
+        <div id="otherMeetingConfigsClonableToFields"
+             tal:attributes="style python: context.getOtherMeetingConfigsClonableTo() and 'display: block' or 'display: none';">
+            <fieldset>
+              <legend i18n:translate="">Data that will be used on new item</legend>
+              <metal:field use-macro="python:here.widget('otherMeetingConfigsClonableToFieldTitle', mode='edit')"/>
+              <metal:field use-macro="python:here.widget('otherMeetingConfigsClonableToFieldDescription', mode='edit')"/>
+              <metal:field use-macro="python:here.widget('otherMeetingConfigsClonableToFieldMotivation', mode='edit')"/>
+              <metal:field use-macro="python:here.widget('otherMeetingConfigsClonableToFieldDecision', mode='edit')"/>
+              <metal:field use-macro="python:here.widget('otherMeetingConfigsClonableToFieldDecisionSuite', mode='edit')"/>
+            </fieldset>
+        </div>
+    </tal:otherMeetingConfigsClonableToFields>
+
     <tal:comment replace="nothing">Budget-related information</tal:comment>
     <fieldset tal:condition="python: 'budgetInfos' in usedAttrs">
       <legend i18n:translate="">Budget</legend>

@@ -443,7 +443,9 @@ div.viewlet_workflowstate span.state-refused {
 .portletCell { padding: 0.1em 0.5em 0.2em 1em; font-weight: normal; font-style: italic; }
 .portletSelected { font-weight: bold; }
 /* avoid title input too large */
-.field input[type="text"][name$=".title"], input#title {
+.field input[type="text"][name$=".title"],
+input#title,
+input#otherMeetingConfigsClonableToFieldTitle {
     width: 99%;
 }
 /* add right margin when field displayed in table so table cells are not sticked togheter */
@@ -1924,6 +1926,10 @@ span#newTemplateItemCreationDisabledDuringEdit {
 /* make sure ajax spinner is diaplayed in available items iframe */
 body.template-meeting_available_items_view div#ajax-spinner {
    top: -35px;
+}
+
+p.otherMeetingConfigsClonableToDataUsed {
+   margin-top: 1em;
 }
 
 /* </dtml-with> */

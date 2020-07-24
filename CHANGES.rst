@@ -19,6 +19,8 @@ Changelog
   so it renders faster in dashboards displaying organizations
 - Make `organization`/`person`/`held_position` implements `IConfigElement` so we may use `_invalidateCachedVocabularies`
   to invalidate cached vocabularies and it is not necessary to write event handlers for these cases
+- Added possibility to define data (title/description/motivation/decision/decisionSuite) to use on an item that will be cloned to
+  another MeetingConfig, data defined on original item will replace basic data on resulting item
 
 4.1.27.2 (2020-06-25)
 ---------------------

@@ -25,7 +25,8 @@
                                   usedAttrs meetingConfig/getUsedItemAttributes;
                                   usedMeetingAttrs meetingConfig/getUsedMeetingAttributes;
                                   context_url context/absolute_url;
-                                  showAdvices python: context.adapted().showAdvices()">
+                                  showAdvices python: context.adapted().showAdvices();
+                                  showAdvancedClonableToOtherMCs python: context.adapted().showAdvancedClonableToOtherMCs();">
 
     <script language="javascript"
             tal:content="python: 'ploneEditor = \'%s\';' % (member.getProperty('wysiwyg_editor') or here.portal_properties.site_properties.default_editor)">
@@ -360,7 +361,7 @@
 
             <tal:comment replace="nothing">Other MeetingConfigs Clonable To</tal:comment>
             <div class="discreet"
-                 tal:condition="python: otherMCs or context.showClonableToOtherMeetingConfigs()"
+                 tal:condition="not:showAdvancedClonableToOtherMCs"
                  tal:define="otherMCs context/getOtherMeetingConfigsClonableTo">
                 <span class="item_attribute_label"
                       i18n:translate="PloneMeeting_label_otherMeetingConfigsClonableTo"></span>:&nbsp;&nbsp;
@@ -435,6 +436,40 @@
     <tal:field define="fieldName python: 'detailedDescription'; ajaxEdit python:True">
        <metal:f use-macro="context/@@pm-macros/viewContentField"/>
     </tal:field>
+
+    <tal:comment replace="nothing">Other meetingConfigs clonable to</tal:comment>
+    <tal:block tal:condition="showAdvancedClonableToOtherMCs"
+               tal:define="otherMCs context/getOtherMeetingConfigsClonableTo">
+    <fieldset>
+      <legend i18n:translate="PloneMeeting_label_otherMeetingConfigsClonableTo"></legend>
+      <div>
+        <tal:displayOtherMeetingConfigsClonableTo tal:condition="otherMCs">
+            <span tal:replace="structure context/displayOtherMeetingConfigsClonableTo">Other mc clonable to (Emergency, privacy)</span>
+        </tal:displayOtherMeetingConfigsClonableTo>
+        <span tal:condition="not: otherMCs">-</span>
+        <div tal:condition="otherMCs">
+          <p class="discreet otherMeetingConfigsClonableToDataUsed" i18n:translate="">Data that will be used on new item</p>
+          <tal:otherMeetingConfigsClonableToFieldTitle condition="python: 'otherMeetingConfigsClonableToFieldTitle' in usedAttrs">
+            <span class="item_attribute_label"
+                  i18n:translate="PloneMeeting_label_itemTitle"></span>:&nbsp;&nbsp;
+            <span metal:use-macro="python: here.widget('otherMeetingConfigsClonableToFieldTitle', mode='view')" />
+          </tal:otherMeetingConfigsClonableToFieldTitle>
+          <tal:field define="fieldName python: 'otherMeetingConfigsClonableToFieldDescription'; ajaxEdit python:True">
+            <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+          </tal:field>
+          <tal:field define="fieldName python: 'otherMeetingConfigsClonableToFieldMotivation'; ajaxEdit python:True">
+            <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+          </tal:field>
+          <tal:field define="fieldName python: 'otherMeetingConfigsClonableToFieldDecision'; ajaxEdit python:True">
+            <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+          </tal:field>
+          <tal:field define="fieldName python: 'otherMeetingConfigsClonableToFieldDecisionSuite'; ajaxEdit python:True">
+            <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+          </tal:field>
+        </div>
+      </div>
+    </fieldset>
+    </tal:block>
 
     <tal:comment replace="nothing">Budgetary informations, manage fields budgetRelated and budgetInfos</tal:comment>
     <tal:block condition="python: 'budgetInfos' in usedAttrs and member.has_permission('PloneMeeting: Read budget infos', context)">
