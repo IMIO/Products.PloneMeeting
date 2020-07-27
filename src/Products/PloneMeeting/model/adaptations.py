@@ -1153,9 +1153,11 @@ def getValidationReturnedStates(cfg):
     # either we are setting workflowAdaptations, or it is stored in MeetingConfig
     use_prevalidation = False
     if hasattr(cfg.REQUEST, 'useGroupsAsCategories'):
-        use_prevalidation = 'pre_validation' in cfg.REQUEST.get('workflowAdaptations', [])
+        use_prevalidation = [wfa for wfa in cfg.REQUEST.get('workflowAdaptations', [])
+                             if wfa.startswith('pre_validation')]
     else:
-        use_prevalidation = 'pre_validation' in cfg.getWorkflowAdaptations()
+        use_prevalidation = [wfa for wfa in cfg.getWorkflowAdaptations()
+                             if wfa.startswith('pre_validation')]
     if use_prevalidation:
         states += ('prevalidated', )
     res = []
