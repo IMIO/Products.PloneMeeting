@@ -1197,19 +1197,53 @@ class testViews(PloneMeetingTestCase):
            'Not found' is left in the group."""
         self.changeUser('pmCreator1')
         view = self.portal.restrictedTraverse('@@display-group-users')
-        view(group_id=self.developers_creators)
+        group = api.group.get(self.developers_creators)
+        group_id = group.getId()
+        view(group_id=group_id)
         self.assertEqual(
-            view.group_users(),
+            view.group_users(group),
             "<img src='http://nohost/plone/user.png'> M. PMCreator One<br />"
             "<img src='http://nohost/plone/user.png'> M. PMCreator One bee<br />"
             "<img src='http://nohost/plone/user.png'> M. PMManager")
         # add a 'not found' user, will not be displayed
         self._make_not_found_user()
         self.assertEqual(
-            view.group_users(),
+            view.group_users(group),
             "<img src='http://nohost/plone/user.png'> M. PMCreator One<br />"
             "<img src='http://nohost/plone/user.png'> M. PMCreator One bee<br />"
             "<img src='http://nohost/plone/user.png'> M. PMManager")
+
+    def test_pm_DisplayGroupUsersViewAllPloneGroups(self):
+        """It is possible to get every Plone groups."""
+        cfg = self.meetingConfig
+        cfg.setUseCopies(True)
+        cfg.setItemCopyGroupsStates(('itemcreated', ))
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem', copyGroups=(self.vendors_reviewers, ))
+        view = item.restrictedTraverse('@@display-group-users')
+        # append a "*" to a org uid to get every Plone groups
+        group_id = self.developers.UID() + '*'
+        view(group_id=group_id)
+        plone_group = api.group.get(self.developers_creators)
+        self.assertEqual(
+            view.group_users(plone_group),
+            "<img src='http://nohost/plone/user.png'> M. PMCreator One<br />"
+            "<img src='http://nohost/plone/user.png'> M. PMCreator One bee<br />"
+            "<img src='http://nohost/plone/user.png'> M. PMManager")
+        # add a 'not found' user, will not be displayed
+        self._make_not_found_user()
+        self.assertEqual(
+            view.group_users(plone_group),
+            "<img src='http://nohost/plone/user.png'> M. PMCreator One<br />"
+            "<img src='http://nohost/plone/user.png'> M. PMCreator One bee<br />"
+            "<img src='http://nohost/plone/user.png'> M. PMManager")
+        # only available to proposingGroup members
+        self.changeUser('pmCreator2')
+        self.assertTrue(self.hasPermission(View, item))
+        # calling view with '*' raises Unauthorized
+        self.assertRaises(Unauthorized, view, group_id=group_id)
+        # but ok to get only one Plone group members
+        self.assertTrue(view(group_id=self.developers_creators))
 
     def test_pm_MeetingStoreItemsPodTemplateAsAnnexBatchActionForm_may_store(self):
         """By default only available if something defined in
