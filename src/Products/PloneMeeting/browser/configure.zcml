@@ -281,7 +281,7 @@
       />
 
     <browser:page
-      for="Products.CMFPlone.interfaces.siteroot.IPloneSiteRoot"
+      for="OFS.interfaces.IItem"
       name="display-group-users"
       template="templates/display_group_users.pt"
       class=".views.DisplayGroupUsersView"
