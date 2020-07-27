@@ -1238,7 +1238,7 @@ class testViews(PloneMeetingTestCase):
             "<img src='http://nohost/plone/user.png'> M. PMCreator One bee<br />"
             "<img src='http://nohost/plone/user.png'> M. PMManager")
         # only available to proposingGroup members
-        self.changeUser('pmCreator2')
+        self.changeUser('pmReviewer2')
         self.assertTrue(self.hasPermission(View, item))
         # calling view with '*' raises Unauthorized
         self.assertRaises(Unauthorized, view, group_id=group_id)
