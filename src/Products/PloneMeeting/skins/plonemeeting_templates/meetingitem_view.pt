@@ -46,8 +46,10 @@
               <div class="discreet">
                   <span class="item_attribute_label"
                         i18n:translate="PloneMeeting_label_proposingGroup"></span>:&nbsp;&nbsp;
-                  <span tal:condition="nocall:proposingGroup"
-                        tal:content="proposingGroup/Title" />
+                  <tal:hasProposingGroup condition="nocall:proposingGroup">
+                    <span tal:content="proposingGroup/Title" />
+                    <metal:people use-macro="here/@@pm-macros/proposingGroupUsers"/>
+                  </tal:hasProposingGroup>
                   <span tal:condition="not:nocall:proposingGroup">-</span>
               </div>
               <tal:comment replace="nothing">Groups in charge</tal:comment>
@@ -66,10 +68,13 @@
             <div class="discreet" tal:condition="python: 'proposingGroupWithGroupInCharge' in usedAttrs">
                 <span class="item_attribute_label"
                       i18n:translate="PloneMeeting_label_proposingGroupWithGroupInCharge"></span>:&nbsp;&nbsp;
-                <span tal:condition="nocall:proposingGroup"
-                      tal:content="proposingGroup/Title" />&nbsp;(<span tal:define="gic python: context.getGroupsInCharge(theObjects=True, first=True)"
-                                                                        tal:condition="nocall:gic"
-                                                                        tal:content="gic/Title" />)
+                <tal:hasProposingGroup condition="nocall:proposingGroup">
+                  <span tal:condition="nocall:proposingGroup"
+                        tal:content="proposingGroup/Title" />&nbsp;(<span tal:define="gic python: context.getGroupsInCharge(theObjects=True, first=True)"
+                                                                          tal:condition="nocall:gic"
+                                                                          tal:content="gic/Title" />)
+                  <metal:people use-macro="here/@@pm-macros/proposingGroupUsers"/>
+                </tal:hasProposingGroup>
                 <span tal:condition="not:nocall:proposingGroup">-</span>
             </div>
 

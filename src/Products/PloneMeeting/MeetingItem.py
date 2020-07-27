@@ -6489,6 +6489,17 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         tool = api.portal.get_tool('portal_plonemeeting')
         return tool.isManager(self) and self.hasMeeting() and self._checkMayQuickEdit()
 
+    def displayProposingGroupUsers(self):
+        """ """
+        res = False
+        proposingGroup = self.getProposingGroup()
+        tool = api.portal.get_tool('portal_plonemeeting')
+        if not proposingGroup or \
+           self.getProposingGroup(theObject=False) in tool.get_orgs_for_user(the_objects=False) or \
+           tool.isManager(self):
+            res = True
+        return res
+
     security.declareProtected(ModifyPortalContent, 'ItemAssemblyDescrMethod')
 
     def ItemAssemblyDescrMethod(self):
