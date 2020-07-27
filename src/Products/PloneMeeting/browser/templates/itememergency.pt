@@ -1,6 +1,6 @@
 <tal:defines define="selectableEmergencies python: view.listSelectableEmergencies().items();">
     <tal:loop repeat="emergency python: selectableEmergencies">
-        <span class="fa fa-angle-double-right" />
+        <span class="fa fa-caret-right" />
         <a href="#"
            tal:attributes="href python: '%s/@@item_emergency_change_form?new_emergency_value=%s'
                            % (context.absolute_url(), emergency[0]);

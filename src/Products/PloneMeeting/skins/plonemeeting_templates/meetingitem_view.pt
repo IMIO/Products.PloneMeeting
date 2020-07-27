@@ -453,7 +453,9 @@
         </tal:displayOtherMeetingConfigsClonableTo>
         <span tal:condition="not: otherMCs">-</span>
         <div tal:condition="otherMCs">
-          <p class="discreet otherMeetingConfigsClonableToDataUsed" i18n:translate="">Data that will be used on new item</p>
+          <br />
+          <span class="fa fa-caret-right" style="color: grey;"></span>
+          <span class="discreet otherMeetingConfigsClonableToDataUsed" i18n:translate="">Data that will be used on new item</span><br />
           <tal:otherMeetingConfigsClonableToFieldTitle condition="python: 'otherMeetingConfigsClonableToFieldTitle' in usedAttrs">
             <span class="item_attribute_label"
                   i18n:translate="PloneMeeting_label_itemTitle"></span>:&nbsp;&nbsp;

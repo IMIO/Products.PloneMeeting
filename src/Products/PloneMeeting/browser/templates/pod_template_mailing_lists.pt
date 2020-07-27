@@ -1,6 +1,6 @@
 <div>
     <tal:loop tal:repeat="name view/getAvailableMailingLists">
-        <span class="fa fa-angle-double-right" />
+        <span class="fa fa-caret-right" />
         <a href="#"
            class="template_send_mailing_list"
            tal:content="name"

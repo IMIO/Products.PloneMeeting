@@ -1835,7 +1835,7 @@ ul.change_delay_actions li a span {
    display: inline-block;
 }
 
-.fa-angle-double-right {
+.fa-caret-right {
    color: &dtml-linkColor;;
 }
 
