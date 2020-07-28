@@ -23,12 +23,19 @@ class Migrate_To_4110(Migrator):
     def run(self, from_migration_to_41=False):
         logger.info('Migrating to PloneMeeting 4110...')
         self._updateOrgsDashboardCollectionColumns()
+        # update collective.contact.plonegroup
+        self.upgradeAll(omit=['Products.PloneMeeting:default',
+                              self.profile_name.replace('profile-', '')])
+        # init otherMeetingConfigsClonableToFieldXXX
+        self.initNewHTMLFields()
 
 
 def migrate(context):
     '''This migration function will:
 
-       1) Enable column 'PloneGroupUsersGroupsColumn' of for contacts collections displaying organizations.
+       1) Enable column 'PloneGroupUsersGroupsColumn' of for contacts collections displaying organizations;
+       2) Apply every pending upgrades;
+       3) Init otherMeetingConfigsClonableToFieldXXX new fields.
     '''
     migrator = Migrate_To_4110(context)
     migrator.run()

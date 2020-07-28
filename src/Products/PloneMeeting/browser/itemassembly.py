@@ -23,11 +23,11 @@
 from AccessControl import Unauthorized
 from plone import api
 from plone.z3cform.layout import wrap_form
-from Products.CMFCore.utils import getToolByName
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import IRedirect
 from Products.PloneMeeting.utils import _itemNumber_to_storedItemNumber
+from Products.PloneMeeting.utils import fplog
 from Products.PloneMeeting.utils import notifyModifiedAndReindex
 from Products.PloneMeeting.utils import validate_item_assembly_value
 from z3c.form import button
@@ -192,7 +192,7 @@ class DisplayAssemblyFromMeetingProvider(ContentProviderBase):
           Return the msgid to translate, either 'Assembly' or
           'Attendees' defined on the meeting.
         """
-        tool = getToolByName(self.context, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
         usedMeetingAttributes = cfg.getUsedMeetingAttributes()
         if 'assemblyExcused' in usedMeetingAttributes or \
@@ -362,7 +362,7 @@ class ManageItemAssemblyForm(form.Form):
     def updateWidgets(self):
         # XXX manipulate self.fields BEFORE doing form.Form.updateWidgets
         # show only relevant fields
-        tool = getToolByName(self.context, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
         usedMeetingAttributes = cfg.getUsedMeetingAttributes()
         self.fields['item_assembly'].mode = 'hidden'
@@ -411,9 +411,11 @@ class ManageItemAssemblyForm(form.Form):
         item_excused_def = item_excused_default()
         item_absents_def = item_absents_default()
         item_guests_def = item_guests_default()
+        from_item_number = self.context.getItemNumber(relativeTo='meeting')
+        until_item_number = self.apply_until_item_number
         items_to_update = _itemsToUpdate(
-            from_item_number=self.context.getItemNumber(relativeTo='meeting'),
-            until_item_number=self.apply_until_item_number,
+            from_item_number=from_item_number,
+            until_item_number=until_item_number,
             meeting=self.meeting)
         for itemToUpdate in items_to_update:
             # only update if we changed default value
@@ -427,8 +429,12 @@ class ManageItemAssemblyForm(form.Form):
                 itemToUpdate.setItemAssemblyGuests(self.item_guests)
             notifyModifiedAndReindex(itemToUpdate)
 
-        plone_utils = getToolByName(self.context, 'plone_utils')
-        plone_utils.addPortalMessage(_("Item assemblies have been updated."))
+        first_item_number = items_to_update[0].getItemNumber(for_display=True)
+        last_item_number = items_to_update[-1].getItemNumber(for_display=True)
+        extras = 'item={0} from_item_number={1} until_item_number={2}'.format(
+            repr(self.context), first_item_number, last_item_number)
+        fplog('manage_item_assembly', extras=extras)
+        api.portal.show_message(_("Item assemblies have been updated."), request=self.request)
         self._finished = True
 
 

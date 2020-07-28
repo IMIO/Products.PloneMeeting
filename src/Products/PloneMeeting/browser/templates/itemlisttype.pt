@@ -5,7 +5,7 @@
 <p>&nbsp;</p>
 <tal:defines define="selectableListTypes view/selectableListTypes;">
     <tal:loop repeat="listType selectableListTypes">
-        <span class="fa fa-caret-right" />
+        <span class="fa fa-angle-double-right" />
         <a href="#"
            onclick="#"
            tal:attributes="onclick string:event.preventDefault();;

@@ -258,7 +258,7 @@
                        class="link-overlay-pm-preview-advice"
                        tal:condition="adviceHolderIsViewable"
                        tal:attributes="href string:${obj_absolute_url}/view">
-                         <span class="fa fa-caret-right" />
+                         <span class="fa fa-angle-double-right" />
                          <span i18n:translate="">Preview detailed advice</span>
                     </a>
                 </td>

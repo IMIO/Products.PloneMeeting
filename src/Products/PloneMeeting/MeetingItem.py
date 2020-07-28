@@ -5899,6 +5899,20 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            'privacy' in destMeetingConfig.getUsedItemAttributes():
             newItem.setPrivacy('secret')
 
+        # handle 'otherMeetingConfigsClonableToFieldXXX' of original item
+        other_mc_field_names = [field_name for field_name in cfg.getUsedItemAttributes()
+                                if field_name.startswith('otherMeetingConfigsClonableToField')]
+        for other_mc_field_name in other_mc_field_names:
+            # first check if original field not empty
+            if self.fieldIsEmpty(other_mc_field_name):
+                continue
+            other_mc_field = self.getField(other_mc_field_name)
+            other_mc_field_value = other_mc_field.get(self)
+            dest_field_name = other_mc_field_name.replace('otherMeetingConfigsClonableToField', '')
+            dest_field_name = dest_field_name[0].lower() + dest_field_name[1:]
+            dest_field = newItem.getField(dest_field_name)
+            dest_field.set(newItem, other_mc_field_value)
+
         # execute some transitions on the newItem if it was defined in the cfg
         # find the transitions to trigger
         triggerUntil = NO_TRIGGER_WF_TRANSITION_UNTIL

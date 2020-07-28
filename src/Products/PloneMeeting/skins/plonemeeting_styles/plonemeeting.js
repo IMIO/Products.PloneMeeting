@@ -61,9 +61,10 @@ function findParent(node, className) {
 }
 
 /* used in configuration to show/hide documentation */
-function toggleDoc(id, toggle_parent_active=true, parent_elem=null, load_view=null) {
+function toggleDoc(id, toggle_parent_active=true, parent_elem=null, load_view=null, base_url=null) {
   elem = $('#' + id);
   elem.slideToggle(200);
+  debugger;
   if (toggle_parent_active) {
     if (!parent_elem) {
       parent_elem = elem.prev()[0];
@@ -74,9 +75,10 @@ function toggleDoc(id, toggle_parent_active=true, parent_elem=null, load_view=nu
   inner_content_tag = $('div.collapsible-inner-content', elem)[0];
   if (load_view && !inner_content_tag.dataset.loaded) {
     // load content in the collapsible-inner-content div
-    var url = $("link[rel='canonical']").attr('href') + '/' + load_view;
+    var url = base_url || $("link[rel='canonical']").attr('href');
+    var view_url = url + '/' + load_view;
     $.ajax({
-      url: url,
+      url: view_url,
       dataType: 'html',
       data: {},
       cache: false,

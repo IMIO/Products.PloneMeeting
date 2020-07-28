@@ -1427,12 +1427,21 @@ div.item-send-to-other-mc div.field {
 }
 div.item-send-to-other-mc-multiple-fields {
    border: 1px solid lightgrey;
-   min-width: 600px;
+   width: 100%;
 }
 
 #archetypes-fieldname-otherMeetingConfigsClonableTo {
     display: inline;
     float: left;
+    margin-right: 3em;
+}
+
+div#otherMeetingConfigsClonableTo div.label {
+   visibility: hidden;
+}
+
+div.other-mc-clonable-to-base-fields {
+   margin-top: -1em;
 }
 
 #archetypes-fieldname-otherMeetingConfigsClonableToEmergency,
@@ -1452,9 +1461,19 @@ div.item-send-to-other-mc-multiple-fields {
     color: &dtml-discreetColor;;
 }
 
-ul.item-predecessors span.pretty_link_content {
+span.item-predecessors span.pretty_link_content {
     vertical-align: text-top;
 }
+div.item-predecessors div.collapsible,
+div.item-predecessors div.collapsible-content {
+    margin-left: 1em;
+    line-height: 1.5em;
+}
+div.item-predecessors div.collapsible:before {
+   font-size: 110%;
+   padding-right: 0.5em;
+}
+
 /* limit left space on the faceted form of items to present,
    define width so we do not have the width scrollbar */
 body.template-meeting_available_items_view div#faceted-form {
@@ -1835,8 +1854,8 @@ ul.change_delay_actions li a span {
    display: inline-block;
 }
 
-.fa-caret-right {
-   color: &dtml-linkColor;;
+.fa-angle-double-right {
+   color: grey;
 }
 
 fieldset.section_annex, fieldset.section_annexDecision, fieldset.section_advices {

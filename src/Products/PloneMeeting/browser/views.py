@@ -90,8 +90,9 @@ class ItemMoreInfosView(BrowserView):
         self.request = request
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
+        self.portal_url = api.portal.get().absolute_url()
 
-    def __call__(self, visibleColumns):
+    def __call__(self, visibleColumns=[]):
         """ """
         self.visibleColumns = visibleColumns
         return super(ItemMoreInfosView, self).__call__()

@@ -4,22 +4,33 @@
                      linkedItems python: context.getManuallyLinkedItems(only_viewable=True);
                      showManuallyLinkedItems python: 'manuallyLinkedItems' in usedAttrs or linkedItems;">
     <span class="item_attribute_label" i18n:translate="auto_linked_items">Automatically linked items</span>:&nbsp;&nbsp;
-    <ul class="item-predecessors"
+    <div class="item-predecessors"
         tal:condition="predecessors">
-        <li tal:repeat="predecessor predecessors">
-            <tal:predecessor replace="structure python: context.displayLinkedItem(predecessor)" />
-        </li>
-    </ul>
+        <tal:loop repeat="predecessor predecessors">
+            <tal:defines define="predecessor_uid predecessor/UID;
+                                 predecessor_url predecessor/absolute_url;">
+                <div class="collapsible"
+                     tal:attributes="onclick string:toggleDoc('collapsible-text-predecessor-${predecessor_uid}', toggle_parent_active=true, parent_elem=null, load_view='@@item-more-infos', base_url='${predecessor_url}');">
+                  <span tal:content="structure python: context.displayLinkedItem(predecessor)"></span>
+                </div>
+                <div tal:attributes="id string:collapsible-text-predecessor-${predecessor_uid}"
+                     class="collapsible-content" style="display: none;">
+                  <div class="collapsible-inner-content">
+                      <img tal:attributes="src string:${view/portal_url}/spinner_small.gif" />
+                  </div>
+                </div>
+            </tal:defines>
+        </tal:loop>
+    </div>
     <span tal:condition="not: predecessors">-</span>
     <tal:manuallyLinkedItems condition="showManuallyLinkedItems">
-          <p></p>
           <span class="item_attribute_label" i18n:translate="PloneMeeting_label_manuallyLinkedItems">Manually linked items</span>:&nbsp;&nbsp;
-          <ul class="item-linkeditems"
+          <span class="item-linkeditems"
               tal:condition="linkedItems">
-              <li tal:repeat="item linkedItems">
+              <p tal:repeat="item linkedItems">
                   <tal:linkedItem replace="structure python: context.displayLinkedItem(item)" />
-              </li>
-          </ul>
+              </p>
+          </span>
           <span tal:condition="not: linkedItems">-</span>
     </tal:manuallyLinkedItems>
 </tal:defines>

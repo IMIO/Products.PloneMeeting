@@ -1,19 +1,23 @@
 <div name="pmDescription"
       i18n:domain="PloneMeeting"
       class="pmMoreInfo"
-      tal:define="mode string:view;">
+      tal:define="mode string:view;
+                  global displayed python:False;">
     <tal:loop repeat="visibleFieldInfos python: view.getItemsListVisibleFields().items()">
         <span tal:define="visibleFieldName python: visibleFieldInfos[0];
                           visibleFieldRenderer python: visibleFieldInfos[1];
                           field python: context.getField(visibleFieldName);"
               tal:condition="python: not context.fieldIsEmpty(visibleFieldName) and ((visibleFieldName == 'budgetInfos' and
                              context.getBudgetRelated() or not visibleFieldName == 'budgetInfos') and True or False) and not visibleFieldName in view.visibleColumns">
-            <tal:customRenderer condition="visibleFieldRenderer">
-                <span tal:replace="structure python: context.restrictedTraverse(visibleFieldRenderer)(visibleFieldName)" />
-            </tal:customRenderer> 
-            <tal:defaultRenderer condition="not: visibleFieldRenderer">
-                <metal:render use-macro="context/widgets/field/macros/view" />
-            </tal:defaultRenderer> 
+            <tal:displayed define="global displayed python:True">
+                <tal:customRenderer condition="visibleFieldRenderer">
+                    <span tal:replace="structure python: context.restrictedTraverse(visibleFieldRenderer)(visibleFieldName)" />
+                </tal:customRenderer>
+                <tal:defaultRenderer condition="not: visibleFieldRenderer">
+                    <metal:render use-macro="context/widgets/field/macros/view" />
+                </tal:defaultRenderer>
+            </tal:displayed>
         </span>
     </tal:loop>
+    <span class="discreet" tal:condition="not:displayed" i18n:translate="">Nothing to display.</span>
 </div>

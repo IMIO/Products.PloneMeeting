@@ -1,6 +1,6 @@
 <tal:defines define="selectableCompleteness python: view.listSelectableCompleteness().items();">
     <tal:loop repeat="completeness selectableCompleteness">
-        <span class="fa fa-caret-right" />
+        <span class="fa fa-angle-double-right" />
         <a href="#"
            tal:attributes="href python: '%s/@@change-item-completeness?new_completeness_value=%s' % (context.absolute_url(),
                                                                             completeness[0]);
