@@ -20,6 +20,7 @@ Changelog
 - Make `organization`/`person`/`held_position` implements `IConfigElement` so we may use `_invalidateCachedVocabularies`
   to invalidate cached vocabularies and it is not necessary to write event handlers for these cases
 - Added `group-users` icon next to `proposingGroup` to display every Plone groups members to members of the `proposingGroup` only
+- Added `collective.fingerpointing` log message when managing item `assembly/signatures/attendees/signatories`
 
 4.1.27.2 (2020-06-25)
 ---------------------
