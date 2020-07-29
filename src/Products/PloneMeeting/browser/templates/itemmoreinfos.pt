@@ -20,8 +20,17 @@
         </span>
         <tal:comment replace="nothing">Sepcial case for displaying annexes</tal:comment>
         <div class="item_annexes" tal:condition="python: visibleFieldInfos[0] == 'annexes'">
+            <span class="item_attribute_label"
+                  i18n:translate="existing_annexes">Annexes</span>:&nbsp;&nbsp;
             <tal:annexes define="global displayed python:True"
                          replace="structure view/render_annexes" />
+        </div>
+        <tal:comment replace="nothing">Sepcial case for displaying advices</tal:comment>
+        <div class="item_annexes" tal:condition="python: visibleFieldInfos[0] == 'advices'">
+            <span class="item_attribute_label"
+                  i18n:translate="PloneMeeting_label_advices"></span>:&nbsp;&nbsp;
+            <tal:annexes define="global displayed python:True"
+                         replace="structure context/@@advices-icons" />
         </div>
     </tal:loop>
     <p class="discreet" tal:condition="not:displayed" i18n:translate="">Nothing to display.</p>

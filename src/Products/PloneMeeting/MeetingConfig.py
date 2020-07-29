@@ -4459,7 +4459,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                   ignored_field_ids=self.adapted()._ignoredVisibleFieldIds(),
                                   hide_not_visible=True)
         res.insert(0, ('MetingItem.annexes',
-                       translate('annexes',
+                       translate('existing_annexes',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)))
+        res.insert(0, ('MetingItem.advices',
+                       translate('PloneMeeting_label_advices',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)))
         return DisplayList(tuple(res))
