@@ -103,17 +103,18 @@ class ItemPollTypeColumn(VocabularyColumn):
     vocabulary = u'Products.PloneMeeting.vocabularies.polltypesvocabulary'
 
 
-def render_item_annexes(item, tool):
+def render_item_annexes(item, tool, show_nothing=False):
     """ """
     annexes = ''
-    annexes += item.restrictedTraverse('categorized-childs')(portal_type='annex')
+    annexes += item.restrictedTraverse('categorized-childs')(
+        portal_type='annex', show_nothing=show_nothing)
     if tool.hasAnnexes(item, portal_type='annexDecision'):
         decision_term = translate("AnnexesDecisionShort",
                                   domain='PloneMeeting',
                                   context=item.REQUEST)
         annexes += u"<span class='discreet'>{0}&nbsp;:&nbsp;</span>".format(decision_term)
         annexes += item.restrictedTraverse('categorized-childs')(
-            portal_type='annexDecision')
+            portal_type='annexDecision', show_nothing=show_nothing)
     return annexes
 
 

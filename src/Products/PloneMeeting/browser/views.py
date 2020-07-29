@@ -138,7 +138,7 @@ class ItemMoreInfosView(BrowserView):
 
     def render_annexes(self):
         """ """
-        return render_item_annexes(self.context, self.tool)
+        return render_item_annexes(self.context, self.tool, show_nothing=True)
 
 
 class BaseStaticInfosView(BrowserView):
