@@ -61,10 +61,9 @@ function findParent(node, className) {
 }
 
 /* used in configuration to show/hide documentation */
-function toggleDoc(id, toggle_parent_active=true, parent_elem=null, load_view=null, base_url=null) {
+function toggleDoc(id, toggle_parent_active=true, parent_elem=null, load_view=null, base_url=null, init_annexes=false) {
   elem = $('#' + id);
-  elem.slideToggle(200);
-  debugger;
+  elem.slideToggle(0);
   if (toggle_parent_active) {
     if (!parent_elem) {
       parent_elem = elem.prev()[0];
@@ -86,6 +85,9 @@ function toggleDoc(id, toggle_parent_active=true, parent_elem=null, load_view=nu
       success: function(data) {
         inner_content_tag.innerHTML = data;
         inner_content_tag.dataset.loaded = true;
+        if (init_annexes) {
+          categorizedChildsInfos({selector: 'div.collapsible-content .tooltipster-childs-infos', });
+        }
       },
       error: function(jqXHR, textStatus, errorThrown) {
         /*console.log(textStatus);*/

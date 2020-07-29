@@ -418,7 +418,8 @@ class MeetingConfigDescriptor(Descriptor):
     multiSelectFields = ('certifiedSignatures', 'usedItemAttributes', 'historizedItemAttributes',
                          'recordItemHistoryStates', 'usedMeetingAttributes',
                          'historizedMeetingAttributes', 'recordMeetingHistoryStates',
-                         'availableItemsListVisibleColumns', 'itemsListVisibleColumns', 'itemsListVisibleFields',
+                         'availableItemsListVisibleColumns', 'itemsListVisibleColumns',
+                         'itemsVisibleFields', 'itemsNotViewableVisibleFields', 'itemsListVisibleFields',
                          'itemColumns', 'itemActionsColumnConfig', 'meetingColumns',
                          'displayAvailableItemsTo', 'toDoListSearches',
                          'dashboardItemsListingsFilters', 'dashboardMeetingAvailableItemsFilters',
@@ -649,6 +650,12 @@ class MeetingConfigDescriptor(Descriptor):
             'Creator', 'CreationDate', 'getProposingGroup', 'actions']
         self.itemsListVisibleColumns = [
             'Creator', 'CreationDate', 'review_state', 'getProposingGroup', 'actions']
+        # what fields of the item will be displayed in the linked items
+        self.itemsVisibleFields = ['MeetingItem.annexes',
+                                   'MeetingItem.description',
+                                   'MeetingItem.decision']
+        self.itemsNotViewableVisibleFields = []
+        self.itemsNotViewableVisibleFieldsTALExpr = ''
         # what fields of the item will be displayed in the items listings
         # while clicking on the show more infos action (glasses icon)
         self.itemsListVisibleFields = ['MeetingItem.description', 'MeetingItem.decision']

@@ -1,36 +1,18 @@
 <tal:defines i18n:domain="PloneMeeting"
              define="usedAttrs python: view.cfg.getUsedItemAttributes();
-                     predecessors python: context.adapted().getPredecessors(only_viewable=True);
-                     linkedItems python: context.getManuallyLinkedItems(only_viewable=True);
-                     showManuallyLinkedItems python: 'manuallyLinkedItems' in usedAttrs or linkedItems;">
+                     predecessors python: context.adapted().getPredecessors(only_viewable=True);">
     <span class="item_attribute_label" i18n:translate="auto_linked_items">Automatically linked items</span>:&nbsp;&nbsp;
-    <div class="item-predecessors"
-        tal:condition="predecessors">
-        <tal:loop repeat="predecessor predecessors">
-            <tal:defines define="predecessor_uid predecessor/UID;
-                                 predecessor_url predecessor/absolute_url;">
-                <div class="collapsible"
-                     tal:attributes="onclick string:toggleDoc('collapsible-text-predecessor-${predecessor_uid}', toggle_parent_active=true, parent_elem=null, load_view='@@item-more-infos', base_url='${predecessor_url}');">
-                  <span tal:content="structure python: context.displayLinkedItem(predecessor)"></span>
-                </div>
-                <div tal:attributes="id string:collapsible-text-predecessor-${predecessor_uid}"
-                     class="collapsible-content" style="display: none;">
-                  <div class="collapsible-inner-content">
-                      <img tal:attributes="src string:${view/portal_url}/spinner_small.gif" />
-                  </div>
-                </div>
-            </tal:defines>
-        </tal:loop>
-    </div>
+    <tal:predecessors define="linkedItems predecessors">
+        <metal:linkedItems use-macro="here/@@pm-macros/linkedItems" />
+    </tal:predecessors>
     <span tal:condition="not: predecessors">-</span>
-    <tal:manuallyLinkedItems condition="showManuallyLinkedItems">
-          <span class="item_attribute_label" i18n:translate="PloneMeeting_label_manuallyLinkedItems">Manually linked items</span>:&nbsp;&nbsp;
-          <span class="item-linkeditems"
-              tal:condition="linkedItems">
-              <p tal:repeat="item linkedItems">
-                  <tal:linkedItem replace="structure python: context.displayLinkedItem(item)" />
-              </p>
-          </span>
-          <span tal:condition="not: linkedItems">-</span>
+    <div style="clear: both;" />
+    <tal:manuallyLinkedItems define="manuallyLinkedItems python: context.getManuallyLinkedItems(only_viewable=True);
+                                     showManuallyLinkedItems python: 'manuallyLinkedItems' in usedAttrs or manuallyLinkedItems;"
+                             condition="showManuallyLinkedItems">
+        <span class="item_attribute_label" i18n:translate="PloneMeeting_label_manuallyLinkedItems">Manually linked items</span>:&nbsp;&nbsp;
+        <tal:manuallyLinkedItems define="linkedItems manuallyLinkedItems">
+            <metal:linkedItems use-macro="here/@@pm-macros/linkedItems" />
+        </tal:manuallyLinkedItems>
     </tal:manuallyLinkedItems>
 </tal:defines>

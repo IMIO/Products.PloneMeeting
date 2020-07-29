@@ -2,6 +2,7 @@
 
 from AccessControl import Unauthorized
 from collections import OrderedDict
+from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.contact.core.utils import get_gender_and_number
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from collective.contact.plonegroup.utils import get_all_suffixes
@@ -33,6 +34,7 @@ from Products.CMFPlone.utils import safe_unicode
 from Products.Five import BrowserView
 from Products.PloneMeeting import logger
 from Products.PloneMeeting.browser.itemchangeorder import _is_integer
+from Products.PloneMeeting.columns import render_item_annexes
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import ADVICE_STATES_ALIVE
 from Products.PloneMeeting.config import ITEM_INSERT_METHODS
@@ -41,6 +43,7 @@ from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.indexes import _to_coded_adviser_index
 from Products.PloneMeeting.interfaces import IMeeting
 from Products.PloneMeeting.MeetingConfig import POWEROBSERVERPREFIX
+from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import _itemNumber_to_storedItemNumber
 from Products.PloneMeeting.utils import _storedItemNumber_to_itemNumber
 from Products.PloneMeeting.utils import get_annexes
@@ -90,20 +93,38 @@ class ItemMoreInfosView(BrowserView):
         self.request = request
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
-        self.portal_url = api.portal.get().absolute_url()
 
-    def __call__(self, visibleColumns=[]):
+    def __call__(self, visibleColumns=[], fieldsConfigAttr='itemsVisibleFields', currentCfgId=None):
         """ """
         self.visibleColumns = visibleColumns
+        self.visibleFields = self.cfg.getField(fieldsConfigAttr).get(self.cfg)
+        # if current user may not see the item, use another fieldsConfigAttr
+        if not _checkPermission(View, self.context) and \
+           fieldsConfigAttr == 'itemsVisibleFields':
+            # check it item fields should be visible nevertheless
+            extra_expr_ctx = _base_extra_expr_ctx(self.context)
+            currentCfg = self.tool.get(currentCfgId)
+            extra_expr_ctx.update({'item': self.context})
+            extra_expr_ctx.update({'cfg': currentCfg})
+            extra_expr_ctx.update({'item_cfg': self.cfg})
+            res = _evaluateExpression(self.context,
+                                      expression=currentCfg.getItemsNotViewableVisibleFieldsTALExpr(),
+                                      roles_bypassing_expression=[],
+                                      extra_expr_ctx=extra_expr_ctx)
+            if res:
+                self.visibleFields = self.cfg.getField('itemsNotViewableVisibleFields').get(self.cfg)
+                with api.env.adopt_roles(['Manager']):
+                    return super(ItemMoreInfosView, self).__call__()
+            else:
+                self.visibleFields = ()
         return super(ItemMoreInfosView, self).__call__()
 
-    @memoize_contextless
-    def getItemsListVisibleFields(self):
+    @memoize
+    def getVisibleFields(self):
         """ """
-        visibleFields = self.cfg.getItemsListVisibleFields()
         # keep order of displayed fields
         res = OrderedDict()
-        for visibleField in visibleFields:
+        for visibleField in self.visibleFields:
             visibleFieldName = visibleField.split('.')[1]
             # if nothing is defined, the default rendering macro will be used
             # this is made to be overrided
@@ -114,6 +135,10 @@ class ItemMoreInfosView(BrowserView):
         """Return the renderer to use for given p_fieldName, this returns nothing
            by default and is made to be overrided by subproduct."""
         return None
+
+    def render_annexes(self):
+        """ """
+        return render_item_annexes(self.context, self.tool)
 
 
 class BaseStaticInfosView(BrowserView):

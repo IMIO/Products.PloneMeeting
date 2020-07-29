@@ -659,7 +659,7 @@
         class=".views.ItemMoreInfosView"
         template="templates/itemmoreinfos.pt"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
-        permission="zope2.View" />
+        permission="zope.Public" />
 
     <!-- the view that display the item navigation widget -->
     <browser:page

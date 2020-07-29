@@ -790,23 +790,34 @@
           </td>
         </tr>
         <tr valign="top">
+          <td tal:define="field python:here.getField('itemsVisibleFields')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td tal:define="field python:here.getField('itemsNotViewableVisibleFields')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td tal:define="field python:here.getField('itemsNotViewableVisibleFieldsTALExpr')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+        </tr>
+        <tr valign="top">
           <td tal:define="field python:here.getField('itemsListVisibleFields')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td tal:define="field python:here.getField('displayAvailableItemsTo')">
-            <span metal:use-macro="here/widgets/field/macros/view" />
+          <td>
           </td>
           <td>
           </td>
         </tr>
         <tr valign="top">
+          <td tal:define="field python:here.getField('displayAvailableItemsTo')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
           <td tal:define="field python:here.getField('maxShownMeetings')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
           <td tal:define="field python:here.getField('toDoListSearches')">
             <span metal:use-macro="here/widgets/field/macros/view" />
-          </td>
-          <td>
           </td>
         </tr>
         <tr valign="top">

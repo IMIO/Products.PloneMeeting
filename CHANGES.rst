@@ -21,8 +21,11 @@ Changelog
   to invalidate cached vocabularies and it is not necessary to write event handlers for these cases
 - Added `group-users` icon next to `proposingGroup` to display every Plone groups members to members of the `proposingGroup` only
 - Added `collective.fingerpointing` log message when managing item `assembly/signatures/attendees/signatories`
-- Added possibility to define data (title/description/motivation/decision/decisionSuite) to use on an item that will be cloned to
+- Added possibility to define data (`title/description/motivation/decision/decisionSuite`) to use on an item that will be cloned to
   another MeetingConfig, data defined on original item will replace basic data on resulting item
+- Added possibility to configure in `MeetingConfig.itemsVisibleFields` data to display on linked items.
+  It is also possible using the `MeetingConfig.itemsNotViewableVisibleFields` and `MeetingConfig.itemsNotViewableVisibleFieldsTALExpr`
+  fields to select specific data that will be displayed to users that may not access to the linked items
 
 4.1.27.2 (2020-06-25)
 ---------------------

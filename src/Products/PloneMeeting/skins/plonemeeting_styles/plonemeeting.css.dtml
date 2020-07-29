@@ -1461,15 +1461,26 @@ div.other-mc-clonable-to-base-fields {
     color: &dtml-discreetColor;;
 }
 
-span.item-predecessors span.pretty_link_content {
-    vertical-align: text-top;
-}
 div.item-predecessors div.collapsible,
-div.item-predecessors div.collapsible-content {
+div.item-linkeditems div.collapsible,
+div.item-predecessors span:first-of-type,
+div.item-linkeditems span:first-of-type {
+   display: inline-block;
+}
+
+div.item-predecessors div.collapsible,
+div.item-linkeditems div.collapsible,
+div.item-predecessors div.collapsible-content,
+div.item-linkeditems div.collapsible-content {
     margin-left: 1em;
     line-height: 1.5em;
 }
-div.item-predecessors div.collapsible:before {
+div.item-predecessors div.collapsible-content,
+div.item-linkeditems div.collapsible-content {
+   display: block;
+}
+div.item-predecessors div.collapsible:before,
+div.item-linkeditems div.collapsible:before {
    font-size: 110%;
    padding-right: 0.5em;
 }
@@ -1541,6 +1552,9 @@ input[id^='value_moveAction_'] {
 div.dashboard_annexes {
     width: 100%;
     text-align: right;
+}
+div.item_annexes {
+    margin-bottom: 0.5em;
 }
 
 /* use important! so it is correctly displayed in the advice popup */

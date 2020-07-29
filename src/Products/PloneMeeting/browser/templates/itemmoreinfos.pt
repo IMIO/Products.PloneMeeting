@@ -3,11 +3,11 @@
       class="pmMoreInfo"
       tal:define="mode string:view;
                   global displayed python:False;">
-    <tal:loop repeat="visibleFieldInfos python: view.getItemsListVisibleFields().items()">
+    <tal:loop repeat="visibleFieldInfos python: view.getVisibleFields().items()">
         <span tal:define="visibleFieldName python: visibleFieldInfos[0];
                           visibleFieldRenderer python: visibleFieldInfos[1];
                           field python: context.getField(visibleFieldName);"
-              tal:condition="python: not context.fieldIsEmpty(visibleFieldName) and ((visibleFieldName == 'budgetInfos' and
+              tal:condition="python: field and not context.fieldIsEmpty(visibleFieldName) and ((visibleFieldName == 'budgetInfos' and
                              context.getBudgetRelated() or not visibleFieldName == 'budgetInfos') and True or False) and not visibleFieldName in view.visibleColumns">
             <tal:displayed define="global displayed python:True">
                 <tal:customRenderer condition="visibleFieldRenderer">
@@ -18,6 +18,12 @@
                 </tal:defaultRenderer>
             </tal:displayed>
         </span>
+        <tal:comment replace="nothing">Sepcial case for displaying annexes</tal:comment>
+        <div class="item_annexes" tal:condition="python: visibleFieldInfos[0] == 'annexes'">
+            <tal:annexes define="global displayed python:True"
+                         replace="structure view/render_annexes" />
+        </div>
     </tal:loop>
-    <span class="discreet" tal:condition="not:displayed" i18n:translate="">Nothing to display.</span>
+    <p class="discreet" tal:condition="not:displayed" i18n:translate="">Nothing to display.</p>
+    <script>categorizedChildsInfos();</script>
 </div>
