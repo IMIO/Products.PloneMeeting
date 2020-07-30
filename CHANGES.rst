@@ -68,6 +68,14 @@ Changelog
   do not have a border, so displaying it as dotted border in `CKeditor`
 - In `@@display-group-users`, if group contains another group, display group's title instead group id (or group id if no title),
   moreover clearly differenciate using `user.png/group.png` icon when member is a user or a group
+- Enabled column `PloneGroupUsersGroupsColumn` on contacts dashboard displaying organizations
+- Enabled `allow_reorder` for `organization.certified_signatures` DataGridField
+- Use `ram.cache` for `SelectableAssemblyMembersVocabulary` used in `organization.certified_signatures` DataGridField
+  so it renders faster in dashboards displaying organizations
+- Make `organization`/`person`/`held_position` implements `IConfigElement` so we may use `_invalidateCachedVocabularies`
+  to invalidate cached vocabularies and it is not necessary to write event handlers for these cases
+- Added `group-users` icon next to `proposingGroup` to display every Plone groups members to members of the `proposingGroup` only
+- Added `collective.fingerpointing` log message when managing item `assembly/signatures/attendees/signatories`
 
 4.1.27.2 (2020-06-25)
 ---------------------

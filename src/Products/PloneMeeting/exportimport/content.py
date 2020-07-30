@@ -150,8 +150,7 @@ class ToolInitializer:
             suffixes = MEETING_GROUP_SUFFIXES + EXTRA_GROUP_SUFFIXES
             for suffix in suffixes:
                 if suffix['fct_id'] not in function_ids:
-                    copied_suffix = {}
-                    copied_suffix['fct_id'] = suffix['fct_id']
+                    copied_suffix = suffix.copy()
                     copied_suffix['fct_title'] = translate(suffix['fct_title'],
                                                            domain='PloneMeeting',
                                                            context=self.request)

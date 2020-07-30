@@ -5,6 +5,7 @@ from collective.contact.core.content.held_position import IHeldPosition
 from collective.contact.core.utils import get_gender_and_number
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from collective.excelexport.exportables.dexterityfields import get_exportable_for_fieldname
+from imio.helpers.cache import invalidate_cachekey_volatile_for
 from plone.autoform import directives as form
 from plone.dexterity.schema import DexteritySchemaPolicy
 from plone.supermodel import model
@@ -258,6 +259,12 @@ class PMHeldPosition(HeldPosition):
             res = uncapitalize(res)
             res = u'{0} {1}'.format(self.person_title, res)
         return res
+
+    def _invalidateCachedVocabularies(self):
+        '''Clean cache for vocabularies using held_positions.'''
+        invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.selectableheldpositionsvocabulary")
+        invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.selectableassemblymembersvocabulary")
+        invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.selectableiteminitiatorsvocabulary")
 
 
 class PMHeldPositionSchemaPolicy(DexteritySchemaPolicy):
