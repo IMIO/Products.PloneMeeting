@@ -501,6 +501,7 @@ document.location.reload(true);
      </td>
 
      <td align="center"
+         tal:condition="showNonAttendees"
          tal:attributes="onmouseover python: 'setHiddenButton(\'%s\', \'visible\', prefix=\'byebye_nonattendee_\')' % aUid;
                          onmouseout python: 'setHiddenButton(\'%s\', \'hidden\', prefix=\'byebye_nonattendee_\')' % aUid">
 
