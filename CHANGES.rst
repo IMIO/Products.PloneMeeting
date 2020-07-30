@@ -76,6 +76,8 @@ Changelog
   to invalidate cached vocabularies and it is not necessary to write event handlers for these cases
 - Added `group-users` icon next to `proposingGroup` to display every Plone groups members to members of the `proposingGroup` only
 - Added `collective.fingerpointing` log message when managing item `assembly/signatures/attendees/signatories`
+- Fixed bug in `itemPeople` macro displayed on `meetingitem_view`, when field Meeting `itemNonAttendees` is enabled,
+  the column header was correctly hidden but the column cells were displayed
 
 4.1.27.2 (2020-06-25)
 ---------------------
