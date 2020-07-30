@@ -1487,6 +1487,32 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual([anItem.getPrivacy() for anItem in meeting.getItems(ordered=True)],
                          ['public', 'public', 'public', 'secret', 'secret', 'secret'])
 
+    def test_pm_SendItemToOtherMCAutoReplacedFields(self):
+        '''Test when item sent to other MC and original item
+           is using otherMeetingConfigsClonableToFieldXXX fields.'''
+        cfg = self.meetingConfig
+        cfg2 = self.meetingConfig2
+        cfg2Id = cfg2.getId()
+        cfg2.setUseGroupsAsCategories(True)
+        cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % cfg2Id,
+                                         'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL},))
+        cfg.setItemManualSentToOtherMCStates(('itemcreated', ))
+        self._enableField('otherMeetingConfigsClonableToFieldTitle')
+        self._enableField('otherMeetingConfigsClonableToFieldDecision')
+
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        item.setTitle('Title')
+        item.setDecision('<p></p>')
+        item.setOtherMeetingConfigsClonableToFieldTitle('Field title')
+        item.setOtherMeetingConfigsClonableToFieldDecision('<p>Field decision</p>')
+        item.setOtherMeetingConfigsClonableTo((cfg2Id,))
+        newItem = item.cloneToOtherMeetingConfig(cfg2Id)
+        self.assertEqual(newItem.Title(), 'Field title')
+        self.assertEqual(newItem.getDecision(), '<p>Field decision</p>')
+        self.assertTrue(newItem.fieldIsEmpty('otherMeetingConfigsClonableToFieldTitle'))
+        self.assertTrue(newItem.fieldIsEmpty('otherMeetingConfigsClonableToFieldDecision'))
+
     def test_pm_CloneItemWithSetCurrentAsPredecessor(self):
         '''When an item is cloned with option setCurrentAsPredecessor=True,
            items are linked together, with an automatic link if option

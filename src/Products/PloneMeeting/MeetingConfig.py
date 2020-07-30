@@ -4458,11 +4458,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         res = self._listFieldsFor(MeetingItem,
                                   ignored_field_ids=self.adapted()._ignoredVisibleFieldIds(),
                                   hide_not_visible=True)
-        res.insert(0, ('MetingItem.annexes',
+        res.insert(0, ('MeetingItem.annexes',
                        translate('existing_annexes',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)))
-        res.insert(0, ('MetingItem.advices',
+        res.insert(0, ('MeetingItem.advices',
                        translate('PloneMeeting_label_advices',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)))

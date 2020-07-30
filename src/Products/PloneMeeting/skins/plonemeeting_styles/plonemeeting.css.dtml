@@ -1472,7 +1472,7 @@ div.item-predecessors div.collapsible,
 div.item-linkeditems div.collapsible,
 div.item-predecessors div.collapsible-content,
 div.item-linkeditems div.collapsible-content {
-    margin-left: 1em;
+    margin-left: 0.5em;
     line-height: 1.5em;
 }
 div.item-predecessors div.collapsible-content,
