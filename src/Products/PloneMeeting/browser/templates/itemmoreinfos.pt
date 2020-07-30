@@ -29,7 +29,7 @@
         <div class="item_annexes" tal:condition="python: visibleFieldInfos[0] == 'advices'">
             <span class="item_attribute_label"
                   i18n:translate="PloneMeeting_label_advices"></span>:&nbsp;&nbsp;
-            <tal:annexes define="global displayed python:True"
+            <tal:advices define="global displayed python:True"
                          replace="structure context/@@advices-icons" />
         </div>
     </tal:loop>

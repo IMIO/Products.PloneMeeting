@@ -63,7 +63,7 @@ function findParent(node, className) {
 /* used in configuration to show/hide documentation */
 function toggleDoc(id, toggle_parent_active=true, parent_elem=null, load_view=null, base_url=null, init_tooltipsters=false) {
   elem = $('#' + id);
-  elem.slideToggle(0);
+  elem.slideToggle(200);
   if (toggle_parent_active) {
     if (!parent_elem) {
       parent_elem = elem.prev()[0];
