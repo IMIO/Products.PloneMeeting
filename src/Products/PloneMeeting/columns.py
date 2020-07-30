@@ -172,10 +172,11 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
                         visibleColumns = cfg.getItemsListVisibleColumns()
                 else:
                     visibleColumns = cfg.getItemColumns()
-                staticInfos = obj.restrictedTraverse('@@static-infos')(visibleColumns=visibleColumns)
+                staticInfos = obj.restrictedTraverse('@@static-infos')(
+                    visibleColumns=visibleColumns)
                 if self.showMoreInfos:
-                    moreInfos = obj.restrictedTraverse('@@item-more-infos')(visibleColumns=visibleColumns,
-                                                                            fieldsConfigAttr='itemsListVisibleFields')
+                    moreInfos = obj.restrictedTraverse('@@item-more-infos')(
+                        visibleColumns=visibleColumns)
 
                 # display annexes
                 annexes = render_item_annexes(obj, tool)

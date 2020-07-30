@@ -94,16 +94,15 @@ class ItemMoreInfosView(BrowserView):
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
 
-    def __call__(self, visibleColumns=[], fieldsConfigAttr='itemsVisibleFields', currentCfgId=None):
+    def __call__(self, visibleColumns=[], fieldsConfigAttr='itemsListVisibleFields', currentCfgId=None):
         """ """
         self.visibleColumns = visibleColumns
         self.visibleFields = self.cfg.getField(fieldsConfigAttr).get(self.cfg)
         # if current user may not see the item, use another fieldsConfigAttr
-        if not _checkPermission(View, self.context) and \
-           fieldsConfigAttr == 'itemsVisibleFields':
+        if not _checkPermission(View, self.context):
             # check it item fields should be visible nevertheless
             extra_expr_ctx = _base_extra_expr_ctx(self.context)
-            currentCfg = self.tool.get(currentCfgId)
+            currentCfg = currentCfgId and self.tool.get(currentCfgId) or self.cfg
             extra_expr_ctx.update({'item': self.context})
             extra_expr_ctx.update({'cfg': currentCfg})
             extra_expr_ctx.update({'item_cfg': self.cfg})

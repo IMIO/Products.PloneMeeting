@@ -832,17 +832,77 @@ class testViews(PloneMeetingTestCase):
 
     def test_pm_ItemMoreInfos(self, ):
         '''Test the @@item-more-infos view, especially getItemsListVisibleFields
-           that keeps order of fields, because we need to make sure that it respects
-           order defined in the MeetingItem schema.'''
+           for which order of fields may be defined and displayed data may not
+           respect MeetingItem schema order.'''
         cfg = self.meetingConfig
+        cfg.setItemsListVisibleFields(('MeetingItem.description',
+                                       'MeetingItem.decision',
+                                       'MeetingItem.motivation'))
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         view = item.restrictedTraverse('@@item-more-infos')
+        view()
+        self.assertEqual(view.getVisibleFields().keys(),
+                         ['description', 'decision', 'motivation'])
+
+    def test_pm_ItemMoreInfosItemsVisibleFields(self, ):
+        '''Test the @@item-more-infos view when using MeetingConfig.ItemsVisibleFields
+           instead MeetingConfig.itemsListVisibleFields.'''
+        cfg = self.meetingConfig
+        # not used
         cfg.setItemsListVisibleFields(('MeetingItem.description',
-                                       'MeetingItem.motivation',
                                        'MeetingItem.decision'))
-        self.assertEqual(view.getItemsListVisibleFields().keys(),
-                         ['description', 'motivation', 'decision'])
+        cfg.setItemsVisibleFields(('MeetingItem.annexes',
+                                   'MeetingItem.advices',
+                                   'MeetingItem.description',
+                                   'MeetingItem.motivation',
+                                   'MeetingItem.decision',
+                                   'MeetingItem.privacy'))
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        view = item.restrictedTraverse('@@item-more-infos')
+        view(fieldsConfigAttr='itemsVisibleFields')
+        self.assertEqual(view.getVisibleFields().keys(),
+                         ['annexes', 'advices', 'description', 'motivation', 'decision', 'privacy'])
+
+    def test_pm_ItemMoreInfosNotViewableItem(self, ):
+        '''When displaying more infos on a not viewable item, configuration
+           defined in MeetingConfig.itemsNotViewableVisibleFields will be used.'''
+        cfg = self.meetingConfig
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.changeUser('pmCreator2')
+        self.assertFalse(self.hasPermission(View, item))
+        view = item.restrictedTraverse('@@item-more-infos')
+        view()
+        self.assertEqual(cfg.getItemsNotViewableVisibleFields(), ())
+        self.assertEqual(view.getVisibleFields().keys(), [])
+        cfg.setItemsNotViewableVisibleFields(('MeetingItem.description', ))
+        self.cleanMemoize()
+        view()
+        self.assertEqual(view.getVisibleFields().keys(), ['description'])
+
+    def test_pm_ItemMoreInfosNotViewableItemTALExpr(self, ):
+        '''When displaying more infos on a not viewable item, configuration
+           defined in MeetingConfig.itemsNotViewableVisibleFields will be used,
+           it is possible to complete access with a TAL expression so for example
+           not viewable items fields are only shown when item is decided.'''
+        cfg = self.meetingConfig
+        cfg.setItemsNotViewableVisibleFields(('MeetingItem.description', ))
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.changeUser('pmCreator2')
+        self.assertFalse(self.hasPermission(View, item))
+        view = item.restrictedTraverse('@@item-more-infos')
+        view()
+        self.assertEqual(view.getVisibleFields().keys(), ['description'])
+        # define TAL expression
+        cfg.setItemsNotViewableVisibleFieldsTALExpr("python: item.queryState() != 'itemcreated'")
+        self.cleanMemoize()
+        view()
+        self.assertEqual(view.getVisibleFields().keys(), [])
+        self.proposeItem(item)
+        cfg.setItemsNotViewableVisibleFields(('MeetingItem.description', ))
 
     def _setupPrintXhtml(self):
         """ """
