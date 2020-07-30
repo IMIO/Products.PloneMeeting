@@ -399,7 +399,10 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg.at_post_edit_script()
         self.changeUser('pmManager')
         self.failIf(item.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
-        self.assertFalse(item.showClonableToOtherMeetingConfigs())
+        # field still shown because not empty
+        self.assertTrue(item.showClonableToOtherMCs())
+        item.setOtherMeetingConfigsClonableTo(())
+        self.assertFalse(item.showClonableToOtherMCs())
 
         # ok, activate it and send it!
         self.changeUser('admin')
@@ -407,7 +410,8 @@ class testMeetingItem(PloneMeetingTestCase):
             ({'meeting_config': otherMeetingConfigId,
               'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL}, ))
         cfg.at_post_edit_script()
-        self.assertTrue(item.showClonableToOtherMeetingConfigs())
+        self.assertTrue(item.showClonableToOtherMCs())
+        item.setOtherMeetingConfigsClonableTo((otherMeetingConfigId,))
         self.changeUser('pmManager')
         self.failUnless(item.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
         item.cloneToOtherMeetingConfig(otherMeetingConfigId)
