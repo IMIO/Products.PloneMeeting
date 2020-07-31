@@ -1,28 +1,10 @@
 # -*- coding: utf-8 -*-
-#
-# File: testMeetingConfig.py
-#
-# Copyright (c) 2015 by Imio.be
-#
-# GNU General Public License (GPL)
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
-# 02110-1301, USA.
-#
 
+from collective.contact.plonegroup.browser.settings import IContactPlonegroupConfig
+from collective.contact.plonegroup.config import get_registry_functions
+from collective.contact.plonegroup.config import set_registry_functions
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
+from Products.PloneMeeting.validators import PloneGroupSettingsValidator
 from Products.validation import validation
 from zope.i18n import translate
 
@@ -275,6 +257,28 @@ class testValidators(PloneMeetingTestCase):
                                                   context=self.portal.REQUEST)
         self.assertEquals(v(certified),
                           duplicated_entries_error_msg2)
+
+    def test_pm_PloneGroupSettingsValidator(self):
+        """Completed plonegroup settings validation with our use cases :
+           - can not remove a suffix if used in MeetingConfig.selectableCopyGroups;
+           - can not remove a suffix if used in MeetingItem.copyGroups."""
+        self.changeUser('siteadmin')
+        # add a new suffix and play with it
+        cfg = self.meetingConfig
+        functions = get_registry_functions()
+        functions.append({'enabled': True,
+                          'fct_id': u'samplers',
+                          'fct_orgs': [],
+                          'fct_title': u'Samplers'})
+        validator = PloneGroupSettingsValidator(self.portal,
+                                                self.request,
+                                                None,
+                                                IContactPlonegroupConfig['functions'],
+                                                None)
+        import ipdb; ipdb.set_trace()
+        self.assertIsNone(validator.validate(functions))
+        set_registry_functions(functions)
+        
 
 
 def test_suite():

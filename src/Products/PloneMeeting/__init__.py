@@ -28,6 +28,7 @@ from config import ADD_CONTENT_PERMISSIONS
 from config import DEFAULT_ADD_CONTENT_PERMISSION
 from config import product_globals
 from config import PROJECTNAME
+from plone.registry.field import DisallowedProperty
 from Products.Archetypes import listTypes
 from Products.Archetypes.atapi import process_types
 from Products.CMFCore import utils as cmfutils
@@ -61,6 +62,12 @@ for valid in baseValidators:
         valid.compileRegex()
 
 validation.register(ATCertifiedSignaturesValidator('isValidCertifiedSignatures', title='', description=''))
+
+
+# this is necessary to be able to register custom validator for datagridfield
+# we use it for validators.PloneGroupSettingsValidator,
+# see https://github.com/collective/collective.z3cform.datagridfield/issues/14
+DisallowedProperty('__provides__')
 
 
 def initialize(context):
