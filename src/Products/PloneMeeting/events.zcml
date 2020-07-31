@@ -85,14 +85,6 @@
               handler=".events.onCategoryWillBeRemoved" />
 
   <subscriber for=".content.organization.IPMOrganization
-                   zope.lifecycleevent.interfaces.IObjectAddedEvent"
-              handler=".events.onOrgCreated" />
-
-  <subscriber for=".content.organization.IPMOrganization
-                   zope.lifecycleevent.IObjectModifiedEvent"
-              handler=".events.onOrgModified" />
-
-  <subscriber for=".content.organization.IPMOrganization
                    OFS.interfaces.IObjectWillBeRemovedEvent"
               handler=".events.onOrgWillBeRemoved" />
 

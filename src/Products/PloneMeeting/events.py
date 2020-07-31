@@ -243,16 +243,6 @@ def _invalidateOrgRelatedCachedVocabularies():
     invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.askedadvicesvocabulary")
 
 
-def onOrgCreated(org, event):
-    ''' '''
-    _invalidateOrgRelatedCachedVocabularies()
-
-
-def onOrgModified(org, event):
-    ''' '''
-    _invalidateOrgRelatedCachedVocabularies()
-
-
 def onOrgWillBeRemoved(current_org, event):
     '''Checks if the organization can be deleted:
       - it can not be linked to an existing MeetingItem;
@@ -359,9 +349,6 @@ def onOrgRemoved(current_org, event):
         plone_group = get_plone_group(current_org_uid, suffix)
         if plone_group:
             portal_groups.removeGroup(plone_group.id)
-
-    # clean cache for organization related vocabularies
-    _invalidateOrgRelatedCachedVocabularies()
 
 
 def onRegistryModified(event):

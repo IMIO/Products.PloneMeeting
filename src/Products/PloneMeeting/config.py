@@ -112,11 +112,11 @@ MEETINGROLES = {'creators': 'MeetingMember',
 # base suffixes, THIS IS NOT INTENDED TO BE OVERRIDED or monkeypatched,
 # if necessary, use EXTRA_GROUP_SUFFIXES to extend it
 MEETING_GROUP_SUFFIXES = [
-    {'fct_title': u'advisers', 'fct_id': u'advisers', 'fct_orgs': []},
-    {'fct_title': u'creators', 'fct_id': u'creators', 'fct_orgs': []},
-    {'fct_title': u'observers', 'fct_id': u'observers', 'fct_orgs': []},
-    {'fct_title': u'prereviewers', 'fct_id': u'prereviewers', 'fct_orgs': []},
-    {'fct_title': u'reviewers', 'fct_id': u'reviewers', 'fct_orgs': []},
+    {'fct_title': u'advisers', 'fct_id': u'advisers', 'fct_orgs': [], 'enabled': True},
+    {'fct_title': u'creators', 'fct_id': u'creators', 'fct_orgs': [], 'enabled': True},
+    {'fct_title': u'observers', 'fct_id': u'observers', 'fct_orgs': [], 'enabled': True},
+    {'fct_title': u'prereviewers', 'fct_id': u'prereviewers', 'fct_orgs': [], 'enabled': True},
+    {'fct_title': u'reviewers', 'fct_id': u'reviewers', 'fct_orgs': [], 'enabled': True},
 ]
 
 # this is made to manage specific suffixes for a particular profile

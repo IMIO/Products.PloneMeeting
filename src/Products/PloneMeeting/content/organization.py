@@ -12,6 +12,7 @@ from plone.autoform import directives as form
 from plone.dexterity.schema import DexteritySchemaPolicy
 from plone.supermodel import model
 from Products.PloneMeeting.config import PMMessageFactory as _
+from Products.PloneMeeting.events import _invalidateOrgRelatedCachedVocabularies
 from Products.PloneMeeting.utils import computeCertifiedSignatures
 from Products.PloneMeeting.utils import listifySignatures
 from Products.PloneMeeting.validators import DXCertifiedSignaturesValidator
@@ -132,7 +133,7 @@ class IPMOrganization(IOrganization):
 
     form.read_permission(certified_signatures='PloneMeeting.manage_internal_organization_fields')
     form.write_permission(certified_signatures='PloneMeeting.manage_internal_organization_fields')
-    form.widget('certified_signatures', DataGridFieldFactory)
+    form.widget('certified_signatures', DataGridFieldFactory, allow_reorder=True)
     certified_signatures = schema.List(
         title=_(u'PloneMeeting_label_group_certifiedSignatures'),
         description=_("group_certified_signatures_descr"),
@@ -303,6 +304,10 @@ class PMOrganization(Organization):
                         i = associated_org_index
                     break
         return i
+
+    def _invalidateCachedVocabularies(self):
+        '''Clean cache for vocabularies using organizations.'''
+        _invalidateOrgRelatedCachedVocabularies()
 
 
 class PMOrganizationSchemaPolicy(DexteritySchemaPolicy):
