@@ -23,6 +23,8 @@ Changelog
 - Added `collective.fingerpointing` log message when managing item `assembly/signatures/attendees/signatories`
 - Fixed bug in `itemPeople` macro displayed on `meetingitem_view`, when field Meeting `itemNonAttendees` is enabled,
   the column header was correctly hidden but the column cells were displayed
+- Validate `plonegroup` settings for `functions` so it is not possible to remove or disable a function that is used in
+  `MeetingConfig.selectableCopyGroups` or `MeetingItem.copyGroups`
 
 4.1.27.2 (2020-06-25)
 ---------------------

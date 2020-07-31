@@ -3,10 +3,15 @@
 from collective.contact.plonegroup.browser.settings import IContactPlonegroupConfig
 from collective.contact.plonegroup.config import get_registry_functions
 from collective.contact.plonegroup.config import set_registry_functions
+from collective.contact.plonegroup.utils import get_plone_group
+from copy import deepcopy
+from plone import api
+from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.validators import PloneGroupSettingsValidator
 from Products.validation import validation
 from zope.i18n import translate
+from zope.interface import Invalid
 
 
 class testValidators(PloneMeetingTestCase):
@@ -266,6 +271,7 @@ class testValidators(PloneMeetingTestCase):
         # add a new suffix and play with it
         cfg = self.meetingConfig
         functions = get_registry_functions()
+        functions_without_samplers = deepcopy(functions)
         functions.append({'enabled': True,
                           'fct_id': u'samplers',
                           'fct_orgs': [],
@@ -275,10 +281,36 @@ class testValidators(PloneMeetingTestCase):
                                                 None,
                                                 IContactPlonegroupConfig['functions'],
                                                 None)
-        import ipdb; ipdb.set_trace()
         self.assertIsNone(validator.validate(functions))
         set_registry_functions(functions)
-        
+        # developers_samplers was created
+        dev_samplers = get_plone_group(self.developers_uid, 'samplers')
+        dev_samplers_id = dev_samplers.getId()
+        self.assertTrue(dev_samplers in api.group.get_groups())
+        # use samplers in MeetingConfig
+        cfg.setSelectableCopyGroups(cfg.getSelectableCopyGroups() + (dev_samplers_id, ))
+        validation_error_msg = _('can_not_delete_plone_group_meetingconfig',
+                                 mapping={'cfg_url': cfg.absolute_url()})
+        with self.assertRaises(Invalid) as cm:
+            validator.validate(functions_without_samplers)
+        self.assertEqual(cm.exception.message, validation_error_msg)
+        # use samplers on item, remove it from MeetingConfig
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        item.setCopyGroups((dev_samplers_id, ))
+        item.reindexObject()
+        cfg.setSelectableCopyGroups(())
+        validation_error_msg = _('can_not_delete_plone_group_meetingitem',
+                                 mapping={'item_url': item.absolute_url()})
+        with self.assertRaises(Invalid) as cm:
+            validator.validate(functions_without_samplers)
+        self.assertEqual(cm.exception.message, validation_error_msg)
+        # remove it on item, then everything is correct
+        item.setCopyGroups(())
+        item.reindexObject()
+        self.assertIsNone(validator.validate(functions))
+        set_registry_functions(functions_without_samplers)
+        self.assertFalse(dev_samplers in api.group.get_groups())
 
 
 def test_suite():
