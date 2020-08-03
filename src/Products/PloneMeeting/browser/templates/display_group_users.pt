@@ -2,9 +2,9 @@
     <tal:loop repeat="group view/groups">
         <h5><span i18n:domain="plone" i18n:translate="heading_group_members_of">Members of group <span style="font-style: italic;"
                                                                              i18n:name="groupname"
-                                                                             tal:content="python: view.group_title(group)">group title</span>
-        </span>
-        <acronym tal:condition="python: view.tool.isManager(context, realManagers=True)"><a target='_parent'
+                                                                             tal:content="python: view.group_title(group)">group title</span></span>
+        <acronym tal:condition="python: view.tool.isManager(context, realManagers=True)">
+            <a target='_parent'
                tal:attributes="href string:${view/portal_url}/@@usergroup-groupmembership?groupname=${group/getId}">
                 <img width="16" height="16" style="width: 16px; height: 16px;" tal:attributes="src string:${view/portal_url}/group.png" title="View linked Plone groups" i18n:attributes="title" />
             </a>
