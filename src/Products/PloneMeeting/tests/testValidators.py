@@ -267,6 +267,15 @@ class testValidators(PloneMeetingTestCase):
         """Completed plonegroup settings validation with our use cases :
            - can not remove a suffix if used in MeetingConfig.selectableCopyGroups;
            - can not remove a suffix if used in MeetingItem.copyGroups."""
+        def _check(validation_error_msg):
+            """ """
+            for value in (functions_without_samplers,
+                          functions_with_disabled_samplers,
+                          functions_with_fct_orgs_samplers):
+                with self.assertRaises(Invalid) as cm:
+                    validator.validate(value)
+                self.assertEqual(cm.exception.message, validation_error_msg)
+
         self.changeUser('siteadmin')
         # add a new suffix and play with it
         cfg = self.meetingConfig
@@ -276,6 +285,11 @@ class testValidators(PloneMeetingTestCase):
                           'fct_id': u'samplers',
                           'fct_orgs': [],
                           'fct_title': u'Samplers'})
+        functions_with_disabled_samplers = deepcopy(functions)
+        functions_with_disabled_samplers[-1]['enabled'] = False
+        functions_with_fct_orgs_samplers = deepcopy(functions)
+        functions_with_fct_orgs_samplers[-1]['fct_orgs'] = [self.vendors_uid]
+
         validator = PloneGroupSettingsValidator(self.portal,
                                                 self.request,
                                                 None,
@@ -291,9 +305,7 @@ class testValidators(PloneMeetingTestCase):
         cfg.setSelectableCopyGroups(cfg.getSelectableCopyGroups() + (dev_samplers_id, ))
         validation_error_msg = _('can_not_delete_plone_group_meetingconfig',
                                  mapping={'cfg_url': cfg.absolute_url()})
-        with self.assertRaises(Invalid) as cm:
-            validator.validate(functions_without_samplers)
-        self.assertEqual(cm.exception.message, validation_error_msg)
+        _check(validation_error_msg)
         # use samplers on item, remove it from MeetingConfig
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
@@ -302,9 +314,7 @@ class testValidators(PloneMeetingTestCase):
         cfg.setSelectableCopyGroups(())
         validation_error_msg = _('can_not_delete_plone_group_meetingitem',
                                  mapping={'item_url': item.absolute_url()})
-        with self.assertRaises(Invalid) as cm:
-            validator.validate(functions_without_samplers)
-        self.assertEqual(cm.exception.message, validation_error_msg)
+        _check(validation_error_msg)
         # remove it on item, then everything is correct
         item.setCopyGroups(())
         item.reindexObject()
