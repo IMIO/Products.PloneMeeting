@@ -501,6 +501,7 @@ document.location.reload(true);
      </td>
 
      <td align="center"
+         tal:condition="showNonAttendees"
          tal:attributes="onmouseover python: 'setHiddenButton(\'%s\', \'visible\', prefix=\'byebye_nonattendee_\')' % aUid;
                          onmouseout python: 'setHiddenButton(\'%s\', \'hidden\', prefix=\'byebye_nonattendee_\')' % aUid">
 
@@ -845,3 +846,17 @@ The parameter "cFolder" is the folder containing categories.</tal:comment>
 </p>
 </tal:defines>
 </metal:categoriesInMeetingConfig>
+
+<metal:proposingGroupUsers define-macro="proposingGroupUsers" i18n:domain="PloneMeeting">
+<tal:comment replace="nothing">Tooltipster displaying proposing group users.</tal:comment>
+  <acronym tal:condition="context/displayProposingGroupUsers">
+    <a onclick="event.preventDefault();"
+       class="tooltipster-group-users deactivated"
+       style='display: inline-block; padding: 0'
+       href='#'
+       tal:attributes="data-base_url context_url;
+                       data-group_id string:${proposingGroup/UID}*;">
+      <img tal:attributes="src string:${portal_url}/group_users.png" />
+    </a>
+  </acronym>
+</metal:proposingGroupUsers>

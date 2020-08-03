@@ -8,6 +8,7 @@ from Products.PloneMeeting.browser.itemassembly import validate_apply_until_item
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import IRedirect
 from Products.PloneMeeting.utils import _itemNumber_to_storedItemNumber
+from Products.PloneMeeting.utils import fplog
 from Products.PloneMeeting.utils import notifyModifiedAndReindex
 from z3c.form import button
 from z3c.form import field
@@ -128,7 +129,6 @@ class ByeByeAttendeeForm(BaseAttendeeForm):
         if not self.mayChangeAttendees():
             raise Unauthorized
 
-        plone_utils = api.portal.get_tool('plone_utils')
         items_to_update = _itemsToUpdate(
             from_item_number=self.context.getItemNumber(relativeTo='meeting'),
             until_item_number=self.apply_until_item_number,
@@ -142,28 +142,32 @@ class ByeByeAttendeeForm(BaseAttendeeForm):
         error = False
         for item_to_update in items_to_update:
             if self.person_uid in item_to_update.getItemSignatories(real=True):
-                plone_utils.addPortalMessage(
+                api.portal.show_message(
                     _("Can not set ${not_present_type} a person selected as signatory on an item!",
                       mapping={'not_present_type': _('item_not_present_type_{0}'.format(self.not_present_type))}),
-                    type='warning')
+                    type='warning',
+                    request=self.request)
                 error = True
             if self.not_present_type == 'absent' and self.person_uid in item_to_update.getItemExcused():
-                plone_utils.addPortalMessage(
+                api.portal.show_message(
                     _("Can not set excused a person selected as absent on an item!"),
-                    type='warning')
+                    type='warning',
+                    request=self.request)
                 error = True
             if self.not_present_type == 'excused' and self.person_uid in item_to_update.getItemAbsents():
-                plone_utils.addPortalMessage(
+                api.portal.show_message(
                     _("Can not set absent a person selected as excused on an item!"),
-                    type='warning')
+                    type='warning',
+                    request=self.request)
                 error = True
 
             if error:
                 if item_to_update != self.context:
-                    plone_utils.addPortalMessage(
+                    api.portal.show_message(
                         _("Please check item at ${item_url}.",
                           mapping={'item_url': item_to_update.absolute_url()}),
-                        type='warning')
+                        type='warning',
+                        request=self.request)
                 self._finished = True
                 return
 
@@ -178,9 +182,15 @@ class ByeByeAttendeeForm(BaseAttendeeForm):
                 meeting_not_present_attr[item_to_update_uid] = item_not_present
                 notifyModifiedAndReindex(item_to_update)
         notifyModifiedAndReindex(self.meeting)
-        plone_utils.addPortalMessage(
+        first_item_number = items_to_update[0].getItemNumber(for_display=True)
+        last_item_number = items_to_update[-1].getItemNumber(for_display=True)
+        extras = 'item={0} hp={1} not_present_type={2} from_item_number={3} until_item_number={4}'.format(
+            repr(self.context), self.person_uid, self.not_present_type, first_item_number, last_item_number)
+        fplog('byebye_item_attendee', extras=extras)
+        api.portal.show_message(
             _("Attendee has been set ${not_present_type}.",
-              mapping={'not_present_type': _('item_not_present_type_{0}'.format(self.not_present_type))}))
+              mapping={'not_present_type': _('item_not_present_type_{0}'.format(self.not_present_type))}),
+            request=self.request)
         self._finished = True
 
 
@@ -236,8 +246,12 @@ class WelcomeAttendeeForm(BaseAttendeeForm):
                 meeting_absent_attr[item_to_update_uid] = item_absents
                 notifyModifiedAndReindex(item_to_update)
         notifyModifiedAndReindex(self.meeting)
-        plone_utils = api.portal.get_tool('plone_utils')
-        plone_utils.addPortalMessage(self.attendee_welcome_msg)
+        first_item_number = items_to_update[0].getItemNumber(for_display=True)
+        last_item_number = items_to_update[-1].getItemNumber(for_display=True)
+        extras = 'item={0} hp={1} from_item_number={2} until_item_number={3}'.format(
+            repr(self.context), self.person_uid, first_item_number, last_item_number)
+        fplog('welcome_item_attendee', extras=extras)
+        api.portal.show_message(self.attendee_welcome_msg, request=self.request)
         self._finished = True
 
 
@@ -336,7 +350,6 @@ class RedefinedSignatoryForm(BaseAttendeeForm):
         if not self.mayChangeAttendees():
             raise Unauthorized
 
-        plone_utils = api.portal.get_tool('plone_utils')
         items_to_update = _itemsToUpdate(
             from_item_number=self.context.getItemNumber(relativeTo='meeting'),
             until_item_number=self.apply_until_item_number,
@@ -351,7 +364,12 @@ class RedefinedSignatoryForm(BaseAttendeeForm):
                 self.meeting.itemSignatories[item_to_update_uid] = item_signatories
                 notifyModifiedAndReindex(item_to_update)
         notifyModifiedAndReindex(self.meeting)
-        plone_utils.addPortalMessage(_("Attendee has been set signatory."))
+        first_item_number = items_to_update[0].getItemNumber(for_display=True)
+        last_item_number = items_to_update[-1].getItemNumber(for_display=True)
+        extras = 'item={0} hp={1} signature_number={2} from_item_number={3} until_item_number={4}'.format(
+            repr(self.context), self.person_uid, self.signature_number, first_item_number, last_item_number)
+        fplog('redefine_item_signatory', extras=extras)
+        api.portal.show_message(_("Attendee has been set signatory."), request=self.request)
         self._finished = True
 
 
@@ -381,7 +399,6 @@ class RemoveRedefinedSignatoryForm(BaseAttendeeForm):
         if not self.mayChangeAttendees():
             raise Unauthorized
 
-        plone_utils = api.portal.get_tool('plone_utils')
         items_to_update = _itemsToUpdate(
             from_item_number=self.context.getItemNumber(relativeTo='meeting'),
             until_item_number=self.apply_until_item_number,
@@ -401,7 +418,12 @@ class RemoveRedefinedSignatoryForm(BaseAttendeeForm):
                     del self.meeting.itemSignatories[item_to_update_uid]
                 notifyModifiedAndReindex(item_to_update)
         notifyModifiedAndReindex(self.meeting)
-        plone_utils.addPortalMessage(_("Attendee is no more defined as item signatory."))
+        first_item_number = items_to_update[0].getItemNumber(for_display=True)
+        last_item_number = items_to_update[-1].getItemNumber(for_display=True)
+        extras = 'item={0} hp={1} from_item_number={2} until_item_number={3}'.format(
+            repr(self.context), self.person_uid, first_item_number, last_item_number)
+        fplog('remove_redefined_item_signatory', extras=extras)
+        api.portal.show_message(_("Attendee is no more defined as item signatory."), request=self.request)
         self._finished = True
 
 

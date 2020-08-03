@@ -1611,6 +1611,13 @@ class BaseHeldPositionsVocabulary(object):
 
 class SelectableHeldPositionsVocabulary(BaseHeldPositionsVocabulary):
     """ """
+
+    def __call___cachekey(method, self, context, usage=None, uids=[]):
+        '''cachekey method for self.__call__.'''
+        date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.selectableheldpositionsvocabulary')
+        return date, str(context), usage, uids
+
+    @ram.cache(__call___cachekey)
     def __call__(self, context, usage=None, uids=[]):
         res = super(SelectableHeldPositionsVocabulary, self).__call__(context, usage=None)
         return res
@@ -1621,6 +1628,13 @@ SelectableHeldPositionsVocabularyFactory = SelectableHeldPositionsVocabulary()
 
 class SelectableAssemblyMembersVocabulary(BaseHeldPositionsVocabulary):
     """ """
+
+    def __call___cachekey(method, self, context, usage=None, uids=[]):
+        '''cachekey method for self.__call__.'''
+        date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.selectableassemblymembersvocabulary')
+        return date, str(context), usage, uids
+
+    @ram.cache(__call___cachekey)
     def __call__(self, context, usage=None, uids=[]):
         terms = super(SelectableAssemblyMembersVocabulary, self).__call__(context, usage='assemblyMember')
         stored_terms = []
@@ -1656,6 +1670,13 @@ SelectableAssemblyMembersVocabularyFactory = SelectableAssemblyMembersVocabulary
 
 class SelectableItemInitiatorsVocabulary(BaseHeldPositionsVocabulary):
     """ """
+
+    def __call___cachekey(method, self, context, usage=None, uids=[]):
+        '''cachekey method for self.__call__.'''
+        date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.selectableiteminitiatorsvocabulary')
+        return date, str(context), usage, uids
+
+    @ram.cache(__call___cachekey)
     def __call__(self, context):
         terms = super(SelectableItemInitiatorsVocabulary, self).__call__(
             context, usage='asker')

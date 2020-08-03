@@ -21,14 +21,15 @@
 #
 
 from AccessControl import Unauthorized
+from plone import api
 from plone.z3cform.layout import wrap_form
-from Products.CMFCore.utils import getToolByName
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.browser.itemassembly import _itemsToUpdate
 from Products.PloneMeeting.browser.itemassembly import validate_apply_until_item_number
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import IRedirect
 from Products.PloneMeeting.utils import _itemNumber_to_storedItemNumber
+from Products.PloneMeeting.utils import fplog
 from z3c.form import button
 from z3c.form import field
 from z3c.form import form
@@ -183,8 +184,12 @@ class ManageItemSignaturesForm(form.Form):
             for itemToUpdate in items_to_update:
                 itemToUpdate.setItemSignatures(self.item_signatures)
 
-        plone_utils = getToolByName(self.context, 'plone_utils')
-        plone_utils.addPortalMessage(_("Item signatures have been updated."))
+            first_item_number = items_to_update[0].getItemNumber(for_display=True)
+            last_item_number = items_to_update[-1].getItemNumber(for_display=True)
+            extras = 'item={0} from_item_number={1} until_item_number={2}'.format(
+                repr(self.context), first_item_number, last_item_number)
+            fplog('manage_item_signatures', extras=extras)
+        api.portal.show_message(_("Item signatures have been updated."), request=self.request)
         self._finished = True
 
 

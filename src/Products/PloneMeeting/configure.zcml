@@ -353,7 +353,13 @@
   <class class="collective.iconifiedcategory.content.subcategory.Subcategory">
     <implements interface="Products.PloneMeeting.interfaces.IConfigElement" />
   </class>
-  <class class="collective.contact.core.content.organization.Organization">
+  <class class="Products.PloneMeeting.content.organization.PMOrganization">
+    <implements interface="Products.PloneMeeting.interfaces.IConfigElement" />
+  </class>
+  <class class="Products.PloneMeeting.content.person.PMPerson">
+    <implements interface="Products.PloneMeeting.interfaces.IConfigElement" />
+  </class>
+  <class class="Products.PloneMeeting.content.held_position.PMHeldPosition">
     <implements interface="Products.PloneMeeting.interfaces.IConfigElement" />
   </class>
   <class class="collective.documentgenerator.content.pod_template.ConfigurablePODTemplate">
