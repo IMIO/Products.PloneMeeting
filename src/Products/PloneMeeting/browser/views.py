@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 
+from AccessControl import Unauthorized
 from collections import OrderedDict
 from collective.contact.core.utils import get_gender_and_number
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_organization
 from collective.contact.plonegroup.utils import get_organizations
+from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.documentgenerator.helper.archetypes import ATDocumentGenerationHelperView
 from collective.documentgenerator.helper.dexterity import DXDocumentGenerationHelperView
 from collective.eeafaceted.batchactions import _ as _CEBA
@@ -26,6 +28,7 @@ from Products.CMFCore.permissions import ManagePortal
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.CMFCore.utils import _checkPermission
+from Products.CMFPlone.utils import base_hasattr
 from Products.CMFPlone.utils import safe_unicode
 from Products.Five import BrowserView
 from Products.PloneMeeting import logger
@@ -1835,22 +1838,51 @@ class DisplayGroupUsersView(BrowserView):
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.portal_url = api.portal.get().absolute_url()
 
+    def _check_auth(self, group_id):
+        """Only members of proposingGroup or (MeetingManagers)."""
+        if not self.context.displayProposingGroupUsers():
+            raise Unauthorized
+
+    def _get_suffixes(self, group_id):
+        """ """
+        suffixes = get_all_suffixes(group_id)
+        cfg = self.tool.getMeetingConfig(self.context)
+        if 'prereviewers' in suffixes and \
+           not [wfa for wfa in cfg.getWorkflowAdaptations()
+                if wfa.startswith('pre_validation')]:
+            suffixes.remove('prereviewers')
+        return suffixes
+
     def __call__(self, group_id):
         """ """
-        # manage auto groups
-        self.group_id = group_id
-        self.group = api.group.get(group_id)
+        if group_id.endswith('*'):
+            # remove ending '*'
+            group_id = group_id[:-1]
+            self._check_auth(group_id)
+            # me received a organization UID, get the Plone group ids
+            suffixes = self._get_suffixes(group_id)
+            group_ids = [get_plone_group_id(group_id, suffix)
+                         for suffix in suffixes]
+        else:
+            group_ids = [group_id]
+        self.groups = [api.group.get(tmp_group_id) for tmp_group_id in group_ids]
         return self.index()
 
-    def group_title(self):
+    def group_title(self, group):
         """ """
-        return self.group.getProperty('title')
+        return group.getProperty('title')
 
-    def group_users(self):
+    def group_users(self, group):
         """ """
         res = []
-        for member in self.group.getAllGroupMembers():
-            res.append(member.getProperty('fullname') or member.getId())
+        patterns = {}
+        patterns[0] = "<img src='%s/user.png'> " % self.portal_url
+        patterns[1] = "<img src='%s/group.png'> " % self.portal_url
+        for member in group.getAllGroupMembers():
+            # member may be a user or group
+            isGroup = base_hasattr(member, 'isGroup') and member.isGroup() or 0
+            member_title = member.getProperty('fullname') or member.getProperty('title') or member.getId()
+            res.append(patterns[isGroup] + member_title)
         res.sort()
         return "<br />".join(res)
 
