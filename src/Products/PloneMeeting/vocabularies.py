@@ -295,10 +295,9 @@ class GroupsInChargeVocabulary(object):
                                                     onlySelectable=False,
                                                     caching=False)
                 for cat in categories:
-                    for group_in_charge_uid in cat.getGroupsInCharge():
-                        group_in_charge = get_organization(group_in_charge_uid)
+                    for group_in_charge in cat.get_groups_in_charge(the_objects=True):
                         # manage duplicates
-                        if group_in_charge and group_in_charge not in res:
+                        if group_in_charge not in res:
                             res.append(group_in_charge)
         else:
             # groups in charge are selected on the items

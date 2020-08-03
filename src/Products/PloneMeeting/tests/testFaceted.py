@@ -372,28 +372,31 @@ class testFaceted(PloneMeetingTestCase):
     def test_pm_GroupsInChargeVocabulary(self):
         '''Test the "Products.PloneMeeting.vocabularies.groupsinchargevocabulary"
            vocabulary, especially because it is cached.'''
+        cfg = self.meetingConfig
+        cfg.setUseGroupsAsCategories(False)
+        self._enableField('classifier')
         self.changeUser('siteadmin')
         org1 = self.create('organization', id='org1', title='Org 1', acronym='Org1')
-        org1uid = org1.UID()
+        org1_uid = org1.UID()
         org2 = self.create('organization', id='org2', title='Org 2', acronym='Org2')
-        org2uid = org2.UID()
+        org2_uid = org2.UID()
         org3 = self.create('organization', id='org3', title='Org 3', acronym='Org3')
-        org3uid = org3.UID()
+        org3_uid = org3.UID()
         vocab = queryUtility(IVocabularyFactory, "Products.PloneMeeting.vocabularies.groupsinchargevocabulary")
 
         # for now, no group in charge
         meetingFolder = self.getMeetingFolder()
         self.assertEqual(len(vocab(meetingFolder)), 0)
         # define some group in charge, vocabulary is invalidated when an org is modified
-        self.vendors.groups_in_charge = (org1uid,)
+        self.vendors.groups_in_charge = (org1_uid,)
         notify(ObjectModifiedEvent(self.vendors))
-        self.developers.groups_in_charge = (org2uid,)
+        self.developers.groups_in_charge = (org2_uid,)
         notify(ObjectModifiedEvent(self.developers))
         self.assertEqual([term.title for term in vocab(meetingFolder)], ['Org 1', 'Org 2'])
 
         # create an new org with a groupInCharge directly
         org4 = self.create('organization', id='org4', title='Org 4',
-                           acronym='Org4', groups_in_charge=(org3uid,))
+                           acronym='Org4', groups_in_charge=(org3_uid,))
         org4_uid = org4.UID()
         self._select_organization(org4_uid)
         self.assertEqual([term.title for term in vocab(meetingFolder)], ['Org 1', 'Org 2', 'Org 3'])
@@ -407,6 +410,30 @@ class testFaceted(PloneMeetingTestCase):
         self.vendors.groups_in_charge = ()
         notify(ObjectModifiedEvent(self.vendors))
         self.assertEqual([term.title for term in vocab(meetingFolder)], ['Org 2', 'Org 3'])
+
+        # category, creating an organization invalidates the vocabulary cache
+        org5 = self.create('organization', id='org5', title='Org 5', acronym='Org5')
+        org5_uid = org5.UID()
+        # an already used
+        cfg.categories.development.groups_in_charge = [org3_uid]
+        # already existing no more used
+        cfg.categories.research.groups_in_charge = [org4_uid]
+        # new
+        cfg.categories.events.groups_in_charge = [org5_uid]
+        self.assertEqual(
+            [term.title for term in vocab(meetingFolder)],
+            ['Org 2', 'Org 3', 'Org 4', 'Org 5'])
+
+        # classifier, creating an organization invalidates the vocabulary cache
+        org6 = self.create('organization', id='org6', title='Org 6', acronym='Org6')
+        org6_uid = org6.UID()
+        # already existing
+        cfg.classifiers.classifier1.groups_in_charge = [org5_uid]
+        # new
+        cfg.classifiers.classifier2.groups_in_charge = [org6_uid]
+        self.assertEqual(
+            [term.title for term in vocab(meetingFolder)],
+            ['Org 2', 'Org 3', 'Org 4', 'Org 5', 'Org 6'])
 
     def test_pm_CreatorsVocabulary(self):
         '''Test the "Products.PloneMeeting.vocabularies.creatorsvocabulary"
