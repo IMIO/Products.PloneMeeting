@@ -79,7 +79,7 @@
       <a name="directory"></a>
       <fieldset tal:condition="isRealManager">
          <legend><span i18n:translate="meeting_organizations">Organizations</span>
-           <span class="fa fa-question-circle help-doc" onClick="toggleDoc('groupDoc', toggle_parent_active=false);"></span>
+           <span class="fa fa-question-circle help-doc" onClick="toggleDetails('groupDoc', toggle_parent_active=false);"></span>
          </legend>
          <h4>
            <img style="vertical-align: baseline;"
