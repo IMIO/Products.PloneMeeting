@@ -24,6 +24,7 @@ Changelog
 - Fixed bug in `itemPeople` macro displayed on `meetingitem_view`, when field Meeting `itemNonAttendees` is enabled,
   the column header was correctly hidden but the column cells were displayed
 - Moved JS function `toggleDoc` to `imio.helpers` under name `toggleDetails`
+- Cleaned `plonemeeting.css`, removed useless styles definition
 - Migrate `MeetingCategory` from AT to DX :
 
   - New portal_type is `meetingcategory`;
