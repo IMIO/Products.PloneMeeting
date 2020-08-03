@@ -2,10 +2,7 @@
 
 from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator
-<<<<<<< HEAD
 from Products.ZCatalog.ProgressHandler import ZLogHandler
-=======
->>>>>>> origin/master
 
 
 class Migrate_To_4110(Migrator):
