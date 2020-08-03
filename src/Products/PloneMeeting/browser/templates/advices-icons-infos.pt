@@ -26,7 +26,7 @@
                   <div style="display: inline"
                        class="collapsible active"
                        tal:attributes="id string:comment_toggle_${advice/id};
-                                       onclick string:toggleDoc('comment_content_${advice/id}', toggle_parent_active=true, parent_elem=comment_toggle_${advice/id});">
+                                       onclick string:toggleDetails('comment_content_${advice/id}', toggle_parent_active=true, parent_tag=comment_toggle_${advice/id});">
                   </div>
                   <span tal:condition="advice/delay">
                      <tal:defines define="class_if_not_given string:advice_delay advice_delay_${advice/delay_infos/delay_status};">

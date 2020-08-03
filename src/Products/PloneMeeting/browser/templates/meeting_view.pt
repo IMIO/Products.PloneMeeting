@@ -39,7 +39,7 @@
 
   <tal:availableItems condition="view/showAvailableItems">
     <h2 class="collapsible active available-items"
-         onclick="toggleDoc('collapsible-available-items', toggle_parent_active=true, parent_elem=this)">
+         onclick="toggleDetails('collapsible-available-items', toggle_parent_active=true, parent_tag=this)">
       <span i18n:translate='available_items'>Available items</span>
     </h2>
     <iframe src="@@meeting_available_items_view"
@@ -55,7 +55,7 @@
 
   <div class="clear"></div>
   <h2 class="collapsible active presented-items"
-       onclick="toggleDoc('faceted-form', toggle_parent_active=true, parent_elem=this)">
+       onclick="toggleDetails('faceted-form', toggle_parent_active=true, parent_tag=this)">
     <span i18n:translate="presented_items">Presented items</span> (<span class="meeting_number_of_items" tal:content="context/numberOfItems"/>)
   </h2>
   <span class="fa fa-question-circle help-doc pmAction tooltipster-inserting-methods-helper-msg"
