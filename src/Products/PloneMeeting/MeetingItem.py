@@ -6452,7 +6452,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                           domain='PloneMeeting',
                           context=self.REQUEST).encode(enc) + '<br/>'
         collapsibleMeetingAssembly = """<div class="collapsible"
- onclick="toggleDoc('collapsible-item-assembly');">&nbsp;%s</div>
+ onclick="toggleDetails('collapsible-item-assembly');">&nbsp;%s</div>
 <div id="collapsible-item-assembly" class="collapsible-content" style="display: none;">
 <div class="collapsible-inner-content">
 %s
@@ -6476,7 +6476,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                           context=self.REQUEST).encode(enc) + '<br/>'
         collapsibleMeetingAssemblyExcused = \
             """<div class="collapsible"
- onclick="toggleDoc('collapsible-item-assembly-excused');">&nbsp;%s</div>
+ onclick="toggleDetails('collapsible-item-assembly-excused');">&nbsp;%s</div>
 <div id="collapsible-item-assembly-excused" class="collapsible-content" style="display: none;">
 <div class="collapsible-inner-content">
 %s
@@ -6500,7 +6500,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                           context=self.REQUEST).encode(enc) + '<br/>'
         collapsibleMeetingAssemblyAbsents = \
             """<div class="collapsible"
- onclick="toggleDoc('collapsible-item-assembly-absents');">&nbsp;%s</div>
+ onclick="toggleDetails('collapsible-item-assembly-absents');">&nbsp;%s</div>
 <div id="collapsible-item-assembly-absents" class="collapsible-content" style="display: none;">
 <div class="collapsible-inner-content">
 %s
@@ -6524,7 +6524,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                           context=self.REQUEST).encode(enc) + '<br/>'
         collapsibleMeetingAssemblyGuests = \
             """<div class="collapsible"
- onclick="toggleDoc('collapsible-item-assembly-guests');">&nbsp;%s</div>
+ onclick="toggleDetails('collapsible-item-assembly-guests');">&nbsp;%s</div>
 <div id="collapsible-item-assembly-guests" class="collapsible-content" style="display: none;">
 <div class="collapsible-inner-content">
 %s
@@ -6547,7 +6547,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                           domain='PloneMeeting',
                           context=self.REQUEST).encode(enc) + '<br/>'
         collapsibleMeetingSignatures = """<div class="collapsible"
- onclick="toggleDoc('collapsible-item-signatures');">&nbsp;%s</div>
+ onclick="toggleDetails('collapsible-item-signatures');">&nbsp;%s</div>
 <div id="collapsible-item-signatures" class="collapsible-content" style="display: none;">
 <div class="collapsible-inner-content">
 %s

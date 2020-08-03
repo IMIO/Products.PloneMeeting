@@ -23,6 +23,7 @@ Changelog
 - Added `collective.fingerpointing` log message when managing item `assembly/signatures/attendees/signatories`
 - Fixed bug in `itemPeople` macro displayed on `meetingitem_view`, when field Meeting `itemNonAttendees` is enabled,
   the column header was correctly hidden but the column cells were displayed
+- Moved JS function `toggleDoc` to `imio.helpers` under name `toggleDetails`
 - Migrate `MeetingCategory` from AT to DX :
 
   - New portal_type is `meetingcategory`;

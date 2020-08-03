@@ -137,7 +137,7 @@ document.location.reload(true);
     <div style="display: inline"
          class="collapsible active"
          tal:attributes="id string:${hookId}_toggle;
-                         onclick string:toggleDoc('${hookId}_content', toggle_parent_active=true, parent_elem=${hookId}_toggle);">
+                         onclick string:toggleDetails('${hookId}_content', toggle_parent_active=true, parent_tag=${hookId}_toggle);">
       <span tal:replace="python: field.widget.Label(context)"></span>
     </div>
     <img style="cursor:pointer" tal:condition="mayEdit"
