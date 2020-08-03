@@ -1886,8 +1886,8 @@ class DisplayGroupUsersView(BrowserView):
         """ """
         res = []
         patterns = {}
-        patterns[0] = "<img src='%s/user.png'> " % self.portal_url
-        patterns[1] = "<img src='%s/group.png'> " % self.portal_url
+        patterns[0] = "<img style='width: 16px; height: 16px;' src='%s/user.png'> " % self.portal_url
+        patterns[1] = "<img style='width: 16px; height: 16px;' src='%s/group.png'> " % self.portal_url
         for member in group.getAllGroupMembers():
             # member may be a user or group
             isGroup = base_hasattr(member, 'isGroup') and member.isGroup() or 0
