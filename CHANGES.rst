@@ -25,6 +25,7 @@ Changelog
   the column header was correctly hidden but the column cells were displayed
 - Moved JS function `toggleDoc` to `imio.helpers` under name `toggleDetails`
 - Cleaned `plonemeeting.css`, removed useless styles definition
+- In `contacts` management, show clearly that icons in portlet will add new `organization/held_position` by using icons with a `+`
 
 4.1.27.2 (2020-06-25)
 ---------------------
