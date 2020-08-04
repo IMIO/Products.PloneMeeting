@@ -204,6 +204,6 @@
   <!-- eea.facetednavigation settings changed event -->
   <subscriber for="eea.facetednavigation.interfaces.IFacetedNavigable
                    eea.facetednavigation.interfaces.IFacetedGlobalSettingsChangedEvent"
-   handler=".events.onFacetedGlobalSettingsChanged" />
+              handler=".events.onFacetedGlobalSettingsChanged" />
 
 </configure>

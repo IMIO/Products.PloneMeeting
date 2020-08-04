@@ -183,6 +183,7 @@
 
   <adapter factory=".validators.DXCertifiedSignaturesValidator" />
 
+
   <!-- IContentDeletable adapter override for PloneMeeting -->
   <adapter for="imio.annex.content.annex.IAnnex"
            factory=".adapters.AnnexContentDeletableAdapter"
