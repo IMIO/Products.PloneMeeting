@@ -20,8 +20,8 @@
   <type type_id="Meeting">
      <bound-workflow workflow_id="meeting_workflow" />
   </type>
-  <type type_id="MeetingCategory">
-     <bound-workflow workflow_id="plonemeeting_activity_workflow" />
+  <type type_id="meetingcategory">
+     <bound-workflow workflow_id="" />
   </type>
   <type type_id="MeetingConfig">
      <bound-workflow workflow_id="plonemeeting_activity_workflow" />

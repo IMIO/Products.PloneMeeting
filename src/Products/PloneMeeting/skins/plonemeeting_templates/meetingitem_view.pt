@@ -88,26 +88,26 @@
                 <span tal:condition="not: associatedGroups">-</span>
             </div>
 
-            <tal:comment replace="nothing">Classifier</tal:comment>
-            <div class="discreet"
-                 tal:condition="python: 'classifier' in usedAttrs"
-                 tal:define="classifier context/getClassifier">
-                <span class="item_attribute_label"
-                      i18n:translate="PloneMeeting_label_classifier"></span>:&nbsp;&nbsp;
-                <span tal:condition="nocall:classifier" tal:content="classifier/Title">-</span>
-                <span tal:condition="not:nocall:classifier">-</span>
-            </div>
-
             <tal:comment replace="nothing">Category</tal:comment>
             <tal:category condition="not:meetingConfig/getUseGroupsAsCategories">
             <div class="discreet"
                  tal:define="cat python: context.getCategory(True)">
                 <span class="item_attribute_label"
                       tal:condition="not: meetingConfig/getUseGroupsAsCategories"
-                      i18n:translate="MeetingCategory"></span>:&nbsp;&nbsp;
+                      i18n:translate="PloneMeeting_label_category"></span>:&nbsp;&nbsp;
                 <span tal:condition="nocall:cat" tal:content="cat/Title"></span>
             </div>
             </tal:category>
+
+            <tal:comment replace="nothing">Classifier</tal:comment>
+            <div class="discreet"
+                 tal:condition="python: 'classifier' in usedAttrs"
+                 tal:define="classifier python: context.getClassifier(theObject=True)">
+                <span class="item_attribute_label"
+                      i18n:translate="PloneMeeting_label_classifier"></span>:&nbsp;&nbsp;
+                <span tal:condition="nocall:classifier" tal:content="classifier/Title">-</span>
+                <span tal:condition="not:nocall:classifier">-</span>
+            </div>
 
             <tal:comment replace="nothing">Advices</tal:comment>
             <div class="discreet" tal:condition="showAdvices"

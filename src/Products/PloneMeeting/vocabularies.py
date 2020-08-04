@@ -113,12 +113,13 @@ class ItemCategoriesVocabulary(object):
         """ """
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        categories = cfg.getCategories(classifiers=classifiers, onlySelectable=False, caching=False)
-        activeCategories = [cat for cat in categories if api.content.get_state(cat) == 'active']
-        notActiveCategories = [cat for cat in categories if not api.content.get_state(cat) == 'active']
+        catType = classifiers and 'classifiers' or 'categories'
+        categories = cfg.getCategories(catType=catType, onlySelectable=False, caching=False)
+        activeCategories = [cat for cat in categories if cat.enabled]
+        notActiveCategories = [cat for cat in categories if not cat.enabled]
         res_active = []
         for category in activeCategories:
-            term_id = classifiers and category.UID() or category.getId()
+            term_id = category.getId()
             res_active.append(
                 SimpleTerm(term_id,
                            term_id,
@@ -129,7 +130,7 @@ class ItemCategoriesVocabulary(object):
 
         res_not_active = []
         for category in notActiveCategories:
-            term_id = classifiers and category.UID() or category.getId()
+            term_id = category.getId()
             res_not_active.append(
                 SimpleTerm(term_id,
                            term_id,
@@ -287,13 +288,16 @@ class GroupsInChargeVocabulary(object):
                         res.append(group_in_charge)
             # categories
             if not cfg.getUseGroupsAsCategories():
-                classifiers = 'classifier' in cfg.getUsedItemAttributes()
-                categories = cfg.getCategories(classifiers=classifiers, onlySelectable=False, caching=False)
+                categories = cfg.getCategories(onlySelectable=False, caching=False)
+                # add classifiers when using it
+                if 'classifier' in cfg.getUsedItemAttributes():
+                    categories += cfg.getCategories(catType='classifiers',
+                                                    onlySelectable=False,
+                                                    caching=False)
                 for cat in categories:
-                    for group_in_charge_uid in cat.getGroupsInCharge():
-                        group_in_charge = get_organization(group_in_charge_uid)
+                    for group_in_charge in cat.get_groups_in_charge(the_objects=True):
                         # manage duplicates
-                        if group_in_charge and group_in_charge not in res:
+                        if group_in_charge not in res:
                             res.append(group_in_charge)
         else:
             # groups in charge are selected on the items

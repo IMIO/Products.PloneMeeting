@@ -80,6 +80,10 @@
                    OFS.interfaces.IObjectWillBeRemovedEvent"
               handler=".events.onConfigWillBeRemoved" />
 
+  <subscriber for=".content.category.IMeetingCategory
+                   OFS.interfaces.IObjectWillBeRemovedEvent"
+              handler=".events.onCategoryWillBeRemoved" />
+
   <subscriber for=".content.organization.IPMOrganization
                    OFS.interfaces.IObjectWillBeRemovedEvent"
               handler=".events.onOrgWillBeRemoved" />

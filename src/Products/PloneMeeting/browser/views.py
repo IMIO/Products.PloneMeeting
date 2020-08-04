@@ -410,7 +410,7 @@ class MeetingInsertingMethodsHelpMsgView(BrowserView):
         return res
 
     def orderedCategories(self):
-        """Display categories if one of the selected inserting methods relies on categories."""
+        """Display categories if one of the selected inserting methods relies on it."""
         categories = []
         categories_inserting_methods = [
             method['insertingMethod'] for method in self.cfg.getInsertingMethodsOnAddItem()
@@ -418,6 +418,16 @@ class MeetingInsertingMethodsHelpMsgView(BrowserView):
         if categories_inserting_methods:
             categories = self.cfg.getCategories()
         return categories
+
+    def orderedClassifiers(self):
+        """Display classifiers if one of the selected inserting methods relies on it."""
+        classifiers = []
+        classifiers_inserting_methods = [
+            method['insertingMethod'] for method in self.cfg.getInsertingMethodsOnAddItem()
+            if 'classifier' in self.inserting_methods_fields_mapping[method['insertingMethod']]]
+        if classifiers_inserting_methods:
+            classifiers = self.cfg.getCategories(catType='classifiers')
+        return classifiers
 
 
 class MeetingUpdateItemReferences(BrowserView):

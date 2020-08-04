@@ -110,16 +110,21 @@ class ItemTemplateDescriptor(Descriptor):
 
 
 class CategoryDescriptor(Descriptor):
-    multiSelectFields = ['usingGroups', ]
+    multiSelectFields = ['using_groups',
+                         'category_mapping_when_cloning_to_other_mc',
+                         'groups_in_charge']
 
-    def __init__(self, id, title, description='', categoryId='',
-                 usingGroups=[], active=True):
+    def __init__(self, id, title, description='', category_id='',
+                 using_groups=[], category_mapping_when_cloning_to_other_mc=[],
+                 groups_in_charge=[], enabled=True):
         self.id = id
         self.title = title
         self.description = description
-        self.categoryId = categoryId
-        self.usingGroups = usingGroups
-        self.active = active
+        self.category_id = category_id
+        self.using_groups = using_groups
+        self.category_mapping_when_cloning_to_other_mc = category_mapping_when_cloning_to_other_mc
+        self.groups_in_charge = groups_in_charge
+        self.enabled = enabled
 
 
 class AnnexTypeDescriptor(Descriptor):

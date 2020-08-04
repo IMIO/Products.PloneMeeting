@@ -177,6 +177,8 @@ class MeetingItemWorkflowConditions(object):
         msg = None
         if not self.context.getCategory(theObject=True):
             msg = No(_('required_category_ko'))
+        elif self.context.attributeIsUsed('classifier') and not self.context.getClassifier():
+            msg = No(_('required_classifier_ko'))
         elif self.context.attributeIsUsed('groupsInCharge') and not self.context.getGroupsInCharge():
             msg = No(_('required_groupsInCharge_ko'))
         return msg
@@ -814,6 +816,7 @@ schema = Schema((
         name='category',
         widget=SelectionWidget(
             condition="python: here.showCategory()",
+            format="select",
             description="Category",
             description_msgid="item_category_descr",
             label='Category',
@@ -822,28 +825,19 @@ schema = Schema((
         ),
         vocabulary='listCategories',
     ),
-    ReferenceField(
+    StringField(
         name='classifier',
-        keepReferencesOnCopy=True,
-        widget=ReferenceBrowserWidget(
+        widget=SelectionWidget(
+            condition="python: here.attributeIsUsed('classifier')",
+            format="select",
             description="Classifier",
             description_msgid="item_classifier_descr",
-            condition="python: here.attributeIsUsed('classifier')",
-            allow_search=True,
-            allow_browse=False,
-            startup_directory_method="classifierStartupDirectory",
-            force_close_on_insert=True,
-            restrict_browsing_to_startup_directory=True,
-            base_query="classifierBaseQuery",
-            show_results_without_query=True,
             label='Classifier',
             label_msgid='PloneMeeting_label_classifier',
             i18n_domain='PloneMeeting',
         ),
-        multiValued=False,
-        relationship="ItemClassification",
-        allowed_types=('MeetingCategory',),
         optional=True,
+        vocabulary='listClassifiers',
     ),
     StringField(
         name='proposingGroup',
@@ -1623,10 +1617,26 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         # Value could be '_none_' if it was displayed as listbox or None if
-        # it was displayed as radio buttons...  Category use 'flex' format
+        # it was displayed as radio buttons...  Category uses 'flex' format
         if (not cfg.getUseGroupsAsCategories()) and \
            (value == '_none_' or not value):
             return translate('category_required', domain='PloneMeeting', context=self.REQUEST)
+
+    security.declarePrivate('validate_classifier')
+
+    def validate_classifier(self, value):
+        '''Checks that, if we use classifiers, a classifier is specified.
+           The classifier will not be validated when editing an item template.'''
+
+        # bypass for itemtemplates
+        if self.isDefinedInTool(item_type='itemtemplate'):
+            return
+
+        # Value could be '_none_' if it was displayed as listbox or None if
+        # it was displayed as radio buttons...  Classifier uses 'flex' format
+        if (self.attributeIsUsed('classifier')) and \
+           (value == '_none_' or not value):
+            return translate('classifier_required', domain='PloneMeeting', context=self.REQUEST)
 
     security.declarePrivate('validate_groupsInCharge')
 
@@ -1737,32 +1747,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def custom_validate_optionalAdvisers(self, value, storedOptionalAdvisers, removedAdvisers):
         '''See doc in interfaces.py.'''
         pass
-
-    security.declarePrivate('validate_classifier')
-
-    def validate_classifier(self, value):
-        '''If classifiers are used, they are mandatory.'''
-        if self.attributeIsUsed('classifier') and not value:
-            return translate('category_required', domain='PloneMeeting', context=self.REQUEST)
-
-    def classifierStartupDirectory(self):
-        '''Returns the startup_directory for the classifier referencebrowserwidget.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        portal_url = api.portal.get_tool('portal_url')
-        cfg = tool.getMeetingConfig(self)
-        return portal_url.getRelativeContentURL(cfg.classifiers)
-
-    security.declarePublic('classifierBaseQuery')
-
-    def classifierBaseQuery(self):
-        '''base_query for the 'classifier' field.
-           Here, we restrict the widget to search in the MeetingConfig's classifiers directory only.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self)
-        query = {}
-        query['path'] = {'query': '/'.join(cfg.getPhysicalPath() + ('classifiers',))}
-        query['review_state'] = 'active'
-        return query
 
     security.declarePublic('manuallyLinkedItemsBaseQuery')
 
@@ -2264,7 +2248,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def setClassifier(self, value, **kwargs):
         '''Overrides the field 'classifier' mutator to be able to
            updateItemReferences if value changed.'''
-        current_classifier = self.getField('classifier').getRaw(self, **kwargs)
+        current_classifier = self.getField('classifier').get(self, **kwargs)
         if not value == current_classifier:
             # add a value in the REQUEST to specify that updateItemReferences is needed
             self.REQUEST.set('need_Meeting_updateItemReferences', True)
@@ -2865,33 +2849,41 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePrivate('listCategories')
 
-    def listCategories(self):
+    def listCategories(self, classifiers=False):
         '''Returns a DisplayList containing all available active categories in
            the meeting config that corresponds me.'''
         res = []
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        for cat in cfg.getCategories():
+        catType = classifiers and 'classifiers' or 'categories'
+        for cat in cfg.getCategories(catType=catType):
             res.append((cat.id, safe_unicode(cat.Title())))
 
         # make sure current category is listed here
+        field_name = classifiers and "classifier" or "category"
         storedKeys = [elt[0] for elt in res]
-        current_cat = self.getCategory(theObject=True)
+        current_cat = self.getField(field_name).getAccessor(self)(theObject=True)
         if current_cat and not current_cat.getId() in storedKeys:
             res.append((current_cat.getId(), safe_unicode(current_cat.Title())))
 
-        if 'category' not in cfg.getItemFieldsToKeepConfigSortingFor():
+        if field_name not in cfg.getItemFieldsToKeepConfigSortingFor():
             # natural sort, reverse tuple so we have value/key instead key/value
             # and realsorted may achieve his work
             res = [(elt[1], elt[0]) for elt in res]
             res = realsorted(res)
             res = [(elt[1], elt[0]) for elt in res]
 
-        if len(res) > 4:
-            res.insert(0, ('_none_', translate('make_a_choice',
-                                               domain='PloneMeeting',
-                                               context=self.REQUEST)))
+        res.insert(0, ('_none_', translate('make_a_choice',
+                                           domain='PloneMeeting',
+                                           context=self.REQUEST)))
         return DisplayList(res)
+
+    security.declarePrivate('listClassifiers')
+
+    def listClassifiers(self):
+        '''Returns a DisplayList containing all available active classifiers in
+           the meeting config that corresponds me.'''
+        return self.listCategories(classifiers=True)
 
     security.declarePublic('getCategory')
 
@@ -2915,6 +2907,28 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                         res = getattr(cfg.categories, cat_id)
                 else:
                     res = cat_id
+        except AttributeError:
+            res = ''
+        return res
+
+    security.declarePublic('getClassifier')
+
+    def getClassifier(self, theObject=False, real=False, **kwargs):
+        '''Returns the classifier of this item. When used by Archetypes,
+           this method returns the category Id; when used elsewhere in
+           the PloneMeeting code (with p_theObject=True), it returns
+           the true Category object.'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        try:
+            res = ''
+            cat_id = self.getField('classifier').get(self, **kwargs)
+            if theObject:
+                # avoid problems with acquisition
+                if cat_id in cfg.classifiers.objectIds():
+                    res = getattr(cfg.classifiers, cat_id)
+            else:
+                res = cat_id
         except AttributeError:
             res = ''
         return res
@@ -2974,7 +2988,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             category = self.getCategory(theObject=True, real=True)
             if category:
                 cat_groups_in_charge = [
-                    gic_uid for gic_uid in category.getGroupsInCharge()
+                    gic_uid for gic_uid in category.get_groups_in_charge()
                     if gic_uid not in res]
                 if cat_groups_in_charge:
                     res += list(cat_groups_in_charge)
@@ -3525,13 +3539,21 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             else:
                 res = keptListTypes.index(currentListType) + 1
         elif insertMethod == 'on_categories':
-            # get the category order, pass onlySelectable to False so disabled categories
+            # get the categories order, pass onlySelectable to False so disabled categories
             # are taken into account also, so we avoid problems with freshly disabled categories
             # or when a category is restricted to a group a MeetingManager is not member of
             res = 1
             category = self.getCategory(True)
             if category:
-                res = category.getOrder(onlySelectable=False)
+                res = category.get_order(only_selectable=False)
+        elif insertMethod == 'on_classifiers':
+            # get the classifiers order, pass onlySelectable to False so disabled classifiers
+            # are taken into account also, so we avoid problems with freshly disabled classifiers
+            # or when a classifier is restricted to a group a MeetingManager is not member of
+            res = 1
+            classifier = self.getClassifier(True)
+            if classifier:
+                res = classifier.get_order(only_selectable=False)
         elif insertMethod == 'on_proposing_groups':
             org = self.getProposingGroup(True)
             res = org.get_order()
@@ -5787,7 +5809,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            not destMeetingConfig.getUseGroupsAsCategories():
             originalCategory = self.getCategory(theObject=True)
             # find out if something is defined when sending an item to destMeetingConfig
-            for destCat in originalCategory.getCategoryMappingsWhenCloningToOtherMC():
+            for destCat in originalCategory.category_mapping_when_cloning_to_other_mc:
                 if destCat.split('.')[0] == destMeetingConfigId:
                     # we found a mapping defined for the new category, apply it
                     # get the category so it fails if it does not exist (that should not be possible...)

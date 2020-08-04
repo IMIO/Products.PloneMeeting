@@ -220,8 +220,7 @@ class testSetup(PloneMeetingTestCase):
         portal_factory = api.portal.get_tool('portal_factory')
         factory_types = portal_factory.getFactoryTypes().keys()
         portal_types = api.portal.get_tool('portal_types')
-        # every portal_types starting with Meeting, MeetingCategory,
-        # MeetingConfig, MeetingItemRecurringXXX, ...
+        # every portal_types starting with Meeting, MeetingConfig, MeetingItemRecurringXXX, ...
         meeting_types = [pt for pt in portal_types if pt.startswith('Meeting')]
         for meeting_type in meeting_types:
             self.failIf(set(meeting_types).difference(factory_types))
