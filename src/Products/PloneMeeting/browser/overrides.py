@@ -174,12 +174,13 @@ class PMContentActionsViewlet(ContentActionsViewlet):
 
     def render(self):
         if self.context.meta_type in (
-            'ATTopic', 'Meeting', 'MeetingItem', 'MeetingCategory',
+            'ATTopic', 'Meeting', 'MeetingItem',
             'MeetingConfig', 'ToolPloneMeeting',) or \
            self.context.portal_type in (
             'ContentCategoryConfiguration', 'ContentCategoryGroup',
             'ConfigurablePODTemplate', 'DashboardPODTemplate',
-            'organization', 'person', 'held_position') or \
+            'organization', 'person', 'held_position',
+            'meetingcategory') or \
            self.context.portal_type.startswith(('meetingadvice',)) or \
            self.context.portal_type.endswith(('ContentCategory', 'ContentSubcategory',)) or \
            IContactsDashboard.providedBy(self.context) or \
