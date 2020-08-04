@@ -274,6 +274,7 @@ class Migrator(BaseMigrator):
         for cfgId in self.cfgsAdvicesInvalidation:
             cfg = getattr(self.tool, cfgId)
             cfg.setEnableAdviceInvalidation(self.cfgsAdvicesInvalidation[cfgId])
+        self.cleanRegistries()
         self.tool.invalidateAllCache()
         BaseMigrator.finish(self)
         logger.info('======================================================================')

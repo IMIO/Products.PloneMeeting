@@ -36,6 +36,7 @@ Changelog
   - Removed magic in `MeetingConfig.getCategories` that returned organizations when
     `MeetingConfig.useGroupsAsCategories` was `True`, now it returns only categories, moreover parameter `classifiers` is
     renamed to `catType` that may be `all`/`categories`/`classifiers`.
+- In every migrations, call `cleanRegistries` at the end by default so `JS/CSS` are recompiled
 
 4.1.27.2 (2020-06-25)
 ---------------------
