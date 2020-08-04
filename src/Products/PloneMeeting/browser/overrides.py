@@ -469,6 +469,9 @@ class PMRenderCategoryView(IDRenderCategoryView):
         contact_infos.pop('hps-searches')
         # by default, add organization to plonegroup-organization
         contact_infos['orgs-searches']['add'] = 'plonegroup-organization/++add++organization'
+        # use default add icon to add organization or person
+        contact_infos['orgs-searches']['img'] = 'create_organization.png'
+        contact_infos['persons-searches']['img'] = 'create_contact.png'
         return contact_infos
 
     def _get_category_template(self):
