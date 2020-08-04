@@ -203,6 +203,44 @@ class Migrator(BaseMigrator):
         pghandler.finish()
         logger.info('Done.')
 
+    def cleanItemColumns(self, to_remove=[]):
+        '''When a column is no more available.'''
+        logger.info('Cleaning MeetingConfig columns related fields, removing columns "%s"...'
+                    % ', '.join(to_remove))
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            for field_name in ('itemColumns',
+                               'availableItemsListVisibleColumns',
+                               'itemsListVisibleColumns'):
+                field = cfg.getField(field_name)
+                keys = field.get(cfg)
+                adapted_keys = [k for k in keys if k not in to_remove]
+                field.set(cfg, adapted_keys)
+        logger.info('Done.')
+
+    def cleanItemFilters(self, to_remove=[], to_add=[]):
+        '''When a faceted filter is no more available or has been renamed.'''
+        logger.info('Cleaning MeetingConfig faceted filter related fields, removing columns "%s"...'
+                    % ', '.join(to_remove))
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            for field_name in ('dashboardItemsListingsFilters',
+                               'dashboardMeetingAvailableItemsFilters',
+                               'dashboardMeetingLinkedItemsFilters'):
+                field = cfg.getField(field_name)
+                keys = field.get(cfg)
+                adapted_keys = [k for k in keys if k not in to_remove]
+                field.set(cfg, adapted_keys)
+        logger.info('Done.')
+
+    def cleanUsedItemAttributes(self, to_remove=[]):
+        '''When an item attribute is no more available or has been renamed.'''
+        logger.info('Cleaning MeetingConfig used item attributes, removing columns "%s"...'
+                    % ', '.join(to_remove))
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            usedItemAttrs = list(cfg.getUsedItemAttributes())
+            adapted_usedItemAttrs = [k for k in usedItemAttrs if k not in to_remove]
+            cfg.setUsedItemAttributes(adapted_usedItemAttrs)
+        logger.info('Done.')
+
     def reloadMeetingConfigs(self, full=False):
         '''Reload MeetingConfigs, either only portal_types related parameters,
            or full reload (at_post_edit_script).'''
@@ -236,6 +274,7 @@ class Migrator(BaseMigrator):
         for cfgId in self.cfgsAdvicesInvalidation:
             cfg = getattr(self.tool, cfgId)
             cfg.setEnableAdviceInvalidation(self.cfgsAdvicesInvalidation[cfgId])
+        self.cleanRegistries()
         self.tool.invalidateAllCache()
         BaseMigrator.finish(self)
         logger.info('======================================================================')

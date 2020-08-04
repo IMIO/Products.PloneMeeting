@@ -172,12 +172,13 @@ class PMContentActionsViewlet(ContentActionsViewlet):
 
     def render(self):
         if self.context.meta_type in (
-            'ATTopic', 'Meeting', 'MeetingItem', 'MeetingCategory',
+            'ATTopic', 'Meeting', 'MeetingItem',
             'MeetingConfig', 'ToolPloneMeeting',) or \
            self.context.portal_type in (
             'ContentCategoryConfiguration', 'ContentCategoryGroup',
             'ConfigurablePODTemplate', 'DashboardPODTemplate',
-            'organization', 'person', 'held_position') or \
+            'organization', 'person', 'held_position',
+            'meetingcategory') or \
            self.context.portal_type.startswith(('meetingadvice',)) or \
            self.context.portal_type.endswith(('ContentCategory', 'ContentSubcategory',)) or \
            IContactsDashboard.providedBy(self.context) or \
@@ -468,6 +469,9 @@ class PMRenderCategoryView(IDRenderCategoryView):
         contact_infos.pop('hps-searches')
         # by default, add organization to plonegroup-organization
         contact_infos['orgs-searches']['add'] = 'plonegroup-organization/++add++organization'
+        # use default add icon to add organization or person
+        contact_infos['orgs-searches']['img'] = 'create_organization.png'
+        contact_infos['persons-searches']['img'] = 'create_contact.png'
         return contact_infos
 
     def _get_category_template(self):

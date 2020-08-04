@@ -64,7 +64,7 @@
   </div>
 
   <div id="assembly-and-signatures"
-      onclick="togglePersonsCookie();;toggleDoc('collapsible-assembly-and-signatures');"
+      onclick="togglePersonsCookie();;toggleDetails('collapsible-assembly-and-signatures');"
       class="collapsible discreet">
    <span class="meeting_attribute_label" i18n:translate="assembly_and_signatures">
      Meeting assembly and signatures

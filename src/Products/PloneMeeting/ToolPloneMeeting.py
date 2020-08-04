@@ -1062,14 +1062,15 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             # Set fields not in the copyFields list to their default value
             # 'id' and  'proposingGroup' will be kept in anyway
             fieldsToKeep = ['id', 'proposingGroup', ] + copyFields
-            # remove 'category/classifier' from fieldsToKeep if it is disabled
+            # remove 'category' from fieldsToKeep if it is disabled
             if 'category' in fieldsToKeep:
                 category = copiedItem.getCategory(real=True, theObject=True)
-                if category and not category.isSelectable(userId=loggedUserId):
+                if category and not category.is_selectable(userId=loggedUserId):
                     fieldsToKeep.remove('category')
+            # remove 'classifier' from fieldsToKeep if it is disabled
             if 'classifier' in fieldsToKeep:
-                category = copiedItem.getClassifier()
-                if category and not category.isSelectable(userId=loggedUserId):
+                classifier = copiedItem.getClassifier(theObject=True)
+                if classifier and not classifier.is_selectable(userId=loggedUserId):
                     fieldsToKeep.remove('classifier')
 
             for field in newItem.Schema().filterFields(isMetadata=False):
@@ -1081,9 +1082,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             if 'toDiscuss' in copyFields and destMeetingConfig.getToDiscussSetOnItemInsert():
                 toDiscussDefault = destMeetingConfig.getToDiscussDefault()
                 newItem.setToDiscuss(toDiscussDefault)
-            if 'classifier' in copyFields:
-                newItem.getField('classifier').set(
-                    newItem, copiedItem.getClassifier())
 
             # if we have left annexes, we manage it
             plone_utils = api.portal.get_tool('plone_utils')
@@ -1274,15 +1272,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     return True
             else:
                 if attrName in getattr(meetingConfig, configAttr)():
-                    if (attrName == 'classifier') and \
-                       (len(meetingConfig.classifiers.objectIds()) > 130):
-                        # The selection widget currently used is inadequate
-                        # for a large number of classifiers. In this case we
-                        # should use the popup for selecting classifiers. This
-                        # has not been implemented yet, so for the moment if
-                        # there are too much classifiers we do as if this field
-                        # was not used.
-                        return False
                     return True
         return False
 

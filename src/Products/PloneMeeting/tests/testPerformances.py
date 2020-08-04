@@ -437,7 +437,7 @@ class testPerformances(PloneMeetingTestCase):
         self._removeConfigObjectsFor(self.meetingConfig, folders=['recurringitems', 'itemtemplates', 'categories'])
         # create categories
         for i in range(number_of_categories):
-            catObj = self.create('MeetingCategory',
+            catObj = self.create('meetingcategory',
                                  id=i,
                                  title='Category %d' % i)
             if withUsingGroups:

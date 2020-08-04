@@ -80,6 +80,10 @@
                    OFS.interfaces.IObjectWillBeRemovedEvent"
               handler=".events.onConfigWillBeRemoved" />
 
+  <subscriber for=".content.category.IMeetingCategory
+                   OFS.interfaces.IObjectWillBeRemovedEvent"
+              handler=".events.onCategoryWillBeRemoved" />
+
   <subscriber for=".content.organization.IPMOrganization
                    OFS.interfaces.IObjectWillBeRemovedEvent"
               handler=".events.onOrgWillBeRemoved" />
@@ -200,6 +204,6 @@
   <!-- eea.facetednavigation settings changed event -->
   <subscriber for="eea.facetednavigation.interfaces.IFacetedNavigable
                    eea.facetednavigation.interfaces.IFacetedGlobalSettingsChangedEvent"
-   handler=".events.onFacetedGlobalSettingsChanged" />
+              handler=".events.onFacetedGlobalSettingsChanged" />
 
 </configure>

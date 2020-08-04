@@ -256,8 +256,6 @@ div.pm_search_no_result_info {
     margin-top: 2em;
 }
 
-.itemsNavigation {margin-bottom: 0.3em; margin-top: 0.3em; }
-#archetypes-fieldname-title2 input { font-size: 160%; width:99%;}
 /* display input for entering TAL expression as large as possible */
 input#form-widgets-as_copy_group_on {
     width: 99%;
@@ -429,9 +427,6 @@ div.viewlet_workflowstate span.state-refused {
 .transition-close { color: black !important; }
 
 .somethingtodo { color: red !important; }
-.selectRow { }
-.itemTitle { font-size: 100%; font-weight: bold; margin: 0.2em 0.1em 0 0.1em; }
-.itemDescription { margin: 0 0.1em; }
 .portlet a:hover {text-decoration: underline; }
 .portletHeader { padding: 1px 0.5em; text-transform: none; font-weight: bold; }
 .portletSection {
@@ -510,21 +505,6 @@ div.tooltipster-content div#content {
     padding-right: 0.5em;
 }
 
-/* place an icon before the annex title if there was an error during conversion */
-.erroredConversion,
-dd li span.erroredConversion,
-dd ul a.erroredConversion {
-    background-image: url(<dtml-var portal_url>/errored_conversion.png);
-    background-repeat: no-repeat;
-    background-position: 0px 0px;
-    padding-left: 16px !important;
-}
-
-/* small fixes with position of icon displayed before annex title depending on following tag */
-dd li a.erroredConversion, tr span.erroredConversion {
-    background-position: 0px 1px;
-}
-
 /* highlight error message when an error occured on an edit form */
 .fieldErrorBox {
     color: red;
@@ -559,23 +539,8 @@ td.noPadding a {
     padding: 0 !important;
 }
 
-.hsCancel { background-color: white; }
-
 #meeting_users td { padding: 0 0.4em 0 0.4em; }
 .image-right { border:0px solid Black; clear:both; float:right; margin:0.5em; }
-
-/* Styles for showing content (item, annexes) differently depending on the fact
-   that the user already consulted the last modifications on content or not. */
-#pmNewContent { color: Red; }
-#pmNoNewContent { color: &dtml-linkColor; !important; }
-#content td.pmLinks a,
-#content dt.pmLinks a,
-.portletCell.pmLink.odd a,
-.portletCell.pmLink.even a,
-#content li.pmLinks a,
-#content span.pmLinks a {
-    text-decoration:none;
-}
 
 dd.portletCell.pmLink {
     margin-left: -1em;
@@ -591,19 +556,6 @@ dd.portletCell.pmLink.even {
 .documentContent { padding: 1em 0.5em 2.5em 1em !important; }
 .documentContent p a { border-bottom: 0px solid #CCCCCC; }
 .documentEditable { margin: 0; padding: 0 !important; }
-.searchItem { font-weight: normal; font-style: italic; }
-
-div.hsDialog {
-    display: none;
-    position: absolute;
-    top: 30%;
-    left: 35%;
-    width: 350px;
-    z-index : 100;
-    background: white;
-    padding: 8px;
-    border: 1px solid gray;
-}
 
 div.hsGrey {
     display: none;
@@ -614,32 +566,6 @@ div.hsGrey {
     height:100%;
     background:gray;
     opacity:0.5;
-}
-
-.hsActions {position: relative; top: 1.7em; right: 1.3em; z-index:10;}
-.hsCatId {font-style: italic; }
-.pmLanguage {position: absolute; right: 15px; font-style: italic; font-size: 95%;}
-legend .pmLanguage {top: -0.3em; right: 5px;}
-
-.pmDropdown {
-    display:none;
-    border: 1px solid gray;
-    position: absolute;
-    background-color: white;
-    padding: 0.3em;
-    z-index: 5;
-    cursor: auto;
-}
-.pmDropdown a {
-    display: block;
-    cursor: pointer;
-}
-.pmDropdown a:hover {
-    text-decoration: underline;
-}
-
-.pmDropdown.podTemplateSendmail > div {
-    padding-right: 50px;
 }
 
 /* CSS for data changes in object histories. */
@@ -1929,6 +1855,11 @@ span#newTemplateItemCreationDisabledDuringEdit {
 /* make sure ajax spinner is diaplayed in available items iframe */
 body.template-meeting_available_items_view div#ajax-spinner {
    top: -35px;
+}
+
+div#content.group_members_tooltipster img {
+   width: 16px;
+   height: 16px;
 }
 
 /* </dtml-with> */

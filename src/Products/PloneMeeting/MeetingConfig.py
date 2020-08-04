@@ -2442,13 +2442,15 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     # Information about each sub-folder that will be created within a meeting config.
     subFoldersInfo = {
         TOOL_FOLDER_CATEGORIES: (('Categories', 'Folder'),
-                                 ('MeetingCategory', ),
+                                 ('meetingcategory', ),
                                  ()
                                  ),
+
         TOOL_FOLDER_CLASSIFIERS: (('Classifiers', 'Folder'),
-                                  ('MeetingCategory', ),
+                                  ('meetingcategory', ),
                                   ()
                                   ),
+
         TOOL_FOLDER_SEARCHES: (('Searches', 'Folder'),
                                ('Folder', ),
                                # 'items' is a reserved word
@@ -4615,6 +4617,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             ('category', translate('PloneMeeting_label_category',
                                    domain=d,
                                    context=self.REQUEST)),
+            ('classifier', translate('PloneMeeting_label_classifier',
+                                     domain=d,
+                                     context=self.REQUEST)),
             ('associatedGroups', translate('PloneMeeting_label_associatedGroups',
                                            domain=d,
                                            context=self.REQUEST)),
@@ -5791,40 +5796,36 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getCategories')
 
-    def getCategories(self, classifiers=False, onlySelectable=True, userId=None, caching=True):
-        '''Returns the categories defined for this meeting config or the
-           classifiers if p_classifiers is True. If p_onlySelectable is True,
-           there will be a check to see if the category is available to the
-           current user, otherwise, we return every existing MeetingCategories.
-           If a p_userId is given, it will be used to be passed to isSelectable'''
+    def getCategories(self, catType='categories', onlySelectable=True, userId=None, caching=True):
+        '''Returns the categories defined for this meeting config.
+           If p_onlySelectable is True, there will be a check to see if the category
+           is available to the current user, otherwise, we return every existing categories.
+           If a p_userId is given, it will be used to be passed to isSelectable.
+           p_catType may be 'categories' (default), then returns categories, 'classifiers',
+           then returns classifiers or 'all', then return every categories and classifiers.'''
         data = None
         if caching:
-            key = "meeting-config-getcategories-%s-%s-%s-%s" % (self.getId(),
-                                                                str(classifiers),
-                                                                str(onlySelectable),
-                                                                str(userId))
+            key = "meeting-config-getcategories-%s-%s-%s-%s" % (
+                self.getId(), str(catType), str(onlySelectable), str(userId))
             cache = IAnnotations(self.REQUEST)
             data = cache.get(key, None)
         if data is None:
             data = []
-            if classifiers:
-                catFolder = self.classifiers
-            elif self.getUseGroupsAsCategories():
-                data = get_organizations()
-                if caching:
-                    cache[key] = data
-                return data
+            if catType == 'all':
+                categories = self.categories.objectValues() + self.classifiers.objectValues()
+            elif catType == 'classifiers':
+                categories = self.classifiers.objectValues()
             else:
-                catFolder = self.categories
-            res = []
+                categories = self.categories.objectValues()
+
             if onlySelectable:
-                for cat in catFolder.objectValues('MeetingCategory'):
-                    if cat.adapted().isSelectable(userId=userId):
-                        res.append(cat)
+                for cat in categories:
+                    if cat.is_selectable(userId=userId):
+                        data.append(cat)
             else:
-                res = catFolder.objectValues('MeetingCategory')
+                data = categories
             # be coherent as objectValues returns a LazyMap
-            data = list(res)
+            data = list(data)
             if caching:
                 cache[key] = data
         return data

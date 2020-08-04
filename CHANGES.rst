@@ -23,6 +23,20 @@ Changelog
 - Added `collective.fingerpointing` log message when managing item `assembly/signatures/attendees/signatories`
 - Fixed bug in `itemPeople` macro displayed on `meetingitem_view`, when field Meeting `itemNonAttendees` is enabled,
   the column header was correctly hidden but the column cells were displayed
+- Moved JS function `toggleDoc` to `imio.helpers` under name `toggleDetails`
+- Cleaned `plonemeeting.css`, removed useless styles definition
+- In `contacts` management, show clearly that icons in portlet will add new `organization/held_position` by using icons with a `+`
+- Validate `plonegroup` settings for `functions` so it is not possible to remove or disable a function that is used in
+  `MeetingConfig.selectableCopyGroups` or `MeetingItem.copyGroups`
+- Migrate `MeetingCategory` from AT to DX :
+
+  - New portal_type is `meetingcategory`;
+  - Field `MeetingItem.classifier` was moved from ReferenceField to StringField;
+  - Added new `MeetingConfig.insertingMethodsOnAddItem` named `on_classifiers`;
+  - Removed magic in `MeetingConfig.getCategories` that returned organizations when
+    `MeetingConfig.useGroupsAsCategories` was `True`, now it returns only categories, moreover parameter `classifiers` is
+    renamed to `catType` that may be `all`/`categories`/`classifiers`.
+- In every migrations, call `cleanRegistries` at the end by default so `JS/CSS` are recompiled
 
 4.1.27.2 (2020-06-25)
 ---------------------

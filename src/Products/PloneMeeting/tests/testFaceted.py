@@ -101,14 +101,14 @@ class testFaceted(PloneMeetingTestCase):
         self.assertNotEquals(terms.by_token['development'].title,
                              cfg.categories.development.title)
         # right correctly edit the category, the vocabulary is invalidated
-        dev.at_post_edit_script()
+        notify(ObjectModifiedEvent(dev))
         terms = vocab(pmFolder)
         self.assertEqual(terms.by_token['development'].title,
                          cfg.categories.development.title)
 
         # if we add/remove a category, then the cache is cleaned too
         # add a category
-        newCat = self.create('MeetingCategory',
+        newCat = self.create('meetingcategory',
                              id='new-category',
                              title='New category')
         # cache was cleaned, the new value is available
@@ -118,7 +118,7 @@ class testFaceted(PloneMeetingTestCase):
             [u'Events', u'New category', u'New title', u'Research topics'])
 
         # disable a category
-        self.do(newCat, 'deactivate')
+        self._disableObj(newCat)
         self.assertEqual(
             [term.title for term in vocab(pmFolder)],
             [u'Events', u'New title', u'Research topics', u'New category (Inactive)'])
@@ -146,48 +146,45 @@ class testFaceted(PloneMeetingTestCase):
         # once get, it is cached
         terms = vocab(pmFolder)
         # every existing categories are shown, no matter it is disabled
-        nbOfCategories = len(cfg.getCategories(classifiers=True, onlySelectable=False, caching=False))
+        nbOfCategories = len(cfg.getCategories(catType='classifiers', onlySelectable=False, caching=False))
         self.assertEqual(len(terms), nbOfCategories)
         # here we make sure it is cached by changing a category title
         # manually without using the processForm way
         classifier1 = cfg.classifiers.classifier1
         classifier1.title = u'New title'
         terms = vocab(pmFolder)
-        classifier1_UID = classifier1.UID()
-        self.assertNotEquals(terms.by_token[classifier1_UID].title,
+        classifier1_id = classifier1.getId()
+        self.assertNotEquals(terms.by_token[classifier1_id].title,
                              cfg.categories.development.title)
         # right correctly edit the category, the vocabulary is invalidated
-        classifier1.at_post_edit_script()
+        notify(ObjectModifiedEvent(classifier1))
         terms = vocab(pmFolder)
-        self.assertEqual(terms.by_token[classifier1_UID].title,
+        self.assertEqual(terms.by_token[classifier1_id].title,
                          cfg.classifiers.classifier1.title)
 
         # if we add/remove a category, then the cache is cleaned too
         # add a classifier
-        newClassifier = self.create('MeetingCategory',
+        newClassifier = self.create('meetingcategory',
                                     id='newclassifier',
                                     title='New classifier',
-                                    isClassifier=True)
+                                    is_classifier=True)
         # cache was cleaned, the new value is available
         terms = vocab(pmFolder)
         self.assertEqual(
             [term.title for term in vocab(pmFolder)],
             [u'Classifier 2', u'Classifier 3', u'New classifier', u'New title'])
 
-        # disable a category
-        self.do(newClassifier, 'deactivate')
+        # disable a classifier
+        self._disableObj(newClassifier)
         self.assertEqual(
             [term.title for term in vocab(pmFolder)],
             [u'Classifier 2', u'Classifier 3', u'New title', u'New classifier (Inactive)'])
-        # term.value is the category id
+        # term.value is the classifier id
         self.assertEqual(
             [term.value for term in vocab(pmFolder)],
-            [cfg.classifiers.classifier2.UID(),
-             cfg.classifiers.classifier3.UID(),
-             cfg.classifiers.classifier1.UID(),
-             cfg.classifiers.newclassifier.UID()])
+            ['classifier2', 'classifier3', 'classifier1', 'newclassifier'])
 
-        # remove a category
+        # remove a classifier
         self.portal.restrictedTraverse('@@delete_givenuid')(newClassifier.UID())
         # cache was cleaned
         self.assertEqual(
@@ -375,28 +372,31 @@ class testFaceted(PloneMeetingTestCase):
     def test_pm_GroupsInChargeVocabulary(self):
         '''Test the "Products.PloneMeeting.vocabularies.groupsinchargevocabulary"
            vocabulary, especially because it is cached.'''
+        cfg = self.meetingConfig
+        cfg.setUseGroupsAsCategories(False)
+        self._enableField('classifier')
         self.changeUser('siteadmin')
         org1 = self.create('organization', id='org1', title='Org 1', acronym='Org1')
-        org1uid = org1.UID()
+        org1_uid = org1.UID()
         org2 = self.create('organization', id='org2', title='Org 2', acronym='Org2')
-        org2uid = org2.UID()
+        org2_uid = org2.UID()
         org3 = self.create('organization', id='org3', title='Org 3', acronym='Org3')
-        org3uid = org3.UID()
+        org3_uid = org3.UID()
         vocab = queryUtility(IVocabularyFactory, "Products.PloneMeeting.vocabularies.groupsinchargevocabulary")
 
         # for now, no group in charge
         meetingFolder = self.getMeetingFolder()
         self.assertEqual(len(vocab(meetingFolder)), 0)
         # define some group in charge, vocabulary is invalidated when an org is modified
-        self.vendors.groups_in_charge = (org1uid,)
+        self.vendors.groups_in_charge = (org1_uid,)
         notify(ObjectModifiedEvent(self.vendors))
-        self.developers.groups_in_charge = (org2uid,)
+        self.developers.groups_in_charge = (org2_uid,)
         notify(ObjectModifiedEvent(self.developers))
         self.assertEqual([term.title for term in vocab(meetingFolder)], ['Org 1', 'Org 2'])
 
         # create an new org with a groupInCharge directly
         org4 = self.create('organization', id='org4', title='Org 4',
-                           acronym='Org4', groups_in_charge=(org3uid,))
+                           acronym='Org4', groups_in_charge=(org3_uid,))
         org4_uid = org4.UID()
         self._select_organization(org4_uid)
         self.assertEqual([term.title for term in vocab(meetingFolder)], ['Org 1', 'Org 2', 'Org 3'])
@@ -410,6 +410,30 @@ class testFaceted(PloneMeetingTestCase):
         self.vendors.groups_in_charge = ()
         notify(ObjectModifiedEvent(self.vendors))
         self.assertEqual([term.title for term in vocab(meetingFolder)], ['Org 2', 'Org 3'])
+
+        # category, creating an organization invalidates the vocabulary cache
+        org5 = self.create('organization', id='org5', title='Org 5', acronym='Org5')
+        org5_uid = org5.UID()
+        # an already used
+        cfg.categories.development.groups_in_charge = [org3_uid]
+        # already existing no more used
+        cfg.categories.research.groups_in_charge = [org4_uid]
+        # new
+        cfg.categories.events.groups_in_charge = [org5_uid]
+        self.assertEqual(
+            [term.title for term in vocab(meetingFolder)],
+            ['Org 2', 'Org 3', 'Org 4', 'Org 5'])
+
+        # classifier, creating an organization invalidates the vocabulary cache
+        org6 = self.create('organization', id='org6', title='Org 6', acronym='Org6')
+        org6_uid = org6.UID()
+        # already existing
+        cfg.classifiers.classifier1.groups_in_charge = [org5_uid]
+        # new
+        cfg.classifiers.classifier2.groups_in_charge = [org6_uid]
+        self.assertEqual(
+            [term.title for term in vocab(meetingFolder)],
+            ['Org 2', 'Org 3', 'Org 4', 'Org 5', 'Org 6'])
 
     def test_pm_CreatorsVocabulary(self):
         '''Test the "Products.PloneMeeting.vocabularies.creatorsvocabulary"
@@ -684,9 +708,7 @@ class testFaceted(PloneMeetingTestCase):
         self.assertTrue(searchAllItems_path in vocab(searches, real_context=pmFolder))
         # disable it then test again
         self.changeUser('siteadmin')
-        searchAllItems.enabled = False
-        # invalidate vocabulary cache
-        notify(ObjectModifiedEvent(searchAllItems))
+        self._disableObj(searchAllItems, notify_event=True)
         self.changeUser('pmCreator1')
         self.assertFalse(searchAllItems_path in vocab(searches, real_context=pmFolder))
 
