@@ -22,7 +22,9 @@
 # 02110-1301, USA.
 #
 
+from collective.iconifiedcategory.browser.tabview import CategorizedContent
 from collective.iconifiedcategory.interfaces import IIconifiedCategorySettings
+from collective.iconifiedcategory.utils import get_categorized_elements
 from DateTime import DateTime
 from imio.helpers.cache import cleanRamCacheFor
 from plone import api
@@ -116,13 +118,16 @@ class testColumns(PloneMeetingTestCase):
         annex1 = self.addAnnex(item)
         annex2 = self.addAnnex(item)
 
-        annex1_brain = self.catalog(UID=annex1.UID())[0]
-        annex2_brain = self.catalog(UID=annex2.UID())[0]
+        annex1_infos = get_categorized_elements(item, uids=[annex1.UID()])
+        annex1_content = CategorizedContent(item, annex1_infos[0])
+        annex2_infos = get_categorized_elements(item, uids=[annex2.UID()])
+        annex2_content = CategorizedContent(item, annex2_infos[0])
+
         meetingFolder = self.getMeetingFolder()
         faceted_table = meetingFolder.restrictedTraverse('faceted-table-view')
         column = PMAnnexActionsColumn(meetingFolder, self.portal.REQUEST, faceted_table)
-        renderedColumnAnnex1 = column.renderCell(annex1_brain)
-        renderedColumnAnnex2 = column.renderCell(annex2_brain)
+        renderedColumnAnnex1 = column.renderCell(annex1_content)
+        renderedColumnAnnex2 = column.renderCell(annex2_content)
         self.assertTrue(self.hasPermission(AddAnnex, item))
         # sort_categorized_tab must be False to show arrows
         sort_categorized_tab = api.portal.get_registry_record(
@@ -135,8 +140,8 @@ class testColumns(PloneMeetingTestCase):
         api.portal.set_registry_record('sort_categorized_tab',
                                        False,
                                        interface=IIconifiedCategorySettings)
-        renderedColumnAnnex1 = column.renderCell(annex1_brain)
-        renderedColumnAnnex2 = column.renderCell(annex2_brain)
+        renderedColumnAnnex1 = column.renderCell(annex1_content)
+        renderedColumnAnnex2 = column.renderCell(annex2_content)
         self.assertTrue('folder_position_typeaware?position=down' in renderedColumnAnnex1)
         self.assertTrue('folder_position_typeaware?position=up' in renderedColumnAnnex2)
 
@@ -146,12 +151,15 @@ class testColumns(PloneMeetingTestCase):
         self.assertTrue(self.hasPermission(AddAnnexDecision, item))
         annexDecision1 = self.addAnnex(item, relatedTo='item_decision')
         annexDecision2 = self.addAnnex(item, relatedTo='item_decision')
-        annexDecision1_brain = self.catalog(UID=annexDecision1.UID())[0]
-        annexDecision2_brain = self.catalog(UID=annexDecision2.UID())[0]
-        renderedColumnAnnex1 = column.renderCell(annex1_brain)
-        renderedColumnAnnex2 = column.renderCell(annex2_brain)
-        renderedColumnDecisionAnnex1 = column.renderCell(annexDecision1_brain)
-        renderedColumnDecisionAnnex2 = column.renderCell(annexDecision2_brain)
+        annexDecision1_infos = get_categorized_elements(item, uids=[annexDecision1.UID()])
+        annexDecision1_content = CategorizedContent(item, annexDecision1_infos[0])
+        annexDecision2_infos = get_categorized_elements(item, uids=[annexDecision2.UID()])
+        annexDecision2_content = CategorizedContent(item, annexDecision2_infos[0])
+
+        renderedColumnAnnex1 = column.renderCell(annex1_content)
+        renderedColumnAnnex2 = column.renderCell(annex2_content)
+        renderedColumnDecisionAnnex1 = column.renderCell(annexDecision1_content)
+        renderedColumnDecisionAnnex2 = column.renderCell(annexDecision2_content)
         self.assertTrue('folder_position_typeaware?position=down' in renderedColumnAnnex1)
         self.assertTrue('folder_position_typeaware?position=up' in renderedColumnAnnex2)
         self.assertTrue('folder_position_typeaware?position=down' in renderedColumnDecisionAnnex1)
@@ -168,10 +176,10 @@ class testColumns(PloneMeetingTestCase):
         self.closeMeeting(meeting)
         self.assertFalse(self.hasPermission(AddAnnex, item))
         self.assertTrue(self.hasPermission(AddAnnexDecision, item))
-        renderedColumnAnnex1 = column.renderCell(annex1_brain)
-        renderedColumnAnnex2 = column.renderCell(annex2_brain)
-        renderedColumnDecisionAnnex1 = column.renderCell(annexDecision1_brain)
-        renderedColumnDecisionAnnex2 = column.renderCell(annexDecision2_brain)
+        renderedColumnAnnex1 = column.renderCell(annex1_content)
+        renderedColumnAnnex2 = column.renderCell(annex2_content)
+        renderedColumnDecisionAnnex1 = column.renderCell(annexDecision1_content)
+        renderedColumnDecisionAnnex2 = column.renderCell(annexDecision2_content)
         self.assertFalse('folder_position_typeaware?position=down' in renderedColumnAnnex1)
         self.assertFalse('folder_position_typeaware?position=up' in renderedColumnAnnex2)
         self.assertTrue('folder_position_typeaware?position=up' in renderedColumnDecisionAnnex1)

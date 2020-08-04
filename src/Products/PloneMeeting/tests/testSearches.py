@@ -600,8 +600,8 @@ class testSearches(PloneMeetingTestCase):
         # if not, then reviewers must be at least 2 elements long
         reviewers = reviewersFor(cfg.getItemWorkflow())
         if not len(reviewers) > 1:
-            pm_logger.info("Could not launch test 'test_pm_SearchItemsToValidateOfMyReviewerGroups' because "
-                           "we need at least 2 levels of item validation.")
+            pm_logger.info("Could not launch test 'test_pm_SearchItemsToValidateOfMyReviewerGroups' "
+                           "because we need at least 2 levels of item validation.")
         if 'pre_validation' in cfg.listWorkflowAdaptations():
             cfg.setWorkflowAdaptations('pre_validation')
             performWorkflowAdaptations(cfg, logger=pm_logger)

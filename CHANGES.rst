@@ -37,6 +37,8 @@ Changelog
     `MeetingConfig.useGroupsAsCategories` was `True`, now it returns only categories, moreover parameter `classifiers` is
     renamed to `catType` that may be `all`/`categories`/`classifiers`.
 - In every migrations, call `cleanRegistries` at the end by default so `JS/CSS` are recompiled
+- Adapted code regarding changes in `collective.iconifiedcategory`, do not use `portal_catalog` to get the annexes but rely on
+  `allowedRolesAndUsers` stored in `categorized_elements`
 
 4.1.27.2 (2020-06-25)
 ---------------------
