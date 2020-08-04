@@ -1,20 +1,19 @@
 # -*- coding: utf-8 -*-
-#
-# File: validators.py
-#
-# Copyright (c) 2017 by Imio.be
-# Generator: ArchGenXML Version 2.7
-#            http://plone.org/products/archgenxml
-#
-# GNU General Public License (GPL)
-#
 
+from collective.contact.plonegroup.browser.settings import IContactPlonegroupConfig
+from collective.contact.plonegroup.config import get_registry_functions
+from collective.contact.plonegroup.utils import get_all_suffixes
+from collective.contact.plonegroup.utils import get_organizations
+from collective.contact.plonegroup.utils import get_plone_group_id
 from DateTime import DateTime
 from datetime import date
+from plone import api
+from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.utils import getInterface
 from Products.validation.interfaces.IValidator import IValidator
 from z3c.form import validator
 from zope.component import getGlobalSiteManager
+from zope.component import provideAdapter
 from zope.component.hooks import getSite
 from zope.i18n import translate
 from zope.interface import implements
@@ -156,3 +155,63 @@ class WorkflowInterfacesValidator:
         if not adapter:
             return NO_ADAPTER_FOUND % (self._getPackageName(theInterface),
                                        self._getPackageName(self.baseInterface))
+
+
+# Complete validation of collective.contact.plonegroup settings
+class PloneGroupSettingsValidator(validator.SimpleFieldValidator):
+
+    def validate(self, value):
+        # check that if a suffix is removed, it is not used in MeetingConfig or MeetingItems
+        stored_suffixes = get_all_suffixes()
+        # get removed suffixes...
+        saved_suffixes = [func['fct_id'] for func in value]
+        removed_suffixes = list(set(stored_suffixes) - set(saved_suffixes))
+        removed_plonegroups = [
+            get_plone_group_id(org_uid, removed_suffix)
+            for org_uid in get_organizations(only_selected=False, the_objects=False)
+            for removed_suffix in removed_suffixes]
+        # ... and new defined fct_orgs as it will remove some suffixed groups
+        stored_functions = get_registry_functions()
+        old_functions = {dic['fct_id']: {'fct_title': dic['fct_title'],
+                                         'fct_orgs': dic['fct_orgs'],
+                                         'enabled': dic['enabled']}
+                         for dic in stored_functions}
+        new_functions = {dic['fct_id']: {'fct_title': dic['fct_title'],
+                                         'fct_orgs': dic['fct_orgs'],
+                                         'enabled': dic['enabled']}
+                         for dic in value}
+        for new_function, new_function_infos in new_functions.items():
+            if new_function_infos['fct_orgs'] and \
+               old_functions[new_function]['fct_orgs'] != new_function_infos['fct_orgs']:
+                # check that Plone group is empty for not selected fct_orgs
+                for org_uid in get_organizations(only_selected=False, the_objects=False):
+                    if org_uid in new_function_infos['fct_orgs']:
+                        continue
+                    removed_plonegroups.append(get_plone_group_id(org_uid, new_function))
+            elif new_function_infos['enabled'] is False:
+                # check that Plone groups are all empty
+                for org_uid in get_organizations(only_selected=False, the_objects=False):
+                    removed_plonegroups.append(get_plone_group_id(org_uid, new_function))
+
+        # check that plone_group not used in MeetingConfigs
+        removed_plonegroups = set(removed_plonegroups)
+        tool = api.portal.get_tool('portal_plonemeeting')
+        for cfg in tool.objectValues('MeetingConfig'):
+            if removed_plonegroups.intersection(cfg.getSelectableCopyGroups()):
+                msg = _("can_not_delete_plone_group_meetingconfig",
+                        mapping={'cfg_url': cfg.absolute_url()})
+                raise Invalid(msg)
+        # check that plone_group not used in MeetingItems
+        catalog = api.portal.get_tool('portal_catalog')
+        for brain in catalog(meta_type="MeetingItem"):
+            item = brain.getObject()
+            if removed_plonegroups.intersection(item.getCopyGroups()):
+                if item.isDefinedInTool():
+                    msgid = "can_not_delete_plone_group_config_meetingitem"
+                else:
+                    msgid = "can_not_delete_plone_group_meetingitem"
+                msg = _(msgid, mapping={'item_url': item.absolute_url()})
+                raise Invalid(msg)
+
+validator.WidgetValidatorDiscriminators(PloneGroupSettingsValidator, field=IContactPlonegroupConfig['functions'])
+provideAdapter(PloneGroupSettingsValidator)

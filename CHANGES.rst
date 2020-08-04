@@ -26,6 +26,8 @@ Changelog
 - Moved JS function `toggleDoc` to `imio.helpers` under name `toggleDetails`
 - Cleaned `plonemeeting.css`, removed useless styles definition
 - In `contacts` management, show clearly that icons in portlet will add new `organization/held_position` by using icons with a `+`
+- Validate `plonegroup` settings for `functions` so it is not possible to remove or disable a function that is used in
+  `MeetingConfig.selectableCopyGroups` or `MeetingItem.copyGroups`
 
 4.1.27.2 (2020-06-25)
 ---------------------
