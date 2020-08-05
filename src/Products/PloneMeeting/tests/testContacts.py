@@ -475,6 +475,77 @@ class testContacts(PloneMeetingTestCase):
         self.assertEqual(item1.getItemAbsents(), (hp_uid, ))
         self.assertFalse(item2.getItemAbsents())
 
+    def test_pm_test_print_signatories_by_position(self):
+        # Set up
+        self.changeUser('siteadmin')
+        cfg = self.meetingConfig
+        cfg.setUsedMeetingAttributes(('attendees', 'excused', 'absents', 'signatories',))
+        ordered_contacts = cfg.getField('orderedContacts').Vocabulary(cfg).keys()
+        cfg.setOrderedContacts(ordered_contacts)
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime())
+        item = self.create('MeetingItem')
+
+        view = item.restrictedTraverse('document-generation')
+        helper = view.get_generation_context_helper()
+        # print_signatories_by_position shouldn't fail if the item is not in a meeting
+        self.assertEqual(len(helper.print_signatories_by_position()), 0)
+        self.presentItem(item)
+
+        signatories = item.getItemSignatories(theObjects=True, by_signature_number=True)
+        printed_signatories = helper.print_signatories_by_position(ender='.')
+        self.assertEqual(
+            printed_signatories,
+            {
+                0: signatories['1'].get_prefix_for_gender_and_number(
+                    include_value=True,
+                    position_type_attr='position_type') + ',',
+                1: signatories['1'].get_person_title(include_person_title=False) + '.',
+                2: signatories['2'].get_prefix_for_gender_and_number(
+                    include_value=True,
+                    position_type_attr='position_type') + ',',
+                3: signatories['2'].get_person_title(include_person_title=False) + '.'
+            }
+        )
+        printed_signatories = helper.print_signatories_by_position(
+            signature_format=('secondary_position_type', 'XXX', 'gender'),
+            separator=''
+        )
+        self.assertEqual(
+            printed_signatories,
+            {
+                0: signatories['1'].get_prefix_for_gender_and_number(
+                    include_value=True,
+                    position_type_attr='secondary_position_type'),
+                1: 'XXX',
+                2: signatories['1'].gender,
+                3: signatories['2'].get_prefix_for_gender_and_number(
+                    include_value=True,
+                    position_type_attr='secondary_position_type'),
+                4: 'XXX',
+                5: signatories['2'].gender,
+            }
+        )
+
+        # On a Meeting
+        view = meeting.restrictedTraverse('document-generation')
+        helper = view.get_generation_context_helper()
+
+        signatories = meeting.getSignatories(theObjects=True, by_signature_number=True)
+        printed_signatories = helper.print_signatories_by_position(
+            signature_format=(u'position_type', u'person_title'),
+            separator=u' ;'
+        )
+        self.assertEqual(
+            printed_signatories,
+            {
+                0: signatories['1'].get_label(position_type_attr='position_type') + ' ;',
+                1: signatories['1'].get_person_title(include_person_title=True),
+                2: signatories['2'].get_label(position_type_attr='position_type') + ' ;',
+                3: signatories['2'].get_person_title(include_person_title=True),
+            }
+        )
+
     def _setupInAndOutAttendees(self):
         """Setup a meeting with items and in and out (non) attendees."""
         cfg = self.meetingConfig

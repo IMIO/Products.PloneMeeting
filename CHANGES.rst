@@ -37,6 +37,8 @@ Changelog
     `MeetingConfig.useGroupsAsCategories` was `True`, now it returns only categories, moreover parameter `classifiers` is
     renamed to `catType` that may be `all`/`categories`/`classifiers`.
 - In every migrations, call `cleanRegistries` at the end by default so `JS/CSS` are recompiled
+- Improved `BaseDGHV.print_signatories_by_position` to add more use cases
+- Added tests for `BaseDGHV.print_signatories_by_position`
 
 4.1.27.2 (2020-06-25)
 ---------------------

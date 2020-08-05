@@ -1316,14 +1316,19 @@ class BaseDGHV(object):
             return self.print_signatories_by_position(**kwargs)
 
     def print_signatories_by_position(self,
-                                      signature_format=(u'position_type', u'person'),
-                                      separator=u', ',
-                                      ender=''):
+                                      signature_format=(u'prefixed_position_type', u'person'),
+                                      separator=u',',
+                                      ender=u''):
         """
         Print signatories by position
+        :param signature_format: can be 'position_type', 'prefixed_position_type', 'person',
+        'person_title', 'secondary_position_type', 'prefixed_secondary_position_type',
+        an attribute of PMHeldPosition or a str (in this case it just print the str)
+        :param separator: str that will be appended at the end of each line (except the last one)
+        :param ender: str that will be appended at the end of the last one
         :return: a dict with position as key and signature as value
         like this {1 : 'The mayor,', 2: 'John Doe'}
-        A dict is used to safely get a signature with the get method
+        A dict is used to safely '.get()' a signature with the get method in the PODTemplates
         """
         signature_lines = OrderedDict()
         if self.context.meta_type == 'Meeting':
@@ -1331,25 +1336,36 @@ class BaseDGHV(object):
         else:
             signatories = self.context.getItemSignatories(theObjects=True, by_signature_number=True)
 
-        n_line = 0
+        line = 0
         for signatory in signatories.values():
             for attr in signature_format:
-                if u'position_type' in attr:
-                    signature_lines[n_line] = signatory.get_prefix_for_gender_and_number(
+                if u'position_type' == attr:
+                    signature_lines[line] = signatory.get_label(position_type_attr=attr)
+                elif u'prefixed_position_type' == attr:
+                    signature_lines[line] = signatory.get_prefix_for_gender_and_number(
                         include_value=True,
-                        position_type_attr=attr)
+                        position_type_attr='position_type')
+                elif u'secondary_position_type' == attr:
+                    signature_lines[line] = signatory.get_label(position_type_attr=attr)
+                elif u'prefixed_secondary_position_type' == attr:
+                    signature_lines[line] = signatory.get_prefix_for_gender_and_number(
+                        include_value=True,
+                        position_type_attr='secondary_position_type')
                 elif attr == u'person':
-                    signature_lines[n_line] = signatory.get_person_title(include_person_title=False)
+                    signature_lines[line] = signatory.get_person_title(include_person_title=False)
+                elif attr == u'person_title':
+                    signature_lines[line] = signatory.get_person_title(include_person_title=True)
                 elif hasattr(signatory, attr):
-                    signature_lines[n_line] = attr
-                else:
-                    signature_lines[n_line] += signature_format
+                    signature_lines[line] = getattr(signatory, attr)
+                else: # Just put the attr if it doesn't match anything above
+                    signature_lines[line] = attr
 
                 if attr != signature_format[-1]:  # if not last line of signatory
-                    signature_lines[n_line] += separator
-                else:
-                    signature_lines[n_line] += ender
-                n_line += 1
+                    signature_lines[line] += separator
+                else: # it is the last line
+                    signature_lines[line] += ender
+
+                line += 1
 
         return signature_lines
 
