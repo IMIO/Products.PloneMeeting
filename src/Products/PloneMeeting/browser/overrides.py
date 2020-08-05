@@ -25,8 +25,7 @@ from collective.iconifiedcategory.browser.actionview import ToPrintChangeView
 from collective.iconifiedcategory.browser.tabview import CategorizedTabView
 from collective.iconifiedcategory.browser.views import CategorizedChildInfosView
 from collective.iconifiedcategory.browser.views import CategorizedChildView
-from datetime import date
-from datetime import datetime
+from DateTime import DateTime
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from imio.actionspanel.browser.viewlets import ActionsPanelViewlet
 from imio.actionspanel.browser.views import ActionsPanelView
@@ -63,6 +62,7 @@ from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.interfaces import IMeeting
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import get_annexes
+from Products.PloneMeeting.utils import get_next_meeting
 from Products.PloneMeeting.utils import is_editing
 from Products.PloneMeeting.utils import normalize_id
 from Products.PloneMeeting.utils import sendMail
@@ -437,18 +437,10 @@ class PMFacetedContainerView(FacetedDashboardView):
            to it's own pmFolder if it is on the pmFolder of another user."""
         if self.cfg and self.cfg.getRedirectToNextMeeting():
             if ('searches_items' in self.request.steps) and ('facetednavigation_view' in self.request.steps) and not (self.request.get('no_redirect')):
-
-                dt = date.today()
-                meetingDate = (datetime.combine(dt, datetime.min.time()))
-                meetingTypeName = self.cfg.getMeetingTypeName()
-                catalog = api.portal.get_tool('portal_catalog')
-
-                # find every meetings after meetingDate
-                brains = catalog(portal_type=meetingTypeName,
-                                 getDate={'query': meetingDate, 'range': 'min'},
-                                 sort_on='getDate')
-                if brains:
-                    self.request.RESPONSE.redirect(brains[0].getURL())
+                meetingDate = DateTime(DateTime().strftime("%Y/%m/%d"))
+                next_meeting = get_next_meeting(meetingDate=meetingDate, cfg=self.cfg)
+                if next_meeting:
+                    self.request.RESPONSE.redirect(next_meeting.absolute_url())
 
         res = super(PMFacetedContainerView, self).__call__()
 
