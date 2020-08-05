@@ -475,7 +475,7 @@ class testContacts(PloneMeetingTestCase):
         self.assertEqual(item1.getItemAbsents(), (hp_uid, ))
         self.assertFalse(item2.getItemAbsents())
 
-    def test_pm_test_print_signatories_by_position(self):
+    def test_pm_print_signatories_by_position(self):
         # Set up
         self.changeUser('siteadmin')
         cfg = self.meetingConfig
