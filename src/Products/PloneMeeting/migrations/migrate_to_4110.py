@@ -101,10 +101,18 @@ class Migrate_To_4110(Migrator):
                 org_coll.customViewFields = customViewFields
         logger.info('Done.')
 
+    def _enableDateinputJSResource(self):
+        """Make sure '++resource++plone.app.jquerytools.dateinput.js' is enabled in portal_javascripts."""
+        logger.info("Enabling '++resource++plone.app.jquerytools.dateinput.js' in portal_javascripts...")
+        resource = self.portal.portal_javascripts.getResource('++resource++plone.app.jquerytools.dateinput.js')
+        resource.setEnabled(True)
+        logger.info('Done.')
+
     def run(self, from_migration_to_41=False):
         logger.info('Migrating to PloneMeeting 4110...')
         self._migrateMeetingCategoryToDX()
         self._updateOrgsDashboardCollectionColumns()
+        self._enableDateinputJSResource()
         # update collective.contact.plonegroup
         self.upgradeAll(omit=['Products.PloneMeeting:default',
                               self.profile_name.replace('profile-', '')])
@@ -115,7 +123,8 @@ def migrate(context):
 
        1) Migrate MeetingCategory to meetingcategory.
        2) Enable column 'PloneGroupUsersGroupsColumn' of for contacts collections displaying organizations;
-       3) Apply every pending upgrades.
+       3) Make sure '++resource++plone.app.jquerytools.dateinput.js' is enabled in portal_javascripts;
+       4) Apply every pending upgrades.
     '''
     migrator = Migrate_To_4110(context)
     migrator.run()
