@@ -36,9 +36,6 @@ class Migrate_To_4110(Migrator):
     def _migrateMeetingCategoryToDX(self):
         '''Migrate from AT MeetingCategory to DX meetingcategory.'''
         logger.info('Migrating MeetingCategory from AT to DX...')
-        if 'meetingcategory' in self.portal.portal_types:
-            return self._already_migrated()
-
         # update item classifier
         # migrate references
         pghandler = ZLogHandler(steps=100)
