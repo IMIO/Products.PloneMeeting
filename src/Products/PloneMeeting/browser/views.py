@@ -1321,14 +1321,21 @@ class BaseDGHV(object):
                                       ender=u''):
         """
         Print signatories by position
-        :param signature_format: can be 'position_type', 'prefixed_position_type', 'person',
-        'person_title', 'secondary_position_type', 'prefixed_secondary_position_type',
-        an attribute of PMHeldPosition or a str (in this case it just print the str)
+        :param signature_format: tuple representing a single signature format
+        containing these possible values:
+            - 'position_type' -> 'Mayor'
+            - 'prefixed_position_type' -> 'The Mayor'
+            - 'person' -> 'John Doe'
+            - 'person_title' -> 'Mister John Doe'
+            - 'secondary_position_type' -> 'President'
+            - 'prefixed_secondary_position_type' -> 'The President'
+            - [PMHeldPosition attribute] e.g. 'gender' -> 'M'
+            - [str] e.g. 'My String' -> 'My String' (in this case it just print the str)
         :param separator: str that will be appended at the end of each line (except the last one)
         :param ender: str that will be appended at the end of the last one
         :return: a dict with position as key and signature as value
-        like this {1 : 'The mayor,', 2: 'John Doe'}
-        A dict is used to safely '.get()' a signature with the get method in the PODTemplates
+        like this {0 : 'The Manager,', 1 : "Jane Doe", 2 : 'The mayor,', 3: 'John Doe'}
+        A dict is used to safely retrieve a signature with the '.get()' method in the PODTemplates
         """
         signature_lines = OrderedDict()
         if self.context.meta_type == 'Meeting':
