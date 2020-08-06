@@ -1763,8 +1763,10 @@ ul.change_delay_actions li a span {
    color: &dtml-linkColor;;
 }
 
+/* manage custom behaviors in annexes/advices fieldsets */
 fieldset.section_annex, fieldset.section_annexDecision, fieldset.section_advices {
-   height: 50px;
+   min-height: 50px;
+   height: auto;
 }
 
 div#held_position_back_refs {
@@ -1808,7 +1810,9 @@ div.pm_checkbox_widget div.checkbox_widget_select_all {
 div.pm_checkbox_widget input.checkbox-widget {
    margin-left: 0.25em;
 }
-div.pm_checkbox_widget span.option {
+/* space between checkboxes in item duplicate form popup */
+div.pm_checkbox_widget span#form-widgets-annex_decision_ids span.option,
+div.pm_checkbox_widget span#form-widgets-annex_ids span.option {
    margin-top: 0.5em;
    margin-bottom: 0.5em;
 }

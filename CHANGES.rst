@@ -37,6 +37,10 @@ Changelog
     `MeetingConfig.useGroupsAsCategories` was `True`, now it returns only categories, moreover parameter `classifiers` is
     renamed to `catType` that may be `all`/`categories`/`classifiers`.
 - In every migrations, call `cleanRegistries` at the end by default so `JS/CSS` are recompiled
+- Make sure `++resource++plone.app.jquerytools.dateinput.js` is enabled in `portal_javascripts`
+- Completed custom widget `PMCheckBoxFieldWidget` to manage `display` mode, every element are listed one under each other and not one
+  next to each others separated with commas that was much unreadable when having more than 3 values.
+  Use it everywhere possible: `organization`, `held_position` and `category`
 - Adapted code regarding changes in `collective.iconifiedcategory`, do not use `portal_catalog` to get the annexes but rely on
   `allowedRolesAndUsers` stored in `categorized_elements`
 

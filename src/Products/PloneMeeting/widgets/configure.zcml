@@ -12,4 +12,10 @@
     template="pm_checkbox_input.pt"
     layer="z3c.form.interfaces.IFormLayer" />
 
+  <z3c:widgetTemplate
+    mode="display"
+    widget=".pm_checkbox.IPMCheckBoxWidget"
+    template="pm_checkbox_display.pt"
+    layer="z3c.form.interfaces.IFormLayer" />
+
 </configure>
