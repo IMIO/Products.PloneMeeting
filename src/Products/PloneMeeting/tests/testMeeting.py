@@ -3266,6 +3266,21 @@ class testMeeting(PloneMeetingTestCase):
         self.changeUser('powerobserver1')
         view.update()
         self.assertTrue(view.showAvailableItems())
+        # will not be the case for cfg2
+        self.meetingConfig2.setDisplayAvailableItemsTo(
+            (POWEROBSERVERPREFIX + 'powerobservers', ))
+        self.changeUser('pmManager')
+        self.setMeetingConfig(self.meetingConfig2.getId())
+        meeting = self.create('Meeting', date=DateTime('2020/08/06'))
+        view = meeting.restrictedTraverse('@@meeting_view')
+        view.update()
+        self.assertTrue(view.showAvailableItems())
+        self.changeUser('powerobserver2')
+        view.update()
+        self.assertFalse(view.showAvailableItems())
+        self.changeUser('powerobserver1')
+        view.update()
+        self.assertFalse(view.showAvailableItems())
 
     def test_pm_AvailableItemsShownInformations(self):
         """When available items shown to other users than MeetingManagers,
