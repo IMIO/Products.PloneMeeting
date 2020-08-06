@@ -43,6 +43,8 @@ Changelog
   Use it everywhere possible: `organization`, `held_position` and `category`
 - Adapted code regarding changes in `collective.iconifiedcategory`, do not use `portal_catalog` to get the annexes but rely on
   `allowedRolesAndUsers` stored in `categorized_elements`
+- Fixed `MeetingView._displayAvailableItemsTo`, do not use `ToolPloneMeeting.userIsAmong` for powerobservers as it could be
+  powerobserver for `MeetingConfig` A and not for `MeetingConfig` B and in this case, the available items were shown
 
 4.1.27.2 (2020-06-25)
 ---------------------

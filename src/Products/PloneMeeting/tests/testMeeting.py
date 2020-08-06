@@ -3266,6 +3266,9 @@ class testMeeting(PloneMeetingTestCase):
         self.changeUser('powerobserver1')
         view.update()
         self.assertTrue(view.showAvailableItems())
+        self.changeUser('powerobserver2')
+        view.update()
+        self.assertFalse(view.showAvailableItems())
         # will not be the case for cfg2
         self.meetingConfig2.setDisplayAvailableItemsTo(
             (POWEROBSERVERPREFIX + 'powerobservers', ))
@@ -3277,7 +3280,7 @@ class testMeeting(PloneMeetingTestCase):
         self.assertTrue(view.showAvailableItems())
         self.changeUser('powerobserver2')
         view.update()
-        self.assertFalse(view.showAvailableItems())
+        self.assertTrue(view.showAvailableItems())
         self.changeUser('powerobserver1')
         view.update()
         self.assertFalse(view.showAvailableItems())

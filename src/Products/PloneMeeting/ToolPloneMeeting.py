@@ -555,25 +555,25 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         '''Check if the currently logged user is in at least one of p_suffixes-related Plone
            group.  p_suffixes is a list of suffixes.
            If cfg, we filter on cfg.usingGroups.'''
+        res = False
         # display a warning if suffixes is not a tuple/list
         if not isinstance(suffixes, (tuple, list)):
             logger.warn("ToolPloneMeeting.userIsAmong parameter 'suffixes' must be "
                         "a tuple or list of suffixes, but we received '{0}'".format(suffixes))
-
-        using_groups = cfg and cfg.getUsingGroups() or []
-        activeOrgUids = [org_uid for org_uid in get_organizations(
-            only_selected=True, the_objects=False, kept_org_uids=using_groups)]
-        res = False
-        for plone_group_id in self.get_plone_groups_for_user():
-            # check if the plone_group_id ends with a least one of the p_suffixes
-            has_kept_suffixes = [suffix for suffix in suffixes if plone_group_id.endswith('_%s' % suffix)]
-            if has_kept_suffixes:
-                org = get_organization(plone_group_id)
-                # if we can not find the org, it means that it is a suffix like 'powerobservers'
-                # if we find the org, we check that it is among activeOrgUids
-                if not org or org.UID() in activeOrgUids:
-                    res = True
-                    break
+        else:
+            using_groups = cfg and cfg.getUsingGroups() or []
+            activeOrgUids = [org_uid for org_uid in get_organizations(
+                only_selected=True, the_objects=False, kept_org_uids=using_groups)]
+            for plone_group_id in self.get_plone_groups_for_user():
+                # check if the plone_group_id ends with a least one of the p_suffixes
+                has_kept_suffixes = [suffix for suffix in suffixes if plone_group_id.endswith('_%s' % suffix)]
+                if has_kept_suffixes:
+                    org = get_organization(plone_group_id)
+                    # if we can not find the org, it means that it is a suffix like 'powerobservers'
+                    # if we find the org, we check that it is among activeOrgUids
+                    if not org or org.UID() in activeOrgUids:
+                        res = True
+                        break
         return res
 
     security.declarePublic('getPloneMeetingFolder')
