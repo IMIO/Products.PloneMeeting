@@ -475,13 +475,49 @@ class testContacts(PloneMeetingTestCase):
         self.assertEqual(item1.getItemAbsents(), (hp_uid, ))
         self.assertFalse(item2.getItemAbsents())
 
+    def _setup_print_signatories_by_position(self):
+        # Add a position_type
+        self.portal.contacts.position_types += (
+            {"token": u"dg",
+             "name": u"Directeur Général|Directeurs Généraux|"
+                     u"Directrice Générale|Directrices Générales"},
+            {"token": u"super",
+             "name": u"Super-héro|Super-héros|"
+                     u"Super-héroine|Super-héroines"},
+        )
+        person1 = self.portal.contacts.get("person1")
+        person1.firstname = "Jane"
+        person1.lastname = "Doe"
+        person1.gender = u"F"
+        person1.person_title = u"Miss"
+
+        signatory1 = person1.get_held_positions()[0]
+        signatory1.position_type = u"dg"
+        signatory1.secondary_position_type = u"super"
+        signatory1.label = u""
+
+        # No gender/person_title and no position_type, no secondary_position_type
+        person4 = self.portal.contacts.get("person4")
+        person4.firstname = "John"
+        person4.lastname = "Doe"
+        person4.gender = u""
+        person4.person_title = u""
+
+        signatory2 = person4.get_held_positions()[0]
+        signatory2.label = u"Président"
+
+        # prepare 2 more signatories (but not setted as such, yet)
+        person2 = self.portal.contacts.get("person2")
+        signatory3 = person2.get_held_positions()[0]
+        signatory3.label = u"Signatory3"
+
+        person3 = self.portal.contacts.get("person3")
+        signatory4 = person3.get_held_positions()[0]
+        signatory4.label = u"Signatory4"
+
     def test_pm_print_signatories_by_position(self):
-        # Set up
-        self.changeUser("siteadmin")
-        cfg = self.meetingConfig
-        cfg.setUsedMeetingAttributes(("attendees", "excused", "absents", "signatories",))
-        ordered_contacts = cfg.getField("orderedContacts").Vocabulary(cfg).keys()
-        cfg.setOrderedContacts(ordered_contacts)
+        self._setup_print_signatories_by_position()
+
         self.changeUser("pmManager")
         meeting = self.create("Meeting", date=DateTime())
         item = self.create("MeetingItem")
@@ -497,43 +533,55 @@ class testContacts(PloneMeetingTestCase):
         self.assertEqual(
             printed_signatories,
             {
-                0: "Assembly member 1,",
-                1: "Person1FirstName Person1LastName.",
-                2: "Assembly member 4 & 5,",
-                3: "Person4FirstName Person4LastName."
+                0: u"La Directrice Générale,",
+                1: u"Jane Doe.",
+                2: u"Président,",  # No position_type, so no prefix
+                3: u"John Doe.",
             }
         )
         printed_signatories = helper.print_signatories_by_position(
-            signature_format=("secondary_position_type", "XXX", "gender"),
+            signature_format=(u"prefixed_secondary_position_type", u"person_with_title", u"XXX", u"gender"),
             separator=""
         )
         self.assertEqual(
             printed_signatories,
             {
-                0: "Assembly member 1",
-                1: "XXX",
-                2: "M",
-                3: "Assembly member 4 & 5",
-                4: "XXX",
-                5: "M"
+                0: u"La Super-héroine",
+                1: u"Miss Jane Doe",
+                2: u"XXX",
+                3: u"F",
+                4: u"Président",  # John Doe has no gender, no title and no secondary_position_type
+                5: u"John Doe",
+                6: u"XXX",
+                7: u""
             }
         )
 
-        # On Meeting
+        # On Meeting, with 4 signatories
         view = meeting.restrictedTraverse("document-generation")
         helper = view.get_generation_context_helper()
 
+        # Add two more signatories
+        contacts = meeting.orderedContacts.items()
+        signatory3 = contacts[1][1]
+        # Set an absurd value to see if it will be correctly sorted
+        signatory3["signature_number"] = "10"
+        signatory3["signer"] = True
+        signatory4 = contacts[2][1]
+        signatory4["signer"] = True
+        signatory4["signature_number"] = "22"  # Same here
+
         printed_signatories = helper.print_signatories_by_position(
-            signature_format=(u"position_type", u"person_title"),
-            separator=u" ;"
+            signature_format=(u"position_type",),
+            ender=None
         )
         self.assertEqual(
             printed_signatories,
             {
-                0: "Assembly member 1 ;",
-                1: "Monsieur Person1FirstName Person1LastName",
-                2: "Assembly member 4 & 5 ;",
-                3: "Monsieur Person4FirstName Person4LastName"
+                0: u"Directrice Générale",
+                1: u"Président",
+                2: u"Signatory3",
+                3: u"Signatory4"
             }
         )
 
