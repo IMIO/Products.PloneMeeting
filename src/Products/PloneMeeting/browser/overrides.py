@@ -10,6 +10,7 @@ from collective.contact.core import utils as contact_core_utils
 from collective.contact.plonegroup import utils as contact_plonegroup_utils
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from collective.contact.plonegroup.utils import get_all_suffixes
+from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.documentgenerator.viewlets.generationlinks import DocumentGeneratorLinksViewlet
 from collective.eeafaceted.batchactions.browser.views import TransitionBatchActionForm
 from collective.eeafaceted.collectionwidget.browser.views import FacetedDashboardView
@@ -59,6 +60,8 @@ from Products.PloneMeeting import utils as pm_utils
 from Products.PloneMeeting.config import BARCODE_INSERTED_ATTR_ID
 from Products.PloneMeeting.config import ITEM_DEFAULT_TEMPLATE_ID
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
+from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
+from Products.PloneMeeting.MeetingConfig import POWEROBSERVERPREFIX
 from Products.PloneMeeting.interfaces import IMeeting
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import get_annexes
@@ -432,15 +435,38 @@ class PMFacetedContainerView(FacetedDashboardView):
         else:
             return self.cfg.searches
 
+    def _redirectToNextMeeting(self):
+        """Check if current user profile is selected in MeetingConfig.redirectToNextMeeting."""
+        res = False
+        redirectToNextMeeting = self.cfg and self.cfg.getRedirectToNextMeeting()
+        if redirectToNextMeeting:
+            suffixes = []
+            groups = []
+            cfg_id = self.cfg.getId()
+            for value in redirectToNextMeeting:
+                if value == 'app_users':
+                    suffixes = get_all_suffixes()
+                elif value == 'meeting_managers':
+                    groups.append(get_plone_group_id(cfg_id, MEETINGMANAGERS_GROUP_SUFFIX))
+                elif value.startswith(POWEROBSERVERPREFIX):
+                    groups.append(value)
+            if suffixes:
+                res = self.tool.userIsAmong(suffixes)
+            if not res and groups:
+                res = bool(set(groups).intersection(self.tool.get_plone_groups_for_user()))
+        return res
+
     def __call__(self):
         """Make sure a user, even a Manager that is not the Zope Manager is redirected
            to it's own pmFolder if it is on the pmFolder of another user."""
-        if self.cfg and self.cfg.getRedirectToNextMeeting():
-            if ('searches_items' in self.request.steps) and ('facetednavigation_view' in self.request.steps) and not (self.request.get('no_redirect')):
-                meetingDate = DateTime(DateTime().strftime("%Y/%m/%d"))
-                next_meeting = get_next_meeting(meetingDate=meetingDate, cfg=self.cfg)
-                if next_meeting:
-                    self.request.RESPONSE.redirect(next_meeting.absolute_url())
+        if self._redirectToNextMeeting() and \
+           ('searches_items' in self.request.steps) and \
+           ('facetednavigation_view' in self.request.steps) and \
+           not (self.request.get('no_redirect')):
+            meetingDate = DateTime(DateTime().strftime("%Y/%m/%d"))
+            next_meeting = get_next_meeting(meetingDate=meetingDate, cfg=self.cfg)
+            if next_meeting:
+                self.request.RESPONSE.redirect(next_meeting.absolute_url())
 
         res = super(PMFacetedContainerView, self).__call__()
 

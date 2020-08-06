@@ -256,18 +256,6 @@ schema = Schema((
         ),
         write_permission="PloneMeeting: Write risky config",
     ),
-    BooleanField(
-        name='redirectToNextMeeting',
-        default=defValues.yearlyInitMeetingNumber,
-        widget=BooleanField._properties['widget'](
-            description="RedirectToNextMeeting",
-            description_msgid="redirect_to_next_meeting_desc",
-            label='RedirectToNextMeeting',
-            label_msgid='PloneMeeting_label_redirectToNextMeeting',
-            i18n_domain='PloneMeeting',
-        ),
-        write_permission="PloneMeeting: Write risky config",
-    ),
     TextField(
         name='budgetDefault',
         widget=RichWidget(
@@ -1422,6 +1410,23 @@ schema = Schema((
         multiValued=1,
         vocabulary='listDisplayAvailableItemsTo',
         default=defValues.displayAvailableItemsTo,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    LinesField(
+        name='redirectToNextMeeting',
+        widget=MultiSelectionWidget(
+            description="RedirectToNextMeeting",
+            description_msgid="redirect_to_next_meeting_descr",
+            format="checkbox",
+            label='Redirecttonextmeeting',
+            label_msgid='PloneMeeting_label_redirectToNextMeeting',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="gui",
+        multiValued=1,
+        vocabulary='listRedirectToNextMeeting',
+        default=defValues.redirectToNextMeeting,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
@@ -4466,6 +4471,19 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         d = "PloneMeeting"
         res = DisplayList((
             ("app_users", translate('app_users', domain=d, context=self.REQUEST)),
+        ))
+        for po_infos in self.getPowerObservers():
+            res.add('{0}{1}'.format(POWEROBSERVERPREFIX, po_infos['row_id']),
+                    po_infos['label'])
+        return res
+
+    security.declarePrivate('listRedirectToNextMeeting')
+
+    def listRedirectToNextMeeting(self):
+        d = "PloneMeeting"
+        res = DisplayList((
+            ("app_users", translate('app_users', domain=d, context=self.REQUEST)),
+            ("meeting_managers", translate('meetingmanagers', domain=d, context=self.REQUEST)),
         ))
         for po_infos in self.getPowerObservers():
             res.add('{0}{1}'.format(POWEROBSERVERPREFIX, po_infos['row_id']),

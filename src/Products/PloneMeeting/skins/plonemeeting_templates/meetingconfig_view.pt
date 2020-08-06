@@ -84,8 +84,7 @@
           <td tal:define="field python:here.getField('yearlyInitMeetingNumber')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td tal:define="field python:here.getField('redirectToNextMeeting')">
-            <span metal:use-macro="here/widgets/field/macros/view" />
+          <td>
           </td>
         </tr>
         <tr valign="top">
@@ -799,7 +798,8 @@
           <td tal:define="field python:here.getField('displayAvailableItemsTo')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td>
+          <td tal:define="field python:here.getField('redirectToNextMeeting')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
         </tr>
         <tr valign="top">

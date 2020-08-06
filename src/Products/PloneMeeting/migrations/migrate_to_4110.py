@@ -122,7 +122,6 @@ def migrate(context):
        2) Enable column 'PloneGroupUsersGroupsColumn' of for contacts collections displaying organizations;
        3) Make sure '++resource++plone.app.jquerytools.dateinput.js' is enabled in portal_javascripts;
        4) Apply every pending upgrades.
-
     '''
     migrator = Migrate_To_4110(context)
     migrator.run()
