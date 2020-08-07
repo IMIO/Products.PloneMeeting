@@ -1219,16 +1219,16 @@ div.highlightBlankRow:before {
 }
 p.page-break {
     border: 1px dotted grey;
-    color: grey;
     page-break-after: always;
 }
 
-body.cke_editable p.page-break:before,
-div[id^='hook_'] p.page-break:before,
-div.pmMoreInfo p.page-break:before {
+body.cke_editable p.page-break:after,
+div[id^='hook_'] p.page-break:after,
+div.pmMoreInfo p.page-break:after {
     font-weight: bold;
     content: 'Saut de page';
     padding-left: 0.5em;
+    color: red;
 }
 
 /* on the meetingconfig view, move itemIconColor value to let place for the icon */
