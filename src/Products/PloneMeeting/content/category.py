@@ -9,7 +9,7 @@ from plone.dexterity.content import Item
 from plone.dexterity.schema import DexteritySchemaPolicy
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import IConfigElement
-from z3c.form.browser.checkbox import CheckBoxFieldWidget
+from Products.PloneMeeting.widgets.pm_checkbox import PMCheckBoxFieldWidget
 from z3c.form.browser.radio import RadioFieldWidget
 from zope import schema
 from zope.i18n import translate
@@ -32,7 +32,7 @@ class IMeetingCategory(IConfigElement):
         required=False,
     )
 
-    form.widget('using_groups', CheckBoxFieldWidget, multiple='multiple')
+    form.widget('using_groups', PMCheckBoxFieldWidget, multiple='multiple')
     using_groups = schema.List(
         title=_("PloneMeeting_label_usingGroups"),
         description=_("category_using_groups_descr"),
@@ -42,7 +42,7 @@ class IMeetingCategory(IConfigElement):
         required=False,
     )
 
-    form.widget('category_mapping_when_cloning_to_other_mc', CheckBoxFieldWidget, multiple='multiple')
+    form.widget('category_mapping_when_cloning_to_other_mc', PMCheckBoxFieldWidget, multiple='multiple')
     category_mapping_when_cloning_to_other_mc = schema.List(
         title=_("PloneMeeting_label_category_mapping_when_cloning_to_other_mc"),
         description=_("category_mapping_when_cloning_to_other_mc_descr"),
@@ -52,7 +52,7 @@ class IMeetingCategory(IConfigElement):
         required=False,
     )
 
-    form.widget('groups_in_charge', CheckBoxFieldWidget, multiple='multiple')
+    form.widget('groups_in_charge', PMCheckBoxFieldWidget, multiple='multiple')
     groups_in_charge = schema.List(
         title=_("PloneMeeting_label_groupsInCharge"),
         description=_("groups_in_charge_descr"),
