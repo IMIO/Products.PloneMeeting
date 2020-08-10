@@ -79,6 +79,75 @@ class testFaceted(PloneMeetingTestCase):
         self.assertFalse(self.request.RESPONSE.getHeader('location'))
         self.assertTrue(self.request.RESPONSE.getStatus() == 200)
 
+    def test_pm_RedirectToNextMeeting(self):
+        """When selected, some user profiles will be redirected to the next meeting if it exists
+           instead a dashboard displaying items (my items, ...)."""
+        cfg = self.meetingConfig
+        self.assertEqual(cfg.getRedirectToNextMeeting(), ())
+        cfgId = cfg.getId()
+        # get the pmCreator1 pmFolder
+        self.changeUser('pmCreator1')
+        self.request.RESPONSE.setHeader('location', '')
+        creatorPMFolder = self.tool.getPloneMeetingFolder(cfgId)
+        # access the pmFolder
+        creatorPMFolder.searches_items()
+        self.assertEqual(self.request.RESPONSE.getHeader('location'), '')
+        # redirect app user to next meeting
+        self.assertEqual(cfg.listRedirectToNextMeeting().keys(),
+                         ['app_users',
+                          'meeting_managers',
+                          'powerobserver__powerobservers',
+                          'powerobserver__restrictedpowerobservers'])
+        cfg.setRedirectToNextMeeting(('app_users', ))
+        # still searches_items as no meeting exist
+        creatorPMFolder.searches_items()
+        self.assertEqual(self.request.RESPONSE.getStatus(), 200)
+        self.assertEqual(self.request.RESPONSE.getHeader('location'), '')
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime() + 1)
+        meeting_url = meeting.absolute_url()
+        # freeze meeting so we are sure it is viewable (depends on WF)
+        self.freezeMeeting(meeting)
+        self.changeUser('pmCreator1')
+        creatorPMFolder.searches_items()
+        self.assertEqual(self.request.RESPONSE.getStatus(), 302)
+        self.assertEqual(self.request.RESPONSE.getHeader('location'), meeting_url)
+
+    def test_pm_RedirectToNextMeetingWhenMeetingNotViewable(self):
+        """If meeting not viewable, user not redirected."""
+        cfg = self.meetingConfig
+        cfgId = cfg.getId()
+        self._setPowerObserverStates(field_name='meeting_states',
+                                     states=('closed', ))
+        self.assertEqual(cfg.listRedirectToNextMeeting().keys(),
+                         ['app_users',
+                          'meeting_managers',
+                          'powerobserver__powerobservers',
+                          'powerobserver__restrictedpowerobservers'])
+        cfg.setRedirectToNextMeeting(('powerobserver__powerobservers', ))
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime() + 1)
+        meeting_url = meeting.absolute_url()
+        # not viewable for now
+        self.changeUser('powerobserver1')
+        pmFolder = self.tool.getPloneMeetingFolder(cfgId)
+        # access the pmFolder
+        pmFolder.searches_items()
+        self.assertEqual(self.request.RESPONSE.getStatus(), 200)
+        self.assertEqual(self.request.RESPONSE.getHeader('location'), '')
+        # make meeting viewable
+        self.closeMeeting(meeting, as_manager=True)
+        # when no_redirect in request, user is not redirected
+        self.assertEqual(self.request.get('no_redirect'), '1')
+        pmFolder.searches_items()
+        self.assertEqual(self.request.RESPONSE.getStatus(), 200)
+        self.assertEqual(self.request.RESPONSE.getHeader('location'), '')
+        # redirected
+        self.request.set('no_redirect', 0)
+        pmFolder.searches_items()
+        self.assertEqual(self.request.RESPONSE.getStatus(), 302)
+        self.assertEqual(self.request.RESPONSE.getHeader('location'), meeting_url)
+
     def test_pm_ItemCategoriesVocabulary(self):
         '''Test the "Products.PloneMeeting.vocabularies.categoriesvocabulary"
            vocabulary, especially because it is cached.'''

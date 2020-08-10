@@ -2,6 +2,7 @@ Changelog
 =========
 
 
+
 4.1.28 (unreleased)
 -------------------
 
@@ -37,6 +38,8 @@ Changelog
     `MeetingConfig.useGroupsAsCategories` was `True`, now it returns only categories, moreover parameter `classifiers` is
     renamed to `catType` that may be `all`/`categories`/`classifiers`.
 - In every migrations, call `cleanRegistries` at the end by default so `JS/CSS` are recompiled
+- Add 'redirectToNextMeeting' option.
+- Moved `Meeting.getNextMeeting` logic to `utils.get_next_meeting` so it can be used from outside a `Meeting` instance
 - Make sure `++resource++plone.app.jquerytools.dateinput.js` is enabled in `portal_javascripts`
 - Completed custom widget `PMCheckBoxFieldWidget` to manage `display` mode, every element are listed one under each other and not one
   next to each others separated with commas that was much unreadable when having more than 3 values.
@@ -45,6 +48,7 @@ Changelog
   powerobserver for `MeetingConfig` A and not for `MeetingConfig` B and in this case, the available items were shown
 - Added `CKEditor` style `page-break` to be able to insert a `page-break` into a `RichText` field, this can be used in a
   `POD template` by adding a relevant `page-break` paragraph style
+
 
 4.1.27.2 (2020-06-25)
 ---------------------
