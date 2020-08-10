@@ -409,10 +409,12 @@ class PMFacetedContainerView(FacetedDashboardView):
         super(PMFacetedContainerView, self).__init__(context, request)
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
+        self.check_redirect_next_meeting = False
         # disable border for faceted dashboards of PM except on Meeting
         if 'portal_plonemeeting' not in self.context.absolute_url() and \
            not IMeeting.providedBy(self.context) and self.cfg:
             self.request.set('disable_border', 1)
+            self.check_redirect_next_meeting = True
 
     def getPloneMeetingFolder(self):
         '''Returns the current PM folder.'''
@@ -438,8 +440,8 @@ class PMFacetedContainerView(FacetedDashboardView):
     def _redirectToNextMeeting(self):
         """Check if current user profile is selected in MeetingConfig.redirectToNextMeeting."""
         res = False
-        redirectToNextMeeting = self.cfg and self.cfg.getRedirectToNextMeeting()
-        if redirectToNextMeeting:
+        if self.check_redirect_next_meeting:
+            redirectToNextMeeting = self.cfg.getRedirectToNextMeeting()
             suffixes = []
             groups = []
             cfg_id = self.cfg.getId()
@@ -449,7 +451,8 @@ class PMFacetedContainerView(FacetedDashboardView):
                 elif value == 'meeting_managers':
                     groups.append(get_plone_group_id(cfg_id, MEETINGMANAGERS_GROUP_SUFFIX))
                 elif value.startswith(POWEROBSERVERPREFIX):
-                    groups.append(value)
+                    po_grp_id = value.replace(POWEROBSERVERPREFIX, '')
+                    groups.append(get_plone_group_id(cfg_id, po_grp_id))
             if suffixes:
                 res = self.tool.userIsAmong(suffixes)
             if not res and groups:
@@ -459,15 +462,11 @@ class PMFacetedContainerView(FacetedDashboardView):
     def __call__(self):
         """Make sure a user, even a Manager that is not the Zope Manager is redirected
            to it's own pmFolder if it is on the pmFolder of another user."""
-        if self._redirectToNextMeeting() and \
-           ('searches_items' in self.request.steps) and \
-           ('facetednavigation_view' in self.request.steps) and \
-           not (self.request.get('no_redirect')):
+        if not self.request.get('no_redirect') and self._redirectToNextMeeting():
             meetingDate = DateTime(DateTime().strftime("%Y/%m/%d"))
             next_meeting = get_next_meeting(meetingDate=meetingDate, cfg=self.cfg)
             if next_meeting:
                 self.request.RESPONSE.redirect(next_meeting.absolute_url())
-
         res = super(PMFacetedContainerView, self).__call__()
 
         if self.request.RESPONSE.status == 302 and \
