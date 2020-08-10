@@ -46,6 +46,8 @@ Changelog
   Use it everywhere possible: `organization`, `held_position` and `category`
 - Fixed `MeetingView._displayAvailableItemsTo`, do not use `ToolPloneMeeting.userIsAmong` for powerobservers as it could be
   powerobserver for `MeetingConfig` A and not for `MeetingConfig` B and in this case, the available items were shown
+- Added `CKEditor` style `page-break` to be able to insert a `page-break` into a `RichText` field, this can be used in a
+  `POD template` by adding a relevant `page-break` paragraph style
 
 
 4.1.27.2 (2020-06-25)
