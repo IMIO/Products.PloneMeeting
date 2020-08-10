@@ -41,6 +41,10 @@ Changelog
 - Completed custom widget `PMCheckBoxFieldWidget` to manage `display` mode, every element are listed one under each other and not one
   next to each others separated with commas that was much unreadable when having more than 3 values.
   Use it everywhere possible: `organization`, `held_position` and `category`
+- Fixed `MeetingView._displayAvailableItemsTo`, do not use `ToolPloneMeeting.userIsAmong` for powerobservers as it could be
+  powerobserver for `MeetingConfig` A and not for `MeetingConfig` B and in this case, the available items were shown
+- Added `CKEditor` style `page-break` to be able to insert a `page-break` into a `RichText` field, this can be used in a
+  `POD template` by adding a relevant `page-break` paragraph style
 - Adapted code regarding changes in `collective.iconifiedcategory`, do not use `portal_catalog` to get the annexes but rely on
   `allowedRolesAndUsers` stored in `categorized_elements`
 - Fixed `MeetingView._displayAvailableItemsTo`, do not use `ToolPloneMeeting.userIsAmong` for powerobservers as it could be
