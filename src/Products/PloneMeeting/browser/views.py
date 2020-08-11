@@ -320,15 +320,18 @@ class MeetingView(FacetedContainerView):
         """Check if current user profile is selected in MeetingConfig.displayAvailableItemsTo."""
         displayAvailableItemsTo = self.cfg.getDisplayAvailableItemsTo()
         suffixes = []
+        groups = []
         res = False
+        cfgId = self.cfg.getId()
         for value in displayAvailableItemsTo:
             if value == 'app_users':
-                suffixes += get_all_suffixes()
-            if value.startswith(POWEROBSERVERPREFIX):
-                suffixes.append(value.split(POWEROBSERVERPREFIX)[1])
+                suffixes = get_all_suffixes()
+            elif value.startswith(POWEROBSERVERPREFIX):
+                groups.append(get_plone_group_id(cfgId, value.split(POWEROBSERVERPREFIX)[1]))
         if suffixes:
-            tool = api.portal.get_tool('portal_plonemeeting')
-            res = tool.userIsAmong(suffixes)
+            res = self.tool.userIsAmong(suffixes)
+        if not res and groups:
+            res = bool(set(groups).intersection(self.tool.get_plone_groups_for_user()))
         return res
 
     def showAvailableItems(self):

@@ -7,6 +7,7 @@ from Products.CMFPlone.interfaces.constrains import IConstrainTypes
 from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator
 from Products.ZCatalog.ProgressHandler import ZLogHandler
+from zope.i18n import translate
 
 
 class MeetingCategoryMigrator(ContentMigrator):
@@ -36,9 +37,6 @@ class Migrate_To_4110(Migrator):
     def _migrateMeetingCategoryToDX(self):
         '''Migrate from AT MeetingCategory to DX meetingcategory.'''
         logger.info('Migrating MeetingCategory from AT to DX...')
-        if 'meetingcategory' in self.portal.portal_types:
-            return self._already_migrated()
-
         # update item classifier
         # migrate references
         pghandler = ZLogHandler(steps=100)
@@ -108,11 +106,35 @@ class Migrate_To_4110(Migrator):
         resource.setEnabled(True)
         logger.info('Done.')
 
+    def _addPageBreakStyleToCKEditor(self):
+        """Add new style 'page-break' to CKeditor styles."""
+        logger.info("Adding style 'page-break' to CKEditor styles...")
+        cke_props = self.portal.portal_properties.ckeditor_properties
+        if cke_props.menuStyles.find('page-break') == -1:
+            msg_page_break = translate('ckeditor_style_page_break',
+                                       domain='PloneMeeting',
+                                       context=self.request).encode('utf-8')
+            menuStyles = cke_props.menuStyles
+            page_break_style = "{{ name : '{0}'\t\t, element : 'p', attributes : " \
+                "{{ 'class' : 'page-break' }} }},\n]".format(msg_page_break)
+            # last element, check if we need a ',' before or not...
+            strippedMenuStyles = menuStyles.replace(' ', '').replace('\n', '').replace('\r', '')
+            if ',]' not in strippedMenuStyles:
+                menuStyles = menuStyles.replace('\n]', ']')
+                page_break_style = ",\n" + page_break_style
+            menuStyles = menuStyles.replace(']', page_break_style)
+            cke_props.menuStyles = menuStyles
+            logger.info("Style 'page-break' was added...")
+        else:
+            logger.info("Style 'page-break' already exists and was not added...")
+        logger.info('Done.')
+
     def run(self, from_migration_to_41=False):
         logger.info('Migrating to PloneMeeting 4110...')
         self._migrateMeetingCategoryToDX()
         self._updateOrgsDashboardCollectionColumns()
         self._enableDateinputJSResource()
+        self._addPageBreakStyleToCKEditor()
         # update collective.contact.plonegroup
         self.upgradeAll(omit=['Products.PloneMeeting:default',
                               self.profile_name.replace('profile-', '')])
@@ -124,7 +146,8 @@ def migrate(context):
        1) Migrate MeetingCategory to meetingcategory.
        2) Enable column 'PloneGroupUsersGroupsColumn' of for contacts collections displaying organizations;
        3) Make sure '++resource++plone.app.jquerytools.dateinput.js' is enabled in portal_javascripts;
-       4) Apply every pending upgrades.
+       4) Add new style 'page-break' to CKEditor;
+       5) Apply every pending upgrades.
     '''
     migrator = Migrate_To_4110(context)
     migrator.run()
