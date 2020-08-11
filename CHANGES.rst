@@ -48,7 +48,8 @@ Changelog
   powerobserver for `MeetingConfig` A and not for `MeetingConfig` B and in this case, the available items were shown
 - Added `CKEditor` style `page-break` to be able to insert a `page-break` into a `RichText` field, this can be used in a
   `POD template` by adding a relevant `page-break` paragraph style
-
+- In `MeetingItemWorkflowConditions._check_review_and_required`, factorized check about `Review portal content` permission and
+  required data (`category/classifier/groupsInCharge`)
 
 4.1.27.2 (2020-06-25)
 ---------------------
