@@ -50,6 +50,8 @@ Changelog
   `POD template` by adding a relevant `page-break` paragraph style
 - In `MeetingItemWorkflowConditions._check_review_and_required`, factorized check about `Review portal content` permission and
   required data (`category/classifier/groupsInCharge`)
+- Improved `BaseDGHV.print_signatories_by_position` to add more use cases
+- Added tests for `BaseDGHV.print_signatories_by_position`
 
 4.1.27.2 (2020-06-25)
 ---------------------
