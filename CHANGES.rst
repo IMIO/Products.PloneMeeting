@@ -52,6 +52,9 @@ Changelog
   required data (`category/classifier/groupsInCharge`)
 - Improved `BaseDGHV.print_signatories_by_position` to add more use cases
 - Added tests for `BaseDGHV.print_signatories_by_position`
+- Display groups created by a `MeetingConfig` (meetingmanagers, powerobservers, ...) on the `meetingconfig_view`.
+  Moved the `@@display-group-users` view to `collective.contact.plonegroup` so we have same view to render groups and users in
+  contacts dashboard and everywhere else.
 
 4.1.27.2 (2020-06-25)
 ---------------------

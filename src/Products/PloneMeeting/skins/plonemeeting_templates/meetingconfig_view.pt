@@ -119,95 +119,97 @@
     </fieldset>
     </tal:customFields>
 
-    <fieldset tal:condition="isRealManager">
-      <legend i18n:translate="heading_actions"></legend>
-      <p class="discreet" style="color: red;" i18n:translate="pm_tool_updates_warning">
-      Warning: take care that launching these proceedings may take time, depending on the number of existing elements!  Do not launch during period of hig use!
-      </p>
-      <table class="configActions">
-        <tr valign="top">
-          <td width=20%>
+    <table class="configActions" tal:condition="isRealManager">
+      <tr valign="top">
+        <td width="50%">
+          <tal:comment replace="nothing">Display groups and users linked to this MeetingConfig</tal:comment>
+          <fieldset>
+            <legend i18n:translate="" i18n:domain="collective.contact.plonegroup">Groups and users</legend>
+            <p i18n:translate="meetingconfig_display_groups_and_users_descr" class='pageNameDescr'></p>
+            <tal:groupsAndUsers tal:replace="structure context/displayGroupsAndUsers" />
+          </fieldset>
+        </td>
+        <td width="50%">
+          <fieldset>
+            <legend i18n:translate="heading_actions">Actions</legend>
+            <p class="discreet" style="color: red; font-weight: bold;" i18n:translate="pm_tool_updates_warning">
+            Warning: take care that launching these proceedings may take time, depending on the number of existing elements!  Do not launch during period of hig use!
+            </p>
             <form name="updateAnnexConfidentialityForm" action="updateAnnexConfidentiality">
-            <input class="context"
-                   type="submit" name="updateAnnexConfidentiality"
-                   value="pm_update_annex_confidentiality"
-                   onclick="event.preventDefault(); if (confirm(window.eval('are_you_sure'))) {this.form.submit();}"
-                   i18n:attributes="value"/>&nbsp;&nbsp;
+              <p class="discreet" style="color: red;" i18n:translate="pm_update_annex_confidentiality_warning">
+                  Warning: the action 'Initialize existing annexes confidentiality' will initialize every existing annex confidentiality to what is defined as default value in this meeting configuration (check the 'Advices and access' tab).
+              </p>
+              <input class="context"
+                     type="submit" name="updateAnnexConfidentiality"
+                     value="pm_update_annex_confidentiality"
+                     onclick="event.preventDefault(); if (confirm(window.eval('are_you_sure'))) {this.form.submit();}"
+                     i18n:attributes="value"/>
             </form>
-            <p class="discreet" style="color: red;" i18n:translate="pm_update_annex_confidentiality_warning">
-                Warning: the action 'Initialize existing annexes confidentiality' will initialize every existing annex confidentiality to what is defined as default value in this meeting configuration (check the 'Advices and access' tab).
-            </p>
-          </td>
-          <td width=20%>
-            <form name="updateAdviceConfidentialityForm" action="updateAdviceConfidentiality">
-            <input class="context"
-                   type="submit"
-                   name="updateAdviceConfidentiality"
-                   value="pm_update_advice_confidentiality"
-                   onclick="event.preventDefault(); if (confirm(window.eval('are_you_sure'))) {this.form.submit();}"
-                   i18n:attributes="value"/>&nbsp;&nbsp;
-            </form>
-            <p class="discreet" style="color: red;" i18n:translate="pm_update_advice_confidentiality_warning">
-                Warning: the action 'Initialize existing advices confidentiality' will initialize every existing advice confidentiality to what is defined as default value in this meeting configuration (check the 'Advices and access' tab).
-            </p>
-          </td>
-          <td width=20%>
-            <form name="updatePersonalLabelsForm" action="updatePersonalLabels">
-            <select name="personal_labels:list">
-              <option value="" i18n:translate="">Select a label</option>
-              <option tal:repeat="term context/get_labels_vocab"
-                      tal:attributes="value term/value"
-                      tal:content="term/title">Label title</option>
-            </select>
-            <br />
-            <select name="modified_since_days:int">
-              <option value="30" i18n:translate="">Modified since (in days, default to 30 days)</option>
-              <option tal:repeat="value python: range(0, 100, 5)"
-                      tal:attributes="value value"
-                      tal:content="value">0</option>
-            </select>
-            <br />
-            <input class="context"
-                   type="submit"
-                   name="updatePersonalLabels"
-                   value="pm_update_personal_labels"
-                   onclick="event.preventDefault(); if (confirm(window.eval('are_you_sure'))) {this.form.submit();}"
-                   i18n:attributes="value"/>&nbsp;&nbsp;
-            </form>
-            <p class="discreet" style="color: red;" i18n:translate="pm_update_personal_labels_warning">
-                Warning: the action 'Initialize personal labels' will activate selected labels on every existing items that were last modified before given number of days for every users able to see these items.
-            </p>
-          </td>
 
-          <td width=20%>
-            <form name="checkPodTemplatesForm" action="checkPodTemplates">
-            <input class="context"
-                   type="submit" name="checkPodTemplates"
-                   value="pm_check_pod_templates"
-                   onclick="event.preventDefault(); if (confirm(window.eval('are_you_sure'))) {this.form.submit();}"
-                   i18n:attributes="value"/>&nbsp;&nbsp;
+            <form name="updateAdviceConfidentialityForm" action="updateAdviceConfidentiality">
+              <p class="discreet" style="color: red;" i18n:translate="pm_update_advice_confidentiality_warning">
+                  Warning: the action 'Initialize existing advices confidentiality' will initialize every existing advice confidentiality to what is defined as default value in this meeting configuration (check the 'Advices and access' tab).
+              </p>
+              <input class="context"
+                     type="submit"
+                     name="updateAdviceConfidentiality"
+                     value="pm_update_advice_confidentiality"
+                     onclick="event.preventDefault(); if (confirm(window.eval('are_you_sure'))) {this.form.submit();}"
+                     i18n:attributes="value"/>
             </form>
-            <p class="discreet" style="color: red;" i18n:translate="pm_check_pod_templates_warning">
-                Warning: the action 'Check Pod templates' will check that every Pod templates defined in the configuration are working correctly.
-            </p>
-          </td>
-          <td width=20%>
+
+            <form name="updatePersonalLabelsForm" action="updatePersonalLabels">
+              <p class="discreet" style="color: red;" i18n:translate="pm_update_personal_labels_warning">
+                  Warning: the action 'Initialize personal labels' will activate selected labels on every existing items that were last modified before given number of days for every users able to see these items.
+              </p>
+              <select name="personal_labels:list">
+                <option value="" i18n:translate="">Select a label</option>
+                <option tal:repeat="term context/get_labels_vocab"
+                        tal:attributes="value term/value"
+                        tal:content="term/title">Label title</option>
+              </select>
+              <br />
+              <select name="modified_since_days:int">
+                <option value="30" i18n:translate="">Modified since (in days, default to 30 days)</option>
+                <option tal:repeat="value python: range(0, 100, 5)"
+                        tal:attributes="value value"
+                        tal:content="value">0</option>
+              </select>
+              <br />
+              <input class="context"
+                     type="submit"
+                     name="updatePersonalLabels"
+                     value="pm_update_personal_labels"
+                     onclick="event.preventDefault(); if (confirm(window.eval('are_you_sure'))) {this.form.submit();}"
+                     i18n:attributes="value"/>
+            </form>
+
+            <form name="checkPodTemplatesForm" action="checkPodTemplates">
+              <p class="discreet" style="color: red;" i18n:translate="pm_check_pod_templates_warning">
+                  Warning: the action 'Check Pod templates' will check that every Pod templates defined in the configuration are working correctly.
+              </p>
+              <input class="context"
+                     type="submit" name="checkPodTemplates"
+                     value="pm_check_pod_templates"
+                     onclick="event.preventDefault(); if (confirm(window.eval('are_you_sure'))) {this.form.submit();}"
+                     i18n:attributes="value"/>
+            </form>
+
             <form name="updateAllLocalRolesForm" action="updateAllLocalRoles"
                   tal:attributes="action string:${tool/absolute_url}/updateAllLocalRoles">
-            <input type="hidden" tal:attributes="value context/getMeetingTypeName" name="portal_type:list" />
-            <input type="hidden" tal:attributes="value context/getItemTypeName" name="portal_type:list" />
-            <input class="context" type="submit" name="updateAllLocalRoles"
-                   onclick="event.preventDefault(); if (confirm(window.eval('are_you_sure'))) {this.form.submit();}"
-                   value="mc_update_all_local_roles" i18n:attributes="value"/>&nbsp;&nbsp;
+              <p class="discreet" style="color: red;" i18n:translate="mc_update_all_local_roles_warning">
+                  Warning: this will update every items and meetings of this configuration, it is only relevant if the field of the configuration that you changed specifies that you need to use this action.  If you only made little changes like adding or removing a state in a field, as an administrator, it is possible to update items and meetings from the dashboards.  To do this, select elements that need to be updated and use the \"Update from configuration\" batch action.
+              </p>
+              <input type="hidden" tal:attributes="value context/getMeetingTypeName" name="portal_type:list" />
+              <input type="hidden" tal:attributes="value context/getItemTypeName" name="portal_type:list" />
+              <input class="context" type="submit" name="updateAllLocalRoles"
+                     onclick="event.preventDefault(); if (confirm(window.eval('are_you_sure'))) {this.form.submit();}"
+                     value="mc_update_all_local_roles" i18n:attributes="value"/>
             </form>
-            <p class="discreet" style="color: red;" i18n:translate="mc_update_all_local_roles_warning">
-                Warning: this will update every items and meetings of this configuration, it is only relevant if the field of the configuration that you changed specifies that you need to use this action.  If you only made little changes like adding or removing a state in a field, as an administrator, it is possible to update items and meetings from the dashboards.  To do this, select elements that need to be updated and use the \"Update from configuration\" batch action.
-            </p>
-          </td>
-        </tr>
-      </table>
-    </fieldset>
-
+          </fieldset>
+        </td>
+      </tr>
+    </table>
     </tal:mainConfig>
 
     <tal:assembly_and_signatures condition="python: pageName=='assembly_and_signatures'">

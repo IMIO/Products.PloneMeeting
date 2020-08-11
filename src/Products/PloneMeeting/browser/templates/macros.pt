@@ -855,7 +855,7 @@ The parameter "cFolder" is the folder containing categories.</tal:comment>
        style='display: inline-block; padding: 0'
        href='#'
        tal:attributes="data-base_url context_url;
-                       data-group_id string:${proposingGroup/UID}*;">
+                       data-group_ids string:${proposingGroup/UID}*;">
       <img tal:attributes="src string:${portal_url}/group_users.png" />
     </a>
   </acronym>

@@ -3,6 +3,7 @@
 from AccessControl import Unauthorized
 from collections import OrderedDict
 from collective.contact.core.utils import get_gender_and_number
+from collective.contact.plonegroup.browser.tables import DisplayGroupUsersView
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_organization
@@ -28,7 +29,6 @@ from Products.CMFCore.permissions import ManagePortal
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.CMFCore.utils import _checkPermission
-from Products.CMFPlone.utils import base_hasattr
 from Products.CMFPlone.utils import safe_unicode
 from Products.Five import BrowserView
 from Products.PloneMeeting import logger
@@ -1353,7 +1353,8 @@ class BaseDGHV(object):
             signatories = self.context.getItemSignatories(theObjects=True, by_signature_number=True)
 
         line = 0
-        for _, signatory in sorted(signatories.items(), key=lambda item: int(item[0])):
+        sorted_signatories = sorted(signatories.items(), key=lambda item: int(item[0]))
+        for signatory in sorted_signatories.values():
             for attr in signature_format:
                 if u'position_type' == attr:
                     signature_lines[line] = signatory.get_label(position_type_attr=attr)
@@ -1870,16 +1871,14 @@ class CheckPodTemplatesView(BrowserView):
         return res
 
 
-class DisplayGroupUsersView(BrowserView):
+class PMDisplayGroupUsersView(DisplayGroupUsersView):
     """
       View that display the users of a Plone group.
     """
 
     def __init__(self, context, request):
-        self.context = context
-        self.request = request
+        super(PMDisplayGroupUsersView, self).__init__(context, request)
         self.tool = api.portal.get_tool('portal_plonemeeting')
-        self.portal_url = api.portal.get().absolute_url()
 
     def _check_auth(self, group_id):
         """Only members of proposingGroup or (MeetingManagers)."""
@@ -1895,39 +1894,6 @@ class DisplayGroupUsersView(BrowserView):
                 if wfa.startswith('pre_validation')]:
             suffixes.remove('prereviewers')
         return suffixes
-
-    def __call__(self, group_id):
-        """ """
-        if group_id.endswith('*'):
-            # remove ending '*'
-            group_id = group_id[:-1]
-            self._check_auth(group_id)
-            # me received a organization UID, get the Plone group ids
-            suffixes = self._get_suffixes(group_id)
-            group_ids = [get_plone_group_id(group_id, suffix)
-                         for suffix in suffixes]
-        else:
-            group_ids = [group_id]
-        self.groups = [api.group.get(tmp_group_id) for tmp_group_id in group_ids]
-        return self.index()
-
-    def group_title(self, group):
-        """ """
-        return group.getProperty('title')
-
-    def group_users(self, group):
-        """ """
-        res = []
-        patterns = {}
-        patterns[0] = "<img src='%s/user.png'> " % self.portal_url
-        patterns[1] = "<img src='%s/group.png'> " % self.portal_url
-        for member in group.getAllGroupMembers():
-            # member may be a user or group
-            isGroup = base_hasattr(member, 'isGroup') and member.isGroup() or 0
-            member_title = member.getProperty('fullname') or member.getProperty('title') or member.getId()
-            res.append(patterns[isGroup] + member_title)
-        res.sort()
-        return "<br />".join(res)
 
 
 class DisplayInheritedAdviceItemInfos(BrowserView):

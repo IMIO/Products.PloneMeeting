@@ -5173,10 +5173,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                 context=self.REQUEST)
                 self.plone_utils.addPortalMessage(msg)
 
-    def _createOrUpdatePloneGroup(self, groupSuffix, groupTitleSuffix=None):
+    def _createOrUpdatePloneGroup(self, groupSuffix, groupTitleSuffix=None, only_group_ids=False):
         '''Create a group for this MeetingConfig using given p_groupSuffix to manage group id and group title.
            This will return groupId and True if group was added, False otherwise.'''
         groupId = "{0}_{1}".format(self.getId(), groupSuffix)
+        if only_group_ids:
+            return groupId, False
         groupTitle = self.Title(include_config_group=True)
         if groupTitleSuffix:
             groupSuffix = safe_unicode(groupTitleSuffix)
@@ -5185,12 +5187,16 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePrivate('createPowerObserversGroups')
 
-    def createPowerObserversGroups(self, force_update_access=False):
+    def createPowerObserversGroups(self, force_update_access=False, only_group_ids=False):
         '''Creates Plone groups to manage power observers.'''
+        groupIds = []
         tool = api.portal.get_tool('portal_plonemeeting')
         for po_infos in self.getPowerObservers():
             groupSuffix = po_infos['row_id']
-            groupId, wasCreated = self._createOrUpdatePloneGroup(groupSuffix, groupTitleSuffix=po_infos['label'])
+            groupId, wasCreated = self._createOrUpdatePloneGroup(groupSuffix,
+                                                                 groupTitleSuffix=po_infos['label'],
+                                                                 only_group_ids=only_group_ids)
+            groupIds.append(groupId)
             if wasCreated or force_update_access:
                 # now define local_roles on the tool so it is accessible by this group
                 tool.manage_addLocalRoles(groupId, (READER_USECASES['powerobservers'],))
@@ -5203,20 +5209,26 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 self.__ac_local_roles_block__ = True
                 self.manage_addLocalRoles(groupId, (READER_USECASES['powerobservers'],))
                 self.reindexObjectSecurity()
+        return groupIds
 
     security.declarePrivate('createBudgetImpactEditorsGroup')
 
-    def createBudgetImpactEditorsGroup(self):
+    def createBudgetImpactEditorsGroup(self, only_group_ids=False):
         '''Creates a Plone group that will be used to apply the 'MeetingBudgetImpactEditor'
            local role on every items of this MeetingConfig regarding self.itemBudgetInfosStates.'''
-        self._createOrUpdatePloneGroup(groupSuffix=BUDGETIMPACTEDITORS_GROUP_SUFFIX)
+        groupId, wasCreated = self._createOrUpdatePloneGroup(groupSuffix=BUDGETIMPACTEDITORS_GROUP_SUFFIX,
+                                                             only_group_ids=only_group_ids)
+        return [groupId]
 
     security.declarePrivate('createMeetingManagersGroup')
 
-    def createMeetingManagersGroup(self, force_update_access=False):
+    def createMeetingManagersGroup(self, force_update_access=False, only_group_ids=False):
         '''Creates a Plone group that will be used to apply the 'MeetingManager'
            local role on every plonemeeting folders of this MeetingConfig and on this MeetingConfig.'''
-        groupId, wasCreated = self._createOrUpdatePloneGroup(groupSuffix=MEETINGMANAGERS_GROUP_SUFFIX)
+        groupId, wasCreated = self._createOrUpdatePloneGroup(groupSuffix=MEETINGMANAGERS_GROUP_SUFFIX,
+                                                             only_group_ids=only_group_ids)
+        if only_group_ids:
+            return [groupId]
         if wasCreated or force_update_access:
             # now define local_roles on the tool so it is accessible by this group
             tool = api.portal.get_tool('portal_plonemeeting')
@@ -5229,13 +5241,15 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # remove inheritance on self and define these local_roles for self too
             self.__ac_local_roles_block__ = True
             self.manage_addLocalRoles(groupId, ('MeetingManager',))
-        self.manage_addLocalRoles(groupId, ('MeetingManager',))
 
     security.declarePrivate('createItemTemplateManagersGroup')
 
-    def createItemTemplateManagersGroup(self, force_update_access=False):
+    def createItemTemplateManagersGroup(self, force_update_access=False, only_group_ids=False):
         '''Creates a Plone group that will be used to store users able to manage item templates.'''
-        groupId, wasCreated = self._createOrUpdatePloneGroup(groupSuffix=ITEMTEMPLATESMANAGERS_GROUP_SUFFIX)
+        groupId, wasCreated = self._createOrUpdatePloneGroup(groupSuffix=ITEMTEMPLATESMANAGERS_GROUP_SUFFIX,
+                                                             only_group_ids=only_group_ids)
+        if only_group_ids:
+            return [groupId]
         if wasCreated or force_update_access:
             # now define local_roles on the tool so it is accessible by this group
             tool = api.portal.get_tool('portal_plonemeeting')
@@ -5248,16 +5262,26 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # give 'Manager' local role to group in the itemtemplates folder
             self.itemtemplates.manage_addLocalRoles(groupId, ('Manager', ))
 
-    def _createOrUpdateAllPloneGroups(self, force_update_access=False):
-        """Create or update every linked Plone groups."""
-        # Create the corresponding group that will contain MeetingPowerObservers
-        self.createPowerObserversGroups(force_update_access=force_update_access)
-        # Create the corresponding group that will contain MeetingBudgetImpactEditors
-        self.createBudgetImpactEditorsGroup()
+    def _createOrUpdateAllPloneGroups(self, force_update_access=False, only_group_ids=False):
+        """Create or update every linked Plone groups.
+           If p_force_update_access this will force update of access given to created group.
+           If p_only_group_ids, this will not create groups but return group ids that would be created."""
+        group_ids = []
         # Create the corresponding group that will contain MeetingManagers
-        self.createMeetingManagersGroup(force_update_access=force_update_access)
+        group_ids += self.createMeetingManagersGroup(
+            force_update_access=force_update_access,
+            only_group_ids=only_group_ids)
         # Create the corresponding group that will contain item templates Managers
-        self.createItemTemplateManagersGroup(force_update_access=force_update_access)
+        group_ids += self.createItemTemplateManagersGroup(
+            force_update_access=force_update_access,
+            only_group_ids=only_group_ids)
+        # Create the corresponding group that will contain MeetingBudgetImpactEditors
+        group_ids += self.createBudgetImpactEditorsGroup(only_group_ids=only_group_ids)
+        # Create the corresponding group that will contain MeetingPowerObservers
+        group_ids += self.createPowerObserversGroups(
+            force_update_access=force_update_access,
+            only_group_ids=only_group_ids)
+        return group_ids
 
     def _set_default_faceted_search(self, collection_id='searchmyitems'):
         """ """
@@ -6301,6 +6325,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             terms = [term for term in vocab._terms if '(*)' in term.title]
             vocab = SimpleVocabulary(terms)
         return vocab
+
+    def displayGroupsAndUsers(self):
+        """Display groups and users specific to this MeetingConfig (meetingmanagers, powerobservers, ...)."""
+        plone_group_ids = self._createOrUpdateAllPloneGroups(only_group_ids=True)
+        portal = api.portal.get()
+        res = portal.restrictedTraverse('@@display-group-users')(group_ids=plone_group_ids, short=True)
+        return res
 
     def _optionalDelayAwareAdvisers(self, validity_date, item=None):
         '''Returns the 'delay-aware' advisers.
