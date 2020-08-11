@@ -1391,10 +1391,12 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
 
     def get_infos(self, category, limited=False):
         """A the 'visible_for_groups' info."""
+        if not limited:
+            visible_for_groups = self._visible_for_groups()
         infos = super(PMCategorizedObjectInfoAdapter, self).get_infos(
             category, limited=limited)
         if not limited:
-            infos['visible_for_groups'] = self._visible_for_groups()
+            infos['visible_for_groups'] = visible_for_groups
         return infos
 
     def _apply_visible_groups_security(self, group_ids):
@@ -1424,7 +1426,7 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
                 for grp_id in group_ids:
                     self.context.manage_addLocalRoles(
                         grp_id, (READER_USECASES['confidentialannex'], ))
-            self.context.reindexObjectSecurity()
+            # self.context.reindexObjectSecurity()
 
     def _visible_for_groups(self):
         """ """
@@ -1532,8 +1534,8 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
 class PMCategorizedObjectAdapter(CategorizedObjectAdapter):
     """ """
 
-    def __init__(self, context, request, brain):
-        super(PMCategorizedObjectAdapter, self).__init__(context, request, brain)
+    def __init__(self, context, request, categorized_obj):
+        super(PMCategorizedObjectAdapter, self).__init__(context, request, categorized_obj)
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
 
@@ -1546,7 +1548,7 @@ class PMCategorizedObjectAdapter(CategorizedObjectAdapter):
             return False
 
         # bypass if not confidential
-        infos = self.context.categorized_elements[self.brain.UID]
+        infos = self.context.categorized_elements[self.categorized_obj.UID()]
         if not infos['confidential']:
             return True
 

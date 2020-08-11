@@ -416,7 +416,11 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     def _users_groups_value_cachekey(method, self):
         """ """
-        return str(self.REQUEST._debug)
+        # async does not have a REQUEST
+        if hasattr(self, 'REQUEST'):
+            return str(self.REQUEST._debug)
+        else:
+            return None
 
     @ram.cache(_users_groups_value_cachekey)
     def _users_groups_value(self):
@@ -438,7 +442,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     @ram.cache(get_plone_groups_for_user_cachekey)
     def get_plone_groups_for_user(self, userId=None, org_uid=None):
-        """Just return user.getGroups but cached so it is only done once by REQUEST."""
+        """Just return user.getGroups but cached."""
         if api.user.is_anonymous():
             return []
         user = userId and api.user.get(userId) or api.user.get_current()

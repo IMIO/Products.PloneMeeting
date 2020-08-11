@@ -52,6 +52,10 @@ Changelog
   required data (`category/classifier/groupsInCharge`)
 - Improved `BaseDGHV.print_signatories_by_position` to add more use cases
 - Added tests for `BaseDGHV.print_signatories_by_position`
+- Adapted code regarding changes in `collective.iconifiedcategory`, do not use `portal_catalog` to get the annexes but rely on
+  `allowedRolesAndUsers` stored in `categorized_elements`
+- Fixed `MeetingView._displayAvailableItemsTo`, do not use `ToolPloneMeeting.userIsAmong` for powerobservers as it could be
+  powerobserver for `MeetingConfig` A and not for `MeetingConfig` B and in this case, the available items were shown
 - Display groups created by a `MeetingConfig` (meetingmanagers, powerobservers, ...) on the `meetingconfig_view`.
   Moved the `@@display-group-users` view to `collective.contact.plonegroup` so we have same view to render groups and users in
   contacts dashboard and everywhere else.
