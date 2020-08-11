@@ -1449,15 +1449,6 @@ div.customAdviceMessage {
     margin-bottom: 0.5em;
 }
 
-span.no_users {
-    font-style: italic;
-}
-span.no_users,
-span.users {
-    display: block;
-    margin-bottom: 0.5em;
-}
-
 /* width of input used on the meeting_view to change item number */
 input[id^='value_moveAction_'] {
     width: 35px;
