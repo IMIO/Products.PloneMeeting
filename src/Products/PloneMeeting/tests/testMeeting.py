@@ -421,8 +421,10 @@ class testMeeting(PloneMeetingTestCase):
 
     def test_pm_InsertItemClassifiers(self):
         '''Sort method tested here is "on_classifiers".'''
+        cfg = self.meetingConfig
+        self._removeConfigObjectsFor(cfg)
         self._enableField('classifier')
-        self.meetingConfig.setInsertingMethodsOnAddItem(
+        cfg.setInsertingMethodsOnAddItem(
             ({'insertingMethod': 'on_classifiers', 'reverse': '0'}, ))
         self.changeUser('pmManager')
         meeting = self._createMeetingWithItems()

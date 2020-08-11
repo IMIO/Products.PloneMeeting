@@ -183,41 +183,33 @@ class MeetingItemWorkflowConditions(object):
             msg = No(_('required_groupsInCharge_ko'))
         return msg
 
+    def _check_review_and_required(self):
+        """Base check that will check for ReviewPortalContent and required data."""
+        res = False
+        if _checkPermission(ReviewPortalContent, self.context):
+            res = True
+            msg = self._check_required_data()
+            if msg is not None:
+                res = msg
+        return res
+
     security.declarePublic('mayPropose')
 
     def mayPropose(self):
         '''We may propose an item if the workflow permits it and if the
            necessary fields are filled.  In the case an item is transferred from
            another meetingConfig, the category could not be defined.'''
-        res = False
-        if _checkPermission(ReviewPortalContent, self.context):
-            res = True
-            msg = self._check_required_data()
-            if msg is not None:
-                res = msg
-        return res
+        return self._check_review_and_required()
 
     security.declarePublic('mayPrevalidate')
 
     def mayPrevalidate(self):
-        res = False
-        if _checkPermission(ReviewPortalContent, self.context):
-            res = True
-            msg = self._check_required_data()
-            if msg is not None:
-                res = msg
-        return res
+        return self._check_review_and_required()
 
     security.declarePublic('mayValidate')
 
     def mayValidate(self):
-        res = False
-        if _checkPermission(ReviewPortalContent, self.context):
-            res = True
-            msg = self._check_required_data()
-            if msg is not None:
-                res = msg
-        return res
+        return self._check_review_and_required()
 
     security.declarePublic('mayPresent')
 

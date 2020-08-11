@@ -1319,14 +1319,32 @@ class BaseDGHV(object):
             return self.print_signatories_by_position(**kwargs)
 
     def print_signatories_by_position(self,
-                                      signature_format=(u'position_type', u'person'),
-                                      separator=u', ',
-                                      ender=''):
+                                      signature_format=(u'prefixed_position_type', u'person'),
+                                      separator=u',',
+                                      ender=u''):
         """
         Print signatories by position
+        :param signature_format: tuple representing a single signature format
+        containing these possible values:
+            - 'position_type' -> 'Mayor'
+            - 'prefixed_position_type' -> 'The Mayor'
+            - 'person' -> 'John Doe'
+            - 'person_with_title' -> 'Mister John Doe'
+            - 'secondary_position_type' -> 'President'
+            - 'prefixed_secondary_position_type' -> 'The President'
+            - [PMHeldPosition attribute] e.g. 'gender' -> 'M'
+            - [str] e.g. 'My String' -> 'My String' (in this case it just print the str)
+        :param separator: str that will be appended at the end of each line (except the last one)
+        :param ender: str that will be appended at the end of the last one
         :return: a dict with position as key and signature as value
-        like this {1 : 'The mayor,', 2: 'John Doe'}
-        A dict is used to safely get a signature with the get method
+        like this {0 : 'The Manager,', 1 : "Jane Doe", 2 : 'The mayor,', 3: 'John Doe'}
+        A dict is used to safely retrieve a signature with the '.get()' method in the PODTemplates
+        --------------------------------------------------------------------------------------------
+        Disclaimer: If a signatory has a label it will be used instead of his
+        (secondary_)position_type and thus it can't be prefixed. If signatory has no gender,
+        it will not be prefixed either. If person_with_title is used but signatory
+        has no title defined, it will be printed without it.
+        --------------------------------------------------------------------------------------------
         """
         signature_lines = OrderedDict()
         if self.context.meta_type == 'Meeting':
@@ -1334,25 +1352,37 @@ class BaseDGHV(object):
         else:
             signatories = self.context.getItemSignatories(theObjects=True, by_signature_number=True)
 
-        n_line = 0
-        for signatory in signatories.values():
+        line = 0
+        for _, signatory in sorted(signatories.items(), key=lambda item: int(item[0])):
             for attr in signature_format:
-                if u'position_type' in attr:
-                    signature_lines[n_line] = signatory.get_prefix_for_gender_and_number(
+                if u'position_type' == attr:
+                    signature_lines[line] = signatory.get_label(position_type_attr=attr)
+                elif u'prefixed_position_type' == attr:
+                    signature_lines[line] = signatory.get_prefix_for_gender_and_number(
                         include_value=True,
-                        position_type_attr=attr)
+                        position_type_attr='position_type')
+                elif u'secondary_position_type' == attr:
+                    signature_lines[line] = signatory.get_label(position_type_attr=attr)
+                elif u'prefixed_secondary_position_type' == attr:
+                    signature_lines[line] = signatory.get_prefix_for_gender_and_number(
+                        include_value=True,
+                        position_type_attr='secondary_position_type')
                 elif attr == u'person':
-                    signature_lines[n_line] = signatory.get_person_title(include_person_title=False)
+                    signature_lines[line] = signatory.get_person_title(include_person_title=False)
+                elif attr == u'person_with_title':
+                    signature_lines[line] = signatory.get_person_title(include_person_title=True)
                 elif hasattr(signatory, attr):
-                    signature_lines[n_line] = attr
-                else:
-                    signature_lines[n_line] += signature_format
+                    signature_lines[line] = getattr(signatory, attr)
+                else:  # Just put the attr if it doesn't match anything above
+                    signature_lines[line] = attr
 
-                if attr != signature_format[-1]:  # if not last line of signatory
-                    signature_lines[n_line] += separator
-                else:
-                    signature_lines[n_line] += ender
-                n_line += 1
+                if attr != signature_format[-1] and separator is not None:
+                    # if not last line of signatory
+                    signature_lines[line] += separator
+                elif ender is not None:  # it is the last line
+                    signature_lines[line] += ender
+
+                line += 1
 
         return signature_lines
 
