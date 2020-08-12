@@ -449,6 +449,7 @@ class MeetingConfigDescriptor(Descriptor):
                          'hideHistoryTo')
     excludedFields = ['maxDaysDecisions', 'meetingAppDefaultView',
                       'addContactsCSV', 'orderedContacts', 'orderedItemInitiators',
+                      'meetingItemTemplatesToStoreAsAnnex',
                       'disabled_collections', 'defaultLabels']
 
     # The 'instance' static attribute stores an instance used for assigning
@@ -765,7 +766,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.orderedItemInitiators = []
 
         # Doc parameters -------------------------------------------------------
-        self.meetingItemTemplateToStoreAsAnnex = ''
+        self.meetingItemTemplatesToStoreAsAnnex = []
 
         # content_category_groups parameters -----------------------------------
         self.category_group_activated_attrs = {}

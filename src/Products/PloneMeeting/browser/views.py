@@ -47,6 +47,8 @@ from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import get_person_from_userid
 from Products.PloneMeeting.utils import signatureNotAlone
 from Products.PloneMeeting.utils import toHTMLStrikedContent
+from z3c.form.field import Fields
+from zope import schema
 from zope.i18n import translate
 
 import cgi
@@ -1958,14 +1960,19 @@ class MeetingStoreItemsPodTemplateAsAnnexBatchActionForm(BaseBatchActionForm):
 
     def available(self):
         """ """
-        if self.cfg.getMeetingItemTemplateToStoreAsAnnex() and \
+        if self.cfg.getMeetingItemTemplatesToStoreAsAnnex() and \
            api.user.get_current().has_permission(ModifyPortalContent, self.context):
             return True
 
+    def _update(self):
+        self.fields += Fields(schema.Choice(
+            __name__='pod_template',
+            title=_(u'POD template to annex'),
+            vocabulary='Products.PloneMeeting.vocabularies.itemtemplatesstorableasannexvocabulary'))
+
     def _apply(self, **data):
         """ """
-        template_id, output_format = \
-            self.cfg.getMeetingItemTemplateToStoreAsAnnex().split('__output_format__')
+        template_id, output_format = data['pod_template'].split('__output_format__')
         pod_template = getattr(self.cfg.podtemplates, template_id)
 
         num_of_generated_templates = 0
@@ -1987,7 +1994,7 @@ class MeetingStoreItemsPodTemplateAsAnnexBatchActionForm(BaseBatchActionForm):
                 msg = translate(msgid=res, domain='PloneMeeting', context=self.request)
                 logger.info(u'Could not generate POD template {0} using output format {1} for item at {2} : {3}'.format(
                     template_id, output_format, '/'.join(item.getPhysicalPath()), msg))
-                api.portal.show_message(msg, request=self.request)
+                api.portal.show_message(msg, request=self.request, type='error')
 
         msg = translate('stored_item_template_as_annex',
                         domain="PloneMeeting",

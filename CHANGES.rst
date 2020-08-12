@@ -59,6 +59,9 @@ Changelog
 - Display groups created by a `MeetingConfig` (meetingmanagers, powerobservers, ...) on the `meetingconfig_view`.
   Moved the `@@display-group-users` view to `collective.contact.plonegroup` so we have same view to render groups and users in
   contacts dashboard and everywhere else.
+- Extended batch action that stores a generated template directly as an annex on selected elements.
+  Field `MeetingConfig.meetingItemTemplateToStoreAsAnnex` is now `MeetingConfig.meetingItemTemplatesToStoreAsAnnex` and several
+  POD templates may be selected instead one single.  In the batch action, the user may chose among available POD templates
 
 4.1.27.2 (2020-06-25)
 ---------------------

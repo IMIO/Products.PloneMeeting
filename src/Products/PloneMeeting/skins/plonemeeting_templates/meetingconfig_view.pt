@@ -1221,7 +1221,7 @@
 
       <table width="100%" class="discreet">
         <tr valign="top">
-          <td tal:define="field python:here.getField('meetingItemTemplateToStoreAsAnnex')">
+          <td tal:define="field python:here.getField('meetingItemTemplatesToStoreAsAnnex')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
         </tr>

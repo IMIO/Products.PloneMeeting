@@ -1195,15 +1195,12 @@ class ItemTemplatesStorableAsAnnexVocabulary(object):
 
     def __call__(self, context):
         """ """
-        res = [SimpleTerm(u'',
-                          u'',
-                          translate('make_a_choice',
-                                    domain='PloneMeeting',
-                                    context=context.REQUEST))]
+        res = []
         # get every POD templates that have a defined 'store_as_annex'
         catalog = api.portal.get_tool('portal_catalog')
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
+        meetingItemTemplatesToStoreAsAnnex = cfg.getMeetingItemTemplatesToStoreAsAnnex()
         for pod_template in cfg.podtemplates.objectValues():
             store_as_annex = getattr(pod_template, 'store_as_annex', None)
             if store_as_annex:
@@ -1212,6 +1209,11 @@ class ItemTemplatesStorableAsAnnexVocabulary(object):
                 for output_format in pod_template.pod_formats:
                     term_id = '{0}__output_format__{1}'.format(
                         pod_template.getId(), output_format)
+                    # when called on another context than MeetingConfig
+                    # only keep meetingItemTemplatesToStoreAsAnnex
+                    if context.portal_type != 'MeetingConfig' and \
+                       term_id not in meetingItemTemplatesToStoreAsAnnex:
+                        continue
                     res.append(SimpleTerm(
                         term_id,
                         term_id,
@@ -1338,6 +1340,8 @@ class PMCategoryVocabulary(CategoryVocabulary):
         tool = api.portal.get_tool('portal_plonemeeting')
         isManager = tool.isManager(context)
         cfg = tool.getMeetingConfig(context)
+        # in case called from dexterity types configuration panel, no cfg
+        cfg_modified = cfg and cfg.modified() or None
         # if context is an annex, cache on context.UID() + context.modified() to manage stored term
         context_uid = None
         context_modified = None
@@ -1349,7 +1353,7 @@ class PMCategoryVocabulary(CategoryVocabulary):
         # invalidate if user groups changed
         user_plone_groups = tool.get_plone_groups_for_user()
         return annex_group.getId(), \
-            isManager, cfg.modified(), use_category_uid_as_token, \
+            isManager, cfg_modified, use_category_uid_as_token, \
             context_uid, context_modified, user_plone_groups
 
     @ram.cache(__call___cachekey)

@@ -4,6 +4,7 @@ from plone import api
 from plone.app.contenttypes.migration.dxmigration import ContentMigrator
 from plone.app.contenttypes.migration.migration import migrate as pac_migrate
 from Products.CMFPlone.interfaces.constrains import IConstrainTypes
+from Products.CMFPlone.utils import base_hasattr
 from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator
 from Products.ZCatalog.ProgressHandler import ZLogHandler
@@ -129,12 +130,27 @@ class Migrate_To_4110(Migrator):
             logger.info("Style 'page-break' already exists and was not added...")
         logger.info('Done.')
 
+    def _migrateToMeetingItemTemplatesToStoreAsAnnex(self):
+        """Single value field MeetingConfig.meetingItemTemplateToStoreAsAnnex was moved
+           to multi valued field MeetingConfig.meetingItemTemplatesToStoreAsAnnex."""
+        logger.info("Migrating MeetingConfig.meetingItemTemplateToStoreAsAnnex to "
+                    "MeetingConfig.meetingItemTemplatesToStoreAsAnnex...")
+        old_field_name = 'meetingItemTemplateToStoreAsAnnex'
+        new_field_name = 'meetingItemTemplatesToStoreAsAnnex'
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            if base_hasattr(cfg, old_field_name):
+                old_field_value = getattr(cfg, old_field_name)
+                if old_field_value:
+                    setattr(cfg, new_field_name, [old_field_value])
+        logger.info('Done.')
+
     def run(self, from_migration_to_41=False):
         logger.info('Migrating to PloneMeeting 4110...')
         self._migrateMeetingCategoryToDX()
         self._updateOrgsDashboardCollectionColumns()
         self._enableDateinputJSResource()
         self._addPageBreakStyleToCKEditor()
+        self._migrateToMeetingItemTemplatesToStoreAsAnnex()
         # update collective.contact.plonegroup
         self.upgradeAll(omit=['Products.PloneMeeting:default',
                               self.profile_name.replace('profile-', '')])
@@ -147,7 +163,8 @@ def migrate(context):
        2) Enable column 'PloneGroupUsersGroupsColumn' of for contacts collections displaying organizations;
        3) Make sure '++resource++plone.app.jquerytools.dateinput.js' is enabled in portal_javascripts;
        4) Add new style 'page-break' to CKEditor;
-       5) Apply every pending upgrades.
+       5) Migrate MeetingConfig.meetingItemTemplateToStoreAsAnnex to MeetingConfig.meetingItemTemplatesToStoreAsAnnex;
+       6) Apply every pending upgrades.
     '''
     migrator = Migrate_To_4110(context)
     migrator.run()
