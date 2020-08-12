@@ -5216,20 +5216,22 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def createBudgetImpactEditorsGroup(self, only_group_ids=False):
         '''Creates a Plone group that will be used to apply the 'MeetingBudgetImpactEditor'
            local role on every items of this MeetingConfig regarding self.itemBudgetInfosStates.'''
+        groupIds = []
         groupId, wasCreated = self._createOrUpdatePloneGroup(groupSuffix=BUDGETIMPACTEDITORS_GROUP_SUFFIX,
                                                              only_group_ids=only_group_ids)
-        return [groupId]
+        groupIds.append(groupId)
+        return groupIds
 
     security.declarePrivate('createMeetingManagersGroup')
 
     def createMeetingManagersGroup(self, force_update_access=False, only_group_ids=False):
         '''Creates a Plone group that will be used to apply the 'MeetingManager'
            local role on every plonemeeting folders of this MeetingConfig and on this MeetingConfig.'''
+        groupIds = []
         groupId, wasCreated = self._createOrUpdatePloneGroup(groupSuffix=MEETINGMANAGERS_GROUP_SUFFIX,
                                                              only_group_ids=only_group_ids)
-        if only_group_ids:
-            return [groupId]
-        if wasCreated or force_update_access:
+        groupIds.append(groupId)
+        if not only_group_ids and wasCreated or force_update_access:
             # now define local_roles on the tool so it is accessible by this group
             tool = api.portal.get_tool('portal_plonemeeting')
             tool.manage_addLocalRoles(groupId, ('MeetingManager',))
@@ -5241,16 +5243,17 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # remove inheritance on self and define these local_roles for self too
             self.__ac_local_roles_block__ = True
             self.manage_addLocalRoles(groupId, ('MeetingManager',))
+        return groupIds
 
     security.declarePrivate('createItemTemplateManagersGroup')
 
     def createItemTemplateManagersGroup(self, force_update_access=False, only_group_ids=False):
         '''Creates a Plone group that will be used to store users able to manage item templates.'''
+        groupIds = []
         groupId, wasCreated = self._createOrUpdatePloneGroup(groupSuffix=ITEMTEMPLATESMANAGERS_GROUP_SUFFIX,
                                                              only_group_ids=only_group_ids)
-        if only_group_ids:
-            return [groupId]
-        if wasCreated or force_update_access:
+        groupIds.append(groupId)
+        if not only_group_ids and wasCreated or force_update_access:
             # now define local_roles on the tool so it is accessible by this group
             tool = api.portal.get_tool('portal_plonemeeting')
             tool.manage_addLocalRoles(groupId, (READER_USECASES[ITEMTEMPLATESMANAGERS_GROUP_SUFFIX],))
@@ -5261,6 +5264,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             portal.contacts.reindexObjectSecurity()
             # give 'Manager' local role to group in the itemtemplates folder
             self.itemtemplates.manage_addLocalRoles(groupId, ('Manager', ))
+        return groupIds
 
     def _createOrUpdateAllPloneGroups(self, force_update_access=False, only_group_ids=False):
         """Create or update every linked Plone groups.
