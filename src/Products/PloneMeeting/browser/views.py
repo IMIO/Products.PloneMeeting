@@ -1353,8 +1353,8 @@ class BaseDGHV(object):
             signatories = self.context.getItemSignatories(theObjects=True, by_signature_number=True)
 
         line = 0
-        sorted_signatories = sorted(signatories.items(), key=lambda item: int(item[0]))
-        for signatory in sorted_signatories.values():
+        sorted_signatories = [v for k, v in sorted(signatories.items(), key=lambda item: int(item[0]))]
+        for signatory in sorted_signatories:
             for attr in signature_format:
                 if u'position_type' == attr:
                     signature_lines[line] = signatory.get_label(position_type_attr=attr)
