@@ -1199,7 +1199,7 @@ class testViews(PloneMeetingTestCase):
         view = self.portal.restrictedTraverse('@@display-group-users')
         group = api.group.get(self.developers_creators)
         group_id = group.getId()
-        view(group_id=group_id)
+        view(group_ids=[group_id])
         self.assertEqual(
             view.group_users(group),
             "<img src='http://nohost/plone/user.png'> M. PMCreator One<br />"
@@ -1223,7 +1223,7 @@ class testViews(PloneMeetingTestCase):
         view = item.restrictedTraverse('@@display-group-users')
         # append a "*" to a org uid to get every Plone groups
         group_id = self.developers.UID() + '*'
-        view(group_id=group_id)
+        view(group_ids=group_id)
         plone_group = api.group.get(self.developers_creators)
         self.assertEqual(
             view.group_users(plone_group),
@@ -1241,9 +1241,9 @@ class testViews(PloneMeetingTestCase):
         self.changeUser('pmReviewer2')
         self.assertTrue(self.hasPermission(View, item))
         # calling view with '*' raises Unauthorized
-        self.assertRaises(Unauthorized, view, group_id=group_id)
+        self.assertRaises(Unauthorized, view, group_ids=group_id)
         # but ok to get only one Plone group members
-        self.assertTrue(view(group_id=self.developers_creators))
+        self.assertTrue(view(group_ids=self.developers_creators))
 
     def test_pm_MeetingStoreItemsPodTemplateAsAnnexBatchActionForm_may_store(self):
         """By default only available if something defined in
