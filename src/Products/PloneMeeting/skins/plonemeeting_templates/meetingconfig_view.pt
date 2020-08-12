@@ -119,9 +119,9 @@
     </fieldset>
     </tal:customFields>
 
-    <table class="configActions" tal:condition="isRealManager">
+    <table class="configActions" tal:condition="isManager">
       <tr valign="top">
-        <td width="50%">
+        <td>
           <tal:comment replace="nothing">Display groups and users linked to this MeetingConfig</tal:comment>
           <fieldset>
             <legend i18n:translate="" i18n:domain="collective.contact.plonegroup">Groups and users</legend>
@@ -129,7 +129,7 @@
             <tal:groupsAndUsers tal:replace="structure context/displayGroupsAndUsers" />
           </fieldset>
         </td>
-        <td width="50%">
+        <td tal:condition="isRealManager" style="padding-left: 0.75em;">
           <fieldset>
             <legend i18n:translate="heading_actions">Actions</legend>
             <p class="discreet" style="color: red; font-weight: bold;" i18n:translate="pm_tool_updates_warning">

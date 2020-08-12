@@ -1301,16 +1301,14 @@ p.item-before-budget-related {
 
 #content table.configActions {
     margin: 0;
+    width: 100%;
+}
+#content table.configActions td:first-of-type {
+    min-width: 40%;
 }
 #content table.configActions form {
     border: 1px solid lightgrey;
     padding: 0.5em;
-}
-
-table.configActions td {
-    padding-right: 1em;
-}
-.configActions form {
     margin-bottom: 0.5em;
     margin-top: 0.5em;
 }
