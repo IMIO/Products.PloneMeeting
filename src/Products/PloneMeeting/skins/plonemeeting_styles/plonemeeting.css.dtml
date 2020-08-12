@@ -1870,11 +1870,6 @@ body.template-meeting_available_items_view div#ajax-spinner {
    top: -35px;
 }
 
-div#content.group_members_tooltipster img {
-   width: 16px;
-   height: 16px;
-}
-
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */
