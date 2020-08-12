@@ -1846,7 +1846,7 @@ class CheckPodTemplatesView(BrowserView):
                 view()
                 try:
                     view()
-                    view._generate_doc(pod_template, output_format=output_format)
+                    view._generate_doc(pod_template, output_format=output_format, raiseOnError=True)
                     messages['clean'].append((pod_template, obj))
                 except Exception, exc:
                     messages['error'].append((pod_template, obj, ('Error', exc.message)))
