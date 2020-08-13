@@ -5896,7 +5896,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         add_wf_history_action(self, action_name=action_name, action_label=action_label)
 
         # Send an email to the user being able to modify the new item if relevant
-        mapping = {'meetingConfigTitle': destMeetingConfig.Title(), }
+        mapping = {'originMeetingConfigTitle': safe_unicode(cfg.Title()), }
         sendMailIfRelevant(newItem,
                            'itemClonedToThisMC',
                            ModifyPortalContent,

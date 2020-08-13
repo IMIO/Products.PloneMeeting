@@ -63,6 +63,7 @@ Changelog
   Field `MeetingConfig.meetingItemTemplateToStoreAsAnnex` is now `MeetingConfig.meetingItemTemplatesToStoreAsAnnex` and several
   POD templates may be selected instead one single.  In the batch action, the user may chose among available POD templates
 - Fixed `@@check-pod-templates` that was no more raising an error when a POD template was wrong, hidding broken templates...
+- Reworked email notifications to always have relevant information at the beginning of the subject in case item title is very long
 
 4.1.27.2 (2020-06-25)
 ---------------------
