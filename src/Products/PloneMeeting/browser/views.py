@@ -937,24 +937,32 @@ class BaseDGHV(object):
 
     def _get_attendees(self):
         """ """
+        attendees = []
+        item_absents = []
+        item_excused = []
+        item_non_attendees = []
         if self.context.meta_type == 'Meeting':
             meeting = self.context
             attendees = meeting.getAttendees()
-            item_absents = []
-            item_excused = []
             item_non_attendees = meeting.getItemNonAttendees()
         else:
             # MeetingItem
             meeting = self.context.getMeeting()
-            attendees = self.context.getAttendees()
-            item_absents = self.context.getItemAbsents()
-            item_excused = self.context.getItemExcused()
+            if meeting:
+                attendees = self.context.getAttendees()
+                item_absents = self.context.getItemAbsents()
+                item_excused = self.context.getItemExcused()
             item_non_attendees = self.context.getItemNonAttendees()
         # generate content then group by sub organization if necessary
-        contacts = meeting.getAllUsedHeldPositions()
-        excused = meeting.getExcused()
-        absents = meeting.getAbsents()
-        replaced = meeting.getReplacements()
+        contacts = []
+        absents = []
+        excused = []
+        replaced = []
+        if meeting:
+            contacts = meeting.getAllUsedHeldPositions()
+            excused = meeting.getExcused()
+            absents = meeting.getAbsents()
+            replaced = meeting.getReplacements()
         return meeting, attendees, item_absents, item_excused, item_non_attendees, \
             contacts, excused, absents, replaced
 
