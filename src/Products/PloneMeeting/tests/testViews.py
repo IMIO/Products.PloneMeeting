@@ -1199,7 +1199,7 @@ class testViews(PloneMeetingTestCase):
         view = self.portal.restrictedTraverse('@@display-group-users')
         group = api.group.get(self.developers_creators)
         group_id = group.getId()
-        view(group_id=group_id)
+        view(group_ids=[group_id])
         self.assertEqual(
             view.group_users(group),
             "<img src='http://nohost/plone/user.png'> M. PMCreator One<br />"
@@ -1223,7 +1223,7 @@ class testViews(PloneMeetingTestCase):
         view = item.restrictedTraverse('@@display-group-users')
         # append a "*" to a org uid to get every Plone groups
         group_id = self.developers.UID() + '*'
-        view(group_id=group_id)
+        view(group_ids=group_id)
         plone_group = api.group.get(self.developers_creators)
         self.assertEqual(
             view.group_users(plone_group),
@@ -1241,15 +1241,15 @@ class testViews(PloneMeetingTestCase):
         self.changeUser('pmReviewer2')
         self.assertTrue(self.hasPermission(View, item))
         # calling view with '*' raises Unauthorized
-        self.assertRaises(Unauthorized, view, group_id=group_id)
+        self.assertRaises(Unauthorized, view, group_ids=group_id)
         # but ok to get only one Plone group members
-        self.assertTrue(view(group_id=self.developers_creators))
+        self.assertTrue(view(group_ids=self.developers_creators))
 
     def test_pm_MeetingStoreItemsPodTemplateAsAnnexBatchActionForm_may_store(self):
         """By default only available if something defined in
-           MeetingConfig.meetingItemTemplateToStoreAsAnnex and user able to edit Meeting."""
+           MeetingConfig.meetingItemTemplatesToStoreAsAnnex and user able to edit Meeting."""
         cfg = self.meetingConfig
-        self.assertFalse(cfg.getMeetingItemTemplateToStoreAsAnnex())
+        self.assertFalse(cfg.getMeetingItemTemplatesToStoreAsAnnex())
         self.changeUser('pmManager')
         meeting = self.create('Meeting', date=DateTime('2017/08/08'))
         form = meeting.restrictedTraverse('@@store-items-template-as-annex-batch-action')
@@ -1258,17 +1258,17 @@ class testViews(PloneMeetingTestCase):
         self.assertFalse(form.available())
         self.assertRaises(Unauthorized, form.handleApply, form, None)
 
-        # configure MeetingConfig.meetingItemTemplateToStoreAsAnnex
+        # configure MeetingConfig.meetingItemTemplatesToStoreAsAnnex
         # values are taking POD templates having a store_as_annex
         self.assertEqual(
-            cfg.getField('meetingItemTemplateToStoreAsAnnex').Vocabulary(cfg).keys(),
-            [u''])
+            cfg.getField('meetingItemTemplatesToStoreAsAnnex').Vocabulary(cfg).keys(),
+            [])
         annex_type_uid = cfg.annexes_types.item_decision_annexes.get('decision-annex').UID()
         cfg.podtemplates.itemTemplate.store_as_annex = annex_type_uid
         self.assertEqual(
-            cfg.getField('meetingItemTemplateToStoreAsAnnex').Vocabulary(cfg).keys(),
-            [u'', 'itemTemplate__output_format__odt'])
-        cfg.setMeetingItemTemplateToStoreAsAnnex('itemTemplate__output_format__odt')
+            cfg.getField('meetingItemTemplatesToStoreAsAnnex').Vocabulary(cfg).keys(),
+            ['itemTemplate__output_format__odt'])
+        cfg.setMeetingItemTemplatesToStoreAsAnnex('itemTemplate__output_format__odt')
         self.assertTrue(form.available())
 
         # may_store is False if user not able to edit meeting
@@ -1278,13 +1278,13 @@ class testViews(PloneMeetingTestCase):
 
     def test_pm_MeetingStoreItemsPodTemplateAsAnnexBatchActionForm_handleApply(self):
         """This will store a POD template selected in
-           MeetingConfig.meetingItemTemplateToStoreAsAnnex as an annex
+           MeetingConfig.meetingItemTemplatesToStoreAsAnnex as an annex
            for every selected items."""
         cfg = self.meetingConfig
         # define correct config
         annex_type_uid = cfg.annexes_types.item_decision_annexes.get('decision-annex').UID()
         cfg.podtemplates.itemTemplate.store_as_annex = annex_type_uid
-        cfg.setMeetingItemTemplateToStoreAsAnnex('itemTemplate__output_format__odt')
+        cfg.setMeetingItemTemplatesToStoreAsAnnex('itemTemplate__output_format__odt')
 
         # create meeting with items
         self.changeUser('pmManager')
@@ -1294,6 +1294,7 @@ class testViews(PloneMeetingTestCase):
         # store annex for 3 first items
         first_3_item_uids = [item.UID for item in meeting.getItems(ordered=True, theObjects=False)[0:3]]
         self.request.form['form.widgets.uids'] = ','.join(first_3_item_uids)
+        self.request.form['form.widgets.pod_template'] = 'itemTemplate__output_format__odt'
         form.update()
         form.handleApply(form, None)
         itemTemplateId = cfg.podtemplates.itemTemplate.getId()
@@ -1309,6 +1310,7 @@ class testViews(PloneMeetingTestCase):
             self.assertFalse(annexes)
 
         # call again with next 3 uids
+        form = meeting.restrictedTraverse('@@store-items-template-as-annex-batch-action')
         next_3_item_uids = [item.UID for item in meeting.getItems(ordered=True, theObjects=False)[3:6]]
         self.request.form['form.widgets.uids'] = ','.join(next_3_item_uids)
         form.brains = None
@@ -1322,7 +1324,8 @@ class testViews(PloneMeetingTestCase):
         annexes = get_annexes(items[6])
         self.assertFalse(annexes)
 
-        # call a last time, last is stored and it does not fail when no items left
+        # call again, last is stored and it does not fail when no items left
+        form = meeting.restrictedTraverse('@@store-items-template-as-annex-batch-action')
         last_item_uid = meeting.getItems(ordered=True, theObjects=False)[-1].UID
         self.request.form['form.widgets.uids'] = last_item_uid
         form.brains = None
@@ -1333,7 +1336,8 @@ class testViews(PloneMeetingTestCase):
             self.assertEqual(len(annexes), 1)
             self.assertTrue(annexes[0].used_pod_template_id, itemTemplateId)
 
-        # call when nothing to do, nothing is done
+        # call a last time, when nothing to do, nothing is done
+        form = meeting.restrictedTraverse('@@store-items-template-as-annex-batch-action')
         item_uids = [item.UID for item in meeting.getItems(ordered=True, theObjects=False)]
         self.request.form['form.widgets.uids'] = item_uids
         form.update()

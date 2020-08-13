@@ -13,7 +13,7 @@ from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.utils import plain_render
 from Products.PloneMeeting.utils import uncapitalize
-from z3c.form.browser.checkbox import CheckBoxFieldWidget
+from Products.PloneMeeting.widgets.pm_checkbox import PMCheckBoxFieldWidget
 from zope.globalrequest import getRequest
 from zope.i18n import translate
 
@@ -43,7 +43,7 @@ class IPMHeldPosition(IHeldPosition):
         required=False,
     )
 
-    form.widget('usages', CheckBoxFieldWidget, multiple='multiple')
+    form.widget('usages', PMCheckBoxFieldWidget, multiple='multiple')
     usages = zope.schema.List(
         title=_("Usages"),
         value_type=zope.schema.Choice(
@@ -51,7 +51,7 @@ class IPMHeldPosition(IHeldPosition):
         required=False,
     )
 
-    form.widget('defaults', CheckBoxFieldWidget, multiple='multiple')
+    form.widget('defaults', PMCheckBoxFieldWidget, multiple='multiple')
     defaults = zope.schema.List(
         title=_("Defaults"),
         value_type=zope.schema.Choice(

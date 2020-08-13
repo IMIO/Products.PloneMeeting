@@ -1443,6 +1443,23 @@ schema = Schema((
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
+        name='redirectToNextMeeting',
+        widget=MultiSelectionWidget(
+            description="RedirectToNextMeeting",
+            description_msgid="redirect_to_next_meeting_descr",
+            format="checkbox",
+            label='Redirecttonextmeeting',
+            label_msgid='PloneMeeting_label_redirectToNextMeeting',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="gui",
+        multiValued=1,
+        vocabulary='listRedirectToNextMeeting',
+        default=defValues.redirectToNextMeeting,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    LinesField(
         name='itemsListVisibleFields',
         widget=InAndOutWidget(
             description="ItemsListVisibleFields",
@@ -2425,19 +2442,21 @@ schema = Schema((
         schemata="votes",
         write_permission="PloneMeeting: Write risky config",
     ),
-    StringField(
-        name='meetingItemTemplateToStoreAsAnnex',
-        widget=SelectionWidget(
-            description="MeetingItemTemplateToStoreAsAnnex",
-            description_msgid="meeting_item_template_to_store_as_annex_descr",
-            format="select",
-            label='Meetingitemtemplatetostoreasannex',
-            label_msgid='PloneMeeting_label_meetingItemTemplateToStoreAsAnnex',
+    LinesField(
+        name='meetingItemTemplatesToStoreAsAnnex',
+        widget=MultiSelectionWidget(
+            description="MeetingItemTemplatesToStoreAsAnnex",
+            description_msgid="meeting_item_templates_to_store_as_annex_descr",
+            format="checkbox",
+            label='Meetingitemtemplatestostoreasannex',
+            label_msgid='PloneMeeting_label_meetingItemTemplatesToStoreAsAnnex',
             i18n_domain='PloneMeeting',
+            visible=True,
         ),
         schemata="doc",
+        multiValued=1,
         vocabulary_factory='Products.PloneMeeting.vocabularies.itemtemplatesstorableasannexvocabulary',
-        default=defValues.meetingItemTemplateToStoreAsAnnex,
+        default=defValues.meetingItemTemplatesToStoreAsAnnex,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
@@ -2471,13 +2490,15 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     # Information about each sub-folder that will be created within a meeting config.
     subFoldersInfo = {
         TOOL_FOLDER_CATEGORIES: (('Categories', 'Folder'),
-                                 ('MeetingCategory', ),
+                                 ('meetingcategory', ),
                                  ()
                                  ),
+
         TOOL_FOLDER_CLASSIFIERS: (('Classifiers', 'Folder'),
-                                  ('MeetingCategory', ),
+                                  ('meetingcategory', ),
                                   ()
                                   ),
+
         TOOL_FOLDER_SEARCHES: (('Searches', 'Folder'),
                                ('Folder', ),
                                # 'items' is a reserved word
@@ -4628,6 +4649,19 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     po_infos['label'])
         return res
 
+    security.declarePrivate('listRedirectToNextMeeting')
+
+    def listRedirectToNextMeeting(self):
+        d = "PloneMeeting"
+        res = DisplayList((
+            ("app_users", translate('app_users', domain=d, context=self.REQUEST)),
+            ("meeting_managers", translate('meetingmanagers', domain=d, context=self.REQUEST)),
+        ))
+        for po_infos in self.getPowerObservers():
+            res.add('{0}{1}'.format(POWEROBSERVERPREFIX, po_infos['row_id']),
+                    po_infos['label'])
+        return res
+
     security.declarePrivate('listItemActionsColumnConfig')
 
     def listItemActionsColumnConfig(self):
@@ -4785,6 +4819,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             ('category', translate('PloneMeeting_label_category',
                                    domain=d,
                                    context=self.REQUEST)),
+            ('classifier', translate('PloneMeeting_label_classifier',
+                                     domain=d,
+                                     context=self.REQUEST)),
             ('associatedGroups', translate('PloneMeeting_label_associatedGroups',
                                            domain=d,
                                            context=self.REQUEST)),
@@ -5305,10 +5342,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                 context=self.REQUEST)
                 self.plone_utils.addPortalMessage(msg)
 
-    def _createOrUpdatePloneGroup(self, groupSuffix, groupTitleSuffix=None):
+    def _createOrUpdatePloneGroup(self, groupSuffix, groupTitleSuffix=None, only_group_ids=False):
         '''Create a group for this MeetingConfig using given p_groupSuffix to manage group id and group title.
            This will return groupId and True if group was added, False otherwise.'''
         groupId = "{0}_{1}".format(self.getId(), groupSuffix)
+        if only_group_ids:
+            return groupId, False
         groupTitle = self.Title(include_config_group=True)
         if groupTitleSuffix:
             groupSuffix = safe_unicode(groupTitleSuffix)
@@ -5317,12 +5356,16 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePrivate('createPowerObserversGroups')
 
-    def createPowerObserversGroups(self, force_update_access=False):
+    def createPowerObserversGroups(self, force_update_access=False, only_group_ids=False):
         '''Creates Plone groups to manage power observers.'''
+        groupIds = []
         tool = api.portal.get_tool('portal_plonemeeting')
         for po_infos in self.getPowerObservers():
             groupSuffix = po_infos['row_id']
-            groupId, wasCreated = self._createOrUpdatePloneGroup(groupSuffix, groupTitleSuffix=po_infos['label'])
+            groupId, wasCreated = self._createOrUpdatePloneGroup(groupSuffix,
+                                                                 groupTitleSuffix=po_infos['label'],
+                                                                 only_group_ids=only_group_ids)
+            groupIds.append(groupId)
             if wasCreated or force_update_access:
                 # now define local_roles on the tool so it is accessible by this group
                 tool.manage_addLocalRoles(groupId, (READER_USECASES['powerobservers'],))
@@ -5335,21 +5378,29 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 self.__ac_local_roles_block__ = True
                 self.manage_addLocalRoles(groupId, (READER_USECASES['powerobservers'],))
                 self.reindexObjectSecurity()
+        return groupIds
 
     security.declarePrivate('createBudgetImpactEditorsGroup')
 
-    def createBudgetImpactEditorsGroup(self):
+    def createBudgetImpactEditorsGroup(self, only_group_ids=False):
         '''Creates a Plone group that will be used to apply the 'MeetingBudgetImpactEditor'
            local role on every items of this MeetingConfig regarding self.itemBudgetInfosStates.'''
-        self._createOrUpdatePloneGroup(groupSuffix=BUDGETIMPACTEDITORS_GROUP_SUFFIX)
+        groupIds = []
+        groupId, wasCreated = self._createOrUpdatePloneGroup(groupSuffix=BUDGETIMPACTEDITORS_GROUP_SUFFIX,
+                                                             only_group_ids=only_group_ids)
+        groupIds.append(groupId)
+        return groupIds
 
     security.declarePrivate('createMeetingManagersGroup')
 
-    def createMeetingManagersGroup(self, force_update_access=False):
+    def createMeetingManagersGroup(self, force_update_access=False, only_group_ids=False):
         '''Creates a Plone group that will be used to apply the 'MeetingManager'
            local role on every plonemeeting folders of this MeetingConfig and on this MeetingConfig.'''
-        groupId, wasCreated = self._createOrUpdatePloneGroup(groupSuffix=MEETINGMANAGERS_GROUP_SUFFIX)
-        if wasCreated or force_update_access:
+        groupIds = []
+        groupId, wasCreated = self._createOrUpdatePloneGroup(groupSuffix=MEETINGMANAGERS_GROUP_SUFFIX,
+                                                             only_group_ids=only_group_ids)
+        groupIds.append(groupId)
+        if not only_group_ids and wasCreated or force_update_access:
             # now define local_roles on the tool so it is accessible by this group
             tool = api.portal.get_tool('portal_plonemeeting')
             tool.manage_addLocalRoles(groupId, ('MeetingManager',))
@@ -5361,14 +5412,17 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # remove inheritance on self and define these local_roles for self too
             self.__ac_local_roles_block__ = True
             self.manage_addLocalRoles(groupId, ('MeetingManager',))
-        self.manage_addLocalRoles(groupId, ('MeetingManager',))
+        return groupIds
 
     security.declarePrivate('createItemTemplateManagersGroup')
 
-    def createItemTemplateManagersGroup(self, force_update_access=False):
+    def createItemTemplateManagersGroup(self, force_update_access=False, only_group_ids=False):
         '''Creates a Plone group that will be used to store users able to manage item templates.'''
-        groupId, wasCreated = self._createOrUpdatePloneGroup(groupSuffix=ITEMTEMPLATESMANAGERS_GROUP_SUFFIX)
-        if wasCreated or force_update_access:
+        groupIds = []
+        groupId, wasCreated = self._createOrUpdatePloneGroup(groupSuffix=ITEMTEMPLATESMANAGERS_GROUP_SUFFIX,
+                                                             only_group_ids=only_group_ids)
+        groupIds.append(groupId)
+        if not only_group_ids and wasCreated or force_update_access:
             # now define local_roles on the tool so it is accessible by this group
             tool = api.portal.get_tool('portal_plonemeeting')
             tool.manage_addLocalRoles(groupId, (READER_USECASES[ITEMTEMPLATESMANAGERS_GROUP_SUFFIX],))
@@ -5379,17 +5433,28 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             portal.contacts.reindexObjectSecurity()
             # give 'Manager' local role to group in the itemtemplates folder
             self.itemtemplates.manage_addLocalRoles(groupId, ('Manager', ))
+        return groupIds
 
-    def _createOrUpdateAllPloneGroups(self, force_update_access=False):
-        """Create or update every linked Plone groups."""
-        # Create the corresponding group that will contain MeetingPowerObservers
-        self.createPowerObserversGroups(force_update_access=force_update_access)
-        # Create the corresponding group that will contain MeetingBudgetImpactEditors
-        self.createBudgetImpactEditorsGroup()
+    def _createOrUpdateAllPloneGroups(self, force_update_access=False, only_group_ids=False):
+        """Create or update every linked Plone groups.
+           If p_force_update_access this will force update of access given to created group.
+           If p_only_group_ids, this will not create groups but return group ids that would be created."""
+        group_ids = []
         # Create the corresponding group that will contain MeetingManagers
-        self.createMeetingManagersGroup(force_update_access=force_update_access)
+        group_ids += self.createMeetingManagersGroup(
+            force_update_access=force_update_access,
+            only_group_ids=only_group_ids)
         # Create the corresponding group that will contain item templates Managers
-        self.createItemTemplateManagersGroup(force_update_access=force_update_access)
+        group_ids += self.createItemTemplateManagersGroup(
+            force_update_access=force_update_access,
+            only_group_ids=only_group_ids)
+        # Create the corresponding group that will contain MeetingBudgetImpactEditors
+        group_ids += self.createBudgetImpactEditorsGroup(only_group_ids=only_group_ids)
+        # Create the corresponding group that will contain MeetingPowerObservers
+        group_ids += self.createPowerObserversGroups(
+            force_update_access=force_update_access,
+            only_group_ids=only_group_ids)
+        return group_ids
 
     def _set_default_faceted_search(self, collection_id='searchmyitems'):
         """ """
@@ -5981,40 +6046,36 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getCategories')
 
-    def getCategories(self, classifiers=False, onlySelectable=True, userId=None, caching=True):
-        '''Returns the categories defined for this meeting config or the
-           classifiers if p_classifiers is True. If p_onlySelectable is True,
-           there will be a check to see if the category is available to the
-           current user, otherwise, we return every existing MeetingCategories.
-           If a p_userId is given, it will be used to be passed to isSelectable'''
+    def getCategories(self, catType='categories', onlySelectable=True, userId=None, caching=True):
+        '''Returns the categories defined for this meeting config.
+           If p_onlySelectable is True, there will be a check to see if the category
+           is available to the current user, otherwise, we return every existing categories.
+           If a p_userId is given, it will be used to be passed to isSelectable.
+           p_catType may be 'categories' (default), then returns categories, 'classifiers',
+           then returns classifiers or 'all', then return every categories and classifiers.'''
         data = None
         if caching:
-            key = "meeting-config-getcategories-%s-%s-%s-%s" % (self.getId(),
-                                                                str(classifiers),
-                                                                str(onlySelectable),
-                                                                str(userId))
+            key = "meeting-config-getcategories-%s-%s-%s-%s" % (
+                self.getId(), str(catType), str(onlySelectable), str(userId))
             cache = IAnnotations(self.REQUEST)
             data = cache.get(key, None)
         if data is None:
             data = []
-            if classifiers:
-                catFolder = self.classifiers
-            elif self.getUseGroupsAsCategories():
-                data = get_organizations()
-                if caching:
-                    cache[key] = data
-                return data
+            if catType == 'all':
+                categories = self.categories.objectValues() + self.classifiers.objectValues()
+            elif catType == 'classifiers':
+                categories = self.classifiers.objectValues()
             else:
-                catFolder = self.categories
-            res = []
+                categories = self.categories.objectValues()
+
             if onlySelectable:
-                for cat in catFolder.objectValues('MeetingCategory'):
-                    if cat.adapted().isSelectable(userId=userId):
-                        res.append(cat)
+                for cat in categories:
+                    if cat.is_selectable(userId=userId):
+                        data.append(cat)
             else:
-                res = catFolder.objectValues('MeetingCategory')
+                data = categories
             # be coherent as objectValues returns a LazyMap
-            data = list(res)
+            data = list(data)
             if caching:
                 cache[key] = data
         return data
@@ -6460,6 +6521,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             terms = [term for term in vocab._terms if '(*)' in term.title]
             vocab = SimpleVocabulary(terms)
         return vocab
+
+    def displayGroupsAndUsers(self):
+        """Display groups and users specific to this MeetingConfig (meetingmanagers, powerobservers, ...)."""
+        plone_group_ids = self._createOrUpdateAllPloneGroups(only_group_ids=True)
+        portal = api.portal.get()
+        res = portal.restrictedTraverse('@@display-group-users')(group_ids=plone_group_ids, short=True)
+        return res
 
     def _optionalDelayAwareAdvisers(self, validity_date, item=None):
         '''Returns the 'delay-aware' advisers.

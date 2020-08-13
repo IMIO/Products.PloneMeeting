@@ -528,7 +528,7 @@ class testWorkflows(PloneMeetingTestCase):
         self._removeConfigObjectsFor(cfg)
         cfg.setUseGroupsAsCategories(False)
         research = cfg.categories.research
-        research.setUsingGroups((self.endUsers_uid, ))
+        research.using_groups = (self.endUsers_uid, )
         self.create('MeetingItemRecurring',
                     title='Rec item developers',
                     proposingGroup=self.endUsers_uid,

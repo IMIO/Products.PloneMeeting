@@ -1,13 +1,8 @@
 # -*- coding: utf-8 -*-
-#
-# File: etags.py
-#
-# Copyright (c) 2019 by Imio.be
-#
-# GNU General Public License (GPL)
-#
 
 from collective.messagesviewlet.utils import get_messages_to_show
+from DateTime import DateTime
+from imio.helpers.cache import get_cachekey_volatile
 from plone import api
 from plone.app.caching.interfaces import IETagValue
 from plone.app.caching.operations.utils import getContext
@@ -105,6 +100,16 @@ class LinkedMeetingModified(object):
             meeting = context.getMeeting()
             if meeting:
                 res = 'lm_' + _modified(meeting)
+        elif context.portal_type == 'Folder':
+            # in case this is a meeting folder
+            # we return last Meeting modified when using MeetingConfig.redirectToNextMeeting
+            tool = api.portal.get_tool('portal_plonemeeting')
+            cfg = tool.getMeetingConfig(context)
+            if cfg and cfg.getRedirectToNextMeeting():
+                # this changes when meeting added/removed/date changed
+                meeting_date_last_modified = get_cachekey_volatile(
+                    'Products.PloneMeeting.vocabularies.meetingdatesvocabulary')
+                res = 'lm_' + str(int(DateTime(meeting_date_last_modified)))
         return res
 
 

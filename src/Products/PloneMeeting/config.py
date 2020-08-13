@@ -79,7 +79,6 @@ setDefaultRoles(DEFAULT_ADD_CONTENT_PERMISSION, ('Manager', 'Owner', 'Contributo
 ADD_CONTENT_PERMISSIONS = {
     'MeetingItem': AddItem,
     'Meeting': AddMeeting,
-    'MeetingCategory': 'PloneMeeting: Manage configuration',
     'MeetingConfig': 'PloneMeeting: Manage configuration',
     'MeetingGroup': 'PloneMeeting: Manage configuration',
 }
@@ -200,7 +199,7 @@ DEFAULT_COPIED_FIELDS = ['title', 'description', 'detailedDescription', 'motivat
                          'groupsInCharge', 'proposingGroupWithGroupInCharge', 'copyGroups']
 # extra fields kept when an item is cloned in the same meeting config,
 # so not the case when sent to another meeting config
-EXTRA_COPIED_FIELDS_SAME_MC = ['associatedGroups', 'classifier', 'category',
+EXTRA_COPIED_FIELDS_SAME_MC = ['associatedGroups', 'category', 'classifier',
                                'optionalAdvisers', 'otherMeetingConfigsClonableTo',
                                'otherMeetingConfigsClonableToPrivacy', 'oralQuestion',
                                'toDiscuss', 'privacy', 'pollType', 'textCheckList']
@@ -289,6 +288,8 @@ ITEM_INSERT_METHODS = OrderedDict((
     ('on_list_type', ['field_listTypes']),
     # according to category order;
     ('on_categories', ['category']),
+    # according to classifier order;
+    ('on_classifiers', ['classifier']),
     # according to proposing group order;
     ('on_proposing_groups', ['organization']),
     # according to all groups (among proposing group AND

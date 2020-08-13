@@ -101,9 +101,9 @@ class testMeetingItem(PloneMeetingTestCase):
     '''Tests the MeetingItem class methods.'''
 
     def test_pm_SelectableCategories(self):
-        '''Categories are available if isSelectable returns True.  By default,
-           isSelectable will return active categories for wich intersection
-           between MeetingCategory.usingGroups and current member
+        '''Categories are available if is_selectable returns True.  By default,
+           is_selectable will return active categories for wich intersection
+           between meetingcategory.using_groups and current member
            proposingGroups is not empty.'''
         # Use MeetingCategory as categories
         self.changeUser('admin')
@@ -116,12 +116,11 @@ class testMeetingItem(PloneMeetingTestCase):
         expectedClassifiers = ['classifier1', 'classifier2', 'classifier3', ]
         # By default, every categories are selectable
         self.assertEqual([cat.id for cat in cfg.getCategories()], expectedCategories)
-        # And the behaviour is the same for classifiers
-        self.assertEqual([cat.id for cat in cfg.getCategories(classifiers=True)], expectedClassifiers)
-        # Deactivate a category and a classifier
+        self.assertEqual([cat.id for cat in cfg.getCategories(catType='classifiers')], expectedClassifiers)
+        # Deactivate a category
         self.changeUser('admin')
-        self.wfTool.doActionFor(cfg.categories.deployment, 'deactivate')
-        self.wfTool.doActionFor(cfg.classifiers.classifier2, 'deactivate')
+        self._disableObj(cfg.categories.deployment)
+        self._disableObj(cfg.classifiers.classifier2)
         expectedCategories.remove('deployment')
         expectedClassifiers.remove('classifier2')
         # getCategories has caching in the REQUEST, we need to wipe this out
@@ -129,36 +128,39 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         # A deactivated category will not be returned by getCategories no matter an item is given or not
         self.assertEqual([cat.id for cat in cfg.getCategories()], expectedCategories)
-        self.assertEqual([cat.id for cat in cfg.getCategories(classifiers=True)], expectedClassifiers)
+        self.assertEqual([cat.id for cat in cfg.getCategories(catType='classifiers')], expectedClassifiers)
         # Specify that a category is restricted to some groups pmCreator1 is not creator for
         self.changeUser('admin')
-        cfg.categories.maintenance.setUsingGroups((self.vendors_uid,))
-        cfg.classifiers.classifier1.setUsingGroups((self.vendors_uid,))
+        cfg.categories.maintenance.using_groups = (self.vendors_uid,)
+        cfg.classifiers.classifier1.using_groups = (self.vendors_uid,)
         expectedCategories.remove('maintenance')
         expectedClassifiers.remove('classifier1')
         # getCategories has caching in the REQUEST, we need to wipe this out
         self.cleanMemoize()
         self.changeUser('pmCreator1')
-        # if current user is not creator for one of the usingGroups defined for the category, he can not use it
+        # if current user is not creator for one of the using_groups defined for the category, he can not use it
         self.assertEqual([cat.id for cat in cfg.getCategories()], expectedCategories)
-        self.assertEqual([cat.id for cat in cfg.getCategories(classifiers=True)], expectedClassifiers)
+        self.assertEqual([cat.id for cat in cfg.getCategories(catType='classifiers')], expectedClassifiers)
         # cfg.getCategories can receive a userId
         # pmCreator2 has an extra category called subproducts
         expectedCategories.append('subproducts')
         # here above we restrict the use of 'maintenance' to vendors too...
         expectedCategories.insert(0, 'maintenance')
         self.assertEqual([cat.id for cat in cfg.getCategories(userId='pmCreator2')], expectedCategories)
-        # change usingGroup for 'subproducts'
-        cfg.categories.subproducts.setUsingGroups((self.developers_uid,))
+        # change using_groups for 'subproducts'
+        cfg.categories.subproducts.using_groups = (self.developers_uid,)
         expectedCategories.remove('subproducts')
         # getCategories has caching in the REQUEST, we need to wipe this out
         self.cleanMemoize()
         self.assertEqual([cat.id for cat in cfg.getCategories(userId='pmCreator2')], expectedCategories)
 
-        # if useGroupsAsCategories is on, getCategories will return proposingGroups
-        self.cleanMemoize()
+        # if useGroupsAsCategories is on, getCategories will still return categories
         cfg.setUseGroupsAsCategories(True)
-        self.assertEqual([cat.UID() for cat in cfg.getCategories()], [self.developers_uid, self.vendors_uid])
+        self.cleanMemoize()
+        expectedCategories.remove('maintenance')
+        expectedCategories.append('subproducts')
+        self.assertEqual([cat.id for cat in cfg.getCategories()], expectedCategories)
+        self.assertEqual([cat.id for cat in cfg.getCategories(catType='classifiers')], expectedClassifiers)
 
     def test_pm_ListProposingGroups(self):
         '''Check MeetingItem.proposingGroup vocabulary.'''
@@ -316,7 +318,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(READER_USECASES['groupsincharge'] in item.__ac_local_roles__[self.vendors_observers])
 
     def test_pm_GroupsInChargeFromCategory(self):
-        '''Groups in charge defined on the item category MeetingCategory is taken into
+        '''Groups in charge defined on the item category is taken into
            account by MeetingItem.getGroupsInCharge and get local_roles on item
            if MeetingConfig.includeGroupsInChargeDefinedOnCategory.'''
         cfg = self.meetingConfig
@@ -324,7 +326,7 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg.setIncludeGroupsInChargeDefinedOnCategory(False)
         cfg.setItemGroupsInChargeStates((self._stateMappingFor('itemcreated'), ))
         development = cfg.categories.development
-        development.setGroupsInCharge([self.vendors_uid])
+        development.groups_in_charge = [self.vendors_uid]
 
         # create an item
         self.changeUser('pmCreator1')
@@ -782,7 +784,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('admin')
         for at in (cfg.annexes_types.item_annexes.objectValues() +
                    cfg.annexes_types.item_decision_annexes.objectValues()):
-            at.enabled = False
+            self._disableObj(at)
         # no available annex types, try to clone newItem now
         self.changeUser('pmManager')
         clonedItem = originalItem.clone(copyAnnexes=True, copyDecisionAnnexes=True)
@@ -1320,9 +1322,8 @@ class testMeetingItem(PloneMeetingTestCase):
         originalItem = data['originalItem']
         originalItemCat = getattr(self.meetingConfig.categories, originalItem.getCategory())
         catIdOfMC2Mapped = self.meetingConfig2.categories.objectIds()[0]
-        originalItemCat.setCategoryMappingsWhenCloningToOtherMC(('%s.%s' %
-                                                                 (self.meetingConfig2.getId(),
-                                                                  catIdOfMC2Mapped), ))
+        originalItemCat.category_mapping_when_cloning_to_other_mc = (
+            '%s.%s' % (self.meetingConfig2.getId(), catIdOfMC2Mapped), )
         # delete newItem and send originalItem again
         # do this as 'Manager' in case 'MeetingManager' can not delete the item in used item workflow
         self.deleteAsManager(newItem.UID())
@@ -1719,7 +1720,7 @@ class testMeetingItem(PloneMeetingTestCase):
 
         # disable category
         self.changeUser('siteadmin')
-        self.do(category, 'deactivate')
+        self._disableObj(category)
         self.assertFalse(category in cfg.getCategories(onlySelectable=True))
         self.changeUser('pmCreator1')
         new_item_without_category = item.clone()
@@ -3504,11 +3505,16 @@ class testMeetingItem(PloneMeetingTestCase):
         item2._update_after_edit()
         # a disabled category will still be displayed in the vocab if it is the currently used value
         self.changeUser('siteadmin')
-        self.do(cfg.categories.development, 'deactivate')
+        self._disableObj(cfg.categories.development)
         self.assertEqual(item.listCategories().values(),
-                         [u'Development topics', u'Events', u'Research topics'])
+                         [u'--- Make a choice ---',
+                          u'Development topics',
+                          u'Events',
+                          u'Research topics'])
         self.assertEqual(item2.listCategories().values(),
-                         [u'Events', u'Research topics'])
+                         [u'--- Make a choice ---',
+                          u'Events',
+                          u'Research topics'])
 
     def test_pm_ListCategoriesNaturalSorting(self):
         '''
@@ -3528,7 +3534,7 @@ class testMeetingItem(PloneMeetingTestCase):
                 'cat10': '10. Category',
                 'cat101': '10.1 Category'}
         for cat_id, cat_title in data.items():
-            self.create('MeetingCategory', id=cat_id, title=cat_title)
+            self.create('meetingcategory', id=cat_id, title=cat_title)
 
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
@@ -3545,17 +3551,54 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg = self.meetingConfig
         cfg.setUseGroupsAsCategories(False)
         self.changeUser('siteadmin')
-        self.create('MeetingCategory', id='cat1', title='Category 1')
+        self.create('meetingcategory', id='cat1', title='Category 1')
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
 
         # not in itemFieldsToKeepConfigSortingFor for now
         self.assertFalse('category' in cfg.getItemFieldsToKeepConfigSortingFor())
         self.assertEqual(item.listCategories().values(),
-                         [u'Category 1', u'Development topics', u'Events', u'Research topics'])
+                         [u'--- Make a choice ---',
+                          u'Category 1',
+                          u'Development topics',
+                          u'Events',
+                          u'Research topics'])
         cfg.setItemFieldsToKeepConfigSortingFor(('category', ))
         self.assertEqual(item.listCategories().values(),
-                         [u'Development topics', u'Research topics', u'Events', u'Category 1'])
+                         [u'--- Make a choice ---',
+                          u'Development topics',
+                          u'Research topics',
+                          u'Events',
+                          u'Category 1'])
+
+    def test_pm_ListClassifiersKeepConfigSorting(self):
+        """If 'classifier' selected in MeetingConfig.itemFieldsToKeepConfigSortingFor,
+           the vocabulary keeps config order, not sorted alphabetically."""
+        cfg = self.meetingConfig
+        self._enableField('classifier')
+        self.changeUser('siteadmin')
+        self.create('meetingcategory',
+                    id='classifier0',
+                    title='Classifier 0',
+                    is_classifier=True)
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+
+        # not in itemFieldsToKeepConfigSortingFor for now
+        self.assertFalse('classifier' in cfg.getItemFieldsToKeepConfigSortingFor())
+        self.assertEqual(item.Vocabulary('classifier')[0].values(),
+                         [u'--- Make a choice ---',
+                          u'Classifier 0',
+                          u'Classifier 1',
+                          u'Classifier 2',
+                          u'Classifier 3'])
+        cfg.setItemFieldsToKeepConfigSortingFor(('classifier', ))
+        self.assertEqual(item.Vocabulary('classifier')[0].values(),
+                         [u'--- Make a choice ---',
+                          u'Classifier 1',
+                          u'Classifier 2',
+                          u'Classifier 3',
+                          u'Classifier 0'])
 
     def test_pm_OptionalAdvisersVocabulary(self):
         '''
@@ -6611,7 +6654,7 @@ class testMeetingItem(PloneMeetingTestCase):
             "python: here.getMeeting().getDate().strftime('%Y%m%d') + '/' + "
             "str(here.getProposingGroup(True).get_acronym()) + '/' + "
             "str(here.getCategory()) + '/' + "
-            "str(here.getClassifier() and here.getClassifier().getId() or '-') + '/' + "
+            "str(here.getRawClassifier() and here.getClassifier(theObject=True).getId() or '-') + '/' + "
             "('/'.join(here.getOtherMeetingConfigsClonableTo()) or '-') + '/' + "
             "here.Title() + '/' + "
             "str(here.getItemNumber(relativeTo='meetingConfig', for_display=True))")
@@ -6626,7 +6669,7 @@ class testMeetingItem(PloneMeetingTestCase):
         item._update_after_edit()
         self.assertEqual(item.getItemReference(), '20170303/Devel/research/-/-/Title1/1')
         # change classifier
-        item.setClassifier(cfg.classifiers.classifier1.UID())
+        item.setClassifier('classifier1')
         item._update_after_edit()
         self.assertEqual(item.getItemReference(), '20170303/Devel/research/classifier1/-/Title1/1')
         # change proposingGroup

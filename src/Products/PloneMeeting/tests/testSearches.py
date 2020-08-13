@@ -632,8 +632,8 @@ class testSearches(PloneMeetingTestCase):
         if not len(reviewers) > 1:
             self._enablePrevalidation(cfg)
         if not len(reviewers) > 1:
-            pm_logger.info("Could not launch test 'test_pm_SearchItemsToValidateOfMyReviewerGroups' because "
-                           "we need at least 2 levels of item validation.")
+            pm_logger.info("Could not launch test 'test_pm_SearchItemsToValidateOfMyReviewerGroups' "
+                           "because we need at least 2 levels of item validation.")
 
         # first test the generated query
         adapter = getAdapter(cfg,

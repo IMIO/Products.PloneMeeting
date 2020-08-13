@@ -1765,7 +1765,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         content_category_cfg_modified = cfg.modified()
         self.assertNotEqual(style_template_cfg_modified, content_category_cfg_modified)
 
-        # edit a MeetingCategory
+        # edit a meetingcategory
         category = cfg.categories.objectValues()[0]
         notify(ObjectModifiedEvent(category))
         category_cfg_modified = cfg.modified()

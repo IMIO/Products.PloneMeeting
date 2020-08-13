@@ -370,11 +370,19 @@ class testMeeting(PloneMeetingTestCase):
 
     def test_pm_InsertItemCategories(self):
         '''Sort method tested here is "on_categories".'''
+        cfg = self.meetingConfig
+        cfg.setUseGroupsAsCategories(False)
+        cfg.setInsertingMethodsOnAddItem(
+            ({'insertingMethod': 'on_categories', 'reverse': '0'}, ))
         self.changeUser('pmManager')
-        self.setMeetingConfig(self.meetingConfig2.getId())
         meeting = self._createMeetingWithItems()
-        self.assertEqual([item.getId() for item in meeting.getItems(ordered=True)],
-                         ['item-2', 'item-3', 'item-4', 'item-5', 'item-1'])
+        ordered_items = meeting.getItems(ordered=True)
+        self.assertEqual(
+            [item.getId() for item in ordered_items],
+            ['item-2', 'item-3', 'item-1', 'item-4', 'item-5'])
+        self.assertEqual(
+            [item.getCategory() for item in ordered_items],
+            ['development', 'development', 'research', 'events', 'events'])
 
     def test_pm_InsertItemOnCategoriesWithDisabledCategory(self):
         '''Test that inserting an item using the "on_categories" sorting method
@@ -389,7 +397,7 @@ class testMeeting(PloneMeetingTestCase):
         # and insert a new item
         self.changeUser('admin')
         self.assertTrue(meeting.getItems(ordered=True)[0].getCategory(), 'development')
-        self.do(self.meetingConfig.categories.development, 'deactivate')
+        self._disableObj(self.meetingConfig.categories.development)
         self.changeUser('pmManager')
         newItem = self.create('MeetingItem')
         # Use the category of 'o5' and 'o6' that is 'events' so the new item will
@@ -410,6 +418,24 @@ class testMeeting(PloneMeetingTestCase):
         self.presentItem(newItem)
         self.assertEqual([item.getId() for item in meeting.getItems(ordered=True)],
                          ['item-2', 'item-3', newItem.getId(), 'item-4', 'item-5', 'item-1'])
+
+    def test_pm_InsertItemClassifiers(self):
+        '''Sort method tested here is "on_classifiers".'''
+        cfg = self.meetingConfig
+        self._removeConfigObjectsFor(cfg)
+        self._enableField('classifier')
+        cfg.setInsertingMethodsOnAddItem(
+            ({'insertingMethod': 'on_classifiers', 'reverse': '0'}, ))
+        self.changeUser('pmManager')
+        meeting = self._createMeetingWithItems()
+        ordered_items = meeting.getItems(ordered=True)
+        self.assertEqual([item.getId() for item in ordered_items],
+                         ['item-4', 'item-5', 'item-2', 'item-3', 'item-1'])
+        # items with no classifier (recurring items here) are inserted at position 0
+        self.assertEqual([item.getClassifier() for item in ordered_items],
+                         ['classifier1', 'classifier1',
+                          'classifier2', 'classifier2',
+                          'classifier3'])
 
     def test_pm_InsertItemAllGroups(self):
         '''Sort method tested here is "on_all_groups".
@@ -957,7 +983,7 @@ class testMeeting(PloneMeetingTestCase):
                           ('secret', 'events')])
         # we can also insert an item using a disabled category
         self.changeUser('admin')
-        self.do(self.meetingConfig.categories.development, 'deactivate')
+        self._disableObj(self.meetingConfig.categories.development)
         self.changeUser('pmManager')
         newItem = self.create('MeetingItem')
         newItem.setProposingGroup(self.vendors_uid)
@@ -1626,7 +1652,7 @@ class testMeeting(PloneMeetingTestCase):
         self.assertEqual(meeting.getItemInsertOrder(item, cfg), [1])
         # disable category, it does not change because for performance reasons,
         # we consider every categories when computing insert order, but the cache was cleaned
-        self.do(cfg.categories.development, 'deactivate')
+        self._disableObj(cfg.categories.development)
         # the cache is invalidated
         self.assertTrue(meeting._check_insert_order_cache(cfg))
         self.assertEqual(meeting.getItemInsertOrder(item, cfg), [1])
@@ -3242,6 +3268,24 @@ class testMeeting(PloneMeetingTestCase):
         self.changeUser('powerobserver1')
         view.update()
         self.assertTrue(view.showAvailableItems())
+        self.changeUser('powerobserver2')
+        view.update()
+        self.assertFalse(view.showAvailableItems())
+        # will not be the case for cfg2
+        self.meetingConfig2.setDisplayAvailableItemsTo(
+            (POWEROBSERVERPREFIX + 'powerobservers', ))
+        self.changeUser('pmManager')
+        self.setMeetingConfig(self.meetingConfig2.getId())
+        meeting = self.create('Meeting', date=DateTime('2020/08/06'))
+        view = meeting.restrictedTraverse('@@meeting_view')
+        view.update()
+        self.assertTrue(view.showAvailableItems())
+        self.changeUser('powerobserver2')
+        view.update()
+        self.assertTrue(view.showAvailableItems())
+        self.changeUser('powerobserver1')
+        view.update()
+        self.assertFalse(view.showAvailableItems())
 
     def test_pm_AvailableItemsShownInformations(self):
         """When available items shown to other users than MeetingManagers,

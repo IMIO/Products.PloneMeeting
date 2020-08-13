@@ -5,8 +5,7 @@ Changelog
 4.2a8 (unreleased)
 ------------------
 
-- Nothing changed yet.
-
+- Merged changes from 4.1.28
 
 4.2a7 (2020-06-24)
 ------------------
@@ -78,6 +77,45 @@ Changelog
 - Added `collective.fingerpointing` log message when managing item `assembly/signatures/attendees/signatories`
 - Fixed bug in `itemPeople` macro displayed on `meetingitem_view`, when field Meeting `itemNonAttendees` is enabled,
   the column header was correctly hidden but the column cells were displayed
+- Moved JS function `toggleDoc` to `imio.helpers` under name `toggleDetails`
+- Cleaned `plonemeeting.css`, removed useless styles definition
+- In `contacts` management, show clearly that icons in portlet will add new `organization/held_position` by using icons with a `+`
+- Validate `plonegroup` settings for `functions` so it is not possible to remove or disable a function that is used in
+  `MeetingConfig.selectableCopyGroups` or `MeetingItem.copyGroups`
+- Migrate `MeetingCategory` from AT to DX :
+
+  - New portal_type is `meetingcategory`;
+  - Field `MeetingItem.classifier` was moved from ReferenceField to StringField;
+  - Added new `MeetingConfig.insertingMethodsOnAddItem` named `on_classifiers`;
+  - Removed magic in `MeetingConfig.getCategories` that returned organizations when
+    `MeetingConfig.useGroupsAsCategories` was `True`, now it returns only categories, moreover parameter `classifiers` is
+    renamed to `catType` that may be `all`/`categories`/`classifiers`.
+- In every migrations, call `cleanRegistries` at the end by default so `JS/CSS` are recompiled
+- Add 'redirectToNextMeeting' option.
+- Moved `Meeting.getNextMeeting` logic to `utils.get_next_meeting` so it can be used from outside a `Meeting` instance
+- Make sure `++resource++plone.app.jquerytools.dateinput.js` is enabled in `portal_javascripts`
+- Completed custom widget `PMCheckBoxFieldWidget` to manage `display` mode, every element are listed one under each other and not one
+  next to each others separated with commas that was much unreadable when having more than 3 values.
+  Use it everywhere possible: `organization`, `held_position` and `category`
+- Fixed `MeetingView._displayAvailableItemsTo`, do not use `ToolPloneMeeting.userIsAmong` for powerobservers as it could be
+  powerobserver for `MeetingConfig` A and not for `MeetingConfig` B and in this case, the available items were shown
+- Added `CKEditor` style `page-break` to be able to insert a `page-break` into a `RichText` field, this can be used in a
+  `POD template` by adding a relevant `page-break` paragraph style
+- In `MeetingItemWorkflowConditions._check_review_and_required`, factorized check about `Review portal content` permission and
+  required data (`category/classifier/groupsInCharge`)
+- Improved `BaseDGHV.print_signatories_by_position` to add more use cases
+- Added tests for `BaseDGHV.print_signatories_by_position`
+- Adapted code regarding changes in `collective.iconifiedcategory`, do not use `portal_catalog` to get the annexes but rely on
+  `allowedRolesAndUsers` stored in `categorized_elements`
+- Fixed `MeetingView._displayAvailableItemsTo`, do not use `ToolPloneMeeting.userIsAmong` for powerobservers as it could be
+  powerobserver for `MeetingConfig` A and not for `MeetingConfig` B and in this case, the available items were shown
+- Display groups created by a `MeetingConfig` (meetingmanagers, powerobservers, ...) on the `meetingconfig_view`.
+  Moved the `@@display-group-users` view to `collective.contact.plonegroup` so we have same view to render groups and users in
+  contacts dashboard and everywhere else.
+- Extended batch action that stores a generated template directly as an annex on selected elements.
+  Field `MeetingConfig.meetingItemTemplateToStoreAsAnnex` is now `MeetingConfig.meetingItemTemplatesToStoreAsAnnex` and several
+  POD templates may be selected instead one single.  In the batch action, the user may chose among available POD templates
+- Fixed `@@check-pod-templates` that was no more raising an error when a POD template was wrong, hidding broken templates...
 
 4.1.27.2 (2020-06-25)
 ---------------------

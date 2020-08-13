@@ -113,12 +113,13 @@ class ItemCategoriesVocabulary(object):
         """ """
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        categories = cfg.getCategories(classifiers=classifiers, onlySelectable=False, caching=False)
-        activeCategories = [cat for cat in categories if api.content.get_state(cat) == 'active']
-        notActiveCategories = [cat for cat in categories if not api.content.get_state(cat) == 'active']
+        catType = classifiers and 'classifiers' or 'categories'
+        categories = cfg.getCategories(catType=catType, onlySelectable=False, caching=False)
+        activeCategories = [cat for cat in categories if cat.enabled]
+        notActiveCategories = [cat for cat in categories if not cat.enabled]
         res_active = []
         for category in activeCategories:
-            term_id = classifiers and category.UID() or category.getId()
+            term_id = category.getId()
             res_active.append(
                 SimpleTerm(term_id,
                            term_id,
@@ -129,7 +130,7 @@ class ItemCategoriesVocabulary(object):
 
         res_not_active = []
         for category in notActiveCategories:
-            term_id = classifiers and category.UID() or category.getId()
+            term_id = category.getId()
             res_not_active.append(
                 SimpleTerm(term_id,
                            term_id,
@@ -287,13 +288,16 @@ class GroupsInChargeVocabulary(object):
                         res.append(group_in_charge)
             # categories
             if not cfg.getUseGroupsAsCategories():
-                classifiers = 'classifier' in cfg.getUsedItemAttributes()
-                categories = cfg.getCategories(classifiers=classifiers, onlySelectable=False, caching=False)
+                categories = cfg.getCategories(onlySelectable=False, caching=False)
+                # add classifiers when using it
+                if 'classifier' in cfg.getUsedItemAttributes():
+                    categories += cfg.getCategories(catType='classifiers',
+                                                    onlySelectable=False,
+                                                    caching=False)
                 for cat in categories:
-                    for group_in_charge_uid in cat.getGroupsInCharge():
-                        group_in_charge = get_organization(group_in_charge_uid)
+                    for group_in_charge in cat.get_groups_in_charge(the_objects=True):
                         # manage duplicates
-                        if group_in_charge and group_in_charge not in res:
+                        if group_in_charge not in res:
                             res.append(group_in_charge)
         else:
             # groups in charge are selected on the items
@@ -1191,15 +1195,12 @@ class ItemTemplatesStorableAsAnnexVocabulary(object):
 
     def __call__(self, context):
         """ """
-        res = [SimpleTerm(u'',
-                          u'',
-                          translate('make_a_choice',
-                                    domain='PloneMeeting',
-                                    context=context.REQUEST))]
+        res = []
         # get every POD templates that have a defined 'store_as_annex'
         catalog = api.portal.get_tool('portal_catalog')
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
+        meetingItemTemplatesToStoreAsAnnex = cfg.getMeetingItemTemplatesToStoreAsAnnex()
         for pod_template in cfg.podtemplates.objectValues():
             store_as_annex = getattr(pod_template, 'store_as_annex', None)
             if store_as_annex:
@@ -1208,6 +1209,11 @@ class ItemTemplatesStorableAsAnnexVocabulary(object):
                 for output_format in pod_template.pod_formats:
                     term_id = '{0}__output_format__{1}'.format(
                         pod_template.getId(), output_format)
+                    # when called on another context than MeetingConfig
+                    # only keep meetingItemTemplatesToStoreAsAnnex
+                    if context.portal_type != 'MeetingConfig' and \
+                       term_id not in meetingItemTemplatesToStoreAsAnnex:
+                        continue
                     res.append(SimpleTerm(
                         term_id,
                         term_id,
@@ -1334,6 +1340,8 @@ class PMCategoryVocabulary(CategoryVocabulary):
         tool = api.portal.get_tool('portal_plonemeeting')
         isManager = tool.isManager(context)
         cfg = tool.getMeetingConfig(context)
+        # in case called from dexterity types configuration panel, no cfg
+        cfg_modified = cfg and cfg.modified() or None
         # if context is an annex, cache on context.UID() + context.modified() to manage stored term
         context_uid = None
         context_modified = None
@@ -1345,7 +1353,7 @@ class PMCategoryVocabulary(CategoryVocabulary):
         # invalidate if user groups changed
         user_plone_groups = tool.get_plone_groups_for_user()
         return annex_group.getId(), \
-            isManager, cfg.modified(), use_category_uid_as_token, \
+            isManager, cfg_modified, use_category_uid_as_token, \
             context_uid, context_modified, user_plone_groups
 
     @ram.cache(__call___cachekey)

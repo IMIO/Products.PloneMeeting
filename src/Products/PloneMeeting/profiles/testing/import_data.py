@@ -41,17 +41,17 @@ from Products.PloneMeeting.profiles import UserDescriptor
 # First meeting type: a fictitious PloneGov assembly ---------------------------
 
 # Categories
-deployment = CategoryDescriptor('deployment', 'Deployment topics', categoryId='deployment')
-maintenance = CategoryDescriptor('maintenance', 'Maintenance topics', categoryId='maintenance')
-development = CategoryDescriptor('development', 'Development topics', categoryId='development')
-events = CategoryDescriptor('events', 'Events', categoryId='events')
-research = CategoryDescriptor('research', 'Research topics', categoryId='research')
-projects = CategoryDescriptor('projects', 'Projects', categoryId='projects')
+deployment = CategoryDescriptor('deployment', 'Deployment topics', category_id='deployment')
+maintenance = CategoryDescriptor('maintenance', 'Maintenance topics', category_id='maintenance')
+development = CategoryDescriptor('development', 'Development topics', category_id='development')
+events = CategoryDescriptor('events', 'Events', category_id='events')
+research = CategoryDescriptor('research', 'Research topics', category_id='research')
+projects = CategoryDescriptor('projects', 'Projects', category_id='projects')
 # A vintage category
-marketing = CategoryDescriptor('marketing', 'Marketing', categoryId='marketing', active=False)
+marketing = CategoryDescriptor('marketing', 'Marketing', category_id='marketing', enabled=False)
 # usingGroups category
 subproducts = CategoryDescriptor('subproducts', 'Subproducts wishes',
-                                 categoryId='subproducts', usingGroups=('vendors',))
+                                 category_id='subproducts', using_groups=('vendors',))
 
 # Classifiers
 classifier1 = CategoryDescriptor('classifier1', 'Classifier 1')

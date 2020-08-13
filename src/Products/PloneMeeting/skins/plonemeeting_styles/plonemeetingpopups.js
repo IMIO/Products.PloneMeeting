@@ -280,7 +280,7 @@ function inheritedItemInfos() {
 function usersGroupInfos() {
     tooltipster_helper(selector='.tooltipster-group-users',
                        view_name='@@display-group-users',
-                       data_parameters=['group_id']);
+                       data_parameters=['group_ids']);
 }
 
 function adviceChangeDelay() {

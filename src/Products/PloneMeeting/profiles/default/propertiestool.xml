@@ -24,11 +24,10 @@
    <element value="Link"/>
    <element value="News Item"/>
    <element value="MailingLoopTemplate"/>
-   <element value="meetingadvice"/>
    <element value="Meeting"/>
-   <element value="MeetingCategory"/>
+   <element value="meetingadvice"/>
+   <element value="meetingcategory"/>
    <element value="MeetingConfig"/>
-   <element value="MeetingGroup"/>
    <element value="MeetingItem"/>
    <element value="MeetingItemTemplate"/>
    <element value="MeetingItemRecurring"/>

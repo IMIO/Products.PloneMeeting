@@ -10,6 +10,7 @@ from collective.contact.core import utils as contact_core_utils
 from collective.contact.plonegroup import utils as contact_plonegroup_utils
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from collective.contact.plonegroup.utils import get_all_suffixes
+from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.documentgenerator.viewlets.generationlinks import DocumentGeneratorLinksViewlet
 from collective.eeafaceted.batchactions.browser.views import TransitionBatchActionForm
 from collective.eeafaceted.collectionwidget.browser.views import FacetedDashboardView
@@ -25,6 +26,7 @@ from collective.iconifiedcategory.browser.actionview import ToPrintChangeView
 from collective.iconifiedcategory.browser.tabview import CategorizedTabView
 from collective.iconifiedcategory.browser.views import CategorizedChildInfosView
 from collective.iconifiedcategory.browser.views import CategorizedChildView
+from DateTime import DateTime
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from imio.actionspanel.browser.viewlets import ActionsPanelViewlet
 from imio.actionspanel.browser.views import ActionsPanelView
@@ -58,9 +60,12 @@ from Products.PloneMeeting import utils as pm_utils
 from Products.PloneMeeting.config import BARCODE_INSERTED_ATTR_ID
 from Products.PloneMeeting.config import ITEM_DEFAULT_TEMPLATE_ID
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
+from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
+from Products.PloneMeeting.MeetingConfig import POWEROBSERVERPREFIX
 from Products.PloneMeeting.interfaces import IMeeting
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import get_annexes
+from Products.PloneMeeting.utils import get_next_meeting
 from Products.PloneMeeting.utils import is_editing
 from Products.PloneMeeting.utils import normalize_id
 from Products.PloneMeeting.utils import sendMail
@@ -172,12 +177,13 @@ class PMContentActionsViewlet(ContentActionsViewlet):
 
     def render(self):
         if self.context.meta_type in (
-            'ATTopic', 'Meeting', 'MeetingItem', 'MeetingCategory',
+            'ATTopic', 'Meeting', 'MeetingItem',
             'MeetingConfig', 'ToolPloneMeeting',) or \
            self.context.portal_type in (
             'ContentCategoryConfiguration', 'ContentCategoryGroup',
             'ConfigurablePODTemplate', 'DashboardPODTemplate',
-            'organization', 'person', 'held_position') or \
+            'organization', 'person', 'held_position',
+            'meetingcategory') or \
            self.context.portal_type.startswith(('meetingadvice',)) or \
            self.context.portal_type.endswith(('ContentCategory', 'ContentSubcategory',)) or \
            IContactsDashboard.providedBy(self.context) or \
@@ -403,10 +409,12 @@ class PMFacetedContainerView(FacetedDashboardView):
         super(PMFacetedContainerView, self).__init__(context, request)
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
+        self.check_redirect_next_meeting = False
         # disable border for faceted dashboards of PM except on Meeting
         if 'portal_plonemeeting' not in self.context.absolute_url() and \
            not IMeeting.providedBy(self.context) and self.cfg:
             self.request.set('disable_border', 1)
+            self.check_redirect_next_meeting = True
 
     def getPloneMeetingFolder(self):
         '''Returns the current PM folder.'''
@@ -429,9 +437,36 @@ class PMFacetedContainerView(FacetedDashboardView):
         else:
             return self.cfg.searches
 
+    def _redirectToNextMeeting(self):
+        """Check if current user profile is selected in MeetingConfig.redirectToNextMeeting."""
+        res = False
+        if self.check_redirect_next_meeting:
+            redirectToNextMeeting = self.cfg.getRedirectToNextMeeting()
+            suffixes = []
+            groups = []
+            cfg_id = self.cfg.getId()
+            for value in redirectToNextMeeting:
+                if value == 'app_users':
+                    suffixes = get_all_suffixes()
+                elif value == 'meeting_managers':
+                    groups.append(get_plone_group_id(cfg_id, MEETINGMANAGERS_GROUP_SUFFIX))
+                elif value.startswith(POWEROBSERVERPREFIX):
+                    po_grp_id = value.replace(POWEROBSERVERPREFIX, '')
+                    groups.append(get_plone_group_id(cfg_id, po_grp_id))
+            if suffixes:
+                res = self.tool.userIsAmong(suffixes)
+            if not res and groups:
+                res = bool(set(groups).intersection(self.tool.get_plone_groups_for_user()))
+        return res
+
     def __call__(self):
         """Make sure a user, even a Manager that is not the Zope Manager is redirected
            to it's own pmFolder if it is on the pmFolder of another user."""
+        if not self.request.get('no_redirect') and self._redirectToNextMeeting():
+            meetingDate = DateTime(DateTime().strftime("%Y/%m/%d"))
+            next_meeting = get_next_meeting(meetingDate=meetingDate, cfg=self.cfg)
+            if next_meeting:
+                self.request.RESPONSE.redirect(next_meeting.absolute_url())
         res = super(PMFacetedContainerView, self).__call__()
 
         if self.request.RESPONSE.status == 302 and \
@@ -468,6 +503,9 @@ class PMRenderCategoryView(IDRenderCategoryView):
         contact_infos.pop('hps-searches')
         # by default, add organization to plonegroup-organization
         contact_infos['orgs-searches']['add'] = 'plonegroup-organization/++add++organization'
+        # use default add icon to add organization or person
+        contact_infos['orgs-searches']['img'] = 'create_organization.png'
+        contact_infos['persons-searches']['img'] = 'create_contact.png'
         return contact_infos
 
     def _get_category_template(self):

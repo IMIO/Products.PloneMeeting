@@ -1,4 +1,4 @@
-<td class="noPadding" i18n:domain="PloneMeeting" tal:define="dummy view/saveHasActions;">
+<td class="noPadding" i18n:domain="collective.contact.plonegroup" tal:define="dummy view/saveHasActions;">
 
   <tal:comment replace="nothing">Icon</tal:comment>
   <a tal:condition="view/useIcons"

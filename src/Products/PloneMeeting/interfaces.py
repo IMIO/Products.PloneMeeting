@@ -565,34 +565,6 @@ class IMeetingAdviceWorkflowActions(Interface):
     '''Actions that may be triggered while the workflow linked to an advice executes.'''
 
 
-# Interfaces used for customizing the behaviour of meeting categories ----------
-class IMeetingCategoryDocumentation:
-    '''Normally, the methods described here should be part of IMeetingCategory.
-       Because it is impossible to do so with an overengineered yet overrigid
-       ArchGenXML 2, we document the provided methods in this absurd class.'''
-    def onEdit(isCreated):
-        '''This method is called every time a category is created or updated.
-           p_isCreated is True if the object was just created. It is called
-           within Archetypes methods at_post_create_script and
-           at_post_edit_script. You do not need to reindex the category. The
-           default PloneMeeting implementation for this method does nothing.'''
-    def isSelectable(item):
-        '''When creating or updating a meeting item, the user may choose a
-           category (or a classifier if you use field "classifier" in the
-           corresponding meeting configuration). Selectable categories are
-           categories for which method isSelectable returns True. The
-           default implementation of isSelectable returns True if the workflow
-           state is "active" for the category and if the current user is creator
-           for at least one of the 'usingGroups' selected on the category.
-           If a p_userId is given, it will check if the category is selectable
-           for given userId.'''
-
-
-class IMeetingCategoryCustom(IMeetingCategory):
-    '''If you want to propose your own implementations of IMeetingCategory methods,
-       you must define an adapter that adapts IMeetingCategory to IMeetingCategoryCustom.'''
-
-
 # Interfaces used for customizing the behaviour of meeting configs -------------
 # See docstring of previous classes for understanding this section.
 class IMeetingConfigDocumentation:

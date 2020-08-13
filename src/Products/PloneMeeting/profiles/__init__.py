@@ -110,16 +110,21 @@ class ItemTemplateDescriptor(Descriptor):
 
 
 class CategoryDescriptor(Descriptor):
-    multiSelectFields = ['usingGroups', ]
+    multiSelectFields = ['using_groups',
+                         'category_mapping_when_cloning_to_other_mc',
+                         'groups_in_charge']
 
-    def __init__(self, id, title, description='', categoryId='',
-                 usingGroups=[], active=True):
+    def __init__(self, id, title, description='', category_id='',
+                 using_groups=[], category_mapping_when_cloning_to_other_mc=[],
+                 groups_in_charge=[], enabled=True):
         self.id = id
         self.title = title
         self.description = description
-        self.categoryId = categoryId
-        self.usingGroups = usingGroups
-        self.active = active
+        self.category_id = category_id
+        self.using_groups = using_groups
+        self.category_mapping_when_cloning_to_other_mc = category_mapping_when_cloning_to_other_mc
+        self.groups_in_charge = groups_in_charge
+        self.enabled = enabled
 
 
 class AnnexTypeDescriptor(Descriptor):
@@ -420,7 +425,7 @@ class MeetingConfigDescriptor(Descriptor):
                          'historizedMeetingAttributes', 'recordMeetingHistoryStates',
                          'availableItemsListVisibleColumns', 'itemsListVisibleColumns', 'itemsListVisibleFields',
                          'itemColumns', 'itemActionsColumnConfig', 'meetingColumns',
-                         'displayAvailableItemsTo', 'toDoListSearches',
+                         'displayAvailableItemsTo', 'redirectToNextMeeting', 'toDoListSearches',
                          'dashboardItemsListingsFilters', 'dashboardMeetingAvailableItemsFilters',
                          'dashboardMeetingLinkedItemsFilters', 'groupsHiddenInDashboardFilter',
                          'usersHiddenInDashboardFilter', 'workflowAdaptations',
@@ -444,6 +449,7 @@ class MeetingConfigDescriptor(Descriptor):
                          'hideHistoryTo')
     excludedFields = ['maxDaysDecisions', 'meetingAppDefaultView',
                       'addContactsCSV', 'orderedContacts', 'orderedItemInitiators',
+                      'meetingItemTemplatesToStoreAsAnnex',
                       'disabled_collections', 'defaultLabels']
 
     # The 'instance' static attribute stores an instance used for assigning
@@ -732,6 +738,7 @@ class MeetingConfigDescriptor(Descriptor):
         # columns shown on meetings listings.  Order is important!
         self.meetingColumns = ['Creator', 'CreationDate', 'review_state', 'actions']
         self.displayAvailableItemsTo = []
+        self.redirectToNextMeeting = []
         # searches display on portlet_todo
         self.toDoListSearches = []
         # advanced filters shown
@@ -832,7 +839,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.orderedItemInitiators = []
 
         # Doc parameters -------------------------------------------------------
-        self.meetingItemTemplateToStoreAsAnnex = ''
+        self.meetingItemTemplatesToStoreAsAnnex = []
 
         # content_category_groups parameters -----------------------------------
         self.category_group_activated_attrs = {}
