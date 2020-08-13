@@ -136,7 +136,9 @@ def onItemTransition(item, event):
         event.object, event.workflow, event.old_state, event.new_state,
         event.transition, event.status, event.kwargs))
     # just reindex the entire object
-    item.reindexObject()
+    #item.reindexObject()
+    review_state_related_indexes = item.adapted().getReviewStateRelatedIndexes()
+    notifyModifiedAndReindex(item, extra_idxs=review_state_related_indexes)
     # An item has ben modified, use get_again for portlet_todo
     invalidate_cachekey_volatile_for('Products.PloneMeeting.MeetingItem.modified', get_again=True)
 

@@ -1934,7 +1934,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 self.takenOverByInfos[wf_state] = value
             elif not value and wf_state in self.takenOverByInfos:
                 del self.takenOverByInfos[wf_state]
-        self.getField('takenOverBy').set(self, value, **kwargs)
+        # only store new value and reindex if value changed
+        current_takenOverBy = self.getField('takenOverBy').get(self, **kwargs)
+        if not value == current_takenOverBy:
+            self.getField('takenOverBy').set(self, value, **kwargs)
+            # reindex, in case called by setHistorizedTakenOverBy in a WF transition
+            self.reindexObject(idxs=['getTakenOverBy'])
 
     security.declarePublic('setHistorizedTakenOverBy')
 
@@ -2115,7 +2120,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def setItemNumber(self, value, **kwargs):
         '''Overrides the field 'itemNumber' mutator to
-           notifyModified and reindex relevant indexes.'''
+           reindex relevant index when value changed.'''
         current_item_number = self.getField('itemNumber').get(self, **kwargs)
         if not value == current_item_number:
             self.getField('itemNumber').set(self, value, **kwargs)
@@ -5357,7 +5362,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if not avoid_reindex or old_local_roles != self.__ac_local_roles__:
             self.reindexObjectSecurity()
         # return indexes_to_update in case a reindexObject is not done
-        return ['getCopyGroups', 'getGroupsInCharge']
+        local_roles_related_indexes = self.adapted().getLocalRolesRelatedIndexes()
+        return local_roles_related_indexes
 
     def _updateCopyGroupsLocalRoles(self, isCreated):
         '''Give the 'Reader' local role to the copy groups
@@ -6389,8 +6395,24 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('getAdviceRelatedIndexes')
 
     def getAdviceRelatedIndexes(self):
-        '''See doc in utils.py.'''
+        '''See doc in interfaces.py.'''
         return ['indexAdvisers']
+
+    security.declarePrivate('getLocalRolesRelatedIndexes')
+
+    def getLocalRolesRelatedIndexes(self):
+        '''See doc in interfaces.py.'''
+        return ['getCopyGroups', 'getGroupsInCharge']
+
+    security.declarePrivate('getReviewStateRelatedIndexes')
+
+    def getReviewStateRelatedIndexes(self):
+        '''See doc in interfaces.py.'''
+        item = self.getSelf()
+        indexes = item.adapted().getLocalRolesRelatedIndexes()
+        indexes += ['downOrUpWorkflowAgain', 'previous_review_state',
+                    'reviewProcessInfo', 'sentToInfos']
+        return indexes
 
     security.declarePublic('lastValidatedBefore')
 
