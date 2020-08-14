@@ -1189,7 +1189,7 @@ schema = Schema((
         widget=RichWidget(
             condition="python: here.showMeetingManagerReservedField('inAndOutMoves')",
             description="InAndOutMoves",
-            description_msgid="in_and_out_moves_descr",
+            description_msgid="field_reserved_to_meeting_managers_descr",
             label_msgid="PloneMeeting_inAndOutMoves",
             label='Inandoutmoves',
             i18n_domain='PloneMeeting',
@@ -1205,7 +1205,7 @@ schema = Schema((
         widget=RichWidget(
             condition="python: here.showMeetingManagerReservedField('notes')",
             description="Notes",
-            description_msgid="notes_descr",
+            description_msgid="field_reserved_to_meeting_managers_descr",
             label_msgid="PloneMeeting_notes",
             label='Notes',
             i18n_domain='PloneMeeting',
@@ -1221,7 +1221,7 @@ schema = Schema((
         widget=RichWidget(
             condition="python: here.showMeetingManagerReservedField('meetingManagersNotes')",
             description="MeetingManagersNotes",
-            description_msgid="meeting_managers_notes_descr",
+            description_msgid="field_reserved_to_meeting_managers_descr",
             label_msgid="PloneMeeting_label_meetingManagersNotes",
             label='Meetingmanagersnotes',
             i18n_domain='PloneMeeting',
@@ -1267,6 +1267,7 @@ schema = Schema((
         widget=RichWidget(
             label_msgid="PloneMeeting_itemObservations",
             condition="python: here.attributeIsUsed('observations') and here.adapted().showObservations()",
+            description_msgid="field_vieawable_by_everyone_descr",
             label='Observations',
             i18n_domain='PloneMeeting',
         ),
@@ -1417,6 +1418,7 @@ schema = Schema((
         widget=RichWidget(
             label_msgid="PloneMeeting_label_pollTypeObservations",
             condition="python: here.attributeIsUsed('pollTypeObservations')",
+            description_msgid="field_vieawable_by_everyone_descr",
             label='Polltypeobservations',
             i18n_domain='PloneMeeting',
         ),
@@ -6063,7 +6065,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         add_wf_history_action(self, action_name=action_name, action_label=action_label)
 
         # Send an email to the user being able to modify the new item if relevant
-        mapping = {'meetingConfigTitle': destMeetingConfig.Title(), }
+        mapping = {'originMeetingConfigTitle': safe_unicode(cfg.Title()), }
         sendMailIfRelevant(newItem,
                            'itemClonedToThisMC',
                            ModifyPortalContent,
