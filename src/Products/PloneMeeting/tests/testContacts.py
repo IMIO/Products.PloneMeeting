@@ -584,6 +584,31 @@ class testContacts(PloneMeetingTestCase):
                 3: u"Signatory4"
             }
         )
+        # When asking for secondary_position_type, if not available,
+        # it falls back to position_type automatically
+        person3 = self.portal.contacts.get("person3")
+        signatory4 = person3.get_held_positions()[0]
+        signatory4.label = None
+        signatory4.position_type = u'super'
+        signatory4.secondary_position_type = None
+
+        printed_signatories = helper.print_signatories_by_position(
+            signature_format=(u"prefixed_secondary_position_type",),
+            ender=None
+        )
+        self.assertEqual(
+            printed_signatories,
+            {
+                # secondary_position_type
+                0: u"La Super-héroine",
+                # label
+                1: u"Président",
+                # label
+                2: u"Signatory3",
+                # position_type fallback from secondary_position_type
+                3: u"Le Super-héro"
+            }
+        )
 
     def _setupInAndOutAttendees(self):
         """Setup a meeting with items and in and out (non) attendees."""

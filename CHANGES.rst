@@ -64,6 +64,9 @@ Changelog
   POD templates may be selected instead one single.  In the batch action, the user may chose among available POD templates
 - Fixed `@@check-pod-templates` that was no more raising an error when a POD template was wrong, hidding broken templates...
 - Reworked email notifications to always have relevant information at the beginning of the subject in case item title is very long
+- When getting a `position_type_attr` on a `held_position.get_label`, added possibility to fallback to another `position_type_attr`
+  if given one is empty.  This makes it possible to fallback to `position_type` while trying to get `secondary_position_type`
+  and this last is empty
 
 4.1.27.2 (2020-06-25)
 ---------------------
