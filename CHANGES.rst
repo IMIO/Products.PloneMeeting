@@ -68,6 +68,7 @@ Changelog
 - When getting a `position_type_attr` on a `held_position.get_label`, added possibility to fallback to another `position_type_attr`
   if given one is empty.  This makes it possible to fallback to `position_type` while trying to get `secondary_position_type`
   and this last is empty
+- Hide button `Add group` in Plone groups configuration panel with CSS, this avoid users to add Plone groups instead organizations
 
 4.1.27.2 (2020-06-25)
 ---------------------
