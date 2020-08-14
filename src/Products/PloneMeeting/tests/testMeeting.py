@@ -3098,13 +3098,29 @@ class testMeeting(PloneMeetingTestCase):
         meeting = self.create('Meeting', date=DateTime())
         # a reserved field is shown if used
         usedMeetingAttrs = cfg.getUsedMeetingAttributes()
-        self.assertFalse('notes' in usedMeetingAttrs)
-        self.assertFalse(meeting.showMeetingManagerReservedField('notes'))
-        cfg.setUsedMeetingAttributes(usedMeetingAttrs + ('notes', ))
-        self.assertTrue(meeting.showMeetingManagerReservedField('notes'))
+        self.assertFalse('a_meeting_field' in usedMeetingAttrs)
+        self.assertFalse(meeting.showMeetingManagerReservedField('a_meeting_field'))
+        cfg.setUsedMeetingAttributes(usedMeetingAttrs + ('a_meeting_field', ))
+        self.assertTrue(meeting.showMeetingManagerReservedField('a_meeting_field'))
         # not viewable by non MeetingManagers
         self.changeUser('pmCreator1')
-        self.assertFalse(meeting.showMeetingManagerReservedField('notes'))
+        self.assertFalse(meeting.showMeetingManagerReservedField('a_meeting_field'))
+
+    def test_pm_MeetingManagerReservedFields(self):
+        """Make sure a list of fields is not viewable on meeting except by MeetingManagers."""
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime())
+        self.freezeMeeting(meeting)
+        field_names = ['inAndOutMoves', 'notes', 'secretMeetingObservations', 'authorityNotice']
+        for field_name in field_names:
+            self._enableField(field_name, related_to='Meeting')
+            widget = meeting.getField(field_name).widget
+            # MeetingManager may see
+            self.assertTrue(widget.testCondition(meeting.aq_inner.aq_parent, self.portal, meeting))
+            # other may not see
+            self.changeUser('pmCreator1')
+            self.assertFalse(widget.testCondition(meeting.aq_inner.aq_parent, self.portal, meeting))
+            self.changeUser('pmManager')
 
     def test_pm_DefaultTextValuesFromConfig(self):
         """Some values may be defined in the configuration and used when the meeting is created :
