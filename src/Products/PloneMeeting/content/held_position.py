@@ -176,7 +176,7 @@ class PMHeldPosition(HeldPosition):
         value = get_exportable_for_fieldname(
             self, position_type_attr, getRequest()).render_value(self)
         # fallback_position_type_attr
-        if not value:
+        if not value and fallback_position_type_attr:
             value = get_exportable_for_fieldname(
                 self, fallback_position_type_attr, getRequest()).render_value(self)
         values = value and value.split('|') or [u'', u'', u'', u'']

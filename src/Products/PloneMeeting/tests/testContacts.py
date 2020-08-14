@@ -1631,8 +1631,15 @@ class testContacts(PloneMeetingTestCase):
 
         # we may give a position_type_attr, this is usefull when using field secondary_position_type
         self.assertIsNone(hp.secondary_position_type)
+        # when position_type_attr value is None, fallback to 'position_type' by default
         self.assertEqual(hp.get_prefix_for_gender_and_number(
-            include_value=True, position_type_attr='secondary_position_type'),
+            include_value=True,
+            position_type_attr='secondary_position_type'),
+            u'La Directrice')
+        self.assertEqual(hp.get_prefix_for_gender_and_number(
+            include_value=True,
+            position_type_attr='secondary_position_type',
+            fallback_position_type_attr=None),
             u'')
         hp.secondary_position_type = u'admin'
         # include_value and include_person_title
