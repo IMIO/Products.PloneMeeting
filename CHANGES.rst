@@ -6,6 +6,9 @@ Changelog
 ------------------
 
 - Merged changes from 4.1.28
+- Added `waiting_advices_from_last_val_level_advices_required_to_validate`
+  WFAdaptation to be able to block item validation in case advices still
+  need to be given.
 
 4.2a7 (2020-06-24)
 ------------------

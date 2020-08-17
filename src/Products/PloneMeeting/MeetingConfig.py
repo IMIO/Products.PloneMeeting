@@ -2556,6 +2556,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                      'waiting_advices_from_last_val_level_only_adviser_send_back',
                      'waiting_advices_from_last_val_level_only_proposing_group_send_back',
                      'waiting_advices_from_last_val_level_adviser_and_proposing_group_send_back',
+                     'waiting_advices_from_last_val_level_advices_required_to_validate',
                      'waiting_advices_from_before_last_val_level',
                      'accepted_out_of_meeting',
                      'accepted_out_of_meeting_and_duplicated',

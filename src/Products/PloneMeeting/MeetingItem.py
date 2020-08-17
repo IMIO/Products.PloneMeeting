@@ -236,6 +236,24 @@ class MeetingItemWorkflowConditions(object):
                 res = msg
         return res
 
+    def _has_waiting_advices_transitions(self):
+        '''Are there 'wait_advices_' transitions from current state and
+           are there advices to wait, aka the transition would be available?'''
+        res = False
+        if 'waiting_advices_from_last_val_level_advices_required_to_validate' in \
+           self.cfg.getWorkflowAdaptations():
+            review_state = self.context.queryState()
+            wf_tool = api.portal.get_tool('portal_workflow')
+            item_wf = wf_tool.getWorkflowsFor(self.context)[0]
+            transitions = item_wf.states[review_state].transitions
+            wait_advices_transitions = [tr for tr in transitions
+                                        if tr.startswith('wait_advices_')]
+            for wait_advices_tr in wait_advices_transitions:
+                if self._hasAdvicesToGive(item_wf.transitions[wait_advices_tr].new_state_id):
+                    res = True
+                    break
+        return res
+
     security.declarePublic('mayValidate')
 
     def mayValidate(self):
@@ -250,6 +268,8 @@ class MeetingItemWorkflowConditions(object):
                 last_validation_state = self._getLastValidationState()
                 if item_state == last_validation_state:
                     res = True
+                    if self._has_waiting_advices_transitions():
+                        res = No(_('has_required_waiting_advices'))
         if res:
             msg = self._check_required_data()
             if msg is not None:
@@ -288,7 +308,6 @@ class MeetingItemWorkflowConditions(object):
 
         # all checks passed
         return True
-
 
     security.declarePublic('mayDecide')
 
@@ -1744,6 +1763,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if self.isDefinedInTool(item_type='itemtemplate'):
             return
 
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
         # check if value is among classifiers defined in the MeetingConfig
         if (self.attributeIsUsed('classifier')) and value not in cfg.classifiers.objectIds():
             return translate('classifier_required', domain='PloneMeeting', context=self.REQUEST)
