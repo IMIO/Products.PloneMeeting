@@ -80,13 +80,22 @@ indexInfos = {
     # Indexes used by every portal_types
     'getConfigId': ('FieldIndex', {}), }
 # Metadata to create in portal_catalog
-columnInfos = ('getDate',
-               'getProposingGroup', 'getGroupsInCharge', 'getAssociatedGroups',
-               'getPreferredMeeting', 'getPreferredMeetingDate',
-               'linkedMeetingDate', 'linkedMeetingUID',
-               'title_or_id', 'toDiscuss',
-               'privacy', 'pollType', 'listType', 'getItemNumber',
-               'getCategory', 'getRawClassifier')
+columnInfos = ('getAssociatedGroups',
+               'getCategory',
+               'getDate',
+               'getGroupsInCharge',
+               'getItemNumber',
+               'getPreferredMeeting',
+               'getPreferredMeetingDate',
+               'getProposingGroup',
+               'getRawClassifier',
+               'linkedMeetingDate',
+               'linkedMeetingUID',
+               'listType',
+               'privacy',
+               'pollType',
+               'title_or_id',
+               'toDiscuss')
 transformsToDisable = ['word_to_html', 'pdf_to_html', 'pdf_to_text']
 
 
