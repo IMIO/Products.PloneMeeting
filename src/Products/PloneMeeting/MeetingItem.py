@@ -4609,9 +4609,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            WARNING : this method is a sub-method of self.updateLocalRoles and is not supposed
            to be called separately unless you know what you are doing!  Indeed, as this method involves
            localRoles management, various methods update localRoles sometimes same localRoles.'''
+        idxs = self.adapted().getAdviceRelatedIndexes()
         # bypass advice update if we are pasting items containing advices
         if self.REQUEST.get('currentlyPastingItems', False):
-            return
+            return idxs
 
         # declare that we are currently updating advices
         # because some subprocess like events could call it again
@@ -4996,7 +4997,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                    triggered_by_transition=triggered_by_transition,
                                    old_adviceIndex=old_adviceIndex))
         self.REQUEST.set('currentlyUpdatingAdvice', False)
-        return self.adapted().getAdviceRelatedIndexes()
+        return idxs
 
     def _itemToAdviceIsViewable(self, org_uid):
         '''See doc in interfaces.py.'''
@@ -5374,24 +5375,22 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def _updateCopyGroupsLocalRoles(self, isCreated):
         '''Give the 'Reader' local role to the copy groups
            depending on what is defined in the corresponding meetingConfig.'''
-        if not self.isCopiesEnabled():
-            return
-        # Check if some copyGroups must be automatically added
-        self.addAutoCopyGroups(isCreated=isCreated)
-
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self)
-        # check if copyGroups should have access to this item for current review state
-        itemState = self.queryState()
-        if itemState not in cfg.getItemCopyGroupsStates():
-            return
-        # Add the local roles corresponding to the selected copyGroups.
-        # We give the 'Reader' role to the selected groups.
-        # This will give them a read-only access to the item.
-        copyGroupIds = self.getAllCopyGroups(auto_real_plone_group_ids=True)
-        for copyGroupId in copyGroupIds:
-            self.manage_addLocalRoles(copyGroupId, (READER_USECASES['copy_groups'],))
-        return ['getCopyGroups']
+        idxs = ['getCopyGroups']
+        if self.isCopiesEnabled():
+            # Check if some copyGroups must be automatically added
+            self.addAutoCopyGroups(isCreated=isCreated)
+            tool = api.portal.get_tool('portal_plonemeeting')
+            cfg = tool.getMeetingConfig(self)
+            # check if copyGroups should have access to this item for current review state
+            itemState = self.queryState()
+            if itemState in cfg.getItemCopyGroupsStates():
+                # Add the local roles corresponding to the selected copyGroups.
+                # We give the 'Reader' role to the selected groups.
+                # This will give them a read-only access to the item.
+                copyGroupIds = self.getAllCopyGroups(auto_real_plone_group_ids=True)
+                for copyGroupId in copyGroupIds:
+                    self.manage_addLocalRoles(copyGroupId, (READER_USECASES['copy_groups'],))
+        return idxs
 
     def _updatePowerObserversLocalRoles(self):
         '''Give local roles to the groups defined in MeetingConfig.powerObservers.'''
@@ -5421,16 +5420,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def _updateGroupsInChargeLocalRoles(self):
         '''Get the current groupsInCharge and give View access to the _observers Plone group.'''
+        idxs = ['getGroupsInCharge']
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         itemState = self.queryState()
-        if itemState not in cfg.getItemGroupsInChargeStates():
-            return
-        groupsInCharge = self.getGroupsInCharge(theObjects=True, includeAuto=True)
-        for groupInCharge in groupsInCharge:
-            observersPloneGroupId = get_plone_group_id(groupInCharge.UID(), 'observers')
-            self.manage_addLocalRoles(observersPloneGroupId, (READER_USECASES['groupsincharge'],))
-        return ['getGroupsInCharge']
+        if itemState in cfg.getItemGroupsInChargeStates():
+            groupsInCharge = self.getGroupsInCharge(theObjects=True, includeAuto=True)
+            for groupInCharge in groupsInCharge:
+                observersPloneGroupId = get_plone_group_id(groupInCharge.UID(), 'observers')
+                self.manage_addLocalRoles(observersPloneGroupId, (READER_USECASES['groupsincharge'],))
+        return idxs
 
     def _versionateAdvicesOnItemEdit(self):
         """When item is edited, versionate advices if necessary, it is the case if advice was
