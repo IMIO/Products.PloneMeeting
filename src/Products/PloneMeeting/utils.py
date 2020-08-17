@@ -1026,7 +1026,10 @@ def applyOnTransitionFieldTransform(obj, transitionId):
             field = obj.getField(transform['field_name'].split('.')[1])
             field.set(obj, res, mimetype='text/html')
             idxs.append(field.accessor)
-    obj.reindexObject(idxs=idxs)
+    # XXX do not reindex for now as full reindex is done after
+    # when moving to dexerity, will be able to reindex more efficiently
+    if False and idxs:
+        obj.reindexObject(idxs=idxs)
 
 
 # ------------------------------------------------------------------------------
