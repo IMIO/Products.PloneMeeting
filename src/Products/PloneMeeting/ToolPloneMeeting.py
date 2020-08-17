@@ -1426,7 +1426,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                          brain.portal_type,
                          '/'.join(itemOrMeeting.getPhysicalPath())))
             i = i + 1
-            indexes_to_update = itemOrMeeting.updateLocalRoles(avoid_reindex=True)
+            indexes_to_update = itemOrMeeting.updateLocalRoles(avoid_reindex_security=True)
             # if auto rules regarding copyGroups or groupsInCharge changed
             # we could have more or less copyGroups/groupsInCharge so reindex relevant indexes
             if indexes_to_update:
@@ -1462,7 +1462,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                          brain.portal_type,
                          '/'.join(itemOrMeeting.getPhysicalPath())))
             i = i + 1
-            indexes_to_update = itemOrMeeting.updateLocalRoles(avoid_reindex=True)
+            indexes_to_update = itemOrMeeting.updateLocalRoles(avoid_reindex_security=True)
             # if auto rules regarding copyGroups or groupsInCharge changed
             # we could have more or less copyGroups/groupsInCharge so reindex relevant indexes
             if indexes_to_update:

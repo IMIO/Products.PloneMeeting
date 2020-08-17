@@ -75,20 +75,22 @@ def do(action, event):
     # Execute some actions defined in the corresponding adapter
     actionMethod = getattr(actionsAdapter, action)
     actionMethod(event)
+    idxs = []
     if objectType == 'MeetingItem':
         # Update every local roles : advices, copyGroups, powerObservers, budgetImpactEditors, ...
-        event.object.updateLocalRoles(triggered_by_transition=event.transition.id)
+        # do not reindexObjectSecurity as also done by portal_workflow
+        idxs += event.object.updateLocalRoles(
+            triggered_by_transition=event.transition.id,
+            force_avoid_reindex_security=True)
         # Send mail regarding advices to give if relevant
         event.object.sendStateDependingMailIfRelevant(event.old_state.id, event.new_state.id)
         # Send mail if relevant
         sendMailIfRelevant(event.object, "item_state_changed_%s" % event.transition.id, 'View')
         # apply on transition field transform if any
-        applyOnTransitionFieldTransform(event.object, event.transition.id)
-        # update modification date upon state change
-        event.object.notifyModified()
+        idxs += applyOnTransitionFieldTransform(event.object, event.transition.id)
     elif objectType == 'Meeting':
         # update every local roles
-        event.object.updateLocalRoles()
+        event.object.updateLocalRoles(force_avoid_reindex_security=True)
         # Add recurring items to the meeting if relevant
         addRecurringItemsIfRelevant(event.object, event.transition.id)
         # Send mail if relevant
@@ -96,10 +98,9 @@ def do(action, event):
         # trigger some transitions on contained items depending on
         # MeetingConfig.onMeetingTransitionItemActionToExecute
         meetingExecuteActionOnLinkedItems(event.object, event.transition.id)
-        # update modification date upon state change
-        event.object.notifyModified()
     elif objectType == 'MeetingAdvice':
         _addManagedPermissions(event.object)
+    return idxs
 
 
 def onItemTransition(item, event):
@@ -113,7 +114,7 @@ def onItemTransition(item, event):
         action = 'doItem%s%s' % (transitionId[4].upper(), transitionId[5:])
     else:
         action = 'do%s%s' % (transitionId[0].upper(), transitionId[1:])
-    do(action, event)
+    idxs = do(action, event)
 
     # check if we need to send the item to another meetingConfig
     tool = api.portal.get_tool('portal_plonemeeting')
@@ -137,8 +138,8 @@ def onItemTransition(item, event):
         event.transition, event.status, event.kwargs))
     # just reindex the entire object
     #item.reindexObject()
-    review_state_related_indexes = item.adapted().getReviewStateRelatedIndexes()
-    notifyModifiedAndReindex(item, extra_idxs=review_state_related_indexes)
+    idxs += item.adapted().getReviewStateRelatedIndexes()
+    notifyModifiedAndReindex(item, extra_idxs=idxs)
     # An item has ben modified, use get_again for portlet_todo
     invalidate_cachekey_volatile_for('Products.PloneMeeting.MeetingItem.modified', get_again=True)
 
@@ -166,8 +167,7 @@ def onMeetingTransition(meeting, event):
     notify(MeetingAfterTransitionEvent(
         event.object, event.workflow, event.old_state, event.new_state,
         event.transition, event.status, event.kwargs))
-    # just reindex the entire object
-    event.object.reindexObject()
+    notifyModifiedAndReindex(meeting, extra_idxs=['*'])
 
 
 def onAdviceTransition(advice, event):
@@ -685,10 +685,10 @@ def storeImagesLocallyDexterity(advice):
             advice.REQUEST.set('currentlyStoringExternalImages', False)
 
 
-def _advice_update_item(item):
+def _advice_update_item(item, idxs):
     ''' '''
     # reindex advice related indexes
-    advice_related_indexes = item.adapted().getAdviceRelatedIndexes()
+    advice_related_indexes = idxs or item.adapted().getAdviceRelatedIndexes()
     notifyModifiedAndReindex(item, extra_idxs=advice_related_indexes)
     # invalidate portlet_todo cachekey
     invalidate_cachekey_volatile_for('Products.PloneMeeting.MeetingItem.modified', get_again=True)
@@ -707,7 +707,7 @@ def onAdviceAdded(advice, event):
         advice._updateAdviceRowId()
 
     item = advice.getParentNode()
-    item.updateLocalRoles()
+    idxs = item.updateLocalRoles()
 
     _addManagedPermissions(advice)
 
@@ -724,7 +724,7 @@ def onAdviceAdded(advice, event):
         advice.REQUEST.RESPONSE.redirect(http_referer + '#adviceAndAnnexes')
 
     # update item
-    _advice_update_item(item)
+    _advice_update_item(item, idxs)
 
     # Send mail if relevant
     sendMailIfRelevant(item, 'adviceEdited', 'MeetingMember', isRole=True)
@@ -740,7 +740,7 @@ def onAdviceModified(advice, event):
     advice._updateAdviceRowId()
 
     item = advice.getParentNode()
-    item.updateLocalRoles()
+    idxs = item.updateLocalRoles()
 
     # make sure external images used in RichText fields are stored locally
     storeImagesLocallyDexterity(advice)
@@ -750,7 +750,7 @@ def onAdviceModified(advice, event):
     notify(AdviceAfterModifyEvent(advice))
 
     # update item
-    _advice_update_item(item)
+    _advice_update_item(item, idxs)
 
     # Send mail if relevant
     sendMailIfRelevant(item, 'adviceEdited', 'MeetingMember', isRole=True)
@@ -778,8 +778,9 @@ def onAdviceRemoved(advice, event):
     if item not in item.aq_inner.aq_parent.objectValues():
         return
 
+    idxs = []
     try:
-        item.updateLocalRoles()
+        idxs = item.updateLocalRoles()
     except TypeError:
         # while removing an advice, if it was not anymore in the advice index
         # it can raise a TypeError, this can be the case when using ToolPloneMeeting.pasteItems
@@ -787,7 +788,7 @@ def onAdviceRemoved(advice, event):
         logger.info('Removal of advice at %s raised TypeError.' % advice.absolute_url_path())
 
     # update item
-    _advice_update_item(item)
+    _advice_update_item(item, idxs)
 
 
 def onAnnexAdded(annex, event):
@@ -799,12 +800,13 @@ def onAnnexAdded(annex, event):
         if '/++add++annex' in annex.REQUEST.getURL():
             annex.REQUEST.RESPONSE.redirect(parent.absolute_url() + '/@@categorized-annexes')
 
+        idxs = []
         if parent.meta_type == 'MeetingItem':
             parent.updateHistory('add',
                                  annex,
                                  decisionRelated=annex.portal_type == 'annexDecision' and True or False)
             if annex.portal_type == 'annex' and parent.willInvalidateAdvices():
-                parent.updateLocalRoles(invalidate=True)
+                idxs = parent.updateLocalRoles(invalidate=True)
 
             # Potentially I must notify MeetingManagers through email.
             sendMailIfRelevant(parent, 'annexAdded', 'MeetingManager', isRole=True)
@@ -813,7 +815,7 @@ def onAnnexAdded(annex, event):
         # and reindex parent relevant indexes
         notifyModifiedAndReindex(
             parent,
-            extra_idxs=['SearchableText', 'hasAnnexesToSign', 'hasAnnexesToPrint'])
+            extra_idxs=['SearchableText', 'hasAnnexesToSign', 'hasAnnexesToPrint'] + idxs)
 
 
 def onAnnexEditFinished(annex, event):
@@ -854,15 +856,16 @@ def onAnnexRemoved(annex, event):
         return
 
     # if it is an annex added on an item, versionate given advices if necessary
+    idxs = []
     if parent.meta_type == 'MeetingItem':
         parent.updateHistory('delete',
                              annex,
                              decisionRelated=annex.portal_type == 'annexDecision' and True or False)
         if parent.willInvalidateAdvices():
-            parent.updateLocalRoles(invalidate=True)
+            idxs = parent.updateLocalRoles(invalidate=True)
 
     # update modification date and SearchableText
-    notifyModifiedAndReindex(parent, extra_idxs=['SearchableText', 'hasAnnexesToPrint', 'hasAnnexesToSign'])
+    notifyModifiedAndReindex(parent, extra_idxs=['SearchableText', 'hasAnnexesToPrint', 'hasAnnexesToSign'] + idxs)
 
 
 def onAnnexAttrChanged(annex, event):

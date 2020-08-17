@@ -4995,8 +4995,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         notify(AdvicesUpdatedEvent(self,
                                    triggered_by_transition=triggered_by_transition,
                                    old_adviceIndex=old_adviceIndex))
-        self.reindexObject(idxs=['indexAdvisers'])
         self.REQUEST.set('currentlyUpdatingAdvice', False)
+        return self.adapted().getAdviceRelatedIndexes()
 
     def _itemToAdviceIsViewable(self, org_uid):
         '''See doc in interfaces.py.'''
@@ -5239,7 +5239,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def at_post_edit_script(self):
         self.updateLocalRoles(invalidate=self.willInvalidateAdvices(),
                               isCreated=False,
-                              avoid_reindex=True)
+                              avoid_reindex_security=True)
         # Apply potential transformations to richtext fields
         transformAllRichTextFields(self)
         # Add a line in history if historized fields have changed
@@ -5321,17 +5321,21 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if org:
             self._assign_roles_to_group_suffixes(org)
 
+        # indexes to update regarding local roles changes
+        idxs = []
+
         # update local roles regarding copyGroups
         isCreated = kwargs.get('isCreated', None)
-        self._updateCopyGroupsLocalRoles(isCreated)
+        idxs += self._updateCopyGroupsLocalRoles(isCreated)
         # Update advices after updateLocalRoles because updateLocalRoles
         # reinitialize existing local roles
         triggered_by_transition = kwargs.get('triggered_by_transition', None)
         invalidate = kwargs.get('invalidate', False)
         inheritedAdviserUids = kwargs.get('inheritedAdviserUids', [])
-        self._updateAdvices(invalidate=invalidate,
-                            triggered_by_transition=triggered_by_transition,
-                            inheritedAdviserUids=inheritedAdviserUids)
+        idxs += self._updateAdvices(
+            invalidate=invalidate,
+            triggered_by_transition=triggered_by_transition,
+            inheritedAdviserUids=inheritedAdviserUids)
         # Update every 'power observers' local roles given to the
         # corresponding MeetingConfig.powerObsevers
         # it is done on every edit because of 'item_access_on' TAL expression
@@ -5342,7 +5346,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         self._updateBudgetImpactEditorsLocalRoles()
         # update group in charge local roles
         # we will give the current groupsInCharge _observers sub group access to this item
-        self._updateGroupsInChargeLocalRoles()
+        idxs += self._updateGroupsInChargeLocalRoles()
         # manage automatically given permissions
         _addManagedPermissions(self)
         # clean borg.localroles caching
@@ -5359,13 +5363,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             for advice in self.getAdvices():
                 updateAnnexesAccess(advice)
 
-        # reindex object security except if avoid_reindex=True and localroles are the same
-        avoid_reindex = kwargs.get('avoid_reindex', False)
-        if not avoid_reindex or old_local_roles != self.__ac_local_roles__:
+        # reindex object security except if avoid_reindex_security=True and localroles are the same
+        avoid_reindex_security = kwargs.get('avoid_reindex_security', False)
+        force_avoid_reindex_security = kwargs.get('force_avoid_reindex_security', False)
+        if not force_avoid_reindex_security and \
+           (not avoid_reindex_security or old_local_roles != self.__ac_local_roles__):
             self.reindexObjectSecurity()
-        # return indexes_to_update in case a reindexObject is not done
-        local_roles_related_indexes = self.adapted().getLocalRolesRelatedIndexes()
-        return local_roles_related_indexes
+        return idxs
 
     def _updateCopyGroupsLocalRoles(self, isCreated):
         '''Give the 'Reader' local role to the copy groups
@@ -5387,6 +5391,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         copyGroupIds = self.getAllCopyGroups(auto_real_plone_group_ids=True)
         for copyGroupId in copyGroupIds:
             self.manage_addLocalRoles(copyGroupId, (READER_USECASES['copy_groups'],))
+        return ['getCopyGroups']
 
     def _updatePowerObserversLocalRoles(self):
         '''Give local roles to the groups defined in MeetingConfig.powerObservers.'''
@@ -5425,6 +5430,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         for groupInCharge in groupsInCharge:
             observersPloneGroupId = get_plone_group_id(groupInCharge.UID(), 'observers')
             self.manage_addLocalRoles(observersPloneGroupId, (READER_USECASES['groupsincharge'],))
+        return ['getGroupsInCharge']
 
     def _versionateAdvicesOnItemEdit(self):
         """When item is edited, versionate advices if necessary, it is the case if advice was
@@ -6400,21 +6406,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''See doc in interfaces.py.'''
         return ['indexAdvisers']
 
-    security.declarePrivate('getLocalRolesRelatedIndexes')
-
-    def getLocalRolesRelatedIndexes(self):
-        '''See doc in interfaces.py.'''
-        return ['getCopyGroups', 'getGroupsInCharge']
-
     security.declarePrivate('getReviewStateRelatedIndexes')
 
     def getReviewStateRelatedIndexes(self):
         '''See doc in interfaces.py.'''
-        item = self.getSelf()
-        indexes = item.adapted().getLocalRolesRelatedIndexes()
-        indexes += ['downOrUpWorkflowAgain', 'previous_review_state',
-                    'reviewProcessInfo', 'sentToInfos']
-        return indexes
+        return ['downOrUpWorkflowAgain', 'previous_review_state',
+                'reviewProcessInfo', 'sentToInfos']
 
     security.declarePublic('lastValidatedBefore')
 

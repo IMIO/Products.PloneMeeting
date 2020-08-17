@@ -1800,9 +1800,11 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         # not really necessary here but easier
         # update annexes categorized_elements to store 'visible_for_groups'
         updateAnnexesAccess(self)
-        # reindex object security except if avoid_reindex=True and localroles are the same
-        avoid_reindex = kwargs.get('avoid_reindex', False)
-        if not avoid_reindex or old_local_roles != self.__ac_local_roles__:
+        # reindex object security except if avoid_reindex_security=True and localroles are the same
+        avoid_reindex_security = kwargs.get('avoid_reindex_security', False)
+        force_avoid_reindex_security = kwargs.get('force_avoid_reindex_security', False)
+        if not force_avoid_reindex_security and \
+           (not avoid_reindex_security or old_local_roles != self.__ac_local_roles__):
             self.reindexObjectSecurity()
 
     def _updatePowerObserversLocalRoles(self):

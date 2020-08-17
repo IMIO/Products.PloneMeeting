@@ -1026,10 +1026,10 @@ def applyOnTransitionFieldTransform(obj, transitionId):
             field = obj.getField(transform['field_name'].split('.')[1])
             field.set(obj, res, mimetype='text/html')
             idxs.append(field.accessor)
-    # only reindex if some transform applied
+    # return indexes to reindex
     if idxs:
         idxs.append('SearchableText')
-        obj.reindexObject(idxs=idxs)
+    return idxs
 
 
 # ------------------------------------------------------------------------------
