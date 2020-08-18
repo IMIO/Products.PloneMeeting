@@ -529,7 +529,9 @@ class testContacts(PloneMeetingTestCase):
         self.assertEqual(len(helper.print_signatories_by_position()), 0)
         self.presentItem(item)
 
-        printed_signatories = helper.print_signatories_by_position(ender=".")
+        printed_signatories = helper.print_signatories_by_position(
+            signature_format=(u'prefixed_position_type', u'person'),
+            ender=".")
         self.assertEqual(
             printed_signatories,
             {
