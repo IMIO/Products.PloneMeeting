@@ -529,7 +529,9 @@ class testContacts(PloneMeetingTestCase):
         self.assertEqual(len(helper.print_signatories_by_position()), 0)
         self.presentItem(item)
 
-        printed_signatories = helper.print_signatories_by_position(ender=".")
+        printed_signatories = helper.print_signatories_by_position(
+            signature_format=(u'prefixed_position_type', u'person'),
+            ender=".")
         self.assertEqual(
             printed_signatories,
             {
@@ -582,6 +584,31 @@ class testContacts(PloneMeetingTestCase):
                 1: u"Président",
                 2: u"Signatory3",
                 3: u"Signatory4"
+            }
+        )
+        # When asking for secondary_position_type, if not available,
+        # it falls back to position_type automatically
+        person3 = self.portal.contacts.get("person3")
+        signatory4 = person3.get_held_positions()[0]
+        signatory4.label = None
+        signatory4.position_type = u'super'
+        signatory4.secondary_position_type = None
+
+        printed_signatories = helper.print_signatories_by_position(
+            signature_format=(u"prefixed_secondary_position_type",),
+            ender=None
+        )
+        self.assertEqual(
+            printed_signatories,
+            {
+                # secondary_position_type
+                0: u"La Super-héroine",
+                # label
+                1: u"Président",
+                # label
+                2: u"Signatory3",
+                # position_type fallback from secondary_position_type
+                3: u"Le Super-héro"
             }
         )
 
@@ -1606,8 +1633,15 @@ class testContacts(PloneMeetingTestCase):
 
         # we may give a position_type_attr, this is usefull when using field secondary_position_type
         self.assertIsNone(hp.secondary_position_type)
+        # when position_type_attr value is None, fallback to 'position_type' by default
         self.assertEqual(hp.get_prefix_for_gender_and_number(
-            include_value=True, position_type_attr='secondary_position_type'),
+            include_value=True,
+            position_type_attr='secondary_position_type'),
+            u'La Directrice')
+        self.assertEqual(hp.get_prefix_for_gender_and_number(
+            include_value=True,
+            position_type_attr='secondary_position_type',
+            fallback_position_type_attr=None),
             u'')
         hp.secondary_position_type = u'admin'
         # include_value and include_person_title
