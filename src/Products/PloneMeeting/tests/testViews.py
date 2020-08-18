@@ -1202,15 +1202,15 @@ class testViews(PloneMeetingTestCase):
         view(group_ids=[group_id])
         self.assertEqual(
             view.group_users(group),
-            "<img src='http://nohost/plone/user.png'> <div class='user-or-group'>M. PMCreator One bee</div>"
             "<img src='http://nohost/plone/user.png'> <div class='user-or-group'>M. PMCreator One</div>"
+            "<img src='http://nohost/plone/user.png'> <div class='user-or-group'>M. PMCreator One bee</div>"
             "<img src='http://nohost/plone/user.png'> <div class='user-or-group'>M. PMManager</div>")
         # add a 'not found' user, will not be displayed
         self._make_not_found_user()
         self.assertEqual(
             view.group_users(group),
-            "<img src='http://nohost/plone/user.png'> <div class='user-or-group'>M. PMCreator One bee</div>"
             "<img src='http://nohost/plone/user.png'> <div class='user-or-group'>M. PMCreator One</div>"
+            "<img src='http://nohost/plone/user.png'> <div class='user-or-group'>M. PMCreator One bee</div>"
             "<img src='http://nohost/plone/user.png'> <div class='user-or-group'>M. PMManager</div>")
 
     def test_pm_DisplayGroupUsersViewAllPloneGroups(self):
@@ -1227,15 +1227,15 @@ class testViews(PloneMeetingTestCase):
         plone_group = api.group.get(self.developers_creators)
         self.assertEqual(
             view.group_users(plone_group),
-            "<img src='http://nohost/plone/user.png'> <div class='user-or-group'>M. PMCreator One bee</div>"
             "<img src='http://nohost/plone/user.png'> <div class='user-or-group'>M. PMCreator One</div>"
+            "<img src='http://nohost/plone/user.png'> <div class='user-or-group'>M. PMCreator One bee</div>"
             "<img src='http://nohost/plone/user.png'> <div class='user-or-group'>M. PMManager</div>")
         # add a 'not found' user, will not be displayed
         self._make_not_found_user()
         self.assertEqual(
             view.group_users(plone_group),
-            "<img src='http://nohost/plone/user.png'> <div class='user-or-group'>M. PMCreator One bee</div>"
             "<img src='http://nohost/plone/user.png'> <div class='user-or-group'>M. PMCreator One</div>"
+            "<img src='http://nohost/plone/user.png'> <div class='user-or-group'>M. PMCreator One bee</div>"
             "<img src='http://nohost/plone/user.png'> <div class='user-or-group'>M. PMManager</div>")
         # only available to proposingGroup members
         self.changeUser('pmReviewer2')
