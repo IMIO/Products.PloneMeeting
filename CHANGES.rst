@@ -3,7 +3,7 @@ Changelog
 
 
 
-4.1.28 (unreleased)
+4.1.28 (2020-08-21)
 -------------------
 
 - Moved `Meeting.getNextMeeting` logic to `utils.get_next_meeting` so it can be used from outside a `Meeting` instance,
