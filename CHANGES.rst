@@ -3,7 +3,7 @@ Changelog
 
 
 
-4.1.28.1 (unreleased)
+4.1.28.1 (2020-08-21)
 ---------------------
 
 - When getting a `position_type_attr` on a `held_position.get_label`, added possibility to fallback to another `position_type_attr`
