@@ -1870,6 +1870,16 @@ body.template-meeting_available_items_view div#ajax-spinner {
    top: -35px;
 }
 
+/* hide the "Add group" button in Plone users and groups management
+ * this is never done and it will avoid new users to create Plone groups instead organizatons ... */
+body.template-usergroup-groupprefs input[name="form.button.AddGroup"] {
+   display: none;
+}
+/* space between add user button and table */
+body.template-usergroup-userprefs input[name="form.button.AddUser"] {
+   margin-bottom: 1em;
+}
+
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */
