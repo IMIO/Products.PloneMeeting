@@ -119,7 +119,7 @@
         </tal:scriptForOtherMeetingConfigsClonableToSpecificFields>
         <div style='clear: both'></div>
 
-        <tal:otherMeetingConfigsClonableToFields condition="python: context.adapted().showAdvancedClonableToOtherMCs()">
+        <tal:otherMeetingConfigsClonableToFields condition="python: context.adapted().showAdvancedClonableToOtherMCs(True)">
             <script type="text/javascript">
               $("input[id^='otherMeetingConfigsClonableTo_'").bind( "click", function() {
               var otherMeetingConfigsClonableToFields = $('#otherMeetingConfigsClonableToFields');
