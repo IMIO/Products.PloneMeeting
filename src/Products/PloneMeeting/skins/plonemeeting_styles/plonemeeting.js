@@ -610,6 +610,13 @@ function updateNumberOfItems() {
   }
 }
 
+$(document).on('toggle_details_ajax_success', init_tooltipsters);
+
+function init_tooltipsters() {
+    categorizedChildsInfos({selector: 'div.item-linkeditems .tooltipster-childs-infos', });
+    advicesInfos();
+}
+
 // when clicking on the input#forceInsertNormal, update the 'pmForceInsertNormal' cookie
 function changeForceInsertNormalCookie(input) {
   if (input.checked) {

@@ -1916,6 +1916,9 @@ body.template-usergroup-groupprefs input[name="form.button.AddGroup"] {
 body.template-usergroup-userprefs input[name="form.button.AddUser"] {
    margin-bottom: 1em;
 }
+div.item-linkeditems div.collapsible-content {
+   margin-top: 0.25em;
+}
 
 /* </dtml-with> */
 
