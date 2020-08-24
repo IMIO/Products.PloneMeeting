@@ -1460,6 +1460,53 @@ schema = Schema((
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
+        name='itemsVisibleFields',
+        widget=InAndOutWidget(
+            description="ItemsVisibleFields",
+            description_msgid="items_visible_fields_descr",
+            label='Itemsvisiblefields',
+            label_msgid='PloneMeeting_label_itemsVisibleFields',
+            i18n_domain='PloneMeeting',
+            size='10',
+        ),
+        schemata="gui",
+        vocabulary='listItemsVisibleFields',
+        default=defValues.itemsVisibleFields,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    LinesField(
+        name='itemsNotViewableVisibleFields',
+        widget=InAndOutWidget(
+            description="ItemsNotViewableVisibleFields",
+            description_msgid="items_not_viewable_visible_fields_descr",
+            label='Itemsnotviewablevisiblefields',
+            label_msgid='PloneMeeting_label_NotViewable',
+            i18n_domain='PloneMeeting',
+            size='10',
+        ),
+        schemata="gui",
+        vocabulary='listItemsListVisibleFields',
+        default=defValues.itemsNotViewableVisibleFields,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    TextField(
+        name='itemsNotViewableVisibleFieldsTALExpr',
+        allowable_content_types=('text/plain',),
+        widget=TextAreaWidget(
+            description="ItemsNotViewableVisibleFieldsTALExpr",
+            description_msgid="items_not_viewable_visible_fields_tal_expr_descr",
+            label='Itemsnotviewablevisiblefieldstalexpr',
+            label_msgid='PloneMeeting_label_itemsNotViewableVisibleFieldsTALExpr',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="gui",
+        default=defValues.itemsNotViewableVisibleFieldsTALExpr,
+        default_content_type='text/plain',
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    LinesField(
         name='itemsListVisibleFields',
         widget=InAndOutWidget(
             description="ItemsListVisibleFields",
@@ -4611,9 +4658,25 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 'manuallyLinkedItems',
                 'otherMeetingConfigsClonableToEmergency', 'otherMeetingConfigsClonableToPrivacy']
 
+    def listItemsVisibleFields(self):
+        '''Vocabulary for the 'itemsVisibleFields/itemsNotViewableVisibleFields' field.
+           Every fields available on the MeetingItem can be selectable.'''
+        res = self._listFieldsFor(MeetingItem,
+                                  ignored_field_ids=self.adapted()._ignoredVisibleFieldIds(),
+                                  hide_not_visible=True)
+        res.insert(0, ('MeetingItem.annexes',
+                       translate('existing_annexes',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)))
+        res.insert(0, ('MeetingItem.advices',
+                       translate('PloneMeeting_label_advices',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)))
+        return DisplayList(tuple(res))
+
     def listItemsListVisibleFields(self):
-        '''Vocabulary for the 'itemsListVisibleFields' field.
-           Every RichText field available on the MeetingItem can be selectable.'''
+        '''Vocabulary for the 'itemsListVisibleFields/itemsNotViewableVisibleFields' fields.
+           Every fields available on the MeetingItem can be selectable.'''
         res = self._listFieldsFor(MeetingItem,
                                   ignored_field_ids=self.adapted()._ignoredVisibleFieldIds(),
                                   hide_not_visible=True)

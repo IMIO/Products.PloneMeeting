@@ -103,6 +103,21 @@ class ItemPollTypeColumn(VocabularyColumn):
     vocabulary = u'Products.PloneMeeting.vocabularies.polltypesvocabulary'
 
 
+def render_item_annexes(item, tool, show_nothing=False):
+    """ """
+    annexes = ''
+    annexes += item.restrictedTraverse('categorized-childs')(
+        portal_type='annex', show_nothing=show_nothing)
+    if tool.hasAnnexes(item, portal_type='annexDecision'):
+        decision_term = translate("AnnexesDecisionShort",
+                                  domain='PloneMeeting',
+                                  context=item.REQUEST)
+        annexes += u"<span class='discreet'>{0}&nbsp;:&nbsp;</span>".format(decision_term)
+        annexes += item.restrictedTraverse('categorized-childs')(
+            portal_type='annexDecision', show_nothing=show_nothing)
+    return annexes
+
+
 class PMPrettyLinkColumn(PrettyLinkColumn):
     """A column that display the IPrettyLink.getLink column."""
 
@@ -157,19 +172,14 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
                         visibleColumns = cfg.getItemsListVisibleColumns()
                 else:
                     visibleColumns = cfg.getItemColumns()
-                staticInfos = obj.restrictedTraverse('@@static-infos')(visibleColumns=visibleColumns)
+                staticInfos = obj.restrictedTraverse('@@static-infos')(
+                    visibleColumns=visibleColumns)
                 if self.showMoreInfos:
-                    moreInfos = obj.restrictedTraverse('@@item-more-infos')(visibleColumns=visibleColumns)
+                    moreInfos = obj.restrictedTraverse('@@item-more-infos')(
+                        visibleColumns=visibleColumns)
 
                 # display annexes
-                annexes += obj.restrictedTraverse('categorized-childs')(portal_type='annex')
-                if tool.hasAnnexes(obj, portal_type='annexDecision'):
-                    decision_term = translate("AnnexesDecisionShort",
-                                              domain='PloneMeeting',
-                                              context=obj.REQUEST)
-                    annexes += u"<span class='discreet'>{0}&nbsp;:&nbsp;</span>".format(decision_term)
-                    annexes += obj.restrictedTraverse('categorized-childs')(
-                        portal_type='annexDecision')
+                annexes = render_item_annexes(obj, tool)
         elif obj.meta_type == 'Meeting':
             visibleColumns = cfg.getMeetingColumns()
             staticInfos = obj.restrictedTraverse('@@static-infos')(visibleColumns=visibleColumns)

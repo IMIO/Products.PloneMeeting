@@ -202,7 +202,12 @@ DEFAULT_COPIED_FIELDS = ['title', 'description', 'detailedDescription', 'motivat
 EXTRA_COPIED_FIELDS_SAME_MC = ['associatedGroups', 'category', 'classifier',
                                'optionalAdvisers', 'otherMeetingConfigsClonableTo',
                                'otherMeetingConfigsClonableToPrivacy', 'oralQuestion',
-                               'toDiscuss', 'privacy', 'pollType', 'textCheckList']
+                               'toDiscuss', 'privacy', 'pollType', 'textCheckList',
+                               'otherMeetingConfigsClonableToFieldTitle',
+                               'otherMeetingConfigsClonableToFieldDescription',
+                               'otherMeetingConfigsClonableToFieldMotivation',
+                               'otherMeetingConfigsClonableToFieldDecision',
+                               'otherMeetingConfigsClonableToFieldDecisionSuite']
 
 EXTRA_COPIED_FIELDS_FROM_ITEM_TEMPLATE = ['observations', 'inAndOutMoves', 'notes',
                                           'internalNotes', 'isAcceptableOutOfMeeting']

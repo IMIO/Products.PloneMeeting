@@ -435,7 +435,9 @@ div.viewlet_workflowstate span.state-refused {
 .portletCell { padding: 0.1em 0.5em 0.2em 1em; font-weight: normal; font-style: italic; }
 .portletSelected { font-weight: bold; }
 /* avoid title input too large */
-.field input[type="text"][name$=".title"], input#title {
+.field input[type="text"][name$=".title"],
+input#title,
+input#otherMeetingConfigsClonableToFieldTitle {
     width: 99%;
 }
 /* add right margin when field displayed in table so table cells are not sticked togheter */
@@ -1367,12 +1369,21 @@ div.item-send-to-other-mc div.field {
 }
 div.item-send-to-other-mc-multiple-fields {
    border: 1px solid lightgrey;
-   min-width: 600px;
+   width: 100%;
 }
 
 #archetypes-fieldname-otherMeetingConfigsClonableTo {
     display: inline;
     float: left;
+    margin-right: 3em;
+}
+
+div#otherMeetingConfigsClonableTo div.label {
+   visibility: hidden;
+}
+
+div.other-mc-clonable-to-base-fields {
+   margin-top: -1em;
 }
 
 #archetypes-fieldname-otherMeetingConfigsClonableToEmergency,
@@ -1392,9 +1403,30 @@ div.item-send-to-other-mc-multiple-fields {
     color: &dtml-discreetColor;;
 }
 
-ul.item-predecessors span.pretty_link_content {
-    vertical-align: text-top;
+div.item-predecessors div.collapsible,
+div.item-linkeditems div.collapsible,
+div.item-predecessors span:first-of-type,
+div.item-linkeditems span:first-of-type {
+   display: inline-block;
 }
+
+div.item-predecessors div.collapsible,
+div.item-linkeditems div.collapsible,
+div.item-predecessors div.collapsible-content,
+div.item-linkeditems div.collapsible-content {
+    margin-left: 0.5em;
+    line-height: 1.5em;
+}
+div.item-predecessors div.collapsible-content,
+div.item-linkeditems div.collapsible-content {
+   display: block;
+}
+div.item-predecessors div.collapsible:before,
+div.item-linkeditems div.collapsible:before {
+   font-size: 110%;
+   padding-right: 0.5em;
+}
+
 /* limit left space on the faceted form of items to present,
    define width so we do not have the width scrollbar */
 body.template-meeting_available_items_view div#faceted-form {
@@ -1453,6 +1485,9 @@ input[id^='value_moveAction_'] {
 div.dashboard_annexes {
     width: 100%;
     text-align: right;
+}
+div.item_annexes {
+    margin-bottom: 0.5em;
 }
 
 /* use important! so it is correctly displayed in the advice popup */
@@ -1767,7 +1802,7 @@ ul.change_delay_actions li a span {
 }
 
 .fa-angle-double-right {
-   color: &dtml-linkColor;;
+   color: grey;
 }
 
 /* manage custom behaviors in annexes/advices fieldsets */
@@ -1866,6 +1901,10 @@ span#newTemplateItemCreationDisabledDuringEdit {
 /* make sure ajax spinner is diaplayed in available items iframe */
 body.template-meeting_available_items_view div#ajax-spinner {
    top: -35px;
+}
+
+p.otherMeetingConfigsClonableToDataUsed {
+   margin-top: 1em;
 }
 
 /* hide the "Add group" button in Plone users and groups management

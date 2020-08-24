@@ -1148,7 +1148,6 @@ schema = Schema((
     TextField(
         name='decisionSuite',
         widget=RichWidget(
-            rows=15,
             condition="python: here.attributeIsUsed('decisionSuite')",
             label='DecisionSuite',
             label_msgid='PloneMeeting_label_decisionSuite',
@@ -1492,7 +1491,7 @@ schema = Schema((
     LinesField(
         name='otherMeetingConfigsClonableTo',
         widget=MultiSelectionWidget(
-            condition="here/showClonableToOtherMeetingConfigs",
+            condition="here/showClonableToOtherMCs",
             format="checkbox",
             label='Othermeetingconfigsclonableto',
             label_msgid='PloneMeeting_label_otherMeetingConfigsClonableTo',
@@ -1529,6 +1528,81 @@ schema = Schema((
         enforceVocabulary=True,
         multiValued=1,
         vocabulary='listOtherMeetingConfigsClonableToPrivacy',
+    ),
+    StringField(
+        name='otherMeetingConfigsClonableToFieldTitle',
+        searchable=True,
+        default='',
+        widget=StringWidget(
+            condition="python: here.attributeIsUsed('otherMeetingConfigsClonableToFieldTitle')",
+            label_msgid="PloneMeeting_label_itemTitle",
+            label='OtherMeetingConfigsClonableToFieldTitle',
+            i18n_domain='PloneMeeting',
+            maxlength=750,
+        ),
+        optional=True,
+    ),
+    TextField(
+        name='otherMeetingConfigsClonableToFieldDescription',
+        widget=RichWidget(
+            condition="python: here.attributeIsUsed('otherMeetingConfigsClonableToFieldDescription')",
+            label_msgid="PloneMeeting_label_itemDescription",
+            label='Description',
+            i18n_domain='PloneMeeting',
+        ),
+        default_content_type="text/html",
+        searchable=True,
+        allowable_content_types=('text/html',),
+        default_output_type="text/x-html-safe",
+        optional=True,
+    ),
+    TextField(
+        name='otherMeetingConfigsClonableToFieldMotivation',
+        widget=RichWidget(
+            condition="python: here.attributeIsUsed('otherMeetingConfigsClonableToFieldMotivation')",
+            label='OtherMeetingConfigsClonableToFieldMotivation',
+            label_msgid='PloneMeeting_label_motivation',
+            i18n_domain='PloneMeeting',
+        ),
+        default_content_type="text/html",
+        read_permission="PloneMeeting: Read decision",
+        searchable=True,
+        allowable_content_types=('text/html',),
+        default_output_type="text/x-html-safe",
+        optional=True,
+        write_permission="PloneMeeting: Write decision",
+    ),
+    TextField(
+        name='otherMeetingConfigsClonableToFieldDecision',
+        widget=RichWidget(
+            condition="python: here.attributeIsUsed('otherMeetingConfigsClonableToFieldDecision')",
+            label='OtherMeetingConfigsClonableToFieldDecision',
+            label_msgid='PloneMeeting_label_decision',
+            i18n_domain='PloneMeeting',
+        ),
+        default_content_type="text/html",
+        read_permission="PloneMeeting: Read decision",
+        searchable=True,
+        allowable_content_types=('text/html',),
+        default_output_type="text/x-html-safe",
+        optional=True,
+        write_permission="PloneMeeting: Write decision",
+    ),
+    TextField(
+        name='otherMeetingConfigsClonableToFieldDecisionSuite',
+        widget=RichWidget(
+            condition="python: here.attributeIsUsed('otherMeetingConfigsClonableToFieldDecisionSuite')",
+            label='OtherMeetingConfigsClonableToFieldDecisionSuite',
+            label_msgid='PloneMeeting_label_decisionSuite',
+            i18n_domain='PloneMeeting',
+        ),
+        default_content_type="text/html",
+        read_permission="PloneMeeting: Read decision",
+        searchable=True,
+        allowable_content_types=('text/html',),
+        default_output_type="text/x-html-safe",
+        optional=True,
+        write_permission="PloneMeeting: Write decision",
     ),
     BooleanField(
         name='isAcceptableOutOfMeeting',
@@ -2467,17 +2541,35 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         elif item_type == 'itemtemplate':
             return is_in_tool and self.portal_type.startswith('MeetingItemTemplate')
 
-    security.declarePublic('showClonableToOtherMeetingConfigs')
+    security.declarePublic('showClonableToOtherMCs')
 
-    def showClonableToOtherMeetingConfigs(self):
+    def showClonableToOtherMCs(self):
         '''Returns True if the current item can be cloned to another
            meetingConfig. This method is used as a condition for showing
            or not the 'otherMeetingConfigsClonableTo' field.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self)
-        if cfg.getMeetingConfigsToCloneTo():
-            return True
-        return False
+        res = False
+        if self.getOtherMeetingConfigsClonableTo():
+            res = True
+        else:
+            tool = api.portal.get_tool('portal_plonemeeting')
+            cfg = tool.getMeetingConfig(self)
+            res = cfg.getMeetingConfigsToCloneTo()
+        return res
+
+    security.declarePublic('showAdvancedClonableToOtherMCs')
+
+    def showAdvancedClonableToOtherMCs(self, showClonableToOtherMCs=False):
+        '''Display otherMeetingConfigsClonableTo as advanced or not.
+           Functionnality enabled and using relevant otherMeetingConfigsClonableToFieldXXX are used.'''
+        item = self.getSelf()
+        res = False
+        if showClonableToOtherMCs:
+            tool = api.portal.get_tool('portal_plonemeeting')
+            cfg = tool.getMeetingConfig(item)
+            usedAttrs = [usedAttr for usedAttr in cfg.getUsedItemAttributes()
+                         if usedAttr.startswith('otherMeetingConfigsClonableToField')]
+            res = bool(usedAttrs)
+        return res
 
     security.declarePublic('getItemNumber')
 
@@ -6010,6 +6102,20 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if destMeetingConfigId in self.getOtherMeetingConfigsClonableToPrivacy() and \
            'privacy' in destMeetingConfig.getUsedItemAttributes():
             newItem.setPrivacy('secret')
+
+        # handle 'otherMeetingConfigsClonableToFieldXXX' of original item
+        other_mc_field_names = [field_name for field_name in cfg.getUsedItemAttributes()
+                                if field_name.startswith('otherMeetingConfigsClonableToField')]
+        for other_mc_field_name in other_mc_field_names:
+            # first check if original field not empty
+            if self.fieldIsEmpty(other_mc_field_name):
+                continue
+            other_mc_field = self.getField(other_mc_field_name)
+            other_mc_field_value = other_mc_field.get(self)
+            dest_field_name = other_mc_field_name.replace('otherMeetingConfigsClonableToField', '')
+            dest_field_name = dest_field_name[0].lower() + dest_field_name[1:]
+            dest_field = newItem.getField(dest_field_name)
+            dest_field.set(newItem, other_mc_field_value)
 
         # execute some transitions on the newItem if it was defined in the cfg
         # find the transitions to trigger

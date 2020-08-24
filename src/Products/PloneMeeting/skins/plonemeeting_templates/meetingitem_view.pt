@@ -25,7 +25,9 @@
                                   usedAttrs meetingConfig/getUsedItemAttributes;
                                   usedMeetingAttrs meetingConfig/getUsedMeetingAttributes;
                                   context_url context/absolute_url;
-                                  showAdvices python: context.adapted().showAdvices()">
+                                  showAdvices python: context.adapted().showAdvices();
+                                  showClonableToOtherMCs context/showClonableToOtherMCs;
+                                  showAdvancedClonableToOtherMCs python: context.adapted().showAdvancedClonableToOtherMCs(showClonableToOtherMCs);">
 
     <script language="javascript"
             tal:content="python: 'ploneEditor = \'%s\';' % (member.getProperty('wysiwyg_editor') or here.portal_properties.site_properties.default_editor)">
@@ -245,38 +247,14 @@
                 <span tal:content="python: ', '.join(context.getItemTags())"></span>
             </div>
 
-            <tal:comment replace="nothing">Linked items</tal:comment>
-            <tal:defines define="predecessors python: context.adapted().getPredecessors(only_viewable=True);
-                                 linkedItems python: context.getManuallyLinkedItems(only_viewable=True);
-                                 showManuallyLinkedItems python: 'manuallyLinkedItems' in usedAttrs or linkedItems;
-                                 class_to_use python: (predecessors or linkedItems) and 'item_attribute_label highlightValue' or 'item_attribute_label';">
-                <div id="linkedItems" class="collapsible discreet" onclick="toggleDetails('collapsible-linked-items', toggle_parent_active=true, parent_tag=null, load_view='@@load_linked_items');">
-                  <span tal:condition="showManuallyLinkedItems"
-                        class="item_attribute_label"
-                        tal:attributes="class class_to_use"
-                        i18n:translate="linked_items_with_manually_linked_items">
-                      Linked items, <span i18n:name="auto_linked_items" tal:content="python: len(predecessors)">4</span> automatically and <span i18n:name="manually_linked_items" tal:content="python: len(linkedItems)">0</span> manually
-                  </span>
-                  <span tal:condition="not:showManuallyLinkedItems"
-                        class="item_attribute_label"
-                        tal:attributes="class class_to_use"
-                        i18n:translate="linked_items">
-                      Linked items (<span i18n:name="auto_linked_items" tal:content="python: len(predecessors)">4</span>)
-                  </span>
-                </div>
-                <div id="collapsible-linked-items" class="collapsible-content discreet" style="display: none;">
-                  <div class="collapsible-inner-content">
-                     <img tal:attributes="src string:${portal_url}/spinner_small.gif" />
-                  </div>
-                </div>
-            </tal:defines>
-
+            <tal:comment replace="nothing">Item is signed?</tal:comment>
             <div class="discreet"
                  tal:condition="python: 'itemIsSigned' in usedAttrs">
               <span class="item_attribute_label"
                     i18n:translate="PloneMeeting_label_itemIsSigned"></span>:&nbsp;&nbsp;
                 <tal:itemIsSigned replace="structure context/@@item-is-signed" />
             </div>
+            <tal:comment replace="nothing">Taken over by</tal:comment>
             <div class="discreet"
                  tal:condition="python: 'takenOverBy' in usedAttrs">
               <span class="item_attribute_label"
@@ -366,7 +344,7 @@
 
             <tal:comment replace="nothing">Other MeetingConfigs Clonable To</tal:comment>
             <div class="discreet"
-                 tal:condition="python: otherMCs or context.showClonableToOtherMeetingConfigs()"
+                 tal:condition="context/showClonableToOtherMCs"
                  tal:define="otherMCs context/getOtherMeetingConfigsClonableTo">
                 <span class="item_attribute_label"
                       i18n:translate="PloneMeeting_label_otherMeetingConfigsClonableTo"></span>:&nbsp;&nbsp;
@@ -374,6 +352,10 @@
                     <span tal:replace="structure context/displayOtherMeetingConfigsClonableTo">Other mc clonable to (Emergency, privacy)</span>
                 </tal:displayOtherMeetingConfigsClonableTo>
                 <span tal:condition="not: otherMCs">-</span>
+                <tal:details condition="showAdvancedClonableToOtherMCs"> — <a class="discreet"
+                     tal:attributes="href string:${context_url}#clonable-to-other-mcs"
+                     i18n:translate="legend_details" i18n:domain="plone">Details</a>
+                </tal:details>
             </div>
 
             <tal:comment replace="nothing">Privacy</tal:comment>
@@ -433,6 +415,32 @@
       </tr>
     </table>
 
+    <tal:comment replace="nothing">Linked items</tal:comment>
+    <tal:defines define="predecessors python: context.adapted().getPredecessors(only_viewable=True);
+                         linkedItems python: context.getManuallyLinkedItems(only_viewable=True);
+                         showManuallyLinkedItems python: 'manuallyLinkedItems' in usedAttrs or linkedItems;
+                         class_to_use python: (predecessors or linkedItems) and 'item_attribute_label highlightValue' or 'item_attribute_label';">
+        <div id="linkedItems" class="collapsible discreet" onclick="toggleDoc('collapsible-linked-items', toggle_parent_active=true, parent_elem=null, load_view='@@load_linked_items');">
+          <span tal:condition="showManuallyLinkedItems"
+                class="item_attribute_label"
+                tal:attributes="class class_to_use"
+                i18n:translate="linked_items_with_manually_linked_items">
+              Linked items, <span i18n:name="auto_linked_items" tal:content="python: len(predecessors)">4</span> automatically and <span i18n:name="manually_linked_items" tal:content="python: len(linkedItems)">0</span> manually
+          </span>
+          <span tal:condition="not:showManuallyLinkedItems"
+                class="item_attribute_label"
+                tal:attributes="class class_to_use"
+                i18n:translate="linked_items">
+              Linked items (<span i18n:name="auto_linked_items" tal:content="python: len(predecessors)">4</span>)
+          </span>
+        </div>
+        <div id="collapsible-linked-items" class="collapsible-content discreet" style="display: none;">
+          <div class="collapsible-inner-content">
+             <img tal:attributes="src string:${portal_url}/spinner_small.gif" />
+          </div>
+        </div>
+    </tal:defines>
+
     <tal:comment replace="nothing">Description</tal:comment>
     <tal:field define="fieldName python: 'description'; ajaxEdit python:True">
        <metal:f use-macro="context/@@pm-macros/viewContentField"/>
@@ -458,6 +466,46 @@
               <metal:f use-macro="context/@@pm-macros/viewContentField"/>
           </div>
         </tal:displayBudgetInfos>
+    </fieldset>
+    </tal:block>
+
+    <tal:comment replace="nothing">Other meetingConfigs clonable to</tal:comment>
+    <tal:block tal:condition="showAdvancedClonableToOtherMCs"
+               tal:define="otherMCs context/getOtherMeetingConfigsClonableTo">
+    <fieldset >
+      <legend>
+        <a name="clonable-to-other-mcs">
+          <span i18n:translate="PloneMeeting_label_otherMeetingConfigsClonableTo"></span>
+        </a>
+      </legend>
+      <div>
+        <tal:displayOtherMeetingConfigsClonableTo tal:condition="otherMCs">
+            <span tal:replace="structure context/displayOtherMeetingConfigsClonableTo">Other mc clonable to (Emergency, privacy)</span>
+        </tal:displayOtherMeetingConfigsClonableTo>
+        <span tal:condition="not: otherMCs">-</span>
+        <div tal:condition="otherMCs">
+          <fieldset>
+            <legend i18n:translate="">Data that will be used on new item</legend>
+            <tal:otherMeetingConfigsClonableToFieldTitle condition="python: 'otherMeetingConfigsClonableToFieldTitle' in usedAttrs">
+              <span class="item_attribute_label"
+                    i18n:translate="PloneMeeting_label_itemTitle"></span>:&nbsp;&nbsp;
+              <span metal:use-macro="python: here.widget('otherMeetingConfigsClonableToFieldTitle', mode='view')" />
+            </tal:otherMeetingConfigsClonableToFieldTitle>
+            <tal:field define="fieldName python: 'otherMeetingConfigsClonableToFieldDescription'; ajaxEdit python:True">
+              <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+            </tal:field>
+            <tal:field define="fieldName python: 'otherMeetingConfigsClonableToFieldMotivation'; ajaxEdit python:True">
+              <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+            </tal:field>
+            <tal:field define="fieldName python: 'otherMeetingConfigsClonableToFieldDecision'; ajaxEdit python:True">
+              <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+            </tal:field>
+            <tal:field define="fieldName python: 'otherMeetingConfigsClonableToFieldDecisionSuite'; ajaxEdit python:True">
+              <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+            </tal:field>
+          </fieldset>
+        </div>
+      </div>
     </fieldset>
     </tal:block>
 

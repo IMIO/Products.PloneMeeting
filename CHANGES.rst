@@ -12,6 +12,11 @@ Changelog
 - Added adaptable methods `MeetingConfig.extra_item_decided_states` and
   `MeetingConfig.extra_item_positive_decided_states` to formalize how to extend
   `item_decided_states` and `item_positive_decided_states`.
+- Added possibility to define data (`title/description/motivation/decision/decisionSuite`) to use on an item that will be cloned to
+  another MeetingConfig, data defined on original item will replace basic data on resulting item
+- Added possibility to configure in `MeetingConfig.itemsVisibleFields` data to display on linked items.
+  It is also possible using the `MeetingConfig.itemsNotViewableVisibleFields` and `MeetingConfig.itemsNotViewableVisibleFieldsTALExpr`
+  fields to select specific data that will be displayed to users that may not access to the linked items
 
 4.2a7 (2020-06-24)
 ------------------
