@@ -1329,7 +1329,7 @@ class BaseDGHV(object):
             return self.print_signatories_by_position(**kwargs)
 
     def print_signatories_by_position(self,
-                                      signature_format=(u'prefixed_position_type', u'person'),
+                                      signature_format=(u'prefixed_secondary_position_type', u'person'),
                                       separator=u',',
                                       ender=u''):
         """
@@ -1344,6 +1344,9 @@ class BaseDGHV(object):
             - 'prefixed_secondary_position_type' -> 'The President'
             - [PMHeldPosition attribute] e.g. 'gender' -> 'M'
             - [str] e.g. 'My String' -> 'My String' (in this case it just print the str)
+        When using 'prefixed_secondary_position_type' (default), if no 'secondary_position_type'
+        was defined, it falls back to 'prefixed_position_type' by default
+        (same for 'secondary_position_type' that will fall back to 'position_type')
         :param separator: str that will be appended at the end of each line (except the last one)
         :param ender: str that will be appended at the end of the last one
         :return: a dict with position as key and signature as value

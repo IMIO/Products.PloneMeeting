@@ -59,7 +59,21 @@ Changelog
 - Use roles 'Reviewer' and 'Contributor' in meetingadvice_workflow
 - Added bypass for users having 'Manage portal' in MeetingItemWorkflowConditions in 'mayWait_advices_from', 'mayValidate' and 'mayPresent'
 
-4.1.28 (unreleased)
+4.1.28.2 (unreleased)
+---------------------
+
+- Nothing changed yet.
+
+
+4.1.28.1 (2020-08-21)
+---------------------
+
+- When getting a `position_type_attr` on a `held_position.get_label`, added possibility to fallback to another `position_type_attr`
+  if given one is empty.  This makes it possible to fallback to `position_type` while trying to get `secondary_position_type`
+  and this last is empty
+- Hide button `Add group` in Plone groups configuration panel with CSS, this avoid users to add Plone groups instead organizations
+
+4.1.28 (2020-08-21)
 -------------------
 
 - Moved `Meeting.getNextMeeting` logic to `utils.get_next_meeting` so it can be used from outside a `Meeting` instance,
