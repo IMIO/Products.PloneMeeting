@@ -474,7 +474,7 @@
                tal:define="otherMCs context/getOtherMeetingConfigsClonableTo">
     <fieldset >
       <legend>
-        <a id="anchor-clonable-to-other-mcs" name="clonable-to-other-mcs">
+        <a name="clonable-to-other-mcs">
           <span i18n:translate="PloneMeeting_label_otherMeetingConfigsClonableTo"></span>
         </a>
       </legend>
