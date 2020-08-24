@@ -83,6 +83,9 @@ class Migrate_To_4200(Migrator):
         # configure new WFs
         self.cleanMeetingConfigs(field_names=['itemDecidedStates', 'itemPositiveDecidedStates'])
 
+        # init otherMeetingConfigsClonableToFieldXXX
+        self.initNewHTMLFields()
+
         self.tool.updateAllLocalRoles(meta_type=('MeetingItem', ))
         self.refreshDatabase(workflows=True, catalogsToUpdate=[])
 
@@ -90,8 +93,8 @@ class Migrate_To_4200(Migrator):
 def migrate(context):
     '''This migration function will:
 
-       1) Configure field MeetingConfig.itemWFValidationLevels depending on old wfAdaptations.
-
+       1) Configure field MeetingConfig.itemWFValidationLevels depending on old wfAdaptations;
+       2) Init otherMeetingConfigsClonableToFieldXXX new fields.
     '''
     migrator = Migrate_To_4200(context)
     migrator.run()

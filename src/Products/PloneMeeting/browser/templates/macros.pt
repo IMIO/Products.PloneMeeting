@@ -860,3 +860,27 @@ The parameter "cFolder" is the folder containing categories.</tal:comment>
     </a>
   </acronym>
 </metal:proposingGroupUsers>
+
+<metal:linkedItems define-macro="linkedItems" i18n:domain="PloneMeeting">
+<tal:comment replace="nothing">Display linked items (predecessors/manuallyLinkedItems).</tal:comment>
+ <div class="item-linkeditems"
+     tal:condition="linkedItems">
+     <tal:loop repeat="linkedItem linkedItems">
+       <tal:defines define="linkedItem_uid linkedItem/UID;
+                            linkedItem_url linkedItem/absolute_url;">
+           <div class="collapsible"
+                tal:attributes="onclick string:toggleDoc('collapsible-text-linkeditem-${linkedItem_uid}', toggle_parent_active=true, parent_elem=this, load_view='@@item-more-infos?fieldsConfigAttr=itemsVisibleFields&currentCfgId=${view/cfg/getId}', base_url='${linkedItem_url}', init_tooltipsters=true);">
+           </div>
+           <div style="display: inline;" tal:content="structure python: context.displayLinkedItem(linkedItem)"></div>
+           <div style="clear: both;" />
+           <div tal:attributes="id string:collapsible-text-linkeditem-${linkedItem_uid}"
+                class="collapsible-content" style="display: none;">
+             <div class="collapsible-inner-content">
+                 <img tal:attributes="src string:${view/portal_url}/spinner_small.gif" />
+             </div>
+           </div>
+       </tal:defines>
+     </tal:loop>
+ </div>
+ <span tal:condition="not: linkedItems">-</span>
+</metal:linkedItems>

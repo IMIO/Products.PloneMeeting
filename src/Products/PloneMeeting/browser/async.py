@@ -310,4 +310,5 @@ class AsyncLoadLinkedItems(BrowserView):
         """ """
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
+        self.portal_url = api.portal.get().absolute_url()
         return self.index()

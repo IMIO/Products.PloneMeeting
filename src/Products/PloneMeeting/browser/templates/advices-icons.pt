@@ -64,7 +64,7 @@
       </tal:menu>
       </tal:definesIfSomethingToShow>
       </tal:advicesToAddOrExisting>
-      <div tal:condition="not: advicesByType">
+      <div class="categorized-elements" tal:condition="not: advicesByType">
         <tal:comment replace="nothing">Icon for adding an advice for power advisers</tal:comment>
         <div style="display: inline">&nbsp;-&nbsp;&nbsp;&nbsp;</div>
         <div tal:condition="python: advicesToAdd" style="display: inline">
