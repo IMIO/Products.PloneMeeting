@@ -24,6 +24,7 @@
 
 from AccessControl import Unauthorized
 from collective.contact.plonegroup.utils import get_plone_group
+from collective.iconifiedcategory.browser.tabview import CategorizedContent
 from collective.iconifiedcategory.event import IconifiedAttrChangedEvent
 from collective.iconifiedcategory.interfaces import IIconifiedPreview
 from collective.iconifiedcategory.utils import calculate_category_id
@@ -304,8 +305,7 @@ class testAnnexes(PloneMeetingTestCase):
         """ """
         # current user may see every annexes
         self.assertEqual(set([elt['UID'] for elt in get_categorized_elements(obj)]),
-                         set((annexNotConfidential.UID(),
-                              annexConfidential.UID())))
+                         set((annexNotConfidential.UID(), annexConfidential.UID())))
         self.assertTrue('Annex not confidential' in annexes_table())
         self.assertTrue('Annex confidential' in annexes_table())
         categorized_child.update()
@@ -392,6 +392,7 @@ class testAnnexes(PloneMeetingTestCase):
         # give budget impact editors view on item
         # by default, budget impact editors local role will only give ability to edit budget infos, not to view item
         item.__ac_local_roles__['{0}_{1}'.format(cfg.getId(), BUDGETIMPACTEDITORS_GROUP_SUFFIX)] = ['Reader']
+        item._propagateReaderAndMeetingManagerLocalRolesToSubObjects()
         item.reindexObjectSecurity()
 
         self.changeUser('budgetimpacteditor')
@@ -1062,8 +1063,11 @@ class testAnnexes(PloneMeetingTestCase):
         # use the 'only_creator_may_delete' WF adaptation if available
         # in this case, it will ensure that when validated, the item may not be
         # deleted but annexes may be deleted by item editor
-        if 'only_creator_may_delete' in cfg.listWorkflowAdaptations():
-            cfg.setWorkflowAdaptations('only_creator_may_delete')
+        wfAdaptations = cfg.getWorkflowAdaptations()
+        if 'only_creator_may_delete' in cfg.listWorkflowAdaptations() and \
+           'only_creator_may_delete' not in wfAdaptations:
+            wfAdaptations = wfAdaptations + ('only_creator_may_delete', )
+            cfg.setWorkflowAdaptations(wfAdaptations)
             cfg.at_post_edit_script()
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
@@ -1307,10 +1311,7 @@ class testAnnexes(PloneMeetingTestCase):
         # annexDecision section is shown if annexDecision are stored or if
         # annexDecision annex types are available (active), disable the annexDecision annex types
         for annex_type in cfg.annexes_types.item_decision_annexes.objectValues():
-            annex_type.enabled = False
-            # manage cache
-            notify(ObjectModifiedEvent(annex_type))
-            annex_type.reindexObject(idxs=['enabled'])
+            self._disableObj(annex_type, notify_event=True)
         view = item.restrictedTraverse('@@categorized-annexes')
         # showDecisionAnnexesSection still True because annexDecision exists
         self.assertTrue(view.showDecisionAnnexesSection())
@@ -1424,13 +1425,14 @@ class testAnnexes(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         annex = self.addAnnex(item)
-        annex_brain = self.catalog(UID=annex.UID())[0]
+        annex_infos = get_categorized_elements(item, uids=[annex.UID()])
+        annex_content = CategorizedContent(item, annex_infos[0])
         column = ActionsColumn(self.portal, self.request, self)
-        self.assertFalse('@@historyview' in column.renderCell(annex_brain))
+        self.assertFalse('@@historyview' in column.renderCell(annex_content))
         self.changeUser('pmManager')
-        self.assertFalse('@@historyview' in column.renderCell(annex_brain))
+        self.assertFalse('@@historyview' in column.renderCell(annex_content))
         self.changeUser('admin')
-        self.assertTrue('@@historyview' in column.renderCell(annex_brain))
+        self.assertTrue('@@historyview' in column.renderCell(annex_content))
 
     def test_pm_ParentModificationDateUpdatedWhenAnnexChanged(self):
         """When an annex is added/modified/removed, the parent modification date is updated."""

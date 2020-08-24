@@ -79,7 +79,6 @@ setDefaultRoles(DEFAULT_ADD_CONTENT_PERMISSION, ('Manager', 'Owner', 'Contributo
 ADD_CONTENT_PERMISSIONS = {
     'MeetingItem': AddItem,
     'Meeting': AddMeeting,
-    'MeetingCategory': 'PloneMeeting: Manage configuration',
     'MeetingConfig': 'PloneMeeting: Manage configuration',
     'MeetingGroup': 'PloneMeeting: Manage configuration',
 }
@@ -105,11 +104,6 @@ ADD_SUBCONTENT_PERMISSIONS = [
     AddAnnexDecision,
     'ATContentTypes: Add Image']
 
-MEETINGROLES = {'creators': 'MeetingMember',
-                'prereviewers': 'MeetingPreReviewer',
-                'reviewers': 'MeetingReviewer',
-                'observers': 'MeetingObserverLocal',
-                'advisers': None}
 # base suffixes, THIS IS NOT INTENDED TO BE OVERRIDED or monkeypatched,
 # if necessary, use EXTRA_GROUP_SUFFIXES to extend it
 MEETING_GROUP_SUFFIXES = [
@@ -118,6 +112,11 @@ MEETING_GROUP_SUFFIXES = [
     {'fct_title': u'observers', 'fct_id': u'observers', 'fct_orgs': [], 'enabled': True},
     {'fct_title': u'prereviewers', 'fct_id': u'prereviewers', 'fct_orgs': [], 'enabled': True},
     {'fct_title': u'reviewers', 'fct_id': u'reviewers', 'fct_orgs': [], 'enabled': True},
+    {'fct_title': u'level1reviewers', 'fct_id': u'level1reviewers', 'fct_orgs': [], 'enabled': True},
+    {'fct_title': u'level2reviewers', 'fct_id': u'level2reviewers', 'fct_orgs': [], 'enabled': True},
+    {'fct_title': u'level3reviewers', 'fct_id': u'level3reviewers', 'fct_orgs': [], 'enabled': True},
+    {'fct_title': u'level4reviewers', 'fct_id': u'level4reviewers', 'fct_orgs': [], 'enabled': True},
+    {'fct_title': u'level5reviewers', 'fct_id': u'level5reviewers', 'fct_orgs': [], 'enabled': True},
 ]
 
 # this is made to manage specific suffixes for a particular profile
@@ -127,18 +126,6 @@ MEETING_GROUP_SUFFIXES = [
 #   'fct_orgs': ['path_to_group_id_1', 'path_to_group_id_2']},
 # ]
 EXTRA_GROUP_SUFFIXES = []
-
-# additonal advice types that will be available for MeetingConfig.usedAdviceTypes
-# format is just a tuple containing keys, it will be translated using same key
-# ('extra_type_1', 'extra_type_2', 'extra_type_3', )
-EXTRA_ADVICE_TYPES = ()
-
-# list of reviewer roles, this needs to be defined in logical order because
-# we will also look for 'higher' reviewer level
-# the key is the group suffix and the value is a list of states of the items to review
-# highest levels to lowest levels
-MEETINGREVIEWERS = {'*': OrderedDict([('reviewers', ['proposed']),
-                                      ('prereviewers', ['proposed']), ]), }
 
 # This is the group created for each MeetingConfig where we store
 # users that will be able to edit the budgetInfos field for items in state
@@ -183,10 +170,10 @@ ploneMeetingRoles = (
     'MeetingObserverGlobal',
 )
 
-# Roles that can evaluate MeetingItem.completeness
-ITEM_COMPLETENESS_EVALUATORS = ('MeetingManager', 'Manager', 'MeetingReviewer', 'MeetingPreReviewer', )
-# Roles that can ask new evaluation of  MeetingItem.completeness if set to 'incomplete'
-ITEM_COMPLETENESS_ASKERS = ('MeetingManager', 'Manager', 'MeetingReviewer', 'MeetingPreReviewer', 'MeetingMember', )
+# Suffixes that may evaluate MeetingItem.completeness
+ITEM_COMPLETENESS_EVALUATORS = ('reviewers', 'prereviewers', )
+# Suffixes that can ask new evaluation of MeetingItem.completeness if set to 'incomplete'
+ITEM_COMPLETENESS_ASKERS = ('reviewers', 'prereviewers', 'creators', )
 
 # The id used for the root folder added to the member personal area that
 # will contain every meetingConfigs available to the member
@@ -212,7 +199,7 @@ DEFAULT_COPIED_FIELDS = ['title', 'description', 'detailedDescription', 'motivat
                          'groupsInCharge', 'proposingGroupWithGroupInCharge', 'copyGroups']
 # extra fields kept when an item is cloned in the same meeting config,
 # so not the case when sent to another meeting config
-EXTRA_COPIED_FIELDS_SAME_MC = ['associatedGroups', 'classifier', 'category',
+EXTRA_COPIED_FIELDS_SAME_MC = ['associatedGroups', 'category', 'classifier',
                                'optionalAdvisers', 'otherMeetingConfigsClonableTo',
                                'otherMeetingConfigsClonableToPrivacy', 'oralQuestion',
                                'toDiscuss', 'privacy', 'pollType', 'textCheckList',
@@ -306,6 +293,8 @@ ITEM_INSERT_METHODS = OrderedDict((
     ('on_list_type', ['field_listTypes']),
     # according to category order;
     ('on_categories', ['category']),
+    # according to classifier order;
+    ('on_classifiers', ['classifier']),
     # according to proposing group order;
     ('on_proposing_groups', ['organization']),
     # according to all groups (among proposing group AND
@@ -343,7 +332,7 @@ ITEM_INSERT_METHODS = OrderedDict((
 
 INSERTING_ON_ITEM_DECISION_FIRST_WORDS_NB = 5
 
-ITEM_TRANSITION_WHEN_RETURNED_FROM_PROPOSING_GROUP_AFTER_CORRECTION = 'accept'
+ITEM_TRANSITION_WHEN_RETURNED_FROM_PROPOSING_GROUP_AFTER_CORRECTION = 'accept_but_modify'
 
 EMPTY_STRING = '__empty_string__'
 

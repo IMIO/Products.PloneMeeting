@@ -4,6 +4,7 @@ from AccessControl import Unauthorized
 from collections import OrderedDict
 from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.contact.core.utils import get_gender_and_number
+from collective.contact.plonegroup.browser.tables import DisplayGroupUsersView
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_organization
@@ -29,7 +30,6 @@ from Products.CMFCore.permissions import ManagePortal
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.CMFCore.utils import _checkPermission
-from Products.CMFPlone.utils import base_hasattr
 from Products.CMFPlone.utils import safe_unicode
 from Products.Five import BrowserView
 from Products.PloneMeeting import logger
@@ -50,6 +50,8 @@ from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import get_person_from_userid
 from Products.PloneMeeting.utils import signatureNotAlone
 from Products.PloneMeeting.utils import toHTMLStrikedContent
+from z3c.form.field import Fields
+from zope import schema
 from zope.i18n import translate
 
 import cgi
@@ -345,15 +347,18 @@ class MeetingView(FacetedContainerView):
         """Check if current user profile is selected in MeetingConfig.displayAvailableItemsTo."""
         displayAvailableItemsTo = self.cfg.getDisplayAvailableItemsTo()
         suffixes = []
+        groups = []
         res = False
+        cfgId = self.cfg.getId()
         for value in displayAvailableItemsTo:
             if value == 'app_users':
-                suffixes += get_all_suffixes()
-            if value.startswith(POWEROBSERVERPREFIX):
-                suffixes.append(value.split(POWEROBSERVERPREFIX)[1])
+                suffixes = get_all_suffixes()
+            elif value.startswith(POWEROBSERVERPREFIX):
+                groups.append(get_plone_group_id(cfgId, value.split(POWEROBSERVERPREFIX)[1]))
         if suffixes:
-            tool = api.portal.get_tool('portal_plonemeeting')
-            res = tool.userIsAmong(suffixes)
+            res = self.tool.userIsAmong(suffixes)
+        if not res and groups:
+            res = bool(set(groups).intersection(self.tool.get_plone_groups_for_user()))
         return res
 
     def showAvailableItems(self):
@@ -435,7 +440,7 @@ class MeetingInsertingMethodsHelpMsgView(BrowserView):
         return res
 
     def orderedCategories(self):
-        """Display categories if one of the selected inserting methods relies on categories."""
+        """Display categories if one of the selected inserting methods relies on it."""
         categories = []
         categories_inserting_methods = [
             method['insertingMethod'] for method in self.cfg.getInsertingMethodsOnAddItem()
@@ -443,6 +448,16 @@ class MeetingInsertingMethodsHelpMsgView(BrowserView):
         if categories_inserting_methods:
             categories = self.cfg.getCategories()
         return categories
+
+    def orderedClassifiers(self):
+        """Display classifiers if one of the selected inserting methods relies on it."""
+        classifiers = []
+        classifiers_inserting_methods = [
+            method['insertingMethod'] for method in self.cfg.getInsertingMethodsOnAddItem()
+            if 'classifier' in self.inserting_methods_fields_mapping[method['insertingMethod']]]
+        if classifiers_inserting_methods:
+            classifiers = self.cfg.getCategories(catType='classifiers')
+        return classifiers
 
 
 class MeetingUpdateItemReferences(BrowserView):
@@ -947,24 +962,32 @@ class BaseDGHV(object):
 
     def _get_attendees(self):
         """ """
+        attendees = []
+        item_absents = []
+        item_excused = []
+        item_non_attendees = []
         if self.context.meta_type == 'Meeting':
             meeting = self.context
             attendees = meeting.getAttendees()
-            item_absents = []
-            item_excused = []
             item_non_attendees = meeting.getItemNonAttendees()
         else:
             # MeetingItem
             meeting = self.context.getMeeting()
-            attendees = self.context.getAttendees()
-            item_absents = self.context.getItemAbsents()
-            item_excused = self.context.getItemExcused()
+            if meeting:
+                attendees = self.context.getAttendees()
+                item_absents = self.context.getItemAbsents()
+                item_excused = self.context.getItemExcused()
             item_non_attendees = self.context.getItemNonAttendees()
         # generate content then group by sub organization if necessary
-        contacts = meeting.getAllUsedHeldPositions()
-        excused = meeting.getExcused()
-        absents = meeting.getAbsents()
-        replaced = meeting.getReplacements()
+        contacts = []
+        absents = []
+        excused = []
+        replaced = []
+        if meeting:
+            contacts = meeting.getAllUsedHeldPositions()
+            excused = meeting.getExcused()
+            absents = meeting.getAbsents()
+            replaced = meeting.getReplacements()
         return meeting, attendees, item_absents, item_excused, item_non_attendees, \
             contacts, excused, absents, replaced
 
@@ -1331,14 +1354,35 @@ class BaseDGHV(object):
             return self.print_signatories_by_position(**kwargs)
 
     def print_signatories_by_position(self,
-                                      signature_format=(u'position_type', u'person'),
-                                      separator=u', ',
-                                      ender=''):
+                                      signature_format=(u'prefixed_secondary_position_type', u'person'),
+                                      separator=u',',
+                                      ender=u''):
         """
         Print signatories by position
+        :param signature_format: tuple representing a single signature format
+        containing these possible values:
+            - 'position_type' -> 'Mayor'
+            - 'prefixed_position_type' -> 'The Mayor'
+            - 'person' -> 'John Doe'
+            - 'person_with_title' -> 'Mister John Doe'
+            - 'secondary_position_type' -> 'President'
+            - 'prefixed_secondary_position_type' -> 'The President'
+            - [PMHeldPosition attribute] e.g. 'gender' -> 'M'
+            - [str] e.g. 'My String' -> 'My String' (in this case it just print the str)
+        When using 'prefixed_secondary_position_type' (default), if no 'secondary_position_type'
+        was defined, it falls back to 'prefixed_position_type' by default
+        (same for 'secondary_position_type' that will fall back to 'position_type')
+        :param separator: str that will be appended at the end of each line (except the last one)
+        :param ender: str that will be appended at the end of the last one
         :return: a dict with position as key and signature as value
-        like this {1 : 'The mayor,', 2: 'John Doe'}
-        A dict is used to safely get a signature with the get method
+        like this {0 : 'The Manager,', 1 : "Jane Doe", 2 : 'The mayor,', 3: 'John Doe'}
+        A dict is used to safely retrieve a signature with the '.get()' method in the PODTemplates
+        --------------------------------------------------------------------------------------------
+        Disclaimer: If a signatory has a label it will be used instead of his
+        (secondary_)position_type and thus it can't be prefixed. If signatory has no gender,
+        it will not be prefixed either. If person_with_title is used but signatory
+        has no title defined, it will be printed without it.
+        --------------------------------------------------------------------------------------------
         """
         signature_lines = OrderedDict()
         if self.context.meta_type == 'Meeting':
@@ -1346,25 +1390,38 @@ class BaseDGHV(object):
         else:
             signatories = self.context.getItemSignatories(theObjects=True, by_signature_number=True)
 
-        n_line = 0
-        for signatory in signatories.values():
+        line = 0
+        sorted_signatories = [v for k, v in sorted(signatories.items(), key=lambda item: int(item[0]))]
+        for signatory in sorted_signatories:
             for attr in signature_format:
-                if u'position_type' in attr:
-                    signature_lines[n_line] = signatory.get_prefix_for_gender_and_number(
+                if u'position_type' == attr:
+                    signature_lines[line] = signatory.get_label(position_type_attr=attr)
+                elif u'prefixed_position_type' == attr:
+                    signature_lines[line] = signatory.get_prefix_for_gender_and_number(
                         include_value=True,
-                        position_type_attr=attr)
+                        position_type_attr='position_type')
+                elif u'secondary_position_type' == attr:
+                    signature_lines[line] = signatory.get_label(position_type_attr=attr)
+                elif u'prefixed_secondary_position_type' == attr:
+                    signature_lines[line] = signatory.get_prefix_for_gender_and_number(
+                        include_value=True,
+                        position_type_attr='secondary_position_type')
                 elif attr == u'person':
-                    signature_lines[n_line] = signatory.get_person_title(include_person_title=False)
+                    signature_lines[line] = signatory.get_person_title(include_person_title=False)
+                elif attr == u'person_with_title':
+                    signature_lines[line] = signatory.get_person_title(include_person_title=True)
                 elif hasattr(signatory, attr):
-                    signature_lines[n_line] = attr
-                else:
-                    signature_lines[n_line] += signature_format
+                    signature_lines[line] = getattr(signatory, attr)
+                else:  # Just put the attr if it doesn't match anything above
+                    signature_lines[line] = attr
 
-                if attr != signature_format[-1]:  # if not last line of signatory
-                    signature_lines[n_line] += separator
-                else:
-                    signature_lines[n_line] += ender
-                n_line += 1
+                if attr != signature_format[-1] and separator is not None:
+                    # if not last line of signatory
+                    signature_lines[line] += separator
+                elif ender is not None:  # it is the last line
+                    signature_lines[line] += ender
+
+                line += 1
 
         return signature_lines
 
@@ -1827,7 +1884,7 @@ class CheckPodTemplatesView(BrowserView):
                 view()
                 try:
                     view()
-                    view._generate_doc(pod_template, output_format=output_format)
+                    view._generate_doc(pod_template, output_format=output_format, raiseOnError=True)
                     messages['clean'].append((pod_template, obj))
                 except Exception, exc:
                     messages['error'].append((pod_template, obj, ('Error', exc.message)))
@@ -1852,16 +1909,14 @@ class CheckPodTemplatesView(BrowserView):
         return res
 
 
-class DisplayGroupUsersView(BrowserView):
+class PMDisplayGroupUsersView(DisplayGroupUsersView):
     """
       View that display the users of a Plone group.
     """
 
     def __init__(self, context, request):
-        self.context = context
-        self.request = request
+        super(PMDisplayGroupUsersView, self).__init__(context, request)
         self.tool = api.portal.get_tool('portal_plonemeeting')
-        self.portal_url = api.portal.get().absolute_url()
 
     def _check_auth(self, group_id):
         """Only members of proposingGroup or (MeetingManagers)."""
@@ -1877,39 +1932,6 @@ class DisplayGroupUsersView(BrowserView):
                 if wfa.startswith('pre_validation')]:
             suffixes.remove('prereviewers')
         return suffixes
-
-    def __call__(self, group_id):
-        """ """
-        if group_id.endswith('*'):
-            # remove ending '*'
-            group_id = group_id[:-1]
-            self._check_auth(group_id)
-            # me received a organization UID, get the Plone group ids
-            suffixes = self._get_suffixes(group_id)
-            group_ids = [get_plone_group_id(group_id, suffix)
-                         for suffix in suffixes]
-        else:
-            group_ids = [group_id]
-        self.groups = [api.group.get(tmp_group_id) for tmp_group_id in group_ids]
-        return self.index()
-
-    def group_title(self, group):
-        """ """
-        return group.getProperty('title')
-
-    def group_users(self, group):
-        """ """
-        res = []
-        patterns = {}
-        patterns[0] = "<img src='%s/user.png'> " % self.portal_url
-        patterns[1] = "<img src='%s/group.png'> " % self.portal_url
-        for member in group.getAllGroupMembers():
-            # member may be a user or group
-            isGroup = base_hasattr(member, 'isGroup') and member.isGroup() or 0
-            member_title = member.getProperty('fullname') or member.getProperty('title') or member.getId()
-            res.append(patterns[isGroup] + member_title)
-        res.sort()
-        return "<br />".join(res)
 
 
 class DisplayInheritedAdviceItemInfos(BrowserView):
@@ -1974,14 +1996,19 @@ class MeetingStoreItemsPodTemplateAsAnnexBatchActionForm(BaseBatchActionForm):
 
     def available(self):
         """ """
-        if self.cfg.getMeetingItemTemplateToStoreAsAnnex() and \
+        if self.cfg.getMeetingItemTemplatesToStoreAsAnnex() and \
            api.user.get_current().has_permission(ModifyPortalContent, self.context):
             return True
 
+    def _update(self):
+        self.fields += Fields(schema.Choice(
+            __name__='pod_template',
+            title=_(u'POD template to annex'),
+            vocabulary='Products.PloneMeeting.vocabularies.itemtemplatesstorableasannexvocabulary'))
+
     def _apply(self, **data):
         """ """
-        template_id, output_format = \
-            self.cfg.getMeetingItemTemplateToStoreAsAnnex().split('__output_format__')
+        template_id, output_format = data['pod_template'].split('__output_format__')
         pod_template = getattr(self.cfg.podtemplates, template_id)
 
         num_of_generated_templates = 0
@@ -2003,7 +2030,7 @@ class MeetingStoreItemsPodTemplateAsAnnexBatchActionForm(BaseBatchActionForm):
                 msg = translate(msgid=res, domain='PloneMeeting', context=self.request)
                 logger.info(u'Could not generate POD template {0} using output format {1} for item at {2} : {3}'.format(
                     template_id, output_format, '/'.join(item.getPhysicalPath()), msg))
-                api.portal.show_message(msg, request=self.request)
+                api.portal.show_message(msg, request=self.request, type='error')
 
         msg = translate('stored_item_template_as_annex',
                         domain="PloneMeeting",

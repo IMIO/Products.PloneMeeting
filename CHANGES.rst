@@ -2,7 +2,86 @@ Changelog
 =========
 
 
-4.1.28 (unreleased)
+4.2a8 (unreleased)
+------------------
+
+- Merged changes from 4.1.28
+- Added `waiting_advices_from_last_val_level_advices_required_to_validate`
+  WFAdaptation to be able to block item validation in case advices still
+  need to be given.
+- Added adaptable methods `MeetingConfig.extra_item_decided_states` and
+  `MeetingConfig.extra_item_positive_decided_states` to formalize how to extend
+  `item_decided_states` and `item_positive_decided_states`.
+- Added possibility to define data (`title/description/motivation/decision/decisionSuite`) to use on an item that will be cloned to
+  another MeetingConfig, data defined on original item will replace basic data on resulting item
+- Added possibility to configure in `MeetingConfig.itemsVisibleFields` data to display on linked items.
+  It is also possible using the `MeetingConfig.itemsNotViewableVisibleFields` and `MeetingConfig.itemsNotViewableVisibleFieldsTALExpr`
+  fields to select specific data that will be displayed to users that may not access to the linked items
+
+4.2a7 (2020-06-24)
+------------------
+
+- Merged changes from 4.1.27.1
+
+4.2a6 (2020-06-24)
+------------------
+
+- Merged changes from 4.1.20
+- Merged changes from 4.1.21
+- Merged changes from 4.1.22
+- Merged changes from 4.1.23
+- Merged changes from 4.1.24
+- Merged changes from 4.1.25
+- Merged changes from 4.1.26
+- Merged changes from 4.1.26.1
+- Merged changes from 4.1.27
+
+4.2a5 (2020-03-17)
+------------------
+
+- Merged changes from 4.1.19.2
+
+4.2a4 (2020-03-13)
+------------------
+
+- Merged changes from 4.1.19
+
+4.2a3 (2020-02-21)
+------------------
+
+- Merged changes from 4.1.18
+
+4.2a2 (2020-02-21)
+------------------
+
+- Merged changes from 4.1.x
+
+4.2a1 (2020-02-06)
+------------------
+
+- Item validation workflow is now designed in the MeetingConfig.itemWFValidationLevels, this imply :
+    - to no longer rely on MEETINGROLES and MEETINGREVIEWERS constants;
+    - reviewer levels and mapping between review_state and organization suffix that manage the item is computed from the MeetingConfig;
+    - item validation specific roles (MeetingMember, MeetingReviewer, MeetingPreReviewer are removed from item workflows, local roles are dynamically given and
+      we only use common roles (Reader, Editor, Reviewer and Contributor)
+- Use roles 'Reviewer' and 'Contributor' in meetingadvice_workflow
+- Added bypass for users having 'Manage portal' in MeetingItemWorkflowConditions in 'mayWait_advices_from', 'mayValidate' and 'mayPresent'
+
+4.1.28.2 (unreleased)
+---------------------
+
+- Nothing changed yet.
+
+
+4.1.28.1 (2020-08-21)
+---------------------
+
+- When getting a `position_type_attr` on a `held_position.get_label`, added possibility to fallback to another `position_type_attr`
+  if given one is empty.  This makes it possible to fallback to `position_type` while trying to get `secondary_position_type`
+  and this last is empty
+- Hide button `Add group` in Plone groups configuration panel with CSS, this avoid users to add Plone groups instead organizations
+
+4.1.28 (2020-08-21)
 -------------------
 
 - Moved `Meeting.getNextMeeting` logic to `utils.get_next_meeting` so it can be used from outside a `Meeting` instance,
@@ -23,11 +102,47 @@ Changelog
 - Added `collective.fingerpointing` log message when managing item `assembly/signatures/attendees/signatories`
 - Fixed bug in `itemPeople` macro displayed on `meetingitem_view`, when field Meeting `itemNonAttendees` is enabled,
   the column header was correctly hidden but the column cells were displayed
-- Added possibility to define data (`title/description/motivation/decision/decisionSuite`) to use on an item that will be cloned to
-  another MeetingConfig, data defined on original item will replace basic data on resulting item
-- Added possibility to configure in `MeetingConfig.itemsVisibleFields` data to display on linked items.
-  It is also possible using the `MeetingConfig.itemsNotViewableVisibleFields` and `MeetingConfig.itemsNotViewableVisibleFieldsTALExpr`
-  fields to select specific data that will be displayed to users that may not access to the linked items
+- Moved JS function `toggleDoc` to `imio.helpers` under name `toggleDetails`
+- Cleaned `plonemeeting.css`, removed useless styles definition
+- In `contacts` management, show clearly that icons in portlet will add new `organization/held_position` by using icons with a `+`
+- Validate `plonegroup` settings for `functions` so it is not possible to remove or disable a function that is used in
+  `MeetingConfig.selectableCopyGroups` or `MeetingItem.copyGroups`
+- Migrate `MeetingCategory` from AT to DX :
+
+  - New portal_type is `meetingcategory`;
+  - Field `MeetingItem.classifier` was moved from ReferenceField to StringField;
+  - Added new `MeetingConfig.insertingMethodsOnAddItem` named `on_classifiers`;
+  - Removed magic in `MeetingConfig.getCategories` that returned organizations when
+    `MeetingConfig.useGroupsAsCategories` was `True`, now it returns only categories, moreover parameter `classifiers` is
+    renamed to `catType` that may be `all`/`categories`/`classifiers`.
+- In every migrations, call `cleanRegistries` at the end by default so `JS/CSS` are recompiled
+- Add 'redirectToNextMeeting' option.
+- Moved `Meeting.getNextMeeting` logic to `utils.get_next_meeting` so it can be used from outside a `Meeting` instance
+- Make sure `++resource++plone.app.jquerytools.dateinput.js` is enabled in `portal_javascripts`
+- Completed custom widget `PMCheckBoxFieldWidget` to manage `display` mode, every element are listed one under each other and not one
+  next to each others separated with commas that was much unreadable when having more than 3 values.
+  Use it everywhere possible: `organization`, `held_position` and `category`
+- Fixed `MeetingView._displayAvailableItemsTo`, do not use `ToolPloneMeeting.userIsAmong` for powerobservers as it could be
+  powerobserver for `MeetingConfig` A and not for `MeetingConfig` B and in this case, the available items were shown
+- Added `CKEditor` style `page-break` to be able to insert a `page-break` into a `RichText` field, this can be used in a
+  `POD template` by adding a relevant `page-break` paragraph style
+- In `MeetingItemWorkflowConditions._check_review_and_required`, factorized check about `Review portal content` permission and
+  required data (`category/classifier/groupsInCharge`)
+- Improved `BaseDGHV.print_signatories_by_position` to add more use cases
+- Added tests for `BaseDGHV.print_signatories_by_position`
+- Adapted code regarding changes in `collective.iconifiedcategory`, do not use `portal_catalog` to get the annexes but rely on
+  `allowedRolesAndUsers` stored in `categorized_elements`
+- Fixed `MeetingView._displayAvailableItemsTo`, do not use `ToolPloneMeeting.userIsAmong` for powerobservers as it could be
+  powerobserver for `MeetingConfig` A and not for `MeetingConfig` B and in this case, the available items were shown
+- Display groups created by a `MeetingConfig` (meetingmanagers, powerobservers, ...) on the `meetingconfig_view`.
+  Moved the `@@display-group-users` view to `collective.contact.plonegroup` so we have same view to render groups and users in
+  contacts dashboard and everywhere else.
+- Extended batch action that stores a generated template directly as an annex on selected elements.
+  Field `MeetingConfig.meetingItemTemplateToStoreAsAnnex` is now `MeetingConfig.meetingItemTemplatesToStoreAsAnnex` and several
+  POD templates may be selected instead one single.  In the batch action, the user may chose among available POD templates
+- Fixed `@@check-pod-templates` that was no more raising an error when a POD template was wrong, hidding broken templates...
+- Reworked email notifications to always have relevant information at the beginning of the subject in case item title is very long
+- Make sure field `Meeting.secretMeetingObservations` is only editable/viewable by `MeetingManagers`
 
 4.1.27.2 (2020-06-25)
 ---------------------

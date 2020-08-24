@@ -109,20 +109,10 @@ class MeetingWorkflowConditions(object):
     implements(IMeetingWorkflowConditions)
     security = ClassSecurityInfo()
 
-    # Item states when a final decision is taken
-    archivableStates = ('confirmed', 'delayed', 'refused')
-
     def __init__(self, meeting):
         self.context = meeting
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
-
-    def _decisionsAreArchivable(self):
-        '''Returns True all the decisions may be archived.'''
-        for item in self.context.getItems():
-            if item.queryState() not in self.archivableStates:
-                return False
-        return True
 
     security.declarePublic('mayAcceptItems')
 
@@ -184,18 +174,6 @@ class MeetingWorkflowConditions(object):
     def mayClose(self):
         if _checkPermission(ReviewPortalContent, self.context):
             return True
-
-    security.declarePublic('mayArchive')
-
-    def mayArchive(self):
-        if _checkPermission(ReviewPortalContent, self.context) and \
-           self._decisionsAreArchivable():
-            return True
-
-    security.declarePublic('mayRepublish')
-
-    def mayRepublish(self):
-        return False
 
     security.declarePublic('mayChangeItemsOrder')
 
@@ -290,17 +268,6 @@ class MeetingWorkflowActions(object):
         '''When the wfAdaptation 'hide_decisions_when_under_writing' is activated.'''
         pass
 
-    security.declarePrivate('doArchive')
-
-    def doArchive(self, stateChange):
-        ''' '''
-        pass
-
-    security.declarePrivate('doRepublish')
-
-    def doRepublish(self, stateChange):
-        pass
-
     security.declarePrivate('doBackToCreated')
 
     def doBackToCreated(self, stateChange):
@@ -335,18 +302,6 @@ class MeetingWorkflowActions(object):
 
     def doBackToFrozen(self, stateChange):
         pass
-
-    security.declarePrivate('doBackToClosed')
-
-    def doBackToClosed(self, stateChange):
-        # Every item must go back to its previous state: confirmed, delayed or
-        # refused.
-        wfTool = self.context.portal_workflow
-        for item in self.context.getItems():
-            itemHistory = item.workflow_history['meetingitem_workflow']
-            previousState = itemHistory[-2]['review_state']
-            previousState = previousState[0].upper() + previousState[1:]
-            wfTool.doActionFor(item, 'backTo' + previousState)
 
 
 InitializeClass(MeetingWorkflowActions)
@@ -556,7 +511,7 @@ schema = Schema((
         widget=RichWidget(
             condition="python: here.showMeetingManagerReservedField('inAndOutMoves')",
             description="InAndOutMoves",
-            description_msgid="in_and_out_moves_descr",
+            description_msgid="field_reserved_to_meeting_managers_descr",
             label_msgid="PloneMeeting_inAndOutMoves",
             label='Inandoutmoves',
             i18n_domain='PloneMeeting',
@@ -572,7 +527,7 @@ schema = Schema((
         widget=RichWidget(
             condition="python: here.showMeetingManagerReservedField('notes')",
             description="Notes",
-            description_msgid="notes_descr",
+            description_msgid="field_reserved_to_meeting_managers_descr",
             label_msgid="PloneMeeting_notes",
             label='Notes',
             i18n_domain='PloneMeeting',
@@ -587,6 +542,8 @@ schema = Schema((
         allowable_content_types=('text/html',),
         widget=RichWidget(
             condition="python: here.attributeIsUsed('observations')",
+            description="Observations",
+            description_msgid="field_vieawable_by_everyone_descr",
             label_msgid="PloneMeeting_meetingObservations",
             label='Observations',
             i18n_domain='PloneMeeting',
@@ -622,6 +579,7 @@ schema = Schema((
         allowable_content_types=('text/html',),
         widget=RichWidget(
             condition="python: here.attributeIsUsed('preObservations')",
+            description_msgid="field_vieawable_by_everyone_descr",
             label='Preobservations',
             label_msgid='PloneMeeting_label_preObservations',
             i18n_domain='PloneMeeting',
@@ -636,6 +594,7 @@ schema = Schema((
         allowable_content_types=('text/html',),
         widget=RichWidget(
             condition="python: here.attributeIsUsed('committeeObservations')",
+            description_msgid="field_vieawable_by_everyone_descr",
             label='Committeeobservations',
             label_msgid='PloneMeeting_label_committeeObservations',
             i18n_domain='PloneMeeting',
@@ -650,6 +609,7 @@ schema = Schema((
         allowable_content_types=('text/html',),
         widget=RichWidget(
             condition="python: here.attributeIsUsed('publicMeetingObservations')",
+            description_msgid="field_vieawable_by_everyone_descr",
             label='Publicmeetingobservations',
             label_msgid='PloneMeeting_label_publicMeetingObservations',
             i18n_domain='PloneMeeting',
@@ -663,7 +623,9 @@ schema = Schema((
         name='secretMeetingObservations',
         allowable_content_types=('text/html',),
         widget=RichWidget(
-            condition="python: here.attributeIsUsed('secretMeetingObservations')",
+            condition="python: here.showMeetingManagerReservedField('secretMeetingObservations')",
+            description="Secretmeetingobservations",
+            description_msgid="field_reserved_to_meeting_managers_descr",
             label='Secretmeetingobservations',
             label_msgid='PloneMeeting_label_secretMeetingObservations',
             i18n_domain='PloneMeeting',
@@ -679,7 +641,7 @@ schema = Schema((
         widget=RichWidget(
             condition="python: here.showMeetingManagerReservedField('authorityNotice')",
             description="AuthorityNotice",
-            description_msgid="authority_notice_descr",
+            description_msgid="field_reserved_to_meeting_managers_descr",
             label='Authoritynotice',
             label_msgid='PloneMeeting_label_authorityNotice',
             i18n_domain='PloneMeeting',
@@ -770,7 +732,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
 
     schema = Meeting_schema
 
-    meetingClosedStates = ['closed', 'archived']
+    meetingClosedStates = ['closed']
 
     # declarePublic so it is callable in item view template
     # when the meeting is not viewable by the current user
@@ -1900,7 +1862,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
 
     def isDecided(self):
         meeting = self.getSelf()
-        return meeting.queryState() in ('decided', 'closed', 'archived', 'decisions_published', )
+        return meeting.queryState() in ('decided', 'closed', 'decisions_published', )
 
     security.declarePublic('getSpecificMailContext')
 

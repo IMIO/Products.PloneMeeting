@@ -63,6 +63,14 @@ class testPerformances(PloneMeetingTestCase):
                                       with_meeting=True,
                                       present_items=False,
                                       as_uids=True):
+        cfg = self.meetingConfig
+        wfAdaptations = list(cfg.getWorkflowAdaptations())
+        if 'no_publication' not in wfAdaptations:
+            self.changeUser('siteadmin')
+            wfAdaptations.append('no_publication')
+            cfg.setWorkflowAdaptations(wfAdaptations)
+            cfg.at_post_edit_script()
+
         self.changeUser('pmManager')
         meeting = None
         if with_meeting:
@@ -437,7 +445,7 @@ class testPerformances(PloneMeetingTestCase):
         self._removeConfigObjectsFor(self.meetingConfig, folders=['recurringitems', 'itemtemplates', 'categories'])
         # create categories
         for i in range(number_of_categories):
-            catObj = self.create('MeetingCategory',
+            catObj = self.create('meetingcategory',
                                  id=i,
                                  title='Category %d' % i)
             if withUsingGroups:

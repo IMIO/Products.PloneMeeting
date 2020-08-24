@@ -357,8 +357,6 @@ class IMeetingItemWorkflowConditions(Interface):
         '''May a decision take place on this item (accept, reject...)?'''
     def mayDelay():
         '''May this item be delayed to another meeting ?'''
-    def mayConfirm():
-        '''May the decision be definitely confirmed?'''
     def mayCorrect(destinationState=None):
         '''Used for 'back' transitions.  p_destinationState is useful when there are
            several 'back' transitions from the same state.'''
@@ -366,8 +364,6 @@ class IMeetingItemWorkflowConditions(Interface):
         '''May one publish me?'''
     def mayFreeze():
         '''May one freeze me ?'''
-    def mayArchive():
-        '''May one archive me ?'''
     def isLateFor(meeting):
         '''Normally, when meeting agendas are published (and seen by everyone),
            we shouldn't continue to add items to it. But sometimes those things
@@ -414,8 +410,12 @@ class IMeetingItemWorkflowActions(Interface):
         '''Executes when the meeting containing this item is frozen (ie
            published, but without most people having the possibility to modify
            it).'''
+    def doPre_accept(stateChange):
+        '''Executes when an item is pre_accepted.'''
     def doAccept(stateChange):
         '''Executes when an item is accepted.'''
+    def doAccept_but_modify(stateChange):
+        '''Executes when an item is accepted_but_modified.'''
     def doRefuse(stateChange):
         '''Executes when an item is refused.'''
     def doDelay(stateChange):
@@ -423,10 +423,6 @@ class IMeetingItemWorkflowActions(Interface):
     def doCorrect(stateChange):
         '''Executes when the user performs a wrong action and needs to undo
            it.'''
-    def doConfirm(stateChange):
-        '''Executes when an item is definitely confirmed.'''
-    def doItemArchive(stateChange):
-        '''Executes when the meeting containing this item is archived.'''
 
 
 class IMeetingItemCustom(IMeetingItem):
@@ -569,34 +565,6 @@ class IMeetingAdviceWorkflowActions(Interface):
     '''Actions that may be triggered while the workflow linked to an advice executes.'''
 
 
-# Interfaces used for customizing the behaviour of meeting categories ----------
-class IMeetingCategoryDocumentation:
-    '''Normally, the methods described here should be part of IMeetingCategory.
-       Because it is impossible to do so with an overengineered yet overrigid
-       ArchGenXML 2, we document the provided methods in this absurd class.'''
-    def onEdit(isCreated):
-        '''This method is called every time a category is created or updated.
-           p_isCreated is True if the object was just created. It is called
-           within Archetypes methods at_post_create_script and
-           at_post_edit_script. You do not need to reindex the category. The
-           default PloneMeeting implementation for this method does nothing.'''
-    def isSelectable(item):
-        '''When creating or updating a meeting item, the user may choose a
-           category (or a classifier if you use field "classifier" in the
-           corresponding meeting configuration). Selectable categories are
-           categories for which method isSelectable returns True. The
-           default implementation of isSelectable returns True if the workflow
-           state is "active" for the category and if the current user is creator
-           for at least one of the 'usingGroups' selected on the category.
-           If a p_userId is given, it will check if the category is selectable
-           for given userId.'''
-
-
-class IMeetingCategoryCustom(IMeetingCategory):
-    '''If you want to propose your own implementations of IMeetingCategory methods,
-       you must define an adapter that adapts IMeetingCategory to IMeetingCategoryCustom.'''
-
-
 # Interfaces used for customizing the behaviour of meeting configs -------------
 # See docstring of previous classes for understanding this section.
 class IMeetingConfigDocumentation:
@@ -622,6 +590,18 @@ class IMeetingConfigDocumentation:
         '''Return the interface name to use to get the advice WF conditions adapter.'''
     def _adviceActionsInterfaceFor(self, advice_obj):
         '''Return the interface name to use to get the advice WF actions adapter.'''
+    def get_item_corresponding_state_to_assign_local_roles(self, item_state):
+        '''If an item_state is not managed by MeetingItem.assign_roles_to_group_suffixes,
+           maybe there is a correspondence between current item_state and
+           a managed item state.'''
+    def get_item_custom_suffix_roles(self, item_state):
+        """If an item_state is not managed by MeetingItem.assign_roles_to_group_suffixes,
+           and no corresponding item state exists by default, we can manage
+           suffix_roles manually."""
+    def extra_item_decided_states(self):
+        """Returns additional item decided states."""
+    def extra_item_positive_decided_states(self):
+        """Returns additional item positive decided states."""
 
 
 class IMeetingConfigCustom(IMeetingConfig):
@@ -650,6 +630,15 @@ class IToolPloneMeetingDocumentation:
         '''See doc in methods with similar names above.'''
     def performCustomWFAdaptations(meetingConfig, wfAdaptation, logger, itemWorkflow, meetingWorkflow):
         '''This let's a plugin define it's own WFAdaptations to apply.'''
+    def get_extra_adviser_infos(self):
+        '''Extra adviser infos giving following information :
+           - master key: adviser organization id
+           - value : a dict with :
+               - 'portal_type' : the portal_type to use to give the advice;
+               - 'base_wf' : the name of the base WF used by this portal_type;
+                 will be used to generate a patched_ prefixed WF to apply WFAdaptations on;
+               - 'wf_adaptations': a list of workflow adaptations to apply.
+        '''
 
 
 class IToolPloneMeetingCustom(IToolPloneMeeting):

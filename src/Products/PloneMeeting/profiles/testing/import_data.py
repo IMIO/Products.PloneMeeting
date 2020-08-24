@@ -41,17 +41,17 @@ from Products.PloneMeeting.profiles import UserDescriptor
 # First meeting type: a fictitious PloneGov assembly ---------------------------
 
 # Categories
-deployment = CategoryDescriptor('deployment', 'Deployment topics', categoryId='deployment')
-maintenance = CategoryDescriptor('maintenance', 'Maintenance topics', categoryId='maintenance')
-development = CategoryDescriptor('development', 'Development topics', categoryId='development')
-events = CategoryDescriptor('events', 'Events', categoryId='events')
-research = CategoryDescriptor('research', 'Research topics', categoryId='research')
-projects = CategoryDescriptor('projects', 'Projects', categoryId='projects')
+deployment = CategoryDescriptor('deployment', 'Deployment topics', category_id='deployment')
+maintenance = CategoryDescriptor('maintenance', 'Maintenance topics', category_id='maintenance')
+development = CategoryDescriptor('development', 'Development topics', category_id='development')
+events = CategoryDescriptor('events', 'Events', category_id='events')
+research = CategoryDescriptor('research', 'Research topics', category_id='research')
+projects = CategoryDescriptor('projects', 'Projects', category_id='projects')
 # A vintage category
-marketing = CategoryDescriptor('marketing', 'Marketing', categoryId='marketing', active=False)
+marketing = CategoryDescriptor('marketing', 'Marketing', category_id='marketing', enabled=False)
 # usingGroups category
 subproducts = CategoryDescriptor('subproducts', 'Subproducts wishes',
-                                 categoryId='subproducts', usingGroups=('vendors',))
+                                 category_id='subproducts', using_groups=('vendors',))
 
 # Classifiers
 classifier1 = CategoryDescriptor('classifier1', 'Classifier 1')
@@ -235,6 +235,7 @@ developers.advisers.append(pmManager)
 
 vendors = OrgDescriptor('vendors', 'Vendors', u'Devil')
 vendors.creators.append(pmCreator2)
+vendors.prereviewers.append(pmReviewer2)
 vendors.reviewers.append(pmReviewer2)
 vendors.observers.append(pmReviewer2)
 vendors.observers.append(pmObserver2)
@@ -294,61 +295,53 @@ meetingPma.annexTypes = [financialAnalysis, budgetAnalysisCfg1, overheadAnalysis
 meetingPma.usedItemAttributes = ('description', 'toDiscuss', 'itemTags', 'itemIsSigned',)
 meetingPma.usedMeetingAttributes = ('place',)
 meetingPma.maxShownListings = '100'
-meetingPma.itemDecidedStates = ('accepted', 'delayed', 'confirmed', 'itemarchived')
-meetingPma.workflowAdaptations = []
-meetingPma.itemPositiveDecidedStates = ['accepted', 'confirmed']
+meetingPma.workflowAdaptations = ['delayed']
+meetingPma.itemPositiveDecidedStates = ['accepted']
 meetingPma.transitionsForPresentingAnItem = ('propose', 'validate', 'present', )
 meetingPma.onMeetingTransitionItemActionToExecute = (
+    {'meeting_transition': 'freeze',
+     'item_action': 'itemfreeze',
+     'tal_expression': ''},
+
+    {'meeting_transition': 'publish',
+     'item_action': 'itemfreeze',
+     'tal_expression': ''},
     {'meeting_transition': 'publish',
      'item_action': 'itempublish',
      'tal_expression': ''},
 
-    {'meeting_transition': 'freeze',
-     'item_action': 'itempublish',
-     'tal_expression': ''},
-    {'meeting_transition': 'freeze',
-     'item_action': 'itemfreeze',
-     'tal_expression': ''},
-
-    {'meeting_transition': 'decide',
-     'item_action': 'itempublish',
-     'tal_expression': ''},
     {'meeting_transition': 'decide',
      'item_action': 'itemfreeze',
      'tal_expression': ''},
-
-    {'meeting_transition': 'close',
+    {'meeting_transition': 'decide',
      'item_action': 'itempublish',
-     'tal_expression': ''},
-    {'meeting_transition': 'close',
-     'item_action': 'itemfreeze',
-     'tal_expression': ''},
-    {'meeting_transition': 'close',
-     'item_action': 'accept',
-     'tal_expression': ''},
-    {'meeting_transition': 'close',
-     'item_action': 'confirm',
      'tal_expression': ''},
 
     {'meeting_transition': 'publish_decisions',
-     'item_action': 'itempublish',
+     'item_action': 'itemfreeze',
      'tal_expression': ''},
     {'meeting_transition': 'publish_decisions',
-     'item_action': 'itemfreeze',
+     'item_action': 'itempublish',
      'tal_expression': ''},
     {'meeting_transition': 'publish_decisions',
      'item_action': 'accept',
      'tal_expression': ''},
-    {'meeting_transition': 'publish_decisions',
-     'item_action': 'confirm',
-     'tal_expression': ''},
 
-    {'meeting_transition': 'archive',
-     'item_action': 'itemarchive',
+    {'meeting_transition': 'close',
+     'item_action': 'itemfreeze',
+     'tal_expression': ''},
+    {'meeting_transition': 'close',
+     'item_action': 'itempublish',
+     'tal_expression': ''},
+    {'meeting_transition': 'close',
+     'item_action': 'accept',
      'tal_expression': ''},
 
     {'meeting_transition': 'backToCreated',
      'item_action': 'backToItemPublished',
+     'tal_expression': ''},
+    {'meeting_transition': 'backToCreated',
+     'item_action': 'backToItemFrozen',
      'tal_expression': ''},
     {'meeting_transition': 'backToCreated',
      'item_action': 'backToPresented',
@@ -414,13 +407,12 @@ meetingPga.onMeetingTransitionItemActionToExecute = deepcopy(
 meetingPga.insertingMethodsOnAddItem = ({'insertingMethod': 'on_categories', 'reverse': '0'}, )
 meetingPga.useGroupsAsCategories = False
 meetingPga.itemTemplates = (template1, template2, )
+meetingPga.workflowAdaptations = ['delayed']
 meetingPga.useAdvices = False
 meetingPga.selectableAdvisers = []
 # use same values as meetingPma for powerObserversStates
 meetingPga.powerObservers = deepcopy(meetingPma.powerObservers)
-meetingPga.itemDecidedStates = ('accepted', 'delayed', 'confirmed', 'itemarchived')
-meetingPga.workflowAdaptations = []
-meetingPga.itemPositiveDecidedStates = ['accepted', 'confirmed']
+meetingPga.itemPositiveDecidedStates = ['accepted']
 meetingPga.useCopies = True
 meetingPga.selectableCopyGroups = [developers.getIdSuffixed('reviewers'), vendors.getIdSuffixed('reviewers')]
 meetingPga.itemCopyGroupsStates = ['validated', 'itempublished', 'itemfrozen', 'accepted', 'delayed']

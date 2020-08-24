@@ -60,46 +60,6 @@ function findParent(node, className) {
     return null;
 }
 
-/* used in configuration to show/hide documentation */
-function toggleDoc(id, toggle_parent_active=true, parent_elem=null, load_view=null, base_url=null, init_tooltipsters=false) {
-  elem = $('#' + id);
-  elem.slideToggle(200);
-  if (toggle_parent_active) {
-    if (!parent_elem) {
-      parent_elem = elem.prev()[0];
-    }
-    parent_elem.classList.toggle("active");
-  }
-
-  inner_content_tag = $('div.collapsible-inner-content', elem)[0];
-  if (load_view && !inner_content_tag.dataset.loaded) {
-    // load content in the collapsible-inner-content div
-    var url = base_url || $("link[rel='canonical']").attr('href');
-    var view_url = url + '/' + load_view;
-    $.ajax({
-      url: view_url,
-      dataType: 'html',
-      data: {},
-      cache: false,
-      async: true,
-      success: function(data) {
-        inner_content_tag.innerHTML = data;
-        inner_content_tag.dataset.loaded = true;
-        if (init_tooltipsters) {
-          /* annnexes */
-          categorizedChildsInfos({selector: 'div.collapsible-content .tooltipster-childs-infos', });
-          /* advices */
-          advicesInfos();
-        }
-      },
-      error: function(jqXHR, textStatus, errorThrown) {
-        /*console.log(textStatus);*/
-        window.location.href = window.location.href;
-        }
-    });
-  }
-}
-
 function toggleMenu(menuId){
   /* we may have '.' in the id and it fails while using directly $(selector)
    * because it thinks we are using a CSS class selector so use getElementById */
@@ -614,6 +574,7 @@ function moveItem(baseUrl, moveType, tag) {
 
 // event subscriber when a transition is triggered
 $(document).on('ap_transition_triggered', synchronizeMeetingFaceteds);
+
 // synchronize faceted displayed on the meeting_view, available items and presented items
 function synchronizeMeetingFaceteds(infos) {
     // refresh iframe 'available items' while removing an item
@@ -723,9 +684,16 @@ if (/msie/.test(navigator.userAgent.toLowerCase())) {
 $(document).ready(function () {
     $("input[value^='not_selectable_value_'").each(function() {
         this.disabled = true;
-    });
+    }); 
 });
 
+/* make sure first line of MeetingConfig.itemWFValidationLevels can not be edited */
+$(document).ready(function () {
+    $("input[id$='_itemWFValidationLevels_1'").each(function() {
+        this.readOnly = true;
+    });
+    
+});
 
 function update_search_term(tag){
   var url = $("link[rel='canonical']").attr('href') + '/@@async_render_search_term';

@@ -31,12 +31,6 @@
         permission="zope2.View" />
     <browser:viewlet
         name="plone.belowcontenttitle.workflowstate"
-        manager="plone.app.layout.viewlets.interfaces.IBelowContentTitle"
-        class="plonetheme.imioapps.browser.viewlets.WorkflowState"
-        for="Products.PloneMeeting.interfaces.IMeetingCategory"
-        permission="zope2.View" />
-    <browser:viewlet
-        name="plone.belowcontenttitle.workflowstate"
         manager="plone.app.layout.viewlets.interfaces.IAboveContentTitle"
         class="plonetheme.imioapps.browser.viewlets.WorkflowState"
         for="collective.contact.core.content.person.IPerson"
@@ -277,72 +271,65 @@
       name="check-pod-templates"
       template="templates/check_pod_templates.pt"
       class=".views.CheckPodTemplatesView"
-      permission="cmf.ManagePortal"
-      />
+      permission="cmf.ManagePortal" />
 
-    <browser:page
-      for="OFS.interfaces.IItem"
-      name="display-group-users"
-      template="templates/display_group_users.pt"
-      class=".views.DisplayGroupUsersView"
-      permission="zope2.View"
-      />
+    <configure package="collective.contact.plonegroup.browser">
+        <browser:page
+          for="Products.PloneMeeting.interfaces.IMeetingContent"
+          name="display-group-users"
+          template="templates/display_group_users.pt"
+          class="Products.PloneMeeting.browser.views.PMDisplayGroupUsersView"
+          permission="zope2.View" />
+    </configure>
 
     <browser:page
       for="Products.PloneMeeting.interfaces.IMeetingItem"
       name="display-inherited-item-infos"
       template="templates/display_inherited_advice_item_infos.pt"
       class=".views.DisplayInheritedAdviceItemInfos"
-      permission="zope2.View"
-      />
+      permission="zope2.View" />
 
     <browser:page
       for="Products.PloneMeeting.interfaces.IMeetingContent"
       name="display-annexes"
       template="templates/display_annexes.pt"
       class=".views.DisplayAnnexesView"
-      permission="zope2.View"
-      />
+      permission="zope2.View" />
 
     <browser:page
       for="Products.PloneMeeting.interfaces.IMeetingItem"
       name="header"
       template="templates/header_item.pt"
       class=".views.ItemHeaderView"
-      permission="zope2.View"
-      />
+      permission="zope2.View" />
 
     <browser:page
       for="Products.PloneMeeting.interfaces.IMeeting"
       name="header"
       template="templates/header_meeting.pt"
       class=".views.MeetingHeaderView"
-      permission="zope2.View"
-      />
+      permission="zope2.View" />
 
     <browser:page
       for="Products.PloneMeeting.content.advice.IMeetingAdvice"
       name="header"
       template="templates/header_advice.pt"
       class=".views.AdviceHeaderView"
-      permission="zope2.View"
-      />
+      permission="zope2.View" />
 
     <browser:page
       for="*"
       name="display-grouped-configs"
       template="templates/grouped_configs.pt"
       class=".views.DisplayMeetingConfigsOfConfigGroup"
-      permission="zope2.View"
-      />
+      permission="zope2.View" />
 
     <browser:page
       for="Products.PloneMeeting.interfaces.IMeetingContent"
       name="display-meeting-item-not-present"
       template="templates/meeting_item_not_present.pt"
       class=".views.DisplayMeetingItemNotPresent"
-      permission="zope2.View"
-      />
+      permission="zope2.View" />
 
     <browser:page
       for="Products.PloneMeeting.interfaces.IMeetingContent"

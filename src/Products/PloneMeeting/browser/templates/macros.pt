@@ -137,7 +137,7 @@ document.location.reload(true);
     <div style="display: inline"
          class="collapsible active"
          tal:attributes="id string:${hookId}_toggle;
-                         onclick string:toggleDoc('${hookId}_content', toggle_parent_active=true, parent_elem=${hookId}_toggle);">
+                         onclick string:toggleDetails('${hookId}_content', toggle_parent_active=true, parent_tag=${hookId}_toggle);">
       <span tal:replace="python: field.widget.Label(context)"></span>
     </div>
     <img style="cursor:pointer" tal:condition="mayEdit"
@@ -789,10 +789,10 @@ This works for an AT and for a DX.</tal:comment>
 </metal:additionalInformations>
 
 <metal:categoriesInMeetingConfig define-macro="categoriesInConfig" i18n:domain="PloneMeeting">
-<tal:comment replace="nothing">Macro used to display categories and classifiers in a MeetingConfig.
+<tal:comment replace="nothing">Macro used to display categories/classifiers in a MeetingConfig.
 The parameter "cFolder" is the folder containing categories.</tal:comment>
 <tal:defines define="cFolderUrl cFolder/absolute_url;
-                     objs python: cFolder.objectValues('MeetingCategory');
+                     objs python: cFolder.objectValues();
                      threshold python: not 'show_every_categories' in context.REQUEST and 50 or 0;
                      too_much_cats python: threshold and len(objs) > threshold;">
 <table class="listing nosort" align="right" width="100%">
@@ -813,9 +813,9 @@ The parameter "cFolder" is the folder containing categories.</tal:comment>
     </td>
   </tr>
   <tal:loop repeat="obj objs" condition="python: not threshold or len(objs) <= threshold">
-  <tr tal:define="isActive python: here.portal_workflow.getInfoFor(obj, 'review_state') == 'active';
-                    oddrow repeat/obj/odd;
-                    classOddEven python: oddrow and 'even' or 'odd';" valign="top"
+  <tr tal:define="isActive obj/enabled;
+                  oddrow repeat/obj/odd;
+                  classOddEven python: oddrow and 'even' or 'odd';" valign="top"
         tal:attributes="class python: not isActive and classOddEven+' state-inactive' or classOddEven"
         class="#">
     <td>
@@ -827,7 +827,7 @@ The parameter "cFolder" is the folder containing categories.</tal:comment>
             <metal:addtionalInformations use-macro="here/@@pm-macros/additionalInformations" />
         </tal:additionalInformations>
     </td>
-    <td tal:content="obj/getCategoryId"></td>
+    <td tal:content="obj/category_id"></td>
     <td i18n:domain="plone">
       <span tal:condition="isActive" i18n:translate="">Yes</span>
       <span tal:condition="not: isActive" i18n:translate="">No</span>
@@ -842,7 +842,7 @@ The parameter "cFolder" is the folder containing categories.</tal:comment>
   You can <a i18n:name="force_display" i18n:translate="categories_force_display" href=".?pageName=data&show_every_categories=1#categories">force display</a> of every categories.
 </p>
 <p i18n:translate="categories_use_folder_contents" tal:condition="isRealManager">
-  You can <a i18n:name="force_display" i18n:translate="categories_force_display" href="./?pageName=data&show_every_categories=1">force display</a> of every categories or you may use the <a i18n:name="folder_contents_link" i18n:translate="categories_folder_contents_view" href="#" tal:attributes="href string:${cFolder/absolute_url}/folder_contents">"Folder contents" view</a> to manage categories.
+  You can <a i18n:name="force_display" i18n:translate="categories_force_display" href="./?pageName=data&show_every_categories=1">force display</a> of every categories or you may use the <a i18n:name="folder_contents_link" i18n:translate="categories_folder_contents_view" href="#" tal:attributes="href string:${cFolder/absolute_url}/folder_contents">"Folder contents" view</a> to manage elements order.
 </p>
 </tal:defines>
 </metal:categoriesInMeetingConfig>
@@ -855,7 +855,7 @@ The parameter "cFolder" is the folder containing categories.</tal:comment>
        style='display: inline-block; padding: 0'
        href='#'
        tal:attributes="data-base_url context_url;
-                       data-group_id string:${proposingGroup/UID}*;">
+                       data-group_ids string:${proposingGroup/UID}*;">
       <img tal:attributes="src string:${portal_url}/group_users.png" />
     </a>
   </acronym>

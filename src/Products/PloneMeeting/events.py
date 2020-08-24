@@ -106,18 +106,22 @@ def onItemTransition(item, event):
     '''Called whenever a transition has been fired on an item.'''
     if not event.transition or (item != event.object):
         return
+
+    tool = api.portal.get_tool('portal_plonemeeting')
+    cfg = tool.getMeetingConfig(item)
+
     transitionId = event.transition.id
-    if transitionId.startswith('backTo'):
-        action = 'doCorrect'
-    elif transitionId.startswith('item'):
-        action = 'doItem%s%s' % (transitionId[4].upper(), transitionId[5:])
-    else:
-        action = 'do%s%s' % (transitionId[0].upper(), transitionId[1:])
+    action = item.wfActions()._getCustomActionName(transitionId)
+    if not action:
+        if transitionId.startswith('backTo'):
+            action = 'doCorrect'
+        elif transitionId.startswith('item'):
+            action = 'doItem%s%s' % (transitionId[4].upper(), transitionId[5:])
+        else:
+            action = 'do%s%s' % (transitionId[0].upper(), transitionId[1:])
     do(action, event)
 
     # check if we need to send the item to another meetingConfig
-    tool = api.portal.get_tool('portal_plonemeeting')
-    cfg = tool.getMeetingConfig(item)
     if item.queryState() in cfg.getItemAutoSentToOtherMCStates():
         otherMCs = item.getOtherMeetingConfigsClonableTo()
         for otherMC in otherMCs:
@@ -248,7 +252,7 @@ def onOrgWillBeRemoved(current_org, event):
       - it can not be linked to an existing MeetingItem;
       - it can not be used in a existing ItemTemplate.templateUsingGroups;
       - it can not be referenced in an existing MeetingConfig;
-      - it can not be used in an existing MeetingCategory.usingGroups;
+      - it can not be used in an existing MeetingCategory.using_groups/groups_in_charge;
       - it can not be used as groupInCharge of another organization;
       - it can not be used as groupInCharge of a category;
       - the linked ploneGroups must be empty of members.'''
@@ -264,7 +268,7 @@ def onOrgWillBeRemoved(current_org, event):
     current_org_uid = current_org.UID()
 
     for org in get_organizations(only_selected=False):
-        if current_org_uid in org.groups_in_charge:
+        if current_org_uid in org.get_groups_in_charge():
             raise BeforeDeleteException(translate("can_not_delete_organization_groupsincharge",
                                                   mapping={'org_url': org.absolute_url()},
                                                   domain="plone",
@@ -290,10 +294,8 @@ def onOrgWillBeRemoved(current_org, event):
                                                       mapping={'cfg_url': mc.absolute_url()},
                                                       domain="plone",
                                                       context=request))
-        categories = mc.categories.objectValues('MeetingCategory')
-        classifiers = mc.classifiers.objectValues('MeetingCategory')
-        for cat in tuple(categories) + tuple(classifiers):
-            if current_org_uid in cat.getUsingGroups() or current_org_uid in cat.getGroupsInCharge():
+        for cat in mc.getCategories(catType='all', onlySelectable=False, caching=False):
+            if current_org_uid in cat.get_using_groups() or current_org_uid in cat.get_groups_in_charge():
                 raise BeforeDeleteException(translate("can_not_delete_organization_meetingcategory",
                                                       mapping={'url': cat.absolute_url()},
                                                       domain="plone",
@@ -595,7 +597,7 @@ def item_added_or_initialized(item):
        Especially for plone.restapi that calls Initialized then do the validation.'''
     # make sure workflow mapping is applied, plone.restapi needs it...
     user = api.user.get_current()
-    item.manage_addLocalRoles(user.getId(), ('MeetingMember',))
+    item.manage_addLocalRoles(user.getId(), ('Editor', 'Reader'))
     # Add a place to store adviceIndex
     item.adviceIndex = PersistentMapping()
     # Add a place to store emergency changes history
@@ -611,6 +613,8 @@ def item_added_or_initialized(item):
         alsoProvides(item, IConfigElement)
     else:
         noLongerProvides(item, IConfigElement)
+        # An item has ben modified
+        invalidate_cachekey_volatile_for('Products.PloneMeeting.MeetingItem.modified', get_again=True)
 
 
 def onItemInitialized(item, event):
@@ -727,7 +731,7 @@ def onAdviceAdded(advice, event):
     _advice_update_item(item)
 
     # Send mail if relevant
-    sendMailIfRelevant(item, 'adviceEdited', 'MeetingMember', isRole=True)
+    sendMailIfRelevant(item, 'adviceEdited', 'creators', isSuffix=True)
     sendMailIfRelevant(item, 'adviceEditedOwner', 'Owner', isRole=True)
 
 
@@ -807,7 +811,7 @@ def onAnnexAdded(annex, event):
                 parent.updateLocalRoles(invalidate=True)
 
             # Potentially I must notify MeetingManagers through email.
-            sendMailIfRelevant(parent, 'annexAdded', 'MeetingManager', isRole=True)
+            sendMailIfRelevant(parent, 'annexAdded', 'meetingmanagers', isSuffix=True)
 
         # update parent modificationDate, it is used for caching and co
         # and reindex parent relevant indexes
@@ -1199,3 +1203,53 @@ def onFacetedGlobalSettingsChanged(folder, event):
     """ """
     # set modification date on every containers
     _notifyContainerModified(folder)
+
+
+def onCategoryWillBeRemoved(category, event):
+    '''Checks if the current p_category can be deleted:
+      - it can not be linked to an existing meetingItem (normal item,
+        recurring item or item template);
+      - it can not be used in field 'category_mapping_when_cloning_to_other_mc'
+        of another meetingcategory.'''
+    # If we are trying to remove the whole Plone Site, bypass this hook.
+    # bypass also if we are in the creation process
+    if event.object.meta_type == 'Plone Site':
+        return
+
+    tool = api.portal.get_tool('portal_plonemeeting')
+    cfg = tool.getMeetingConfig(category)
+    catalog = api.portal.get_tool('portal_catalog')
+    brains = catalog(
+        portal_type=(
+            cfg.getItemTypeName(),
+            cfg.getItemTypeName(configType='MeetingItemRecurring'),
+            cfg.getItemTypeName(configType='MeetingItemTemplate')),
+        getCategory=category.getId())
+    brains += catalog(
+        portal_type=(
+            cfg.getItemTypeName(),
+            cfg.getItemTypeName(configType='MeetingItemRecurring'),
+            cfg.getItemTypeName(configType='MeetingItemTemplate')),
+        getRawClassifier=category.getId())
+    if brains:
+        # linked to an existing item, we can not delete it
+        msg = translate(
+            "can_not_delete_meetingcategory_meetingitem",
+            domain="plone",
+            mapping={'url': brains[0].getURL()},
+            context=category.REQUEST)
+        raise BeforeDeleteException(msg)
+    # check field category_mapping_when_cloning_to_other_mc of other MC categories
+    cat_mapping_id = '{0}.{1}'.format(cfg.getId(), category.getId())
+    catType = category.is_classifier() and 'classifiers' or 'categories'
+    for other_cfg in tool.objectValues('MeetingConfig'):
+        if other_cfg == cfg:
+            continue
+        for other_cat in other_cfg.getCategories(catType=catType, onlySelectable=False, caching=False):
+            if cat_mapping_id in other_cat.category_mapping_when_cloning_to_other_mc:
+                msg = translate(
+                    "can_not_delete_meetingcategory_other_category_mapping",
+                    domain="plone",
+                    mapping={'url': other_cat.absolute_url()},
+                    context=category.REQUEST)
+                raise BeforeDeleteException(msg)

@@ -89,26 +89,27 @@
                 <span tal:condition="not: associatedGroups">-</span>
             </div>
 
-            <tal:comment replace="nothing">Classifier</tal:comment>
-            <div class="discreet"
-                 tal:condition="python: 'classifier' in usedAttrs"
-                 tal:define="classifier context/getClassifier">
-                <span class="item_attribute_label"
-                      i18n:translate="PloneMeeting_label_classifier"></span>:&nbsp;&nbsp;
-                <span tal:condition="nocall:classifier" tal:content="classifier/Title">-</span>
-                <span tal:condition="not:nocall:classifier">-</span>
-            </div>
-
             <tal:comment replace="nothing">Category</tal:comment>
             <tal:category condition="not:meetingConfig/getUseGroupsAsCategories">
             <div class="discreet"
                  tal:define="cat python: context.getCategory(True)">
                 <span class="item_attribute_label"
                       tal:condition="not: meetingConfig/getUseGroupsAsCategories"
-                      i18n:translate="MeetingCategory"></span>:&nbsp;&nbsp;
+                      i18n:translate="PloneMeeting_label_category"></span>:&nbsp;&nbsp;
                 <span tal:condition="nocall:cat" tal:content="cat/Title"></span>
+                <span tal:condition="not:nocall:cat">-</span>
             </div>
             </tal:category>
+
+            <tal:comment replace="nothing">Classifier</tal:comment>
+            <div class="discreet"
+                 tal:condition="python: 'classifier' in usedAttrs"
+                 tal:define="classifier python: context.getClassifier(theObject=True)">
+                <span class="item_attribute_label"
+                      i18n:translate="PloneMeeting_label_classifier"></span>:&nbsp;&nbsp;
+                <span tal:condition="nocall:classifier" tal:content="classifier/Title">-</span>
+                <span tal:condition="not:nocall:classifier">-</span>
+            </div>
 
             <tal:comment replace="nothing">Advices</tal:comment>
             <div class="discreet" tal:condition="showAdvices"
@@ -143,7 +144,7 @@
                         mayQuickEditItemAssembly context/mayQuickEditItemAssembly;
                         mayQuickEditItemSignatures context/mayQuickEditItemSignatures;">
               <div id="assembly-and-signatures"
-                  onclick="togglePersonsCookie();;toggleDoc('collapsible-assembly-and-signatures');"
+                  onclick="togglePersonsCookie();;toggleDetails('collapsible-assembly-and-signatures');"
                   class="collapsible discreet">
                   <span class="meeting_attribute_label" i18n:translate="redefinable_assembly_and_signatures">
                       <span i18n:name="assembly" tal:define="class_to_use python: redefinedItemAssemblies and 'highlightValue' or ''"
@@ -245,12 +246,14 @@
                 <span tal:content="python: ', '.join(context.getItemTags())"></span>
             </div>
 
+            <tal:comment replace="nothing">Item is signed?</tal:comment>
             <div class="discreet"
                  tal:condition="python: 'itemIsSigned' in usedAttrs">
               <span class="item_attribute_label"
                     i18n:translate="PloneMeeting_label_itemIsSigned"></span>:&nbsp;&nbsp;
                 <tal:itemIsSigned replace="structure context/@@item-is-signed" />
             </div>
+            <tal:comment replace="nothing">Taken over by</tal:comment>
             <div class="discreet"
                  tal:condition="python: 'takenOverBy' in usedAttrs">
               <span class="item_attribute_label"
@@ -372,7 +375,7 @@
                 <tal:displayPollTypeObservations tal:condition="python: 'pollTypeObservations' in usedAttrs">
                     <span class="fa fa-question-circle help-doc"
                        id="showPollTypeObservations"
-                       onclick="toggleDoc('dataPollTypeObservations', toggle_parent_active=false);"
+                       onclick="toggleDetails('dataPollTypeObservations', toggle_parent_active=false);"
                        i18n:attributes="title" title="show_or_hide_pollTypeObservations"></span>
                     <fieldset id="dataPollTypeObservations" style="display: none; margin-top: 0;">
                         <legend i18n:translate="PloneMeeting_label_pollTypeObservations">Poll type observations</legend>
@@ -537,7 +540,7 @@
     </table>
 
     <tal:textCheckList condition="python: 'textCheckList' in usedAttrs and context.getTextCheckList()">
-      <div id="textCheckList" class="collapsible discreet" onclick="toggleDoc('collapsible-text-checklist');">
+      <div id="textCheckList" class="collapsible discreet" onclick="toggleDetails('collapsible-text-checklist');">
         <span class="item_attribute_label" i18n:translate="PloneMeeting_label_textCheckList">
             Text check list
         </span>

@@ -256,8 +256,6 @@ div.pm_search_no_result_info {
     margin-top: 2em;
 }
 
-.itemsNavigation {margin-bottom: 0.3em; margin-top: 0.3em; }
-#archetypes-fieldname-title2 input { font-size: 160%; width:99%;}
 /* display input for entering TAL expression as large as possible */
 input#form-widgets-as_copy_group_on {
     width: 99%;
@@ -313,22 +311,21 @@ div.viewlet_workflowstate span.state-advice_under_edit {
 .state-advice_under_edit {color: red;}
 /* DarkOrange */
 div.viewlet_workflowstate span[class^='state-proposed'],
-div.viewlet_workflowstate span.state-proposed_waiting_advices,
+div.viewlet_workflowstate span[class$='waiting_advices'],
 div.viewlet_workflowstate span.state-prevalidated,
-div.viewlet_workflowstate span.state-prevalidated_waiting_advices,
-div.viewlet_workflowstate span.state-proposed__or__prevalidated_waiting_advices,
-div.viewlet_workflowstate span.state-waiting_advices,
 div.viewlet_workflowstate span.state-returned_to_proposing_group_proposed,
 div.viewlet_workflowstate span.state-returned_to_proposing_group_prevalidated {
     background-color: DarkOrange;
     border-color: DarkOrange;
 }
 .state-proposed,
-.state-proposed_waiting_advices,
+.state-proposedToValidationLevel1,
+.state-proposedToValidationLevel2,
+.state-proposedToValidationLevel3,
+.state-proposedToValidationLevel4,
+.state-proposedToValidationLevel5,
+span[class$='waiting_advices'],
 .state-prevalidated,
-.state-prevalidated_waiting_advices,
-.state-proposed__or__prevalidated_waiting_advices,
-.state-waiting_advices,
 .state-returned_to_proposing_group_proposed,
 .state-returned_to_proposing_group_prevalidated {color: DarkOrange;}
 /* blue */
@@ -391,8 +388,7 @@ div.viewlet_workflowstate span.state-accepted,
 div.viewlet_workflowstate span.state-accepted_but_modified,
 div.viewlet_workflowstate span.state-accepted_out_of_meeting,
 div.viewlet_workflowstate span.state-accepted_out_of_meeting_emergency,
-div.viewlet_workflowstate span.state-pre_accepted,
-div.viewlet_workflowstate span.state-confirmed {
+div.viewlet_workflowstate span.state-pre_accepted {
     background-color: green;
     border-color: green;
 }
@@ -400,8 +396,7 @@ div.viewlet_workflowstate span.state-confirmed {
 .state-accepted_but_modified,
 .state-accepted_out_of_meeting,
 .state-accepted_out_of_meeting_emergency,
-.state-pre_accepted,
-.state-confirmed {color: green;}
+.state-pre_accepted {color: green;}
 /* Violet */
 div.viewlet_workflowstate span.state-refused {
     background-color: violet;
@@ -429,9 +424,6 @@ div.viewlet_workflowstate span.state-refused {
 .transition-close { color: black !important; }
 
 .somethingtodo { color: red !important; }
-.selectRow { }
-.itemTitle { font-size: 100%; font-weight: bold; margin: 0.2em 0.1em 0 0.1em; }
-.itemDescription { margin: 0 0.1em; }
 .portlet a:hover {text-decoration: underline; }
 .portletHeader { padding: 1px 0.5em; text-transform: none; font-weight: bold; }
 .portletSection {
@@ -512,21 +504,6 @@ div.tooltipster-content div#content {
     padding-right: 0.5em;
 }
 
-/* place an icon before the annex title if there was an error during conversion */
-.erroredConversion,
-dd li span.erroredConversion,
-dd ul a.erroredConversion {
-    background-image: url(<dtml-var portal_url>/errored_conversion.png);
-    background-repeat: no-repeat;
-    background-position: 0px 0px;
-    padding-left: 16px !important;
-}
-
-/* small fixes with position of icon displayed before annex title depending on following tag */
-dd li a.erroredConversion, tr span.erroredConversion {
-    background-position: 0px 1px;
-}
-
 /* highlight error message when an error occured on an edit form */
 .fieldErrorBox {
     color: red;
@@ -561,23 +538,8 @@ td.noPadding a {
     padding: 0 !important;
 }
 
-.hsCancel { background-color: white; }
-
 #meeting_users td { padding: 0 0.4em 0 0.4em; }
 .image-right { border:0px solid Black; clear:both; float:right; margin:0.5em; }
-
-/* Styles for showing content (item, annexes) differently depending on the fact
-   that the user already consulted the last modifications on content or not. */
-#pmNewContent { color: Red; }
-#pmNoNewContent { color: &dtml-linkColor; !important; }
-#content td.pmLinks a,
-#content dt.pmLinks a,
-.portletCell.pmLink.odd a,
-.portletCell.pmLink.even a,
-#content li.pmLinks a,
-#content span.pmLinks a {
-    text-decoration:none;
-}
 
 dd.portletCell.pmLink {
     margin-left: -1em;
@@ -593,19 +555,6 @@ dd.portletCell.pmLink.even {
 .documentContent { padding: 1em 0.5em 2.5em 1em !important; }
 .documentContent p a { border-bottom: 0px solid #CCCCCC; }
 .documentEditable { margin: 0; padding: 0 !important; }
-.searchItem { font-weight: normal; font-style: italic; }
-
-div.hsDialog {
-    display: none;
-    position: absolute;
-    top: 30%;
-    left: 35%;
-    width: 350px;
-    z-index : 100;
-    background: white;
-    padding: 8px;
-    border: 1px solid gray;
-}
 
 div.hsGrey {
     display: none;
@@ -616,32 +565,6 @@ div.hsGrey {
     height:100%;
     background:gray;
     opacity:0.5;
-}
-
-.hsActions {position: relative; top: 1.7em; right: 1.3em; z-index:10;}
-.hsCatId {font-style: italic; }
-.pmLanguage {position: absolute; right: 15px; font-style: italic; font-size: 95%;}
-legend .pmLanguage {top: -0.3em; right: 5px;}
-
-.pmDropdown {
-    display:none;
-    border: 1px solid gray;
-    position: absolute;
-    background-color: white;
-    padding: 0.3em;
-    z-index: 5;
-    cursor: auto;
-}
-.pmDropdown a {
-    display: block;
-    cursor: pointer;
-}
-.pmDropdown a:hover {
-    text-decoration: underline;
-}
-
-.pmDropdown.podTemplateSendmail > div {
-    padding-right: 50px;
 }
 
 /* CSS for data changes in object histories. */
@@ -733,8 +656,9 @@ p.indent-firstline {text-indent: 40px;}
     font-size: 120%;
 }
 
-.input_disabled {
-    color: grey !important;
+.input_disabled,
+input[readonly=""] {
+    color: lightgrey !important;
     border-color: lightgrey !important;
     cursor: not-allowed !important;
 }
@@ -1289,9 +1213,24 @@ div.decisionAnnexDescription {
 }
 p.highlightBlankRow:before,
 div.highlightBlankRow:before {
+    font-weight: bold;
     content: attr(title);
     padding-left: 0.5em;
 }
+p.page-break {
+    border: 1px dotted grey;
+    page-break-after: always;
+}
+
+body.cke_editable p.page-break:after,
+div[id^='hook_'] p.page-break:after,
+div.pmMoreInfo p.page-break:after {
+    font-weight: bold;
+    content: 'Saut de page';
+    padding-left: 0.5em;
+    color: red;
+}
+
 /* on the meetingconfig view, move itemIconColor value to let place for the icon */
 span[id^="parent-fieldname-itemIconColor"] {
     padding-left: 20px;
@@ -1362,11 +1301,14 @@ p.item-before-budget-related {
 
 #content table.configActions {
     margin: 0;
+    width: 100%;
 }
-table.configActions td {
-    padding-right: 1em;
+#content table.configActions td:first-of-type {
+    min-width: 40%;
 }
-.configActions form {
+#content table.configActions form {
+    border: 1px solid lightgrey;
+    padding: 0.5em;
     margin-bottom: 0.5em;
     margin-top: 0.5em;
 }
@@ -1532,15 +1474,6 @@ div.customAdviceMessage {
 
 #content-core p.tool_pm_descr,
 #content-core p.backToItem {
-    margin-bottom: 0.5em;
-}
-
-span.no_users {
-    font-style: italic;
-}
-span.no_users,
-span.users {
-    display: block;
     margin-bottom: 0.5em;
 }
 
@@ -1872,8 +1805,10 @@ ul.change_delay_actions li a span {
    color: grey;
 }
 
+/* manage custom behaviors in annexes/advices fieldsets */
 fieldset.section_annex, fieldset.section_annexDecision, fieldset.section_advices {
-   height: 50px;
+   min-height: 50px;
+   height: auto;
 }
 
 div#held_position_back_refs {
@@ -1917,7 +1852,9 @@ div.pm_checkbox_widget div.checkbox_widget_select_all {
 div.pm_checkbox_widget input.checkbox-widget {
    margin-left: 0.25em;
 }
-div.pm_checkbox_widget span.option {
+/* space between checkboxes in item duplicate form popup */
+div.pm_checkbox_widget span#form-widgets-annex_decision_ids span.option,
+div.pm_checkbox_widget span#form-widgets-annex_ids span.option {
    margin-top: 0.5em;
    margin-bottom: 0.5em;
 }
@@ -1968,6 +1905,16 @@ body.template-meeting_available_items_view div#ajax-spinner {
 
 p.otherMeetingConfigsClonableToDataUsed {
    margin-top: 1em;
+}
+
+/* hide the "Add group" button in Plone users and groups management
+ * this is never done and it will avoid new users to create Plone groups instead organizatons ... */
+body.template-usergroup-groupprefs input[name="form.button.AddGroup"] {
+   display: none;
+}
+/* space between add user button and table */
+body.template-usergroup-userprefs input[name="form.button.AddUser"] {
+   margin-bottom: 1em;
 }
 
 /* </dtml-with> */

@@ -21,12 +21,13 @@
                                   obj_absolute_url python: obj and obj.absolute_url() or '';
                                   customMessageInfos python: context.adapted().getCustomAdviceMessageFor(advice);
                                   displayDefaultComplementaryMessage customMessageInfos/displayDefaultComplementaryMessage;
-                                  customAdviceMessage customMessageInfos/customAdviceMessage;">
+                                  customAdviceMessage customMessageInfos/customAdviceMessage;
+                                  state_infos python: view.state_infos(context);">
                 <legend>
                   <div style="display: inline"
                        class="collapsible active"
                        tal:attributes="id string:comment_toggle_${advice/id};
-                                       onclick string:toggleDoc('comment_content_${advice/id}', toggle_parent_active=true, parent_elem=comment_toggle_${advice/id});">
+                                       onclick string:toggleDetails('comment_content_${advice/id}', toggle_parent_active=true, parent_tag=comment_toggle_${advice/id});">
                   </div>
                   <span tal:condition="advice/delay">
                      <tal:defines define="class_if_not_given string:advice_delay advice_delay_${advice/delay_infos/delay_status};">
@@ -87,7 +88,7 @@
                            style="display: inline-block; padding: 0"
                            href="#"
                            onclick="event.preventDefault();"
-                           tal:attributes="data-group_id string:${advice/id}_advisers;
+                           tal:attributes="data-group_ids string:${advice/id}_advisers;
                                            data-base_url string:${view/portal_url}">
                          <img src="group_users.png" tal:attributes="src string:${view/portal_url}/group_users.png"/>
                         </a>

@@ -13,7 +13,7 @@ from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.utils import plain_render
 from Products.PloneMeeting.utils import uncapitalize
-from z3c.form.browser.checkbox import CheckBoxFieldWidget
+from Products.PloneMeeting.widgets.pm_checkbox import PMCheckBoxFieldWidget
 from zope.globalrequest import getRequest
 from zope.i18n import translate
 
@@ -43,7 +43,7 @@ class IPMHeldPosition(IHeldPosition):
         required=False,
     )
 
-    form.widget('usages', CheckBoxFieldWidget, multiple='multiple')
+    form.widget('usages', PMCheckBoxFieldWidget, multiple='multiple')
     usages = zope.schema.List(
         title=_("Usages"),
         value_type=zope.schema.Choice(
@@ -51,7 +51,7 @@ class IPMHeldPosition(IHeldPosition):
         required=False,
     )
 
-    form.widget('defaults', CheckBoxFieldWidget, multiple='multiple')
+    form.widget('defaults', PMCheckBoxFieldWidget, multiple='multiple')
     defaults = zope.schema.List(
         title=_("Defaults"),
         value_type=zope.schema.Choice(
@@ -75,11 +75,15 @@ class IPMHeldPosition(IHeldPosition):
 class PMHeldPosition(HeldPosition):
     """Override HeldPosition to add some fields and methods."""
 
-    def get_label(self, position_type_attr='position_type'):
+    def get_label(self,
+                  position_type_attr='position_type',
+                  fallback_position_type_attr='position_type'):
         """Override get_label to use position_type if label is empty."""
         value = self.label
         if not value:
-            values = self.gender_and_number_from_position_type(position_type_attr=position_type_attr)
+            values = self.gender_and_number_from_position_type(
+                position_type_attr=position_type_attr,
+                fallback_position_type_attr=fallback_position_type_attr)
             gender = self.get_person().gender
             if gender == 'M':
                 value = values['MS']
@@ -165,9 +169,16 @@ class PMHeldPosition(HeldPosition):
             person_held_position_label = u", {0}".format(held_position_label)
         return u'{0}{1} {2}{3}'.format(person_title, firstname, person.lastname, person_held_position_label)
 
-    def gender_and_number_from_position_type(self, position_type_attr='position_type'):
+    def gender_and_number_from_position_type(self,
+                                             position_type_attr='position_type',
+                                             fallback_position_type_attr='position_type'):
         """Split the position_type and generates a dict with gender and number possibilities."""
-        value = get_exportable_for_fieldname(self, position_type_attr, getRequest()).render_value(self)
+        value = get_exportable_for_fieldname(
+            self, position_type_attr, getRequest()).render_value(self)
+        # fallback_position_type_attr
+        if not value and fallback_position_type_attr:
+            value = get_exportable_for_fieldname(
+                self, fallback_position_type_attr, getRequest()).render_value(self)
         values = value and value.split('|') or [u'', u'', u'', u'']
         if len(values) > 1:
             res = {'MS': values[0],
@@ -186,7 +197,8 @@ class PMHeldPosition(HeldPosition):
                                          include_person_title=False,
                                          use_by=False,
                                          use_to=False,
-                                         position_type_attr='position_type'):
+                                         position_type_attr='position_type',
+                                         fallback_position_type_attr='position_type'):
         """Get prefix to use depending on given value."""
         value_starting_vowel = {'MS': u'L\'',
                                 'MP': u'Les ',
@@ -236,7 +248,8 @@ class PMHeldPosition(HeldPosition):
                                     }
 
         res = u''
-        value = self.get_label(position_type_attr=position_type_attr)
+        value = self.get_label(position_type_attr=position_type_attr,
+                               fallback_position_type_attr=fallback_position_type_attr)
         if not value:
             return res
 

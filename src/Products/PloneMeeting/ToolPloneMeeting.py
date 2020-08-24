@@ -416,7 +416,11 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     def _users_groups_value_cachekey(method, self):
         """ """
-        return str(self.REQUEST._debug)
+        # async does not have a REQUEST
+        if hasattr(self, 'REQUEST'):
+            return str(self.REQUEST._debug)
+        else:
+            return None
 
     @ram.cache(_users_groups_value_cachekey)
     def _users_groups_value(self):
@@ -438,7 +442,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     @ram.cache(get_plone_groups_for_user_cachekey)
     def get_plone_groups_for_user(self, userId=None, org_uid=None):
-        """Just return user.getGroups but cached so it is only done once by REQUEST."""
+        """Just return user.getGroups but cached."""
         if api.user.is_anonymous():
             return []
         user = userId and api.user.get(userId) or api.user.get_current()
@@ -551,25 +555,25 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         '''Check if the currently logged user is in at least one of p_suffixes-related Plone
            group.  p_suffixes is a list of suffixes.
            If cfg, we filter on cfg.usingGroups.'''
+        res = False
         # display a warning if suffixes is not a tuple/list
         if not isinstance(suffixes, (tuple, list)):
             logger.warn("ToolPloneMeeting.userIsAmong parameter 'suffixes' must be "
                         "a tuple or list of suffixes, but we received '{0}'".format(suffixes))
-
-        using_groups = cfg and cfg.getUsingGroups() or []
-        activeOrgUids = [org_uid for org_uid in get_organizations(
-            only_selected=True, the_objects=False, kept_org_uids=using_groups)]
-        res = False
-        for plone_group_id in self.get_plone_groups_for_user():
-            # check if the plone_group_id ends with a least one of the p_suffixes
-            has_kept_suffixes = [suffix for suffix in suffixes if plone_group_id.endswith('_%s' % suffix)]
-            if has_kept_suffixes:
-                org = get_organization(plone_group_id)
-                # if we can not find the org, it means that it is a suffix like 'powerobservers'
-                # if we find the org, we check that it is among activeOrgUids
-                if not org or org.UID() in activeOrgUids:
-                    res = True
-                    break
+        else:
+            using_groups = cfg and cfg.getUsingGroups() or []
+            activeOrgUids = [org_uid for org_uid in get_organizations(
+                only_selected=True, the_objects=False, kept_org_uids=using_groups)]
+            for plone_group_id in self.get_plone_groups_for_user():
+                # check if the plone_group_id ends with a least one of the p_suffixes
+                has_kept_suffixes = [suffix for suffix in suffixes if plone_group_id.endswith('_%s' % suffix)]
+                if has_kept_suffixes:
+                    org = get_organization(plone_group_id)
+                    # if we can not find the org, it means that it is a suffix like 'powerobservers'
+                    # if we find the org, we check that it is among activeOrgUids
+                    if not org or org.UID() in activeOrgUids:
+                        res = True
+                        break
         return res
 
     security.declarePublic('getPloneMeetingFolder')
@@ -1058,14 +1062,15 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             # Set fields not in the copyFields list to their default value
             # 'id' and  'proposingGroup' will be kept in anyway
             fieldsToKeep = ['id', 'proposingGroup', ] + copyFields
-            # remove 'category/classifier' from fieldsToKeep if it is disabled
+            # remove 'category' from fieldsToKeep if it is disabled
             if 'category' in fieldsToKeep:
                 category = copiedItem.getCategory(real=True, theObject=True)
-                if category and not category.isSelectable(userId=loggedUserId):
+                if category and not category.is_selectable(userId=loggedUserId):
                     fieldsToKeep.remove('category')
+            # remove 'classifier' from fieldsToKeep if it is disabled
             if 'classifier' in fieldsToKeep:
-                category = copiedItem.getClassifier()
-                if category and not category.isSelectable(userId=loggedUserId):
+                classifier = copiedItem.getClassifier(theObject=True)
+                if classifier and not classifier.is_selectable(userId=loggedUserId):
                     fieldsToKeep.remove('classifier')
 
             for field in newItem.Schema().filterFields(isMetadata=False):
@@ -1077,9 +1082,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             if 'toDiscuss' in copyFields and destMeetingConfig.getToDiscussSetOnItemInsert():
                 toDiscussDefault = destMeetingConfig.getToDiscussDefault()
                 newItem.setToDiscuss(toDiscussDefault)
-            if 'classifier' in copyFields:
-                newItem.getField('classifier').set(
-                    newItem, copiedItem.getClassifier())
 
             # if we have left annexes, we manage it
             plone_utils = api.portal.get_tool('plone_utils')
@@ -1270,15 +1272,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     return True
             else:
                 if attrName in getattr(meetingConfig, configAttr)():
-                    if (attrName == 'classifier') and \
-                       (len(meetingConfig.classifiers.objectIds()) > 130):
-                        # The selection widget currently used is inadequate
-                        # for a large number of classifiers. In this case we
-                        # should use the popup for selecting classifiers. This
-                        # has not been implemented yet, so for the moment if
-                        # there are too much classifiers we do as if this field
-                        # was not used.
-                        return False
                     return True
         return False
 
@@ -1544,6 +1537,14 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     def performCustomWFAdaptations(self, meetingConfig, wfAdaptation, logger, itemWorkflow, meetingWorkflow):
         '''See doc in interfaces.py.'''
         return False
+
+    def performCustomAdviceWFAdaptations(self, meetingConfig, wfAdaptation, logger, advice_wf_id):
+        '''See doc in interfaces.py.'''
+        return False
+
+    def get_extra_adviser_infos(self):
+        '''See doc in interfaces.py.'''
+        return {}
 
     def getAdvicePortalTypes_cachekey(method, self, as_ids=False):
         '''cachekey method for self.getAdvicePortalTypes.'''

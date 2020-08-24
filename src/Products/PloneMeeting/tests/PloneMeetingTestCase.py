@@ -21,6 +21,7 @@
 #
 
 from AccessControl.SecurityManagement import getSecurityManager
+from Products.CMFPlone.utils import base_hasattr
 from collections import OrderedDict
 from collective.contact.plonegroup.config import ORGANIZATIONS_REGISTRY
 from collective.contact.plonegroup.utils import get_own_organization
@@ -52,6 +53,7 @@ from Products.PloneMeeting.utils import reviewersFor
 from z3c.form.testing import TestRequest as z3c_form_TestRequest
 from zope.component import getMultiAdapter
 from zope.event import notify
+from zope.lifecycleevent import ObjectModifiedEvent
 from zope.traversing.interfaces import BeforeTraverseEvent
 from zope.viewlet.interfaces import IViewletManager
 
@@ -252,7 +254,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                objectType,
                folder=None,
                autoAddCategory=True,
-               isClassifier=False,
+               is_classifier=False,
                **attrs):
         '''Creates an instance of a meeting (if p_objectType is 'Meeting') or
            meeting item (if p_objectType is 'MeetingItem') and
@@ -283,11 +285,18 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                 attrs['item_advice_view_states'] = []
             if 'certified_signatures' not in attrs:
                 attrs['certified_signatures'] = []
-        elif objectType == 'MeetingCategory':
-            if isClassifier:
+        elif objectType == 'meetingcategory':
+            if is_classifier:
                 folder = cfg.classifiers
             else:
                 folder = cfg.categories
+
+            if 'groups_in_charge' not in attrs:
+                attrs['groups_in_charge'] = []
+            if 'using_groups' not in attrs:
+                attrs['using_groups'] = []
+            if 'category_mapping_when_cloning_to_other_mc' not in attrs:
+                attrs['category_mapping_when_cloning_to_other_mc'] = []
         elif objectType == 'ConfigurablePODTemplate':
             folder = cfg.podtemplates
         else:
@@ -514,7 +523,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
           Helper method for adding a given p_member to every '_prereviewers' group
           corresponding to every '_reviewers' group he is in.
         """
-        reviewers = reviewersFor(self.meetingConfig.getItemWorkflow())
+        reviewers = reviewersFor(self.meetingConfig)
         groups = [group for group in member.getGroups() if group.endswith('_%s' % reviewers.keys()[0])]
         groups = [group.replace(reviewers.keys()[0], reviewers.keys()[-1]) for group in groups]
         for group in groups:
@@ -555,9 +564,10 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         self.changeUser(self.member.getId())
         cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
 
-    def _removePrincipalFromGroup(self, principal_id, group_id):
+    def _removePrincipalFromGroups(self, principal_id, group_ids):
         """We need to changeUser so getGroups is updated."""
-        self.portal.portal_groups.removePrincipalFromGroup(principal_id, group_id)
+        for group_id in group_ids:
+            self.portal.portal_groups.removePrincipalFromGroup(principal_id, group_id)
         self.changeUser(self.member.getId())
         cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
 
@@ -580,6 +590,20 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                     po_infos['meeting_access_on'] = access_on
         cfg.setPowerObservers(power_observers)
 
+    def _activate_wfas(self, wfas, cfg=None):
+        """Activate given p_wfas, we clean wfas, apply,
+           then set given p_wfas and apply again."""
+        currentUser = self.member.getId()
+        self.changeUser('siteadmin')
+        if cfg is None:
+            cfg = self.meetingConfig
+        cfg.setWorkflowAdaptations(())
+        cfg.at_post_edit_script()
+        if wfas:
+            cfg.setWorkflowAdaptations(wfas)
+            cfg.at_post_edit_script()
+        self.changeUser(currentUser)
+
     def _enableAutoConvert(self, enable=True):
         """Enable collective.documentviewer auto_convert."""
         gsettings = GlobalSettings(self.portal)
@@ -600,3 +624,18 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             if field_name not in usedMeetingAttrs:
                 usedMeetingAttrs += (field_name, )
                 cfg.setUsedMeetingAttributes(usedMeetingAttrs)
+
+    def _disableObj(self, obj, notify_event=True):
+        """ """
+        # using field 'enabled'
+        if base_hasattr(obj, 'enabled'):
+            obj.enabled = False
+            obj.reindexObject(idxs=['enabled'])
+        else:
+            # using workflow
+            self.do(obj, 'deactivate')
+        if notify_event:
+            # manage cache
+            notify(ObjectModifiedEvent(obj))
+        self.cleanMemoize()
+

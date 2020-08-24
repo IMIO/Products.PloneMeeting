@@ -370,11 +370,19 @@ class testMeeting(PloneMeetingTestCase):
 
     def test_pm_InsertItemCategories(self):
         '''Sort method tested here is "on_categories".'''
+        cfg = self.meetingConfig
+        cfg.setUseGroupsAsCategories(False)
+        cfg.setInsertingMethodsOnAddItem(
+            ({'insertingMethod': 'on_categories', 'reverse': '0'}, ))
         self.changeUser('pmManager')
-        self.setMeetingConfig(self.meetingConfig2.getId())
         meeting = self._createMeetingWithItems()
-        self.assertEqual([item.getId() for item in meeting.getItems(ordered=True)],
-                         ['item-2', 'item-3', 'item-4', 'item-5', 'item-1'])
+        ordered_items = meeting.getItems(ordered=True)
+        self.assertEqual(
+            [item.getId() for item in ordered_items],
+            ['item-2', 'item-3', 'item-1', 'item-4', 'item-5'])
+        self.assertEqual(
+            [item.getCategory() for item in ordered_items],
+            ['development', 'development', 'research', 'events', 'events'])
 
     def test_pm_InsertItemOnCategoriesWithDisabledCategory(self):
         '''Test that inserting an item using the "on_categories" sorting method
@@ -389,7 +397,7 @@ class testMeeting(PloneMeetingTestCase):
         # and insert a new item
         self.changeUser('admin')
         self.assertTrue(meeting.getItems(ordered=True)[0].getCategory(), 'development')
-        self.do(self.meetingConfig.categories.development, 'deactivate')
+        self._disableObj(self.meetingConfig.categories.development)
         self.changeUser('pmManager')
         newItem = self.create('MeetingItem')
         # Use the category of 'o5' and 'o6' that is 'events' so the new item will
@@ -410,6 +418,24 @@ class testMeeting(PloneMeetingTestCase):
         self.presentItem(newItem)
         self.assertEqual([item.getId() for item in meeting.getItems(ordered=True)],
                          ['item-2', 'item-3', newItem.getId(), 'item-4', 'item-5', 'item-1'])
+
+    def test_pm_InsertItemClassifiers(self):
+        '''Sort method tested here is "on_classifiers".'''
+        cfg = self.meetingConfig
+        self._removeConfigObjectsFor(cfg)
+        self._enableField('classifier')
+        cfg.setInsertingMethodsOnAddItem(
+            ({'insertingMethod': 'on_classifiers', 'reverse': '0'}, ))
+        self.changeUser('pmManager')
+        meeting = self._createMeetingWithItems()
+        ordered_items = meeting.getItems(ordered=True)
+        self.assertEqual([item.getId() for item in ordered_items],
+                         ['item-4', 'item-5', 'item-2', 'item-3', 'item-1'])
+        # items with no classifier (recurring items here) are inserted at position 0
+        self.assertEqual([item.getClassifier() for item in ordered_items],
+                         ['classifier1', 'classifier1',
+                          'classifier2', 'classifier2',
+                          'classifier3'])
 
     def test_pm_InsertItemAllGroups(self):
         '''Sort method tested here is "on_all_groups".
@@ -957,7 +983,7 @@ class testMeeting(PloneMeetingTestCase):
                           ('secret', 'events')])
         # we can also insert an item using a disabled category
         self.changeUser('admin')
-        self.do(self.meetingConfig.categories.development, 'deactivate')
+        self._disableObj(self.meetingConfig.categories.development)
         self.changeUser('pmManager')
         newItem = self.create('MeetingItem')
         newItem.setProposingGroup(self.vendors_uid)
@@ -1626,7 +1652,7 @@ class testMeeting(PloneMeetingTestCase):
         self.assertEqual(meeting.getItemInsertOrder(item, cfg), [1])
         # disable category, it does not change because for performance reasons,
         # we consider every categories when computing insert order, but the cache was cleaned
-        self.do(cfg.categories.development, 'deactivate')
+        self._disableObj(cfg.categories.development)
         # the cache is invalidated
         self.assertTrue(meeting._check_insert_order_cache(cfg))
         self.assertEqual(meeting.getItemInsertOrder(item, cfg), [1])
@@ -2144,7 +2170,7 @@ class testMeeting(PloneMeetingTestCase):
         item.REQUEST['PUBLISHED'] = item
         # as no current meeting and no meeting in the future, the item
         # may not be presented anymore
-        self.assertTrue(not item.wfConditions().mayPresent())
+        self.assertFalse(item.wfConditions().mayPresent())
 
         item.REQUEST['PUBLISHED'] = meeting
         # freeze the meeting, there will be no more meeting to present the item to
@@ -2575,7 +2601,7 @@ class testMeeting(PloneMeetingTestCase):
         self.changeUser('admin')
         self._removeConfigObjectsFor(self.meetingConfig)
         # make sure 'pmManager' may not see items of 'vendors'
-        self._removePrincipalFromGroup('pmManager', self.vendors_advisers)
+        self._removePrincipalFromGroups('pmManager', [self.vendors_advisers])
 
         # create a meeting and an item, set the meeting as preferredMeeting for the item
         # then when the meeting is removed, the item preferredMeeting is back to 'whatever'
@@ -2714,8 +2740,8 @@ class testMeeting(PloneMeetingTestCase):
         actions_panel._transitions = None
         meetingManager_rendered_actions_panel = actions_panel()
         # we will remove 'pmManager' from the cfg _meetingmanagers group
-        self._removePrincipalFromGroup('pmManager',
-                                       '{0}_{1}'.format(cfg.getId(), MEETINGMANAGERS_GROUP_SUFFIX))
+        self._removePrincipalFromGroups(
+            'pmManager', ['{0}_{1}'.format(cfg.getId(), MEETINGMANAGERS_GROUP_SUFFIX)])
         # we need to reconnect for groups changes to take effect
         self.changeUser('pmManager')
         self.assertFalse('MeetingManager' in self.member.getRolesInContext(meeting))
@@ -2988,18 +3014,16 @@ class testMeeting(PloneMeetingTestCase):
             return
 
         cfg.setWorkflowAdaptations(())
-        cfg.setMeetingWorkflow('meeting_workflow')
         cfg.at_post_edit_script()
         cfg2.setWorkflowAdaptations(())
-        cfg2.setMeetingWorkflow('meeting_workflow')
         cfg2.at_post_edit_script()
 
         self.changeUser('pmManager')
         meeting = self.create('Meeting', date=DateTime('2018/04/09'))
         self.assertEqual(sorted(meeting.getStatesBefore('frozen')),
-                         ['created', 'published'])
-        self.assertEqual(sorted(meeting.getStatesBefore('published')),
                          ['created'])
+        self.assertEqual(sorted(meeting.getStatesBefore('published')),
+                         ['created', 'frozen'])
         # use the no_publication WF adaptation to remove state 'published'
         cfg.setWorkflowAdaptations(('no_publication', ))
         # do not use at_post_edit_script that does a cleanRamCache()
@@ -3008,35 +3032,37 @@ class testMeeting(PloneMeetingTestCase):
         self.assertEqual(sorted(meeting.getStatesBefore('frozen')),
                          ['created'])
         # state not found, every states are returned
-        self.assertEqual(sorted(meeting.getStatesBefore('published')),
-                         ['archived', 'closed', 'created', 'decided', 'frozen'])
+        self.assertEqual(sorted(meeting.getStatesBefore('unknown_state')),
+                         ['closed', 'created', 'decided', 'frozen'])
         cfg.setWorkflowAdaptations(())
         # do not use at_post_edit_script that does a cleanRamCache()
         cfg.registerPortalTypes()
         transaction.commit()
         self.assertEqual(sorted(meeting.getStatesBefore('frozen')),
-                         ['created', 'published'])
-        self.assertEqual(sorted(meeting.getStatesBefore('published')),
                          ['created'])
+        self.assertEqual(sorted(meeting.getStatesBefore('published')),
+                         ['created', 'frozen'])
 
         # different for 2 meetingConfigs
         self.setMeetingConfig(cfg2.getId())
         meeting2 = self.create('Meeting', date=DateTime('2018/04/09'))
         self.assertEqual(sorted(meeting2.getStatesBefore('frozen')),
-                         ['created', 'published'])
+                         ['created'])
+        self.assertEqual(sorted(meeting2.getStatesBefore('published')),
+                         ['created', 'frozen'])
         cfg2.setWorkflowAdaptations(('no_publication', ))
         cfg2.registerPortalTypes()
         transaction.commit()
 
         # different values for different meetings
         self.assertEqual(sorted(meeting.getStatesBefore('frozen')),
-                         ['created', 'published'])
-        self.assertEqual(sorted(meeting.getStatesBefore('published')),
                          ['created'])
+        self.assertEqual(sorted(meeting.getStatesBefore('published')),
+                         ['created', 'frozen'])
         self.assertEqual(sorted(meeting2.getStatesBefore('frozen')),
                          ['created'])
         self.assertEqual(sorted(meeting2.getStatesBefore('published')),
-                         ['archived', 'closed', 'created', 'decided', 'frozen'])
+                         ['closed', 'created', 'decided', 'frozen'])
 
         # if no frozen state found, every states are considered as before frozen
         # connect 'published' state to 'decided'
@@ -3044,7 +3070,7 @@ class testMeeting(PloneMeetingTestCase):
         meeting_wf.states.deleteStates(['frozen'])
         cfg.at_post_edit_script()
         self.assertEqual(sorted(meeting.getStatesBefore('frozen')),
-                         ['archived', 'closed', 'created', 'decided', 'published'])
+                         ['closed', 'created', 'decided', 'published'])
 
     def test_pm_GetPrettyLink(self):
         """Test the Meeting.getPrettyLink method."""
@@ -3072,13 +3098,29 @@ class testMeeting(PloneMeetingTestCase):
         meeting = self.create('Meeting', date=DateTime())
         # a reserved field is shown if used
         usedMeetingAttrs = cfg.getUsedMeetingAttributes()
-        self.assertFalse('notes' in usedMeetingAttrs)
-        self.assertFalse(meeting.showMeetingManagerReservedField('notes'))
-        cfg.setUsedMeetingAttributes(usedMeetingAttrs + ('notes', ))
-        self.assertTrue(meeting.showMeetingManagerReservedField('notes'))
+        self.assertFalse('a_meeting_field' in usedMeetingAttrs)
+        self.assertFalse(meeting.showMeetingManagerReservedField('a_meeting_field'))
+        cfg.setUsedMeetingAttributes(usedMeetingAttrs + ('a_meeting_field', ))
+        self.assertTrue(meeting.showMeetingManagerReservedField('a_meeting_field'))
         # not viewable by non MeetingManagers
         self.changeUser('pmCreator1')
-        self.assertFalse(meeting.showMeetingManagerReservedField('notes'))
+        self.assertFalse(meeting.showMeetingManagerReservedField('a_meeting_field'))
+
+    def test_pm_MeetingManagerReservedFields(self):
+        """Make sure a list of fields is not viewable on meeting except by MeetingManagers."""
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime())
+        self.freezeMeeting(meeting)
+        field_names = ['inAndOutMoves', 'notes', 'secretMeetingObservations', 'authorityNotice']
+        for field_name in field_names:
+            self._enableField(field_name, related_to='Meeting')
+            widget = meeting.getField(field_name).widget
+            # MeetingManager may see
+            self.assertTrue(widget.testCondition(meeting.aq_inner.aq_parent, self.portal, meeting))
+            # other may not see
+            self.changeUser('pmCreator1')
+            self.assertFalse(widget.testCondition(meeting.aq_inner.aq_parent, self.portal, meeting))
+            self.changeUser('pmManager')
 
     def test_pm_DefaultTextValuesFromConfig(self):
         """Some values may be defined in the configuration and used when the meeting is created :
@@ -3242,6 +3284,24 @@ class testMeeting(PloneMeetingTestCase):
         self.changeUser('powerobserver1')
         view.update()
         self.assertTrue(view.showAvailableItems())
+        self.changeUser('powerobserver2')
+        view.update()
+        self.assertFalse(view.showAvailableItems())
+        # will not be the case for cfg2
+        self.meetingConfig2.setDisplayAvailableItemsTo(
+            (POWEROBSERVERPREFIX + 'powerobservers', ))
+        self.changeUser('pmManager')
+        self.setMeetingConfig(self.meetingConfig2.getId())
+        meeting = self.create('Meeting', date=DateTime('2020/08/06'))
+        view = meeting.restrictedTraverse('@@meeting_view')
+        view.update()
+        self.assertTrue(view.showAvailableItems())
+        self.changeUser('powerobserver2')
+        view.update()
+        self.assertTrue(view.showAvailableItems())
+        self.changeUser('powerobserver1')
+        view.update()
+        self.assertFalse(view.showAvailableItems())
 
     def test_pm_AvailableItemsShownInformations(self):
         """When available items shown to other users than MeetingManagers,

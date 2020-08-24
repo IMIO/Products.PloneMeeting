@@ -190,7 +190,7 @@ def postInstall(context):
     pol.setTitle(_(u'PloneMeeting tool policy'))
     pol.setChain('DashboardCollection', ('',))
     pol.setChainForPortalTypes(
-        ('MeetingConfig', 'MeetingCategory'), ('plonemeeting_activity_workflow',))
+        ('MeetingConfig', ), ('plonemeeting_activity_workflow',))
     # use onestate workflow for Folders contained in the tool/MeetingConfigs
     pol.setChain('Folder', ('plonemeeting_onestate_workflow',))
     pc = getattr(site.portal_plonemeeting, WorkflowPolicyConfig_id)
@@ -423,12 +423,15 @@ def _configureCKeditor(site):
         msg_x_large = translate('ckeditor_style_x_large',
                                 domain='PloneMeeting',
                                 context=site.REQUEST).encode('utf-8')
-        msg_indent = translate('ckeditor_style_indent_first_line',
-                               domain='PloneMeeting',
-                               context=site.REQUEST).encode('utf-8')
         msg_table_no_optimization = translate('ckeditor_style_table_no_optimization',
                                               domain='PloneMeeting',
                                               context=site.REQUEST).encode('utf-8')
+        msg_indent = translate('ckeditor_style_indent_first_line',
+                               domain='PloneMeeting',
+                               context=site.REQUEST).encode('utf-8')
+        msg_page_break = translate('ckeditor_style_page_break',
+                                   domain='PloneMeeting',
+                                   context=site.REQUEST).encode('utf-8')
 
         menuStyles = unicode(
             "[\n{0}\n{{ name : '{1}'\t\t, element : 'span', attributes : {{ 'class' : 'highlight-red' }} }},\n"
@@ -440,7 +443,8 @@ def _configureCKeditor(site):
             "{{ name : '{7}'\t\t, element : 'p', attributes : {{ 'class' : 'largeText' }} }},\n"
             "{{ name : '{8}'\t\t, element : 'p', attributes : {{ 'class' : 'xLargeText' }} }},\n"
             "{{ name : '{9}'\t\t, element : 'table', styles : {{ 'table-layout' : 'fixed' }} }},\n"
-            "{{ name : '{10}'\t\t, element : 'p', attributes : {{ 'style' : 'text-indent: 40px;' }} }},\n]\n".
+            "{{ name : '{10}'\t\t, element : 'p', attributes : {{ 'style' : 'text-indent: 40px;' }} }},\n"
+            "{{ name : '{11}'\t\t, element : 'p', attributes : {{ 'class' : 'page-break' }} }},\n]\n".
             format(CKEDITOR_MENUSTYLES_CUSTOMIZED_MSG,
                    msg_highlight_red,
                    msg_highlight_blue,
@@ -451,7 +455,8 @@ def _configureCKeditor(site):
                    msg_large,
                    msg_x_large,
                    msg_table_no_optimization,
-                   msg_indent), enc)
+                   msg_indent,
+                   msg_page_break), enc)
         cke_props.menuStyles = menuStyles
     # make sure we use resolveuid for images so URL is always correct even if item id changed
     cke_props.allow_link_byuid = True
@@ -552,7 +557,7 @@ def _configureDexterityLocalRolesField():
     # meetingadvice
     roles_config = {'advice_group': {
         'advice_given': {u'advisers': {'rel': '', 'roles': []}},
-        'advice_under_edit': {u'advisers': {'rel': '', 'roles': [u'Editor']}}}
+        'advice_under_edit': {u'advisers': {'rel': '', 'roles': [u'Editor', u'Reviewer', u'Contributor']}}}
     }
     msg = add_fti_configuration(portal_type='meetingadvice',
                                 configuration=roles_config['advice_group'],

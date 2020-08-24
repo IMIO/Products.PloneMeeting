@@ -369,9 +369,15 @@ class PMAnnexActionsColumn(AnnexActionsColumn):
 class ReviewStateTitle(I18nColumn):
     """Translate the review_state title and not the id."""
 
+    def _get_workflow(self, item):
+        ''' '''
+        if not hasattr(self, '_cached_wf'):
+            wfTool = api.portal.get_tool('portal_workflow')
+            wf = wfTool.getWorkflowsFor(item.portal_type)[0]
+            self._cached_wf = wf
+        return self._cached_wf
+
     def getValue(self, item):
         """ """
-        obj = self._getObject(item)
-        wfTool = api.portal.get_tool('portal_workflow')
-        wf = wfTool.getWorkflowsFor(obj)[0]
+        wf = self._get_workflow(item)
         return wf.states.get(item.review_state).title
