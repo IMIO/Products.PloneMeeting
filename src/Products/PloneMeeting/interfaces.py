@@ -598,6 +598,10 @@ class IMeetingConfigDocumentation:
         """If an item_state is not managed by MeetingItem.assign_roles_to_group_suffixes,
            and no corresponding item state exists by default, we can manage
            suffix_roles manually."""
+    def extra_item_decided_states(self):
+        """Returns additional item decided states."""
+    def extra_item_positive_decided_states(self):
+        """Returns additional item positive decided states."""
 
 
 class IMeetingConfigCustom(IMeetingConfig):

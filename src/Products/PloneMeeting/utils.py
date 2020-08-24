@@ -1753,7 +1753,7 @@ def compute_item_roles_to_assign_to_suffixes(cfg, item_state, org=None):
         # every item validation suffixes get View access
         # if item is in a decided state, we also give the Contributor
         # role to every validation suffixes
-        item_is_decided = item_state in cfg.adapted().getItemDecidedStates()
+        item_is_decided = item_state in cfg.getItemDecidedStates()
         for suffix in get_item_validation_wf_suffixes(cfg, org):
             given_roles = ['Reader']
             if item_is_decided and suffix != 'observers':

@@ -679,7 +679,7 @@ class testWorkflows(PloneMeetingTestCase):
                                        ('meetingmanager_correct_closed_meeting', ))
         # call updateLocalRoles on item only if it not already decided
         # as updateLocalRoles is called when item review_state changed
-        self.assertTrue('accepted' in cfg.adapted().getItemDecidedStates())
+        self.assertTrue('accepted' in cfg.getItemDecidedStates())
         cfg.setOnMeetingTransitionItemActionToExecute(
             [{'meeting_transition': 'decide',
               'item_action': 'itemfreeze',
@@ -696,7 +696,7 @@ class testWorkflows(PloneMeetingTestCase):
               'tal_expression': ''},
              {'meeting_transition': 'close',
               'item_action': EXECUTE_EXPR_VALUE,
-              'tal_expression': 'python: item.queryState() in cfg.adapted().getItemDecidedStates() and '
+              'tal_expression': 'python: item.queryState() in cfg.getItemDecidedStates() and '
                 'item.updateLocalRoles()'},
              {'meeting_transition': 'close',
               'item_action': 'accept',

@@ -2572,7 +2572,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         wfTool = api.portal.get_tool('portal_workflow')
         itemWF = wfTool.getWorkflowsFor(itemType)[0]
         livingItemStates = [state for state in itemWF.states
-                            if state not in self.adapted().getItemDecidedStates()]
+                            if state not in self.getItemDecidedStates()]
         infos = OrderedDict(
             [
                 # My items
@@ -3160,23 +3160,37 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     def getItemDecidedStates(self):
         '''Return list of item decided states.'''
-        return ['accepted',
-                'accepted_but_modified',
-                'accepted_out_of_meeting',
-                'accepted_out_of_meeting_emergency',
-                'delayed',
-                'delayed',
-                'marked_not_applicable',
-                'postponed_next_meeting',
-                'refused',
-                'removed']
+        item_decided_states = [
+            'accepted',
+            'accepted_but_modified',
+            'accepted_out_of_meeting',
+            'accepted_out_of_meeting_emergency',
+            'delayed',
+            'delayed',
+            'marked_not_applicable',
+            'postponed_next_meeting',
+            'refused',
+            'removed']
+        item_decided_states += self.adapted().extra_item_decided_states()
+        return item_decided_states
+
+    def extra_item_decided_states(self):
+        '''See doc in interfaces.py.'''
+        return []
 
     def getItemPositiveDecidedStates(self):
         '''Return list of item positive decided states.'''
-        return ['accepted',
-                'accepted_but_modified',
-                'accepted_out_of_meeting',
-                'accepted_out_of_meeting_emergency']
+        item_positive_decided_states = [
+            'accepted',
+            'accepted_but_modified',
+            'accepted_out_of_meeting',
+            'accepted_out_of_meeting_emergency']
+        item_positive_decided_states += self.adapted().extra_item_positive_decided_states()
+        return item_positive_decided_states
+
+    def extra_item_positive_decided_states(self):
+        '''See doc in interfaces.py.'''
+        return []
 
     security.declarePublic('getUsingGroups')
 

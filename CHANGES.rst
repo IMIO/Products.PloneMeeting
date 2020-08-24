@@ -9,6 +9,9 @@ Changelog
 - Added `waiting_advices_from_last_val_level_advices_required_to_validate`
   WFAdaptation to be able to block item validation in case advices still
   need to be given.
+- Added adaptable methods `MeetingConfig.extra_item_decided_states` and
+  `MeetingConfig.extra_item_positive_decided_states` to formalize how to extend
+  `item_decided_states` and `item_positive_decided_states`.
 
 4.2a7 (2020-06-24)
 ------------------
