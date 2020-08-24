@@ -2558,12 +2558,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('showAdvancedClonableToOtherMCs')
 
-    def showAdvancedClonableToOtherMCs(self):
+    def showAdvancedClonableToOtherMCs(self, showClonableToOtherMCs=False):
         '''Display otherMeetingConfigsClonableTo as advanced or not.
            Functionnality enabled and using relevant otherMeetingConfigsClonableToFieldXXX are used.'''
         item = self.getSelf()
         res = False
-        if item.showClonableToOtherMCs():
+        if showClonableToOtherMCs:
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(item)
             usedAttrs = [usedAttr for usedAttr in cfg.getUsedItemAttributes()

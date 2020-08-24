@@ -26,7 +26,8 @@
                                   usedMeetingAttrs meetingConfig/getUsedMeetingAttributes;
                                   context_url context/absolute_url;
                                   showAdvices python: context.adapted().showAdvices();
-                                  showAdvancedClonableToOtherMCs python: context.adapted().showAdvancedClonableToOtherMCs();">
+                                  showClonableToOtherMCs context/showClonableToOtherMCs;
+                                  showAdvancedClonableToOtherMCs python: context.adapted().showAdvancedClonableToOtherMCs(showClonableToOtherMCs);">
 
     <script language="javascript"
             tal:content="python: 'ploneEditor = \'%s\';' % (member.getProperty('wysiwyg_editor') or here.portal_properties.site_properties.default_editor)">
@@ -343,7 +344,7 @@
 
             <tal:comment replace="nothing">Other MeetingConfigs Clonable To</tal:comment>
             <div class="discreet"
-                 tal:condition="not:showAdvancedClonableToOtherMCs"
+                 tal:condition="context/showClonableToOtherMCs"
                  tal:define="otherMCs context/getOtherMeetingConfigsClonableTo">
                 <span class="item_attribute_label"
                       i18n:translate="PloneMeeting_label_otherMeetingConfigsClonableTo"></span>:&nbsp;&nbsp;
@@ -351,6 +352,10 @@
                     <span tal:replace="structure context/displayOtherMeetingConfigsClonableTo">Other mc clonable to (Emergency, privacy)</span>
                 </tal:displayOtherMeetingConfigsClonableTo>
                 <span tal:condition="not: otherMCs">-</span>
+                <tal:details condition="showAdvancedClonableToOtherMCs"> — <a class="discreet"
+                     tal:attributes="href string:${context_url}#clonable-to-other-mcs"
+                     i18n:translate="legend_details" i18n:domain="plone">Details</a>
+                </tal:details>
             </div>
 
             <tal:comment replace="nothing">Privacy</tal:comment>
@@ -467,8 +472,12 @@
     <tal:comment replace="nothing">Other meetingConfigs clonable to</tal:comment>
     <tal:block tal:condition="showAdvancedClonableToOtherMCs"
                tal:define="otherMCs context/getOtherMeetingConfigsClonableTo">
-    <fieldset>
-      <legend i18n:translate="PloneMeeting_label_otherMeetingConfigsClonableTo"></legend>
+    <fieldset >
+      <legend>
+        <a id="anchor-clonable-to-other-mcs" name="clonable-to-other-mcs">
+          <span i18n:translate="PloneMeeting_label_otherMeetingConfigsClonableTo"></span>
+        </a>
+      </legend>
       <div>
         <tal:displayOtherMeetingConfigsClonableTo tal:condition="otherMCs">
             <span tal:replace="structure context/displayOtherMeetingConfigsClonableTo">Other mc clonable to (Emergency, privacy)</span>
