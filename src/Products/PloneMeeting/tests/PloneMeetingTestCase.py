@@ -523,7 +523,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
           Helper method for adding a given p_member to every '_prereviewers' group
           corresponding to every '_reviewers' group he is in.
         """
-        reviewers = reviewersFor(self.meetingConfig.getItemWorkflow())
+        reviewers = reviewersFor(self.meetingConfig)
         groups = [group for group in member.getGroups() if group.endswith('_%s' % reviewers.keys()[0])]
         groups = [group.replace(reviewers.keys()[0], reviewers.keys()[-1]) for group in groups]
         for group in groups:
@@ -564,9 +564,10 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         self.changeUser(self.member.getId())
         cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
 
-    def _removePrincipalFromGroup(self, principal_id, group_id):
+    def _removePrincipalFromGroups(self, principal_id, group_ids):
         """We need to changeUser so getGroups is updated."""
-        self.portal.portal_groups.removePrincipalFromGroup(principal_id, group_id)
+        for group_id in group_ids:
+            self.portal.portal_groups.removePrincipalFromGroup(principal_id, group_id)
         self.changeUser(self.member.getId())
         cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
 
@@ -588,6 +589,20 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                 else:
                     po_infos['meeting_access_on'] = access_on
         cfg.setPowerObservers(power_observers)
+
+    def _activate_wfas(self, wfas, cfg=None):
+        """Activate given p_wfas, we clean wfas, apply,
+           then set given p_wfas and apply again."""
+        currentUser = self.member.getId()
+        self.changeUser('siteadmin')
+        if cfg is None:
+            cfg = self.meetingConfig
+        cfg.setWorkflowAdaptations(())
+        cfg.at_post_edit_script()
+        if wfas:
+            cfg.setWorkflowAdaptations(wfas)
+            cfg.at_post_edit_script()
+        self.changeUser(currentUser)
 
     def _enableAutoConvert(self, enable=True):
         """Enable collective.documentviewer auto_convert."""
@@ -623,3 +638,4 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             # manage cache
             notify(ObjectModifiedEvent(obj))
         self.cleanMemoize()
+

@@ -235,6 +235,7 @@ developers.advisers.append(pmManager)
 
 vendors = OrgDescriptor('vendors', 'Vendors', u'Devil')
 vendors.creators.append(pmCreator2)
+vendors.prereviewers.append(pmReviewer2)
 vendors.reviewers.append(pmReviewer2)
 vendors.observers.append(pmReviewer2)
 vendors.observers.append(pmObserver2)
@@ -294,61 +295,53 @@ meetingPma.annexTypes = [financialAnalysis, budgetAnalysisCfg1, overheadAnalysis
 meetingPma.usedItemAttributes = ('description', 'toDiscuss', 'itemTags', 'itemIsSigned',)
 meetingPma.usedMeetingAttributes = ('place',)
 meetingPma.maxShownListings = '100'
-meetingPma.itemDecidedStates = ('accepted', 'delayed', 'confirmed', 'itemarchived')
-meetingPma.workflowAdaptations = []
-meetingPma.itemPositiveDecidedStates = ['accepted', 'confirmed']
+meetingPma.workflowAdaptations = ['delayed']
+meetingPma.itemPositiveDecidedStates = ['accepted']
 meetingPma.transitionsForPresentingAnItem = ('propose', 'validate', 'present', )
 meetingPma.onMeetingTransitionItemActionToExecute = (
+    {'meeting_transition': 'freeze',
+     'item_action': 'itemfreeze',
+     'tal_expression': ''},
+
+    {'meeting_transition': 'publish',
+     'item_action': 'itemfreeze',
+     'tal_expression': ''},
     {'meeting_transition': 'publish',
      'item_action': 'itempublish',
      'tal_expression': ''},
 
-    {'meeting_transition': 'freeze',
-     'item_action': 'itempublish',
-     'tal_expression': ''},
-    {'meeting_transition': 'freeze',
-     'item_action': 'itemfreeze',
-     'tal_expression': ''},
-
-    {'meeting_transition': 'decide',
-     'item_action': 'itempublish',
-     'tal_expression': ''},
     {'meeting_transition': 'decide',
      'item_action': 'itemfreeze',
      'tal_expression': ''},
-
-    {'meeting_transition': 'close',
+    {'meeting_transition': 'decide',
      'item_action': 'itempublish',
-     'tal_expression': ''},
-    {'meeting_transition': 'close',
-     'item_action': 'itemfreeze',
-     'tal_expression': ''},
-    {'meeting_transition': 'close',
-     'item_action': 'accept',
-     'tal_expression': ''},
-    {'meeting_transition': 'close',
-     'item_action': 'confirm',
      'tal_expression': ''},
 
     {'meeting_transition': 'publish_decisions',
-     'item_action': 'itempublish',
+     'item_action': 'itemfreeze',
      'tal_expression': ''},
     {'meeting_transition': 'publish_decisions',
-     'item_action': 'itemfreeze',
+     'item_action': 'itempublish',
      'tal_expression': ''},
     {'meeting_transition': 'publish_decisions',
      'item_action': 'accept',
      'tal_expression': ''},
-    {'meeting_transition': 'publish_decisions',
-     'item_action': 'confirm',
-     'tal_expression': ''},
 
-    {'meeting_transition': 'archive',
-     'item_action': 'itemarchive',
+    {'meeting_transition': 'close',
+     'item_action': 'itemfreeze',
+     'tal_expression': ''},
+    {'meeting_transition': 'close',
+     'item_action': 'itempublish',
+     'tal_expression': ''},
+    {'meeting_transition': 'close',
+     'item_action': 'accept',
      'tal_expression': ''},
 
     {'meeting_transition': 'backToCreated',
      'item_action': 'backToItemPublished',
+     'tal_expression': ''},
+    {'meeting_transition': 'backToCreated',
+     'item_action': 'backToItemFrozen',
      'tal_expression': ''},
     {'meeting_transition': 'backToCreated',
      'item_action': 'backToPresented',
@@ -414,13 +407,12 @@ meetingPga.onMeetingTransitionItemActionToExecute = deepcopy(
 meetingPga.insertingMethodsOnAddItem = ({'insertingMethod': 'on_categories', 'reverse': '0'}, )
 meetingPga.useGroupsAsCategories = False
 meetingPga.itemTemplates = (template1, template2, )
+meetingPga.workflowAdaptations = ['delayed']
 meetingPga.useAdvices = False
 meetingPga.selectableAdvisers = []
 # use same values as meetingPma for powerObserversStates
 meetingPga.powerObservers = deepcopy(meetingPma.powerObservers)
-meetingPga.itemDecidedStates = ('accepted', 'delayed', 'confirmed', 'itemarchived')
-meetingPga.workflowAdaptations = []
-meetingPga.itemPositiveDecidedStates = ['accepted', 'confirmed']
+meetingPga.itemPositiveDecidedStates = ['accepted']
 meetingPga.useCopies = True
 meetingPga.selectableCopyGroups = [developers.getIdSuffixed('reviewers'), vendors.getIdSuffixed('reviewers')]
 meetingPga.itemCopyGroupsStates = ['validated', 'itempublished', 'itemfrozen', 'accepted', 'delayed']

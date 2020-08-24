@@ -311,22 +311,21 @@ div.viewlet_workflowstate span.state-advice_under_edit {
 .state-advice_under_edit {color: red;}
 /* DarkOrange */
 div.viewlet_workflowstate span[class^='state-proposed'],
-div.viewlet_workflowstate span.state-proposed_waiting_advices,
+div.viewlet_workflowstate span[class$='waiting_advices'],
 div.viewlet_workflowstate span.state-prevalidated,
-div.viewlet_workflowstate span.state-prevalidated_waiting_advices,
-div.viewlet_workflowstate span.state-proposed__or__prevalidated_waiting_advices,
-div.viewlet_workflowstate span.state-waiting_advices,
 div.viewlet_workflowstate span.state-returned_to_proposing_group_proposed,
 div.viewlet_workflowstate span.state-returned_to_proposing_group_prevalidated {
     background-color: DarkOrange;
     border-color: DarkOrange;
 }
 .state-proposed,
-.state-proposed_waiting_advices,
+.state-proposedToValidationLevel1,
+.state-proposedToValidationLevel2,
+.state-proposedToValidationLevel3,
+.state-proposedToValidationLevel4,
+.state-proposedToValidationLevel5,
+span[class$='waiting_advices'],
 .state-prevalidated,
-.state-prevalidated_waiting_advices,
-.state-proposed__or__prevalidated_waiting_advices,
-.state-waiting_advices,
 .state-returned_to_proposing_group_proposed,
 .state-returned_to_proposing_group_prevalidated {color: DarkOrange;}
 /* blue */
@@ -389,8 +388,7 @@ div.viewlet_workflowstate span.state-accepted,
 div.viewlet_workflowstate span.state-accepted_but_modified,
 div.viewlet_workflowstate span.state-accepted_out_of_meeting,
 div.viewlet_workflowstate span.state-accepted_out_of_meeting_emergency,
-div.viewlet_workflowstate span.state-pre_accepted,
-div.viewlet_workflowstate span.state-confirmed {
+div.viewlet_workflowstate span.state-pre_accepted {
     background-color: green;
     border-color: green;
 }
@@ -398,8 +396,7 @@ div.viewlet_workflowstate span.state-confirmed {
 .state-accepted_but_modified,
 .state-accepted_out_of_meeting,
 .state-accepted_out_of_meeting_emergency,
-.state-pre_accepted,
-.state-confirmed {color: green;}
+.state-pre_accepted {color: green;}
 /* Violet */
 div.viewlet_workflowstate span.state-refused {
     background-color: violet;
@@ -657,8 +654,9 @@ p.indent-firstline {text-indent: 40px;}
     font-size: 120%;
 }
 
-.input_disabled {
-    color: grey !important;
+.input_disabled,
+input[readonly=""] {
+    color: lightgrey !important;
     border-color: lightgrey !important;
     cursor: not-allowed !important;
 }

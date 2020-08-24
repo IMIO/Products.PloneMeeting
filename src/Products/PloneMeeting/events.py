@@ -106,18 +106,22 @@ def onItemTransition(item, event):
     '''Called whenever a transition has been fired on an item.'''
     if not event.transition or (item != event.object):
         return
+
+    tool = api.portal.get_tool('portal_plonemeeting')
+    cfg = tool.getMeetingConfig(item)
+
     transitionId = event.transition.id
-    if transitionId.startswith('backTo'):
-        action = 'doCorrect'
-    elif transitionId.startswith('item'):
-        action = 'doItem%s%s' % (transitionId[4].upper(), transitionId[5:])
-    else:
-        action = 'do%s%s' % (transitionId[0].upper(), transitionId[1:])
+    action = item.wfActions()._getCustomActionName(transitionId)
+    if not action:
+        if transitionId.startswith('backTo'):
+            action = 'doCorrect'
+        elif transitionId.startswith('item'):
+            action = 'doItem%s%s' % (transitionId[4].upper(), transitionId[5:])
+        else:
+            action = 'do%s%s' % (transitionId[0].upper(), transitionId[1:])
     do(action, event)
 
     # check if we need to send the item to another meetingConfig
-    tool = api.portal.get_tool('portal_plonemeeting')
-    cfg = tool.getMeetingConfig(item)
     if item.queryState() in cfg.getItemAutoSentToOtherMCStates():
         otherMCs = item.getOtherMeetingConfigsClonableTo()
         for otherMC in otherMCs:
@@ -593,7 +597,7 @@ def item_added_or_initialized(item):
        Especially for plone.restapi that calls Initialized then do the validation.'''
     # make sure workflow mapping is applied, plone.restapi needs it...
     user = api.user.get_current()
-    item.manage_addLocalRoles(user.getId(), ('MeetingMember',))
+    item.manage_addLocalRoles(user.getId(), ('Editor', 'Reader'))
     # Add a place to store adviceIndex
     item.adviceIndex = PersistentMapping()
     # Add a place to store emergency changes history
@@ -609,6 +613,8 @@ def item_added_or_initialized(item):
         alsoProvides(item, IConfigElement)
     else:
         noLongerProvides(item, IConfigElement)
+        # An item has ben modified
+        invalidate_cachekey_volatile_for('Products.PloneMeeting.MeetingItem.modified', get_again=True)
 
 
 def onItemInitialized(item, event):
@@ -725,7 +731,7 @@ def onAdviceAdded(advice, event):
     _advice_update_item(item)
 
     # Send mail if relevant
-    sendMailIfRelevant(item, 'adviceEdited', 'MeetingMember', isRole=True)
+    sendMailIfRelevant(item, 'adviceEdited', 'creators', isSuffix=True)
     sendMailIfRelevant(item, 'adviceEditedOwner', 'Owner', isRole=True)
 
 
@@ -805,7 +811,7 @@ def onAnnexAdded(annex, event):
                 parent.updateLocalRoles(invalidate=True)
 
             # Potentially I must notify MeetingManagers through email.
-            sendMailIfRelevant(parent, 'annexAdded', 'MeetingManager', isRole=True)
+            sendMailIfRelevant(parent, 'annexAdded', 'meetingmanagers', isSuffix=True)
 
         # update parent modificationDate, it is used for caching and co
         # and reindex parent relevant indexes

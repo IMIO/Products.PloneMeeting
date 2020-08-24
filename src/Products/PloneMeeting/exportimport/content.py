@@ -365,7 +365,6 @@ class ToolInitializer:
                 field.set(cfg, cData[fieldName], mimetype='text/html')
         # call processForm passing dummy values so existing values are not touched
         cfg.processForm(values={'dummy': None})
-
         # Validates meeting config (validation seems not to be triggered
         # automatically when an object is created from code).
         errors = []

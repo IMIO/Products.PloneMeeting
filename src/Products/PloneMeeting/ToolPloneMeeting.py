@@ -1538,6 +1538,14 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         '''See doc in interfaces.py.'''
         return False
 
+    def performCustomAdviceWFAdaptations(self, meetingConfig, wfAdaptation, logger, advice_wf_id):
+        '''See doc in interfaces.py.'''
+        return False
+
+    def get_extra_adviser_infos(self):
+        '''See doc in interfaces.py.'''
+        return {}
+
     def getAdvicePortalTypes_cachekey(method, self, as_ids=False):
         '''cachekey method for self.getAdvicePortalTypes.'''
         return (str(self.REQUEST._debug), as_ids)

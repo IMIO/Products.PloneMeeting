@@ -428,13 +428,13 @@ class MeetingConfigDescriptor(Descriptor):
                          'displayAvailableItemsTo', 'redirectToNextMeeting', 'toDoListSearches',
                          'dashboardItemsListingsFilters', 'dashboardMeetingAvailableItemsFilters',
                          'dashboardMeetingLinkedItemsFilters', 'groupsHiddenInDashboardFilter',
-                         'usersHiddenInDashboardFilter', 'workflowAdaptations', 'transitionsToConfirm',
+                         'usersHiddenInDashboardFilter', 'workflowAdaptations',
+                         'itemWFValidationLevels', 'transitionsToConfirm',
                          'transitionsForPresentingAnItem', 'onTransitionFieldTransforms',
                          'onMeetingTransitionItemActionToExecute', 'meetingPresentItemWhenNoCurrentMeetingStates',
                          'itemAutoSentToOtherMCStates', 'itemManualSentToOtherMCStates', 'advicesKeptOnSentToOtherMC',
                          'mailItemEvents', 'mailMeetingEvents',
                          'usedAdviceTypes', 'selectableAdvisers', 'itemAdviceStates',
-                         'itemDecidedStates', 'itemPositiveDecidedStates',
                          'itemAdviceEditStates', 'itemAdviceViewStates', 'itemBudgetInfosStates',
                          'powerAdvisersGroups', 'powerObservers',
                          'meetingConfigsToCloneTo', 'itemAdviceInvalidateStates', 'transitionsReinitializingDelays',
@@ -601,11 +601,84 @@ class MeetingConfigDescriptor(Descriptor):
                                           'IMeetingWorkflowConditions'
         self.meetingActionsInterface = 'Products.PloneMeeting.interfaces.' \
                                        'IMeetingWorkflowActions'
-        self.itemDecidedStates = []
-        self.itemPositiveDecidedStates = []
         # Workflow adaptations are sets of changes that can be applied to
         # default PloneMeeting workflows.
         self.workflowAdaptations = []
+        self.itemWFValidationLevels = (
+            {'leading_transition': '-',
+             'state_title': 'itemcreated',
+             'suffix': 'creators',
+             'enabled': '1',
+             'state': 'itemcreated',
+             'back_transition_title': 'backToItemCreated',
+             'back_transition': 'backToItemCreated',
+             'leading_transition_title': '-',
+             'extra_suffixes': []},
+            {'leading_transition': 'propose',
+             'state_title': 'proposed',
+             'suffix': 'reviewers',
+             'enabled': '1',
+             'state': 'proposed',
+             'back_transition_title': 'backToProposed',
+             'back_transition': 'backToProposed',
+             'leading_transition_title': 'propose',
+             'extra_suffixes': []},
+            {'leading_transition': 'prevalidate',
+             'state_title': 'prevalidated',
+             'suffix': 'reviewers',
+             'enabled': '0',
+             'state': 'prevalidated',
+             'back_transition_title': 'backToPrevalidated',
+             'back_transition': 'backToPrevalidated',
+             'leading_transition_title': 'prevalidate',
+             'extra_suffixes': []},
+            {'leading_transition': 'proposeToValidationLevel1',
+             'state_title': 'proposedToValidationLevel1',
+             'suffix': 'level1reviewers',
+             'enabled': '0',
+             'state': 'proposedToValidationLevel1',
+             'back_transition_title': 'backToProposedToValidationLevel1',
+             'back_transition': 'backToProposedToValidationLevel1',
+             'leading_transition_title': 'proposeToValidationLevel1',
+             'extra_suffixes': []},
+            {'leading_transition': 'proposeToValidationLevel2',
+             'state_title': 'proposedToValidationLevel2',
+             'suffix': 'level2reviewers',
+             'enabled': '0',
+             'state': 'proposedToValidationLevel2',
+             'back_transition_title': 'backToProposedToValidationLevel2',
+             'back_transition': 'backToProposedToValidationLevel2',
+             'leading_transition_title': 'proposeToValidationLevel2',
+             'extra_suffixes': []},
+            {'leading_transition': 'proposeToValidationLevel3',
+             'state_title': 'proposedToValidationLevel3',
+             'suffix': 'level3reviewers',
+             'enabled': '0',
+             'state': 'proposedToValidationLevel3',
+             'back_transition_title': 'backToProposedToValidationLevel3',
+             'back_transition': 'backToProposedToValidationLevel3',
+             'leading_transition_title': 'proposeToValidationLevel3',
+             'extra_suffixes': []},
+            {'leading_transition': 'proposeToValidationLevel4',
+             'state_title': 'proposedToValidationLevel4',
+             'suffix': 'level4reviewers',
+             'enabled': '0',
+             'state': 'proposedToValidationLevel4',
+             'back_transition_title': 'backToProposedToValidationLevel4',
+             'back_transition': 'backToProposedToValidationLevel4',
+             'leading_transition_title': 'proposeToValidationLevel4',
+             'extra_suffixes': []},
+            {'leading_transition': 'proposeToValidationLevel5',
+             'state_title': 'proposedToValidationLevel5',
+             'suffix': 'level5reviewers',
+             'enabled': '0',
+             'state': 'proposedToValidationLevel5',
+             'back_transition_title': 'backToProposedToValidationLevel5',
+             'back_transition': 'backToProposedToValidationLevel5',
+             'leading_transition_title': 'proposeToValidationLevel5',
+             'extra_suffixes': []},
+        )
+
         # "Transitions to confirm" are Meeting or Item-related transitions for
         # which, in the user interface, a click on the corresponding icon or
         # button will show a confirmation popup. In this popup, the user will
@@ -638,7 +711,7 @@ class MeetingConfigDescriptor(Descriptor):
         # In the "decisions" portlet, the "all decisions" portlet will only show
         # meetings having one of the states listed in decisionTopicStates.
         # this will be applied on the 'searchlastdecisions' DashboardCollection
-        self.decisionTopicStates = ['decided', 'closed', 'archived']
+        self.decisionTopicStates = ['decided', 'closed']
         # Maximum number of meetings or decisions shown in the meeting and
         # decision portlets. If overflow, a combo box is shown instead of a
         # list of links.

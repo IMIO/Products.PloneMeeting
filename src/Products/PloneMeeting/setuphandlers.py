@@ -557,7 +557,7 @@ def _configureDexterityLocalRolesField():
     # meetingadvice
     roles_config = {'advice_group': {
         'advice_given': {u'advisers': {'rel': '', 'roles': []}},
-        'advice_under_edit': {u'advisers': {'rel': '', 'roles': [u'Editor']}}}
+        'advice_under_edit': {u'advisers': {'rel': '', 'roles': [u'Editor', u'Reviewer', u'Contributor']}}}
     }
     msg = add_fti_configuration(portal_type='meetingadvice',
                                 configuration=roles_config['advice_group'],

@@ -684,9 +684,16 @@ if (/msie/.test(navigator.userAgent.toLowerCase())) {
 $(document).ready(function () {
     $("input[value^='not_selectable_value_'").each(function() {
         this.disabled = true;
-    });
+    }); 
 });
 
+/* make sure first line of MeetingConfig.itemWFValidationLevels can not be edited */
+$(document).ready(function () {
+    $("input[id$='_itemWFValidationLevels_1'").each(function() {
+        this.readOnly = true;
+    });
+    
+});
 
 function update_search_term(tag){
   var url = $("link[rel='canonical']").attr('href') + '/@@async_render_search_term';

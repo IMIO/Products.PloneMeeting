@@ -77,10 +77,7 @@ class Discuss(BrowserView):
         if discussAction == 'ask':
             # I must send a mail to MeetingManagers for notifying them that a reviewer
             # wants to discuss this item.
-            sendMailEnabled = sendMailIfRelevant(item,
-                                                 'askDiscussItem',
-                                                 'MeetingManager',
-                                                 isRole=True)
+            sendMailEnabled = sendMailIfRelevant(item, 'askDiscussItem', 'meetingmanagers', isSuffix=True)
             if sendMailEnabled:
                 msgId = 'to_discuss_ask_mail_sent'
             else:

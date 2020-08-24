@@ -21,25 +21,28 @@ class PloneMeetingTestingHelpers:
     TRANSITIONS_FOR_PRESENTING_ITEM_1 = TRANSITIONS_FOR_PRESENTING_ITEM_2 = (
         'propose', 'prevalidate', 'validate', 'present', )
 
-    TRANSITIONS_FOR_PUBLISHING_MEETING_1 = TRANSITIONS_FOR_PUBLISHING_MEETING_2 = ('publish', )
-    TRANSITIONS_FOR_FREEZING_MEETING_1 = TRANSITIONS_FOR_FREEZING_MEETING_2 = ('publish', 'freeze', )
-    TRANSITIONS_FOR_DECIDING_MEETING_1 = TRANSITIONS_FOR_DECIDING_MEETING_2 = ('publish', 'freeze', 'decide', )
-    TRANSITIONS_FOR_CLOSING_MEETING_1 = TRANSITIONS_FOR_CLOSING_MEETING_2 = ('publish',
-                                                                             'freeze',
+    TRANSITIONS_FOR_PUBLISHING_MEETING_1 = TRANSITIONS_FOR_PUBLISHING_MEETING_2 = ('freeze', 'publish', )
+    TRANSITIONS_FOR_FREEZING_MEETING_1 = TRANSITIONS_FOR_FREEZING_MEETING_2 = ('freeze', )
+    TRANSITIONS_FOR_DECIDING_MEETING_1 = TRANSITIONS_FOR_DECIDING_MEETING_2 = ('freeze', 'publish', 'decide')
+    TRANSITIONS_FOR_CLOSING_MEETING_1 = TRANSITIONS_FOR_CLOSING_MEETING_2 = ('freeze',
+                                                                             'publish',
                                                                              'decide',
                                                                              'close', )
-    TRANSITIONS_FOR_ACCEPTING_ITEMS_MEETING_1 = TRANSITIONS_FOR_ACCEPTING_ITEMS_MEETING_2 = ('publish', 'freeze', )
+    TRANSITIONS_FOR_ACCEPTING_ITEMS_MEETING_1 = ('freeze', 'publish', 'decide')
+    TRANSITIONS_FOR_ACCEPTING_ITEMS_MEETING_2 = ('freeze', 'publish', 'decide')
     BACK_TO_WF_PATH_1 = BACK_TO_WF_PATH_2 = {
         # Meeting
-        'created': ('backToDecided',
-                    'backToFrozen',
+        'created': ('backToDecisionsPublished',
+                    'backToDecided',
                     'backToPublished',
+                    'backToFrozen',
                     'backToCreated',),
         # MeetingItem
         'itemcreated': ('backToItemPublished',
                         'backToItemFrozen',
                         'backToPresented',
                         'backToValidated',
+                        'backToPreValidated',
                         'backToProposed',
                         'backToItemCreated', ),
         'proposed': ('backToItemPublished',
@@ -81,8 +84,8 @@ class PloneMeetingTestingHelpers:
     WF_MEETING_TRANSITION_NAME_MAPPINGS_2 = {}
 
     # in which state an item must be after a particular meeting transition?
-    ITEM_WF_STATE_AFTER_MEETING_TRANSITION = {'publish_decisions': 'confirmed',
-                                              'close': 'confirmed', }
+    ITEM_WF_STATE_AFTER_MEETING_TRANSITION = {'publish_decisions': 'accepted',
+                                              'close': 'accepted', }
 
     def _stateMappingFor(self, state_name, meta_type='MeetingItem'):
         """ """
@@ -439,3 +442,40 @@ class PloneMeetingTestingHelpers:
         """Select organization in ORGANIZATIONS_REGISTRY."""
         select_organization(org_uid, remove=remove)
         self.cleanMemoize()
+
+    def _enablePrevalidation(self, cfg, enable_extra_suffixes=False):
+        """Enable the 'prevalidated' state in MeetingConfig.itemWFValidationLevels."""
+        currentUser = self.member.getId()
+        self.changeUser('admin')
+        itemWFValidationLevels = cfg.getItemWFValidationLevels()
+        itemWFValidationLevels[1]['suffix'] = 'prereviewers'
+        itemWFValidationLevels[2]['enabled'] = '1'
+        if enable_extra_suffixes:
+            itemWFValidationLevels[2]['extra_suffixes'] = ['reviewers']
+        cfg.setItemWFValidationLevels(itemWFValidationLevels)
+        cfg.at_post_edit_script()
+        self.changeUser(currentUser)
+
+    def _enableItemValidationLevels(self, cfg, levels=[]):
+        """Disable every item validation levels."""
+        currentUser = self.member.getId()
+        self.changeUser('admin')
+        itemValLevels = cfg.getItemWFValidationLevels()
+        for itemValLevel in itemValLevels:
+            if not levels or itemValLevel['state'] in levels:
+                itemValLevel['enabled'] = '1'
+        cfg.setItemWFValidationLevels(itemValLevels)
+        cfg.at_post_edit_script()
+        self.changeUser(currentUser)
+
+    def _disableItemValidationLevels(self, cfg, levels=[]):
+        """Disable every item validation levels."""
+        currentUser = self.member.getId()
+        self.changeUser('admin')
+        itemValLevels = cfg.getItemWFValidationLevels()
+        for itemValLevel in itemValLevels:
+            if not levels or itemValLevel['state'] in levels:
+                itemValLevel['enabled'] = '0'
+        cfg.setItemWFValidationLevels(itemValLevels)
+        cfg.at_post_edit_script()
+        self.changeUser(currentUser)

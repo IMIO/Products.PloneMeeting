@@ -21,7 +21,8 @@
                                   obj_absolute_url python: obj and obj.absolute_url() or '';
                                   customMessageInfos python: context.adapted().getCustomAdviceMessageFor(advice);
                                   displayDefaultComplementaryMessage customMessageInfos/displayDefaultComplementaryMessage;
-                                  customAdviceMessage customMessageInfos/customAdviceMessage;">
+                                  customAdviceMessage customMessageInfos/customAdviceMessage;
+                                  state_infos python: view.state_infos(context);">
                 <legend>
                   <div style="display: inline"
                        class="collapsible active"

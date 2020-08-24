@@ -4,8 +4,11 @@ from Acquisition import aq_base
 from AccessControl.Permission import Permission
 from appy.shared.diff import HtmlDiff
 from bs4 import BeautifulSoup
+from collections import OrderedDict
 from collective.behavior.talcondition.utils import _evaluateExpression
+from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_own_organization
+from collective.contact.plonegroup.utils import get_plone_group
 from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.excelexport.exportables.dexterityfields import get_exportable_for_fieldname
 from collective.fingerpointing.config import AUDIT_MESSAGE
@@ -80,6 +83,7 @@ from zope.i18n import translate
 from zope.interface import implements
 from zope.security.interfaces import IPermission
 
+import itertools
 import logging
 import os
 import os.path
@@ -509,14 +513,14 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
         logger.warn(str(ee))
 
 
-def sendMailIfRelevant(obj, event, permissionOrRole, isRole=False,
-                       customEvent=False, mapping={}):
+def sendMailIfRelevant(obj, event, permissionOrSuffixOrRole, isSuffix=False,
+                       customEvent=False, mapping={}, isRole=False):
     '''An p_event just occurred on meeting or item p_obj. If the corresponding
        meeting config specifies that a mail needs to be sent, this function
        will send a mail. The mail subject and body are defined from i18n labels
-       that derive from the event name. if p_isRole is True, p_permissionOrRole
-       is a role, and the mail will be sent to every user having this role. If
-       p_isRole is False, p_permissionOrRole is a permission and the mail will
+       that derive from the event name. if p_isSuffix is True, p_permissionOrSuffixOrRole
+       is a suffix, and the mail will be sent to every members of this sufixed group (relevant for item).
+       If p_isSuffix is False, p_permissionOrSuffixOrRole is a permission and the mail will
        be sent to everyone having this permission.  Some mapping can be received
        and used afterward in mail subject and mail body translations.
 
@@ -540,11 +544,21 @@ def sendMailIfRelevant(obj, event, permissionOrRole, isRole=False,
     # Ok, send a mail. Who are the recipients ?
     recipients = []
     adap = obj.adapted()
-    if isRole and (permissionOrRole == 'Owner'):
-        userIds = [obj.Creator()]
+    userIds = []
+    if isSuffix:
+        org = obj.adapted()._getGroupManagingItem(obj.queryState())
+        plone_group = get_plone_group(org.UID(), permissionOrSuffixOrRole)
+        if not plone_group:
+            # maybe the suffix is a MeetingConfig related suffix, like _meetingmanagers
+            plone_group = get_plone_group(cfg.getId(), permissionOrSuffixOrRole)
+        if plone_group:
+            userIds = plone_group.getGroupMemberIds()
     else:
-        # Warning "_members" returns all users (even deleted users), the filter must do this afterwards.
-        userIds = api.portal.get_tool('portal_memberdata')._members
+        if isRole and (permissionOrSuffixOrRole == 'Owner'):
+            userIds = [obj.Creator()]
+        else:
+            # Warning "_members" returns all users (even deleted users), the filter must do this afterwards.
+            userIds = api.portal.get_tool('portal_memberdata')._members
     for userId in userIds:
         user = membershipTool.getMemberById(userId)
         # do not warn user doing the action
@@ -553,12 +567,13 @@ def sendMailIfRelevant(obj, event, permissionOrRole, isRole=False,
         if not user.getProperty('email'):
             continue
         # Does the user have the corresponding permission on p_obj ?
-        if isRole:
-            if not user.has_role(permissionOrRole, obj):
-                continue
-        else:
-            if not api.user.has_permission(permission=permissionOrRole, obj=obj, user=user):
-                continue
+        if not isSuffix:
+            if not isRole:
+                if not api.user.has_permission(permission=permissionOrSuffixOrRole, obj=obj, user=user):
+                    continue
+            else:
+                if not user.has_role(permissionOrSuffixOrRole, obj):
+                    continue
 
         recipient = tool.getMailRecipient(user)
         # Must we avoid sending mail to this recipient for some custom reason?
@@ -1567,12 +1582,26 @@ def main_item_data(item):
     return data
 
 
-def reviewersFor(workflow_id=None):
-    # import MEETINGREVIEWERS as it is often monkeypatched...
-    from Products.PloneMeeting.config import MEETINGREVIEWERS
-    if workflow_id and workflow_id in MEETINGREVIEWERS:
-        return MEETINGREVIEWERS.get(workflow_id)
-    return MEETINGREVIEWERS.get('*')
+def reviewersFor(cfg):
+    """Return an OrderedDict were key is the reviewer suffix and
+       value the corresponding item state, from highest level to lower level.
+       For example :
+       OrderedDict([('reviewers', ['prevalidated']), ('prereviewers', ['proposed'])])
+    """
+    suffixes = list(cfg.getItemWFValidationLevels(data='suffix', only_enabled=True))[1:]
+    # we need from highest level to lowest
+    suffixes.reverse()
+    states = list(cfg.getItemWFValidationLevels(data='state', only_enabled=True))[1:]
+    # we need from highest level to lowest
+    states.reverse()
+
+    # group suffix to state
+    tuples = zip(suffixes, states)
+
+    res = OrderedDict()
+    for suffix, state in tuples:
+        res[suffix] = [state]
+    return res
 
 
 def get_every_back_references(obj, relationship):
@@ -1650,6 +1679,88 @@ def duplicate_portal_type(portalTypeName, duplicatedPortalTypeId):
     duplicatedPortalType.add_view_expr = duplicatedPortalType.add_view_expr.replace(
         portalTypeName, duplicatedPortalTypeId)
     return duplicatedPortalType
+
+
+def get_item_validation_wf_suffixes(cfg, org=None):
+    """Returns suffixes related to MeetingItem validation WF,
+       so the 'creators', 'observers' and suffixes managed by
+       MeetingConfig.itemWFValidationLevels.
+       If p_org is given, we only return available suffixes."""
+    base_suffixes = [u'creators', u'observers']
+    # we get the principal suffix from level['suffix'] then level['extra_suffixes']
+    # is containing suffixes that will also get Editor access in relevant state
+    config_suffix = cfg.getItemWFValidationLevels(data='suffix', only_enabled=True)
+    config_extra_suffixes = cfg.getItemWFValidationLevels(data='extra_suffixes', only_enabled=True)
+    config_suffixes = [config_suffix] + list(config_extra_suffixes)
+    config_suffixes = list(itertools.chain.from_iterable(config_suffixes))
+    suffixes = base_suffixes + config_suffixes
+    if org:
+        # only return suffixes that are available for p_org
+        available_suffixes = set(get_all_suffixes(org.UID()))
+        suffixes = list(available_suffixes.intersection(set(suffixes)))
+    return suffixes
+
+
+def compute_item_roles_to_assign_to_suffixes(cfg, item_state, org=None):
+    """ """
+    apply_meetingmanagers_access = True
+    suffix_roles = []
+
+    # roles given to item_state are managed automatically
+    # it is possible to manage it manually for extra states (coming from wfAdaptations for example)
+    # try to find corresponding item state
+    corresponding_auto_item_state = cfg.adapted().get_item_corresponding_state_to_assign_local_roles(item_state)
+    if corresponding_auto_item_state:
+        item_state = corresponding_auto_item_state
+    else:
+        # if no corresponding item state, check if we manage state suffix roles manually
+        apply_meetingmanagers_access, suffix_roles = cfg.adapted().get_item_custom_suffix_roles(item_state)
+
+    # find suffix_roles if it was not managed manually
+    if suffix_roles:
+        return apply_meetingmanagers_access, suffix_roles
+
+    item_val_levels_states = cfg.getItemWFValidationLevels(data='state', only_enabled=True)
+    # by default, observers may View in every states as well as creators
+    suffix_roles = {'observers': ['Reader'],
+                    'creators': ['Reader']}
+
+    # MeetingConfig.itemWFValidationLevels
+    # states before validated
+    if item_state in item_val_levels_states:
+        # find Editor suffixes
+        # walk every defined validation levels so we give 'Reader'
+        # to levels already behind us
+        for level in cfg.getItemWFValidationLevels(only_enabled=True):
+            suffixes = [level['suffix']] + list(level['extra_suffixes'])
+            for suffix in suffixes:
+                if suffix not in suffix_roles:
+                    suffix_roles[suffix] = []
+                given_roles = ['Reader']
+                # we are on the current state
+                if level['state'] == item_state:
+                    given_roles.append('Editor')
+                    given_roles.append('Reviewer')
+                    given_roles.append('Contributor')
+                for role in given_roles:
+                    if role not in suffix_roles[suffix]:
+                        suffix_roles[suffix].append(role)
+            if level['state'] == item_state:
+                break
+
+    # states out of item validation (validated and following states)
+    else:
+        # every item validation suffixes get View access
+        # if item is in a decided state, we also give the Contributor
+        # role to every validation suffixes
+        item_is_decided = item_state in cfg.getItemDecidedStates()
+        for suffix in get_item_validation_wf_suffixes(cfg, org):
+            given_roles = ['Reader']
+            if item_is_decided and suffix != 'observers':
+                given_roles.append('Contributor')
+            suffix_roles[suffix] = given_roles
+
+    return apply_meetingmanagers_access, suffix_roles
 
 
 def org_id_to_uid(org_info, raise_on_error=True, ignore_underscore=False):

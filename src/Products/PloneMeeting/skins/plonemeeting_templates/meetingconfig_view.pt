@@ -727,10 +727,12 @@
           <td tal:define="field python:here.getField('workflowAdaptations')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td tal:define="field python:here.getField('itemDecidedStates')">
-            <span metal:use-macro="here/widgets/field/macros/view" />
-          </td>
-          <td tal:define="field python:here.getField('itemPositiveDecidedStates')">
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td colspan="3" tal:define="field python:here.getField('itemWFValidationLevels');
+                                      dummy python:here.REQUEST.set('translated_itemWFValidationLevels', True);">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
         </tr>
