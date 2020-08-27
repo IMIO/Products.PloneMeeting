@@ -9,7 +9,7 @@
 # GNU General Public License (GPL)
 #
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
-from collective.documentgenerator.config import set_raiseOnError_for_non_managers
+from collective.documentgenerator.config import set_raiseOnError_for_non_managers, set_oo_server, set_column_modifier
 from collective.documentgenerator.config import set_use_stream
 from collective.messagesviewlet.utils import add_message
 from dexterity.localroles.utils import add_fti_configuration
@@ -299,10 +299,8 @@ def postInstall(context):
             api.content.transition(browser_warn_msg, 'activate')
 
     # collective.documentgenerator : change some default values
-    api.portal.set_registry_record(
-        'collective.documentgenerator.browser.controlpanel.'
-        'IDocumentGeneratorControlPanelSchema.column_modifier',
-        'optimize')
+    set_oo_server()
+    set_column_modifier('optimize')
     set_raiseOnError_for_non_managers(True)
     set_use_stream(False)
 
