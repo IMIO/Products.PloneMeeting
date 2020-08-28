@@ -7,7 +7,10 @@ Changelog
 
 - Setup more default values for documentenerator.
   [odelaere]
-
+- Added `To discuss?` faceted filter.
+  Renamed catalog indexes `getItemIsSigned`, `sendToAuthority` and
+  `toDiscuss` to `item_is_signed`, `send_to_authority` and `to_discuss`.
+  [gbastien]
 
 4.2b1 (2020-08-24)
 ------------------

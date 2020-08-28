@@ -28,6 +28,7 @@ from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
 from Products.ZCatalog.ProgressHandler import ZLogHandler
 
 import logging
+import os
 
 
 logger = logging.getLogger('PloneMeeting')
@@ -250,6 +251,28 @@ class Migrator(BaseMigrator):
                 cfg.at_post_edit_script()
             else:
                 cfg.registerPortalTypes()
+        logger.info('Done.')
+
+    def updateFacetedFilters(self, xml_filename, related_to="items"):
+        """ """
+        logger.info("Updating faceted filters for every MeetingConfigs...")
+
+        xmlpath = os.path.join(
+            os.path.dirname(__file__),
+            '../faceted_conf/%s' % xml_filename)
+        logger.info("Applying faceted config at %s..." % xmlpath)
+
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            obj = None
+            if related_to == "items":
+                obj = cfg.searches.searches_items
+            elif related_to == "meetings":
+                obj = cfg.searches.searches_meetings
+            elif related_to == "decisions":
+                obj = cfg.searches.searches_decisions
+            # add new faceted filters
+            obj.unrestrictedTraverse('@@faceted_exportimport').import_xml(
+                import_file=open(xmlpath))
         logger.info('Done.')
 
     def _already_migrated(self, done=True):

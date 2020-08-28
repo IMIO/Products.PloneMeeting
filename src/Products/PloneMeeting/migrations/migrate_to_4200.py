@@ -63,6 +63,10 @@ class Migrate_To_4200(Migrator):
     def run(self, extra_omitted=[]):
         logger.info('Migrating to PloneMeeting 4200...')
 
+        # remove useless catalog indexes and columns, were renamed to snake case
+        self.removeUnusedIndexes(indexes=['getItemIsSigned', 'sendToAuthority', 'toDiscuss'])
+        self.removeUnusedColumns(columns=['toDiscuss'])
+
         self.upgradeAll(omit=['Products.PloneMeeting:default',
                               self.profile_name.replace('profile-', '')] + extra_omitted)
 
@@ -85,6 +89,9 @@ class Migrate_To_4200(Migrator):
 
         # init otherMeetingConfigsClonableToFieldXXX
         self.initNewHTMLFields()
+
+        # update faceted filters
+        self.updateFacetedFilters(xml_filename='upgrade_step_4200_add_item_widgets.xml')
 
         self.tool.updateAllLocalRoles(meta_type=('MeetingItem', ))
         self.refreshDatabase(workflows=True, catalogsToUpdate=[])

@@ -49,8 +49,6 @@
            name="Products.PloneMeeting.vocabularies.advicetypesvocabulary" />
   <utility component=".vocabularies.SentToInfosVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.senttoinfosvocabulary" />
-  <utility component=".vocabularies.SendToAuthorityVocabularyFactory"
-           name="Products.PloneMeeting.vocabularies.sendtoauthorityvocabulary" />
   <utility component=".vocabularies.BooleanForFacetedVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.booleanforfacetedvocabulary" />
   <utility component=".vocabularies.HasAnnexesToPrintVocabularyFactory"
