@@ -17,9 +17,12 @@
 
 from collective.behavior.talcondition.behavior import ITALCondition
 from DateTime import DateTime
+from eea.facetednavigation.interfaces import ICriteria
 from imio.helpers.catalog import addOrUpdateColumns
 from imio.helpers.catalog import addOrUpdateIndexes
 from imio.migrator.migrator import Migrator as BaseMigrator
+from natsort import humansorted
+from operator import attrgetter
 from plone import api
 from Products.CMFPlone.utils import base_hasattr
 from Products.PloneMeeting.setuphandlers import columnInfos
@@ -253,7 +256,7 @@ class Migrator(BaseMigrator):
                 cfg.registerPortalTypes()
         logger.info('Done.')
 
-    def updateFacetedFilters(self, xml_filename, related_to="items"):
+    def updateFacetedFilters(self, xml_filename, related_to="items", reorder=True):
         """ """
         logger.info("Updating faceted filters for every MeetingConfigs...")
 
@@ -273,6 +276,11 @@ class Migrator(BaseMigrator):
             # add new faceted filters
             obj.unrestrictedTraverse('@@faceted_exportimport').import_xml(
                 import_file=open(xmlpath))
+            if reorder:
+                # when criteria have been imported, if some were purged, we need to reorder
+                criteria = ICriteria(obj)
+                # sort by criterion name, so c0, c1, c2, ...
+                criteria._update(humansorted(criteria.values(), key=attrgetter('__name__')))
         logger.info('Done.')
 
     def _already_migrated(self, done=True):
