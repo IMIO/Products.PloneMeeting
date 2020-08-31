@@ -20,10 +20,21 @@ from zope.globalrequest.local import setLocal
 
 import Products.PloneMeeting
 
+from collective.solr import monkey
+
+
+def patched_search(*args, **kwargs):
+    import transaction
+    transaction.commit()
+    return monkey._original_search(*args, **kwargs)
+
 
 class PMLayer(PloneWithPackageLayer):
 
     def setUpZope(self, app, configurationContext):
+        monkey._original_search = monkey.searchResults
+        monkey.searchResults = patched_search
+
         from App.config import _config
         if not base_hasattr(_config, 'product_config'):
             _config.product_config = {
@@ -46,6 +57,12 @@ class PMLayer(PloneWithPackageLayer):
             # this layer is used by imio.pm.wsclient
             if api.user.get(userId):
                 _createMemberarea(portal, userId)
+        # Required for SolR
+        import collective.indexing
+        self.loadZCML(package=collective.indexing)
+        import collective.solr
+        self.loadZCML(package=collective.solr)
+        z2.installProduct(portal, "collective.indexing")
 
 
 PM_ZCML = zca.ZCMLSandbox(filename="testing.zcml",
@@ -67,11 +84,11 @@ PM_TESTING_PROFILE = PMLayer(
     name="PM_TESTING_PROFILE")
 
 PM_TESTING_PROFILE_INTEGRATION = IntegrationTesting(
-    bases=(PM_TESTING_PROFILE,),
+    bases=(PM_TESTING_PROFILE, ),
     name="PM_TESTING_PROFILE_INTEGRATION")
 
 PM_TESTING_PROFILE_FUNCTIONAL = FunctionalTesting(
-    bases=(PM_TESTING_PROFILE,),
+    bases=(PM_TESTING_PROFILE, ),
     name="PM_TESTING_PROFILE_FUNCTIONAL")
 
 PM_TESTING_ROBOT = FunctionalTesting(

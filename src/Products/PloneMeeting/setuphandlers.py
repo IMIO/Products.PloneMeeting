@@ -150,7 +150,6 @@ def postInstall(context):
         return
     site = context.getSite()
 
-    activate_solr_and_reindex_if_available(site)
     # Create or update indexes
     addOrUpdateIndexes(site, indexInfos)
     addOrUpdateColumns(site, columnInfos)
@@ -366,25 +365,25 @@ def activate_solr_and_reindex_if_available(site):
         if solr_activated:
             return
         activate(True)
-        config = getConfig()
-        config.async_indexing = True
-        api.portal.set_registry_record('collective.solr.required', [u''])
+        # config = getConfig()
+        # config.async_indexing = True
+        api.portal.set_registry_record('collective.solr.required', [])
         port = int(os.environ['SOLR_PORT'])
         api.portal.set_registry_record('collective.solr.port', port)
-        import transaction
-        transaction.savepoint()
+        # import transaction
+        # transaction.savepoint()
         catalog = api.portal.get_tool('portal_catalog')
         catalog.clearFindAndRebuild()
-        transaction.savepoint()
+        # transaction.savepoint()
         response = site.REQUEST.RESPONSE
         original = response.write
         response.write = lambda x: x  # temporarily ignore output
         maintenance = site.unrestrictedTraverse("@@solr-maintenance")
         maintenance.clear()
-        transaction.savepoint()
+        # transaction.savepoint()
         maintenance.reindex()
         response.write = original
-        transaction.savepoint()
+        # transaction.savepoint()
 
 
 def _configureCKeditor(site):

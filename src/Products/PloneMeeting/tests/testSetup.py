@@ -33,6 +33,11 @@ def getProfileData(self):
 class testSetup(PloneMeetingTestCase):
     '''Tests the setup, especially registered profiles.'''
 
+    def setUp(self):
+        super(testSetup, self).setUp()
+        from Products.PloneMeeting.setuphandlers import activate_solr_and_reindex_if_available
+        activate_solr_and_reindex_if_available(api.portal.get())
+
     def _currentSetupProfileNames(self, excluded=[]):
         """ """
         package_name = self.layer.__module__.replace('.testing', '')
@@ -217,7 +222,7 @@ class testSetup(PloneMeetingTestCase):
             self.assertTrue(api.portal.get_registry_record('collective.solr.active'),
                             msg="collective.solr is not active")
             self.assertEqual(api.portal.get_registry_record('collective.solr.port'), int(os.environ['SOLR_PORT']))
-            self.assertEqual(api.portal.get_registry_record('collective.solr.required'), [u''])
+            self.assertEqual(api.portal.get_registry_record('collective.solr.required'), [])
             self.assertEqual(brains[0].__class__.__name__, 'PloneFlare')
         else:
             self.assertEqual(brains[0].__class__.__name__, 'mybrains')
