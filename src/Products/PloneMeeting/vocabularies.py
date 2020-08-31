@@ -956,15 +956,6 @@ class BooleanForFacetedVocabulary(object):
 BooleanForFacetedVocabularyFactory = BooleanForFacetedVocabulary()
 
 
-class ToDiscussVocabulary(BooleanForFacetedVocabulary):
-
-    def __call__(self, context):
-        """ """
-        return super(ToDiscussVocabulary, self).__call__(context, prefix='to_discuss_')
-
-ToDiscussVocabularyFactory = ToDiscussVocabulary()
-
-
 class DownOrUpWorkflowAgainVocabulary(object):
     implements(IVocabularyFactory)
 
