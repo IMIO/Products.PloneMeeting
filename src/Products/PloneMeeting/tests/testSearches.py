@@ -1059,7 +1059,7 @@ class testSearches(PloneMeetingTestCase):
         item.reindexObject(idxs=['labels'])
         self.assertEqual(len(collection.results()), 0)
 
-    def test_pm_CompoundAdapterItemsWithNegativePreviousIndex(self):
+    def test_pm_CompoundCriterionAdapterItemsWithNegativePreviousIndex(self):
         '''Test the 'items-with-negative-previous-index' adapter.
            Here we will try to get items that do not have a certain advice asked.'''
         cfg = self.meetingConfig
