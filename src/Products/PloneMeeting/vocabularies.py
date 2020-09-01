@@ -878,30 +878,6 @@ class SentToInfosVocabulary(object):
 SentToInfosVocabularyFactory = SentToInfosVocabulary()
 
 
-class SendToAuthorityVocabulary(object):
-    implements(IVocabularyFactory)
-
-    def __call__(self, context):
-        """ """
-        res = []
-        res.append(SimpleTerm('1',
-                              '1',
-                              safe_unicode(translate('to_be_send_to_authority_term',
-                                                     domain='PloneMeeting',
-                                                     context=context.REQUEST)))
-                   )
-        res.append(SimpleTerm('0',
-                              '0',
-                              safe_unicode(translate('not_to_be_send_to_authority_term',
-                                                     domain='PloneMeeting',
-                                                     context=context.REQUEST)))
-                   )
-        return SimpleVocabulary(res)
-
-
-SendToAuthorityVocabularyFactory = SendToAuthorityVocabulary()
-
-
 class HasAnnexesToPrintVocabulary(object):
     implements(IVocabularyFactory)
 
@@ -959,17 +935,17 @@ HasAnnexesToSignVocabularyFactory = HasAnnexesToSignVocabulary()
 class BooleanForFacetedVocabulary(object):
     implements(IVocabularyFactory)
 
-    def __call__(self, context):
+    def __call__(self, context, prefix=''):
         """ """
         res = []
-        res.append(SimpleTerm('0',
-                              '0',
+        res.append(SimpleTerm(prefix + '0',
+                              prefix + '0',
                               safe_unicode(translate('boolean_value_false',
                                                      domain='PloneMeeting',
                                                      context=context.REQUEST)))
                    )
-        res.append(SimpleTerm('1',
-                              '1',
+        res.append(SimpleTerm(prefix + '1',
+                              prefix + '1',
                               safe_unicode(translate('boolean_value_true',
                                                      domain='PloneMeeting',
                                                      context=context.REQUEST)))

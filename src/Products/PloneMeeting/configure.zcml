@@ -206,12 +206,12 @@
   <adapter name="getConfigId" factory=".indexes.getConfigId" />
   <adapter name="getCopyGroups" factory=".indexes.getCopyGroups" />
   <adapter name="getGroupsInCharge" factory=".indexes.getGroupsInCharge" />
-  <adapter name="getItemIsSigned" factory=".indexes.getItemIsSigned" />
   <adapter name="getPreferredMeetingDate" factory=".indexes.getPreferredMeetingDate" />
   <adapter name="getTakenOverBy" factory=".indexes.getTakenOverBy" />
   <adapter name="hasAnnexesToPrint" factory=".indexes.hasAnnexesToPrint" />
   <adapter name="hasAnnexesToSign" factory=".indexes.hasAnnexesToSign" />
   <adapter name="indexAdvisers" factory=".indexes.indexAdvisers" />
+  <adapter name="item_is_signed" factory=".indexes.item_is_signed" />
   <adapter name="linkedMeetingDate" factory=".indexes.linkedMeetingDate" />
   <adapter name="linkedMeetingUID" factory=".indexes.linkedMeetingUID" />
   <adapter name="previous_review_state" factory=".indexes.previous_review_state" />
@@ -219,11 +219,12 @@
   <adapter name="SearchableText" factory=".indexes.SearchableText_item" />
   <adapter name="SearchableText" factory=".indexes.SearchableText_meeting" />
   <adapter name="SearchableText" factory=".indexes.SearchableText_annex" />
-  <adapter name="sendToAuthority" factory=".indexes.sendToAuthority" />
+  <adapter name="send_to_authority" factory=".indexes.send_to_authority" />
   <adapter name="sentToInfos" factory=".indexes.sentToInfos" />
   <adapter name="sortable_title" factory=".indexes.sortable_title" />
   <adapter name="templateUsingGroups" factory=".indexes.templateUsingGroups" />
   <adapter name="title_or_id" factory=".indexes.title_or_id" />
+  <adapter name="to_discuss" factory=".indexes.to_discuss" />
   <adapter name="get_full_title" factory=".indexes.get_full_title" />
   <adapter name="contained_uids" factory=".indexes.contained_uids_item" />
   <adapter name="contained_uids" factory=".indexes.contained_uids_meeting" />
