@@ -11,6 +11,9 @@ Changelog
   Renamed catalog indexes `getItemIsSigned`, `sendToAuthority` and
   `toDiscuss` to `item_is_signed`, `send_to_authority` and `to_discuss`.
   [gbastien]
+- Added CompoundCriterion adapter `items-with-negative-previous-index`, this
+  will lookup previous index in the query then negativize defined values.
+  [gbastien]
 
 4.2b1 (2020-08-24)
 ------------------

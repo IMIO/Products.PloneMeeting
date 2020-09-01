@@ -25,9 +25,11 @@
 from collective.compoundcriterion.interfaces import ICompoundCriterionFilter
 from collective.eeafaceted.collectionwidget.utils import getCollectionLinkCriterion
 from DateTime import DateTime
+from ftw.labels.interfaces import ILabeling
 from imio.helpers.cache import cleanRamCacheFor
 from plone import api
 from plone.app.textfield.value import RichTextValue
+from plone.app.querystring.querybuilder import queryparser
 from plone.dexterity.utils import createContentInContainer
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
@@ -1037,6 +1039,69 @@ class testSearches(PloneMeetingTestCase):
         res = collection.results()
         self.failUnless(len(res) == 1)
         self.failUnless(res[0].UID == vendorsItem.UID())
+
+    def test_pm_SearchUnreadItems(self):
+        '''Test the 'items-with-negative-personal-labels' adapter.
+           This should return a list of items for which current user did not checked the 'lu' label.'''
+        cfg = self.meetingConfig
+        cfg.setEnableLabels(True)
+        collection = cfg.searches.searches_items.searchunreaditems
+
+        # create item, not 'lu' by default
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        item.reindexObject(idxs=['labels'])
+        # for now item is not 'lu'
+        self.assertEqual(len(collection.results()), 1)
+        # make item 'lu'
+        labeling = ILabeling(item)
+        labeling.pers_update(['lu'], True)
+        item.reindexObject(idxs=['labels'])
+        self.assertEqual(len(collection.results()), 0)
+
+    def test_pm_CompoundAdapterItemsWithNegativePreviousIndex(self):
+        '''Test the 'items-with-negative-previous-index' adapter.
+           Here we will try to get items that do not have a certain advice asked.'''
+        cfg = self.meetingConfig
+        cfg.setCustomAdvisers(
+            [{'row_id': 'unique_id_123',
+              'org': self.developers_uid,
+              'delay': '10', }, ])
+        # this will return items for which developers 10 days delay advice was not asked
+        # or vendors advice was not asked
+        collection = cfg.searches.searches_items.searchallitems
+        query = collection.query
+        query.append({u'i': u'indexAdvisers',
+                      u'o': u'plone.app.querystring.operation.selection.is',
+                      u'v': [u'delay_row_id__unique_id_123',
+                             u'real_org_uid__{0}'.format(self.vendors_uid)]})
+        query.append({u'i': u'CompoundCriterion',
+                      u'o': u'plone.app.querystring.operation.compound.is',
+                      u'v': [u'items-with-negative-previous-index']})
+        collection.setQuery(query)
+        self.assertEqual(
+            queryparser.parseFormquery(collection, collection.getQuery())[u'indexAdvisers'],
+            {'not': [u'delay_row_id__unique_id_123',
+                     u'real_org_uid__{0}'.format(self.vendors_uid)]})
+
+        # test
+        self.changeUser('pmCreator1')
+        self.assertEqual(len(collection.results()), 0)
+        item = self.create('MeetingItem')
+        self.assertEqual(len(collection.results()), 1)
+        # ask advices
+        item.setOptionalAdvisers(('{0}__rowid__unique_id_123'.format(self.developers_uid), ))
+        item._update_after_edit()
+        item.reindexObject(idxs=['indexAdvisers'])
+        self.assertEqual(len(collection.results()), 0)
+        item.setOptionalAdvisers(())
+        item._update_after_edit()
+        item.reindexObject(idxs=['indexAdvisers'])
+        self.assertEqual(len(collection.results()), 1)
+        item.setOptionalAdvisers((self.vendors_uid, ))
+        item._update_after_edit()
+        item.reindexObject(idxs=['indexAdvisers'])
+        self.assertEqual(len(collection.results()), 0)
 
     def test_pm_DashboardCollectionsAreEditable(self):
         """This will ensure created DashboardCollections are editable.

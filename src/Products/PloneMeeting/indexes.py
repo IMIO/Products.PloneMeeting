@@ -411,6 +411,9 @@ def indexAdvisers(obj):
     # remove double entry, it could be the case for the 'advice_type' alone
     res = list(set(res))
     res.sort()
+    # store something when no advices. Query with 'not' in ZCatalog>=3 will retrieve it.
+    if not res:
+        res.append('_')
     return res
 
 
