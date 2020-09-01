@@ -774,3 +774,18 @@ $('table.faceted-table-results').tableDnD({
 
 });
 }
+
+window.onbeforeunload = function() {
+    localStorage.removeItem("toggleAllDetails");
+};
+
+function toggleAllDetails() {
+  state = localStorage.getItem("toggleAllDetails");
+  if (!state || state == "1") {
+    localStorage.setItem("toggleAllDetails", "0");
+    $('div.collapsible.active').each(function() {$(this).click();});
+  } else {
+    localStorage.setItem("toggleAllDetails", "1");
+    $('div.collapsible:not(.active):not(.discreet)').each(function() {$(this).click();});
+  }
+}

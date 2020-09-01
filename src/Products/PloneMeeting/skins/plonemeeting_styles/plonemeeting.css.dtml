@@ -1919,6 +1919,22 @@ body.template-usergroup-userprefs input[name="form.button.AddUser"] {
 div.item-linkeditems div.collapsible-content {
    margin-top: 0.25em;
 }
+/* avoid textarea too large */
+#content textarea {
+    width: 99%;
+}
+
+a.show-hide-all-details {
+   float: right;
+   position: fixed;
+   right: 20px;
+   bottom: 20px;
+   z-index: 10000;
+}
+a.show-hide-all-details:focus,
+a.show-hide-all-details:focus img {
+   outline: 0 !important;
+}
 
 /* </dtml-with> */
 

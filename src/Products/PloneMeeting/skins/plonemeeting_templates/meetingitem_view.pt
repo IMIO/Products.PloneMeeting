@@ -420,7 +420,7 @@
                          linkedItems python: context.getManuallyLinkedItems(only_viewable=True);
                          showManuallyLinkedItems python: 'manuallyLinkedItems' in usedAttrs or linkedItems;
                          class_to_use python: (predecessors or linkedItems) and 'item_attribute_label highlightValue' or 'item_attribute_label';">
-        <div id="linkedItems" class="collapsible discreet" onclick="toggleDetails('collapsible-linked-items', toggle_parent_active=true, parent_tag=null, load_view='@@load_linked_items');">
+        <div id="linkedItems" class="collapsible async discreet" onclick="toggleDetails('collapsible-linked-items', toggle_parent_active=true, parent_tag=null, load_view='@@load_linked_items');">
           <span tal:condition="showManuallyLinkedItems"
                 class="item_attribute_label"
                 tal:attributes="class class_to_use"
@@ -453,7 +453,15 @@
     <tal:comment replace="nothing">Budgetary informations, manage fields budgetRelated and budgetInfos</tal:comment>
     <tal:block condition="python: 'budgetInfos' in usedAttrs and member.has_permission('PloneMeeting: Read budget infos', context)">
     <fieldset>
-      <legend i18n:translate="">Budget</legend>
+      <legend>
+        <div style="display: inline"
+             class="collapsible active"
+             id="budget_toggle"
+             tal:attributes="onclick string:toggleDetails('budget_content', toggle_parent_active=true, parent_tag=this);">
+          <span i18n:translate="">Budget</span>
+        </div>
+      </legend>
+      <div id="budget_content">
         <p class="item-before-budget-related"></p>
         <metal:budgetInfos use-macro="here/@@pm-macros/budgetInfos" />
 
@@ -466,6 +474,7 @@
               <metal:f use-macro="context/@@pm-macros/viewContentField"/>
           </div>
         </tal:displayBudgetInfos>
+      </div>
     </fieldset>
     </tal:block>
 
@@ -474,11 +483,16 @@
                tal:define="otherMCs context/getOtherMeetingConfigsClonableTo">
     <fieldset >
       <legend>
-        <a name="clonable-to-other-mcs">
-          <span i18n:translate="PloneMeeting_label_otherMeetingConfigsClonableTo"></span>
-        </a>
+        <div style="display: inline"
+             class="collapsible active"
+             id="clonable_to_other_mcs_toggle"
+             tal:attributes="onclick string:toggleDetails('clonable_to_other_mcs_content', toggle_parent_active=true, parent_tag=this);">
+          <a name="clonable-to-other-mcs">
+            <span i18n:translate="PloneMeeting_label_otherMeetingConfigsClonableTo"></span>
+          </a>
+        </div>
       </legend>
-      <div>
+      <div id="clonable_to_other_mcs_content">
         <tal:displayOtherMeetingConfigsClonableTo tal:condition="otherMCs">
             <span tal:replace="structure context/displayOtherMeetingConfigsClonableTo">Other mc clonable to (Emergency, privacy)</span>
         </tal:displayOtherMeetingConfigsClonableTo>
@@ -614,6 +628,13 @@
       </tal:transitionsForRecurring>
 
     </tal:itemInConfig>
+
+    <a title="show_or_hide_details"
+       i18n:attributes="title"
+       class="show-hide-all-details"
+       href="javascript:toggleAllDetails();">
+      <img tal:attributes="src string:${portal_url}/more_less_details.png" />
+    </a>
 
     </metal:body_macro>
     </metal:fill>

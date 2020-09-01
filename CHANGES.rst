@@ -14,6 +14,10 @@ Changelog
 - Added CompoundCriterion adapter `items-with-negative-previous-index`, this
   will lookup previous index in the query then negativize defined values.
   [gbastien]
+- Added collapsible sections for `budget` and `clonable to other mcs` on item view.
+  Added `Toggle show/hide all details action` on the item view to be able to toggle
+  every collapsible in one click.
+  [gbastien]
 
 4.2b1 (2020-08-24)
 ------------------
