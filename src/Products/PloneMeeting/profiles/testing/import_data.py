@@ -352,7 +352,7 @@ meetingPma.useGroupsAsCategories = True
 meetingPma.defaultLabels = [
     {'color': 'blue', 'by_user': False, 'title': 'Label'},
     {'color': 'yellow', 'by_user': True, 'title': 'Personal label'},
-    {'color': 'green', 'by_user': True, 'title': 'Read'},
+    {'color': 'green', 'by_user': True, 'title': 'Lu'},
     {'color': 'yellow', 'by_user': True, 'title': 'Suivi'}]
 meetingPma.useAdvices = True
 meetingPma.selectableAdvisers = ['developers', 'vendors']

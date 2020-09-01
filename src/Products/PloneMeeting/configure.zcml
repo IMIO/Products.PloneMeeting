@@ -177,6 +177,10 @@
            provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
            name="items-with-negative-personal-labels" />
   <adapter for="*"
+           factory="Products.PloneMeeting.adapters.NegativePreviousIndexValuesAdapter"
+           provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
+           name="items-with-negative-previous-index" />
+  <adapter for="*"
            factory="Products.PloneMeeting.adapters.LastDecisionsAdapter"
            provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
            name="last-decisions" />

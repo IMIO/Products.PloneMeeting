@@ -1421,6 +1421,35 @@ class NegativePersonalLabelsAdapter(CompoundCriterionBaseAdapter):
     query = query_negative_personal_labels
 
 
+class NegativePreviousIndexValuesAdapter(CompoundCriterionBaseAdapter):
+
+    @property
+    @ram.cache(query_user_groups_cachekey)
+    def query_negative_previous_index_values(self):
+        '''Special query that will get previous value in DashboardCollection and
+           negativize values.  So for example, if previous index is indexAdvisers,
+           values defined in indexAdvisers will be negativized, this will let find
+           items that does not have that or that advice.'''
+        if not self.cfg:
+            return {}
+        # get previous index
+        previous = None
+        for value in self.context.query:
+            if value[u'i'] == u'CompoundCriterion' and \
+               u'items-with-negative-previous-index' in value[u'v']:
+                break
+            previous = value
+
+        query = {
+            'portal_type': {'query': self.cfg.getItemTypeName()}, }
+        if previous:
+            query[previous[u'i']] = {'not': previous[u'v']}
+        return query
+
+    # we may not ram.cache methods in same file with same name...
+    query = query_negative_previous_index_values
+
+
 class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
     """ """
 
