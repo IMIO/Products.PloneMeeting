@@ -3011,6 +3011,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         return res
 
+    security.declarePublic('getAssociatedGroups')
+
+    def getAssociatedGroups(self, theObjects=False, **kwargs):
+        '''This redefined accessor may return associated group ids or the real
+           groups if p_theObjects is True.'''
+        res = self.getField('associatedGroups').get(self, **kwargs)
+        if res and theObjects:
+            return tuple(uuidsToObjects(uuids=res, ordered=True))
+        return res
+
     security.declarePublic('fieldIsEmpty')
 
     def fieldIsEmpty(self, name):

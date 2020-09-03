@@ -11,6 +11,8 @@ Changelog
     be able to pass it to `ToolPloneMeeting.getPloneMeetingFolder`.
     Used by `plonemeeting.restapi` tests.
     [gbastien]
+  - Added an accessor `MeetingItem.getAssociatedGroups` for associatedGroups field.
+    [aduchene]
 - Fixed `MeetingItem.getMeeting_cachekey` regarding the way we get `_debug`
   on the `REQUEST`, in some case like when using `plonemeeting.restapi`,
   the `REQUEST` is actually a `<Special Object Used to Force Acquisition>`.
