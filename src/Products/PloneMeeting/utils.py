@@ -1019,9 +1019,9 @@ def applyOnTransitionFieldTransform(obj, transitionId):
     cfg = extra_expr_ctx['cfg']
     for transform in cfg.getOnTransitionFieldTransforms():
         tal_expr = transform['tal_expression'].strip()
-        if transform['transition'] == transitionId and \
-           transform['field_name'].split('.')[0] == obj.meta_type and \
-           tal_expr:
+        if tal_expr and \
+           transform['transition'] == transitionId and \
+           transform['field_name'].split('.')[0] == obj.meta_type:
             try:
                 extra_expr_ctx.update({'item': obj, })
                 res = _evaluateExpression(
@@ -1031,16 +1031,16 @@ def applyOnTransitionFieldTransform(obj, transitionId):
                     extra_expr_ctx=extra_expr_ctx,
                     empty_expr_is_true=False,
                     raise_on_error=True)
+                field = obj.getField(transform['field_name'].split('.')[1])
+                field.set(obj, res, mimetype='text/html')
+                idxs.append(field.accessor)
             except Exception, e:
                 plone_utils = api.portal.get_tool('plone_utils')
                 plone_utils.addPortalMessage(
-                    PloneMeetingError(ON_TRANSITION_TRANSFORM_TAL_EXPR_ERROR %
-                                      (transform['field_name'].split('.')[1], str(e))),
+                    ON_TRANSITION_TRANSFORM_TAL_EXPR_ERROR % (
+                        transform['field_name'].split('.')[1], str(e)),
                     type='warning')
                 return
-            field = obj.getField(transform['field_name'].split('.')[1])
-            field.set(obj, res, mimetype='text/html')
-            idxs.append(field.accessor)
     # XXX do not reindex for now as full reindex is done after
     # when moving to dexerity, will be able to reindex more efficiently
     if False and idxs:

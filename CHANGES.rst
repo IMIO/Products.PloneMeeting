@@ -18,6 +18,9 @@ Changelog
   Added `Toggle show/hide all details action` on the item view to be able to toggle
   every collapsible in one click.
   [gbastien]
+- Do not break in `utils.applyOnTransitionFieldTransform` if TAL expression does
+  not return a string (especially when it returns `False`).
+  [gbastien]
 
 4.2b1 (2020-08-24)
 ------------------
