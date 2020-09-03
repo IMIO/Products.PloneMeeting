@@ -3,7 +3,7 @@ Changelog
 
 
 
-4.1.28.2 (unreleased)
+4.1.28.2 (2020-09-03)
 ---------------------
 
 - Re-run `_removeBrokenAnnexes` from `Migrate_To_4105` in `Migrate_To_4110` in case some broken annexes are still found
