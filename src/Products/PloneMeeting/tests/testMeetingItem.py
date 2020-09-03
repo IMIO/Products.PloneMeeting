@@ -4003,9 +4003,10 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg = self.meetingConfig
         self.changeUser('pmManager')
         meeting = self._createMeetingWithItems()
+        items = meeting.getItems(ordered=True)
         self.decideMeeting(meeting)
         # we will adapt item decision when the item is delayed
-        item1 = meeting.getItems()[0]
+        item1 = items[0]
         originalDecision = '<p>Current item decision.</p>'
         item1.setDecision(originalDecision)
         # for now, as nothing is defined, nothing happens when item is delayed
@@ -4017,7 +4018,7 @@ class testMeetingItem(PloneMeetingTestCase):
             ({'transition': 'delay',
               'field_name': 'MeetingItem.decision',
               'tal_expression': 'string:%s' % delayedItemDecision},))
-        item2 = meeting.getItems()[1]
+        item2 = items[1]
         item2.setDecision(originalDecision)
         self.do(item2, 'delay')
         self.assertEqual(item2.getDecision(), delayedItemDecision)
@@ -4028,7 +4029,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(duplicatedItem.getPredecessor(), item2)
         self.assertEqual(duplicatedItem.getDecision(), originalDecision)
         # this work also when triggering any other item or meeting transition with every rich fields
-        item3 = meeting.getItems()[2]
+        item3 = items[2]
         cfg.setOnTransitionFieldTransforms(
             ({'transition': 'accept',
               'field_name': 'MeetingItem.description',
@@ -4042,7 +4043,7 @@ class testMeetingItem(PloneMeetingTestCase):
             ({'transition': 'accept',
               'field_name': 'MeetingItem.decision',
               'tal_expression': 'some_wrong_tal_expression'},))
-        item4 = meeting.getItems()[3]
+        item4 = items[3]
         item4.setDecision('<p>My decision that will not be touched.</p>')
         self.do(item4, 'accept')
         # transition was triggered
@@ -4058,7 +4059,7 @@ class testMeetingItem(PloneMeetingTestCase):
             ({'transition': 'accept',
               'field_name': 'MeetingItem.decision',
               'tal_expression': 'python:False'},))
-        item5 = meeting.getItems()[4]
+        item5 = items[4]
         self.do(item5, 'accept')
         # field was not changed
         self.assertEqual(item5.getDecision(), '<p>A decision</p>')
@@ -4070,7 +4071,7 @@ class testMeetingItem(PloneMeetingTestCase):
             ({'transition': 'accept',
               'field_name': 'MeetingItem.decision',
               'tal_expression': 'python:None'},))
-        item6 = meeting.getItems()[5]
+        item6 = items[5]
         self.do(item6, 'accept')
         self.assertFalse(IStatusMessage(self.request).show())
         self.assertEqual(item6.getDecision(), '')
