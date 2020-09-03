@@ -3324,7 +3324,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             res = [brain.getObject() for brain in brains]
         return res
 
-    security.declarePublic('getOrderedAssociatedOrganizations')
+    security.declarePublic('getOrderedGroupsInCharge')
 
     def getOrderedGroupsInCharge(self, theObjects=False, **kwargs):
         '''Overrides the field 'orderedGroupsInCharge' acessor to manage theObjects.'''

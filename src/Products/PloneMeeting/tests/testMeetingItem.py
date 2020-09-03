@@ -347,6 +347,23 @@ class testMeetingItem(PloneMeetingTestCase):
         item._update_after_edit()
         self.assertEqual(item.getGroupsInCharge(includeAuto=True), [])
 
+    def test_pm_GetAssociatedGroups(self):
+        # Given an item...
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+
+        # ...With no associated group, getAssociatedGroups() should be empty
+        self.assertEqual(item.getAssociatedGroups(), ())
+        self.assertEqual(item.getAssociatedGroups(theObjects=True), ())
+
+        # ...With associated groups
+        item.setAssociatedGroups((self.developers_uid, self.vendors_uid))
+        # getAssociatedGroups() should contain uids
+        self.assertEqual(item.getAssociatedGroups(), (self.developers_uid, self.vendors_uid))
+
+        # getAssociatedGroups() should contain organization objects
+        self.assertEqual(item.getAssociatedGroups(theObjects=True), (self.developers, self.vendors))
+
     def test_pm_SendItemToOtherMCDefaultFunctionnality(self):
         '''Test the send an item to another meetingConfig functionnality'''
         # Activate the functionnality
