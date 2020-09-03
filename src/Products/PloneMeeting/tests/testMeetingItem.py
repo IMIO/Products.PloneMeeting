@@ -4070,6 +4070,28 @@ class testMeetingItem(PloneMeetingTestCase):
         messages = IStatusMessage(self.request).show()
         self.assertEqual(messages[-1].message, ON_TRANSITION_TRANSFORM_TAL_EXPR_ERROR %
                          ('decision', "'some_wrong_tal_expression'"))
+        # if the TAL expression returns something else than a string, it does not break
+        cfg.setOnTransitionFieldTransforms(
+            ({'transition': 'accept',
+              'field_name': 'MeetingItem.decision',
+              'tal_expression': 'python:False'},))
+        item5 = meeting.getItems()[4]
+        self.do(item5, 'accept')
+        # field was not changed
+        self.assertEqual(item5.getDecision(), '<p>A decision</p>')
+        messages = IStatusMessage(self.request).show()
+        self.assertEqual(
+            messages[-1].message, ON_TRANSITION_TRANSFORM_TAL_EXPR_ERROR %
+            ('decision', "Value is not File or String (<type 'bool'> - <type 'bool'>)"))
+        cfg.setOnTransitionFieldTransforms(
+            ({'transition': 'accept',
+              'field_name': 'MeetingItem.decision',
+              'tal_expression': 'python:None'},))
+        item6 = meeting.getItems()[5]
+        self.do(item6, 'accept')
+        self.assertFalse(IStatusMessage(self.request).show())
+        self.assertEqual(item6.getDecision(), '')
+        self.assertEqual(item6.decision.mimetype, 'text/html')
 
     def test_pm_OnTransitionFieldTransformsUseLastCommentFromHistory(self):
         '''Use comment of last WF transition in expression.'''

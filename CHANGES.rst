@@ -22,6 +22,9 @@ Changelog
   [aduchene]
 - Fixed one security.declarePublic in `MeetingConfig`.
   [aduchene]
+- Do not break in `utils.applyOnTransitionFieldTransform` if TAL expression does
+  not return a string (especially when it returns `False`).
+  [gbastien]
 
 4.2b1 (2020-08-24)
 ------------------
