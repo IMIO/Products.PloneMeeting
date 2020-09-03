@@ -6,7 +6,7 @@ from plone.app.contenttypes.migration.migration import migrate as pac_migrate
 from Products.CMFPlone.interfaces.constrains import IConstrainTypes
 from Products.CMFPlone.utils import base_hasattr
 from Products.PloneMeeting.migrations import logger
-from Products.PloneMeeting.migrations import Migrator
+from Products.PloneMeeting.migrations.migrate_to_4105 import Migrate_To_4105
 from Products.ZCatalog.ProgressHandler import ZLogHandler
 from zope.i18n import translate
 
@@ -33,7 +33,7 @@ class MeetingCategoryMigrator(ContentMigrator):
         self.new.reindexObject()
 
 
-class Migrate_To_4110(Migrator):
+class Migrate_To_4110(Migrate_To_4105):
 
     def _migrateMeetingCategoryToDX(self):
         '''Migrate from AT MeetingCategory to DX meetingcategory.'''
@@ -146,6 +146,9 @@ class Migrate_To_4110(Migrator):
 
     def run(self, from_migration_to_41=False):
         logger.info('Migrating to PloneMeeting 4110...')
+        # from Migrate_To_4105
+        self._removeBrokenAnnexes()
+        # from Migrate_To_4110
         self._migrateMeetingCategoryToDX()
         self._updateOrgsDashboardCollectionColumns()
         self._enableDateinputJSResource()
@@ -159,6 +162,7 @@ class Migrate_To_4110(Migrator):
 def migrate(context):
     '''This migration function will:
 
+       0) Re-run remove broken annexes from Migrate_To_4105;
        1) Migrate MeetingCategory to meetingcategory.
        2) Enable column 'PloneGroupUsersGroupsColumn' of for contacts collections displaying organizations;
        3) Make sure '++resource++plone.app.jquerytools.dateinput.js' is enabled in portal_javascripts;
