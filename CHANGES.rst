@@ -18,8 +18,10 @@ Changelog
   Added `Toggle show/hide all details action` on the item view to be able to toggle
   every collapsible in one click.
   [gbastien]
-- Added an accessor `MeetingItem.getAssociatedGroups` for associatedGroups field [aduchene]
-- Fixed one security.declarePublic in `MeetingConfig`
+- Added an accessor `MeetingItem.getAssociatedGroups` for associatedGroups field.
+  [aduchene]
+- Fixed one security.declarePublic in `MeetingConfig`.
+  [aduchene]
 
 4.2b1 (2020-08-24)
 ------------------
