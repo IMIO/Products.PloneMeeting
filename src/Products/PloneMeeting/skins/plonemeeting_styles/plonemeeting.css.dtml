@@ -959,7 +959,7 @@ div#archetypes-fieldname-powerAdvisersGroups,
 div#archetypes-fieldname-selectableCopyGroups,
 div#archetypes-fieldname-templateUsingGroups,
 div#archetypes-fieldname-usingGroups {
-    max-height: 300px;
+    max-height: 500px;
     max-width: 500px;
     overflow-x: auto;
     padding-bottom: 1em;
@@ -1935,6 +1935,7 @@ div.item-global-actions {
    color: #666666;
    background-color: rgba(200,200,200,0.5);
    padding: 0.5em;
+   border-radius: 3px;
 }
 div.item-global-actions span {
    cursor: pointer;
@@ -1951,6 +1952,19 @@ div#doc-generation-view {
    padding-right: 0.5em;
 }
 
+#content label.formQuestion,
+#content .formQuestion.label {
+    font-size: 110%;
+}
+/* back to font-size 100% */
+#portal-columns #content .discreet,
+#content .discreet {
+   font-size: 100%;
+}
+#portal-columns #content legend,
+#portal-columns #content .widget-fieldset legend {
+    font-size: 110%;
+}
 
 /* </dtml-with> */
 

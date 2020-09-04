@@ -37,6 +37,8 @@ Changelog
       fields.
 
     [gbastien]
+- Display field label and fieldset legend a bit larger.
+  [gbastien]
 
 4.2b1 (2020-08-24)
 ------------------

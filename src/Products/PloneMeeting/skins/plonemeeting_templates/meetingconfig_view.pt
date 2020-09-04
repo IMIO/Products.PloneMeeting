@@ -58,9 +58,13 @@
           </td>
           <!-- I cannot use the standard macro for displaying this field because the
                widget condition prevents the widget from being displayed. -->
-          <td width="25%" tal:define="field python:here.getField('shortName')">
-            <b i18n:translate="PloneMeeting_label_shortName"></b>:
+          <td width="25%">
+            <div class="field ArchetypesField-BooleanField">
+            <label class="formQuestion">
+              <span i18n:translate="PloneMeeting_label_shortName">Shortname</span>:
+            </label>
             <span tal:content="context/getShortName"/>
+            </div>
           </td>
           <td width="25%" tal:define="field python:here.getField('isDefault')">
             <span metal:use-macro="here/widgets/field/macros/view" />
@@ -239,6 +243,8 @@
         </ul>
         </fieldset>
       </tal:defines>
+
+      <br />
 
       <table width="100%" class="discreet">
         <tr valign="top">
