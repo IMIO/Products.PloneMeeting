@@ -233,20 +233,6 @@
               </script>
             </tal:assembly_and_signatures>
 
-            <tal:comment replace="nothing">Item keywords</tal:comment>
-            <div class="discreet" tal:condition="python: 'itemKeywords' in usedAttrs">
-                <span class="item_attribute_label"
-                      i18n:translate="PloneMeeting_label_itemKeywords"></span>:&nbsp;&nbsp;
-                <span tal:content="context/itemKeywords"></span>
-            </div>
-
-            <tal:comment replace="nothing">Item tags</tal:comment>
-            <div class="discreet" tal:condition="python: 'itemTags' in usedAttrs">
-                <span class="item_attribute_label"
-                      i18n:translate="PloneMeeting_label_itemTags"></span>:&nbsp;&nbsp;
-                <span tal:content="python: ', '.join(context.getItemTags())"></span>
-            </div>
-
             <tal:comment replace="nothing">Item is signed?</tal:comment>
             <div class="discreet"
                  tal:condition="python: 'itemIsSigned' in usedAttrs">
@@ -293,7 +279,7 @@
                 <span class="discreet"> — <a href="item-completeness-history" class="link-overlay-pm" i18n:translate="" i18n:domain="plone">History</a></span>
             </div>
         </td>
-        <td width="50%" align="right">
+        <td style="padding-right: 0.5em;" width="50%" align="right">
             <tal:comment replace="nothing">Preferred meeting</tal:comment>
             <div class="discreet">
                 <span class="item_attribute_label" i18n:translate="PloneMeeting_label_preferredMeeting"></span>:&nbsp;&nbsp;
@@ -358,13 +344,6 @@
                 </tal:details>
             </div>
 
-            <tal:comment replace="nothing">Privacy</tal:comment>
-            <div class="item_attribute_label"
-                 tal:define="privacy context/getPrivacy"
-                 tal:condition="python: ('privacy' in usedAttrs) and privacy">
-              <span class="#" tal:attributes="class string:item_privacy_${privacy}" tal:content="privacy" i18n:translate="" />
-            </div>
-
             <tal:comment replace="nothing">To discuss?</tal:comment>
             <div class="discreet" tal:condition="context/showToDiscuss">
                 <span class="item_attribute_label"
@@ -411,7 +390,28 @@
                     <span tal:condition="not: itemInitiator">-</span>
                 </tal:defines>
             </div>
-        </td>
+
+            <tal:comment replace="nothing">Item keywords</tal:comment>
+            <div class="discreet" tal:condition="python: 'itemKeywords' in usedAttrs">
+                <span class="item_attribute_label"
+                      i18n:translate="PloneMeeting_label_itemKeywords"></span>:&nbsp;&nbsp;
+                <span tal:content="context/itemKeywords"></span>
+            </div>
+
+            <tal:comment replace="nothing">Item tags</tal:comment>
+            <div class="discreet" tal:condition="python: 'itemTags' in usedAttrs">
+                <span class="item_attribute_label"
+                      i18n:translate="PloneMeeting_label_itemTags"></span>:&nbsp;&nbsp;
+                <span tal:content="python: ', '.join(context.getItemTags())"></span>
+            </div>
+
+            <tal:comment replace="nothing">Privacy</tal:comment>
+            <div class="item_attribute_label"
+                 tal:define="privacy context/getPrivacy"
+                 tal:condition="python: ('privacy' in usedAttrs) and privacy">
+              <span class="#" tal:attributes="class string:item_privacy_${privacy}" tal:content="privacy" i18n:translate="" />
+            </div>
+         </td>
       </tr>
     </table>
 
@@ -420,7 +420,7 @@
                          linkedItems python: context.getManuallyLinkedItems(only_viewable=True);
                          showManuallyLinkedItems python: 'manuallyLinkedItems' in usedAttrs or linkedItems;
                          class_to_use python: (predecessors or linkedItems) and 'item_attribute_label highlightValue' or 'item_attribute_label';">
-        <div id="linkedItems" class="collapsible async discreet" onclick="toggleDetails('collapsible-linked-items', toggle_parent_active=true, parent_tag=null, load_view='@@load_linked_items');">
+        <div id="linkedItems" class="collapsible discreet" onclick="toggleDetails('collapsible-linked-items', toggle_parent_active=true, parent_tag=null, load_view='@@load_linked_items');">
           <span tal:condition="showManuallyLinkedItems"
                 class="item_attribute_label"
                 tal:attributes="class class_to_use"
@@ -478,6 +478,21 @@
     </fieldset>
     </tal:block>
 
+    <tal:comment replace="nothing">Motivation</tal:comment>
+    <tal:field define="fieldName python: 'motivation'; ajaxEdit python:True">
+       <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+    </tal:field>
+
+    <tal:comment replace="nothing">Decision</tal:comment>
+    <tal:field define="fieldName python: 'decision'; ajaxEdit python:True">
+       <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+    </tal:field>
+
+    <tal:comment replace="nothing">DecisionSuite</tal:comment>
+    <tal:field define="fieldName python: 'decisionSuite'; ajaxEdit python:True">
+       <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+    </tal:field>
+
     <tal:comment replace="nothing">Other meetingConfigs clonable to</tal:comment>
     <tal:block tal:condition="showAdvancedClonableToOtherMCs"
                tal:define="otherMCs context/getOtherMeetingConfigsClonableTo">
@@ -522,21 +537,6 @@
       </div>
     </fieldset>
     </tal:block>
-
-    <tal:comment replace="nothing">Motivation</tal:comment>
-    <tal:field define="fieldName python: 'motivation'; ajaxEdit python:True">
-       <metal:f use-macro="context/@@pm-macros/viewContentField"/>
-    </tal:field>
-
-    <tal:comment replace="nothing">Decision</tal:comment>
-    <tal:field define="fieldName python: 'decision'; ajaxEdit python:True">
-       <metal:f use-macro="context/@@pm-macros/viewContentField"/>
-    </tal:field>
-
-    <tal:comment replace="nothing">DecisionSuite</tal:comment>
-    <tal:field define="fieldName python: 'decisionSuite'; ajaxEdit python:True">
-       <metal:f use-macro="context/@@pm-macros/viewContentField"/>
-    </tal:field>
 
     <tal:comment replace="nothing">Annexes and advices</tal:comment>
     <a name="adviceAndAnnexes"></a>
@@ -611,6 +611,25 @@
       <tal:itemNavigation replace="structure context/@@item-navigation-widget" />
     </tal:itemNavigation>
 
+    <div class="item-global-actions">
+      <a title="show_or_hide_details"
+         i18n:attributes="title"
+         class="show-hide-all-details"
+         href="javascript:toggleAllDetails();">
+        <img tal:attributes="src string:${portal_url}/more_less_details.png" />
+      </a>
+      <span title="top_of_page"
+            i18n:attributes="title"
+            class="fa fa-arrow-up go-to-top-of-page"
+            onclick="event.preventDefault();$('html, body').animate({ scrollTop: 0 }, 'fast');">
+      </span>
+      <span title="bottom_of_page"
+            i18n:attributes="title"
+            class="fa fa-arrow-down go-to-bottom-of-page"
+            onclick="event.preventDefault();$('html, body').animate({ scrollTop: document.body.scrollHeight}, 'fast');">
+      </span>
+    </div>
+
     <tal:comment replace="nothing">Fields that appear only if the item is defined in a configuration</tal:comment>
     <tal:itemInConfig condition="context/isDefinedInTool">
       <tal:templateUsingGroups condition="python: context.isDefinedInTool(item_type='itemtemplate')">
@@ -628,13 +647,6 @@
       </tal:transitionsForRecurring>
 
     </tal:itemInConfig>
-
-    <a title="show_or_hide_details"
-       i18n:attributes="title"
-       class="show-hide-all-details"
-       href="javascript:toggleAllDetails();">
-      <img tal:attributes="src string:${portal_url}/more_less_details.png" />
-    </a>
 
     </metal:body_macro>
     </metal:fill>

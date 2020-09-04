@@ -884,3 +884,80 @@ The parameter "cFolder" is the folder containing categories.</tal:comment>
  </div>
  <span tal:condition="not: linkedItems">-</span>
 </metal:linkedItems>
+
+<metal:otherMeetingConfigsClonable define-macro="otherMeetingConfigsClonable" i18n:domain="PloneMeeting">
+    <fieldset tal:define="showOtherMeetingConfigsClonableToSpecialFields python: cfg.getMeetingConfigsToCloneTo() and ('otherMeetingConfigsClonableToEmergency' in usedAttrs or 'otherMeetingConfigsClonableToPrivacy' in usedAttrs)"
+          tal:attributes="class python: showOtherMeetingConfigsClonableToSpecialFields and 'item-send-to-other-mc-multiple-fields item-send-to-other-mc' or 'item-send-to-other-mc'">
+        <legend i18n:translate="PloneMeeting_label_otherMeetingConfigsClonableTo">Other meeting configs clonable to</legend>
+        <div class="other-mc-clonable-to-base-fields">
+            <metal:field use-macro="python:here.widget('otherMeetingConfigsClonableTo', mode='edit')"/>
+            <metal:field use-macro="python:here.widget('otherMeetingConfigsClonableToPrivacy', mode='edit')"/>
+            <metal:field use-macro="python:here.widget('otherMeetingConfigsClonableToEmergency', mode='edit')"/>
+        </div>
+        <tal:scriptForOtherMeetingConfigsClonableToSpecificFields condition="showOtherMeetingConfigsClonableToSpecialFields">
+        <script type="text/javascript">
+            $("input[id^='otherMeetingConfigsClonableTo_']").each(function()
+                {
+                 $(this).bind("click", function() {
+                    number = this.id.split('_')[1]
+                    otherMCEmergencyField = $('#otherMeetingConfigsClonableToEmergency_' + number);
+                    otherMCPrivacyField = $('#otherMeetingConfigsClonableToPrivacy_' + number);
+                    if (this.checked) {
+                        otherMCEmergencyField.attr('disabled', false);
+                        otherMCPrivacyField.attr('disabled', false);
+                    }
+                    else {
+                        otherMCEmergencyField.attr('checked', false);
+                        otherMCEmergencyField.attr('disabled', true);
+                        otherMCPrivacyField.attr('checked', false);
+                        otherMCPrivacyField.attr('disabled', true);
+                    };
+                    });
+                });
+
+            jQuery(document).ready(function($) {
+            $("input[id^='otherMeetingConfigsClonableTo_']").each(function()
+                {
+                if (!$(this).attr('checked')) {
+                    number = this.id.split('_')[1]
+                    otherMCEmergencyField = $('#otherMeetingConfigsClonableToEmergency_' + number);
+                    otherMCEmergencyField.attr('checked', false);
+                    otherMCEmergencyField.attr('disabled', true);
+                    otherMCPrivacyField = $('#otherMeetingConfigsClonableToPrivacy_' + number);
+                    otherMCPrivacyField.attr('checked', false);
+                    otherMCPrivacyField.attr('disabled', true);
+                    };
+                });
+            });
+        </script>
+        </tal:scriptForOtherMeetingConfigsClonableToSpecificFields>
+        <div style='clear: both'></div>
+
+        <tal:otherMeetingConfigsClonableToFields condition="python: context.adapted().showAdvancedClonableToOtherMCs(True)">
+            <script type="text/javascript">
+              $("input[id^='otherMeetingConfigsClonableTo_'").bind( "click", function() {
+              var otherMeetingConfigsClonableToFields = $('#otherMeetingConfigsClonableToFields');
+              if (this.checked) {
+                  otherMeetingConfigsClonableToFields.fadeIn();
+              }
+              else {
+                  otherMeetingConfigsClonableToFields.fadeOut("normal", function() {
+                      $(this).hide();
+                  });
+              };
+              });
+            </script>
+            <div id="otherMeetingConfigsClonableToFields"
+                 tal:attributes="style python: context.getOtherMeetingConfigsClonableTo() and 'display: block' or 'display: none';">
+                <fieldset>
+                  <legend i18n:translate="">Data that will be used on new item</legend>
+                  <metal:field use-macro="python:here.widget('otherMeetingConfigsClonableToFieldTitle', mode='edit')"/>
+                  <metal:field use-macro="python:here.widget('otherMeetingConfigsClonableToFieldDescription', mode='edit')"/>
+                  <metal:field use-macro="python:here.widget('otherMeetingConfigsClonableToFieldMotivation', mode='edit')"/>
+                  <metal:field use-macro="python:here.widget('otherMeetingConfigsClonableToFieldDecision', mode='edit')"/>
+                  <metal:field use-macro="python:here.widget('otherMeetingConfigsClonableToFieldDecisionSuite', mode='edit')"/>
+                </fieldset>
+            </div>
+        </tal:otherMeetingConfigsClonableToFields>
+    </fieldset>
+</metal:otherMeetingConfigsClonable>

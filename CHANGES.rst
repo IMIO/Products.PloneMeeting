@@ -14,17 +14,29 @@ Changelog
 - Added CompoundCriterion adapter `items-with-negative-previous-index`, this
   will lookup previous index in the query then negativize defined values.
   [gbastien]
-- Added collapsible sections for `budget` and `clonable to other mcs` on item view.
-  Added `Toggle show/hide all details action` on the item view to be able to toggle
-  every collapsible in one click.
+- Added collapsible sections for `budget` and `clonable to other mcs` on item
+  view. Added `Toggle show/hide all details action` on the item view to be able
+  to toggle every collapsible in one click.
   [gbastien]
-- Added an accessor `MeetingItem.getAssociatedGroups` for associatedGroups field.
+- Added an accessor `MeetingItem.getAssociatedGroups` for associatedGroups
+  field.
   [aduchene]
 - Fixed one security.declarePublic in `MeetingConfig`.
   [aduchene]
-- Do not break in `utils.applyOnTransitionFieldTransform` if TAL expression does
-  not return a string (especially when it returns `False`).
+- Do not break in `utils.applyOnTransitionFieldTransform` if TAL expression
+  does not return a string (especially when it returns `False`).
   [gbastien]
+- Refactored item view and edit form to make fields order correspond:
+
+    - order defined on the original item view is used;
+    - simple fields (non RichText) are at the top, RichText fields are under;
+    - exception for field MeetingItem.otherMeetingConfigsClonableTo, when using
+      only simple fields, it is displayed at the top, under
+      MeetingItem.sendToAuthority, when using RichText fields
+      (otherMeetingConfigsClonableToFieldXXX) it is displayed under the decisions
+      fields.
+
+    [gbastien]
 
 4.2b1 (2020-08-24)
 ------------------

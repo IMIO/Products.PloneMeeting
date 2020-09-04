@@ -1499,7 +1499,7 @@ div.item_annexes {
 
 /* avoid screen size change when editing element as CKeditor takes some seconds to load */
 div.field.ArchetypesRichWidget {
-   height: 650px;
+   min-height: 650px;
    background-image: url(&dtml-portal_url;/spinner_small.gif);
    background-repeat: no-repeat;
    background-position: center;
@@ -1924,17 +1924,33 @@ div.item-linkeditems div.collapsible-content {
     width: 99%;
 }
 
-a.show-hide-all-details {
+/* global JS actions on item view */
+div.item-global-actions {
    float: right;
    position: fixed;
    right: 20px;
    bottom: 20px;
    z-index: 10000;
+   font-size: 140%;
+   color: #666666;
+   background-color: rgba(200,200,200,0.5);
+   padding: 0.5em;
 }
-a.show-hide-all-details:focus,
-a.show-hide-all-details:focus img {
+div.item-global-actions span {
+   cursor: pointer;
+}
+div.item-global-actions a.show-hide-all-details:focus,
+div.item-global-actions a.show-hide-all-details:focus img {
    outline: 0 !important;
 }
+
+/* padding-right on item view for workflow state, pod template, item infos */
+div.viewlet_workflowstate,
+table.item-infos,
+div#doc-generation-view {
+   padding-right: 0.5em;
+}
+
 
 /* </dtml-with> */
 
