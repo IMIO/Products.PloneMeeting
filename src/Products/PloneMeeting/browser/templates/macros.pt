@@ -933,7 +933,7 @@ The parameter "cFolder" is the folder containing categories.</tal:comment>
         </tal:scriptForOtherMeetingConfigsClonableToSpecificFields>
         <div style='clear: both'></div>
 
-        <tal:otherMeetingConfigsClonableToFields condition="python: context.adapted().showAdvancedClonableToOtherMCs(True)">
+        <tal:otherMeetingConfigsClonableToFields condition="showAdvancedClonableToOtherMCs">
             <script type="text/javascript">
               $("input[id^='otherMeetingConfigsClonableTo_'").bind( "click", function() {
               var otherMeetingConfigsClonableToFields = $('#otherMeetingConfigsClonableToFields');

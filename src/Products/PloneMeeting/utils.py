@@ -1829,7 +1829,7 @@ def normalize_id(id):
     return id
 
 
-def add_wf_history_action(obj, action_name, action_label, user_id=None):
+def add_wf_history_action(obj, action_name, action_label, user_id=None, insert_index=None):
     wfTool = api.portal.get_tool('portal_workflow')
     wfs = wfTool.getWorkflowsFor(obj)
     if not wfs:
@@ -1837,9 +1837,9 @@ def add_wf_history_action(obj, action_name, action_label, user_id=None):
     wf = wfs[0]
     wfName = wf.id
     # get review_state from last event if any
-    events = obj.workflow_history[wfName]
+    events = list(obj.workflow_history[wfName]) or []
     if events:
-        previousEvent = obj.workflow_history[wfName][-1]
+        previousEvent = events[-1]
         review_state_id = previousEvent['review_state']
     else:
         # use initial_state
@@ -1850,9 +1850,12 @@ def add_wf_history_action(obj, action_name, action_label, user_id=None):
     # action_name must be translated in the plone domain
     newEvent['action'] = action_name
     newEvent['actor'] = user_id or api.user.get_current().id
-    newEvent['time'] = DateTime()
-    newEvent['review_state'] = review_state_id
-    obj.workflow_history[wfName] = obj.workflow_history[wfName] + (newEvent, )
+    # if an insert_index is defined, use same 'time' as previous as
+    # events are sorted on 'time' and just add 1 millisecond
+    newEvent['time'] = insert_index is not None and events[insert_index]['time'] + 0.000000001 or DateTime()
+    newEvent['review_state'] = insert_index is not None and events[insert_index]['review_state'] or review_state_id
+    events.insert(insert_index or -1, newEvent)
+    obj.workflow_history[wfName] = events
 
 
 def is_editing():

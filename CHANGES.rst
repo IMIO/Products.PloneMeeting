@@ -39,6 +39,11 @@ Changelog
     [gbastien]
 - Display field label and fieldset legend a bit larger.
   [gbastien]
+- Added parameter `insert_index` to `utils.add_wf_history_action`, this gives
+  the possibility to insert a `workflow_history` event at arbitrary position,
+  and is used for example when creating an item from `REST WS` and WF
+  transitions are triggered, we add event after WF transitions.
+  [gbastien]
 
 4.2b1 (2020-08-24)
 ------------------
