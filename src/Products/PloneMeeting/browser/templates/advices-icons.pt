@@ -64,15 +64,17 @@
       </tal:menu>
       </tal:definesIfSomethingToShow>
       </tal:advicesToAddOrExisting>
-      <div class="categorized-elements" tal:condition="not: advicesByType">
+      <tal:noAdvicesByType condition="not: advicesByType">
+        <div class="categorized-elements" style="display: inline;">
+          <div style="display: inline;">&nbsp;-&nbsp;&nbsp;&nbsp;</div>
+        </div>
         <tal:comment replace="nothing">Icon for adding an advice for power advisers</tal:comment>
-        <div style="display: inline">&nbsp;-&nbsp;&nbsp;&nbsp;</div>
-        <div tal:condition="python: advicesToAdd" style="display: inline">
+        <div tal:condition="python: advicesToAdd" class="add_advice_icon">
           <a href="++add++meetingadvice" class="link-overlay-pm-advice" tal:attributes="href string:${item_url}/++add++meetingadvice">
             <img i18n:attributes="title"
                  title="add_new_meetingadvice"
                  tal:attributes="src string:${view/portal_url}/new_meetingadvice.png;" />
           </a>
         </div>
-  </div>
+      </tal:noAdvicesByType>
 </tal:defines>

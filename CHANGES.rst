@@ -44,6 +44,9 @@ Changelog
   and is used for example when creating an item from `REST WS` and WF
   transitions are triggered, we add event after WF transitions.
   [gbastien]
+- Fixed `@@advices-icons` when no advice at all and `Add advice icon` is
+  displayed to `power advisers`, the add icon was wrongly styled.
+  [gbastien]
 
 4.2b1 (2020-08-24)
 ------------------
