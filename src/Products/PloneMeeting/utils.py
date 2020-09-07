@@ -1852,9 +1852,11 @@ def add_wf_history_action(obj, action_name, action_label, user_id=None, insert_i
     newEvent['actor'] = user_id or api.user.get_current().id
     # if an insert_index is defined, use same 'time' as previous as
     # events are sorted on 'time' and just add 1 millisecond
-    newEvent['time'] = insert_index is not None and events[insert_index]['time'] + 0.000000001 or DateTime()
-    newEvent['review_state'] = insert_index is not None and events[insert_index]['review_state'] or review_state_id
-    events.insert(insert_index or -1, newEvent)
+    newEvent['time'] = insert_index is not None and \
+        events[insert_index]['time'] + 0.000000001 or DateTime()
+    newEvent['review_state'] = insert_index is not None and \
+        events[insert_index]['review_state'] or review_state_id
+    events.insert(insert_index or len(events), newEvent)
     obj.workflow_history[wfName] = events
 
 
