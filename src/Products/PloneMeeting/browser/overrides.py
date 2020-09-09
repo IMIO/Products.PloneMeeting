@@ -938,7 +938,7 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
             # make sure scan_id is generated and available in the REQUEST
             # so it is applied on stored annex
             helper_view = self.get_generation_context_helper()
-            self._get_generation_context(helper_view, pod_template)
+            helper_view.get_scan_id()
         else:
             generated_template = super(
                 PMDocumentGenerationView, self).generate_and_download_doc(
