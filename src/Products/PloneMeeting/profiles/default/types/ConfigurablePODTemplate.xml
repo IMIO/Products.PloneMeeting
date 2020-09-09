@@ -5,22 +5,34 @@
     <property name="model_source">
         &lt;model xmlns:security="http://namespaces.plone.org/supermodel/security" xmlns:marshal="http://namespaces.plone.org/supermodel/marshal" xmlns:form="http://namespaces.plone.org/supermodel/form" xmlns="http://namespaces.plone.org/supermodel/schema" xmlns:i18n="http://xml.zope.org/namespaces/i18n" i18n:domain="collective.documentgenerator"&gt;
           &lt;schema based-on="collective.documentgenerator.content.pod_template.IConfigurablePODTemplate"&gt;
+
             &lt;field name="mailing_lists" type="zope.schema.Text"&gt;
               &lt;title i18n:translate=""&gt;mailing_lists&lt;/title&gt;
               &lt;description i18n:translate=""&gt;mailing_lists_descr&lt;/description&gt;
               &lt;required&gt;False&lt;/required&gt;
             &lt;/field&gt;
+
             &lt;field name="store_as_annex" type="zope.schema.Choice"&gt;
               &lt;title i18n:translate=""&gt;store_as_annex&lt;/title&gt;
               &lt;description i18n:translate=""&gt;store_as_annex_descr&lt;/description&gt;
               &lt;required&gt;False&lt;/required&gt;
               &lt;vocabulary&gt;Products.PloneMeeting.vocabularies.storepodtemplateasannexvocabulary&lt;/vocabulary&gt;
             &lt;/field&gt;
+
             &lt;field name="store_as_annex_title_expr" type="zope.schema.TextLine"&gt;
               &lt;title i18n:translate=""&gt;store_as_annex_title_expr&lt;/title&gt;
               &lt;description i18n:translate=""&gt;store_as_annex_title_expr_descr&lt;/description&gt;
               &lt;required&gt;False&lt;/required&gt;
             &lt;/field&gt;
+
+            &lt;field name=&quot;store_as_annex_empty_file&quot; type=&quot;zope.schema.Bool&quot;&gt;
+              &lt;description i18n:translate=&quot;&quot;&gt;store_as_annex_empty_file&lt;/description&gt;
+              &lt;default&gt;False&lt;/default&gt;
+              &lt;required&gt;False&lt;/required&gt;
+              &lt;title i18n:translate=&quot;&quot;&gt;store_as_annex_empty_file&lt;/title&gt;
+              &lt;form:widget type="z3c.form.browser.radio.RadioFieldWidget"&gt;&lt;/form:widget&gt;
+            &lt;/field&gt;
+
           &lt;/schema&gt;
         &lt;/model&gt;
     </property>

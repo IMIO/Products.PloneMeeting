@@ -47,6 +47,11 @@ Changelog
 - Fixed `@@advices-icons` when no advice at all and `Add advice icon` is
   displayed to `power advisers`, the add icon was wrongly styled.
   [gbastien]
+- Added boolean attribute `ConfigurablePODTemplate.store_as_annex_empty_file`,
+  when `True`, this will store as annex an empty file instead a generated
+  POD template to avoid useless LibreOffice call when stored annex is
+  just stored to be replaced by the AMQP process.
+  [gbastien]
 
 4.2b1 (2020-08-24)
 ------------------
