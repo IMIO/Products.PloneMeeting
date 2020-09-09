@@ -935,6 +935,10 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
             generated_template = translate('empty_annex_file_content',
                                            domain='PloneMeeting',
                                            context=self.request)
+            # make sure scan_id is generated and available in the REQUEST
+            # so it is applied on stored annex
+            helper = self.get_generation_context_helper()
+            helper.get_scan_id()
         else:
             generated_template = super(
                 PMDocumentGenerationView, self).generate_and_download_doc(

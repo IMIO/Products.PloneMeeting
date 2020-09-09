@@ -819,6 +819,8 @@ class testViews(PloneMeetingTestCase):
         annex = get_annexes(item)[0]
         self.assertEqual(annex.file.contentType, 'application/vnd.oasis.opendocument.text')
         self.assertEqual(annex.file.filename, u'Meeting item.odt')
+        self.assertIsNone(annex.scan_id)
+
         # now when pod_template.store_as_annex_empty_file is True
         pod_template.store_as_annex_empty_file = True
         self.deleteAsManager(annex.UID())
@@ -827,6 +829,7 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(annex.file.contentType, 'text/plain')
         self.assertEqual(annex.file.data, 'empty_annex_file_content')
         self.assertEqual(annex.file.filename, u'empty_file.txt')
+        self.assertEqual(annex.scan_id, '013999900000001')
 
     def test_pm_StorePodTemplateAsAnnexWrongConfig(self):
         """As we can not validate field ConfigurablePODTemplate.store_as_annex to

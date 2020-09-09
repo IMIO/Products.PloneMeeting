@@ -2010,9 +2010,6 @@ class MeetingStoreItemsPodTemplateAsAnnexBatchActionForm(BaseBatchActionForm):
         """ """
         template_id, output_format = data['pod_template'].split('__output_format__')
         pod_template = getattr(self.cfg.podtemplates, template_id)
-        from DateTime import DateTime
-        begin = DateTime()
-        logger.info(begin)
         num_of_generated_templates = 0
         self.request.set('store_as_annex', '1')
         for brain in self.brains:
@@ -2038,9 +2035,6 @@ class MeetingStoreItemsPodTemplateAsAnnexBatchActionForm(BaseBatchActionForm):
                         default="Stored ${number_of_annexes} annexes.")
         api.portal.show_message(msg, request=self.request)
         self.request.set('store_as_annex', '0')
-        end = DateTime()
-        logger.info(begin - end)
-        logger.info(end)
 
 
 class UpdateLocalRolesBatchActionForm(BaseBatchActionForm):
