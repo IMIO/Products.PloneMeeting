@@ -14,6 +14,10 @@ Changelog
   do not append a `/view` to the url of the meeting or it breaks caching because
   by default, other places link to meeting without this `/view`.
   [gbastien]
+- Added a new default key displayAdviceReviewState in adaptable method
+  `MeetingItem.getCustomAdviceMessageFor` to be able to display advice
+  `review_state` to users that may not view the advice.
+  [gbastien]
 
 4.2b2 (2020-09-10)
 ------------------

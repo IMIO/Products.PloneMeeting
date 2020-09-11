@@ -3735,6 +3735,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def getCustomAdviceMessageFor(self, advice):
         '''See doc in interfaces.py.'''
         return {'displayDefaultComplementaryMessage': True,
+                'displayAdviceReviewState': False,
                 'customAdviceMessage': None}
 
     def _getInsertOrder(self, cfg):

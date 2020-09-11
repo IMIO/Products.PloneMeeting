@@ -21,8 +21,9 @@
                                   obj_absolute_url python: obj and obj.absolute_url() or '';
                                   customMessageInfos python: context.adapted().getCustomAdviceMessageFor(advice);
                                   displayDefaultComplementaryMessage customMessageInfos/displayDefaultComplementaryMessage;
+                                  displayAdviceReviewState customMessageInfos/displayAdviceReviewState;
                                   customAdviceMessage customMessageInfos/customAdviceMessage;
-                                  state_infos python: view.state_infos(context);">
+                                  mayView view/mayView">
                 <legend>
                   <div style="display: inline"
                        class="collapsible active"
@@ -138,7 +139,7 @@
                 </legend>
                 <div tal:attributes="id string:comment_content_${advice/id}">
 
-            <tal:notHiddenUnderRedactionOrManagable condition="python: view.mayView()">
+            <tal:notHiddenUnderRedactionOrManagable condition="mayView">
 
             <table class="no-style-table advices" cellpadding="2" cellspacing="2" width="100%">
               <tr>
@@ -368,6 +369,18 @@
 
             <tal:complementaryInfoMessage condition="displayDefaultComplementaryMessage">
             <tal:hiddenUnderRedaction condition="python: advice['advice_editable'] and adviceType == 'hidden_during_redaction'">
+
+               <tal:displayAdviceReviewState condition="python: displayAdviceReviewState and not mayView and obj">
+                 <tal:comment replace="nothing">This is a copy/paste of code here above, change both places when necessary...</tal:comment>
+                 <div class="viewlet_workflowstate" i18n:domain="plone">
+                   <span i18n:translate="label_state"></span>&nbsp;
+                   <span tal:define="advice_state_infos python: view.state_infos(obj)"
+                         tal:content="advice_state_infos/state_title"
+                         tal:attributes="class string:state-${advice_state_infos/state_name}"></span>
+                 </div>
+                 <div style="clear: both;">&nbsp;</div>
+               </tal:displayAdviceReviewState>
+
                 <p>
                     <span class="advice_hidden_during_redaction discreet" i18n:translate="advice_hidden_during_redaction_help">This advice is currently under redaction by the advisers of the group and is not visible to other groups.</span>
                     &nbsp;<span tal:condition="advice/delay_infos"
@@ -400,7 +413,7 @@
                <span> - <span i18n:translate="">Limit date <span i18n:name="advice_limit_date" tal:content="advice/delay_infos/limit_date_localized">2013/05/08</span></span></span>
               </tal:delayinfos>
             </div>
-                </div>
+            </div>
             </fieldset>
           </tal:loop>
 
