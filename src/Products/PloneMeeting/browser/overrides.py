@@ -925,11 +925,25 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
         return generation_context
 
     def generate_and_download_doc(self, pod_template, output_format, **kwargs):
-        """ """
-        generated_template = super(
-            PMDocumentGenerationView, self).generate_and_download_doc(
-                pod_template,
-                output_format)
+        """When generating a template :
+           - check if need to generate in case store as annex and store_as_annex_empty_file is True;
+           - send to mailing list if relevant;
+           - or just generate the template."""
+
+        if self.request.get('store_as_annex', '0') == '1' and \
+           pod_template.store_as_annex_empty_file is True:
+            generated_template = translate('empty_annex_file_content',
+                                           domain='PloneMeeting',
+                                           context=self.request)
+            # make sure scan_id is generated and available in the REQUEST
+            # so it is applied on stored annex
+            helper_view = self.get_generation_context_helper()
+            helper_view.get_scan_id()
+        else:
+            generated_template = super(
+                PMDocumentGenerationView, self).generate_and_download_doc(
+                    pod_template,
+                    output_format)
 
         # check if we have to send this generated POD template or to render it
         if self.request.get('mailinglist_name'):
@@ -1045,6 +1059,14 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
         if not return_portal_msg_code:
             return self.request.RESPONSE.redirect(
                 self.context.absolute_url() + '/@@categorized-annexes')
+
+    def _get_filename(self):
+        """Override to take into account store_as_annex_empty_file."""
+        if self.request.get('store_as_annex', '0') == '1' and \
+           self.pod_template.store_as_annex_empty_file is True:
+            return "empty_file.txt"
+        else:
+            return super(PMDocumentGenerationView, self)._get_filename()
 
     def _store_pod_template_as_annex(self,
                                      pod_template,

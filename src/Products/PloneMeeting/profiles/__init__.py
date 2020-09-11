@@ -278,6 +278,7 @@ class PodTemplateDescriptor(StyleTemplateDescriptor):
         self.roles_bypassing_talcondition = set()
         self.store_as_annex = None
         self.store_as_annex_title_expr = u''
+        self.store_as_annex_empty_file = False
         self.is_style = False
         self.merge_templates = []
         self.is_reusable = False
