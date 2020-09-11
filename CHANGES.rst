@@ -10,6 +10,10 @@ Changelog
   POD template to avoid useless LibreOffice call when stored annex is
   just stored to be replaced by the AMQP process.
   [gbastien]
+- In `imgselectbox` (the box used to select a meeting in the portlet),
+  do not append a `/view` to the url of the meeting or it breaks caching because
+  by default, other places link to meeting without this `/view`.
+  [gbastien]
 
 4.2b2 (2020-09-10)
 ------------------
