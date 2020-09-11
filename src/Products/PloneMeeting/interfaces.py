@@ -235,6 +235,12 @@ class IMeetingItemDocumentation:
            within Archetypes methods at_post_create_script and
            at_post_edit_script. You do not need to reindex the item. The
            default PloneMeeting implementation for this method does nothing.'''
+    def getCustomAdviceMessageFor(self, advice):
+        '''This manages custom messages displayed on the advice infos tooltipster.
+           If 'displayDefaultComplementaryMessage' is True, default message are displayed.
+           If 'displayAdviceReviewState' is True, the advice review_state is displayed
+           to users not able to see the advice.
+           'customAdviceMessage' will contain the translated custom message.'''
     def mayCloneToOtherMeetingConfig(destMeetingConfigId):
         '''Check that we can clone the item to p_destMeetingConfigId.
            Checks are ordered from light to heavy as this could be called
