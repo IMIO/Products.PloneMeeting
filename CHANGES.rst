@@ -2,12 +2,15 @@ Changelog
 =========
 
 
-
 4.1.28.3 (unreleased)
 ---------------------
 
-- Nothing changed yet.
-
+- Backport from 4.2.x (added upgrade step to 4111):
+  Added boolean attribute `ConfigurablePODTemplate.store_as_annex_empty_file`,
+  when `True`, this will store as annex an empty file instead a generated
+  POD template to avoid useless LibreOffice call when stored annex is
+  just stored to be replaced by the AMQP process.
+  [gbastien]
 
 4.1.28.2 (2020-09-03)
 ---------------------

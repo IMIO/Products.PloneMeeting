@@ -1985,7 +1985,6 @@ class MeetingStoreItemsPodTemplateAsAnnexBatchActionForm(BaseBatchActionForm):
         """ """
         template_id, output_format = data['pod_template'].split('__output_format__')
         pod_template = getattr(self.cfg.podtemplates, template_id)
-
         num_of_generated_templates = 0
         self.request.set('store_as_annex', '1')
         for brain in self.brains:
@@ -1997,9 +1996,6 @@ class MeetingStoreItemsPodTemplateAsAnnexBatchActionForm(BaseBatchActionForm):
                 return_portal_msg_code=True)
             if not res:
                 num_of_generated_templates += 1
-                logger.info(
-                    'Generated POD template {0} using output format {1} for item at {2}'.format(
-                        template_id, output_format, '/'.join(item.getPhysicalPath())))
             else:
                 # log error
                 msg = translate(msgid=res, domain='PloneMeeting', context=self.request)
