@@ -1299,14 +1299,14 @@ p.item-before-budget-related {
     padding-bottom: 0.2em;
 }
 
-#content table.configActions {
+#content div.configActions table {
     margin: 0;
     width: 100%;
 }
-#content table.configActions td:first-of-type {
+#content div.configActions table td:first-of-type {
     min-width: 40%;
 }
-#content table.configActions form {
+#content div.configActions form {
     border: 1px solid lightgrey;
     padding: 0.5em;
     margin-bottom: 0.5em;
