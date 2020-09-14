@@ -733,6 +733,7 @@ class testViews(PloneMeetingTestCase):
         pod_template.store_as_annex = None
 
         # the document-generation view
+        self.request.set('HTTP_REFERER', item.absolute_url())
         view = item.restrictedTraverse('@@document-generation')
 
         # raises Unauthorized if trying to store_as_annex, as no store_as_annex
@@ -747,19 +748,19 @@ class testViews(PloneMeetingTestCase):
         pod_template.store_as_annex = annex_type.UID()
         self.assertEqual(get_annexes(item), [])
         url = view()
-        # after call to view(), user is redirected to the annexes table view
-        self.assertEqual(url, '{0}/@@categorized-annexes'.format(item.absolute_url()))
+        # after call to view(), user is redirected to the item view
+        self.assertEqual(url, item.absolute_url())
         # now we have an annex
         annex = get_annexes(item)[0]
         self.assertEqual(annex.used_pod_template_id, pod_template.getId())
         # we can not store an annex using a POD template several times, we get a status message
         messages = IStatusMessage(self.request).show()
-        self.assertEqual(len(messages), 2)
+        self.assertEqual(len(messages), 3)
         view()
         # no extra annex
         self.assertEqual(get_annexes(item), [annex])
         messages = IStatusMessage(self.request).show()
-        self.assertEqual(len(messages), 3)
+        self.assertEqual(len(messages), 4)
         last_msg = messages[-1].message
         can_not_store_several_times_msg = translate(
             u'store_podtemplate_as_annex_can_not_store_several_times',
@@ -827,7 +828,7 @@ class testViews(PloneMeetingTestCase):
         view()
         annex = get_annexes(item)[0]
         self.assertEqual(annex.file.contentType, 'text/plain')
-        self.assertEqual(annex.file.data, 'empty_annex_file_content')
+        self.assertEqual(annex.file.data, 'This file will be replaced by the scan process')
         self.assertEqual(annex.file.filename, u'empty_file.txt')
         self.assertEqual(annex.scan_id, '013999900000001')
 
