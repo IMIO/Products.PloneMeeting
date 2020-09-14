@@ -23,6 +23,8 @@ Changelog
   `MeetingItem.getCustomAdviceMessageFor` to be able to display advice
   `review_state` to users that may not view the advice.
   [gbastien]
+- Fixed link `Go to bottom of the page` on item view for Chrome.
+  [gbastien]
 
 4.2b2 (2020-09-10)
 ------------------

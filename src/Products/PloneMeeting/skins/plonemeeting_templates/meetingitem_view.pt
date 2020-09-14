@@ -626,7 +626,7 @@
       <span title="bottom_of_page"
             i18n:attributes="title"
             class="fa fa-arrow-down go-to-bottom-of-page"
-            onclick="event.preventDefault();$('html, body').animate({ scrollTop: document.body.scrollHeight}, 'fast');">
+            onclick="event.preventDefault();$('html, body').animate({ scrollTop: $(document).height()}, 'fast');">
       </span>
     </div>
 
