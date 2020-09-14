@@ -2,16 +2,13 @@
              define="item_url context/absolute_url;
                      advicesByType view/advicesByType;
                      advisableGroups view/advisableGroups;
-                     advicesToAdd python: [info[0] for info in advisableGroups[0]];
-                     advicesToWarn python: view.advicesDelayToWarn();">
+                     advicesToAdd python: [info[0] for info in advisableGroups[0]];">
   
       <tal:advicesToAddOrExisting condition="python: advicesByType or advicesToAdd">
       <tal:definesIfSomethingToShow define="cfg python: view.cfg;
                                             displayedAddIcon python: False;
                                             adviceStyle python: cfg.getAdviceStyle();
-                                            displayAdviceConfidentiality python: cfg.getEnableAdviceConfidentiality() and view.tool.isManager(context);
-                                            isRealManager python: view.tool.isManager(context, realManagers=True);
-                                            item_review_state context/queryState;">
+                                            advicesToWarn python: view.advicesDelayToWarn();">
       <tal:comment replace="nothing">For history reasons, we use cfg.listAdviceTypes to be sure
                                      that a deactivated adviceType is still shown.</tal:comment>
       <tal:menu repeat="adviceType python: ['not_given', 'hidden_during_redaction', 'considered_not_given_hidden_during_redaction'] + cfg.listAdviceTypes().keys()">

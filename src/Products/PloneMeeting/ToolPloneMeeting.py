@@ -463,8 +463,10 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 suffix,
                 user_id)
 
+    # @ram.cache(group_is_not_empty_cachekey)
     def group_is_not_empty(self, org_uid, suffix, user_id=None):
-        '''Is there any user in the group?'''
+        '''Is there any user in the group?
+           Do not use ram.cache for this one, seems slower...'''
         portal = api.portal.get()
         plone_group_id = get_plone_group_id(org_uid, suffix)
         # for performance reasons, check directly in source_groups stored data

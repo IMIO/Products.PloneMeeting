@@ -60,7 +60,7 @@ class AdvicesIcons(BrowserView):
         self.portal_url = self.portal.absolute_url()
         self.advisableGroups = self.context.getAdvicesGroupsInfosForUser(compute_to_edit=False)
         self.advicesByType = self.context.getAdvicesByType()
-        self.pm_utils = SecureModuleImporter['Products.PloneMeeting.utils']
+        self.userAdviserOrgUids = self.tool.get_orgs_for_user(suffixes=['advisers'], the_objects=False)
 
         if not self.context.adapted().isPrivacyViewable():
             return '<div style="display: inline">&nbsp;-&nbsp;&nbsp;&nbsp;</div>'
@@ -71,7 +71,6 @@ class AdvicesIcons(BrowserView):
            - 'not_given' are in the addable advices;
            - 'hidden_during_redaction' or 'asked_again' are in the editable advices."""
 
-        userAdviserOrgUids = self.tool.get_orgs_for_user(suffixes=['advisers'], the_objects=False)
         advicesToWarn = {}
 
         def _updateAdvicesToWarn(adviceType):
@@ -87,7 +86,7 @@ class AdvicesIcons(BrowserView):
                      adviceInfo['hidden_during_redaction'] and not adviceInfo['advice_editable'])) and \
                    adviceInfo['delay'] and \
                    adviceInfo['delay_infos']['left_delay'] < smaller_delay:
-                    if org_uid in userAdviserOrgUids:
+                    if org_uid in self.userAdviserOrgUids:
                         # determinate delay_icon to use
                         advicesToWarn[adviceType] = adviceInfo, _delay_icon(True, adviceInfo)
                     # check if we already have a adviceToWarn, if user was adviser
