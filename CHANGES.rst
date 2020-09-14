@@ -12,7 +12,8 @@ Changelog
   from the item view, user is no more redirected to the annexes tab, it stays on
   the item view.
   [gbastien]
-- Fixed `Migrate_To_4_1._adaptForPlonegroup` to take into account new key `enabled` when setting plonegroup functions.
+- Fixed `Migrate_To_4_1._adaptForPlonegroup` to take into account new key
+  `enabled` when setting plonegroup functions.
   [gbastien]
 - In `imgselectbox` (the box used to select a meeting in the portlet),
   do not append a `/view` to the url of the meeting or it breaks caching because
