@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.1.28.3 (unreleased)
+4.1.28.3 (2020-09-14)
 ---------------------
 
 - Backport from 4.2.x (added upgrade step to 4111):
