@@ -8,7 +8,11 @@ Changelog
 - Added boolean attribute `ConfigurablePODTemplate.store_as_annex_empty_file`,
   when `True`, this will store as annex an empty file instead a generated
   POD template to avoid useless LibreOffice call when stored annex is
-  just stored to be replaced by the AMQP process.
+  just stored to be replaced by the AMQP process. Moreover when storing as annex
+  from the item view, user is no more redirected to the annexes tab, it stays on
+  the item view.
+  [gbastien]
+- Fixed `Migrate_To_4_1._adaptForPlonegroup` to take into account new key `enabled` when setting plonegroup functions.
   [gbastien]
 - In `imgselectbox` (the box used to select a meeting in the portlet),
   do not append a `/view` to the url of the meeting or it breaks caching because

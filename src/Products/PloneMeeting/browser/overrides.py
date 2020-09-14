@@ -1057,8 +1057,11 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
             annex_portal_type)
 
         if not return_portal_msg_code:
-            return self.request.RESPONSE.redirect(
-                self.context.absolute_url() + '/@@categorized-annexes')
+            msg = translate('stored_single_item_template_as_annex',
+                            domain="PloneMeeting",
+                            context=self.request)
+            api.portal.show_message(msg, request=self.request)
+            return self.request.RESPONSE.redirect(self.request['HTTP_REFERER'])
 
     def _get_filename(self):
         """Override to take into account store_as_annex_empty_file."""
