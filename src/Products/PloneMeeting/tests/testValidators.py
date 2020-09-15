@@ -282,6 +282,7 @@ class testValidators(PloneMeetingTestCase):
         functions = get_registry_functions()
         functions_without_samplers = deepcopy(functions)
         functions.append({'enabled': True,
+                          'fct_management': False,
                           'fct_id': u'samplers',
                           'fct_orgs': [],
                           'fct_title': u'Samplers'})
