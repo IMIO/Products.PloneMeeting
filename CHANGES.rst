@@ -28,6 +28,9 @@ Changelog
 - Fixed `@@toggle_item_is_signed` that still reindexed old index
   `getItemIsSigned`, instead new index `item_is_signed`.
   [gbastien]
+- Adapted `config.MEETING_GROUP_SUFFIXES` regarding changes in
+  `collective.contact.plonegroup`, new key `fct_management` in functions.
+  [gbastien]
 
 4.2b2 (2020-09-10)
 ------------------
