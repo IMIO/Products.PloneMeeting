@@ -1,6 +1,7 @@
 # encoding: utf-8
 
 from collective.contact.plonegroup.browser.settings import EveryOrganizationsVocabulary
+from collective.contact.plonegroup.browser.settings import SortedSelectedOrganizationsElephantVocabulary
 from collective.contact.plonegroup.config import get_registry_organizations
 from collective.contact.plonegroup.utils import get_organization
 from collective.contact.plonegroup.utils import get_organizations
@@ -386,6 +387,21 @@ class EveryOrganizationsAcronymsVocabulary(EveryOrganizationsVocabulary):
 
 
 EveryOrganizationsAcronymsVocabularyFactory = EveryOrganizationsAcronymsVocabulary()
+
+
+class PMSortedSelectedOrganizationsElephantVocabulary(SortedSelectedOrganizationsElephantVocabulary):
+    """ """
+
+    def _term_value(self, orga):
+        """ """
+        return orga
+
+    def __call__(self, context):
+        """Dos not work with ElephantVocabulary so unwrap it."""
+        wrapped_vocab = super(PMSortedSelectedOrganizationsElephantVocabulary, self).__call__(context)
+        return wrapped_vocab.vocab
+
+PMSortedSelectedOrganizationsElephantVocabularyFactory = PMSortedSelectedOrganizationsElephantVocabulary()
 
 
 class MeetingReviewStatesVocabulary(object):
