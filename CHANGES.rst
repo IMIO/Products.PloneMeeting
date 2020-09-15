@@ -25,6 +25,9 @@ Changelog
   [gbastien]
 - Fixed link `Go to bottom of the page` on item view for Chrome.
   [gbastien]
+- Fixed `@@toggle_item_is_signed` that still reindexed old index
+  `getItemIsSigned`, instead new index `item_is_signed`.
+  [gbastien]
 
 4.2b2 (2020-09-10)
 ------------------

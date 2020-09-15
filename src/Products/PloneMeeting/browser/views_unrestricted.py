@@ -97,7 +97,7 @@ class ItemSign(BrowserView):
         with api.env.adopt_roles(['Manager', ]):
             itemIsSigned = not self.context.getItemIsSigned()
             self.context.setItemIsSigned(itemIsSigned)
-            notifyModifiedAndReindex(self.context, extra_idxs=['getItemIsSigned'])
+            notifyModifiedAndReindex(self.context, extra_idxs=['item_is_signed'])
 
         # check again if member can signItem now that it has been signed
         # by default, when an item is signed, it can not be unsigned
