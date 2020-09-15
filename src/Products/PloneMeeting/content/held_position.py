@@ -14,6 +14,9 @@ from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.utils import plain_render
 from Products.PloneMeeting.utils import uncapitalize
 from Products.PloneMeeting.widgets.pm_checkbox import PMCheckBoxFieldWidget
+from z3c.form.browser.select import SelectFieldWidget
+from z3c.relationfield.schema import RelationChoice
+from z3c.relationfield.schema import RelationList
 from zope.globalrequest import getRequest
 from zope.i18n import translate
 
@@ -66,10 +69,23 @@ class IPMHeldPosition(IHeldPosition):
         required=False,
     )
 
+    form.widget('representative_organizations', SelectFieldWidget)
+    representative_organizations = RelationList(
+        title=_("Representative following organizations"),
+        description=_("Select organizations the current held position is representative for."),
+        value_type=RelationChoice(
+            vocabulary="collective.contact.plonegroup.browser.settings."
+            "SortedSelectedOrganizationsElephantVocabulary"),
+        required=False,
+    )
+
     model.fieldset('held_position_app_parameters',
                    label=_(u"Application parameters"),
-                   fields=['position', 'label', 'position_type', 'secondary_position_type', 'start_date', 'end_date',
-                           'usages', 'defaults', 'signature_number'])
+                   fields=['position', 'label', 'position_type',
+                           'secondary_position_type',
+                           'start_date', 'end_date',
+                           'usages', 'defaults', 'signature_number',
+                           'representative_organizations'])
 
 
 class PMHeldPosition(HeldPosition):
