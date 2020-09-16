@@ -68,9 +68,9 @@ class IPMHeldPosition(IHeldPosition):
         required=False,
     )
 
-    form.widget('representative_organizations', PMCheckBoxFieldWidget)
-    representative_organizations = RelationList(
-        title=_("Representative following organizations"),
+    form.widget('represented_organizations', PMCheckBoxFieldWidget)
+    represented_organizations = RelationList(
+        title=_("Represented organizations"),
         default=[],
         description=_("Select organizations the current held position is representative for."),
         value_type=RelationChoice(
@@ -84,7 +84,7 @@ class IPMHeldPosition(IHeldPosition):
                            'secondary_position_type',
                            'start_date', 'end_date',
                            'usages', 'defaults', 'signature_number',
-                           'representative_organizations'])
+                           'represented_organizations'])
 
 
 class PMHeldPosition(HeldPosition):

@@ -20,9 +20,11 @@ from Products.statusmessages.interfaces import IStatusMessage
 from z3c.relationfield.relation import RelationValue
 from zExceptions import Redirect
 from zope.component import getUtility
+from zope.event import notify
 from zope.i18n import translate
 from zope.interface import Invalid
 from zope.intid.interfaces import IIntIds
+from zope.lifecycleevent import ObjectModifiedEvent
 
 import os
 import Products.PloneMeeting
@@ -1695,7 +1697,7 @@ class testContacts(PloneMeetingTestCase):
         meeting_attendees = meeting.getAttendees(theObjects=True)
         self.assertEqual(len(meeting_attendees), 4)
 
-    def test_pm_directory_position_types_invariant(self):
+    def test_pm_Directory_position_types_invariant(self):
         class DummyData(object):
             def __init__(self, context, position_types):
                 self.__context__ = context
@@ -1726,6 +1728,61 @@ class testContacts(PloneMeetingTestCase):
         self.assertIsNone(invariant(data))
         data = DummyData(self.portal.contacts, position_types)
         self.assertIsNone(invariant(data))
+
+    def test_pm_Get_representatives(self):
+        """Various held_positions may be representative for different organizations."""
+        org1 = self.developers
+        org2 = self.vendors
+        hp1 = self.portal.contacts.person1.held_pos1
+        hp2 = self.portal.contacts.person2.held_pos2
+        self.assertEqual(hp1.represented_organizations, [])
+        self.assertEqual(hp2.represented_organizations, [])
+        self.assertIsNone(hp1.end_date)
+        self.assertIsNone(hp2.end_date)
+        self.assertEqual(org1.get_representatives(), [])
+        self.assertEqual(org2.get_representatives(), [])
+        intids = getUtility(IIntIds)
+        # hp1 is representative for one org1
+        hp1.represented_organizations = [RelationValue(intids.getId(org1))]
+        # hp2 is representative for two org1 and org2
+        hp2.represented_organizations = [RelationValue(intids.getId(org1)),
+                                         RelationValue(intids.getId(org2))]
+        # update relations
+        notify(ObjectModifiedEvent(hp1))
+        notify(ObjectModifiedEvent(hp2))
+        self.assertEqual(org1.get_representatives(), [hp1, hp2])
+        self.assertEqual(org2.get_representatives(), [hp2])
+        # when using parameter at_date
+        self.assertEqual(org1.get_representatives(at_date=DateTime('2020/01/01')), [hp1, hp2])
+        self.assertEqual(org2.get_representatives(at_date=DateTime('2020/01/01')), [hp2])
+        hp1.end_date = date(2020, 5, 5)
+        self.assertEqual(org1.get_representatives(at_date=DateTime('2020/01/01')), [hp1, hp2])
+        self.assertEqual(org2.get_representatives(at_date=DateTime('2020/01/01')), [hp2])
+        self.assertEqual(org1.get_representatives(at_date=DateTime('2020/05/05')), [hp1, hp2])
+        self.assertEqual(org2.get_representatives(at_date=DateTime('2020/05/05')), [hp2])
+        self.assertEqual(org1.get_representatives(at_date=DateTime('2020/06/06')), [hp2])
+        self.assertEqual(org2.get_representatives(at_date=DateTime('2020/06/06')), [hp2])
+        self.assertEqual(org1.get_representatives(at_date=date(2020, 1, 1)), [hp1, hp2])
+        self.assertEqual(org2.get_representatives(at_date=date(2020, 1, 1)), [hp2])
+        self.assertEqual(org1.get_representatives(at_date=date(2020, 5, 5)), [hp1, hp2])
+        self.assertEqual(org2.get_representatives(at_date=date(2020, 5, 5)), [hp2])
+        self.assertEqual(org1.get_representatives(at_date=date(2020, 6, 6)), [hp2])
+        self.assertEqual(org1.get_representatives(at_date=date(2020, 6, 6)), [hp2])
+        self.assertEqual(org2.get_representatives(at_date=date(2020, 6, 6)), [hp2])
+        hp2.end_date = date(2020, 5, 5)
+        self.assertEqual(org1.get_representatives(at_date=DateTime('2020/01/01')), [hp1, hp2])
+        self.assertEqual(org2.get_representatives(at_date=DateTime('2020/01/01')), [hp2])
+        self.assertEqual(org1.get_representatives(at_date=DateTime('2020/05/05')), [hp1, hp2])
+        self.assertEqual(org2.get_representatives(at_date=DateTime('2020/05/05')), [hp2])
+        self.assertEqual(org1.get_representatives(at_date=DateTime('2020/06/06')), [])
+        self.assertEqual(org2.get_representatives(at_date=DateTime('2020/06/06')), [])
+        self.assertEqual(org1.get_representatives(at_date=date(2020, 1, 1)), [hp1, hp2])
+        self.assertEqual(org2.get_representatives(at_date=date(2020, 1, 1)), [hp2])
+        self.assertEqual(org1.get_representatives(at_date=date(2020, 5, 5)), [hp1, hp2])
+        self.assertEqual(org2.get_representatives(at_date=date(2020, 5, 5)), [hp2])
+        self.assertEqual(org1.get_representatives(at_date=date(2020, 6, 6)), [])
+        self.assertEqual(org1.get_representatives(at_date=date(2020, 6, 6)), [])
+        self.assertEqual(org2.get_representatives(at_date=date(2020, 6, 6)), [])
 
 
 def test_suite():

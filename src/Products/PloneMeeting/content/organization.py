@@ -7,6 +7,9 @@ from collective.contact.plonegroup.interfaces import IPloneGroupContact
 from collective.contact.plonegroup.utils import get_organizations
 from collective.z3cform.datagridfield import DataGridFieldFactory
 from collective.z3cform.datagridfield import DictRow
+from DateTime import DateTime
+from datetime import date
+from imio.helpers.content import get_back_relations
 from imio.helpers.content import uuidsToObjects
 from plone.autoform import directives as form
 from plone.dexterity.schema import DexteritySchemaPolicy
@@ -304,6 +307,20 @@ class PMOrganization(Organization):
                         i = associated_org_index
                     break
         return i
+
+    def get_representatives(self, at_date=None):
+        '''Get the representative held positions.
+           When a date is given, it will get the held position that were active at given date.
+           Else, date will be set to "now" to only get the currently active held positions.'''
+        if not at_date:
+            at_date = date.today()
+        elif isinstance(at_date, DateTime):
+            at_date = at_date.asdatetime().date()
+        res = []
+        for hp in get_back_relations(self, 'represented_organizations'):
+            if not hp.end_date or hp.end_date >= at_date:
+                res.append(hp)
+        return res
 
     def _invalidateCachedVocabularies(self):
         '''Clean cache for vocabularies using organizations.'''
