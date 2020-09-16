@@ -14,6 +14,8 @@ from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.utils import plain_render
 from Products.PloneMeeting.utils import uncapitalize
 from Products.PloneMeeting.widgets.pm_checkbox import PMCheckBoxFieldWidget
+from z3c.relationfield.schema import RelationChoice
+from z3c.relationfield.schema import RelationList
 from zope.globalrequest import getRequest
 from zope.i18n import translate
 
@@ -61,15 +63,28 @@ class IPMHeldPosition(IHeldPosition):
 
     signature_number = zope.schema.Choice(
         title=_("Signature number"),
-        description=_("If this contact is a default signer, select signature number"),
+        description=_("If this contact is a default signer, select signature number."),
         vocabulary="Products.PloneMeeting.vocabularies.signaturenumbervocabulary",
+        required=False,
+    )
+
+    form.widget('represented_organizations', PMCheckBoxFieldWidget)
+    represented_organizations = RelationList(
+        title=_("Represented organizations"),
+        default=[],
+        description=_("Select organizations the current held position is representative for."),
+        value_type=RelationChoice(
+            vocabulary="Products.PloneMeeting.vocabularies.sortedselectedorganizationsvocabulary"),
         required=False,
     )
 
     model.fieldset('held_position_app_parameters',
                    label=_(u"Application parameters"),
-                   fields=['position', 'label', 'position_type', 'secondary_position_type', 'start_date', 'end_date',
-                           'usages', 'defaults', 'signature_number'])
+                   fields=['position', 'label', 'position_type',
+                           'secondary_position_type',
+                           'start_date', 'end_date',
+                           'usages', 'defaults', 'signature_number',
+                           'represented_organizations'])
 
 
 class PMHeldPosition(HeldPosition):

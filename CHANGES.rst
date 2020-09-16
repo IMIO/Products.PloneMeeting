@@ -31,6 +31,13 @@ Changelog
 - Adapted `config.MEETING_GROUP_SUFFIXES` regarding changes in
   `collective.contact.plonegroup`, new key `fct_management` in functions.
   [gbastien]
+- Added `held_position.represented_organizations` Relation field to be able to
+  specify held_positions representatives of various organizations.
+  Moreover, a helper method `organization.get_representatives` is added to get
+  representatives held_positions from the organization.
+  [gbastien]
+- Package `plonemeeting.restapi` is now a direct dependency of `Products.PloneMeeting`.
+  [gbastien]
 
 4.2b2 (2020-09-10)
 ------------------

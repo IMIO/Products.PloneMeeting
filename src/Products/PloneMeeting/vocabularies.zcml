@@ -17,6 +17,8 @@
            name="Products.PloneMeeting.vocabularies.everyorganizationsvocabulary" />
   <utility component=".vocabularies.EveryOrganizationsAcronymsVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.everyorganizationsacronymsvocabulary" />
+  <utility component=".vocabularies.PMSortedSelectedOrganizationsElephantVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.sortedselectedorganizationsvocabulary" />
   <utility component=".vocabularies.AssociatedGroupsVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.associatedgroupsvocabulary" />
   <utility component=".vocabularies.ItemAssociatedGroupsVocabularyFactory"
