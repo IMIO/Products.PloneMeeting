@@ -1289,18 +1289,52 @@ class testViews(PloneMeetingTestCase):
         group = api.group.get(self.developers_creators)
         group_id = group.getId()
         view(group_ids=[group_id])
+        self.assertEqual(len(view.groups), 1)
         self.assertEqual(
-            view.group_users(group),
-            "<img src='http://nohost/plone/user.png'> <div class='user-or-group'>M. PMCreator One</div>"
-            "<img src='http://nohost/plone/user.png'> <div class='user-or-group'>M. PMCreator One bee</div>"
-            "<img src='http://nohost/plone/user.png'> <div class='user-or-group'>M. PMManager</div>")
+            view._get_groups_and_members(group),
+            [(0, api.user.get('pmCreator1')),
+             (0, api.user.get('pmCreator1b')),
+             (0, api.user.get('pmManager'))])
         # add a 'not found' user, will not be displayed
         self._make_not_found_user()
         self.assertEqual(
-            view.group_users(group),
-            "<img src='http://nohost/plone/user.png'> <div class='user-or-group'>M. PMCreator One</div>"
-            "<img src='http://nohost/plone/user.png'> <div class='user-or-group'>M. PMCreator One bee</div>"
-            "<img src='http://nohost/plone/user.png'> <div class='user-or-group'>M. PMManager</div>")
+            view._get_groups_and_members(group),
+            [(0, api.user.get('pmCreator1')),
+             (0, api.user.get('pmCreator1b')),
+             (0, api.user.get('pmManager'))])
+
+    def test_pm_DisplayGroupUsersViewGroupsInGroups(self):
+        """Subgroups are displayed with contained members.
+           Normal users see only members and Manager will also see the contained group.
+           This is only relevant when using the recursive_groups PAS plugin."""
+        # add group developers_creators to developers_observers
+        self._addPrincipalToGroup(self.developers_creators, self.developers_observers)
+        self.changeUser('pmCreator1')
+        view = self.portal.restrictedTraverse('@@display-group-users')
+        group = api.group.get(self.developers_observers)
+        group_id = group.getId()
+        view(group_ids=[group_id])
+        self.assertEqual(len(view.groups), 1)
+        # pmManager is in creators and observers but
+        # with keep_subgroups=False, only one is kept
+        self.assertEqual(
+            view._get_groups_and_members(group),
+            [(1, api.user.get('pmCreator1')),
+             (1, api.user.get('pmCreator1b')),
+             (1, api.user.get('pmManager')),
+             (0, api.user.get('pmObserver1')),
+             (0, api.user.get('pmReviewer1'))])
+        # when displaying, sub groups may be displayed, this is the case for Managers
+        # pmManager is in creators and observers and is dispayed 2 times
+        self.assertEqual(
+            view._get_groups_and_members(group, keep_subgroups=True),
+            [(1, api.group.get(self.developers_creators)),
+             (2, api.user.get('pmCreator1')),
+             (2, api.user.get('pmCreator1b')),
+             (2, api.user.get('pmManager')),
+             (0, api.user.get('pmManager')),
+             (0, api.user.get('pmObserver1')),
+             (0, api.user.get('pmReviewer1'))])
 
     def test_pm_DisplayGroupUsersViewAllPloneGroups(self):
         """It is possible to get every Plone groups."""
@@ -1313,19 +1347,7 @@ class testViews(PloneMeetingTestCase):
         # append a "*" to a org uid to get every Plone groups
         group_id = self.developers.UID() + '*'
         view(group_ids=group_id)
-        plone_group = api.group.get(self.developers_creators)
-        self.assertEqual(
-            view.group_users(plone_group),
-            "<img src='http://nohost/plone/user.png'> <div class='user-or-group'>M. PMCreator One</div>"
-            "<img src='http://nohost/plone/user.png'> <div class='user-or-group'>M. PMCreator One bee</div>"
-            "<img src='http://nohost/plone/user.png'> <div class='user-or-group'>M. PMManager</div>")
-        # add a 'not found' user, will not be displayed
-        self._make_not_found_user()
-        self.assertEqual(
-            view.group_users(plone_group),
-            "<img src='http://nohost/plone/user.png'> <div class='user-or-group'>M. PMCreator One</div>"
-            "<img src='http://nohost/plone/user.png'> <div class='user-or-group'>M. PMCreator One bee</div>"
-            "<img src='http://nohost/plone/user.png'> <div class='user-or-group'>M. PMManager</div>")
+        self.assertTrue(len(view.groups) > 1)
         # only available to proposingGroup members
         self.changeUser('pmReviewer2')
         self.assertTrue(self.hasPermission(View, item))
