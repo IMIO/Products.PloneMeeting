@@ -1,7 +1,7 @@
 pmDockerPipeline {
   profileName = 'communes'
   testSuiteName = 'test'
-  unitTestParameter = '--test=!robot --test=!testPerf'
+  unitTestParameter = '--test=!robot'
   activateSolr = false
   solrConfig = 'config\\/default'
   solrHost = '127.0.0.1'
