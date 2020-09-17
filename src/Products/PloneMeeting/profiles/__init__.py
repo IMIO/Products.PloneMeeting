@@ -823,6 +823,19 @@ class PloneMeetingConfiguration(Descriptor):
             {'date': '2020/11/11', },
             {'date': '2020/11/15', },
             {'date': '2020/12/25', },
+
+            {'date': '2021/01/01', },  # 2021
+            {'date': '2021/04/05', },
+            {'date': '2021/05/01', },
+            {'date': '2021/05/13', },
+            {'date': '2021/05/24', },
+            {'date': '2021/07/21', },
+            {'date': '2021/08/15', },
+            {'date': '2021/09/27', },
+            {'date': '2021/11/01', },
+            {'date': '2021/11/11', },
+            {'date': '2021/11/15', },
+            {'date': '2021/12/25', },
         ]
         self.delayUnavailableEndDays = ()
         self.configGroups = ()

@@ -5,8 +5,9 @@ Changelog
 4.1.28.4 (unreleased)
 ---------------------
 
-- Nothing changed yet.
-
+- Backport from 4.2.x (added to upgrade step to 4111):
+  Added holidays for 2021 and adapted upgrade step to 4200.
+  [gbastien]
 
 4.1.28.3 (2020-09-14)
 ---------------------
