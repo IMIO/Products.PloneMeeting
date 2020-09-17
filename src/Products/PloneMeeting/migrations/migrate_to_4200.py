@@ -93,6 +93,9 @@ class Migrate_To_4200(Migrator):
         # update faceted filters
         self.updateFacetedFilters(xml_filename='upgrade_step_4200_add_item_widgets.xml')
 
+        # update holidays
+        self.updateHolidays()
+
         self.tool.updateAllLocalRoles(meta_type=('MeetingItem', ))
         self.refreshDatabase(workflows=True, catalogsToUpdate=[])
 

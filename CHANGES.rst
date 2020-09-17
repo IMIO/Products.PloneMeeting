@@ -38,6 +38,8 @@ Changelog
   [gbastien]
 - Package `plonemeeting.restapi` is now a direct dependency of `Products.PloneMeeting`.
   [gbastien]
+- Added holidays for 2021 and adapted upgrade step to 4200.
+  [gbastien]
 
 4.2b2 (2020-09-10)
 ------------------
