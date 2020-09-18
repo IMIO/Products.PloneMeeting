@@ -27,6 +27,7 @@ from persistent.mapping import PersistentMapping
 from plone import api
 from plone.api.validation import mutually_exclusive_parameters
 from plone.app.querystring.querybuilder import queryparser
+from plone.app.uuid.utils import uuidToCatalogBrain
 from plone.memoize import ram
 from Products.Archetypes.atapi import BooleanField
 from Products.Archetypes.atapi import DateTimeField
@@ -840,6 +841,32 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         # selectedViewFields must return a list of tuple
         return [(elt, elt) for elt in itemsListVisibleColumns]
 
+    def post_validate(self, REQUEST=None, errors=None):
+        '''Validate attendees in post_validate as there is no field in schema for it.
+           - an attendee may not be unselected if something is redefined for it on an item.'''
+        # REQUEST.form['meeting_attendees'] is like
+        # ['muser_attendeeuid1_attendee', 'muser_attendeeuid2_excused']
+        stored_attendees = self.getAllUsedHeldPositions(the_objects=False)
+        meeting_attendees = [attendee.split('_')[1] for attendee in REQUEST.form['meeting_attendees']]
+        removed_meeting_attendees = set(stored_attendees).difference(meeting_attendees)
+        # attendees redefined on items
+        itemNonAttendees = self.getItemNonAttendees(by_persons=True)
+        itemAbsents = self.getItemAbsents(by_persons=True)
+        itemExcused = self.getItemExcused(by_persons=True)
+        itemSignatories = self.getItemSignatories(by_signatories=True)
+        redefined_item_attendees = itemNonAttendees.keys() + \
+            itemAbsents.keys() + itemExcused.keys() + itemSignatories.keys()
+        conflict_attendees = removed_meeting_attendees.intersection(redefined_item_attendees)
+        if conflict_attendees:
+            attendee_uid = tuple(removed_meeting_attendees)[0]
+            attendee_brain = uuidToCatalogBrain(attendee_uid)
+            errors['meeting_attendees'] = translate(
+                'can_not_remove_attendee_redefined_on_items',
+                mapping={'attendee_title': attendee_brain.get_full_title},
+                domain='PloneMeeting',
+                context=REQUEST)
+            return errors
+
     security.declarePrivate('validate_date')
 
     def validate_date(self, value):
@@ -894,10 +921,11 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getAllUsedHeldPositions')
 
-    def getAllUsedHeldPositions(self, include_new=False):
+    def getAllUsedHeldPositions(self, include_new=False, the_objects=True):
         '''This will return every currently stored held_positions.
            If include_new=True, extra held_positions newly selected in the
            configuration are added.
+           If p_the_objects=True, we return held_position objects, UID otherwise.
            '''
         # used Persons are held_positions stored in orderedContacts
         contacts = hasattr(self.aq_base, 'orderedContacts') and list(self.orderedContacts) or []
@@ -909,17 +937,19 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             selectable_contacts = cfg.getOrderedContacts()
             new_selectable_contacts = [c for c in selectable_contacts if c not in contacts]
             contacts = contacts + new_selectable_contacts
-        # query held_positions
-        catalog = api.portal.get_tool('portal_catalog')
-        brains = catalog(UID=contacts)
 
-        # make sure we have correct order because query was not sorted
-        # we need to sort found brains according to uids
-        def getKey(item):
-            return contacts.index(item.UID)
-        brains = sorted(brains, key=getKey)
-        held_positions = [brain.getObject() for brain in brains]
-        return tuple(held_positions)
+        if the_objects:
+            # query held_positions
+            catalog = api.portal.get_tool('portal_catalog')
+            brains = catalog(UID=contacts)
+
+            # make sure we have correct order because query was not sorted
+            # we need to sort found brains according to uids
+            def getKey(item):
+                return contacts.index(item.UID)
+            brains = sorted(brains, key=getKey)
+            contacts = [brain.getObject() for brain in brains]
+        return tuple(contacts)
 
     security.declarePublic('getDefaultAttendees')
 
@@ -977,13 +1007,13 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('getExcused')
 
     def getExcused(self, theObjects=False):
-        '''See docstring in previous method.'''
+        '''Returns the excused in this meeting.'''
         return self._getContacts('excused', theObjects=theObjects)
 
     security.declarePublic('getAbsents')
 
     def getAbsents(self, theObjects=False):
-        '''See docstring in previous method.'''
+        '''Returns the absents in this meeting.'''
         return self._getContacts('absent', theObjects=theObjects)
 
     security.declarePublic('getSignatories')
@@ -1636,7 +1666,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         attendees = OrderedDict()
         for key in meeting_attendees:
             # remove leading muser_
-            position_uid, attendee_type = key[6:].split('_')
+            prefix, position_uid, attendee_type = key.split('_')
             attendees[position_uid] = attendee_type
 
         # manage signatories, remove ''

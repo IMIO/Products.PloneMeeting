@@ -37,15 +37,8 @@ class testContacts(PloneMeetingTestCase):
     def setUp(self):
         ''' '''
         super(testContacts, self).setUp()
-        self.changeUser('siteadmin')
         # enable attendees and signatories fields for Meeting
-        cfg = self.meetingConfig
-        cfg.setUsedMeetingAttributes(('attendees', 'excused', 'absents', 'signatories', ))
-        # enable itemInitiator fields for MeetingItem
-        cfg.setUsedItemAttributes(('attendees', 'excused', 'absents', 'signatories', 'itemInitiator'))
-        # select orderedContacts
-        ordered_contacts = cfg.getField('orderedContacts').Vocabulary(cfg).keys()
-        cfg.setOrderedContacts(ordered_contacts)
+        self._setUpOrderedContacts()
 
     def test_pm_OrderedContacts(self):
         ''' '''

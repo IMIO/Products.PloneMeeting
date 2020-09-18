@@ -3330,6 +3330,77 @@ class testMeeting(PloneMeetingTestCase):
         self.assertFalse('forceInsertNormal' in result)
         self.assertTrue(item_uid in result)
 
+    def test_pm_Post_validate_meeting_attendees(self):
+        """Meeting.post_validate is used to validate meeting_attendees
+           as there is no field in the schema for this."""
+        self._setUpOrderedContacts()
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime('2020/09/18'))
+        item = meeting.getItems()[0]
+        item_uid = item.UID()
+        # configure the 4 assembly members
+        # absent, excused, signatory, nonAttendee
+        attendee_uids = meeting.getAttendees()
+        meeting.orderedContacts[attendee_uids[0]]['signer'] = True
+        meeting.orderedContacts[attendee_uids[0]]['signature_number'] = '1'
+        meeting.itemAbsents[item_uid] = [attendee_uids[0]]
+        meeting.itemExcused[item_uid] = [attendee_uids[1]]
+        meeting.itemNonAttendees[item_uid] = [attendee_uids[2]]
+        meeting.itemSignatories[item_uid] = {'2': attendee_uids[3]}
+        # now while validating meeting_attendees, None may be unselected
+        meeting_attendees = ['muser_{0}_attendee'.format(attendee_uid)
+                             for attendee_uid in attendee_uids]
+
+        self.request.form['meeting_attendees'] = meeting_attendees
+        self.assertEqual(meeting.validate(self.request), {})
+        # unselecting one would break validation
+        error_msg = translate(
+            u'can_not_remove_attendee_redefined_on_items',
+            domain='PloneMeeting',
+            mapping={
+                'attendee_title':
+                    u'Monsieur Person1FirstName Person1LastName, '
+                    u'Assembly member 1 (Mon organisation)'},
+            context=self.request)
+        index = 1
+        for attendee_uid in meeting_attendees:
+            tmp_meeting_attendees = list(meeting_attendees)
+            tmp_meeting_attendees.remove(attendee_uid)
+            self.request.form['meeting_attendees'] = tmp_meeting_attendees
+            self.assertEqual(len(self.request.form['meeting_attendees']), 3)
+            # error msg contains attendee name, ... manipulate it
+            tmp_error_msg = error_msg.replace(
+                '1', str(index)).replace('member 4', 'member 4 & 5')
+            self.assertEqual(
+                meeting.validate(self.request),
+                {'meeting_attendees': tmp_error_msg})
+            index += 1
+        # do work unselect attendee by attendee
+        # itemAbsents
+        meeting.itemAbsents[item_uid] = []
+        self.request.form['meeting_attendees'] = [meeting_attendee for meeting_attendee in meeting_attendees
+                                                  if not attendee_uids[0] in meeting_attendee]
+        self.assertEqual(len(self.request.form['meeting_attendees']), 3)
+        self.assertEqual(meeting.validate(self.request), {})
+        # itemExcused
+        meeting.itemExcused[item_uid] = []
+        self.request.form['meeting_attendees'] = [meeting_attendee for meeting_attendee in meeting_attendees
+                                                  if not attendee_uids[1] in meeting_attendee]
+        self.assertEqual(len(self.request.form['meeting_attendees']), 3)
+        self.assertEqual(meeting.validate(self.request), {})
+        # itemNonAttendees
+        meeting.itemNonAttendees[item_uid] = []
+        self.request.form['meeting_attendees'] = [meeting_attendee for meeting_attendee in meeting_attendees
+                                                  if not attendee_uids[2] in meeting_attendee]
+        self.assertEqual(len(self.request.form['meeting_attendees']), 3)
+        self.assertEqual(meeting.validate(self.request), {})
+        # itemSignatories
+        meeting.itemSignatories[item_uid] = {}
+        self.request.form['meeting_attendees'] = [meeting_attendee for meeting_attendee in meeting_attendees
+                                                  if not attendee_uids[3] in meeting_attendee]
+        self.assertEqual(len(self.request.form['meeting_attendees']), 3)
+        self.assertEqual(meeting.validate(self.request), {})
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

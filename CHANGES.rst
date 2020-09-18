@@ -40,6 +40,10 @@ Changelog
   [gbastien]
 - Added holidays for 2021 and adapted upgrade step to 4200.
   [gbastien]
+- Added validation for meeting attendees so it is not possible to unselect an
+  attendee if it was redefined on items (itemAbsent, itemExcused,
+  itemSignatories, itemNonAttendees).
+  [gbastien]
 
 4.2b2 (2020-09-10)
 ------------------
