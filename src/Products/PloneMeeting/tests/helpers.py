@@ -4,6 +4,7 @@ from collective.contact.plonegroup.utils import select_organization
 from DateTime import DateTime
 from imio.helpers.cache import cleanRamCacheFor
 from plone import api
+from plone.app.testing import logout
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
 from Products.CMFCore.permissions import ModifyPortalContent
@@ -439,3 +440,14 @@ class PloneMeetingTestingHelpers:
         """Select organization in ORGANIZATIONS_REGISTRY."""
         select_organization(org_uid, remove=remove)
         self.cleanMemoize()
+
+    def _setUpOrderedContacts(self):
+        """ """
+        # login to be able to query held_positions for orderedContacts vocabulary
+        self.changeUser('siteadmin')
+        cfg = self.meetingConfig
+        cfg.setUsedMeetingAttributes(('attendees', 'excused', 'absents', 'signatories', ))
+        cfg.setUsedItemAttributes(('attendees', 'excused', 'absents', 'signatories', 'itemInitiator'))
+        ordered_contacts = cfg.getField('orderedContacts').Vocabulary(cfg).keys()
+        cfg.setOrderedContacts(ordered_contacts)
+        logout()

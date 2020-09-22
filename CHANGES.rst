@@ -5,8 +5,11 @@ Changelog
 4.1.28.5 (unreleased)
 ---------------------
 
-- Nothing changed yet.
-
+- Backport from 4.2.x:
+  Added validation for meeting attendees so it is not possible to
+  unselect an attendee if it was redefined on items (itemAbsent,
+  itemExcused, itemSignatories, itemNonAttendees).
+  [gbastien]
 
 4.1.28.4 (2020-09-18)
 ---------------------
