@@ -21,7 +21,6 @@ from datetime import datetime
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.helpers.content import get_vocab
 from imio.helpers.content import uuidsToObjects
-from imio.history.utils import getLastWFAction
 from imio.prettylink.interfaces import IPrettyLink
 from natsort import realsorted
 from OFS.ObjectManager import BeforeDeleteException
@@ -96,6 +95,7 @@ from Products.PloneMeeting.utils import cleanMemoize
 from Products.PloneMeeting.utils import compute_item_roles_to_assign_to_suffixes
 from Products.PloneMeeting.utils import decodeDelayAwareId
 from Products.PloneMeeting.utils import display_as_html
+from Products.PloneMeeting.utils import down_or_up_wf
 from Products.PloneMeeting.utils import fieldIsEmpty
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
 from Products.PloneMeeting.utils import fplog
@@ -252,6 +252,29 @@ class MeetingItemWorkflowConditions(object):
                 if self._hasAdvicesToGive(item_wf.transitions[wait_advices_tr].new_state_id):
                     res = True
                     break
+        return res
+
+    def _get_waiting_advices_icon_advisers(self):
+        '''To be overrided, return adviser ids for which the waiting_advices icon
+           color must be computed.'''
+        return []
+
+    def get_waiting_advices_icon_infos(self):
+        '''Return advice for which the waiting_advices icon (pretty link)
+           must be managed (red/green/blue).
+           If some _get_waiting_advices_icon_advisers, check if one of these advice
+           is giveable in current state, if it is the case, then compute icon color.
+           Return icon name and translation msgid.'''
+        res = 'wait_advices_from.png', 'icon_help_waiting_advices'
+        for adviser_uid in self._get_waiting_advices_icon_advisers():
+            if adviser_uid in self.context.adviceIndex and \
+               self.context.adviceIndex[adviser_uid]['advice_editable']:
+                # check if advice is up or down WF
+                advice_obj = self.context.getAdviceObj(adviser_uid)
+                down_or_up = down_or_up_wf(advice_obj)
+                if down_or_up:
+                    res = 'wait_advices_{0}_from.png'.format(down_or_up), \
+                        'icon_help_waiting_advices_{0}'.format(down_or_up)
         return res
 
     security.declarePublic('mayValidate')
@@ -6432,32 +6455,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def downOrUpWorkflowAgain(self):
         """Was current item already in same review_state before?
            And if so, is it up or down the workflow?"""
-        res = ''
+        res = ""
         if not self.hasMeeting() and \
            not self.queryState() == 'validated' and \
            not self.isDefinedInTool():
-            # down the workflow, the last transition was a backTo... transition
-            wfTool = api.portal.get_tool('portal_workflow')
-            itemWF = wfTool.getWorkflowsFor(self)[0]
-            backTransitionIds = [tr for tr in itemWF.transitions if tr.startswith('back')]
-            transitionIds = [tr for tr in itemWF.transitions if not tr.startswith('back')]
-            # get the last event that is a real workflow transition event
-            lastEvent = getLastWFAction(self, transition=backTransitionIds + transitionIds)
-            if lastEvent and lastEvent['action']:
-                if lastEvent['action'].startswith('back'):
-                    res = "down"
-                # make sure it is a transition because we save other actions too in workflow_history
-                else:
-                    # up the workflow for at least second times and not linked to a meeting
-                    # check if last event was already made in item workflow_history
-                    history = self.workflow_history[itemWF.getId()]
-                    i = 0
-                    for event in history:
-                        if event['action'] == lastEvent['action']:
-                            i = i + 1
-                            if i > 1:
-                                res = "up"
-                                break
+            res = down_or_up_wf(self)
         return res
 
     security.declarePublic('showVotes')

@@ -250,7 +250,16 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
             destMeetingConfigId for destMeetingConfigId in self.context.listOtherMeetingConfigsClonableTo().keys()
             if self.context._getSentToOtherMCAnnotationKey(destMeetingConfigId) in ann]
 
+        # an advice was modified, this is useful for the waiting_advices icon
+        item_state = res[3]
+        advice_modified = None
+        if item_state.endswith('_waiting_advices'):
+            advices = self.context.getAdvices()
+            if advices:
+                advice_modified = max([int(advice.modified()) for advice in advices])
+
         return res + (meeting_modified,
+                      advice_modified,
                       takenOverBy,
                       current_member_id,
                       predecessor_modified,
@@ -272,6 +281,23 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
         """
           Manage icons to display before the icons managed by PrettyLink._icons.
         """
+
+        def _icon_waiting_advices(res):
+            """Manage the waiting_advices icon :
+               - if some MeetingItem.get_waiting_advices_icon_advices,
+                 then check if some are giveable here, if one found,
+                 then return relevant icon :
+                 - red if down WF;
+                 - green if up WF again;
+                 - blue otherwise.
+               - else return blue icon."""
+            icon_name, msgid = self.context.wfConditions().get_waiting_advices_icon_infos()
+            res.append((icon_name,
+                        translate(msgid,
+                                  domain="PloneMeeting",
+                                  context=self.request)))
+            return res
+
         res = []
 
         tool = api.portal.get_tool('portal_plonemeeting')
@@ -383,10 +409,7 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
                                   domain="PloneMeeting",
                                   context=self.request)))
         elif itemState.endswith('_waiting_advices'):
-            res.append(('wait_advices_from.png',
-                        translate('icon_help_waiting_advices',
-                                  domain="PloneMeeting",
-                                  context=self.request)))
+            res = _icon_waiting_advices(res)
         elif itemState.startswith('returned_to_proposing_group_'):
             # get info about return_to_proposing_group validation
             # level in MeetingConfig.itemWFValidationLevels
