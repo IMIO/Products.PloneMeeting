@@ -641,4 +641,3 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             # manage cache
             notify(ObjectModifiedEvent(obj))
         self.cleanMemoize()
-

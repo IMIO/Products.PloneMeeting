@@ -37,15 +37,8 @@ class testContacts(PloneMeetingTestCase):
     def setUp(self):
         ''' '''
         super(testContacts, self).setUp()
-        self.changeUser('siteadmin')
         # enable attendees and signatories fields for Meeting
-        cfg = self.meetingConfig
-        cfg.setUsedMeetingAttributes(('attendees', 'excused', 'absents', 'signatories', ))
-        # enable itemInitiator fields for MeetingItem
-        cfg.setUsedItemAttributes(('attendees', 'excused', 'absents', 'signatories', 'itemInitiator'))
-        # select orderedContacts
-        ordered_contacts = cfg.getField('orderedContacts').Vocabulary(cfg).keys()
-        cfg.setOrderedContacts(ordered_contacts)
+        self._setUpOrderedContacts()
 
     def test_pm_OrderedContacts(self):
         ''' '''
@@ -1486,6 +1479,7 @@ class testContacts(PloneMeetingTestCase):
 
     def test_pm_WarnUserWhenAddingNewOrgOutiseOwnOrg(self):
         """ """
+        self.changeUser('siteadmin')
         # when added in directory or organization ouside own_org, a message is displayed
         for location in (self.portal.contacts, self.developers):
             add_view = location.restrictedTraverse('++add++organization')
@@ -1510,6 +1504,7 @@ class testContacts(PloneMeetingTestCase):
 
     def test_pm_ImportContactsCSV(self):
         """ """
+        self.changeUser('pmManager')
         contacts = self.portal.contacts
         # initialy, we have 4 persons and 4 held_positions
         own_org = get_own_organization()
@@ -1703,6 +1698,7 @@ class testContacts(PloneMeetingTestCase):
                 self.__context__ = context
                 self.position_types = position_types
 
+        self.changeUser('siteadmin')
         position_types = self.portal.contacts.position_types
         self.assertEqual(position_types, [{'token': 'default', 'name': u'D\xe9faut'}])
         hp = self.portal.contacts.person1.held_pos1
