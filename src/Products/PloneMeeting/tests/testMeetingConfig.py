@@ -1984,10 +1984,11 @@ class testMeetingConfig(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         self.assertEqual(item.queryState(), 'itemcreated')
         self.do(item, 'propose')
+        self.assertEqual(item.queryState(), 'proposed')
         level_removed_error = \
             translate('item_wf_val_states_can_not_be_removed_in_use',
                       domain='PloneMeeting',
-                      mapping={'item_state': 'itemcreated',
+                      mapping={'item_state': "Proposed",
                                'item_url': item.absolute_url()},
                       context=self.request)
         self.assertEqual(cfg.validate_itemWFValidationLevels(values_disabled_proposed),
