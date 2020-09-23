@@ -100,8 +100,6 @@ def do(action, event):
         event.object.notifyModified()
     elif objectType == 'MeetingAdvice':
         _addManagedPermissions(event.object)
-        # update modification date upon state change
-        notifyModifiedAndReindex(event.object)
 
 
 def onItemTransition(item, event):

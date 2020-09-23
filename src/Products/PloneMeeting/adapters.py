@@ -213,6 +213,24 @@ class AdvicePrettyLinkAdapter(PrettyLinkAdapter):
         """Necessary to be able to override the cachekey."""
         return self._getLink()
 
+    def _leadingIcons(self):
+        """
+          Manage icons to display before the icons managed by PrettyLink._icons.
+        """
+        res = []
+        item = self.context.aq_inner.aq_parent
+        item_state = item.queryState()
+        # display the waiting advices icon if relevant
+        if item_state.endswith('_waiting_advices'):
+            item_wf_conditions = item.wfConditions()
+            if self.context.advice_group in item_wf_conditions._get_waiting_advices_icon_advisers():
+                icon_name, msgid = item.wfConditions().get_waiting_advices_icon_infos()
+                res.append((icon_name,
+                            translate(msgid,
+                                      domain="PloneMeeting",
+                                      context=self.request)))
+        return res
+
 
 class ItemPrettyLinkAdapter(PrettyLinkAdapter):
     """Override to take into account PloneMeeting use cases..."""
@@ -250,13 +268,14 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
             destMeetingConfigId for destMeetingConfigId in self.context.listOtherMeetingConfigsClonableTo().keys()
             if self.context._getSentToOtherMCAnnotationKey(destMeetingConfigId) in ann]
 
-        # an advice was modified, this is useful for the waiting_advices icon
+        # an advice WF state changed, this is useful for the waiting_advices icon
+        # changing advice review_state will change advice._p_mtime
         item_state = res[3]
         advice_modified = None
         if item_state.endswith('_waiting_advices'):
             advices = self.context.getAdvices()
             if advices:
-                advice_modified = max([int(advice.modified()) for advice in advices])
+                advice_modified = max([advice._p_mtime for advice in advices])
 
         return res + (meeting_modified,
                       advice_modified,
@@ -409,7 +428,11 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
                                   domain="PloneMeeting",
                                   context=self.request)))
         elif itemState.endswith('_waiting_advices'):
-            res = _icon_waiting_advices(res)
+            icon_name, msgid = self.context.wfConditions().get_waiting_advices_icon_infos()
+            res.append((icon_name,
+                        translate(msgid,
+                                  domain="PloneMeeting",
+                                  context=self.request)))
         elif itemState.startswith('returned_to_proposing_group_'):
             # get info about return_to_proposing_group validation
             # level in MeetingConfig.itemWFValidationLevels
