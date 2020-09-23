@@ -5,8 +5,10 @@ Changelog
 4.1.28.6 (unreleased)
 ---------------------
 
-- Nothing changed yet.
-
+- Backport from 4.2.x:
+  Fixed `Meeting.post_validation` when not using contacts or
+  when no contacts selected.
+  [gbastien]
 
 4.1.28.5 (2020-09-22)
 ---------------------
