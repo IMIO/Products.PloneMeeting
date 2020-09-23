@@ -84,6 +84,9 @@
     <tal:field define="fieldName python: 'decisionSuite'">
       <metal:f use-macro="context/@@pm-macros/editContentField"/>
     </tal:field>
+    <tal:field define="fieldName python: 'decisionEnd'">
+      <metal:f use-macro="context/@@pm-macros/editContentField"/>
+    </tal:field>
 
     <tal:clonableToOtherMCsWithExtraFields condition="showAdvancedClonableToOtherMCs">
         <metal:f use-macro="context/@@pm-macros/otherMeetingConfigsClonable"/>
@@ -102,6 +105,12 @@
       <metal:f use-macro="context/@@pm-macros/editContentField"/>
     </tal:field>
     <tal:field define="fieldName python: 'meetingManagersNotes'">
+      <metal:f use-macro="context/@@pm-macros/editContentField"/>
+    </tal:field>
+    <tal:field define="fieldName python: 'meetingManagersNotesSuite'">
+      <metal:f use-macro="context/@@pm-macros/editContentField"/>
+    </tal:field>
+    <tal:field define="fieldName python: 'meetingManagersNotesEnd'">
       <metal:f use-macro="context/@@pm-macros/editContentField"/>
     </tal:field>
     <tal:field define="fieldName python: 'observations'">

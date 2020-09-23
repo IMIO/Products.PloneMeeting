@@ -87,7 +87,7 @@ class Migrate_To_4200(Migrator):
         # configure new WFs
         self.cleanMeetingConfigs(field_names=['itemDecidedStates', 'itemPositiveDecidedStates'])
 
-        # init otherMeetingConfigsClonableToFieldXXX
+        # init otherMeetingConfigsClonableToFieldXXX and XXXSuite/XXXEnd new fields
         self.initNewHTMLFields()
 
         # update faceted filters

@@ -956,6 +956,7 @@ The parameter "cFolder" is the folder containing categories.</tal:comment>
                   <metal:field use-macro="python:here.widget('otherMeetingConfigsClonableToFieldMotivation', mode='edit')"/>
                   <metal:field use-macro="python:here.widget('otherMeetingConfigsClonableToFieldDecision', mode='edit')"/>
                   <metal:field use-macro="python:here.widget('otherMeetingConfigsClonableToFieldDecisionSuite', mode='edit')"/>
+                  <metal:field use-macro="python:here.widget('otherMeetingConfigsClonableToFieldDecisionEnd', mode='edit')"/>
                 </fieldset>
             </div>
         </tal:otherMeetingConfigsClonableToFields>

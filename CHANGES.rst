@@ -44,6 +44,10 @@ Changelog
   attendee if it was redefined on items (itemAbsent, itemExcused,
   itemSignatories, itemNonAttendees).
   [gbastien]
+- Added new fields `MeetingItem.decisionEnd`, `MeetingItem.meetingManagersNotesSuite`,
+  `MeetingItem.meetingManagersNotesEnd` and
+  `MeetingItem.otherMeetingConfigsClonableToFieldDecisionEnd`.
+  [gbastien]
 
 4.2b2 (2020-09-10)
 ------------------
