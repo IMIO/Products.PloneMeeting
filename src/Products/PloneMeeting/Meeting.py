@@ -844,28 +844,33 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
     def post_validate(self, REQUEST=None, errors=None):
         '''Validate attendees in post_validate as there is no field in schema for it.
            - an attendee may not be unselected if something is redefined for it on an item.'''
-        # REQUEST.form['meeting_attendees'] is like
-        # ['muser_attendeeuid1_attendee', 'muser_attendeeuid2_excused']
-        stored_attendees = self.getAllUsedHeldPositions(the_objects=False)
-        meeting_attendees = [attendee.split('_')[1] for attendee in REQUEST.form['meeting_attendees']]
-        removed_meeting_attendees = set(stored_attendees).difference(meeting_attendees)
-        # attendees redefined on items
-        itemNonAttendees = self.getItemNonAttendees(by_persons=True)
-        itemAbsents = self.getItemAbsents(by_persons=True)
-        itemExcused = self.getItemExcused(by_persons=True)
-        itemSignatories = self.getItemSignatories(by_signatories=True)
-        redefined_item_attendees = itemNonAttendees.keys() + \
-            itemAbsents.keys() + itemExcused.keys() + itemSignatories.keys()
-        conflict_attendees = removed_meeting_attendees.intersection(redefined_item_attendees)
-        if conflict_attendees:
-            attendee_uid = tuple(removed_meeting_attendees)[0]
-            attendee_brain = uuidToCatalogBrain(attendee_uid)
-            errors['meeting_attendees'] = translate(
-                'can_not_remove_attendee_redefined_on_items',
-                mapping={'attendee_title': attendee_brain.get_full_title},
-                domain='PloneMeeting',
-                context=REQUEST)
-            return errors
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+
+        if cfg.isUsingContacts() and not self.isTemporary():
+            # REQUEST.form['meeting_attendees'] is like
+            # ['muser_attendeeuid1_attendee', 'muser_attendeeuid2_excused']
+            stored_attendees = self.getAllUsedHeldPositions(the_objects=False)
+            meeting_attendees = [attendee.split('_')[1] for attendee
+                                 in REQUEST.form.get('meeting_attendees', [])]
+            removed_meeting_attendees = set(stored_attendees).difference(meeting_attendees)
+            # attendees redefined on items
+            itemNonAttendees = self.getItemNonAttendees(by_persons=True)
+            itemAbsents = self.getItemAbsents(by_persons=True)
+            itemExcused = self.getItemExcused(by_persons=True)
+            itemSignatories = self.getItemSignatories(by_signatories=True)
+            redefined_item_attendees = itemNonAttendees.keys() + \
+                itemAbsents.keys() + itemExcused.keys() + itemSignatories.keys()
+            conflict_attendees = removed_meeting_attendees.intersection(redefined_item_attendees)
+            if conflict_attendees:
+                attendee_uid = tuple(removed_meeting_attendees)[0]
+                attendee_brain = uuidToCatalogBrain(attendee_uid)
+                errors['meeting_attendees'] = translate(
+                    'can_not_remove_attendee_redefined_on_items',
+                    mapping={'attendee_title': attendee_brain.get_full_title},
+                    domain='PloneMeeting',
+                    context=REQUEST)
+        return errors
 
     security.declarePrivate('validate_date')
 

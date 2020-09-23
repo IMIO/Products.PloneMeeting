@@ -493,6 +493,11 @@
        <metal:f use-macro="context/@@pm-macros/viewContentField"/>
     </tal:field>
 
+    <tal:comment replace="nothing">DecisionEnd</tal:comment>
+    <tal:field define="fieldName python: 'decisionEnd'; ajaxEdit python:True">
+       <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+    </tal:field>
+
     <tal:comment replace="nothing">Other meetingConfigs clonable to</tal:comment>
     <tal:block tal:condition="showAdvancedClonableToOtherMCs"
                tal:define="otherMCs context/getOtherMeetingConfigsClonableTo">
@@ -530,6 +535,9 @@
               <metal:f use-macro="context/@@pm-macros/viewContentField"/>
             </tal:field>
             <tal:field define="fieldName python: 'otherMeetingConfigsClonableToFieldDecisionSuite'; ajaxEdit python:True">
+              <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+            </tal:field>
+            <tal:field define="fieldName python: 'otherMeetingConfigsClonableToFieldDecisionEnd'; ajaxEdit python:True">
               <metal:f use-macro="context/@@pm-macros/viewContentField"/>
             </tal:field>
           </fieldset>
@@ -599,6 +607,16 @@
 
     <tal:comment replace="nothing">Meeting managers notes</tal:comment>
     <tal:field define="fieldName python: 'meetingManagersNotes'; ajaxEdit python:True">
+       <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+    </tal:field>
+
+    <tal:comment replace="nothing">Meeting managers notes suite</tal:comment>
+    <tal:field define="fieldName python: 'meetingManagersNotesSuite'; ajaxEdit python:True">
+       <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+    </tal:field>
+    <tal:comment replace="nothing">Meeting managers notes end</tal:comment>
+
+    <tal:field define="fieldName python: 'meetingManagersNotesEnd'; ajaxEdit python:True">
        <metal:f use-macro="context/@@pm-macros/viewContentField"/>
     </tal:field>
 
