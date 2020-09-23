@@ -3333,9 +3333,22 @@ class testMeeting(PloneMeetingTestCase):
     def test_pm_Post_validate_meeting_attendees(self):
         """Meeting.post_validate is used to validate meeting_attendees
            as there is no field in the schema for this."""
+        cfg = self.meetingConfig
+        # does not break while not using contacts
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime('2020/09/23'))
+        self.assertFalse(cfg.isUsingContacts())
+        self.assertEqual(meeting.validate(self.request), {})
+
+        # now with contacts
         self._setUpOrderedContacts()
         self.changeUser('pmManager')
         meeting = self.create('Meeting', date=DateTime('2020/09/18'))
+
+        # does not break post_validating without 'meeting_attendees'
+        # this is the case when nobody has been selected on the meeting
+        self.assertEqual(meeting.validate(self.request), {})
+
         item = meeting.getItems()[0]
         item_uid = item.UID()
         # configure the 4 assembly members
@@ -3351,6 +3364,7 @@ class testMeeting(PloneMeetingTestCase):
         meeting_attendees = ['muser_{0}_attendee'.format(attendee_uid)
                              for attendee_uid in attendee_uids]
 
+        # now test with meeting_attendees
         self.request.form['meeting_attendees'] = meeting_attendees
         self.assertEqual(meeting.validate(self.request), {})
         # unselecting one would break validation
@@ -3399,6 +3413,22 @@ class testMeeting(PloneMeetingTestCase):
         self.request.form['meeting_attendees'] = [meeting_attendee for meeting_attendee in meeting_attendees
                                                   if not attendee_uids[3] in meeting_attendee]
         self.assertEqual(len(self.request.form['meeting_attendees']), 3)
+        self.assertEqual(meeting.validate(self.request), {})
+
+        # does not break while creating an new meeting aka
+        # persistent attributes like itemNonAttendees or itemAbsents do not exist
+        # remove recurring items in self.meetingConfig
+        self._removeConfigObjectsFor(self.meetingConfig)
+        meeting2 = self.create('Meeting', date=DateTime('2020/09/23'))
+        delattr(meeting2, 'orderedContacts')
+        delattr(meeting2, 'itemAbsents')
+        delattr(meeting2, 'itemExcused')
+        delattr(meeting2, 'itemSignatories')
+        delattr(meeting2, 'itemNonAttendees')
+        self.assertEqual(meeting.validate(self.request), {})
+        self.request.form['meeting_attendees'] = meeting_attendees
+        self.assertEqual(meeting.validate(self.request), {})
+        meeting2.at_post_create_script()
         self.assertEqual(meeting.validate(self.request), {})
 
 
