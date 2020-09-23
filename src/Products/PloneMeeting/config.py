@@ -235,7 +235,8 @@ ITEM_DEFAULT_TEMPLATE_ID = "default-empty-item-template"
 
 # default fields kept when an item is cloned
 DEFAULT_COPIED_FIELDS = ['title', 'description', 'detailedDescription', 'motivation',
-                         'decision', 'decisionSuite', 'budgetInfos', 'budgetRelated', 'sendToAuthority',
+                         'decision', 'decisionSuite', 'decisionEnd',
+                         'budgetInfos', 'budgetRelated', 'sendToAuthority',
                          'groupsInCharge', 'proposingGroupWithGroupInCharge', 'copyGroups']
 # extra fields kept when an item is cloned in the same meeting config,
 # so not the case when sent to another meeting config
@@ -247,7 +248,8 @@ EXTRA_COPIED_FIELDS_SAME_MC = ['associatedGroups', 'category', 'classifier',
                                'otherMeetingConfigsClonableToFieldDescription',
                                'otherMeetingConfigsClonableToFieldMotivation',
                                'otherMeetingConfigsClonableToFieldDecision',
-                               'otherMeetingConfigsClonableToFieldDecisionSuite']
+                               'otherMeetingConfigsClonableToFieldDecisionSuite',
+                               'otherMeetingConfigsClonableToFieldDecisionEnd']
 
 EXTRA_COPIED_FIELDS_FROM_ITEM_TEMPLATE = ['observations', 'inAndOutMoves', 'notes',
                                           'internalNotes', 'isAcceptableOutOfMeeting']
