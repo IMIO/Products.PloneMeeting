@@ -3,6 +3,8 @@
 # File: testWFAdaptations.py
 #
 
+from collective.contact.plonegroup.utils import get_all_suffixes
+from collective.contact.plonegroup.utils import select_org_for_function
 from DateTime.DateTime import DateTime
 from plone import api
 from plone.app.textfield.value import RichTextValue
@@ -50,11 +52,13 @@ class testWFAdaptations(PloneMeetingTestCase):
                           'return_to_proposing_group_with_all_validations',
                           'return_to_proposing_group_with_last_validation',
                           'reviewers_take_back_validated_item',
+                          'waiting_advices',
+                          'waiting_advices_from_every_val_level',
                           'waiting_advices_from_before_last_val_level',
-                          'waiting_advices_from_last_val_level_advices_required_to_validate',
-                          'waiting_advices_from_last_val_level_adviser_and_proposing_group_send_back',
-                          'waiting_advices_from_last_val_level_only_adviser_send_back',
-                          'waiting_advices_from_last_val_level_only_proposing_group_send_back'])
+                          'waiting_advices_from_last_val_level',
+                          'waiting_advices_given_advices_required_to_validate',
+                          'waiting_advices_adviser_send_back',
+                          'waiting_advices_proposing_group_send_back'])
 
     def test_pm_WFA_appliedOnMeetingConfigEdit(self):
         """WFAdpatations are applied when the MeetingConfig is edited."""
@@ -1688,6 +1692,41 @@ class testWFAdaptations(PloneMeetingTestCase):
     def _afterItemCreatedWaitingAdviceWithPrevalidation(self, item):
         """Made to be overrided..."""
         return
+
+    def test_pm_WFA_waiting_advices_from_last_val_level(self):
+        '''Can not validate an item when in last validation state if a wait_advices transition
+           exist and in this waiting_advices states, advices have to be given.'''
+        cfg = self.meetingConfig
+        # ease override by subproducts
+        if 'waiting_advices' not in cfg.listWorkflowAdaptations() or \
+           'waiting_advices_from_last_val_level' not in cfg.listWorkflowAdaptations():
+            return
+
+        self._activate_wfas(('waiting_advices', 'waiting_advices_from_last_val_level'))
+        cfg.setItemAdviceStates(('itemcreated__or__proposed_waiting_advices', ))
+
+        # make itemcreated last validation level for vendors and proposed for developers
+        # select developers for suffix reviewers
+        select_org_for_function(self.developers_uid, 'reviewers')
+        self.assertFalse('reviewers' in get_all_suffixes(self.vendors_uid))
+
+        # developers
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem', optionalAdvisers=(self.vendors_uid, ))
+        # itemcreated, advice not askable
+        self.assertFalse([tr for tr in self.transitions(item)
+                          if tr.startswith('wait_advices_from_')])
+        self.proposeItem(item)
+        self.changeUser('pmReviewer1')
+        self.assertTrue([tr for tr in self.transitions(item)
+                         if tr.startswith('wait_advices_from_')])
+
+        # vendors
+        self.changeUser('pmCreator2')
+        item = self.create('MeetingItem', optionalAdvisers=(self.vendors_uid, ))
+        # itemcreated, advice askable
+        self.assertTrue([tr for tr in self.transitions(item)
+                         if tr.startswith('wait_advices_from_')])
 
     def test_pm_WFA_postpone_next_meeting(self):
         '''Test the workflowAdaptation 'postpone_next_meeting'.'''

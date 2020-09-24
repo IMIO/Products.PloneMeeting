@@ -766,7 +766,7 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
         # It is made to isolate an item in a state where it is no more editable but some advices may be given
         # if we have several 'xxx_waiting_advices' states added,
         # it is prefixed with originState1__or__originState2 like 'proposed__or__prevalidated_waiting_advices'
-        elif wfAdaptation.startswith('waiting_advices'):
+        elif wfAdaptation == 'waiting_advices':
             wf = itemWorkflow
             # compute edit permissions existing on MeetingItem schema
             from Products.PloneMeeting.MeetingItem import MeetingItem
@@ -778,9 +778,26 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
             # for transition to 'xxx_waiting_advices', we need to know where we are coming from
             FROM_TRANSITION_ID_PATTERN = 'wait_advices_from_{0}'
             for infos in WAITING_ADVICES_FROM_STATES:
+                # while using WFAs 'waiting_advices_from_before_last_val_level'
+                # or 'waiting_advices_from_last_val_level', infos['from_states']/infos['back_states']
+                # are ignored ad we use validation states
+                from_states = []
+                back_states = []
+                if 'waiting_advices_from_every_val_levels' in wfAdaptations or \
+                   'waiting_advices_from_before_last_val_level' in wfAdaptations or \
+                   'waiting_advices_from_last_val_level' in wfAdaptations:
+                    item_validation_states = meetingConfig.getItemWFValidationLevels(data='state', only_enabled=True)
+                    from_states = list(item_validation_states)
+                    back_states = list(item_validation_states)
+                else:
+                    from_states = list(infos['from_states'])
+                    back_states = list(infos['back_states'])
+                if 'waiting_advices_back_to_validated' in wfAdaptations:
+                    back_states.append('validated')
+
                 # wipeout 'from_states' and 'back_states' to remove unexisting ones
-                from_state_ids = [state for state in infos['from_states'] if state in wf.states]
-                back_state_ids = [state for state in infos['back_states'] if state in wf.states]
+                from_state_ids = [state for state in from_states if state in wf.states]
+                back_state_ids = [state for state in back_states if state in wf.states]
                 # if nothing left, continue
                 if not from_state_ids or not back_state_ids:
                     continue

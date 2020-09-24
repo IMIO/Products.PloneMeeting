@@ -659,7 +659,7 @@ function updatePortletTodo() {
   $.ajax({
     url: url,
     cache: false,
-    async: false,
+    async: true,
     success: function(data) {
         tag[0].parentNode.innerHTML = data;
     },
@@ -710,7 +710,7 @@ function update_search_term(tag){
     data: {collection_uid: tag.dataset.collection_uid},
     cache: false,
     // async: true provokes ConflictErrors when freezing a meeting
-    async: false,
+    async: true,
     success: function(data) {
       $(tag).replaceWith(data);
       $(tag).find("script").each(function(i) {

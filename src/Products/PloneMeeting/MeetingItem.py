@@ -240,7 +240,7 @@ class MeetingItemWorkflowConditions(object):
         '''Are there 'wait_advices_' transitions from current state and
            are there advices to wait, aka the transition would be available?'''
         res = False
-        if 'waiting_advices_from_last_val_level_advices_required_to_validate' in \
+        if 'waiting_advices_given_advices_required_to_validate' in \
            self.cfg.getWorkflowAdaptations():
             review_state = self.context.queryState()
             wf_tool = api.portal.get_tool('portal_workflow')
@@ -368,6 +368,13 @@ class MeetingItemWorkflowConditions(object):
         ''' '''
         return True
 
+    def _adviceSendableBackOnlyWhenNoMoreEditable(self, org_uid):
+        '''Depending on advice WF, advice may be sendable back by adviser
+           only when advice no more editable.
+           By default this is not the case as default advice WF as only one
+           state in which advice is always editable.'''
+        return False
+
     def _currentUserIsAdviserAbleToSendItemBack(self, destinationState):
         '''Is current user an adviser able to send an item 'waiting_advices' back to other states?
            To do so :
@@ -380,11 +387,20 @@ class MeetingItemWorkflowConditions(object):
         for org_uid in self.context.adviceIndex:
             org = get_organization(org_uid)
             # org can give advice in current state and member is adviser for it
+            # user able to evaluate completeness and item complete or
+            # not able to evaluate completeness but completeness evaluation not required
+            # but advice not editable, this means also advice still not added
+            # this last case is "not using completeness"
+            may_eval_completeness = self.context.adapted().mayEvaluateCompleteness()
             if item_state in org.get_item_advice_states(self.cfg) and \
-               (self.context._advice_is_given(org_uid) or
-                (self.context.adapted().mayEvaluateCompleteness() and
-                 not self.context.adapted()._is_complete())) and \
                get_plone_group_id(org_uid, 'advisers') in user_plone_groups and \
+               (self.context._advice_is_given(org_uid) or
+                (may_eval_completeness and
+                 not self.context.adapted()._is_complete()) or
+                (not may_eval_completeness and
+                 self.context.getCompleteness() == 'completeness_evaluation_not_required') and
+                (not self._adviceSendableBackOnlyWhenNoMoreEditable(org_uid) or
+                 not self.context.adviceIndex[org_uid]['advice_editable'])) and \
                self._currentUserIsAdviserAbleToSendItemBackExtraCondition(org, destinationState):
                 res = True
                 break
@@ -413,31 +429,41 @@ class MeetingItemWorkflowConditions(object):
                         suffix = self.cfg.getItemWFValidationLevels(state=last_val_state, data='suffix')
                         res = self.tool.group_is_not_empty(
                             proposingGroup, suffix, user_id=api.user.get_current().id)
-            # using a 'waiting_advices_from_last_val_level_XXX' WFAdaptation,
-            # we may only correct to the last validation level
-            # a member of last validation level may trigger the transition to last level
-            # and extra transitions out of validation transitions
+            # using 'waiting_advices_XXX_send_back' WFAdaptations,
             elif item_state.endswith('_waiting_advices') and \
-                    'waiting_advices_from_last_val_level_only_adviser_send_back' in wfas or \
-                    'waiting_advices_from_last_val_level_only_proposing_group_send_back' in wfas or \
-                    'waiting_advices_from_last_val_level_adviser_and_proposing_group_send_back' in wfas:
-                last_val_state = self._getLastValidationState()
+                    ('waiting_advices_adviser_send_back' in wfas or
+                     'waiting_advices_proposing_group_send_back' in wfas):
                 item_validation_states = self.cfg.getItemWFValidationLevels(data='state', only_enabled=True)
-                if destinationState == last_val_state or destinationState not in item_validation_states:
+                # compute sendable back states
+                sendable_back_states = []
+                # when using from last/before last validation level, only able to send back to last level
+                if 'waiting_advices_from_before_last_val_level' in wfas or \
+                   'waiting_advices_from_last_val_level' in wfas:
+                    sendable_back_states = [self._getLastValidationState()]
+                elif 'waiting_advices_from_every_val_levels' in wfas:
+                    sendable_back_states = list(item_validation_states)
+                else:
+                    # waiting_advices may send back to every val levels
+                    from Products.PloneMeeting.model import adaptations
+                    for waiting_advice_config in adaptations.WAITING_ADVICES_FROM_STATES:
+                        sendable_back_states += list(waiting_advice_config['back_states'])
+                # also able to send back to validated when using 'waiting_advices_back_to_validated'
+                if 'waiting_advices_back_to_validated' in wfas:
+                    sendable_back_states.append('validated')
+
+                if destinationState in sendable_back_states or destinationState not in item_validation_states:
                     # bypass for Manager
                     if _checkPermission(ReviewPortalContent, self.context):
                         res = True
                     else:
-                        if 'waiting_advices_from_last_val_level_adviser_and_proposing_group_send_back' in wfas or \
-                           'waiting_advices_from_last_val_level_only_proposing_group_send_back' in wfas:
+                        if 'waiting_advices_proposing_group_send_back' in wfas:
                             # is current user member of last validation level?
                             suffix = self.cfg.getItemWFValidationLevels(state=last_val_state, data='suffix')
                             res = self.tool.group_is_not_empty(
                                 proposingGroup, suffix, user_id=api.user.get_current().id)
                         # if not, maybe it is an adviser able to give an advice?
                         if not res:
-                            if 'waiting_advices_from_last_val_level_adviser_and_proposing_group_send_back' in wfas or \
-                               'waiting_advices_from_last_val_level_only_adviser_send_back' in wfas:
+                            if 'waiting_advices_adviser_send_back' in wfas:
                                 # get advisers that are able to trigger transition
                                 res = self._currentUserIsAdviserAbleToSendItemBack(destinationState)
             else:
@@ -571,22 +597,14 @@ class MeetingItemWorkflowConditions(object):
         if _checkPermission(ManagePortal, self.context):
             res = True
         else:
-            last_val_levels_wfas = [
-                wfa for wfa in self.cfg.getWorkflowAdaptations()
-                if wfa.startswith('waiting_advices_from_last_val_level')]
-            before_last_val_levels_wfas = [
-                wfa for wfa in self.cfg.getWorkflowAdaptations()
-                if wfa.startswith('waiting_advices_from_before_last_val_level')]
-            every_val_levels_wfas = [
-                wfa for wfa in self.cfg.getWorkflowAdaptations()
-                if wfa.startswith('waiting_advices_from_every_val_level')]
-            if last_val_levels_wfas:
+            wfas = self.cfg.getWorkflowAdaptations()
+            if 'waiting_advices_from_last_val_level' in wfas:
                 last_val_states = [self._getLastValidationState()]
-                if before_last_val_levels_wfas:
+                if 'waiting_advices_from_before_last_val_level' in wfas:
                     last_val_states.append(self._getLastValidationState(before_last=True))
                 if self.context.queryState() in last_val_states:
                     res = True
-            elif every_val_levels_wfas:
+            elif 'waiting_advices' in wfas:
                 res = True
         return res and self._mayWaitAdvices(self._getWaitingAdvicesStateFrom(fromState))
 
