@@ -28,6 +28,7 @@ from imio.helpers.xhtml import markEmptyTags
 from imio.helpers.xhtml import removeBlanks
 from imio.helpers.xhtml import storeImagesLocally
 from imio.helpers.xhtml import xhtmlContentIsEmpty
+from imio.history.utils import getLastWFAction
 from plone import api
 from plone.app.textfield import RichText
 from plone.app.uuid.utils import uuidToObject
@@ -1907,6 +1908,34 @@ def _base_extra_expr_ctx(obj):
             'pm_utils': SecureModuleImporter['Products.PloneMeeting.utils'],
             'imio_history_utils': SecureModuleImporter['imio.history.utils'], }
     return data
+
+
+def down_or_up_wf(obj):
+    """Return "", "down", or "up" depending on workflow history."""
+    # down the workflow, the last transition was a backTo... transition
+    wfTool = api.portal.get_tool('portal_workflow')
+    wf = wfTool.getWorkflowsFor(obj)[0]
+    backTransitionIds = [tr for tr in wf.transitions if tr.startswith('back')]
+    transitionIds = [tr for tr in wf.transitions if not tr.startswith('back')]
+    # get the last event that is a real workflow transition event
+    lastEvent = getLastWFAction(obj, transition=backTransitionIds + transitionIds)
+    res = ""
+    if lastEvent and lastEvent['action']:
+        if lastEvent['action'].startswith('back'):
+            res = "down"
+        # make sure it is a transition because we save other actions too in workflow_history
+        else:
+            # up the workflow for at least second times and not linked to a meeting
+            # check if last event was already made in item workflow_history
+            history = obj.workflow_history[wf.getId()]
+            i = 0
+            for event in history:
+                if event['action'] == lastEvent['action']:
+                    i = i + 1
+                    if i > 1:
+                        res = "up"
+                        break
+    return res
 
 
 class AdvicesUpdatedEvent(ObjectEvent):

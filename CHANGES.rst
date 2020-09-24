@@ -48,6 +48,9 @@ Changelog
   `MeetingItem.meetingManagersNotesEnd` and
   `MeetingItem.otherMeetingConfigsClonableToFieldDecisionEnd`.
   [gbastien]
+- Manage down/up WF for some specific advices so icon `waiting_advices_from.png`
+  is red when down WF, green when up WF again and blue otherwise.
+  [gbastien]
 
 4.2b2 (2020-09-10)
 ------------------
