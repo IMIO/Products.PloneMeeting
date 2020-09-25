@@ -4491,9 +4491,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                         context=self.REQUEST,
                         default=u'Item back to presented from validation state "{0}"'.format(
                             translated_item_validation_state))
+                    title = title + " ({0})".format(adaptation)
                     res.append((adaptation_id, title))
             else:
                 title = translate('wa_%s' % adaptation, domain='PloneMeeting', context=self.REQUEST)
+                title = title + " ({0})".format(adaptation)
                 res.append((adaptation, title))
         return DisplayList(tuple(res))
 
