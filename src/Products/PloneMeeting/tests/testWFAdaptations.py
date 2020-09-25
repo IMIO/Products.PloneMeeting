@@ -53,11 +53,12 @@ class testWFAdaptations(PloneMeetingTestCase):
                           'return_to_proposing_group_with_last_validation',
                           'reviewers_take_back_validated_item',
                           'waiting_advices',
-                          'waiting_advices_from_every_val_level',
+                          'waiting_advices_adviser_send_back',
+                          'waiting_advices_back_to_validated',
                           'waiting_advices_from_before_last_val_level',
+                          'waiting_advices_from_every_val_levels',
                           'waiting_advices_from_last_val_level',
                           'waiting_advices_given_advices_required_to_validate',
-                          'waiting_advices_adviser_send_back',
                           'waiting_advices_proposing_group_send_back'])
 
     def test_pm_WFA_appliedOnMeetingConfigEdit(self):
@@ -527,7 +528,7 @@ class testWFAdaptations(PloneMeetingTestCase):
                                                   domain='PloneMeeting',
                                                   context=self.request)
         self.changeUser('pmManager')
-        self._activate_wfas(('waiting_advices', ))
+        self._activate_wfas(('waiting_advices', 'waiting_advices_proposing_group_send_back'))
 
         item = self.create('MeetingItem')
         item.setOptionalAdvisers((self.vendors_uid, ))
@@ -1387,7 +1388,6 @@ class testWFAdaptations(PloneMeetingTestCase):
 
         self.changeUser('pmManager')
         # check while the wfAdaptation is not activated
-        originalWFA = cfg.getWorkflowAdaptations()
         self._activate_wfas(())
         self._waiting_advices_inactive()
 
@@ -1398,8 +1398,13 @@ class testWFAdaptations(PloneMeetingTestCase):
             {'from_states': (self._stateMappingFor('proposed_first_level'), ),
              'back_states': (self._stateMappingFor('proposed_first_level'), ),
              'perm_cloned_states': (self._stateMappingFor('proposed_first_level'), ),
-             'remove_modify_access': True},)
-        self._activate_wfas(originalWFA + ('waiting_advices',))
+             'remove_modify_access': True,
+             'use_custom_icon': False,
+             'use_custom_back_transition_title_for': (),
+             'use_custom_state_title': True, },)
+        self._activate_wfas(
+            ('waiting_advices', 'waiting_advices_proposing_group_send_back'),
+            keep_existing=True)
         self._waiting_advices_active()
 
         # back to original configuration
@@ -1436,8 +1441,8 @@ class testWFAdaptations(PloneMeetingTestCase):
         advice_required_to_ask_advices = translate('advice_required_to_ask_advices',
                                                    domain='PloneMeeting',
                                                    context=self.request)
-        methodName = 'mayWait_advices_from_{0}'.format(self._stateMappingFor('proposed_first_level'))
-        self.assertEqual(translate(getattr(item.wfConditions(), methodName)().msg,
+        proposed_state = self._stateMappingFor('proposed_first_level')
+        self.assertEqual(translate(item.wfConditions().mayWait_advices_from(proposed_state).msg,
                                    context=self.request),
                          advice_required_to_ask_advices)
         # ask an advice so transition is available
@@ -1494,7 +1499,10 @@ class testWFAdaptations(PloneMeetingTestCase):
                              'prevalidated', ),
              'perm_cloned_states': (self._stateMappingFor('proposed_first_level'),
                                     'prevalidated', ),
-             'remove_modify_access': True},)
+             'remove_modify_access': True,
+             'use_custom_icon': False,
+             'use_custom_back_transition_title_for': (),
+             'use_custom_state_title': True})
         self._activate_wfas(tuple(wfAdaptations))
         waiting_advices_state = '{0}__or__prevalidated_waiting_advices'.format(
             self._stateMappingFor('proposed_first_level'))
@@ -1573,12 +1581,19 @@ class testWFAdaptations(PloneMeetingTestCase):
             {'from_states': ('itemcreated', ),
              'back_states': ('itemcreated', ),
              'perm_cloned_states': ('itemcreated', ),
-             'remove_modify_access': True},
+             'remove_modify_access': True,
+             'use_custom_icon': False,
+             'use_custom_back_transition_title_for': (),
+             'use_custom_state_title': True, },
             {'from_states': (self._stateMappingFor('proposed'), ),
              'back_states': (self._stateMappingFor('proposed'), ),
              'perm_cloned_states': (self._stateMappingFor('proposed'), ),
-             'remove_modify_access': True},)
-        self._activate_wfas(cfg.getWorkflowAdaptations() + ('waiting_advices', ))
+             'remove_modify_access': True,
+             'use_custom_icon': False,
+             'use_custom_back_transition_title_for': (),
+             'use_custom_state_title': True, },)
+        self._activate_wfas(
+            ('waiting_advices', 'waiting_advices_proposing_group_send_back'), keep_existing=True)
         waiting_advices_itemcreated_state = 'itemcreated_waiting_advices'
         waiting_advices_proposed_state = '{0}_waiting_advices'.format(self._stateMappingFor('proposed'))
         self.vendors.item_advice_states = (
@@ -1632,8 +1647,11 @@ class testWFAdaptations(PloneMeetingTestCase):
             {'from_states': ('itemcreated', ),
              'back_states': ('itemcreated', ),
              'perm_cloned_states': ('itemcreated', ),
-             'remove_modify_access': False},)
-        self._activate_wfas(('waiting_advices', ))
+             'remove_modify_access': False,
+             'use_custom_icon': False,
+             'use_custom_back_transition_title_for': (),
+             'use_custom_state_title': True, },)
+        self._activate_wfas(('waiting_advices', 'waiting_advices_proposing_group_send_back'))
         self.vendors.item_advice_states = ("{0}__state__{1}".format(
             cfg.getId(), 'itemcreated_waiting_advices'), )
 
@@ -1666,8 +1684,11 @@ class testWFAdaptations(PloneMeetingTestCase):
             {'from_states': ('unknown', ),
              'back_states': ('unknown', ),
              'perm_cloned_states': ('unknown', ),
-             'remove_modify_access': True}, )
-        self._activate_wfas(('waiting_advices', ))
+             'remove_modify_access': True,
+             'use_custom_icon': False,
+             'use_custom_back_transition_title_for': (),
+             'use_custom_state_title': True, }, )
+        self._activate_wfas(('waiting_advices', 'waiting_advices_proposing_group_send_back'))
         itemWF = self.wfTool.getWorkflowsFor(cfg.getItemTypeName())[0]
         # does not fail and existing states are taken into account
         self.assertEqual(
@@ -1694,15 +1715,16 @@ class testWFAdaptations(PloneMeetingTestCase):
         return
 
     def test_pm_WFA_waiting_advices_from_last_val_level(self):
-        '''Can not validate an item when in last validation state if a wait_advices transition
-           exist and in this waiting_advices states, advices have to be given.'''
+        '''Set item to waiting_advices from last validation level.'''
         cfg = self.meetingConfig
         # ease override by subproducts
         if 'waiting_advices' not in cfg.listWorkflowAdaptations() or \
            'waiting_advices_from_last_val_level' not in cfg.listWorkflowAdaptations():
             return
 
-        self._activate_wfas(('waiting_advices', 'waiting_advices_from_last_val_level'))
+        self._activate_wfas(('waiting_advices',
+                             'waiting_advices_proposing_group_send_back',
+                             'waiting_advices_from_last_val_level'))
         cfg.setItemAdviceStates(('itemcreated__or__proposed_waiting_advices', ))
 
         # make itemcreated last validation level for vendors and proposed for developers
@@ -1720,6 +1742,10 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.changeUser('pmReviewer1')
         self.assertTrue([tr for tr in self.transitions(item)
                          if tr.startswith('wait_advices_from_')])
+        # ask advice
+        # only sendable back to last level
+        self.do(item, 'wait_advices_from_proposed')
+        self.assertEqual(self.transitions(item), ['backTo_proposed_from_waiting_advices'])
 
         # vendors
         self.changeUser('pmCreator2')
@@ -1727,6 +1753,53 @@ class testWFAdaptations(PloneMeetingTestCase):
         # itemcreated, advice askable
         self.assertTrue([tr for tr in self.transitions(item)
                          if tr.startswith('wait_advices_from_')])
+        # ask advice
+        # only sendable back to last level
+        self.do(item, 'wait_advices_from_itemcreated')
+        self.assertEqual(self.transitions(item), ['backTo_itemcreated_from_waiting_advices'])
+
+    def test_pm_WFA_waiting_advices_from_before_last_val_level(self):
+        '''Set item to waiting_advices from before last validation level.'''
+        cfg = self.meetingConfig
+        # ease override by subproducts
+        if 'waiting_advices' not in cfg.listWorkflowAdaptations() or \
+           'waiting_advices_from_before_last_val_level' not in cfg.listWorkflowAdaptations():
+            return
+
+        self._activate_wfas(('waiting_advices',
+                             'waiting_advices_proposing_group_send_back',
+                             'waiting_advices_from_before_last_val_level'))
+        cfg.setItemAdviceStates(('itemcreated__or__proposed_waiting_advices', ))
+
+        # make itemcreated last validation level for vendors and proposed for developers
+        # select developers for suffix reviewers
+        select_org_for_function(self.developers_uid, 'reviewers')
+        self.assertFalse('reviewers' in get_all_suffixes(self.vendors_uid))
+
+        # developers
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem', optionalAdvisers=(self.vendors_uid, ))
+        # itemcreated, advice is askable as before last validation level
+        self.assertTrue([tr for tr in self.transitions(item)
+                         if tr.startswith('wait_advices_from_')])
+        self.proposeItem(item)
+        self.changeUser('pmReviewer1')
+        self.assertTrue([tr for tr in self.transitions(item)
+                         if tr.startswith('wait_advices_from_')])
+        # ask advice
+        # only sendable back to last level
+        self.do(item, 'wait_advices_from_proposed')
+        self.assertEqual(self.transitions(item), ['backTo_proposed_from_waiting_advices'])
+
+        # vendors, does not break when having only 'itemcreated' as validation level
+        self.changeUser('pmCreator2')
+        item = self.create('MeetingItem', optionalAdvisers=(self.vendors_uid, ))
+        # itemcreated, advice askable
+        self.assertEqual(self.transitions(item), ['validate', 'wait_advices_from_itemcreated'])
+        # ask advice
+        # only sendable back to last level
+        self.do(item, 'wait_advices_from_itemcreated')
+        self.assertEqual(self.transitions(item), ['backTo_itemcreated_from_waiting_advices'])
 
     def test_pm_WFA_postpone_next_meeting(self):
         '''Test the workflowAdaptation 'postpone_next_meeting'.'''
@@ -1829,9 +1902,8 @@ class testWFAdaptations(PloneMeetingTestCase):
         cfg.setItemAdviceStates(('itemcreated', ))
         cfg.setItemAdviceEditStates(('itemcreated', ))
         cfg.setItemAdviceViewStates(('itemcreated', ))
-        originalWFAdaptations = cfg.getWorkflowAdaptations()
-        if 'postpone_next_meeting' not in originalWFAdaptations:
-            self._activate_wfas(originalWFAdaptations + ('postpone_next_meeting', ))
+        if 'postpone_next_meeting' not in cfg.getWorkflowAdaptations():
+            self._activate_wfas(('postpone_next_meeting', ), keep_existing=True)
         cfg.at_post_edit_script()
 
         self.changeUser('pmCreator1')
@@ -1889,10 +1961,9 @@ class testWFAdaptations(PloneMeetingTestCase):
         if 'postpone_next_meeting' not in cfg.listWorkflowAdaptations():
             return
         self.changeUser('pmManager')
-        originalWFAdaptations = cfg.getWorkflowAdaptations()
-        if 'postpone_next_meeting' not in originalWFAdaptations:
-            self._activate_wfas(originalWFAdaptations + ('postpone_next_meeting', ))
-        cfg.at_post_edit_script()
+        if 'postpone_next_meeting' not in cfg.getWorkflowAdaptations():
+            self._activate_wfas(('postpone_next_meeting', ), keep_existing=True)
+            cfg.at_post_edit_script()
 
         item = self.create('MeetingItem')
         item.setDecision('<p>Decision</p>')

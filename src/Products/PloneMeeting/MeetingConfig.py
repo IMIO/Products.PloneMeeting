@@ -6667,13 +6667,16 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''See doc in interfaces.py.'''
         cfg = self.getSelf()
         corresponding_item_state = None
-        # return_to_proposing_group states
         item_val_levels_states = cfg.getItemWFValidationLevels(data='state', only_enabled=True)
+        # return_to_proposing_group WFAdaptation
         if item_state.startswith('returned_to_proposing_group'):
             if item_state == 'returned_to_proposing_group':
                 corresponding_item_state = item_val_levels_states[0]
             else:
                 corresponding_item_state = item_state.split('returned_to_proposing_group_')[1]
+        # waiting_advices WFAdaptation
+        elif item_state.endswith('_waiting_advices'):
+            corresponding_item_state = item_state.split('_waiting_advices')[0]
         return corresponding_item_state
 
     def get_item_custom_suffix_roles(self, item_state):
