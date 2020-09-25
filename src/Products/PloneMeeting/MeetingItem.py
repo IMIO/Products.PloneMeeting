@@ -430,21 +430,19 @@ class MeetingItemWorkflowConditions(object):
                         res = self.tool.group_is_not_empty(
                             proposingGroup, suffix, user_id=api.user.get_current().id)
             # using 'waiting_advices_XXX_send_back' WFAdaptations,
-            elif item_state.endswith('_waiting_advices') and \
-                    ('waiting_advices_adviser_send_back' in wfas or
-                     'waiting_advices_proposing_group_send_back' in wfas):
+            elif item_state.endswith('_waiting_advices'):
                 item_validation_states = self.cfg.getItemWFValidationLevels(data='state', only_enabled=True)
-                last_val_state = self._getLastValidationState()
                 # compute sendable back states
                 sendable_back_states = []
-                # when using from last/before last validation level, only able to send back to last level
-                if 'waiting_advices_from_before_last_val_level' in wfas or \
-                   'waiting_advices_from_last_val_level' in wfas:
-                    sendable_back_states = [last_val_state]
-                elif 'waiting_advices_from_every_val_levels' in wfas:
+                # when using from last/before last validation level, able to send back to last level
+                if 'waiting_advices_from_before_last_val_level' in wfas:
+                    sendable_back_states.append(self._getLastValidationState(before_last=True))
+                if 'waiting_advices_from_last_val_level' in wfas:
+                    sendable_back_states.append(self._getLastValidationState())
+                if 'waiting_advices_from_every_val_levels' in wfas:
                     sendable_back_states = list(item_validation_states)
-                else:
-                    # waiting_advices may send back to every val levels
+                if not sendable_back_states:
+                    # use custom values from WAITING_ADVICES_FROM_STATES
                     from Products.PloneMeeting.model import adaptations
                     for waiting_advice_config in adaptations.WAITING_ADVICES_FROM_STATES:
                         sendable_back_states += list(waiting_advice_config['back_states'])
@@ -598,14 +596,26 @@ class MeetingItemWorkflowConditions(object):
             res = True
         else:
             wfas = self.cfg.getWorkflowAdaptations()
-            if 'waiting_advices_from_last_val_level' in wfas:
-                last_val_states = [self._getLastValidationState()]
+            from_states = []
+            if 'waiting_advices' in wfas:
+                if 'waiting_advices_from_last_val_level' in wfas:
+                    from_states.append(self._getLastValidationState())
                 if 'waiting_advices_from_before_last_val_level' in wfas:
-                    last_val_states.append(self._getLastValidationState(before_last=True))
-                if self.context.queryState() in last_val_states:
+                    from_states.append(self._getLastValidationState(before_last=True))
+                if 'waiting_advices_from_every_val_levels' in wfas:
+                    item_validation_states = self.cfg.getItemWFValidationLevels(
+                        data='state', only_enabled=True)
+                    from_states = list(item_validation_states)
+                if not from_states:
+                    # use custom values from WAITING_ADVICES_FROM_STATES
+                    from Products.PloneMeeting.model import adaptations
+                    for waiting_advice_config in adaptations.WAITING_ADVICES_FROM_STATES:
+                        from_states += list(waiting_advice_config['from_states'])
+                # also able to send back to validated when using 'waiting_advices_back_to_validated'
+                if 'waiting_advices_back_to_validated' in wfas:
+                    from_states.append('validated')
+                if fromState in from_states:
                     res = True
-            elif 'waiting_advices' in wfas:
-                res = True
         return res and self._mayWaitAdvices(self._getWaitingAdvicesStateFrom(fromState))
 
     security.declarePublic('mayAccept_out_of_meeting')

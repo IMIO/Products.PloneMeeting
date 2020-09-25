@@ -1784,12 +1784,15 @@ class testWFAdaptations(PloneMeetingTestCase):
                          if tr.startswith('wait_advices_from_')])
         self.proposeItem(item)
         self.changeUser('pmReviewer1')
-        self.assertTrue([tr for tr in self.transitions(item)
-                         if tr.startswith('wait_advices_from_')])
+        # not before last level so not possible to send
+        self.assertFalse([tr for tr in self.transitions(item)
+                          if tr.startswith('wait_advices_from_')])
         # ask advice
         # only sendable back to last level
-        self.do(item, 'wait_advices_from_proposed')
-        self.assertEqual(self.transitions(item), ['backTo_proposed_from_waiting_advices'])
+        self.backToState(item, 'itemcreated')
+        self.changeUser('pmCreator1')
+        self.do(item, 'wait_advices_from_itemcreated')
+        self.assertEqual(self.transitions(item), ['backTo_itemcreated_from_waiting_advices'])
 
         # vendors, does not break when having only 'itemcreated' as validation level
         self.changeUser('pmCreator2')
