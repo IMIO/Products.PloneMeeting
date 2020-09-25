@@ -53,6 +53,8 @@ Changelog
   [gbastien]
 - Refactored `waiting_advices` WFAdaptations to manage more cases.
   [gbastien]
+- Added helper `PloneMeetingTestCase.addAdvice`.
+  [gbastien]
 
 4.2b2 (2020-09-10)
 ------------------

@@ -39,6 +39,7 @@ from plone.app.testing import login
 from plone.app.testing import logout
 from plone.app.testing.bbb import _createMemberarea
 from plone.app.testing.helpers import setRoles
+from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
 from Products.Five.browser import BrowserView
 from Products.PloneMeeting.config import DEFAULT_USER_PASSWORD
@@ -457,6 +458,22 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             enabled=enabled
         )
         return annexType
+
+    def addAdvice(self,
+                  item,
+                  advice_group=None,
+                  advice_type=u'positive',
+                  advice_hide_during_redaction=False):
+        if not advice_group:
+            advice_group = self.vendors_uid
+        advice = createContentInContainer(
+            item,
+            'meetingadvice',
+            **{'advice_group': advice_group,
+               'advice_type': advice_type,
+               'advice_hide_during_redaction': advice_hide_during_redaction,
+               'advice_comment': RichTextValue(u'My comment')})
+        return advice
 
     def deleteAsManager(self, uid):
         """When we want to remove an item the current user does not have permission to,

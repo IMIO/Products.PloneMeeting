@@ -792,7 +792,7 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                 else:
                     from_states = list(infos['from_states'])
                     back_states = list(infos['back_states'])
-                if 'waiting_advices_back_to_validated' in wfAdaptations:
+                if 'waiting_advices_adviser_may_validate' in wfAdaptations:
                     back_states.append('validated')
 
                 # wipeout 'from_states' and 'back_states' to remove unexisting ones

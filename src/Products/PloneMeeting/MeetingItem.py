@@ -398,7 +398,8 @@ class MeetingItemWorkflowConditions(object):
                 (may_eval_completeness and
                  not self.context.adapted()._is_complete()) or
                 (not may_eval_completeness and
-                 self.context.getCompleteness() == 'completeness_evaluation_not_required') and
+                 self.context.getCompleteness() in ['completeness_evaluation_not_required',
+                                                    'completeness_not_yet_evaluated']) and
                 (not self._adviceSendableBackOnlyWhenNoMoreEditable(org_uid) or
                  not self.context.adviceIndex[org_uid]['advice_editable'])) and \
                self._currentUserIsAdviserAbleToSendItemBackExtraCondition(org, destinationState):
@@ -446,9 +447,6 @@ class MeetingItemWorkflowConditions(object):
                     from Products.PloneMeeting.model import adaptations
                     for waiting_advice_config in adaptations.WAITING_ADVICES_FROM_STATES:
                         sendable_back_states += list(waiting_advice_config['back_states'])
-                # also able to send back to validated when using 'waiting_advices_back_to_validated'
-                if 'waiting_advices_back_to_validated' in wfas:
-                    sendable_back_states.append('validated')
 
                 if destinationState in sendable_back_states or destinationState not in item_validation_states:
                     # bypass for Manager
@@ -462,6 +460,11 @@ class MeetingItemWorkflowConditions(object):
                                 proposingGroup, suffix, user_id=api.user.get_current().id)
                         # if not, maybe it is an adviser able to give an advice?
                         if not res and 'waiting_advices_adviser_send_back' in wfas:
+                            # adviser may send back to validated when using
+                            # 'waiting_advices_adviser_may_validate'
+                            if 'waiting_advices_adviser_may_validate' in wfas:
+                                sendable_back_states.append('validated')
+
                             # get advisers that are able to trigger transition
                             res = self._currentUserIsAdviserAbleToSendItemBack(destinationState)
             else:
@@ -611,9 +614,6 @@ class MeetingItemWorkflowConditions(object):
                     from Products.PloneMeeting.model import adaptations
                     for waiting_advice_config in adaptations.WAITING_ADVICES_FROM_STATES:
                         from_states += list(waiting_advice_config['from_states'])
-                # also able to send back to validated when using 'waiting_advices_back_to_validated'
-                if 'waiting_advices_back_to_validated' in wfas:
-                    from_states.append('validated')
                 if fromState in from_states:
                     res = True
         return res and self._mayWaitAdvices(self._getWaitingAdvicesStateFrom(fromState))
