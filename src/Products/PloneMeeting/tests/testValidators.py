@@ -298,6 +298,9 @@ class testValidators(PloneMeetingTestCase):
                                                 None)
         self.assertIsNone(validator.validate(functions))
         set_registry_functions(functions)
+        # use samplers suffix
+        self._enableItemValidationLevel(cfg, level='prevalidated', suffix='samplers')
+
         # developers_samplers was created
         dev_samplers = get_plone_group(self.developers_uid, 'samplers')
         dev_samplers_id = dev_samplers.getId()
@@ -307,12 +310,15 @@ class testValidators(PloneMeetingTestCase):
         validation_error_msg = _('can_not_delete_plone_group_meetingconfig',
                                  mapping={'cfg_url': cfg.absolute_url()})
         _check(validation_error_msg)
+        # also check composed values like 'suffix_proposing_group_level1reviewers'
+        cfg.setSelectableCopyGroups(())
+        cfg.setItemAnnexConfidentialVisibleFor(('suffix_proposing_group_samplers', ))
+        _check(validation_error_msg)
         # use samplers on item, remove it from MeetingConfig
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         item.setCopyGroups((dev_samplers_id, ))
         item.reindexObject()
-        cfg.setSelectableCopyGroups(())
         validation_error_msg = _('can_not_delete_plone_group_meetingitem',
                                  mapping={'item_url': item.absolute_url()})
         _check(validation_error_msg)

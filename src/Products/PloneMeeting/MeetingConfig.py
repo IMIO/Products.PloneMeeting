@@ -4114,11 +4114,14 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # validate removed workflowAdaptations, in case we removed a wfAdaptation that added
         # a state for example, double check that no more element (item or meeting) is in that state...
         removed = set(self.getWorkflowAdaptations()).difference(set(values))
-        if 'waiting_advices' in removed:
+        # any 'waiting_advices' WFAdaptation may not be removed when there are items in waiting_advices states
+        removed_waiting_advices = bool([r for r in removed if 'waiting_advices' in r])
+        if removed_waiting_advices:
             # this will remove the 'waiting_advices' state for MeetingItem
             # check that no more items are in this state
-            # get every 'waiting_advices'-like states, we could have 'itemcreated_waiting_advices'
-            # and 'proposed_waiting_advices' for example
+            # get every 'waiting_advices'-like states, we could have 'itemcreated_waiting_advices',
+            # 'proposed_waiting_advices' or
+            # 'itemcreated__or__proposedToValidationLevel1__or__..._waiting_advices' for example
             itemWF = wfTool.getWorkflowsFor(self.getItemTypeName())[0]
             waiting_advices_states = [state for state in itemWF.states if 'waiting_advices' in state]
             if catalog(portal_type=self.getItemTypeName(), review_state=waiting_advices_states):
@@ -4258,7 +4261,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             data='state',
             value=values,
             only_enabled=True)
-        removed_or_disabled = tuple(set(enabled_stored_states).difference(set(enabled_values_states)))
+        removed_or_disabled_states = tuple(set(enabled_stored_states).difference(
+            set(enabled_values_states)))
 
         # if some states are enabled, then first state 'itemcreated' is mandatory
         if enabled_values_states and 'itemcreated' not in enabled_values_states:
@@ -4268,7 +4272,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
         # make sure no item in state that were removed or disabled
         catalog = api.portal.get_tool('portal_catalog')
-        brains = catalog(portal_type=self.getItemTypeName(), review_state=removed_or_disabled)
+        brains = catalog(portal_type=self.getItemTypeName(), review_state=removed_or_disabled_states)
         if brains:
             aBrain = brains[0]
             return translate('item_wf_val_states_can_not_be_removed_in_use',
@@ -4278,6 +4282,65 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                                               context=self.REQUEST),
                                       'item_url': aBrain.getURL()},
                              context=self.REQUEST)
+
+        # make sure the MeetingConfig does not use a state that was removed or disabled
+        # either using state or transition
+        # states
+        cfg_item_wf_attributes = [
+            # states
+            'recordItemHistoryStates',
+            'itemAutoSentToOtherMCStates',
+            'itemManualSentToOtherMCStates',
+            'itemAdviceStates',
+            'itemAdviceEditStates',
+            'itemAdviceViewStates',
+            'itemAdviceInvalidateStates',
+            'itemBudgetInfosStates',
+            'itemGroupsInChargeStates',
+            'itemCopyGroupsStates',
+            # transitions
+            'transitionsReinitializingDelays',
+            'transitionsToConfirm',
+            'mailItemEvents', ]
+        # transitions
+        enabled_stored_transitions = self.getItemWFValidationLevels(
+            data='leading_transition',
+            only_enabled=True)
+        enabled_values_transitions = self.getItemWFValidationLevels(
+            data='leading_transition',
+            value=values,
+            only_enabled=True)
+        removed_or_disabled_transitions = tuple(set(enabled_stored_transitions).difference(
+            set(enabled_values_transitions)))
+
+        for attr in cfg_item_wf_attributes:
+            field = self.getField(attr)
+            # manage case where item state direclty equal value
+            # of value contains item state, like 'suffix_profile_prereviewers'
+            crossed_states = [v for v in field.getAccessor(self)()
+                              for r in removed_or_disabled_states if r in v]
+            crossed_transitions = [v for v in field.getAccessor(self)()
+                                   for r in removed_or_disabled_transitions if r in v]
+            if crossed_states or crossed_transitions:
+                every_crossed = crossed_states + crossed_transitions
+                return translate(
+                    'item_wf_val_states_can_not_be_removed_in_use_config',
+                    domain='PloneMeeting',
+                    mapping={
+                        'state_or_transition': translate(
+                            # manage values like MeetingItem.proposed
+                            every_crossed[0].split('.')[-1],
+                            domain="plone",
+                            context=self.REQUEST),
+                        'cfg_field_name': translate(
+                            msgid='PloneMeeting_label_{0}'.format(field.getName()),
+                            domain='PloneMeeting',
+                            context=self.REQUEST)},
+                    context=self.REQUEST)
+
+        # XXX to be managed when moving MeetingConfig to DX
+        # some datagridfield attributes
+        # powerObservers, meetingConfigsToCloneTo
 
     security.declarePrivate('validate_itemAdviceEditStates')
 
@@ -4491,13 +4554,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                         context=self.REQUEST,
                         default=u'Item back to presented from validation state "{0}"'.format(
                             translated_item_validation_state))
-                    title = title + " ({0})".format(adaptation)
+                    title = title + " ({0})".format(adaptation_id)
                     res.append((adaptation_id, title))
             else:
                 title = translate('wa_%s' % adaptation, domain='PloneMeeting', context=self.REQUEST)
                 title = title + " ({0})".format(adaptation)
                 res.append((adaptation, title))
-        return DisplayList(tuple(res))
+        return DisplayList(tuple(res)).sortedByValue()
 
     security.declarePrivate('listValidationLevelsNumbers')
 

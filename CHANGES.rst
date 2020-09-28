@@ -55,6 +55,13 @@ Changelog
   [gbastien]
 - Added helper `PloneMeetingTestCase.addAdvice`.
   [gbastien]
+- Completed `MeetingConfig.validate_itemWFValidationLevels` to not be able to
+  disable level if used in the MeetingConfig.
+  [gbastien]
+- Completed `PloneGroupSettingsValidator` validator, check also composed values
+  stored on `MeetingConfig` and using a suffix,
+  so values like `suffix_proposing_group_level1reviewers`.
+  [gbastien]
 
 4.2b2 (2020-09-10)
 ------------------

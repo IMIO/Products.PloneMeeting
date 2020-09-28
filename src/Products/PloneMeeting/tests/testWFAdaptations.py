@@ -216,7 +216,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.failIf(cfg.validate_workflowAdaptations(('presented_item_back_to_itemcreated', )))
 
         # disable every item validation levels
-        self._disableItemValidationLevels(cfg)
+        self._disableItemValidationLevel(cfg)
         self.assertEqual(
             cfg.validate_workflowAdaptations(('reviewers_take_back_validated_item', )),
             wa_dependency)

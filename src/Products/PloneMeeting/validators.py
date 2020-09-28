@@ -193,14 +193,25 @@ class PloneGroupSettingsValidator(validator.SimpleFieldValidator):
                 for org_uid in get_organizations(only_selected=False, the_objects=False):
                     removed_plonegroups.append(get_plone_group_id(org_uid, new_function))
 
-        # check that plone_group not used in MeetingConfigs
+        # check that plonegroups and suffixes not used in MeetingConfigs
         removed_plonegroups = set(removed_plonegroups)
         tool = api.portal.get_tool('portal_plonemeeting')
         for cfg in tool.objectValues('MeetingConfig'):
+            msg = _("can_not_delete_plone_group_meetingconfig",
+                    mapping={'cfg_url': cfg.absolute_url()})
+            # plonegroups
             if removed_plonegroups.intersection(cfg.getSelectableCopyGroups()):
-                msg = _("can_not_delete_plone_group_meetingconfig",
-                        mapping={'cfg_url': cfg.absolute_url()})
                 raise Invalid(msg)
+            # suffixes, values are like 'suffix_proposing_group_level1reviewers'
+            composed_values_attributes = ['itemAnnexConfidentialVisibleFor',
+                                          'adviceAnnexConfidentialVisibleFor',
+                                          'meetingAnnexConfidentialVisibleFor']
+            for composed_values_attr in composed_values_attributes:
+                values = cfg.getField(composed_values_attr).getAccessor(cfg)()
+                values = [v for v in values
+                          for r in removed_suffixes if r in v]
+                if values:
+                    raise Invalid(msg)
         # check that plone_group not used in MeetingItems
         catalog = api.portal.get_tool('portal_catalog')
         for brain in catalog(meta_type="MeetingItem"):
@@ -213,5 +224,6 @@ class PloneGroupSettingsValidator(validator.SimpleFieldValidator):
                 msg = _(msgid, mapping={'item_url': item.absolute_url()})
                 raise Invalid(msg)
 
-validator.WidgetValidatorDiscriminators(PloneGroupSettingsValidator, field=IContactPlonegroupConfig['functions'])
+validator.WidgetValidatorDiscriminators(
+    PloneGroupSettingsValidator, field=IContactPlonegroupConfig['functions'])
 provideAdapter(PloneGroupSettingsValidator)
