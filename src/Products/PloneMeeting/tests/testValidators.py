@@ -267,11 +267,16 @@ class testValidators(PloneMeetingTestCase):
         """Completed plonegroup settings validation with our use cases :
            - can not remove a suffix if used in MeetingConfig.selectableCopyGroups;
            - can not remove a suffix if used in MeetingItem.copyGroups."""
-        def _check(validation_error_msg):
+        def _check(validation_error_msg, checks=['without', 'disabled', 'fct_orgs']):
             """ """
-            for value in (functions_without_samplers,
-                          functions_with_disabled_samplers,
-                          functions_with_fct_orgs_samplers):
+            values = []
+            if 'without' in checks:
+                values.append(functions_without_samplers)
+            if 'disabled' in checks:
+                values.append(functions_with_disabled_samplers)
+            if 'fct_orgs' in checks:
+                values.append(functions_with_fct_orgs_samplers)
+            for value in values:
                 with self.assertRaises(Invalid) as cm:
                     validator.validate(value)
                 self.assertEqual(cm.exception.message, validation_error_msg)
@@ -313,7 +318,8 @@ class testValidators(PloneMeetingTestCase):
         # also check composed values like 'suffix_proposing_group_level1reviewers'
         cfg.setSelectableCopyGroups(())
         cfg.setItemAnnexConfidentialVisibleFor(('suffix_proposing_group_samplers', ))
-        _check(validation_error_msg)
+        _check(validation_error_msg, checks=['without', 'disabled'])
+        cfg.setItemAnnexConfidentialVisibleFor(())
         # use samplers on item, remove it from MeetingConfig
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')

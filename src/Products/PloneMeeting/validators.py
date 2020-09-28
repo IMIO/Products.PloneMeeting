@@ -162,9 +162,9 @@ class PloneGroupSettingsValidator(validator.SimpleFieldValidator):
 
     def validate(self, value):
         # check that if a suffix is removed, it is not used in MeetingConfig or MeetingItems
-        stored_suffixes = get_all_suffixes()
+        stored_suffixes = get_all_suffixes(only_enabled=True)
         # get removed suffixes...
-        saved_suffixes = [func['fct_id'] for func in value]
+        saved_suffixes = [func['fct_id'] for func in value if func['enabled']]
         removed_suffixes = list(set(stored_suffixes) - set(saved_suffixes))
         removed_plonegroups = [
             get_plone_group_id(org_uid, removed_suffix)
