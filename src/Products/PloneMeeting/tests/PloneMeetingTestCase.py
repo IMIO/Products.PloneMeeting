@@ -463,12 +463,13 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                   item,
                   advice_group=None,
                   advice_type=u'positive',
-                  advice_hide_during_redaction=False):
+                  advice_hide_during_redaction=False,
+                  advice_portal_type='meetingadvice'):
         if not advice_group:
             advice_group = self.vendors_uid
         advice = createContentInContainer(
             item,
-            'meetingadvice',
+            advice_portal_type,
             **{'advice_group': advice_group,
                'advice_type': advice_type,
                'advice_hide_during_redaction': advice_hide_during_redaction,
