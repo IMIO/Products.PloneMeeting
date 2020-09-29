@@ -70,7 +70,6 @@ from Products.PloneMeeting.config import INSERTING_ON_ITEM_DECISION_FIRST_WORDS_
 from Products.PloneMeeting.config import ITEM_COMPLETENESS_ASKERS
 from Products.PloneMeeting.config import ITEM_COMPLETENESS_EVALUATORS
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
-from Products.PloneMeeting.config import ITEM_STATES_NOT_LINKED_TO_MEETING
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
 from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
@@ -845,6 +844,14 @@ class MeetingItemWorkflowActions(object):
         # Send, if configured, a mail to the person who created the item
         sendMailIfRelevant(clonedItem, 'itemDelayed', 'creators', isSuffix=True)
 
+    def _get_item_states_removed_from_meeting(self):
+        '''Return item states in which an item is considered removed from a meeting.
+           By default, when using MeetingConfig.itemWFValidationStates, these are
+           the states in which item is no more linked to a meeting.'''
+        res = self.cfg.getItemWFValidationLevels(data='state', only_enabled=True)
+        res.append('validated')
+        return res
+
     security.declarePrivate('doCorrect')
 
     def doCorrect(self, stateChange):
@@ -854,7 +861,8 @@ class MeetingItemWorkflowActions(object):
           do some specific treatment.
         """
         # Remove item from meeting if necessary when going to a state where item is not linked to a meeting
-        if stateChange.new_state.id in ITEM_STATES_NOT_LINKED_TO_MEETING and self.context.hasMeeting():
+        if self.context.hasMeeting() and \
+           stateChange.new_state.id in self._get_item_states_removed_from_meeting():
             # We may have to send a mail
             sendMailIfRelevant(self.context, 'itemUnpresented', 'creators', isSuffix=True)
             # remove the item from the meeting

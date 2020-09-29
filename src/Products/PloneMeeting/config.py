@@ -275,12 +275,6 @@ HISTORY_COMMENT_NOT_VIEWABLE = "<span class='discreet'>Access to this comment is
 ADVICE_STATES_ALIVE = ('advice_under_edit', )
 ADVICE_STATES_ENDED = ('advice_given', )
 
-# In those states, an item is not linked to a meeting
-ITEM_STATES_NOT_LINKED_TO_MEETING = (
-    'itemcreated', 'proposed', 'prevalidated', 'validated',
-    'itemcreated_waiting_advices', 'proposed_waiting_advices',
-    'prevalidated_waiting_advices', 'validated_waiting_advices', )
-
 # name of the variable added to the REQUEST when getting the scan_id
 ITEM_SCAN_ID_NAME = 'item_scan_id'
 # name of the aribale specifying that an annex has been barcoded

@@ -62,6 +62,9 @@ Changelog
   stored on `MeetingConfig` and using a suffix,
   so values like `suffix_proposing_group_level1reviewers`.
   [gbastien]
+- Removed `config.ITEM_STATES_NOT_LINKED_TO_MEETING`, get states in which an item
+  is removed from a meeting using `MeetingConfig.itemWFValidationLevels`.
+  [gbastien]
 
 4.2b2 (2020-09-10)
 ------------------
