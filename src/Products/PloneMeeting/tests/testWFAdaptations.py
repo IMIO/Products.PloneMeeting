@@ -54,8 +54,8 @@ class testWFAdaptations(PloneMeetingTestCase):
                           'return_to_proposing_group_with_last_validation',
                           'reviewers_take_back_validated_item',
                           'waiting_advices',
-                          'waiting_advices_adviser_send_back',
                           'waiting_advices_adviser_may_validate',
+                          'waiting_advices_adviser_send_back',
                           'waiting_advices_from_before_last_val_level',
                           'waiting_advices_from_every_val_levels',
                           'waiting_advices_from_last_val_level',
@@ -539,7 +539,8 @@ class testWFAdaptations(PloneMeetingTestCase):
                                       'wait_advices_from_{0}'.format(proposedState))
         self.assertEqual(item.queryState(),
                          '{0}_waiting_advices'.format(proposedState))
-        self.failIf(cfg.validate_workflowAdaptations(('waiting_advices', )))
+        self.failIf(cfg.validate_workflowAdaptations(
+            ('waiting_advices', 'waiting_advices_proposing_group_send_back')))
         self.assertEqual(
             cfg.validate_workflowAdaptations(()),
             waiting_advices_removed_error)

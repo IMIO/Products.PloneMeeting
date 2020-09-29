@@ -1952,11 +1952,14 @@ class testMeetingConfig(PloneMeetingTestCase):
         # the linked Plone group was removed
         self.assertFalse(api.group.get(plone_group_id))
 
-    def test_pm_Validate_itemWFValidationLevels_removed_used_state(self):
+    def test_pm_Validate_itemWFValidationLevels_removed_used_state_item(self):
         """Test MeetingConfig.validate_itemWFValidationLevels, if we remove a validation
            level state that is used by an item."""
         # ease override by subproducts
         cfg = self.meetingConfig
+        # make sure not used in config
+        cfg.setItemAdviceStates(())
+        cfg.setItemAdviceEditStates(())
 
         # itemcreated level is mandatory
         level_itemcreated_error = \
