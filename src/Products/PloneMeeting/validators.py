@@ -8,7 +8,9 @@ from collective.contact.plonegroup.utils import get_plone_group_id
 from DateTime import DateTime
 from datetime import date
 from plone import api
+from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.config import PMMessageFactory as _
+from Products.PloneMeeting.utils import get_item_validation_wf_suffixes
 from Products.PloneMeeting.utils import getInterface
 from Products.validation.interfaces.IValidator import IValidator
 from z3c.form import validator
@@ -164,8 +166,10 @@ class PloneGroupSettingsValidator(validator.SimpleFieldValidator):
         # check that if a suffix is removed, it is not used in MeetingConfig or MeetingItems
         stored_suffixes = get_all_suffixes(only_enabled=True)
         # get removed suffixes...
-        saved_suffixes = [func['fct_id'] for func in value if func['enabled']]
-        removed_suffixes = list(set(stored_suffixes) - set(saved_suffixes))
+        saved_suffixes = [func['fct_id'] for func in value]
+        saved_enabled_suffixes = [func['fct_id'] for func in value if func['enabled']]
+        removed_suffixes = list(set(stored_suffixes) - set(saved_enabled_suffixes))
+        really_removed_suffixes = list(set(stored_suffixes) - set(saved_suffixes))
         removed_plonegroups = [
             get_plone_group_id(org_uid, removed_suffix)
             for org_uid in get_organizations(only_selected=False, the_objects=False)
@@ -198,7 +202,7 @@ class PloneGroupSettingsValidator(validator.SimpleFieldValidator):
         tool = api.portal.get_tool('portal_plonemeeting')
         for cfg in tool.objectValues('MeetingConfig'):
             msg = _("can_not_delete_plone_group_meetingconfig",
-                    mapping={'cfg_url': cfg.absolute_url()})
+                    mapping={'cfg_title': safe_unicode(cfg.Title())})
             # plonegroups
             if removed_plonegroups.intersection(cfg.getSelectableCopyGroups()):
                 raise Invalid(msg)
@@ -212,6 +216,14 @@ class PloneGroupSettingsValidator(validator.SimpleFieldValidator):
                           for r in removed_suffixes if r in v]
                 if values:
                     raise Invalid(msg)
+            # itemWFValidationLevels, may be disabled if validation level also disabled
+            # but not removed
+            item_enabled_val_suffixes = get_item_validation_wf_suffixes(cfg)
+            if set(really_removed_suffixes).intersection(item_enabled_val_suffixes):
+                raise Invalid(msg)
+            all_item_val_suffixes = get_item_validation_wf_suffixes(cfg, only_enabled=False)
+            if set(removed_suffixes).intersection(all_item_val_suffixes):
+                raise Invalid(msg)
         # check that plone_group not used in MeetingItems
         catalog = api.portal.get_tool('portal_catalog')
         for brain in catalog(meta_type="MeetingItem"):

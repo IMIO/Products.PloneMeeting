@@ -465,13 +465,13 @@ class PloneMeetingTestingHelpers:
         for itemValLevel in itemValLevels:
             if not level or itemValLevel['state'] == level:
                 itemValLevel['enabled'] = '1'
-            if suffix:
-                itemValLevel['suffix'] = suffix
+                if suffix:
+                    itemValLevel['suffix'] = suffix
         cfg.setItemWFValidationLevels(itemValLevels)
         cfg.at_post_edit_script()
         self.changeUser(currentUser)
 
-    def _disableItemValidationLevel(self, cfg, level=None):
+    def _disableItemValidationLevel(self, cfg, level=None, suffix=None):
         """Disable one or every item validation levels."""
         currentUser = self.member.getId()
         self.changeUser('admin')
@@ -479,6 +479,8 @@ class PloneMeetingTestingHelpers:
         for itemValLevel in itemValLevels:
             if not level or itemValLevel['state'] == level:
                 itemValLevel['enabled'] = '0'
+                if suffix:
+                    itemValLevel['suffix'] = suffix
         cfg.setItemWFValidationLevels(itemValLevels)
         cfg.at_post_edit_script()
         self.changeUser(currentUser)

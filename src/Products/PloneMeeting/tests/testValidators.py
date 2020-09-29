@@ -266,7 +266,11 @@ class testValidators(PloneMeetingTestCase):
     def test_pm_PloneGroupSettingsValidator(self):
         """Completed plonegroup settings validation with our use cases :
            - can not remove a suffix if used in MeetingConfig.selectableCopyGroups;
-           - can not remove a suffix if used in MeetingItem.copyGroups."""
+           - can not remove a suffix if used in MeetingItem.copyGroups;
+           - can not remove a suffix if used as composed value, so like
+             'suffix_proposing_group_level1reviewers',
+             in MeetingConfig.itemAnnexConfidentialVisibleFor for example;
+           - can not remove a suffix used by MeetingConfig.itemWFValidationLevels."""
         def _check(validation_error_msg, checks=['without', 'disabled', 'fct_orgs']):
             """ """
             values = []
@@ -325,6 +329,9 @@ class testValidators(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         item.setCopyGroups((dev_samplers_id, ))
         item.reindexObject()
+        # still complaining about config because used in itemWFValidationLevels
+        _check(validation_error_msg, checks=['without', 'disabled'])
+        self._disableItemValidationLevel(cfg, level='prevalidated', suffix='prereviewers')
         validation_error_msg = _('can_not_delete_plone_group_meetingitem',
                                  mapping={'item_url': item.absolute_url()})
         _check(validation_error_msg)
