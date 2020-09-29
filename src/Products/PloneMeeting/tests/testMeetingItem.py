@@ -7025,6 +7025,25 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('templatemanager1')
         self.assertRaises(Redirect, api.content.delete, default_template)
 
+    def test_pm_ItemWFValidationLevels_with_extra_suffixes(self):
+        """Test when using extra_suffixes that gives same access as suffix in given item state."""
+        cfg = self.meetingConfig
+        # by default, no extra_suffixes, means that 'pmObserver2' may see
+        # item created by 'pmCreator2' but may not modify it
+        self.changeUser('pmCreator2')
+        item = self.create('MeetingItem')
+        self.changeUser('pmObserver2')
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertFalse(self.hasPermission(ModifyPortalContent, item))
+        # adapt configuration, make suffix 'observers' extra_suffix in state 'itemcreated'
+        itemWFValidationLevels = cfg.getItemWFValidationLevels()
+        itemWFValidationLevels[0]['extra_suffixes'] = ['observers']
+        cfg.setItemWFValidationLevels(itemWFValidationLevels)
+        cfg.at_post_edit_script()
+        item.updateLocalRoles()
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertTrue(self.hasPermission(ModifyPortalContent, item))
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite
