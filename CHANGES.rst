@@ -5,8 +5,10 @@ Changelog
 4.1.28.7 (unreleased)
 ---------------------
 
-- Nothing changed yet.
-
+- Backport from 4.2.x:
+  Added parameter `clean=False` to `BaseDGHV.printXhtml` that will use
+  `imio.helpers.xhtml.separate_images` to avoid several `<img>` in same `<p>`.
+  [gbastien]
 
 4.1.28.6 (2020-09-23)
 ---------------------

@@ -20,6 +20,7 @@ from ftw.labels.interfaces import ILabeling
 from imio.helpers.xhtml import addClassToContent
 from imio.helpers.xhtml import CLASS_TO_LAST_CHILDREN_NUMBER_OF_CHARS_DEFAULT
 from imio.helpers.xhtml import imagesToPath
+from imio.helpers.xhtml import separate_images
 from imio.history.utils import getLastWFAction
 from plone import api
 from plone.app.caching.operations.utils import getContext
@@ -690,7 +691,8 @@ class BaseDGHV(object):
                    keepWithNextNumberOfChars=CLASS_TO_LAST_CHILDREN_NUMBER_OF_CHARS_DEFAULT,
                    checkNeedSeparator=True,
                    addCSSClass=None,
-                   use_safe_html=True):
+                   use_safe_html=True,
+                   clean=False):
         """Helper method to format a p_xhtmlContents.  The xhtmlContents is a list or a string containing
            either XHTML content or some specific recognized words like :
            - 'separator', in this case, it is replaced with the p_separatorValue;
@@ -743,6 +745,9 @@ class BaseDGHV(object):
         if use_safe_html:
             pt = api.portal.get_tool('portal_transforms')
             xhtmlFinal = pt.convert('safe_html', xhtmlFinal).getData()
+
+        if clean:
+            xhtmlFinal = separate_images(xhtmlFinal)
 
         return xhtmlFinal
 
