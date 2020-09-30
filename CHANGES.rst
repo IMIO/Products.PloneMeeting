@@ -48,6 +48,10 @@ Changelog
   `MeetingItem.meetingManagersNotesEnd` and
   `MeetingItem.otherMeetingConfigsClonableToFieldDecisionEnd`.
   [gbastien]
+- Make `organization.acronym` field viewable/editable also on organizations
+  outside `My organization` as it may be used as `associatedGroups` and displayed
+  in dashboard in the `Associated groups acronym` column.
+  [gbastien]
 - Manage down/up WF for some specific advices so icon `waiting_advices_from.png`
   is red when down WF, green when up WF again and blue otherwise.
   [gbastien]
@@ -64,7 +68,6 @@ Changelog
   [gbastien]
 - Removed `config.ITEM_STATES_NOT_LINKED_TO_MEETING`, get states in which an item
   is removed from a meeting using `MeetingConfig.itemWFValidationLevels`.
-  [gbastien]
 
 4.2b2 (2020-09-10)
 ------------------
