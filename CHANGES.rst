@@ -51,6 +51,10 @@ Changelog
 - Manage down/up WF for some specific advices so icon `waiting_advices_from.png`
   is red when down WF, green when up WF again and blue otherwise.
   [gbastien]
+- Make `organization.acronym` field viewable/editable also on organizations
+  outside `My organization` as it may be used as `associatedGroups` and displayed
+  in dashboard in the `Associated groups acronym` column.
+  [gbastien]
 
 4.2b2 (2020-09-10)
 ------------------

@@ -77,8 +77,6 @@ class IPMOrganization(IOrganization):
        We protect these fields with read/write permission so it is only
        shown on organization added to 'plonegroup-organization'."""
 
-    form.read_permission(acronym='PloneMeeting.manage_internal_organization_fields')
-    form.write_permission(acronym='PloneMeeting.manage_internal_organization_fields')
     acronym = schema.TextLine(
         title=_("PloneMeeting_label_acronym"),
         required=False,
