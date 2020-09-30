@@ -467,6 +467,11 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                   advice_portal_type='meetingadvice'):
         if not advice_group:
             advice_group = self.vendors_uid
+        # manage MeetingConfig.defaultAdviceHiddenDuringRedaction
+        # as it only works while added ttw
+        if not advice_hide_during_redaction:
+            advice_hide_during_redaction = advice_portal_type in \
+                self.meetingConfig.getDefaultAdviceHiddenDuringRedaction()
         advice = createContentInContainer(
             item,
             advice_portal_type,

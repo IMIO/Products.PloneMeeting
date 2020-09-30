@@ -101,6 +101,7 @@ def advice_typeDefaultValue(data):
 @form.default_value(field=IMeetingAdvice['advice_hide_during_redaction'])
 def advice_hide_during_redactionDefaultValue(data):
     published = data.context.REQUEST.get('PUBLISHED')
+    import ipdb; ipdb.set_trace()
     if not published:
         return False
     tool = api.portal.get_tool('portal_plonemeeting')
