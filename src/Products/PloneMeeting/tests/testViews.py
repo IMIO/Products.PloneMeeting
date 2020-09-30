@@ -1039,6 +1039,22 @@ class testViews(PloneMeetingTestCase):
             helper.printXhtml(item, [motivation, '<br>'], use_safe_html=False),
             motivation + '<br>')
 
+    def test_pm_PrintXhtmlClean(self):
+        '''clean=True will use separate_images from imio.helpers.xhtlm.'''
+        item, motivation, decision, helper = self._setupPrintXhtml()
+        text = '<p>Text1</p><p><img src="http://plone/nohost/img1.png" />' \
+            '<img src="http://plone/nohost/img2.png" /></p>' \
+            '<p>Text2</p><p><img src="http://plone/nohost/img3.png" /></p>'
+        # not used by default
+        self.assertEqual(helper.printXhtml(item, text), text)
+        # when used, images are moved in their own <p> when necessary
+        self.assertEqual(helper.printXhtml(item, text, clean=True),
+                         '<p>Text1</p>'
+                         '<p><img src="http://plone/nohost/img1.png"></p>'
+                         '<p><img src="http://plone/nohost/img2.png"></p>'
+                         '<p>Text2</p>'
+                         '<p><img src="http://plone/nohost/img3.png"></p>')
+
     def test_pm_PrintAdvicesInfos(self):
         """Test the printAdvicesInfos method."""
         cfg = self.meetingConfig

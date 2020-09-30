@@ -70,6 +70,9 @@ Changelog
   is removed from a meeting using `MeetingConfig.itemWFValidationLevels`.
 - Setup WFT `default_chain` in `testing.setUpPloneSite` instead `PloneMeetingTestCase.setUp`.
   [gbastien]
+- Added parameter `clean=False` to `BaseDGHV.printXhtml` that will use
+  `imio.helpers.xhtml.separate_images` to avoid several `<img>` in same `<p>`.
+  [gbastien]
 
 4.2b2 (2020-09-10)
 ------------------
