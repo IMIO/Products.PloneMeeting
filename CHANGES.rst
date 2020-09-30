@@ -68,6 +68,8 @@ Changelog
   [gbastien]
 - Removed `config.ITEM_STATES_NOT_LINKED_TO_MEETING`, get states in which an item
   is removed from a meeting using `MeetingConfig.itemWFValidationLevels`.
+- Setup WFT `default_chain` in `testing.setUpPloneSite` instead `PloneMeetingTestCase.setUp`.
+  [gbastien]
 
 4.2b2 (2020-09-10)
 ------------------

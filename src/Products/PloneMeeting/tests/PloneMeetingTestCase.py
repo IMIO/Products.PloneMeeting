@@ -121,9 +121,6 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         self.portal = self.layer['portal']
         self.request = self.layer['request']
         self.changeUser('admin')
-        # configure default workflows so Folder has a workflow
-        # make sure we have a default workflow
-        self.portal.portal_workflow.setDefaultChain('simple_publication_workflow')
         # setup manually the correct browserlayer, see:
         # https://dev.plone.org/ticket/11673
         notify(BeforeTraverseEvent(self.portal, self.request))

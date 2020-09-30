@@ -35,6 +35,9 @@ class PMLayer(PloneWithPackageLayer):
 
     def setUpPloneSite(self, portal):
         setLocal('request', portal.REQUEST)
+        # configure default workflows so Folder has a workflow
+        # make sure we have a default workflow
+        portal.portal_workflow.setDefaultChain('simple_publication_workflow')
         super(PMLayer, self).setUpPloneSite(portal)
         # Create member area of existing users
         for user in api.user.get_users():
