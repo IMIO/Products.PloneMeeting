@@ -8,6 +8,7 @@
                  userAdviserOrgUids view/userAdviserOrgUids;">
   <tal:defines define="cfg python: view.cfg;
                        displayedAddIcon python: False;
+                       displayedReviewState python: False;
                        adviceStyle python: cfg.getAdviceStyle();
                        displayAdviceConfidentiality python: cfg.getEnableAdviceConfidentiality() and view.tool.isManager(context);
                        item_review_state context/queryState;">
@@ -229,7 +230,8 @@
 
                     <div class="viewlet_workflowstate" i18n:domain="plone" tal:condition="nocall:obj">
                       <span i18n:translate="label_state"></span>&nbsp;
-                      <span tal:define="advice_state_infos python: view.state_infos(obj)"
+                      <span tal:define="advice_state_infos python: view.state_infos(obj);
+                                        global displayedReviewState python: True"
                             tal:content="advice_state_infos/state_title"
                             tal:attributes="class string:state-${advice_state_infos/state_name}"></span>
                     </div>
@@ -366,21 +368,19 @@
             </tal:complementaryInfoMessage>
             </tal:notHiddenUnderRedactionOrManagable>
 
+          <tal:displayAdviceReviewState condition="python: not displayedReviewState and displayAdviceReviewState and obj">
+            <tal:comment replace="nothing">This is a copy/paste of code here above, change both places when necessary...</tal:comment>
+            <div class="viewlet_workflowstate" i18n:domain="plone">
+              <span i18n:translate="label_state"></span>&nbsp;
+              <span tal:define="advice_state_infos python: view.state_infos(obj)"
+                    tal:content="advice_state_infos/state_title"
+                    tal:attributes="class string:state-${advice_state_infos/state_name}"></span>
+            </div>
+            <div style="clear: both;">&nbsp;</div>
+          </tal:displayAdviceReviewState>
 
             <tal:complementaryInfoMessage condition="displayDefaultComplementaryMessage">
             <tal:hiddenUnderRedaction condition="python: advice['advice_editable'] and adviceType == 'hidden_during_redaction'">
-
-               <tal:displayAdviceReviewState condition="python: displayAdviceReviewState and not mayView and obj">
-                 <tal:comment replace="nothing">This is a copy/paste of code here above, change both places when necessary...</tal:comment>
-                 <div class="viewlet_workflowstate" i18n:domain="plone">
-                   <span i18n:translate="label_state"></span>&nbsp;
-                   <span tal:define="advice_state_infos python: view.state_infos(obj)"
-                         tal:content="advice_state_infos/state_title"
-                         tal:attributes="class string:state-${advice_state_infos/state_name}"></span>
-                 </div>
-                 <div style="clear: both;">&nbsp;</div>
-               </tal:displayAdviceReviewState>
-
                 <p>
                     <span class="advice_hidden_during_redaction discreet" i18n:translate="advice_hidden_during_redaction_help">This advice is currently under redaction by the advisers of the group and is not visible to other groups.</span>
                     &nbsp;<span tal:condition="advice/delay_infos"

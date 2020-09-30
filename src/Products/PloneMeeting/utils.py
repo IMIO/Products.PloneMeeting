@@ -1682,7 +1682,7 @@ def duplicate_portal_type(portalTypeName, duplicatedPortalTypeId):
     return duplicatedPortalType
 
 
-def get_item_validation_wf_suffixes(cfg, org=None):
+def get_item_validation_wf_suffixes(cfg, org=None, only_enabled=True):
     """Returns suffixes related to MeetingItem validation WF,
        so the 'creators', 'observers' and suffixes managed by
        MeetingConfig.itemWFValidationLevels.
@@ -1690,8 +1690,10 @@ def get_item_validation_wf_suffixes(cfg, org=None):
     base_suffixes = [u'creators', u'observers']
     # we get the principal suffix from level['suffix'] then level['extra_suffixes']
     # is containing suffixes that will also get Editor access in relevant state
-    config_suffix = cfg.getItemWFValidationLevels(data='suffix', only_enabled=True)
-    config_extra_suffixes = cfg.getItemWFValidationLevels(data='extra_suffixes', only_enabled=True)
+    config_suffix = cfg.getItemWFValidationLevels(
+        data='suffix', only_enabled=only_enabled)
+    config_extra_suffixes = cfg.getItemWFValidationLevels(
+        data='extra_suffixes', only_enabled=only_enabled)
     config_suffixes = [config_suffix] + list(config_extra_suffixes)
     config_suffixes = list(itertools.chain.from_iterable(config_suffixes))
     suffixes = base_suffixes + config_suffixes

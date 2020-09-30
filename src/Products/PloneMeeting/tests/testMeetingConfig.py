@@ -1952,11 +1952,14 @@ class testMeetingConfig(PloneMeetingTestCase):
         # the linked Plone group was removed
         self.assertFalse(api.group.get(plone_group_id))
 
-    def test_pm_Validate_itemWFValidationLevels_removed_used_state(self):
+    def test_pm_Validate_itemWFValidationLevels_removed_used_state_item(self):
         """Test MeetingConfig.validate_itemWFValidationLevels, if we remove a validation
            level state that is used by an item."""
         # ease override by subproducts
         cfg = self.meetingConfig
+        # make sure not used in config
+        cfg.setItemAdviceStates(())
+        cfg.setItemAdviceEditStates(())
 
         # itemcreated level is mandatory
         level_itemcreated_error = \
@@ -1964,9 +1967,9 @@ class testMeetingConfig(PloneMeetingTestCase):
                       domain='PloneMeeting',
                       context=self.request)
         # values_disabled_item_created
-        self._disableItemValidationLevels(cfg, levels=['itemcreated'])
+        self._disableItemValidationLevel(cfg, level='itemcreated')
         values_disabled_item_created = deepcopy(cfg.getItemWFValidationLevels())
-        self._enableItemValidationLevels(cfg, levels=['itemcreated'])
+        self._enableItemValidationLevel(cfg, level='itemcreated')
         self.assertEqual(cfg.validate_itemWFValidationLevels(values_disabled_item_created),
                          level_itemcreated_error)
 
@@ -1974,9 +1977,9 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.assertEqual(cfg.getItemWFValidationLevels(data='state', only_enabled=True),
                          ['itemcreated', 'proposed'])
         # values_disabled_proposed
-        self._disableItemValidationLevels(cfg, levels=['proposed'])
+        self._disableItemValidationLevel(cfg, level='proposed')
         values_disabled_proposed = deepcopy(cfg.getItemWFValidationLevels())
-        self._enableItemValidationLevels(cfg, levels=['proposed'])
+        self._enableItemValidationLevel(cfg, level='proposed')
         self.failIf(cfg.validate_itemWFValidationLevels(values_disabled_proposed))
 
         # create an item that will be itemcreated
@@ -1996,6 +1999,43 @@ class testMeetingConfig(PloneMeetingTestCase):
 
         # delete item then validation is correct
         self.deleteAsManager(item.UID())
+        self.failIf(cfg.validate_itemWFValidationLevels(values_disabled_proposed))
+
+    def test_pm_Validate_itemWFValidationLevels_removed_used_state_in_config(self):
+        """Test MeetingConfig.validate_itemWFValidationLevels, if we remove a validation
+           level state that is used by the MeetingConfig."""
+        # ease override by subproducts
+        cfg = self.meetingConfig
+        cfg.setItemAdviceEditStates(())
+
+        # itemcreated level is mandatory
+        level_removed_config_error = \
+            translate('item_wf_val_states_can_not_be_removed_in_use_config',
+                      mapping={'state_or_transition': 'Proposed',
+                               'cfg_field_name': 'Item states allowing to define advices', },
+                      domain='PloneMeeting',
+                      context=self.request)
+        # values_disabled_proposed
+        self._disableItemValidationLevel(cfg, level='proposed')
+        values_disabled_proposed = deepcopy(cfg.getItemWFValidationLevels())
+        self._enableItemValidationLevel(cfg, level='proposed')
+        # used in itemAdviceStates, as state
+        self.assertEqual(cfg.validate_itemWFValidationLevels(values_disabled_proposed),
+                         level_removed_config_error)
+        cfg.setItemAdviceStates(())
+        # used in transitionsToConfirm, as transition
+        cfg.setTransitionsToConfirm(('MeetingItem.propose', 'MeetingItem.validate'))
+        level_removed_config_error = \
+            translate('item_wf_val_states_can_not_be_removed_in_use_config',
+                      mapping={'state_or_transition': 'Propose',
+                               'cfg_field_name': 'Transitions to confirm', },
+                      domain='PloneMeeting',
+                      context=self.request)
+        self.assertEqual(cfg.validate_itemWFValidationLevels(values_disabled_proposed),
+                         level_removed_config_error)
+        # make no more used
+        cfg.setItemAdviceEditStates(())
+        cfg.setTransitionsToConfirm(())
         self.failIf(cfg.validate_itemWFValidationLevels(values_disabled_proposed))
 
     def test_pm_RemoveAnnexesPreviewsOnMeetingClosure(self):

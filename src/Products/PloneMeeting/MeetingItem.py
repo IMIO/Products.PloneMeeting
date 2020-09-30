@@ -70,7 +70,6 @@ from Products.PloneMeeting.config import INSERTING_ON_ITEM_DECISION_FIRST_WORDS_
 from Products.PloneMeeting.config import ITEM_COMPLETENESS_ASKERS
 from Products.PloneMeeting.config import ITEM_COMPLETENESS_EVALUATORS
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
-from Products.PloneMeeting.config import ITEM_STATES_NOT_LINKED_TO_MEETING
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
 from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
@@ -240,7 +239,7 @@ class MeetingItemWorkflowConditions(object):
         '''Are there 'wait_advices_' transitions from current state and
            are there advices to wait, aka the transition would be available?'''
         res = False
-        if 'waiting_advices_from_last_val_level_advices_required_to_validate' in \
+        if 'waiting_advices_given_advices_required_to_validate' in \
            self.cfg.getWorkflowAdaptations():
             review_state = self.context.queryState()
             wf_tool = api.portal.get_tool('portal_workflow')
@@ -368,6 +367,13 @@ class MeetingItemWorkflowConditions(object):
         ''' '''
         return True
 
+    def _adviceSendableBackOnlyWhenNoMoreEditable(self, org_uid):
+        '''Depending on advice WF, advice may be sendable back by adviser
+           only when advice no more editable.
+           By default this is not the case as default advice WF as only one
+           state in which advice is always editable.'''
+        return False
+
     def _currentUserIsAdviserAbleToSendItemBack(self, destinationState):
         '''Is current user an adviser able to send an item 'waiting_advices' back to other states?
            To do so :
@@ -380,11 +386,21 @@ class MeetingItemWorkflowConditions(object):
         for org_uid in self.context.adviceIndex:
             org = get_organization(org_uid)
             # org can give advice in current state and member is adviser for it
+            # user able to evaluate completeness and item complete or
+            # not able to evaluate completeness but completeness evaluation not required
+            # but advice not editable, this means also advice still not added
+            # this last case is "not using completeness"
+            may_eval_completeness = self.context.adapted().mayEvaluateCompleteness()
             if item_state in org.get_item_advice_states(self.cfg) and \
-               (self.context._advice_is_given(org_uid) or
-                (self.context.adapted().mayEvaluateCompleteness() and
-                 not self.context.adapted()._is_complete())) and \
                get_plone_group_id(org_uid, 'advisers') in user_plone_groups and \
+               (self.context._advice_is_given(org_uid) or
+                (may_eval_completeness and
+                 not self.context.adapted()._is_complete()) or
+                (not may_eval_completeness and
+                 self.context.getCompleteness() in ['completeness_evaluation_not_required',
+                                                    'completeness_not_yet_evaluated']) and
+                (not self._adviceSendableBackOnlyWhenNoMoreEditable(org_uid) or
+                 not self.context.adviceIndex[org_uid]['advice_editable'])) and \
                self._currentUserIsAdviserAbleToSendItemBackExtraCondition(org, destinationState):
                 res = True
                 break
@@ -413,33 +429,43 @@ class MeetingItemWorkflowConditions(object):
                         suffix = self.cfg.getItemWFValidationLevels(state=last_val_state, data='suffix')
                         res = self.tool.group_is_not_empty(
                             proposingGroup, suffix, user_id=api.user.get_current().id)
-            # using a 'waiting_advices_from_last_val_level_XXX' WFAdaptation,
-            # we may only correct to the last validation level
-            # a member of last validation level may trigger the transition to last level
-            # and extra transitions out of validation transitions
-            elif item_state.endswith('_waiting_advices') and \
-                    'waiting_advices_from_last_val_level_only_adviser_send_back' in wfas or \
-                    'waiting_advices_from_last_val_level_only_proposing_group_send_back' in wfas or \
-                    'waiting_advices_from_last_val_level_adviser_and_proposing_group_send_back' in wfas:
-                last_val_state = self._getLastValidationState()
+            # using 'waiting_advices_XXX_send_back' WFAdaptations,
+            elif item_state.endswith('_waiting_advices'):
                 item_validation_states = self.cfg.getItemWFValidationLevels(data='state', only_enabled=True)
-                if destinationState == last_val_state or destinationState not in item_validation_states:
+                # compute sendable back states
+                sendable_back_states = []
+                # when using from last/before last validation level, able to send back to last level
+                if 'waiting_advices_from_before_last_val_level' in wfas:
+                    sendable_back_states.append(self._getLastValidationState(before_last=True))
+                if 'waiting_advices_from_last_val_level' in wfas:
+                    sendable_back_states.append(self._getLastValidationState())
+                if 'waiting_advices_from_every_val_levels' in wfas:
+                    sendable_back_states = list(item_validation_states)
+                if not sendable_back_states:
+                    # use custom values from WAITING_ADVICES_FROM_STATES
+                    from Products.PloneMeeting.model import adaptations
+                    for waiting_advice_config in adaptations.WAITING_ADVICES_FROM_STATES:
+                        sendable_back_states += list(waiting_advice_config['back_states'])
+
+                if destinationState in sendable_back_states or destinationState not in item_validation_states:
                     # bypass for Manager
                     if _checkPermission(ReviewPortalContent, self.context):
                         res = True
                     else:
-                        if 'waiting_advices_from_last_val_level_adviser_and_proposing_group_send_back' in wfas or \
-                           'waiting_advices_from_last_val_level_only_proposing_group_send_back' in wfas:
-                            # is current user member of last validation level?
-                            suffix = self.cfg.getItemWFValidationLevels(state=last_val_state, data='suffix')
+                        if 'waiting_advices_proposing_group_send_back' in wfas:
+                            # is current user member of destinationState level?
+                            suffix = self.cfg.getItemWFValidationLevels(state=destinationState, data='suffix')
                             res = self.tool.group_is_not_empty(
                                 proposingGroup, suffix, user_id=api.user.get_current().id)
                         # if not, maybe it is an adviser able to give an advice?
-                        if not res:
-                            if 'waiting_advices_from_last_val_level_adviser_and_proposing_group_send_back' in wfas or \
-                               'waiting_advices_from_last_val_level_only_adviser_send_back' in wfas:
-                                # get advisers that are able to trigger transition
-                                res = self._currentUserIsAdviserAbleToSendItemBack(destinationState)
+                        if not res and 'waiting_advices_adviser_send_back' in wfas:
+                            # adviser may send back to validated when using
+                            # 'waiting_advices_adviser_may_validate'
+                            if 'waiting_advices_adviser_may_validate' in wfas:
+                                sendable_back_states.append('validated')
+
+                            # get advisers that are able to trigger transition
+                            res = self._currentUserIsAdviserAbleToSendItemBack(destinationState)
             else:
                 # maybe destinationState is a validation state? in this case return True only if group not empty
                 suffix = self.cfg.getItemWFValidationLevels(state=destinationState, data='suffix')
@@ -571,23 +597,24 @@ class MeetingItemWorkflowConditions(object):
         if _checkPermission(ManagePortal, self.context):
             res = True
         else:
-            last_val_levels_wfas = [
-                wfa for wfa in self.cfg.getWorkflowAdaptations()
-                if wfa.startswith('waiting_advices_from_last_val_level')]
-            before_last_val_levels_wfas = [
-                wfa for wfa in self.cfg.getWorkflowAdaptations()
-                if wfa.startswith('waiting_advices_from_before_last_val_level')]
-            every_val_levels_wfas = [
-                wfa for wfa in self.cfg.getWorkflowAdaptations()
-                if wfa.startswith('waiting_advices_from_every_val_level')]
-            if last_val_levels_wfas:
-                last_val_states = [self._getLastValidationState()]
-                if before_last_val_levels_wfas:
-                    last_val_states.append(self._getLastValidationState(before_last=True))
-                if self.context.queryState() in last_val_states:
+            wfas = self.cfg.getWorkflowAdaptations()
+            from_states = []
+            if 'waiting_advices' in wfas:
+                if 'waiting_advices_from_last_val_level' in wfas:
+                    from_states.append(self._getLastValidationState())
+                if 'waiting_advices_from_before_last_val_level' in wfas:
+                    from_states.append(self._getLastValidationState(before_last=True))
+                if 'waiting_advices_from_every_val_levels' in wfas:
+                    item_validation_states = self.cfg.getItemWFValidationLevels(
+                        data='state', only_enabled=True)
+                    from_states = list(item_validation_states)
+                if not from_states:
+                    # use custom values from WAITING_ADVICES_FROM_STATES
+                    from Products.PloneMeeting.model import adaptations
+                    for waiting_advice_config in adaptations.WAITING_ADVICES_FROM_STATES:
+                        from_states += list(waiting_advice_config['from_states'])
+                if fromState in from_states:
                     res = True
-            elif every_val_levels_wfas:
-                res = True
         return res and self._mayWaitAdvices(self._getWaitingAdvicesStateFrom(fromState))
 
     security.declarePublic('mayAccept_out_of_meeting')
@@ -817,6 +844,14 @@ class MeetingItemWorkflowActions(object):
         # Send, if configured, a mail to the person who created the item
         sendMailIfRelevant(clonedItem, 'itemDelayed', 'creators', isSuffix=True)
 
+    def _get_item_states_removed_from_meeting(self):
+        '''Return item states in which an item is considered removed from a meeting.
+           By default, when using MeetingConfig.itemWFValidationStates, these are
+           the states in which item is no more linked to a meeting.'''
+        res = self.cfg.getItemWFValidationLevels(data='state', only_enabled=True)
+        res.append('validated')
+        return res
+
     security.declarePrivate('doCorrect')
 
     def doCorrect(self, stateChange):
@@ -826,7 +861,8 @@ class MeetingItemWorkflowActions(object):
           do some specific treatment.
         """
         # Remove item from meeting if necessary when going to a state where item is not linked to a meeting
-        if stateChange.new_state.id in ITEM_STATES_NOT_LINKED_TO_MEETING and self.context.hasMeeting():
+        if self.context.hasMeeting() and \
+           stateChange.new_state.id in self._get_item_states_removed_from_meeting():
             # We may have to send a mail
             sendMailIfRelevant(self.context, 'itemUnpresented', 'creators', isSuffix=True)
             # remove the item from the meeting
@@ -5715,7 +5751,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             for advice in self.getAdvices():
                 updateAnnexesAccess(advice)
         # propagate Reader local_roles to sub elements
-        # this way for example users have Reader role on item may view the advices
+        # this way for example users that have Reader role on item may view the advices
         self._propagateReaderAndMeetingManagerLocalRolesToSubObjects()
         # reindex object security except if avoid_reindex=True and localroles are the same
         avoid_reindex = kwargs.get('avoid_reindex', False)

@@ -266,12 +266,21 @@ class testValidators(PloneMeetingTestCase):
     def test_pm_PloneGroupSettingsValidator(self):
         """Completed plonegroup settings validation with our use cases :
            - can not remove a suffix if used in MeetingConfig.selectableCopyGroups;
-           - can not remove a suffix if used in MeetingItem.copyGroups."""
-        def _check(validation_error_msg):
+           - can not remove a suffix if used in MeetingItem.copyGroups;
+           - can not remove a suffix if used as composed value, so like
+             'suffix_proposing_group_level1reviewers',
+             in MeetingConfig.itemAnnexConfidentialVisibleFor for example;
+           - can not remove a suffix used by MeetingConfig.itemWFValidationLevels."""
+        def _check(validation_error_msg, checks=['without', 'disabled', 'fct_orgs']):
             """ """
-            for value in (functions_without_samplers,
-                          functions_with_disabled_samplers,
-                          functions_with_fct_orgs_samplers):
+            values = []
+            if 'without' in checks:
+                values.append(functions_without_samplers)
+            if 'disabled' in checks:
+                values.append(functions_with_disabled_samplers)
+            if 'fct_orgs' in checks:
+                values.append(functions_with_fct_orgs_samplers)
+            for value in values:
                 with self.assertRaises(Invalid) as cm:
                     validator.validate(value)
                 self.assertEqual(cm.exception.message, validation_error_msg)
@@ -298,6 +307,9 @@ class testValidators(PloneMeetingTestCase):
                                                 None)
         self.assertIsNone(validator.validate(functions))
         set_registry_functions(functions)
+        # use samplers suffix
+        self._enableItemValidationLevel(cfg, level='prevalidated', suffix='samplers')
+
         # developers_samplers was created
         dev_samplers = get_plone_group(self.developers_uid, 'samplers')
         dev_samplers_id = dev_samplers.getId()
@@ -307,12 +319,19 @@ class testValidators(PloneMeetingTestCase):
         validation_error_msg = _('can_not_delete_plone_group_meetingconfig',
                                  mapping={'cfg_url': cfg.absolute_url()})
         _check(validation_error_msg)
+        # also check composed values like 'suffix_proposing_group_level1reviewers'
+        cfg.setSelectableCopyGroups(())
+        cfg.setItemAnnexConfidentialVisibleFor(('suffix_proposing_group_samplers', ))
+        _check(validation_error_msg, checks=['without', 'disabled'])
+        cfg.setItemAnnexConfidentialVisibleFor(())
         # use samplers on item, remove it from MeetingConfig
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         item.setCopyGroups((dev_samplers_id, ))
         item.reindexObject()
-        cfg.setSelectableCopyGroups(())
+        # still complaining about config because used in itemWFValidationLevels
+        _check(validation_error_msg, checks=['without', 'disabled'])
+        self._disableItemValidationLevel(cfg, level='prevalidated', suffix='prereviewers')
         validation_error_msg = _('can_not_delete_plone_group_meetingitem',
                                  mapping={'item_url': item.absolute_url()})
         _check(validation_error_msg)

@@ -39,6 +39,7 @@ from plone.app.testing import login
 from plone.app.testing import logout
 from plone.app.testing.bbb import _createMemberarea
 from plone.app.testing.helpers import setRoles
+from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
 from Products.Five.browser import BrowserView
 from Products.PloneMeeting.config import DEFAULT_USER_PASSWORD
@@ -458,6 +459,28 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         )
         return annexType
 
+    def addAdvice(self,
+                  item,
+                  advice_group=None,
+                  advice_type=u'positive',
+                  advice_hide_during_redaction=False,
+                  advice_portal_type='meetingadvice'):
+        if not advice_group:
+            advice_group = self.vendors_uid
+        # manage MeetingConfig.defaultAdviceHiddenDuringRedaction
+        # as it only works while added ttw
+        if not advice_hide_during_redaction:
+            advice_hide_during_redaction = advice_portal_type in \
+                self.meetingConfig.getDefaultAdviceHiddenDuringRedaction()
+        advice = createContentInContainer(
+            item,
+            advice_portal_type,
+            **{'advice_group': advice_group,
+               'advice_type': advice_type,
+               'advice_hide_during_redaction': advice_hide_during_redaction,
+               'advice_comment': RichTextValue(u'My comment')})
+        return advice
+
     def deleteAsManager(self, uid):
         """When we want to remove an item the current user does not have permission to,
            but we are not testing delete permission, do it as a 'Manager'."""
@@ -593,15 +616,16 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                     po_infos['meeting_access_on'] = access_on
         cfg.setPowerObservers(power_observers)
 
-    def _activate_wfas(self, wfas, cfg=None):
+    def _activate_wfas(self, wfas, cfg=None, keep_existing=False):
         """Activate given p_wfas, we clean wfas, apply,
            then set given p_wfas and apply again."""
         currentUser = self.member.getId()
         self.changeUser('siteadmin')
         if cfg is None:
             cfg = self.meetingConfig
-        cfg.setWorkflowAdaptations(())
-        cfg.at_post_edit_script()
+        if not keep_existing:
+            cfg.setWorkflowAdaptations(())
+            cfg.at_post_edit_script()
         if wfas:
             cfg.setWorkflowAdaptations(wfas)
             cfg.at_post_edit_script()

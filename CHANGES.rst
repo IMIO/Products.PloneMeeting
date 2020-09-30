@@ -48,13 +48,26 @@ Changelog
   `MeetingItem.meetingManagersNotesEnd` and
   `MeetingItem.otherMeetingConfigsClonableToFieldDecisionEnd`.
   [gbastien]
-- Manage down/up WF for some specific advices so icon `waiting_advices_from.png`
-  is red when down WF, green when up WF again and blue otherwise.
-  [gbastien]
 - Make `organization.acronym` field viewable/editable also on organizations
   outside `My organization` as it may be used as `associatedGroups` and displayed
   in dashboard in the `Associated groups acronym` column.
   [gbastien]
+- Manage down/up WF for some specific advices so icon `waiting_advices_from.png`
+  is red when down WF, green when up WF again and blue otherwise.
+  [gbastien]
+- Refactored `waiting_advices` WFAdaptations to manage more cases.
+  [gbastien]
+- Added helper `PloneMeetingTestCase.addAdvice`.
+  [gbastien]
+- Completed `MeetingConfig.validate_itemWFValidationLevels` to not be able to
+  disable level if used in the MeetingConfig.
+  [gbastien]
+- Completed `PloneGroupSettingsValidator` validator, check also composed values
+  stored on `MeetingConfig` and using a suffix,
+  so values like `suffix_proposing_group_level1reviewers`.
+  [gbastien]
+- Removed `config.ITEM_STATES_NOT_LINKED_TO_MEETING`, get states in which an item
+  is removed from a meeting using `MeetingConfig.itemWFValidationLevels`.
 
 4.2b2 (2020-09-10)
 ------------------
