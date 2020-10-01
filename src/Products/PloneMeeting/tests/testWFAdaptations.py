@@ -1644,15 +1644,9 @@ class testWFAdaptations(PloneMeetingTestCase):
             return
 
         from Products.PloneMeeting.model import adaptations
-        original_WAITING_ADVICES_FROM_STATES = adaptations.WAITING_ADVICES_FROM_STATES
-        adaptations.WAITING_ADVICES_FROM_STATES = (
-            {'from_states': ('itemcreated', ),
-             'back_states': ('itemcreated', ),
-             'perm_cloned_states': ('itemcreated', ),
-             'remove_modify_access': False,
-             'use_custom_icon': False,
-             'use_custom_back_transition_title_for': (),
-             'use_custom_state_title': True, },)
+        original_WAITING_ADVICES_REMOVE_MODIFY_ACCESS = \
+            adaptations.WAITING_ADVICES_REMOVE_MODIFY_ACCESS
+        adaptations.WAITING_ADVICES_REMOVE_MODIFY_ACCESS = False
         self._activate_wfas(('waiting_advices', 'waiting_advices_proposing_group_send_back'))
         self.vendors.item_advice_states = ("{0}__state__{1}".format(
             cfg.getId(), 'itemcreated_waiting_advices'), )
@@ -1671,7 +1665,8 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertEqual(item.queryState(), 'itemcreated')
 
         # back to original configuration
-        adaptations.WAITING_ADVICES_FROM_STATES = original_WAITING_ADVICES_FROM_STATES
+        adaptations.WAITING_ADVICES_REMOVE_MODIFY_ACCESS = \
+            original_WAITING_ADVICES_REMOVE_MODIFY_ACCESS
 
     def test_pm_WFA_waiting_advices_unknown_state(self):
         '''Does not fail to be activated if a from/back state does not exist.'''
@@ -1684,12 +1679,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         original_WAITING_ADVICES_FROM_STATES = adaptations.WAITING_ADVICES_FROM_STATES
         adaptations.WAITING_ADVICES_FROM_STATES = original_WAITING_ADVICES_FROM_STATES + (
             {'from_states': ('unknown', ),
-             'back_states': ('unknown', ),
-             'perm_cloned_states': ('unknown', ),
-             'remove_modify_access': True,
-             'use_custom_icon': False,
-             'use_custom_back_transition_title_for': (),
-             'use_custom_state_title': True, }, )
+             'back_states': ('unknown', ), }, )
         self._activate_wfas(('waiting_advices', 'waiting_advices_proposing_group_send_back'))
         itemWF = self.wfTool.getWorkflowsFor(cfg.getItemTypeName())[0]
         # does not fail and existing states are taken into account
