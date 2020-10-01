@@ -4534,7 +4534,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePrivate('listWorkflowAdaptations')
 
-    def listWorkflowAdaptations(self):
+    def listWorkflowAdaptations(self, sorted=True):
         '''Lists the available workflow changes.'''
         res = []
         for adaptation in self.wfAdaptations:
@@ -4560,7 +4560,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 title = translate('wa_%s' % adaptation, domain='PloneMeeting', context=self.REQUEST)
                 title = title + " ({0})".format(adaptation)
                 res.append((adaptation, title))
-        return DisplayList(tuple(res)).sortedByValue()
+        res = DisplayList(tuple(res))
+        if sorted:
+            res = res.sortedByValue()
+        return res
 
     security.declarePrivate('listValidationLevelsNumbers')
 
