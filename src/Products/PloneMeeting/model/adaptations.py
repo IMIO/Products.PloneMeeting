@@ -258,7 +258,7 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
     # make sure given wfAdaptations are in the right order
     # import MeetingConfig only here so we are sure that the 'wfAdaptations' attr
     # has been updated by subplugins if any
-    ordered_wfAdaptations = meetingConfig.listWorkflowAdaptations().keys()
+    ordered_wfAdaptations = meetingConfig.wfAdaptations
     wfAdaptations = list(wfAdaptations)
     wfAdaptations.sort(key=lambda x: ordered_wfAdaptations.index(x))
     wfTool = api.portal.get_tool('portal_workflow')
