@@ -38,26 +38,19 @@ WF_ITEM_VALIDATION_LEVELS_DISABLED = 'No enabled item validation levels found fo
 # list of dict containing infos about 'waiting_advices' state(s) to add
 # a state will be added by "dict", 'from_states' are list of states leading to the new state
 # 'back_states' are states to come back from the new state and 'perm_cloned_states' are states
-# to use to define permissions of the new state minus every 'edit' permissions.  We may define
-# several 'perm_cloned_states' because it will try to find first, if not found, try to use following, ...
+# to use to define permissions of the new state minus every 'edit' permissions.
 WAITING_ADVICES_FROM_STATES = (
     {'from_states': ('itemcreated', ),
      'back_states': ('itemcreated', ),
-     'perm_cloned_states': ('itemcreated',),
-     'remove_modify_access': True,
-     'use_custom_icon': False,
-     'use_custom_back_transition_title_for': (),
-     'use_custom_state_title': True,
      },
     {'from_states': ('proposed', 'prevalidated'),
      'back_states': ('proposed', 'prevalidated'),
-     'perm_cloned_states': ('prevalidated', 'proposed'),
-     'remove_modify_access': True,
-     'use_custom_icon': False,
-     'use_custom_back_transition_title_for': (),
-     'use_custom_state_title': True,
      },
 )
+WAITING_ADVICES_REMOVE_MODIFY_ACCESS = True
+WAITING_ADVICES_USE_CUSTOM_ICON = True
+WAITING_ADVICES_USE_CUSTOM_BACK_TR_TITLE_FOR = ()
+WAITING_ADVICES_USE_CUSTOM_STATE_TITLE = True
 
 
 def grantPermission(state, perm, role):
@@ -812,7 +805,7 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                         wf.transitions.addTransition(from_transition_id)
                         transition = wf.transitions[from_transition_id]
                         icon_name = 'wait_advices_from'
-                        if infos['use_custom_icon']:
+                        if WAITING_ADVICES_USE_CUSTOM_ICON:
                             icon_name = from_transition_id
                         transition.setProperties(
                             title='wait_advices_from',
@@ -828,7 +821,7 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                         wf.transitions.addTransition(back_transition_id)
                         transition = wf.transitions[back_transition_id]
                         back_transition_title = back_transition_id
-                        if back_state_id not in infos['use_custom_back_transition_title_for']:
+                        if back_state_id not in WAITING_ADVICES_USE_CUSTOM_BACK_TR_TITLE_FOR:
                             # reuse the existing back transition for title
                             existing_back_transition_id = 'backTo%s%s' % (back_state_id[0].upper(), back_state_id[1:])
                             if existing_back_transition_id in wf.transitions:
@@ -843,7 +836,7 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
 
                     # Update connections between states and transitions
                     new_state_title = new_state_id
-                    if not infos['use_custom_state_title']:
+                    if not WAITING_ADVICES_USE_CUSTOM_STATE_TITLE:
                         new_state_title = 'waiting_advices'
                     new_state.setProperties(title=new_state_title,
                                             description='',
@@ -864,12 +857,10 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                                                  transitions=existing_transitions + (from_transition_id, ))
 
                     # Initialize permission->roles mapping for new state "to_transition",
-                    # which is the same as state infos['perm_cloned_state']
-                    for perm_cloned_state_id in infos['perm_cloned_states']:
-                        if perm_cloned_state_id in wf.states:
-                            perm_cloned_state = wf.states[perm_cloned_state_id]
+                    # which is the same as state 'validated'
+                    perm_cloned_state = wf.states['validated']
                     for permission, roles in perm_cloned_state.permission_roles.iteritems():
-                        if infos['remove_modify_access'] and permission in edit_permissions:
+                        if WAITING_ADVICES_REMOVE_MODIFY_ACCESS and permission in edit_permissions:
                             # remove every roles but 'Manager', 'MeetingManager' and 'MeetingBudgetImpactEditor'
                             edit_roles = set(roles).intersection(
                                 set(('Manager', 'MeetingManager', 'MeetingBudgetImpactEditor')))

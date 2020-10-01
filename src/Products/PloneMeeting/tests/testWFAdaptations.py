@@ -1694,8 +1694,8 @@ class testWFAdaptations(PloneMeetingTestCase):
         itemWF = self.wfTool.getWorkflowsFor(cfg.getItemTypeName())[0]
         # does not fail and existing states are taken into account
         self.assertEqual(
-            [st for st in itemWF.states if 'waiting_advices' in st],
-            ['proposed_waiting_advices', 'itemcreated_waiting_advices'])
+            sorted([st for st in itemWF.states if 'waiting_advices' in st]),
+            ['itemcreated_waiting_advices', 'proposed_waiting_advices'])
 
         # back to original configuration
         adaptations.WAITING_ADVICES_FROM_STATES = original_WAITING_ADVICES_FROM_STATES
