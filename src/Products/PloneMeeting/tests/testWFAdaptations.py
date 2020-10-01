@@ -1363,26 +1363,21 @@ class testWFAdaptations(PloneMeetingTestCase):
            it is possible to go from 'proposed' and 'prevalidated' to 'waiting_advices'
            and to go back to both states.'''
         cfg = self.meetingConfig
-        if not self._check_wfa_available(['waiting_advices']):
+        if not self._check_wfa_available(['waiting_advices',
+                                          'waiting_advices_proposing_group_send_back']):
             return
 
-        wfAdaptations = list(cfg.getWorkflowAdaptations())
         self._enablePrevalidation(cfg)
-        self._activate_wfas(['waiting_advices'], keep_existing=True)
+        self._activate_wfas(
+            ['waiting_advices', 'waiting_advices_proposing_group_send_back'],
+            keep_existing=True)
         from Products.PloneMeeting.model import adaptations
         original_WAITING_ADVICES_FROM_STATES = adaptations.WAITING_ADVICES_FROM_STATES
         adaptations.WAITING_ADVICES_FROM_STATES = (
             {'from_states': (self._stateMappingFor('proposed_first_level'),
                              'prevalidated', ),
              'back_states': (self._stateMappingFor('proposed_first_level'),
-                             'prevalidated', ),
-             'perm_cloned_states': (self._stateMappingFor('proposed_first_level'),
-                                    'prevalidated', ),
-             'remove_modify_access': True,
-             'use_custom_icon': False,
-             'use_custom_back_transition_title_for': (),
-             'use_custom_state_title': True})
-        self._activate_wfas(tuple(wfAdaptations))
+                             'prevalidated', ), }, )
         waiting_advices_state = '{0}__or__prevalidated_waiting_advices'.format(
             self._stateMappingFor('proposed_first_level'))
         self.vendors.item_advice_states = ("{0}__state__{1}".format(cfg.getId(), waiting_advices_state), )
