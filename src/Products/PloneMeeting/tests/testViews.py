@@ -1050,10 +1050,10 @@ class testViews(PloneMeetingTestCase):
         # when used, images are moved in their own <p> when necessary
         self.assertEqual(helper.printXhtml(item, text, clean=True),
                          '<p>Text1</p>'
-                         '<p><img src="http://plone/nohost/img1.png"></p>'
-                         '<p><img src="http://plone/nohost/img2.png"></p>'
+                         '<p><img src="http://plone/nohost/img1.png" /></p>'
+                         '<p><img src="http://plone/nohost/img2.png" /></p>'
                          '<p>Text2</p>'
-                         '<p><img src="http://plone/nohost/img3.png"></p>')
+                         '<p><img src="http://plone/nohost/img3.png" /></p>')
 
     def test_pm_PrintAdvicesInfos(self):
         """Test the printAdvicesInfos method."""
