@@ -740,14 +740,14 @@ class BaseDGHV(object):
         if addCSSClass:
             xhtmlFinal = addClassToContent(xhtmlFinal, addCSSClass)
 
+        if clean:
+            xhtmlFinal = separate_images(xhtmlFinal)
+
         # finally use_safe_html to clean the HTML, it does not only clean
         # but turns the result into a XHTML compliant HTML, by replacing <br> with <br /> for example
         if use_safe_html:
             pt = api.portal.get_tool('portal_transforms')
             xhtmlFinal = pt.convert('safe_html', xhtmlFinal).getData()
-
-        if clean:
-            xhtmlFinal = separate_images(xhtmlFinal)
 
         return xhtmlFinal
 
