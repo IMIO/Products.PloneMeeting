@@ -189,12 +189,6 @@ Changelog
 - Use roles 'Reviewer' and 'Contributor' in meetingadvice_workflow
 - Added bypass for users having 'Manage portal' in MeetingItemWorkflowConditions in 'mayWait_advices_from', 'mayValidate' and 'mayPresent'
 
-4.1.28.2 (unreleased)
----------------------
-
-- Nothing changed yet.
-
-
 4.1.28.1 (2020-08-21)
 ---------------------
 
