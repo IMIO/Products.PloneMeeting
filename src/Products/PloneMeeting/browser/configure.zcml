@@ -298,6 +298,13 @@
 
     <browser:page
       for="Products.PloneMeeting.interfaces.IMeetingItem"
+      name="load_assembly_and_signatures"
+      template="templates/itemassemblyandsignatures.pt"
+      class=".async.AsyncLoadAssemblyAndSignatures"
+      permission="zope2.View" />
+
+    <browser:page
+      for="Products.PloneMeeting.interfaces.IMeetingItem"
       name="header"
       template="templates/header_item.pt"
       class=".views.ItemHeaderView"

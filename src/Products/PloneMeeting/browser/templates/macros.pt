@@ -322,12 +322,11 @@ document.location.reload(true);
     <img src="back_to.gif" tal:attributes="src string:${portal_url}/back_to.gif" />&nbsp;<span i18n:translate="">Back to the MeetingConfig</span></a>
 </p>
 
-<div id="meeting_users_"
+<div id="item-people"
      metal:define-macro="itemPeople" i18n:domain="PloneMeeting"
      tal:define="usedAttrs usedAttrs|meetingConfig/getUsedItemAttributes;
                  meeting context/getMeeting;
                  usedMeetingAttributes usedMeetingAttributes|meetingConfig/getUsedMeetingAttributes">
-<form id="itemPeopleForm" name="itemPeopleForm" method="post">
 <table tal:define="allUsers meeting/getAllUsedHeldPositions;
                    showVotes context/showVotes;
                    usedVoteValues meetingConfig/getUsedVoteValues;
@@ -345,6 +344,7 @@ document.location.reload(true);
                    showSignatories python: 'signatories' in usedMeetingAttributes or itemSignatories;
                    showNonAttendees python: 'nonAttendees' in usedMeetingAttributes or itemNonAttendees;
                    voters python: [];
+                   mayChangeAttendees python: context._mayChangeAttendees();
                    global showSave python:False;
                    global showRefresh python: False;
                    error request/error | python:'';
@@ -405,7 +405,7 @@ document.location.reload(true);
  
        <tal:comment replace="nothing">Button for byebying a user</tal:comment>
        <a href="#" class="link-overlay-pm" tal:attributes="href string:item_byebye_attendee_form?person_uid=${aUid}"
-          tal:condition="python:context._mayChangeAttendees() and isPresent">
+          tal:condition="python:mayChangeAttendees and isPresent">
         <span class="fa people-edit-itemabsent people-action" title="person_byebye" i18n:attributes="title" style="visibility: hidden"
             tal:attributes="id python: 'byebye_%s' % aUid;
                             name  python: 'byebye_%s' % aUid;" />
@@ -426,7 +426,7 @@ document.location.reload(true);
 
          <tal:comment replace="nothing">Remove info user being an item excused</tal:comment>
          <a href="#" class="link-overlay-pm" tal:attributes="href string:item_welcome_attendee_form?person_uid=${aUid}"
-            tal:condition="python: context._mayChangeAttendees()">
+            tal:condition="python:mayChangeAttendees">
           <span class="fa people-remove-left people-action" title="person_welcome" i18n:attributes="title"
               tal:attributes="id python: 'welcome_%s' % aUid;
                               name  python: 'welcome_%s' % aUid;" />
@@ -449,7 +449,7 @@ document.location.reload(true);
 
          <tal:comment replace="nothing">Remove info user being an item absent</tal:comment>
          <a href="#" class="link-overlay-pm" tal:attributes="href string:item_welcome_attendee_form?person_uid=${aUid}"
-            tal:condition="python: context._mayChangeAttendees()">
+            tal:condition="python:mayChangeAttendees">
           <span class="fa people-remove-left people-action" title="person_welcome" i18n:attributes="title"
               tal:attributes="id python: 'welcome_%s' % aUid;
                               name  python: 'welcome_%s' % aUid;" />
@@ -485,7 +485,7 @@ document.location.reload(true);
 
        <tal:comment replace="nothing">Remove info user being an item signatory</tal:comment>
        <a href="#" class="link-overlay-pm" tal:attributes="href string:item_remove_redefined_signatory_form?person_uid=${aUid}"
-          tal:condition="python: context._mayChangeAttendees()">
+          tal:condition="python:mayChangeAttendees">
         <span class="fa people-remove-redefined-signatory people-action" title="Remove attendee from signatory defined for this item" i18n:attributes="title" />
        </a>
 
@@ -493,7 +493,7 @@ document.location.reload(true);
 
       <tal:comment replace="nothing">Button for redefining a signatory</tal:comment>
       <a href="#" class="link-overlay-pm" tal:attributes="href string:item_redefine_signatory_form?person_uid=${aUid}"
-         tal:condition="python:context._mayChangeAttendees() and isPresent and (aUid not in itemSignatories and aUid not in meetingSignatories)">
+         tal:condition="python:mayChangeAttendees and isPresent and (aUid not in itemSignatories and aUid not in meetingSignatories)">
        <span class="fa people-edit-signatory people-action" title="Define this attendee as signatory for this item" i18n:attributes="title" style="visibility: hidden"
            tal:attributes="id python: 'redefine_signatory_%s' % aUid;
                            name  python: 'redefine_signatory_%s' % aUid;" />
@@ -507,7 +507,7 @@ document.location.reload(true);
 
        <tal:comment replace="nothing">Button for setting attendee to nonAttendee</tal:comment>
        <a href="#" class="link-overlay-pm" tal:attributes="href string:item_byebye_nonattendee_form?person_uid=${aUid}"
-          tal:condition="python:context._mayChangeAttendees() and aUid not in itemNonAttendees">
+          tal:condition="python:mayChangeAttendees and aUid not in itemNonAttendees">
         <span class="fa people-edit-itemabsent people-action" title="person_byebye" i18n:attributes="title" style="visibility: hidden"
             tal:attributes="id python: 'byebye_nonattendee_%s' % aUid;
                             name  python: 'byebye_nonattendee_%s' % aUid;" />
@@ -524,7 +524,7 @@ document.location.reload(true);
 
         <tal:comment replace="nothing">Remove info user being an item nonAttendee</tal:comment>
         <a href="#" class="link-overlay-pm" tal:attributes="href string:item_welcome_nonattendee_form?person_uid=${aUid}"
-           tal:condition="python: context._mayChangeAttendees()">
+           tal:condition="python:mayChangeAttendees">
          <span class="fa people-remove-left people-action" title="nonattendee_welcome" i18n:attributes="title"
              tal:attributes="id python: 'welcome_%s' % aUid;
                              name  python: 'welcome_%s' % aUid;" />
@@ -610,10 +610,6 @@ document.location.reload(true);
   </tr>
   <tbody>
 </table>
-</form>
-<script>
- pmCommonOverlays();
-</script>
 </div>
 
 <tal:comment replace="nothing">

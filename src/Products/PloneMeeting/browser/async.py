@@ -312,3 +312,40 @@ class AsyncLoadLinkedItems(BrowserView):
         self.cfg = self.tool.getMeetingConfig(self.context)
         self.portal_url = api.portal.get().absolute_url()
         return self.index()
+
+
+class AsyncLoadAssemblyAndSignatures(BrowserView):
+    """ """
+
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+
+    def show(self):
+        """ """
+        return self.meeting is not None
+
+    def __call___cachekey(method, self):
+        '''cachekey method for self.__call__.'''
+        context_path = '/'.join(self.context.getPhysicalPath())
+        tool = api.portal.get_tool('portal_plonemeeting')
+        userGroups = tool.get_plone_groups_for_user()
+        cfg = tool.getMeetingConfig(self.context)
+        cfg_modified = cfg.modified()
+        meeting = self.context.getMeeting()
+        ordered_contacts = meeting.orderedContacts.items()
+        redefined_item_attendees = meeting._get_all_redefined_attendees(only_keys=False)
+        return (context_path,
+                userGroups,
+                cfg_modified,
+                ordered_contacts,
+                redefined_item_attendees)
+
+    @ram.cache(__call___cachekey)
+    def __call__(self):
+        """ """
+        self.tool = api.portal.get_tool('portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(self.context)
+        self.usedMeetingAttrs = self.cfg.getUsedMeetingAttributes()
+        self.meeting = self.context.getMeeting()
+        return self.index()

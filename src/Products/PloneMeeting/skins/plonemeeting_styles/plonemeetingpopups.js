@@ -143,6 +143,7 @@ jQuery(document).ready(function($) {
     completenessChange();
     availableMailingLists();
     duplicateItem();
+    attendeesInfos();
 
     // inserting methods infos on meeting_view
     tooltipster_helper(selector='.tooltipster-inserting-methods-helper-msg',
@@ -150,6 +151,10 @@ jQuery(document).ready(function($) {
                        data_parameters=[],
                        options={position: 'bottom',
                                 trigger: 'click'});
+    pmCommonOverlays();
+});
+
+function attendeesInfos() {
     // item absents on meeting_view
     tooltipster_helper(selector='.tooltipster-meeting-item-not-present',
                        view_name='@@display-meeting-item-not-present',
@@ -158,9 +163,7 @@ jQuery(document).ready(function($) {
     tooltipster_helper(selector='.tooltipster-meeting-item-signatories',
                        view_name='@@display-meeting-item-signatories',
                        data_parameters=['signatory_uid']);
-                       
-    pmCommonOverlays();
-});
+}
 
 // prepare overlays and tooltipsters in dashboards
 function initializeDashboard(){

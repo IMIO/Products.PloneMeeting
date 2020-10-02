@@ -133,8 +133,10 @@ function initializePersonsCookie() {
   label_tag = $('div#assembly-and-signatures')[0];
   tag = $('div#collapsible-assembly-and-signatures')[0];
   if (show == 'true') {
-    label_tag.classList.add('active');
-    tag.style.display = 'block';
+    label_tag.click();
+    createCookie('showPersons', 'true');
+    //label_tag.classList.add('active');
+    //tag.style.display = 'block';
   }
 }
 
@@ -612,9 +614,16 @@ function updateNumberOfItems() {
 
 $(document).on('toggle_details_ajax_success', init_tooltipsters);
 
-function init_tooltipsters() {
-    categorizedChildsInfos({selector: 'div.item-linkeditems .tooltipster-childs-infos', });
-    advicesInfos();
+function init_tooltipsters(event) {
+    css_id = event.tag[0].id;
+    if (css_id == 'collapsible-assembly-and-signatures') {
+      pmCommonOverlays(selector_prefix='div#item-people ');
+      attendeesInfos();
+    }
+    if (css_id == 'collapsible-assembly-and-signatures') {
+      categorizedChildsInfos({selector: 'div.item-linkeditems .tooltipster-childs-infos', });
+      advicesInfos();
+    }
 }
 
 // when clicking on the input#forceInsertNormal, update the 'pmForceInsertNormal' cookie

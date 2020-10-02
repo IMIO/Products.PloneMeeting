@@ -5,7 +5,11 @@ Changelog
 4.2b4 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Implement votes functionnality :
+
+  - Load attendees displayed on item view asynchronously;
+  - ...
+  [gbastien]
 
 
 4.2b3 (2020-10-02)

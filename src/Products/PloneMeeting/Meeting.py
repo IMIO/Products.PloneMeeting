@@ -841,6 +841,20 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         # selectedViewFields must return a list of tuple
         return [(elt, elt) for elt in itemsListVisibleColumns]
 
+    def _get_all_redefined_attendees(self, by_persons=False, only_keys=True):
+        """Returns a list of dicts."""
+        itemNonAttendees = self.getItemNonAttendees(by_persons=by_persons)
+        itemAbsents = self.getItemAbsents(by_persons=by_persons)
+        itemExcused = self.getItemExcused(by_persons=by_persons)
+        itemSignatories = self.getItemSignatories(by_signatories=by_persons)
+        if only_keys:
+            redefined_item_attendees = itemNonAttendees.keys() + \
+                itemAbsents.keys() + itemExcused.keys() + itemSignatories.keys()
+        else:
+            redefined_item_attendees = itemNonAttendees, itemAbsents, \
+                itemExcused, itemSignatories
+        return redefined_item_attendees
+
     def post_validate(self, REQUEST=None, errors=None):
         '''Validate attendees in post_validate as there is no field in schema for it.
            - an attendee may not be unselected if something is redefined for it on an item.'''
@@ -855,12 +869,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
                                  in REQUEST.form.get('meeting_attendees', [])]
             removed_meeting_attendees = set(stored_attendees).difference(meeting_attendees)
             # attendees redefined on items
-            itemNonAttendees = self.getItemNonAttendees(by_persons=True)
-            itemAbsents = self.getItemAbsents(by_persons=True)
-            itemExcused = self.getItemExcused(by_persons=True)
-            itemSignatories = self.getItemSignatories(by_signatories=True)
-            redefined_item_attendees = itemNonAttendees.keys() + \
-                itemAbsents.keys() + itemExcused.keys() + itemSignatories.keys()
+            redefined_item_attendees = self._get_all_redefined_attendees(by_persons=True)
             conflict_attendees = removed_meeting_attendees.intersection(redefined_item_attendees)
             if conflict_attendees:
                 attendee_uid = tuple(removed_meeting_attendees)[0]
