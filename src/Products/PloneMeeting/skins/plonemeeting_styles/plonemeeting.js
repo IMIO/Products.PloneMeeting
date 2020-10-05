@@ -798,3 +798,10 @@ function toggleAllDetails() {
     $('div.collapsible:not(.active):not(.discreet)').each(function() {$(this).click();});
   }
 }
+
+// prevent
+preventDefaultClickAttendees = function() {
+$("input#form-buttons-apply").click(function(event) {
+  event.preventDefault();
+});
+};

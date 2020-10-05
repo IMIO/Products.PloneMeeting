@@ -326,20 +326,29 @@ class AsyncLoadAssemblyAndSignatures(BrowserView):
         return self.meeting is not None
 
     def __call___cachekey(method, self):
-        '''cachekey method for self.__call__.'''
-        context_path = '/'.join(self.context.getPhysicalPath())
+        '''cachekey method for self.__call__.
+           Cache is invalidated depending on :
+           - current user may edit or not;
+           - something is redefined for current item or not.'''
         tool = api.portal.get_tool('portal_plonemeeting')
-        userGroups = tool.get_plone_groups_for_user()
         cfg = tool.getMeetingConfig(self.context)
         cfg_modified = cfg.modified()
         meeting = self.context.getMeeting()
+        meeting_uid = meeting.UID()
         ordered_contacts = meeting.orderedContacts.items()
         redefined_item_attendees = meeting._get_all_redefined_attendees(only_keys=False)
-        return (context_path,
-                userGroups,
-                cfg_modified,
+        item_votes = meeting.getItemVotes()
+        context_uid = self.context.UID()
+        # if something redefined for context or not
+        if context_uid not in str(redefined_item_attendees):
+            redefined_item_attendees = []
+        may_change_attendees = self.context._mayChangeAttendees()
+        return (cfg_modified,
+                meeting_uid,
                 ordered_contacts,
-                redefined_item_attendees)
+                redefined_item_attendees,
+                item_votes,
+                may_change_attendees)
 
     @ram.cache(__call___cachekey)
     def __call__(self):

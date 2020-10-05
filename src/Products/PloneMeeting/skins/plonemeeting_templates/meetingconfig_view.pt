@@ -27,7 +27,7 @@
                                   pageName request/pageName|string:default;
                                   member context/@@plone_portal_state/member;
                                   schematas here/Schemata;
-                                  fieldsets python:[key for key in schematas.keys() if (key not in ('metadata', 'votes', 'settings'))];
+                                  fieldsets python:[key for key in schematas.keys() if (key not in ('metadata', 'settings'))];
                                   displayable_fieldsets python: list(fieldsets);">
 
     <tal:hideToNonManagers condition="nocall:isManager">
@@ -1207,7 +1207,7 @@
       </table>
     </tal:advices>
 
-    <!--tal:votes condition="python: pageName=='votes'">
+    <tal:votes condition="python: pageName=='votes'">
       <p i18n:translate="meetingconfig_votes_descr" class='pageNameDescr'></p><br />
       <table width="100%" class="discreet">
         <tr valign="top">
@@ -1231,7 +1231,7 @@
           <td></td>
         </tr>
       </table>
-    </tal:votes-->
+    </tal:votes>
 
     <tal:doc condition="python: pageName=='doc'">
     <p i18n:translate="meetingconfig_doc_descr" class='pageNameDescr'></p><br />

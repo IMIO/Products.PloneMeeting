@@ -38,7 +38,7 @@ class IBaseAttendee(Interface):
 
 
 class BaseAttendeeForm(form.Form):
-    """Factorize common code used by ByeBye attendee and Welcome attendee forms."""
+    """Factorize common code used by attendees management forms."""
 
     description = u''
     _finished = False

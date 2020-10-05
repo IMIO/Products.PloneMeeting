@@ -1102,6 +1102,13 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             signatories = self.itemSignatories.data
         return signatories
 
+    security.declarePublic('getItemVotes')
+
+    def getItemVotes(self):
+        ''' '''
+        votes = self.itemVotes.data
+        return votes
+
     security.declarePublic('displayUserReplacement')
 
     def displayUserReplacement(self,
@@ -1713,6 +1720,8 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         self.itemNonAttendees = PersistentMapping()
         # place to store item signatories
         self.itemSignatories = PersistentMapping()
+        # place to store item votes
+        self.itemVotes = PersistentMapping()
         # place to store attendees when using contacts
         self.orderedContacts = OrderedDict()
         self.updateTitle()
@@ -2014,15 +2023,10 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         '''See doc in interfaces.py.'''
         res = False
         meeting = self.getSelf()
-        meetingConfig = meeting.portal_plonemeeting.getMeetingConfig(meeting)
-        if meetingConfig.getUseVotes():
-            # The meeting must have started. But what date to take into account?
-            now = DateTime()
-            meetingStartDate = meeting.getDate()
-            if meeting.attributeIsUsed('startDate') and meeting.getStartDate():
-                meetingStartDate = meeting.getStartDate()
-            if meetingStartDate < now:
-                res = True
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(meeting)
+        if cfg.getUseVotes():
+            res = True
         return res
 
     security.declarePublic('getPreviousMeeting')

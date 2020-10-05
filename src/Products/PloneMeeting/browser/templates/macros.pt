@@ -339,6 +339,7 @@ document.location.reload(true);
                    itemAbsents context/getItemAbsents;
                    itemExcused context/getItemExcused;
                    itemNonAttendees context/getItemNonAttendees;
+                   itemVotes context/getItemVotes;
                    showExcused python: 'excused' in usedMeetingAttributes or excused;
                    showAbsents python: 'absents' in usedMeetingAttributes or absents or itemAbsents;
                    showSignatories python: 'signatories' in usedMeetingAttributes or itemSignatories;
@@ -360,8 +361,7 @@ document.location.reload(true);
     <th class="nosort" tal:condition="showAbsents" i18n:translate="is_absent">Absent?</th>
     <th class="nosort" tal:condition="showSignatories" i18n:translate="is_signer">Signer?</th>
     <th class="nosort" tal:condition="showNonAttendees" i18n:translate="is_non_attendee">Non attendee?</th>
-    <th class="nosort" tal:condition="showVotes" i18n:translate="is_voter"></th>
-    <th class="nosort" tal:condition="python: showVotes and not secret" i18n:translate="vote_value"></th>
+    <th class="nosort" tal:condition="python: showVotes and not secret" i18n:translate="vote_values">Votes</th>
     <th class="nosort" tal:condition="python: showVotes and secret" align="left">
       <i style="color:blue">
       <span i18n:translate="voter_count">
@@ -394,8 +394,10 @@ document.location.reload(true);
   <tbody>
   <tal:loop repeat="mUser allUsers">
   <tr tal:define="aUid mUser/UID;
-                  isPresent python: aUid in itemAttendees"
-      tal:attributes="class python: aUid in itemNonAttendees and 'item-non-attendee' or ''">
+                  isPresent python: aUid in itemAttendees;
+                  oddrow repeat/mUser/odd;
+                  classOddEven python: oddrow and 'even' or 'odd';"
+      tal:attributes="class python: aUid in itemNonAttendees and classOddEven + ' item-non-attendee' or classOddEven">
      <td><b tal:content="mUser/get_short_title"></b></td>
      <td align="center"
          tal:attributes="onmouseover python: 'setHiddenButton(\'%s\', \'visible\')' % aUid;
@@ -417,11 +419,10 @@ document.location.reload(true);
        <tal:comment replace="nothing">Show "excused" icon if the user was excused for this item</tal:comment>
        <tal:left condition="python: aUid in itemExcused">
  
-        <span tal:condition="python: aUid in itemExcused"
-                 class="tooltipster-meeting-item-not-present fa people-left people-action"
-                 tal:attributes="data-base_url string:${context/absolute_url};
-                                 data-not_present_uid string:${aUid};
-                                 data-not_present_type string:excused;">
+        <span class="tooltipster-meeting-item-not-present fa people-left people-action"
+              tal:attributes="data-base_url string:${context/absolute_url};
+                              data-not_present_uid string:${aUid};
+                              data-not_present_type string:excused;">
         </span>
 
          <tal:comment replace="nothing">Remove info user being an item excused</tal:comment>
@@ -440,16 +441,15 @@ document.location.reload(true);
        <tal:comment replace="nothing">Show "absent" icon if the user was absent for this item</tal:comment>
        <tal:left condition="python: aUid in itemAbsents">
  
-        <span tal:condition="python: aUid in itemAbsents"
-                 class="tooltipster-meeting-item-not-present fa people-left people-action"
-                 tal:attributes="data-base_url string:${context/absolute_url};
-                                 data-not_present_uid string:${aUid};
-                                 data-not_present_type string:absent;">
+        <span class="tooltipster-meeting-item-not-present fa people-left people-action"
+              tal:attributes="data-base_url string:${context/absolute_url};
+                              data-not_present_uid string:${aUid};
+                              data-not_present_type string:absent;">
         </span>
 
          <tal:comment replace="nothing">Remove info user being an item absent</tal:comment>
          <a href="#" class="link-overlay-pm" tal:attributes="href string:item_welcome_attendee_form?person_uid=${aUid}"
-            tal:condition="python:mayChangeAttendees">
+            tal:condition="mayChangeAttendees">
           <span class="fa people-remove-left people-action" title="person_welcome" i18n:attributes="title"
               tal:attributes="id python: 'welcome_%s' % aUid;
                               name  python: 'welcome_%s' % aUid;" />
@@ -480,12 +480,13 @@ document.location.reload(true);
                 class="tooltipster-meeting-item-signatories fa people-signatory-replacer people-action"
                 tal:attributes="data-base_url string:${context/absolute_url};
                                 data-signatory_uid string:${aUid};">
-        <span class="item-signatory-replacer-signature-number" tal:content="python: realItemSignatories[aUid]" />
+        <span class="item-signatory-replacer-signature-number"
+              tal:content="python: realItemSignatories[aUid]" />
        </span>
 
        <tal:comment replace="nothing">Remove info user being an item signatory</tal:comment>
        <a href="#" class="link-overlay-pm" tal:attributes="href string:item_remove_redefined_signatory_form?person_uid=${aUid}"
-          tal:condition="python:mayChangeAttendees">
+          tal:condition="mayChangeAttendees">
         <span class="fa people-remove-redefined-signatory people-action" title="Remove attendee from signatory defined for this item" i18n:attributes="title" />
        </a>
 
@@ -515,16 +516,15 @@ document.location.reload(true);
        <tal:comment replace="nothing">Show "nonAttendee" icon if the user was nonAttendee for this item</tal:comment>
        <tal:left condition="python: aUid in itemNonAttendees">
 
-        <span tal:condition="python: aUid in itemNonAttendees"
-                 class="tooltipster-meeting-item-not-present fa people-left people-action"
-                 tal:attributes="data-base_url string:${context/absolute_url};
-                                 data-not_present_uid string:${aUid};
-                                 data-not_present_type string:non_attendee;">
+        <span class="tooltipster-meeting-item-not-present fa people-left people-action"
+              tal:attributes="data-base_url string:${context/absolute_url};
+                              data-not_present_uid string:${aUid};
+                              data-not_present_type string:non_attendee;">
         </span>
 
         <tal:comment replace="nothing">Remove info user being an item nonAttendee</tal:comment>
         <a href="#" class="link-overlay-pm" tal:attributes="href string:item_welcome_nonattendee_form?person_uid=${aUid}"
-           tal:condition="python:mayChangeAttendees">
+           tal:condition="mayChangeAttendees">
          <span class="fa people-remove-left people-action" title="nonattendee_welcome" i18n:attributes="title"
              tal:attributes="id python: 'welcome_%s' % aUid;
                              name  python: 'welcome_%s' % aUid;" />
@@ -535,78 +535,21 @@ document.location.reload(true);
 
      <td align="center" tal:condition="showVotes">
        <span tal:condition="python: aUid in voters" class="fa people-checked" ></span>
+       <tal:comment replace="nothing">Show "vote" value if the user voted for this item</tal:comment>
+       <tal:voted condition="python: aUid in itemVotes">
+        <span i18n:translate=""
+              tal:define="vote_value python: 'vote_value_' + itemVotes[aUid]"
+              tal:attributes="class vote_value"
+              tal:content="string:${vote_value}">Vote value</span>
+       </tal:voted>
      </td>
-     <td align="center" tal:condition="python: showVotes and not secret">
-     <tal:showVote condition="python: (aUid in voters) and isPresent">
-     <tal:votes define="mayConsultVote python: mUser.adapted().mayConsultVote(member, context);
-                        mayEditVote python: mUser.adapted().mayEditVote(member, context);
-                        voterId mUser/getId;
-                        voteValue python: context.getVoteValue(voterId);
-                        global showSave python: mayEditVote and True or showSave;
-                        global showRefresh python: not mayEditVote and (mayConsultVote and True or showRefresh) or False">
 
-       <tal:comment replace="nothing">For users that can't consult neither edit the vote value</tal:comment>
-       <span id="vote-not_consultable" tal:condition="python: not mayConsultVote and not mayEditVote"
-             i18n:translate="vote_value_not_consultable"></span>
-       <tal:comment replace="nothing">For users that can consult the vote value but not edit it.</tal:comment>
-       <span tal:condition="python: mayConsultVote and not mayEditVote" i18n:translate=""
-             tal:content="python: 'vote_value_%s' % voteValue"></span>
-       <tal:comment replace="nothing">For users that can consult and edit the vote.</tal:comment>
-       <tal:editField condition="python: mayConsultVote and mayEditVote"
-                      define="widgetName python: 'vote_value_%s' % voterId">
-         <tal:radio repeat="usedVoteValue usedVoteValues">
-           <tal:input define="widgetId python:'vote_value_%s_%s' % (usedVoteValue, voterId)">
-           <input type="radio" class="noborder" value="not_yet"
-                  tal:attributes="name widgetName; id widgetId; value usedVoteValue;
-                                  checked python: voteValue == usedVoteValue"/>
-           <label tal:define="used_vote_value python: usedVoteValue.replace('-', '_')"
-                  tal:attributes="for widgetId;
-                                  id python: 'vote-%s' % used_vote_value"
-                  tal:content="python: 'vote_value_%s' % used_vote_value"
-                  i18n:translate=""></label>&nbsp;&nbsp;
-           </tal:input>
-         </tal:radio>
-       </tal:editField>
-     </tal:votes>
-     </tal:showVote>
-     </td>
-     <td align="center" tal:condition="python: showVotes and secret">-
-     </td>
   </tr>
   </tal:loop>
   <tr tal:condition="not:allUsers">
    <td colspan="9">
      <span class="discreet no-attendees" i18n:translate="">Nothing to display.</span>
    </td>
-  </tr>
-  <tr tal:condition="showVotes">
-    <th colspan="7" tal:define="maySwitchVotes context/maySwitchVotes">
-      <tal:comment replace="nothing">Switch mode (secret / not secret)</tal:comment>
-      <img style="cursor:pointer;" title="switch_votes" i18n:attributes="title" align="right"
-           tal:condition="python: isManager and maySwitchVotes"
-           tal:attributes="src string:$portal_url/switch.gif;
-                           onClick python:'switchVotes(\'%s\', \'%s\')' % (context.absolute_url(), secret)"/>
-      <img style="cursor:help;" title="switch_votes_why_cannot" i18n:attributes="title" align="right"
-           tal:condition="python: isManager and not maySwitchVotes"
-           tal:attributes="src string:$portal_url/switch_not_allowed.gif;"/>
-      <tal:comment replace="nothing">Set 'yes' for everybody</tal:comment>
-      <img style="cursor:pointer;" title="update_votes_yes" i18n:attributes="title"
-           tal:condition="python: showSave" align="right"
-           tal:attributes="src string:$portal_url/yes.gif;
-                           onClick python:'saveItemPeopleInfos(\'%s\', true)' % context.absolute_url()"/>
-      <tal:comment replace="nothing">Save votes</tal:comment>
-      <img style="cursor:pointer" title="save" i18n:attributes="title"
-           tal:condition="python: showSave" align="right"
-           tal:attributes="src string:$portal_url/save.gif;
-                           onClick python:'saveItemPeopleInfos(\'%s\')' % context.absolute_url()"/>
-      <tal:comment replace="nothing">Refresh votes</tal:comment>
-      <img style="cursor:pointer;" title="refresh_votes" i18n:attributes="title"
-           tal:condition="showRefresh" align="right"
-           tal:attributes="src string:$portal_url/refresh.gif;
-                           onClick python:'refreshVotes(\'%s\')' % context.absolute_url()"/>
-      <i tal:condition="error" tal:content="request/peopleMsg"
-         style="color:red; margin-right: 1em;"></i>
-    </th>
   </tr>
   <tbody>
 </table>

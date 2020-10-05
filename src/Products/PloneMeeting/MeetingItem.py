@@ -3676,6 +3676,25 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         return signatories
 
+    security.declarePublic('getItemVotes')
+
+    def getItemVotes(self, vote_number=0, theObjects=False, **kwargs):
+        '''
+        '''
+        votes = {}
+        if not self.hasMeeting():
+            return votes
+        meeting = self.getMeeting()
+        item_votes = meeting.getItemVotes().get(self.UID(), [])
+        if len(item_votes) - 1 >= vote_number:
+            votes.update(item_votes[vote_number])
+
+        if theObjects:
+            uids = votes.keys()
+            voters = meeting._getContacts(uids=uids, theObjects=theObjects)
+            votes = {votes[voter.UID()]: voter for voter in voters}
+        return votes
+
     def getInAndOutAttendees(self, theObjects=True):
         """Returns a dict with informations about assembly moves :
            - who left at the beginning of the item;
@@ -5089,10 +5108,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # if we have an adviceIndex, check that every inherited adviserIds are handled
         unhandledAdviserUids += [
             org_uid for org_uid in self.adviceIndex
-            if self.adviceIndex[org_uid].get('inherited', False) and org_uid not in handledAdviserUids]
+            if self.adviceIndex[org_uid].get('inherited', False) and
+            org_uid not in handledAdviserUids]
         if unhandledAdviserUids:
-            optionalAdvisers += self.getUnhandledInheritedAdvisersData(unhandledAdviserUids, optional=True)
-            automaticAdvisers += self.getUnhandledInheritedAdvisersData(unhandledAdviserUids, optional=False)
+            optionalAdvisers += self.getUnhandledInheritedAdvisersData(
+                unhandledAdviserUids, optional=True)
+            automaticAdvisers += self.getUnhandledInheritedAdvisersData(
+                unhandledAdviserUids, optional=False)
         # we keep the optional and automatic advisers separated because we need
         # to know what advices are optional or not
         # if an advice is in both optional and automatic advisers, the automatic is kept
@@ -5115,7 +5137,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 d['delay'] = adviceInfo['delay']
                 d['delay_left_alert'] = adviceInfo['delay_left_alert']
                 d['delay_label'] = adviceInfo['delay_label']
-                d['gives_auto_advice_on_help_message'] = adviceInfo['gives_auto_advice_on_help_message']
+                d['gives_auto_advice_on_help_message'] = \
+                    adviceInfo['gives_auto_advice_on_help_message']
                 d['row_id'] = adviceInfo['row_id']
                 d['hidden_during_redaction'] = False
                 # manage the 'delay_started_on' data that was saved prior
@@ -5562,12 +5585,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # The following field allows to store events that occurred in the life
         # of an item, like annex deletions or additions.
         self.itemHistory = PersistentList()
-        # Add a dictionary that will store the votes on this item. Keys are
-        # MeetingUser ids, values are vote vales (strings). If votes are secret
-        # (self.votesAreSecret is True), the structure is different: keys are
-        # vote values and values are numbers of times the vote value has been
-        # chosen.
-        self.votes = PersistentMapping()
         # Add a place to store automatically added copyGroups
         self.autoCopyGroups = PersistentList()
         # Remove temp local role that allowed to create the item in
