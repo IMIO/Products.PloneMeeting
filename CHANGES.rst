@@ -5,8 +5,13 @@ Changelog
 4.1.28.8 (unreleased)
 ---------------------
 
-- Nothing changed yet.
-
+- Backport from 4.2.x:
+  Fixed `BaseDGHV.printXhtml` when using `clean=True` to separate images
+  contained in a single paragraph.
+  [gbastien]
+  Fixed tests regarding changes in `imio.prettylink`, will need to release
+  `imio.prettylink` 1.17
+  [gbastien]
 
 4.1.28.7 (2020-10-01)
 ---------------------
