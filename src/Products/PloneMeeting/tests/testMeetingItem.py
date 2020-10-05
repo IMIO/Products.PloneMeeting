@@ -6504,7 +6504,8 @@ class testMeetingItem(PloneMeetingTestCase):
         item.setPreferredMeeting(meeting.UID())
         self.validateItem(item)
         self.assertFalse(item.wfConditions().isLateFor(meeting))
-        late_icon_html = u"<img title='Late' src='http://nohost/plone/late.png' />"
+        late_icon_html = u"<img title='Late' src='http://nohost/plone/late.png' " \
+            "style=\"width: 16px; height: 16px;\" />"
         self.assertFalse(late_icon_html in IPrettyLink(item).getLink())
         # right now change current URL so displaying_available_items is True
         self.request['URL'] = meeting.absolute_url() + '/@@meeting_available_items_view'
@@ -6582,7 +6583,8 @@ class testMeetingItem(PloneMeetingTestCase):
             in IPrettyLink(item).getLink())
         self.assertTrue(
             u'<img title=\'Sent from {0}, original item is "{1}".\' '
-            u'src=\'http://nohost/plone/cloned_not_decided.png\' />'.format(
+            u'src=\'http://nohost/plone/cloned_not_decided.png\' '
+            u'style="width: 16px; height: 16px;" />'.format(
                 cfg.Title(),
                 translate(item.queryState(), domain="plone", context=self.request)
             )
@@ -6591,7 +6593,8 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(item.queryState(), self._stateMappingFor('proposed'))
         self.assertTrue(
             u'<img title=\'Sent from {0}, original item is "{1}".\' '
-            u'src=\'http://nohost/plone/cloned_not_decided.png\' />'.format(
+            u'src=\'http://nohost/plone/cloned_not_decided.png\' '
+            u'style="width: 16px; height: 16px;" />'.format(
                 cfg.Title(),
                 translate(item.queryState(), domain="plone", context=self.request)
             )
