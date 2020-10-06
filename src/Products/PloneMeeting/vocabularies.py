@@ -1018,6 +1018,31 @@ class ListTypesVocabulary(object):
 ListTypesVocabularyFactory = ListTypesVocabulary()
 
 
+class UsedVoteValuesVocabulary(object):
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """ """
+        # as used in a datagridfield, context may vary...
+        context = get_context_with_request(None)
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        res = []
+        for usedVoteValue in cfg.getUsedVoteValues():
+            res.append(
+                SimpleTerm(
+                    usedVoteValue,
+                    usedVoteValue,
+                    translate(
+                        'vote_value_{0}'.format(usedVoteValue),
+                        domain='PloneMeeting',
+                        context=context.REQUEST)))
+        return SimpleVocabulary(res)
+
+
+UsedVoteValuesVocabularyFactory = UsedVoteValuesVocabulary()
+
+
 class SelectablePrivaciesVocabulary(object):
     implements(IVocabularyFactory)
 
@@ -1410,6 +1435,8 @@ class HeldPositionUsagesVocabulary(object):
             SimpleTerm('assemblyMember', 'assemblyMember', _('assemblyMember')))
         res.append(
             SimpleTerm('asker', 'asker', _('asker')))
+        res.append(
+            SimpleTerm('voter', 'voter', _('voter')))
         return SimpleVocabulary(res)
 
 
@@ -1705,6 +1732,40 @@ class SelectableItemInitiatorsVocabulary(BaseHeldPositionsVocabulary):
 
 
 SelectableItemInitiatorsVocabularyFactory = SelectableItemInitiatorsVocabulary()
+
+
+class ItemVotersVocabulary(BaseHeldPositionsVocabulary):
+    """ """
+
+    def __call___cachekey(method, self, context):
+        '''cachekey method for self.__call__.'''
+        date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.itemvotersvocabulary')
+        # as used in a datagridfield, context may vary...
+        context = get_context_with_request(None)
+        return date, context.UID()
+
+    @ram.cache(__call___cachekey)
+    def __call__(self, context):
+        context = get_context_with_request(None)
+        item_attendee_uids = context.getAttendees()
+        terms = super(ItemVotersVocabulary, self).__call__(
+            context,
+            uids=item_attendee_uids,
+            usage='voter',
+            include_usages=False,
+            include_defaults=False,
+            include_signature_number=False, )
+        # do not modify original terms
+        terms = list(terms._terms)
+
+        # keep order of item attendees
+        def getKey(term):
+            return item_attendee_uids.index(term.token)
+        terms = sorted(terms, key=getKey)
+        return SimpleVocabulary(terms)
+
+
+ItemVotersVocabularyFactory = ItemVotersVocabulary()
 
 
 class PMDetailedEveryOrganizationsVocabulary(EveryOrganizationsVocabulary):

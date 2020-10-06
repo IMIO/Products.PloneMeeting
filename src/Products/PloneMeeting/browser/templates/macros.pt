@@ -344,10 +344,11 @@ document.location.reload(true);
                    showAbsents python: 'absents' in usedMeetingAttributes or absents or itemAbsents;
                    showSignatories python: 'signatories' in usedMeetingAttributes or itemSignatories;
                    showNonAttendees python: 'nonAttendees' in usedMeetingAttributes or itemNonAttendees;
-                   voters python: [];
+                   voters view/voters;
                    mayChangeAttendees python: context._mayChangeAttendees();
                    global showSave python:False;
                    global showRefresh python: False;
+                   shown_vote_count python:[];
                    error request/error | python:'';
                    secret context/getVotesAreSecret;
                    isManager python: tool.isManager(context);"
@@ -361,7 +362,13 @@ document.location.reload(true);
     <th class="nosort" tal:condition="showAbsents" i18n:translate="is_absent">Absent?</th>
     <th class="nosort" tal:condition="showSignatories" i18n:translate="is_signer">Signer?</th>
     <th class="nosort" tal:condition="showNonAttendees" i18n:translate="is_non_attendee">Non attendee?</th>
-    <th class="nosort" tal:condition="python: showVotes and not secret" i18n:translate="vote_values">Votes</th>
+    <th class="nosort" tal:condition="python: showVotes and not secret">
+     <span i18n:translate="vote_values">Votes</span>
+     <span tal:content="python: '(' + str(len(voters)) + ')'">Number of voters</span>
+     <a tal:condition="mayChangeAttendees" href="item_encode_votes_form" class="link-overlay-pm">
+         <img tal:attributes="src string:${view/portal_url}/edit.png" />
+     </a>
+    </th>
     <th class="nosort" tal:condition="python: showVotes and secret" align="left">
       <i style="color:blue">
       <span i18n:translate="voter_count">
@@ -534,14 +541,25 @@ document.location.reload(true);
      </td>
 
      <td align="center" tal:condition="showVotes">
-       <span tal:condition="python: aUid in voters" class="fa people-checked" ></span>
        <tal:comment replace="nothing">Show "vote" value if the user voted for this item</tal:comment>
-       <tal:voted condition="python: aUid in itemVotes">
-        <span i18n:translate=""
-              tal:define="vote_value python: 'vote_value_' + itemVotes[aUid]"
-              tal:attributes="class vote_value"
-              tal:content="string:${vote_value}">Vote value</span>
+       <tal:voted condition="python: aUid in voters">
+        <tal:defines define="vote_value python: context.getVoteValue(aUid);
+                             formatted_vote_value string:vote_value_${vote_value};">
+         <span tal:attributes="class string:vote_value ${formatted_vote_value}">
+          <tal:block i18n:translate="" content="formatted_vote_value">Vote value</tal:block>
+          <tal:vote_count condition="python: vote_value not in shown_vote_count">
+           <span tal:define="dummy python: shown_vote_count.append(vote_value)"
+                 tal:content="python: '(' + str(context.getVoteCount(vote_value)) + ')'">
+            Vote count
+           </span>
+          </tal:vote_count>
+         </span>
+        </tal:defines>
        </tal:voted>
+       <tal:comment replace="nothing">Not a voter</tal:comment>
+       <tal:not_voter condition="python: aUid not in voters">
+         <span class="item-not-voter" i18n:attributes="title" title="Not voter">-</span>
+       </tal:not_voter>
      </td>
 
   </tr>

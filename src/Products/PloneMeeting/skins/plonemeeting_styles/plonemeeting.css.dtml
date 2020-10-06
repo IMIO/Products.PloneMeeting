@@ -538,7 +538,12 @@ td.noPadding a {
     padding: 0 !important;
 }
 
-#meeting_users td { padding: 0 0.4em 0 0.4em; }
+table#meeting_users td {
+   padding: 0 0.4em 0 0.4em;
+}
+table#meeting_users th {
+   text-align: center;
+}
 .image-right { border:0px solid Black; clear:both; float:right; margin:0.5em; }
 
 dd.portletCell.pmLink {
@@ -1011,34 +1016,26 @@ span.advices_of_type {
     vertical-align: sub;
 }
 
-#vote-abstain {
-    color: orange;
-    font-weight: bold;
+span.vote_value {
+   font-weight: bold;
 }
-
-#vote-yes {
-    color: green;
-    font-weight: bold;
+span.vote_value_abstain {
+   color: orange;
 }
-
-#vote-no {
-    color: red;
-    font-weight: bold;
+span.vote_value_no {
+   color: red;
 }
-
-#vote-not_yet {
-    color: grey;
-    font-weight: bold;
+span.vote_value_yes {
+   color: green;
 }
-
-#vote-does_not_vote {
-    color: blue;
-    font-weight: bold;
+span.vote_value_not_yet {
+   color: grey;
 }
-
-#vote-not_consultable {
-    color: black;
-    font-weight: bold;
+span.vote_value_does_not_vote {
+   color: blue;
+}
+span.vote_value_not_consultable {
+   color: black;
 }
 
 table.listing tr[class][class] td.meeting_item_listType_normal {

@@ -2,6 +2,7 @@
 
 from AccessControl import Unauthorized
 from imio.helpers.cache import get_cachekey_volatile
+from imio.helpers.content import get_vocab
 from plone import api
 from plone.memoize import ram
 from Products.CMFCore.permissions import ModifyPortalContent
@@ -320,6 +321,8 @@ class AsyncLoadAssemblyAndSignatures(BrowserView):
     def __init__(self, context, request):
         self.context = context
         self.request = request
+        self.portal = api.portal.get()
+        self.portal_url = self.portal.absolute_url()
 
     def show(self):
         """ """
@@ -357,4 +360,6 @@ class AsyncLoadAssemblyAndSignatures(BrowserView):
         self.cfg = self.tool.getMeetingConfig(self.context)
         self.usedMeetingAttrs = self.cfg.getUsedMeetingAttributes()
         self.meeting = self.context.getMeeting()
+        self.voters = get_vocab(
+            self.context, "Products.PloneMeeting.vocabularies.itemvotersvocabulary").by_token.keys()
         return self.index()

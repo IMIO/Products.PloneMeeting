@@ -6495,8 +6495,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         attendees = meeting.getAttendees(theObjects=False)
         itemAbsents = self.getItemAbsents()
         itemExcused = self.getItemExcused()
+        itemNonAttendees = self.getItemNonAttendees()
         attendees = [attendee for attendee in attendees
-                     if attendee not in itemAbsents + itemExcused]
+                     if attendee not in itemAbsents + itemExcused + itemNonAttendees]
         # get really present attendees now
         attendees = meeting._getContacts(uids=attendees, theObjects=theObjects)
         return attendees
@@ -6604,196 +6605,33 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getVoteValue')
 
-    def getVoteValue(self, userId):
+    def getVoteValue(self, hp_uid):
         '''What is the vote value for user with id p_userId?'''
         if self.getVotesAreSecret():
             raise 'Unusable when votes are secret.'
-        if userId in self.votes:
-            return self.votes[userId]
+        itemVotes = self.getItemVotes()
+        if hp_uid in itemVotes:
+            return itemVotes[hp_uid]
         else:
-            tool = api.portal.get_tool('portal_plonemeeting')
-            cfg = tool.getMeetingConfig(self)
-            return cfg.getDefaultVoteValue()
+            return NOT_ENCODED_VOTE_VALUE
 
     security.declarePublic('getVoteCount')
 
-    def getVoteCount(self, voteValue):
-        '''Gets the number of votes for p_voteValue.'''
+    def getVoteCount(self, vote_value, vote_number=0):
+        '''Gets the number of votes for p_vote_value.'''
         res = 0
+        itemVotes = self.getItemVotes(vote_number)
+        item_voter_uids = get_vocab(
+            self, "Products.PloneMeeting.vocabularies.itemvotersvocabulary").by_token.keys()
         if not self.getVotesAreSecret():
-            for aValue in self.votes.itervalues():
-                if aValue == voteValue:
+            for item_voter_uid in item_voter_uids:
+                if (item_voter_uid not in itemVotes and vote_value == NOT_ENCODED_VOTE_VALUE) or \
+                   (item_voter_uid in itemVotes and vote_value == itemVotes[item_voter_uid]):
                     res += 1
         else:
-            if voteValue in self.votes:
-                res = self.votes[voteValue]
+            if vote_value in self.itemVotes:
+                res = itemVotes[vote_value]
         return res
-
-    security.declarePublic('getVotePrint')
-
-    def getVotePrint(self, voteValues=('yes', 'no', 'abstain')):
-        '''Returns the "voteprint" for this item. A "voteprint" is a string that
-           integrates all votes with vote values in p_voteValues. Useful for
-           grouping items having the same vote value.'''
-        if self.getVotesAreSecret():
-            raise Exception('Works only for non-secret votes.')
-        if not self.votes:
-            return ''
-        voters = self.votes.keys()
-        voters.sort()
-        res = []
-        for voter in voters:
-            if self.votes[voter] in voteValues:
-                # Reduce the vote value to a single letter
-                value = self.votes[voter]
-                if value == NOT_ENCODED_VOTE_VALUE:
-                    v = 't'
-                elif value == 'not_found':
-                    v = 'f'
-                else:
-                    v = value[0]
-                res.append('%s.%s' % (voter, v))
-        return ''.join(res)
-
-    security.declarePrivate('saveVoteValues')
-
-    def saveVoteValues(self, newVoteValues):
-        '''p_newVoteValues is a dictionary that contains a bunch of new vote
-           values.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self)
-        user = api.user.get_current()
-        usedVoteValues = cfg.getUsedVoteValues()
-        for userId in newVoteValues.iterkeys():
-            # Check that the current user can update the vote of this user
-            meetingUser = cfg.getMeetingUserFromPloneUser(userId)
-            if not newVoteValues[userId] in usedVoteValues:
-                raise ValueError('Trying to set vote with another value than '
-                                 'ones defined in meetingConfig.usedVoteValues!')
-            elif meetingUser.adapted().mayEditVote(user, self):
-                self.votes[userId] = newVoteValues[userId]
-            else:
-                raise Unauthorized
-
-    security.declarePrivate('saveVoteCounts')
-
-    def saveVoteCounts(self, newVoteCounts):
-        '''p_newVoteCounts is a dictionary that contains, for every vote value,
-           new vote counts.'''
-        if not self.mayEditVotes():
-            raise Unauthorized
-        for voteValue, voteCount in newVoteCounts.iteritems():
-            self.votes[voteValue] = voteCount
-
-    security.declarePublic('onSaveItemPeopleInfos')
-
-    def onSaveItemPeopleInfos(self):
-        '''This method is called when the user saves item-related people info:
-           - votes.'''
-        rq = self.REQUEST
-        # If votes are secret, we get vote counts. Else, we get vote values.
-        secret = self.getVotesAreSecret()
-        requestVotes = {}
-        numberOfVotes = 0
-        voters = self.getAttendees(usage='voter')
-        voterIds = [voter.getId() for voter in voters]
-        numberOfVoters = len(voters)
-        rq.set('error', True)  # If everything OK, we'll set "False" in the end.
-        # If allYes is True, we must set vote value "yes" for every voter.
-        allYes = rq.get('allYes') == 'true'
-        for key in rq.keys():
-            if key.startswith('vote_value_') and not secret:
-                voterId = key[11:]
-                if voterId not in voterIds:
-                    raise KeyError("Trying to set vote for unexisting voter!")
-                requestVotes[voterId] = allYes and 'yes' or rq[key]
-                secret = False
-            elif key.startswith('vote_count_') and secret:
-                voteValue = key[11:]
-                # If allYes, we cheat
-                if allYes:
-                    if voteValue == 'yes':
-                        v = numberOfVoters
-                    else:
-                        v = 0
-                else:
-                    # Check that the entered value is positive integer
-                    inError = False
-                    v = 0
-                    try:
-                        v = int(rq[key])
-                        if v < 0:
-                            inError = True
-                    except ValueError:
-                        inError = True
-                    if inError:
-                        rq.set('peopleMsg',
-                               translate('vote_count_not_int',
-                                         domain='PloneMeeting',
-                                         context=rq))
-                        return
-                numberOfVotes += v
-                requestVotes[voteValue] = v
-        # Check the total number of votes
-        if secret:
-            if numberOfVotes != numberOfVoters:
-                rq.set('peopleMsg', translate('vote_count_wrong',
-                                              domain='PloneMeeting',
-                                              context=rq))
-                return
-        # Update the vote values
-        rq.set('peopleMsg', translate('Changes saved.', domain="plone", context=self.REQUEST))
-        rq.set('error', False)
-        if secret:
-            self.saveVoteCounts(requestVotes)
-        else:
-            self.saveVoteValues(requestVotes)
-
-    security.declarePublic('maySwitchVotes')
-
-    def maySwitchVotes(self):
-        '''Check if current user may switch votes mode.'''
-        member = self.restrictedTraverse('@@plone_portal_state').member()
-        if not self.hasVotes() and \
-           member.has_permission(ModifyPortalContent, self) and \
-           api.portal.get_tool('portal_plonemeeting').isManager(self):
-            return True
-        return False
-
-    security.declarePublic('onSwitchVotes')
-
-    def onSwitchVotes(self):
-        '''Switches votes (secret / not secret).'''
-        if not self.maySwitchVotes():
-            raise Unauthorized
-        self.setVotesAreSecret(not self.getVotesAreSecret())
-        self.votes = {}
-
-    security.declarePublic('mayConsultVotes')
-
-    def mayConsultVotes(self):
-        '''Returns True if the current user may consult all votes for p_self.'''
-        user = api.user.get_current()
-        voters = self.getAttendees(usage='voter')
-        if not voters:
-            return False
-        for mUser in voters:
-            if not mUser.adapted().mayConsultVote(user, self):
-                return False
-        return True
-
-    security.declarePublic('mayEditVotes')
-
-    def mayEditVotes(self):
-        '''Returns True if the current user may edit all votes for p_self.'''
-        user = api.user.get_current()
-        voters = self.getAttendees(usage='voter')
-        if not voters:
-            return False
-        for mUser in voters:
-            if not mUser.adapted().mayEditVote(user, self):
-                return False
-        return True
 
     security.declarePublic('setFieldFromAjax')
 

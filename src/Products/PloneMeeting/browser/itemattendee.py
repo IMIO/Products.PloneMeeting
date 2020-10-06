@@ -1,7 +1,14 @@
 # -*- coding: utf-8 -*-
 
 from AccessControl import Unauthorized
+from collective.z3cform.datagridfield import DataGridFieldFactory
+from collective.z3cform.datagridfield import DictRow
+from imio.helpers.cache import invalidate_cachekey_volatile_for
+from imio.helpers.content import get_vocab
+from persistent.list import PersistentList
+from persistent.mapping import PersistentMapping
 from plone import api
+from plone.autoform.directives import widget
 from plone.z3cform.layout import wrap_form
 from Products.PloneMeeting.browser.itemassembly import _itemsToUpdate
 from Products.PloneMeeting.browser.itemassembly import validate_apply_until_item_number
@@ -13,10 +20,15 @@ from Products.PloneMeeting.utils import notifyModifiedAndReindex
 from z3c.form import button
 from z3c.form import field
 from z3c.form import form
+from z3c.form.browser.radio import RadioFieldWidget
+from z3c.form.interfaces import DISPLAY_MODE
+from z3c.form.interfaces import HIDDEN_MODE
 from zope import schema
 from zope.component.hooks import getSite
 from zope.i18n import translate
 from zope.interface import Interface
+from zope.interface import provider
+from zope.schema.interfaces import IContextAwareDefaultFactory
 
 
 def person_uid_default():
@@ -428,3 +440,136 @@ class RemoveRedefinedSignatoryForm(BaseAttendeeForm):
 
 
 RemoveRedefinedSignatoryFormWrapper = wrap_form(RemoveRedefinedSignatoryForm)
+
+
+def vote_number_default():
+    """
+      Get the value from the REQUEST as it is passed when calling the
+      form : form?vote_number=0.
+    """
+    request = getSite().REQUEST
+    return request.get('vote_number', 0)
+
+
+@provider(IContextAwareDefaultFactory)
+def votes_default(context):
+    """Default values for votes :
+       - either we have itemVotes and we use it on voters;
+       - or we do not have and we use the default value defined on MeetingConfig."""
+    res = []
+    item_votes = context.getItemVotes(vote_number=vote_number_default())
+    item_voter_terms = get_vocab(context, "Products.PloneMeeting.vocabularies.itemvotersvocabulary")
+    tool = api.portal.get_tool('portal_plonemeeting')
+    cfg = tool.getMeetingConfig(context)
+    for item_voter_term in item_voter_terms:
+        item_voter_token = item_voter_term.token
+        if item_voter_token in item_votes:
+            data = {'voter_uid': item_voter_token,
+                    'voter': item_voter_token,
+                    'vote_value': item_votes[item_voter_token]}
+        else:
+            data = {'voter_uid': item_voter_token,
+                    'voter': item_voter_token,
+                    'vote_value': cfg.getDefaultVoteValue()}
+        res.append(data)
+    return res
+
+
+class IVote(Interface):
+
+    voter_uid = schema.Choice(
+        title=u'Voter UID',
+        required=False,
+        vocabulary="Products.PloneMeeting.vocabularies.itemvotersvocabulary", )
+
+    voter = schema.Choice(
+        title=u'Voter',
+        required=False,
+        vocabulary="Products.PloneMeeting.vocabularies.itemvotersvocabulary", )
+
+    widget('vote_value', RadioFieldWidget)
+    vote_value = schema.Choice(
+        title=u'Vote value',
+        required=True,
+        vocabulary="Products.PloneMeeting.vocabularies.usedvotevaluesvocabulary", )
+
+
+class IEncodeVotes(IBaseAttendee):
+
+    vote_number = schema.Int(
+        title=_(u"Vote number"),
+        description=_(u""),
+        defaultFactory=vote_number_default,
+        required=False)
+
+    votes = schema.List(
+        title=u'Votes',
+        value_type=DictRow(title=u'Votes', schema=IVote),
+        defaultFactory=votes_default,
+        required=True
+    )
+
+
+class EncodeVotesForm(BaseAttendeeForm):
+    """ """
+
+    label = _(u"Encode votes")
+    schema = IEncodeVotes
+    fields = field.Fields(IEncodeVotes)
+    fields['votes'].widgetFactory = DataGridFieldFactory
+
+    def updateWidgets(self):
+        # hide vote_number field
+        self.fields['vote_number'].mode = 'hidden'
+        super(EncodeVotesForm, self).updateWidgets()
+        self.widgets['votes'].allow_delete = False
+        self.widgets['votes'].allow_insert = False
+        self.widgets['votes'].allow_reorder = False
+        self.widgets['votes'].auto_append = False
+        self.widgets['votes'].columns[0]['mode'] = HIDDEN_MODE
+        for row in self.widgets['votes'].widgets:
+            for wdt in row.subform.widgets.values():
+                if wdt.__name__ == 'voter':
+                    wdt.mode = DISPLAY_MODE
+                elif wdt.__name__ == 'voter_uid':
+                    wdt.mode = HIDDEN_MODE
+
+    def _doApply(self):
+        """ """
+        if not self.mayChangeAttendees():
+            raise Unauthorized
+
+        # prepare Meeting.itemVotes compatible data
+        # while datagrid used in an overlay, some <NO_VALUE>
+        # wipeout self.votes from these values
+        self.votes = [vote for vote in self.votes if isinstance(vote, dict)]
+        data = {}
+        for vote in self.votes:
+            data[vote['voter_uid']] = vote['vote_value']
+        item_uid = self.context.UID()
+        # set new itemVotes value on meeting
+        if item_uid not in self.meeting.itemVotes:
+            self.meeting.itemVotes[item_uid] = PersistentList()
+            self.meeting.itemVotes[item_uid].append(PersistentMapping(data))
+        else:
+            self.meeting.itemVotes[item_uid][self.vote_number].update(data)
+
+        # finish
+        notifyModifiedAndReindex(self.context)
+        invalidate_cachekey_volatile_for(
+            'Products.PloneMeeting.vocabularies.itemvotersvocabulary',
+            get_again=True)
+
+        voter_uids = [vote['voter_uid'] for vote in self.votes]
+        voter_uids = "_".join(voter_uids)
+        vote_values = [vote['vote_value'] for vote in self.votes]
+        vote_values = "_".join(vote_values)
+        extras = 'item={0} hps={1} vote_values={2}'.format(
+            repr(self.context), voter_uids, vote_values)
+        fplog('encode_item_votes', extras=extras)
+        api.portal.show_message(
+            _("Votes have been encoded for current item."),
+            request=self.request)
+        self._finished = True
+
+EncodeVotesFormWrapper = wrap_form(EncodeVotesForm)

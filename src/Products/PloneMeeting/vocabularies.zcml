@@ -61,6 +61,8 @@
            name="Products.PloneMeeting.vocabularies.downorupworkflowagainvocabulary" />
   <utility component=".vocabularies.ListTypesVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.listtypesvocabulary" />
+  <utility component=".vocabularies.UsedVoteValuesVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.usedvotevaluesvocabulary" />
   <utility component=".vocabularies.PrivaciesVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.privaciesvocabulary" />
   <utility component=".vocabularies.SelectablePrivaciesVocabularyFactory"
@@ -79,6 +81,8 @@
            name="Products.PloneMeeting.vocabularies.selectableassemblymembersvocabulary" />
   <utility component=".vocabularies.SelectableItemInitiatorsVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.selectableiteminitiatorsvocabulary" />
+  <utility component=".vocabularies.ItemVotersVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.itemvotersvocabulary" />
   <utility component=".vocabularies.PMDetailedEveryOrganizationsVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.detailedorganizationsvocabulary" />
   <utility component=".vocabularies.ItemNotPresentTypeVocabularyFactory"
