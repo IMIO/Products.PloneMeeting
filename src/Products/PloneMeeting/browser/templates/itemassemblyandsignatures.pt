@@ -38,10 +38,10 @@
           </tal:defines>
       </tal:item_assembly>
 
-      <div tal:condition="python: ('attendees' in usedMeetingAttrs or meeting.getAttendees()) and not meeting.getAssembly()">
+      <tal:block condition="python: ('attendees' in usedMeetingAttrs or meeting.getAttendees()) and not meeting.getAssembly()">
         <tal:comment replace="nothing">People (item attendees, signers and votes)</tal:comment>
         <metal:people use-macro="here/@@pm-macros/itemPeople"/>
-      </div>
+      </tal:block>
 
       <tal:item_assembly_common_fields>
         <div tal:condition="python: 'assemblyGuests' in usedMeetingAttrs or 'assemblyGuests' in redefinedItemAssemblies">

@@ -2,7 +2,6 @@
 
 from AccessControl import Unauthorized
 from imio.helpers.cache import get_cachekey_volatile
-from imio.helpers.content import get_vocab
 from plone import api
 from plone.memoize import ram
 from Products.CMFCore.permissions import ModifyPortalContent
@@ -10,6 +9,7 @@ from Products.CMFCore.utils import _checkPermission
 from Products.Five import BrowserView
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from Products.PloneMeeting.config import WriteBudgetInfos
+from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
 from Products.PloneMeeting.utils import sendMailIfRelevant
 from zope.i18n import translate
 
@@ -315,7 +315,7 @@ class AsyncLoadLinkedItems(BrowserView):
         return self.index()
 
 
-class AsyncLoadAssemblyAndSignatures(BrowserView):
+class AsyncLoadItemAssemblyAndSignatures(BrowserView):
     """ """
 
     def __init__(self, context, request):
@@ -327,6 +327,26 @@ class AsyncLoadAssemblyAndSignatures(BrowserView):
     def show(self):
         """ """
         return self.meeting is not None
+
+    def vote_counts(self, vote_number=0):
+        """Returns an HTML string regarding votes count."""
+        res = [u'<span title="{0}">{1}</span>'.format(
+            translate('number_of_voters', domain='PloneMeeting', context=self.request),
+            len(self.voters))]
+        pattern = u'<span class="vote_value_{0}" title="{1}">{2}</span>'
+        for usedVoteValue in self.cfg.getUsedVoteValues():
+            res.append(pattern.format(
+                usedVoteValue,
+                translate('vote_value_{0}'.format(usedVoteValue),
+                          domain='PloneMeeting',
+                          context=self.request),
+                self.context.getVoteCount(usedVoteValue, vote_number)))
+        votes = u" / ".join(res)
+        return votes
+
+    def next_vote_number(self):
+        """Return next vote_number."""
+        return len(self.itemVotes)
 
     def __call___cachekey(method, self):
         '''cachekey method for self.__call__.
@@ -353,13 +373,53 @@ class AsyncLoadAssemblyAndSignatures(BrowserView):
                 item_votes,
                 may_change_attendees)
 
-    @ram.cache(__call___cachekey)
+    #@ram.cache(__call___cachekey)
     def __call__(self):
         """ """
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
         self.usedMeetingAttrs = self.cfg.getUsedMeetingAttributes()
         self.meeting = self.context.getMeeting()
-        self.voters = get_vocab(
-            self.context, "Products.PloneMeeting.vocabularies.itemvotersvocabulary").by_token.keys()
+        self.showVotes = self.context.showVotes()
+        self.voters = self.showVotes and self.context.getItemVoters() or []
+        self.itemVotes = self.showVotes and \
+            self.context.getItemVotes(vote_number='all', include_unexisting=True) or []
+        return self.index()
+
+
+class AsyncLoadMeetingAssemblyAndSignatures(BrowserView):
+    """ """
+
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+        self.portal = api.portal.get()
+        self.portal_url = self.portal.absolute_url()
+
+    def show(self):
+        """ """
+        return self.meeting is not None
+
+    def __call___cachekey(method, self):
+        '''cachekey method for self.__call__.
+           Cache is invalidated depending on :
+           - current user may edit or not;
+           - something is redefined for current item or not.'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
+        cfg_modified = cfg.modified()
+        ordered_contacts = self.context.orderedContacts.items()
+        item_votes = self.context.getItemVotes()
+        context_uid = self.context.UID()
+        return (cfg_modified,
+                ordered_contacts,
+                item_votes,
+                context_uid)
+
+    @ram.cache(__call___cachekey)
+    def __call__(self):
+        """ """
+        self.tool = api.portal.get_tool('portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(self.context)
+        self.usedAttrs = self.cfg.getUsedMeetingAttributes()
         return self.index()

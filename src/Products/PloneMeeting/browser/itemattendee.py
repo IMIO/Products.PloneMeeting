@@ -4,7 +4,6 @@ from AccessControl import Unauthorized
 from collective.z3cform.datagridfield import DataGridFieldFactory
 from collective.z3cform.datagridfield import DictRow
 from imio.helpers.cache import invalidate_cachekey_volatile_for
-from imio.helpers.content import get_vocab
 from persistent.list import PersistentList
 from persistent.mapping import PersistentMapping
 from plone import api
@@ -13,10 +12,8 @@ from plone.z3cform.layout import wrap_form
 from Products.PloneMeeting.browser.itemassembly import _itemsToUpdate
 from Products.PloneMeeting.browser.itemassembly import validate_apply_until_item_number
 from Products.PloneMeeting.config import PMMessageFactory as _
-from Products.PloneMeeting.interfaces import IRedirect
 from Products.PloneMeeting.utils import _itemNumber_to_storedItemNumber
 from Products.PloneMeeting.utils import fplog
-from Products.PloneMeeting.utils import notifyModifiedAndReindex
 from z3c.form import button
 from z3c.form import field
 from z3c.form import form
@@ -104,7 +101,7 @@ class BaseAttendeeForm(form.Form):
 
     def render(self):
         if self._finished:
-            IRedirect(self.request).redirect(self.context.absolute_url())
+            self.request.RESPONSE.redirect(self.context.absolute_url())
             return ""
         return super(BaseAttendeeForm, self).render()
 
@@ -192,8 +189,6 @@ class ByeByeAttendeeForm(BaseAttendeeForm):
             if self.person_uid not in item_not_present:
                 item_not_present.append(self.person_uid)
                 meeting_not_present_attr[item_to_update_uid] = item_not_present
-                notifyModifiedAndReindex(item_to_update)
-        notifyModifiedAndReindex(self.meeting)
         first_item_number = items_to_update[0].getItemNumber(for_display=True)
         last_item_number = items_to_update[-1].getItemNumber(for_display=True)
         extras = 'item={0} hp={1} not_present_type={2} from_item_number={3} until_item_number={4}'.format(
@@ -256,8 +251,6 @@ class WelcomeAttendeeForm(BaseAttendeeForm):
             if self.person_uid in item_absents:
                 item_absents.remove(self.person_uid)
                 meeting_absent_attr[item_to_update_uid] = item_absents
-                notifyModifiedAndReindex(item_to_update)
-        notifyModifiedAndReindex(self.meeting)
         first_item_number = items_to_update[0].getItemNumber(for_display=True)
         last_item_number = items_to_update[-1].getItemNumber(for_display=True)
         extras = 'item={0} hp={1} from_item_number={2} until_item_number={3}'.format(
@@ -374,8 +367,6 @@ class RedefinedSignatoryForm(BaseAttendeeForm):
             if self.person_uid not in item_signatories.values():
                 item_signatories[self.signature_number] = self.person_uid
                 self.meeting.itemSignatories[item_to_update_uid] = item_signatories
-                notifyModifiedAndReindex(item_to_update)
-        notifyModifiedAndReindex(self.meeting)
         first_item_number = items_to_update[0].getItemNumber(for_display=True)
         last_item_number = items_to_update[-1].getItemNumber(for_display=True)
         extras = 'item={0} hp={1} signature_number={2} from_item_number={3} until_item_number={4}'.format(
@@ -428,8 +419,6 @@ class RemoveRedefinedSignatoryForm(BaseAttendeeForm):
                     self.meeting.itemSignatories[item_to_update_uid] = item_signatories
                 else:
                     del self.meeting.itemSignatories[item_to_update_uid]
-                notifyModifiedAndReindex(item_to_update)
-        notifyModifiedAndReindex(self.meeting)
         first_item_number = items_to_update[0].getItemNumber(for_display=True)
         last_item_number = items_to_update[-1].getItemNumber(for_display=True)
         extras = 'item={0} hp={1} from_item_number={2} until_item_number={3}'.format(
@@ -458,20 +447,29 @@ def votes_default(context):
        - or we do not have and we use the default value defined on MeetingConfig."""
     res = []
     item_votes = context.getItemVotes(vote_number=vote_number_default())
-    item_voter_terms = get_vocab(context, "Products.PloneMeeting.vocabularies.itemvotersvocabulary")
+    item_voter_uids = context.getItemVoters()
     tool = api.portal.get_tool('portal_plonemeeting')
     cfg = tool.getMeetingConfig(context)
-    for item_voter_term in item_voter_terms:
-        item_voter_token = item_voter_term.token
-        if item_voter_token in item_votes:
-            data = {'voter_uid': item_voter_token,
-                    'voter': item_voter_token,
-                    'vote_value': item_votes[item_voter_token]}
+    for item_voter_uid in item_voter_uids:
+        if item_voter_uid in item_votes:
+            data = {'voter_uid': item_voter_uid,
+                    'voter': item_voter_uid,
+                    'vote_value': item_votes[item_voter_uid]}
         else:
-            data = {'voter_uid': item_voter_token,
-                    'voter': item_voter_token,
+            data = {'voter_uid': item_voter_uid,
+                    'voter': item_voter_uid,
                     'vote_value': cfg.getDefaultVoteValue()}
         res.append(data)
+    return res
+
+
+@provider(IContextAwareDefaultFactory)
+def label_default(context):
+    """ """
+    res = None
+    item_votes = context.getItemVotes(vote_number=vote_number_default())
+    if item_votes and item_votes['label']:
+        res = item_votes['label']
     return res
 
 
@@ -500,6 +498,21 @@ class IEncodeVotes(IBaseAttendee):
         title=_(u"Vote number"),
         description=_(u""),
         defaultFactory=vote_number_default,
+        required=False)
+
+    label = schema.TextLine(
+        title=_(u"Label"),
+        description=_(u"Free label that will identify the vote, "
+                      u"useful when several votes are defined on an item. "
+                      u"Leave empty if not used."),
+        defaultFactory=label_default,
+        required=False)
+
+    linked_to_previous = schema.Bool(
+        title=_(u"Linked to previous"),
+        description=_(u"This will link this vote with the previous one, "
+                      u"if so, voter may only vote for one of the linked votes."),
+        default=False,
         required=False)
 
     votes = schema.List(
@@ -544,18 +557,22 @@ class EncodeVotesForm(BaseAttendeeForm):
         # wipeout self.votes from these values
         self.votes = [vote for vote in self.votes if isinstance(vote, dict)]
         data = {}
+        data['label'] = self.label
+        data['voters'] = PersistentMapping()
         for vote in self.votes:
-            data[vote['voter_uid']] = vote['vote_value']
+            data['voters'][vote['voter_uid']] = vote['vote_value']
         item_uid = self.context.UID()
         # set new itemVotes value on meeting
+        # first votes
         if item_uid not in self.meeting.itemVotes:
             self.meeting.itemVotes[item_uid] = PersistentList()
+        # new vote_number
+        if self.vote_number + 1 > len(self.meeting.itemVotes[item_uid]):
             self.meeting.itemVotes[item_uid].append(PersistentMapping(data))
         else:
-            self.meeting.itemVotes[item_uid][self.vote_number].update(data)
+            self.meeting.itemVotes[item_uid][self.vote_number] = PersistentMapping(data)
 
         # finish
-        notifyModifiedAndReindex(self.context)
         invalidate_cachekey_volatile_for(
             'Products.PloneMeeting.vocabularies.itemvotersvocabulary',
             get_again=True)

@@ -1754,7 +1754,8 @@ class ItemVotersVocabulary(BaseHeldPositionsVocabulary):
             usage='voter',
             include_usages=False,
             include_defaults=False,
-            include_signature_number=False, )
+            include_signature_number=False,
+            review_state=[], )
         # do not modify original terms
         terms = list(terms._terms)
 

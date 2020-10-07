@@ -619,8 +619,9 @@ function init_tooltipsters(event) {
     if (css_id == 'collapsible-assembly-and-signatures') {
       pmCommonOverlays(selector_prefix='div#item-people ');
       attendeesInfos();
+      editVotes();
     }
-    if (css_id == 'collapsible-assembly-and-signatures') {
+    if (css_id.startsWith('collapsible-text-linkeditem-')) {
       categorizedChildsInfos({selector: 'div.item-linkeditems .tooltipster-childs-infos', });
       advicesInfos();
     }
@@ -718,7 +719,7 @@ function update_search_term(tag){
     dataType: 'html',
     data: {collection_uid: tag.dataset.collection_uid},
     cache: false,
-    // async: true provokes ConflictErrors when freezing a meeting
+    // async: true provokes ConflictErrors when freezing a meeting???
     async: true,
     success: function(data) {
       $(tag).replaceWith(data);
@@ -798,10 +799,3 @@ function toggleAllDetails() {
     $('div.collapsible:not(.active):not(.discreet)').each(function() {$(this).click();});
   }
 }
-
-// prevent
-preventDefaultClickAttendees = function() {
-$("input#form-buttons-apply").click(function(event) {
-  event.preventDefault();
-});
-};

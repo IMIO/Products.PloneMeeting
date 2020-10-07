@@ -137,56 +137,6 @@
                 <span tal:condition="not: copyGroups">-</span>
             </div>
 
-            <tal:comment replace="nothing">Assembly and signatures</tal:comment>
-            <tal:assembly_and_signatures condition="nocall:meeting">
-              <tal:defines define="mayQuickEditItemAssembly context/mayQuickEditItemAssembly;
-                                   mayQuickEditItemSignatures context/mayQuickEditItemSignatures;
-                                   redefinedItemAssemblies python: context.redefinedItemAssemblies();
-                                   redefinedItemSignatures python: context.getItemSignatures(real=True) or context.getItemSignatories(real=True);
-                                   isUsingContacts meetingConfig/isUsingContacts">
-              <div id="assembly-and-signatures"
-                  onclick="togglePersonsCookie();;toggleDetails('collapsible-assembly-and-signatures', toggle_parent_active=true, parent_tag=null, load_view='@@load_assembly_and_signatures');"
-                  class="collapsible discreet">
-                  <span class="meeting_attribute_label" i18n:translate="redefinable_assembly_and_signatures">
-                      <span i18n:name="assembly"
-                            tal:define="class_to_use python: redefinedItemAssemblies and 'highlightValue' or ''"
-                            tal:attributes="class class_to_use">
-                            <tal:block i18n:translate="meeting_assembly">Assembly</tal:block>
-                            <tal:block condition="isUsingContacts"
-                                       content="python:'(' + str(len(context.getAttendees())) + ')'">Number of attendees</tal:block>
-                      </span>
-
-                      <a i18n:name="assembly_edit" tal:condition="mayQuickEditItemAssembly" href="manage_item_assembly_form?initial_edit=1" class="link-overlay-pm">
-                          <img src="edit.png"
-                               tal:attributes="src string:${portal_url}/edit.png" />
-                      </a>
-                      <span i18n:name="assembly_edit" tal:condition="not:mayQuickEditItemAssembly" />
-                      and
-                      <span i18n:name="signatures" tal:define="class_to_use python: redefinedItemSignatures and 'highlightValue' or ''"
-                            tal:attributes="class class_to_use">
-                            <tal:block i18n:translate="meeting_signatures">signatures</tal:block>
-                            <tal:block condition="isUsingContacts"
-                                       content="python:'(' + str(len(context.getItemSignatories(by_signature_number=True))) + ')'">Number of attendees</tal:block>
-                      </span>
-
-                      <a i18n:name="signatures_edit" tal:condition="mayQuickEditItemSignatures" href="manage_item_signatures_form" class="link-overlay-pm">
-                          <img src="edit.png"
-                               tal:attributes="src string:${portal_url}/edit.png" />
-                      </a>
-                      <span i18n:name="signatures_edit" tal:condition="not:mayQuickEditItemSignatures" />
-                  </span>
-              </div>
-              <div id="collapsible-assembly-and-signatures" class="collapsible-content discreet" style="display: none;">
-                <div class="collapsible-inner-content">
-                 <img tal:attributes="src string:${portal_url}/spinner_small.gif" />
-                </div>
-              </div>
-              <script>
-                initializePersonsCookie();
-              </script>
-              </tal:defines>
-            </tal:assembly_and_signatures>
-
             <tal:comment replace="nothing">Item is signed?</tal:comment>
             <div class="discreet"
                  tal:condition="python: 'itemIsSigned' in usedAttrs">
@@ -369,12 +319,62 @@
       </tr>
     </table>
 
+    <tal:comment replace="nothing">Assembly and signatures</tal:comment>
+    <tal:assembly_and_signatures condition="nocall:meeting">
+      <tal:defines define="mayQuickEditItemAssembly context/mayQuickEditItemAssembly;
+                           mayQuickEditItemSignatures context/mayQuickEditItemSignatures;
+                           redefinedItemAssemblies python: context.redefinedItemAssemblies();
+                           redefinedItemSignatures python: context.getItemSignatures(real=True) or context.getItemSignatories(real=True);
+                           isUsingContacts meetingConfig/isUsingContacts">
+      <div id="assembly-and-signatures"
+          onclick="togglePersonsCookie();;toggleDetails('collapsible-assembly-and-signatures', toggle_parent_active=true, parent_tag=null, load_view='@@load_item_assembly_and_signatures');"
+          class="collapsible discreet">
+          <span class="meeting_attribute_label" i18n:translate="redefinable_assembly_and_signatures">
+              <span i18n:name="assembly"
+                    tal:define="class_to_use python: redefinedItemAssemblies and 'highlightValue' or ''"
+                    tal:attributes="class class_to_use">
+                    <tal:block i18n:translate="meeting_assembly">Assembly</tal:block>
+                    <tal:block condition="isUsingContacts"
+                               content="python:'(' + str(len(context.getAttendees())) + '/' + str(len(meeting.getAttendees())) + ')'">Number of attendees</tal:block>
+              </span>
+
+              <a i18n:name="assembly_edit" tal:condition="mayQuickEditItemAssembly" href="manage_item_assembly_form?initial_edit=1" class="link-overlay-pm">
+                  <img src="edit.png"
+                       tal:attributes="src string:${portal_url}/edit.png" />
+              </a>
+              <span i18n:name="assembly_edit" tal:condition="not:mayQuickEditItemAssembly" />
+              and
+              <span i18n:name="signatures" tal:define="class_to_use python: redefinedItemSignatures and 'highlightValue' or ''"
+                    tal:attributes="class class_to_use">
+                    <tal:block i18n:translate="meeting_signatures">signatures</tal:block>
+                    <tal:block condition="isUsingContacts"
+                               content="python:'(' + str(len(context.getItemSignatories(by_signature_number=True))) + ')'">Number of attendees</tal:block>
+              </span>
+
+              <a i18n:name="signatures_edit" tal:condition="mayQuickEditItemSignatures" href="manage_item_signatures_form" class="link-overlay-pm">
+                  <img src="edit.png"
+                       tal:attributes="src string:${portal_url}/edit.png" />
+              </a>
+              <span i18n:name="signatures_edit" tal:condition="not:mayQuickEditItemSignatures" />
+          </span>
+      </div>
+      <div id="collapsible-assembly-and-signatures" class="collapsible-content discreet" style="display: none;">
+        <div class="collapsible-inner-content">
+         <img tal:attributes="src string:${portal_url}/spinner_small.gif" />
+        </div>
+      </div>
+      <script>
+        initializePersonsCookie();
+      </script>
+      </tal:defines>
+    </tal:assembly_and_signatures>
+
     <tal:comment replace="nothing">Linked items</tal:comment>
     <tal:defines define="predecessors python: context.adapted().getPredecessors(only_viewable=True);
                          linkedItems python: context.getManuallyLinkedItems(only_viewable=True);
                          showManuallyLinkedItems python: 'manuallyLinkedItems' in usedAttrs or linkedItems;
                          class_to_use python: (predecessors or linkedItems) and 'item_attribute_label highlightValue' or 'item_attribute_label';">
-        <div id="linkedItems" class="collapsible discreet" onclick="toggleDetails('collapsible-linked-items', toggle_parent_active=true, parent_tag=null, load_view='@@load_linked_items');">
+        <div id="linked-items" class="collapsible discreet" onclick="toggleDetails('collapsible-linked-items', toggle_parent_active=true, parent_tag=null, load_view='@@load_linked_items');">
           <span tal:condition="showManuallyLinkedItems"
                 class="item_attribute_label"
                 tal:attributes="class class_to_use"

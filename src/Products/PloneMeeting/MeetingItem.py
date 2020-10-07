@@ -3678,22 +3678,55 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getItemVotes')
 
-    def getItemVotes(self, vote_number=0, theObjects=False, **kwargs):
-        '''
-        '''
+    def getItemVotes(self,
+                     vote_number=0,
+                     include_unexisting=False,
+                     unexisting_value=NOT_ENCODED_VOTE_VALUE):
+        '''If p_vote_number=0 (default), returns the vote with given number.
+           If p_vote_number='all', return a list of every votes.
+           If p_include_unexisting, will return p_unexisting_value for votes that
+           does not exist, so when votes just enabled, new voter selected, ...'''
         votes = {}
         if not self.hasMeeting():
             return votes
         meeting = self.getMeeting()
         item_votes = meeting.getItemVotes().get(self.UID(), [])
-        if len(item_votes) - 1 >= vote_number:
+        # add an empty vote in case nothing in itemVotes
+        # this is useful when no votes encoded, new voters selected, ...
+        if include_unexisting:
+            voter_uids = self.getItemVoters()
+            if not item_votes:
+                item_votes = [{'label': None, 'voters': {}, 'vote_number': 0}]
+                for voter_uid in voter_uids:
+                    item_votes[0]['voters'][voter_uid] = NOT_ENCODED_VOTE_VALUE
+            else:
+                # add new values if some voters were added
+                for item_vote in item_votes:
+                    stored_voter_uids = item_vote['voters'].keys()
+                    for voter_uid in voter_uids:
+                        if voter_uid not in stored_voter_uids:
+                            item_vote['voters'][voter_uid] = NOT_ENCODED_VOTE_VALUE
+        if vote_number == 'all':
+            votes = deepcopy(item_votes)
+            # add a 'vote_number' key into the result for convenience
+            i = 0
+            for vote_infos in votes:
+                vote_infos['vote_number'] = i
+                i += 1
+        elif len(item_votes) - 1 >= vote_number:
             votes.update(item_votes[vote_number])
-
-        if theObjects:
-            uids = votes.keys()
-            voters = meeting._getContacts(uids=uids, theObjects=theObjects)
-            votes = {votes[voter.UID()]: voter for voter in voters}
         return votes
+
+    security.declarePublic('getItemVoters')
+
+    def getItemVoters(self, theObjects=False):
+        ''' '''
+        voter_terms = get_vocab(self, "Products.PloneMeeting.vocabularies.itemvotersvocabulary")
+        voters = [term.token for term in voter_terms._terms]
+        if theObjects:
+            meeting = self.getMeeting()
+            voters = meeting._getContacts(uids=voters, theObjects=True)
+        return voters
 
     def getInAndOutAttendees(self, theObjects=True):
         """Returns a dict with informations about assembly moves :
@@ -6605,12 +6638,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getVoteValue')
 
-    def getVoteValue(self, hp_uid):
+    def getVoteValue(self, hp_uid, vote_number=0):
         '''What is the vote value for user with id p_userId?'''
         if self.getVotesAreSecret():
             raise 'Unusable when votes are secret.'
-        itemVotes = self.getItemVotes()
-        if hp_uid in itemVotes:
+        itemVotes = self.getItemVotes(vote_number=vote_number)
+        if hp_uid in itemVotes['voters']:
             return itemVotes[hp_uid]
         else:
             return NOT_ENCODED_VOTE_VALUE
@@ -6621,12 +6654,18 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Gets the number of votes for p_vote_value.'''
         res = 0
         itemVotes = self.getItemVotes(vote_number)
-        item_voter_uids = get_vocab(
-            self, "Products.PloneMeeting.vocabularies.itemvotersvocabulary").by_token.keys()
-        if not self.getVotesAreSecret():
+        item_voter_uids = self.getItemVoters()
+        # when initializing, so Meeting.itemVotes is empty
+        # only return count for NOT_ENCODED_VOTE_VALUE
+        if not itemVotes:
+            if vote_value == NOT_ENCODED_VOTE_VALUE:
+                res = len(item_voter_uids)
+        elif not self.getVotesAreSecret():
             for item_voter_uid in item_voter_uids:
-                if (item_voter_uid not in itemVotes and vote_value == NOT_ENCODED_VOTE_VALUE) or \
-                   (item_voter_uid in itemVotes and vote_value == itemVotes[item_voter_uid]):
+                if (item_voter_uid not in itemVotes['voters'] and
+                        vote_value == NOT_ENCODED_VOTE_VALUE) or \
+                   (item_voter_uid in itemVotes['voters'] and
+                        vote_value == itemVotes['voters'][item_voter_uid]):
                     res += 1
         else:
             if vote_value in self.itemVotes:

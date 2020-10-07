@@ -1106,7 +1106,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
 
     def getItemVotes(self):
         ''' '''
-        votes = self.itemVotes.data
+        votes = deepcopy(self.itemVotes.data)
         return votes
 
     security.declarePublic('displayUserReplacement')
@@ -1787,7 +1787,11 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         # Call sub-product-specific behaviour
         self.adapted().onEdit(isCreated=False)
         # invalidate last meeting modified
-        invalidate_cachekey_volatile_for('Products.PloneMeeting.Meeting.modified', get_again=True)
+        invalidate_cachekey_volatile_for(
+            'Products.PloneMeeting.Meeting.modified', get_again=True)
+        # invalidate item voters vocabulary in case new voters (un)selected
+        invalidate_cachekey_volatile_for(
+            'Products.PloneMeeting.vocabularies.itemvotersvocabulary', get_again=True)
         if need_reindex:
             self.reindexObject()
 

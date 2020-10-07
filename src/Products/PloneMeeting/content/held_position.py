@@ -293,6 +293,7 @@ class PMHeldPosition(HeldPosition):
         invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.selectableheldpositionsvocabulary")
         invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.selectableassemblymembersvocabulary")
         invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.selectableiteminitiatorsvocabulary")
+        invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.itemvotersvocabulary")
 
 
 class PMHeldPositionSchemaPolicy(DexteritySchemaPolicy):

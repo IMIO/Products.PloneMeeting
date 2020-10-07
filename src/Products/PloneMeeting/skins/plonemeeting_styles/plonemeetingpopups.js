@@ -55,6 +55,23 @@ function advicePreview() {
     });
 }
 
+// opening the encode votes form
+function editVotes() {
+    jQuery(function($){
+        $('a.link-overlay-pm-encode-votes').prepOverlay({
+            subtype: 'ajax',
+            closeselector: '[name="form.buttons.cancel"]',
+            config: {
+                onBeforeLoad : function (e) {
+                    // odd even for datagridfield
+                    $('table tbody').each(setoddeven);
+                    return true;
+                },
+            }
+       });
+    });
+}
+
 // the content history popup
 function contentHistory() {
     jQuery(function($) {
@@ -143,7 +160,6 @@ jQuery(document).ready(function($) {
     completenessChange();
     availableMailingLists();
     duplicateItem();
-    attendeesInfos();
 
     // inserting methods infos on meeting_view
     tooltipster_helper(selector='.tooltipster-inserting-methods-helper-msg',
