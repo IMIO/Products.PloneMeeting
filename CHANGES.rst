@@ -8,7 +8,9 @@ Changelog
 - Make sure `state color` on links is applied everywhere
   (livesearch, livesearch results, folder_contents, ...).
   [gbastien]
-
+- Make sure `events.item_added_or_initialized` is only called one time when
+  a new item is created or it may break things done in-between.
+  [gbastien]
 
 4.2b3 (2020-10-02)
 ------------------
