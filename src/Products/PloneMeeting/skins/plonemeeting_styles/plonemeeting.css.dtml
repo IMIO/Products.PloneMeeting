@@ -321,8 +321,8 @@ div.viewlet_workflowstate span.state-returned_to_proposing_group_prevalidated {
     background-color: DarkOrange;
     border-color: DarkOrange;
 }
-[class*='proposed'],
-[class$='waiting_advices'],
+[class*='state-proposed'],
+[class*='state-'][class$='waiting_advices'],
 .state-prevalidated,
 .state-returned_to_proposing_group_proposed,
 .state-returned_to_proposing_group_prevalidated {
