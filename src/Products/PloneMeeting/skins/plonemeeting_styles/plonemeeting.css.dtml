@@ -286,7 +286,10 @@ div.pm_workflowstate {
 }
 
 /* Colors on states */
-body:not([class*='section-contacts']) .state-active, .label-state-active {color: green !important;}
+body:not([class*='section-contacts']) .state-active,
+.label-state-active {
+   color: green !important;
+}
 .state-inactive,
 .state-inactive a,
 .label-state-inactive,
@@ -308,7 +311,7 @@ div.viewlet_workflowstate span.state-advice_under_edit {
 .state-created,
 .state-itemcreated,
 .state-itemcreated_waiting_advices,
-.state-advice_under_edit {color: red;}
+.state-advice_under_edit {color: red !important;}
 /* DarkOrange */
 div.viewlet_workflowstate span[class^='state-proposed'],
 div.viewlet_workflowstate span[class$='waiting_advices'],
@@ -318,28 +321,27 @@ div.viewlet_workflowstate span.state-returned_to_proposing_group_prevalidated {
     background-color: DarkOrange;
     border-color: DarkOrange;
 }
-.state-proposed,
-.state-proposedToValidationLevel1,
-.state-proposedToValidationLevel2,
-.state-proposedToValidationLevel3,
-.state-proposedToValidationLevel4,
-.state-proposedToValidationLevel5,
-span[class$='waiting_advices'],
+[class*='proposed'],
+[class$='waiting_advices'],
 .state-prevalidated,
 .state-returned_to_proposing_group_proposed,
-.state-returned_to_proposing_group_prevalidated {color: DarkOrange;}
-/* blue */
+.state-returned_to_proposing_group_prevalidated {
+   color: DarkOrange !important;
+}
 div.viewlet_workflowstate span.state-validated {
     background-color: blue;
     border-color: blue;
 }
-.state-validated {color: blue;}
-/* brown */
+.state-validated {
+   color: blue !important;
+}
 div.viewlet_workflowstate span.state-presented {
     background-color: brown;
     border-color: brown;
 }
-.state-presented {color: brown;}
+.state-presented {
+   color: brown !important;
+}
 /* cornflowerBlue */
 div.viewlet_workflowstate span.state-itemfrozen,
 div.viewlet_workflowstate span.state-frozen {
@@ -347,7 +349,9 @@ div.viewlet_workflowstate span.state-frozen {
     border-color: cornflowerBlue;
 }
 .state-itemfrozen,
-.state-frozen {color: cornflowerBlue;}
+.state-frozen {
+   color: cornflowerBlue !important;
+}
 /* grey */
 div.viewlet_workflowstate span.state-returned_to_proposing_group,
 div.viewlet_workflowstate span.state-closed,
@@ -365,7 +369,7 @@ div.viewlet_workflowstate span.state-advice_given {
 .state-marked_not_applicable,
 .state-postponed_next_meeting,
 .state-removed,
-.state-advice_given {color: grey;}
+.state-advice_given {color: grey !important;}
 /* darkgoldenrod */
 div.viewlet_workflowstate span.state-itempublished,
 div.viewlet_workflowstate span.state-published {
@@ -373,7 +377,7 @@ div.viewlet_workflowstate span.state-published {
     border-color: darkgoldenrod;
 }
 .state-itempublished,
-.state-published {color: darkgoldenrod;}
+.state-published {color: darkgoldenrod !important;}
 /* black */
 div.viewlet_workflowstate span.state-decided,
 div.viewlet_workflowstate span.state-decisions_published {
@@ -381,8 +385,9 @@ div.viewlet_workflowstate span.state-decisions_published {
     border-color: black;
 }
 .state-decided,
-.state-decisions_published {color: black;}
-/* green */
+.state-decisions_published {
+   color: black !important;
+}
 div.viewlet_workflowstate span.state-active,
 div.viewlet_workflowstate span.state-accepted,
 div.viewlet_workflowstate span.state-accepted_but_modified,
@@ -396,13 +401,16 @@ div.viewlet_workflowstate span.state-pre_accepted {
 .state-accepted_but_modified,
 .state-accepted_out_of_meeting,
 .state-accepted_out_of_meeting_emergency,
-.state-pre_accepted {color: green;}
-/* Violet */
+.state-pre_accepted {
+   color: green !important;
+}
 div.viewlet_workflowstate span.state-refused {
     background-color: violet;
     border-color: violet;
 }
-.state-refused {color: violet;}
+.state-refused {
+   color: violet !important;
+}
 
 /* Colors on transitions, used in the item wf history */
 /* this correspond to the element creation */

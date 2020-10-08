@@ -5,7 +5,9 @@ Changelog
 4.2b4 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Make sure `state color` on links is applied everywhere
+  (livesearch, livesearch results, folder_contents, ...).
+  [gbastien]
 
 
 4.2b3 (2020-10-02)
