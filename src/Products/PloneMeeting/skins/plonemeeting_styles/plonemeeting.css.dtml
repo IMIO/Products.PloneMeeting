@@ -1982,6 +1982,24 @@ div#item-people th.header-attendee-signatory {
    width: 60px;
 }
 
+div.select-all-vote-values {
+   position: absolute;
+   right: 12.5px;
+   padding-top: 25px;
+   font-weight: normal;
+   display: inline;
+}
+div.select-all-vote-values span.option {
+   display: inline;
+}
+div#formfield-form-widgets-votes td.cell-3 {
+   text-align: right;
+}
+table#form-widgets-votes td,
+table#form-widgets-votes th {
+    padding: 0.5em;
+}
+
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */

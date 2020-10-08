@@ -18,11 +18,16 @@ from z3c.form import button
 from z3c.form import field
 from z3c.form import form
 from z3c.form.browser.radio import RadioFieldWidget
+from z3c.form.contentprovider import ContentProviders
 from z3c.form.interfaces import DISPLAY_MODE
 from z3c.form.interfaces import HIDDEN_MODE
+from z3c.form.interfaces import IFieldsAndContentProvidersForm
 from zope import schema
+from zope.browserpage.viewpagetemplatefile import ViewPageTemplateFile
 from zope.component.hooks import getSite
+from zope.contentprovider.provider import ContentProviderBase
 from zope.i18n import translate
+from zope.interface import implements
 from zope.interface import Interface
 from zope.interface import provider
 from zope.schema.interfaces import IContextAwareDefaultFactory
@@ -86,6 +91,10 @@ class BaseAttendeeForm(form.Form):
             )
         self.meeting = self.context.getMeeting()
         self._doApply()
+        # in any case, if attendee (un)set absent/excused/... invalidate itemvoters caching
+        invalidate_cachekey_volatile_for(
+            'Products.PloneMeeting.vocabularies.itemvotersvocabulary',
+            get_again=True)
 
     @button.buttonAndHandler(_('Cancel'), name='cancel')
     def handleCancel(self, action):
@@ -448,17 +457,10 @@ def votes_default(context):
     res = []
     item_votes = context.getItemVotes(vote_number=vote_number_default())
     item_voter_uids = context.getItemVoters()
-    tool = api.portal.get_tool('portal_plonemeeting')
-    cfg = tool.getMeetingConfig(context)
     for item_voter_uid in item_voter_uids:
-        if item_voter_uid in item_votes:
-            data = {'voter_uid': item_voter_uid,
-                    'voter': item_voter_uid,
-                    'vote_value': item_votes[item_voter_uid]}
-        else:
-            data = {'voter_uid': item_voter_uid,
-                    'voter': item_voter_uid,
-                    'vote_value': cfg.getDefaultVoteValue()}
+        data = {'voter_uid': item_voter_uid,
+                'voter': item_voter_uid,
+                'vote_value': item_votes['voters'][item_voter_uid]}
         res.append(data)
     return res
 
@@ -487,8 +489,8 @@ class IVote(Interface):
 
     widget('vote_value', RadioFieldWidget)
     vote_value = schema.Choice(
-        title=u'Vote value',
-        required=True,
+        title=u'',   # no title as we use column header for select all vote values
+        required=False,
         vocabulary="Products.PloneMeeting.vocabularies.usedvotevaluesvocabulary", )
 
 
@@ -523,8 +525,32 @@ class IEncodeVotes(IBaseAttendee):
     )
 
 
+class DisplaySelectAllProvider(ContentProviderBase):
+    """
+      This ContentProvider will just display
+      the select all controls to ease selecting same vote value for everyone.
+    """
+    template = \
+        ViewPageTemplateFile('templates/display_select_all_vote_value.pt')
+
+    def __init__(self, context, request, view):
+        super(DisplaySelectAllProvider, self).__init__(
+            context, request, view)
+        self.__parent__ = view
+
+    def render(self):
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
+        self.usedVoteValues = cfg.getUsedVoteValues()
+        return self.template()
+
+
 class EncodeVotesForm(BaseAttendeeForm):
     """ """
+    implements(IFieldsAndContentProvidersForm)
+    contentProviders = ContentProviders()
+    contentProviders['select_all'] = DisplaySelectAllProvider
+    contentProviders['select_all'].position = 4
 
     label = _(u"Encode votes")
     schema = IEncodeVotes
@@ -534,6 +560,7 @@ class EncodeVotesForm(BaseAttendeeForm):
     def updateWidgets(self):
         # hide vote_number field
         self.fields['vote_number'].mode = 'hidden'
+        self.fields['linked_to_previous'].mode = 'hidden'
         super(EncodeVotesForm, self).updateWidgets()
         self.widgets['votes'].allow_delete = False
         self.widgets['votes'].allow_insert = False
@@ -566,6 +593,16 @@ class EncodeVotesForm(BaseAttendeeForm):
         # first votes
         if item_uid not in self.meeting.itemVotes:
             self.meeting.itemVotes[item_uid] = PersistentList()
+            # check if we are not adding a new vote on an item containing no votes at all
+            if self.vote_number == 1:
+                # add an empty vote 0
+                data_item_vote_0 = self.context.getItemVotes(
+                    vote_number=0,
+                    include_vote_number=False,
+                    include_unexisting=True)
+                # make sure we use persistent for 'voters'
+                data_item_vote_0['voters'] = PersistentMapping(data_item_vote_0['voters'])
+                self.meeting.itemVotes[item_uid].append(PersistentMapping(data_item_vote_0))
         # new vote_number
         if self.vote_number + 1 > len(self.meeting.itemVotes[item_uid]):
             self.meeting.itemVotes[item_uid].append(PersistentMapping(data))
@@ -573,10 +610,6 @@ class EncodeVotesForm(BaseAttendeeForm):
             self.meeting.itemVotes[item_uid][self.vote_number] = PersistentMapping(data)
 
         # finish
-        invalidate_cachekey_volatile_for(
-            'Products.PloneMeeting.vocabularies.itemvotersvocabulary',
-            get_again=True)
-
         voter_uids = [vote['voter_uid'] for vote in self.votes]
         voter_uids = "_".join(voter_uids)
         vote_values = [vote['vote_value'] for vote in self.votes]

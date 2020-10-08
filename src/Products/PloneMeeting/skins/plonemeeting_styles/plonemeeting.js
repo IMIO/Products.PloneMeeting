@@ -799,3 +799,10 @@ function toggleAllDetails() {
     $('div.collapsible:not(.active):not(.discreet)').each(function() {$(this).click();});
   }
 }
+
+function selectAllVoteValues(tag) {
+  $('input[value='+tag.value+']').each(function() {
+    this.checked = true;
+    }
+  );
+}

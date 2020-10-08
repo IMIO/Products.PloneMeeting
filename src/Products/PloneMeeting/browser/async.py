@@ -9,7 +9,6 @@ from Products.CMFCore.utils import _checkPermission
 from Products.Five import BrowserView
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from Products.PloneMeeting.config import WriteBudgetInfos
-from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
 from Products.PloneMeeting.utils import sendMailIfRelevant
 from zope.i18n import translate
 
@@ -357,23 +356,22 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
         cfg = tool.getMeetingConfig(self.context)
         cfg_modified = cfg.modified()
         meeting = self.context.getMeeting()
-        meeting_uid = meeting.UID()
         ordered_contacts = meeting.orderedContacts.items()
         redefined_item_attendees = meeting._get_all_redefined_attendees(only_keys=False)
-        item_votes = meeting.getItemVotes()
+        item_votes = self.context.getItemVotes(include_vote_number=False)
         context_uid = self.context.UID()
         # if something redefined for context or not
         if context_uid not in str(redefined_item_attendees):
             redefined_item_attendees = []
         may_change_attendees = self.context._mayChangeAttendees()
-        return (cfg_modified,
-                meeting_uid,
+        return (self.context.UID(),
+                cfg_modified,
                 ordered_contacts,
                 redefined_item_attendees,
                 item_votes,
                 may_change_attendees)
 
-    #@ram.cache(__call___cachekey)
+    @ram.cache(__call___cachekey)
     def __call__(self):
         """ """
         self.tool = api.portal.get_tool('portal_plonemeeting')
@@ -383,7 +381,7 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
         self.showVotes = self.context.showVotes()
         self.voters = self.showVotes and self.context.getItemVoters() or []
         self.itemVotes = self.showVotes and \
-            self.context.getItemVotes(vote_number='all', include_unexisting=True) or []
+            self.context.getItemVotes(include_unexisting=True) or []
         return self.index()
 
 

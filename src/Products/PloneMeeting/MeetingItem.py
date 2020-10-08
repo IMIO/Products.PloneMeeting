@@ -3679,50 +3679,73 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('getItemVotes')
 
     def getItemVotes(self,
-                     vote_number=0,
-                     include_unexisting=False,
+                     vote_number='all',
+                     include_vote_number=True,
+                     include_unexisting=True,
                      unexisting_value=NOT_ENCODED_VOTE_VALUE):
-        '''If p_vote_number=0 (default), returns the vote with given number.
-           If p_vote_number='all', return a list of every votes.
+        '''p_vote_number may be 'all' (default), return a list of every votes,
+           or an integer like 0, returns the vote with given number.
+           If p_include_vote_number, for convenience, a key 'vote_number'
+           is added to the returned value.
            If p_include_unexisting, will return p_unexisting_value for votes that
            does not exist, so when votes just enabled, new voter selected, ...'''
-        votes = {}
+        votes = []
         if not self.hasMeeting():
             return votes
         meeting = self.getMeeting()
         item_votes = meeting.getItemVotes().get(self.UID(), [])
+        voter_uids = self.getItemVoters()
+        # all votes
+        if vote_number == 'all':
+            # votes will be a list
+            votes = deepcopy(item_votes)
+            if include_vote_number:
+                # add a 'vote_number' key into the result for convenience
+                i = 0
+                for vote_infos in votes:
+                    vote_infos['vote_number'] = i
+                    i += 1
+        # vote_number
+        elif len(item_votes) - 1 >= vote_number:
+            votes.append(item_votes[vote_number])
+
         # add an empty vote in case nothing in itemVotes
         # this is useful when no votes encoded, new voters selected, ...
         if include_unexisting:
-            voter_uids = self.getItemVoters()
-            if not item_votes:
-                item_votes = [{'label': None, 'voters': {}, 'vote_number': 0}]
+            if not votes:
+                votes = [{'label': None, 'voters': {}}]
+                if include_vote_number:
+                    votes[0]['vote_number'] = 0
                 for voter_uid in voter_uids:
-                    item_votes[0]['voters'][voter_uid] = NOT_ENCODED_VOTE_VALUE
+                    votes[0]['voters'][voter_uid] = NOT_ENCODED_VOTE_VALUE
             else:
                 # add new values if some voters were added
-                for item_vote in item_votes:
-                    stored_voter_uids = item_vote['voters'].keys()
+                for vote in votes:
+                    stored_voter_uids = vote['voters'].keys()
                     for voter_uid in voter_uids:
                         if voter_uid not in stored_voter_uids:
-                            item_vote['voters'][voter_uid] = NOT_ENCODED_VOTE_VALUE
-        if vote_number == 'all':
-            votes = deepcopy(item_votes)
-            # add a 'vote_number' key into the result for convenience
-            i = 0
-            for vote_infos in votes:
-                vote_infos['vote_number'] = i
-                i += 1
-        elif len(item_votes) - 1 >= vote_number:
-            votes.update(item_votes[vote_number])
+                            vote['voters'][voter_uid] = NOT_ENCODED_VOTE_VALUE
+        # make sure we only have current voters in 'voters'
+        # this could not be the case when encoding votes
+        # for a voter then setting him absent
+        for vote in votes:
+            vote['voters'] = {vote_voter_uid: vote_voter_value
+                              for vote_voter_uid, vote_voter_value in vote['voters'].items()
+                              if vote_voter_uid in voter_uids}
+        # when asing a vote_number, only return this one
+        if votes and vote_number != 'all':
+            votes = votes[0]
+
         return votes
 
     security.declarePublic('getItemVoters')
 
     def getItemVoters(self, theObjects=False):
         ''' '''
+        attendees = self.getAttendees()
         voter_terms = get_vocab(self, "Products.PloneMeeting.vocabularies.itemvotersvocabulary")
-        voters = [term.token for term in voter_terms._terms]
+        voters = [term.token for term in voter_terms._terms
+                  if term.token in attendees]
         if theObjects:
             meeting = self.getMeeting()
             voters = meeting._getContacts(uids=voters, theObjects=True)
