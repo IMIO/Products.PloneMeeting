@@ -5,8 +5,10 @@ Changelog
 4.1.28.9 (unreleased)
 ---------------------
 
-- Nothing changed yet.
-
+- Backport from 4.2.x:
+  Make sure `state color` on links is applied everywhere
+  (livesearch, livesearch results, folder_contents, ...).
+  [gbastien]
 
 4.1.28.8 (2020-10-06)
 ---------------------
