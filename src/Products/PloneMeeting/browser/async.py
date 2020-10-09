@@ -8,6 +8,7 @@ from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.utils import _checkPermission
 from Products.Five import BrowserView
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
+from Products.PloneMeeting.config import NOT_VOTABLE_LINKED_TO_VALUE
 from Products.PloneMeeting.config import WriteBudgetInfos
 from Products.PloneMeeting.utils import sendMailIfRelevant
 from zope.i18n import translate
@@ -371,7 +372,7 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
                 item_votes,
                 may_change_attendees)
 
-    @ram.cache(__call___cachekey)
+    #@ram.cache(__call___cachekey)
     def __call__(self):
         """ """
         self.tool = api.portal.get_tool('portal_plonemeeting')
@@ -381,7 +382,9 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
         self.showVotes = self.context.showVotes()
         self.voters = self.showVotes and self.context.getItemVoters() or []
         self.itemVotes = self.showVotes and \
-            self.context.getItemVotes(include_unexisting=True) or []
+        self.context.getItemVotes(
+            include_unexisting=True,
+            ignored_vote_values=[NOT_VOTABLE_LINKED_TO_VALUE]) or []
         return self.index()
 
 

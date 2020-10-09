@@ -8,9 +8,13 @@ from persistent.list import PersistentList
 from persistent.mapping import PersistentMapping
 from plone import api
 from plone.autoform.directives import widget
+from plone.restapi.deserializer import boolean_value
 from plone.z3cform.layout import wrap_form
+from Products.Five import BrowserView
 from Products.PloneMeeting.browser.itemassembly import _itemsToUpdate
 from Products.PloneMeeting.browser.itemassembly import validate_apply_until_item_number
+from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
+from Products.PloneMeeting.config import NOT_VOTABLE_LINKED_TO_VALUE
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.utils import _itemNumber_to_storedItemNumber
 from Products.PloneMeeting.utils import fplog
@@ -440,6 +444,26 @@ class RemoveRedefinedSignatoryForm(BaseAttendeeForm):
 RemoveRedefinedSignatoryFormWrapper = wrap_form(RemoveRedefinedSignatoryForm)
 
 
+class DisplaySelectAllProvider(ContentProviderBase):
+    """
+      This ContentProvider will just display
+      the select all controls to ease selecting same vote value for everyone.
+    """
+    template = \
+        ViewPageTemplateFile('templates/display_select_all_vote_value.pt')
+
+    def __init__(self, context, request, view):
+        super(DisplaySelectAllProvider, self).__init__(
+            context, request, view)
+        self.__parent__ = view
+
+    def render(self):
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
+        self.usedVoteValues = cfg.getUsedVoteValues()
+        return self.template()
+
+
 def vote_number_default():
     """
       Get the value from the REQUEST as it is passed when calling the
@@ -455,13 +479,36 @@ def votes_default(context):
        - either we have itemVotes and we use it on voters;
        - or we do not have and we use the default value defined on MeetingConfig."""
     res = []
-    item_votes = context.getItemVotes(vote_number=vote_number_default())
+    vote_number = vote_number_default()
+    item_votes = context.getItemVotes(vote_number=vote_number,
+                                      ignored_vote_values=[NOT_VOTABLE_LINKED_TO_VALUE])
+    # keep order using getItemVoters
     item_voter_uids = context.getItemVoters()
+
+    # when adding a new vote linked_to_previous, only keep possible voters
+    if item_votes['linked_to_previous']:
+        new_vote = not context.getItemVotes(
+            vote_number=vote_number, include_unexisting=False)
+        if new_vote:
+            tool = api.portal.get_tool('portal_plonemeeting')
+            cfg = tool.getMeetingConfig(context)
+            usedVoteValues = cfg.getUsedVoteValues()
+            ignored_vote_values = [v for v in usedVoteValues
+                                   if v != NOT_ENCODED_VOTE_VALUE]
+            ignored_vote_values.append(NOT_VOTABLE_LINKED_TO_VALUE)
+            last_vote = context.getItemVotes(
+                vote_number=-1,
+                ignored_vote_values=ignored_vote_values)
+            item_voter_uids = [item_voter_uid for item_voter_uid in item_voter_uids
+                               if item_voter_uid in last_vote['voters']]
+
     for item_voter_uid in item_voter_uids:
-        data = {'voter_uid': item_voter_uid,
-                'voter': item_voter_uid,
-                'vote_value': item_votes['voters'][item_voter_uid]}
-        res.append(data)
+        # voter could not be there because ignored_vote_values
+        if item_voter_uid in item_votes['voters']:
+            data = {'voter_uid': item_voter_uid,
+                    'voter': item_voter_uid,
+                    'vote_value': item_votes['voters'][item_voter_uid]}
+            res.append(data)
     return res
 
 
@@ -472,6 +519,17 @@ def label_default(context):
     item_votes = context.getItemVotes(vote_number=vote_number_default())
     if item_votes and item_votes['label']:
         res = item_votes['label']
+    return res
+
+
+@provider(IContextAwareDefaultFactory)
+def linked_to_previous_default(context):
+    """ """
+    request = getSite().REQUEST
+    res = request.get('linked_to_previous', None)
+    if res is None:
+        item_votes = context.getItemVotes(vote_number=vote_number_default())
+        res = item_votes['linked_to_previous']
     return res
 
 
@@ -514,7 +572,7 @@ class IEncodeVotes(IBaseAttendee):
         title=_(u"Linked to previous"),
         description=_(u"This will link this vote with the previous one, "
                       u"if so, voter may only vote for one of the linked votes."),
-        default=False,
+        defaultFactory=linked_to_previous_default,
         required=False)
 
     votes = schema.List(
@@ -523,26 +581,6 @@ class IEncodeVotes(IBaseAttendee):
         defaultFactory=votes_default,
         required=True
     )
-
-
-class DisplaySelectAllProvider(ContentProviderBase):
-    """
-      This ContentProvider will just display
-      the select all controls to ease selecting same vote value for everyone.
-    """
-    template = \
-        ViewPageTemplateFile('templates/display_select_all_vote_value.pt')
-
-    def __init__(self, context, request, view):
-        super(DisplaySelectAllProvider, self).__init__(
-            context, request, view)
-        self.__parent__ = view
-
-    def render(self):
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self.context)
-        self.usedVoteValues = cfg.getUsedVoteValues()
-        return self.template()
 
 
 class EncodeVotesForm(BaseAttendeeForm):
@@ -559,8 +597,10 @@ class EncodeVotesForm(BaseAttendeeForm):
 
     def updateWidgets(self):
         # hide vote_number field
-        self.fields['vote_number'].mode = 'hidden'
-        self.fields['linked_to_previous'].mode = 'hidden'
+        self.fields['vote_number'].mode = HIDDEN_MODE
+        # do not hide it, when hidding it, value is always True???
+        # this is hidden using CSS
+        # self.fields['linked_to_previous'].mode = HIDDEN_MODE
         super(EncodeVotesForm, self).updateWidgets()
         self.widgets['votes'].allow_delete = False
         self.widgets['votes'].allow_insert = False
@@ -574,6 +614,57 @@ class EncodeVotesForm(BaseAttendeeForm):
                 elif wdt.__name__ == 'voter_uid':
                     wdt.mode = HIDDEN_MODE
 
+    def _getLinkedItemVoteNumbers(self, vote_number=0):
+        """Return every votes linked to given p_vote_number."""
+        res = []
+        item_votes = self.meeting.itemVotes[self.context.UID()]
+        len_item_votes = len(item_votes)
+
+        origin_is_linked = item_votes[vote_number]['linked_to_previous']
+
+        if origin_is_linked:
+            # find first
+            i = vote_number - 1
+            while i and item_votes[i]['linked_to_previous']:
+                res.append(i)
+                i -= 1
+            # i is now on the vote previous first 'linked_to_previous', keep it
+            res.append(i)
+
+        # not origin_is_linked only way is next or origin_is_linked, need to get next too
+        res.append(vote_number)
+        i = vote_number + 1
+        while i < len_item_votes and item_votes[i]['linked_to_previous']:
+            res.append(i)
+            i += 1
+        # not linked, return an empty list
+        if res == [vote_number]:
+            res = []
+        return res
+
+    def cleanVotersLinkedTo(self, vote_number, new_voters):
+        """ """
+        linked_vote_numbers = self._getLinkedItemVoteNumbers(vote_number)
+        if linked_vote_numbers:
+            item_votes = self.meeting.itemVotes[self.context.UID()]
+            # wipeout other vote numbers
+            # get values edited just now that will no more be useable on linked votes
+            current_item_votes = item_votes[vote_number]
+            kept_voters = [voter_uid for voter_uid, voter_value in current_item_votes['voters'].items()
+                           if voter_value not in [NOT_ENCODED_VOTE_VALUE, NOT_VOTABLE_LINKED_TO_VALUE]]
+            for linked_vote_number in linked_vote_numbers:
+                if linked_vote_number == vote_number:
+                    continue
+                linked_item_vote = item_votes[linked_vote_number]
+                for voter_uid, vote_value in linked_item_vote['voters'].items():
+                    if voter_uid in kept_voters:
+                        linked_item_vote['voters'][voter_uid] = NOT_VOTABLE_LINKED_TO_VALUE
+                    elif vote_value == NOT_VOTABLE_LINKED_TO_VALUE and \
+                            voter_uid in new_voters and \
+                            new_voters[voter_uid] == NOT_ENCODED_VOTE_VALUE:
+                        # this is potentially a liberated vote value
+                        linked_item_vote['voters'][voter_uid] = NOT_ENCODED_VOTE_VALUE
+
     def _doApply(self):
         """ """
         if not self.mayChangeAttendees():
@@ -585,6 +676,7 @@ class EncodeVotesForm(BaseAttendeeForm):
         self.votes = [vote for vote in self.votes if isinstance(vote, dict)]
         data = {}
         data['label'] = self.label
+        data['linked_to_previous'] = self.linked_to_previous
         data['voters'] = PersistentMapping()
         for vote in self.votes:
             data['voters'][vote['voter_uid']] = vote['vote_value']
@@ -603,18 +695,34 @@ class EncodeVotesForm(BaseAttendeeForm):
                 # make sure we use persistent for 'voters'
                 data_item_vote_0['voters'] = PersistentMapping(data_item_vote_0['voters'])
                 self.meeting.itemVotes[item_uid].append(PersistentMapping(data_item_vote_0))
+        new_voters = data.get('voters')
         # new vote_number
         if self.vote_number + 1 > len(self.meeting.itemVotes[item_uid]):
+            # complete data before storing, if some voters are missing it is
+            # because of NOT_VOTABLE_LINKED_TO_VALUE, we add it
+            item_voter_uids = self.context.getItemVoters()
+            for item_voter_uid in item_voter_uids:
+                if item_voter_uid not in data['voters']:
+                    data['voters'][item_voter_uid] = NOT_VOTABLE_LINKED_TO_VALUE
             self.meeting.itemVotes[item_uid].append(PersistentMapping(data))
         else:
-            self.meeting.itemVotes[item_uid][self.vote_number] = PersistentMapping(data)
+            # use update in case we only update a subset of votes
+            # when some vote NOT_VOTABLE_LINKED_TO_VALUE or so
+            # we have nested dicts, data is a dict, containing 'voters' dict
+            self.meeting.itemVotes[item_uid][self.vote_number]['voters'].update(data['voters'])
+            data.pop('voters')
+            self.meeting.itemVotes[item_uid][self.vote_number].update(data)
+        # manage linked_to_previous
+        # if current vote is linked to other votes, we will set NOT_VOTABLE_LINKED_TO_VALUE
+        # as value of vote of voters of other linked votes
+        self.cleanVotersLinkedTo(self.vote_number, new_voters)
 
         # finish
         voter_uids = [vote['voter_uid'] for vote in self.votes]
         voter_uids = "_".join(voter_uids)
         vote_values = [vote['vote_value'] for vote in self.votes]
         vote_values = "_".join(vote_values)
-        extras = 'item={0} hps={1} vote_values={2}'.format(
+        extras = 'item={0} voter_uids={1} vote_values={2}'.format(
             repr(self.context), voter_uids, vote_values)
         fplog('encode_item_votes', extras=extras)
         api.portal.show_message(
@@ -623,3 +731,37 @@ class EncodeVotesForm(BaseAttendeeForm):
         self._finished = True
 
 EncodeVotesFormWrapper = wrap_form(EncodeVotesForm)
+
+
+class ItemDeleteVoteView(BrowserView):
+    """ """
+
+    def __call__(self, object_uid, redirect=True):
+        """ """
+        if not self.context._mayChangeAttendees():
+            raise Unauthorized
+
+        # redirect can by passed by jQuery, in this case, we receive '0' or '1'
+        redirect = boolean_value(redirect)
+        object_uid = int(object_uid)
+        item_uid = self.context.UID()
+        # delete from meeting itemVote
+        meeting = self.context.getMeeting()
+        deleted_vote = meeting.itemVotes[item_uid].pop(object_uid)
+        # finish
+        voter_uids = [voter_uid for voter_uid in deleted_vote['voters']]
+        voter_uids = "_".join(voter_uids)
+        vote_values = [vote_value for vote_value in deleted_vote['voters'].values()]
+        vote_values = "_".join(vote_values)
+        extras = 'item={0} vote_number={1} vote_label={2} voter_uids={3} vote_values={4}'.format(
+            repr(self.context),
+            object_uid,
+            deleted_vote['label'],
+            voter_uids,
+            vote_values)
+        fplog('delete_item_votes', extras=extras)
+        api.portal.show_message(
+            _("Votes number ${vote_number} have been deleted for current item.",
+              mapping={'vote_number': object_uid + 1}),
+            request=self.request)
+        self._finished = True

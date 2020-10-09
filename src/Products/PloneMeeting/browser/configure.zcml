@@ -405,25 +405,31 @@
         name="item_welcome_nonattendee_form"
         class=".itemattendee.WelcomeNonAttendeeFormWrapper"
         permission="zope2.View" />
+    <browser:page
+       for="Products.PloneMeeting.interfaces.IMeetingItem"
+       layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+       name="item_redefine_signatory_form"
+       class=".itemattendee.RedefinedSignatoryFormWrapper"
+       permission="zope2.View" />
      <browser:page
-        for="Products.PloneMeeting.interfaces.IMeetingItem"
-        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
-        name="item_redefine_signatory_form"
-        class=".itemattendee.RedefinedSignatoryFormWrapper"
-        permission="zope2.View" />
-      <browser:page
-        for="Products.PloneMeeting.interfaces.IMeetingItem"
-        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
-        name="item_remove_redefined_signatory_form"
-        class=".itemattendee.RemoveRedefinedSignatoryFormWrapper"
-        permission="zope2.View" />
-      <browser:page
-        for="Products.PloneMeeting.interfaces.IMeetingItem"
-        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
-        name="item_encode_votes_form"
-        class=".itemattendee.EncodeVotesFormWrapper"
-        permission="zope2.View" />
- 
+       for="Products.PloneMeeting.interfaces.IMeetingItem"
+       layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+       name="item_remove_redefined_signatory_form"
+       class=".itemattendee.RemoveRedefinedSignatoryFormWrapper"
+       permission="zope2.View" />
+     <browser:page
+       for="Products.PloneMeeting.interfaces.IMeetingItem"
+       layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+       name="item_encode_votes_form"
+       class=".itemattendee.EncodeVotesFormWrapper"
+       permission="zope2.View" />
+   <browser:view
+       for="Products.PloneMeeting.interfaces.IMeetingItem"
+       layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+       name="item_delete_vote"
+       class=".itemattendee.ItemDeleteVoteView"
+       permission="zope2.View" />
+
     <!-- Asynchronous calls (ajax) -->
     <browser:page
         name="toggle_to_discuss"

@@ -1665,6 +1665,25 @@ table.listing tbody tr.even.dragging td {
    color: green;
 }
 
+#content span.fa-pen {
+   color: gold;
+}
+#content span.fa-trash-alt {
+   color: red;
+}
+#content span.fa-plus,
+#content span.fa-puzzle-piece {
+   color: &dtml-linkColor;;
+}
+#content span.leading-icon.fa-puzzle-piece {
+   color: &dtml-discreetColor;;
+   cursor: help;
+}
+#content span.disabled.fa-puzzle-piece {
+   color: lightgrey;
+   cursor: help;
+}
+
 #content span.pmHelp {
    cursor: help;
 }
@@ -1992,7 +2011,7 @@ div#item-people th.header-attendee-signatory {
 
 div.select-all-vote-values {
    position: absolute;
-   right: 12.5px;
+   right: 14px;
    padding-top: 25px;
    font-weight: normal;
    display: inline;
@@ -2005,8 +2024,12 @@ div#formfield-form-widgets-votes td.cell-3 {
 }
 table#form-widgets-votes td,
 table#form-widgets-votes th {
-    padding: 0.5em;
+   padding: 0.5em;
 }
+div#formfield-form-widgets-linked_to_previous {
+   display: none;
+}
+
 
 /* </dtml-with> */
 

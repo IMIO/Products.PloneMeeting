@@ -362,22 +362,42 @@ document.location.reload(true);
     <th class="header-attendee-non-attendee" tal:condition="showNonAttendees" i18n:translate="is_non_attendee">Non attendee?</th>
     <tal:vote repeat="vote_infos itemVotes">
      <th class="header-attendee-vote" class="nosort" tal:condition="not:secret">
+      <span tal:condition="vote_infos/linked_to_previous"
+            title="This vote is linked to previous vote"
+            i18n:attributes="title"
+            class="leading-icon fa fa-puzzle-piece"></span>
       <span i18n:translate="vote_values">Votes</span>
       <tal:actions condition="mayChangeAttendees">
-      <a tal:attributes="href string:item_encode_votes_form?vote_number:int=${vote_infos/vote_number}"
-         title="Edit these votes"
-         i18n:attributes="title"
-         class="link-overlay-pm-encode-votes">
-          <img tal:attributes="src string:${view/portal_url}/edit.png" />
-      </a>
-      <a tal:define="next_vote_number view/next_vote_number"
-         tal:condition="python: vote_infos['vote_number'] + 1 == next_vote_number"
-         tal:attributes="href string:item_encode_votes_form?vote_number:int=${next_vote_number}"
-         title="Add new votes"
-         i18n:attributes="title"
-         class="link-overlay-pm-encode-votes">
-          <img tal:attributes="src string:${view/portal_url}/new.png" />
-      </a>
+       <br />
+       <a tal:attributes="href string:item_encode_votes_form?vote_number:int=${vote_infos/vote_number}"
+          title="Edit these votes"
+          i18n:attributes="title"
+          class="link-overlay-pm-encode-votes">
+           <span class="fa fa-pen" />
+       </a>
+       <a href="#"
+          tal:condition="python: vote_infos['vote_number'] > 0"
+          title="Delete this vote"
+          tal:attributes="onClick string:javascript:event.preventDefault();;confirmDeleteObject(base_url='${context/absolute_url}', object_uid=${vote_infos/vote_number}, this, msgName='delete_confirm_message', view_name='@@item_delete_vote');;"
+          i18n:attributes="title">
+           <span class="fa fa-trash-alt"></span>
+       </a>
+       <a tal:define="next_vote_number view/next_vote_number"
+          tal:condition="python: vote_infos['vote_number'] + 1 == next_vote_number"
+          tal:attributes="href string:item_encode_votes_form?vote_number:int=${next_vote_number}"
+          title="Add new votes"
+          i18n:attributes="title"
+          class="link-overlay-pm-encode-votes">
+           <span class="fa fa-plus"></span>
+       </a>
+       <a tal:define="next_vote_number view/next_vote_number"
+          tal:condition="python: vote_infos['vote_number'] + 1 == next_vote_number"
+          tal:attributes="href string:item_encode_votes_form?vote_number:int=${next_vote_number}&linked_to_previous:boolean=True"
+          title="Add new linked votes"
+          i18n:attributes="title"
+          class="link-overlay-pm-encode-votes">
+           <span class="fa fa-puzzle-piece"></span>
+       </a>
       </tal:actions>
       <br />
       <span class="vote-number" tal:content="structure python: view.vote_counts(vote_infos['vote_number'])">Votes count</span>
@@ -535,14 +555,20 @@ document.location.reload(true);
 
      <tal:vote repeat="vote_infos itemVotes">
       <td align="center">
-        <tal:comment replace="nothing">Show "vote" value if the user voted for this item</tal:comment>
-        <tal:voted condition="python: aUid in voters">
+        <tal:comment replace="nothing">Show "vote" value the user voted for this item</tal:comment>
+        <tal:voted condition="python: aUid in voters and aUid in vote_infos['voters']">
          <tal:defines define="vote_value python: vote_infos['voters'][aUid];
                               formatted_vote_value string:vote_value_${vote_value}">
           <span tal:attributes="class string:vote_value ${formatted_vote_value}">
            <tal:block i18n:translate="" content="formatted_vote_value">Vote value</tal:block>
           </span>
          </tal:defines>
+        </tal:voted>
+        <tal:comment replace="nothing">Show "not votable linked value"</tal:comment>
+        <tal:voted condition="python: aUid in voters and aUid not in vote_infos['voters']">
+           <span title="Voter already encoded a vote for another linked vote"
+                 i18n:attributes="title"
+                 class="fa fa-puzzle-piece disabled"></span>
         </tal:voted>
         <tal:comment replace="nothing">Not a voter</tal:comment>
         <tal:not_voter condition="python: aUid not in voters">

@@ -3676,13 +3676,34 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         return signatories
 
+    def getItemVotes_cachekey(method,
+                              self,
+                              vote_number='all',
+                              include_vote_number=True,
+                              include_unexisting=True,
+                              unexisting_value=NOT_ENCODED_VOTE_VALUE,
+                              respect_linked_to_previous=True,
+                              ignored_vote_values=[]):
+        '''cachekey method for self.getItemVotes.'''
+        meeting = self.getMeeting()
+        item_votes = meeting.itemVotes.data
+        linked_to_previous = self.REQUEST.get('linked_to_previous', False)
+        return (self.UID(), item_votes, linked_to_previous,
+                vote_number,
+                include_vote_number,
+                include_unexisting,
+                unexisting_value,
+                ignored_vote_values)
+
     security.declarePublic('getItemVotes')
 
+    #@ram.cache(getItemVotes_cachekey)
     def getItemVotes(self,
                      vote_number='all',
                      include_vote_number=True,
                      include_unexisting=True,
-                     unexisting_value=NOT_ENCODED_VOTE_VALUE):
+                     unexisting_value=NOT_ENCODED_VOTE_VALUE,
+                     ignored_vote_values=[]):
         '''p_vote_number may be 'all' (default), return a list of every votes,
            or an integer like 0, returns the vote with given number.
            If p_include_vote_number, for convenience, a key 'vote_number'
@@ -3712,8 +3733,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # add an empty vote in case nothing in itemVotes
         # this is useful when no votes encoded, new voters selected, ...
         if include_unexisting:
+            # first or not existing
             if not votes:
-                votes = [{'label': None, 'voters': {}}]
+                votes = [{'label': None,
+                          'voters': {},
+                          'linked_to_previous': self.REQUEST.get('linked_to_previous', False)}]
                 if include_vote_number:
                     votes[0]['vote_number'] = 0
                 for voter_uid in voter_uids:
@@ -3728,20 +3752,25 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # make sure we only have current voters in 'voters'
         # this could not be the case when encoding votes
         # for a voter then setting him absent
+        # discard also ignored_vote_values
         for vote in votes:
             vote['voters'] = {vote_voter_uid: vote_voter_value
                               for vote_voter_uid, vote_voter_value in vote['voters'].items()
-                              if vote_voter_uid in voter_uids}
-        # when asing a vote_number, only return this one
+                              if vote_voter_uid in voter_uids and
+                              (not ignored_vote_values or
+                               vote_voter_value not in ignored_vote_values)}
+
+        # when asking a vote_number, only return this one as a dict, not as a list
         if votes and vote_number != 'all':
             votes = votes[0]
-
         return votes
 
     security.declarePublic('getItemVoters')
 
     def getItemVoters(self, theObjects=False):
-        ''' '''
+        '''Return held positions able to vote on current item.
+           By default, held_position UIDs are returned.
+           If p_ehtObjects=True, held_position objects are returned.'''
         attendees = self.getAttendees()
         voter_terms = get_vocab(self, "Products.PloneMeeting.vocabularies.itemvotersvocabulary")
         voters = [term.token for term in voter_terms._terms
