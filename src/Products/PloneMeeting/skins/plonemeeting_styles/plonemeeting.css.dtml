@@ -1665,21 +1665,40 @@ table.listing tbody tr.even.dragging td {
    color: green;
 }
 
-#content span.fa-pen {
-   color: gold;
+/* edit icon */
+#content span.edit-element:before {
+   content: "\f304";
 }
-#content span.fa-trash-alt {
-   color: red;
+#content span.edit-element {
+   color: #ffce09;
 }
-#content span.fa-plus,
-#content span.fa-puzzle-piece {
+/* linked-to-previous icon */
+#content span.vote-linked-to-previous:before {
+   content: "\f12e";
+}
+#content span.vote-linked-to-previous {
    color: &dtml-linkColor;;
 }
-#content span.leading-icon.fa-puzzle-piece {
+/* add icon */
+#content span.add-element:before {
+   content: "\f067";
+}
+#content span.add-element {
+   color: &dtml-linkColor;;
+}
+/* delete icon */
+#content span.delete-element:before {
+   content: "\f2ed";
+}
+#content span.delete-element {
+   color: red;
+}
+/* icon colors */
+#content span.fa.leading-icon {
    color: &dtml-discreetColor;;
    cursor: help;
 }
-#content span.disabled.fa-puzzle-piece {
+#content span.fa.disabled {
    color: lightgrey;
    cursor: help;
 }

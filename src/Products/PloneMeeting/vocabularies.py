@@ -33,6 +33,7 @@ from plone.app.vocabularies.users import UsersFactory
 from plone.memoize import ram
 from plone.uuid.interfaces import ATTRIBUTE_NAME
 from Products.CMFPlone.utils import safe_unicode
+from Products.PloneMeeting.browser.itemattendee import next_vote_is_linked
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import CONSIDERED_NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import EMPTY_STRING
@@ -1021,14 +1022,41 @@ ListTypesVocabularyFactory = ListTypesVocabulary()
 class UsedVoteValuesVocabulary(object):
     implements(IVocabularyFactory)
 
+    def __call___cachekey(method, self, context):
+        '''cachekey method for self.__call__.'''
+        context = get_context_with_request(None)
+        return str(hasattr(context, 'REQUEST') and context.REQUEST._debug or None)
+
+    def is_first_linked_vote(self):
+        """ """
+        itemVotes = self.context.getItemVotes()
+        return next_vote_is_linked(itemVotes, self.vote_number)
+
+    def is_linked_vote(self):
+        """ """
+        return self.item_vote['linked_to_previous']
+
+    @ram.cache(__call___cachekey)
     def __call__(self, context):
         """ """
         # as used in a datagridfield, context may vary...
-        context = get_context_with_request(None)
+        self.context = get_context_with_request(None)
         tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(context)
+        cfg = tool.getMeetingConfig(self.context)
         res = []
-        for usedVoteValue in cfg.getUsedVoteValues():
+        # get vote_number, as _voter_number when editing
+        # as form.widgets.vote_number when saving
+        self.vote_number = int(self.context.REQUEST.form.get(
+            'vote_number',
+            self.context.REQUEST.form.get('form.widgets.vote_number')))
+        self.item_vote = self.context.getItemVotes(vote_number=self.vote_number)
+        used_values_attr = 'usedVoteValues'
+        if self.is_linked_vote():
+            used_values_attr = 'nextLinkedVotesUsedVoteValues'
+        elif self.is_first_linked_vote():
+            used_values_attr = 'firstLinkedVoteUsedVoteValues'
+        for usedVoteValue in cfg.getUsedVoteValues(
+                used_values_attr=used_values_attr, include_not_encoded=True):
             res.append(
                 SimpleTerm(
                     usedVoteValue,
@@ -1036,7 +1064,7 @@ class UsedVoteValuesVocabulary(object):
                     translate(
                         'vote_value_{0}'.format(usedVoteValue),
                         domain='PloneMeeting',
-                        context=context.REQUEST)))
+                        context=self.context.REQUEST)))
         return SimpleVocabulary(res)
 
 

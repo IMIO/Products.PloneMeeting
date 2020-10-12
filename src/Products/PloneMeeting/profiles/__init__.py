@@ -836,9 +836,10 @@ class MeetingConfigDescriptor(Descriptor):
         self.usedPollTypes = ('freehand', 'no_vote', 'secret', 'secret_separated')
         self.defaultPollType = 'freehand'
         self.useVotes = False
-        self.votesEncoder = ('theVoterHimself',)
-        self.usedVoteValues = ('not_yet', 'yes', 'no', 'abstain')
-        self.defaultVoteValue = 'not_yet'
+        self.votesEncoder = ('aMeetingManager',)
+        self.usedVoteValues = ('yes', 'no', 'abstain')
+        self.firstLinkedVoteUsedVoteValues = ('no', 'abstain')
+        self.nextLinkedVotesUsedVoteValues = ('yes', )
         self.voteCondition = 'True'
 
         # Contacts parameters -----------------------------------------------------

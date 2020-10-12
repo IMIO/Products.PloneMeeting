@@ -45,7 +45,7 @@
       <a title="Edit"
          i18n:attributes="title"
          tal:attributes="href string:${context_url}/base_edit?fieldset=${fieldset}">
-        <img tal:attributes="src string:$portal_url/edit.png;" />
+        <span class="fa fa-pen" />
       </a>
     </tal:edit>]
     </span><br/><br/>
@@ -1217,17 +1217,24 @@
           <td width="34%" tal:define="field python:here.getField('votesEncoder')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td width="33%" tal:define="field python:here.getField('usedVoteValues')">
+          <td></td>
+        </tr>
+        <tr valign="top">
+          <td tal:define="field python:here.getField('usedVoteValues')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td tal:define="field python:here.getField('firstLinkedVoteUsedVoteValues')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td tal:define="field python:here.getField('nextLinkedVotesUsedVoteValues')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
         </tr>
         <tr valign="top">
-          <td tal:define="field python:here.getField('defaultVoteValue')">
-            <span metal:use-macro="here/widgets/field/macros/view" />
-          </td>
           <td tal:define="field python:here.getField('voteCondition')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
+          <td></td>
           <td></td>
         </tr>
       </table>

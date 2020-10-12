@@ -54,6 +54,7 @@ from Products.CMFCore.utils import _checkPermission
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 from Products.CMFPlone.utils import safe_unicode
+from Products.PloneMeeting.browser.itemattendee import next_vote_is_linked
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import AddAdvice
 from Products.PloneMeeting.config import AUTO_COPY_GROUP_PREFIX
@@ -74,6 +75,7 @@ from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
 from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
+from Products.PloneMeeting.config import NOT_VOTABLE_LINKED_TO_VALUE
 from Products.PloneMeeting.config import PROJECTNAME
 from Products.PloneMeeting.config import READER_USECASES
 from Products.PloneMeeting.config import SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY
@@ -3682,7 +3684,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                               include_vote_number=True,
                               include_unexisting=True,
                               unexisting_value=NOT_ENCODED_VOTE_VALUE,
-                              respect_linked_to_previous=True,
                               ignored_vote_values=[]):
         '''cachekey method for self.getItemVotes.'''
         meeting = self.getMeeting()
@@ -6703,23 +6704,28 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('getVoteCount')
 
     def getVoteCount(self, vote_value, vote_number=0):
-        '''Gets the number of votes for p_vote_value.'''
+        '''Gets the number of votes for p_vote_value.
+           A special value 'any_votable' may be passed for p_vote_value,
+           in this case every values other than NOT_VOTABLE_LINKED_TO_VALUE are counted.'''
         res = 0
         itemVotes = self.getItemVotes(vote_number)
         item_voter_uids = self.getItemVoters()
         # when initializing, so Meeting.itemVotes is empty
         # only return count for NOT_ENCODED_VOTE_VALUE
-        if not itemVotes:
-            if vote_value == NOT_ENCODED_VOTE_VALUE:
-                res = len(item_voter_uids)
+        if not itemVotes and vote_value == NOT_ENCODED_VOTE_VALUE:
+            res = len(item_voter_uids)
         elif not self.getVotesAreSecret():
             for item_voter_uid in item_voter_uids:
                 if (item_voter_uid not in itemVotes['voters'] and
                         vote_value == NOT_ENCODED_VOTE_VALUE) or \
                    (item_voter_uid in itemVotes['voters'] and
-                        vote_value == itemVotes['voters'][item_voter_uid]):
+                        vote_value == itemVotes['voters'][item_voter_uid]) or \
+                   (item_voter_uid in itemVotes['voters'] and
+                        vote_value == 'any_votable' and
+                        itemVotes['voters'][item_voter_uid] != NOT_VOTABLE_LINKED_TO_VALUE):
                     res += 1
         else:
+            # secret
             if vote_value in self.itemVotes:
                 res = itemVotes[vote_value]
         return res
@@ -6765,6 +6771,15 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         """Check that user may quickEdit itemAbsents/itemExcused/itemNonAttendees."""
         tool = api.portal.get_tool('portal_plonemeeting')
         return tool.isManager(self) and self.hasMeeting() and self._checkMayQuickEdit()
+
+    def _mayDeleteVote(self, itemVotes, vote_number):
+        """ """
+        res = False
+        vote_infos = itemVotes[vote_number]
+        if vote_infos['linked_to_previous'] or \
+           not next_vote_is_linked(itemVotes, vote_number):
+            res = True
+        return res
 
     def displayProposingGroupUsers(self):
         """ """

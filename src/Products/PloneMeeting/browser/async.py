@@ -330,11 +330,12 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
 
     def vote_counts(self, vote_number=0):
         """Returns an HTML string regarding votes count."""
+        total_votes = self.context.getVoteCount('any_votable', vote_number)
         res = [u'<span title="{0}">{1}</span>'.format(
             translate('number_of_voters', domain='PloneMeeting', context=self.request),
-            len(self.voters))]
+            total_votes)]
         pattern = u'<span class="vote_value_{0}" title="{1}">{2}</span>'
-        for usedVoteValue in self.cfg.getUsedVoteValues():
+        for usedVoteValue in self.cfg.getUsedVoteValues(include_not_encoded=True):
             res.append(pattern.format(
                 usedVoteValue,
                 translate('vote_value_{0}'.format(usedVoteValue),
@@ -344,9 +345,29 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
         votes = u" / ".join(res)
         return votes
 
-    def next_vote_number(self):
+    def compute_next_vote_number(self):
         """Return next vote_number."""
         return len(self.itemVotes)
+
+    def show_add_vote_linked_to_previous_icon(self, vote_infos):
+        """Show add linked_to_previous icon only on last element.
+           More over, may only add linked_to_previous if :
+           - already a linked_to_previous element;
+           - not linked_to_previous element does not use forbidden vote_values,
+             aka vote_values not in MeetingConfig.firstLinkedVoteUsedVoteValues."""
+        res = False
+        if (vote_infos['vote_number'] + 1 == self.next_vote_number):
+            if vote_infos['linked_to_previous']:
+                res = True
+            else:
+                # check vote_values not out of MeetingConfig.firstLinkedVoteUsedVoteValues
+                vote_values = [vote_value for vote_value in vote_infos['voters'].values()]
+                if not set(vote_values).difference(
+                    self.cfg.getUsedVoteValues(
+                        used_values_attr='firstLinkedVoteUsedVoteValues',
+                        include_not_encoded=True)):
+                    res = True
+        return res
 
     def __call___cachekey(method, self):
         '''cachekey method for self.__call__.
@@ -382,9 +403,10 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
         self.showVotes = self.context.showVotes()
         self.voters = self.showVotes and self.context.getItemVoters() or []
         self.itemVotes = self.showVotes and \
-        self.context.getItemVotes(
-            include_unexisting=True,
-            ignored_vote_values=[NOT_VOTABLE_LINKED_TO_VALUE]) or []
+            self.context.getItemVotes(
+                include_unexisting=True,
+                ignored_vote_values=[NOT_VOTABLE_LINKED_TO_VALUE]) or []
+        self.next_vote_number = self.compute_next_vote_number()
         return self.index()
 
 
