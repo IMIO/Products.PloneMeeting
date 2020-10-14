@@ -138,7 +138,8 @@ document.location.reload(true);
          class="collapsible active"
          tal:attributes="id string:${hookId}_toggle;
                          onclick string:toggleDetails('${hookId}_content', toggle_parent_active=true, parent_tag=${hookId}_toggle);">
-      <span tal:replace="python: field.widget.Label(context)"></span>
+      <a tal:attributes="name fieldName"
+         tal:content="python: field.widget.Label(context)">Field label</a>
     </div>
     <img style="cursor:pointer" tal:condition="mayEdit"
          tal:attributes="src string:$portal_url/edit.png;
@@ -157,6 +158,7 @@ document.location.reload(true);
   <div tal:attributes="id string:${hookId}_content">
    <div tal:replace="structure python: context.getFieldVersion(fieldName, changes)"></div>
   </div>
+ 
  </fieldset>
 </div>
 
@@ -381,29 +383,30 @@ document.location.reload(true);
           i18n:attributes="title">
            <span class="fa delete-element"></span>
        </a>
-       <a tal:define="next_vote_number view/next_vote_number"
-          tal:condition="python: vote_infos['vote_number'] + 1 == next_vote_number"
-          tal:attributes="href string:item_encode_votes_form?vote_number:int=${next_vote_number}"
-          title="Add new votes"
-          i18n:attributes="title"
-          class="link-overlay-pm-encode-votes">
-           <span class="fa add-element"></span>
-       </a>
-       <tal:linked_to_previous define="show_icon python: view.show_add_vote_linked_to_previous_icon(vote_infos)">
-        <a tal:define="next_vote_number view/next_vote_number"
-           tal:condition="show_icon"
-           tal:attributes="href string:item_encode_votes_form?vote_number:int=${next_vote_number}&linked_to_previous:boolean=True"
-           title="Add new linked votes"
+       <tal:last_vote_actions define="next_vote_number view/next_vote_number"
+                              condition="python: vote_infos['vote_number'] + 1 == next_vote_number">
+        <a tal:attributes="href string:item_encode_votes_form?vote_number:int=${next_vote_number}"
+           title="Add new votes"
            i18n:attributes="title"
            class="link-overlay-pm-encode-votes">
-            <span class="fa vote-linked-to-previous"></span>
+            <span class="fa add-element"></span>
         </a>
-        <span tal:condition="not:show_icon"
-              title="Not able to add new linked votes because incompatible vote vales have been encoded on current vote"
-              i18n:attributes="title"
-              class="fa vote-linked-to-previous disabled">
-        </span>
+        <tal:linked_to_previous define="show_icon python: view.show_add_vote_linked_to_previous_icon(vote_infos)">
+         <a tal:define="next_vote_number view/next_vote_number"
+            tal:condition="show_icon"
+            tal:attributes="href string:item_encode_votes_form?vote_number:int=${next_vote_number}&linked_to_previous:boolean=True"
+            title="Add new linked votes"
+            i18n:attributes="title"
+            class="link-overlay-pm-encode-votes">
+             <span class="fa vote-linked-to-previous"></span>
+         </a>
+         <span tal:condition="not:show_icon"
+               title="Not able to add new linked votes because incompatible vote vales have been encoded on current vote"
+               i18n:attributes="title"
+               class="fa vote-linked-to-previous disabled">
+         </span>
         </tal:linked_to_previous>
+       </tal:last_vote_actions>
       </tal:actions>
       <br />
       <span class="vote-number" tal:content="structure python: view.vote_counts(vote_infos['vote_number'])">Votes count</span>

@@ -156,6 +156,7 @@ jQuery(document).ready(function($) {
     advicesInfos();
     adviceAddEdit();
     listTypeChange();
+    pollTypeChange();
     emergencyChange();
     completenessChange();
     availableMailingLists();
@@ -257,11 +258,19 @@ function editAnnex(){
 }
 
 function listTypeChange() {
-    // listtype change on meeting_view
+    // listType change on meeting_view
     tooltipster_helper(selector='.tooltipster-item-listtype-change',
                        view_name='@@item-listtype',
                        data_parameters=[],
                        options={position: 'right'});
+}
+
+function pollTypeChange() {
+    // pollType change on meeting_view
+    tooltipster_helper(selector='.tooltipster-item-polltype-change',
+                       view_name='@@item-polltype',
+                       data_parameters=[],
+                       options={});
 }
 
 function emergencyChange() {

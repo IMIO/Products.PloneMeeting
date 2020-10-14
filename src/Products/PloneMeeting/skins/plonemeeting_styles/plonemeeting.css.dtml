@@ -1064,6 +1064,15 @@ div.tooltipster-content a.item_listType_late:visited {
     color: red;
 }
 
+.item_polltype_secret,
+.item_polltype_secret_separated {
+   color: red !important;
+}
+a[class*="item_polltype_"]:not([class*='item_polltype_secret']),
+span[class*="item_polltype_"]:not([class*='item_polltype_secret']) {
+   color: green !important;
+}
+
 .item_completeness_incomplete,
 a.item_completeness_incomplete:link,
 a.item_completeness_incomplete:visited {
@@ -1154,6 +1163,7 @@ a:link.item_emergency_refused {
 .item_emergency_accepted.Editable,
 .item_emergency_refused.Editable,
 .item_listType.Editable,
+.item_polltype.Editable,
 .advice_change_delay.Editable {
     border-bottom: 1px dotted;
     cursor: pointer;

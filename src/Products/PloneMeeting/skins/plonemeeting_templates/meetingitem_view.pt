@@ -259,16 +259,17 @@
             <div class="discreet" tal:condition="python: 'pollType' in usedAttrs">
                 <span class="item_attribute_label"
                       i18n:translate="PloneMeeting_label_pollType"></span>:&nbsp;&nbsp;
-                <span metal:use-macro="python: here.widget('pollType', mode='view')" />
+                <span data-base_url="#"
+                   style="display: inline;"
+                   tal:define="edit_css_classes python: context.mayQuickEdit('pollType') and 'tooltipster-item-polltype-change item_polltype Editable pmAction' or ''"
+                   tal:attributes="data-base_url string:${context_url};
+                                   class string:${edit_css_classes} item_polltype_${context/getPollType}">
+                    <span metal:use-macro="python: here.widget('pollType', mode='view')" />
+                </span>
                 <tal:displayPollTypeObservations tal:condition="python: 'pollTypeObservations' in usedAttrs">
-                    <span class="fa fa-question-circle help-doc"
-                       id="showPollTypeObservations"
-                       onclick="toggleDetails('dataPollTypeObservations', toggle_parent_active=false);"
-                       i18n:attributes="title" title="show_or_hide_pollTypeObservations"></span>
-                    <fieldset id="dataPollTypeObservations" style="display: none; margin-top: 0;">
-                        <legend i18n:translate="PloneMeeting_label_pollTypeObservations">Poll type observations</legend>
-                        <span metal:use-macro="python: here.widget('pollTypeObservations', mode='view')" />
-                    </fieldset>
+                — <a class="discreet"
+                     tal:attributes="href string:${context_url}#pollTypeObservations"
+                     i18n:translate="legend_details" i18n:domain="plone">Details</a>
                 </tal:displayPollTypeObservations>
             </div>
 
@@ -569,6 +570,11 @@
     <tal:comment replace="nothing">Meeting managers notes end</tal:comment>
 
     <tal:field define="fieldName python: 'meetingManagersNotesEnd'; ajaxEdit python:True">
+       <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+    </tal:field>
+
+    <tal:comment replace="nothing">Poll type observations</tal:comment>
+    <tal:field define="fieldName python: 'pollTypeObservations'; ajaxEdit python:True">
        <metal:f use-macro="context/@@pm-macros/viewContentField"/>
     </tal:field>
 

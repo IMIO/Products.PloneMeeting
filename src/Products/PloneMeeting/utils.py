@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from Acquisition import aq_base
 from AccessControl.Permission import Permission
+from Acquisition import aq_base
 from appy.shared.diff import HtmlDiff
 from bs4 import BeautifulSoup
 from collections import OrderedDict
@@ -65,6 +65,7 @@ from Products.PloneMeeting.interfaces import IItemDuplicatedFromConfigEvent
 from Products.PloneMeeting.interfaces import IItemDuplicatedToOtherMCEvent
 from Products.PloneMeeting.interfaces import IItemListTypeChangedEvent
 from Products.PloneMeeting.interfaces import IItemLocalRolesUpdatedEvent
+from Products.PloneMeeting.interfaces import IItemPollTypeChangedEvent
 from Products.PloneMeeting.interfaces import IMeetingAfterTransitionEvent
 from Products.PloneMeeting.interfaces import IMeetingConfigCustom
 from Products.PloneMeeting.interfaces import IMeetingCustom
@@ -2014,6 +2015,14 @@ class ItemListTypeChangedEvent(ObjectEvent):
     def __init__(self, object, old_listType):
         self.object = object
         self.old_listType = old_listType
+
+
+class ItemPollTypeChangedEvent(ObjectEvent):
+    implements(IItemPollTypeChangedEvent)
+
+    def __init__(self, object, old_pollType):
+        self.object = object
+        self.old_pollType = old_pollType
 
 
 class ItemLocalRolesUpdatedEvent(ObjectEvent):

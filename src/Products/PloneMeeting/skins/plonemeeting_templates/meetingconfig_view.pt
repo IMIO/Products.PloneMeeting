@@ -45,7 +45,7 @@
       <a title="Edit"
          i18n:attributes="title"
          tal:attributes="href string:${context_url}/base_edit?fieldset=${fieldset}">
-        <span class="fa fa-pen" />
+         <span class="fa edit-element"></span>
       </a>
     </tal:edit>]
     </span><br/><br/>

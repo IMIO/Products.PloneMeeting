@@ -1,0 +1,10 @@
+<tal:defines define="selectablePollTypes python: view.selectablePollTypes();">
+    <tal:loop repeat="pollType selectablePollTypes">
+        <span class="fa fa-angle-double-right" />
+        <a href="#"
+           tal:attributes="href python: '%s/@@change-item-polltype?new_value=%s'
+                           % (context.absolute_url(), pollType.token);
+                           class python: 'link-overlay-pm item_polltype_%s' % pollType.token"
+           tal:content="pollType/title">Poll type</a><br />
+    </tal:loop>
+</tal:defines>

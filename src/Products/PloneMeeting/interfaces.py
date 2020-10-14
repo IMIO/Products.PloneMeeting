@@ -37,6 +37,11 @@ class IItemListTypeChangedEvent(IObjectEvent):
     """
 
 
+class IItemPollTypeChangedEvent(IObjectEvent):
+    """
+    """
+
+
 class IItemLocalRolesUpdatedEvent(IObjectEvent):
     """
     """

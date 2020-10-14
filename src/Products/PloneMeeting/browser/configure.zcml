@@ -647,6 +647,23 @@
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="zope2.View" />
 
+    <!-- the view that show MeetingItem.pollType on the meetingitem_view -->
+    <browser:page
+        for="Products.PloneMeeting.interfaces.IMeetingItem"
+        name="item-polltype"
+        class=".itempolltype.ItemPollTypeView"
+        template="templates/itempolltype.pt"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        permission="zope2.View" />
+
+    <!-- the view that change MeetingItem.pollType value then refresh page -->
+    <browser:view
+        for="Products.PloneMeeting.interfaces.IMeetingItem"
+        name="change-item-polltype"
+        class=".itempolltype.ChangeItemPollTypeView"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        permission="zope2.View" />
+
     <!-- the view that display staticInfos about item in the PrettyLink column -->
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingItem"

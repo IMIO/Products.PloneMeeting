@@ -10,7 +10,7 @@ from zope.schema.interfaces import IVocabularyFactory
 
 
 class ItemListTypeView(BrowserView):
-    '''Render the item completeness HTML on the meetingitem_view.'''
+    '''Render the item listType selection on the meetingitem_view.'''
 
     def __init__(self, context, request):
         super(BrowserView, self).__init__(context, request)

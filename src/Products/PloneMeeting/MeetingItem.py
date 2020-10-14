@@ -2200,6 +2200,18 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return True
         return False
 
+    security.declarePublic('mayChangePollType')
+
+    def mayChangePollType(self):
+        '''Condition for editing 'pollType' field.'''
+        item = self.getSelf()
+        res = False
+        if _checkPermission(ModifyPortalContent, item):
+            tool = api.portal.get_tool('portal_plonemeeting')
+            if not item.hasMeeting() or tool.isManager(item):
+                res = True
+        return res
+
     security.declarePublic('maySignItem')
 
     def maySignItem(self):

@@ -776,31 +776,36 @@ class ItemDeleteVoteView(BrowserView):
         object_uid = int(object_uid)
         item_uid = self.context.UID()
         meeting = self.context.getMeeting()
-        itemVotes = meeting.itemVotes[item_uid]
-        assert self.context._mayDeleteVote(itemVotes, object_uid)
+        if item_uid in meeting.itemVotes:
+            itemVotes = meeting.itemVotes[item_uid]
+            assert self.context._mayDeleteVote(itemVotes, object_uid)
 
-        vote_to_delete = itemVotes[object_uid]
-        originnal_voter_uids = [voter_uid for voter_uid in vote_to_delete['voters']]
-        originnal_voter_uids = "_".join(originnal_voter_uids)
-        originnal_vote_values = [vote_value for vote_value in vote_to_delete['voters'].values()]
-        originnal_vote_values = "_".join(originnal_vote_values)
-        # call clean_voters_linked_to with every values NOT_ENCODED_VOTE_VALUE
-        # to liberate every values
-        new_voters = vote_to_delete['voters'].copy()
-        new_voters = {voter_uid: NOT_ENCODED_VOTE_VALUE
-                      for voter_uid, vote_value in new_voters.items()
-                      if vote_value != NOT_VOTABLE_LINKED_TO_VALUE}
-        clean_voters_linked_to(self.context, meeting, object_uid, new_voters)
-        # delete from meeting itemVote
-        deleted_vote = meeting.itemVotes[item_uid].pop(object_uid)
-        # finish
-        extras = 'item={0} vote_number={1} vote_label={2} voter_uids={3} vote_values={4}'.format(
-            repr(self.context),
-            object_uid,
-            deleted_vote['label'],
-            originnal_voter_uids,
-            originnal_vote_values)
-        fplog('delete_item_votes', extras=extras)
+            vote_to_delete = itemVotes[object_uid]
+            originnal_voter_uids = [voter_uid for voter_uid in vote_to_delete['voters']]
+            originnal_voter_uids = "_".join(originnal_voter_uids)
+            originnal_vote_values = [vote_value for vote_value in vote_to_delete['voters'].values()]
+            originnal_vote_values = "_".join(originnal_vote_values)
+            # call clean_voters_linked_to with every values NOT_ENCODED_VOTE_VALUE
+            # to liberate every values
+            new_voters = vote_to_delete['voters'].copy()
+            new_voters = {voter_uid: NOT_ENCODED_VOTE_VALUE
+                          for voter_uid, vote_value in new_voters.items()
+                          if vote_value != NOT_VOTABLE_LINKED_TO_VALUE}
+            clean_voters_linked_to(self.context, meeting, object_uid, new_voters)
+            # delete from meeting itemVote
+            deleted_vote = meeting.itemVotes[item_uid].pop(object_uid)
+            # if deleted last existing vote (vote_number 0) remove context UID from meeting itemVotes
+            if not meeting.itemVotes[item_uid]:
+                del meeting.itemVotes[item_uid]
+            # finish deletion
+            extras = 'item={0} vote_number={1} vote_label={2} voter_uids={3} vote_values={4}'.format(
+                repr(self.context),
+                object_uid,
+                deleted_vote['label'],
+                originnal_voter_uids,
+                originnal_vote_values)
+            fplog('delete_item_votes', extras=extras)
+        # message
         api.portal.show_message(
             _("Votes number ${vote_number} have been deleted for current item.",
               mapping={'vote_number': object_uid + 1}),
