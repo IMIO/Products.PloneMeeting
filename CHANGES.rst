@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2b4 (unreleased)
+4.2b4 (2020-10-14)
 ------------------
 
 - Make sure `state color` on links is applied everywhere
