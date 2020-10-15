@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from AccessControl import Unauthorized
 from plone import api
 from Products.Five.browser import BrowserView

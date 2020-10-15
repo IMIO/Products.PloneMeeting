@@ -4,6 +4,7 @@ from copy import deepcopy
 from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_NEW
 from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator
+from Products.PloneMeeting.profiles import MeetingConfigDescriptor
 
 
 class Migrate_To_4200(Migrator):
@@ -60,6 +61,19 @@ class Migrate_To_4200(Migrator):
             cfg.at_post_edit_script()
         logger.info('Done.')
 
+    def _configureVotes(self):
+        """Some votes attributes on MeetingConfig already exist before changing all
+           this, re-apply default values from MeetingConfigDescriptor."""
+        logger.info("Configuring 'votes' for every MeetingConfigs...")
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            cfg.setUseVotes(MeetingConfigDescriptor.useVotes)
+            cfg.setVotesEncoder(MeetingConfigDescriptor.votesEncoder)
+            cfg.setUsedVoteValues(MeetingConfigDescriptor.usedVoteValues)
+            cfg.setFirstLinkedVoteUsedVoteValues(MeetingConfigDescriptor.firstLinkedVoteUsedVoteValues)
+            cfg.setNextLinkedVotesUsedVoteValues(MeetingConfigDescriptor.nextLinkedVotesUsedVoteValues)
+            cfg.setVoteCondition(MeetingConfigDescriptor.voteCondition)
+        logger.info('Done.')
+
     def run(self, extra_omitted=[]):
         logger.info('Migrating to PloneMeeting 4200...')
 
@@ -74,6 +88,7 @@ class Migrate_To_4200(Migrator):
         self.runProfileSteps('Products.PloneMeeting', steps=['workflow'], profile='default')
         # configure wfAdaptations before reinstall
         self._configureItemWFValidationLevels()
+        self._configureVotes()
 
         # reinstall so versions are correctly shown in portal_quickinstaller
         self.reinstall(profiles=['profile-Products.PloneMeeting:default', ],

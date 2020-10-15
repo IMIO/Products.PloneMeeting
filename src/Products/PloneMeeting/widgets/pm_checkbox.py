@@ -10,7 +10,7 @@ from zope.interface import implementer_only
 
 
 class IPMCheckBoxWidget(ICheckBoxWidget):
-    """Marker interface for PM Checkbox Widget"""
+    """Marker interface for PM checkbox widget"""
 
 
 @implementer_only(IPMCheckBoxWidget)

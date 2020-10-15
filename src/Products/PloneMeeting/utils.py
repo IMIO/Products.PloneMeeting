@@ -1906,6 +1906,7 @@ def _base_extra_expr_ctx(obj):
     """ """
     tool = api.portal.get_tool('portal_plonemeeting')
     cfg = tool.getMeetingConfig(obj)
+    # member, context and portal are managed by collective.behavior.talcondition
     data = {'tool': tool,
             'cfg': cfg,
             'pm_utils': SecureModuleImporter['Products.PloneMeeting.utils'],

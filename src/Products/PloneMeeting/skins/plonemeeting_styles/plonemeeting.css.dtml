@@ -546,9 +546,6 @@ td.noPadding a {
     padding: 0 !important;
 }
 
-table#meeting_users td {
-   padding: 0 0.4em 0 0.4em;
-}
 table#meeting_users th {
    text-align: center;
 }
@@ -1045,6 +1042,16 @@ span.vote_value_does_not_vote {
 span.vote_value_not_consultable {
    color: black;
 }
+span.secret_vote_value {
+   font-weight: bold;
+}
+span.vote_value_number_of_voters {
+    display: inline-block;
+    padding-bottom: 1.5em;
+}
+table#meeting_users td.secret-vote {
+   padding-top: 2em;
+}
 
 table.listing tr[class][class] td.meeting_item_listType_normal {
     background-color: white;
@@ -1068,8 +1075,12 @@ div.tooltipster-content a.item_listType_late:visited {
 .item_polltype_secret_separated {
    color: red !important;
 }
-a[class*="item_polltype_"]:not([class*='item_polltype_secret']),
-span[class*="item_polltype_"]:not([class*='item_polltype_secret']) {
+.item_polltype_no_vote {
+   color: grey !important;
+}
+
+a[class*="item_polltype_"]:not([class*='item_polltype_secret']):not([class*='item_polltype_no_vote']),
+span[class*="item_polltype_"]:not([class*='item_polltype_secret']):not([class*='item_polltype_no_vote']) {
    color: green !important;
 }
 

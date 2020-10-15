@@ -347,7 +347,8 @@ document.location.reload(true);
                    showNonAttendees python: 'nonAttendees' in usedMeetingAttributes or itemNonAttendees;
                    voters view/voters;
                    mayChangeAttendees python: context._mayChangeAttendees();
-                   secret context/getVotesAreSecret;"
+                   votesAreSecret view/votesAreSecret;
+                   pollType context/getPollType;"
        id="meeting_users"
        class="listing"
        cellspacing="0"
@@ -362,15 +363,19 @@ document.location.reload(true);
     <th class="header-attendee-signatory" tal:condition="showSignatories" i18n:translate="is_signer">Signer?</th>
     <th class="header-attendee-non-attendee" tal:condition="showNonAttendees" i18n:translate="is_non_attendee">Non attendee?</th>
     <tal:vote repeat="vote_infos itemVotes">
-     <th class="header-attendee-vote" class="nosort" tal:condition="not:secret">
+     <th class="header-attendee-vote" class="nosort">
       <span tal:condition="vote_infos/linked_to_previous"
             title="This vote is linked to previous vote"
             i18n:attributes="title"
             class="fa vote-linked-to-previous leading-icon"></span>
       <span i18n:translate="vote_values">Votes</span>
-      <tal:actions condition="mayChangeAttendees">
+      (<span i18n:translate=""
+             tal:attributes="class string:item_polltype_${pollType};"
+             tal:content="string:polltype_${pollType}">Poll type</span>)
+      <tal:actions condition="mayChangeAttendees"
+                   define="form_name python: votesAreSecret and 'item_encode_secret_votes_form' or 'item_encode_votes_form';">
        <br />
-       <a tal:attributes="href string:item_encode_votes_form?vote_number:int=${vote_infos/vote_number}"
+       <a tal:attributes="href string:${form_name}?vote_number:int=${vote_infos/vote_number}"
           title="Edit these votes"
           i18n:attributes="title"
           class="link-overlay-pm-encode-votes">
@@ -383,9 +388,10 @@ document.location.reload(true);
           i18n:attributes="title">
            <span class="fa delete-element"></span>
        </a>
-       <tal:last_vote_actions define="next_vote_number view/next_vote_number"
-                              condition="python: vote_infos['vote_number'] + 1 == next_vote_number">
-        <a tal:attributes="href string:item_encode_votes_form?vote_number:int=${next_vote_number}"
+       <tal:last_vote_actions
+            define="next_vote_number view/next_vote_number;"
+            condition="python: vote_infos['vote_number'] + 1 == next_vote_number">
+        <a tal:attributes="href string:${form_name}?vote_number:int=${next_vote_number}"
            title="Add new votes"
            i18n:attributes="title"
            class="link-overlay-pm-encode-votes">
@@ -394,7 +400,7 @@ document.location.reload(true);
         <tal:linked_to_previous define="show_icon python: view.show_add_vote_linked_to_previous_icon(vote_infos)">
          <a tal:define="next_vote_number view/next_vote_number"
             tal:condition="show_icon"
-            tal:attributes="href string:item_encode_votes_form?vote_number:int=${next_vote_number}&linked_to_previous:boolean=True"
+            tal:attributes="href string:${form_name}?vote_number:int=${next_vote_number}&linked_to_previous:boolean=True"
             title="Add new linked votes"
             i18n:attributes="title"
             class="link-overlay-pm-encode-votes">
@@ -414,8 +420,6 @@ document.location.reload(true);
       <span tal:condition="vote_infos/label"
             class="vote-label"
             tal:content="string:${vote_infos/label}">Votes count</span>
-     </th>
-     <th class="nosort" tal:condition="secret" align="left">
      </th>
     </tal:vote>
   </tr>
@@ -562,7 +566,7 @@ document.location.reload(true);
 
      </td>
 
-     <tal:vote repeat="vote_infos itemVotes">
+     <tal:vote repeat="vote_infos itemVotes" condition="not:votesAreSecret">
       <td align="center">
         <tal:comment replace="nothing">Show "vote" value the user voted for this item</tal:comment>
         <tal:voted condition="python: aUid in voters and aUid in vote_infos['voters']">
@@ -583,6 +587,22 @@ document.location.reload(true);
         <tal:not_voter condition="python: aUid not in voters">
           <span class="item-not-voter" i18n:attributes="title" title="Not voter">-</span>
         </tal:not_voter>
+      </td>
+     </tal:vote>
+
+     <tal:vote repeat="vote_infos itemVotes" condition="votesAreSecret">
+      <td align="center"
+          class="secret-vote"
+          tal:define="loop_index repeat/mUser/index"
+          tal:attributes="rowspan python:len(allUsers);"
+          tal:condition="python: loop_index == 0">
+        <tal:comment replace="nothing">Show "vote" value count</tal:comment>
+        <tal:loop repeat="vote_count view/counts">
+         <span tal:attributes="class python:'secret_vote_value ' + vote_count[2]"
+               tal:content="python:vote_count[0]"></span> :
+         <span tal:attributes="class python:'secret_vote_count ' + vote_count[2]"
+               tal:content="python:vote_count[1]"></span><br />
+        </tal:loop>
       </td>
      </tal:vote>
 

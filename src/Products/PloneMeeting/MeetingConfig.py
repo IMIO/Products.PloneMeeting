@@ -1,17 +1,12 @@
 # -*- coding: utf-8 -*-
 #
-# File: MeetingConfig.py
-#
-# Copyright (c) 2019 by Imio.be
-# Generator: ArchGenXML Version 2.7
-#            http://plone.org/products/archgenxml
-#
 # GNU General Public License (GPL)
 #
 
 from AccessControl import ClassSecurityInfo
 from AccessControl import Unauthorized
 from collections import OrderedDict
+from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.contact.plonegroup.utils import get_organization
 from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_plone_groups
@@ -105,6 +100,7 @@ from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.model.adaptations import _getValidationReturnedStates
 from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
 from Products.PloneMeeting.profiles import MeetingConfigDescriptor
+from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import computeCertifiedSignatures
 from Products.PloneMeeting.utils import createOrUpdatePloneGroup
 from Products.PloneMeeting.utils import duplicate_workflow
@@ -2490,7 +2486,6 @@ schema = Schema((
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
-
     StringField(
         name='voteCondition',
         default=defValues.voteCondition,
@@ -4921,16 +4916,16 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
              translate('polltype_mechanical',
                        domain='PloneMeeting',
                        context=self.REQUEST)),
-            ("no_vote",
-             translate('polltype_no_vote',
-                       domain='PloneMeeting',
-                       context=self.REQUEST)),
             ("secret",
              translate('polltype_secret',
                        domain='PloneMeeting',
                        context=self.REQUEST)),
             ("secret_separated",
              translate('polltype_secret_separated',
+                       domain='PloneMeeting',
+                       context=self.REQUEST)),
+            ("no_vote",
+             translate('polltype_no_vote',
                        domain='PloneMeeting',
                        context=self.REQUEST)),
         ]
@@ -5231,8 +5226,15 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('isVotable')
 
     def isVotable(self, item):
-        # exec 'condition = %s' % self.getVoteCondition()
-        return True
+        extra_expr_ctx = _base_extra_expr_ctx(item)
+        extra_expr_ctx.update({'item': item})
+        res = _evaluateExpression(
+            item,
+            expression=self.getVoteCondition(),
+            roles_bypassing_expression=[],
+            extra_expr_ctx=extra_expr_ctx,
+            empty_expr_is_true=True)
+        return res
 
     security.declarePublic('deadlinesAreEnabled')
 

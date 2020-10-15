@@ -330,19 +330,28 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
 
     def vote_counts(self, vote_number=0):
         """Returns an HTML string regarding votes count."""
+        data = []
         total_votes = self.context.getVoteCount('any_votable', vote_number)
+        number_of_votes_msg = translate(
+            'number_of_voters', domain='PloneMeeting', context=self.request)
+        data.append((number_of_votes_msg, total_votes, 'vote_value_number_of_voters'))
         res = [u'<span title="{0}">{1}</span>'.format(
-            translate('number_of_voters', domain='PloneMeeting', context=self.request),
+            number_of_votes_msg,
             total_votes)]
         pattern = u'<span class="vote_value_{0}" title="{1}">{2}</span>'
         for usedVoteValue in self.cfg.getUsedVoteValues(include_not_encoded=True):
+            translated_used_vote_value = translate(
+                'vote_value_{0}'.format(usedVoteValue),
+                domain='PloneMeeting',
+                context=self.request)
+            count = self.context.getVoteCount(usedVoteValue, vote_number)
             res.append(pattern.format(
                 usedVoteValue,
-                translate('vote_value_{0}'.format(usedVoteValue),
-                          domain='PloneMeeting',
-                          context=self.request),
-                self.context.getVoteCount(usedVoteValue, vote_number)))
+                translated_used_vote_value,
+                count))
+            data.append((translated_used_vote_value, count, 'vote_value_' + usedVoteValue))
         votes = u" / ".join(res)
+        self.counts = data
         return votes
 
     def compute_next_vote_number(self):
@@ -361,12 +370,15 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
                 res = True
             else:
                 # check vote_values not out of MeetingConfig.firstLinkedVoteUsedVoteValues
-                vote_values = [vote_value for vote_value in vote_infos['voters'].values()]
-                if not set(vote_values).difference(
-                    self.cfg.getUsedVoteValues(
-                        used_values_attr='firstLinkedVoteUsedVoteValues',
-                        include_not_encoded=True)):
+                if self.votesAreSecret:
                     res = True
+                else:
+                    vote_values = [vote_value for vote_value in vote_infos['voters'].values()]
+                    if not set(vote_values).difference(
+                        self.cfg.getUsedVoteValues(
+                            used_values_attr='firstLinkedVoteUsedVoteValues',
+                            include_not_encoded=True)):
+                        res = True
         return res
 
     def __call___cachekey(method, self):
@@ -380,6 +392,7 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
         meeting = self.context.getMeeting()
         ordered_contacts = meeting.orderedContacts.items()
         redefined_item_attendees = meeting._get_all_redefined_attendees(only_keys=False)
+        show_votes = self.context.showVotes()
         item_votes = self.context.getItemVotes(include_vote_number=False)
         context_uid = self.context.UID()
         # if something redefined for context or not
@@ -390,6 +403,7 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
                 cfg_modified,
                 ordered_contacts,
                 redefined_item_attendees,
+                show_votes,
                 item_votes,
                 may_change_attendees)
 
@@ -401,12 +415,18 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
         self.usedMeetingAttrs = self.cfg.getUsedMeetingAttributes()
         self.meeting = self.context.getMeeting()
         self.showVotes = self.context.showVotes()
-        self.voters = self.showVotes and self.context.getItemVoters() or []
-        self.itemVotes = self.showVotes and \
-            self.context.getItemVotes(
+        if self.showVotes:
+            self.votesAreSecret = self.context.getVotesAreSecret()
+            self.voters = self.context.getItemVoters() or []
+            self.itemVotes = self.context.getItemVotes(
                 include_unexisting=True,
                 ignored_vote_values=[NOT_VOTABLE_LINKED_TO_VALUE]) or []
-        self.next_vote_number = self.compute_next_vote_number()
+            self.next_vote_number = self.compute_next_vote_number()
+        else:
+            self.votesAreSecret = False
+            self.voters = None
+            self.itemVotes = None
+            self.next_vote_number = None
         return self.index()
 
 

@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from AccessControl import Unauthorized
 from DateTime import DateTime
 from plone import api

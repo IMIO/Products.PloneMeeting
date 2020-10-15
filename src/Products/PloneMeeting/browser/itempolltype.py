@@ -1,6 +1,9 @@
+# -*- coding: utf-8 -*-
+
 from AccessControl import Unauthorized
 from plone import api
 from Products.Five.browser import BrowserView
+from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import PloneMeetingError
 from Products.PloneMeeting.utils import ItemPollTypeChangedEvent
 from Products.PloneMeeting.utils import notifyModifiedAndReindex
@@ -57,9 +60,22 @@ class ChangeItemPollTypeView(BrowserView):
         if not self.context.adapted().mayChangePollType():
             raise Unauthorized
 
+        # if user tries to switch from a public pollType to a secret
+        # and vice-versa, it can not be done if some votes are encoded
+        old_pollType = self.context.getPollType()
+        is_switching_vote_mode = (old_pollType.startswith('secret') and
+                                  not new_value.startswith('secret')) or \
+                                 (not old_pollType.startswith('secret') and
+                                  new_value.startswith('secret'))
+        if (new_value == 'no_vote' or is_switching_vote_mode) and \
+           self.context.getItemVotes(include_unexisting=False):
+            can_not_switch_polltype_msg = _('can_not_switch_polltype_votes_encoded')
+            api.portal.show_message(
+                can_not_switch_polltype_msg, request=self.request, type='warning')
+            return
+
         # save old_pollType so we can pass it the the ItemPollTypeChangedEvent
         # set the new pollType and notify events
-        old_pollType = self.context.getPollType()
         self.context.setPollType(new_value)
         self.context._update_after_edit(idxs=['pollType'])
         try:
@@ -68,11 +84,9 @@ class ChangeItemPollTypeView(BrowserView):
             # back to original state
             self.context.setPollType(old_pollType)
             self.context._update_after_edit(idxs=['pollType'])
-            plone_utils = api.portal.get_tool('plone_utils')
-            plone_utils.addPortalMessage(msg, type='warning')
+            api.portal.show_message(msg, type='warning')
 
         # an item's pollType has been changed, notify meeting
         if self.context.hasMeeting():
             meeting = self.context.getMeeting()
             notifyModifiedAndReindex(meeting)
-        self.request.RESPONSE.redirect(self.context.absolute_url())

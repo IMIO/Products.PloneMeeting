@@ -444,12 +444,13 @@ class MeetingConfigDescriptor(Descriptor):
                          'customAdvisers', 'selectableCopyGroups', 'itemCopyGroupsStates', 'votesEncoder',
                          'meetingTopicStates', 'decisionTopicStates', 'itemFieldsToKeepConfigSortingFor',
                          'listTypes', 'selectablePrivacies', 'xhtmlTransformFields', 'xhtmlTransformTypes',
-                         'usedVoteValues', 'insertingMethodsOnAddItem',
+                         'usedVoteValues', 'firstLinkedVoteUsedVoteValues', 'nextLinkedVotesUsedVoteValues',
+                         'usedPollTypes', 'insertingMethodsOnAddItem',
                          'annexRestrictShownAndEditableAttributes', 'itemAnnexConfidentialVisibleFor',
                          'adviceAnnexConfidentialVisibleFor', 'meetingAnnexConfidentialVisibleFor',
                          'enableAdviceConfidentiality', 'adviceConfidentialityDefault', 'adviceConfidentialFor',
                          'hideNotViewableLinkedItemsTo', 'inheritedAdviceRemoveableByAdviser', 'usingGroups',
-                         'hideHistoryTo')
+                         'hideHistoryTo', )
     excludedFields = ['maxDaysDecisions', 'meetingAppDefaultView',
                       'addContactsCSV', 'orderedContacts', 'orderedItemInitiators',
                       'meetingItemTemplatesToStoreAsAnnex',
@@ -843,7 +844,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.usedVoteValues = ('yes', 'no', 'abstain')
         self.firstLinkedVoteUsedVoteValues = ('no', 'abstain')
         self.nextLinkedVotesUsedVoteValues = ('yes', )
-        self.voteCondition = 'True'
+        self.voteCondition = ''
 
         # Contacts parameters -----------------------------------------------------
         # bulk import of contacts using CSV related files

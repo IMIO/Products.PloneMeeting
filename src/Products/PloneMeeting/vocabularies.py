@@ -33,7 +33,7 @@ from plone.app.vocabularies.users import UsersFactory
 from plone.memoize import ram
 from plone.uuid.interfaces import ATTRIBUTE_NAME
 from Products.CMFPlone.utils import safe_unicode
-from Products.PloneMeeting.browser.itemattendee import next_vote_is_linked
+from Products.PloneMeeting.browser.itemvotes import next_vote_is_linked
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import CONSIDERED_NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import EMPTY_STRING

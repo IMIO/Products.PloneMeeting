@@ -6,6 +6,7 @@
 
   <include package="z3c.form" file="meta.zcml" />
 
+  <!-- checkbox -->
   <z3c:widgetTemplate
     mode="input"
     widget=".pm_checkbox.IPMCheckBoxWidget"
@@ -17,5 +18,20 @@
     widget=".pm_checkbox.IPMCheckBoxWidget"
     template="pm_checkbox_display.pt"
     layer="z3c.form.interfaces.IFormLayer" />
+
+  <!-- text -->
+  <z3c:widgetTemplate
+    mode="input"
+    widget=".pm_number.IPMNumberWidget"
+    template="pm_number_input.pt"
+    layer="z3c.form.interfaces.IFormLayer" />
+
+  <!-- readonly select -->
+  <z3c:widgetTemplate
+    mode="input"
+    widget=".pm_selectreadonly.PMSelectReadonlyWidget"
+    template="pm_selectreadonly_input.pt"
+    layer="z3c.form.interfaces.IFormLayer" />
+
 
 </configure>

@@ -421,13 +421,19 @@
        for="Products.PloneMeeting.interfaces.IMeetingItem"
        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
        name="item_encode_votes_form"
-       class=".itemattendee.EncodeVotesFormWrapper"
+       class=".itemvotes.EncodeVotesFormWrapper"
+       permission="zope2.View" />
+     <browser:page
+       for="Products.PloneMeeting.interfaces.IMeetingItem"
+       layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+       name="item_encode_secret_votes_form"
+       class=".itemvotes.EncodeSecretVotesFormWrapper"
        permission="zope2.View" />
    <browser:view
        for="Products.PloneMeeting.interfaces.IMeetingItem"
        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
        name="item_delete_vote"
-       class=".itemattendee.ItemDeleteVoteView"
+       class=".itemvotes.ItemDeleteVoteView"
        permission="zope2.View" />
 
     <!-- Asynchronous calls (ajax) -->
