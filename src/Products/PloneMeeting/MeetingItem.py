@@ -6731,6 +6731,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Gets the number of votes for p_vote_value.
            A special value 'any_votable' may be passed for p_vote_value,
            in this case every values other than NOT_VOTABLE_LINKED_TO_VALUE are counted.'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
         res = 0
         itemVotes = self.getItemVotes(vote_number)
         item_voter_uids = self.getItemVoters()
@@ -6755,12 +6757,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             elif vote_value == 'any_votable':
                 res = len(item_voter_uids)
             elif vote_value == NOT_ENCODED_VOTE_VALUE:
-                tool = api.portal.get_tool('portal_plonemeeting')
-                cfg = tool.getMeetingConfig(self)
                 total = len(item_voter_uids)
                 voted = sum([item_vote_count or 0 for item_vote_value, item_vote_count in itemVotes.items()
                              if item_vote_value in cfg.getUsedVoteValues()])
                 res = total - voted
+            elif vote_value == 'any_voted':
+                res = sum([item_vote_count or 0 for item_vote_value, item_vote_count in itemVotes.items()
+                           if item_vote_value in cfg.getUsedVoteValues()])
         return res
 
     security.declarePublic('setFieldFromAjax')

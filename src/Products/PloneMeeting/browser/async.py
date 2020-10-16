@@ -2,6 +2,7 @@
 
 from AccessControl import Unauthorized
 from imio.helpers.cache import get_cachekey_volatile
+from imio.helpers.content import get_vocab
 from plone import api
 from plone.memoize import ram
 from Products.CMFCore.permissions import ModifyPortalContent
@@ -328,31 +329,45 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
         """ """
         return self.meeting is not None
 
-    def vote_counts(self, vote_number=0):
+    def vote_counts(self):
         """Returns an HTML string regarding votes count."""
         data = []
-        total_votes = self.context.getVoteCount('any_votable', vote_number)
-        number_of_votes_msg = translate(
-            'number_of_voters', domain='PloneMeeting', context=self.request)
-        data.append((number_of_votes_msg, total_votes, 'vote_value_number_of_voters'))
-        res = [u'<span title="{0}">{1}</span>'.format(
-            number_of_votes_msg,
-            total_votes)]
-        pattern = u'<span class="vote_value_{0}" title="{1}">{2}</span>'
-        for usedVoteValue in self.cfg.getUsedVoteValues(include_not_encoded=True):
-            translated_used_vote_value = translate(
-                'vote_value_{0}'.format(usedVoteValue),
-                domain='PloneMeeting',
-                context=self.request)
-            count = self.context.getVoteCount(usedVoteValue, vote_number)
-            res.append(pattern.format(
-                usedVoteValue,
-                translated_used_vote_value,
-                count))
-            data.append((translated_used_vote_value, count, 'vote_value_' + usedVoteValue))
-        votes = u" / ".join(res)
-        self.counts = data
-        return votes
+        counts = []
+        for vote_number in range(len(self.itemVotes)):
+            sub_counts = []
+            total_votes = self.context.getVoteCount('any_votable', vote_number)
+            number_of_votes_msg = translate(
+                'number_of_voters', domain='PloneMeeting', context=self.request)
+            res = [u'<span title="{0}">{1}</span>'.format(
+                number_of_votes_msg,
+                total_votes)]
+            # specify how much voted for this vote if secret
+            if self.votesAreSecret:
+                voted = self.context.getVoteCount('any_voted', vote_number)
+                total_votes = "{0} / {1}".format(voted, total_votes)
+            sub_counts.append((number_of_votes_msg, total_votes, 'vote_value_number_of_voters'))
+
+            pattern = u'<span class="vote_value_{0}" title="{1}">{2}</span>'
+            used_vote_terms = get_vocab(
+                self.context,
+                "Products.PloneMeeting.vocabularies.usedvotevaluesvocabulary",
+                vote_number=vote_number)
+            usedVoteValues = [term.token for term in used_vote_terms._terms]
+            for usedVoteValue in usedVoteValues:
+                translated_used_vote_value = translate(
+                    'vote_value_{0}'.format(usedVoteValue),
+                    domain='PloneMeeting',
+                    context=self.request)
+                count = self.context.getVoteCount(usedVoteValue, vote_number)
+                res.append(pattern.format(
+                    usedVoteValue,
+                    translated_used_vote_value,
+                    count))
+                sub_counts.append((translated_used_vote_value, count, 'vote_value_' + usedVoteValue))
+            votes = u" / ".join(res)
+            data.append(votes)
+            counts.append(sub_counts)
+        return data, counts
 
     def compute_next_vote_number(self):
         """Return next vote_number."""
@@ -371,14 +386,15 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
             else:
                 # check vote_values not out of MeetingConfig.firstLinkedVoteUsedVoteValues
                 if self.votesAreSecret:
-                    res = True
+                    vote_values = [vote_value for vote_value, vote_count in vote_infos.items()
+                                   if vote_count and vote_value in self.cfg.getUsedVoteValues()]
                 else:
                     vote_values = [vote_value for vote_value in vote_infos['voters'].values()]
-                    if not set(vote_values).difference(
-                        self.cfg.getUsedVoteValues(
-                            used_values_attr='firstLinkedVoteUsedVoteValues',
-                            include_not_encoded=True)):
-                        res = True
+                if not set(vote_values).difference(
+                    self.cfg.getUsedVoteValues(
+                        used_values_attr='firstLinkedVoteUsedVoteValues',
+                        include_not_encoded=True)):
+                    res = True
         return res
 
     def __call___cachekey(method, self):
@@ -422,11 +438,15 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
                 include_unexisting=True,
                 ignored_vote_values=[NOT_VOTABLE_LINKED_TO_VALUE]) or []
             self.next_vote_number = self.compute_next_vote_number()
+            vote_counts = self.vote_counts()
+            self.displayable_counts = vote_counts[0]
+            self.counts = vote_counts[1]
         else:
             self.votesAreSecret = False
             self.voters = None
             self.itemVotes = None
             self.next_vote_number = None
+            self.counts = None
         return self.index()
 
 

@@ -143,8 +143,8 @@ class ByeByeAttendeeForm(BaseAttendeeForm):
 
     def _mayByeByeAttendeePrecondition(self, items_to_update):
         """Are there condition at execution time that
-           makes attendee ny byebyeable?
-           This is the case if used in votes."""
+           makes attendee byebyeable?
+           This is the case if used in votes, redefined signatory, ..."""
         error = False
         for item_to_update in items_to_update:
             # item signatory
@@ -170,22 +170,56 @@ class ByeByeAttendeeForm(BaseAttendeeForm):
                     request=self.request)
                 error = True
             # item voter
-            all_item_votes = item_to_update.getItemVotes(ignored_vote_values=[NOT_ENCODED_VOTE_VALUE])
-            hp_uid_in_voters = bool([item_vote for item_vote in all_item_votes
-                                     if self.person_uid in item_vote['voters']])
-            if hp_uid_in_voters:
-                api.portal.show_message(
-                    _("Can not set ${not_present_type} a person that voted on an item!",
-                      mapping={'not_present_type': _('item_not_present_type_{0}'.format(self.not_present_type))}),
-                    type='warning',
-                    request=self.request)
-                error = True
+            # if not a voter, continue
+            tool = api.portal.get_tool('portal_plonemeeting')
+            cfg = tool.getMeetingConfg(item_to_update)
+            if cfg.getUseVotes():
+                voters = item_to_update.getItemVoters()
+                if self.person_uid in voters:
+                    # secret
+                    if item_to_update.getVotesAreSecret():
+                        # is there place to remove a voter?
+                        len_voters = len(voters)
+                        all_item_votes = item_to_update.getItemVotes()
+                        i = 0
+                        for item_vote in all_item_votes:
+                            encoded_votes_count = item_to_update.getVoteCount(
+                                vote_value='any_votable', vote_number=i)
+                            if len_voters == encoded_votes_count:
+                                api.portal.show_message(
+                                    _("Can not set ${not_present_type} "
+                                      "a person that voted on an item!",
+                                      mapping={
+                                          'not_present_type':
+                                              _('item_not_present_type_{0}'.format(
+                                                self.not_present_type))}),
+                                    type='warning',
+                                    request=self.request)
+                                error = True
+                    # public
+                    else:
+                        all_item_votes = item_to_update.getItemVotes(
+                            ignored_vote_values=[NOT_ENCODED_VOTE_VALUE])
+                        hp_uid_in_voters = bool([item_vote for item_vote in all_item_votes
+                                                 if self.person_uid in item_vote['voters']])
+                        if hp_uid_in_voters:
+                            api.portal.show_message(
+                                _("Can not set ${not_present_type} "
+                                  "a person that voted on an item!",
+                                  mapping={
+                                      'not_present_type':
+                                          _('item_not_present_type_{0}'.format(
+                                            self.not_present_type))}),
+                                type='warning',
+                                request=self.request)
+                            error = True
 
             if error:
                 if item_to_update != self.context:
                     api.portal.show_message(
-                        _("Please check item at ${item_url}.",
-                          mapping={'item_url': item_to_update.absolute_url()}),
+                        _("Please check item number ${item_number} at ${item_url}.",
+                          mapping={'item_number': item_to_update.getItemNumber(for_display=True),
+                                   'item_url': item_to_update.absolute_url()}),
                         type='warning',
                         request=self.request)
                 break

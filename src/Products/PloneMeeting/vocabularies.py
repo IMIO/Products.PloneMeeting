@@ -1022,22 +1022,23 @@ ListTypesVocabularyFactory = ListTypesVocabulary()
 class UsedVoteValuesVocabulary(object):
     implements(IVocabularyFactory)
 
-    def __call___cachekey(method, self, context):
-        '''cachekey method for self.__call__.'''
-        context = get_context_with_request(None)
-        return str(hasattr(context, 'REQUEST') and context.REQUEST._debug or None)
-
-    def is_first_linked_vote(self):
+    def is_first_linked_vote(self, vote_number):
         """ """
         itemVotes = self.context.getItemVotes()
-        return next_vote_is_linked(itemVotes, self.vote_number)
+        return next_vote_is_linked(itemVotes, vote_number)
 
     def is_linked_vote(self):
         """ """
         return self.item_vote['linked_to_previous']
 
+    def __call___cachekey(method, self, context, vote_number=None):
+        '''cachekey method for self.__call__.'''
+        context = get_context_with_request(None)
+        request_debug = str(hasattr(context, 'REQUEST') and context.REQUEST._debug or None)
+        return request_debug, vote_number
+
     @ram.cache(__call___cachekey)
-    def __call__(self, context):
+    def __call__(self, context, vote_number=None):
         """ """
         # as used in a datagridfield, context may vary...
         self.context = get_context_with_request(None)
@@ -1046,17 +1047,19 @@ class UsedVoteValuesVocabulary(object):
         res = []
         # get vote_number, as _voter_number when editing
         # as form.widgets.vote_number when saving
-        self.vote_number = int(self.context.REQUEST.form.get(
-            'vote_number',
-            self.context.REQUEST.form.get('form.widgets.vote_number')))
-        self.item_vote = self.context.getItemVotes(vote_number=self.vote_number)
+        if vote_number is None:
+            vote_number = int(self.context.REQUEST.form.get(
+                'vote_number',
+                self.context.REQUEST.form.get('form.widgets.vote_number')))
+        self.item_vote = self.context.getItemVotes(vote_number=vote_number)
         used_values_attr = 'usedVoteValues'
         if self.is_linked_vote():
             used_values_attr = 'nextLinkedVotesUsedVoteValues'
-        elif self.is_first_linked_vote():
+        elif self.is_first_linked_vote(vote_number):
             used_values_attr = 'firstLinkedVoteUsedVoteValues'
         for usedVoteValue in cfg.getUsedVoteValues(
-                used_values_attr=used_values_attr, include_not_encoded=True):
+                used_values_attr=used_values_attr,
+                include_not_encoded=not self.context.getVotesAreSecret()):
             res.append(
                 SimpleTerm(
                     usedVoteValue,

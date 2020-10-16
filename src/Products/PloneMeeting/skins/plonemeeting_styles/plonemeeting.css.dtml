@@ -1690,15 +1690,9 @@ table.listing tbody tr.even.dragging td {
 #content span.edit-element:before {
    content: "\f304";
 }
-#content span.edit-element {
-   color: #ffce09;
-}
 /* linked-to-previous icon */
 #content span.vote-linked-to-previous:before {
    content: "\f12e";
-}
-#content span.vote-linked-to-previous {
-   color: &dtml-linkColor;;
 }
 /* add icon */
 #content span.add-element:before {

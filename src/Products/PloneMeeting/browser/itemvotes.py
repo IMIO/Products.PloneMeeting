@@ -179,29 +179,31 @@ class IEncodeVotes(IBaseAttendee):
 def _get_linked_item_vote_numbers(context, meeting, vote_number=0):
     """Return every votes linked to given p_vote_number."""
     res = []
-    item_votes = meeting.itemVotes[context.UID()]
-    len_item_votes = len(item_votes)
-
-    origin_is_linked = item_votes[vote_number]['linked_to_previous']
-
-    if origin_is_linked:
-        # find first
-        i = vote_number - 1
-        while i and item_votes[i]['linked_to_previous']:
+    item_votes = meeting.itemVotes.get(context.UID())
+    if item_votes:
+        len_item_votes = len(item_votes)
+        # while adding new secret vote, vote_number does still not exist
+        if len(item_votes) > vote_number:
+            origin_is_linked = item_votes[vote_number]['linked_to_previous']
+        else:
+            origin_is_linked = bool(context.REQUEST.form.get('form.widgets.linked_to_previous'))
+        if origin_is_linked:
+            # find first
+            i = vote_number - 1
+            while i and item_votes[i]['linked_to_previous']:
+                res.append(i)
+                i -= 1
+            # i is now on the vote previous first 'linked_to_previous', keep it
             res.append(i)
-            i -= 1
-        # i is now on the vote previous first 'linked_to_previous', keep it
-        res.append(i)
-
-    # not origin_is_linked only way is next or origin_is_linked, need to get next too
-    res.append(vote_number)
-    i = vote_number + 1
-    while i < len_item_votes and item_votes[i]['linked_to_previous']:
-        res.append(i)
-        i += 1
-    # not linked, return an empty list
-    if res == [vote_number]:
-        res = []
+        # not origin_is_linked only way is next or origin_is_linked, need to get next too
+        res.append(vote_number)
+        i = vote_number + 1
+        while i < len_item_votes and item_votes[i]['linked_to_previous']:
+            res.append(i)
+            i += 1
+        # not linked, return an empty list
+        if res == [vote_number]:
+            res = []
     return res
 
 
@@ -321,11 +323,11 @@ class EncodeVotesForm(BaseAttendeeForm):
 
         # finish
         voter_uids = [vote['voter_uid'] for vote in self.votes]
-        voter_uids = "_".join(voter_uids)
+        voter_uids = "__".join(voter_uids)
         vote_values = [vote['vote_value'] for vote in self.votes]
-        vote_values = "_".join(vote_values)
-        extras = 'item={0} voter_uids={1} vote_values={2}'.format(
-            repr(self.context), voter_uids, vote_values)
+        vote_values = "__".join(vote_values)
+        extras = 'item={0} vote_number={1} voter_uids={2} vote_values={3}'.format(
+            repr(self.context), self.vote_number, voter_uids, vote_values)
         fplog('encode_item_votes', extras=extras)
         api.portal.show_message(
             _("Votes have been encoded for current item."),
@@ -343,9 +345,10 @@ def secret_votes_default(context):
     item_votes = context.getItemVotes(vote_number=vote_number,
                                       ignored_vote_values=[NOT_VOTABLE_LINKED_TO_VALUE])
 
-    tool = api.portal.get_tool('portal_plonemeeting')
-    cfg = tool.getMeetingConfig(context)
-    usedVoteValues = cfg.getUsedVoteValues()
+    used_vote_terms = get_vocab(
+        context, "Products.PloneMeeting.vocabularies.usedvotevaluesvocabulary")
+    usedVoteValues = [term.token for term in used_vote_terms._terms
+                      if term.token != NOT_ENCODED_VOTE_VALUE]
     for usedVoteValue in usedVoteValues:
         data = {'vote_value_id': usedVoteValue,
                 'vote_value': usedVoteValue,
@@ -409,10 +412,27 @@ class IEncodeSecretVotes(IBaseAttendee):
         # while datagrid used in an overlay, some <NO_VALUE>
         # wipeout self.votes from these values
         context = get_context_with_request(None)
+        meeting = context.getMeeting()
         votes = [vote for vote in data.votes if isinstance(vote, dict)]
         data.votes = votes
+        # check if max voters of every linked secret votes is not exceeded
+        linked_vote_numbers = _get_linked_item_vote_numbers(context, meeting, data.vote_number)
         max_voters = len(context.getItemVoters())
-        total = sum([vote['vote_count'] for vote in votes])
+        if linked_vote_numbers:
+            # init at current value
+            total = sum([vote['vote_count'] for vote in data.votes])
+            for linked_vote_number in linked_vote_numbers:
+                if linked_vote_number != data.vote_number:
+                    linked_vote = context.getItemVotes(vote_number=linked_vote_number)
+                    used_vote_terms = get_vocab(
+                        context,
+                        "Products.PloneMeeting.vocabularies.usedvotevaluesvocabulary",
+                        vote_number=linked_vote_number)
+                    usedVoteValues = [term.token for term in used_vote_terms._terms]
+                    total += sum([vote_count for vote_value, vote_count in linked_vote.items()
+                                  if vote_value in usedVoteValues])
+        else:
+            total = sum([vote['vote_count'] for vote in votes])
         if total > max_voters:
             msg = translate(u'error_can_not_encode_more_than_max_voters',
                             domain="PloneMeeting",
@@ -465,7 +485,6 @@ class EncodeSecretVotesForm(BaseAttendeeForm):
         data = {}
         data['label'] = self.label
         data['linked_to_previous'] = self.linked_to_previous
-        data['voters'] = PersistentMapping()
         for vote in self.votes:
             data[vote['vote_value_id']] = vote['vote_count']
         item_uid = self.context.UID()
@@ -489,11 +508,11 @@ class EncodeSecretVotesForm(BaseAttendeeForm):
 
         # finish
         vote_values = [vote['vote_value_id'] for vote in self.votes]
-        vote_values = "_".join(vote_values)
+        vote_values = "__".join(vote_values)
         vote_count = [str(vote['vote_count']) for vote in self.votes]
-        vote_count = "_".join(vote_count)
-        extras = 'item={0} vote_values={1} vote_count={2}'.format(
-            repr(self.context), vote_values, vote_count)
+        vote_count = "__".join(vote_count)
+        extras = 'item={0} vote_number={1} vote_values={2} vote_count={3}'.format(
+            repr(self.context), self.vote_number, vote_values, vote_count)
         fplog('encode_item_secret_votes', extras=extras)
         api.portal.show_message(
             _("Votes have been encoded for current item."),
@@ -510,41 +529,57 @@ class ItemDeleteVoteView(BrowserView):
         """ """
         # redirect can by passed by jQuery, in this case, we receive '0' or '1'
         redirect = boolean_value(redirect)
-        object_uid = int(object_uid)
+        vote_number = int(object_uid)
         item_uid = self.context.UID()
         meeting = self.context.getMeeting()
         if item_uid in meeting.itemVotes:
             itemVotes = meeting.itemVotes[item_uid]
-            assert self.context._mayDeleteVote(itemVotes, object_uid)
+            assert self.context._mayDeleteVote(itemVotes, vote_number)
 
-            vote_to_delete = itemVotes[object_uid]
-            originnal_voter_uids = [voter_uid for voter_uid in vote_to_delete['voters']]
-            originnal_voter_uids = "_".join(originnal_voter_uids)
-            originnal_vote_values = [vote_value for vote_value in vote_to_delete['voters'].values()]
-            originnal_vote_values = "_".join(originnal_vote_values)
-            # call clean_voters_linked_to with every values NOT_ENCODED_VOTE_VALUE
-            # to liberate every values
-            new_voters = vote_to_delete['voters'].copy()
-            new_voters = {voter_uid: NOT_ENCODED_VOTE_VALUE
-                          for voter_uid, vote_value in new_voters.items()
-                          if vote_value != NOT_VOTABLE_LINKED_TO_VALUE}
-            clean_voters_linked_to(self.context, meeting, object_uid, new_voters)
+            vote_to_delete = itemVotes[vote_number]
+            if self.context.getVotesAreSecret():
+                used_vote_terms = get_vocab(
+                    self.context,
+                    "Products.PloneMeeting.vocabularies.usedvotevaluesvocabulary",
+                    vote_number=vote_number)
+                usedVoteValues = [term.token for term in used_vote_terms._terms]
+                originnal_vote_keys = [str(vote_count) for vote_value, vote_count in vote_to_delete.items()
+                                       if vote_value in usedVoteValues]
+                originnal_vote_keys = "__".join(originnal_vote_keys)
+                originnal_vote_values = [vote_value for vote_value, vote_count in vote_to_delete.items()
+                                         if vote_value in usedVoteValues]
+                originnal_vote_values = "__".join(originnal_vote_values)
+                fp_extras_pattern = 'item={0} vote_number={1} vote_label={2} vote_count={3} vote_values={4}'
+            else:
+                originnal_vote_keys = [voter_uid for voter_uid in vote_to_delete['voters']]
+                originnal_vote_keys = "__".join(originnal_vote_keys)
+                originnal_vote_values = [vote_value for vote_value in vote_to_delete['voters'].values()]
+                originnal_vote_values = "__".join(originnal_vote_values)
+                fp_extras_pattern = 'item={0} vote_number={1} vote_label={2} voter_uids={3} vote_values={4}'
+                # call clean_voters_linked_to with every values NOT_ENCODED_VOTE_VALUE
+                # to liberate every values
+                new_voters = vote_to_delete['voters'].copy()
+                new_voters = {voter_uid: NOT_ENCODED_VOTE_VALUE
+                              for voter_uid, vote_value in new_voters.items()
+                              if vote_value != NOT_VOTABLE_LINKED_TO_VALUE}
+                clean_voters_linked_to(self.context, meeting, vote_number, new_voters)
+
             # delete from meeting itemVote
-            deleted_vote = meeting.itemVotes[item_uid].pop(object_uid)
+            deleted_vote = meeting.itemVotes[item_uid].pop(vote_number)
             # if deleted last existing vote (vote_number 0) remove context UID from meeting itemVotes
             if not meeting.itemVotes[item_uid]:
                 del meeting.itemVotes[item_uid]
             # finish deletion
-            extras = 'item={0} vote_number={1} vote_label={2} voter_uids={3} vote_values={4}'.format(
+            extras = fp_extras_pattern.format(
                 repr(self.context),
-                object_uid,
+                vote_number,
                 deleted_vote['label'],
-                originnal_voter_uids,
+                originnal_vote_keys,
                 originnal_vote_values)
             fplog('delete_item_votes', extras=extras)
         # message
         api.portal.show_message(
             _("Votes number ${vote_number} have been deleted for current item.",
-              mapping={'vote_number': object_uid + 1}),
+              mapping={'vote_number': vote_number + 1}),
             request=self.request)
         self._finished = True

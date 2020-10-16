@@ -415,7 +415,7 @@ document.location.reload(true);
        </tal:last_vote_actions>
       </tal:actions>
       <br />
-      <span class="vote-number" tal:content="structure python: view.vote_counts(vote_infos['vote_number'])">Votes count</span>
+      <span class="vote-number" tal:content="structure python: view.displayable_counts[vote_infos['vote_number']]">Votes count</span>
       <br />
       <span tal:condition="vote_infos/label"
             class="vote-label"
@@ -597,7 +597,7 @@ document.location.reload(true);
           tal:attributes="rowspan python:len(allUsers);"
           tal:condition="python: loop_index == 0">
         <tal:comment replace="nothing">Show "vote" value count</tal:comment>
-        <tal:loop repeat="vote_count view/counts">
+        <tal:loop repeat="vote_count python: view.counts[vote_infos['vote_number']]">
          <span tal:attributes="class python:'secret_vote_value ' + vote_count[2]"
                tal:content="python:vote_count[0]"></span> :
          <span tal:attributes="class python:'secret_vote_count ' + vote_count[2]"
