@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.1.28.10 (unreleased)
+4.1.28.10 (2020-10-19)
 ----------------------
 
 - Do not let `siteadmin` delete a user in production application because,
