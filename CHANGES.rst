@@ -5,8 +5,13 @@ Changelog
 4.1.28.10 (unreleased)
 ----------------------
 
-- Nothing changed yet.
+- Do not let `siteadmin` delete a user in production application because,
+  that could lead to :
 
+  - losing information (`fullname`) on elements the user interacted with;
+  - loading the application and maybe break it as `local_roles` are recomputed
+    on every existing elements by Plone when deleting a user.
+  [gbastien]
 
 4.1.28.9 (2020-10-12)
 ---------------------

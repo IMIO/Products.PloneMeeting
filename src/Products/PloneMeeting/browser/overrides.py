@@ -1540,8 +1540,11 @@ class PMBaseOverviewControlPanel(UsersGroupsControlPanelView):
         adapted_results = []
         for item in results:
             adapted_item = item.copy()
+            # only keep some relevant roles
             for role in self.portal_roles:
                 adapted_item['roles'][role]['canAssign'] = False
+            # remove possibility to remove user from UI
+            adapted_item['can_delete'] = False
             adapted_results.append(adapted_item)
         return adapted_results
 
