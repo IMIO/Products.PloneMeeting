@@ -11,7 +11,7 @@ Changelog
   - losing information (`fullname`) on elements the user interacted with;
   - loading the application and maybe break it as `local_roles` are recomputed
     on every existing elements by Plone when deleting a user.
-  [gbastien]
+    [gbastien]
 
 4.1.28.9 (2020-10-12)
 ---------------------
