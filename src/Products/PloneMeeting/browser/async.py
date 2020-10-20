@@ -426,6 +426,7 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
     #@ram.cache(__call___cachekey)
     def __call__(self):
         """ """
+        self.error_msg = self.request.get('attendees_error_msg')
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
         self.usedMeetingAttrs = self.cfg.getUsedMeetingAttributes()

@@ -8,6 +8,7 @@ from Products.PloneMeeting.browser.itemassembly import _itemsToUpdate
 from Products.PloneMeeting.browser.itemassembly import validate_apply_until_item_number
 from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
 from Products.PloneMeeting.config import PMMessageFactory as _
+from Products.PloneMeeting.interfaces import IRedirect
 from Products.PloneMeeting.utils import _itemNumber_to_storedItemNumber
 from Products.PloneMeeting.utils import fplog
 from z3c.form import button
@@ -49,6 +50,7 @@ class BaseAttendeeForm(form.Form):
         self.context = context
         self.request = request
         self.label = translate(self.label, domain='PloneMeeting', context=request)
+        self.request.set('disable_border', 1)
 
     def updateWidgets(self):
         # XXX manipulate self.fields BEFORE doing form.Form.updateWidgets
@@ -98,6 +100,8 @@ class BaseAttendeeForm(form.Form):
     @button.buttonAndHandler(_('Cancel'), name='cancel')
     def handleCancel(self, action):
         self._finished = True
+        IRedirect(self.request).redirect(self.context.absolute_url())
+        return ""
 
     def mayChangeAttendees(self):
         """ """
@@ -109,7 +113,10 @@ class BaseAttendeeForm(form.Form):
 
     def render(self):
         if self._finished:
-            self.request.RESPONSE.redirect(self.context.absolute_url())
+            # make sure we return nothing, taken into account by ajax query
+            self.request.RESPONSE.setStatus(204)
+            if not self.request.form.get('ajax_load', ''):
+                IRedirect(self.request).redirect(self.context.absolute_url())
             return ""
         return super(BaseAttendeeForm, self).render()
 

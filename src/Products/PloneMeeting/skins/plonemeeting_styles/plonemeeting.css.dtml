@@ -1644,6 +1644,16 @@ table.listing tbody tr.even.dragging td {
     background-color: #ffa;
 }
 
+/* refresh attendees */
+#content span.refresh-attendees:before {
+    content: "\f2f1";
+}
+#content div.refresh-attendees-container {
+    display: inline;
+    padding-left: 2em;
+    cursor: pointer;
+}
+
 /* check in item people tables */
 #content span.people-checked:before,
 #content span.people-signatory-checked:before {

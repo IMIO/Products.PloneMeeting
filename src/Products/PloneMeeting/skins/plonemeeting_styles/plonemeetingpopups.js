@@ -59,17 +59,79 @@ function advicePreview() {
 function editVotes() {
     jQuery(function($){
         $('a.link-overlay-pm-encode-votes').prepOverlay({
+            api: true,
             subtype: 'ajax',
+            noform: 'redirect',
+            redirect: $.plonepopups.redirectbasehref,
             closeselector: '[name="form.buttons.cancel"]',
             config: {
                 onBeforeLoad : function (e) {
                     // odd even for datagridfield
                     $('table tbody').each(setoddeven);
-                    return true;
+                    // onclick for submit button
+                    $('input#form-buttons-apply').click(function(event) {
+                      event.preventDefault();
+                      var data = {'ajax_load': true};
+                      $(this.form.elements).each(function(){
+                          // use checked instead value for checkbox and radio
+                          if (this.type == 'checkbox' && !this.checked) {
+                            // unchecked checkboxes are ignored
+                            return;
+                          }
+                          if (this.type == 'radio') {
+                            if (this.checked) {
+                              data[this.name] = this.value;
+                            }
+                            else {
+                              return;
+                            }
+                          }
+                          // default
+                          data[this.name] = this.value;
+                        });
+                      $.ajax( {
+                      type: 'POST',
+                      url: this.form.action,
+                      data: data,
+                      cache: false,
+                      async: true,
+                      success: function(data) {
+                            if (data) {
+                              $("div.pb-ajax div")[0].innerHTML = data;
+                            }
+                            else {
+                              refresh_attendees(highlight=null, click_cancel=true);
+                            }
+                      },
+                      error: function(jqXHR, textStatus, errorThrown) {
+                        window.location.href = canonical_url();
+                      }, } ); });
+                return true;
                 },
+              onClose : function (e) {
+                highlight_attendees('.vote-value');
+              },
             }
        });
     });
+}
+
+// refresh attendees panel
+function refresh_attendees(highlight=null, click_cancel=false) {
+  tag = $("#collapsible-assembly-and-signatures");
+  result = loadCollapsibleContent(
+    tag, load_view='@@load_item_assembly_and_signatures?msg=error', async=false);
+  if (click_cancel) {
+    $('input#form-buttons-cancel').click();
+  }
+  if (highlight) {
+    $.when(highlight_attendees(highlight));
+  }
+}
+// highlight votes when is is refreshed
+function highlight_attendees(highlight_selector=null) {
+  $.when($("#collapsible-assembly-and-signatures table tr td" + highlight_selector).effect(
+    'highlight', {}, 2000));
 }
 
 // the content history popup

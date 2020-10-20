@@ -356,7 +356,12 @@ document.location.reload(true);
   <tal:comment replace="nothing">Column headers</tal:comment>
   <thead>
   <tr valign="top" class="nosort">
-    <th class="header-attendee-item-specific" i18n:translate="item_specific"></th>
+    <th class="header-attendee-item-specific">
+     <span i18n:translate="item_specific"></span>
+     <div class="refresh-attendees-container" onclick="refresh_attendees(highlight='.attendee-value');">
+      <span class="fa refresh-attendees"></span>
+     </div>
+    </th>
     <th class="header-attendee-present" i18n:translate="is_attendee"></th>
     <th class="header-attendee-excused" tal:condition="showExcused" i18n:translate="is_excused">Excused?</th>
     <th class="header-attendee-absent" tal:condition="showAbsents" i18n:translate="is_absent">Absent?</th>
@@ -384,7 +389,8 @@ document.location.reload(true);
        <a href="#"
           tal:condition="python: context._mayDeleteVote(itemVotes, vote_infos['vote_number'])"
           title="Delete this vote"
-          tal:attributes="onClick string:javascript:event.preventDefault();;confirmDeleteObject(base_url='${context/absolute_url}', object_uid=${vote_infos/vote_number}, this, msgName='delete_confirm_message', view_name='@@item_delete_vote');;"
+          id="delete-vote-action"
+          tal:attributes="onClick string:javascript:event.preventDefault();;confirmDeleteObject(base_url='${context/absolute_url}', object_uid=${vote_infos/vote_number}, this, msgName='delete_confirm_message', view_name='@@item_delete_vote', redirect='0');;"
           i18n:attributes="title">
            <span class="fa delete-element"></span>
        </a>
@@ -433,6 +439,7 @@ document.location.reload(true);
       tal:attributes="class python: aUid in itemNonAttendees and classOddEven + ' item-non-attendee' or classOddEven">
      <td><b tal:content="mUser/get_short_title"></b></td>
      <td align="center"
+         class="attendee-value"
          tal:attributes="onmouseover python: 'setHiddenButton(\'%s\', \'visible\')' % aUid;
                          onmouseout python: 'setHiddenButton(\'%s\', \'hidden\')' % aUid">
        <tal:comment replace="nothing">The user is present</tal:comment>
@@ -447,7 +454,9 @@ document.location.reload(true);
        </a>
      </td>
  
-     <td align="center" tal:condition="showExcused">
+     <td align="center"
+         class="attendee-value"
+         tal:condition="showExcused">
        <span tal:condition="python: aUid in excused" class="fa people-checked" ></span>
        <tal:comment replace="nothing">Show "excused" icon if the user was excused for this item</tal:comment>
        <tal:left condition="python: aUid in itemExcused">
@@ -469,7 +478,9 @@ document.location.reload(true);
 
      </td>
  
-     <td align="center" tal:condition="showAbsents">
+     <td align="center"
+         class="attendee-value"
+         tal:condition="showAbsents">
        <span tal:condition="python: aUid in absents" class="fa people-checked" ></span>
        <tal:comment replace="nothing">Show "absent" icon if the user was absent for this item</tal:comment>
        <tal:left condition="python: aUid in itemAbsents">
@@ -492,6 +503,7 @@ document.location.reload(true);
      </td>
  
      <td align="center"
+         class="attendee-value"
          tal:condition="showSignatories"
          tal:attributes="onmouseover python: 'setHiddenButton(\'%s\', \'visible\', prefix=\'redefine_signatory_\')' % aUid;
                          onmouseout python: 'setHiddenButton(\'%s\', \'hidden\', prefix=\'redefine_signatory_\')' % aUid">
@@ -535,6 +547,7 @@ document.location.reload(true);
      </td>
 
      <td align="center"
+         class="attendee-value"
          tal:condition="showNonAttendees"
          tal:attributes="onmouseover python: 'setHiddenButton(\'%s\', \'visible\', prefix=\'byebye_nonattendee_\')' % aUid;
                          onmouseout python: 'setHiddenButton(\'%s\', \'hidden\', prefix=\'byebye_nonattendee_\')' % aUid">
@@ -567,7 +580,7 @@ document.location.reload(true);
      </td>
 
      <tal:vote repeat="vote_infos itemVotes" condition="not:votesAreSecret">
-      <td align="center">
+      <td align="center" class="attendee-value vote-value public-vote">
         <tal:comment replace="nothing">Show "vote" value the user voted for this item</tal:comment>
         <tal:voted condition="python: aUid in voters and aUid in vote_infos['voters']">
          <tal:defines define="vote_value python: vote_infos['voters'][aUid];
@@ -592,7 +605,7 @@ document.location.reload(true);
 
      <tal:vote repeat="vote_infos itemVotes" condition="votesAreSecret">
       <td align="center"
-          class="secret-vote"
+          class="attendee-value vote-value secret-vote"
           tal:define="loop_index repeat/mUser/index"
           tal:attributes="rowspan python:len(allUsers);"
           tal:condition="python: loop_index == 0">

@@ -122,7 +122,7 @@ def linked_to_previous_default(context):
     if res is None:
         item_votes = context.getItemVotes(vote_number=vote_number_default())
         res = item_votes['linked_to_previous']
-    return res
+    return res or False
 
 
 class IVote(Interface):
