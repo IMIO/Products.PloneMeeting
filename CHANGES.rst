@@ -12,6 +12,10 @@ Changelog
   - loading the application and maybe break it as `local_roles` are recomputed
     on every existing elements by Plone when deleting a user.
   [gbastien]
+- Manage in and out sentences when attendee was `absent/excused/non attendee`
+  from first item. Manage also when attendee is `excused/absent` then
+  `non attendee` and so still not present.
+  [gbastien]
 
 4.2b4 (2020-10-14)
 ------------------
