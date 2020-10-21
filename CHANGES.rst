@@ -12,6 +12,8 @@ Changelog
   - loading the application and maybe break it as `local_roles` are recomputed
     on every existing elements by Plone when deleting a user.
   [gbastien]
+- Fixed adding a MeetingConfig TTW, set correct default values.
+  [gbastien]
 
 4.2b4 (2020-10-14)
 ------------------
