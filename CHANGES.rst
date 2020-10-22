@@ -5,7 +5,10 @@ Changelog
 4.1.28.11 (unreleased)
 ----------------------
 
-- Nothing changed yet.
+- Backport from 4.2.x:
+  Fixed activate correct `portal_tab` while using grouped configs and several
+  MC start with same id.
+  [gbastien]
 
 
 4.1.28.10 (2020-10-19)
