@@ -115,12 +115,13 @@ class IPMOrganization(IOrganization):
         required=False,
     )
 
-    form.read_permission(keep_access_to_item_when_advice_is_given='PloneMeeting.manage_internal_organization_fields')
-    form.write_permission(keep_access_to_item_when_advice_is_given='PloneMeeting.manage_internal_organization_fields')
-    keep_access_to_item_when_advice_is_given = schema.Choice(
-        title=_(u'PloneMeeting_label_keepAccessToItemWhenAdviceIsGiven'),
-        description=_("group_keep_access_to_item_when_advice_is_given_descr"),
-        vocabulary=u'Products.PloneMeeting.content.organization.keep_access_to_item_when_advice_is_given_vocabulary',
+    form.read_permission(keep_access_to_item_when_advice='PloneMeeting.manage_internal_organization_fields')
+    form.write_permission(keep_access_to_item_when_advice='PloneMeeting.manage_internal_organization_fields')
+    keep_access_to_item_when_advice = schema.Choice(
+        title=_(u'PloneMeeting_label_keepAccessToItemWhenAdvice'),
+        description=_("group_keep_access_to_item_when_advice_descr"),
+        vocabulary=u'Products.PloneMeeting.vocabularies.keep_access_to_item_when_advice_vocabulary',
+        default='default',
         required=True,
     )
 
@@ -161,7 +162,7 @@ class IPMOrganization(IOrganization):
                    label=_(u"Application parameters"),
                    fields=['acronym', 'item_advice_states',
                            'item_advice_edit_states', 'item_advice_view_states',
-                           'keep_access_to_item_when_advice_is_given', 'as_copy_group_on',
+                           'keep_access_to_item_when_advice', 'as_copy_group_on',
                            'certified_signatures', 'groups_in_charge'])
 
 
@@ -235,16 +236,11 @@ class PMOrganization(Organization):
             res = tmpres or cfg.getItemAdviceViewStates()
         return tuple(res)
 
-    def get_keep_access_to_item_when_advice_is_given(self, cfg=None):
+    def get_keep_access_to_item_when_advice(self, cfg=None):
         """ """
-        res = self.keep_access_to_item_when_advice_is_given
-        if cfg:
-            if not res:
-                res = cfg.getKeepAccessToItemWhenAdviceIsGiven()
-            elif res == '0':
-                res = False
-            else:
-                res = True
+        res = self.keep_access_to_item_when_advice
+        if cfg and res == 'use_meetingconfig_value':
+            res = cfg.getKeepAccessToItemWhenAdviceIsGiven()
         return res
 
     def get_certified_signatures(self, computed=False, cfg=None, group_in_charge=None, listify=True, **kwargs):

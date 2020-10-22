@@ -5253,7 +5253,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     self.REQUEST.set('mayGiveAdvice', False)
                 # in case advice was not given or access to given advice is not kept,
                 # we are done with this one
-                if adviceObj and org.get_keep_access_to_item_when_advice_is_given(cfg):
+                if adviceObj and org.get_keep_access_to_item_when_advice(cfg) == 'is_given':
                     giveReaderAccess = True
 
             if self.adapted()._itemToAdviceIsViewable(org_uid) and giveReaderAccess:

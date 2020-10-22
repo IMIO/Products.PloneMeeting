@@ -22,6 +22,10 @@ Changelog
 - Fixed activate correct `portal_tab` while using grouped configs and several
   MC start with same id.
   [gbastien]
+- Changed `MeetingConfig.keepAccessToItemWhenAdviceIsGiven` to
+  `MeetingConfig.keepAccessToItemWhenAdvice` so it may handle keeping access to
+  item when advice is given or has been giveable.
+  [gbastien]
 
 4.2b4 (2020-10-14)
 ------------------

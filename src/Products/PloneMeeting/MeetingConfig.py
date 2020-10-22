@@ -1946,17 +1946,19 @@ schema = Schema((
         schemata="advices",
         write_permission="PloneMeeting: Write risky config",
     ),
-    BooleanField(
-        name='keepAccessToItemWhenAdviceIsGiven',
-        default=defValues.keepAccessToItemWhenAdviceIsGiven,
-        widget=BooleanField._properties['widget'](
-            description="KeepAccessToItemWhenAdviceIsGiven",
-            description_msgid="keep_access_to_item_when_advice_is_given_descr",
-            label='Keepaccesstoitemwhenadviceisgiven',
-            label_msgid='PloneMeeting_label_keepAccessToItemWhenAdviceIsGiven',
+    StringField(
+        name='keepAccessToItemWhenAdvice',
+        default=defValues.keepAccessToItemWhenAdvice,
+        widget=SelectionWidget(
+            description="KeepAccessToItemWhenAdvice",
+            description_msgid="keep_access_to_item_when_advice_descr",
+            label='Keepaccesstoitemwhenadvice',
+            label_msgid='PloneMeeting_label_keepAccessToItemWhenAdvice',
             i18n_domain='PloneMeeting',
         ),
         schemata="advices",
+        vocabulary_factory='Products.PloneMeeting.vocabularies.keep_access_to_item_when_advice_vocabulary',
+        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
     BooleanField(
