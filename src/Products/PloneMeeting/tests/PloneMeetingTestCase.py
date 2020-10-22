@@ -115,6 +115,8 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
     external_image4 = "https://i.picsum.photos/id/1062/600/500.jpg?hmac=ZoUBWDuRcsyqDbBPOj5jEU1kHgJ5iGO1edk1-QYode8"
 
     def setUp(self):
+        # enable full diff in failing tests
+        self.maxDiff = None
         # Define some useful attributes
         self.app = self.layer['app']
         self.portal = self.layer['portal']

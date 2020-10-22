@@ -9,6 +9,10 @@ Changelog
   Fixed activate correct `portal_tab` while using grouped configs and several
   MC start with same id.
   [gbastien]
+  Manage in and out sentences when attendee was `absent/excused/non attendee`
+  from first item. Manage also when attendee is `excused/absent` then
+  `non attendee` and so still not present.
+  [gbastien]
 
 
 4.1.28.10 (2020-10-19)
