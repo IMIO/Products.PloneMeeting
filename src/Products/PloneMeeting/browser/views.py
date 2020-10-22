@@ -1745,7 +1745,7 @@ class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV)
            not be rendered for first item of the meeting."""
 
         patterns = {'left_before': u'{0} quitte la séance avant la discussion du point.',
-                    'entered_before': u'{0} rentre en séance avant la discussion du point.',
+                    'entered_before': u'{0} entre en séance avant la discussion du point.',
                     'left_after': u'{0} quitte la séance après la discussion du point.',
                     'entered_after': u'{0} entre en séance après la discussion du point.',
                     'non_attendee_before': u'{0} ne participe plus à la séance avant la discussion du point.',

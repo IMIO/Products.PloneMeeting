@@ -12,6 +12,9 @@ Changelog
   - loading the application and maybe break it as `local_roles` are recomputed
     on every existing elements by Plone when deleting a user.
   [gbastien]
+- Fixed adding a MeetingConfig TTW, set correct default values.
+  [gbastien]
+- Display group `Administrators` members on the MeetingConfig view.
 - Manage in and out sentences when attendee was `absent/excused/non attendee`
   from first item. Manage also when attendee is `excused/absent` then
   `non attendee` and so still not present.
