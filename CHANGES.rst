@@ -16,6 +16,9 @@ Changelog
   [gbastien]
 - Display group `Administrators` members on the MeetingConfig view.
   [gbastien]
+- Fixed activate correct `portal_tab` while using grouped configs and several
+  MC start with same id.
+  [gbastien]
 
 4.2b4 (2020-10-14)
 ------------------
