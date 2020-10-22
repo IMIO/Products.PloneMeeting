@@ -14,6 +14,8 @@ Changelog
   [gbastien]
 - Fixed adding a MeetingConfig TTW, set correct default values.
   [gbastien]
+- Display group `Administrators` members on the MeetingConfig view.
+  [gbastien]
 
 4.2b4 (2020-10-14)
 ------------------

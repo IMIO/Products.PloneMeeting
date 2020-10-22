@@ -6674,6 +6674,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def displayGroupsAndUsers(self):
         """Display groups and users specific to this MeetingConfig (meetingmanagers, powerobservers, ...)."""
         plone_group_ids = self._createOrUpdateAllPloneGroups(only_group_ids=True)
+        # include also group "Administrators"
+        plone_group_ids.append("Administrators")
         portal = api.portal.get()
         res = portal.restrictedTraverse('@@display-group-users')(group_ids=plone_group_ids, short=True)
         return res
