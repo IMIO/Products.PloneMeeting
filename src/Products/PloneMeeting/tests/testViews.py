@@ -1639,7 +1639,9 @@ class testViews(PloneMeetingTestCase):
         # now in the configuration
         # of cfg1 in a configGroup
         self.changeUser('pmManager')
-        self.request['URL'] = cfg.absolute_url()
+        # when accessing http.../meeting-config-id, request URL contains
+        # http.../meeting-config-id/base_view
+        self.request['URL'] = cfg.absolute_url() + '/' + cfg.getLayout()
         viewlet = self._get_viewlet(
             context=cfg,
             manager_name='plone.portalheader',

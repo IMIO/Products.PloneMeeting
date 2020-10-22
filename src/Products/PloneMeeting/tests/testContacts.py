@@ -938,10 +938,8 @@ class testContacts(PloneMeetingTestCase):
             helper.print_attendees(),
             u'Monsieur Person1FirstName Person1LastName, '
             u'Assembly member 1, <strong>absent pour ce point</strong><br />'
-            u'Monsieur Person2FirstName Person2LastName, '
-            u'Assembly member 2, <strong>pr\xe9sent</strong><br />'
             u'Monsieur Person3FirstName Person3LastName, '
-            u'Assembly member 3, <strong>pr\xe9sent</strong><br />'
+            u'Assembly member 3, <strong>excus\xe9 pour ce point</strong><br />'
             u'Monsieur Person4FirstName Person4LastName, '
             u'Assembly member 4 &amp; 5, <strong>pr\xe9sent</strong>')
         # meeting
@@ -966,10 +964,10 @@ class testContacts(PloneMeetingTestCase):
         helper = view.get_generation_context_helper()
         self.assertEqual(
             helper.print_attendees_by_type(),
-            u'<strong><u>Pr\xe9sents&nbsp;:</u></strong><br />'
-            u'Monsieur Person2FirstName Person2LastName, Assembly member 2, '
-            u'Monsieur Person3FirstName Person3LastName, Assembly member 3, '
+            u'<strong><u>Pr\xe9sent&nbsp;:</u></strong><br />'
             u'Monsieur Person4FirstName Person4LastName, Assembly member 4 &amp; 5;<br />'
+            u'<strong><u>Excus\xe9 pour ce point&nbsp;:</u></strong><br />'
+            u'Monsieur Person3FirstName Person3LastName, Assembly member 3;<br />'
             u'<strong><u>Absent pour ce point&nbsp;:</u></strong><br />'
             u'Monsieur Person1FirstName Person1LastName, Assembly member 1;')
         # meeting
