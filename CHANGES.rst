@@ -15,6 +15,9 @@ Changelog
 - Fixed adding a MeetingConfig TTW, set correct default values.
   [gbastien]
 - Display group `Administrators` members on the MeetingConfig view.
+- Manage in and out sentences when attendee was `absent/excused/non attendee`
+  from first item. Manage also when attendee is `excused/absent` then
+  `non attendee` and so still not present.
   [gbastien]
 - Fixed activate correct `portal_tab` while using grouped configs and several
   MC start with same id.
