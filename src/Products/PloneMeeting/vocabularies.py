@@ -1525,7 +1525,7 @@ class KeepAccessToItemWhenAdviceVocabulary(object):
         for value in values:
             res.append(
                 SimpleTerm(value, value, translate(
-                    'keep_access_to_item_' + value,
+                    'keep_access_to_item_when_advice_' + value,
                     domain='PloneMeeting',
                     context=context.REQUEST)))
         return SimpleVocabulary(res)

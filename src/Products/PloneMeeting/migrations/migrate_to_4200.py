@@ -77,12 +77,12 @@ class Migrate_To_4200(Migrator):
         # organizations
         orgs = get_organizations(only_selected=False)
         for org in orgs:
-            old_value = org.keep_access_to_item_when_advice
+            old_value = org.keep_access_to_item_when_advice_is_given
             if old_value == '':
                 org.keep_access_to_item_when_advice = 'use_meetingconfig_value'
-            elif old_value is True:
+            elif old_value == '1':
                 org.keep_access_to_item_when_advice = 'is_given'
-            elif old_value is False:
+            elif old_value == '0':
                 org.keep_access_to_item_when_advice = 'default'
         logger.info('Done.')
 

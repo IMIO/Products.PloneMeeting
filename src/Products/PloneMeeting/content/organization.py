@@ -240,7 +240,7 @@ class PMOrganization(Organization):
         """ """
         res = self.keep_access_to_item_when_advice
         if cfg and res == 'use_meetingconfig_value':
-            res = cfg.getKeepAccessToItemWhenAdviceIsGiven()
+            res = cfg.getKeepAccessToItemWhenAdvice()
         return res
 
     def get_certified_signatures(self, computed=False, cfg=None, group_in_charge=None, listify=True, **kwargs):
