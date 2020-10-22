@@ -723,7 +723,7 @@ class testContacts(PloneMeetingTestCase):
                 u'\xe0 la s\xe9ance avant la discussion du point.</p>',
              'entered_after': u'<p>Monsieur Person4FirstName Person4LastName entre en '
                 u's\xe9ance apr\xe8s la discussion du point.</p>',
-             'entered_before': u'<p>Monsieur Person3FirstName Person3LastName rentre en '
+             'entered_before': u'<p>Monsieur Person3FirstName Person3LastName entre en '
                 u's\xe9ance avant la discussion du point.</p>',
              'left_after': u'<p>Monsieur Person3FirstName Person3LastName quitte la '
                 u's\xe9ance apr\xe8s la discussion du point.</p>',
@@ -738,7 +738,7 @@ class testContacts(PloneMeetingTestCase):
             {'attendee_again_after': '',
              'attendee_again_before': '',
              'entered_after': '',
-             'entered_before': u'<p>Monsieur Person4FirstName Person4LastName rentre en '
+             'entered_before': u'<p>Monsieur Person4FirstName Person4LastName entre en '
                 u's\xe9ance avant la discussion du point.</p>',
              'left_after': '',
              'left_before': u'<p>Monsieur Person3FirstName Person3LastName quitte la '
@@ -769,7 +769,7 @@ class testContacts(PloneMeetingTestCase):
                 ignore_before_first_item=False, merge_in_and_out_types=True),
             {'entered_after': u'<p>Monsieur Person4FirstName Person4LastName entre en '
                 u's\xe9ance apr\xe8s la discussion du point.</p>',
-             'entered_before': u'<p>Monsieur Person3FirstName Person3LastName rentre en '
+             'entered_before': u'<p>Monsieur Person3FirstName Person3LastName entre en '
                 u's\xe9ance avant la discussion du point.</p>'
                 u'<p>Monsieur Person2FirstName Person2LastName participe \xe0 la '
                 u's\xe9ance avant la discussion du point.</p>',
@@ -782,7 +782,7 @@ class testContacts(PloneMeetingTestCase):
             helper.print_in_and_out_attendees(
                 ignore_before_first_item=False, merge_in_and_out_types=True),
             {'entered_after': '',
-             'entered_before': u'<p>Monsieur Person4FirstName Person4LastName rentre en '
+             'entered_before': u'<p>Monsieur Person4FirstName Person4LastName entre en '
                 u's\xe9ance avant la discussion du point.</p>',
              'left_after': '',
              'left_before': u'<p>Monsieur Person3FirstName Person3LastName quitte la '
