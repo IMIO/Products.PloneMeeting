@@ -14,6 +14,8 @@ Changelog
   [gbastien]
 - Fixed adding a MeetingConfig TTW, set correct default values.
   [gbastien]
+- Display group `Administrators` members on the MeetingConfig view.
+  [gbastien]
 - Fixed activate correct `portal_tab` while using grouped configs and several
   MC start with same id.
   [gbastien]
