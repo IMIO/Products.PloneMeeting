@@ -42,7 +42,9 @@
     <metal:field use-macro="python:here.widget('preferredMeeting', mode='edit')"/>
     <metal:field use-macro="python:here.widget('sendToAuthority', mode='edit')"/>
 
-    <tal:clonableToOtherMCsWithoutExtraFields condition="not:showAdvancedClonableToOtherMCs">
+    <tal:comment replace="nothing">Clonable to other cfg when not using extra fields</tal:comment>
+    <tal:clonableToOtherMCsWithoutExtraFields
+        condition="python: showClonableToOtherMCs and not showAdvancedClonableToOtherMCs">
         <metal:f use-macro="context/@@pm-macros/otherMeetingConfigsClonable"/>
     </tal:clonableToOtherMCsWithoutExtraFields>
 
@@ -88,6 +90,7 @@
       <metal:f use-macro="context/@@pm-macros/editContentField"/>
     </tal:field>
 
+    <tal:comment replace="nothing">Clonable to other cfg when using extra fields</tal:comment>
     <tal:clonableToOtherMCsWithExtraFields condition="showAdvancedClonableToOtherMCs">
         <metal:f use-macro="context/@@pm-macros/otherMeetingConfigsClonable"/>
     </tal:clonableToOtherMCsWithExtraFields>
