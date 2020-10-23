@@ -17,6 +17,10 @@ Changelog
   - Be explicit and always show attendees management icons on the item view,
     was only shown on hover before.
     [gbastien]
+  - Fixed ploneMeetingSelectItem box (dropdown box for selecting a meeting in the
+    plonemeeting portlet) CSS to use light grey background color now that meeting
+    state color is kept (was turned to white before).
+    [gbastien]
 
 4.1.28.10 (2020-10-19)
 ----------------------

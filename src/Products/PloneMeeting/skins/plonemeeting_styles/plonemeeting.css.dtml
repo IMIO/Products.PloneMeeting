@@ -158,8 +158,7 @@ dl.portlet p.ploneMeetingSelectItem a {
 }
 dl.portlet p.ploneMeetingSelectItem:hover,
 dl.portlet p.ploneMeetingSelectItem:hover span {
-    background-color: &dtml-globalBackgroundColor;;
-    color: white;
+    background-color: &dtml-tableHeaderBackgroundColor;;
     font-weight: bold;
 }
 
