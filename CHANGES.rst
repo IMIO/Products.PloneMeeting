@@ -7,6 +7,9 @@ Changelog
 
 - Backport from 4.2.x:
 
+  - Use position `bottom` to display tooltipster `usersGroupInfos`
+    to avoid screen overflow.
+    [gbastien]
   - Optimized `PloneGroupSettingsValidator` when checking if `plonegroup` used on
     items, do it only if some suffixes removed and use the `portal_catalog`.
     [gbastien]
