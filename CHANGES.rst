@@ -14,6 +14,9 @@ Changelog
     from first item. Manage also when attendee is `excused/absent` then
     `non attendee` and so still not present.
     [gbastien]
+  - Be explicit and always show attendees management icons on the item view,
+    was only shown on hover before.
+    [gbastien]
 
 4.1.28.10 (2020-10-19)
 ----------------------

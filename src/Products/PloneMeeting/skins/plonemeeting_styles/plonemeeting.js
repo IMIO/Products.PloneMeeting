@@ -9,13 +9,6 @@ function confirmReinitializeDelay(base_url, advice, tag, msgName){
     }
 }
 
-// function that show/hide icons to manage attendees (absents, signatories, ...)
-function setHiddenButton(userId, visibility, prefix='byebye_') {
-  var button = document.getElementById(prefix + userId);
-  if (!button) return;
-  button.style.visibility = visibility;
-}
-
 // Dropdown for selecting an annex type
 var ploneMeetingSelectBoxes = new Object();
 
