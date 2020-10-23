@@ -158,8 +158,7 @@ dl.portlet p.ploneMeetingSelectItem a {
 }
 dl.portlet p.ploneMeetingSelectItem:hover,
 dl.portlet p.ploneMeetingSelectItem:hover span {
-    background-color: &dtml-globalBackgroundColor;;
-    color: white;
+    background-color: &dtml-tableHeaderBackgroundColor;;
     font-weight: bold;
 }
 
@@ -1642,7 +1641,8 @@ table.listing tbody tr.even.dragging td {
 }
 #content span.people-edit-itemabsent:before,
 #content span.people-edit-signatory:before {
-    color: orange;
+    color: &dtml-linkColor;;
+    opacity: 0.9;
 }
 #content span.people-action {
     border-bottom: 1px dotted;

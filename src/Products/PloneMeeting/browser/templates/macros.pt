@@ -397,16 +397,14 @@ document.location.reload(true);
                   isPresent python: aUid in itemAttendees"
       tal:attributes="class python: aUid in itemNonAttendees and 'item-non-attendee' or ''">
      <td><b tal:content="mUser/get_short_title"></b></td>
-     <td align="center"
-         tal:attributes="onmouseover python: 'setHiddenButton(\'%s\', \'visible\')' % aUid;
-                         onmouseout python: 'setHiddenButton(\'%s\', \'hidden\')' % aUid">
+     <td align="center">
        <tal:comment replace="nothing">The user is present</tal:comment>
        <span tal:condition="isPresent" class="fa people-checked" ></span>
  
        <tal:comment replace="nothing">Button for byebying a user</tal:comment>
        <a href="#" class="link-overlay-pm" tal:attributes="href string:item_byebye_attendee_form?person_uid=${aUid}"
           tal:condition="python:context._mayChangeAttendees() and isPresent">
-        <span class="fa people-edit-itemabsent people-action" title="person_byebye" i18n:attributes="title" style="visibility: hidden"
+        <span class="fa people-edit-itemabsent people-action" title="person_byebye" i18n:attributes="title"
             tal:attributes="id python: 'byebye_%s' % aUid;
                             name  python: 'byebye_%s' % aUid;" />
        </a>
@@ -459,9 +457,7 @@ document.location.reload(true);
      </td>
  
      <td align="center"
-         tal:condition="showSignatories"
-         tal:attributes="onmouseover python: 'setHiddenButton(\'%s\', \'visible\', prefix=\'redefine_signatory_\')' % aUid;
-                         onmouseout python: 'setHiddenButton(\'%s\', \'hidden\', prefix=\'redefine_signatory_\')' % aUid">
+         tal:condition="showSignatories">
 
       <tal:meetingSigner condition="python: aUid not in realItemSignatories and aUid in meetingSignatories and aUid in itemSignatories">
        <span class="signatory-checked" title="Original meeting signatory" i18n:attributes="title">
@@ -494,21 +490,19 @@ document.location.reload(true);
       <tal:comment replace="nothing">Button for redefining a signatory</tal:comment>
       <a href="#" class="link-overlay-pm" tal:attributes="href string:item_redefine_signatory_form?person_uid=${aUid}"
          tal:condition="python:context._mayChangeAttendees() and isPresent and (aUid not in itemSignatories and aUid not in meetingSignatories)">
-       <span class="fa people-edit-signatory people-action" title="Define this attendee as signatory for this item" i18n:attributes="title" style="visibility: hidden"
+       <span class="fa people-edit-signatory people-action" title="Define this attendee as signatory for this item" i18n:attributes="title"
            tal:attributes="id python: 'redefine_signatory_%s' % aUid;
                            name  python: 'redefine_signatory_%s' % aUid;" />
       </a>
      </td>
 
      <td align="center"
-         tal:condition="showNonAttendees"
-         tal:attributes="onmouseover python: 'setHiddenButton(\'%s\', \'visible\', prefix=\'byebye_nonattendee_\')' % aUid;
-                         onmouseout python: 'setHiddenButton(\'%s\', \'hidden\', prefix=\'byebye_nonattendee_\')' % aUid">
+         tal:condition="showNonAttendees">
 
        <tal:comment replace="nothing">Button for setting attendee to nonAttendee</tal:comment>
        <a href="#" class="link-overlay-pm" tal:attributes="href string:item_byebye_nonattendee_form?person_uid=${aUid}"
           tal:condition="python:context._mayChangeAttendees() and aUid not in itemNonAttendees">
-        <span class="fa people-edit-itemabsent people-action" title="person_byebye" i18n:attributes="title" style="visibility: hidden"
+        <span class="fa people-edit-itemabsent people-action" title="person_byebye" i18n:attributes="title"
             tal:attributes="id python: 'byebye_nonattendee_%s' % aUid;
                             name  python: 'byebye_nonattendee_%s' % aUid;" />
        </a>

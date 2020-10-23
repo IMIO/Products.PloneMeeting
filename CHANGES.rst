@@ -22,6 +22,16 @@ Changelog
 - Fixed activate correct `portal_tab` while using grouped configs and several
   MC start with same id.
   [gbastien]
+- Use position `bottom` to display tooltipster `usersGroupInfos`
+  to avoid screen overflow.
+  [gbastien]
+- Be explicit and always show attendees management icons on the item view,
+  was only shown on hover before.
+  [gbastien]
+- Fixed ploneMeetingSelectItem box (dropdown box for selecting a meeting in the
+  plonemeeting portlet) CSS to use light grey background color now that meeting
+  state color is kept (was turned to white before).
+  [gbastien]
 - Changed `MeetingConfig.keepAccessToItemWhenAdviceIsGiven` to
   `MeetingConfig.keepAccessToItemWhenAdvice` so it may handle keeping access to
   item when advice is given or has been giveable.
