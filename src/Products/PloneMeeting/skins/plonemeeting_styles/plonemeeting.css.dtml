@@ -72,55 +72,18 @@ td[class^='meeting_item_listType_'] > div {
 dl.portlet .ploneMeetingSelectContainer p {
     margin-right: 1em;
 }
-/* make sure if both select boxes are displayed, first is displayed above second */
-dl.portlet div#go_to_meeting_img_select_box_searchnotdecidedmeetings {
-    z-index: 2;
-}
-
-dl.portlet div.ploneMeetingSelectContainer.go_to_meeting_img_select_box_searchnotdecidedmeetings div.ploneMeetingSelectDropdownIcon,
-dl.portlet div.ploneMeetingSelectContainer.go_to_meeting_img_select_box_searchlastdecisions div.ploneMeetingSelectDropdownIcon {
-    width: 80%;
-    min-width: 150px;
-}
-dl.portlet div.ploneMeetingSelectContainer.go_to_meeting_img_select_box_searchnotdecidedmeetings div.ploneMeetingSelectBox,
-dl.portlet div.ploneMeetingSelectContainer.go_to_meeting_img_select_box_searchlastdecisions div.ploneMeetingSelectBox {
-    width: 80%;
-    min-width: 150px;
-    padding-right: 9px;
-}
-dl.portlet div.ploneMeetingSelectContainer span#idButtonText_go_to_meeting_img_select_box_searchnotdecidedmeetings,
-dl.portlet div.ploneMeetingSelectContainer span#idButtonText_go_to_meeting_img_select_box_searchlastdecisions {
-    display: inline-block;
-}
-/* add some top padding for --- choose --- */
-dl.portlet div.ploneMeetingSelectContainer span#idButtonText_go_to_meeting_img_select_box_searchnotdecidedmeetings span.select_choice {
-    display: block;
-    padding-top: 2px;
-}
-
-/* cancel additional padding given by faceted to the meeting list */
-dl.portlet div.faceted-tagscloud-collection-widget div.ploneMeetingSelectContainer.go_to_meeting_img_select_box_searchnotdecidedmeetings a.pretty_link,
-dl.portlet div.faceted-tagscloud-collection-widget div.ploneMeetingSelectContainer.go_to_meeting_img_select_box_searchlastdecisions a.pretty_link {
-    margin-left: 0em;
-}
-
-dl.portlet div.ploneMeetingSelectContainer.go_to_meeting_img_select_box_searchnotdecidedmeetings p,
-dl.portlet div.ploneMeetingSelectContainer.go_to_meeting_img_select_box_searchlastdecisions p {
-    margin-bottom: 0em;
-}
 
 dl.portlet .ploneMeetingSelectButton {
     cursor: pointer;
     border: 1px solid &dtml-globalBorderColor;;
     background-color: white;
-    padding: 0px;
     color: &dtml-fontColor;;
     text-align: left;
     width: auto;
     height: 18px !important;
     padding-right: 24px;
-    padding-top: 2px;
-    margin-top: 5px;
+    padding-top: 3px;
+    margin-top: 4px;
     border-style: outset;
 }
 /* selected element */
@@ -134,10 +97,10 @@ dl.portlet div.ploneMeetingSelectBox {
     border-width: 1px;
     border-color: &dtml-globalBorderColor;;
     background-color: white;
-    padding: 0px;
     color: &dtml-fontColor;;
     display: none;
     position: absolute;
+    padding-top: 0px;
     border-style: inset;
     height: auto;
     overflow: auto;
@@ -146,11 +109,17 @@ dl.portlet div.ploneMeetingSelectBox {
     z-index: 1;
     overflow: hidden;
 }
+dl.portlet div.ploneMeetingSelectBox p span.select_choice {
+    margin-top: 3px;
+    display: inline-block;
+    margin-bottom: 4px;
+}
 dl.portlet p.ploneMeetingSelectItem {
     margin: 0px;
     vertical-align: top !important;
     min-height: 18px;
     padding-left: 5px;
+    padding-top: 2px;
 }
 dl.portlet p.ploneMeetingSelectItem a {
     min-height: 18px;
@@ -1629,20 +1598,25 @@ table.listing tbody tr.even.dragging td {
 #content span.people-checked:before,
 #content span.people-signatory-checked:before {
     content: "\f00c";
+    color: #333333;
 }
 #content span.people-edit-itemabsent:before,
 #content span.people-left:before {
     content: "\f2f5";
     font-size: 120%;
 }
-#content span.people-left:before {
+#content span.people-left {
     color: red;
     cursor: help;
 }
-#content span.people-edit-itemabsent:before,
-#content span.people-edit-signatory:before {
+#content span.people-edit-itemabsent,
+#content span.people-edit-signatory {
     color: &dtml-linkColor;;
-    opacity: 0.9;
+    opacity: 0.3;
+}
+#content span.people-edit-itemabsent:hover,
+#content span.people-edit-signatory:hover {
+    opacity: 1;
 }
 #content span.people-action {
     border-bottom: 1px dotted;
