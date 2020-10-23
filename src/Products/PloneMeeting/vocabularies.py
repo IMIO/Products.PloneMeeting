@@ -1519,7 +1519,7 @@ class KeepAccessToItemWhenAdviceVocabulary(object):
 
     def __call__(self, context):
         res = []
-        values = ('default', 'is_giveable', 'is_given')
+        values = ('default', 'was_giveable', 'is_given')
         if context.portal_type != 'MeetingConfig':
             values = ('use_meetingconfig_value', ) + values
         for value in values:

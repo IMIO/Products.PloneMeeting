@@ -119,9 +119,9 @@ class IPMOrganization(IOrganization):
     form.write_permission(keep_access_to_item_when_advice='PloneMeeting.manage_internal_organization_fields')
     keep_access_to_item_when_advice = schema.Choice(
         title=_(u'PloneMeeting_label_keepAccessToItemWhenAdvice'),
-        description=_("group_keep_access_to_item_when_advice_descr"),
+        description=_("keep_access_to_item_when_advice_descr"),
         vocabulary=u'Products.PloneMeeting.vocabularies.keep_access_to_item_when_advice_vocabulary',
-        default='default',
+        default='use_meetingconfig_value',
         required=True,
     )
 

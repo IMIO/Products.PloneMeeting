@@ -21,6 +21,7 @@ from datetime import datetime
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.helpers.content import get_vocab
 from imio.helpers.content import uuidsToObjects
+from imio.history.utils import get_all_history_attr
 from imio.prettylink.interfaces import IPrettyLink
 from natsort import realsorted
 from OFS.ObjectManager import BeforeDeleteException
@@ -5253,7 +5254,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     self.REQUEST.set('mayGiveAdvice', False)
                 # in case advice was not given or access to given advice is not kept,
                 # we are done with this one
-                if adviceObj and org.get_keep_access_to_item_when_advice(cfg) == 'is_given':
+                # just check the keep_access_to_item_when_advice
+                # when 'was_giveable' if item was in a state where advices were giveable
+                # access is kept, when 'is_given', access is kept if advice given
+                keep_access_to_item_when_advice = org.get_keep_access_to_item_when_advice(cfg)
+                if (adviceObj and keep_access_to_item_when_advice == 'is_given') or \
+                   (keep_access_to_item_when_advice == 'was_giveable' and
+                        set(itemAdviceStates).intersection(
+                            get_all_history_attr(self, attr_name='review_state'))):
                     giveReaderAccess = True
 
             if self.adapted()._itemToAdviceIsViewable(org_uid) and giveReaderAccess:

@@ -395,7 +395,7 @@ class OrgDescriptor(Descriptor):
         self.item_advice_states = []
         self.item_advice_edit_states = []
         self.item_advice_view_states = []
-        self.keep_access_to_item_when_advice = 'default'
+        self.keep_access_to_item_when_advice = 'use_meetingconfig_value'
         self.as_copy_group_on = as_copy_group_on
         self.certified_signatures = []
         self.groups_in_charge = groups_in_charge
