@@ -1642,7 +1642,7 @@ table.listing tbody tr.even.dragging td {
 }
 #content span.people-edit-itemabsent:before,
 #content span.people-edit-signatory:before {
-    color: édtml-linkColor;;
+    color: &dtml-linkColor;;
     opacity: 0.9;
 }
 #content span.people-action {
