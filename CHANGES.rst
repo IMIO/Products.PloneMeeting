@@ -25,6 +25,9 @@ Changelog
 - Use position `bottom` to display tooltipster `usersGroupInfos`
   to avoid screen overflow.
   [gbastien]
+- Be explicit and always show attendees management icons on the item view,
+  was only shown on hover before.
+  [gbastien]
 
 4.2b4 (2020-10-14)
 ------------------
