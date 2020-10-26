@@ -1513,31 +1513,25 @@ class AnnexRestrictShownAndEditableAttributesVocabulary(object):
 AnnexRestrictShownAndEditableAttributesVocabularyFactory = AnnexRestrictShownAndEditableAttributesVocabulary()
 
 
-class KeepAccessToItemWhenAdviceIsGivenVocabulary(object):
+class KeepAccessToItemWhenAdviceVocabulary(object):
     """ """
     implements(IVocabularyFactory)
 
     def __call__(self, context):
         res = []
-        res.append(
-            SimpleTerm('', '', translate(
-                'use_meetingconfig_value',
-                domain='PloneMeeting',
-                context=context.REQUEST)))
-        res.append(
-            SimpleTerm('0', '0', translate(
-                'boolean_value_false',
-                domain='PloneMeeting',
-                context=context.REQUEST)))
-        res.append(
-            SimpleTerm('1', '1', translate(
-                'boolean_value_true',
-                domain='PloneMeeting',
-                context=context.REQUEST)))
+        values = ('default', 'was_giveable', 'is_given')
+        if context.portal_type != 'MeetingConfig':
+            values = ('use_meetingconfig_value', ) + values
+        for value in values:
+            res.append(
+                SimpleTerm(value, value, translate(
+                    'keep_access_to_item_when_advice_' + value,
+                    domain='PloneMeeting',
+                    context=context.REQUEST)))
         return SimpleVocabulary(res)
 
 
-KeepAccessToItemWhenAdviceIsGivenVocabularyFactory = KeepAccessToItemWhenAdviceIsGivenVocabulary()
+KeepAccessToItemWhenAdviceVocabularyFactory = KeepAccessToItemWhenAdviceVocabulary()
 
 
 class PMMergeTemplatesVocabulary(MergeTemplatesVocabularyFactory):

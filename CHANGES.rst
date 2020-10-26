@@ -32,6 +32,10 @@ Changelog
   plonemeeting portlet) CSS to use light grey background color now that meeting
   state color is kept (was turned to white before).
   [gbastien]
+- Changed `MeetingConfig.keepAccessToItemWhenAdviceIsGiven` to
+  `MeetingConfig.keepAccessToItemWhenAdvice` so it may handle keeping access to
+  item when advice is given or has been giveable.
+  [gbastien]
 
 4.2b4 (2020-10-14)
 ------------------
