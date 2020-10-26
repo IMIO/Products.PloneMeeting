@@ -2596,8 +2596,9 @@ class testAdvices(PloneMeetingTestCase):
         self.changeUser('pmAdviser1')
         self.assertTrue(self.hasPermission(View, item))
 
-    def test_pm_OrgDefinedKeepAccessToItemWhenAdviceIsGivenOverridesMeetingConfigValues(self):
-        '''organization.keep_access_to_item_when_advice will use or override the MeetingConfig value.'''
+    def test_pm_OrgDefinedKeepAccessToItemWhenAdviceOverridesMeetingConfigValues(self):
+        '''organization.keep_access_to_item_when_advice will use or
+           override the MeetingConfig value.'''
         cfg = self.meetingConfig
         item, vendors_advice, developers_advice = self._setupKeepAccessToItemWhenAdvice()
 
@@ -2607,7 +2608,7 @@ class testAdvices(PloneMeetingTestCase):
                          'use_meetingconfig_value')
         self.assertEqual(cfg.getKeepAccessToItemWhenAdvice(), 'default')
         self.backToState(item, self._stateMappingFor('itemcreated'))
-        self.assertFalse(self.hasPermission(View, item))
+        self.backToState(item, self._stateMappingFor('itemcreated'))
 
         # override MeetingConfig value
         self.vendors.keep_access_to_item_when_advice = 'is_given'
@@ -2641,6 +2642,16 @@ class testAdvices(PloneMeetingTestCase):
 
         # this does not interact with other given advices, still using MeetingConfig value
         self.changeUser('pmAdviser1')
+        self.assertTrue(self.hasPermission(View, item))
+
+        # use was_giveable
+        # remove vendors advice
+        self.changeUser('siteadmin')
+        self.deleteAsManager(developers_advice.UID())
+        self.changeUser('pmAdviser1')
+        self.assertFalse(self.hasPermission(View, item))
+        self.developers.keep_access_to_item_when_advice = 'was_giveable'
+        item.updateLocalRoles()
         self.assertTrue(self.hasPermission(View, item))
 
     def test_pm_AdviceAddImagePermission(self):
