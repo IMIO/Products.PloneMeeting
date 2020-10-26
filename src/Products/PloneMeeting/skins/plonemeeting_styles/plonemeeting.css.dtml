@@ -625,7 +625,10 @@ p.indent-firstline {text-indent: 40px;}
 #portal-columns dl.portletTodo a {
     display: inline;
 }
-.portletPloneMeetingHeaderIcons {
+div#portal-columns dt.portletHeader a.portletPloneMeetingHeaderHome {
+    display: inline;
+}
+div.portletPloneMeetingHeaderIcons {
     float:right;
     display: inline;
     padding-right: 5px;
@@ -1560,6 +1563,12 @@ body.template-documentviewer.portaltype-styletemplate dl.portalMessage.info:last
 div.grouped-configs {
     padding-right: 1em;
     padding-left: 1em;
+}
+div.grouped-configs span.fa.selected::before {
+    content: "\f00c";
+    font-size: 75%;
+    position: relative;
+    bottom: 2px;
 }
 
 /* arrow position when tooltipster displayed to top (annexes at bottom of the screen) */

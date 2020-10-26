@@ -2089,12 +2089,18 @@ class DisplayMeetingConfigsOfConfigGroup(BrowserView):
         tool = api.portal.get_tool('portal_plonemeeting')
         grouped_configs = tool.getGroupedConfigs(config_group=self.config_group)
         res = []
+        current_url = self.request['URL']
         for config_info in grouped_configs.values()[0]:
             cfg_id = config_info['id']
             cfg = getattr(tool, cfg_id)
+            css_class = ""
+            if "/mymeetings/%s/" % cfg_id in current_url or \
+               "/portal_plonemeeting/%s/" % cfg_id in current_url:
+                css_class = "fa selected"
             res.append(
                 {'config': cfg,
-                 'url': tool.getPloneMeetingFolder(cfg_id).absolute_url() + '/searches_items'})
+                 'url': tool.getPloneMeetingFolder(cfg_id).absolute_url() + '/searches_items',
+                 'css_class': css_class})
         # make sure 'content-type' header of response is correct because during
         # faceted initialization, 'content-type' is turned to 'text/xml' and it
         # breaks to tooltipster displaying the result in the tooltip...

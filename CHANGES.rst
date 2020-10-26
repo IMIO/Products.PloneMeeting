@@ -36,6 +36,11 @@ Changelog
   `MeetingConfig.keepAccessToItemWhenAdvice` so it may handle keeping access to
   item when advice is given or has been giveable.
   [gbastien]
+- While using `grouped configs` (dropdown menu in `portal_tabs`), display an
+  icon next to the currently selected MeetingConfig.
+- Turn `portlet_plonemeeting` label displaying MeetingConfig title into a link
+  to the home folder (like the `Home` icon).
+  [gbastien]
 
 4.2b4 (2020-10-14)
 ------------------

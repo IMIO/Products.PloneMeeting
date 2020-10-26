@@ -1,6 +1,11 @@
-<div class="grouped-configs">
+<div class="grouped-configs" i18n:domain="PloneMeeting">
    <h3 tal:repeat="infos view/getViewableMeetingConfigs">
-      <a tal:attributes="href infos/url"
-         tal:content="infos/config/Title">Config title</a>
+      <a tal:attributes="href infos/url">
+         <span tal:content="infos/config/Title">Config title</span>
+         <span tal:condition="infos/css_class"
+               tal:attributes="class infos/css_class"
+               title="Currently selected meeting config"
+               i18n:attributes="title"></span>
+      </a>
    </h3>
 </div>
