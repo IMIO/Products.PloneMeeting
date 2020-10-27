@@ -370,7 +370,8 @@ function inheritedItemInfos() {
 function usersGroupInfos() {
     tooltipster_helper(selector='.tooltipster-group-users',
                        view_name='@@display-group-users',
-                       data_parameters=['group_ids']);
+                       data_parameters=['group_ids'],
+                       options={position: 'bottom'});
 }
 
 function adviceChangeDelay() {

@@ -2,7 +2,60 @@ Changelog
 =========
 
 
-4.2b4 (unreleased)
+4.2b6 (unreleased)
+------------------
+
+- Implement votes functionnality :
+
+  - Load attendees displayed on item view asynchronously;
+  - Use `Products.PloneMeeting.vocabularies.signaturenumbervocabulary`
+    everywhere possible and changed from 10 to 20 possible signatories;
+  - ...
+  [gbastien]
+
+4.2b5 (2020-10-26)
+------------------
+
+- Do not let `siteadmin` delete a user in production application because,
+  that could lead to :
+
+  - losing information (`fullname`) on elements the user interacted with;
+  - loading the application and maybe break it as `local_roles` are recomputed
+    on every existing elements by Plone when deleting a user.
+
+  [gbastien]
+
+- Fixed adding a MeetingConfig TTW, set correct default values.
+  [gbastien]
+- Display group `Administrators` members on the MeetingConfig view.
+- Manage in and out sentences when attendee was `absent/excused/non attendee`
+  from first item. Manage also when attendee is `excused/absent` then
+  `non attendee` and so still not present.
+  [gbastien]
+- Fixed activate correct `portal_tab` while using grouped configs and several
+  MC start with same id.
+  [gbastien]
+- Use position `bottom` to display tooltipster `usersGroupInfos`
+  to avoid screen overflow.
+  [gbastien]
+- Be explicit and always show attendees management icons on the item view,
+  was only shown on hover before.
+  [gbastien]
+- Fixed ploneMeetingSelectItem box (dropdown box for selecting a meeting in the
+  plonemeeting portlet) CSS to use light grey background color now that meeting
+  state color is kept (was turned to white before).
+  [gbastien]
+- Changed `MeetingConfig.keepAccessToItemWhenAdviceIsGiven` to
+  `MeetingConfig.keepAccessToItemWhenAdvice` so it may handle keeping access to
+  item when advice is given or has been giveable.
+  [gbastien]
+- While using `grouped configs` (dropdown menu in `portal_tabs`), display an
+  icon next to the currently selected MeetingConfig.
+- Turn `portlet_plonemeeting` label displaying MeetingConfig title into a link
+  to the home folder (like the `Home` icon).
+  [gbastien]
+
+4.2b4 (2020-10-14)
 ------------------
 
 - Make sure `state color` on links is applied everywhere
@@ -11,12 +64,6 @@ Changelog
 - Make sure `events.item_added_or_initialized` is only called one time when
   a new item is created or it may break things done in-between.
   [gbastien]
-- Implement votes functionnality :
-
-  - Load attendees displayed on item view asynchronously;
-  - ...
-  [gbastien]
-
 
 4.2b3 (2020-10-02)
 ------------------

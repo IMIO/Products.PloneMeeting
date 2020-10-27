@@ -400,7 +400,7 @@ class IRedefinedSignatory(IBaseAttendee):
         title=_(u"Signature number"),
         description=_(u""),
         required=True,
-        values=['1', '2', '3', '4', '5'])
+        vocabulary=u"Products.PloneMeeting.vocabularies.signaturenumbervocabulary")
 
 
 class RedefinedSignatoryForm(BaseAttendeeForm):

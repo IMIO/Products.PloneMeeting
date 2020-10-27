@@ -1729,29 +1729,33 @@ class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV)
             custom_patterns={},
             include_person_title=True,
             render_as_html=True,
-            html_pattern=u'<p>{0}</p>'):
+            html_pattern=u'<p>{0}</p>',
+            ignore_before_first_item=True):
         """Print in an out moves depending on the previous/next item.
            If p_in_and_out_types is given, only given types are considered among
-           'left_before', 'entered_before', 'left_after' and 'entered_after'.
+           patterns keys ('left_before', 'entered_before', ...).
            p_merge_in_and_out_types=True (default) will merge in_and_out_types for absent/excused and non_attendee
            types so for example key 'left_before' will also contain elements of key 'non_attendee_before'.
            p_patterns rendering informations may be overrided.
            If person_full_title is True, include full_title in sentence, aka include 'Mister' prefix.
            If p_render_as_html is True, informations is returned with value as HTML, else,
            we return a list of sentences.
-           p_html_pattern is the way HTML is rendered when p_render_as_html is True."""
+           p_html_pattern is the way HTML is rendered when p_render_as_html is True.
+           If p_ignore_before_first_item is True (default), "before" sentences will
+           not be rendered for first item of the meeting."""
 
         patterns = {'left_before': u'{0} quitte la séance avant la discussion du point.',
-                    'entered_before': u'{0} rentre en séance avant la discussion du point.',
+                    'entered_before': u'{0} entre en séance avant la discussion du point.',
                     'left_after': u'{0} quitte la séance après la discussion du point.',
                     'entered_after': u'{0} entre en séance après la discussion du point.',
                     'non_attendee_before': u'{0} ne participe plus à la séance avant la discussion du point.',
-                    'attendee_again_before': u'{0} participe à nouveau à la séance avant la discussion du point.',
+                    'attendee_again_before': u'{0} participe à la séance avant la discussion du point.',
                     'non_attendee_after': u'{0} ne participe plus à la séance après la discussion du point.',
-                    'attendee_again_after': u'{0} participe à nouveau à la séance après la discussion du point.'}
+                    'attendee_again_after': u'{0} participe à la séance après la discussion du point.'}
         patterns.update(custom_patterns)
 
-        in_and_out = self.context.getInAndOutAttendees()
+        in_and_out = self.context.getInAndOutAttendees(
+            ignore_before_first_item=ignore_before_first_item)
         person_res = {in_and_out_type: [] for in_and_out_type in in_and_out.keys()
                       if (not in_and_out_types or in_and_out_type in in_and_out_types)}
         for in_and_out_type, held_positions in in_and_out.items():
@@ -2085,12 +2089,18 @@ class DisplayMeetingConfigsOfConfigGroup(BrowserView):
         tool = api.portal.get_tool('portal_plonemeeting')
         grouped_configs = tool.getGroupedConfigs(config_group=self.config_group)
         res = []
+        current_url = self.request['URL']
         for config_info in grouped_configs.values()[0]:
             cfg_id = config_info['id']
             cfg = getattr(tool, cfg_id)
+            css_class = ""
+            if "/mymeetings/%s/" % cfg_id in current_url or \
+               "/portal_plonemeeting/%s/" % cfg_id in current_url:
+                css_class = "fa selected"
             res.append(
                 {'config': cfg,
-                 'url': tool.getPloneMeetingFolder(cfg_id).absolute_url() + '/searches_items'})
+                 'url': tool.getPloneMeetingFolder(cfg_id).absolute_url() + '/searches_items',
+                 'css_class': css_class})
         # make sure 'content-type' header of response is correct because during
         # faceted initialization, 'content-type' is turned to 'text/xml' and it
         # breaks to tooltipster displaying the result in the tooltip...

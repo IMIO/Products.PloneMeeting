@@ -229,7 +229,7 @@
                                                  disabled python: test(errors, not [v for v in request.get('meeting_signatories', []) if v.startswith(muid)], muid not in attendees);
                                                  onClick python: 'onClickBox(this, \'signer\', \'%s\')' % muid">
                             <option value="">-</option>
-                            <tal:signature_number repeat="signature_number python: [str(i) for i in range(1, 11)]">
+                            <tal:signature_number repeat="signature_number python: [str(i) for i in range(1, 21)]">
                                   <tal:defines define="value string:${muid}__signaturenumber__${signature_number};">
                                   <option
                                       tal:attributes="

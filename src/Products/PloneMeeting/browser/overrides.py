@@ -139,8 +139,10 @@ class PMGlobalSectionsViewlet(GlobalSectionsViewlet):
                                                 action['name'],
                                                 action['data-config_full_label'])]]
                     for cfg_id in cfg_ids:
-                        # select groupedConfig tab in the application and when on the MC in the configuration
-                        if "/mymeetings/%s" % cfg_id in path or "/portal_plonemeeting/%s" % cfg_id in path:
+                        # select groupedConfig tab in the application and
+                        # when on the MC in the configuration
+                        if "/mymeetings/%s/" % cfg_id in path or \
+                           "/portal_plonemeeting/%s/" % cfg_id in path:
                             return {'portal': action['id'], }
             # XXX end of change by PM
 
@@ -1540,8 +1542,11 @@ class PMBaseOverviewControlPanel(UsersGroupsControlPanelView):
         adapted_results = []
         for item in results:
             adapted_item = item.copy()
+            # only keep some relevant roles
             for role in self.portal_roles:
                 adapted_item['roles'][role]['canAssign'] = False
+            # remove possibility to remove user from UI
+            adapted_item['can_delete'] = False
             adapted_results.append(adapted_item)
         return adapted_results
 

@@ -21,6 +21,7 @@ from datetime import datetime
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.helpers.content import get_vocab
 from imio.helpers.content import uuidsToObjects
+from imio.history.utils import get_all_history_attr
 from imio.prettylink.interfaces import IPrettyLink
 from natsort import realsorted
 from OFS.ObjectManager import BeforeDeleteException
@@ -3805,12 +3806,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             voters = meeting._getContacts(uids=voters, theObjects=True)
         return voters
 
-    def getInAndOutAttendees(self, theObjects=True):
+    def getInAndOutAttendees(self, ignore_before_first_item=True, theObjects=True):
         """Returns a dict with informations about assembly moves :
            - who left at the beginning of the item;
            - who entered at the beginning of the item;
            - who left at the end of the item;
-           - who entered at the end of the item."""
+           - who entered at the end of the item.
+           """
         res = {'left_before': (),
                'entered_before': (),
                'left_after': (),
@@ -3824,52 +3826,58 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             items = meeting.getItems(ordered=True, unrestricted=True)
             item_index = items.index(self)
             previous = None
+            # only fill a value if attendee present for current item
+            # this manage fact that an attendee may be absent for an item,
+            # then not attendee for next item
+            attendees = self.getAttendees(theObjects=theObjects)
             absents = self.getItemAbsents(theObjects=theObjects)
             excused = self.getItemExcused(theObjects=theObjects)
             non_attendees = self.getItemNonAttendees(theObjects=theObjects)
             if item_index:
                 previous = items[item_index - 1]
-                # absents/excused
+                # before absents/excused
+                previous_attendees = previous.getAttendees(theObjects=theObjects)
                 previous_absents = previous.getItemAbsents(theObjects=theObjects)
                 previous_excused = previous.getItemExcused(theObjects=theObjects)
-                left_before = tuple(set(absents + excused).difference(
-                    set(previous_absents + previous_excused)))
-                entered_before = tuple(set(previous_absents + previous_excused).difference(
-                    set(absents + excused)))
+                left_before = tuple(set(absents + excused).intersection(
+                    set(previous_attendees)))
+                entered_before = tuple(set(previous_absents + previous_excused).intersection(
+                    set(attendees)))
                 res['left_before'] = left_before
                 res['entered_before'] = entered_before
                 # non attendees
-                previous_non_attendee = previous.getItemNonAttendees(theObjects=theObjects)
-                non_attendee_before = tuple(set(non_attendees).difference(
-                    set(previous_non_attendee)))
-                attendee_again_before = tuple(set(previous_non_attendee).difference(
-                    set(non_attendees)))
+                previous_non_attendees = previous.getItemNonAttendees(theObjects=theObjects)
+                non_attendee_before = tuple(set(non_attendees).intersection(
+                    set(previous_attendees)))
+                attendee_again_before = tuple(set(previous_non_attendees).intersection(
+                    set(attendees)))
                 res['non_attendee_before'] = non_attendee_before
                 res['attendee_again_before'] = attendee_again_before
-            else:
-                # self is first item, get absents
+            elif not ignore_before_first_item:
+                # self is first item
                 res['left_before'] = absents + excused
+                res['non_attendee_before'] = non_attendees
             next = None
             if self != items[-1]:
                 next = items[item_index + 1]
-                # absents/excused
+                # after absents/excused
+                next_attendees = next.getAttendees(theObjects=theObjects)
                 next_absents = next.getItemAbsents(theObjects=theObjects)
                 next_excused = next.getItemExcused(theObjects=theObjects)
-                left_after = tuple(set(next_absents + next_excused).difference(
-                    set(absents + excused)))
-                entered_after = tuple(set(absents + excused).difference(
-                    set(next_absents + next_excused)))
+                next_non_attendees = next.getItemNonAttendees(theObjects=theObjects)
+                left_after = tuple(set(next_excused + next_absents).intersection(
+                    set(attendees)))
+                entered_after = tuple(set(excused + absents).intersection(
+                    set(next_attendees)))
                 res['left_after'] = left_after
                 res['entered_after'] = entered_after
                 # non attendees
-                next_non_attendee = next.getItemNonAttendees(theObjects=theObjects)
-                non_attendee_after = tuple(set(next_non_attendee).difference(
+                non_attendee_after = tuple(set(attendees).intersection(
+                    set(next_non_attendees)))
+                attendee_again_after = tuple(set(next_attendees).intersection(
                     set(non_attendees)))
-                attendee_again_after = tuple(set(non_attendees).difference(
-                    set(next_non_attendee)))
                 res['non_attendee_after'] = non_attendee_after
                 res['attendee_again_after'] = attendee_again_after
-
         return res
 
     security.declarePublic('mustShowItemReference')
@@ -5379,7 +5387,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     self.REQUEST.set('mayGiveAdvice', False)
                 # in case advice was not given or access to given advice is not kept,
                 # we are done with this one
-                if adviceObj and org.get_keep_access_to_item_when_advice_is_given(cfg):
+                # just check the keep_access_to_item_when_advice
+                # when 'was_giveable' if item was in a state where advices were giveable
+                # access is kept, when 'is_given', access is kept if advice given
+                keep_access_to_item_when_advice = org.get_keep_access_to_item_when_advice(cfg)
+                if (adviceObj and keep_access_to_item_when_advice == 'is_given') or \
+                   (keep_access_to_item_when_advice == 'was_giveable' and
+                        set(itemAdviceStates).intersection(
+                            get_all_history_attr(self, attr_name='review_state'))):
                     giveReaderAccess = True
 
             if self.adapted()._itemToAdviceIsViewable(org_uid) and giveReaderAccess:

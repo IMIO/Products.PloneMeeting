@@ -11,13 +11,16 @@
     <dt class="portletHeader">
         <tal:cfg condition="nocall:cfg">
             <tal:defines define="meetingFolder view/getPloneMeetingFolder;
-                                 portal_url view/portal_url;">
-                <span tal:content="cfg/Title">MeetingConfig title</span>
+                                 portal_url view/portal_url;
+                                 home_url meetingFolder/searches_items/absolute_url;">
+                <a class="portletPloneMeetingHeaderHome"
+                   tal:content="cfg/Title"
+                   tal:attributes="href home_url">MeetingConfig title</a>
                 <div class="portletPloneMeetingHeaderIcons">
                     <a style="display: inline;"
                        class="fa fa-home"
                        href="#"
-                       tal:attributes="href meetingFolder/searches_items/absolute_url;
+                       tal:attributes="href home_url;
                                        title cfg/Title">
                     </a>
                     <a style="display: inline;"

@@ -395,7 +395,7 @@ class OrgDescriptor(Descriptor):
         self.item_advice_states = []
         self.item_advice_edit_states = []
         self.item_advice_view_states = []
-        self.keep_access_to_item_when_advice_is_given = ''
+        self.keep_access_to_item_when_advice = 'use_meetingconfig_value'
         self.as_copy_group_on = as_copy_group_on
         self.certified_signatures = []
         self.groups_in_charge = groups_in_charge
@@ -698,7 +698,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.advicesKeptOnSentToOtherMC = []
         self.useCopies = False
         self.selectableCopyGroups = []
-        self.itemCopyGroupsStates = ['accepted', 'delayed', ]
+        self.itemCopyGroupsStates = ['accepted']
         self.hideItemHistoryCommentsToUsersOutsideProposingGroup = False
         self.hideHistoryTo = ()
         self.restrictAccessToSecretItems = False
@@ -829,7 +829,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.defaultAdviceHiddenDuringRedaction = []
         self.transitionsReinitializingDelays = []
         self.historizeItemDataWhenAdviceIsGiven = True
-        self.keepAccessToItemWhenAdviceIsGiven = False
+        self.keepAccessToItemWhenAdvice = 'default'
         self.versionateAdviceIfGivenAndItemModified = True
         self.customAdvisers = []
 
