@@ -5,8 +5,11 @@ Changelog
 4.2b6 (unreleased)
 ------------------
 
-- Nothing changed yet.
-
+- Added parameter `the_objects=False` to `GroupsInChargeVocabulary` and
+  `AssociatedGroupsVocabulary` so it is possible to get organization objects as
+  term value, this will be used by `plonemeeting.restapi` to return
+  `groups_in_charge` and `associated_groups` of a `MeetingConfig`.
+  [gbastien]
 
 4.2b5 (2020-10-26)
 ------------------

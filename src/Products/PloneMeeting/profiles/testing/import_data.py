@@ -1,23 +1,7 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2016 by PloneGov
-#
 # GNU General Public License (GPL)
 #
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
-# 02110-1301, USA.
 
 from copy import deepcopy
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
@@ -360,6 +344,7 @@ meetingPma.itemAdviceStates = ['proposed']
 meetingPma.itemAdviceEditStates = ['proposed', 'validated']
 meetingPma.itemAdviceViewStates = ['presented']
 meetingPma.transitionsReinitializingDelays = ('backToItemCreated', )
+meetingPma.orderedGroupsInCharge = ['developers', 'vendors']
 meetingPma.allItemTags = '\n'.join(('Strategic decision', 'Genericity mechanism', 'User interface'))
 meetingPma.sortAllItemTags = True
 meetingPma.recurringItems = (recItem1, recItem2, )
@@ -406,6 +391,7 @@ meetingPga.onMeetingTransitionItemActionToExecute = deepcopy(
     meetingPma.onMeetingTransitionItemActionToExecute)
 meetingPga.insertingMethodsOnAddItem = ({'insertingMethod': 'on_categories', 'reverse': '0'}, )
 meetingPga.useGroupsAsCategories = False
+meetingPga.orderedGroupsInCharge = ['developers', 'vendors']
 meetingPga.itemTemplates = (template1, template2, )
 meetingPga.workflowAdaptations = ['delayed']
 meetingPga.useAdvices = False

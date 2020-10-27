@@ -264,10 +264,7 @@ class ToolInitializer:
             cfg.setOrderedContacts(selectableOrderedContacts)
 
         # turn contact path to uid
-        for org_storing_field in ('orderedContacts',
-                                  'orderedItemInitiators',
-                                  'orderedAssociatedOrganizations',
-                                  'orderedGroupsInCharge'):
+        for org_storing_field in ('orderedContacts', ):
             org_storing_data = getattr(data, org_storing_field, [])
             if org_storing_data:
                 contact_uids = []
@@ -330,7 +327,13 @@ class ToolInitializer:
            sub-objects of the meeting config will be searched there.'''
         cData = configData.getData()
         # turn org ids into org uids
-        for field_name in ['selectableCopyGroups', 'selectableAdvisers', 'powerAdvisersGroups', 'usingGroups']:
+        for field_name in ['selectableCopyGroups',
+                           'selectableAdvisers',
+                           'powerAdvisersGroups',
+                           'usingGroups',
+                           'orderedItemInitiators',
+                           'orderedAssociatedOrganizations',
+                           'orderedGroupsInCharge']:
             data = cData.get(field_name)
             try:
                 data = [org_id_to_uid(suffixed_group_id) for suffixed_group_id in data
