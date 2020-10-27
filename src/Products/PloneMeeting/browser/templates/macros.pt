@@ -437,7 +437,7 @@ document.location.reload(true);
                   oddrow repeat/mUser/odd;
                   classOddEven python: oddrow and 'even' or 'odd';"
       tal:attributes="class python: aUid in itemNonAttendees and classOddEven + ' item-non-attendee' or classOddEven">
-     <td><b tal:content="mUser/get_short_title"></b></td>
+     <td class="attendee-value"><b tal:content="mUser/get_short_title"></b></td>
      <td align="center"
          class="attendee-value">
        <tal:comment replace="nothing">The user is present</tal:comment>
