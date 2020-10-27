@@ -261,7 +261,7 @@ ItemProposingGroupsForFacetedFilterVocabularyFactory = ItemProposingGroupsForFac
 class GroupsInChargeVocabulary(object):
     implements(IVocabularyFactory)
 
-    def __call___cachekey(method, self, context, only_selected=True, sort=True):
+    def __call___cachekey(method, self, context, only_selected=True, sort=True, the_objects=False):
         '''cachekey method for self.__call__.'''
         date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.groupsinchargevocabulary')
         tool = api.portal.get_tool('portal_plonemeeting')
@@ -269,7 +269,7 @@ class GroupsInChargeVocabulary(object):
         return date, cfg.getId(), only_selected, sort
 
     @ram.cache(__call___cachekey)
-    def __call__(self, context, only_selected=True, sort=True):
+    def __call__(self, context, only_selected=True, sort=True, the_objects=False):
         """List groups in charge :
            - if groupsInCharge in MeetingConfig.usedItemAttributes,
              list MeetingConfig.orderedGroupsInCharge;
@@ -307,15 +307,20 @@ class GroupsInChargeVocabulary(object):
             kept_org_uids = cfg.getOrderedGroupsInCharge()
             res = get_organizations(only_selected=only_selected, kept_org_uids=kept_org_uids)
 
-        res = [SimpleTerm(gic.UID(),
-                          gic.UID(),
-                          safe_unicode(gic.get_full_title(first_index=1)))
-               for gic in res]
+        terms = []
+        for org in res:
+            term_value = org
+            if not the_objects:
+                term_value = org.UID()
+            terms.append(
+                SimpleTerm(term_value,
+                           term_value,
+                           safe_unicode(org.get_full_title(first_index=1))))
 
         if sort or not is_using_cfg_order:
-            res = humansorted(res, key=attrgetter('title'))
+            terms = humansorted(terms, key=attrgetter('title'))
 
-        return SimpleVocabulary(res)
+        return SimpleVocabulary(terms)
 
 
 GroupsInChargeVocabularyFactory = GroupsInChargeVocabulary()
@@ -1826,7 +1831,7 @@ class AssociatedGroupsVocabulary(object):
     """ """
     implements(IVocabularyFactory)
 
-    def __call___cachekey(method, self, context, sort=True):
+    def __call___cachekey(method, self, context, sort=True, the_objects=False):
         '''cachekey method for self.__call__.'''
         date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.associatedgroupsvocabulary')
         tool = api.portal.get_tool('portal_plonemeeting')
@@ -1834,7 +1839,7 @@ class AssociatedGroupsVocabulary(object):
         return date, sort, cfg
 
     @ram.cache(__call___cachekey)
-    def __call__(self, context, sort=True):
+    def __call__(self, context, sort=True, the_objects=False):
         """ """
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
@@ -1849,8 +1854,10 @@ class AssociatedGroupsVocabulary(object):
 
         terms = []
         for org in orgs:
-            org_uid = org.UID()
-            terms.append(SimpleTerm(org_uid, org_uid, org.get_full_title()))
+            term_value = org
+            if not the_objects:
+                term_value = org.UID()
+            terms.append(SimpleTerm(term_value, term_value, org.get_full_title()))
 
         if sort or not is_using_cfg_order:
             terms = humansorted(terms, key=attrgetter('title'))
