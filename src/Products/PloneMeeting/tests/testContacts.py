@@ -1057,7 +1057,9 @@ class testContacts(PloneMeetingTestCase):
         disable_link_integrity_checks()
         cfg = self.meetingConfig
         cfg.setSelectableAdvisers(())
+        cfg.setOrderedGroupsInCharge(())
         cfg2 = self.meetingConfig2
+        cfg2.setOrderedGroupsInCharge(())
         self.changeUser('pmManager')
         # delete recurring items, just keep item templates
         self._removeConfigObjectsFor(cfg, folders=['recurringitems', ])
@@ -1396,9 +1398,10 @@ class testContacts(PloneMeetingTestCase):
         # and remove 'vendors_reviewers' from every MeetingConfig.selectableCopyGroups
         # and 'vendors' from every MeetingConfig.selectableAdvisers
         cfg.setSelectableCopyGroups((self.developers_reviewers, ))
+        cfg.setOrderedGroupsInCharge(())
+        cfg2.setOrderedGroupsInCharge(())
         cfg2.setSelectableAdvisers((self.developers_uid, ))
         cfg2.setSelectableCopyGroups((self.developers_reviewers, ))
-        cfg2.setSelectableAdvisers((self.developers_uid, ))
         # and remove users from vendors Plone groups
         for ploneGroup in get_plone_groups(self.vendors_uid):
             for memberId in ploneGroup.getGroupMemberIds():

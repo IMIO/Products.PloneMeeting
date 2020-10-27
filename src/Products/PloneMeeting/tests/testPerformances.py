@@ -326,8 +326,10 @@ class testPerformances(PloneMeetingTestCase):
         cfg2 = self.meetingConfig2
         # remove existing groups and add our own
         # make what necessary for groups to be removable...
+        cfg.setOrderedGroupsInCharge(())
         cfg.setSelectableCopyGroups(())
         cfg.setSelectableAdvisers(())
+        cfg2.setOrderedGroupsInCharge(())
         cfg2.setSelectableCopyGroups(())
         cfg2.setSelectableAdvisers(())
         orgs = get_organizations(only_selected=True)
