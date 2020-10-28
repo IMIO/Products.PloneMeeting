@@ -2,6 +2,7 @@
 
 from collective.contact.plonegroup.utils import get_organizations
 from copy import deepcopy
+from persistent.mapping import PersistentMapping
 from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_NEW
 from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator
@@ -74,6 +75,14 @@ class Migrate_To_4200(Migrator):
             cfg.setFirstLinkedVoteUsedVoteValues(config_descr.firstLinkedVoteUsedVoteValues)
             cfg.setNextLinkedVotesUsedVoteValues(config_descr.nextLinkedVotesUsedVoteValues)
             cfg.setVoteCondition(config_descr.voteCondition)
+        # add itemVotes on every meetings
+        brains = self.catalog(meta_type='Meeting')
+        logger.info('Adding "itemVotes" to every meetings...')
+        for brain in brains:
+            meeting = brain.getObject()
+            if hasattr(meeting, 'itemVotes'):
+                continue
+            meeting.itemVotes = PersistentMapping()
         logger.info('Done.')
 
     def _migrateKeepAccessToItemWhenAdviceIsGiven(self):

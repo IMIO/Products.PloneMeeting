@@ -206,10 +206,17 @@ div[id^='hook_'] > img {
    margin-top: 0.5em;
 }
 
+div.change-item-order {
+   width: 65px;
+}
+
 #content table.no-style-table.advices {
     margin-bottom: 0;
 }
 
+#content table.no-style-table.advices tr {
+    border-left: 0px transparent;
+}
 /* avoid background of parent table (list of items) being used for advices popup table */
 #content table.no-style-table.advices tr td {
     background-color: transparent;
@@ -1029,7 +1036,7 @@ div.tooltipster-content a.item_listType_normal:visited {
     color: &dtml-discreetColor;;
 }
 
-table.listing tr[class][class] td.meeting_item_listType_late {
+#content table#faceted_table.listing tr[class][class] td.meeting_item_listType_late {
     background-color: red;
 }
 span.item_listType_late,
@@ -1607,10 +1614,26 @@ table#faceted_table td.draggable {
 table#meeting_users select[id$="_replacement"] {
    width: 500px;
 }
-#content table#meeting_users.listing tbody tr:hover td.attendee-title {
-   color: &dtml-linkColor;;
-   text-decoration: underline;
+#content table#meeting_users.listing tbody tr.even:hover td,
+#content table#faceted_table.listing tbody tr.even:hover td,
+#content table#meeting_users.listing tbody tr.odd:hover td,
+#content table#faceted_table.listing tbody tr.odd:hover td {
+   background-color: &dtml-tableHeaderBackgroundColor;;
 }
+#content table#meeting_users.listing tbody tr.even,
+#content table#faceted_table.listing tbody tr.even,
+#content table#meeting_users.listing tbody tr.odd,
+#content table#faceted_table.listing tbody tr.odd {
+   border-left: 2px solid &dtml-tableHeaderBackgroundColor;;
+}
+
+#content table#meeting_users.listing tbody tr.even:hover,
+#content table#faceted_table.listing tbody tr.even:hover,
+#content table#meeting_users.listing tbody tr.odd:hover,
+#content table#faceted_table.listing tbody tr.odd:hover {
+   border-left: 3px solid grey;
+}
+
 table#meeting_users tr.item-non-attendee {
     color: gray;
 }
