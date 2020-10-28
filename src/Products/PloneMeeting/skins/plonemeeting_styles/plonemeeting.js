@@ -598,7 +598,7 @@ function init_tooltipsters(event) {
     if (css_id == 'collapsible-assembly-and-signatures') {
       pmCommonOverlays(selector_prefix='div#item-people ');
       attendeesInfos();
-      editVotes();
+      manageAttendees();
     }
     if (css_id.startsWith('collapsible-text-linkeditem-')) {
       categorizedChildsInfos({selector: 'div.item-linkeditems .tooltipster-childs-infos', });

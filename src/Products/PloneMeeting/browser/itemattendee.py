@@ -179,7 +179,7 @@ class ByeByeAttendeeForm(BaseAttendeeForm):
             # item voter
             # if not a voter, continue
             tool = api.portal.get_tool('portal_plonemeeting')
-            cfg = tool.getMeetingConfg(item_to_update)
+            cfg = tool.getMeetingConfig(item_to_update)
             if cfg.getUseVotes():
                 voters = item_to_update.getItemVoters()
                 if self.person_uid in voters:

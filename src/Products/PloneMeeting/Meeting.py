@@ -870,7 +870,16 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             removed_meeting_attendees = set(stored_attendees).difference(meeting_attendees)
             # attendees redefined on items
             redefined_item_attendees = self._get_all_redefined_attendees(by_persons=True)
-            conflict_attendees = removed_meeting_attendees.intersection(redefined_item_attendees)
+            # voters
+            item_votes = self.getItemVotes()
+            voter_uids = []
+            for votes in item_votes.values():
+                for vote in votes:
+                    voter_uids += vote.get('voters', [])
+            voter_uids = list(set(voter_uids))
+
+            conflict_attendees = removed_meeting_attendees.intersection(
+                redefined_item_attendees + voter_uids)
             if conflict_attendees:
                 attendee_uid = tuple(removed_meeting_attendees)[0]
                 attendee_brain = uuidToCatalogBrain(attendee_uid)

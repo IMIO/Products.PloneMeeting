@@ -991,10 +991,6 @@ span.advices_of_type {
     font-size: 90%;
     vertical-align: sub;
 }
-
-span.vote_value {
-   font-weight: bold;
-}
 span.vote_value_abstain {
    color: orange;
 }
@@ -1610,6 +1606,10 @@ table#faceted_table td.draggable {
 }
 table#meeting_users select[id$="_replacement"] {
    width: 500px;
+}
+#content table#meeting_users.listing tbody tr:hover td.attendee-title {
+   color: &dtml-linkColor;;
+   text-decoration: underline;
 }
 table#meeting_users tr.item-non-attendee {
     color: gray;

@@ -9,6 +9,7 @@ from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.utils import _checkPermission
 from Products.Five import BrowserView
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
+from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
 from Products.PloneMeeting.config import NOT_VOTABLE_LINKED_TO_VALUE
 from Products.PloneMeeting.config import WriteBudgetInfos
 from Products.PloneMeeting.utils import sendMailIfRelevant
@@ -397,6 +398,16 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
                     res = True
         return res
 
+    def get_voted_voters(self):
+        '''Voter uids that actually voted on this item.'''
+        item_votes = self.context.getItemVotes(
+            ignored_vote_values=[NOT_ENCODED_VOTE_VALUE])
+        voted_voters = []
+        for vote in item_votes:
+            voters = vote.get('voters', {}).keys()
+            voted_voters += voters
+        return tuple(set(voted_voters))
+
     def __call___cachekey(method, self):
         '''cachekey method for self.__call__.
            Cache is invalidated depending on :
@@ -438,6 +449,7 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
             self.itemVotes = self.context.getItemVotes(
                 include_unexisting=True,
                 ignored_vote_values=[NOT_VOTABLE_LINKED_TO_VALUE]) or []
+            self.voted_voters = self.get_voted_voters()
             self.next_vote_number = self.compute_next_vote_number()
             vote_counts = self.vote_counts()
             self.displayable_counts = vote_counts[0]

@@ -56,9 +56,9 @@ function advicePreview() {
 }
 
 // opening the encode votes form
-function editVotes() {
+function manageAttendees() {
     jQuery(function($){
-        $('a.link-overlay-pm-encode-votes').prepOverlay({
+        $('a.link-overlay-pm-manage-attendees').prepOverlay({
             api: true,
             subtype: 'ajax',
             noform: 'redirect',
@@ -66,50 +66,24 @@ function editVotes() {
             closeselector: '[name="form.buttons.cancel"]',
             config: {
                 onBeforeLoad : function (e) {
-                    // odd even for datagridfield
-                    $('table tbody').each(setoddeven);
-                    // onclick for submit button
-                    $('input#form-buttons-apply').click(function(event) {
-                      event.preventDefault();
-                      var data = {'ajax_load': true};
-                      $(this.form.elements).each(function(){
-                          // use checked instead value for checkbox and radio
-                          if (this.type == 'checkbox' && !this.checked) {
-                            // unchecked checkboxes are ignored
-                            return;
-                          }
-                          if (this.type == 'radio') {
-                            if (this.checked) {
-                              data[this.name] = this.value;
-                            }
-                            else {
-                              return;
-                            }
-                          }
-                          // default
-                          data[this.name] = this.value;
-                        });
-                      $.ajax( {
-                      type: 'POST',
-                      url: this.form.action,
-                      data: data,
-                      cache: false,
-                      async: true,
-                      success: function(data) {
-                            if (data) {
-                              $("div.pb-ajax div")[0].innerHTML = data;
-                            }
-                            else {
-                              refresh_attendees(highlight=null, click_cancel=true);
-                            }
-                      },
-                      error: function(jqXHR, textStatus, errorThrown) {
-                        window.location.href = canonical_url();
-                      }, } ); });
-                return true;
+                  async_submit_form(this.form);
+                  return true;
                 },
               onClose : function (e) {
-                highlight_attendees('.vote-value');
+                selector = '.attendee-value'
+                if (e.target.innerHTML.includes('item_encode_votes_form')) {
+                  selector = '.vote-value';
+                }
+                else if (e.target.innerHTML.includes('_attendee_form')) {
+                  selector = '.attendee-assembly';
+                }
+                else if (e.target.innerHTML.includes('_signatory_form')) {
+                  selector = '.attendee-signatory';
+                }
+                else if (e.target.innerHTML.includes('_nonattendee_form')) {
+                  selector = '.attendee-nonattendee';
+                }
+                highlight_attendees(selector);
               },
             }
        });
@@ -133,6 +107,50 @@ function highlight_attendees(highlight_selector=null) {
   $.when($("#collapsible-assembly-and-signatures table tr td" + highlight_selector).effect(
     'highlight', {}, 2000));
 }
+
+function async_submit_form() {
+  // odd even for datagridfield
+  $('table tbody').each(setoddeven);
+  // onclick for submit button
+  $('input#form-buttons-apply').click(function(event) {
+    event.preventDefault();
+    var data = {'ajax_load': true};
+    $(this.form.elements).each(function(){
+        // use checked instead value for checkbox and radio
+        if (this.type == 'checkbox' && !this.checked) {
+          // unchecked checkboxes are ignored
+          return;
+        }
+        if (this.type == 'radio') {
+          if (this.checked) {
+            data[this.name] = this.value;
+          }
+          else {
+            return;
+          }
+        }
+        // default
+        data[this.name] = this.value;
+      });
+    $.ajax( {
+    type: 'POST',
+    url: this.form.action,
+    data: data,
+    cache: false,
+    async: true,
+    success: function(data) {
+          if (data) {
+            $("div.pb-ajax div")[0].innerHTML = data;
+          }
+          else {
+            refresh_attendees(highlight=null, click_cancel=true);
+          }
+    },
+    error: function(jqXHR, textStatus, errorThrown) {
+      window.location.href = canonical_url();
+    }, } ); });
+}
+
 
 // the content history popup
 function contentHistory() {
