@@ -498,6 +498,7 @@ class testMeeting(PloneMeetingTestCase):
 
         self.changeUser('siteadmin')
         cfg = self.meetingConfig
+        cfg.setOrderedGroupsInCharge(())
         cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_groups_in_charge',
                                            'reverse': '0'}, ))
         # when groupsInCharge are not defined for some proposingGroups, items are inserted at the beginning
@@ -622,6 +623,7 @@ class testMeeting(PloneMeetingTestCase):
 
         self.changeUser('siteadmin')
         cfg = self.meetingConfig
+        cfg.setOrderedGroupsInCharge(())
         cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_groups_in_charge',
                                            'reverse': '0'}, ))
         # create some groups in charge
