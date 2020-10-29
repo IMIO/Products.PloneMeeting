@@ -5,8 +5,11 @@ Changelog
 4.1.28.12 (unreleased)
 ----------------------
 
-- Nothing changed yet.
+- Backport from 4.2.x:
 
+  - Optimized `PloneGroupSettingsValidator` when checking if `plonegroup` used on
+    items, do it only if some suffixes removed and use the `portal_catalog`.
+    [gbastien]
 
 4.1.28.11 (2020-10-26)
 ----------------------

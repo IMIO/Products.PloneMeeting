@@ -202,10 +202,11 @@ class PloneGroupSettingsValidator(validator.SimpleFieldValidator):
                         mapping={'cfg_url': cfg.absolute_url()})
                 raise Invalid(msg)
         # check that plone_group not used in MeetingItems
-        catalog = api.portal.get_tool('portal_catalog')
-        for brain in catalog(meta_type="MeetingItem"):
-            item = brain.getObject()
-            if removed_plonegroups.intersection(item.getCopyGroups()):
+        # need to be performant or may kill the instance when several items exist
+        if removed_plonegroups:
+            catalog = api.portal.get_tool('portal_catalog')
+            for brain in catalog(meta_type="MeetingItem", getCopyGroups=tuple(removed_plonegroups)):
+                item = brain.getObject()
                 if item.isDefinedInTool():
                     msgid = "can_not_delete_plone_group_config_meetingitem"
                 else:
