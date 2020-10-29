@@ -10,6 +10,9 @@ Changelog
   term value, this will be used by `plonemeeting.restapi` to return
   `groups_in_charge` and `associated_groups` of a `MeetingConfig`.
   [gbastien]
+- Optimized `PloneGroupSettingsValidator` when checking if `plonegroup` used on
+  items, do it only if some suffixes removed and use the `portal_catalog`.
+  [gbastien]
 
 4.2b5 (2020-10-26)
 ------------------
