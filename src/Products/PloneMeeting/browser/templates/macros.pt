@@ -329,6 +329,9 @@ document.location.reload(true);
      tal:define="usedAttrs usedAttrs|meetingConfig/getUsedItemAttributes;
                  meeting context/getMeeting;
                  usedMeetingAttributes usedMeetingAttributes|meetingConfig/getUsedMeetingAttributes">
+                     <div metal:use-macro="context/global_statusmessage/macros/portal_message">
+                      Portal status message
+                    </div>
 <table tal:define="allUsers meeting/getAllUsedHeldPositions;
                    showVotes view/showVotes;
                    excused meeting/getExcused;
@@ -358,7 +361,7 @@ document.location.reload(true);
   <thead>
   <tr valign="top" class="nosort">
     <th class="header-attendee-item-specific">
-     <span i18n:translate="item_specific"></span>
+     <span i18n:translate="item_specific">For this item</span>
      <div class="refresh-attendees-container" onclick="refresh_attendees(highlight='.attendee-value');">
       <span class="fa refresh-attendees"></span>
      </div>
@@ -368,6 +371,7 @@ document.location.reload(true);
     <th class="header-attendee-absent" tal:condition="showAbsents" i18n:translate="is_absent">Absent?</th>
     <th class="header-attendee-signatory" tal:condition="showSignatories" i18n:translate="is_signer">Signer?</th>
     <th class="header-attendee-non-attendee" tal:condition="showNonAttendees" i18n:translate="is_non_attendee">Non attendee?</th>
+    <th class="header-attendee-voter" tal:condition="showVotes" i18n:translate="is_voter">Voter?</th>
     <tal:vote repeat="vote_infos itemVotes">
      <th class="header-attendee-vote" class="nosort">
       <span tal:condition="vote_infos/linked_to_previous"
@@ -437,15 +441,16 @@ document.location.reload(true);
                   isPresent python: aUid in itemAttendees;
                   isMeetingSignatory python: aUid in meetingSignatories;
                   isRealItemSignatory python: aUid in realItemSignatories;
+                  isVoter python: aUid in voters;
+                  isNonAttendee python: aUid in itemNonAttendees;
                   oddrow repeat/mUser/odd;
                   classOddEven python: oddrow and 'even' or 'odd';"
-      tal:attributes="class python: aUid in itemNonAttendees and classOddEven + ' item-non-attendee' or classOddEven">
+      tal:attributes="class python: isNonAttendee and classOddEven + ' item-non-attendee' or classOddEven">
      <td class="attendee-value attendee-title"><b tal:content="mUser/get_short_title"></b></td>
      <td align="center"
          class="attendee-value attendee-assembly attendee-present">
        <tal:comment replace="nothing">The user is present</tal:comment>
-       <span tal:condition="isPresent" class="fa people-checked" ></span>
- 
+       <span tal:condition="isPresent" class="fa people-checked"></span>
        <tal:comment replace="nothing">Button for byebying a user</tal:comment>
        <a href="#" class="link-overlay-pm-manage-attendees"
           tal:attributes="href string:item_byebye_attendee_form?person_uid=${aUid}"
@@ -454,12 +459,13 @@ document.location.reload(true);
               tal:attributes="id python: 'byebye_%s' % aUid;
                               name  python: 'byebye_%s' % aUid;" />
        </a>
+       <span tal:condition="not:isPresent">-</span>
      </td>
  
      <td align="center"
          class="attendee-value attendee-assembly attendee-excused"
          tal:condition="showExcused">
-       <span tal:condition="python: aUid in excused" class="fa people-checked" ></span>
+       <span tal:condition="python: aUid in excused" class="fa people-checked"></span>
        <tal:comment replace="nothing">Show "excused" icon if the user was excused for this item</tal:comment>
        <tal:left condition="python: aUid in itemExcused">
  
@@ -483,7 +489,7 @@ document.location.reload(true);
      <td align="center"
          class="attendee-value attendee-assembly attendee-absent"
          tal:condition="showAbsents">
-       <span tal:condition="python: aUid in absents" class="fa people-checked" ></span>
+       <span tal:condition="python: aUid in absents" class="fa people-checked"></span>
        <tal:comment replace="nothing">Show "absent" icon if the user was absent for this item</tal:comment>
        <tal:left condition="python: aUid in itemAbsents">
  
@@ -551,7 +557,7 @@ document.location.reload(true);
 
        <tal:comment replace="nothing">Button for setting attendee to nonAttendee</tal:comment>
        <a href="#" class="link-overlay-pm-manage-attendees" tal:attributes="href string:item_byebye_nonattendee_form?person_uid=${aUid}"
-          tal:condition="python:context._mayChangeAttendees() and aUid not in itemNonAttendees">
+          tal:condition="python:context._mayChangeAttendees() and not isNonAttendee and not isRealItemSignatory">
         <span class="fa people-edit-itemabsent people-action" title="person_byebye" i18n:attributes="title"
               tal:attributes="id python: 'byebye_nonattendee_%s' % aUid;
                               name  python: 'byebye_nonattendee_%s' % aUid;" />
@@ -574,6 +580,13 @@ document.location.reload(true);
         </a>
        </tal:left>
 
+     </td>
+
+     <td align="center"
+         class="attendee-value attendee-voter">
+       <tal:comment replace="nothing">The user is voter</tal:comment>
+       <span tal:condition="isVoter" class="fa people-checked"></span>
+       <span tal:condition="not:isVoter">-</span>
      </td>
 
      <tal:vote repeat="vote_infos itemVotes" condition="not:votesAreSecret">
@@ -826,9 +839,9 @@ The parameter "cFolder" is the folder containing categories.</tal:comment>
   <tal:loop repeat="obj objs" condition="python: not threshold or len(objs) <= threshold">
   <tr tal:define="isActive obj/enabled;
                   oddrow repeat/obj/odd;
-                  classOddEven python: oddrow and 'even' or 'odd';" valign="top"
-        tal:attributes="class python: not isActive and classOddEven+' state-inactive' or classOddEven"
-        class="#">
+                  classOddEven python: oddrow and 'even' or 'odd';"
+      valign="top"
+      tal:attributes="class python: not isActive and classOddEven+' state-inactive' or classOddEven">
     <td>
         <h5><a tal:attributes="href obj/absolute_url" tal:content="obj/Title"></a></h5>
         <div class="discreet" tal:define="descr obj/Description" tal:condition="descr" tal:content="descr"></div>

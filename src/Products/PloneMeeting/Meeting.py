@@ -1062,6 +1062,17 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         return {replaced_uid: self.orderedContacts[replaced_uid]['replacement']
                 for replaced_uid in replaced_uids}
 
+    security.declarePublic('getVoters')
+
+    def getVoters(self, theObjects=False):
+        '''Return attendees able to vote.'''
+        hps = self.getAllUsedHeldPositions(the_objects=True)
+        attendees = self.getAttendees(theObjects=False)
+        voters = [hp for hp in hps if 'voter' in hp.usages and hp.UID() in attendees]
+        if not theObjects:
+            voters = [hp.UID() for hp in voters]
+        return voters
+
     def _get_item_not_present(self, attr, by_persons=False):
         '''Return item not present (itemAbsents, itemExcused) by default the attr dict has the item UID
            as key and list of not_present as values but if 'p_by_persons' is True, the informations

@@ -385,37 +385,37 @@
         for="Products.PloneMeeting.interfaces.IMeetingItem"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         name="item_byebye_attendee_form"
-        class=".itemattendee.ByeByeAttendeeFormWrapper"
+        class=".itemattendee.ByeByeAttendeeForm"
         permission="zope2.View" />
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingItem"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         name="item_welcome_attendee_form"
-        class=".itemattendee.WelcomeAttendeeFormWrapper"
+        class=".itemattendee.WelcomeAttendeeForm"
         permission="zope2.View" />
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingItem"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         name="item_byebye_nonattendee_form"
-        class=".itemattendee.ByeByeNonAttendeeFormWrapper"
+        class=".itemattendee.ByeByeNonAttendeeForm"
         permission="zope2.View" />
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingItem"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         name="item_welcome_nonattendee_form"
-        class=".itemattendee.WelcomeNonAttendeeFormWrapper"
+        class=".itemattendee.WelcomeNonAttendeeForm"
         permission="zope2.View" />
     <browser:page
        for="Products.PloneMeeting.interfaces.IMeetingItem"
        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
        name="item_redefine_signatory_form"
-       class=".itemattendee.RedefinedSignatoryFormWrapper"
+       class=".itemattendee.RedefinedSignatoryForm"
        permission="zope2.View" />
      <browser:page
        for="Products.PloneMeeting.interfaces.IMeetingItem"
        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
        name="item_remove_redefined_signatory_form"
-       class=".itemattendee.RemoveRedefinedSignatoryFormWrapper"
+       class=".itemattendee.RemoveRedefinedSignatoryForm"
        permission="zope2.View" />
      <browser:page
        for="Products.PloneMeeting.interfaces.IMeetingItem"

@@ -493,10 +493,12 @@ class AsyncLoadMeetingAssemblyAndSignatures(BrowserView):
                 item_votes,
                 context_uid)
 
-    @ram.cache(__call___cachekey)
+    #@ram.cache(__call___cachekey)
     def __call__(self):
         """ """
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
         self.usedAttrs = self.cfg.getUsedMeetingAttributes()
+        self.showVoters = self.cfg.getUseVotes()
+        self.voters = self.context.getVoters()
         return self.index()

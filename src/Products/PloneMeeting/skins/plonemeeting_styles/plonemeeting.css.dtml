@@ -1614,23 +1614,30 @@ table#faceted_table td.draggable {
 table#meeting_users select[id$="_replacement"] {
    width: 500px;
 }
-#content table#meeting_users.listing tbody tr.even:hover td,
-#content table#faceted_table.listing tbody tr.even:hover td,
-#content table#meeting_users.listing tbody tr.odd:hover td,
-#content table#faceted_table.listing tbody tr.odd:hover td {
-   background-color: &dtml-tableHeaderBackgroundColor;;
-}
+
 #content table#meeting_users.listing tbody tr.even,
-#content table#faceted_table.listing tbody tr.even,
 #content table#meeting_users.listing tbody tr.odd,
-#content table#faceted_table.listing tbody tr.odd {
+#content table#faceted_table.listing tbody tr.even,
+#content table#faceted_table.listing tbody tr.odd,
+#content table.datagridwidget-table-view.listing tbody tr.even,
+#content table.datagridwidget-table-view.listing tbody tr.odd {
    border-left: 2px solid &dtml-tableHeaderBackgroundColor;;
 }
-
 #content table#meeting_users.listing tbody tr.even:hover,
-#content table#faceted_table.listing tbody tr.even:hover,
 #content table#meeting_users.listing tbody tr.odd:hover,
-#content table#faceted_table.listing tbody tr.odd:hover {
+#content table#faceted_table.listing tbody tr.even:hover,
+#content table#faceted_table.listing tbody tr.odd:hover,
+#content table.datagridwidget-table-view.listing tbody tr.even:hover,
+#content table.datagridwidget-table-view.listing tbody tr.odd:hover {
+   border-left: 2px solid grey;
+}
+/* special handling for table border left highlight for faceted on meeting_view */
+body.template-meeting_view #content table#faceted_table.listing tbody tr.even,
+body.template-meeting_view #content table#faceted_table.listing tbody tr.odd {
+   border-left: 3px solid &dtml-tableHeaderBackgroundColor;;
+}
+body.template-meeting_view #content table#faceted_table.listing tbody tr.even:hover,
+body.template-meeting_view #content table#faceted_table.listing tbody tr.odd:hover {
    border-left: 3px solid grey;
 }
 

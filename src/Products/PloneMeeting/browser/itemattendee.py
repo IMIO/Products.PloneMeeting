@@ -3,7 +3,6 @@
 from AccessControl import Unauthorized
 from imio.helpers.cache import invalidate_cachekey_volatile_for
 from plone import api
-from plone.z3cform.layout import wrap_form
 from Products.PloneMeeting.browser.itemassembly import _itemsToUpdate
 from Products.PloneMeeting.browser.itemassembly import validate_apply_until_item_number
 from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
@@ -191,7 +190,7 @@ class ByeByeAttendeeForm(BaseAttendeeForm):
                         i = 0
                         for item_vote in all_item_votes:
                             encoded_votes_count = item_to_update.getVoteCount(
-                                vote_value='any_votable', vote_number=i)
+                                vote_value='any_voted', vote_number=i)
                             if len_voters == encoded_votes_count:
                                 api.portal.show_message(
                                     _("Can not set ${not_present_type} "
@@ -273,7 +272,8 @@ class ByeByeAttendeeForm(BaseAttendeeForm):
         self._finished = True
 
 
-ByeByeAttendeeFormWrapper = wrap_form(ByeByeAttendeeForm)
+# do not wrap_form or it breaks the portal_messages displayed in xhr request
+# ByeByeAttendeeFormWrapper = wrap_form(ByeByeAttendeeForm)
 
 
 class IWelcomeAttendee(IBaseAttendee):
@@ -332,7 +332,8 @@ class WelcomeAttendeeForm(BaseAttendeeForm):
         self._finished = True
 
 
-WelcomeAttendeeFormWrapper = wrap_form(WelcomeAttendeeForm)
+# do not wrap_form or it breaks the portal_messages displayed in xhr request
+# WelcomeAttendeeFormWrapper = wrap_form(WelcomeAttendeeForm)
 
 
 class IByeByeNonAttendee(IBaseAttendee):
@@ -356,7 +357,8 @@ class ByeByeNonAttendeeForm(ByeByeAttendeeForm):
     not_present_type = 'non_attendee'
 
 
-ByeByeNonAttendeeFormWrapper = wrap_form(ByeByeNonAttendeeForm)
+# do not wrap_form or it breaks the portal_messages displayed in xhr request
+# ByeByeNonAttendeeFormWrapper = wrap_form(ByeByeNonAttendeeForm)
 
 
 class IWelcomeNonAttendee(IBaseAttendee):
@@ -383,7 +385,8 @@ class WelcomeNonAttendeeForm(WelcomeAttendeeForm):
         return self.meeting.itemNonAttendees
 
 
-WelcomeNonAttendeeFormWrapper = wrap_form(WelcomeNonAttendeeForm)
+# do not wrap_form or it breaks the portal_messages displayed in xhr request
+# WelcomeNonAttendeeFormWrapper = wrap_form(WelcomeNonAttendeeForm)
 
 
 class IRedefinedSignatory(IBaseAttendee):
@@ -448,7 +451,8 @@ class RedefinedSignatoryForm(BaseAttendeeForm):
         self._finished = True
 
 
-RedefinedSignatoryFormWrapper = wrap_form(RedefinedSignatoryForm)
+# do not wrap_form or it breaks the portal_messages displayed in xhr request
+# RedefinedSignatoryFormWrapper = wrap_form(RedefinedSignatoryForm)
 
 
 class IRemoveRedefinedSignatory(IBaseAttendee):
@@ -500,4 +504,5 @@ class RemoveRedefinedSignatoryForm(BaseAttendeeForm):
         self._finished = True
 
 
-RemoveRedefinedSignatoryFormWrapper = wrap_form(RemoveRedefinedSignatoryForm)
+# do not wrap_form or it breaks the portal_messages displayed in xhr request
+# RemoveRedefinedSignatoryFormWrapper = wrap_form(RemoveRedefinedSignatoryForm)

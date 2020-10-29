@@ -90,11 +90,19 @@ function manageAttendees() {
     });
 }
 
-// refresh attendees panel
+// refresh meeting attendees panel
+function refresh_meeting_attendees() {
+  tag = $("#collapsible-assembly-and-signatures");
+  result = loadCollapsibleContent(
+    tag, load_view='@@load_meeting_assembly_and_signatures', async=false);
+  highlight_attendees();
+}
+
+// refresh item attendees panel
 function refresh_attendees(highlight=null, click_cancel=false) {
   tag = $("#collapsible-assembly-and-signatures");
   result = loadCollapsibleContent(
-    tag, load_view='@@load_item_assembly_and_signatures?msg=error', async=false);
+    tag, load_view='@@load_item_assembly_and_signatures', async=false);
   if (click_cancel) {
     $('input#form-buttons-cancel').click();
   }
@@ -103,7 +111,7 @@ function refresh_attendees(highlight=null, click_cancel=false) {
   }
 }
 // highlight votes when is is refreshed
-function highlight_attendees(highlight_selector=null) {
+function highlight_attendees(highlight_selector='') {
   $.when($("#collapsible-assembly-and-signatures table tr td" + highlight_selector).effect(
     'highlight', {}, 2000));
 }

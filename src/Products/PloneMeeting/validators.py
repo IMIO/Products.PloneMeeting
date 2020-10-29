@@ -101,7 +101,6 @@ class DXCertifiedSignaturesValidator(validator.SimpleFieldValidator):
     def validate(self, value):
         """
         """
-        import ipdb; ipdb.set_trace()
         error = _validate_certified_signatures(value)
         if error:
             raise Invalid(error)

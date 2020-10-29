@@ -393,7 +393,7 @@ class MeetingAfterFacetedInfosView(BrowserView):
 
     def __call__(self):
         """ """
-        # initialize member in call because it is Anonymous in __init__ of view...
+        # initialize in call because user is Anonymous in __init__ of view...
         self.member = api.user.get_current()
         return super(MeetingAfterFacetedInfosView, self).__call__()
 
