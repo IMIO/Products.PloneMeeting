@@ -18,6 +18,7 @@ Changelog
   - Use `Products.PloneMeeting.vocabularies.signaturenumbervocabulary`
     everywhere possible and changed from 10 to 20 possible signatories;
   - highlight row in tables to know where we are;
+  - Method for printing votes (print_votes);
   - ...
   [gbastien]
 

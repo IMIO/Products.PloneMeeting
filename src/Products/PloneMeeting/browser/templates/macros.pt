@@ -483,21 +483,19 @@ document.location.reload(true);
                               name  python: 'welcome_%s' % aUid;" />
          </a>
        </tal:left>
-
      </td>
- 
+
      <td align="center"
          class="attendee-value attendee-assembly attendee-absent"
          tal:condition="showAbsents">
        <span tal:condition="python: aUid in absents" class="fa people-checked"></span>
        <tal:comment replace="nothing">Show "absent" icon if the user was absent for this item</tal:comment>
        <tal:left condition="python: aUid in itemAbsents">
- 
-        <span class="tooltipster-meeting-item-not-present fa people-left people-action"
-              tal:attributes="data-base_url string:${context/absolute_url};
-                              data-not_present_uid string:${aUid};
-                              data-not_present_type string:absent;">
-        </span>
+         <span class="tooltipster-meeting-item-not-present fa people-left people-action"
+               tal:attributes="data-base_url string:${context/absolute_url};
+                               data-not_present_uid string:${aUid};
+                               data-not_present_type string:absent;">
+         </span>
 
          <tal:comment replace="nothing">Remove info user being an item absent</tal:comment>
          <a href="#" class="link-overlay-pm-manage-attendees" tal:attributes="href string:item_welcome_attendee_form?person_uid=${aUid}"
@@ -507,7 +505,6 @@ document.location.reload(true);
                               name  python: 'welcome_%s' % aUid;" />
          </a>
        </tal:left>
-
      </td>
  
      <td align="center"
@@ -519,6 +516,7 @@ document.location.reload(true);
          <span tal:content="python: meetingSignatories[aUid]" />
        </span>
       </tal:meetingSigner>
+
       <tal:replacedMeetingSigner condition="python: aUid in meetingSignatories and aUid not in itemSignatories">
        (<span class="signatory-checked" title="Meeting signatory replaced for this item" i18n:attributes="title">
         <span class="fa people-checked"></span>
@@ -539,7 +537,6 @@ document.location.reload(true);
           tal:condition="mayChangeAttendees">
         <span class="fa people-remove-redefined-signatory people-action" title="Remove attendee from signatory defined for this item" i18n:attributes="title" />
        </a>
-
       </tal:replacerMeetingSigner>
 
       <tal:comment replace="nothing">Button for redefining a signatory</tal:comment>
@@ -557,7 +554,7 @@ document.location.reload(true);
 
        <tal:comment replace="nothing">Button for setting attendee to nonAttendee</tal:comment>
        <a href="#" class="link-overlay-pm-manage-attendees" tal:attributes="href string:item_byebye_nonattendee_form?person_uid=${aUid}"
-          tal:condition="python:context._mayChangeAttendees() and not isNonAttendee and not isRealItemSignatory">
+          tal:condition="python:context._mayChangeAttendees() and not isNonAttendee and not isRealItemSignatory and aUid not in voted_voters">
         <span class="fa people-edit-itemabsent people-action" title="person_byebye" i18n:attributes="title"
               tal:attributes="id python: 'byebye_nonattendee_%s' % aUid;
                               name  python: 'byebye_nonattendee_%s' % aUid;" />

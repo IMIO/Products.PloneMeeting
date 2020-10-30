@@ -1430,6 +1430,68 @@ class BaseDGHV(object):
 
         return signature_lines
 
+    def print_votes(self,
+                    main_pattern=u"<p>Par {0},</p>",
+                    separator=u", ",
+                    last_separator=u" et ",
+                    single_vote_value=u"une",
+                    secret_pattern=u"<p>Au scrutin secret,</p>",
+                    public_pattern="",
+                    custom_patterns={},
+                    include_vote_label=True,
+                    used_vote_values=[],
+                    include_null_vote_count_values=[],
+                    all_yes_render="<p>À l'unanimité,</p>",
+                    render_as_html=True):
+        """ """
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
+        patterns = {'yes': u"{0} voix pour",
+                    'yes_multiple': u"{0} voix pour",
+                    'no': u"{0} voix contre",
+                    'no_multiple': u"{0} voix contre",
+                    'abstain': u"{0} abstention",
+                    'abstain_multiple': u"{0} abstentions"}
+        patterns.update(custom_patterns)
+        # there may have several votes
+        item_votes = self.context.getItemVotes(include_unexisting=False)
+        res = OrderedDict()
+        used_vote_values = used_vote_values or cfg.getUsedVoteValues()
+        for item_vote in item_votes:
+            for vote_value in used_vote_values:
+                vote_count = self.context.getVoteCount(
+                    vote_value=vote_value, vote_number=item_vote['vote_number'])
+                # keep 0 vote_counts?
+                if vote_count == 0 and vote_value not in include_null_vote_count_values:
+                    continue
+                res[vote_value] = vote_count
+
+        if render_as_html:
+            if all_yes_render and len(res) == 1 and 'yes' in res:
+                res = all_yes_render
+            else:
+                values = []
+                for vote_value, vote_count in res.items():
+                    if vote_count == 1:
+                        vote_count = single_vote_value
+                    values.append(patterns[vote_value].format(vote_count))
+                # render text taking into account last_separator
+                last_rendered = u''
+                two_last_values = values[-2:]
+                all = []
+                if len(two_last_values) == 2:
+                    last_rendered = last_separator.join(two_last_values)
+                    values = values[:-2]
+                    all.append(last_rendered)
+                # after last_rendered management, still values?
+                if values:
+                    begin_rendered_values = separator.join(values)
+                    all.insert(0, begin_rendered_values)
+                rendered = main_pattern.format(separator.join(all))
+                res = rendered
+
+        return res
+
 
 class FolderDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV):
     """ """
