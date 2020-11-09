@@ -23,6 +23,7 @@ from imio.helpers.cache import cleanRamCacheFor
 from imio.helpers.cache import invalidate_cachekey_volatile_for
 from imio.prettylink.interfaces import IPrettyLink
 from OFS.ObjectManager import BeforeDeleteException
+from persistent.list import PersistentList
 from persistent.mapping import PersistentMapping
 from plone import api
 from plone.api.validation import mutually_exclusive_parameters
@@ -51,6 +52,8 @@ from Products.PloneMeeting.browser.itemchangeorder import _compute_value_to_add
 from Products.PloneMeeting.browser.itemchangeorder import _is_integer
 from Products.PloneMeeting.browser.itemchangeorder import _to_integer
 from Products.PloneMeeting.browser.itemchangeorder import _use_same_integer
+from Products.PloneMeeting.browser.itemvotes import clean_voters_linked_to
+from Products.PloneMeeting.config import NOT_VOTABLE_LINKED_TO_VALUE
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import PROJECTNAME
 from Products.PloneMeeting.config import READER_USECASES
@@ -1128,6 +1131,72 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         ''' '''
         votes = deepcopy(self.itemVotes.data)
         return votes
+
+    security.declarePrivate('setItemPublicVote')
+
+    def setItemPublicVote(self, item, data, vote_number=0):
+        """ """
+        data = deepcopy(data)
+        item_uid = item.UID()
+        # set new itemVotes value on meeting
+        # first votes
+        if item_uid not in self.itemVotes:
+            self.itemVotes[item_uid] = PersistentList()
+            # check if we are not adding a new vote on an item containing no votes at all
+            if vote_number == 1:
+                # add an empty vote 0
+                data_item_vote_0 = item.getItemVotes(
+                    vote_number=0,
+                    include_vote_number=False,
+                    include_unexisting=True)
+                # make sure we use persistent for 'voters'
+                data_item_vote_0['voters'] = PersistentMapping(data_item_vote_0['voters'])
+                self.itemVotes[item_uid].append(PersistentMapping(data_item_vote_0))
+        new_voters = data.get('voters')
+        # new vote_number
+        if vote_number + 1 > len(self.itemVotes[item_uid]):
+            # complete data before storing, if some voters are missing it is
+            # because of NOT_VOTABLE_LINKED_TO_VALUE, we add it
+            item_voter_uids = item.getItemVoters()
+            for item_voter_uid in item_voter_uids:
+                if item_voter_uid not in data['voters']:
+                    data['voters'][item_voter_uid] = NOT_VOTABLE_LINKED_TO_VALUE
+            self.itemVotes[item_uid].append(PersistentMapping(data))
+        else:
+            # use update in case we only update a subset of votes
+            # when some vote NOT_VOTABLE_LINKED_TO_VALUE or so
+            # we have nested dicts, data is a dict, containing 'voters' dict
+            self.itemVotes[item_uid][vote_number]['voters'].update(data['voters'])
+            data.pop('voters')
+            self.itemVotes[item_uid][vote_number].update(data)
+        # manage linked_to_previous
+        # if current vote is linked to other votes, we will set NOT_VOTABLE_LINKED_TO_VALUE
+        # as value of vote of voters of other linked votes
+        clean_voters_linked_to(item, self, vote_number, new_voters)
+
+    security.declarePrivate('setItemSecretVote')
+
+    def setItemSecretVote(self, item, data, vote_number):
+        """ """
+        data = deepcopy(data)
+        item_uid = item.UID()
+        # set new itemVotes value on meeting
+        # first votes
+        if item_uid not in self.itemVotes:
+            self.itemVotes[item_uid] = PersistentList()
+            # check if we are not adding a new vote on an item containing no votes at all
+            if vote_number == 1:
+                # add an empty vote 0
+                data_item_vote_0 = item.getItemVotes(
+                    vote_number=0,
+                    include_vote_number=False,
+                    include_unexisting=True)
+                self.itemVotes[item_uid].append(PersistentMapping(data_item_vote_0))
+        # new vote_number
+        if vote_number + 1 > len(self.itemVotes[item_uid]):
+            self.itemVotes[item_uid].append(PersistentMapping(data))
+        else:
+            self.itemVotes[item_uid][vote_number].update(data)
 
     security.declarePublic('displayUserReplacement')
 

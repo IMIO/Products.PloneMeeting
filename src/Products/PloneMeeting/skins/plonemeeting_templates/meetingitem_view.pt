@@ -340,7 +340,7 @@
               </span>
 
               <a i18n:name="assembly_edit" tal:condition="mayQuickEditItemAssembly" href="manage_item_assembly_form?initial_edit=1" class="link-overlay-pm">
-                <span class="fa fa-pen" />
+                <span class="fa edit-element" />
               </a>
               <span i18n:name="assembly_edit" tal:condition="not:mayQuickEditItemAssembly" />
               and
@@ -352,7 +352,7 @@
               </span>
 
               <a i18n:name="signatures_edit" tal:condition="mayQuickEditItemSignatures" href="manage_item_signatures_form" class="link-overlay-pm">
-                <span class="fa fa-pen" />
+                <span class="fa edit-element" />
               </a>
               <span i18n:name="signatures_edit" tal:condition="not:mayQuickEditItemSignatures" />
           </span>

@@ -651,7 +651,7 @@ class AskedAdvicesVocabulary(object):
     def __call__(self, context):
         """ """
         res = []
-        context = get_context_with_request(context)
+        context = get_context_with_request(context) or context
 
         self.tool = api.portal.get_tool('portal_plonemeeting')
         try:
@@ -1038,7 +1038,7 @@ class UsedVoteValuesVocabulary(object):
 
     def __call___cachekey(method, self, context, vote_number=None):
         '''cachekey method for self.__call__.'''
-        context = get_context_with_request(None)
+        context = get_context_with_request(context)
         request_debug = str(hasattr(context, 'REQUEST') and context.REQUEST._debug or None)
         return request_debug, vote_number
 
@@ -1046,7 +1046,7 @@ class UsedVoteValuesVocabulary(object):
     def __call__(self, context, vote_number=None):
         """ """
         # as used in a datagridfield, context may vary...
-        self.context = get_context_with_request(None)
+        self.context = get_context_with_request(context)
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
         res = []
@@ -1772,12 +1772,12 @@ class ItemVotersVocabulary(BaseHeldPositionsVocabulary):
         '''cachekey method for self.__call__.'''
         date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.itemvotersvocabulary')
         # as used in a datagridfield, context may vary...
-        context = get_context_with_request(None)
+        context = get_context_with_request(context)
         return date, context.UID()
 
     @ram.cache(__call___cachekey)
     def __call__(self, context):
-        context = get_context_with_request(None)
+        context = get_context_with_request(context)
         item_attendee_uids = context.getAttendees()
         terms = super(ItemVotersVocabulary, self).__call__(
             context,

@@ -4,7 +4,6 @@ from AccessControl import Unauthorized
 from collective.z3cform.datagridfield import DataGridFieldFactory
 from collective.z3cform.datagridfield import DictRow
 from imio.helpers.content import get_vocab
-from persistent.list import PersistentList
 from persistent.mapping import PersistentMapping
 from plone import api
 from plone.autoform.directives import widget
@@ -284,42 +283,9 @@ class EncodeVotesForm(BaseAttendeeForm):
         data['voters'] = PersistentMapping()
         for vote in self.votes:
             data['voters'][vote['voter_uid']] = vote['vote_value']
-        item_uid = self.context.UID()
-        # set new itemVotes value on meeting
-        # first votes
-        if item_uid not in self.meeting.itemVotes:
-            self.meeting.itemVotes[item_uid] = PersistentList()
-            # check if we are not adding a new vote on an item containing no votes at all
-            if self.vote_number == 1:
-                # add an empty vote 0
-                data_item_vote_0 = self.context.getItemVotes(
-                    vote_number=0,
-                    include_vote_number=False,
-                    include_unexisting=True)
-                # make sure we use persistent for 'voters'
-                data_item_vote_0['voters'] = PersistentMapping(data_item_vote_0['voters'])
-                self.meeting.itemVotes[item_uid].append(PersistentMapping(data_item_vote_0))
-        new_voters = data.get('voters')
-        # new vote_number
-        if self.vote_number + 1 > len(self.meeting.itemVotes[item_uid]):
-            # complete data before storing, if some voters are missing it is
-            # because of NOT_VOTABLE_LINKED_TO_VALUE, we add it
-            item_voter_uids = self.context.getItemVoters()
-            for item_voter_uid in item_voter_uids:
-                if item_voter_uid not in data['voters']:
-                    data['voters'][item_voter_uid] = NOT_VOTABLE_LINKED_TO_VALUE
-            self.meeting.itemVotes[item_uid].append(PersistentMapping(data))
-        else:
-            # use update in case we only update a subset of votes
-            # when some vote NOT_VOTABLE_LINKED_TO_VALUE or so
-            # we have nested dicts, data is a dict, containing 'voters' dict
-            self.meeting.itemVotes[item_uid][self.vote_number]['voters'].update(data['voters'])
-            data.pop('voters')
-            self.meeting.itemVotes[item_uid][self.vote_number].update(data)
-        # manage linked_to_previous
-        # if current vote is linked to other votes, we will set NOT_VOTABLE_LINKED_TO_VALUE
-        # as value of vote of voters of other linked votes
-        clean_voters_linked_to(self.context, self.meeting, self.vote_number, new_voters)
+
+        # set item public votes
+        self.meeting.setItemPublicVote(self.context, data, self.vote_number)
 
         # finish
         voter_uids = [vote['voter_uid'] for vote in self.votes]
@@ -464,6 +430,8 @@ class EncodeSecretVotesForm(BaseAttendeeForm):
             for wdt in row.subform.widgets.values():
                 if wdt.__name__ == 'vote_value_id':
                     wdt.mode = HIDDEN_MODE
+                elif wdt.__name__ == 'vote_value' and wdt.value:
+                    wdt.klass += " {0}".format(wdt.context['vote_value'])
 
     def max(self, widget):
         """ """
@@ -487,24 +455,9 @@ class EncodeSecretVotesForm(BaseAttendeeForm):
         data['linked_to_previous'] = self.linked_to_previous
         for vote in self.votes:
             data[vote['vote_value_id']] = vote['vote_count']
-        item_uid = self.context.UID()
-        # set new itemVotes value on meeting
-        # first votes
-        if item_uid not in self.meeting.itemVotes:
-            self.meeting.itemVotes[item_uid] = PersistentList()
-            # check if we are not adding a new vote on an item containing no votes at all
-            if self.vote_number == 1:
-                # add an empty vote 0
-                data_item_vote_0 = self.context.getItemVotes(
-                    vote_number=0,
-                    include_vote_number=False,
-                    include_unexisting=True)
-                self.meeting.itemVotes[item_uid].append(PersistentMapping(data_item_vote_0))
-        # new vote_number
-        if self.vote_number + 1 > len(self.meeting.itemVotes[item_uid]):
-            self.meeting.itemVotes[item_uid].append(PersistentMapping(data))
-        else:
-            self.meeting.itemVotes[item_uid][self.vote_number].update(data)
+
+        # set item public votes
+        self.meeting.setItemSecretVote(self.context, data, self.vote_number)
 
         # finish
         vote_values = [vote['vote_value_id'] for vote in self.votes]
@@ -570,10 +523,11 @@ class ItemDeleteVoteView(BrowserView):
             if not meeting.itemVotes[item_uid]:
                 del meeting.itemVotes[item_uid]
             # finish deletion
+            label = deleted_vote['label'] or ""
             extras = fp_extras_pattern.format(
                 repr(self.context),
                 vote_number,
-                deleted_vote['label'],
+                label.encode('utf-8'),
                 originnal_vote_keys,
                 originnal_vote_values)
             fplog('delete_item_votes', extras=extras)

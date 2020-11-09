@@ -524,6 +524,11 @@ td.noPadding a {
 table#meeting_users th {
    text-align: center;
 }
+/* increase size of FontAwesome in meeting_users */
+table#meeting_users tbody span.fa {
+   font-size: 110%;
+}
+
 .image-right { border:0px solid Black; clear:both; float:right; margin:0.5em; }
 
 dd.portletCell.pmLink {
@@ -998,22 +1003,35 @@ span.advices_of_type {
     font-size: 90%;
     vertical-align: sub;
 }
-span.vote_value_abstain {
-   color: orange;
-}
-span.vote_value_no {
-   color: red;
-}
-span.vote_value_yes {
+/* vote_value "yes" + vote edit form public/secret */
+span.vote_value_yes,
+input[value="yes"] + span.label,
+span.select-widget.yes span {
    color: green;
 }
-span.vote_value_not_yet {
+span.vote_value_no,
+input[value="no"] + span.label,
+span.select-widget.no span {
+   color: red;
+}
+span.vote_value_abstain,
+input[value="abstain"] + span.label,
+span.select-widget.abstain span {
+   color: orange;
+}
+span.vote_value_not_yet,
+input[value="not_yet"] + span.label,
+span.select-widget.not_yet span {
    color: grey;
 }
-span.vote_value_does_not_vote {
+span.vote_value_does_not_vote,
+input[value="does_not_vote"] + span.label,
+span.select-widget.does_not_vote span {
    color: blue;
 }
-span.vote_value_not_consultable {
+span.vote_value_not_consultable,
+input[value="not_consultable"] + span.label,
+span.select-widget.not_consultable span {
    color: black;
 }
 span.secret_vote_value {
@@ -1654,6 +1672,7 @@ table.listing tbody tr.even.dragging td {
 /* refresh attendees */
 #content span.refresh-attendees:before {
     content: "\f2f1";
+    color: &dtml-linkColor;;
 }
 #content div.refresh-attendees-container {
     display: inline;
@@ -1713,6 +1732,11 @@ table.listing tbody tr.even.dragging td {
 #content span.edit-element:before {
    content: "\f304";
 }
+#content legend span.edit-element {
+   font-size: 90%;
+   color: &dtml-linkColor;;
+}
+
 /* linked-to-previous icon */
 #content span.vote-linked-to-previous:before {
    content: "\f12e";
@@ -1841,11 +1865,6 @@ div.config_sub_categories table {
 /* highlight disabled values in red in faceted filters */
 #faceted-form fieldset.widget-fieldset label[title*="(Désactivé)"] {
     color: red;
-}
-
-/* increase FontAwesome base size when parent is using discreet */
-.discreet .fa, .fas {
-    font-size: 110%;
 }
 
 h2.available-items,
