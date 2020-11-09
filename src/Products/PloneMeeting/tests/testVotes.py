@@ -75,8 +75,9 @@ class testVotes(PloneMeetingTestCase):
                          u'<p>Par une voix pour, une voix contre et 2 abstentions,</p>')
         # public vote all yes and secret_intro
         self.assertEqual(helper_yes_secret.print_votes(secret_intro=u"<p>À bulletin secret,</p>"),
-                         u"<p>\xc3\x80 bulletin secret,</p>"
+                         u"<p>\xc0 bulletin secret,</p>"
                          u"<p>\xc0 l'unanimit\xe9,</p>")
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite
