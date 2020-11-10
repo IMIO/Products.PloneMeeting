@@ -13,6 +13,9 @@ Changelog
 - Optimized `PloneGroupSettingsValidator` when checking if `plonegroup` used on
   items, do it only if some suffixes removed and use the `portal_catalog`.
   [gbastien]
+- Make sure `attendees` are still editable on item by `MeetingManagers`
+  on a decided item if meeting is not closed.
+  [gbastien]
 
 4.2b5 (2020-10-26)
 ------------------

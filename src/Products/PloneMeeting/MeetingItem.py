@@ -6832,9 +6832,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return True
 
     def _mayChangeAttendees(self):
-        """Check that user may quickEdit itemAbsents/itemExcused/itemNonAttendees."""
-        tool = api.portal.get_tool('portal_plonemeeting')
-        return tool.isManager(self) and self.hasMeeting() and self._checkMayQuickEdit()
+        """Check that user may quickEdit
+           itemAbsents/itemExcused/itemNonAttendees/votes/..."""
+        return self.hasMeeting() and self._checkMayQuickEdit(
+            bypassWritePermissionCheck=True, onlyForManagers=True)
 
     def displayProposingGroupUsers(self):
         """ """
