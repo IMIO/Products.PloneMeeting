@@ -5,8 +5,11 @@ Changelog
 4.1.28.13 (unreleased)
 ----------------------
 
-- Nothing changed yet.
+- Backport from 4.2.x:
 
+  - Make sure `attendees` are still editable on item by `MeetingManagers`
+    on a decided item if meeting is not closed.
+    [gbastien]
 
 4.1.28.12 (2020-10-29)
 ----------------------
