@@ -1471,8 +1471,6 @@ class HeldPositionUsagesVocabulary(object):
             SimpleTerm('assemblyMember', 'assemblyMember', _('assemblyMember')))
         res.append(
             SimpleTerm('asker', 'asker', _('asker')))
-        res.append(
-            SimpleTerm('voter', 'voter', _('voter')))
         return SimpleVocabulary(res)
 
 
@@ -1487,6 +1485,8 @@ class HeldPositionDefaultsVocabulary(object):
         res = []
         res.append(
             SimpleTerm('present', 'present', _('present')))
+        res.append(
+            SimpleTerm('voter', 'voter', _('voter')))
         return SimpleVocabulary(res)
 
 
@@ -1778,11 +1778,10 @@ class ItemVotersVocabulary(BaseHeldPositionsVocabulary):
     @ram.cache(__call___cachekey)
     def __call__(self, context):
         context = get_context_with_request(context)
-        item_attendee_uids = context.getAttendees()
+        item_voter_uids = context.getVoters()
         terms = super(ItemVotersVocabulary, self).__call__(
             context,
-            uids=item_attendee_uids,
-            usage='voter',
+            uids=item_voter_uids,
             include_usages=False,
             include_defaults=False,
             include_signature_number=False,
@@ -1792,7 +1791,7 @@ class ItemVotersVocabulary(BaseHeldPositionsVocabulary):
 
         # keep order of item attendees
         def getKey(term):
-            return item_attendee_uids.index(term.token)
+            return item_voter_uids.index(term.token)
         terms = sorted(terms, key=getKey)
         return SimpleVocabulary(terms)
 

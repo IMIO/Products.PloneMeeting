@@ -3710,7 +3710,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                               ignored_vote_values=[]):
         '''cachekey method for self.getItemVotes.'''
         meeting = self.getMeeting()
-        item_votes = deepcopy(meeting.itemVotes.data)
+        item_votes = meeting and deepcopy(meeting.itemVotes.data)
         linked_to_previous = self.REQUEST.get('linked_to_previous', False)
         return (self.UID(), item_votes, linked_to_previous,
                 vote_number,
@@ -3739,7 +3739,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return votes
         meeting = self.getMeeting()
         item_votes = meeting.getItemVotes().get(self.UID(), [])
-        voter_uids = self.getItemVoters()
+        voter_uids = self.getVoters()
         votes_are_secret = self.getVotesAreSecret()
         # all votes
         if vote_number == 'all':
@@ -3761,6 +3761,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 # first or not existing
                 if not votes:
                     votes = [{'label': None,
+                              'votes': {},
                               'linked_to_previous': self.REQUEST.get('linked_to_previous', False)}]
                     if include_vote_number:
                         votes[0]['vote_number'] = 0
@@ -3768,7 +3769,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     tool = api.portal.get_tool('portal_plonemeeting')
                     cfg = tool.getMeetingConfig(self)
                     for used_vote in cfg.getUsedVoteValues():
-                        votes[0][used_vote] = ""
+                        votes[0]['votes'][used_vote] = ""
         # public votes
         else:
             # add an empty vote in case nothing in itemVotes
@@ -3807,19 +3808,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             votes = votes[0]
         return votes
 
-    security.declarePublic('getItemVoters')
+    security.declarePublic('getVoters')
 
-    def getItemVoters(self, theObjects=False):
+    def getVoters(self, theObjects=False):
         '''Return held positions able to vote on current item.
            By default, held_position UIDs are returned.
            If p_ehtObjects=True, held_position objects are returned.'''
-        attendees = self.getAttendees()
-        voter_terms = get_vocab(self, "Products.PloneMeeting.vocabularies.itemvotersvocabulary")
-        voters = [term.token for term in voter_terms._terms
-                  if term.token in attendees]
-        if theObjects:
-            meeting = self.getMeeting()
-            voters = meeting._getContacts(uids=voters, theObjects=True)
+        meeting = self.getMeeting()
+        voters = meeting.getVoters(theObjects=theObjects)
         return voters
 
     def getInAndOutAttendees(self, ignore_before_first_item=True, theObjects=True):
@@ -6762,16 +6758,15 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Gets the number of votes for p_vote_value.
            A special value 'any_votable' may be passed for p_vote_value,
            in this case every values other than NOT_VOTABLE_LINKED_TO_VALUE are counted.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self)
         res = 0
         itemVotes = self.getItemVotes(vote_number)
-        item_voter_uids = self.getItemVoters()
+        item_voter_uids = self.getVoters()
         # when initializing, so Meeting.itemVotes is empty
         # only return count for NOT_ENCODED_VOTE_VALUE
         if not itemVotes and vote_value == NOT_ENCODED_VOTE_VALUE:
             res = len(item_voter_uids)
         elif not self.getVotesAreSecret():
+            # public
             for item_voter_uid in item_voter_uids:
                 if (item_voter_uid not in itemVotes['voters'] and
                         vote_value == NOT_ENCODED_VOTE_VALUE) or \
@@ -6783,18 +6778,18 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     res += 1
         else:
             # secret
-            if vote_value in itemVotes:
-                res = itemVotes[vote_value] or 0
+            if vote_value in itemVotes['votes']:
+                res = itemVotes['votes'][vote_value] or 0
             elif vote_value == 'any_votable':
                 res = len(item_voter_uids)
             elif vote_value == NOT_ENCODED_VOTE_VALUE:
                 total = len(item_voter_uids)
-                voted = sum([item_vote_count or 0 for item_vote_value, item_vote_count in itemVotes.items()
-                             if item_vote_value in cfg.getUsedVoteValues()])
+                voted = sum([item_vote_count or 0 for item_vote_value, item_vote_count
+                             in itemVotes['votes'].items()])
                 res = total - voted
             elif vote_value == 'any_voted':
-                res = sum([item_vote_count or 0 for item_vote_value, item_vote_count in itemVotes.items()
-                           if item_vote_value in cfg.getUsedVoteValues()])
+                res = sum([item_vote_count or 0 for item_vote_value, item_vote_count
+                           in itemVotes['votes'].items()])
         return res
 
     security.declarePublic('setFieldFromAjax')

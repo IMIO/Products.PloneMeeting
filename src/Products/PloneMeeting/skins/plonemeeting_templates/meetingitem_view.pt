@@ -368,6 +368,28 @@
       </tal:defines>
     </tal:assembly_and_signatures>
 
+    <tal:assembly_and_signatures_no_meeting condition="not:nocall:meeting">
+      <div id="assembly-and-signatures"
+          onclick="toggleDetails('collapsible-assembly-and-signatures', toggle_parent_active=true);"
+          class="collapsible discreet">
+          <span class="meeting_attribute_label" i18n:translate="redefinable_assembly_and_signatures">
+              <span i18n:name="assembly">
+                    <tal:block i18n:translate="meeting_assembly">Assembly</tal:block>
+              </span>
+              <span i18n:name="assembly_edit" />
+              <span i18n:name="signatures">
+                    <tal:block i18n:translate="meeting_signatures">signatures</tal:block>
+              </span>
+              <span i18n:name="signatures_edit" />
+          </span>
+      </div>
+      <div id="collapsible-assembly-and-signatures" class="collapsible-content discreet" style="display: none;">
+        <div class="collapsible-inner-content">
+         <span i18n:translate="">Nothing to display when item is not presented into a meeting.</span>
+        </div>
+      </div>
+    </tal:assembly_and_signatures_no_meeting  >
+
     <tal:comment replace="nothing">Linked items</tal:comment>
     <tal:defines define="predecessors python: context.adapted().getPredecessors(only_viewable=True);
                          linkedItems python: context.getManuallyLinkedItems(only_viewable=True);

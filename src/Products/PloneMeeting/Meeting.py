@@ -53,6 +53,7 @@ from Products.PloneMeeting.browser.itemchangeorder import _is_integer
 from Products.PloneMeeting.browser.itemchangeorder import _to_integer
 from Products.PloneMeeting.browser.itemchangeorder import _use_same_integer
 from Products.PloneMeeting.browser.itemvotes import clean_voters_linked_to
+from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
 from Products.PloneMeeting.config import NOT_VOTABLE_LINKED_TO_VALUE
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import PROJECTNAME
@@ -865,6 +866,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         cfg = tool.getMeetingConfig(self)
 
         if cfg.isUsingContacts() and not self.isTemporary():
+            # removed attendees
             # REQUEST.form['meeting_attendees'] is like
             # ['muser_attendeeuid1_attendee', 'muser_attendeeuid2_excused']
             stored_attendees = self.getAllUsedHeldPositions(the_objects=False)
@@ -873,16 +875,8 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             removed_meeting_attendees = set(stored_attendees).difference(meeting_attendees)
             # attendees redefined on items
             redefined_item_attendees = self._get_all_redefined_attendees(by_persons=True)
-            # voters
-            item_votes = self.getItemVotes()
-            voter_uids = []
-            for votes in item_votes.values():
-                for vote in votes:
-                    voter_uids += vote.get('voters', [])
-            voter_uids = list(set(voter_uids))
-
             conflict_attendees = removed_meeting_attendees.intersection(
-                redefined_item_attendees + voter_uids)
+                redefined_item_attendees)
             if conflict_attendees:
                 attendee_uid = tuple(removed_meeting_attendees)[0]
                 attendee_brain = uuidToCatalogBrain(attendee_uid)
@@ -891,6 +885,43 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
                     mapping={'attendee_title': attendee_brain.get_full_title},
                     domain='PloneMeeting',
                     context=REQUEST)
+            else:
+                # removed voters
+                stored_voters = self.getVoters()
+                meeting_voters = [voter.split('_')[1] for voter
+                                  in REQUEST.form.get('meeting_voters', [])]
+                removed_meeting_voters = set(stored_voters).difference(meeting_voters)
+                # public, voters are known
+                item_votes = self.getItemVotes()
+                voter_uids = []
+                highest_secret_votes = 0
+                for votes in item_votes.values():
+                    for vote in votes:
+                        if 'voters' in vote:
+                            # public
+                            voter_uids += [k for k, v in vote['voters'].items()
+                                           if v != NOT_ENCODED_VOTE_VALUE]
+                        else:
+                            secret_votes = sum([v for k, v in vote['votes'].items()])
+                            if secret_votes > highest_secret_votes:
+                                highest_secret_votes = secret_votes
+                voter_uids = list(set(voter_uids))
+                conflict_voters = removed_meeting_voters.intersection(
+                    voter_uids)
+                if conflict_voters:
+                    voter_uid = tuple(removed_meeting_voters)[0]
+                    voter_brain = uuidToCatalogBrain(voter_uid)
+                    errors['meeting_attendees'] = translate(
+                        'can_not_remove_public_voter_voted_on_items',
+                        mapping={'attendee_title': voter_brain.get_full_title},
+                        domain='PloneMeeting',
+                        context=REQUEST)
+                elif highest_secret_votes > len(meeting_voters):
+                    errors['meeting_attendees'] = translate(
+                        'can_not_remove_secret_voter_voted_on_items',
+                        domain='PloneMeeting',
+                        context=REQUEST)
+
         return errors
 
     security.declarePrivate('validate_date')
@@ -992,7 +1023,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('getDefaultSignatories')
 
     def getDefaultSignatories(self):
-        '''The default signatiries are the active held_positions
+        '''The default signatories are the active held_positions
            with a defined signature_number.'''
         res = []
         if self.checkCreationFlag():
@@ -1000,6 +1031,18 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             res = [held_pos for held_pos in used_held_positions
                    if held_pos.defaults and 'present' in held_pos.defaults and held_pos.signature_number]
         return {signer.UID(): signer.signature_number for signer in res}
+
+    security.declarePublic('getDefaultVoters')
+
+    def getDefaultVoters(self):
+        '''The default voters are the active held_positions
+           with 'voter' in defaults.'''
+        res = []
+        if self.checkCreationFlag():
+            used_held_positions = self.getAllUsedHeldPositions(include_new=True)
+            res = [held_pos.UID() for held_pos in used_held_positions
+                   if held_pos.defaults and 'voter' in held_pos.defaults]
+        return res
 
     @mutually_exclusive_parameters('contact_type', 'uids')
     def _getContacts(self, contact_type=None, uids=None, theObjects=False):
@@ -1042,6 +1085,12 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         '''Returns the absents in this meeting.'''
         return self._getContacts('absent', theObjects=theObjects)
 
+    security.declarePublic('getVoters')
+
+    def getVoters(self, theObjects=False):
+        '''Returns the voters in this meeting.'''
+        return self._getContacts('voter', theObjects=theObjects)
+
     security.declarePublic('getSignatories')
 
     def getSignatories(self, theObjects=False, by_signature_number=False):
@@ -1064,17 +1113,6 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         replaced_uids = self._getContacts('replacement', theObjects=theObjects)
         return {replaced_uid: self.orderedContacts[replaced_uid]['replacement']
                 for replaced_uid in replaced_uids}
-
-    security.declarePublic('getVoters')
-
-    def getVoters(self, theObjects=False):
-        '''Return attendees able to vote.'''
-        hps = self.getAllUsedHeldPositions(the_objects=True)
-        attendees = self.getAttendees(theObjects=False)
-        voters = [hp for hp in hps if 'voter' in hp.usages and hp.UID() in attendees]
-        if not theObjects:
-            voters = [hp.UID() for hp in voters]
-        return voters
 
     def _get_item_not_present(self, attr, by_persons=False):
         '''Return item not present (itemAbsents, itemExcused) by default the attr dict has the item UID
@@ -1157,7 +1195,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         if vote_number + 1 > len(self.itemVotes[item_uid]):
             # complete data before storing, if some voters are missing it is
             # because of NOT_VOTABLE_LINKED_TO_VALUE, we add it
-            item_voter_uids = item.getItemVoters()
+            item_voter_uids = self.getVoters()
             for item_voter_uid in item_voter_uids:
                 if item_voter_uid not in data['voters']:
                     data['voters'][item_voter_uid] = NOT_VOTABLE_LINKED_TO_VALUE
@@ -1730,11 +1768,17 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         '''Adaptable method to filter possible user replacement.'''
         return allUsers
 
-    def _doUpdateContacts(self, attendees=OrderedDict(), signatories={}, replacements={}):
+    def _doUpdateContacts(self,
+                          attendees=OrderedDict(),
+                          signatories={},
+                          replacements={},
+                          voters=[]):
         ''' '''
         # attendees must be an OrderedDict to keep order
         if not isinstance(attendees, OrderedDict):
-            raise ValueError('Parameter attendees passed to Meeting._doUpdateContacts must be an OrderedDict !!!')
+            raise ValueError(
+                'Parameter attendees passed to Meeting._doUpdateContacts '
+                'must be an OrderedDict !!!')
         # save the ordered contacts so we rely on this, especially when
         # users are disabled in the configuration
         self.orderedContacts.clear()
@@ -1747,7 +1791,8 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
                      'absent': False,
                      'signer': False,
                      'signature_number': None,
-                     'replacement': None}
+                     'replacement': None,
+                     'voter': False}
             self.orderedContacts[attendee_uid][attendee_type] = True
 
         for signatory_uid, signature_number in signatories.items():
@@ -1756,6 +1801,10 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
 
         for replaced_uid, replacer_uid in replacements.items():
             self.orderedContacts[replaced_uid]['replacement'] = replacer_uid
+
+        for voter_uid in voters:
+            self.orderedContacts[voter_uid]['voter'] = True
+
         self._p_changed = True
 
     security.declarePrivate('updateContacts')
@@ -1770,7 +1819,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         if not cfg.isUsingContacts():
             return
 
-        # manage attendees, excused, absents
+        # attendees, excused, absents
         meeting_attendees = self.REQUEST.get('meeting_attendees', [])
         # remove leading muser_ and return a list of tuples, position_uid, attendee_type
         attendees = OrderedDict()
@@ -1779,7 +1828,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             prefix, position_uid, attendee_type = key.split('_')
             attendees[position_uid] = attendee_type
 
-        # manage signatories, remove ''
+        # signatories, remove ''
         meeting_signatories = [
             signatory for signatory in self.REQUEST.get('meeting_signatories', []) if signatory]
         signatories = {}
@@ -1787,7 +1836,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             signatory, signature_number = key.split('__signaturenumber__')
             signatories[signatory] = signature_number
 
-        # manage replacements, remove ''
+        # replacements, remove ''
         meeting_replacements = [
             replacer for replacer in self.REQUEST.get('meeting_replacements', []) if replacer]
         replacements = {}
@@ -1795,7 +1844,16 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             replaced, replacer = key.split('__replacedby__')
             replacements[replaced] = replacer
 
-        self._doUpdateContacts(attendees, signatories, replacements)
+        # voters
+        meeting_voters = self.REQUEST.get('meeting_voters', [])
+        # remove leading muser_ and return a list of tuples, position_uid, attendee_type
+        voters = []
+        for key in meeting_voters:
+            # remove leading muser_ and ending _voter
+            prefix, position_uid, suffix = key.split('_')
+            voters.append(position_uid)
+
+        self._doUpdateContacts(attendees, signatories, replacements, voters)
 
     security.declarePrivate('at_post_create_script')
 

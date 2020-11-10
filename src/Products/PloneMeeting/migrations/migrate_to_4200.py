@@ -83,6 +83,10 @@ class Migrate_To_4200(Migrator):
             if hasattr(meeting, 'itemVotes'):
                 continue
             meeting.itemVotes = PersistentMapping()
+            # add the 'voter' key to Meeting.orderedContacts
+            for value in meeting.orderedContacts.values():
+                value['voter'] = False
+            meeting._p_changed = True
         logger.info('Done.')
 
     def _migrateKeepAccessToItemWhenAdviceIsGiven(self):

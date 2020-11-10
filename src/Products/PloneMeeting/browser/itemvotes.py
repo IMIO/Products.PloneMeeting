@@ -75,8 +75,8 @@ def votes_default(context):
     vote_number = vote_number_default()
     item_votes = context.getItemVotes(vote_number=vote_number,
                                       ignored_vote_values=[NOT_VOTABLE_LINKED_TO_VALUE])
-    # keep order using getItemVoters
-    item_voter_uids = context.getItemVoters()
+    # keep order using getVoters
+    item_voter_uids = context.getVoters()
 
     # when adding a new vote linked_to_previous, only keep possible voters
     if item_votes['linked_to_previous']:
@@ -318,7 +318,7 @@ def secret_votes_default(context):
     for usedVoteValue in usedVoteValues:
         data = {'vote_value_id': usedVoteValue,
                 'vote_value': usedVoteValue,
-                'vote_count': item_votes[usedVoteValue] or 0}
+                'vote_count': item_votes['votes'].get(usedVoteValue) or 0}
         res.append(data)
     return res
 
@@ -383,7 +383,7 @@ class IEncodeSecretVotes(IBaseAttendee):
         data.votes = votes
         # check if max voters of every linked secret votes is not exceeded
         linked_vote_numbers = _get_linked_item_vote_numbers(context, meeting, data.vote_number)
-        max_voters = len(context.getItemVoters())
+        max_voters = len(context.getVoters())
         if linked_vote_numbers:
             # init at current value
             total = sum([vote['vote_count'] for vote in data.votes])
@@ -435,7 +435,7 @@ class EncodeSecretVotesForm(BaseAttendeeForm):
 
     def max(self, widget):
         """ """
-        return len(self.context.getItemVoters())
+        return len(self.context.getVoters())
 
     def min(self, widget):
         """ """
@@ -453,8 +453,9 @@ class EncodeSecretVotesForm(BaseAttendeeForm):
         data = {}
         data['label'] = self.label
         data['linked_to_previous'] = self.linked_to_previous
+        data['votes'] = {}
         for vote in self.votes:
-            data[vote['vote_value_id']] = vote['vote_count']
+            data['votes'][vote['vote_value_id']] = vote['vote_count']
 
         # set item public votes
         self.meeting.setItemSecretVote(self.context, data, self.vote_number)
@@ -491,16 +492,11 @@ class ItemDeleteVoteView(BrowserView):
 
             vote_to_delete = itemVotes[vote_number]
             if self.context.getVotesAreSecret():
-                used_vote_terms = get_vocab(
-                    self.context,
-                    "Products.PloneMeeting.vocabularies.usedvotevaluesvocabulary",
-                    vote_number=vote_number)
-                usedVoteValues = [term.token for term in used_vote_terms._terms]
-                originnal_vote_keys = [str(vote_count) for vote_value, vote_count in vote_to_delete.items()
-                                       if vote_value in usedVoteValues]
+                originnal_vote_keys = [str(vote_count) for vote_value, vote_count
+                                       in vote_to_delete['votes'].items()]
                 originnal_vote_keys = "__".join(originnal_vote_keys)
-                originnal_vote_values = [vote_value for vote_value, vote_count in vote_to_delete.items()
-                                         if vote_value in usedVoteValues]
+                originnal_vote_values = [vote_value for vote_value, vote_count
+                                         in vote_to_delete['votes'].items()]
                 originnal_vote_values = "__".join(originnal_vote_values)
                 fp_extras_pattern = 'item={0} vote_number={1} vote_label={2} vote_count={3} vote_values={4}'
             else:

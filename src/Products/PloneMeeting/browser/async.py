@@ -417,6 +417,7 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
         cfg = tool.getMeetingConfig(self.context)
         cfg_modified = cfg.modified()
         meeting = self.context.getMeeting()
+        voters = meeting.getVoters()
         ordered_contacts = meeting.orderedContacts.items()
         redefined_item_attendees = meeting._get_all_redefined_attendees(only_keys=False)
         show_votes = self.context.showVotes()
@@ -428,13 +429,14 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
         may_change_attendees = self.context._mayChangeAttendees()
         return (self.context.UID(),
                 cfg_modified,
+                voters,
                 ordered_contacts,
                 redefined_item_attendees,
                 show_votes,
                 item_votes,
                 may_change_attendees)
 
-    #@ram.cache(__call___cachekey)
+    @ram.cache(__call___cachekey)
     def __call__(self):
         """ """
         self.error_msg = self.request.get('attendees_error_msg')
@@ -445,7 +447,7 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
         self.showVotes = self.context.showVotes()
         if self.showVotes:
             self.votesAreSecret = self.context.getVotesAreSecret()
-            self.voters = self.context.getItemVoters() or []
+            self.voters = self.context.getVoters() or []
             self.itemVotes = self.context.getItemVotes(
                 include_unexisting=True,
                 ignored_vote_values=[NOT_VOTABLE_LINKED_TO_VALUE]) or []
@@ -493,7 +495,7 @@ class AsyncLoadMeetingAssemblyAndSignatures(BrowserView):
                 item_votes,
                 context_uid)
 
-    #@ram.cache(__call___cachekey)
+    @ram.cache(__call___cachekey)
     def __call__(self):
         """ """
         self.tool = api.portal.get_tool('portal_plonemeeting')

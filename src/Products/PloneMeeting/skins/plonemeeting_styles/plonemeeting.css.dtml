@@ -2095,8 +2095,10 @@ div.select-all-vote-values {
 div.select-all-vote-values span.option {
    display: inline;
 }
+/* make sure radio button is displayed on one line */
 div#formfield-form-widgets-votes td.cell-3 {
    text-align: right;
+   white-space: nowrap;
 }
 table#form-widgets-votes td,
 table#form-widgets-votes th {

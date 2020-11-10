@@ -16,8 +16,34 @@ class testVotes(PloneMeetingTestCase):
         self.setMeetingConfig(self.meetingConfig2.getId())
         self._setUpOrderedContacts()
 
+    def test_pm_GetItemVotes(self):
+        """Returns votes on an item."""
+        self.changeUser('pmManager')
+        public_item = self.create('MeetingItem')
+        secret_item = self.create('MeetingItem', pollType='secret')
+        meeting = self.create('Meeting', date=DateTime('2020/11/10'))
+        # return an empty list of not linked to a meeting
+        self.assertEqual(public_item.getItemVotes(), [])
+        self.assertEqual(secret_item.getItemVotes(), [])
+        self.presentItem(public_item)
+        self.presentItem(secret_item)
+        # return an empty vote when nothing encoded
+        # when include_unexisting=True (default)
+        public_vote = public_item.getItemVotes()[0]
+        secret_vote = secret_item.getItemVotes()[0]
+        self.assertEqual(public_vote['vote_number'], 0)
+        self.assertEqual(secret_vote['vote_number'], 0)
+        # voters are on public vote
+        voters = meeting.getVoters()
+        self.assertEqual(public_vote['voters'].keys(), voters)
+        # not on secret
+        self.assertFalse('voters' in secret_vote)
+        self.assertTrue('yes' in secret_vote)
+        self.assertTrue('no' in secret_vote)
+        self.assertTrue('abstain' in secret_vote)
+
     def test_pm_PrintVotes(self):
-        '''Test the print_votes helper.'''
+        """Test the print_votes helper."""
         self.changeUser('pmManager')
         meeting = self.create('Meeting', date=DateTime('2020/11/09'))
         public_item = self.create('MeetingItem')
