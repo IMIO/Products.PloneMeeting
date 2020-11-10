@@ -1557,6 +1557,22 @@ schema = Schema((
         optional=True,
         write_permission="PloneMeeting: Write item MeetingManager reserved fields",
     ),
+    TextField(
+        name='votesObservations',
+        widget=RichWidget(
+            label_msgid="PloneMeeting_label_votesObservations",
+            condition="python: here.attributeIsUsed('votesObservations')",
+            description_msgid="field_vieawable_by_everyone_descr",
+            label='Votesobservations',
+            i18n_domain='PloneMeeting',
+        ),
+        default_content_type="text/html",
+        searchable=True,
+        allowable_content_types=('text/html',),
+        default_output_type="text/x-html-safe",
+        optional=True,
+        write_permission="PloneMeeting: Write item MeetingManager reserved fields",
+    ),
     ReferenceField(
         name='predecessor',
         widget=ReferenceBrowserWidget(
@@ -3694,7 +3710,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                               ignored_vote_values=[]):
         '''cachekey method for self.getItemVotes.'''
         meeting = self.getMeeting()
-        item_votes = meeting.itemVotes.data
+        item_votes = deepcopy(meeting.itemVotes.data)
         linked_to_previous = self.REQUEST.get('linked_to_previous', False)
         return (self.UID(), item_votes, linked_to_previous,
                 vote_number,
@@ -3705,7 +3721,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getItemVotes')
 
-    #@ram.cache(getItemVotes_cachekey)
+    @ram.cache(getItemVotes_cachekey)
     def getItemVotes(self,
                      vote_number='all',
                      include_vote_number=True,

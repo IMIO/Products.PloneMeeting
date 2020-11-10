@@ -14,11 +14,14 @@ Changelog
   items, do it only if some suffixes removed and use the `portal_catalog`.
 - Implement votes functionnality :
 
-  - Load attendees displayed on item view asynchronously;
+  - Added possibility to manage public and secret votes depending
+    on MeetingItem.pollType;
+  - Added new optional field MeetingItem.votesObservations;
+  - Load and manage attendees displayed on item view asynchronously;
   - Use `Products.PloneMeeting.vocabularies.signaturenumbervocabulary`
     everywhere possible and changed from 10 to 20 possible signatories;
   - highlight row in tables to know where we are;
-  - Method for printing votes (print_votes);
+  - Added method for printing votes (print_votes);
   - ...
   [gbastien]
 
