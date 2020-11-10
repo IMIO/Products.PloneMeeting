@@ -144,7 +144,7 @@ class testContacts(PloneMeetingTestCase):
         # remove recurring items
         self._removeConfigObjectsFor(cfg)
         self.changeUser('pmCreator1')
-        item = self.create('MeetingItem')
+        item = self.create('MeetingItem', decision=self.decisionText)
         self.changeUser('pmManager')
         meeting = self.create('Meeting', date=DateTime())
         # attendees not signatories
@@ -173,12 +173,18 @@ class testContacts(PloneMeetingTestCase):
         # False for everybody when item not in a meeting
         _check('pmManager', should=False)
         _check('pmCreator1', should=False)
-        self.presentItem(item)
         # MeetingManagers may when item in a meeting
+        self.presentItem(item)
         _check('pmManager')
         _check('pmCreator1', should=False)
-        self.closeMeeting(meeting)
+        # MeetingManagers may when item decided and meeting not closed
+        self.changeUser('pmManager')
+        self.decideMeeting(meeting)
+        self.do(item, 'accept')
+        _check('pmManager')
+        _check('pmCreator1', should=False)
         # False for everybody when meeting is closed
+        self.closeMeeting(meeting)
         _check('pmManager', should=False)
         _check('pmCreator1', should=False)
 

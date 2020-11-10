@@ -24,6 +24,9 @@ Changelog
   - Added method for printing votes (print_votes);
   - ...
   [gbastien]
+- Make sure `attendees` are still editable on item by `MeetingManagers`
+  on a decided item if meeting is not closed.
+  [gbastien]
 
 4.2b5 (2020-10-26)
 ------------------
