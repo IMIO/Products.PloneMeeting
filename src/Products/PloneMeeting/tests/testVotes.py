@@ -13,7 +13,6 @@ class testVotes(PloneMeetingTestCase):
     def setUp(self):
         # call parent setUp
         super(testVotes, self).setUp()
-        self.setMeetingConfig(self.meetingConfig2.getId())
         self._setUpOrderedContacts()
 
     def test_pm_GetItemVotes(self):
@@ -35,12 +34,13 @@ class testVotes(PloneMeetingTestCase):
         self.assertEqual(secret_vote['vote_number'], 0)
         # voters are on public vote
         voters = meeting.getVoters()
-        self.assertEqual(public_vote['voters'].keys(), voters)
+        self.assertEqual(sorted(public_vote['voters'].keys()), sorted(voters))
         # not on secret
         self.assertFalse('voters' in secret_vote)
-        self.assertTrue('yes' in secret_vote)
-        self.assertTrue('no' in secret_vote)
-        self.assertTrue('abstain' in secret_vote)
+        self.assertTrue('votes' in secret_vote)
+        self.assertTrue('yes' in secret_vote['votes'])
+        self.assertTrue('no' in secret_vote['votes'])
+        self.assertTrue('abstain' in secret_vote['votes'])
 
     def test_pm_PrintVotes(self):
         """Test the print_votes helper."""
@@ -68,14 +68,14 @@ class testVotes(PloneMeetingTestCase):
         meeting.setItemPublicVote(yes_public_item, public_votes, 0)
         # encode secret votes
         secret_votes = secret_item.getItemVotes()[0]
-        secret_votes['abstain'] = 2
-        secret_votes['no'] = 1
-        secret_votes['yes'] = 1
+        secret_votes['votes']['abstain'] = 2
+        secret_votes['votes']['no'] = 1
+        secret_votes['votes']['yes'] = 1
         meeting.setItemSecretVote(secret_item, secret_votes, 0)
         # all yes secret votes
-        secret_votes['abstain'] = 0
-        secret_votes['no'] = 0
-        secret_votes['yes'] = 4
+        secret_votes['votes']['abstain'] = 0
+        secret_votes['votes']['no'] = 0
+        secret_votes['votes']['yes'] = 4
         meeting.setItemSecretVote(yes_secret_item, secret_votes, 0)
 
         # print_votes
