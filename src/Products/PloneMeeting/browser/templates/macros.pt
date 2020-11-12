@@ -329,9 +329,9 @@ document.location.reload(true);
      tal:define="usedAttrs usedAttrs|meetingConfig/getUsedItemAttributes;
                  meeting context/getMeeting;
                  usedMeetingAttributes usedMeetingAttributes|meetingConfig/getUsedMeetingAttributes">
-                     <div metal:use-macro="context/global_statusmessage/macros/portal_message">
-                      Portal status message
-                    </div>
+ <div metal:use-macro="context/global_statusmessage/macros/portal_message">
+   Portal status message
+ </div>
 <table tal:define="allUsers meeting/getAllUsedHeldPositions;
                    showVotes view/showVotes;
                    excused meeting/getExcused;

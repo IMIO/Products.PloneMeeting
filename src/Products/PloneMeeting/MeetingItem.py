@@ -3701,27 +3701,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         """ """
         return bool(self.getPollType().startswith('secret'))
 
-    def getItemVotes_cachekey(method,
-                              self,
-                              vote_number='all',
-                              include_vote_number=True,
-                              include_unexisting=True,
-                              unexisting_value=NOT_ENCODED_VOTE_VALUE,
-                              ignored_vote_values=[]):
-        '''cachekey method for self.getItemVotes.'''
-        meeting = self.getMeeting()
-        item_votes = meeting and deepcopy(meeting.itemVotes.data)
-        linked_to_previous = self.REQUEST.get('linked_to_previous', False)
-        return (self.UID(), item_votes, linked_to_previous,
-                vote_number,
-                include_vote_number,
-                include_unexisting,
-                unexisting_value,
-                ignored_vote_values)
-
     security.declarePublic('getItemVotes')
 
-    @ram.cache(getItemVotes_cachekey)
     def getItemVotes(self,
                      vote_number='all',
                      include_vote_number=True,
@@ -3739,7 +3720,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return votes
         meeting = self.getMeeting()
         item_votes = meeting.getItemVotes().get(self.UID(), [])
-        voter_uids = self.getVoters()
+        voter_uids = self.getItemVoters()
         votes_are_secret = self.getVotesAreSecret()
         # all votes
         if vote_number == 'all':
@@ -3750,6 +3731,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 i = 0
                 for vote_infos in votes:
                     vote_infos['vote_number'] = i
+                    vote_infos['linked_to_previous'] = vote_infos.get('linked_to_previous', False)
                     i += 1
         # vote_number
         elif len(item_votes) - 1 >= vote_number:
@@ -3808,14 +3790,25 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             votes = votes[0]
         return votes
 
-    security.declarePublic('getVoters')
+    def get_voted_voters(self):
+        '''Voter uids that actually voted on this item.'''
+        item_votes = self.getItemVotes(
+            ignored_vote_values=[NOT_ENCODED_VOTE_VALUE])
+        voted_voters = []
+        for vote in item_votes:
+            voters = vote.get('voters', {}).keys()
+            voted_voters += voters
+        return tuple(set(voted_voters))
 
-    def getVoters(self, theObjects=False):
+    security.declarePublic('getItemVoters')
+
+    def getItemVoters(self, theObjects=False):
         '''Return held positions able to vote on current item.
            By default, held_position UIDs are returned.
-           If p_ehtObjects=True, held_position objects are returned.'''
+           If p_theObjects=True, held_position objects are returned.'''
         meeting = self.getMeeting()
-        voters = meeting.getVoters(theObjects=theObjects)
+        attendee_uids = self.getAttendees() or None
+        voters = meeting.getVoters(uids=attendee_uids, theObjects=theObjects)
         return voters
 
     def getInAndOutAttendees(self, ignore_before_first_item=True, theObjects=True):
@@ -6760,7 +6753,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            in this case every values other than NOT_VOTABLE_LINKED_TO_VALUE are counted.'''
         res = 0
         itemVotes = self.getItemVotes(vote_number)
-        item_voter_uids = self.getVoters()
+        item_voter_uids = self.getItemVoters()
         # when initializing, so Meeting.itemVotes is empty
         # only return count for NOT_ENCODED_VOTE_VALUE
         if not itemVotes and vote_value == NOT_ENCODED_VOTE_VALUE:

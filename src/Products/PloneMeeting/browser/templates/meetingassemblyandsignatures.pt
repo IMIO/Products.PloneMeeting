@@ -89,7 +89,11 @@
           </span>
         </td>
         <td align="center" tal:condition="showVoters">
-          <span tal:condition="python: aUid in voters" class="fa people-checked" ></span>
+          <span tal:condition="python: aUid in voters"
+                class="tooltipster-meeting-item-voters fa people-checked people-action"
+                tal:attributes="data-base_url string:${context/absolute_url};
+                                data-voter_uid string:${aUid};">
+          </span>
           <span tal:condition="python: aUid not in voters">-</span>
         </td>
       </tr>

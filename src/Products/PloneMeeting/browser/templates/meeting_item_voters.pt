@@ -1,0 +1,9 @@
+<div id="content"
+     i18n:domain="PloneMeeting"
+     class="meeting_item_voters_tooltipster"
+     tal:define="items view/getNonVotedItems">
+  <h4><span i18n:translate="">This voter did not vote for <span i18n:name="number" tal:content="python: len(items)">number</span> following public item(s)</span> :</h4>
+  <ul tal:repeat="item items">
+    <li><span tal:content="python: item.getItemNumber(for_display=True)" />. <span tal:content="structure item/getPrettyLink" /></li>
+  </ul>
+</div>

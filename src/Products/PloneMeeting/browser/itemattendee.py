@@ -95,6 +95,13 @@ class BaseAttendeeForm(form.Form):
         invalidate_cachekey_volatile_for(
             'Products.PloneMeeting.vocabularies.itemvotersvocabulary',
             get_again=True)
+        # invalidate attendees async load on item and meeting
+        invalidate_cachekey_volatile_for(
+            'Products.PloneMeeting.browser.async.AsyncLoadItemAssemblyAndSignatures',
+            get_again=True)
+        invalidate_cachekey_volatile_for(
+            'Products.PloneMeeting.browser.async.AsyncLoadMeetingAssemblyAndSignatures',
+            get_again=True)
 
     @button.buttonAndHandler(_('Cancel'), name='cancel')
     def handleCancel(self, action):
@@ -180,7 +187,7 @@ class ByeByeAttendeeForm(BaseAttendeeForm):
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(item_to_update)
             if cfg.getUseVotes():
-                voters = item_to_update.getVoters()
+                voters = item_to_update.getItemVoters()
                 if self.person_uid in voters:
                     # secret
                     if item_to_update.getVotesAreSecret():

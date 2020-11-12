@@ -26,7 +26,6 @@ from OFS.ObjectManager import BeforeDeleteException
 from persistent.list import PersistentList
 from persistent.mapping import PersistentMapping
 from plone import api
-from plone.api.validation import mutually_exclusive_parameters
 from plone.app.querystring.querybuilder import queryparser
 from plone.app.uuid.utils import uuidToCatalogBrain
 from plone.memoize import ram
@@ -1044,14 +1043,13 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
                    if held_pos.defaults and 'voter' in held_pos.defaults]
         return res
 
-    @mutually_exclusive_parameters('contact_type', 'uids')
     def _getContacts(self, contact_type=None, uids=None, theObjects=False):
         """ """
         res = []
         orderedContacts = getattr(self, 'orderedContacts', OrderedDict())
         if contact_type:
             for uid, infos in orderedContacts.items():
-                if infos[contact_type]:
+                if infos[contact_type] and (not uids or uid in uids):
                     res.append(uid)
         else:
             res = uids
@@ -1087,9 +1085,10 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getVoters')
 
-    def getVoters(self, theObjects=False):
+    def getVoters(self, uids=None, theObjects=False):
         '''Returns the voters in this meeting.'''
-        return self._getContacts('voter', theObjects=theObjects)
+        voters = self._getContacts('voter', uids=uids, theObjects=theObjects)
+        return voters
 
     security.declarePublic('getSignatories')
 
@@ -1195,7 +1194,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         if vote_number + 1 > len(self.itemVotes[item_uid]):
             # complete data before storing, if some voters are missing it is
             # because of NOT_VOTABLE_LINKED_TO_VALUE, we add it
-            item_voter_uids = self.getVoters()
+            item_voter_uids = item.getItemVoters()
             for item_voter_uid in item_voter_uids:
                 if item_voter_uid not in data['voters']:
                     data['voters'][item_voter_uid] = NOT_VOTABLE_LINKED_TO_VALUE

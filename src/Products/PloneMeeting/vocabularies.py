@@ -1778,7 +1778,7 @@ class ItemVotersVocabulary(BaseHeldPositionsVocabulary):
     @ram.cache(__call___cachekey)
     def __call__(self, context):
         context = get_context_with_request(context)
-        item_voter_uids = context.getVoters()
+        item_voter_uids = context.getItemVoters()
         terms = super(ItemVotersVocabulary, self).__call__(
             context,
             uids=item_voter_uids,

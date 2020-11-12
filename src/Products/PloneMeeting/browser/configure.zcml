@@ -350,8 +350,14 @@
       name="display-meeting-item-signatories"
       template="templates/meeting_item_signatories.pt"
       class=".views.DisplayMeetingItemSignatories"
-      permission="zope2.View"
-      />
+      permission="zope2.View" />
+
+    <browser:page
+      for="Products.PloneMeeting.interfaces.IMeetingContent"
+      name="display-meeting-item-voters"
+      template="templates/meeting_item_voters.pt"
+      class=".views.DisplayMeetingItemVoters"
+      permission="zope2.View" />
 
     <!-- Custom view for meetingadvice -->
     <browser:page

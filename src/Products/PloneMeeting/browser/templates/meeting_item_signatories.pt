@@ -1,6 +1,9 @@
-<div id="content" i18n:domain="PloneMeeting" class="meeting_item_signatories_tooltipster">
-  <h4><span i18n:translate="">This attendee is marked as signatory for following items</span> :</h4>
-  <ul tal:repeat="item view/getItemsForSignatory">
+<div id="content"
+     i18n:domain="PloneMeeting"
+     class="meeting_item_signatories_tooltipster"
+     tal:define="items view/getItemsForSignatory">
+  <h4><span i18n:translate="">This attendee is marked as signatory for the <span i18n:name="number" tal:content="python: len(items)">number</span> following item(s)</span> :</h4>
+  <ul tal:repeat="item items">
     <li><span tal:content="python: item.getItemNumber(for_display=True)" />. <span tal:content="structure item/getPrettyLink" /></li>
   </ul>
 </div>

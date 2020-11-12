@@ -9,7 +9,6 @@ from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.utils import _checkPermission
 from Products.Five import BrowserView
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
-from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
 from Products.PloneMeeting.config import NOT_VOTABLE_LINKED_TO_VALUE
 from Products.PloneMeeting.config import WriteBudgetInfos
 from Products.PloneMeeting.utils import sendMailIfRelevant
@@ -398,26 +397,17 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
                     res = True
         return res
 
-    def get_voted_voters(self):
-        '''Voter uids that actually voted on this item.'''
-        item_votes = self.context.getItemVotes(
-            ignored_vote_values=[NOT_ENCODED_VOTE_VALUE])
-        voted_voters = []
-        for vote in item_votes:
-            voters = vote.get('voters', {}).keys()
-            voted_voters += voters
-        return tuple(set(voted_voters))
-
     def __call___cachekey(method, self):
         '''cachekey method for self.__call__.
            Cache is invalidated depending on :
            - current user may edit or not;
            - something is redefined for current item or not.'''
+        date = get_cachekey_volatile(
+            'Products.PloneMeeting.browser.async.AsyncLoadItemAssemblyAndSignatures')
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
         cfg_modified = cfg.modified()
         meeting = self.context.getMeeting()
-        voters = meeting.getVoters()
         ordered_contacts = meeting.orderedContacts.items()
         redefined_item_attendees = meeting._get_all_redefined_attendees(only_keys=False)
         show_votes = self.context.showVotes()
@@ -427,14 +417,16 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
         if context_uid not in str(redefined_item_attendees):
             redefined_item_attendees = []
         may_change_attendees = self.context._mayChangeAttendees()
-        return (self.context.UID(),
+        poll_type = self.context.getPollType()
+        return (date,
+                self.context.UID(),
                 cfg_modified,
-                voters,
                 ordered_contacts,
                 redefined_item_attendees,
                 show_votes,
                 item_votes,
-                may_change_attendees)
+                may_change_attendees,
+                poll_type)
 
     @ram.cache(__call___cachekey)
     def __call__(self):
@@ -447,11 +439,11 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
         self.showVotes = self.context.showVotes()
         if self.showVotes:
             self.votesAreSecret = self.context.getVotesAreSecret()
-            self.voters = self.context.getVoters() or []
+            self.voters = self.context.getItemVoters() or []
             self.itemVotes = self.context.getItemVotes(
                 include_unexisting=True,
                 ignored_vote_values=[NOT_VOTABLE_LINKED_TO_VALUE]) or []
-            self.voted_voters = self.get_voted_voters()
+            self.voted_voters = self.context.get_voted_voters()
             self.next_vote_number = self.compute_next_vote_number()
             vote_counts = self.vote_counts()
             self.displayable_counts = vote_counts[0]
@@ -484,13 +476,16 @@ class AsyncLoadMeetingAssemblyAndSignatures(BrowserView):
            Cache is invalidated depending on :
            - current user may edit or not;
            - something is redefined for current item or not.'''
+        date = get_cachekey_volatile(
+            'Products.PloneMeeting.browser.async.AsyncLoadMeetingAssemblyAndSignatures')
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
         cfg_modified = cfg.modified()
         ordered_contacts = self.context.orderedContacts.items()
         item_votes = self.context.getItemVotes()
         context_uid = self.context.UID()
-        return (cfg_modified,
+        return (date,
+                cfg_modified,
                 ordered_contacts,
                 item_votes,
                 context_uid)

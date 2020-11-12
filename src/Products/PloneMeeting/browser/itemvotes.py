@@ -75,9 +75,8 @@ def votes_default(context):
     vote_number = vote_number_default()
     item_votes = context.getItemVotes(vote_number=vote_number,
                                       ignored_vote_values=[NOT_VOTABLE_LINKED_TO_VALUE])
-    # keep order using getVoters
-    item_voter_uids = context.getVoters()
-
+    # keep order using getItemVoters
+    item_voter_uids = context.getItemVoters()
     # when adding a new vote linked_to_previous, only keep possible voters
     if item_votes['linked_to_previous']:
         is_new_vote = not context.getItemVotes(
@@ -383,7 +382,7 @@ class IEncodeSecretVotes(IBaseAttendee):
         data.votes = votes
         # check if max voters of every linked secret votes is not exceeded
         linked_vote_numbers = _get_linked_item_vote_numbers(context, meeting, data.vote_number)
-        max_voters = len(context.getVoters())
+        max_voters = len(context.getItemVoters())
         if linked_vote_numbers:
             # init at current value
             total = sum([vote['vote_count'] for vote in data.votes])
@@ -435,7 +434,7 @@ class EncodeSecretVotesForm(BaseAttendeeForm):
 
     def max(self, widget):
         """ """
-        return len(self.context.getVoters())
+        return len(self.context.getItemVoters())
 
     def min(self, widget):
         """ """

@@ -1727,6 +1727,9 @@ table.listing tbody tr.even.dragging td {
    cursor: help;
    color: green;
 }
+.tooltipster-meeting-item-voters {
+   cursor: help;
+}
 
 /* edit icon */
 #content span.edit-element:before {

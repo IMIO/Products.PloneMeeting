@@ -268,6 +268,10 @@ function attendeesInfos() {
     tooltipster_helper(selector='.tooltipster-meeting-item-signatories',
                        view_name='@@display-meeting-item-signatories',
                        data_parameters=['signatory_uid']);
+    // item voters on meeting_view
+    tooltipster_helper(selector='.tooltipster-meeting-item-voters',
+                       view_name='@@display-meeting-item-voters',
+                       data_parameters=['voter_uid']);
 }
 
 // prepare overlays and tooltipsters in dashboards
