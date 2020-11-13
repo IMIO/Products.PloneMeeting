@@ -469,7 +469,7 @@ document.location.reload(true);
        <tal:comment replace="nothing">Show "excused" icon if the user was excused for this item</tal:comment>
        <tal:left condition="python: aUid in itemExcused">
  
-        <span class="tooltipster-meeting-item-not-present fa people-left link-action"
+        <span class="tooltipster-meeting-item-not-present fa people-left link-help"
               tal:attributes="data-base_url string:${context/absolute_url};
                               data-not_present_uid string:${aUid};
                               data-not_present_type string:excused;">
@@ -491,7 +491,7 @@ document.location.reload(true);
        <span tal:condition="python: aUid in absents" class="fa people-checked"></span>
        <tal:comment replace="nothing">Show "absent" icon if the user was absent for this item</tal:comment>
        <tal:left condition="python: aUid in itemAbsents">
-         <span class="tooltipster-meeting-item-not-present fa people-left link-action"
+         <span class="tooltipster-meeting-item-not-present fa people-left link-help"
                tal:attributes="data-base_url string:${context/absolute_url};
                                data-not_present_uid string:${aUid};
                                data-not_present_type string:absent;">
@@ -525,7 +525,7 @@ document.location.reload(true);
       </tal:replacedMeetingSigner>
       <tal:replacerMeetingSigner condition="python: aUid in realItemSignatories">
        <span tal:condition="python: aUid in itemSignatories"
-                class="tooltipster-meeting-item-signatories fa people-signatory-replacer link-action"
+                class="tooltipster-meeting-item-signatories fa people-signatory-replacer link-help"
                 tal:attributes="data-base_url string:${context/absolute_url};
                                 data-signatory_uid string:${aUid};">
         <span class="item-signatory-replacer-signature-number"
@@ -562,7 +562,7 @@ document.location.reload(true);
        <tal:comment replace="nothing">Show "nonAttendee" icon if the user was nonAttendee for this item</tal:comment>
        <tal:left condition="python: aUid in itemNonAttendees">
 
-        <span class="tooltipster-meeting-item-not-present fa people-left link-action"
+        <span class="tooltipster-meeting-item-not-present fa people-left link-help"
               tal:attributes="data-base_url string:${context/absolute_url};
                               data-not_present_uid string:${aUid};
                               data-not_present_type string:non_attendee;">

@@ -1615,12 +1615,6 @@ div.grouped-configs span.fa.selected::before {
     height: 6px;
 }
 
-#content span.help-doc {
-   border-bottom: 1px dotted;
-   padding-bottom: 2px;
-   cursor: pointer;
-}
-
 /* meeting_users table on meeting_edit */
 table#meeting_users td {
    padding: 0.5em;
@@ -1706,6 +1700,15 @@ table.listing tbody tr.even.dragging td {
 }
 #content span.link-action {
     border-bottom: 1px dotted;
+    padding-bottom: 2px;
+    cursor: pointer;
+    color: &dtml-linkColor;;
+}
+
+#content span.link-help {
+    border-bottom: 1px dotted;
+    padding-bottom: 2px;
+    cursor: help;
 }
 
 #content span.people-edit-signatory:before {
@@ -1717,7 +1720,6 @@ table.listing tbody tr.even.dragging td {
     content: "\f00c";
     font-size: 120%;
     color: green;
-    cursor: help;
 }
 .item-signatory-replacer-signature-number {
     font-family: &dtml-fontFamily;;
@@ -1758,6 +1760,10 @@ table.listing tbody tr.even.dragging td {
 #content span.show-info:before {
    content: "\f05a";
 }
+#content span.show-help:before {
+   content: "\f059";
+}
+
 /* icon colors */
 #content span.fa.leading-icon {
    color: &dtml-discreetColor;;

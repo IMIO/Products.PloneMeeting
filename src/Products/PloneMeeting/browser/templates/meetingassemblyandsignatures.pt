@@ -57,7 +57,7 @@
         <td align="center" tal:condition="showExcused">
           <span tal:condition="python: aUid in excused" class="fa people-checked" ></span>
           <span tal:condition="python: aUid in itemExcused"
-                   class="tooltipster-meeting-item-not-present fa people-left link-action"
+                   class="tooltipster-meeting-item-not-present fa people-left link-help"
                    tal:attributes="data-base_url string:${context/absolute_url};
                                    data-not_present_uid string:${aUid};
                                    data-not_present_type string:excused;">
@@ -66,7 +66,7 @@
         <td align="center" tal:condition="showAbsents">
           <span tal:condition="python: aUid in absents" class="fa people-checked" ></span>
           <span tal:condition="python: aUid in itemAbsents"
-                   class="tooltipster-meeting-item-not-present fa people-left link-action"
+                   class="tooltipster-meeting-item-not-present fa people-left link-help"
                    tal:attributes="data-base_url string:${context/absolute_url};
                                    data-not_present_uid string:${aUid};
                                    data-not_present_type string:absent;">
@@ -78,7 +78,7 @@
           <span tal:content="python: signers[aUid]" />
          </tal:is_signer>
          <span tal:condition="python: aUid in itemSignatories"
-                  class="tooltipster-meeting-item-signatories fa people-signatory-replacer link-action"
+                  class="tooltipster-meeting-item-signatories fa people-signatory-replacer link-help"
                   tal:attributes="data-base_url string:${context/absolute_url};
                                   data-signatory_uid string:${aUid};">
          </span>
@@ -89,7 +89,7 @@
         </td>
         <td align="center" tal:condition="showNonAttendees">
           <span tal:condition="python: aUid in itemNonAttendees"
-                   class="tooltipster-meeting-item-not-present fa people-left link-action"
+                   class="tooltipster-meeting-item-not-present fa people-left link-help"
                    tal:attributes="data-base_url string:${context/absolute_url};
                                    data-not_present_uid string:${aUid};
                                    data-not_present_type string:non_attendee;">
