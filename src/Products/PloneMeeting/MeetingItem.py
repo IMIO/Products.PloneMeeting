@@ -6828,7 +6828,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         return self.hasMeeting() and self._checkMayQuickEdit(
             bypassWritePermissionCheck=True, onlyForManagers=True)
 
-    def _mayDeleteVote(self, itemVotes, vote_number):
+    def _voteIsDeletable(self, itemVotes, vote_number):
         """ """
         res = False
         vote_infos = itemVotes[vote_number]

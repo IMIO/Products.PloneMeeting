@@ -475,6 +475,9 @@ class ItemDeleteVoteView(BrowserView):
 
     def __call__(self, object_uid, redirect=True):
         """ """
+        if not self.context._mayChangeAttendees():
+            raise Unauthorized
+
         # redirect can by passed by jQuery, in this case, we receive '0' or '1'
         redirect = boolean_value(redirect)
         vote_number = int(object_uid)
@@ -482,7 +485,7 @@ class ItemDeleteVoteView(BrowserView):
         meeting = self.context.getMeeting()
         if item_uid in meeting.itemVotes:
             itemVotes = meeting.itemVotes[item_uid]
-            assert self.context._mayDeleteVote(itemVotes, vote_number)
+            assert self.context._voteIsDeletable(itemVotes, vote_number)
 
             vote_to_delete = itemVotes[vote_number]
             if self.context.getVotesAreSecret():
