@@ -93,16 +93,18 @@ function manageAttendees() {
 // refresh meeting attendees panel
 function refresh_meeting_attendees() {
   tag = $("#collapsible-assembly-and-signatures");
+  var timeStamp = new Date();
   result = loadCollapsibleContent(
-    tag, load_view='@@load_meeting_assembly_and_signatures', async=false);
+    tag, load_view='@@load_meeting_assembly_and_signatures?cache_date=' + timeStamp, async=false);
   highlight_attendees();
 }
 
 // refresh item attendees panel
 function refresh_attendees(highlight=null, click_cancel=false) {
   tag = $("#collapsible-assembly-and-signatures");
+  var timeStamp = new Date();
   result = loadCollapsibleContent(
-    tag, load_view='@@load_item_assembly_and_signatures', async=false);
+    tag, load_view='@@load_item_assembly_and_signatures?cache_date=' + timeStamp, async=false);
   if (click_cancel) {
     $('input#form-buttons-cancel').click();
   }
@@ -268,10 +270,6 @@ function attendeesInfos() {
     tooltipster_helper(selector='.tooltipster-meeting-item-signatories',
                        view_name='@@display-meeting-item-signatories',
                        data_parameters=['signatory_uid']);
-    // item voters on meeting_view
-    tooltipster_helper(selector='.tooltipster-meeting-item-voters',
-                       view_name='@@display-meeting-item-voters',
-                       data_parameters=['voter_uid']);
 }
 
 // prepare overlays and tooltipsters in dashboards

@@ -389,13 +389,8 @@ class IEncodeSecretVotes(IBaseAttendee):
             for linked_vote_number in linked_vote_numbers:
                 if linked_vote_number != data.vote_number:
                     linked_vote = context.getItemVotes(vote_number=linked_vote_number)
-                    used_vote_terms = get_vocab(
-                        context,
-                        "Products.PloneMeeting.vocabularies.usedvotevaluesvocabulary",
-                        vote_number=linked_vote_number)
-                    usedVoteValues = [term.token for term in used_vote_terms._terms]
-                    total += sum([vote_count for vote_value, vote_count in linked_vote.items()
-                                  if vote_value in usedVoteValues])
+                    total += sum([vote_count for vote_value, vote_count
+                                  in linked_vote['votes'].items()])
         else:
             total = sum([vote['vote_count'] for vote in votes])
         if total > max_voters:

@@ -330,7 +330,7 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
         return self.meeting is not None
 
     def vote_counts(self):
-        """Returns an HTML string regarding votes count."""
+        """Returns informations regarding votes count."""
         data = []
         counts = []
         for vote_number in range(len(self.itemVotes)):
@@ -418,6 +418,7 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
             redefined_item_attendees = []
         may_change_attendees = self.context._mayChangeAttendees()
         poll_type = self.context.getPollType()
+        cache_date = self.request.get('cache_date', None)
         return (date,
                 self.context.UID(),
                 cfg_modified,
@@ -426,10 +427,10 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
                 show_votes,
                 item_votes,
                 may_change_attendees,
-                poll_type)
+                poll_type,
+                cache_date)
 
-    @ram.cache(__call___cachekey)
-    def __call__(self):
+    def _update(self):
         """ """
         self.error_msg = self.request.get('attendees_error_msg')
         self.tool = api.portal.get_tool('portal_plonemeeting')
@@ -443,7 +444,9 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
             self.itemVotes = self.context.getItemVotes(
                 include_unexisting=True,
                 ignored_vote_values=[NOT_VOTABLE_LINKED_TO_VALUE]) or []
-            self.voted_voters = self.context.get_voted_voters()
+            self.voted_voters = ()
+            if not self.votesAreSecret:
+                self.voted_voters = self.context.get_voted_voters()
             self.next_vote_number = self.compute_next_vote_number()
             vote_counts = self.vote_counts()
             self.displayable_counts = vote_counts[0]
@@ -455,6 +458,11 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
             self.voted_voters = []
             self.next_vote_number = None
             self.counts = None
+
+    @ram.cache(__call___cachekey)
+    def __call__(self):
+        """ """
+        self._update()
         return self.index()
 
 
@@ -466,10 +474,6 @@ class AsyncLoadMeetingAssemblyAndSignatures(BrowserView):
         self.request = request
         self.portal = api.portal.get()
         self.portal_url = self.portal.absolute_url()
-
-    def show(self):
-        """ """
-        return self.meeting is not None
 
     def __call___cachekey(method, self):
         '''cachekey method for self.__call__.
@@ -484,11 +488,13 @@ class AsyncLoadMeetingAssemblyAndSignatures(BrowserView):
         ordered_contacts = self.context.orderedContacts.items()
         item_votes = self.context.getItemVotes()
         context_uid = self.context.UID()
+        cache_date = self.request.get('cache_date', None)
         return (date,
                 cfg_modified,
                 ordered_contacts,
                 item_votes,
-                context_uid)
+                context_uid,
+                cache_date)
 
     @ram.cache(__call___cachekey)
     def __call__(self):

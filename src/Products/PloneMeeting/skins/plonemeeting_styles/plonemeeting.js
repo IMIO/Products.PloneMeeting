@@ -596,7 +596,7 @@ $(document).on('toggle_details_ajax_success', init_tooltipsters);
 function init_tooltipsters(event) {
     css_id = event.tag[0].id;
     if (css_id == 'collapsible-assembly-and-signatures') {
-      pmCommonOverlays(selector_prefix='div#item-people ');
+      pmCommonOverlays(selector_prefix='table#meeting_users ');
       attendeesInfos();
       manageAttendees();
     }

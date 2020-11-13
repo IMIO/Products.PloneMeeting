@@ -1704,7 +1704,7 @@ table.listing tbody tr.even.dragging td {
 #content span.people-edit-signatory:hover {
     opacity: 1;
 }
-#content span.people-action {
+#content span.link-action {
     border-bottom: 1px dotted;
 }
 
@@ -1726,9 +1726,6 @@ table.listing tbody tr.even.dragging td {
 .tooltipster-meeting-item-signatories {
    cursor: help;
    color: green;
-}
-.tooltipster-meeting-item-voters {
-   cursor: help;
 }
 
 /* edit icon */
@@ -1757,6 +1754,9 @@ table.listing tbody tr.even.dragging td {
 }
 #content span.delete-element {
    color: red;
+}
+#content span.show-info:before {
+   content: "\f05a";
 }
 /* icon colors */
 #content span.fa.leading-icon {
@@ -2080,11 +2080,11 @@ table#form-widgets-votes span.option {
    display: inline;
 }
 
-div#item-people th.header-attendee-present,
-div#item-people th.header-attendee-excused,
-div#item-people th.header-attendee-absent,
-div#item-people th.header-attendee-non-attendee,
-div#item-people th.header-attendee-signatory {
+table#meeting_users th.header-attendee-present,
+table#meeting_users th.header-attendee-excused,
+table#meeting_users th.header-attendee-absent,
+table#meeting_users th.header-attendee-non-attendee,
+table#meeting_users th.header-attendee-signatory {
    width: 60px;
 }
 

@@ -35,6 +35,7 @@ from Products.CMFPlone.utils import safe_unicode
 from Products.Five import BrowserView
 from Products.PloneMeeting import logger
 from Products.PloneMeeting.browser.itemchangeorder import _is_integer
+from Products.PloneMeeting.browser.itemvotes import _get_linked_item_vote_numbers
 from Products.PloneMeeting.columns import render_item_annexes
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import ADVICE_STATES_ALIVE
@@ -2352,23 +2353,35 @@ class DisplayMeetingItemVoters(BrowserView):
     def __init__(self, context, request):
         self.context = context
         self.request = request
-        # this view is called on meeting or item
-        self.meeting = IMeeting.providedBy(self.context) and self.context or self.context.getMeeting()
-
-    def __call__(self, voter_uid):
-        """ """
-        self.tool = api.portal.get_tool('portal_plonemeeting')
-        self.voter_uid = voter_uid
-        return self.index()
 
     def getNonVotedItems(self):
         """Returns the list of items the voter_uid did not vote for."""
-        items = self.meeting.getItems(ordered=True)
-        res = []
+        items = self.context.getItems(ordered=True)
+        res = {'public': [],
+               'secret': []}
         for item in items:
-            if not item.getVotesAreSecret() and \
-               self.voter_uid not in item.get_voted_voters():
-                res.append(item)
+            if not item.getVotesAreSecret():
+                if set(item.getItemVoters()).difference(item.get_voted_voters()):
+                    res['public'].append(item)
+            else:
+                data = {}
+                total_voters = item.getVoteCount('any_votable')
+                for item_vote in item.getItemVotes():
+                    vote_number = item_vote['vote_number']
+                    i = vote_number
+                    linked_numbers = _get_linked_item_vote_numbers(
+                        item, self.context, vote_number=vote_number)
+                    if linked_numbers:
+                        i = linked_numbers[0]
+                    if i not in data:
+                        data[i] = 0
+                    vote_count = item.getVoteCount('any_voted', vote_number=vote_number)
+                    data[i] += vote_count
+                # now if we have a element in res < total_voters, we miss some votes
+                for count in data.values():
+                    if count < total_voters:
+                        res['secret'].append(item)
+                        break
         return res
 
 

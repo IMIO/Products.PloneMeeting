@@ -25,16 +25,23 @@
       <th class="nosort">
         <span i18n:translate="default_for_all_items">For all items</span>
         <div class="refresh-attendees-container" onclick="refresh_meeting_attendees();">
-         <span class="fa refresh-attendees"></span>
+         <span class="fa refresh-attendees link-action"></span>
         </div>
       </th>
-      <th class="nosort" i18n:translate="is_attendee"></th>
-      <th class="nosort" tal:condition="showExcused" i18n:translate="is_excused">Excused?</th>
-      <th class="nosort" tal:condition="showAbsents" i18n:translate="is_absent">Absent?</th>
-      <th class="nosort" tal:condition="showSignatories" i18n:translate="is_signer">Signer?</th>
-      <th class="nosort" tal:condition="useUserReplacements" i18n:translate="is_replaced">Replaced?</th>
-      <th class="nosort" tal:condition="showNonAttendees" i18n:translate="is_non_attendee">Non attendee?</th>
-      <th class="nosort" tal:condition="showVoters" i18n:translate="is_voter">Voter?</th>
+      <th class="header-attendee-present" class="nosort" i18n:translate="is_attendee"></th>
+      <th class="header-attendee-excused" class="nosort" tal:condition="showExcused" i18n:translate="is_excused">Excused?</th>
+      <th class="header-attendee-absent" class="nosort" tal:condition="showAbsents" i18n:translate="is_absent">Absent?</th>
+      <th class="header-attendee-signatory" class="nosort" tal:condition="showSignatories" i18n:translate="is_signer">Signer?</th>
+      <th class="header-attendee-replacement" class="nosort" tal:condition="useUserReplacements" i18n:translate="is_replaced">Replaced?</th>
+      <th class="header-attendee-non-attendee" class="nosort" tal:condition="showNonAttendees" i18n:translate="is_non_attendee">Non attendee?</th>
+      <th class="header-attendee-voter" class="nosort" tal:condition="showVoters">
+       <span i18n:translate="is_voter">Voter?</span>
+       <a class="link-overlay-pm"
+          tal:condition="python:view.tool.isManager(context)"
+          tal:attributes="href string:${context/absolute_url}/@@display-meeting-item-voters">
+        <span class="fa show-info link-action"></span>
+       </a>
+      </th>
     </tr>
     </thead>
     <tbody>
@@ -50,7 +57,7 @@
         <td align="center" tal:condition="showExcused">
           <span tal:condition="python: aUid in excused" class="fa people-checked" ></span>
           <span tal:condition="python: aUid in itemExcused"
-                   class="tooltipster-meeting-item-not-present fa people-left people-action"
+                   class="tooltipster-meeting-item-not-present fa people-left link-action"
                    tal:attributes="data-base_url string:${context/absolute_url};
                                    data-not_present_uid string:${aUid};
                                    data-not_present_type string:excused;">
@@ -59,7 +66,7 @@
         <td align="center" tal:condition="showAbsents">
           <span tal:condition="python: aUid in absents" class="fa people-checked" ></span>
           <span tal:condition="python: aUid in itemAbsents"
-                   class="tooltipster-meeting-item-not-present fa people-left people-action"
+                   class="tooltipster-meeting-item-not-present fa people-left link-action"
                    tal:attributes="data-base_url string:${context/absolute_url};
                                    data-not_present_uid string:${aUid};
                                    data-not_present_type string:absent;">
@@ -71,7 +78,7 @@
           <span tal:content="python: signers[aUid]" />
          </tal:is_signer>
          <span tal:condition="python: aUid in itemSignatories"
-                  class="tooltipster-meeting-item-signatories fa people-signatory-replacer people-action"
+                  class="tooltipster-meeting-item-signatories fa people-signatory-replacer link-action"
                   tal:attributes="data-base_url string:${context/absolute_url};
                                   data-signatory_uid string:${aUid};">
          </span>
@@ -82,7 +89,7 @@
         </td>
         <td align="center" tal:condition="showNonAttendees">
           <span tal:condition="python: aUid in itemNonAttendees"
-                   class="tooltipster-meeting-item-not-present fa people-left people-action"
+                   class="tooltipster-meeting-item-not-present fa people-left link-action"
                    tal:attributes="data-base_url string:${context/absolute_url};
                                    data-not_present_uid string:${aUid};
                                    data-not_present_type string:non_attendee;">
@@ -90,7 +97,7 @@
         </td>
         <td align="center" tal:condition="showVoters">
           <span tal:condition="python: aUid in voters"
-                class="tooltipster-meeting-item-voters fa people-checked people-action"
+                class="tooltipster-meeting-item-voters fa people-checked"
                 tal:attributes="data-base_url string:${context/absolute_url};
                                 data-voter_uid string:${aUid};">
           </span>
