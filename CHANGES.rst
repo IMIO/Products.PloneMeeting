@@ -5,8 +5,11 @@ Changelog
 4.1.28.14 (unreleased)
 ----------------------
 
-- Nothing changed yet.
+- Backport from 4.2.x:
 
+  - Fixed `MeetingItem._mayClone` that was failing when creating an item from
+    a template if `proposingGroup` was defined and `privacy` was `secret`.
+    [gbastien]
 
 4.1.28.13 (2020-11-13)
 ----------------------
