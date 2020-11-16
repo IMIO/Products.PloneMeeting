@@ -373,20 +373,22 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
         """Return next vote_number."""
         return len(self.itemVotes)
 
-    def show_add_vote_linked_to_previous_icon(self, vote_infos):
+    def show_add_vote_linked_to_previous_icon(self, vote_number):
         """Show add linked_to_previous icon only on last element.
            More over, may only add linked_to_previous if :
            - already a linked_to_previous element;
            - not linked_to_previous element does not use forbidden vote_values,
              aka vote_values not in MeetingConfig.firstLinkedVoteUsedVoteValues."""
         res = False
+        vote_infos = self.itemVotes[vote_number]
         if (vote_infos['vote_number'] + 1 == self.next_vote_number):
             if vote_infos['linked_to_previous']:
                 res = True
             else:
                 # check vote_values not out of MeetingConfig.firstLinkedVoteUsedVoteValues
                 if self.votesAreSecret:
-                    vote_values = [vote_value for vote_value, vote_count in vote_infos.items()
+                    vote_values = [vote_value for vote_value, vote_count
+                                   in vote_infos['votes'].items()
                                    if vote_count and vote_value in self.cfg.getUsedVoteValues()]
                 else:
                     vote_values = [vote_value for vote_value in vote_infos['voters'].values()]

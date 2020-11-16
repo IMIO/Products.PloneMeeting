@@ -311,7 +311,9 @@ def secret_votes_default(context):
                                       ignored_vote_values=[NOT_VOTABLE_LINKED_TO_VALUE])
 
     used_vote_terms = get_vocab(
-        context, "Products.PloneMeeting.vocabularies.usedvotevaluesvocabulary")
+        context,
+        "Products.PloneMeeting.vocabularies.usedvotevaluesvocabulary",
+        vote_number=vote_number)
     usedVoteValues = [term.token for term in used_vote_terms._terms
                       if term.token != NOT_ENCODED_VOTE_VALUE]
     for usedVoteValue in usedVoteValues:
@@ -376,7 +378,8 @@ class IEncodeSecretVotes(IBaseAttendee):
         # prepare Meeting.itemVotes compatible data
         # while datagrid used in an overlay, some <NO_VALUE>
         # wipeout self.votes from these values
-        context = get_context_with_request(None)
+        # data.__context__ does not contain the context...
+        context = data.__context__ or get_context_with_request(None)
         meeting = context.getMeeting()
         votes = [vote for vote in data.votes if isinstance(vote, dict)]
         data.votes = votes
@@ -485,7 +488,7 @@ class ItemDeleteVoteView(BrowserView):
         meeting = self.context.getMeeting()
         if item_uid in meeting.itemVotes:
             itemVotes = meeting.itemVotes[item_uid]
-            assert self.context._voteIsDeletable(itemVotes, vote_number)
+            assert self.context._voteIsDeletable(vote_number)
 
             vote_to_delete = itemVotes[vote_number]
             if self.context.getVotesAreSecret():

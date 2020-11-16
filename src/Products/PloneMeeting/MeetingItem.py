@@ -6828,13 +6828,15 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         return self.hasMeeting() and self._checkMayQuickEdit(
             bypassWritePermissionCheck=True, onlyForManagers=True)
 
-    def _voteIsDeletable(self, itemVotes, vote_number):
+    def _voteIsDeletable(self, vote_number):
         """ """
         res = False
-        vote_infos = itemVotes[vote_number]
-        if vote_infos['linked_to_previous'] or \
-           not next_vote_is_linked(itemVotes, vote_number):
-            res = True
+        item_votes = self.getMeeting().itemVotes.get(self.UID())
+        if item_votes:
+            vote_infos = item_votes[vote_number]
+            if vote_infos['linked_to_previous'] or \
+               not next_vote_is_linked(item_votes, vote_number):
+                res = True
         return res
 
     def displayProposingGroupUsers(self):

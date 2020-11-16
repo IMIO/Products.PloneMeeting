@@ -5,11 +5,14 @@
 
 from AccessControl import Unauthorized
 from DateTime import DateTime
+from Products.PloneMeeting.browser.itemvotes import secret_votes_default
 from Products.PloneMeeting.browser.itemvotes import votes_default
+from Products.PloneMeeting.browser.itemvotes import IEncodeSecretVotes
 from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
 from Products.PloneMeeting.config import NOT_VOTABLE_LINKED_TO_VALUE
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from zope.i18n import translate
+from zope.interface import Invalid
 
 
 class testVotes(PloneMeetingTestCase):
@@ -135,6 +138,52 @@ class testVotes(PloneMeetingTestCase):
         self.assertTrue(delete_view.context.getItemVotes(include_unexisting=False))
         delete_view(0, redirect=False)
         self.assertFalse(delete_view.context.getItemVotes(include_unexisting=False))
+
+    def test_pm_ItemDeleteVoteViewCanNotDeleteFirstLinkedVote(self):
+        """When votes are linked, the first linked vote may not be deleted."""
+        self.changeUser('pmManager')
+        meeting, public_item, yes_public_item, secret_item, yes_secret_item = \
+            self._createMeetingWithVotes()
+
+        # set linked votes
+        self.changeUser('pmManager')
+        public_votes = public_item.getItemVotes()[0]
+        meeting.setItemPublicVote(public_item, public_votes, 0)
+        public_votes['linked_to_previous'] = True
+        meeting.setItemPublicVote(public_item, public_votes, 1)
+        self.assertEqual(len(public_item.getItemVotes(include_unexisting=False)), 2)
+        # vote 0 is not deletable
+        self.assertFalse(public_item._voteIsDeletable(0))
+        self.assertTrue(public_item._voteIsDeletable(1))
+        delete_view = public_item.restrictedTraverse('@@item_delete_vote')
+        self.assertRaises(AssertionError, delete_view, object_uid=0)
+        # delete vote 1, then vote 0 is deletable
+        delete_view(object_uid=1)
+        self.assertTrue(public_item._voteIsDeletable(0))
+        delete_view(object_uid=0)
+        self.assertFalse(public_item.getItemVotes(include_unexisting=False))
+
+    def test_pm_ItemDeleteVoteViewDeleteSeveralNotLinkedVotes(self):
+        """When votes are not linked, any may be deleted."""
+        self.changeUser('pmManager')
+        meeting, public_item, yes_public_item, secret_item, yes_secret_item = \
+            self._createMeetingWithVotes()
+
+        # add several votes
+        self.changeUser('pmManager')
+        public_votes = public_item.getItemVotes()[0]
+        meeting.setItemPublicVote(public_item, public_votes, 0)
+        meeting.setItemPublicVote(public_item, public_votes, 1)
+        meeting.setItemPublicVote(public_item, public_votes, 2)
+        self.assertEqual(len(public_item.getItemVotes(include_unexisting=False)), 3)
+        self.assertTrue(public_item._voteIsDeletable(0))
+        self.assertTrue(public_item._voteIsDeletable(1))
+        self.assertTrue(public_item._voteIsDeletable(2))
+        delete_view = public_item.restrictedTraverse('@@item_delete_vote')
+        delete_view(object_uid=1)
+        # vote 2 is not vote 1
+        delete_view(object_uid=1)
+        delete_view(object_uid=0)
 
     def test_pm_CanNotUnselectVoterOnMeetingIfUsedOnItem(self):
         """This will not be possible to unselect a voter on a meeting
@@ -295,8 +344,7 @@ class testVotes(PloneMeetingTestCase):
         self.assertEqual(public_item.getVoteCount('yes'), 2)
         load_view = public_item.restrictedTraverse('@@load_item_assembly_and_signatures')
         load_view._update()
-        self.assertFalse(load_view.show_add_vote_linked_to_previous_icon(
-            public_item.getItemVotes(vote_number=0)))
+        self.assertFalse(load_view.show_add_vote_linked_to_previous_icon(vote_number=0))
 
         # make linked vote addable
         votes_form.votes = [{'voter_uid': hp1_uid, 'vote_value': 'no'},
@@ -307,15 +355,14 @@ class testVotes(PloneMeetingTestCase):
         votes_form.label = u"My label"
         votes_form.linked_to_previous = False
         votes_form._doApply()
-        self.assertTrue(load_view.show_add_vote_linked_to_previous_icon(
-            public_item.getItemVotes(vote_number=0)))
+        self.assertTrue(load_view.show_add_vote_linked_to_previous_icon(vote_number=0))
 
         # add linked vote
         self.request.set('linked_to_previous', True)
         self.request.set('vote_number', 1)
         # votes default only show encodable values for hp3/hp4
-        self.assertEqual(votes_default(
-            public_item),
+        self.assertEqual(
+            votes_default(public_item),
             [{'vote_value': NOT_ENCODED_VOTE_VALUE,
               'voter': hp3_uid,
               'voter_uid': hp3_uid},
@@ -346,6 +393,123 @@ class testVotes(PloneMeetingTestCase):
         item_votes = public_item.getItemVotes()
         self.assertEqual(item_votes[0]['voters'][hp4_uid], NOT_VOTABLE_LINKED_TO_VALUE)
         self.assertEqual(item_votes[1]['voters'][hp4_uid], 'yes')
+
+    def test_pm_EncodeSecretVotesForm(self):
+        """ """
+        self.changeUser('pmManager')
+        meeting, public_item, secret_item = \
+            self._createMeetingWithVotes(include_yes=False)
+
+        # encode votes form
+        votes_form = secret_item.restrictedTraverse('@@item_encode_secret_votes_form').form_instance
+        votes_form.meeting = meeting
+        votes_form.votes = [
+            {'vote_value': 'yes', 'vote_count': 0, 'vote_value_id': 'yes'},
+            {'vote_value': 'no', 'vote_count': 4, 'vote_value_id': 'no'},
+            {'vote_value': 'abstain', 'vote_count': 0, 'vote_value_id': 'abstain'}]
+        votes_form.vote_number = 0
+        votes_form.label = u"My label"
+        votes_form.linked_to_previous = False
+        # only for MeetingManagers
+        self.changeUser('pmCreator1')
+        self.assertRaises(Unauthorized, votes_form._doApply)
+        self.changeUser('pmManager')
+        self.assertEqual(secret_item.getVoteCount('yes'), 1)
+        votes_form._doApply()
+        # votes were updated
+        self.assertEqual(secret_item.getVoteCount('yes'), 0)
+        self.assertEqual(secret_item.getVoteCount('no'), 4)
+
+    def test_pm_EncodeSecretVotesFormLinkedToPrevious(self):
+        """ """
+        self.changeUser('pmManager')
+        meeting, public_item, secret_item = \
+            self._createMeetingWithVotes(include_yes=False)
+
+        # there are 'yes' votes so not able to link to previous
+        self.assertEqual(secret_item.getVoteCount('yes'), 1)
+        load_view = secret_item.restrictedTraverse('@@load_item_assembly_and_signatures')
+        load_view._update()
+        self.assertFalse(load_view.show_add_vote_linked_to_previous_icon(vote_number=0))
+
+        # make linked vote addable
+        votes_form = secret_item.restrictedTraverse('@@item_encode_secret_votes_form').form_instance
+        votes_form.meeting = meeting
+        votes_form.votes = [
+            {'vote_value': 'yes', 'vote_count': 0, 'vote_value_id': 'yes'},
+            {'vote_value': 'no', 'vote_count': 2, 'vote_value_id': 'no'},
+            {'vote_value': 'abstain', 'vote_count': 0, 'vote_value_id': 'abstain'}]
+        votes_form.vote_number = 0
+        votes_form.label = u"My label"
+        votes_form.linked_to_previous = False
+        votes_form._doApply()
+        load_view._update()
+        self.assertTrue(load_view.show_add_vote_linked_to_previous_icon(vote_number=0))
+
+        # add linked vote
+        self.request.set('linked_to_previous', True)
+        self.request.set('vote_number', 1)
+        # votes default only show encodable values for hp3/hp4
+        self.assertEqual(
+            secret_votes_default(secret_item),
+            [{'vote_value': 'yes', 'vote_count': 0, 'vote_value_id': 'yes'}])
+        # apply linked vote
+        votes_form.vote_number = 1
+        votes_form.label = u"My label 1"
+        votes_form.linked_to_previous = True
+        votes_form.votes = [{'vote_value': 'yes', 'vote_count': 1, 'vote_value_id': 'yes'}]
+        votes_form._doApply()
+        # 2 encoded votes
+        item_votes = secret_item.getItemVotes()
+        self.assertEqual(len(item_votes), 2)
+
+    def test_pm_EncodeSecretVotesFormInvariant(self):
+        """The validate_votes invariant check that encoded values do not
+           overflow maximum number of votes."""
+
+        class DummyData(object):
+            def __init__(self, context, votes, vote_number=0):
+                self.__context__ = context
+                self.votes = votes
+                self.vote_number = vote_number
+
+        self.changeUser('pmManager')
+        meeting, public_item, secret_item = \
+            self._createMeetingWithVotes(include_yes=False)
+
+        # one vote, maximum voter is 4
+        invariant = IEncodeSecretVotes.getTaggedValue('invariants')[0]
+        votes = [
+            {'vote_value': 'yes', 'vote_count': 0, 'vote_value_id': 'yes'},
+            {'vote_value': 'no', 'vote_count': 2, 'vote_value_id': 'no'},
+            {'vote_value': 'abstain', 'vote_count': 0, 'vote_value_id': 'abstain'}]
+        data = DummyData(secret_item, votes)
+        self.assertIsNone(invariant(data))
+        # validation fails if total > 4
+        error_msg = translate('error_can_not_encode_more_than_max_voters',
+                              domain='PloneMeeting',
+                              context=self.request)
+        votes = [
+            {'vote_value': 'yes', 'vote_count': 2, 'vote_value_id': 'yes'},
+            {'vote_value': 'no', 'vote_count': 2, 'vote_value_id': 'no'},
+            {'vote_value': 'abstain', 'vote_count': 2, 'vote_value_id': 'abstain'}]
+        data = DummyData(secret_item, votes)
+        with self.assertRaises(Invalid) as cm:
+            invariant(data)
+        self.assertEqual(cm.exception.message, error_msg)
+
+        # linked vote
+        self.request.form['form.widgets.linked_to_previous'] = True
+        # already 4 votes, encoding 0 pass
+        votes = [{'vote_value': 'yes', 'vote_count': 0, 'vote_value_id': 'yes'}, ]
+        data = DummyData(secret_item, votes, vote_number=1)
+        self.assertIsNone(invariant(data))
+        # already 4 votes, encoding 1 would do 5 and fails
+        votes = [{'vote_value': 'yes', 'vote_count': 1, 'vote_value_id': 'yes'}, ]
+        data = DummyData(secret_item, votes, vote_number=1)
+        with self.assertRaises(Invalid) as cm:
+            invariant(data)
+        self.assertEqual(cm.exception.message, error_msg)
 
 
 def test_suite():

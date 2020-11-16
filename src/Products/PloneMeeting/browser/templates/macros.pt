@@ -392,7 +392,7 @@ document.location.reload(true);
            <span class="fa edit-element"></span>
        </a>
        <a href="#"
-          tal:condition="python: context._voteIsDeletable(itemVotes, vote_infos['vote_number'])"
+          tal:condition="python: context._voteIsDeletable(vote_infos['vote_number'])"
           title="Delete this vote"
           id="delete-vote-action"
           tal:attributes="onClick string:javascript:event.preventDefault();;confirmDeleteObject(base_url='${context/absolute_url}', object_uid=${vote_infos/vote_number}, this, msgName='delete_confirm_message', view_name='@@item_delete_vote', redirect='0');;"
@@ -408,7 +408,7 @@ document.location.reload(true);
            class="link-overlay-pm-manage-attendees">
             <span class="fa add-element"></span>
         </a>
-        <tal:linked_to_previous define="show_icon python: view.show_add_vote_linked_to_previous_icon(vote_infos)">
+        <tal:linked_to_previous define="show_icon python: view.show_add_vote_linked_to_previous_icon(vote_infos['vote_number'])">
          <a tal:define="next_vote_number view/next_vote_number"
             tal:condition="show_icon"
             tal:attributes="href string:${form_name}?vote_number:int=${next_vote_number}&linked_to_previous:boolean=True"
