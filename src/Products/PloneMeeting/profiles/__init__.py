@@ -838,7 +838,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.customAdvisers = []
 
         # Votes parameters -----------------------------------------------------
-        self.usedPollTypes = ('out_loud',
+        self.usedPollTypes = ('freehand',
                               'no_vote',
                               'secret',
                               'secret_separated')
