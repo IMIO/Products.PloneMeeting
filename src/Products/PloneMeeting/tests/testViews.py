@@ -206,6 +206,27 @@ class testViews(PloneMeetingTestCase):
             last_wf_comments,
             u'This item has been created from item template "Cont\xe9ner / Titl\xe9".')
 
+    def test_pm_CreateItemFromTemplateIsPrivacyViewable(self):
+        '''Test the createItemFromTemplate functionnality when creating an item
+           with privacy "secret" and MeetingConfig.restrictAccessToSecretItems is True.'''
+        self.changeUser('siteadmin')
+        cfg = self.meetingConfig
+        self._enableField('privacy')
+        cfg.setRestrictAccessToSecretItems(True)
+        itemTemplates = cfg.getItemTemplates(filtered=True)
+        itemTemplate = itemTemplates[0].getObject()
+        itemTemplate.setPrivacy('secret')
+        itemTemplate.setProposingGroup(self.developers_uid)
+        itemTemplateUID = itemTemplate.UID()
+
+        # create item
+        self.changeUser('pmCreator1')
+        self.getMeetingFolder()
+        folder = self.getMeetingFolder()
+        itemTemplateView = folder.restrictedTraverse('createitemfromtemplate')
+        # creating an item from such template does not raise Unauthorized
+        itemTemplateView.createItemFromTemplate(itemTemplateUID)
+
     def test_pm_CreateItemFromTemplateKeepsProposingGroup(self):
         '''When item create from itemTemplate, if proposingGroup defined on itemTemplate,
            it is kept if current user is creator for this proposingGroup.'''

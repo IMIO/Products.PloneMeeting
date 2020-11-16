@@ -5991,9 +5991,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # first check that we are not trying to clone an item
         # we can not access because of privacy status
         # do this check if we are not creating an item from an itemTemplate
-        # for wich there is no proposingGroup selected or it will not be
+        # because if a proposingGroup is defined, it will not be
         # privacyViewable and using such an item template will always fail...
-        if self.getProposingGroup() and not self.adapted().isPrivacyViewable():
+        if not self.isDefinedInTool() and not self.adapted().isPrivacyViewable():
             raise Unauthorized
 
         # 'duplicate' and 'duplicate and keep link'

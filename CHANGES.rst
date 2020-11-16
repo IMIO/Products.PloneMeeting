@@ -16,6 +16,9 @@ Changelog
 - Make sure `attendees` are still editable on item by `MeetingManagers`
   on a decided item if meeting is not closed.
   [gbastien]
+- Fixed `MeetingItem._mayClone` that was failing when creating an item from
+  a template if `proposingGroup` was defined and `privacy` was `secret`.
+  [gbastien]
 
 4.2b5 (2020-10-26)
 ------------------
