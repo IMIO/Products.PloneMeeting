@@ -277,8 +277,8 @@ class testVotes(PloneMeetingTestCase):
         meeting.setItemSecretVote(secret_item, secret_votes, 0)
         byebye_form._doApply()
         self.assertEqual(
-            meeting.getItemExcused(by_persons=True),
-            {hp1_uid: [public_item.UID(), secret_item.UID()]})
+            sorted(meeting.getItemExcused(by_persons=True)[hp1_uid]),
+            sorted([public_item.UID(), secret_item.UID()]))
 
     def test_pm_EncodePublicVotesForm(self):
         """ """
@@ -355,6 +355,7 @@ class testVotes(PloneMeetingTestCase):
         votes_form.label = u"My label"
         votes_form.linked_to_previous = False
         votes_form._doApply()
+        load_view._update()
         self.assertTrue(load_view.show_add_vote_linked_to_previous_icon(vote_number=0))
 
         # add linked vote
