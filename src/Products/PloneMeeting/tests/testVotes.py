@@ -5,7 +5,9 @@
 
 from AccessControl import Unauthorized
 from DateTime import DateTime
+from Products.PloneMeeting.browser.itemvotes import votes_default
 from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
+from Products.PloneMeeting.config import NOT_VOTABLE_LINKED_TO_VALUE
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from zope.i18n import translate
 
@@ -228,6 +230,122 @@ class testVotes(PloneMeetingTestCase):
         self.assertEqual(
             meeting.getItemExcused(by_persons=True),
             {hp1_uid: [public_item.UID(), secret_item.UID()]})
+
+    def test_pm_EncodePublicVotesForm(self):
+        """ """
+        self.changeUser('pmManager')
+        meeting, public_item, secret_item = \
+            self._createMeetingWithVotes(include_yes=False)
+
+        # encode votes form
+        person1 = self.portal.contacts.get('person1')
+        hp1 = person1.get_held_positions()[0]
+        hp1_uid = hp1.UID()
+        person2 = self.portal.contacts.get('person2')
+        hp2 = person2.get_held_positions()[0]
+        hp2_uid = hp2.UID()
+        person3 = self.portal.contacts.get('person3')
+        hp3 = person3.get_held_positions()[0]
+        hp3_uid = hp3.UID()
+        person4 = self.portal.contacts.get('person4')
+        hp4 = person4.get_held_positions()[0]
+        hp4_uid = hp4.UID()
+        votes_form = public_item.restrictedTraverse('@@item_encode_votes_form').form_instance
+        votes_form.meeting = meeting
+        # change vote to all 'no'
+        votes_form.votes = [{'voter_uid': hp1_uid, 'vote_value': 'no'},
+                            {'voter_uid': hp2_uid, 'vote_value': 'no'},
+                            {'voter_uid': hp3_uid, 'vote_value': 'no'},
+                            {'voter_uid': hp4_uid, 'vote_value': 'no'}]
+        votes_form.vote_number = 0
+        votes_form.label = u"My label"
+        votes_form.linked_to_previous = False
+        # only for MeetingManagers
+        self.changeUser('pmCreator1')
+        self.assertRaises(Unauthorized, votes_form._doApply)
+        self.changeUser('pmManager')
+        self.assertEqual(public_item.getVoteCount('yes'), 2)
+        votes_form._doApply()
+        # votes were updated
+        self.assertEqual(public_item.getVoteCount('yes'), 0)
+        self.assertEqual(public_item.getVoteCount('no'), 4)
+
+    def test_pm_EncodePublicVotesFormLinkedToPrevious(self):
+        """ """
+        self.changeUser('pmManager')
+        meeting, public_item, secret_item = \
+            self._createMeetingWithVotes(include_yes=False)
+
+        # encode votes form
+        person1 = self.portal.contacts.get('person1')
+        hp1 = person1.get_held_positions()[0]
+        hp1_uid = hp1.UID()
+        person2 = self.portal.contacts.get('person2')
+        hp2 = person2.get_held_positions()[0]
+        hp2_uid = hp2.UID()
+        person3 = self.portal.contacts.get('person3')
+        hp3 = person3.get_held_positions()[0]
+        hp3_uid = hp3.UID()
+        person4 = self.portal.contacts.get('person4')
+        hp4 = person4.get_held_positions()[0]
+        hp4_uid = hp4.UID()
+        votes_form = public_item.restrictedTraverse('@@item_encode_votes_form').form_instance
+        votes_form.meeting = meeting
+        # there are 'yes' votes so not able to link to previous
+        self.assertEqual(public_item.getVoteCount('yes'), 2)
+        load_view = public_item.restrictedTraverse('@@load_item_assembly_and_signatures')
+        load_view._update()
+        self.assertFalse(load_view.show_add_vote_linked_to_previous_icon(
+            public_item.getItemVotes(vote_number=0)))
+
+        # make linked vote addable
+        votes_form.votes = [{'voter_uid': hp1_uid, 'vote_value': 'no'},
+                            {'voter_uid': hp2_uid, 'vote_value': 'abstain'},
+                            {'voter_uid': hp3_uid, 'vote_value': NOT_ENCODED_VOTE_VALUE},
+                            {'voter_uid': hp4_uid, 'vote_value': NOT_ENCODED_VOTE_VALUE}]
+        votes_form.vote_number = 0
+        votes_form.label = u"My label"
+        votes_form.linked_to_previous = False
+        votes_form._doApply()
+        self.assertTrue(load_view.show_add_vote_linked_to_previous_icon(
+            public_item.getItemVotes(vote_number=0)))
+
+        # add linked vote
+        self.request.set('linked_to_previous', True)
+        self.request.set('vote_number', 1)
+        # votes default only show encodable values for hp3/hp4
+        self.assertEqual(votes_default(
+            public_item),
+            [{'vote_value': NOT_ENCODED_VOTE_VALUE,
+              'voter': hp3_uid,
+              'voter_uid': hp3_uid},
+             {'vote_value': NOT_ENCODED_VOTE_VALUE,
+              'voter': hp4_uid,
+              'voter_uid': hp4_uid}])
+        # apply linked vote
+        votes_form.vote_number = 1
+        votes_form.label = u"My label 1"
+        votes_form.linked_to_previous = True
+        votes_form.votes = [{'voter_uid': hp3_uid, 'vote_value': 'yes'},
+                            {'voter_uid': hp4_uid, 'vote_value': NOT_ENCODED_VOTE_VALUE}]
+        votes_form._doApply()
+        # 2 encoded votes
+        item_votes = public_item.getItemVotes()
+        self.assertEqual(len(item_votes), 2)
+        # votes not useable in vote_number 0 or 1 are marked NOT_VOTABLE_LINKED_TO_VALUE
+        self.assertEqual(item_votes[0]['voters'][hp3_uid], NOT_VOTABLE_LINKED_TO_VALUE)
+        self.assertEqual(item_votes[1]['voters'][hp1_uid], NOT_VOTABLE_LINKED_TO_VALUE)
+        self.assertEqual(item_votes[1]['voters'][hp2_uid], NOT_VOTABLE_LINKED_TO_VALUE)
+        # if not encoded in vote_number 0 and 1, some values appear in both
+        self.assertEqual(item_votes[0]['voters'][hp4_uid], NOT_ENCODED_VOTE_VALUE)
+        self.assertEqual(item_votes[1]['voters'][hp4_uid], NOT_ENCODED_VOTE_VALUE)
+        # finally encode hp4_uid
+        votes_form.votes = [{'voter_uid': hp3_uid, 'vote_value': 'yes'},
+                            {'voter_uid': hp4_uid, 'vote_value': 'yes'}]
+        votes_form._doApply()
+        item_votes = public_item.getItemVotes()
+        self.assertEqual(item_votes[0]['voters'][hp4_uid], NOT_VOTABLE_LINKED_TO_VALUE)
+        self.assertEqual(item_votes[1]['voters'][hp4_uid], 'yes')
 
 
 def test_suite():
