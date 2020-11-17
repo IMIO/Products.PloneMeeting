@@ -24,6 +24,14 @@ Changelog
   validate from `normal item validation WF` and
   from `returned_to_proposing_group item validation WF`.
   [gbastien]
+- Added email notifications `itemPresentedOwner`, `itemUnpresentedOwner`,
+  `itemDelayedOwner` and `returnedToProposingGroupOwner` that notify item
+  `Owner` in addition to existing notification `itemPresented`,
+  `itemUnpresented`, `itemDelayed` and `returnedToProposingGroup` that notify
+  the entire `creators` group.
+  In `utils.sendMail`, if event name ends with `Owner` we use mail subject and
+  body of corresponding event without the `Owner` suffix.
+  [gbastien]
 
 4.2b5 (2020-10-26)
 ------------------

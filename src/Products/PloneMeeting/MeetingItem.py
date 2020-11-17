@@ -721,6 +721,7 @@ class MeetingItemWorkflowActions(object):
         self._insertItem(meeting)
         # We may have to send a mail.
         sendMailIfRelevant(self.context, 'itemPresented', 'creators', isSuffix=True)
+        sendMailIfRelevant(self.context, 'itemPresentedOwner', 'Owner', isRole=True)
 
     def _insertItem(self, meeting):
         """ """
@@ -844,6 +845,7 @@ class MeetingItemWorkflowActions(object):
                                         setCurrentAsPredecessor=True)
         # Send, if configured, a mail to the person who created the item
         sendMailIfRelevant(clonedItem, 'itemDelayed', 'creators', isSuffix=True)
+        sendMailIfRelevant(clonedItem, 'itemDelayedOwner', 'Owner', isRole=True)
 
     def _get_item_states_removed_from_meeting(self):
         '''Return item states in which an item is considered removed from a meeting.
@@ -866,6 +868,7 @@ class MeetingItemWorkflowActions(object):
            stateChange.new_state.id in self._get_item_states_removed_from_meeting():
             # We may have to send a mail
             sendMailIfRelevant(self.context, 'itemUnpresented', 'creators', isSuffix=True)
+            sendMailIfRelevant(self.context, 'itemUnpresentedOwner', 'Owner', isRole=True)
             # remove the item from the meeting
             self.context.getMeeting().removeItem(self.context)
         # if an item was returned to proposing group for corrections and that
@@ -893,6 +896,7 @@ class MeetingItemWorkflowActions(object):
     def doReturn_to_proposing_group(self, stateChange):
         '''Send an email when returned to proposing group if relevant...'''
         sendMailIfRelevant(self.context, 'returnedToProposingGroup', 'creators', isSuffix=True)
+        sendMailIfRelevant(self.context, 'returnedToProposingGroupOwner', 'Owner', isRole=True)
 
     security.declarePrivate('doGoTo_returned_to_proposing_group_proposed')
 
