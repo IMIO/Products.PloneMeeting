@@ -455,8 +455,8 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
             self.counts = vote_counts[1]
         else:
             self.votesAreSecret = False
-            self.voters = None
-            self.itemVotes = None
+            self.voters = []
+            self.itemVotes = []
             self.voted_voters = []
             self.next_vote_number = None
             self.counts = None

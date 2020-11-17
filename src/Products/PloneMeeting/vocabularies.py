@@ -24,8 +24,8 @@ from DateTime import DateTime
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from imio.annex.content.annex import IAnnex
 from imio.helpers.cache import get_cachekey_volatile
-from imio.helpers.content import uuidsToObjects
 from imio.helpers.content import get_vocab
+from imio.helpers.content import uuidsToObjects
 from natsort import humansorted
 from operator import attrgetter
 from plone import api
@@ -1130,7 +1130,12 @@ class PollTypesVocabulary(object):
         res = []
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        for usedPollType in cfg.getUsedPollTypes():
+        usedPollTypes = list(cfg.getUsedPollTypes())
+        # if on an item, include values not unselected in config
+        if context.meta_type == 'MeetingItem' and context.getPollType() not in usedPollTypes:
+            usedPollTypes.append(context.getPollType())
+
+        for usedPollType in usedPollTypes:
             res.append(SimpleTerm(usedPollType,
                                   usedPollType,
                                   safe_unicode(translate("polltype_{0}".format(usedPollType),

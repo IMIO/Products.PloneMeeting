@@ -372,7 +372,7 @@ document.location.reload(true);
     <th class="header-attendee-signatory" tal:condition="showSignatories" i18n:translate="is_signer">Signer?</th>
     <th class="header-attendee-non-attendee" tal:condition="showNonAttendees" i18n:translate="is_non_attendee">Non attendee?</th>
     <th class="header-attendee-voter" tal:condition="showVotes" i18n:translate="is_voter">Voter?</th>
-    <tal:vote repeat="vote_infos itemVotes">
+    <tal:vote repeat="vote_infos itemVotes" tal:condition="showVotes">
      <th class="header-attendee-vote" class="nosort">
       <span tal:condition="vote_infos/linked_to_previous"
             title="This vote is linked to previous vote"
@@ -580,13 +580,14 @@ document.location.reload(true);
      </td>
 
      <td align="center"
-         class="attendee-value attendee-voter">
+         class="attendee-value attendee-voter"
+         tal:condition="showVotes">
        <tal:comment replace="nothing">The user is voter</tal:comment>
        <span tal:condition="isVoter" class="fa people-checked"></span>
        <span tal:condition="not:isVoter">-</span>
      </td>
 
-     <tal:vote repeat="vote_infos itemVotes" condition="not:votesAreSecret">
+     <tal:vote repeat="vote_infos itemVotes" condition="python: showVotes and not votesAreSecret">
       <td align="center" class="attendee-value vote-value public-vote">
         <tal:comment replace="nothing">Show "vote" value the user voted for this item</tal:comment>
         <tal:voted condition="python: aUid in voters and aUid in vote_infos['voters']">
