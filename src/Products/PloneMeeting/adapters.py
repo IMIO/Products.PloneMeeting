@@ -2,10 +2,6 @@
 #
 # File: adapters.py
 #
-# Copyright (c) 2015 by Imio.be
-#
-# GNU General Public License (GPL)
-#
 
 from appy.shared.diff import HtmlDiff
 from collective.contact.plonegroup.utils import get_own_organization
@@ -25,6 +21,7 @@ from eea.facetednavigation.widgets.resultsperpage.widget import Widget as Result
 from eea.facetednavigation.widgets.storage import Criterion
 from imio.actionspanel.adapters import ContentDeletableAdapter as APContentDeletableAdapter
 from imio.annex.adapters import AnnexPrettyLinkAdapter
+from imio.helpers.catalog import merge_queries
 from imio.helpers.xhtml import xhtmlContentIsEmpty
 from imio.history.adapters import BaseImioHistoryAdapter
 from imio.history.adapters import ImioWfHistoryAdapter
@@ -951,7 +948,8 @@ class BaseItemsToValidateOfHighestHierarchicLevelAdapter(CompoundCriterionBaseAd
                 'reviewProcessInfo': {'query': reviewProcessInfos}, }
 
 
-class ItemsToValidateOfHighestHierarchicLevelAdapter(BaseItemsToValidateOfHighestHierarchicLevelAdapter):
+class ItemsToValidateOfHighestHierarchicLevelAdapter(
+        BaseItemsToValidateOfHighestHierarchicLevelAdapter):
 
     @property
     @ram.cache(query_user_groups_cachekey)
@@ -962,7 +960,8 @@ class ItemsToValidateOfHighestHierarchicLevelAdapter(BaseItemsToValidateOfHighes
     query = query_itemstovalidateofhighesthierarchiclevel
 
 
-class ItemsToCorrectToValidateOfHighestHierarchicLevelAdapter(BaseItemsToValidateOfHighestHierarchicLevelAdapter):
+class ItemsToCorrectToValidateOfHighestHierarchicLevelAdapter(
+        BaseItemsToValidateOfHighestHierarchicLevelAdapter):
 
     @property
     @ram.cache(query_user_groups_cachekey)
@@ -971,6 +970,21 @@ class ItemsToCorrectToValidateOfHighestHierarchicLevelAdapter(BaseItemsToValidat
 
     # we may not ram.cache methods in same file with same name...
     query = query_itemstocorrecttovalidateofhighesthierarchiclevel
+
+
+class AllItemsToValidateOfHighestHierarchicLevelAdapter(
+        BaseItemsToValidateOfHighestHierarchicLevelAdapter):
+
+    @property
+    @ram.cache(query_user_groups_cachekey)
+    def query_allitemstovalidateofhighesthierarchiclevel(self):
+        to_validate_query = self._query()
+        to_correct_to_validate_query = self._query(prefix_review_state='returned_to_proposing_group_')
+        query = merge_queries([to_validate_query, to_correct_to_validate_query])
+        return query
+
+    # we may not ram.cache methods in same file with same name...
+    query = query_allitemstovalidateofhighesthierarchiclevel
 
 
 class BaseItemsToValidateOfEveryReviewerLevelsAndLowerLevelsAdapter(CompoundCriterionBaseAdapter):
@@ -1053,6 +1067,21 @@ class ItemsToCorrectToValidateOfEveryReviewerLevelsAndLowerLevelsAdapter(
     query = query_itemstocorrecttovalidateofeveryreviewerlevelsandlowerlevels
 
 
+class AllItemsToValidateOfEveryReviewerLevelsAndLowerLevelsAdapter(
+        BaseItemsToValidateOfEveryReviewerLevelsAndLowerLevelsAdapter):
+
+    @property
+    @ram.cache(query_user_groups_cachekey)
+    def query_allitemstovalidateofeveryreviewerlevelsandlowerlevels(self):
+        to_validate_query = self._query()
+        to_correct_to_validate_query = self._query(prefix_review_state='returned_to_proposing_group_')
+        query = merge_queries([to_validate_query, to_correct_to_validate_query])
+        return query
+
+    # we may not ram.cache methods in same file with same name...
+    query = query_allitemstovalidateofeveryreviewerlevelsandlowerlevels
+
+
 class BaseItemsToValidateOfMyReviewerGroupsAdapter(CompoundCriterionBaseAdapter):
 
     def _query(self, prefix_review_state=''):
@@ -1111,6 +1140,20 @@ class ItemsToCorrectToValidateOfMyReviewerGroupsAdapter(BaseItemsToValidateOfMyR
 
     # we may not ram.cache methods in same file with same name...
     query = query_itemstocorrecttovalidateoffmyreviewergroups
+
+
+class AllItemsToValidateOfMyReviewerGroupsAdapter(BaseItemsToValidateOfMyReviewerGroupsAdapter):
+
+    @property
+    @ram.cache(query_user_groups_cachekey)
+    def query_allitemstovalidateoffmyreviewergroups(self):
+        to_validate_query = self._query()
+        to_correct_to_validate_query = self._query(prefix_review_state='returned_to_proposing_group_')
+        query = merge_queries([to_validate_query, to_correct_to_validate_query])
+        return query
+
+    # we may not ram.cache methods in same file with same name...
+    query = query_allitemstovalidateoffmyreviewergroups
 
 
 class BaseItemsToCorrectAdapter(CompoundCriterionBaseAdapter):
