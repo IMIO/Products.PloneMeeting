@@ -67,6 +67,27 @@ class testVotes(PloneMeetingTestCase):
             res = meeting, public_item, yes_public_item, secret_item, yes_secret_item
         return res
 
+    def test_pm_ShowVotes(self):
+        """Votes are only shown on an item presented to a meeting,
+           unless pollType is "no_vote"."""
+        cfg = self.meetingConfig
+        self.changeUser('pmManager')
+        self.assertTrue(cfg.getUseVotes())
+        self.create('Meeting', date=DateTime('2020/11/17'))
+        item = self.create('MeetingItem')
+        self.assertFalse(item.showVotes())
+        self.presentItem(item)
+        self.assertEqual(item.getPollType(), 'freehand')
+        self.assertTrue(item.showVotes())
+        item.setPollType('secret')
+        self.assertTrue(item.showVotes())
+        item.setPollType('no_vote')
+        self.assertFalse(item.showVotes())
+        item.setPollType('secret')
+        self.assertTrue(item.showVotes())
+        cfg.setUseVotes(False)
+        self.assertFalse(item.showVotes())
+
     def test_pm_GetItemVotes(self):
         """Returns votes on an item."""
         self.changeUser('pmManager')
@@ -511,6 +532,21 @@ class testVotes(PloneMeetingTestCase):
         with self.assertRaises(Invalid) as cm:
             invariant(data)
         self.assertEqual(cm.exception.message, error_msg)
+
+    def test_pm_ItemVotesWhenItemRemovedFromMeeting(self):
+        """Ensure Meeting.itemVotes correctly wiped out when item removed from meeting."""
+        self.changeUser('pmManager')
+        meeting, public_item, yes_public_item, secret_item, yes_secret_item = \
+            self._createMeetingWithVotes()
+
+        public_item_uid = public_item.UID()
+        self.assertTrue(public_item_uid in meeting.itemVotes)
+        secret_item_uid = secret_item.UID()
+        self.assertTrue(secret_item_uid in meeting.itemVotes)
+        self.backToState(public_item, 'validated')
+        self.assertFalse(public_item_uid in meeting.itemVotes)
+        self.backToState(secret_item, 'validated')
+        self.assertFalse(secret_item_uid in meeting.itemVotes)
 
 
 def test_suite():

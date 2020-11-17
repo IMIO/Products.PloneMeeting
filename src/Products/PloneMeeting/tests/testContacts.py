@@ -1034,6 +1034,7 @@ class testContacts(PloneMeetingTestCase):
         # excused
         self.backToState(item_with_excused, 'validated')
         self.assertFalse(excused_hp_uid in meeting.getItemExcused(by_persons=True))
+        self.assertFalse(excused_hp_uid in meeting.itemExcused)
         self.assertFalse(signer_hp_uid in item_with_excused.getItemSignatories())
         self.assertFalse(item_with_excused.getItemExcused())
         self.assertFalse(item_with_excused.redefinedItemAssemblies())

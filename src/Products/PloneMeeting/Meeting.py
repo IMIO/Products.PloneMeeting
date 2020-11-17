@@ -1605,6 +1605,8 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             del self.itemNonAttendees[item_uid]
         if item_uid in self.itemSignatories:
             del self.itemSignatories[item_uid]
+        if item_uid in self.itemVotes:
+            del self.itemVotes[item_uid]
 
         # remove item UID from _insert_order_cache
         self._invalidate_insert_order_cache_for(item)

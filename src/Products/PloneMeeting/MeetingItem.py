@@ -6714,11 +6714,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def showVotes(self):
         '''Must I show the "votes" tab on this item?'''
+        res = False
         if self.hasMeeting() and self.getMeeting().adapted().showVotes():
             # Checks whether votes may occur on this item
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(self)
-            return self.getPollType() != 'no_vote' and cfg.isVotable(self)
+            res = self.getPollType() != 'no_vote' and cfg.isVotable(self)
+        return res
 
     security.declarePublic('hasVotes')
 
