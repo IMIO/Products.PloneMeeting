@@ -19,6 +19,11 @@ Changelog
 - Fixed `MeetingItem._mayClone` that was failing when creating an item from
   a template if `proposingGroup` was defined and `privacy` was `secret`.
   [gbastien]
+- Added CompoundCriterion adapters `all-items-to-validate-of-highest-hierarchic-level`
+  and `all-items-to-validate-of-every-reviewer-groups` that will return items to
+  validate from `normal item validation WF` and
+  from `returned_to_proposing_group item validation WF`.
+  [gbastien]
 
 4.2b5 (2020-10-26)
 ------------------
