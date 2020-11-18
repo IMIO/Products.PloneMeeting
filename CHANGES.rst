@@ -41,6 +41,9 @@ Changelog
 - Fixed JS form unload protection, that was broken because we redefined
   `window.onbeforeunload`.
   [gbastien]
+- Fixed order of CSS (`portal_css`) and JS (`portal_javascripts`) regarding new
+  resources (`dexterity.localroles`, `eea.facetednavigation` multiselect widget).
+  [gbastien]
 
 4.2b5 (2020-10-26)
 ------------------
