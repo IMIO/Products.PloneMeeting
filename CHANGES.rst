@@ -32,6 +32,12 @@ Changelog
   In `utils.sendMail`, if event name ends with `Owner` we use mail subject and
   body of corresponding event without the `Owner` suffix.
   [gbastien]
+- Completed `Migrate_To_4200._configureItemWFValidationLevels`, migrate fields
+  `MeetingConfig.itemAnnexConfidentialVisibleFor`,
+  `MeetingConfig.adviceAnnexConfidentialVisibleFor` and
+   `MeetingConfig.meetingAnnexConfidentialVisibleFor` that may contain not
+  allowed values, but that were not validated in previous version.
+  [gbastien]
 
 4.2b5 (2020-10-26)
 ------------------
