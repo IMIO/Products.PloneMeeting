@@ -1811,6 +1811,11 @@ div#held_position_back_refs {
    display: none !important;
 }
 
+/* manually linked items overlay */
+#atrb_manuallyLinkedItems {
+    width: 80%;
+}
+
 div.itemtemplate-infos, div.recurringitem-infos {
    padding-top: 1em;
 }
