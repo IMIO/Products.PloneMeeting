@@ -44,6 +44,9 @@ Changelog
 - Fixed order of CSS (`portal_css`) and JS (`portal_javascripts`) regarding new
   resources (`dexterity.localroles`, `eea.facetednavigation` multiselect widget).
   [gbastien]
+- Optimized `MeetingItem.updateLocalRoles`, pass `cfg` and `item_state` when
+  possible and `ram.cache` for `utils.compute_item_roles_to_assign_to_suffixes`.
+  [gbastien]
 
 4.2b5 (2020-10-26)
 ------------------

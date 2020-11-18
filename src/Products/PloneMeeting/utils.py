@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from Acquisition import aq_base
 from AccessControl.Permission import Permission
+from Acquisition import aq_base
 from appy.shared.diff import HtmlDiff
 from bs4 import BeautifulSoup
 from collections import OrderedDict
@@ -36,6 +36,7 @@ from plone.autoform.interfaces import WRITE_PERMISSIONS_KEY
 from plone.dexterity.interfaces import IDexterityContent
 from plone.i18n.normalizer.interfaces import IIDNormalizer
 from plone.locking.events import unlockAfterModification
+from plone.memoize import ram
 from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.permissions import AccessContentsInformation
 from Products.CMFCore.permissions import AddPortalContent
@@ -1706,6 +1707,12 @@ def get_item_validation_wf_suffixes(cfg, org=None, only_enabled=True):
     return suffixes
 
 
+def compute_item_roles_to_assign_to_suffixes_cachekey(method, cfg, item_state, org=None):
+    '''cachekey method for compute_item_roles_to_assign_to_suffixes.'''
+    return cfg.getId(), cfg.modified(), item_state, org and org.UID()
+
+
+@ram.cache(compute_item_roles_to_assign_to_suffixes_cachekey)
 def compute_item_roles_to_assign_to_suffixes(cfg, item_state, org=None):
     """ """
     apply_meetingmanagers_access = True
@@ -1726,9 +1733,7 @@ def compute_item_roles_to_assign_to_suffixes(cfg, item_state, org=None):
         return apply_meetingmanagers_access, suffix_roles
 
     item_val_levels_states = cfg.getItemWFValidationLevels(data='state', only_enabled=True)
-    # by default, observers may View in every states as well as creators
-    suffix_roles = {'observers': ['Reader'],
-                    'creators': ['Reader']}
+    suffix_roles = {}
 
     # MeetingConfig.itemWFValidationLevels
     # states before validated
