@@ -38,6 +38,9 @@ Changelog
    `MeetingConfig.meetingAnnexConfidentialVisibleFor` that may contain not
   allowed values, but that were not validated in previous version.
   [gbastien]
+- Fixed JS form unload protection, that was broken because we redefined
+  `window.onbeforeunload`.
+  [gbastien]
 
 4.2b5 (2020-10-26)
 ------------------
