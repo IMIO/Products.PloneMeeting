@@ -1038,13 +1038,16 @@ class testSearches(PloneMeetingTestCase):
            CompoundCriterion adapter. This should return every items the user is able to validate
            so items that are 'proposed' and items that are 'returned_to_proposing_group_proposed'.'''
         cfg = self.meetingConfig
-        if 'return_to_proposing_group_with_all_validations' not in cfg.listWorkflowAdaptations():
+        wfas = cfg.listWorkflowAdaptations()
+        if 'return_to_proposing_group_with_all_validations' not in wfas or \
+           'pre_validation' not in wfas:
             pm_logger.info(
-                "Bypassing test test_pm_SearchAllItemsToValidateOfEveryReviewerGroups because it "
-                "needs the 'return_to_proposing_group_with_all_validations' wfAdaptation.")
+                "Bypassing test test_pm_SearchAllItemsToValidateOfEveryReviewerGroups "
+                "because it needs the 'return_to_proposing_group_with_all_validations' "
+                "and 'pre_validation' wfAdaptations.")
             return
 
-        # activate 'prevalidation' if necessary
+        # activate 'prevalidation' if not already the case
         if 'pre_validation' not in cfg.getWorkflowAdaptations():
             cfg.setWorkflowAdaptations('pre_validation')
             performWorkflowAdaptations(cfg, logger=pm_logger)
