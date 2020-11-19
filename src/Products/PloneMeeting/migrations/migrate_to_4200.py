@@ -94,7 +94,9 @@ class Migrate_To_4200(Migrator):
         # organizations
         orgs = get_organizations(only_selected=False)
         for org in orgs:
-            old_value = org.keep_access_to_item_when_advice_is_given
+            # org.keep_access_to_item_when_advice_is_given could not exist
+            # for imported org never saved
+            old_value = getattr(org, 'keep_access_to_item_when_advice_is_given', None)
             if old_value == '':
                 org.keep_access_to_item_when_advice = 'use_meetingconfig_value'
             elif old_value == '1':

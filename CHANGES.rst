@@ -2,7 +2,13 @@ Changelog
 =========
 
 
-4.2b6 (unreleased)
+4.2b7 (unreleased)
+------------------
+
+- Nothing changed yet.
+
+
+4.2b6 (2020-11-19)
 ------------------
 
 - Added parameter `the_objects=False` to `GroupsInChargeVocabulary` and
@@ -35,7 +41,7 @@ Changelog
 - Completed `Migrate_To_4200._configureItemWFValidationLevels`, migrate fields
   `MeetingConfig.itemAnnexConfidentialVisibleFor`,
   `MeetingConfig.adviceAnnexConfidentialVisibleFor` and
-   `MeetingConfig.meetingAnnexConfidentialVisibleFor` that may contain not
+  `MeetingConfig.meetingAnnexConfidentialVisibleFor` that may contain not
   allowed values, but that were not validated in previous version.
   [gbastien]
 - Fixed JS form unload protection, that was broken because we redefined
@@ -43,6 +49,10 @@ Changelog
   [gbastien]
 - Fixed order of CSS (`portal_css`) and JS (`portal_javascripts`) regarding new
   resources (`dexterity.localroles`, `eea.facetednavigation` multiselect widget).
+  [gbastien]
+- Fixed `Migrate_To_4200._migrateKeepAccessToItemWhenAdviceIsGiven` in case
+  attribute `keep_access_to_item_when_advice_is_given` does not exist on
+  organization.
   [gbastien]
 - Optimized `MeetingItem.updateLocalRoles`, pass `cfg` and `item_state` when
   possible and `ram.cache` for `utils.compute_item_roles_to_assign_to_suffixes`.
