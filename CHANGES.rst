@@ -5,8 +5,10 @@ Changelog
 4.1.28.15 (unreleased)
 ----------------------
 
-- Nothing changed yet.
-
+- Fixed bug in `BaseItemsToValidateOfHighestHierarchicLevelAdapter` review_states
+  computation that was adding `prefix_review_state` several times when user was
+  `reviewer` for several `organizations`.
+  [gbastien]
 
 4.1.28.14 (2020-11-18)
 ----------------------

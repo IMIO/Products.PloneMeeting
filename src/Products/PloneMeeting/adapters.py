@@ -935,14 +935,17 @@ class BaseItemsToValidateOfHighestHierarchicLevelAdapter(CompoundCriterionBaseAd
             review_states = ['prevalidated']
 
         reviewProcessInfos = []
+        # apply prefix_review_state on review_states
+        review_states = [
+            '{0}{1}'.format(prefix_review_state, review_state)
+            for review_state in review_states]
         for plone_group_id in userPloneGroupIds:
             if plone_group_id.endswith('_%s' % highestReviewerLevel):
                 # append group name without suffix
                 org_uid = plone_group_id.split('_')[0]
-                review_states = [
-                    '{0}{1}'.format(prefix_review_state, review_state) for review_state in review_states]
                 reviewProcessInfo = [
-                    '{0}__reviewprocess__{1}'.format(org_uid, review_state) for review_state in review_states]
+                    '{0}__reviewprocess__{1}'.format(org_uid, review_state)
+                    for review_state in review_states]
                 reviewProcessInfos.extend(reviewProcessInfo)
         return {'portal_type': {'query': self.cfg.getItemTypeName()},
                 'reviewProcessInfo': {'query': reviewProcessInfos}, }
