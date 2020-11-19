@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.1.28.15 (unreleased)
+4.1.28.15 (2020-11-19)
 ----------------------
 
 - Fixed bug in `BaseItemsToValidateOfHighestHierarchicLevelAdapter` review_states
