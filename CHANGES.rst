@@ -35,7 +35,7 @@ Changelog
 - Completed `Migrate_To_4200._configureItemWFValidationLevels`, migrate fields
   `MeetingConfig.itemAnnexConfidentialVisibleFor`,
   `MeetingConfig.adviceAnnexConfidentialVisibleFor` and
-   `MeetingConfig.meetingAnnexConfidentialVisibleFor` that may contain not
+  `MeetingConfig.meetingAnnexConfidentialVisibleFor` that may contain not
   allowed values, but that were not validated in previous version.
   [gbastien]
 - Fixed JS form unload protection, that was broken because we redefined
