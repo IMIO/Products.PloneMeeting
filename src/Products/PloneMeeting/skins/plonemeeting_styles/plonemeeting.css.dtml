@@ -1948,18 +1948,10 @@ div#doc-generation-view {
    padding-right: 0.5em;
 }
 
-#content label.formQuestion,
-#content .formQuestion.label {
-    font-size: 110%;
-}
 /* back to font-size 100% */
 #portal-columns #content .discreet,
 #content .discreet {
    font-size: 100%;
-}
-#portal-columns #content legend,
-#portal-columns #content .widget-fieldset legend {
-    font-size: 110%;
 }
 
 /* </dtml-with> */
