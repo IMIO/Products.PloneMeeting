@@ -1929,6 +1929,11 @@ div#held_position_back_refs {
    display: none !important;
 }
 
+/* manually linked items overlay */
+#atrb_manuallyLinkedItems {
+    width: 80%;
+}
+
 div.itemtemplate-infos, div.recurringitem-infos {
    padding-top: 1em;
 }
@@ -2062,18 +2067,10 @@ div#doc-generation-view {
    padding-right: 0.5em;
 }
 
-#content label.formQuestion,
-#content .formQuestion.label {
-    font-size: 110%;
-}
 /* back to font-size 100% */
 #portal-columns #content .discreet,
 #content .discreet {
    font-size: 100%;
-}
-#portal-columns #content legend,
-#portal-columns #content .widget-fieldset legend {
-    font-size: 110%;
 }
 
 span.vote-number span,

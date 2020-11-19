@@ -2,16 +2,9 @@ Changelog
 =========
 
 
-4.2b6 (unreleased)
+4.2b7 (unreleased)
 ------------------
 
-- Added parameter `the_objects=False` to `GroupsInChargeVocabulary` and
-  `AssociatedGroupsVocabulary` so it is possible to get organization objects as
-  term value, this will be used by `plonemeeting.restapi` to return
-  `groups_in_charge` and `associated_groups` of a `MeetingConfig`.
-  [gbastien]
-- Optimized `PloneGroupSettingsValidator` when checking if `plonegroup` used on
-  items, do it only if some suffixes removed and use the `portal_catalog`.
 - Implement votes functionnality :
 
   - Added possibility to manage public and secret votes depending
@@ -24,11 +17,51 @@ Changelog
   - Added method for printing votes (print_votes);
   - ...
   [gbastien]
+
+4.2b6 (2020-11-19)
+------------------
+
+- Added parameter `the_objects=False` to `GroupsInChargeVocabulary` and
+  `AssociatedGroupsVocabulary` so it is possible to get organization objects as
+  term value, this will be used by `plonemeeting.restapi` to return
+  `groups_in_charge` and `associated_groups` of a `MeetingConfig`.
+  [gbastien]
+- Optimized `PloneGroupSettingsValidator` when checking if `plonegroup` used on
+  items, do it only if some suffixes removed and use the `portal_catalog`.
 - Make sure `attendees` are still editable on item by `MeetingManagers`
   on a decided item if meeting is not closed.
   [gbastien]
 - Fixed `MeetingItem._mayClone` that was failing when creating an item from
   a template if `proposingGroup` was defined and `privacy` was `secret`.
+  [gbastien]
+- Added CompoundCriterion adapters `all-items-to-validate-of-highest-hierarchic-level`
+  and `all-items-to-validate-of-every-reviewer-groups` that will return items to
+  validate from `normal item validation WF` and
+  from `returned_to_proposing_group item validation WF`.
+  [gbastien]
+- Added email notifications `itemPresentedOwner`, `itemUnpresentedOwner`,
+  `itemDelayedOwner` and `returnedToProposingGroupOwner` that notify item
+  `Owner` in addition to existing notification `itemPresented`,
+  `itemUnpresented`, `itemDelayed` and `returnedToProposingGroup` that notify
+  the entire `creators` group.
+  In `utils.sendMail`, if event name ends with `Owner` we use mail subject and
+  body of corresponding event without the `Owner` suffix.
+  [gbastien]
+- Completed `Migrate_To_4200._configureItemWFValidationLevels`, migrate fields
+  `MeetingConfig.itemAnnexConfidentialVisibleFor`,
+  `MeetingConfig.adviceAnnexConfidentialVisibleFor` and
+  `MeetingConfig.meetingAnnexConfidentialVisibleFor` that may contain not
+  allowed values, but that were not validated in previous version.
+  [gbastien]
+- Fixed JS form unload protection, that was broken because we redefined
+  `window.onbeforeunload`.
+  [gbastien]
+- Fixed order of CSS (`portal_css`) and JS (`portal_javascripts`) regarding new
+  resources (`dexterity.localroles`, `eea.facetednavigation` multiselect widget).
+  [gbastien]
+- Fixed `Migrate_To_4200._migrateKeepAccessToItemWhenAdviceIsGiven` in case
+  attribute `keep_access_to_item_when_advice_is_given` does not exist on
+  organization.
   [gbastien]
 
 4.2b5 (2020-10-26)

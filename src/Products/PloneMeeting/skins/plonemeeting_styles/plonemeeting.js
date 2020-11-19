@@ -764,9 +764,10 @@ $('table.faceted-table-results').tableDnD({
 });
 }
 
-window.onbeforeunload = function() {
+// do not redefine window.onbeforeunload or it breaks form unload protection
+$(document).ready(function () {
     localStorage.removeItem("toggleAllDetails");
-};
+});
 
 function toggleAllDetails() {
   state = localStorage.getItem("toggleAllDetails");

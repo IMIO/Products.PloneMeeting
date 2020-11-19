@@ -737,9 +737,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.itemsListVisibleColumns = [
             'Creator', 'CreationDate', 'review_state', 'getProposingGroup', 'actions']
         # what fields of the item will be displayed in the linked items
-        self.itemsVisibleFields = ['MeetingItem.annexes',
-                                   'MeetingItem.description',
-                                   'MeetingItem.decision']
+        self.itemsVisibleFields = []
         self.itemsNotViewableVisibleFields = []
         self.itemsNotViewableVisibleFieldsTALExpr = ''
         # what fields of the item will be displayed in the items listings

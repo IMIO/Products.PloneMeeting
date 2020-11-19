@@ -108,34 +108,51 @@
            factory="Products.PloneMeeting.adapters.ItemsInCopyAdapter"
            provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
            name="items-in-copy" />
+
+  <adapter for="*"
+           factory="Products.PloneMeeting.adapters.ItemsToCorrectAdapter"
+           provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
+           name="items-to-correct" />
+
   <adapter for="*"
            factory="Products.PloneMeeting.adapters.ItemsToValidateOfHighestHierarchicLevelAdapter"
            provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
            name="items-to-validate-of-highest-hierarchic-level" />
   <adapter for="*"
-           factory="Products.PloneMeeting.adapters.ItemsToValidateOfEveryReviewerLevelsAndLowerLevelsAdapter"
-           provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
-           name="items-to-validate-of-every-reviewer-levels-and-lower-levels" />
-  <adapter for="*"
-           factory="Products.PloneMeeting.adapters.ItemsToValidateOfMyReviewerGroupsAdapter"
-           provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
-           name="items-to-validate-of-my-reviewer-groups" />
-  <adapter for="*"
-           factory="Products.PloneMeeting.adapters.ItemsToCorrectAdapter"
-           provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
-           name="items-to-correct" />
-  <adapter for="*"
            factory="Products.PloneMeeting.adapters.ItemsToCorrectToValidateOfHighestHierarchicLevelAdapter"
            provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
            name="items-to-correct-to-validate-of-highest-hierarchic-level" />
+  <adapter for="*"
+           factory="Products.PloneMeeting.adapters.AllItemsToValidateOfHighestHierarchicLevelAdapter"
+           provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
+           name="all-items-to-validate-of-highest-hierarchic-level" />
+
+  <adapter for="*"
+           factory="Products.PloneMeeting.adapters.ItemsToValidateOfEveryReviewerLevelsAndLowerLevelsAdapter"
+           provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
+           name="items-to-validate-of-every-reviewer-levels-and-lower-levels" />
   <adapter for="*"
            factory="Products.PloneMeeting.adapters.ItemsToCorrectToValidateOfEveryReviewerLevelsAndLowerLevelsAdapter"
            provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
            name="items-to-correct-to-validate-of-every-reviewer-groups" />
   <adapter for="*"
+           factory="Products.PloneMeeting.adapters.AllItemsToValidateOfEveryReviewerLevelsAndLowerLevelsAdapter"
+           provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
+           name="all-items-to-validate-of-every-reviewer-groups" />
+
+  <adapter for="*"
+           factory="Products.PloneMeeting.adapters.ItemsToValidateOfMyReviewerGroupsAdapter"
+           provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
+           name="items-to-validate-of-my-reviewer-groups" />
+  <adapter for="*"
            factory="Products.PloneMeeting.adapters.ItemsToCorrectToValidateOfMyReviewerGroupsAdapter"
            provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
            name="items-to-correct-to-validate-of-my-reviewer-groups" />
+  <adapter for="*"
+           factory="Products.PloneMeeting.adapters.AllItemsToValidateOfMyReviewerGroupsAdapter"
+           provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
+           name="all-items-to-validate-of-my-reviewer-groups" />
+
   <adapter for="*"
            factory="Products.PloneMeeting.adapters.ItemsToAdviceAdapter"
            provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"

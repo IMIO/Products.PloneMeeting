@@ -443,7 +443,8 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
         subject = safe_unicode(customRes[0])
         body = safe_unicode(customRes[1])
     else:
-        subjectLabel = u'%s_mail_subject' % event
+        # some event end with "Owner", we use same event without the "Owner" suffix
+        subjectLabel = u'%s_mail_subject' % event.rstrip("Owner")
         subject = translate(subjectLabel,
                             domain=d,
                             mapping=translationMapping,
@@ -463,7 +464,8 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
                                 mapping=translationMapping,
                                 context=obj.REQUEST)
         subject = safe_unicode(subject)
-        bodyLabel = u'%s_mail_body' % event
+        # some event end with "Owner", we use same event without the "Owner" suffix
+        bodyLabel = u'%s_mail_body' % event.rstrip("Owner")
         body = translate(bodyLabel,
                          domain=d,
                          mapping=translationMapping,

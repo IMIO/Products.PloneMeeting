@@ -517,14 +517,10 @@ class testSearches(PloneMeetingTestCase):
         itemTypeName = cfg.getItemTypeName()
 
         # first test the generated query
+        self.changeUser('pmManager')
         adapter = getAdapter(cfg,
                              ICompoundCriterionFilter,
                              name='items-to-validate-of-highest-hierarchic-level')
-        # if user si not a reviewer, we want the search to return
-        # nothing so the query uses an unknown review_state
-        self.assertEqual(adapter.query, _find_nothing_query(itemTypeName))
-        # for a reviewer, query is correct
-        self.changeUser('pmManager')
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstovalidateofhighesthierarchiclevel')
         reviewProcessInfo = self._searchItemsToValidateOfHighestHierarchicLevelReviewerInfo(cfg)
         self.assertEqual(
@@ -776,7 +772,6 @@ class testSearches(PloneMeetingTestCase):
     def test_pm_SearchItemsToCorrect(self):
         '''Test the 'items-to-correct' CompoundCriterion adapter.  This should return
            a list of items in state 'returned_to_proposing_group' the current user is able to edit.'''
-        # specify that copyGroups can see the item when it is proposed
         cfg = self.meetingConfig
         if 'return_to_proposing_group' not in cfg.listWorkflowAdaptations():
             pm_logger.info("Bypassing test test_pm_SearchItemsToCorrect because it "
@@ -841,11 +836,10 @@ class testSearches(PloneMeetingTestCase):
         self.failUnless(len(res) == 1)
         self.failUnless(res[0].UID == vendorsItem.UID())
 
-    def test_pm_SearchItemsToCorrectToValidateHighestHierarchicLevel(self):
+    def test_pm_SearchItemsToCorrectToValidateOfHighestHierarchicLevel(self):
         '''Test the 'items-to-correct-to-validate-of-highest-hierarchic-level'
            CompoundCriterion adapter. This should return a list of items in state
            'returned_to_proposing_group_proposed' the current user is able to edit.'''
-        # specify that copyGroups can see the item when it is proposed
         cfg = self.meetingConfig
         if 'return_to_proposing_group_with_last_validation' not in cfg.listWorkflowAdaptations():
             pm_logger.info(
@@ -855,12 +849,6 @@ class testSearches(PloneMeetingTestCase):
 
         itemTypeName = cfg.getItemTypeName()
         self.changeUser('siteadmin')
-        # first test the generated query
-        adapter = getAdapter(cfg,
-                             ICompoundCriterionFilter,
-                             name='items-to-correct-to-validate-of-highest-hierarchic-level')
-        # wfAdaptation 'return_to_proposing_group_with_last_validation' is not enabled
-        self.assertEqual(adapter.query, _find_nothing_query(itemTypeName))
         wfAdaptations = list(cfg.getWorkflowAdaptations())
         if 'return_to_proposing_group_with_last_validation' not in wfAdaptations:
             wfAdaptations.append('return_to_proposing_group_with_last_validation')
@@ -870,12 +858,11 @@ class testSearches(PloneMeetingTestCase):
         cfg.setWorkflowAdaptations(wfAdaptations)
         cfg.at_post_edit_script()
 
-        # normally this search is not available to users that are not able to review items
-        # nevertheless, if a user is in not able to edit items to correct in proposed, the special
-        # query 'return nothing' is returned
-        self.assertEqual(adapter.query, _find_nothing_query(itemTypeName))
+        # first test the generated query
         self.changeUser('pmManager')
-        cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstocorrecttovalidateofhighesthierarchiclevel')
+        adapter = getAdapter(cfg,
+                             ICompoundCriterionFilter,
+                             name='items-to-correct-to-validate-of-highest-hierarchic-level')
         self.assertEqual(adapter.query, {
             'reviewProcessInfo':
             {'query': ['{0}__reviewprocess__returned_to_proposing_group_proposed'.format(self.developers_uid)]},
@@ -929,11 +916,36 @@ class testSearches(PloneMeetingTestCase):
         self.failUnless(len(res) == 1)
         self.failUnless(res[0].UID == vendorsItem.UID())
 
+    def test_pm_SearchAllItemsToValidateOfHighestHierarchicLevel(self):
+        '''Test the 'all-items-to-validate-of-highest-hierarchic-level'
+           CompoundCriterion adapter. This should return every items the user is able to validate
+           so items that are 'proposed' and items that are 'returned_to_proposing_group_proposed'.'''
+        # specify that copyGroups can see the item when it is proposed
+        cfg = self.meetingConfig
+        if 'return_to_proposing_group_with_last_validation' not in cfg.listWorkflowAdaptations():
+            pm_logger.info(
+                "Bypassing test test_pm_SearchAllItemsToValidateHighestHierarchicLevel because it "
+                "needs the 'return_to_proposing_group_with_last_validation' wfAdaptation.")
+            return
+        itemTypeName = cfg.getItemTypeName()
+        self.changeUser('pmManager')
+        # first test the generated query
+        adapter = getAdapter(cfg,
+                             ICompoundCriterionFilter,
+                             name='all-items-to-validate-of-highest-hierarchic-level')
+        self.assertEqual(adapter.query, {
+            'portal_type': {'query': [itemTypeName]},
+            'reviewProcessInfo':
+            {'query': [
+                '{0}__reviewprocess__{1}'.format(
+                    self.developers_uid, self._stateMappingFor('proposed')),
+                '{0}__reviewprocess__returned_to_proposing_group_{1}'.format(
+                    self.developers_uid, self._stateMappingFor('proposed'))]}})
+
     def test_pm_SearchItemsToCorrectToValidateOfEveryReviewerGroups(self):
         '''Test the 'items-to-correct-to-validate-of-every-reviewer-groups'
            CompoundCriterion adapter.  This should return a list of items in state
            'returned_to_proposing_group_proposed' the current user is able to edit.'''
-        # specify that copyGroups can see the item when it is proposed or prevalidated
         cfg = self.meetingConfig
         if 'return_to_proposing_group_with_all_validations' not in cfg.listWorkflowAdaptations():
             pm_logger.info(
@@ -1039,6 +1051,37 @@ class testSearches(PloneMeetingTestCase):
         res = collection.results()
         self.failUnless(len(res) == 1)
         self.failUnless(res[0].UID == vendorsItem.UID())
+
+    def test_pm_SearchAllItemsToValidateOfEveryReviewerGroups(self):
+        '''Test the 'all-items-to-validate-of-every-reviewer-groups'
+           CompoundCriterion adapter. This should return every items the user is able to validate
+           so items that are 'proposed' and items that are 'returned_to_proposing_group_proposed'.'''
+        cfg = self.meetingConfig
+        if 'return_to_proposing_group_with_all_validations' not in cfg.listWorkflowAdaptations():
+            pm_logger.info(
+                "Bypassing test test_pm_SearchAllItemsToValidateOfEveryReviewerGroups because it "
+                "needs the 'return_to_proposing_group_with_all_validations' wfAdaptation.")
+            return
+
+        itemTypeName = cfg.getItemTypeName()
+        self._enablePrevalidation(cfg)
+
+        self.changeUser('pmManager')
+        adapter = getAdapter(cfg,
+                             ICompoundCriterionFilter,
+                             name='all-items-to-validate-of-every-reviewer-groups')
+        self.assertEqual(adapter.query, {
+            'portal_type': {'query': [itemTypeName]},
+            'reviewProcessInfo':
+            {'query': [
+                '{0}__reviewprocess__prevalidated'.format(
+                    self.developers_uid),
+                '{0}__reviewprocess__{1}'.format(
+                    self.developers_uid, self._stateMappingFor('proposed')),
+                '{0}__reviewprocess__returned_to_proposing_group_prevalidated'.format(
+                    self.developers_uid),
+                '{0}__reviewprocess__returned_to_proposing_group_{1}'.format(
+                    self.developers_uid, self._stateMappingFor('proposed'))]}})
 
     def test_pm_SearchUnreadItems(self):
         '''Test the 'items-with-negative-personal-labels' adapter.

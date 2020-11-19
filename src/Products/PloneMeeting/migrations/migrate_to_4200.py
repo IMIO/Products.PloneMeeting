@@ -60,6 +60,23 @@ class Migrate_To_4200(Migrator):
             # remove duplicates (in case migration is launched several times)
             cleaned_wfas = tuple(set(cleaned_wfas))
             cfg.setWorkflowAdaptations(cleaned_wfas)
+            # clean some parameters that use enabled suffixes and were not validated before
+            # for example even when pre_validation was not enabled, it was possible
+            # to select a "prereviewers" related value, it is no more the case
+            for field_name in ("itemAnnexConfidentialVisibleFor",
+                               "adviceAnnexConfidentialVisibleFor",
+                               "meetingAnnexConfidentialVisibleFor"):
+                field = cfg.getField(field_name)
+                old_value = list(field.get(cfg))
+                new_value = [v for v in old_value
+                             if v in field.Vocabulary(cfg)]
+                if old_value != new_value:
+                    self.warn(
+                        logger, "Value was adapted for field \"{0}\" "
+                        "of MeetingConfig \"{1}\", old_value was \"{2}\", "
+                        "new_value is \"{3}\".".format(
+                            field_name, cfg.getId(), old_value, new_value))
+                    field.set(cfg, new_value)
             cfg.at_post_edit_script()
         logger.info('Done.')
 
@@ -105,7 +122,9 @@ class Migrate_To_4200(Migrator):
         # organizations
         orgs = get_organizations(only_selected=False)
         for org in orgs:
-            old_value = org.keep_access_to_item_when_advice_is_given
+            # org.keep_access_to_item_when_advice_is_given could not exist
+            # for imported org never saved
+            old_value = getattr(org, 'keep_access_to_item_when_advice_is_given', None)
             if old_value == '':
                 org.keep_access_to_item_when_advice = 'use_meetingconfig_value'
             elif old_value == '1':
