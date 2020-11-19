@@ -50,6 +50,10 @@ Changelog
 - Fixed order of CSS (`portal_css`) and JS (`portal_javascripts`) regarding new
   resources (`dexterity.localroles`, `eea.facetednavigation` multiselect widget).
   [gbastien]
+- Fixed `Migrate_To_4200._migrateKeepAccessToItemWhenAdviceIsGiven` in case
+  attribute `keep_access_to_item_when_advice_is_given` does not exist on
+  organization.
+  [gbastien]
 
 4.2b5 (2020-10-26)
 ------------------
