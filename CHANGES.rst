@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2b6 (unreleased)
+4.2b6 (2020-11-19)
 ------------------
 
 - Added parameter `the_objects=False` to `GroupsInChargeVocabulary` and
