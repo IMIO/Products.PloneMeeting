@@ -309,7 +309,6 @@ def secret_votes_default(context):
     vote_number = vote_number_default()
     item_votes = context.getItemVotes(vote_number=vote_number,
                                       ignored_vote_values=[NOT_VOTABLE_LINKED_TO_VALUE])
-
     used_vote_terms = get_vocab(
         context,
         "Products.PloneMeeting.vocabularies.usedvotevaluesvocabulary",
@@ -398,6 +397,7 @@ class IEncodeSecretVotes(IBaseAttendee):
             total = sum([vote['vote_count'] for vote in votes])
         if total > max_voters:
             msg = translate(u'error_can_not_encode_more_than_max_voters',
+                            mapping={'max_voters': str(max_voters)},
                             domain="PloneMeeting",
                             context=context.REQUEST)
             raise Invalid(msg)

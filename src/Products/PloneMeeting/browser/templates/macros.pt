@@ -386,7 +386,7 @@ document.location.reload(true);
                    define="form_name python: votesAreSecret and 'item_encode_secret_votes_form' or 'item_encode_votes_form';">
        <br />
        <a tal:attributes="href string:${form_name}?vote_number:int=${vote_infos/vote_number}"
-          title="Edit these votes"
+          title="Edit this vote"
           i18n:attributes="title"
           class="link-overlay-pm-manage-attendees">
            <span class="fa edit-element"></span>
@@ -403,7 +403,7 @@ document.location.reload(true);
             define="next_vote_number view/next_vote_number;"
             condition="python: vote_infos['vote_number'] + 1 == next_vote_number">
         <a tal:attributes="href string:${form_name}?vote_number:int=${next_vote_number}"
-           title="Add new votes"
+           title="Add new vote"
            i18n:attributes="title"
            class="link-overlay-pm-manage-attendees">
             <span class="fa add-element"></span>
@@ -411,7 +411,7 @@ document.location.reload(true);
         <tal:linked_to_previous define="show_icon python: view.show_add_vote_linked_to_previous_icon(vote_infos['vote_number'])">
          <a tal:define="next_vote_number view/next_vote_number"
             tal:condition="show_icon"
-            tal:attributes="href string:${form_name}?vote_number:int=${next_vote_number}&linked_to_previous:boolean=True"
+            tal:attributes="href string:${form_name}?vote_number:int=${next_vote_number}&form.widgets.linked_to_previous:boolean=True"
             title="Add new linked votes"
             i18n:attributes="title"
             class="link-overlay-pm-manage-attendees">

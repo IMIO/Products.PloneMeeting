@@ -3748,7 +3748,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 if not votes:
                     votes = [{'label': None,
                               'votes': {},
-                              'linked_to_previous': self.REQUEST.get('linked_to_previous', False)}]
+                              'linked_to_previous': self.REQUEST.get(
+                                  'form.widgets.linked_to_previous', False)}]
                     if include_vote_number:
                         votes[0]['vote_number'] = 0
                     # define vote_value = '' for every used vote values
