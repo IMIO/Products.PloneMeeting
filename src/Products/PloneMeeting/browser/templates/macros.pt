@@ -412,7 +412,7 @@ document.location.reload(true);
          <a tal:define="next_vote_number view/next_vote_number"
             tal:condition="show_icon"
             tal:attributes="href string:${form_name}?vote_number:int=${next_vote_number}&form.widgets.linked_to_previous:boolean=True"
-            title="Add new linked votes"
+            title="Add new linked vote"
             i18n:attributes="title"
             class="link-overlay-pm-manage-attendees">
              <span class="fa vote-linked-to-previous"></span>
