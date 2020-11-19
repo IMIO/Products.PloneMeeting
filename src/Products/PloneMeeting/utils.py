@@ -1716,7 +1716,7 @@ def compute_item_roles_to_assign_to_suffixes_cachekey(method, cfg, item_state, o
 def compute_item_roles_to_assign_to_suffixes(cfg, item_state, org=None):
     """ """
     apply_meetingmanagers_access = True
-    suffix_roles = []
+    suffix_roles = {}
 
     # roles given to item_state are managed automatically
     # it is possible to manage it manually for extra states (coming from wfAdaptations for example)
@@ -1733,7 +1733,12 @@ def compute_item_roles_to_assign_to_suffixes(cfg, item_state, org=None):
         return apply_meetingmanagers_access, suffix_roles
 
     item_val_levels_states = cfg.getItemWFValidationLevels(data='state', only_enabled=True)
-    suffix_roles = {}
+
+    # by default, observers may View in every states as well as creators
+    # this way observers have access or it is never the case
+    # and creators have access when state "itemcreated" is disabled
+    suffix_roles = {'observers': ['Reader'],
+                    'creators': ['Reader']}
 
     # MeetingConfig.itemWFValidationLevels
     # states before validated
