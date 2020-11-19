@@ -73,7 +73,8 @@ class testVotes(PloneMeetingTestCase):
         cfg = self.meetingConfig
         self.changeUser('pmManager')
         self.assertTrue(cfg.getUseVotes())
-        self.create('Meeting', date=DateTime('2020/11/17'))
+        meeting = self.create('Meeting', date=DateTime('2020/11/17'))
+        self.assertTrue(meeting.getVoters())
         item = self.create('MeetingItem')
         self.assertFalse(item.showVotes())
         self.presentItem(item)
@@ -85,8 +86,23 @@ class testVotes(PloneMeetingTestCase):
         self.assertFalse(item.showVotes())
         item.setPollType('secret')
         self.assertTrue(item.showVotes())
+        # disable votes
         cfg.setUseVotes(False)
-        self.assertFalse(item.showVotes())
+        # still shown because voters
+        self.assertTrue(item.showVotes())
+
+        # do not showVotes if not voter
+        # this will avoid showing votes on older
+        # meeting where votes were not enabled
+        no_vote_meeting = self.create('Meeting', date=DateTime('2020/11/19'))
+        no_vote_item = self.create('MeetingItem')
+        self.presentItem(no_vote_item)
+        self.assertFalse(no_vote_meeting.getVoters())
+        self.assertFalse(no_vote_item.getItemVoters())
+        self.assertFalse(no_vote_item.showVotes())
+        # even if enabled, if nothing to show, nothing shown
+        cfg.setUseVotes(True)
+        self.assertFalse(no_vote_item.showVotes())
 
     def test_pm_GetItemVotes(self):
         """Returns votes on an item."""

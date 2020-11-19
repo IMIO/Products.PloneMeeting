@@ -6723,7 +6723,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # Checks whether votes may occur on this item
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(self)
-            res = self.getPollType() != 'no_vote' and cfg.isVotable(self)
+            res = self.getPollType() != 'no_vote' and \
+                self.getItemVoters() and \
+                cfg.isVotable(self)
         return res
 
     security.declarePublic('hasVotes')
