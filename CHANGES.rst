@@ -5,8 +5,9 @@ Changelog
 4.2b7 (unreleased)
 ------------------
 
-- Nothing changed yet.
-
+- Use correct icon for `itemfreeze/itempublish` transitions on item workflow
+  (were reversed).
+  [gbastien]
 
 4.2b6 (2020-11-19)
 ------------------
