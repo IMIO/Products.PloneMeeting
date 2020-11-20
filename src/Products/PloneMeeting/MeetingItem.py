@@ -3748,15 +3748,18 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 if not votes:
                     votes = [{'label': None,
                               'votes': {},
-                              'linked_to_previous': self.REQUEST.get(
-                                  'form.widgets.linked_to_previous', False)}]
+                              # if first, never linked_to_previous
+                              # this check is done so it works when nothing still encoded
+                              # and addind a linked vote immediatelly
+                              'linked_to_previous': vote_number != 0 and self.REQUEST.get(
+                                  'form.widgets.linked_to_previous', False) or False}]
                     if include_vote_number:
                         votes[0]['vote_number'] = 0
                     # define vote_value = '' for every used vote values
                     tool = api.portal.get_tool('portal_plonemeeting')
                     cfg = tool.getMeetingConfig(self)
                     for used_vote in cfg.getUsedVoteValues():
-                        votes[0]['votes'][used_vote] = ""
+                        votes[0]['votes'][used_vote] = 0
         # public votes
         else:
             # add an empty vote in case nothing in itemVotes
@@ -3764,9 +3767,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             if include_unexisting:
                 # first or not existing
                 if not votes:
-                    votes = [{'label': None,
-                              'voters': {},
-                              'linked_to_previous': self.REQUEST.get('linked_to_previous', False)}]
+                    votes = [
+                        {
+                            'label': None,
+                            'voters': {},
+                            'linked_to_previous': vote_number != 0 and self.REQUEST.get(
+                                'form.widgets.linked_to_previous', False) or False}]
                     if include_vote_number:
                         votes[0]['vote_number'] = 0
                     # define vote not encoded for every voters

@@ -396,7 +396,7 @@ class testVotes(PloneMeetingTestCase):
         self.assertTrue(load_view.show_add_vote_linked_to_previous_icon(vote_number=0))
 
         # add linked vote
-        self.request.set('linked_to_previous', True)
+        self.request.set('form.widgets.linked_to_previous', True)
         self.request.set('vote_number', 1)
         # votes default only show encodable values for hp3/hp4
         self.assertEqual(
@@ -485,7 +485,7 @@ class testVotes(PloneMeetingTestCase):
         self.assertTrue(load_view.show_add_vote_linked_to_previous_icon(vote_number=0))
 
         # add linked vote
-        self.request.set('linked_to_previous', True)
+        self.request.set('form.widgets.linked_to_previous', True)
         self.request.set('vote_number', 1)
         # votes default only show encodable values for hp3/hp4
         self.assertEqual(
@@ -563,6 +563,31 @@ class testVotes(PloneMeetingTestCase):
         self.assertFalse(public_item_uid in meeting.itemVotes)
         self.backToState(secret_item, 'validated')
         self.assertFalse(secret_item_uid in meeting.itemVotes)
+
+    def test_pm_DisplayMeetingItemVoters(self):
+        """The view that displays items for which votes are not completed."""
+        self.changeUser('pmManager')
+        meeting, public_item, yes_public_item, secret_item, yes_secret_item = \
+            self._createMeetingWithVotes()
+
+        view = meeting.restrictedTraverse('@@display-meeting-item-voters')
+        # all voted for now
+        self.assertEqual(view.getNonVotedItems(),
+                         {'secret': [], 'public': []})
+        view()
+        # public vote
+        voters = meeting.getVoters()
+        public_votes = public_item.getItemVotes()[0]
+        public_votes['voters'][voters[0]] = NOT_ENCODED_VOTE_VALUE
+        meeting.setItemPublicVote(public_item, public_votes, 0)
+        # secret vote
+        secret_votes = secret_item.getItemVotes()[0]
+        secret_votes['votes']['yes'] = 0
+        meeting.setItemSecretVote(secret_item, secret_votes, 0)
+        non_voted_items = view.getNonVotedItems()
+        self.assertTrue(public_item in non_voted_items['public'])
+        self.assertTrue(secret_item in non_voted_items['secret'])
+        view()
 
 
 def test_suite():

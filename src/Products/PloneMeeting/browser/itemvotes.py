@@ -116,7 +116,7 @@ def label_default(context):
 def linked_to_previous_default(context):
     """ """
     request = getSite().REQUEST
-    res = request.get('linked_to_previous', None)
+    res = request.get('form.widgets.linked_to_previous', None)
     if res is None:
         item_votes = context.getItemVotes(vote_number=vote_number_default())
         res = item_votes['linked_to_previous']
