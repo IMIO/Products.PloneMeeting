@@ -1773,7 +1773,12 @@ table.listing tbody tr.even.dragging td {
    color: lightgrey;
    cursor: help;
 }
-
+#content span.fa.green-colored {
+   color: green;
+}
+#content span.fa.red-colored {
+   color: red;
+}
 #content span.pmHelp {
    cursor: help;
 }

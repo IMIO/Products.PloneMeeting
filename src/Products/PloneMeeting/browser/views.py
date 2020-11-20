@@ -2354,6 +2354,11 @@ class DisplayMeetingItemVoters(BrowserView):
         self.context = context
         self.request = request
 
+    def __call__(self, show_voted_items=False):
+        """ """
+        self.show_voted_items = show_voted_items
+        return self.index()
+
     def getNonVotedItems(self):
         """Returns the list of items the voter_uid did not vote for."""
         items = self.context.getItems(ordered=True)
@@ -2382,6 +2387,19 @@ class DisplayMeetingItemVoters(BrowserView):
                     if count < total_voters:
                         res['secret'].append(item)
                         break
+        return res
+
+    def getVotedItems(self):
+        """ """
+        non_voted_items = self.getNonVotedItems()
+        items = self.context.getItems(ordered=True)
+        res = {
+            'public': [
+                item for item in items
+                if item not in non_voted_items['public'] and not item.getVotesAreSecret()],
+            'secret': [
+                item for item in items
+                if item not in non_voted_items['secret'] and item.getVotesAreSecret()]}
         return res
 
 

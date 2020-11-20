@@ -566,16 +566,28 @@ class testVotes(PloneMeetingTestCase):
         self.assertFalse(secret_item_uid in meeting.itemVotes)
 
     def test_pm_DisplayMeetingItemVoters(self):
-        """The view that displays items for which votes are not completed."""
+        """The view that displays items for which votes are (not) completed."""
         self.changeUser('pmManager')
         meeting, public_item, yes_public_item, secret_item, yes_secret_item = \
             self._createMeetingWithVotes()
 
-        view = meeting.restrictedTraverse('@@display-meeting-item-voters')
-        # all voted for now
-        self.assertEqual(view.getNonVotedItems(),
+        # for now every voters voted
+        # non voted
+        non_voted_view = meeting.restrictedTraverse('@@display-meeting-item-voters')
+        self.assertEqual(non_voted_view.getNonVotedItems(),
                          {'secret': [], 'public': []})
-        view()
+        non_voted_view()
+        # voted
+        voted_view = meeting.restrictedTraverse('@@display-meeting-item-voters')
+        voted_view.show_voted_items = True
+        voted_items = voted_view.getVotedItems()
+        self.assertTrue(public_item in voted_items['public'])
+        self.assertTrue(yes_public_item in voted_items['public'])
+        self.assertTrue(secret_item in voted_items['secret'])
+        self.assertTrue(yes_secret_item in voted_items['secret'])
+        voted_view()
+
+        # remove one voter on public_item and secret_item
         # public vote
         voters = meeting.getVoters()
         public_votes = public_item.getItemVotes()[0]
@@ -585,10 +597,16 @@ class testVotes(PloneMeetingTestCase):
         secret_votes = secret_item.getItemVotes()[0]
         secret_votes['votes']['yes'] = 0
         meeting.setItemSecretVote(secret_item, secret_votes, 0)
-        non_voted_items = view.getNonVotedItems()
+        # non voted
+        non_voted_items = non_voted_view.getNonVotedItems()
         self.assertTrue(public_item in non_voted_items['public'])
         self.assertTrue(secret_item in non_voted_items['secret'])
-        view()
+        non_voted_view()
+        # voted
+        voted_items = voted_view.getVotedItems()
+        self.assertFalse(public_item in voted_items['public'])
+        self.assertFalse(secret_item in voted_items['secret'])
+        voted_view()
 
 
 def test_suite():

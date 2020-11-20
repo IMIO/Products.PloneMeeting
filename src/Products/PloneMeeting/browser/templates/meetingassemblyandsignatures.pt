@@ -18,7 +18,8 @@
                        voters view/voters;
                        itemAbsents python: context.getItemAbsents(by_persons=True);
                        itemExcused python: context.getItemExcused(by_persons=True);
-                       itemSignatories python: context.getItemSignatories(by_signatories=True);">
+                       itemSignatories python: context.getItemSignatories(by_signatories=True);
+                       isManager python:view.tool.isManager(context);">
     <tal:comment replace="nothing">Column captions</tal:comment>
     <thead>
     <tr>
@@ -36,11 +37,16 @@
       <th class="header-attendee-non-attendee" class="nosort" tal:condition="showNonAttendees" i18n:translate="is_non_attendee">Non attendee?</th>
       <th class="header-attendee-voter" class="nosort" tal:condition="showVoters">
        <span i18n:translate="is_voter">Voter?</span>
-       <a class="link-overlay-pm"
-          tal:condition="python:view.tool.isManager(context)"
-          tal:attributes="href string:${context/absolute_url}/@@display-meeting-item-voters">
-        <span class="fa show-info link-action"></span>
-       </a>
+       <tal:show_voted_or_not_voted condition="isManager">
+        <a class="link-overlay-pm"
+           tal:attributes="href string:${context/absolute_url}/@@display-meeting-item-voters?show_voted_items:boolean=1">
+         <span class="fa show-info green-colored link-action"></span>
+        </a>
+        <a class="link-overlay-pm"
+           tal:attributes="href string:${context/absolute_url}/@@display-meeting-item-voters">
+         <span class="fa show-info red-colored link-action"></span>
+        </a>
+       </tal:show_voted_or_not_voted>
       </th>
     </tr>
     </thead>
