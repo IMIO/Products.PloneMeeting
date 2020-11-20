@@ -1073,7 +1073,7 @@ div.tooltipster-content a.item_listType_late:visited {
 
 a[class*="item_polltype_"]:not([class*='item_polltype_secret']):not([class*='item_polltype_no_vote']),
 span[class*="item_polltype_"]:not([class*='item_polltype_secret']):not([class*='item_polltype_no_vote']) {
-   color: green !important;
+   color: green;
 }
 
 .item_completeness_incomplete,
