@@ -525,6 +525,7 @@ class testVotes(PloneMeetingTestCase):
         self.assertIsNone(invariant(data))
         # validation fails if total > 4
         error_msg = translate('error_can_not_encode_more_than_max_voters',
+                              mapping={'max_voters': 4},
                               domain='PloneMeeting',
                               context=self.request)
         votes = [

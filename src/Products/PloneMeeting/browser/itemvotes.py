@@ -132,7 +132,7 @@ class IVote(Interface):
 
     widget('voter', PMSelectReadonlyWidget)
     voter = schema.Choice(
-        title=u'Voter',
+        title=_(u"Voter"),
         required=False,
         vocabulary="Products.PloneMeeting.vocabularies.itemvotersvocabulary", )
 
@@ -332,13 +332,13 @@ class ISecretVote(Interface):
 
     widget('vote_value', PMSelectReadonlyWidget)
     vote_value = schema.Choice(
-        title=u'Vote value',
+        title=_(u"Vote value"),
         required=False,
         vocabulary="Products.PloneMeeting.vocabularies.usedvotevaluesvocabulary", )
 
     widget('vote_count', PMNumberFieldWidget)
     vote_count = schema.Int(
-        title=u'Vote count',
+        title=_(u"Vote count"),
         required=False)
 
 
@@ -366,7 +366,7 @@ class IEncodeSecretVotes(IBaseAttendee):
         required=False)
 
     votes = schema.List(
-        title=u'Votes',
+        title=_(u"Votes"),
         value_type=DictRow(title=u'Votes', schema=ISecretVote),
         defaultFactory=secret_votes_default,
         required=True)
