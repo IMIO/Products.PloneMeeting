@@ -2776,7 +2776,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             meeting_brain = catalog(UID=meeting_uid)[0]
             self.linked_meeting_path = meeting_brain.getPath()
 
-    def getMeeting(self, only_uid=False):
+    def getMeeting(self, only_uid=False, caching=True):
         '''Returns the linked meeting if it exists.'''
         res = None
         if only_uid:
@@ -2784,8 +2784,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         else:
             meeting_path = getattr(self, 'linked_meeting_path', None)
             if meeting_path:
-                portal = api.portal.get()
-                res = portal.unrestrictedTraverse(meeting_path)
+                if caching and hasattr(self, "REQUEST"):
+                    meeting_uid = getattr(self, 'linked_meeting_uid', None)
+                    res = self.REQUEST.get('meeting__%s' % meeting_uid)
+                if not res:
+                    portal = api.portal.get()
+                    res = portal.unrestrictedTraverse(meeting_path)
+                    if caching and hasattr(self, "REQUEST"):
+                        self.REQUEST.set('meeting__%s' % meeting_uid, res)
         return res
 
     def getMeetingToInsertIntoWhenNoCurrentMeetingObject_cachekey(method, self):

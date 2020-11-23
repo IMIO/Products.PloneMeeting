@@ -687,6 +687,27 @@ class testPerformances(PloneMeetingTestCase):
         '''Helper method that actually duplicated given p_item.'''
         item.clone(copyAnnexes=copyAnnexes)
 
+    def test_pm_SpeedGetMeeting(self):
+        '''Test MeetingItem.getMeeting method performances.
+           We call the method 2000 times, this is what happens when displaying
+           a dashboard of 100 items.'''
+        self.changeUser('pmManager')
+        self.create('Meeting', date=DateTime('2020/11/23'))
+        item = self.create('MeetingItem')
+        self.presentItem(item)
+        # call getMeeting 2000 times wihout caching
+        self._getMeetingOnItem(item, 2000, caching=False)
+        # call getMeeting 2000 times with caching
+        self._getMeetingOnItem(item, 2000, caching=True)
+
+    @timecall
+    def _getMeetingOnItem(self, item, times=1, caching=True):
+        ''' '''
+        pm_logger.info(
+            'Call {0} times, with caching={1}'.format(times, caching))
+        for time in range(times):
+            item.getMeeting(only_uid=False, caching=caching)
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

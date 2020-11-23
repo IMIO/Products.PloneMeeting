@@ -984,6 +984,17 @@ def onMeetingAdded(meeting, event):
         'Products.PloneMeeting.Meeting.modified', get_again=True)
 
 
+def onMeetingMoved(meeting, event):
+    '''Called when a meeting is cut/pasted.'''
+    # this is also called when removing an item, in this case, we do nothing
+    if IObjectRemovedEvent.providedBy(event):
+        return
+
+    # update linked_meeting_path on every items because path changed
+    for item in meeting.getItems():
+        item._update_meeting_link(meeting.UID())
+
+
 def onMeetingRemoved(meeting, event):
     '''When a meeting is removed, check if we need to remove every linked items,
        this is the case if the current user is a Manager.
