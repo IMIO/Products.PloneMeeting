@@ -5,8 +5,8 @@ Changelog
 4.1.28.16 (unreleased)
 ----------------------
 
-- Nothing changed yet.
-
+- Requires `imio.helpers[test]` for test so we get `collective.MockMailHost`.
+  [gbastien]
 
 4.1.28.15 (2020-11-19)
 ----------------------
