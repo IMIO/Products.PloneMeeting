@@ -378,7 +378,7 @@ class testPerformances(PloneMeetingTestCase):
         for time in range(times):
             get_organizations(not_empty_suffix='advisers', caching=caching)
 
-    def test_pm_GetMeetingConfig(self):
+    def test_pm_SpeedGetMeetingConfig(self):
         '''Test ToolPloneMeeting.getMeetingConfig method performances.
            We call the method 2000 times, this is what happens when displaying
            a meeting containing 100 items.'''
