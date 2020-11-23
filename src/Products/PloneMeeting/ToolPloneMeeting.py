@@ -676,7 +676,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 # set (it is equal to the meta_type, which is not
                 # necessarily equal to the portal type). In this case we look for
                 # the correct portal type in the request.
-                portalTypeName = self.REQUEST.get('type_name', None)
+                portalTypeName = self.REQUEST.get('type_name', portalTypeName)
             if portalTypeName.startswith('Meeting'):
                 # Find config based on portal_type of current p_context
                 for config in self.objectValues('MeetingConfig'):
