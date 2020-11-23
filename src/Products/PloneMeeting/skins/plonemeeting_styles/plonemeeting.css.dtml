@@ -282,17 +282,17 @@ div.viewlet_workflowstate span.state-advice_under_edit {
 .state-advice_under_edit {color: red !important;}
 /* DarkOrange */
 div.viewlet_workflowstate span[class^='state-proposed'],
+div.viewlet_workflowstate span[class^='state-returned_to_proposing_group_proposed'],
 div.viewlet_workflowstate span[class$='waiting_advices'],
 div.viewlet_workflowstate span.state-prevalidated,
-div.viewlet_workflowstate span.state-returned_to_proposing_group_proposed,
 div.viewlet_workflowstate span.state-returned_to_proposing_group_prevalidated {
     background-color: DarkOrange;
     border-color: DarkOrange;
 }
 [class*='state-proposed'],
+[class*='state-returned_to_proposing_group_proposed'],
 [class*='state-'][class$='waiting_advices'],
 .state-prevalidated,
-.state-returned_to_proposing_group_proposed,
 .state-returned_to_proposing_group_prevalidated {
    color: DarkOrange !important;
 }
