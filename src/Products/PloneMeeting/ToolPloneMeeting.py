@@ -671,18 +671,19 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         if data is None:
             portalTypeName = context.getPortalTypeName()
             if portalTypeName in ('MeetingItem', 'Meeting'):
-                # Archetypes bug. When this method is called within a default_method
+                # When this method is called within a default_method
                 # (when displaying a edit form), the portal_type is not already
-                # correctly set (it is equal to the meta_type, which is not
+                # set (it is equal to the meta_type, which is not
                 # necessarily equal to the portal type). In this case we look for
                 # the correct portal type in the request.
                 portalTypeName = self.REQUEST.get('type_name', None)
-            # Find config based on portal type of current p_context
-            for config in self.objectValues('MeetingConfig'):
-                if (portalTypeName == config.getItemTypeName()) or \
-                   (portalTypeName == config.getMeetingTypeName()):
-                    data = config
-                    break
+            if portalTypeName.startswith('Meeting'):
+                # Find config based on portal_type of current p_context
+                for config in self.objectValues('MeetingConfig'):
+                    if (portalTypeName == config.getItemTypeName()) or \
+                       (portalTypeName == config.getMeetingTypeName()):
+                        data = config
+                        break
             if not data:
                 # Get the property on the folder that indicates that this is the
                 # "official" folder of a meeting config.
