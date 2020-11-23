@@ -8,6 +8,9 @@ Changelog
 - Use correct icon for `itemfreeze/itempublish` transitions on item workflow
   (were reversed).
   [gbastien]
+- Optimized `MeetingItem.updateLocalRoles`, pass `cfg` and `item_state` when
+  possible and `ram.cache` for `utils.compute_item_roles_to_assign_to_suffixes`.
+  [gbastien]
 
 4.2b6 (2020-11-19)
 ------------------
