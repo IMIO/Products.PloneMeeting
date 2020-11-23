@@ -2766,28 +2766,26 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         cfg = tool.getMeetingConfig(self)
         return cfg.getDefaultPollType()
 
-    def getMeeting_cachekey(method, self, brain=False):
-        '''cachekey method for self.getMeeting.'''
-        return (self, str(hasattr(self, 'REQUEST') and self.REQUEST._debug or False), brain)
+    def _update_meeting_link(self, meeting_uid):
+        """ """
+        self.linked_meeting_uid = None
+        self.linked_meeting_path = None
+        if meeting_uid is not None:
+            catalog = api.portal.get_tool('portal_catalog')
+            self.linked_meeting_uid = meeting_uid
+            meeting_brain = catalog(UID=meeting_uid)[0]
+            self.linked_meeting_path = meeting_brain.getPath()
 
-    security.declarePublic('getMeeting')
-
-    @ram.cache(getMeeting_cachekey)
-    def getMeeting(self, brain=False):
+    def getMeeting(self, only_uid=False):
         '''Returns the linked meeting if it exists.'''
-        # getBRefs returns linked *objects* through a relationship defined in
-        # a ReferenceField, while reference_catalog.getBackReferences returns
-        # *brains*.
-
-        refCatalog = api.portal.get_tool('reference_catalog')
         res = None
-
-        if brain:  # Faster
-            brains = refCatalog.getBackReferences(self, 'MeetingItems')
+        if only_uid:
+            res = getattr(self, 'linked_meeting_uid', None)
         else:
-            brains = self.getBRefs('MeetingItems')
-        if brains:
-            res = brains[0]
+            meeting_path = getattr(self, 'linked_meeting_path', None)
+            if meeting_path:
+                portal = api.portal.get()
+                res = portal.unrestrictedTraverse(meeting_path)
         return res
 
     def getMeetingToInsertIntoWhenNoCurrentMeetingObject_cachekey(method, self):
@@ -3174,7 +3172,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def hasMeeting(self):
         '''Is there a meeting tied to me?'''
-        return self.getMeeting(brain=True) is not None
+        return self.getMeeting(only_uid=True) is not None
 
     security.declarePublic('isLate')
 

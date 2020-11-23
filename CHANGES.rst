@@ -8,6 +8,9 @@ Changelog
 - Use correct icon for `itemfreeze/itempublish` transitions on item workflow
   (were reversed).
   [gbastien]
+- Removed `Meeting.items` `ReferenceField`, manage it manually,
+  this will help migrating to `DX`.
+  [gbastien]
 
 4.2b6 (2020-11-19)
 ------------------

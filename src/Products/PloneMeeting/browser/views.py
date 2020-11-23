@@ -493,7 +493,7 @@ class MeetingReorderItems(BrowserView):
         for item in items:
             item.setItemNumber(itemNumber)
             itemNumber = itemNumber + 100
-        self.context._finalize_item_insert(items, items_to_update=items)
+        self.context._finalize_item_insert(items_to_update=items)
 
     def index(self):
         """ """

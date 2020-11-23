@@ -12,7 +12,6 @@
 from AccessControl import ClassSecurityInfo
 from App.class_init import InitializeClass
 from appy.gen import No
-from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
 from collections import OrderedDict
 from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.contact.plonegroup.config import get_registry_organizations
@@ -34,7 +33,6 @@ from Products.Archetypes.atapi import DateTimeField
 from Products.Archetypes.atapi import IntegerField
 from Products.Archetypes.atapi import OrderedBaseFolder
 from Products.Archetypes.atapi import OrderedBaseFolderSchema
-from Products.Archetypes.atapi import ReferenceField
 from Products.Archetypes.atapi import registerType
 from Products.Archetypes.atapi import RichWidget
 from Products.Archetypes.atapi import Schema
@@ -652,18 +650,6 @@ schema = Schema((
         searchable=True,
         optional=True,
     ),
-    ReferenceField(
-        name='items',
-        widget=ReferenceBrowserWidget(
-            visible=False,
-            label='Items',
-            label_msgid='PloneMeeting_label_items',
-            i18n_domain='PloneMeeting',
-        ),
-        allowed_types="('MeetingItem',)",
-        multiValued=True,
-        relationship="MeetingItems",
-    ),
     IntegerField(
         name='meetingNumber',
         default=-1,
@@ -1237,6 +1223,14 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             res = [brain._unrestrictedGetObject() for brain in res]
         return res
 
+    def getRawItems(self):
+        """Simply get linked items."""
+        catalog = api.portal.get_tool('portal_catalog')
+        catalog_query = self.getRawQuery(force_linked_items_query=True)
+        query = queryparser.parseFormquery(self, catalog_query)
+        res = [brain.UID for brain in catalog.unrestrictedSearchResults(**query)]
+        return res
+
     security.declarePublic('getItemsInOrder')
 
     def getItemsInOrder(self, late=False, uids=[]):
@@ -1407,12 +1401,11 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
                 item.setItemNumber(100)
 
         # Add the item at the end of the items list
-        items.append(item)
-        self._finalize_item_insert(items, items_to_update=[item])
+        item._update_meeting_link(meeting_uid=self.UID())
+        self._finalize_item_insert(items_to_update=[item])
 
-    def _finalize_item_insert(self, items, items_to_update=[]):
+    def _finalize_item_insert(self, items_to_update=[]):
         """ """
-        self.setItems(items)
         # invalidate RAMCache for MeetingItem.getMeeting
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeeting')
         # reindex getItemNumber when item is in the meeting or getItemNumber returns None
@@ -1442,6 +1435,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         itemNumber = item.getItemNumber()
         items = self.getItems()
         try:
+            item._update_meeting_link(meeting_uid=None)
             items.remove(item)
             # set listType back to 'normal' if it was late
             # if it is another value (custom), we do not change it
@@ -1472,7 +1466,6 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             if field.getName().startswith('itemAssembly') or field.getName() == 'itemSignatures':
                 field.set(item, '')
 
-        self.setItems(items)
         # Update item numbers
         # in case itemNumber was a subnumber (or a master having subnumber),
         # we will just update subnumbers of the same integer

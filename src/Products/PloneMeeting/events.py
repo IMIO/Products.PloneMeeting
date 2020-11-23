@@ -563,6 +563,9 @@ def onItemCopied(item, event):
     for image_id in image_ids:
         item._delObject(image_id, suppress_events=True)
 
+    # remove link with Meeting
+    item._update_meeting_link(None)
+
 
 def onItemMoved(item, event):
     '''Called when an item is cut/pasted.'''
