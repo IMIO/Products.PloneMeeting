@@ -563,6 +563,9 @@ def onItemCopied(item, event):
     for image_id in image_ids:
         item._delObject(image_id, suppress_events=True)
 
+    # remove link with Meeting
+    item._update_meeting_link(None)
+
 
 def onItemMoved(item, event):
     '''Called when an item is cut/pasted.'''
@@ -979,6 +982,17 @@ def onMeetingAdded(meeting, event):
         'Products.PloneMeeting.vocabularies.meetingdatesvocabulary', get_again=True)
     invalidate_cachekey_volatile_for(
         'Products.PloneMeeting.Meeting.modified', get_again=True)
+
+
+def onMeetingMoved(meeting, event):
+    '''Called when a meeting is cut/pasted.'''
+    # this is also called when removing an item, in this case, we do nothing
+    if IObjectRemovedEvent.providedBy(event):
+        return
+
+    # update linked_meeting_path on every items because path changed
+    for item in meeting.getItems():
+        item._update_meeting_link(meeting.UID())
 
 
 def onMeetingRemoved(meeting, event):

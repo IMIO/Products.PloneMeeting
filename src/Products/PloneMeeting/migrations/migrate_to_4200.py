@@ -105,12 +105,32 @@ class Migrate_To_4200(Migrator):
                 org.keep_access_to_item_when_advice = 'default'
         logger.info('Done.')
 
+    def _removeMeetingItemsReferenceField(self):
+        '''ReferenceField Meeting.items was removed and is now managed manually.'''
+        logger.info("Removing Meeting.items reference field...")
+        for brain in self.catalog(meta_type='Meeting'):
+            meeting = brain.getObject()
+            # get references from at_references so order is kept
+            reference_uids = [ref.targetUID for ref in meeting.at_references.objectValues()
+                              if ref.relationship == 'MeetingItems']
+            if reference_uids:
+                meeting.deleteReferences('MeetingItems')
+                meeting_uid = meeting.UID()
+                brains = self.catalog(UID=reference_uids)
+                for brain in brains:
+                    item = brain.getObject()
+                    item._update_meeting_link(meeting_uid=meeting_uid)
+        logger.info('Done.')
+
     def run(self, extra_omitted=[]):
         logger.info('Migrating to PloneMeeting 4200...')
 
         # remove useless catalog indexes and columns, were renamed to snake case
         self.removeUnusedIndexes(indexes=['getItemIsSigned', 'sendToAuthority', 'toDiscuss'])
         self.removeUnusedColumns(columns=['toDiscuss'])
+
+        # manage link between item and meeting manually
+        self._removeMeetingItemsReferenceField()
 
         self.upgradeAll(omit=['Products.PloneMeeting:default',
                               self.profile_name.replace('profile-', '')] + extra_omitted)

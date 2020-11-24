@@ -7047,6 +7047,50 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(self.hasPermission(View, item))
         self.assertTrue(self.hasPermission(ModifyPortalContent, item))
 
+    def test_pm__update_meeting_link(self):
+        """The MeetingItem._update_meeting_link is
+           keeping the link between meeting and item."""
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime('2020/11/23'))
+        meeting_uid = meeting.UID()
+        meeting_path = "/".join(meeting.getPhysicalPath())
+        item = self.create('MeetingItem')
+        # item not presented, attributes do not exist
+        self.assertIsNone(getattr(item, "linked_meeting_uid", None))
+        self.assertIsNone(getattr(item, "linked_meeting_path", None))
+        self.assertIsNone(item.getMeeting())
+        self.assertIsNone(item.getMeeting(only_uid=True))
+        # presented item
+        self.presentItem(item)
+        self.assertEqual(item.linked_meeting_uid, meeting_uid)
+        self.assertEqual(item.linked_meeting_path, meeting_path)
+        self.assertEqual(item.getMeeting(), meeting)
+        self.assertEqual(item.getMeeting(only_uid=True), meeting_uid)
+        # remove item from meeting
+        self.backToState(item, 'validated')
+        self.assertIsNone(item.linked_meeting_uid)
+        self.assertIsNone(item.linked_meeting_path)
+        self.assertIsNone(item.getMeeting())
+        self.assertIsNone(item.getMeeting(only_uid=True))
+
+        # present again and rename meeting id
+        self.presentItem(item)
+        meeting.aq_parent.manage_renameObject(meeting.getId(), 'my_new_id')
+        self.assertEqual(meeting.getId(), 'my_new_id')
+        # linked_meeting_path especially is updated
+        self.assertEqual(item.linked_meeting_uid, meeting_uid)
+        meeting_new_path = "/".join(meeting.getPhysicalPath())
+        self.assertEqual(item.linked_meeting_path, meeting_new_path)
+        self.assertEqual(item.getMeeting(), meeting)
+        self.assertEqual(item.getMeeting(only_uid=True), meeting_uid)
+
+        # clone a linked item
+        cloned = item.clone()
+        self.assertIsNone(cloned.linked_meeting_uid)
+        self.assertIsNone(cloned.linked_meeting_path)
+        self.assertIsNone(cloned.getMeeting())
+        self.assertIsNone(cloned.getMeeting(only_uid=True))
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite
