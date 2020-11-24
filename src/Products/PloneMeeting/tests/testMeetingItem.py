@@ -7084,6 +7084,13 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(item.getMeeting(), meeting)
         self.assertEqual(item.getMeeting(only_uid=True), meeting_uid)
 
+        # clone a linked item
+        cloned = item.clone()
+        self.assertIsNone(cloned.linked_meeting_uid)
+        self.assertIsNone(cloned.linked_meeting_path)
+        self.assertIsNone(cloned.getMeeting())
+        self.assertIsNone(cloned.getMeeting(only_uid=True))
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite
