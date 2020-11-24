@@ -4434,8 +4434,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if not cfg.getUseAdvices():
             return ([], [])
         # Logged user must be an adviser
-        orgs = tool.get_orgs_for_user(suffixes=['advisers'])
-        if not orgs:
+        user_orgs = tool.get_orgs_for_user(suffixes=['advisers'])
+        if not user_orgs:
             return ([], [])
         # Produce the lists of groups to which the user belongs and for which,
         # - no advice has been given yet (list of advices to add)
@@ -4444,25 +4444,25 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         toEdit = []
         powerAdvisers = cfg.getPowerAdvisersGroups()
         itemState = self.queryState()
-        for org in orgs:
-            org_uid = org.UID()
-            if org_uid in self.adviceIndex:
-                advice = self.adviceIndex[org_uid]
+        for user_org in user_orgs:
+            user_org_uid = user_org.UID()
+            if user_org_uid in self.adviceIndex:
+                advice = self.adviceIndex[user_org_uid]
                 if compute_to_add and advice['type'] == NOT_GIVEN_ADVICE_VALUE and \
                    advice['advice_addable'] and \
-                   self.adapted()._adviceIsAddableByCurrentUser(org_uid):
-                    toAdd.append((org_uid, org.get_full_title()))
+                   self.adapted()._adviceIsAddableByCurrentUser(user_org_uid):
+                    toAdd.append((user_org_uid, user_org.get_full_title()))
                 if compute_to_edit and advice['type'] != NOT_GIVEN_ADVICE_VALUE and \
                    advice['advice_editable'] and \
-                   self.adapted()._adviceIsEditableByCurrentUser(org_uid):
-                    toEdit.append((org_uid, org.get_full_title()))
+                   self.adapted()._adviceIsEditableByCurrentUser(user_org_uid):
+                    toEdit.append((user_org_uid, user_org.get_full_title()))
             # if not in self.adviceIndex, aka not already given
             # check if group is a power adviser and if he is allowed
             # to add an advice in current item state
             elif compute_to_add and \
-                    org_uid in powerAdvisers and \
-                    itemState in org.get_item_advice_states(cfg):
-                toAdd.append((org_uid, org.get_full_title()))
+                    user_org_uid in powerAdvisers and \
+                    itemState in user_org.get_item_advice_states(cfg):
+                toAdd.append((user_org_uid, user_org.get_full_title()))
         return (toAdd, toEdit)
 
     def _advicePortalTypeForAdviser(self, org_uid):

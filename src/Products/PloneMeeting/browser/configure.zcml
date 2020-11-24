@@ -711,7 +711,7 @@
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="cmf.ManagePortal" />
 
-    <browser:page
+    <browser:view
         for="Products.PloneMeeting.interfaces.IMeetingItem"
         name="object_goto"
         class=".views.ObjectGoToView"
