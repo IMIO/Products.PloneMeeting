@@ -433,16 +433,18 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
         elif itemState.startswith('returned_to_proposing_group_'):
             # get info about return_to_proposing_group validation
             # level in MeetingConfig.itemWFValidationLevels
-            level = cfg.getItemWFValidationLevels(state=itemState)
-            res.append(('goTo_{0}.png'.format(itemState),
-                        translate(
-                            'icon_help_{0}'.format(itemState),
-                            domain="PloneMeeting",
-                            context=self.request,
-                            default=level and translate(
-                                level['state_title'],
-                                domain='plone',
-                                context=self.request) or u'')))
+            validation_state = itemState.replace('returned_to_proposing_group_', '')
+            level = cfg.getItemWFValidationLevels(state=validation_state)
+            res.append(
+                ('goTo_{0}.png'.format(itemState),
+                 translate('icon_help_returned_to_proposing_group_with_validation_state',
+                           domain="PloneMeeting",
+                           mapping={"validation_state":
+                                    translate(
+                                        level['state_title'],
+                                        domain='plone',
+                                        context=self.request), },
+                           context=self.request)))
         else:
             # manage MeetingConfig.itemWFValidationLevels states
             item_validation_states = cfg.getItemWFValidationLevels(data='state', only_enabled=True)
