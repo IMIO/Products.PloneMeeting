@@ -4064,13 +4064,15 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def _sendAdviceToGiveMailIfRelevant(self,
                                         old_review_state,
                                         new_review_state,
-                                        force_resend_if_in_advice_review_states=False):
+                                        force_resend_if_in_advice_review_states=False,
+                                        debug=False):
         '''A transition was fired on self, check if, in the new item state,
            advices need to be given, that had not to be given in the previous item state.'''
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         if 'adviceToGive' not in cfg.getMailItemEvents():
             return
+        debug_res = []
         for org_uid, adviceInfo in self.adviceIndex.iteritems():
             # call hook '_sendAdviceToGiveToGroup' to be able to bypass
             # send of this notification to some defined groups
@@ -4092,9 +4094,18 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             labelType = adviceInfo['optional'] and 'advice_optional' or 'advice_mandatory'
             translated_type = translate(labelType, domain='PloneMeeting', context=self.REQUEST).lower()
             plone_group_id = get_plone_group_id(org_uid, 'advisers')
-            self._sendMailToGroupMembers([plone_group_id],
-                                         event_id='adviceToGive',
-                                         mapping={'type': translated_type})
+            params = {"obj": self,
+                      "event": "adviceToGive",
+                      "permissionOrSuffixOrRoleOrGroupIds": [plone_group_id],
+                      "mapping": {'type': translated_type},
+                      "isGroupIds": True,
+                      "debug": True}
+            if debug:
+                debug_res.append(sendMailIfRelevant(**params))
+            else:
+                sendMailIfRelevant(**params)
+        if debug:
+            return debug_res
 
     def _sendAdviceToGiveToGroup(self, org_uid):
         """See docstring in interfaces.py"""
@@ -4122,34 +4133,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 continue
             plone_group_ids.append(plone_group_id)
         if plone_group_ids:
-            self._sendMailToGroupMembers(plone_group_ids,
-                                         event_id='copyGroups')
+            return sendMailIfRelevant(self, 'copyGroups', plone_group_ids, isGroupIds=True)
 
     def _sendCopyGroupsToGroup(self, groupId):
         """See docstring in interfaces.py"""
         return True
-
-    def _sendMailToGroupMembers(self, plone_group_ids, event_id, mapping={}):
-        """ """
-        tool = api.portal.get_tool('portal_plonemeeting')
-        # save mail addresses the notification was sent to to avoid
-        # sending this mail several times to the same address in case
-        # same address is used for several users (case of "group" address)
-        sent_mail_addresses = []
-        for plone_group_id in plone_group_ids:
-            plone_group = api.group.get(plone_group_id)
-            for memberId in plone_group.getMemberIds():
-                # Send a mail to this user
-                recipient = tool.getMailRecipient(memberId)
-                if recipient:
-                    username, email = recipient.split('<')
-                    if email in sent_mail_addresses:
-                        continue
-                    sent_mail_addresses.append(email)
-                    sendMail([recipient],
-                             self,
-                             event_id,
-                             mapping=mapping)
 
     security.declarePublic('sendAdviceDelayWarningMailIfRelevant')
 
@@ -4189,15 +4177,19 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 event_id = 'adviceDelayWarning'
                 if left_delay == -1 or just_timed_out:
                     event_id = 'adviceDelayExpired'
+
                 if event_id in cfg.getMailItemEvents():
                     plone_group_id = '{0}_advisers'.format(group_id)
-                    self._sendMailToGroupMembers(
-                        [plone_group_id],
+                    sendMailIfRelevant(
+                        self,
                         event_id,
-                        mapping={'left_delay': left_delay,
-                                 'limit_date': limit_date,
-                                 'group_name': self.adviceIndex[group_id]['name'],
-                                 'delay_label': self.adviceIndex[group_id]['delay_label']})
+                        [plone_group_id],
+                        mapping={
+                            'left_delay': left_delay,
+                            'limit_date': limit_date,
+                            'group_name': self.adviceIndex[group_id]['name'],
+                            'delay_label': self.adviceIndex[group_id]['delay_label']},
+                        isGroupIds=True)
 
     def getUnhandledInheritedAdvisersData(self, adviserUids, optional):
         """ """
@@ -5033,8 +5025,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     # Send a mail to the group that can give the advice.
                     if 'adviceInvalidated' in cfg.getMailItemEvents():
                         plone_group_id = get_plone_group_id(org_uid, 'advisers')
-                        self._sendMailToGroupMembers([plone_group_id],
-                                                     event_id='adviceInvalidated')
+                        sendMailIfRelevant(self,
+                                           'adviceInvalidated',
+                                           [plone_group_id],
+                                           isGroupIds=True)
             plone_utils.addPortalMessage(translate('advices_invalidated',
                                                    domain="PloneMeeting",
                                                    context=self.REQUEST),
@@ -6343,8 +6337,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         sendMailIfRelevant(newItem,
                            'itemClonedToThisMC',
                            ModifyPortalContent,
-                           isSuffix=False,
-                           mapping=mapping)
+                           mapping=mapping,
+                           isPermission=True)
         plone_utils.addPortalMessage(
             translate('sendto_success',
                       mapping={'cfgTitle': safe_unicode(destMeetingConfig.Title())},

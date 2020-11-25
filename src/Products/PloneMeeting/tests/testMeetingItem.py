@@ -7091,6 +7091,92 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertIsNone(cloned.getMeeting())
         self.assertIsNone(cloned.getMeeting(only_uid=True))
 
+    def test_pm__sendCopyGroupsMailIfRelevant(self):
+        """Check mail sent to copyGroups when they have access to item.
+           Mail is not sent twice to same email address."""
+        # make utils.sendMailIfRelevant return details
+        self.request['debug_sendMailIfRelevant'] = True
+        cfg = self.meetingConfig
+        cfg.setUseCopies(True)
+        cfg.setSelectableCopyGroups(cfg.listSelectableCopyGroups().keys())
+        cfg.setItemCopyGroupsStates(['validated'])
+        cfg.setMailMode("activated")
+        cfg.setMailItemEvents(("copyGroups", ))
+        self.changeUser('pmCreator1')
+        item = self.create("MeetingItem", title="My item")
+        # no copy groups
+        self.assertIsNone(item._sendCopyGroupsMailIfRelevant('itemcreated', 'validated'))
+        # set every groups in copy so we check that email is not sent twice to same address
+        item.setCopyGroups(cfg.getSelectableCopyGroups())
+        recipients, subject, body = item._sendCopyGroupsMailIfRelevant('itemcreated', 'validated')
+        self.assertEqual(
+            sorted(recipients),
+            [u'M. PMAdviser One <pmadviser1@plonemeeting.org>',
+             u'M. PMCreator One bee <pmcreator1b@plonemeeting.org>',
+             u'M. PMCreator Two <pmcreator2@plonemeeting.org>',
+             u'M. PMManager <pmmanager@plonemeeting.org>',
+             u'M. PMObserver One <pmobserver1@plonemeeting.org>',
+             u'M. PMObserver Two <pmobserver2@plonemeeting.org>',
+             u'M. PMReviewer Level One <pmreviewerlevel1@plonemeeting.org>',
+             u'M. PMReviewer Level Two <pmreviewerlevel2@plonemeeting.org>',
+             u'M. PMReviewer One <pmreviewer1@plonemeeting.org>',
+             u'M. PMReviewer Two <pmreviewer2@plonemeeting.org>'])
+        # with less copyGroups
+        item.setCopyGroups((self.vendors_creators,
+                            self.vendors_reviewers,
+                            self.developers_creators))
+        recipients, subject, body = item._sendCopyGroupsMailIfRelevant('itemcreated', 'validated')
+        self.assertEqual(
+            sorted(recipients),
+            [u'M. PMCreator One bee <pmcreator1b@plonemeeting.org>',
+             u'M. PMCreator Two <pmcreator2@plonemeeting.org>',
+             u'M. PMManager <pmmanager@plonemeeting.org>',
+             u'M. PMReviewer Two <pmreviewer2@plonemeeting.org>'])
+
+    def test_pm__sendAdviceToGiveMailIfRelevant(self):
+        """Check mail sent to advisers when they have access to item.
+           Mail is not sent twice to same email address."""
+        # make utils.sendMailIfRelevant return details
+        self.changeUser('siteadmin')
+        self.request['debug_sendMailIfRelevant'] = True
+        cfg = self.meetingConfig
+        cfg_title = cfg.Title()
+        cfg.setUseAdvices(True)
+        cfg.setSelectableAdvisers(cfg.listSelectableAdvisers().keys())
+        cfg.setItemAdviceStates(['validated'])
+        cfg.setItemAdviceEditStates(['validated'])
+        cfg.setItemAdviceViewStates(['validated'])
+        cfg.setMailMode("activated")
+        cfg.setMailItemEvents(("adviceToGive", ))
+        self.changeUser('pmCreator1')
+        item = self.create("MeetingItem", title="My item")
+        item_url = item.absolute_url()
+        # no advisers
+        self.assertEqual(
+            item._sendAdviceToGiveMailIfRelevant('itemcreated', 'validated', debug=True), [])
+        # set every groups as advisers so we check that email is not sent twice to same address
+        item.setOptionalAdvisers(cfg.getSelectableAdvisers())
+        item.updateLocalRoles()
+        res = item._sendAdviceToGiveMailIfRelevant('itemcreated', 'validated', debug=True)
+        recipients, subject, body = res[0]
+        self.assertEqual(sorted(recipients),
+                         [u'M. PMAdviser One <pmadviser1@plonemeeting.org>',
+                          u'M. PMManager <pmmanager@plonemeeting.org>'])
+        self.assertEqual(subject,
+                         u'{0} - Your advice is requested - My item'.format(cfg_title))
+        self.assertEqual(body,
+                         u'The item is entitled "My item". '
+                         u'You can access this item here: {0}.'.format(item_url))
+        recipients, subject, body = res[1]
+        self.assertEqual(sorted(recipients),
+                         [u'M. PMManager <pmmanager@plonemeeting.org>',
+                          u'M. PMReviewer Two <pmreviewer2@plonemeeting.org>'])
+        self.assertEqual(subject,
+                         u'{0} - Your advice is requested - My item'.format(cfg_title))
+        self.assertEqual(body,
+                         u'The item is entitled "My item". '
+                         u'You can access this item here: {0}.'.format(item_url))
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite
