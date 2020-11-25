@@ -14,6 +14,9 @@ Changelog
 - Removed `Meeting.items` `ReferenceField`, manage it manually,
   this will help migrating to `DX`.
   [gbastien]
+- Do not fail in `vocabularies.PMUsers` when `user_id` contains special chars,
+  it may be the case when using `LDAP`, ignore these values.
+  [gbastien]
 
 4.2b6 (2020-11-19)
 ------------------
