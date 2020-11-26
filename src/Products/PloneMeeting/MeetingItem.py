@@ -90,6 +90,7 @@ from Products.PloneMeeting.utils import _storedItemNumber_to_itemNumber
 from Products.PloneMeeting.utils import add_wf_history_action
 from Products.PloneMeeting.utils import addDataChange
 from Products.PloneMeeting.utils import AdvicesUpdatedEvent
+from Products.PloneMeeting.utils import checkMayQuickEdit
 from Products.PloneMeeting.utils import cleanMemoize
 from Products.PloneMeeting.utils import compute_item_roles_to_assign_to_suffixes
 from Products.PloneMeeting.utils import decodeDelayAwareId
@@ -3814,23 +3815,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             unrestrictedRemoveGivenObject(item)
             return True
 
-    def _checkMayQuickEdit(self,
-                           bypassWritePermissionCheck=False,
-                           permission=ModifyPortalContent,
-                           expression='',
-                           onlyForManagers=False):
-        """ """
-        tool = api.portal.get_tool('portal_plonemeeting')
-        member = api.user.get_current()
-        res = False
-        if (not onlyForManagers or (onlyForManagers and tool.isManager(self))) and \
-           (bypassWritePermissionCheck or member.has_permission(permission, self)) and \
-           (_evaluateExpression(self, expression)) and \
-           (not (self.hasMeeting() and self.getMeeting().queryState() in Meeting.meetingClosedStates) or
-                tool.isManager(self, realManagers=True)):
-            res = True
-        return res
-
     security.declarePublic('mayQuickEdit')
 
     def mayQuickEdit(self, fieldName, bypassWritePermissionCheck=False, onlyForManagers=False):
@@ -3841,7 +3825,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            a real Manager (Site Administrator/Manager).
            If p_bypassWritePermissionCheck is True, we will not check for write_permission.'''
         field = self.Schema()[fieldName]
-        return self._checkMayQuickEdit(
+        return checkMayQuickEdit(
+            self,
             bypassWritePermissionCheck=bypassWritePermissionCheck,
             permission=field.write_permission,
             expression=self.Schema()[fieldName].widget.condition,
@@ -3855,12 +3840,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def mayQuickEditItemSignatures(self):
         """Show edit icon if itemSignatures field editable."""
         return self.mayQuickEdit('itemSignatures', bypassWritePermissionCheck=True, onlyForManagers=True)
-
-    security.declareProtected(ModifyPortalContent, 'transformRichTextField')
-
-    def transformRichTextField(self, fieldName, richContent):
-        '''See doc in interfaces.py.'''
-        return richContent
 
     security.declareProtected(ModifyPortalContent, 'onEdit')
 
@@ -6832,8 +6811,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def _mayChangeAttendees(self):
         """Check that user may quickEdit
            itemAbsents/itemExcused/itemNonAttendees/votes/..."""
-        return self.hasMeeting() and self._checkMayQuickEdit(
-            bypassWritePermissionCheck=True, onlyForManagers=True)
+        return self.hasMeeting() and checkMayQuickEdit(
+            self, bypassWritePermissionCheck=True, onlyForManagers=True)
 
     def displayProposingGroupUsers(self):
         """ """

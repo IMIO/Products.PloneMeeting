@@ -83,6 +83,12 @@
             class="Products.PloneMeeting.browser.overrides.PMAjaxSave"
             attribute="AT_save"
             permission="cmf.ModifyPortalContent"/>
+        <browser:page
+            name="cke-save"
+            for="Products.PloneMeeting.content.advice.IMeetingAdvice"
+            class="Products.PloneMeeting.browser.overrides.PMAjaxSave"
+            attribute="dexterity_save"
+            permission="cmf.ModifyPortalContent"/>
     </configure>
 
     <!-- Annexes table view, override @@iconifiedcategory and make it available under name @@categorized-annexes -->
@@ -748,6 +754,14 @@
         name="pm-notify-event"
         class=".notify.NotifyEvent"
         for="*"
+        permission="zope2.View"/>
+
+    <!-- RichText edit -->
+    <browser:page
+        name="richtext-edit"
+        class=".views.RichTextEdit"
+        for="*"
+        template="templates/richtext_field.pt"
         permission="zope2.View"/>
 
     <!-- document-generation view -->

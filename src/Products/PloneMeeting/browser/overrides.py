@@ -1570,3 +1570,12 @@ class PMAjaxSave(AjaxSave):
                          tranform=True,
                          reindex=True,
                          unlock=False)
+
+    def dexterity_save(self, fieldname, text):
+        setFieldFromAjax(self.context,
+                         fieldname,
+                         text,
+                         remember=False,
+                         tranform=True,
+                         reindex=True,
+                         unlock=False)

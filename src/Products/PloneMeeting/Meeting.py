@@ -1803,12 +1803,6 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
                 powerObserversGroupId = "%s_%s" % (cfg_id, po_infos['row_id'])
                 self.manage_addLocalRoles(powerObserversGroupId, (READER_USECASES['powerobservers'],))
 
-    security.declareProtected(ModifyPortalContent, 'transformRichTextField')
-
-    def transformRichTextField(self, fieldName, richContent):
-        '''See doc in interfaces.py.'''
-        return richContent
-
     security.declareProtected(ModifyPortalContent, 'onEdit')
 
     def onEdit(self, isCreated):

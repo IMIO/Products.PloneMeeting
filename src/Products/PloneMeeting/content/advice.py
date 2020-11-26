@@ -67,12 +67,14 @@ class IMeetingAdvice(IMeetingContent):
         title=_(u"Advice official comment"),
         description=_("Enter the official comment."),
         required=False,
+        allowed_mime_types=(u"text/html", )
     )
     form.widget('advice_observations', PMRichTextFieldWidget)
     advice_observations = RichText(
         title=_(u"Advice observations"),
         description=_("Enter optionnal observations if necessary."),
         required=False,
+        allowed_mime_types=(u"text/html", )
     )
     advice_reference = schema.TextLine(
         title=_(u"Advice reference"),
