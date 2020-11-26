@@ -7158,7 +7158,9 @@ class testMeetingItem(PloneMeetingTestCase):
         item.setOptionalAdvisers(cfg.getSelectableAdvisers())
         item.updateLocalRoles()
         res = item._sendAdviceToGiveMailIfRelevant('itemcreated', 'validated', debug=True)
-        recipients, subject, body = res[0]
+        # as adviceIndex is a dict, it is unsorted, get developers_uid index
+        adviceIndex_keys = item.adviceIndex.keys()
+        recipients, subject, body = res[adviceIndex_keys.index(self.developers_uid)]
         self.assertEqual(sorted(recipients),
                          [u'M. PMAdviser One <pmadviser1@plonemeeting.org>',
                           u'M. PMManager <pmmanager@plonemeeting.org>'])
@@ -7167,7 +7169,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(body,
                          u'The item is entitled "My item". '
                          u'You can access this item here: {0}.'.format(item_url))
-        recipients, subject, body = res[1]
+        recipients, subject, body = res[adviceIndex_keys.index(self.vendors_uid)]
         self.assertEqual(sorted(recipients),
                          [u'M. PMManager <pmmanager@plonemeeting.org>',
                           u'M. PMReviewer Two <pmreviewer2@plonemeeting.org>'])
