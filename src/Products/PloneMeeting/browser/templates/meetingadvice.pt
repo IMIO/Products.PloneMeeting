@@ -31,28 +31,28 @@
         <table class="no-style-table" width="100%">
             <tal:loop repeat="widget view/widgets/values">
             <tr tal:condition="python: widget.mode != 'hidden'"
-                tal:attributes="id string:row-${widget/id}">
-                <tal:defines define="is_rich python: widget.field.__class__.__name__ == 'RichText'">
-                  <tal:is_rich condition="is_rich">
-                    <td colspan="2">
-                         <tal:render tal:content="structure widget/render">Value</tal:render>
-                    </td>
-                  </tal:is_rich>
-                  <tal:not_is_rich condition="not:is_rich">
-                    <td class="table_widget_label"><label tal:content="widget/label">Label</label></td>
-                    <td class="table_widget_value">
-                        <tal:adviceType condition="python: widget.name == 'form.widgets.advice_type'">
-                            <img src="#"
-                                 tal:define="adviceStyle python: context.portal_plonemeeting.getMeetingConfig(context).getAdviceStyle()"
-                                 tal:attributes="src string:$portal_url/advice_${adviceStyle}_${context/advice_type}.png" />
-                        </tal:adviceType>
-                        <tal:render tal:content="structure widget/render">Value</tal:render>
-                        <tal:previousAdviceType condition="python: widget.name == 'form.widgets.advice_type' and context.advice_type == 'asked_again'">
-                          <metal:previousAdviceType use-macro="context/@@pm-macros/previousAdviceType" />
-                        </tal:previousAdviceType>
-                    </td>
-                  </tal:not_is_rich>
-                </tal:defines>
+                tal:define="is_rich python: widget.field.__class__.__name__ == 'RichText'"
+                tal:attributes="id string:row-${widget/id};
+                                class python: is_rich and 'no-border' or ''">
+              <tal:is_rich condition="is_rich">
+                <td colspan="2">
+                     <tal:render tal:content="structure widget/render">Value</tal:render>
+                </td>
+              </tal:is_rich>
+              <tal:not_is_rich condition="not:is_rich">
+                <td class="table_widget_label"><label tal:content="widget/label">Label</label></td>
+                <td class="table_widget_value">
+                    <tal:adviceType condition="python: widget.name == 'form.widgets.advice_type'">
+                        <img src="#"
+                             tal:define="adviceStyle python: context.portal_plonemeeting.getMeetingConfig(context).getAdviceStyle()"
+                             tal:attributes="src string:$portal_url/advice_${adviceStyle}_${context/advice_type}.png" />
+                    </tal:adviceType>
+                    <tal:render tal:content="structure widget/render">Value</tal:render>
+                    <tal:previousAdviceType condition="python: widget.name == 'form.widgets.advice_type' and context.advice_type == 'asked_again'">
+                      <metal:previousAdviceType use-macro="context/@@pm-macros/previousAdviceType" />
+                    </tal:previousAdviceType>
+                </td>
+              </tal:not_is_rich>
             </tr>
             </tal:loop>
         </table>
