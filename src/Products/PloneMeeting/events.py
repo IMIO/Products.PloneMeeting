@@ -11,13 +11,13 @@ from collective.documentviewer.async import queueJob
 from collective.iconifiedcategory.utils import update_all_categorized_elements
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.helpers.cache import invalidate_cachekey_volatile_for
+from imio.helpers.content import richtextval
 from imio.helpers.xhtml import storeImagesLocally
 from OFS.ObjectManager import BeforeDeleteException
 from persistent.list import PersistentList
 from persistent.mapping import PersistentMapping
 from plone import api
 from plone.app.textfield import RichText
-from plone.app.textfield.value import RichTextValue
 from plone.registry.interfaces import IRecordModifiedEvent
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFPlone.utils import safe_unicode
@@ -684,20 +684,21 @@ def onItemModified(item, event):
     invalidate_cachekey_volatile_for('Products.PloneMeeting.MeetingItem.modified', get_again=True)
 
 
-def storeImagesLocallyDexterity(advice):
+def storeImagesLocallyDexterity(obj):
     '''Store external images of every RichText field of a dexterity object locally.'''
     portal_types = api.portal.get_tool('portal_types')
-    fti = portal_types[advice.portal_type]
+    fti = portal_types[obj.portal_type]
     schema = fti.lookupSchema()
     for field_id, field in schema._v_attrs.items():
-        if isinstance(field, RichText) and getattr(advice, field_id, None):
+        if isinstance(field, RichText) and getattr(obj, field_id, None):
             # avoid infinite loop because this is called in a ObjectModifiedEvent
             # and we are modifying the advice...
-            advice.REQUEST.set('currentlyStoringExternalImages', True)
-            newValue = storeImagesLocally(advice,
-                                          getattr(advice, field_id).output)
-            setattr(advice, field_id, RichTextValue(newValue))
-            advice.REQUEST.set('currentlyStoringExternalImages', False)
+            obj.REQUEST.set('currentlyStoringExternalImages', True)
+            newValue = storeImagesLocally(obj,
+                                          getattr(obj, field_id).raw)
+            rich_value = richtextval(newValue)
+            setattr(obj, field_id, rich_value)
+            obj.REQUEST.set('currentlyStoringExternalImages', False)
 
 
 def _advice_update_item(item):

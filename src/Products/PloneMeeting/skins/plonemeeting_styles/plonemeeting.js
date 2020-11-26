@@ -417,8 +417,8 @@ function initRichTextField(rq, hook) {
       }
       else { eval(scriptContent); }
     }
-    // Initialize CKeditor if it is the used editor
-    if (ploneEditor == 'CKeditor') { jQuery(launchCKInstances([fieldName,])); }
+    // Initialize CKeditor
+    jQuery(launchCKInstances([fieldName,]));
     // Enable unload protection, avoid loosing unsaved changes if user click somewhere else
     var tool = window.onbeforeunload && window.onbeforeunload.tool;
     if (tool!==null) {

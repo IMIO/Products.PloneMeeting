@@ -801,7 +801,8 @@
         permission="zope2.View"
       />
 
-    <!-- special view that make it possible to redirect from an overlay and show status messages afterward -->
+    <!-- special view that make it possible to redirect from an overlay
+         and show status messages afterward -->
     <browser:page
         for="*"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
