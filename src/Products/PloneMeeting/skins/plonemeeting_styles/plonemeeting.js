@@ -618,7 +618,7 @@ function exitCKeditor(field_name) {
   CKEDITOR.instances[field_name].execCommand('ajaxsave', 'saveCmd');
   CKEDITOR.instances[field_name].destroy();
   tag=$('div#hook_' + field_name)[0];
-  loadContent(tag, tag, load_view='@@render-single-widget?field_name=' + field_name, async=false, base_url=null, event_name=null);
+  loadContent(tag, load_view='@@render-single-widget?field_name=' + field_name, async=false, base_url=null, event_name=null);
 }
 
 

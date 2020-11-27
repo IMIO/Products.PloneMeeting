@@ -47,8 +47,8 @@ class PMRichTextWidget(RichTextWidget):
 
     def js_on_click(self):
         return "tag=$('div#hook_{0}')[0];" \
-            "loadContent(tag, tag, load_view='@@richtext-edit?field_name={0}', " \
-            "async=false, base_url=null, event_name='ckeditor_prepare_ajax_success');".format(
+            "loadContent(tag, load_view='@@richtext-edit?field_name={0}', " \
+            "async=true, base_url=null, event_name='ckeditor_prepare_ajax_success');".format(
                 self.__name__)
 
 
@@ -76,7 +76,7 @@ class RichTextEdit(BrowserView):
     def js_cancel(self):
         """ """
         return "if (confirm(sure_to_cancel_edit)) {{tag=$('div#hook_{0}')[0];" \
-               "loadContent(tag, tag, load_view='@@render-single-widget?field_name={0}', " \
+               "loadContent(tag, load_view='@@render-single-widget?field_name={0}', " \
             "async=true, base_url=null, event_name=null);}}".format(self.field_name)
 
     def __call__(self, field_name):
