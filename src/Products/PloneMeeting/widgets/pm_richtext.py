@@ -1,15 +1,18 @@
 # -*- coding: utf-8 -*-
 
-from Products.CMFCore.permissions import ModifyPortalContent
 from plone import api
 from plone.app.textfield.widget import IRichTextWidget
 from plone.app.textfield.widget import RichTextWidget
+from plone.autoform.interfaces import WRITE_PERMISSIONS_KEY
+from Products.CMFCore.permissions import ModifyPortalContent
+from Products.Five import BrowserView
 from Products.PloneMeeting.utils import checkMayQuickEdit
+from Products.PloneMeeting.utils import get_dx_widget
 from z3c.form.interfaces import IFieldWidget
+from z3c.form.interfaces import INPUT_MODE
 from z3c.form.widget import FieldWidget
 from zope.interface import implementer
 from zope.interface import implementer_only
-from plone.autoform.interfaces import WRITE_PERMISSIONS_KEY
 
 
 class IPMRichTextWidget(IRichTextWidget):
@@ -44,10 +47,40 @@ class PMRichTextWidget(RichTextWidget):
 
     def js_on_click(self):
         return "tag=$('div#hook_{0}')[0];" \
-               "loadContent(tag, tag, load_view='@@richtext-edit?field_name={0}', " \
-            "async=true, base_url=null, event_name='ckeditor_prepare_ajax_success');".format(self.__name__)
+            "loadContent(tag, tag, load_view='@@richtext-edit?field_name={0}', " \
+            "async=false, base_url=null, event_name='ckeditor_prepare_ajax_success');".format(
+                self.__name__)
 
 
 @implementer(IFieldWidget)
 def PMRichTextFieldWidget(field, request):
     return FieldWidget(field, PMRichTextWidget(request))
+
+
+class RichTextEdit(BrowserView):
+    """ """
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+        self.portal_url = api.portal.get().absolute_url()
+
+    def js_save(self):
+        """ """
+        return "CKEDITOR.instances['{0}'].execCommand('ajaxsave', 'saveCmd');".format(
+            self.field_name)
+
+    def js_save_and_exit(self):
+        """ """
+        return "exitCKeditor('{0}')".format(self.field_name)
+
+    def js_cancel(self):
+        """ """
+        return "if (confirm(sure_to_cancel_edit)) {{tag=$('div#hook_{0}')[0];" \
+               "loadContent(tag, tag, load_view='@@render-single-widget?field_name={0}', " \
+            "async=true, base_url=null, event_name=null);}}".format(self.field_name)
+
+    def __call__(self, field_name):
+        """ """
+        self.field_name = field_name
+        self.widget = get_dx_widget(self.context, field_name, mode=INPUT_MODE)
+        return self.index()

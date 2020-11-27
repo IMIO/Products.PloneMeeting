@@ -749,34 +749,31 @@
         for="*"
         class=".advices.AdvicesIconsInfos"
         template="templates/advices-icons-infos.pt"
-        permission="zope2.View"/>
+        permission="zope2.View" />
     <browser:view
         name="pm-notify-event"
         class=".notify.NotifyEvent"
         for="*"
-        permission="zope2.View"/>
+        permission="zope2.View" />
 
-    <!-- RichText edit -->
-    <browser:page
-        name="richtext-edit"
-        class=".views.RichTextEdit"
+    <!-- Render single widget -->
+    <browser:view
+        name="render-single-widget"
+        class=".views.RenderSingleWidgetView"
         for="*"
-        template="templates/richtext_field.pt"
-        permission="zope2.View"/>
+        permission="zope2.View" />
 
     <!-- document-generation view -->
     <browser:page
         for="Products.Archetypes.interfaces.base.IBaseObject"
         name="document-generation"
         class=".overrides.PMDocumentGenerationView"
-        permission="zope2.View"
-        />
+        permission="zope2.View" />
     <browser:page
         for="plone.dexterity.interfaces.IDexterityContainer"
         name="document-generation"
         class=".overrides.PMDocumentGenerationView"
-        permission="zope2.View"
-        />
+        permission="zope2.View" />
 
     <!-- Form that manage item assembly -->
     <browser:page

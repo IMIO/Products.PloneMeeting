@@ -614,6 +614,14 @@ function init_ckeditor(event) {
   initRichTextField(rq=null, hook=event['tag']);
 }
 
+function exitCKeditor(field_name) {
+  CKEDITOR.instances[field_name].execCommand('ajaxsave', 'saveCmd');
+  CKEDITOR.instances[field_name].destroy();
+  tag=$('div#hook_' + field_name)[0];
+  loadContent(tag, tag, load_view='@@render-single-widget?field_name=' + field_name, async=false, base_url=null, event_name=null);
+}
+
+
 // when clicking on the input#forceInsertNormal, update the 'pmForceInsertNormal' cookie
 function changeForceInsertNormalCookie(input) {
   if (input.checked) {

@@ -25,7 +25,6 @@ from imio.helpers.xhtml import separate_images
 from imio.history.utils import getLastWFAction
 from plone import api
 from plone.app.caching.operations.utils import getContext
-from plone.app.textfield.widget import RichTextWidget
 from plone.memoize.view import memoize
 from plone.memoize.view import memoize_contextless
 from Products.CMFCore.permissions import ManagePortal
@@ -49,16 +48,14 @@ from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import _itemNumber_to_storedItemNumber
 from Products.PloneMeeting.utils import _storedItemNumber_to_itemNumber
 from Products.PloneMeeting.utils import get_annexes
+from Products.PloneMeeting.utils import get_dx_widget
 from Products.PloneMeeting.utils import get_person_from_userid
 from Products.PloneMeeting.utils import signatureNotAlone
 from Products.PloneMeeting.utils import toHTMLStrikedContent
 from z3c.form.field import Fields
-from z3c.form.interfaces import INPUT_MODE
-from z3c.form.interfaces import IContextAware
-from z3c.form.widget import FieldWidget
+from z3c.form.interfaces import DISPLAY_MODE
 from zope import schema
 from zope.i18n import translate
-from zope.interface import alsoProvides
 
 import cgi
 import json
@@ -2188,42 +2185,17 @@ class PODTemplateMailingLists(BrowserView):
         return tool.getAvailableMailingLists(self.context, pod_template)
 
 
-class RichTextEdit(BrowserView):
+class RenderSingleWidgetView(BrowserView):
     """ """
     def __init__(self, context, request):
         self.context = context
         self.request = request
         self.portal_url = api.portal.get().absolute_url()
 
-    def __call__(self, field_name, mode=INPUT_MODE):
+    def __call__(self, field_name, mode=DISPLAY_MODE):
         """ """
         self.field_name = field_name
         self.mode = mode
-        self.widget = self.get_widget()
-        return self.index()
-
-    def may_edit(self):
-        """ """
-        return True
-
-    def widget_label(self):
-        """ """
-        return "Label"
-
-    def need_to_refresh_page(self):
-        """ """
-        return False
-
-    def get_widget(self):
-        """ """
-        portal_types = api.portal.get_tool('portal_types')
-        fti = portal_types[self.context.portal_type]
-        schema = fti.lookupSchema()
-        field = schema[self.field_name]
-        widget = FieldWidget(field, RichTextWidget(self.request))
-        widget.context = self.context
-        alsoProvides(widget, IContextAware)
-        widget.mode = self.mode
-        widget.update()
-        widget.field.allowed_mime_types = ['text/html']
-        return widget
+        widget = get_dx_widget(self.context, field_name, mode)
+        rendered = widget.render()
+        return rendered

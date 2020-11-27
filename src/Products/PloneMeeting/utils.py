@@ -74,8 +74,12 @@ from Products.PloneMeeting.interfaces import IMeetingGroupCustom
 from Products.PloneMeeting.interfaces import IMeetingItemCustom
 from Products.PloneMeeting.interfaces import IMeetingLocalRolesUpdatedEvent
 from Products.PloneMeeting.interfaces import IToolPloneMeetingCustom
+from z3c.form.interfaces import DISPLAY_MODE
+from z3c.form.interfaces import IContextAware
+from z3c.form.interfaces import IFieldWidget
 from zope.annotation import IAnnotations
 from zope.component import getAdapter
+from zope.component import getMultiAdapter
 from zope.component import getUtility
 from zope.component import queryUtility
 from zope.component.hooks import getSite
@@ -83,8 +87,12 @@ from zope.component.interfaces import ObjectEvent
 from zope.event import notify
 from zope.globalrequest import getRequest
 from zope.i18n import translate
+from zope.interface import alsoProvides
 from zope.interface import implements
+from zope.location import locate
 from zope.security.interfaces import IPermission
+from plone.supermodel.utils import mergedTaggedValueDict
+from plone.autoform.interfaces import WIDGETS_KEY
 
 import itertools
 import logging
@@ -908,6 +916,25 @@ def get_dx_field(obj, field_name):
     schema = get_dx_schema(obj)
     field = schema[field_name]
     return field
+
+
+def get_dx_widget(obj, field_name, mode=DISPLAY_MODE):
+    """ """
+    field = get_dx_field(obj, field_name)
+    schema = get_dx_schema(obj)
+    autoform_widgets = mergedTaggedValueDict(schema, WIDGETS_KEY)
+    if field_name in autoform_widgets:
+        widget = autoform_widgets[field_name](field, obj.REQUEST)
+    else:
+        widget = getMultiAdapter((field, obj.REQUEST), IFieldWidget)
+    widget.context = obj
+    alsoProvides(widget, IContextAware)
+    widget.mode = mode
+    widget.update()
+    widget.field.allowed_mime_types = ['text/html']
+    # this will set widget.__name__
+    locate(widget, None, field_name)
+    return widget
 
 
 def setFieldFromAjax(obj, fieldName, newValue, remember=True, tranform=True, reindex=True, unlock=True):
