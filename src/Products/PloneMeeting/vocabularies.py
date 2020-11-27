@@ -1971,10 +1971,16 @@ class PMUsers(UsersFactory):
         # manage duplicates, this can be the case when using LDAP and same userid in source_users
         userids = []
         for user in users:
-            if user['id'] not in userids:
-                userids.append(user['id'])
-                term_title = u'{0} ({1})'.format(safe_unicode(self._user_fullname(user['id'])), user['id'])
-                term = SimpleTerm(user['id'], user['id'], term_title)
+            user_id = user['id']
+            if user_id not in userids:
+                userids.append(user_id)
+                # bypass special characters, may happen when using LDAP
+                try:
+                    unicode(user_id)
+                except UnicodeDecodeError:
+                    continue
+                term_title = u'{0} ({1})'.format(safe_unicode(self._user_fullname(user_id)), user_id)
+                term = SimpleTerm(user_id, user_id, term_title)
                 terms.append(term)
         terms = humansorted(terms, key=attrgetter('title'))
         return SimpleVocabulary(terms)
