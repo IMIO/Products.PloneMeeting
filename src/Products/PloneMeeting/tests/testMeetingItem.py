@@ -7157,6 +7157,11 @@ class testMeetingItem(PloneMeetingTestCase):
         # set every groups as advisers so we check that email is not sent twice to same address
         item.setOptionalAdvisers(cfg.getSelectableAdvisers())
         item.updateLocalRoles()
+        # pmManager is in both groups but only notified one time
+        self.assertTrue(self.developers_uid in item.adviceIndex)
+        self.assertTrue(self.vendors_uid in item.adviceIndex)
+        self.assertTrue("pmManager" in api.group.get(self.developers_advisers).getMemberIds())
+        self.assertTrue("pmManager" in api.group.get(self.vendors_advisers).getMemberIds())
         recipients, subject, body = item._sendAdviceToGiveMailIfRelevant(
             'itemcreated', 'validated', debug=True)
         self.assertEqual(sorted(recipients),
