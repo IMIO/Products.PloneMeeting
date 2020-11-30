@@ -1657,7 +1657,7 @@ def checkMayQuickEdit(obj,
     res = False
     if (not onlyForManagers or (onlyForManagers and tool.isManager(obj))) and \
        (bypassWritePermissionCheck or member.has_permission(permission, obj)) and \
-       (expression and _evaluateExpression(obj, expression) or True) and \
+       (_evaluateExpression(obj, expression)) and \
        (not (obj.hasMeeting() and obj.getMeeting().queryState() in Meeting.meetingClosedStates) or
             tool.isManager(obj, realManagers=True)):
         res = True
