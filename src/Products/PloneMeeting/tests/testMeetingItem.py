@@ -7152,26 +7152,16 @@ class testMeetingItem(PloneMeetingTestCase):
         item = self.create("MeetingItem", title="My item")
         item_url = item.absolute_url()
         # no advisers
-        self.assertEqual(
+        self.assertIsNone(
             item._sendAdviceToGiveMailIfRelevant('itemcreated', 'validated', debug=True), [])
         # set every groups as advisers so we check that email is not sent twice to same address
         item.setOptionalAdvisers(cfg.getSelectableAdvisers())
         item.updateLocalRoles()
-        res = item._sendAdviceToGiveMailIfRelevant('itemcreated', 'validated', debug=True)
-        # as adviceIndex is a dict, it is unsorted, get developers_uid index
-        adviceIndex_keys = item.adviceIndex.keys()
-        recipients, subject, body = res[adviceIndex_keys.index(self.developers_uid)]
+        recipients, subject, body = item._sendAdviceToGiveMailIfRelevant(
+            'itemcreated', 'validated', debug=True)
         self.assertEqual(sorted(recipients),
                          [u'M. PMAdviser One <pmadviser1@plonemeeting.org>',
-                          u'M. PMManager <pmmanager@plonemeeting.org>'])
-        self.assertEqual(subject,
-                         u'{0} - Your advice is requested - My item'.format(cfg_title))
-        self.assertEqual(body,
-                         u'The item is entitled "My item". '
-                         u'You can access this item here: {0}.'.format(item_url))
-        recipients, subject, body = res[adviceIndex_keys.index(self.vendors_uid)]
-        self.assertEqual(sorted(recipients),
-                         [u'M. PMManager <pmmanager@plonemeeting.org>',
+                          u'M. PMManager <pmmanager@plonemeeting.org>',
                           u'M. PMReviewer Two <pmreviewer2@plonemeeting.org>'])
         self.assertEqual(subject,
                          u'{0} - Your advice is requested - My item'.format(cfg_title))

@@ -4072,7 +4072,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         cfg = tool.getMeetingConfig(self)
         if 'adviceToGive' not in cfg.getMailItemEvents():
             return
-        debug_res = []
+        plone_group_ids = []
         for org_uid, adviceInfo in self.adviceIndex.iteritems():
             # call hook '_sendAdviceToGiveToGroup' to be able to bypass
             # send of this notification to some defined groups
@@ -4090,22 +4090,17 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # do not consider groups that already gave their advice
             if adviceInfo['type'] not in ['not_given', 'asked_again']:
                 continue
-            # Send a mail to every person from group _advisers.
-            labelType = adviceInfo['optional'] and 'advice_optional' or 'advice_mandatory'
-            translated_type = translate(labelType, domain='PloneMeeting', context=self.REQUEST).lower()
             plone_group_id = get_plone_group_id(org_uid, 'advisers')
+            plone_group_ids.append(plone_group_id)
+
+        # send mail if plone_group_ids
+        if plone_group_ids:
             params = {"obj": self,
                       "event": "adviceToGive",
-                      "permissionOrSuffixOrRoleOrGroupIds": [plone_group_id],
-                      "mapping": {'type': translated_type},
+                      "permissionOrSuffixOrRoleOrGroupIds": plone_group_ids,
                       "isGroupIds": True,
-                      "debug": True}
-            if debug:
-                debug_res.append(sendMailIfRelevant(**params))
-            else:
-                sendMailIfRelevant(**params)
-        if debug:
-            return debug_res
+                      "debug": debug}
+            return sendMailIfRelevant(**params)
 
     def _sendAdviceToGiveToGroup(self, org_uid):
         """See docstring in interfaces.py"""
