@@ -17,6 +17,15 @@ Changelog
 - Do not fail in `vocabularies.PMUsers` when `user_id` contains special chars,
   it may be the case when using `LDAP`, ignore these values.
   [gbastien]
+- Make the `quick edit RichText field` work for DX content types :
+  - added `PMRichTextWidget` useable in DX schema;
+  - renamed `utils.setFieldFromAjax` to `utils.set_field_from_ajax`;
+  - migrate `RichTextValue` stored on advices to fix `mimeType/outputMimeType`;
+  - moved `MeetingItem._checkMayQuickEdit` to `utils.checkMayQuickEdit` so it
+    is easier to reuse;
+  - use `PMRichTextWidget` on meetingadvice.
+
+  [gbastien]
 
 4.2b6 (2020-11-19)
 ------------------

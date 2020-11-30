@@ -114,7 +114,7 @@ from Products.PloneMeeting.utils import notifyModifiedAndReindex
 from Products.PloneMeeting.utils import rememberPreviousData
 from Products.PloneMeeting.utils import sendMail
 from Products.PloneMeeting.utils import sendMailIfRelevant
-from Products.PloneMeeting.utils import setFieldFromAjax
+from Products.PloneMeeting.utils import set_field_from_ajax
 from Products.PloneMeeting.utils import toHTMLStrikedContent
 from Products.PloneMeeting.utils import transformAllRichTextFields
 from Products.PloneMeeting.utils import updateAnnexesAccess
@@ -6780,7 +6780,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             self.updateLocalRoles(invalidate=True)
         # versionate given advices if necessary
         self._versionateAdvicesOnItemEdit()
-        return setFieldFromAjax(self, fieldName, fieldValue)
+        return set_field_from_ajax(self, fieldName, fieldValue)
 
     security.declarePublic('getFieldVersion')
 

@@ -2,24 +2,7 @@
 #
 # File: testMeetingItem.py
 #
-# Copyright (c) 2016 by Imio.be
-#
 # GNU General Public License (GPL)
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
-# 02110-1301, USA.
 #
 
 from AccessControl import Unauthorized
@@ -83,7 +66,7 @@ from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import getFieldVersion
 from Products.PloneMeeting.utils import getTransitionToReachState
 from Products.PloneMeeting.utils import ON_TRANSITION_TRANSFORM_TAL_EXPR_ERROR
-from Products.PloneMeeting.utils import setFieldFromAjax
+from Products.PloneMeeting.utils import set_field_from_ajax
 from Products.PluginIndexes.common.UnIndex import _marker
 from Products.statusmessages.interfaces import IStatusMessage
 from zExceptions import Redirect
@@ -1822,7 +1805,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(previous_review_state(item)(), previous_state)
 
         # now check that it does not interact when datachange is enabled
-        setFieldFromAjax(item, 'decision', self.decisionText)
+        set_field_from_ajax(item, 'decision', self.decisionText)
         self.assertEqual(previous_review_state(item)(), previous_state)
 
         # does not fail if no workflow_history
@@ -1841,7 +1824,7 @@ class testMeetingItem(PloneMeetingTestCase):
         wf_adapter = getAdapter(item, IImioHistory, 'workflow')
         datachanges_adapter = getAdapter(item, IImioHistory, 'data_changes')
         self.assertFalse('_datachange_' in [event['action'] for event in wf_adapter.getHistory()])
-        setFieldFromAjax(item, 'decision', self.decisionText)
+        set_field_from_ajax(item, 'decision', self.decisionText)
         self.assertFalse('_datachange_' in [event['action'] for event in wf_adapter.getHistory()])
         self.assertTrue('_datachange_' in [event['action'] for event in datachanges_adapter.getHistory()])
 
@@ -6035,7 +6018,7 @@ class testMeetingItem(PloneMeetingTestCase):
 
         # test using the quickedit, test with field 'decision' where getRaw was overrided
         decision = '<p>Working external image <img src="%s"/>.</p>' % self.external_image2
-        setFieldFromAjax(item, 'decision', decision)
+        set_field_from_ajax(item, 'decision', decision)
         self.assertTrue('1025-400x300.jpg' in item.objectIds())
         img2 = item.get('1025-400x300.jpg')
         # external image link was updated

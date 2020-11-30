@@ -48,8 +48,8 @@ class PMRichTextWidget(RichTextWidget):
     def js_on_click(self):
         return "tag=$('div#hook_{0}')[0];" \
             "loadContent(tag, load_view='@@richtext-edit?field_name={0}', " \
-            "async=true, base_url=null, event_name='ckeditor_prepare_ajax_success');".format(
-                self.__name__)
+            "async=true, base_url='{1}', event_name='ckeditor_prepare_ajax_success');".format(
+                self.__name__, self.context.absolute_url())
 
 
 @implementer(IFieldWidget)
@@ -63,6 +63,7 @@ class RichTextEdit(BrowserView):
         self.context = context
         self.request = request
         self.portal_url = api.portal.get().absolute_url()
+        self.context_url = context.absolute_url()
 
     def js_save(self):
         """ """
@@ -71,13 +72,15 @@ class RichTextEdit(BrowserView):
 
     def js_save_and_exit(self):
         """ """
-        return "exitCKeditor('{0}')".format(self.field_name)
+        return "exitCKeditor('{0}', base_url='{1}')".format(
+            self.field_name, self.context_url)
 
     def js_cancel(self):
         """ """
         return "if (confirm(sure_to_cancel_edit)) {{tag=$('div#hook_{0}')[0];" \
-               "loadContent(tag, load_view='@@render-single-widget?field_name={0}', " \
-            "async=true, base_url=null, event_name=null);}}".format(self.field_name)
+            "loadContent(tag, load_view='@@render-single-widget?field_name={0}', " \
+            "async=true, base_url='{1}', event_name=null);}}".format(
+                self.field_name, self.context_url)
 
     def __call__(self, field_name):
         """ """

@@ -2,9 +2,12 @@
 
 from collective.contact.plonegroup.utils import get_organizations
 from copy import deepcopy
+from imio.helpers.content import richtextval
 from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_NEW
+from Products.PloneMeeting.content.advice import IMeetingAdvice
 from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator
+from Products.ZCatalog.ProgressHandler import ZLogHandler
 
 
 class Migrate_To_4200(Migrator):
@@ -122,6 +125,25 @@ class Migrate_To_4200(Migrator):
                     item._update_meeting_link(meeting_uid=meeting_uid)
         logger.info('Done.')
 
+    def _fixRichTextValueMimeType(self):
+        """Make sure RichTextValue stored on DX content (advices) have
+           a correct mimeType and outputMimeType."""
+        brains = self.catalog(object_provides=IMeetingAdvice.__identifier__)
+        logger.info('Fixing mimeType/outputMimeType for every advices...')
+        pghandler = ZLogHandler(steps=100)
+        pghandler.init('Updating RichText fields for advices...', len(brains))
+        i = 0
+        for brain in brains:
+            i += 1
+            pghandler.report(i)
+            advice = brain.getObject()
+            for field_name in ['advice_comment', 'advice_observations']:
+                field_value = getattr(advice, field_name)
+                if field_value:
+                    setattr(advice, field_name, richtextval(field_value.raw))
+        pghandler.finish()
+        logger.info('Done.')
+
     def run(self, extra_omitted=[]):
         logger.info('Migrating to PloneMeeting 4200...')
 
@@ -131,6 +153,9 @@ class Migrate_To_4200(Migrator):
 
         # manage link between item and meeting manually
         self._removeMeetingItemsReferenceField()
+
+        # update RichTextValue stored on DX types (advices)
+        self._fixRichTextValueMimeType()
 
         self.upgradeAll(omit=['Products.PloneMeeting:default',
                               self.profile_name.replace('profile-', '')] + extra_omitted)

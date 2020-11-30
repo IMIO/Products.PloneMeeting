@@ -295,14 +295,6 @@ class MeetingAdvice(Container):
             delattr(self, 'historized_item_data')
             self.reindexObject(idxs=['modified', 'ModificationDate'])
 
-    def renderWidget(self, fieldName):
-        """ """
-        from plone.app.textfield.widget import RichTextWidget
-        from z3c.form.widget import FieldWidget
-        request = self.REQUEST
-        widget = FieldWidget(IMeetingAdvice[fieldName], RichTextWidget(request))
-        return widget.render()
-
 
 class MeetingAdviceSchemaPolicy(DexteritySchemaPolicy):
     """ """

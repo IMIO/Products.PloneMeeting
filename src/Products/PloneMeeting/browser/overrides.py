@@ -69,7 +69,7 @@ from Products.PloneMeeting.utils import get_next_meeting
 from Products.PloneMeeting.utils import is_editing
 from Products.PloneMeeting.utils import normalize_id
 from Products.PloneMeeting.utils import sendMail
-from Products.PloneMeeting.utils import setFieldFromAjax
+from Products.PloneMeeting.utils import set_field_from_ajax
 from zope.annotation import IAnnotations
 from zope.container.interfaces import INameChooser
 from zope.i18n import translate
@@ -1560,22 +1560,24 @@ class PMGroupsOverviewControlPanel(PMBaseOverviewControlPanel, GroupsOverviewCon
 
 
 class PMAjaxSave(AjaxSave):
-    """Override collective.ckeditor ajaxsave to use setFieldFromAjax."""
+    """Override collective.ckeditor ajaxsave to use utils.set_field_from_ajax."""
 
     def AT_save(self, fieldname, text):
-        setFieldFromAjax(self.context,
-                         fieldname,
-                         text,
-                         remember=False,
-                         tranform=True,
-                         reindex=True,
-                         unlock=False)
+        set_field_from_ajax(
+            self.context,
+            fieldname,
+            text,
+            remember=False,
+            tranform=True,
+            reindex=True,
+            unlock=False)
 
     def dexterity_save(self, fieldname, text):
-        setFieldFromAjax(self.context,
-                         fieldname,
-                         text,
-                         remember=False,
-                         tranform=True,
-                         reindex=True,
-                         unlock=False)
+        set_field_from_ajax(
+            self.context,
+            fieldname,
+            text,
+            remember=False,
+            tranform=True,
+            reindex=True,
+            unlock=False)

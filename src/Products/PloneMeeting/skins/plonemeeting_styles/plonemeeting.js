@@ -614,11 +614,11 @@ function init_ckeditor(event) {
   initRichTextField(rq=null, hook=event['tag']);
 }
 
-function exitCKeditor(field_name) {
+function exitCKeditor(field_name, base_url) {
   CKEDITOR.instances[field_name].execCommand('ajaxsave', 'saveCmd');
   CKEDITOR.instances[field_name].destroy();
   tag=$('div#hook_' + field_name)[0];
-  loadContent(tag, load_view='@@render-single-widget?field_name=' + field_name, async=false, base_url=null, event_name=null);
+  loadContent(tag, load_view='@@render-single-widget?field_name=' + field_name, async=false, base_url=base_url, event_name=null);
 }
 
 
