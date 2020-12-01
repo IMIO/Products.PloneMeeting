@@ -7047,6 +7047,133 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(self.hasPermission(View, item))
         self.assertTrue(self.hasPermission(ModifyPortalContent, item))
 
+    def test_pm__update_meeting_link(self):
+        """The MeetingItem._update_meeting_link is
+           keeping the link between meeting and item."""
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime('2020/11/23'))
+        meeting_uid = meeting.UID()
+        meeting_path = "/".join(meeting.getPhysicalPath())
+        item = self.create('MeetingItem')
+        # item not presented, attributes do not exist
+        self.assertIsNone(getattr(item, "linked_meeting_uid", None))
+        self.assertIsNone(getattr(item, "linked_meeting_path", None))
+        self.assertIsNone(item.getMeeting())
+        self.assertIsNone(item.getMeeting(only_uid=True))
+        # presented item
+        self.presentItem(item)
+        self.assertEqual(item.linked_meeting_uid, meeting_uid)
+        self.assertEqual(item.linked_meeting_path, meeting_path)
+        self.assertEqual(item.getMeeting(), meeting)
+        self.assertEqual(item.getMeeting(only_uid=True), meeting_uid)
+        # remove item from meeting
+        self.backToState(item, 'validated')
+        self.assertIsNone(item.linked_meeting_uid)
+        self.assertIsNone(item.linked_meeting_path)
+        self.assertIsNone(item.getMeeting())
+        self.assertIsNone(item.getMeeting(only_uid=True))
+
+        # present again and rename meeting id
+        self.presentItem(item)
+        meeting.aq_parent.manage_renameObject(meeting.getId(), 'my_new_id')
+        self.assertEqual(meeting.getId(), 'my_new_id')
+        # linked_meeting_path especially is updated
+        self.assertEqual(item.linked_meeting_uid, meeting_uid)
+        meeting_new_path = "/".join(meeting.getPhysicalPath())
+        self.assertEqual(item.linked_meeting_path, meeting_new_path)
+        self.assertEqual(item.getMeeting(), meeting)
+        self.assertEqual(item.getMeeting(only_uid=True), meeting_uid)
+
+        # clone a linked item
+        cloned = item.clone()
+        self.assertIsNone(cloned.linked_meeting_uid)
+        self.assertIsNone(cloned.linked_meeting_path)
+        self.assertIsNone(cloned.getMeeting())
+        self.assertIsNone(cloned.getMeeting(only_uid=True))
+
+    def test_pm__sendCopyGroupsMailIfRelevant(self):
+        """Check mail sent to copyGroups when they have access to item.
+           Mail is not sent twice to same email address."""
+        # make utils.sendMailIfRelevant return details
+        self.request['debug_sendMailIfRelevant'] = True
+        cfg = self.meetingConfig
+        cfg.setUseCopies(True)
+        cfg.setSelectableCopyGroups(cfg.listSelectableCopyGroups().keys())
+        cfg.setItemCopyGroupsStates(['validated'])
+        cfg.setMailMode("activated")
+        cfg.setMailItemEvents(("copyGroups", ))
+        self.changeUser('pmCreator1')
+        item = self.create("MeetingItem", title="My item")
+        # no copy groups
+        self.assertIsNone(item._sendCopyGroupsMailIfRelevant('itemcreated', 'validated'))
+        # set every groups in copy so we check that email is not sent twice to same address
+        item.setCopyGroups(cfg.getSelectableCopyGroups())
+        recipients, subject, body = item._sendCopyGroupsMailIfRelevant('itemcreated', 'validated')
+        self.assertEqual(
+            sorted(recipients),
+            [u'M. PMAdviser One <pmadviser1@plonemeeting.org>',
+             u'M. PMCreator One bee <pmcreator1b@plonemeeting.org>',
+             u'M. PMCreator Two <pmcreator2@plonemeeting.org>',
+             u'M. PMManager <pmmanager@plonemeeting.org>',
+             u'M. PMObserver One <pmobserver1@plonemeeting.org>',
+             u'M. PMObserver Two <pmobserver2@plonemeeting.org>',
+             u'M. PMReviewer Level One <pmreviewerlevel1@plonemeeting.org>',
+             u'M. PMReviewer Level Two <pmreviewerlevel2@plonemeeting.org>',
+             u'M. PMReviewer One <pmreviewer1@plonemeeting.org>',
+             u'M. PMReviewer Two <pmreviewer2@plonemeeting.org>'])
+        # with less copyGroups
+        item.setCopyGroups((self.vendors_creators,
+                            self.vendors_reviewers,
+                            self.developers_creators))
+        recipients, subject, body = item._sendCopyGroupsMailIfRelevant('itemcreated', 'validated')
+        self.assertEqual(
+            sorted(recipients),
+            [u'M. PMCreator One bee <pmcreator1b@plonemeeting.org>',
+             u'M. PMCreator Two <pmcreator2@plonemeeting.org>',
+             u'M. PMManager <pmmanager@plonemeeting.org>',
+             u'M. PMReviewer Two <pmreviewer2@plonemeeting.org>'])
+
+    def test_pm__sendAdviceToGiveMailIfRelevant(self):
+        """Check mail sent to advisers when they have access to item.
+           Mail is not sent twice to same email address."""
+        # make utils.sendMailIfRelevant return details
+        self.changeUser('siteadmin')
+        self.request['debug_sendMailIfRelevant'] = True
+        cfg = self.meetingConfig
+        cfg_title = cfg.Title()
+        cfg.setUseAdvices(True)
+        cfg.setSelectableAdvisers(cfg.listSelectableAdvisers().keys())
+        cfg.setItemAdviceStates(['validated'])
+        cfg.setItemAdviceEditStates(['validated'])
+        cfg.setItemAdviceViewStates(['validated'])
+        cfg.setMailMode("activated")
+        cfg.setMailItemEvents(("adviceToGive", ))
+        self.changeUser('pmCreator1')
+        item = self.create("MeetingItem", title="My item")
+        item_url = item.absolute_url()
+        # no advisers
+        self.assertIsNone(
+            item._sendAdviceToGiveMailIfRelevant('itemcreated', 'validated', debug=True), [])
+        # set every groups as advisers so we check that email is not sent twice to same address
+        item.setOptionalAdvisers(cfg.getSelectableAdvisers())
+        item.updateLocalRoles()
+        # pmManager is in both groups but only notified one time
+        self.assertTrue(self.developers_uid in item.adviceIndex)
+        self.assertTrue(self.vendors_uid in item.adviceIndex)
+        self.assertTrue("pmManager" in api.group.get(self.developers_advisers).getMemberIds())
+        self.assertTrue("pmManager" in api.group.get(self.vendors_advisers).getMemberIds())
+        recipients, subject, body = item._sendAdviceToGiveMailIfRelevant(
+            'itemcreated', 'validated', debug=True)
+        self.assertEqual(sorted(recipients),
+                         [u'M. PMAdviser One <pmadviser1@plonemeeting.org>',
+                          u'M. PMManager <pmmanager@plonemeeting.org>',
+                          u'M. PMReviewer Two <pmreviewer2@plonemeeting.org>'])
+        self.assertEqual(subject,
+                         u'{0} - Your advice is requested - My item'.format(cfg_title))
+        self.assertEqual(body,
+                         u'The item is entitled "My item". '
+                         u'You can access this item here: {0}.'.format(item_url))
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

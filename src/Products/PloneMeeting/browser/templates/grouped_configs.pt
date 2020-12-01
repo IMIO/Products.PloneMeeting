@@ -2,7 +2,9 @@
    <h3 tal:repeat="infos view/getViewableMeetingConfigs">
       <a tal:attributes="href infos/url">
          <span tal:content="infos/config/Title">Config title</span>
+         <tal:comment replace="nothing">width:16px for tooltipster</tal:comment>
          <span tal:condition="infos/css_class"
+               style="width: 16px;"
                tal:attributes="class infos/css_class"
                title="Currently selected meeting config"
                i18n:attributes="title"></span>

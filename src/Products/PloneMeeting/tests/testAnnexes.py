@@ -392,7 +392,7 @@ class testAnnexes(PloneMeetingTestCase):
         # give budget impact editors view on item
         # by default, budget impact editors local role will only give ability to edit budget infos, not to view item
         item.__ac_local_roles__['{0}_{1}'.format(cfg.getId(), BUDGETIMPACTEDITORS_GROUP_SUFFIX)] = ['Reader']
-        item._propagateReaderAndMeetingManagerLocalRolesToSubObjects()
+        item._propagateReaderAndMeetingManagerLocalRolesToSubObjects(cfg)
         item.reindexObjectSecurity()
 
         self.changeUser('budgetimpacteditor')

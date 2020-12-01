@@ -5,6 +5,23 @@ Changelog
 4.2b7 (unreleased)
 ------------------
 
+- Use correct icon for `itemfreeze/itempublish` transitions on item workflow
+  (were reversed).
+  [gbastien]
+- Optimized `MeetingItem.updateLocalRoles`, pass `cfg` and `item_state` when
+  possible and `ram.cache` for `utils.compute_item_roles_to_assign_to_suffixes`.
+  [gbastien]
+- Removed `Meeting.items` `ReferenceField`, manage it manually,
+  this will help migrating to `DX`.
+  [gbastien]
+- Do not fail in `vocabularies.PMUsers` when `user_id` contains special chars,
+  it may be the case when using `LDAP`, ignore these values.
+  [gbastien]
+- Optimized `utils.sendMailIfRelevant` to not send an email several times to
+  same address.  It was only done in `MeetingItem._sendMailToGroupMembers`.
+  Removed `MeetingItem._sendMailToGroupMembers` and manage it using new
+  parameter `isGroupIds=True` in `utils.sendMailIfRelevant`.
+  [gbastien]
 - Implement votes functionnality :
 
   - Added possibility to manage public and secret votes depending
@@ -16,6 +33,7 @@ Changelog
   - highlight row in tables to know where we are;
   - Added method for printing votes (print_votes);
   - ...
+
   [gbastien]
 
 4.2b6 (2020-11-19)

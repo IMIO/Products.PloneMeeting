@@ -465,7 +465,7 @@
              before_script=""
              after_script=""
              i18n:attributes="title">
-  <action url="" icon="%(portal_url)s/itempublish.png" category="workflow" i18n:translate="">itemfreeze</action>
+  <action url="" icon="%(portal_url)s/itemfreeze.png" category="workflow" i18n:translate="">itemfreeze</action>
   <guard>
     <guard-expression>python:here.wfConditions().mayFreeze()</guard-expression>
   </guard>
@@ -477,7 +477,7 @@
              before_script=""
              after_script=""
              i18n:attributes="title">
-  <action url="" icon="%(portal_url)s/itemfreeze.png" category="workflow" i18n:translate="">itempublish</action>
+  <action url="" icon="%(portal_url)s/itempublish.png" category="workflow" i18n:translate="">itempublish</action>
   <guard>
     <guard-expression>python:here.wfConditions().mayPublish()</guard-expression>
   </guard>
