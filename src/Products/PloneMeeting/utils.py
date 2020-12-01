@@ -22,6 +22,7 @@ from email import Encoders
 from email.MIMEBase import MIMEBase
 from email.MIMEMultipart import MIMEMultipart
 from email.MIMEText import MIMEText
+from imio.helpers.content import richtextval
 from imio.helpers.xhtml import addClassToLastChildren
 from imio.helpers.xhtml import CLASS_TO_LAST_CHILDREN_NUMBER_OF_CHARS_DEFAULT
 from imio.helpers.xhtml import markEmptyTags
@@ -74,8 +75,12 @@ from Products.PloneMeeting.interfaces import IMeetingGroupCustom
 from Products.PloneMeeting.interfaces import IMeetingItemCustom
 from Products.PloneMeeting.interfaces import IMeetingLocalRolesUpdatedEvent
 from Products.PloneMeeting.interfaces import IToolPloneMeetingCustom
+from z3c.form.interfaces import DISPLAY_MODE
+from z3c.form.interfaces import IContextAware
+from z3c.form.interfaces import IFieldWidget
 from zope.annotation import IAnnotations
 from zope.component import getAdapter
+from zope.component import getMultiAdapter
 from zope.component import getUtility
 from zope.component import queryUtility
 from zope.component.hooks import getSite
@@ -83,8 +88,12 @@ from zope.component.interfaces import ObjectEvent
 from zope.event import notify
 from zope.globalrequest import getRequest
 from zope.i18n import translate
+from zope.interface import alsoProvides
 from zope.interface import implements
+from zope.location import locate
 from zope.security.interfaces import IPermission
+from plone.supermodel.utils import mergedTaggedValueDict
+from plone.autoform.interfaces import WIDGETS_KEY
 
 import itertools
 import logging
@@ -922,38 +931,81 @@ def getHistoryTexts(obj, event):
     return res
 
 
-def setFieldFromAjax(obj, fieldName, newValue, remember=True, tranform=True, reindex=True, unlock=True):
+def get_dx_schema(obj):
+    """ """
+    portal_types = api.portal.get_tool('portal_types')
+    fti = portal_types[obj.portal_type]
+    schema = fti.lookupSchema()
+    return schema
+
+
+def get_dx_field(obj, field_name):
+    """ """
+    schema = get_dx_schema(obj)
+    field = schema[field_name]
+    return field
+
+
+def get_dx_widget(obj, field_name, mode=DISPLAY_MODE):
+    """ """
+    field = get_dx_field(obj, field_name)
+    schema = get_dx_schema(obj)
+    autoform_widgets = mergedTaggedValueDict(schema, WIDGETS_KEY)
+    if field_name in autoform_widgets:
+        widget = autoform_widgets[field_name](field, obj.REQUEST)
+    else:
+        widget = getMultiAdapter((field, obj.REQUEST), IFieldWidget)
+    widget.context = obj
+    alsoProvides(widget, IContextAware)
+    widget.mode = mode
+    widget.update()
+    widget.field.allowed_mime_types = ['text/html']
+    # this will set widget.__name__
+    locate(widget, None, field_name)
+    return widget
+
+
+def set_field_from_ajax(obj, field_name, new_value, remember=True, tranform=True, reindex=True, unlock=True):
     '''Sets on p_obj the content of a field whose name is p_fieldName and whose
        new value is p_fieldValue. This method is called by Ajax pages.'''
-    field = obj.getField(fieldName)
-    if remember:
-        # Keep old value, we might need to historize it.
-        previousData = rememberPreviousData(obj, fieldName)
-        field.getMutator(obj)(newValue, content_type='text/html')
-        # Potentially store it in object history
-        if previousData:
-            addDataChange(obj, previousData)
+
+    if IDexterityContent.providedBy(obj):
+        setattr(obj, field_name, richtextval(new_value))
     else:
-        field.getMutator(obj)(newValue, content_type='text/html')
+        field = obj.getField(field_name)
+        if remember:
+            # Keep old value, we might need to historize it.
+            previousData = rememberPreviousData(obj, field_name)
+            field.getMutator(obj)(new_value, content_type='text/html')
+            # Potentially store it in object history
+            if previousData:
+                addDataChange(obj, previousData)
+        else:
+            field.getMutator(obj)(new_value, content_type='text/html')
 
     if tranform:
         # Apply XHTML transforms when relevant
-        transformAllRichTextFields(obj, onlyField=fieldName)
+        transformAllRichTextFields(obj, onlyField=field_name)
+
     if reindex:
         # only reindex relevant indexes aka SearchableText + field specific index if exists
         index_names = api.portal.get_tool('portal_catalog').indexes()
         extra_idxs = ['SearchableText']
-        if fieldName in index_names:
-            extra_idxs.append(fieldName)
-        if field.accessor in index_names:
-            extra_idxs.append(field.accessor)
+        if field_name == 'description':
+            probable_index_name = 'Description'
+        else:
+            probable_index_name = 'get%s%s' % (field_name[0].upper(), field_name[1:])
+        if field_name in index_names:
+            extra_idxs.append(field_name)
+        if probable_index_name in index_names:
+            extra_idxs.append(probable_index_name)
         notifyModifiedAndReindex(obj, extra_idxs=extra_idxs)
     if unlock:
         # just unlock, do not call ObjectEditedEvent because it does too much
         unlockAfterModification(obj, event={})
     # add a fingerpointing log message
     extras = 'object={0} field_name={1}'.format(
-        repr(obj), fieldName)
+        repr(obj), field_name)
     fplog('quickedit_field', extras=extras)
 
 
@@ -992,31 +1044,43 @@ def transformAllRichTextFields(obj, onlyField=None):
     cfg = tool.getMeetingConfig(obj)
     fieldsToTransform = cfg.getXhtmlTransformFields()
     transformTypes = cfg.getXhtmlTransformTypes()
-    for field in obj.schema.fields():
-        if field.widget.getName() != 'RichWidget':
-            continue
-        if onlyField and (field.getName() != onlyField):
-            continue
-        # What is the "write" permission for this field ?
-        writePermission = ModifyPortalContent
-        if hasattr(field, 'write_permission'):
-            writePermission = field.write_permission
-        if not member.has_permission(writePermission, obj):
-            continue
-        # make sure we do not loose resolveuid to images, use getRaw
-        raw_value = field.getRaw(obj).strip()
+    fields = {}
+    if IDexterityContent.providedBy(obj):
+        if onlyField:
+            field = get_dx_field(obj, onlyField)
+            fields[field.__name__] = getattr(obj, field.__name__).raw
+        else:
+            schema = get_dx_schema(obj)
+            write_permissions = schema.queryTaggedValue(WRITE_PERMISSIONS_KEY, {})
+            fields = {field.__name__: getattr(obj, field.__name__).raw for field in schema
+                      if field.__class__.__name__ == "RichText" and
+                      (write_permissions.get(field.__name__) and
+                       member.has_permission(write_permissions[field.__name], obj) or True)}
+    else:
+        if onlyField:
+            field = obj.schema[onlyField]
+            fields[field.getName()] = field.getAccessor(obj)()
+        else:
+            fields = {field.getName(): field.getRaw(obj).strip() for field in obj.schema.fields()
+                      if field.widget.getName() == 'RichWidget' and
+                      member.has_permission(field.write_permission, obj)}
+
+    for field_name, field_raw_value in fields.items():
         # Apply mandatory transforms
-        fieldContent = storeImagesLocally(obj, raw_value)
+        fieldContent = storeImagesLocally(obj, field_raw_value)
         # Apply standard transformations as defined in the config
         # fieldsToTransform is like ('MeetingItem.description', 'MeetingItem.budgetInfos', )
-        if ("%s.%s" % (obj.meta_type, field.getName()) in fieldsToTransform) and \
+        if ("%s.%s" % (obj.__class__.__name__, field_name) in fieldsToTransform) and \
            not xhtmlContentIsEmpty(fieldContent):
             if 'removeBlanks' in transformTypes:
                 fieldContent = removeBlanks(fieldContent)
-        # Apply custom transformations if defined
-        field.set(obj, obj.adapted().transformRichTextField(
-                  field.getName(), fieldContent))
-        field.setContentType(obj, field.default_content_type)
+        if IDexterityContent.providedBy(obj):
+            new_value = richtextval(fieldContent)
+            setattr(obj, field_name, new_value)
+        else:
+            field = obj.getField(field_name)
+            field.set(obj, fieldContent)
+            field.setContentType(obj, field.default_content_type)
 
 
 # ------------------------------------------------------------------------------
@@ -1419,9 +1483,7 @@ def _addManagedPermissions(obj):
         # get every RichText fields using a write_permission
         if IDexterityContent.providedBy(obj):
             # dexterity
-            portal_types = api.portal.get_tool('portal_types')
-            fti = portal_types[obj.portal_type]
-            schema = fti.lookupSchema()
+            schema = get_dx_schema(obj)
             write_permissions = schema.queryTaggedValue(WRITE_PERMISSIONS_KEY, {})
             for field_id, write_permission in write_permissions.items():
                 if isinstance(schema.get(field_id), RichText):
@@ -1612,6 +1674,25 @@ def main_item_data(item):
             data.append({'field_name': fieldName,
                          'field_content': field.get(item)})
     return data
+
+
+def checkMayQuickEdit(obj,
+                      bypassWritePermissionCheck=False,
+                      permission=ModifyPortalContent,
+                      expression='',
+                      onlyForManagers=False):
+    """ """
+    from Products.PloneMeeting.Meeting import Meeting
+    tool = api.portal.get_tool('portal_plonemeeting')
+    member = api.user.get_current()
+    res = False
+    if (not onlyForManagers or (onlyForManagers and tool.isManager(obj))) and \
+       (bypassWritePermissionCheck or member.has_permission(permission, obj)) and \
+       (_evaluateExpression(obj, expression)) and \
+       (not (obj.hasMeeting() and obj.getMeeting().queryState() in Meeting.meetingClosedStates) or
+            tool.isManager(obj, realManagers=True)):
+        res = True
+    return res
 
 
 def reviewersFor(cfg):

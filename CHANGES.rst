@@ -22,6 +22,15 @@ Changelog
   Removed `MeetingItem._sendMailToGroupMembers` and manage it using new
   parameter `isGroupIds=True` in `utils.sendMailIfRelevant`.
   [gbastien]
+- Make the `quick edit RichText field` work for DX content types :
+  - added `PMRichTextWidget` useable in DX schema;
+  - renamed `utils.setFieldFromAjax` to `utils.set_field_from_ajax`;
+  - migrate `RichTextValue` stored on advices to fix `mimeType/outputMimeType`;
+  - moved `MeetingItem._checkMayQuickEdit` to `utils.checkMayQuickEdit` so it
+    is easier to reuse;
+  - use `PMRichTextWidget` on meetingadvice.
+
+  [gbastien]
 - Implement votes functionnality :
 
   - Added possibility to manage public and secret votes depending

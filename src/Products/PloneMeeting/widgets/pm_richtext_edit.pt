@@ -1,0 +1,50 @@
+<tal:block i18n:domain="PloneMeeting" define="widget python: view.widget">
+  <tal:showWarningWillInvalidateAdvices condition="python: context.meta_type == 'MeetingItem' and context.willInvalidateAdvices()">
+  <dl class="portalMessage warning">
+      <dt i18n:translate="" i18n:domain="plone">Warning</dt>
+      <dd i18n:translate="warning_invalidate_advices_fastedit" i18n:domain="PloneMeeting"></dd>
+  </dl>
+  </tal:showWarningWillInvalidateAdvices>
+
+  <img style="cursor:pointer;"
+       i18n:attributes="title fastedit_save_and_exit_changes"
+       title="Save changes and exit"
+       tal:attributes="src string:${view/portal_url}/save_and_exit.gif;
+                       onClick view/js_save_and_exit;"/>
+  &nbsp;
+  <img style="cursor:pointer;"
+       i18n:attributes="title fastedit_save_changes"
+       title="Save changes"
+       tal:attributes="src string:${view/portal_url}/save.gif;
+                       onClick view/js_save;"/>
+  &nbsp;
+  <img style="cursor: pointer;"
+       i18n:attributes="title fastedit_cancel"
+       title="Cancel edit"
+       tal:attributes="src string:${view/portal_url}/cancel_edit.png;
+                       onClick view/js_cancel;" />
+
+  <form tal:attributes="id string:ajax_edit_${view/field_name};"
+        class="enableUnloadProtection enableAutoFocus enableUnlockProtection">
+
+    <label for=""
+           class="horizontal"
+           tal:attributes="for widget/id">
+        <span i18n:translate="" tal:replace="widget/label">label</span>
+
+        <span class="required horizontal" title="Required"
+              tal:condition="python:widget.required and widget.mode == 'input'"
+              i18n:attributes="title title_required;">&nbsp;</span>
+
+        <span class="formHelp"
+            tal:define="description widget/field/description"
+            i18n:translate=""
+            tal:content="structure description"
+            tal:condition="python:description"
+            >field description
+        </span>
+    </label>
+
+    <div tal:replace="structure python: widget.render()"></div>
+  </form>
+</tal:block>

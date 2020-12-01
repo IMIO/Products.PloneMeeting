@@ -2,21 +2,6 @@
 #
 # GNU General Public License (GPL)
 #
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
-# 02110-1301, USA.
-#
 
 from AccessControl import Unauthorized
 from collective.contact.plonegroup.config import set_registry_organizations
@@ -47,7 +32,7 @@ from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
 from Products.PloneMeeting.tests.testUtils import ASSEMBLY_CORRECT_VALUE
 from Products.PloneMeeting.tests.testUtils import ASSEMBLY_WRONG_VALUE
 from Products.PloneMeeting.utils import getCurrentMeetingObject
-from Products.PloneMeeting.utils import setFieldFromAjax
+from Products.PloneMeeting.utils import set_field_from_ajax
 from Products.ZCatalog.Catalog import AbstractCatalogBrain
 from zope.i18n import translate
 
@@ -2939,7 +2924,7 @@ class testMeeting(PloneMeetingTestCase):
 
         # test using the quickedit
         text = '<p>Working external image <img src="%s"/>.</p>' % self.external_image2
-        setFieldFromAjax(meeting, 'observations', text)
+        set_field_from_ajax(meeting, 'observations', text)
         self.assertTrue('1025-400x300.jpg' in meeting.objectIds())
         img2 = meeting.get('1025-400x300.jpg')
 

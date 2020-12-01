@@ -383,7 +383,7 @@ function initRichTextField(rq, hook) {
     // Javascripts inside this zone will not be executed. So find them
     // and trigger their execution here.
     var scripts = $('script', hook);
-    var fieldName = rq.hook.substring(5);
+    var fieldName = hook.id.substring(5);
     for (var i=0; i<scripts.length; i++) {
       var scriptContent = scripts[i].innerHTML;
       if (scriptContent.search('addEventHandler') != -1) {
@@ -394,8 +394,8 @@ function initRichTextField(rq, hook) {
       }
       else { eval(scriptContent); }
     }
-    // Initialize CKeditor if it is the used editor
-    if (ploneEditor == 'CKeditor') { jQuery(launchCKInstances([fieldName,])); }
+    // Initialize CKeditor
+    jQuery(launchCKInstances([fieldName,]));
     // Enable unload protection, avoid loosing unsaved changes if user click somewhere else
     var tool = window.onbeforeunload && window.onbeforeunload.tool;
     if (tool!==null) {
@@ -412,11 +412,9 @@ function getRichTextContent(rq, params) {
   var formId = 'ajax_edit_' + fieldName;
   var theForm = document.getElementById(formId);
   var theWidget = theForm[fieldName];
-  if (ploneEditor == 'CKeditor'){
-     /* with CKeditor the value is not stored in the widget so get the data from the real CKeditor instance */
-     theWidget.value = CKEDITOR.instances[fieldName].getData();
-     CKEDITOR.instances[fieldName].destroy();
-  }
+  /* with CKeditor the value is not stored in the widget so get the data from the real CKeditor instance */
+  theWidget.value = CKEDITOR.instances[fieldName].getData();
+  CKEDITOR.instances[fieldName].destroy();
   /* Disable the Plone automatic detection of changes to the form. Indeed,
      Plone is not aware that we have sent the form, so he will try to display
      a message, saying that changes will be lost because an unsubmitted form
@@ -594,7 +592,7 @@ function refreshAfterDelete(event) {
 $(document).on('toggle_details_ajax_success', init_tooltipsters);
 
 function init_tooltipsters(event) {
-    css_id = event.tag[0].id;
+    css_id = event.tag.parentElement.id;
     if (css_id == 'collapsible-assembly-and-signatures') {
       pmCommonOverlays(selector_prefix='table#meeting_users ');
       attendeesInfos();
@@ -605,6 +603,20 @@ function init_tooltipsters(event) {
       advicesInfos();
     }
 }
+
+$(document).on('ckeditor_prepare_ajax_success', init_ckeditor);
+
+function init_ckeditor(event) {
+  initRichTextField(rq=null, hook=event['tag']);
+}
+
+function exitCKeditor(field_name, base_url) {
+  CKEDITOR.instances[field_name].execCommand('ajaxsave', 'saveCmd');
+  CKEDITOR.instances[field_name].destroy();
+  tag=$('div#hook_' + field_name)[0];
+  loadContent(tag, load_view='@@render-single-widget?field_name=' + field_name, async=false, base_url=base_url, event_name=null);
+}
+
 
 // when clicking on the input#forceInsertNormal, update the 'pmForceInsertNormal' cookie
 function changeForceInsertNormalCookie(input) {

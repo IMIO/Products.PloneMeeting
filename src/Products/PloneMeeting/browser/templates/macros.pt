@@ -141,8 +141,10 @@ document.location.reload(true);
       <a tal:attributes="name fieldName"
          tal:content="python: field.widget.Label(context)">Field label</a>
     </div>
-
-    <img style="cursor:pointer" tal:condition="mayEdit"
+    <img style="cursor:pointer"
+         tal:condition="mayEdit"
+         title="Edit this field"
+         i18n:attributes="title fastedit_edit"
          tal:attributes="src string:$portal_url/edit.png;
                          onClick jsEdit;
                          onload python: needToRefreshPage and 'javascript:refreshPageIfNeeded()' or ''"/>    <tal:history define="hasHistory python: context.hasHistory(fieldName)" condition="hasHistory">

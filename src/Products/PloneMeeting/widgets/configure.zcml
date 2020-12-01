@@ -1,23 +1,47 @@
 <configure
+    i18n_domain="PloneMeeting"
     xmlns="http://namespaces.zope.org/zope"
+    xmlns:browser="http://namespaces.zope.org/browser"
     xmlns:i18n="http://namespaces.zope.org/i18n"
     xmlns:z3c="http://namespaces.zope.org/z3c"
-    i18n_domain="PloneMeeting">
+    xmlns:zcml="http://namespaces.zope.org/zcml">
 
-  <include package="z3c.form" file="meta.zcml" />
+    <include package="z3c.form" file="meta.zcml" />
 
-  <!-- checkbox -->
-  <z3c:widgetTemplate
-    mode="input"
-    widget=".pm_checkbox.IPMCheckBoxWidget"
-    template="pm_checkbox_input.pt"
-    layer="z3c.form.interfaces.IFormLayer" />
+    <!-- checkbox -->
+    <z3c:widgetTemplate
+        mode="input"
+        widget=".pm_checkbox.IPMCheckBoxWidget"
+        template="pm_checkbox_input.pt"
+        layer="z3c.form.interfaces.IFormLayer" />
 
-  <z3c:widgetTemplate
-    mode="display"
-    widget=".pm_checkbox.IPMCheckBoxWidget"
-    template="pm_checkbox_display.pt"
-    layer="z3c.form.interfaces.IFormLayer" />
+    <z3c:widgetTemplate
+        mode="display"
+        widget=".pm_checkbox.IPMCheckBoxWidget"
+        template="pm_checkbox_display.pt"
+        layer="z3c.form.interfaces.IFormLayer" />
+
+    <!-- richtext -->
+    <z3c:widgetTemplate
+        mode="display"
+        widget=".pm_richtext.IPMRichTextWidget"
+        template="pm_richtext_display.pt"
+        layer="z3c.form.interfaces.IFormLayer" />
+
+    <configure zcml:condition="installed plone.app.z3cform">
+        <z3c:widgetTemplate
+            layer="plone.app.z3cform.interfaces.IPloneFormLayer"
+            mode="display"
+            template="pm_richtext_display.pt"
+            widget=".pm_richtext.IPMRichTextWidget" />
+    </configure>
+
+    <browser:page
+        name="richtext-edit"
+        class=".pm_richtext.RichTextEdit"
+        for="*"
+        template="pm_richtext_edit.pt"
+        permission="zope2.View" />
 
   <!-- text -->
   <z3c:widgetTemplate
