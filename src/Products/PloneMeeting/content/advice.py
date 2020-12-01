@@ -184,6 +184,9 @@ class MeetingAdvice(Container):
     """ """
 
     implements(IMeetingAdvice)
+    # avoid inherited roles from the item or the item editor may edit the advice...
+    __ac_local_roles_block__ = True
+
     security = ClassSecurityInfo()
 
     def getPrettyLink(self, **kwargs):

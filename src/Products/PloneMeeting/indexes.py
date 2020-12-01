@@ -231,7 +231,7 @@ def SearchableText_annex(obj):
 
 
 @indexer(IMeetingItem)
-def sendToAuthority(obj):
+def send_to_authority(obj):
     """
       Index the MeetingItem.sendToAuthority to be searchable in a faceted navigation.
     """
@@ -239,6 +239,26 @@ def sendToAuthority(obj):
         return '1'
     else:
         return '0'
+
+
+@indexer(IMeetingItem)
+def item_is_signed(obj):
+    """
+      Index the getItemIsSigned but in a faceted boolean compatible way.
+    """
+    if obj.getItemIsSigned():
+        return '1'
+    return '0'
+
+
+@indexer(IMeetingItem)
+def to_discuss(obj):
+    """
+      Index the getToDiscuss but in a faceted boolean compatible way.
+    """
+    if obj.getToDiscuss():
+        return '1'
+    return '0'
 
 
 @indexer(IMeetingItem)
@@ -251,16 +271,6 @@ def hasAnnexesToPrint(obj):
     for annex in get_annexes(obj):
         if annex.to_print:
             return '1'
-    return '0'
-
-
-@indexer(IMeetingItem)
-def getItemIsSigned(obj):
-    """
-      Index the getItemIsSigned but in a faceted boolean compatible way.
-    """
-    if obj.getItemIsSigned():
-        return '1'
     return '0'
 
 
@@ -401,6 +411,9 @@ def indexAdvisers(obj):
     # remove double entry, it could be the case for the 'advice_type' alone
     res = list(set(res))
     res.sort()
+    # store something when no advices. Query with 'not' in ZCatalog>=3 will retrieve it.
+    if not res:
+        res.append('_')
     return res
 
 

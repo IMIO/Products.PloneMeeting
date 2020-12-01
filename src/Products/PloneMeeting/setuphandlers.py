@@ -9,7 +9,7 @@
 # GNU General Public License (GPL)
 #
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
-from collective.documentgenerator.config import set_raiseOnError_for_non_managers
+from collective.documentgenerator.config import set_raiseOnError_for_non_managers, set_oo_server, set_column_modifier
 from collective.documentgenerator.config import set_use_stream
 from collective.messagesviewlet.utils import add_message
 from dexterity.localroles.utils import add_fti_configuration
@@ -48,28 +48,29 @@ folderViews = ('folder_contents', )
 # NOT returning empty tuple/list like () or [] but empty values like ''
 indexInfos = {
     # MeetingItem-related indexes
-    'getCategory': ('FieldIndex', {}),
-    'getItemIsSigned': ('FieldIndex', {}),
-    'getItemNumber': ('FieldIndex', {}),
-    'getRawClassifier': ('FieldIndex', {}),
-    'getProposingGroup': ('FieldIndex', {}),
-    'getGroupsInCharge': ('KeywordIndex', {}),
+    'downOrUpWorkflowAgain': ('FieldIndex', {}),
     'getAssociatedGroups': ('KeywordIndex', {}),
+    'getCategory': ('FieldIndex', {}),
+    'getCompleteness': ('KeywordIndex', {}),
+    'getCopyGroups': ('KeywordIndex', {}),
+    'getItemNumber': ('FieldIndex', {}),
+    'item_is_signed': ('FieldIndex', {}),
+    'getGroupsInCharge': ('KeywordIndex', {}),
     'getPreferredMeeting': ('FieldIndex', {}),
     'getPreferredMeetingDate': ('DateIndex', {}),
+    'getProposingGroup': ('FieldIndex', {}),
+    'getRawClassifier': ('FieldIndex', {}),
+    'getTakenOverBy': ('FieldIndex', {}),
+    'indexAdvisers': ('KeywordIndex', {}),
+    'item_boolean_indexes': ('KeywordIndex', {}),
     'linkedMeetingUID': ('FieldIndex', {}),
     'linkedMeetingDate': ('DateIndex', {}),
-    'getCopyGroups': ('KeywordIndex', {}),
-    'indexAdvisers': ('KeywordIndex', {}),
     'previous_review_state': ('FieldIndex', {}),
-    'sentToInfos': ('KeywordIndex', {}),
-    'sendToAuthority': ('FieldIndex', {}),
-    'downOrUpWorkflowAgain': ('FieldIndex', {}),
-    'templateUsingGroups': ('KeywordIndex', {}),
-    'getCompleteness': ('KeywordIndex', {}),
-    'getTakenOverBy': ('FieldIndex', {}),
     'reviewProcessInfo': ('FieldIndex', {}),
-    'toDiscuss': ('BooleanIndex', {}),
+    'send_to_authority': ('FieldIndex', {}),
+    'sentToInfos': ('KeywordIndex', {}),
+    'templateUsingGroups': ('KeywordIndex', {}),
+    'to_discuss': ('FieldIndex', {}),
     'privacy': ('FieldIndex', {}),
     'pollType': ('FieldIndex', {}),
     'listType': ('FieldIndex', {}),
@@ -94,8 +95,7 @@ columnInfos = ('getAssociatedGroups',
                'listType',
                'privacy',
                'pollType',
-               'title_or_id',
-               'toDiscuss')
+               'title_or_id')
 transformsToDisable = ['word_to_html', 'pdf_to_html', 'pdf_to_text']
 
 
@@ -308,10 +308,8 @@ def postInstall(context):
             api.content.transition(browser_warn_msg, 'activate')
 
     # collective.documentgenerator : change some default values
-    api.portal.set_registry_record(
-        'collective.documentgenerator.browser.controlpanel.'
-        'IDocumentGeneratorControlPanelSchema.column_modifier',
-        'optimize')
+    set_oo_server()
+    set_column_modifier('optimize')
     set_raiseOnError_for_non_managers(True)
     set_use_stream(False)
 
@@ -566,7 +564,7 @@ def _configureDexterityLocalRolesField():
     # meetingadvice
     roles_config = {'advice_group': {
         'advice_given': {u'advisers': {'rel': '', 'roles': []}},
-        'advice_under_edit': {u'advisers': {'rel': '', 'roles': [u'Editor']}}}
+        'advice_under_edit': {u'advisers': {'rel': '', 'roles': [u'Editor', u'Reviewer', u'Contributor']}}}
     }
     msg = add_fti_configuration(portal_type='meetingadvice',
                                 configuration=roles_config['advice_group'],

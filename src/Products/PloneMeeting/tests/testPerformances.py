@@ -63,6 +63,14 @@ class testPerformances(PloneMeetingTestCase):
                                       with_meeting=True,
                                       present_items=False,
                                       as_uids=True):
+        cfg = self.meetingConfig
+        wfAdaptations = list(cfg.getWorkflowAdaptations())
+        if 'no_publication' not in wfAdaptations:
+            self.changeUser('siteadmin')
+            wfAdaptations.append('no_publication')
+            cfg.setWorkflowAdaptations(wfAdaptations)
+            cfg.at_post_edit_script()
+
         self.changeUser('pmManager')
         meeting = None
         if with_meeting:
@@ -318,8 +326,10 @@ class testPerformances(PloneMeetingTestCase):
         cfg2 = self.meetingConfig2
         # remove existing groups and add our own
         # make what necessary for groups to be removable...
+        cfg.setOrderedGroupsInCharge(())
         cfg.setSelectableCopyGroups(())
         cfg.setSelectableAdvisers(())
+        cfg2.setOrderedGroupsInCharge(())
         cfg2.setSelectableCopyGroups(())
         cfg2.setSelectableAdvisers(())
         orgs = get_organizations(only_selected=True)
@@ -368,7 +378,7 @@ class testPerformances(PloneMeetingTestCase):
         for time in range(times):
             get_organizations(not_empty_suffix='advisers', caching=caching)
 
-    def test_pm_GetMeetingConfig(self):
+    def test_pm_SpeedGetMeetingConfig(self):
         '''Test ToolPloneMeeting.getMeetingConfig method performances.
            We call the method 2000 times, this is what happens when displaying
            a meeting containing 100 items.'''
@@ -676,6 +686,27 @@ class testPerformances(PloneMeetingTestCase):
     def _duplicateItem(self, item, copyAnnexes=False):
         '''Helper method that actually duplicated given p_item.'''
         item.clone(copyAnnexes=copyAnnexes)
+
+    def test_pm_SpeedGetMeeting(self):
+        '''Test MeetingItem.getMeeting method performances.
+           We call the method 2000 times, this is what happens when displaying
+           a dashboard of 100 items.'''
+        self.changeUser('pmManager')
+        self.create('Meeting', date=DateTime('2020/11/23'))
+        item = self.create('MeetingItem')
+        self.presentItem(item)
+        # call getMeeting 2000 times wihout caching
+        self._getMeetingOnItem(item, 2000, caching=False)
+        # call getMeeting 2000 times with caching
+        self._getMeetingOnItem(item, 2000, caching=True)
+
+    @timecall
+    def _getMeetingOnItem(self, item, times=1, caching=True):
+        ''' '''
+        pm_logger.info(
+            'Call {0} times, with caching={1}'.format(times, caching))
+        for time in range(times):
+            item.getMeeting(only_uid=False, caching=caching)
 
 
 def test_suite():

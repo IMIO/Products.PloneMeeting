@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<object name="portal_css" meta_type="Stylesheets Registry">
+<object name="portal_css" meta_type="Stylesheets Registry" purge="True">
 
 <stylesheet id="++resource++jquery.css" insert-after="" />
 
@@ -45,7 +45,9 @@
 
 <stylesheet id="++resource++plone.app.jquerytools.dateinput.css" insert-after="++resource++plone.app.jquerytools.overlays.css" />
 
-<stylesheet id="++resource++quickupload_static/uploadify.css" insert-after="++resource++plone.app.jquerytools.dateinput.css" />
+<stylesheet id="++resource++dexterity.localroles/settings.css" insert-after="++resource++plone.app.jquerytools.dateinput.css" />
+
+<stylesheet id="++resource++quickupload_static/uploadify.css" insert-after="++resource++dexterity.localroles/settings.css" />
 
 <stylesheet id="++resource++quickupload_static/fileuploader.css" insert-after="++resource++quickupload_static/uploadify.css" />
 
@@ -147,7 +149,9 @@
 
 <stylesheet id="++resource++eea.facetednavigation.widgets.alphabets.view.css" insert-after="++resource++eea.facetednavigation.widgets.autocomplete.view.css" />
 
-<stylesheet id="++resource++eea.faceted-navigation-edit.css" insert-after="++resource++eea.facetednavigation.widgets.alphabets.view.css" />
+<stylesheet id="++resource++eea.facetednavigation.widgets.multiselect.view.css" insert-after="++resource++eea.facetednavigation.widgets.alphabets.view.css" />
+
+<stylesheet id="++resource++eea.faceted-navigation-edit.css" insert-after="++resource++eea.facetednavigation.widgets.multiselect.view.css" />
 
 <stylesheet id="++resource++collective.eeafaceted.collectionwidget.edit.css" insert-after="++resource++eea.faceted-navigation-edit.css" />
 
@@ -189,7 +193,9 @@
 
 <stylesheet id="++resource++eea.facetednavigation.widgets.alphabets.edit.css" insert-after="++resource++eea.facetednavigation.widgets.autocomplete.edit.css" />
 
-<stylesheet id="++resource++plone.formwidget.querystring.querywidget.css" insert-after="++resource++eea.facetednavigation.widgets.alphabets.edit.css" />
+<stylesheet id="++resource++eea.facetednavigation.widgets.multiselect.edit.css" insert-after="++resource++eea.facetednavigation.widgets.alphabets.edit.css" />
+
+<stylesheet id="++resource++plone.formwidget.querystring.querywidget.css" insert-after="++resource++eea.facetednavigation.widgets.multiselect.edit.css" />
 
 <stylesheet id="++resource++collective.eeafaceted.collectionwidget/collective.eeafaceted.collectionwidget.css" insert-after="++resource++plone.formwidget.querystring.querywidget.css" />
 

@@ -85,7 +85,8 @@ def do(action, event):
         # Send mail regarding advices to give if relevant
         event.object.sendStateDependingMailIfRelevant(event.old_state.id, event.new_state.id)
         # Send mail if relevant
-        sendMailIfRelevant(event.object, "item_state_changed_%s" % event.transition.id, 'View')
+        event_id = "item_state_changed_%s" % event.transition.id
+        sendMailIfRelevant(event.object, event_id, 'View', isPermission=True)
         # apply on transition field transform if any
         idxs += applyOnTransitionFieldTransform(event.object, event.transition.id)
     elif objectType == 'Meeting':
@@ -94,7 +95,8 @@ def do(action, event):
         # Add recurring items to the meeting if relevant
         addRecurringItemsIfRelevant(event.object, event.transition.id)
         # Send mail if relevant
-        sendMailIfRelevant(event.object, "meeting_state_changed_%s" % event.transition.id, 'View')
+        event_id = "meeting_state_changed_%s" % event.transition.id
+        sendMailIfRelevant(event.object, event_id, 'View', isPermission=True)
         # trigger some transitions on contained items depending on
         # MeetingConfig.onMeetingTransitionItemActionToExecute
         meetingExecuteActionOnLinkedItems(event.object, event.transition.id)
@@ -107,18 +109,22 @@ def onItemTransition(item, event):
     '''Called whenever a transition has been fired on an item.'''
     if not event.transition or (item != event.object):
         return
+
+    tool = api.portal.get_tool('portal_plonemeeting')
+    cfg = tool.getMeetingConfig(item)
+
     transitionId = event.transition.id
-    if transitionId.startswith('backTo'):
-        action = 'doCorrect'
-    elif transitionId.startswith('item'):
-        action = 'doItem%s%s' % (transitionId[4].upper(), transitionId[5:])
-    else:
-        action = 'do%s%s' % (transitionId[0].upper(), transitionId[1:])
+    action = item.wfActions()._getCustomActionName(transitionId)
+    if not action:
+        if transitionId.startswith('backTo'):
+            action = 'doCorrect'
+        elif transitionId.startswith('item'):
+            action = 'doItem%s%s' % (transitionId[4].upper(), transitionId[5:])
+        else:
+            action = 'do%s%s' % (transitionId[0].upper(), transitionId[1:])
     idxs = do(action, event)
 
     # check if we need to send the item to another meetingConfig
-    tool = api.portal.get_tool('portal_plonemeeting')
-    cfg = tool.getMeetingConfig(item)
     if item.queryState() in cfg.getItemAutoSentToOtherMCStates():
         otherMCs = item.getOtherMeetingConfigsClonableTo()
         for otherMC in otherMCs:
@@ -561,6 +567,9 @@ def onItemCopied(item, event):
     for image_id in image_ids:
         item._delObject(image_id, suppress_events=True)
 
+    # remove link with Meeting
+    item._update_meeting_link(None)
+
 
 def onItemMoved(item, event):
     '''Called when an item is cut/pasted.'''
@@ -593,9 +602,17 @@ def item_added_or_initialized(item):
        To manage every cases, we need to do this in both Initialized and Added event
        because some are triggered in some cases and not others...
        Especially for plone.restapi that calls Initialized then do the validation.'''
+
+    # avoid multiple initialization
+    # when using restapi for example, this empties adviceIndex
+    # because init/updateLocalRoles/init
+    if hasattr(item, '_v_already_initialized'):
+        return
+    item._v_already_initialized = True
+
     # make sure workflow mapping is applied, plone.restapi needs it...
     user = api.user.get_current()
-    item.manage_addLocalRoles(user.getId(), ('MeetingMember',))
+    item.manage_addLocalRoles(user.getId(), ('Editor', 'Reader'))
     # Add a place to store adviceIndex
     item.adviceIndex = PersistentMapping()
     # Add a place to store emergency changes history
@@ -611,6 +628,8 @@ def item_added_or_initialized(item):
         alsoProvides(item, IConfigElement)
     else:
         noLongerProvides(item, IConfigElement)
+        # An item has ben modified
+        invalidate_cachekey_volatile_for('Products.PloneMeeting.MeetingItem.modified', get_again=True)
 
 
 def onItemInitialized(item, event):
@@ -727,7 +746,7 @@ def onAdviceAdded(advice, event):
     _advice_update_item(item, idxs)
 
     # Send mail if relevant
-    sendMailIfRelevant(item, 'adviceEdited', 'MeetingMember', isRole=True)
+    sendMailIfRelevant(item, 'adviceEdited', 'creators', isSuffix=True)
     sendMailIfRelevant(item, 'adviceEditedOwner', 'Owner', isRole=True)
 
 
@@ -753,7 +772,7 @@ def onAdviceModified(advice, event):
     _advice_update_item(item, idxs)
 
     # Send mail if relevant
-    sendMailIfRelevant(item, 'adviceEdited', 'MeetingMember', isRole=True)
+    sendMailIfRelevant(item, 'adviceEdited', 'creators', isSuffix=True)
     sendMailIfRelevant(item, 'adviceEditedOwner', 'Owner', isRole=True)
 
 
@@ -809,7 +828,7 @@ def onAnnexAdded(annex, event):
                 idxs = parent.updateLocalRoles(invalidate=True)
 
             # Potentially I must notify MeetingManagers through email.
-            sendMailIfRelevant(parent, 'annexAdded', 'MeetingManager', isRole=True)
+            sendMailIfRelevant(parent, 'annexAdded', 'meetingmanagers', isSuffix=True)
 
         # update parent modificationDate, it is used for caching and co
         # and reindex parent relevant indexes
@@ -970,6 +989,17 @@ def onMeetingAdded(meeting, event):
         'Products.PloneMeeting.vocabularies.meetingdatesvocabulary', get_again=True)
     invalidate_cachekey_volatile_for(
         'Products.PloneMeeting.Meeting.modified', get_again=True)
+
+
+def onMeetingMoved(meeting, event):
+    '''Called when a meeting is cut/pasted.'''
+    # this is also called when removing an item, in this case, we do nothing
+    if IObjectRemovedEvent.providedBy(event):
+        return
+
+    # update linked_meeting_path on every items because path changed
+    for item in meeting.getItems():
+        item._update_meeting_link(meeting.UID())
 
 
 def onMeetingRemoved(meeting, event):

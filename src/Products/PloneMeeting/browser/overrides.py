@@ -139,8 +139,10 @@ class PMGlobalSectionsViewlet(GlobalSectionsViewlet):
                                                 action['name'],
                                                 action['data-config_full_label'])]]
                     for cfg_id in cfg_ids:
-                        # select groupedConfig tab in the application and when on the MC in the configuration
-                        if "/mymeetings/%s" % cfg_id in path or "/portal_plonemeeting/%s" % cfg_id in path:
+                        # select groupedConfig tab in the application and
+                        # when on the MC in the configuration
+                        if "/mymeetings/%s/" % cfg_id in path or \
+                           "/portal_plonemeeting/%s/" % cfg_id in path:
                             return {'portal': action['id'], }
             # XXX end of change by PM
 
@@ -925,11 +927,25 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
         return generation_context
 
     def generate_and_download_doc(self, pod_template, output_format, **kwargs):
-        """ """
-        generated_template = super(
-            PMDocumentGenerationView, self).generate_and_download_doc(
-                pod_template,
-                output_format)
+        """When generating a template :
+           - check if need to generate in case store as annex and store_as_annex_empty_file is True;
+           - send to mailing list if relevant;
+           - or just generate the template."""
+
+        if self.request.get('store_as_annex', '0') == '1' and \
+           pod_template.store_as_annex_empty_file is True:
+            generated_template = translate('empty_annex_file_content',
+                                           domain='PloneMeeting',
+                                           context=self.request)
+            # make sure scan_id is generated and available in the REQUEST
+            # so it is applied on stored annex
+            helper_view = self.get_generation_context_helper()
+            helper_view.get_scan_id()
+        else:
+            generated_template = super(
+                PMDocumentGenerationView, self).generate_and_download_doc(
+                    pod_template,
+                    output_format)
 
         # check if we have to send this generated POD template or to render it
         if self.request.get('mailinglist_name'):
@@ -1043,8 +1059,19 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
             annex_portal_type)
 
         if not return_portal_msg_code:
-            return self.request.RESPONSE.redirect(
-                self.context.absolute_url() + '/@@categorized-annexes')
+            msg = translate('stored_single_item_template_as_annex',
+                            domain="PloneMeeting",
+                            context=self.request)
+            api.portal.show_message(msg, request=self.request)
+            return self.request.RESPONSE.redirect(self.request['HTTP_REFERER'])
+
+    def _get_filename(self):
+        """Override to take into account store_as_annex_empty_file."""
+        if self.request.get('store_as_annex', '0') == '1' and \
+           self.pod_template.store_as_annex_empty_file is True:
+            return "empty_file.txt"
+        else:
+            return super(PMDocumentGenerationView, self)._get_filename()
 
     def _store_pod_template_as_annex(self,
                                      pod_template,
@@ -1515,8 +1542,11 @@ class PMBaseOverviewControlPanel(UsersGroupsControlPanelView):
         adapted_results = []
         for item in results:
             adapted_item = item.copy()
+            # only keep some relevant roles
             for role in self.portal_roles:
                 adapted_item['roles'][role]['canAssign'] = False
+            # remove possibility to remove user from UI
+            adapted_item['can_delete'] = False
             adapted_results.append(adapted_item)
         return adapted_results
 

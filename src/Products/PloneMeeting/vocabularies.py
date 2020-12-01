@@ -1,6 +1,7 @@
 # encoding: utf-8
 
 from collective.contact.plonegroup.browser.settings import EveryOrganizationsVocabulary
+from collective.contact.plonegroup.browser.settings import SortedSelectedOrganizationsElephantVocabulary
 from collective.contact.plonegroup.config import get_registry_organizations
 from collective.contact.plonegroup.utils import get_organization
 from collective.contact.plonegroup.utils import get_organizations
@@ -259,7 +260,7 @@ ItemProposingGroupsForFacetedFilterVocabularyFactory = ItemProposingGroupsForFac
 class GroupsInChargeVocabulary(object):
     implements(IVocabularyFactory)
 
-    def __call___cachekey(method, self, context, only_selected=True, sort=True):
+    def __call___cachekey(method, self, context, only_selected=True, sort=True, the_objects=False):
         '''cachekey method for self.__call__.'''
         date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.groupsinchargevocabulary')
         tool = api.portal.get_tool('portal_plonemeeting')
@@ -267,7 +268,7 @@ class GroupsInChargeVocabulary(object):
         return date, cfg.getId(), only_selected, sort
 
     @ram.cache(__call___cachekey)
-    def __call__(self, context, only_selected=True, sort=True):
+    def __call__(self, context, only_selected=True, sort=True, the_objects=False):
         """List groups in charge :
            - if groupsInCharge in MeetingConfig.usedItemAttributes,
              list MeetingConfig.orderedGroupsInCharge;
@@ -305,15 +306,20 @@ class GroupsInChargeVocabulary(object):
             kept_org_uids = cfg.getOrderedGroupsInCharge()
             res = get_organizations(only_selected=only_selected, kept_org_uids=kept_org_uids)
 
-        res = [SimpleTerm(gic.UID(),
-                          gic.UID(),
-                          safe_unicode(gic.get_full_title(first_index=1)))
-               for gic in res]
+        terms = []
+        for org in res:
+            term_value = org
+            if not the_objects:
+                term_value = org.UID()
+            terms.append(
+                SimpleTerm(term_value,
+                           term_value,
+                           safe_unicode(org.get_full_title(first_index=1))))
 
         if sort or not is_using_cfg_order:
-            res = humansorted(res, key=attrgetter('title'))
+            terms = humansorted(terms, key=attrgetter('title'))
 
-        return SimpleVocabulary(res)
+        return SimpleVocabulary(terms)
 
 
 GroupsInChargeVocabularyFactory = GroupsInChargeVocabulary()
@@ -386,6 +392,21 @@ class EveryOrganizationsAcronymsVocabulary(EveryOrganizationsVocabulary):
 
 
 EveryOrganizationsAcronymsVocabularyFactory = EveryOrganizationsAcronymsVocabulary()
+
+
+class PMSortedSelectedOrganizationsElephantVocabulary(SortedSelectedOrganizationsElephantVocabulary):
+    """ """
+
+    def _term_value(self, orga):
+        """ """
+        return orga
+
+    def __call__(self, context):
+        """Dos not work with ElephantVocabulary so unwrap it."""
+        wrapped_vocab = super(PMSortedSelectedOrganizationsElephantVocabulary, self).__call__(context)
+        return wrapped_vocab.vocab
+
+PMSortedSelectedOrganizationsElephantVocabularyFactory = PMSortedSelectedOrganizationsElephantVocabulary()
 
 
 class MeetingReviewStatesVocabulary(object):
@@ -878,30 +899,6 @@ class SentToInfosVocabulary(object):
 SentToInfosVocabularyFactory = SentToInfosVocabulary()
 
 
-class SendToAuthorityVocabulary(object):
-    implements(IVocabularyFactory)
-
-    def __call__(self, context):
-        """ """
-        res = []
-        res.append(SimpleTerm('1',
-                              '1',
-                              safe_unicode(translate('to_be_send_to_authority_term',
-                                                     domain='PloneMeeting',
-                                                     context=context.REQUEST)))
-                   )
-        res.append(SimpleTerm('0',
-                              '0',
-                              safe_unicode(translate('not_to_be_send_to_authority_term',
-                                                     domain='PloneMeeting',
-                                                     context=context.REQUEST)))
-                   )
-        return SimpleVocabulary(res)
-
-
-SendToAuthorityVocabularyFactory = SendToAuthorityVocabulary()
-
-
 class HasAnnexesToPrintVocabulary(object):
     implements(IVocabularyFactory)
 
@@ -959,17 +956,17 @@ HasAnnexesToSignVocabularyFactory = HasAnnexesToSignVocabulary()
 class BooleanForFacetedVocabulary(object):
     implements(IVocabularyFactory)
 
-    def __call__(self, context):
+    def __call__(self, context, prefix=''):
         """ """
         res = []
-        res.append(SimpleTerm('0',
-                              '0',
+        res.append(SimpleTerm(prefix + '0',
+                              prefix + '0',
                               safe_unicode(translate('boolean_value_false',
                                                      domain='PloneMeeting',
                                                      context=context.REQUEST)))
                    )
-        res.append(SimpleTerm('1',
-                              '1',
+        res.append(SimpleTerm(prefix + '1',
+                              prefix + '1',
                               safe_unicode(translate('boolean_value_true',
                                                      domain='PloneMeeting',
                                                      context=context.REQUEST)))
@@ -1521,31 +1518,25 @@ class AnnexRestrictShownAndEditableAttributesVocabulary(object):
 AnnexRestrictShownAndEditableAttributesVocabularyFactory = AnnexRestrictShownAndEditableAttributesVocabulary()
 
 
-class KeepAccessToItemWhenAdviceIsGivenVocabulary(object):
+class KeepAccessToItemWhenAdviceVocabulary(object):
     """ """
     implements(IVocabularyFactory)
 
     def __call__(self, context):
         res = []
-        res.append(
-            SimpleTerm('', '', translate(
-                'use_meetingconfig_value',
-                domain='PloneMeeting',
-                context=context.REQUEST)))
-        res.append(
-            SimpleTerm('0', '0', translate(
-                'boolean_value_false',
-                domain='PloneMeeting',
-                context=context.REQUEST)))
-        res.append(
-            SimpleTerm('1', '1', translate(
-                'boolean_value_true',
-                domain='PloneMeeting',
-                context=context.REQUEST)))
+        values = ('default', 'was_giveable', 'is_given')
+        if context.portal_type != 'MeetingConfig':
+            values = ('use_meetingconfig_value', ) + values
+        for value in values:
+            res.append(
+                SimpleTerm(value, value, translate(
+                    'keep_access_to_item_when_advice_' + value,
+                    domain='PloneMeeting',
+                    context=context.REQUEST)))
         return SimpleVocabulary(res)
 
 
-KeepAccessToItemWhenAdviceIsGivenVocabularyFactory = KeepAccessToItemWhenAdviceIsGivenVocabulary()
+KeepAccessToItemWhenAdviceVocabularyFactory = KeepAccessToItemWhenAdviceVocabulary()
 
 
 class PMMergeTemplatesVocabulary(MergeTemplatesVocabularyFactory):
@@ -1746,7 +1737,7 @@ class AssociatedGroupsVocabulary(object):
     """ """
     implements(IVocabularyFactory)
 
-    def __call___cachekey(method, self, context, sort=True):
+    def __call___cachekey(method, self, context, sort=True, the_objects=False):
         '''cachekey method for self.__call__.'''
         date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.associatedgroupsvocabulary')
         tool = api.portal.get_tool('portal_plonemeeting')
@@ -1754,7 +1745,7 @@ class AssociatedGroupsVocabulary(object):
         return date, sort, cfg
 
     @ram.cache(__call___cachekey)
-    def __call__(self, context, sort=True):
+    def __call__(self, context, sort=True, the_objects=False):
         """ """
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
@@ -1769,8 +1760,10 @@ class AssociatedGroupsVocabulary(object):
 
         terms = []
         for org in orgs:
-            org_uid = org.UID()
-            terms.append(SimpleTerm(org_uid, org_uid, org.get_full_title()))
+            term_value = org
+            if not the_objects:
+                term_value = org.UID()
+            terms.append(SimpleTerm(term_value, term_value, org.get_full_title()))
 
         if sort or not is_using_cfg_order:
             terms = humansorted(terms, key=attrgetter('title'))
@@ -1978,10 +1971,16 @@ class PMUsers(UsersFactory):
         # manage duplicates, this can be the case when using LDAP and same userid in source_users
         userids = []
         for user in users:
-            if user['id'] not in userids:
-                userids.append(user['id'])
-                term_title = u'{0} ({1})'.format(safe_unicode(self._user_fullname(user['id'])), user['id'])
-                term = SimpleTerm(user['id'], user['id'], term_title)
+            user_id = user['id']
+            if user_id not in userids:
+                userids.append(user_id)
+                # bypass special characters, may happen when using LDAP
+                try:
+                    unicode(user_id)
+                except UnicodeDecodeError:
+                    continue
+                term_title = u'{0} ({1})'.format(safe_unicode(self._user_fullname(user_id)), user_id)
+                term = SimpleTerm(user_id, user_id, term_title)
                 terms.append(term)
         terms = humansorted(terms, key=attrgetter('title'))
         return SimpleVocabulary(terms)

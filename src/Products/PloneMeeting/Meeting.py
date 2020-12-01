@@ -12,7 +12,6 @@
 from AccessControl import ClassSecurityInfo
 from App.class_init import InitializeClass
 from appy.gen import No
-from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
 from collections import OrderedDict
 from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.contact.plonegroup.config import get_registry_organizations
@@ -27,13 +26,13 @@ from persistent.mapping import PersistentMapping
 from plone import api
 from plone.api.validation import mutually_exclusive_parameters
 from plone.app.querystring.querybuilder import queryparser
+from plone.app.uuid.utils import uuidToCatalogBrain
 from plone.memoize import ram
 from Products.Archetypes.atapi import BooleanField
 from Products.Archetypes.atapi import DateTimeField
 from Products.Archetypes.atapi import IntegerField
 from Products.Archetypes.atapi import OrderedBaseFolder
 from Products.Archetypes.atapi import OrderedBaseFolderSchema
-from Products.Archetypes.atapi import ReferenceField
 from Products.Archetypes.atapi import registerType
 from Products.Archetypes.atapi import RichWidget
 from Products.Archetypes.atapi import Schema
@@ -109,20 +108,10 @@ class MeetingWorkflowConditions(object):
     implements(IMeetingWorkflowConditions)
     security = ClassSecurityInfo()
 
-    # Item states when a final decision is taken
-    archivableStates = ('confirmed', 'delayed', 'refused')
-
     def __init__(self, meeting):
         self.context = meeting
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
-
-    def _decisionsAreArchivable(self):
-        '''Returns True all the decisions may be archived.'''
-        for item in self.context.getItems():
-            if item.queryState() not in self.archivableStates:
-                return False
-        return True
 
     security.declarePublic('mayAcceptItems')
 
@@ -184,18 +173,6 @@ class MeetingWorkflowConditions(object):
     def mayClose(self):
         if _checkPermission(ReviewPortalContent, self.context):
             return True
-
-    security.declarePublic('mayArchive')
-
-    def mayArchive(self):
-        if _checkPermission(ReviewPortalContent, self.context) and \
-           self._decisionsAreArchivable():
-            return True
-
-    security.declarePublic('mayRepublish')
-
-    def mayRepublish(self):
-        return False
 
     security.declarePublic('mayChangeItemsOrder')
 
@@ -290,17 +267,6 @@ class MeetingWorkflowActions(object):
         '''When the wfAdaptation 'hide_decisions_when_under_writing' is activated.'''
         pass
 
-    security.declarePrivate('doArchive')
-
-    def doArchive(self, stateChange):
-        ''' '''
-        pass
-
-    security.declarePrivate('doRepublish')
-
-    def doRepublish(self, stateChange):
-        pass
-
     security.declarePrivate('doBackToCreated')
 
     def doBackToCreated(self, stateChange):
@@ -335,18 +301,6 @@ class MeetingWorkflowActions(object):
 
     def doBackToFrozen(self, stateChange):
         pass
-
-    security.declarePrivate('doBackToClosed')
-
-    def doBackToClosed(self, stateChange):
-        # Every item must go back to its previous state: confirmed, delayed or
-        # refused.
-        wfTool = self.context.portal_workflow
-        for item in self.context.getItems():
-            itemHistory = item.workflow_history['meetingitem_workflow']
-            previousState = itemHistory[-2]['review_state']
-            previousState = previousState[0].upper() + previousState[1:]
-            wfTool.doActionFor(item, 'backTo' + previousState)
 
 
 InitializeClass(MeetingWorkflowActions)
@@ -696,18 +650,6 @@ schema = Schema((
         searchable=True,
         optional=True,
     ),
-    ReferenceField(
-        name='items',
-        widget=ReferenceBrowserWidget(
-            visible=False,
-            label='Items',
-            label_msgid='PloneMeeting_label_items',
-            i18n_domain='PloneMeeting',
-        ),
-        allowed_types="('MeetingItem',)",
-        multiValued=True,
-        relationship="MeetingItems",
-    ),
     IntegerField(
         name='meetingNumber',
         default=-1,
@@ -777,7 +719,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
 
     schema = Meeting_schema
 
-    meetingClosedStates = ['closed', 'archived']
+    meetingClosedStates = ['closed']
 
     # declarePublic so it is callable in item view template
     # when the meeting is not viewable by the current user
@@ -885,6 +827,37 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         # selectedViewFields must return a list of tuple
         return [(elt, elt) for elt in itemsListVisibleColumns]
 
+    def post_validate(self, REQUEST=None, errors=None):
+        '''Validate attendees in post_validate as there is no field in schema for it.
+           - an attendee may not be unselected if something is redefined for it on an item.'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+
+        if cfg.isUsingContacts() and not self.isTemporary():
+            # REQUEST.form['meeting_attendees'] is like
+            # ['muser_attendeeuid1_attendee', 'muser_attendeeuid2_excused']
+            stored_attendees = self.getAllUsedHeldPositions(the_objects=False)
+            meeting_attendees = [attendee.split('_')[1] for attendee
+                                 in REQUEST.form.get('meeting_attendees', [])]
+            removed_meeting_attendees = set(stored_attendees).difference(meeting_attendees)
+            # attendees redefined on items
+            itemNonAttendees = self.getItemNonAttendees(by_persons=True)
+            itemAbsents = self.getItemAbsents(by_persons=True)
+            itemExcused = self.getItemExcused(by_persons=True)
+            itemSignatories = self.getItemSignatories(by_signatories=True)
+            redefined_item_attendees = itemNonAttendees.keys() + \
+                itemAbsents.keys() + itemExcused.keys() + itemSignatories.keys()
+            conflict_attendees = removed_meeting_attendees.intersection(redefined_item_attendees)
+            if conflict_attendees:
+                attendee_uid = tuple(removed_meeting_attendees)[0]
+                attendee_brain = uuidToCatalogBrain(attendee_uid)
+                errors['meeting_attendees'] = translate(
+                    'can_not_remove_attendee_redefined_on_items',
+                    mapping={'attendee_title': attendee_brain.get_full_title},
+                    domain='PloneMeeting',
+                    context=REQUEST)
+        return errors
+
     security.declarePrivate('validate_date')
 
     def validate_date(self, value):
@@ -939,10 +912,11 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getAllUsedHeldPositions')
 
-    def getAllUsedHeldPositions(self, include_new=False):
+    def getAllUsedHeldPositions(self, include_new=False, the_objects=True):
         '''This will return every currently stored held_positions.
            If include_new=True, extra held_positions newly selected in the
            configuration are added.
+           If p_the_objects=True, we return held_position objects, UID otherwise.
            '''
         # used Persons are held_positions stored in orderedContacts
         contacts = hasattr(self.aq_base, 'orderedContacts') and list(self.orderedContacts) or []
@@ -954,17 +928,19 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             selectable_contacts = cfg.getOrderedContacts()
             new_selectable_contacts = [c for c in selectable_contacts if c not in contacts]
             contacts = contacts + new_selectable_contacts
-        # query held_positions
-        catalog = api.portal.get_tool('portal_catalog')
-        brains = catalog(UID=contacts)
 
-        # make sure we have correct order because query was not sorted
-        # we need to sort found brains according to uids
-        def getKey(item):
-            return contacts.index(item.UID)
-        brains = sorted(brains, key=getKey)
-        held_positions = [brain.getObject() for brain in brains]
-        return tuple(held_positions)
+        if the_objects:
+            # query held_positions
+            catalog = api.portal.get_tool('portal_catalog')
+            brains = catalog(UID=contacts)
+
+            # make sure we have correct order because query was not sorted
+            # we need to sort found brains according to uids
+            def getKey(item):
+                return contacts.index(item.UID)
+            brains = sorted(brains, key=getKey)
+            contacts = [brain.getObject() for brain in brains]
+        return tuple(contacts)
 
     security.declarePublic('getDefaultAttendees')
 
@@ -1022,13 +998,13 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('getExcused')
 
     def getExcused(self, theObjects=False):
-        '''See docstring in previous method.'''
+        '''Returns the excused in this meeting.'''
         return self._getContacts('excused', theObjects=theObjects)
 
     security.declarePublic('getAbsents')
 
     def getAbsents(self, theObjects=False):
-        '''See docstring in previous method.'''
+        '''Returns the absents in this meeting.'''
         return self._getContacts('absent', theObjects=theObjects)
 
     security.declarePublic('getSignatories')
@@ -1247,6 +1223,14 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             res = [brain._unrestrictedGetObject() for brain in res]
         return res
 
+    def getRawItems(self):
+        """Simply get linked items."""
+        catalog = api.portal.get_tool('portal_catalog')
+        catalog_query = self.getRawQuery(force_linked_items_query=True)
+        query = queryparser.parseFormquery(self, catalog_query)
+        res = [brain.UID for brain in catalog.unrestrictedSearchResults(**query)]
+        return res
+
     security.declarePublic('getItemsInOrder')
 
     def getItemsInOrder(self, late=False, uids=[]):
@@ -1417,12 +1401,11 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
                 item.setItemNumber(100)
 
         # Add the item at the end of the items list
-        items.append(item)
-        self._finalize_item_insert(items, items_to_update=[item])
+        item._update_meeting_link(meeting_uid=self.UID())
+        self._finalize_item_insert(items_to_update=[item])
 
-    def _finalize_item_insert(self, items, items_to_update=[]):
+    def _finalize_item_insert(self, items_to_update=[]):
         """ """
-        self.setItems(items)
         # invalidate RAMCache for MeetingItem.getMeeting
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeeting')
         # reindex getItemNumber when item is in the meeting or getItemNumber returns None
@@ -1452,6 +1435,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         itemNumber = item.getItemNumber()
         items = self.getItems()
         try:
+            item._update_meeting_link(meeting_uid=None)
             items.remove(item)
             # set listType back to 'normal' if it was late
             # if it is another value (custom), we do not change it
@@ -1482,7 +1466,6 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             if field.getName().startswith('itemAssembly') or field.getName() == 'itemSignatures':
                 field.set(item, '')
 
-        self.setItems(items)
         # Update item numbers
         # in case itemNumber was a subnumber (or a master having subnumber),
         # we will just update subnumbers of the same integer
@@ -1681,7 +1664,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         attendees = OrderedDict()
         for key in meeting_attendees:
             # remove leading muser_
-            position_uid, attendee_type = key[6:].split('_')
+            prefix, position_uid, attendee_type = key.split('_')
             attendees[position_uid] = attendee_type
 
         # manage signatories, remove ''
@@ -1909,7 +1892,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
 
     def isDecided(self):
         meeting = self.getSelf()
-        return meeting.queryState() in ('decided', 'closed', 'archived', 'decisions_published', )
+        return meeting.queryState() in ('decided', 'closed', 'decisions_published', )
 
     security.declarePublic('getSpecificMailContext')
 

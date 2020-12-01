@@ -17,6 +17,8 @@
            name="Products.PloneMeeting.vocabularies.everyorganizationsvocabulary" />
   <utility component=".vocabularies.EveryOrganizationsAcronymsVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.everyorganizationsacronymsvocabulary" />
+  <utility component=".vocabularies.PMSortedSelectedOrganizationsElephantVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.sortedselectedorganizationsvocabulary" />
   <utility component=".vocabularies.AssociatedGroupsVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.associatedgroupsvocabulary" />
   <utility component=".vocabularies.ItemAssociatedGroupsVocabularyFactory"
@@ -49,8 +51,6 @@
            name="Products.PloneMeeting.vocabularies.advicetypesvocabulary" />
   <utility component=".vocabularies.SentToInfosVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.senttoinfosvocabulary" />
-  <utility component=".vocabularies.SendToAuthorityVocabularyFactory"
-           name="Products.PloneMeeting.vocabularies.sendtoauthorityvocabulary" />
   <utility component=".vocabularies.BooleanForFacetedVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.booleanforfacetedvocabulary" />
   <utility component=".vocabularies.HasAnnexesToPrintVocabularyFactory"
@@ -99,8 +99,8 @@
   <!-- PMOrganization vocabularies -->
   <utility component=".vocabularies.ItemAllStatesVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.itemallstates" />
-  <utility component=".vocabularies.KeepAccessToItemWhenAdviceIsGivenVocabularyFactory"
-           name="Products.PloneMeeting.content.organization.keep_access_to_item_when_advice_is_given_vocabulary" />
+  <utility component=".vocabularies.KeepAccessToItemWhenAdviceVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.keep_access_to_item_when_advice_vocabulary" />
 
   <!-- Vocabulary used in collectionwidget and inheritating from the imio.dashboard vocabulary -->
   <utility component=".vocabularies.PMConditionAwareCollectionVocabularyFactory"

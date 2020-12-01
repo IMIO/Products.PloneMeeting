@@ -205,7 +205,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         self.assertEqual(item.listProposingGroups().keys(), [self.developers_uid, self.endUsers_uid, self.vendors_uid])
         # remove user from vendors
-        self._removePrincipalFromGroup('pmCreator1', self.vendors_creators)
+        self._removePrincipalFromGroups('pmCreator1', [self.vendors_creators])
         self.assertEqual(item.listProposingGroups().keys(), [self.developers_uid, self.endUsers_uid])
 
     def test_pm_ListProposingGroupsKeepConfigSorting(self):
@@ -347,7 +347,24 @@ class testMeetingItem(PloneMeetingTestCase):
         item._update_after_edit()
         self.assertEqual(item.getGroupsInCharge(includeAuto=True), [])
 
-    def test_pm_SendItemToOtherMC(self):
+    def test_pm_GetAssociatedGroups(self):
+        # Given an item...
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+
+        # ...With no associated group, getAssociatedGroups() should be empty
+        self.assertEqual(item.getAssociatedGroups(), ())
+        self.assertEqual(item.getAssociatedGroups(theObjects=True), ())
+
+        # ...With associated groups
+        item.setAssociatedGroups((self.developers_uid, self.vendors_uid))
+        # getAssociatedGroups() should contain uids
+        self.assertEqual(item.getAssociatedGroups(), (self.developers_uid, self.vendors_uid))
+
+        # getAssociatedGroups() should contain organization objects
+        self.assertEqual(item.getAssociatedGroups(theObjects=True), (self.developers, self.vendors))
+
+    def test_pm_SendItemToOtherMCDefaultFunctionnality(self):
         '''Test the send an item to another meetingConfig functionnality'''
         # Activate the functionnality
         self.changeUser('admin')
@@ -360,7 +377,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # and it has not already been sent to this other meetingConfig
         self.changeUser('pmManager')
         meetingDate = DateTime('2008/06/12 08:00:00')
-        m1 = self.create('Meeting', date=meetingDate)
+        meeting = self.create('Meeting', date=meetingDate)
         # a creator creates an item
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
@@ -383,8 +400,9 @@ class testMeetingItem(PloneMeetingTestCase):
         # do necessary transitions on the meeting before being able to accept an item
         necessaryMeetingTransitionsToAcceptItem = self._getNecessaryMeetingTransitionsToAcceptItem()
         for transition in necessaryMeetingTransitionsToAcceptItem:
-            self.do(m1, transition)
-            self.failIf(item.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
+            if transition in self.transitions(meeting):
+                self.do(meeting, transition)
+                self.failIf(item.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
         self.do(item, 'accept')
         # still not sendable as 'plonemeeting-assembly' not in item.otherMeetingConfigsClonableTo
         self.failIf(item.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
@@ -401,7 +419,10 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg.at_post_edit_script()
         self.changeUser('pmManager')
         self.failIf(item.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
-        self.assertFalse(item.showClonableToOtherMeetingConfigs())
+        # field still shown because not empty
+        self.assertTrue(item.showClonableToOtherMCs())
+        item.setOtherMeetingConfigsClonableTo(())
+        self.assertFalse(item.showClonableToOtherMCs())
 
         # ok, activate it and send it!
         self.changeUser('admin')
@@ -409,7 +430,8 @@ class testMeetingItem(PloneMeetingTestCase):
             ({'meeting_config': otherMeetingConfigId,
               'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL}, ))
         cfg.at_post_edit_script()
-        self.assertTrue(item.showClonableToOtherMeetingConfigs())
+        self.assertTrue(item.showClonableToOtherMCs())
+        item.setOtherMeetingConfigsClonableTo((otherMeetingConfigId,))
         self.changeUser('pmManager')
         self.failUnless(item.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
         item.cloneToOtherMeetingConfig(otherMeetingConfigId)
@@ -455,7 +477,8 @@ class testMeetingItem(PloneMeetingTestCase):
         # An item is automatically sent to the other meetingConfigs when it is 'accepted'
         # if every conditions are correct
         self.failIf(otherMeetingConfigId in item._getOtherMeetingConfigsImAmClonedIn())
-        self.do(item, 'backToItemFrozen')
+        back_transition = [tr for tr in self.transitions(item) if tr.startswith('back')][0]
+        self.do(item, back_transition)
         self.do(item, 'accept')
         # The item as been automatically sent to the 'plonemeeting-assembly'
         self.failUnless(otherMeetingConfigId in item._getOtherMeetingConfigsImAmClonedIn())
@@ -476,25 +499,25 @@ class testMeetingItem(PloneMeetingTestCase):
                          [None, 'create_to_%s_from_%s' % (otherMeetingConfigId, meetingConfigId)])
         # now check that the item is sent to another meetingConfig for each
         # cfg.getItemAutoSentToOtherMCStates() state
-        needToBackToFrozen = True
+        needToBackToPublished = True
         for state in cfg.getItemAutoSentToOtherMCStates():
-            if needToBackToFrozen:
+            if needToBackToPublished:
                 # do this as 'Manager' in case 'MeetingManager' can not delete the item in used item workflow
                 self.deleteAsManager(newUID)
-                self.do(item, 'backToItemFrozen')
+                self.do(item, back_transition)
                 self.failIf(item._checkAlreadyClonedToOtherMC(otherMeetingConfigId))
                 self.assertFalse(item.getItemClonedToOtherMC(otherMeetingConfigId))
             transition = getTransitionToReachState(item, state)
             if not transition:
                 pm_logger.info("Could not test if item is sent to other meeting config in state '%s' !" % state)
-                needToBackToFrozen = False
+                needToBackToPublished = False
                 continue
             self.do(item, transition)
             self.failUnless(item._checkAlreadyClonedToOtherMC(otherMeetingConfigId))
             self.assertTrue(item.getItemClonedToOtherMC(otherMeetingConfigId))
             self.failUnless(otherMeetingConfigId in item._getOtherMeetingConfigsImAmClonedIn())
             newUID = annotations[annotationKey]
-            needToBackToFrozen = True
+            needToBackToPublished = True
 
     def test_pm_SendItemToOtherMCActions(self):
         '''Test how actions are managed in portal_actions when sendItemToOtherMC functionnality is activated.'''
@@ -631,8 +654,10 @@ class testMeetingItem(PloneMeetingTestCase):
         # Do necessary transitions on the meeting before being able to accept an item
         necessaryMeetingTransitionsToAcceptItem = self._getNecessaryMeetingTransitionsToAcceptItem()
         for transition in necessaryMeetingTransitionsToAcceptItem:
-            self.do(meeting, transition)
-            self.failIf(item.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
+            # do not break in case 'no_publication' WFA is enabled for example
+            if transition in self.transitions(meeting):
+                self.do(meeting, transition)
+                self.failIf(item.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
         if with_annexes:
             decisionAnnex1 = self.addAnnex(item, relatedTo='item_decision')
             decisionAnnex2 = self.addAnnex(item,
@@ -1139,7 +1164,9 @@ class testMeetingItem(PloneMeetingTestCase):
         # it will be presented to the frozenMeeting
         self.deleteAsManager(sentItem.UID())
         item.setOtherMeetingConfigsClonableToEmergency((cfg2Id,))
-        self.backToState(item, 'itemfrozen')
+        # back to itempublished or itemfrozen
+        back_transition = [tr for tr in self.transitions(item) if tr.startswith('back')][0]
+        self.do(item, back_transition)
         cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
         self.do(item, 'accept')
         sentItem = item.getItemClonedToOtherMC(cfg2Id)
@@ -1152,7 +1179,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # before frozenMeeting
         createdMeeting.setDate(now + 1)
         createdMeeting.reindexObject(idxs=['getDate'])
-        self.backToState(item, 'itemfrozen')
+        self.do(item, back_transition)
         cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
         self.do(item, 'accept')
         sentItem = item.getItemClonedToOtherMC(cfg2Id)
@@ -1162,7 +1189,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.deleteAsManager(sentItem.UID())
         createdMeeting.setDate(now - 1)
         createdMeeting.reindexObject(idxs=['getDate'])
-        self.backToState(item, 'itemfrozen')
+        self.do(item, back_transition)
         cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
         self.do(item, 'accept')
         sentItem = item.getItemClonedToOtherMC(cfg2Id)
@@ -1174,7 +1201,7 @@ class testMeetingItem(PloneMeetingTestCase):
         createdMeeting.reindexObject(idxs=['getDate'])
         frozenMeeting.setDate(now - 1)
         frozenMeeting.reindexObject(idxs=['getDate'])
-        self.backToState(item, 'itemfrozen')
+        self.do(item, back_transition)
         cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
         self.do(item, 'accept')
         sentItem = item.getItemClonedToOtherMC(cfg2Id)
@@ -1487,6 +1514,32 @@ class testMeetingItem(PloneMeetingTestCase):
         cleanRamCacheFor('Products.PloneMeeting.Meeting.getItems')
         self.assertEqual([anItem.getPrivacy() for anItem in meeting.getItems(ordered=True)],
                          ['public', 'public', 'public', 'secret', 'secret', 'secret'])
+
+    def test_pm_SendItemToOtherMCAutoReplacedFields(self):
+        '''Test when item sent to other MC and original item
+           is using otherMeetingConfigsClonableToFieldXXX fields.'''
+        cfg = self.meetingConfig
+        cfg2 = self.meetingConfig2
+        cfg2Id = cfg2.getId()
+        cfg2.setUseGroupsAsCategories(True)
+        cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % cfg2Id,
+                                         'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL},))
+        cfg.setItemManualSentToOtherMCStates(('itemcreated', ))
+        self._enableField('otherMeetingConfigsClonableToFieldTitle')
+        self._enableField('otherMeetingConfigsClonableToFieldDecision')
+
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        item.setTitle('Title')
+        item.setDecision('<p></p>')
+        item.setOtherMeetingConfigsClonableToFieldTitle('Field title')
+        item.setOtherMeetingConfigsClonableToFieldDecision('<p>Field decision</p>')
+        item.setOtherMeetingConfigsClonableTo((cfg2Id,))
+        newItem = item.cloneToOtherMeetingConfig(cfg2Id)
+        self.assertEqual(newItem.Title(), 'Field title')
+        self.assertEqual(newItem.getDecision(), '<p>Field decision</p>')
+        self.assertTrue(newItem.fieldIsEmpty('otherMeetingConfigsClonableToFieldTitle'))
+        self.assertTrue(newItem.fieldIsEmpty('otherMeetingConfigsClonableToFieldDecision'))
 
     def test_pm_CloneItemWithSetCurrentAsPredecessor(self):
         '''When an item is cloned with option setCurrentAsPredecessor=True,
@@ -1848,6 +1901,9 @@ class testMeetingItem(PloneMeetingTestCase):
             ['auto__{0}'.format(self.developers_reviewers),
              'auto__{0}'.format(self.developers_advisers),
              'auto__{0}'.format(self.vendors_reviewers)])
+        self.failUnless(READER_USECASES['copy_groups'] in i5.__ac_local_roles__[self.developers_reviewers])
+        self.failUnless(READER_USECASES['copy_groups'] in i5.__ac_local_roles__[self.developers_reviewers])
+        self.failUnless(READER_USECASES['copy_groups'] in i5.__ac_local_roles__[self.vendors_reviewers])
         # when removed from the config, while updating every items,
         # copyGroups are updated correctly
         self.vendors.as_copy_group_on = None
@@ -1857,7 +1913,7 @@ class testMeetingItem(PloneMeetingTestCase):
                          ['auto__{0}'.format(self.developers_reviewers),
                           'auto__{0}'.format(self.developers_advisers)])
         # check that local_roles are correct
-        self.failIf(READER_USECASES['copy_groups'] in i5.__ac_local_roles__[self.vendors_reviewers])
+        self.failIf(self.vendors_reviewers in i5.__ac_local_roles__)
         self.failUnless(READER_USECASES['copy_groups'] in i5.__ac_local_roles__[self.developers_reviewers])
         self.failUnless(READER_USECASES['copy_groups'] in i5.__ac_local_roles__[self.developers_advisers])
         # if a wrong TAL expression is used, it does not break anything upon item at_post_edit_script
@@ -2020,10 +2076,9 @@ class testMeetingItem(PloneMeetingTestCase):
         suffix = 'powerobservers'
         self.assertEqual(i1.__ac_local_roles__['%s_%s' % (cfg.getId(), suffix)],
                          [READER_USECASES[suffix]])
-        for principalId, localRoles in i1.get_local_roles():
-            if not principalId.endswith(suffix):
-                self.assertNotEqual((READER_USECASES['advices'],), localRoles)
-                self.assertNotEqual((READER_USECASES['copy_groups'],), localRoles)
+        # no more copyGroups or advisers
+        self.assertFalse(self.developers_advisers in i1.__ac_local_roles__)
+        self.assertFalse(self.vendors_advisers in i1.__ac_local_roles__)
 
     def test_pm_CopyGroups(self):
         '''Test that if a group is set as copyGroups, the item is Viewable.'''
@@ -2381,6 +2436,7 @@ class testMeetingItem(PloneMeetingTestCase):
            Check also the @@toggle_item_is_signed view that do some unrestricted things...'''
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
+        item_uid = item.UID()
         item.setCategory('development')
         item.setDecision('<p>My decision</p>', mimetype='text/html')
         # MeetingMember can not setItemIsSigned
@@ -2393,7 +2449,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmManager')
         self.assertFalse(item.maySignItem())
         self.assertRaises(Unauthorized, item.setItemIsSigned, True)
-        self.assertRaises(Unauthorized, item.restrictedTraverse('@@toggle_item_is_signed'), item.UID())
+        self.assertRaises(Unauthorized, item.restrictedTraverse('@@toggle_item_is_signed'), item_uid)
         self.assertRaises(Unauthorized, item.setItemIsSigned, True)
         meetingDate = DateTime('2008/06/12 08:00:00')
         meeting = self.create('Meeting', date=meetingDate)
@@ -2412,12 +2468,15 @@ class testMeetingItem(PloneMeetingTestCase):
             self.do(item, 'accept')
         # a signed item can still be unsigned until the meeting is closed
         self.assertTrue(item.maySignItem())
+        self.assertTrue(self.catalog(item_is_signed='1', UID=item_uid))
         # call to @@toggle_item_is_signed will set it back to False (toggle)
-        item.restrictedTraverse('@@toggle_item_is_signed')(item.UID())
+        item.restrictedTraverse('@@toggle_item_is_signed')(item_uid)
         self.assertFalse(item.getItemIsSigned())
+        self.assertTrue(self.catalog(item_is_signed='0', UID=item_uid))
         # toggle itemIsSigned value again
-        item.restrictedTraverse('@@toggle_item_is_signed')(item.UID())
+        item.restrictedTraverse('@@toggle_item_is_signed')(item_uid)
         self.assertTrue(item.getItemIsSigned())
+        self.assertTrue(self.catalog(item_is_signed='1', UID=item_uid))
         # check accessing setItemIsSigned directly
         item.setItemIsSigned(False)
         self.closeMeeting(meeting)
@@ -2427,7 +2486,7 @@ class testMeetingItem(PloneMeetingTestCase):
         item.setItemIsSigned(True)
         self.assertFalse(item.maySignItem())
         self.assertRaises(Unauthorized, item.setItemIsSigned, False)
-        self.assertRaises(Unauthorized, item.restrictedTraverse('@@toggle_item_is_signed'), item.UID())
+        self.assertRaises(Unauthorized, item.restrictedTraverse('@@toggle_item_is_signed'), item_uid)
 
     def test_pm_IsPrivacyViewable(self):
         '''
@@ -2574,7 +2633,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(item.adapted().isPrivacyViewable())
         self.validateItem(item)
         self.assertTrue(item.adapted().isPrivacyViewable())
-        self._removePrincipalFromGroup('restrictedpowerobserver1', self.developers_creators)
+        self._removePrincipalFromGroups('restrictedpowerobserver1', [self.developers_creators])
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.isPrivacyViewable')
         self.assertFalse(item.adapted().isPrivacyViewable())
 
@@ -3929,7 +3988,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual([m.id for m in cfg.getMeetingsAcceptingItems()], [m1.id, m2.id, m3.id])
         cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
         # getMeetingsAcceptingItems should only return meetings
-        # that are 'created' or 'frozen' for the meetingMember
+        # that are 'created' or 'frozen' for the creators
         self.changeUser('pmCreator1')
         self.assertEqual([m.id for m in cfg.getMeetingsAcceptingItems()], [m1.id, m2.id])
 
@@ -3965,9 +4024,10 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg = self.meetingConfig
         self.changeUser('pmManager')
         meeting = self._createMeetingWithItems()
+        items = meeting.getItems(ordered=True)
         self.decideMeeting(meeting)
         # we will adapt item decision when the item is delayed
-        item1 = meeting.getItems()[0]
+        item1 = items[0]
         originalDecision = '<p>Current item decision.</p>'
         item1.setDecision(originalDecision)
         # for now, as nothing is defined, nothing happens when item is delayed
@@ -3979,7 +4039,7 @@ class testMeetingItem(PloneMeetingTestCase):
             ({'transition': 'delay',
               'field_name': 'MeetingItem.decision',
               'tal_expression': 'string:%s' % delayedItemDecision},))
-        item2 = meeting.getItems()[1]
+        item2 = items[1]
         item2.setDecision(originalDecision)
         self.do(item2, 'delay')
         self.assertEqual(item2.getDecision(), delayedItemDecision)
@@ -3990,7 +4050,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(duplicatedItem.getPredecessor(), item2)
         self.assertEqual(duplicatedItem.getDecision(), originalDecision)
         # this work also when triggering any other item or meeting transition with every rich fields
-        item3 = meeting.getItems()[2]
+        item3 = items[2]
         cfg.setOnTransitionFieldTransforms(
             ({'transition': 'accept',
               'field_name': 'MeetingItem.description',
@@ -4004,7 +4064,7 @@ class testMeetingItem(PloneMeetingTestCase):
             ({'transition': 'accept',
               'field_name': 'MeetingItem.decision',
               'tal_expression': 'some_wrong_tal_expression'},))
-        item4 = meeting.getItems()[3]
+        item4 = items[3]
         item4.setDecision('<p>My decision that will not be touched.</p>')
         self.do(item4, 'accept')
         # transition was triggered
@@ -4015,10 +4075,37 @@ class testMeetingItem(PloneMeetingTestCase):
         messages = IStatusMessage(self.request).show()
         self.assertEqual(messages[-1].message, ON_TRANSITION_TRANSFORM_TAL_EXPR_ERROR %
                          ('decision', "'some_wrong_tal_expression'"))
+        # if the TAL expression returns something else than a string, it does not break
+        cfg.setOnTransitionFieldTransforms(
+            ({'transition': 'accept',
+              'field_name': 'MeetingItem.decision',
+              'tal_expression': 'python:False'},))
+        item5 = items[4]
+        self.do(item5, 'accept')
+        # field was not changed
+        self.assertEqual(item5.getDecision(), '<p>A decision</p>')
+        messages = IStatusMessage(self.request).show()
+        self.assertEqual(
+            messages[-1].message, ON_TRANSITION_TRANSFORM_TAL_EXPR_ERROR %
+            ('decision', "Value is not File or String (<type 'bool'> - <type 'bool'>)"))
+        cfg.setOnTransitionFieldTransforms(
+            ({'transition': 'accept',
+              'field_name': 'MeetingItem.decision',
+              'tal_expression': 'python:None'},))
+        item6 = items[5]
+        self.do(item6, 'accept')
+        self.assertFalse(IStatusMessage(self.request).show())
+        self.assertEqual(item6.getDecision(), '')
+        self.assertEqual(item6.decision.mimetype, 'text/html')
 
     def test_pm_OnTransitionFieldTransformsUseLastCommentFromHistory(self):
         '''Use comment of last WF transition in expression.'''
         cfg = self.meetingConfig
+        wfAdaptations = list(cfg.getWorkflowAdaptations())
+        if 'no_publication' not in wfAdaptations:
+            wfAdaptations.append('no_publication')
+            cfg.setWorkflowAdaptations(wfAdaptations)
+            cfg.at_post_edit_script()
         self.changeUser('pmManager')
         meeting = self._createMeetingWithItems()
         self.decideMeeting(meeting)
@@ -4854,7 +4941,8 @@ class testMeetingItem(PloneMeetingTestCase):
             'itemAssemblyGuests', 'itemInitiator', 'itemIsSigned',
             'itemKeywords', 'itemNumber', 'itemReference',
             'itemSignatures', 'itemTags', 'listType', 'manuallyLinkedItems',
-            'meetingTransitionInsertingMe', 'inAndOutMoves', 'notes', 'meetingManagersNotes',
+            'meetingTransitionInsertingMe', 'inAndOutMoves', 'notes',
+            'meetingManagersNotes', 'meetingManagersNotesSuite', 'meetingManagersNotesEnd',
             'marginalNotes', 'observations', 'pollTypeObservations',
             'predecessor', 'preferredMeeting', 'proposingGroup',
             'takenOverBy', 'templateUsingGroups',
@@ -5457,7 +5545,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertFalse(recurringItem.adapted().mayAskCompletenessEvalAgain())
         self.assertFalse(templateItem.adapted().mayAskCompletenessEvalAgain())
 
-        # by default, a MeetingMember can not evaluate completeness
+        # by default, a creator can not evaluate completeness
         # user must have role ITEM_COMPLETENESS_EVALUATORS, like MeetingManager
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
@@ -5926,9 +6014,6 @@ class testMeetingItem(PloneMeetingTestCase):
     def test_pm_ItemExternalImagesStoredLocally(self):
         """External images are stored locally."""
         cfg = self.meetingConfig
-        if 'creator_initiated_decisions' in cfg.listWorkflowAdaptations():
-            cfg.setWorkflowAdaptations(('creator_initiated_decisions', ))
-            performWorkflowAdaptations(cfg, logger=pm_logger)
         self.changeUser('pmCreator1')
         # creation time
         text = '<p>Working external image <img src="%s"/>.</p>' % self.external_image1
@@ -6419,7 +6504,8 @@ class testMeetingItem(PloneMeetingTestCase):
         item.setPreferredMeeting(meeting.UID())
         self.validateItem(item)
         self.assertFalse(item.wfConditions().isLateFor(meeting))
-        late_icon_html = u"<img title='Late' src='http://nohost/plone/late.png' />"
+        late_icon_html = u"<img title='Late' src='http://nohost/plone/late.png' " \
+            "style=\"width: 16px; height: 16px;\" />"
         self.assertFalse(late_icon_html in IPrettyLink(item).getLink())
         # right now change current URL so displaying_available_items is True
         self.request['URL'] = meeting.absolute_url() + '/@@meeting_available_items_view'
@@ -6497,7 +6583,8 @@ class testMeetingItem(PloneMeetingTestCase):
             in IPrettyLink(item).getLink())
         self.assertTrue(
             u'<img title=\'Sent from {0}, original item is "{1}".\' '
-            u'src=\'http://nohost/plone/cloned_not_decided.png\' />'.format(
+            u'src=\'http://nohost/plone/cloned_not_decided.png\' '
+            u'style="width: 16px; height: 16px;" />'.format(
                 cfg.Title(),
                 translate(item.queryState(), domain="plone", context=self.request)
             )
@@ -6506,7 +6593,8 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(item.queryState(), self._stateMappingFor('proposed'))
         self.assertTrue(
             u'<img title=\'Sent from {0}, original item is "{1}".\' '
-            u'src=\'http://nohost/plone/cloned_not_decided.png\' />'.format(
+            u'src=\'http://nohost/plone/cloned_not_decided.png\' '
+            u'style="width: 16px; height: 16px;" />'.format(
                 cfg.Title(),
                 translate(item.queryState(), domain="plone", context=self.request)
             )
@@ -6939,6 +7027,152 @@ class testMeetingItem(PloneMeetingTestCase):
         # ... nor as item templates manager
         self.changeUser('templatemanager1')
         self.assertRaises(Redirect, api.content.delete, default_template)
+
+    def test_pm_ItemWFValidationLevels_with_extra_suffixes(self):
+        """Test when using extra_suffixes that gives same access as suffix in given item state."""
+        cfg = self.meetingConfig
+        # by default, no extra_suffixes, means that 'pmObserver2' may see
+        # item created by 'pmCreator2' but may not modify it
+        self.changeUser('pmCreator2')
+        item = self.create('MeetingItem')
+        self.changeUser('pmObserver2')
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertFalse(self.hasPermission(ModifyPortalContent, item))
+        # adapt configuration, make suffix 'observers' extra_suffix in state 'itemcreated'
+        itemWFValidationLevels = cfg.getItemWFValidationLevels()
+        itemWFValidationLevels[0]['extra_suffixes'] = ['observers']
+        cfg.setItemWFValidationLevels(itemWFValidationLevels)
+        cfg.at_post_edit_script()
+        item.updateLocalRoles()
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertTrue(self.hasPermission(ModifyPortalContent, item))
+
+    def test_pm__update_meeting_link(self):
+        """The MeetingItem._update_meeting_link is
+           keeping the link between meeting and item."""
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime('2020/11/23'))
+        meeting_uid = meeting.UID()
+        meeting_path = "/".join(meeting.getPhysicalPath())
+        item = self.create('MeetingItem')
+        # item not presented, attributes do not exist
+        self.assertIsNone(getattr(item, "linked_meeting_uid", None))
+        self.assertIsNone(getattr(item, "linked_meeting_path", None))
+        self.assertIsNone(item.getMeeting())
+        self.assertIsNone(item.getMeeting(only_uid=True))
+        # presented item
+        self.presentItem(item)
+        self.assertEqual(item.linked_meeting_uid, meeting_uid)
+        self.assertEqual(item.linked_meeting_path, meeting_path)
+        self.assertEqual(item.getMeeting(), meeting)
+        self.assertEqual(item.getMeeting(only_uid=True), meeting_uid)
+        # remove item from meeting
+        self.backToState(item, 'validated')
+        self.assertIsNone(item.linked_meeting_uid)
+        self.assertIsNone(item.linked_meeting_path)
+        self.assertIsNone(item.getMeeting())
+        self.assertIsNone(item.getMeeting(only_uid=True))
+
+        # present again and rename meeting id
+        self.presentItem(item)
+        meeting.aq_parent.manage_renameObject(meeting.getId(), 'my_new_id')
+        self.assertEqual(meeting.getId(), 'my_new_id')
+        # linked_meeting_path especially is updated
+        self.assertEqual(item.linked_meeting_uid, meeting_uid)
+        meeting_new_path = "/".join(meeting.getPhysicalPath())
+        self.assertEqual(item.linked_meeting_path, meeting_new_path)
+        self.assertEqual(item.getMeeting(), meeting)
+        self.assertEqual(item.getMeeting(only_uid=True), meeting_uid)
+
+        # clone a linked item
+        cloned = item.clone()
+        self.assertIsNone(cloned.linked_meeting_uid)
+        self.assertIsNone(cloned.linked_meeting_path)
+        self.assertIsNone(cloned.getMeeting())
+        self.assertIsNone(cloned.getMeeting(only_uid=True))
+
+    def test_pm__sendCopyGroupsMailIfRelevant(self):
+        """Check mail sent to copyGroups when they have access to item.
+           Mail is not sent twice to same email address."""
+        # make utils.sendMailIfRelevant return details
+        self.request['debug_sendMailIfRelevant'] = True
+        cfg = self.meetingConfig
+        cfg.setUseCopies(True)
+        cfg.setSelectableCopyGroups(cfg.listSelectableCopyGroups().keys())
+        cfg.setItemCopyGroupsStates(['validated'])
+        cfg.setMailMode("activated")
+        cfg.setMailItemEvents(("copyGroups", ))
+        self.changeUser('pmCreator1')
+        item = self.create("MeetingItem", title="My item")
+        # no copy groups
+        self.assertIsNone(item._sendCopyGroupsMailIfRelevant('itemcreated', 'validated'))
+        # set every groups in copy so we check that email is not sent twice to same address
+        item.setCopyGroups(cfg.getSelectableCopyGroups())
+        recipients, subject, body = item._sendCopyGroupsMailIfRelevant('itemcreated', 'validated')
+        self.assertEqual(
+            sorted(recipients),
+            [u'M. PMAdviser One <pmadviser1@plonemeeting.org>',
+             u'M. PMCreator One bee <pmcreator1b@plonemeeting.org>',
+             u'M. PMCreator Two <pmcreator2@plonemeeting.org>',
+             u'M. PMManager <pmmanager@plonemeeting.org>',
+             u'M. PMObserver One <pmobserver1@plonemeeting.org>',
+             u'M. PMObserver Two <pmobserver2@plonemeeting.org>',
+             u'M. PMReviewer Level One <pmreviewerlevel1@plonemeeting.org>',
+             u'M. PMReviewer Level Two <pmreviewerlevel2@plonemeeting.org>',
+             u'M. PMReviewer One <pmreviewer1@plonemeeting.org>',
+             u'M. PMReviewer Two <pmreviewer2@plonemeeting.org>'])
+        # with less copyGroups
+        item.setCopyGroups((self.vendors_creators,
+                            self.vendors_reviewers,
+                            self.developers_creators))
+        recipients, subject, body = item._sendCopyGroupsMailIfRelevant('itemcreated', 'validated')
+        self.assertEqual(
+            sorted(recipients),
+            [u'M. PMCreator One bee <pmcreator1b@plonemeeting.org>',
+             u'M. PMCreator Two <pmcreator2@plonemeeting.org>',
+             u'M. PMManager <pmmanager@plonemeeting.org>',
+             u'M. PMReviewer Two <pmreviewer2@plonemeeting.org>'])
+
+    def test_pm__sendAdviceToGiveMailIfRelevant(self):
+        """Check mail sent to advisers when they have access to item.
+           Mail is not sent twice to same email address."""
+        # make utils.sendMailIfRelevant return details
+        self.changeUser('siteadmin')
+        self.request['debug_sendMailIfRelevant'] = True
+        cfg = self.meetingConfig
+        cfg_title = cfg.Title()
+        cfg.setUseAdvices(True)
+        cfg.setSelectableAdvisers(cfg.listSelectableAdvisers().keys())
+        cfg.setItemAdviceStates(['validated'])
+        cfg.setItemAdviceEditStates(['validated'])
+        cfg.setItemAdviceViewStates(['validated'])
+        cfg.setMailMode("activated")
+        cfg.setMailItemEvents(("adviceToGive", ))
+        self.changeUser('pmCreator1')
+        item = self.create("MeetingItem", title="My item")
+        item_url = item.absolute_url()
+        # no advisers
+        self.assertIsNone(
+            item._sendAdviceToGiveMailIfRelevant('itemcreated', 'validated', debug=True), [])
+        # set every groups as advisers so we check that email is not sent twice to same address
+        item.setOptionalAdvisers(cfg.getSelectableAdvisers())
+        item.updateLocalRoles()
+        # pmManager is in both groups but only notified one time
+        self.assertTrue(self.developers_uid in item.adviceIndex)
+        self.assertTrue(self.vendors_uid in item.adviceIndex)
+        self.assertTrue("pmManager" in api.group.get(self.developers_advisers).getMemberIds())
+        self.assertTrue("pmManager" in api.group.get(self.vendors_advisers).getMemberIds())
+        recipients, subject, body = item._sendAdviceToGiveMailIfRelevant(
+            'itemcreated', 'validated', debug=True)
+        self.assertEqual(sorted(recipients),
+                         [u'M. PMAdviser One <pmadviser1@plonemeeting.org>',
+                          u'M. PMManager <pmmanager@plonemeeting.org>',
+                          u'M. PMReviewer Two <pmreviewer2@plonemeeting.org>'])
+        self.assertEqual(subject,
+                         u'{0} - Your advice is requested - My item'.format(cfg_title))
+        self.assertEqual(body,
+                         u'The item is entitled "My item". '
+                         u'You can access this item here: {0}.'.format(item_url))
 
 
 def test_suite():

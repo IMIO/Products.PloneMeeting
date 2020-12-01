@@ -9,13 +9,6 @@ function confirmReinitializeDelay(base_url, advice, tag, msgName){
     }
 }
 
-// function that show/hide icons to manage attendees (absents, signatories, ...)
-function setHiddenButton(userId, visibility, prefix='byebye_') {
-  var button = document.getElementById(prefix + userId);
-  if (!button) return;
-  button.style.visibility = visibility;
-}
-
 // Dropdown for selecting an annex type
 var ploneMeetingSelectBoxes = new Object();
 
@@ -610,6 +603,13 @@ function updateNumberOfItems() {
   }
 }
 
+$(document).on('toggle_details_ajax_success', init_tooltipsters);
+
+function init_tooltipsters() {
+    categorizedChildsInfos({selector: 'div.item-linkeditems .tooltipster-childs-infos', });
+    advicesInfos();
+}
+
 // when clicking on the input#forceInsertNormal, update the 'pmForceInsertNormal' cookie
 function changeForceInsertNormalCookie(input) {
   if (input.checked) {
@@ -652,7 +652,7 @@ function updatePortletTodo() {
   $.ajax({
     url: url,
     cache: false,
-    async: false,
+    async: true,
     success: function(data) {
         tag[0].parentNode.innerHTML = data;
     },
@@ -684,9 +684,16 @@ if (/msie/.test(navigator.userAgent.toLowerCase())) {
 $(document).ready(function () {
     $("input[value^='not_selectable_value_'").each(function() {
         this.disabled = true;
-    });
+    }); 
 });
 
+/* make sure first line of MeetingConfig.itemWFValidationLevels can not be edited */
+$(document).ready(function () {
+    $("input[id$='_itemWFValidationLevels_1'").each(function() {
+        this.readOnly = true;
+    });
+    
+});
 
 function update_search_term(tag){
   var url = $("link[rel='canonical']").attr('href') + '/@@async_render_search_term';
@@ -696,7 +703,7 @@ function update_search_term(tag){
     data: {collection_uid: tag.dataset.collection_uid},
     cache: false,
     // async: true provokes ConflictErrors when freezing a meeting
-    async: false,
+    async: true,
     success: function(data) {
       $(tag).replaceWith(data);
       $(tag).find("script").each(function(i) {
@@ -759,4 +766,20 @@ $('table.faceted-table-results').tableDnD({
    onDragClass: "dragindicator dragging",
 
 });
+}
+
+// do not redefine window.onbeforeunload or it breaks form unload protection
+$(document).ready(function () {
+    localStorage.removeItem("toggleAllDetails");
+});
+
+function toggleAllDetails() {
+  state = localStorage.getItem("toggleAllDetails");
+  if (!state || state == "1") {
+    localStorage.setItem("toggleAllDetails", "0");
+    $('div.collapsible.active').each(function() {$(this).click();});
+  } else {
+    localStorage.setItem("toggleAllDetails", "1");
+    $('div.collapsible:not(.active):not(.discreet)').each(function() {$(this).click();});
+  }
 }

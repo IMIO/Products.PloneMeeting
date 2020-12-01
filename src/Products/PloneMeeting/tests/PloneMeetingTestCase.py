@@ -39,6 +39,7 @@ from plone.app.testing import login
 from plone.app.testing import logout
 from plone.app.testing.bbb import _createMemberarea
 from plone.app.testing.helpers import setRoles
+from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
 from Products.Five.browser import BrowserView
 from Products.PloneMeeting.config import DEFAULT_USER_PASSWORD
@@ -115,14 +116,13 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
     external_image4 = "https://i.picsum.photos/id/1062/600/500.jpg?hmac=ZoUBWDuRcsyqDbBPOj5jEU1kHgJ5iGO1edk1-QYode8"
 
     def setUp(self):
+        # enable full diff in failing tests
+        self.maxDiff = None
         # Define some useful attributes
         self.app = self.layer['app']
         self.portal = self.layer['portal']
         self.request = self.layer['request']
         self.changeUser('admin')
-        # configure default workflows so Folder has a workflow
-        # make sure we have a default workflow
-        self.portal.portal_workflow.setDefaultChain('simple_publication_workflow')
         # setup manually the correct browserlayer, see:
         # https://dev.plone.org/ticket/11673
         notify(BeforeTraverseEvent(self.portal, self.request))
@@ -162,7 +162,10 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         self.annexFileTypeAdvice = 'advice-annex'
         self.annexFileTypeMeeting = 'meeting-annex'
         # log current test module and method name
-        pm_logger.info('Executing {0}:{1}'.format(self.__class__.__name__, self._testMethodName))
+        test_num = self._resultForDoCleanups.testsRun
+        test_total = self._resultForDoCleanups.count
+        pm_logger.info('Executing [{0}/{1}] {2}:{3}'.format(
+            test_num, test_total, self.__class__.__name__, self._testMethodName))
 
     def tearDown(self):
         self._cleanExistingTmpAnnexFile()
@@ -455,6 +458,28 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         )
         return annexType
 
+    def addAdvice(self,
+                  item,
+                  advice_group=None,
+                  advice_type=u'positive',
+                  advice_hide_during_redaction=False,
+                  advice_portal_type='meetingadvice'):
+        if not advice_group:
+            advice_group = self.vendors_uid
+        # manage MeetingConfig.defaultAdviceHiddenDuringRedaction
+        # as it only works while added ttw
+        if not advice_hide_during_redaction:
+            advice_hide_during_redaction = advice_portal_type in \
+                self.meetingConfig.getDefaultAdviceHiddenDuringRedaction()
+        advice = createContentInContainer(
+            item,
+            advice_portal_type,
+            **{'advice_group': advice_group,
+               'advice_type': advice_type,
+               'advice_hide_during_redaction': advice_hide_during_redaction,
+               'advice_comment': RichTextValue(u'My comment')})
+        return advice
+
     def deleteAsManager(self, uid):
         """When we want to remove an item the current user does not have permission to,
            but we are not testing delete permission, do it as a 'Manager'."""
@@ -523,7 +548,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
           Helper method for adding a given p_member to every '_prereviewers' group
           corresponding to every '_reviewers' group he is in.
         """
-        reviewers = reviewersFor(self.meetingConfig.getItemWorkflow())
+        reviewers = reviewersFor(self.meetingConfig)
         groups = [group for group in member.getGroups() if group.endswith('_%s' % reviewers.keys()[0])]
         groups = [group.replace(reviewers.keys()[0], reviewers.keys()[-1]) for group in groups]
         for group in groups:
@@ -564,9 +589,10 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         self.changeUser(self.member.getId())
         cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
 
-    def _removePrincipalFromGroup(self, principal_id, group_id):
+    def _removePrincipalFromGroups(self, principal_id, group_ids):
         """We need to changeUser so getGroups is updated."""
-        self.portal.portal_groups.removePrincipalFromGroup(principal_id, group_id)
+        for group_id in group_ids:
+            self.portal.portal_groups.removePrincipalFromGroup(principal_id, group_id)
         self.changeUser(self.member.getId())
         cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
 
@@ -588,6 +614,21 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                 else:
                     po_infos['meeting_access_on'] = access_on
         cfg.setPowerObservers(power_observers)
+
+    def _activate_wfas(self, wfas, cfg=None, keep_existing=False):
+        """Activate given p_wfas, we clean wfas, apply,
+           then set given p_wfas and apply again."""
+        currentUser = self.member.getId()
+        self.changeUser('siteadmin')
+        if cfg is None:
+            cfg = self.meetingConfig
+        if not keep_existing:
+            cfg.setWorkflowAdaptations(())
+            cfg.at_post_edit_script()
+        if wfas:
+            cfg.setWorkflowAdaptations(wfas)
+            cfg.at_post_edit_script()
+        self.changeUser(currentUser)
 
     def _enableAutoConvert(self, enable=True):
         """Enable collective.documentviewer auto_convert."""

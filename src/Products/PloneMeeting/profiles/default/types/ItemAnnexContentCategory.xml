@@ -26,7 +26,7 @@
      &lt;model xmlns:i18n=&quot;http://xml.zope.org/namespaces/i18n&quot; xmlns:security=&quot;http://namespaces.plone.org/supermodel/security&quot; xmlns:marshal=&quot;http://namespaces.plone.org/supermodel/marshal&quot; xmlns:form=&quot;http://namespaces.plone.org/supermodel/form&quot; xmlns=&quot;http://namespaces.plone.org/supermodel/schema&quot; i18n:domain=&quot;PloneMeeting&quot;&gt;
        &lt;schema based-on=&quot;collective.iconifiedcategory.content.category.ICategory&quot;&gt;
 
-         &lt;field name=&quot;other_mc_correspondences&quot; type=&quot;zope.schema.Set&quot;&gt; 
+         &lt;field name=&quot;other_mc_correspondences&quot; type=&quot;zope.schema.Set&quot;&gt;
            &lt;description i18n:translate=&quot;&quot;&gt;other_mc_correspondences_descr&lt;/description&gt;
            &lt;required&gt;False&lt;/required&gt;
            &lt;title i18n:translate=&quot;&quot;&gt;PloneMeeting_label_otherMCCorrespondences&lt;/title&gt;
@@ -36,7 +36,7 @@
            &lt;/value_type&gt;
          &lt;/field&gt;
 
-         &lt;field name=&quot;only_for_meeting_managers&quot; type=&quot;zope.schema.Bool&quot;&gt; 
+         &lt;field name=&quot;only_for_meeting_managers&quot; type=&quot;zope.schema.Bool&quot;&gt;
            &lt;description i18n:translate=&quot;&quot;&gt;only_for_meeting_managers_descr&lt;/description&gt;
            &lt;default&gt;False&lt;/default&gt;
            &lt;required&gt;False&lt;/required&gt;

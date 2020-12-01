@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
 
-from Acquisition import aq_base
 from AccessControl.Permission import Permission
+from Acquisition import aq_base
 from appy.shared.diff import HtmlDiff
 from bs4 import BeautifulSoup
+from collections import OrderedDict
 from collective.behavior.talcondition.utils import _evaluateExpression
+from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_own_organization
+from collective.contact.plonegroup.utils import get_plone_group
 from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.excelexport.exportables.dexterityfields import get_exportable_for_fieldname
 from collective.fingerpointing.config import AUDIT_MESSAGE
@@ -25,6 +28,7 @@ from imio.helpers.xhtml import markEmptyTags
 from imio.helpers.xhtml import removeBlanks
 from imio.helpers.xhtml import storeImagesLocally
 from imio.helpers.xhtml import xhtmlContentIsEmpty
+from imio.history.utils import getLastWFAction
 from plone import api
 from plone.app.textfield import RichText
 from plone.app.uuid.utils import uuidToObject
@@ -32,6 +36,7 @@ from plone.autoform.interfaces import WRITE_PERMISSIONS_KEY
 from plone.dexterity.interfaces import IDexterityContent
 from plone.i18n.normalizer.interfaces import IIDNormalizer
 from plone.locking.events import unlockAfterModification
+from plone.memoize import ram
 from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.permissions import AccessContentsInformation
 from Products.CMFCore.permissions import AddPortalContent
@@ -80,6 +85,7 @@ from zope.i18n import translate
 from zope.interface import implements
 from zope.security.interfaces import IPermission
 
+import itertools
 import logging
 import os
 import os.path
@@ -437,7 +443,8 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
         subject = safe_unicode(customRes[0])
         body = safe_unicode(customRes[1])
     else:
-        subjectLabel = u'%s_mail_subject' % event
+        # some event end with "Owner", we use same event without the "Owner" suffix
+        subjectLabel = u'%s_mail_subject' % event.replace("Owner", "")
         subject = translate(subjectLabel,
                             domain=d,
                             mapping=translationMapping,
@@ -457,7 +464,8 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
                                 mapping=translationMapping,
                                 context=obj.REQUEST)
         subject = safe_unicode(subject)
-        bodyLabel = u'%s_mail_body' % event
+        # some event end with "Owner", we use same event without the "Owner" suffix
+        bodyLabel = u'%s_mail_body' % event.replace("Owner", "")
         body = translate(bodyLabel,
                          domain=d,
                          mapping=translationMapping,
@@ -507,16 +515,23 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
                       attachments)
     except EmailError, ee:
         logger.warn(str(ee))
+    return subject, body
 
 
-def sendMailIfRelevant(obj, event, permissionOrRole, isRole=False,
-                       customEvent=False, mapping={}):
+def sendMailIfRelevant(obj, event, permissionOrSuffixOrRoleOrGroupIds,
+                       customEvent=False,
+                       mapping={},
+                       isSuffix=False,
+                       isRole=False,
+                       isGroupIds=False,
+                       isPermission=False,
+                       debug=False):
     '''An p_event just occurred on meeting or item p_obj. If the corresponding
        meeting config specifies that a mail needs to be sent, this function
        will send a mail. The mail subject and body are defined from i18n labels
-       that derive from the event name. if p_isRole is True, p_permissionOrRole
-       is a role, and the mail will be sent to every user having this role. If
-       p_isRole is False, p_permissionOrRole is a permission and the mail will
+       that derive from the event name. if p_isSuffix is True, p_permissionOrSuffixOrRole
+       is a suffix, and the mail will be sent to every members of this sufixed group (relevant for item).
+       If p_isSuffix is False, p_permissionOrSuffixOrRole is a permission and the mail will
        be sent to everyone having this permission.  Some mapping can be received
        and used afterward in mail subject and mail body translations.
 
@@ -526,6 +541,7 @@ def sendMailIfRelevant(obj, event, permissionOrRole, isRole=False,
        A plug-in may use this method for sending custom events that are not
        defined in the MeetingConfig. In this case, you must specify
        p_customEvent = True.'''
+    debug = debug or obj.REQUEST.get('debug_sendMailIfRelevant', False)
     tool = api.portal.get_tool(TOOL_ID)
     membershipTool = api.portal.get_tool('portal_membership')
     currentUser = membershipTool.getAuthenticatedMember()
@@ -540,11 +556,30 @@ def sendMailIfRelevant(obj, event, permissionOrRole, isRole=False,
     # Ok, send a mail. Who are the recipients ?
     recipients = []
     adap = obj.adapted()
-    if isRole and (permissionOrRole == 'Owner'):
-        userIds = [obj.Creator()]
+    userIds = []
+    if isSuffix:
+        org = obj.adapted()._getGroupManagingItem(obj.queryState())
+        plone_group = get_plone_group(org.UID(), permissionOrSuffixOrRoleOrGroupIds)
+        if not plone_group:
+            # maybe the suffix is a MeetingConfig related suffix, like _meetingmanagers
+            plone_group = get_plone_group(cfg.getId(), permissionOrSuffixOrRoleOrGroupIds)
+        if plone_group:
+            userIds = plone_group.getGroupMemberIds()
+    elif isRole:
+        if permissionOrSuffixOrRoleOrGroupIds == 'Owner':
+            userIds = [obj.Creator()]
+        else:
+            # Warning "_members" returns all users (even deleted users),
+            # the filter must do this afterwards.
+            userIds = api.portal.get_tool('portal_memberdata')._members
     else:
-        # Warning "_members" returns all users (even deleted users), the filter must do this afterwards.
-        userIds = api.portal.get_tool('portal_memberdata')._members
+        # isGroupIds
+        for plone_group_id in permissionOrSuffixOrRoleOrGroupIds:
+            plone_group = api.group.get(plone_group_id)
+            userIds += plone_group.getMemberIds()
+
+    # remove duplicate
+    userIds = list(set(userIds))
     for userId in userIds:
         user = membershipTool.getMemberById(userId)
         # do not warn user doing the action
@@ -552,27 +587,38 @@ def sendMailIfRelevant(obj, event, permissionOrRole, isRole=False,
             continue
         if not user.getProperty('email'):
             continue
-        # Does the user have the corresponding permission on p_obj ?
-        if isRole:
-            if not user.has_role(permissionOrRole, obj):
+        if isPermission:
+            # then "isPermission"
+            # Does the user have the corresponding permission on p_obj ?
+            # we do this here for performance reason as we have the "user" object
+            if not api.user.has_permission(permission=permissionOrSuffixOrRoleOrGroupIds,
+                                           obj=obj,
+                                           user=user):
                 continue
-        else:
-            if not api.user.has_permission(permission=permissionOrRole, obj=obj, user=user):
+        elif isRole:
+            if not user.has_role(permissionOrSuffixOrRoleOrGroupIds, obj):
                 continue
 
         recipient = tool.getMailRecipient(user)
         # Must we avoid sending mail to this recipient for some custom reason?
         if not adap.includeMailRecipient(event, userId):
             continue
-        # Has the user unsubscribed to this event in his preferences ?
-        itemEvents = cfg.getMailItemEvents()
-        meetingEvents = cfg.getMailMeetingEvents()
-        if (event not in itemEvents) and (event not in meetingEvents):
-            continue
         # After all, we will add this guy to the list of recipients.
         recipients.append(recipient)
+    mail_subject = mail_body = None
     if recipients:
-        sendMail(recipients, obj, event, mapping=mapping)
+        # wipeout recipients to avoid sendind same email to several users
+        unique_emails = []
+        unique_email_recipients = []
+        for recipient in recipients:
+            username, email = recipient.split('<')
+            if email in unique_emails:
+                continue
+            unique_emails.append(email)
+            unique_email_recipients.append(recipient)
+        mail_subject, mail_body = sendMail(unique_email_recipients, obj, event, mapping=mapping)
+    if debug:
+        return recipients, mail_subject, mail_body
     return True
 
 
@@ -1004,9 +1050,9 @@ def applyOnTransitionFieldTransform(obj, transitionId):
     cfg = extra_expr_ctx['cfg']
     for transform in cfg.getOnTransitionFieldTransforms():
         tal_expr = transform['tal_expression'].strip()
-        if transform['transition'] == transitionId and \
-           transform['field_name'].split('.')[0] == obj.meta_type and \
-           tal_expr:
+        if tal_expr and \
+           transform['transition'] == transitionId and \
+           transform['field_name'].split('.')[0] == obj.meta_type:
             try:
                 extra_expr_ctx.update({'item': obj, })
                 res = _evaluateExpression(
@@ -1016,20 +1062,20 @@ def applyOnTransitionFieldTransform(obj, transitionId):
                     extra_expr_ctx=extra_expr_ctx,
                     empty_expr_is_true=False,
                     raise_on_error=True)
+                field = obj.getField(transform['field_name'].split('.')[1])
+                field.set(obj, res, mimetype='text/html')
+                idxs.append(field.accessor)
             except Exception, e:
                 plone_utils = api.portal.get_tool('plone_utils')
                 plone_utils.addPortalMessage(
-                    PloneMeetingError(ON_TRANSITION_TRANSFORM_TAL_EXPR_ERROR %
-                                      (transform['field_name'].split('.')[1], str(e))),
+                    ON_TRANSITION_TRANSFORM_TAL_EXPR_ERROR % (
+                        transform['field_name'].split('.')[1], str(e)),
                     type='warning')
                 return
-            field = obj.getField(transform['field_name'].split('.')[1])
-            field.set(obj, res, mimetype='text/html')
-            idxs.append(field.accessor)
-    # return indexes to reindex
-    if idxs:
-        idxs.append('SearchableText')
-    return idxs
+    # XXX do not reindex for now as full reindex is done after
+    # when moving to dexerity, will be able to reindex more efficiently
+    if False and idxs:
+        obj.reindexObject(idxs=idxs)
 
 
 # ------------------------------------------------------------------------------
@@ -1567,12 +1613,26 @@ def main_item_data(item):
     return data
 
 
-def reviewersFor(workflow_id=None):
-    # import MEETINGREVIEWERS as it is often monkeypatched...
-    from Products.PloneMeeting.config import MEETINGREVIEWERS
-    if workflow_id and workflow_id in MEETINGREVIEWERS:
-        return MEETINGREVIEWERS.get(workflow_id)
-    return MEETINGREVIEWERS.get('*')
+def reviewersFor(cfg):
+    """Return an OrderedDict were key is the reviewer suffix and
+       value the corresponding item state, from highest level to lower level.
+       For example :
+       OrderedDict([('reviewers', ['prevalidated']), ('prereviewers', ['proposed'])])
+    """
+    suffixes = list(cfg.getItemWFValidationLevels(data='suffix', only_enabled=True))[1:]
+    # we need from highest level to lowest
+    suffixes.reverse()
+    states = list(cfg.getItemWFValidationLevels(data='state', only_enabled=True))[1:]
+    # we need from highest level to lowest
+    states.reverse()
+
+    # group suffix to state
+    tuples = zip(suffixes, states)
+
+    res = OrderedDict()
+    for suffix, state in tuples:
+        res[suffix] = [state]
+    return res
 
 
 def get_every_back_references(obj, relationship):
@@ -1652,6 +1712,99 @@ def duplicate_portal_type(portalTypeName, duplicatedPortalTypeId):
     return duplicatedPortalType
 
 
+def get_item_validation_wf_suffixes(cfg, org=None, only_enabled=True):
+    """Returns suffixes related to MeetingItem validation WF,
+       so the 'creators', 'observers' and suffixes managed by
+       MeetingConfig.itemWFValidationLevels.
+       If p_org is given, we only return available suffixes."""
+    base_suffixes = [u'creators', u'observers']
+    # we get the principal suffix from level['suffix'] then level['extra_suffixes']
+    # is containing suffixes that will also get Editor access in relevant state
+    config_suffix = cfg.getItemWFValidationLevels(
+        data='suffix', only_enabled=only_enabled)
+    config_extra_suffixes = cfg.getItemWFValidationLevels(
+        data='extra_suffixes', only_enabled=only_enabled)
+    config_suffixes = [config_suffix] + list(config_extra_suffixes)
+    config_suffixes = list(itertools.chain.from_iterable(config_suffixes))
+    suffixes = base_suffixes + config_suffixes
+    if org:
+        # only return suffixes that are available for p_org
+        available_suffixes = set(get_all_suffixes(org.UID()))
+        suffixes = list(available_suffixes.intersection(set(suffixes)))
+    return suffixes
+
+
+def compute_item_roles_to_assign_to_suffixes_cachekey(method, cfg, item_state, org=None):
+    '''cachekey method for compute_item_roles_to_assign_to_suffixes.'''
+    return cfg.getId(), cfg.modified(), item_state, org and org.UID()
+
+
+@ram.cache(compute_item_roles_to_assign_to_suffixes_cachekey)
+def compute_item_roles_to_assign_to_suffixes(cfg, item_state, org=None):
+    """ """
+    apply_meetingmanagers_access = True
+    suffix_roles = {}
+
+    # roles given to item_state are managed automatically
+    # it is possible to manage it manually for extra states (coming from wfAdaptations for example)
+    # try to find corresponding item state
+    corresponding_auto_item_state = cfg.adapted().get_item_corresponding_state_to_assign_local_roles(item_state)
+    if corresponding_auto_item_state:
+        item_state = corresponding_auto_item_state
+    else:
+        # if no corresponding item state, check if we manage state suffix roles manually
+        apply_meetingmanagers_access, suffix_roles = cfg.adapted().get_item_custom_suffix_roles(item_state)
+
+    # find suffix_roles if it was not managed manually
+    if suffix_roles:
+        return apply_meetingmanagers_access, suffix_roles
+
+    item_val_levels_states = cfg.getItemWFValidationLevels(data='state', only_enabled=True)
+
+    # by default, observers may View in every states as well as creators
+    # this way observers have access or it is never the case
+    # and creators have access when state "itemcreated" is disabled
+    suffix_roles = {'observers': ['Reader'],
+                    'creators': ['Reader']}
+
+    # MeetingConfig.itemWFValidationLevels
+    # states before validated
+    if item_state in item_val_levels_states:
+        # find Editor suffixes
+        # walk every defined validation levels so we give 'Reader'
+        # to levels already behind us
+        for level in cfg.getItemWFValidationLevels(only_enabled=True):
+            suffixes = [level['suffix']] + list(level['extra_suffixes'])
+            for suffix in suffixes:
+                if suffix not in suffix_roles:
+                    suffix_roles[suffix] = []
+                given_roles = ['Reader']
+                # we are on the current state
+                if level['state'] == item_state:
+                    given_roles.append('Editor')
+                    given_roles.append('Reviewer')
+                    given_roles.append('Contributor')
+                for role in given_roles:
+                    if role not in suffix_roles[suffix]:
+                        suffix_roles[suffix].append(role)
+            if level['state'] == item_state:
+                break
+
+    # states out of item validation (validated and following states)
+    else:
+        # every item validation suffixes get View access
+        # if item is in a decided state, we also give the Contributor
+        # role to every validation suffixes
+        item_is_decided = item_state in cfg.getItemDecidedStates()
+        for suffix in get_item_validation_wf_suffixes(cfg, org):
+            given_roles = ['Reader']
+            if item_is_decided and suffix != 'observers':
+                given_roles.append('Contributor')
+            suffix_roles[suffix] = given_roles
+
+    return apply_meetingmanagers_access, suffix_roles
+
+
 def org_id_to_uid(org_info, raise_on_error=True, ignore_underscore=False):
     """Returns the corresponding org based value for given org_info based value.
        'developers', will return 'orguid'.
@@ -1718,7 +1871,7 @@ def normalize_id(id):
     return id
 
 
-def add_wf_history_action(obj, action_name, action_label, user_id=None):
+def add_wf_history_action(obj, action_name, action_label, user_id=None, insert_index=None):
     wfTool = api.portal.get_tool('portal_workflow')
     wfs = wfTool.getWorkflowsFor(obj)
     if not wfs:
@@ -1726,9 +1879,9 @@ def add_wf_history_action(obj, action_name, action_label, user_id=None):
     wf = wfs[0]
     wfName = wf.id
     # get review_state from last event if any
-    events = obj.workflow_history[wfName]
+    events = list(obj.workflow_history[wfName]) or []
     if events:
-        previousEvent = obj.workflow_history[wfName][-1]
+        previousEvent = events[-1]
         review_state_id = previousEvent['review_state']
     else:
         # use initial_state
@@ -1739,9 +1892,17 @@ def add_wf_history_action(obj, action_name, action_label, user_id=None):
     # action_name must be translated in the plone domain
     newEvent['action'] = action_name
     newEvent['actor'] = user_id or api.user.get_current().id
-    newEvent['time'] = DateTime()
-    newEvent['review_state'] = review_state_id
-    obj.workflow_history[wfName] = obj.workflow_history[wfName] + (newEvent, )
+    # if an insert_index is defined, use same 'time' as previous as
+    # events are sorted on 'time' and just add 1 millisecond
+    if insert_index is not None:
+        newEvent['time'] = events[insert_index]['time'] + 0.000000001
+        newEvent['review_state'] = events[insert_index]['review_state']
+        events.insert(insert_index, newEvent)
+    else:
+        newEvent['time'] = DateTime()
+        newEvent['review_state'] = review_state_id
+        events.insert(len(events), newEvent)
+    obj.workflow_history[wfName] = events
 
 
 def is_editing():
@@ -1788,6 +1949,34 @@ def _base_extra_expr_ctx(obj):
             'pm_utils': SecureModuleImporter['Products.PloneMeeting.utils'],
             'imio_history_utils': SecureModuleImporter['imio.history.utils'], }
     return data
+
+
+def down_or_up_wf(obj):
+    """Return "", "down", or "up" depending on workflow history."""
+    # down the workflow, the last transition was a backTo... transition
+    wfTool = api.portal.get_tool('portal_workflow')
+    wf = wfTool.getWorkflowsFor(obj)[0]
+    backTransitionIds = [tr for tr in wf.transitions if tr.startswith('back')]
+    transitionIds = [tr for tr in wf.transitions if not tr.startswith('back')]
+    # get the last event that is a real workflow transition event
+    lastEvent = getLastWFAction(obj, transition=backTransitionIds + transitionIds)
+    res = ""
+    if lastEvent and lastEvent['action']:
+        if lastEvent['action'].startswith('back'):
+            res = "down"
+        # make sure it is a transition because we save other actions too in workflow_history
+        else:
+            # up the workflow for at least second times and not linked to a meeting
+            # check if last event was already made in item workflow_history
+            history = obj.workflow_history[wf.getId()]
+            i = 0
+            for event in history:
+                if event['action'] == lastEvent['action']:
+                    i = i + 1
+                    if i > 1:
+                        res = "up"
+                        break
+    return res
 
 
 class AdvicesUpdatedEvent(ObjectEvent):

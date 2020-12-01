@@ -1,14 +1,9 @@
 <?xml version="1.0"?>
 <rolemap>
   <roles>
-    <role name="MeetingArchiveObserver"/>
     <role name="MeetingBudgetImpactEditor"/>
     <role name="MeetingManager"/>
-    <role name="MeetingMember"/>
     <role name="MeetingObserverGlobal"/>
-    <role name="MeetingObserverLocal"/>
-    <role name="MeetingObserverUnpublished"/>
-    <role name="MeetingReviewer"/>
   </roles>
   <permissions>
     <permission name="CMFEditions: Save new version"
@@ -32,7 +27,6 @@
     </permission>
     <permission name="WebDAV access"
                 acquire="False">
-      <role name="MeetingArchiveObserver"/>
       <role name="MeetingObserverGlobal"/>
       <role name="Manager"/>
     </permission>

@@ -463,8 +463,10 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 suffix,
                 user_id)
 
+    # @ram.cache(group_is_not_empty_cachekey)
     def group_is_not_empty(self, org_uid, suffix, user_id=None):
-        '''Is there any user in the group?'''
+        '''Is there any user in the group?
+           Do not use ram.cache for this one, seems slower...'''
         portal = api.portal.get()
         plone_group_id = get_plone_group_id(org_uid, suffix)
         # for performance reasons, check directly in source_groups stored data
@@ -669,18 +671,19 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         if data is None:
             portalTypeName = context.getPortalTypeName()
             if portalTypeName in ('MeetingItem', 'Meeting'):
-                # Archetypes bug. When this method is called within a default_method
+                # When this method is called within a default_method
                 # (when displaying a edit form), the portal_type is not already
-                # correctly set (it is equal to the meta_type, which is not
+                # set (it is equal to the meta_type, which is not
                 # necessarily equal to the portal type). In this case we look for
                 # the correct portal type in the request.
-                portalTypeName = self.REQUEST.get('type_name', None)
-            # Find config based on portal type of current p_context
-            for config in self.objectValues('MeetingConfig'):
-                if (portalTypeName == config.getItemTypeName()) or \
-                   (portalTypeName == config.getMeetingTypeName()):
-                    data = config
-                    break
+                portalTypeName = self.REQUEST.get('type_name', portalTypeName)
+            if portalTypeName.startswith('Meeting'):
+                # Find config based on portal_type of current p_context
+                for config in self.objectValues('MeetingConfig'):
+                    if (portalTypeName == config.getItemTypeName()) or \
+                       (portalTypeName == config.getMeetingTypeName()):
+                        data = config
+                        break
             if not data:
                 # Get the property on the folder that indicates that this is the
                 # "official" folder of a meeting config.
@@ -1537,6 +1540,14 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     def performCustomWFAdaptations(self, meetingConfig, wfAdaptation, logger, itemWorkflow, meetingWorkflow):
         '''See doc in interfaces.py.'''
         return False
+
+    def performCustomAdviceWFAdaptations(self, meetingConfig, wfAdaptation, logger, advice_wf_id):
+        '''See doc in interfaces.py.'''
+        return False
+
+    def get_extra_adviser_infos(self):
+        '''See doc in interfaces.py.'''
+        return {}
 
     def getAdvicePortalTypes_cachekey(method, self, as_ids=False):
         '''cachekey method for self.getAdvicePortalTypes.'''

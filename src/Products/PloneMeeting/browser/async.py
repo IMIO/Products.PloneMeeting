@@ -77,10 +77,7 @@ class Discuss(BrowserView):
         if discussAction == 'ask':
             # I must send a mail to MeetingManagers for notifying them that a reviewer
             # wants to discuss this item.
-            sendMailEnabled = sendMailIfRelevant(item,
-                                                 'askDiscussItem',
-                                                 'MeetingManager',
-                                                 isRole=True)
+            sendMailEnabled = sendMailIfRelevant(item, 'askDiscussItem', 'meetingmanagers', isSuffix=True)
             if sendMailEnabled:
                 msgId = 'to_discuss_ask_mail_sent'
             else:
@@ -313,4 +310,5 @@ class AsyncLoadLinkedItems(BrowserView):
         """ """
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
+        self.portal_url = api.portal.get().absolute_url()
         return self.index()

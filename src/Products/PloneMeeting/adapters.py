@@ -2,10 +2,6 @@
 #
 # File: adapters.py
 #
-# Copyright (c) 2015 by Imio.be
-#
-# GNU General Public License (GPL)
-#
 
 from appy.shared.diff import HtmlDiff
 from collective.contact.plonegroup.utils import get_own_organization
@@ -25,6 +21,7 @@ from eea.facetednavigation.widgets.resultsperpage.widget import Widget as Result
 from eea.facetednavigation.widgets.storage import Criterion
 from imio.actionspanel.adapters import ContentDeletableAdapter as APContentDeletableAdapter
 from imio.annex.adapters import AnnexPrettyLinkAdapter
+from imio.helpers.catalog import merge_queries
 from imio.helpers.xhtml import xhtmlContentIsEmpty
 from imio.history.adapters import BaseImioHistoryAdapter
 from imio.history.adapters import ImioWfHistoryAdapter
@@ -46,7 +43,6 @@ from Products.PloneMeeting.config import DUPLICATE_EVENT_ACTION
 from Products.PloneMeeting.config import EMPTY_STRING
 from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
-from Products.PloneMeeting.config import MEETINGROLES
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import READER_USECASES
 from Products.PloneMeeting.interfaces import IMeeting
@@ -54,6 +50,7 @@ from Products.PloneMeeting.MeetingConfig import CONFIGGROUPPREFIX
 from Products.PloneMeeting.MeetingConfig import PROPOSINGGROUPPREFIX
 from Products.PloneMeeting.MeetingConfig import READERPREFIX
 from Products.PloneMeeting.MeetingConfig import SUFFIXPROFILEPREFIX
+from Products.PloneMeeting.utils import compute_item_roles_to_assign_to_suffixes
 from Products.PloneMeeting.utils import displaying_available_items
 from Products.PloneMeeting.utils import findNewValue
 from Products.PloneMeeting.utils import getCurrentMeetingObject
@@ -213,6 +210,24 @@ class AdvicePrettyLinkAdapter(PrettyLinkAdapter):
         """Necessary to be able to override the cachekey."""
         return self._getLink()
 
+    def _leadingIcons(self):
+        """
+          Manage icons to display before the icons managed by PrettyLink._icons.
+        """
+        res = []
+        item = self.context.aq_inner.aq_parent
+        item_state = item.queryState()
+        # display the waiting advices icon if relevant
+        if item_state.endswith('_waiting_advices'):
+            item_wf_conditions = item.wfConditions()
+            if self.context.advice_group in item_wf_conditions._get_waiting_advices_icon_advisers():
+                icon_name, msgid = item.wfConditions().get_waiting_advices_icon_infos()
+                res.append((icon_name,
+                            translate(msgid,
+                                      domain="PloneMeeting",
+                                      context=self.request)))
+        return res
+
 
 class ItemPrettyLinkAdapter(PrettyLinkAdapter):
     """Override to take into account PloneMeeting use cases..."""
@@ -220,23 +235,27 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
     def getLink_cachekey(method, self):
         '''cachekey method for self.getLink.'''
         res = super(ItemPrettyLinkAdapter, self).getLink_cachekey(self)
+
         # manage when displayed in availableItems on the meeting_view
         meeting_modified = None
         if displaying_available_items(self.context):
             meeting = getCurrentMeetingObject(self.context)
             if meeting:
                 meeting_modified = meeting.modified()
+
         # manage takenOverBy
         current_member_id = None
         takenOverBy = self.context.getTakenOverBy()
         if takenOverBy:
             current_member_id = api.user.get_current().getId()
+
         # manage when displaying the icon with informations about
         # the predecessor living in another MC
         predecessor_modified = None
         predecessor = self._predecessorFromOtherMC()
         if predecessor:
             predecessor_modified = predecessor.modified()
+
         # manage otherMC to send to, and cloned to
         # indeed we need to know where to send/have been sent if selected/unselected, ...
         ann = IAnnotations(self.context)
@@ -245,7 +264,18 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
         other_mc_cloned_to_ann_keys = [
             destMeetingConfigId for destMeetingConfigId in self.context.listOtherMeetingConfigsClonableTo().keys()
             if self.context._getSentToOtherMCAnnotationKey(destMeetingConfigId) in ann]
+
+        # an advice WF state changed, this is useful for the waiting_advices icon
+        # changing advice review_state will change advice._p_mtime
+        item_state = res[3]
+        advice_modified = None
+        if item_state.endswith('_waiting_advices'):
+            advices = self.context.getAdvices()
+            if advices:
+                advice_modified = max([advice._p_mtime for advice in advices])
+
         return res + (meeting_modified,
+                      advice_modified,
                       takenOverBy,
                       current_member_id,
                       predecessor_modified,
@@ -267,6 +297,23 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
         """
           Manage icons to display before the icons managed by PrettyLink._icons.
         """
+
+        def _icon_waiting_advices(res):
+            """Manage the waiting_advices icon :
+               - if some MeetingItem.get_waiting_advices_icon_advices,
+                 then check if some are giveable here, if one found,
+                 then return relevant icon :
+                 - red if down WF;
+                 - green if up WF again;
+                 - blue otherwise.
+               - else return blue icon."""
+            icon_name, msgid = self.context.wfConditions().get_waiting_advices_icon_infos()
+            res.append((icon_name,
+                        translate(msgid,
+                                  domain="PloneMeeting",
+                                  context=self.request)))
+            return res
+
         res = []
 
         tool = api.portal.get_tool('portal_plonemeeting')
@@ -298,7 +345,10 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
                                                             context=self.request)))
 
         itemState = self.context.queryState()
-        if itemState == 'delayed':
+        # specifically manage states without leading icons to speed up things
+        if itemState in ('itemcreated', 'proposed', 'validated'):
+            pass
+        elif itemState == 'delayed':
             res.append(('delayed.png', translate('icon_help_delayed',
                                                  domain="PloneMeeting",
                                                  context=self.request)))
@@ -309,16 +359,6 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
         elif itemState == 'returned_to_proposing_group':
             res.append(('return_to_proposing_group.png',
                         translate('icon_help_returned_to_proposing_group',
-                                  domain="PloneMeeting",
-                                  context=self.request)))
-        elif itemState == 'returned_to_proposing_group_proposed':
-            res.append(('goTo_returned_to_proposing_group_proposed.png',
-                        translate('icon_help_returned_to_proposing_group_proposed',
-                                  domain="PloneMeeting",
-                                  context=self.request)))
-        elif itemState == 'returned_to_proposing_group_prevalidated':
-            res.append(('goTo_returned_to_proposing_group_prevalidated.png',
-                        translate('icon_help_returned_to_proposing_group_prevalidated',
                                   domain="PloneMeeting",
                                   context=self.request)))
         elif itemState == 'prevalidated':
@@ -365,7 +405,7 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
                                   domain="PloneMeeting",
                                   context=self.request)))
         elif itemState == 'waiting_advices':
-            res.append(('wait_advices_from_proposed.png',
+            res.append(('wait_advices_from.png',
                         translate('icon_help_waiting_advices',
                                   domain="PloneMeeting",
                                   context=self.request)))
@@ -384,6 +424,39 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
                         translate('icon_help_waiting_advices_from_prevalidated',
                                   domain="PloneMeeting",
                                   context=self.request)))
+        elif itemState.endswith('_waiting_advices'):
+            icon_name, msgid = self.context.wfConditions().get_waiting_advices_icon_infos()
+            res.append((icon_name,
+                        translate(msgid,
+                                  domain="PloneMeeting",
+                                  context=self.request)))
+        elif itemState.startswith('returned_to_proposing_group_'):
+            # get info about return_to_proposing_group validation
+            # level in MeetingConfig.itemWFValidationLevels
+            validation_state = itemState.replace('returned_to_proposing_group_', '')
+            level = cfg.getItemWFValidationLevels(state=validation_state)
+            res.append(
+                ('goTo_{0}.png'.format(itemState),
+                 translate('icon_help_returned_to_proposing_group_with_validation_state',
+                           domain="PloneMeeting",
+                           mapping={"validation_state":
+                                    translate(
+                                        level['state_title'],
+                                        domain='plone',
+                                        context=self.request), },
+                           context=self.request)))
+        else:
+            # manage MeetingConfig.itemWFValidationLevels states
+            item_validation_states = cfg.getItemWFValidationLevels(data='state', only_enabled=True)
+            if itemState in item_validation_states:
+                level = cfg.getItemWFValidationLevels(state=itemState, only_enabled=True)
+                res.append(('{0}.png'.format(itemState),
+                            translate('icon_help_{0}'.format(itemState),
+                                      domain="PloneMeeting",
+                                      context=self.request,
+                                      default=translate(level['state_title'],
+                                                        domain='plone',
+                                                        context=self.request))))
 
         # Display icons about sent/cloned to other meetingConfigs
         clonedToOtherMCIds = self.context._getOtherMeetingConfigsImAmClonedIn()
@@ -469,7 +542,7 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
                                       default="Sent from ${meetingConfigTitle}, "
                                       "original item is \"${predecessorState}\".")))
             else:
-                if predecessor_state in predecessorCfg.getItemPositiveDecidedStates():
+                if predecessor_state in predecessorCfg.adapted().getItemPositiveDecidedStates():
                     res.append(('cloned_and_decided.png',
                                 translate(
                                     'icon_help_cloned_and_decided',
@@ -922,36 +995,37 @@ class BaseItemsToValidateOfHighestHierarchicLevelAdapter(CompoundCriterionBaseAd
            in state corresponding to his 'reviewer' role.'''
         if not self.cfg:
             return {}
+
+        # now get highest hierarchic level for every user groups
+        org_uids = self.tool.get_orgs_for_user(the_objects=False)
         userPloneGroupIds = self.tool.get_plone_groups_for_user()
-        highestReviewerLevel = self.cfg._highestReviewerLevel(userPloneGroupIds)
-        if not highestReviewerLevel:
-            # in this case, we do not want to display a result
-            # we return an unknown review_state
-            return _find_nothing_query(self.cfg.getItemTypeName())
-        reviewers = reviewersFor(self.cfg.getItemWorkflow())
-        review_states = reviewers[highestReviewerLevel]
-        # specific management for workflows using the 'pre_validation' wfAdaptation
-        if highestReviewerLevel == 'reviewers' and \
-            ('pre_validation' in self.cfg.getWorkflowAdaptations() or
-             'pre_validation_keep_reviewer_permissions' in self.cfg.getWorkflowAdaptations()) and \
-           review_states == ['proposed']:
-            review_states = ['prevalidated']
+        reviewers = reviewersFor(self.cfg)
+        userReviewerPloneGroupIds = []
+        for org_uid in org_uids:
+            for reviewer_level in reviewers:
+                plone_group_id = get_plone_group_id(org_uid, reviewer_level)
+                if plone_group_id in userPloneGroupIds:
+                    userReviewerPloneGroupIds.append(plone_group_id)
+                    break
 
         reviewProcessInfos = []
-        for plone_group_id in userPloneGroupIds:
-            if plone_group_id.endswith('_%s' % highestReviewerLevel):
-                # append group name without suffix
-                org_uid = plone_group_id.split('_')[0]
-                review_states = [
-                    '{0}{1}'.format(prefix_review_state, review_state) for review_state in review_states]
-                reviewProcessInfo = [
-                    '{0}__reviewprocess__{1}'.format(org_uid, review_state) for review_state in review_states]
-                reviewProcessInfos.extend(reviewProcessInfo)
+        for plone_group_id in userReviewerPloneGroupIds:
+            # append group name without suffix
+            org_uid, reviewer_level = plone_group_id.split('_')
+            # reviewers[reviewer_level] is a list of states
+            reviewProcessInfo = [
+                '{0}__reviewprocess__{1}'.format(
+                    org_uid,
+                    '{0}{1}'.format(prefix_review_state, review_state))
+                for review_state in reviewers[reviewer_level]
+            ]
+            reviewProcessInfos.extend(reviewProcessInfo)
         return {'portal_type': {'query': self.cfg.getItemTypeName()},
                 'reviewProcessInfo': {'query': reviewProcessInfos}, }
 
 
-class ItemsToValidateOfHighestHierarchicLevelAdapter(BaseItemsToValidateOfHighestHierarchicLevelAdapter):
+class ItemsToValidateOfHighestHierarchicLevelAdapter(
+        BaseItemsToValidateOfHighestHierarchicLevelAdapter):
 
     @property
     @ram.cache(query_user_groups_cachekey)
@@ -962,7 +1036,8 @@ class ItemsToValidateOfHighestHierarchicLevelAdapter(BaseItemsToValidateOfHighes
     query = query_itemstovalidateofhighesthierarchiclevel
 
 
-class ItemsToCorrectToValidateOfHighestHierarchicLevelAdapter(BaseItemsToValidateOfHighestHierarchicLevelAdapter):
+class ItemsToCorrectToValidateOfHighestHierarchicLevelAdapter(
+        BaseItemsToValidateOfHighestHierarchicLevelAdapter):
 
     @property
     @ram.cache(query_user_groups_cachekey)
@@ -971,6 +1046,21 @@ class ItemsToCorrectToValidateOfHighestHierarchicLevelAdapter(BaseItemsToValidat
 
     # we may not ram.cache methods in same file with same name...
     query = query_itemstocorrecttovalidateofhighesthierarchiclevel
+
+
+class AllItemsToValidateOfHighestHierarchicLevelAdapter(
+        BaseItemsToValidateOfHighestHierarchicLevelAdapter):
+
+    @property
+    @ram.cache(query_user_groups_cachekey)
+    def query_allitemstovalidateofhighesthierarchiclevel(self):
+        to_validate_query = self._query()
+        to_correct_to_validate_query = self._query(prefix_review_state='returned_to_proposing_group_')
+        query = merge_queries([to_validate_query, to_correct_to_validate_query])
+        return query
+
+    # we may not ram.cache methods in same file with same name...
+    query = query_allitemstovalidateofhighesthierarchiclevel
 
 
 class BaseItemsToValidateOfEveryReviewerLevelsAndLowerLevelsAdapter(CompoundCriterionBaseAdapter):
@@ -1004,7 +1094,7 @@ class BaseItemsToValidateOfEveryReviewerLevelsAndLowerLevelsAdapter(CompoundCrit
             if not highestReviewerLevel:
                 continue
             foundLevel = False
-            reviewers = reviewersFor(self.cfg.getItemWorkflow())
+            reviewers = reviewersFor(self.cfg)
             for reviewer_suffix, review_states in reviewers.items():
                 if not foundLevel and not reviewer_suffix == highestReviewerLevel:
                     continue
@@ -1053,6 +1143,21 @@ class ItemsToCorrectToValidateOfEveryReviewerLevelsAndLowerLevelsAdapter(
     query = query_itemstocorrecttovalidateofeveryreviewerlevelsandlowerlevels
 
 
+class AllItemsToValidateOfEveryReviewerLevelsAndLowerLevelsAdapter(
+        BaseItemsToValidateOfEveryReviewerLevelsAndLowerLevelsAdapter):
+
+    @property
+    @ram.cache(query_user_groups_cachekey)
+    def query_allitemstovalidateofeveryreviewerlevelsandlowerlevels(self):
+        to_validate_query = self._query()
+        to_correct_to_validate_query = self._query(prefix_review_state='returned_to_proposing_group_')
+        query = merge_queries([to_validate_query, to_correct_to_validate_query])
+        return query
+
+    # we may not ram.cache methods in same file with same name...
+    query = query_allitemstovalidateofeveryreviewerlevelsandlowerlevels
+
+
 class BaseItemsToValidateOfMyReviewerGroupsAdapter(CompoundCriterionBaseAdapter):
 
     def _query(self, prefix_review_state=''):
@@ -1063,7 +1168,7 @@ class BaseItemsToValidateOfMyReviewerGroupsAdapter(CompoundCriterionBaseAdapter)
             return {}
         userPloneGroups = self.tool.get_plone_groups_for_user()
         reviewProcessInfos = []
-        reviewers = reviewersFor(self.cfg.getItemWorkflow())
+        reviewers = reviewersFor(self.cfg)
         for userPloneGroupId in userPloneGroups:
             for reviewer_suffix, review_states in reviewers.items():
                 # current user may be able to validate at at least
@@ -1113,6 +1218,20 @@ class ItemsToCorrectToValidateOfMyReviewerGroupsAdapter(BaseItemsToValidateOfMyR
     query = query_itemstocorrecttovalidateoffmyreviewergroups
 
 
+class AllItemsToValidateOfMyReviewerGroupsAdapter(BaseItemsToValidateOfMyReviewerGroupsAdapter):
+
+    @property
+    @ram.cache(query_user_groups_cachekey)
+    def query_allitemstovalidateoffmyreviewergroups(self):
+        to_validate_query = self._query()
+        to_correct_to_validate_query = self._query(prefix_review_state='returned_to_proposing_group_')
+        query = merge_queries([to_validate_query, to_correct_to_validate_query])
+        return query
+
+    # we may not ram.cache methods in same file with same name...
+    query = query_allitemstovalidateoffmyreviewergroups
+
+
 class BaseItemsToCorrectAdapter(CompoundCriterionBaseAdapter):
 
     def _query(self, review_states):
@@ -1125,12 +1244,19 @@ class BaseItemsToCorrectAdapter(CompoundCriterionBaseAdapter):
         reviewProcessInfos = []
         for review_state in review_states:
             if review_state in itemWF.states:
-                roles = itemWF.states[review_state].permission_roles[ModifyPortalContent]
-                suffixes = [suffix for suffix, role in MEETINGROLES.items() if role in roles]
-                userOrgUids = self.tool.get_orgs_for_user(suffixes=suffixes, the_objects=False)
-                if userOrgUids:
-                    for userOrgUid in userOrgUids:
-                        reviewProcessInfos.append('%s__reviewprocess__%s' % (userOrgUid, review_state))
+                # roles that may edit
+                edit_roles = itemWF.states[review_state].permission_roles[ModifyPortalContent]
+                # suffixes information for review_state
+                roles_of_suffixes = compute_item_roles_to_assign_to_suffixes(self.cfg, review_state)[1]
+                # keep suffixes having relevant roles
+                suffixes = []
+                for suffix, roles in roles_of_suffixes.items():
+                    if set(edit_roles).intersection(set(roles)):
+                        suffixes.append(suffix)
+                # we have suffixes to keep, now find suffixed orgs for current user
+                userOrgIds = [org.UID() for org in self.tool.get_orgs_for_user(suffixes=suffixes)]
+                for userOrgId in userOrgIds:
+                    reviewProcessInfos.append('%s__reviewprocess__%s' % (userOrgId, review_state))
         if not reviewProcessInfos:
             return _find_nothing_query(self.cfg.getItemTypeName())
         # Create query parameters
@@ -1378,6 +1504,35 @@ class NegativePersonalLabelsAdapter(CompoundCriterionBaseAdapter):
 
     # we may not ram.cache methods in same file with same name...
     query = query_negative_personal_labels
+
+
+class NegativePreviousIndexValuesAdapter(CompoundCriterionBaseAdapter):
+
+    @property
+    @ram.cache(query_user_groups_cachekey)
+    def query_negative_previous_index_values(self):
+        '''Special query that will get previous value in DashboardCollection and
+           negativize values.  So for example, if previous index is indexAdvisers,
+           values defined in indexAdvisers will be negativized, this will let find
+           items that does not have that or that advice.'''
+        if not self.cfg:
+            return {}
+        # get previous index
+        previous = None
+        for value in self.context.query:
+            if value[u'i'] == u'CompoundCriterion' and \
+               u'items-with-negative-previous-index' in value[u'v']:
+                break
+            previous = value
+
+        query = {
+            'portal_type': {'query': self.cfg.getItemTypeName()}, }
+        if previous:
+            query[previous[u'i']] = {'not': previous[u'v']}
+        return query
+
+    # we may not ram.cache methods in same file with same name...
+    query = query_negative_previous_index_values
 
 
 class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):

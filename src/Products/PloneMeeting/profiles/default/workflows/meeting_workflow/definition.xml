@@ -11,48 +11,10 @@
  <permission>Review portal content</permission>
  <permission>Delete objects</permission>
  <permission>PloneMeeting: Add annex</permission>
- <state state_id="archived"
-        title="archived"
-        i18n:attributes="title">
-  <exit-transition transition_id="backToClosed"/>
-  <permission-map name="Access contents information"
-                  acquired="False">
-   <permission-role>Manager</permission-role>
-   <permission-role>MeetingManager</permission-role>
-   <permission-role>MeetingObserverGlobal</permission-role>
-   <permission-role>MeetingArchiveObserver</permission-role>
-   <permission-role>Reader</permission-role>
-  </permission-map>
-  <permission-map name="Delete objects"
-                  acquired="False">
-   <permission-role>Manager</permission-role>
-  </permission-map>
-  <permission-map name="Modify portal content"
-                  acquired="False">
-   <permission-role>Manager</permission-role>
-  </permission-map>
-  <permission-map name="PloneMeeting: Add annex"
-                  acquired="False">
-   <permission-role>Manager</permission-role>
-  </permission-map>
-  <permission-map name="Review portal content"
-                  acquired="False">
-   <permission-role>Manager</permission-role>
-  </permission-map>
-  <permission-map name="View"
-                  acquired="False">
-   <permission-role>Manager</permission-role>
-   <permission-role>MeetingManager</permission-role>
-   <permission-role>MeetingObserverGlobal</permission-role>
-   <permission-role>MeetingArchiveObserver</permission-role>
-   <permission-role>Reader</permission-role>
-  </permission-map>
- </state>
  <state state_id="closed"
         title="closed"
         i18n:attributes="title">
   <exit-transition transition_id="backToDecided"/>
-  <exit-transition transition_id="archive"/>
   <permission-map name="Access contents information"
                   acquired="False">
    <permission-role>Manager</permission-role>
@@ -89,12 +51,12 @@
  <state state_id="created"
         title="created"
         i18n:attributes="title">
-  <exit-transition transition_id="publish"/>
+  <exit-transition transition_id="freeze"/>
   <permission-map name="Access contents information"
                   acquired="False">
    <permission-role>Manager</permission-role>
    <permission-role>MeetingManager</permission-role>
-   <permission-role>MeetingObserverUnpublished</permission-role>
+   <permission-role>MeetingObserverGlobal</permission-role>
    <permission-role>Reader</permission-role>
   </permission-map>
   <permission-map name="Delete objects"
@@ -121,7 +83,7 @@
                   acquired="False">
    <permission-role>Manager</permission-role>
    <permission-role>MeetingManager</permission-role>
-   <permission-role>MeetingObserverUnpublished</permission-role>
+   <permission-role>MeetingObserverGlobal</permission-role>
    <permission-role>Reader</permission-role>
   </permission-map>
  </state>
@@ -129,7 +91,7 @@
         title="decided"
         i18n:attributes="title">
   <exit-transition transition_id="close"/>
-  <exit-transition transition_id="backToFrozen"/>
+  <exit-transition transition_id="backToPublished"/>
   <permission-map name="Access contents information"
                   acquired="False">
    <permission-role>Manager</permission-role>
@@ -167,8 +129,8 @@
  <state state_id="frozen"
         title="frozen"
         i18n:attributes="title">
-  <exit-transition transition_id="backToPublished"/>
-  <exit-transition transition_id="decide"/>
+  <exit-transition transition_id="backToCreated"/>
+  <exit-transition transition_id="publish"/>
   <permission-map name="Access contents information"
                   acquired="False">
    <permission-role>Manager</permission-role>
@@ -206,9 +168,8 @@
  <state state_id="published"
         title="published"
         i18n:attributes="title">
-  <exit-transition transition_id="backToCreated"/>
-  <exit-transition transition_id="republish"/>
-  <exit-transition transition_id="freeze"/>
+  <exit-transition transition_id="backToFrozen"/>
+  <exit-transition transition_id="decide"/>
   <permission-map name="Access contents information"
                   acquired="False">
    <permission-role>Manager</permission-role>
@@ -243,30 +204,6 @@
    <permission-role>Reader</permission-role>
   </permission-map>
  </state>
- <transition transition_id="archive"
-             title="archive"
-             new_state="archived"
-             trigger="USER"
-             before_script=""
-             after_script=""
-             i18n:attributes="title">
-  <action url="" icon="" category="workflow" i18n:translate="">archive</action>
-  <guard>
-    <guard-expression>python:here.wfConditions().mayArchive()</guard-expression>
-  </guard>
- </transition>
- <transition transition_id="backToClosed"
-             title="backToClosed"
-             new_state="closed"
-             trigger="USER"
-             before_script=""
-             after_script=""
-             i18n:attributes="title">
-  <action url="" icon="" category="workflow" i18n:translate="">backToClosed</action>
-  <guard>
-    <guard-expression>python:here.wfConditions().mayCorrect('closed')</guard-expression>
-  </guard>
- </transition>
  <transition transition_id="backToCreated"
              title="backToCreated"
              new_state="created"
@@ -361,18 +298,6 @@
   <action url="" icon="" category="workflow" i18n:translate="">publish</action>
   <guard>
     <guard-expression>python:here.wfConditions().mayPublish()</guard-expression>
-  </guard>
- </transition>
- <transition transition_id="republish"
-             title="republish"
-             new_state="published"
-             trigger="USER"
-             before_script=""
-             after_script=""
-             i18n:attributes="title">
-  <action url="" icon="" category="workflow" i18n:translate="">republish</action>
-  <guard>
-    <guard-expression>python:here.wfConditions().mayRepublish()</guard-expression>
   </guard>
  </transition>
  <variable variable_id="action" for_catalog="False"

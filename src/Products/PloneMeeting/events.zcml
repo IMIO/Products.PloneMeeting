@@ -73,6 +73,10 @@
               handler=".events.onMeetingTransition" />
 
   <subscriber for=".interfaces.IMeeting
+                   zope.lifecycleevent.ObjectMovedEvent"
+              handler=".events.onMeetingMoved" />
+
+  <subscriber for=".interfaces.IMeeting
                    zope.container.interfaces.IObjectRemovedEvent"
               handler=".events.onMeetingRemoved" />
 

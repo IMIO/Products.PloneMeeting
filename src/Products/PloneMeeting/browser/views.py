@@ -2,6 +2,7 @@
 
 from AccessControl import Unauthorized
 from collections import OrderedDict
+from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.contact.core.utils import get_gender_and_number
 from collective.contact.plonegroup.browser.tables import DisplayGroupUsersView
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
@@ -20,6 +21,7 @@ from ftw.labels.interfaces import ILabeling
 from imio.helpers.xhtml import addClassToContent
 from imio.helpers.xhtml import CLASS_TO_LAST_CHILDREN_NUMBER_OF_CHARS_DEFAULT
 from imio.helpers.xhtml import imagesToPath
+from imio.helpers.xhtml import separate_images
 from imio.history.utils import getLastWFAction
 from plone import api
 from plone.app.caching.operations.utils import getContext
@@ -33,6 +35,7 @@ from Products.CMFPlone.utils import safe_unicode
 from Products.Five import BrowserView
 from Products.PloneMeeting import logger
 from Products.PloneMeeting.browser.itemchangeorder import _is_integer
+from Products.PloneMeeting.columns import render_item_annexes
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import ADVICE_STATES_ALIVE
 from Products.PloneMeeting.config import ITEM_INSERT_METHODS
@@ -41,6 +44,7 @@ from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.indexes import _to_coded_adviser_index
 from Products.PloneMeeting.interfaces import IMeeting
 from Products.PloneMeeting.MeetingConfig import POWEROBSERVERPREFIX
+from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import _itemNumber_to_storedItemNumber
 from Products.PloneMeeting.utils import _storedItemNumber_to_itemNumber
 from Products.PloneMeeting.utils import get_annexes
@@ -93,18 +97,36 @@ class ItemMoreInfosView(BrowserView):
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
 
-    def __call__(self, visibleColumns):
+    def __call__(self, visibleColumns=[], fieldsConfigAttr='itemsListVisibleFields', currentCfgId=None):
         """ """
         self.visibleColumns = visibleColumns
+        self.visibleFields = self.cfg.getField(fieldsConfigAttr).get(self.cfg)
+        # if current user may not see the item, use another fieldsConfigAttr
+        if not _checkPermission(View, self.context):
+            # check it item fields should be visible nevertheless
+            extra_expr_ctx = _base_extra_expr_ctx(self.context)
+            currentCfg = currentCfgId and self.tool.get(currentCfgId) or self.cfg
+            extra_expr_ctx.update({'item': self.context})
+            extra_expr_ctx.update({'cfg': currentCfg})
+            extra_expr_ctx.update({'item_cfg': self.cfg})
+            res = _evaluateExpression(self.context,
+                                      expression=currentCfg.getItemsNotViewableVisibleFieldsTALExpr(),
+                                      roles_bypassing_expression=[],
+                                      extra_expr_ctx=extra_expr_ctx)
+            if res:
+                self.visibleFields = self.cfg.getField('itemsNotViewableVisibleFields').get(self.cfg)
+                with api.env.adopt_roles(['Manager']):
+                    return super(ItemMoreInfosView, self).__call__()
+            else:
+                self.visibleFields = ()
         return super(ItemMoreInfosView, self).__call__()
 
-    @memoize_contextless
-    def getItemsListVisibleFields(self):
+    @memoize
+    def getVisibleFields(self):
         """ """
-        visibleFields = self.cfg.getItemsListVisibleFields()
         # keep order of displayed fields
         res = OrderedDict()
-        for visibleField in visibleFields:
+        for visibleField in self.visibleFields:
             visibleFieldName = visibleField.split('.')[1]
             # if nothing is defined, the default rendering macro will be used
             # this is made to be overrided
@@ -115,6 +137,10 @@ class ItemMoreInfosView(BrowserView):
         """Return the renderer to use for given p_fieldName, this returns nothing
            by default and is made to be overrided by subproduct."""
         return None
+
+    def render_annexes(self):
+        """ """
+        return render_item_annexes(self.context, self.tool, show_nothing=True)
 
 
 class BaseStaticInfosView(BrowserView):
@@ -467,7 +493,7 @@ class MeetingReorderItems(BrowserView):
         for item in items:
             item.setItemNumber(itemNumber)
             itemNumber = itemNumber + 100
-        self.context._finalize_item_insert(items, items_to_update=items)
+        self.context._finalize_item_insert(items_to_update=items)
 
     def index(self):
         """ """
@@ -690,7 +716,8 @@ class BaseDGHV(object):
                    keepWithNextNumberOfChars=CLASS_TO_LAST_CHILDREN_NUMBER_OF_CHARS_DEFAULT,
                    checkNeedSeparator=True,
                    addCSSClass=None,
-                   use_safe_html=True):
+                   use_safe_html=True,
+                   clean=False):
         """Helper method to format a p_xhtmlContents.  The xhtmlContents is a list or a string containing
            either XHTML content or some specific recognized words like :
            - 'separator', in this case, it is replaced with the p_separatorValue;
@@ -737,6 +764,9 @@ class BaseDGHV(object):
         # manage addCSSClass
         if addCSSClass:
             xhtmlFinal = addClassToContent(xhtmlFinal, addCSSClass)
+
+        if clean:
+            xhtmlFinal = separate_images(xhtmlFinal)
 
         # finally use_safe_html to clean the HTML, it does not only clean
         # but turns the result into a XHTML compliant HTML, by replacing <br> with <br /> for example
@@ -1329,7 +1359,7 @@ class BaseDGHV(object):
             return self.print_signatories_by_position(**kwargs)
 
     def print_signatories_by_position(self,
-                                      signature_format=(u'prefixed_position_type', u'person'),
+                                      signature_format=(u'prefixed_secondary_position_type', u'person'),
                                       separator=u',',
                                       ender=u''):
         """
@@ -1344,6 +1374,9 @@ class BaseDGHV(object):
             - 'prefixed_secondary_position_type' -> 'The President'
             - [PMHeldPosition attribute] e.g. 'gender' -> 'M'
             - [str] e.g. 'My String' -> 'My String' (in this case it just print the str)
+        When using 'prefixed_secondary_position_type' (default), if no 'secondary_position_type'
+        was defined, it falls back to 'prefixed_position_type' by default
+        (same for 'secondary_position_type' that will fall back to 'position_type')
         :param separator: str that will be appended at the end of each line (except the last one)
         :param ender: str that will be appended at the end of the last one
         :return: a dict with position as key and signature as value
@@ -1696,29 +1729,33 @@ class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV)
             custom_patterns={},
             include_person_title=True,
             render_as_html=True,
-            html_pattern=u'<p>{0}</p>'):
+            html_pattern=u'<p>{0}</p>',
+            ignore_before_first_item=True):
         """Print in an out moves depending on the previous/next item.
            If p_in_and_out_types is given, only given types are considered among
-           'left_before', 'entered_before', 'left_after' and 'entered_after'.
+           patterns keys ('left_before', 'entered_before', ...).
            p_merge_in_and_out_types=True (default) will merge in_and_out_types for absent/excused and non_attendee
            types so for example key 'left_before' will also contain elements of key 'non_attendee_before'.
            p_patterns rendering informations may be overrided.
            If person_full_title is True, include full_title in sentence, aka include 'Mister' prefix.
            If p_render_as_html is True, informations is returned with value as HTML, else,
            we return a list of sentences.
-           p_html_pattern is the way HTML is rendered when p_render_as_html is True."""
+           p_html_pattern is the way HTML is rendered when p_render_as_html is True.
+           If p_ignore_before_first_item is True (default), "before" sentences will
+           not be rendered for first item of the meeting."""
 
         patterns = {'left_before': u'{0} quitte la séance avant la discussion du point.',
-                    'entered_before': u'{0} rentre en séance avant la discussion du point.',
+                    'entered_before': u'{0} entre en séance avant la discussion du point.',
                     'left_after': u'{0} quitte la séance après la discussion du point.',
                     'entered_after': u'{0} entre en séance après la discussion du point.',
                     'non_attendee_before': u'{0} ne participe plus à la séance avant la discussion du point.',
-                    'attendee_again_before': u'{0} participe à nouveau à la séance avant la discussion du point.',
+                    'attendee_again_before': u'{0} participe à la séance avant la discussion du point.',
                     'non_attendee_after': u'{0} ne participe plus à la séance après la discussion du point.',
-                    'attendee_again_after': u'{0} participe à nouveau à la séance après la discussion du point.'}
+                    'attendee_again_after': u'{0} participe à la séance après la discussion du point.'}
         patterns.update(custom_patterns)
 
-        in_and_out = self.context.getInAndOutAttendees()
+        in_and_out = self.context.getInAndOutAttendees(
+            ignore_before_first_item=ignore_before_first_item)
         person_res = {in_and_out_type: [] for in_and_out_type in in_and_out.keys()
                       if (not in_and_out_types or in_and_out_type in in_and_out_types)}
         for in_and_out_type, held_positions in in_and_out.items():
@@ -1982,7 +2019,6 @@ class MeetingStoreItemsPodTemplateAsAnnexBatchActionForm(BaseBatchActionForm):
         """ """
         template_id, output_format = data['pod_template'].split('__output_format__')
         pod_template = getattr(self.cfg.podtemplates, template_id)
-
         num_of_generated_templates = 0
         self.request.set('store_as_annex', '1')
         for brain in self.brains:
@@ -1994,9 +2030,6 @@ class MeetingStoreItemsPodTemplateAsAnnexBatchActionForm(BaseBatchActionForm):
                 return_portal_msg_code=True)
             if not res:
                 num_of_generated_templates += 1
-                logger.info(
-                    'Generated POD template {0} using output format {1} for item at {2}'.format(
-                        template_id, output_format, '/'.join(item.getPhysicalPath())))
             else:
                 # log error
                 msg = translate(msgid=res, domain='PloneMeeting', context=self.request)
@@ -2056,12 +2089,18 @@ class DisplayMeetingConfigsOfConfigGroup(BrowserView):
         tool = api.portal.get_tool('portal_plonemeeting')
         grouped_configs = tool.getGroupedConfigs(config_group=self.config_group)
         res = []
+        current_url = self.request['URL']
         for config_info in grouped_configs.values()[0]:
             cfg_id = config_info['id']
             cfg = getattr(tool, cfg_id)
+            css_class = ""
+            if "/mymeetings/%s/" % cfg_id in current_url or \
+               "/portal_plonemeeting/%s/" % cfg_id in current_url:
+                css_class = "fa selected"
             res.append(
                 {'config': cfg,
-                 'url': tool.getPloneMeetingFolder(cfg_id).absolute_url() + '/searches_items'})
+                 'url': tool.getPloneMeetingFolder(cfg_id).absolute_url() + '/searches_items',
+                 'css_class': css_class})
         # make sure 'content-type' header of response is correct because during
         # faceted initialization, 'content-type' is turned to 'text/xml' and it
         # breaks to tooltipster displaying the result in the tooltip...

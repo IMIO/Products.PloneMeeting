@@ -498,6 +498,7 @@ class testMeeting(PloneMeetingTestCase):
 
         self.changeUser('siteadmin')
         cfg = self.meetingConfig
+        cfg.setOrderedGroupsInCharge(())
         cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_groups_in_charge',
                                            'reverse': '0'}, ))
         # when groupsInCharge are not defined for some proposingGroups, items are inserted at the beginning
@@ -622,6 +623,7 @@ class testMeeting(PloneMeetingTestCase):
 
         self.changeUser('siteadmin')
         cfg = self.meetingConfig
+        cfg.setOrderedGroupsInCharge(())
         cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_groups_in_charge',
                                            'reverse': '0'}, ))
         # create some groups in charge
@@ -2172,7 +2174,7 @@ class testMeeting(PloneMeetingTestCase):
         item.REQUEST['PUBLISHED'] = item
         # as no current meeting and no meeting in the future, the item
         # may not be presented anymore
-        self.assertTrue(not item.wfConditions().mayPresent())
+        self.assertFalse(item.wfConditions().mayPresent())
 
         item.REQUEST['PUBLISHED'] = meeting
         # freeze the meeting, there will be no more meeting to present the item to
@@ -2603,7 +2605,7 @@ class testMeeting(PloneMeetingTestCase):
         self.changeUser('admin')
         self._removeConfigObjectsFor(self.meetingConfig)
         # make sure 'pmManager' may not see items of 'vendors'
-        self._removePrincipalFromGroup('pmManager', self.vendors_advisers)
+        self._removePrincipalFromGroups('pmManager', [self.vendors_advisers])
 
         # create a meeting and an item, set the meeting as preferredMeeting for the item
         # then when the meeting is removed, the item preferredMeeting is back to 'whatever'
@@ -2742,8 +2744,8 @@ class testMeeting(PloneMeetingTestCase):
         actions_panel._transitions = None
         meetingManager_rendered_actions_panel = actions_panel()
         # we will remove 'pmManager' from the cfg _meetingmanagers group
-        self._removePrincipalFromGroup('pmManager',
-                                       '{0}_{1}'.format(cfg.getId(), MEETINGMANAGERS_GROUP_SUFFIX))
+        self._removePrincipalFromGroups(
+            'pmManager', ['{0}_{1}'.format(cfg.getId(), MEETINGMANAGERS_GROUP_SUFFIX)])
         # we need to reconnect for groups changes to take effect
         self.changeUser('pmManager')
         self.assertFalse('MeetingManager' in self.member.getRolesInContext(meeting))
@@ -3026,18 +3028,16 @@ class testMeeting(PloneMeetingTestCase):
             return
 
         cfg.setWorkflowAdaptations(())
-        cfg.setMeetingWorkflow('meeting_workflow')
         cfg.at_post_edit_script()
         cfg2.setWorkflowAdaptations(())
-        cfg2.setMeetingWorkflow('meeting_workflow')
         cfg2.at_post_edit_script()
 
         self.changeUser('pmManager')
         meeting = self.create('Meeting', date=DateTime('2018/04/09'))
         self.assertEqual(sorted(meeting.getStatesBefore('frozen')),
-                         ['created', 'published'])
-        self.assertEqual(sorted(meeting.getStatesBefore('published')),
                          ['created'])
+        self.assertEqual(sorted(meeting.getStatesBefore('published')),
+                         ['created', 'frozen'])
         # use the no_publication WF adaptation to remove state 'published'
         cfg.setWorkflowAdaptations(('no_publication', ))
         # do not use at_post_edit_script that does a cleanRamCache()
@@ -3046,35 +3046,37 @@ class testMeeting(PloneMeetingTestCase):
         self.assertEqual(sorted(meeting.getStatesBefore('frozen')),
                          ['created'])
         # state not found, every states are returned
-        self.assertEqual(sorted(meeting.getStatesBefore('published')),
-                         ['archived', 'closed', 'created', 'decided', 'frozen'])
+        self.assertEqual(sorted(meeting.getStatesBefore('unknown_state')),
+                         ['closed', 'created', 'decided', 'frozen'])
         cfg.setWorkflowAdaptations(())
         # do not use at_post_edit_script that does a cleanRamCache()
         cfg.registerPortalTypes()
         transaction.commit()
         self.assertEqual(sorted(meeting.getStatesBefore('frozen')),
-                         ['created', 'published'])
-        self.assertEqual(sorted(meeting.getStatesBefore('published')),
                          ['created'])
+        self.assertEqual(sorted(meeting.getStatesBefore('published')),
+                         ['created', 'frozen'])
 
         # different for 2 meetingConfigs
         self.setMeetingConfig(cfg2.getId())
         meeting2 = self.create('Meeting', date=DateTime('2018/04/09'))
         self.assertEqual(sorted(meeting2.getStatesBefore('frozen')),
-                         ['created', 'published'])
+                         ['created'])
+        self.assertEqual(sorted(meeting2.getStatesBefore('published')),
+                         ['created', 'frozen'])
         cfg2.setWorkflowAdaptations(('no_publication', ))
         cfg2.registerPortalTypes()
         transaction.commit()
 
         # different values for different meetings
         self.assertEqual(sorted(meeting.getStatesBefore('frozen')),
-                         ['created', 'published'])
-        self.assertEqual(sorted(meeting.getStatesBefore('published')),
                          ['created'])
+        self.assertEqual(sorted(meeting.getStatesBefore('published')),
+                         ['created', 'frozen'])
         self.assertEqual(sorted(meeting2.getStatesBefore('frozen')),
                          ['created'])
         self.assertEqual(sorted(meeting2.getStatesBefore('published')),
-                         ['archived', 'closed', 'created', 'decided', 'frozen'])
+                         ['closed', 'created', 'decided', 'frozen'])
 
         # if no frozen state found, every states are considered as before frozen
         # connect 'published' state to 'decided'
@@ -3082,25 +3084,27 @@ class testMeeting(PloneMeetingTestCase):
         meeting_wf.states.deleteStates(['frozen'])
         cfg.at_post_edit_script()
         self.assertEqual(sorted(meeting.getStatesBefore('frozen')),
-                         ['archived', 'closed', 'created', 'decided', 'published'])
+                         ['closed', 'created', 'decided', 'published'])
 
     def test_pm_GetPrettyLink(self):
         """Test the Meeting.getPrettyLink method."""
         self.changeUser('pmManager')
         meeting = self.create('Meeting', date=DateTime('2015/05/05 12:35'))
         self.portal.portal_languages.setDefaultLanguage('en')
-        translatedMeetingTypeTitle = translate(self.portal.portal_types[meeting.portal_type].title,
-                                               domain='plone',
-                                               context=self.portal.REQUEST)
+        translatedMeetingTypeTitle = translate(
+            self.portal.portal_types[meeting.portal_type].title,
+            domain='plone',
+            context=self.portal.REQUEST)
         self.assertEqual(
             meeting.getPrettyLink(showContentIcon=True, prefixed=True),
             u"<a class='pretty_link' title='Meeting of 05/05/2015 (12:35)' "
             "href='http://nohost/plone/Members/pmManager/mymeetings/{0}/o1' target='_self'>"
-            "<span class='pretty_link_icons'><img title='{1}' "
-            "src='http://nohost/plone/Meeting.png' /></span>"
+            "<span class='pretty_link_icons'>"
+            "<img title='{1}' src='http://nohost/plone/Meeting.png' "
+            "style=\"width: 16px; height: 16px;\" /></span>"
             "<span class='pretty_link_content state-created'>"
-            "Meeting of 05/05/2015 (12:35)</span></a>".format(self.meetingConfig.getId(),
-                                                              translatedMeetingTypeTitle))
+            "Meeting of 05/05/2015 (12:35)</span></a>".format(
+                self.meetingConfig.getId(), translatedMeetingTypeTitle))
 
     def test_pm_ShowMeetingManagerReservedField(self):
         """This condition is protecting some fields that should only be
@@ -3341,6 +3345,107 @@ class testMeeting(PloneMeetingTestCase):
         self.assertFalse('presentSelectedItems' in result)
         self.assertFalse('forceInsertNormal' in result)
         self.assertTrue(item_uid in result)
+
+    def test_pm_Post_validate_meeting_attendees(self):
+        """Meeting.post_validate is used to validate meeting_attendees
+           as there is no field in the schema for this."""
+        cfg = self.meetingConfig
+        # does not break while not using contacts
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime('2020/09/23'))
+        self.assertFalse(cfg.isUsingContacts())
+        self.assertEqual(meeting.validate(self.request), {})
+
+        # now with contacts
+        self._setUpOrderedContacts()
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime('2020/09/18'))
+
+        # does not break post_validating without 'meeting_attendees'
+        # this is the case when nobody has been selected on the meeting
+        self.assertEqual(meeting.validate(self.request), {})
+
+        item = meeting.getItems()[0]
+        item_uid = item.UID()
+        # configure the 4 assembly members
+        # absent, excused, signatory, nonAttendee
+        attendee_uids = meeting.getAttendees()
+        meeting.orderedContacts[attendee_uids[0]]['signer'] = True
+        meeting.orderedContacts[attendee_uids[0]]['signature_number'] = '1'
+        meeting.itemAbsents[item_uid] = [attendee_uids[0]]
+        meeting.itemExcused[item_uid] = [attendee_uids[1]]
+        meeting.itemNonAttendees[item_uid] = [attendee_uids[2]]
+        meeting.itemSignatories[item_uid] = {'2': attendee_uids[3]}
+        # now while validating meeting_attendees, None may be unselected
+        meeting_attendees = ['muser_{0}_attendee'.format(attendee_uid)
+                             for attendee_uid in attendee_uids]
+
+        # now test with meeting_attendees
+        self.request.form['meeting_attendees'] = meeting_attendees
+        self.assertEqual(meeting.validate(self.request), {})
+        # unselecting one would break validation
+        error_msg = translate(
+            u'can_not_remove_attendee_redefined_on_items',
+            domain='PloneMeeting',
+            mapping={
+                'attendee_title':
+                    u'Monsieur Person1FirstName Person1LastName, '
+                    u'Assembly member 1 (Mon organisation)'},
+            context=self.request)
+        index = 1
+        for attendee_uid in meeting_attendees:
+            tmp_meeting_attendees = list(meeting_attendees)
+            tmp_meeting_attendees.remove(attendee_uid)
+            self.request.form['meeting_attendees'] = tmp_meeting_attendees
+            self.assertEqual(len(self.request.form['meeting_attendees']), 3)
+            # error msg contains attendee name, ... manipulate it
+            tmp_error_msg = error_msg.replace(
+                '1', str(index)).replace('member 4', 'member 4 & 5')
+            self.assertEqual(
+                meeting.validate(self.request),
+                {'meeting_attendees': tmp_error_msg})
+            index += 1
+        # do work unselect attendee by attendee
+        # itemAbsents
+        meeting.itemAbsents[item_uid] = []
+        self.request.form['meeting_attendees'] = [meeting_attendee for meeting_attendee in meeting_attendees
+                                                  if not attendee_uids[0] in meeting_attendee]
+        self.assertEqual(len(self.request.form['meeting_attendees']), 3)
+        self.assertEqual(meeting.validate(self.request), {})
+        # itemExcused
+        meeting.itemExcused[item_uid] = []
+        self.request.form['meeting_attendees'] = [meeting_attendee for meeting_attendee in meeting_attendees
+                                                  if not attendee_uids[1] in meeting_attendee]
+        self.assertEqual(len(self.request.form['meeting_attendees']), 3)
+        self.assertEqual(meeting.validate(self.request), {})
+        # itemNonAttendees
+        meeting.itemNonAttendees[item_uid] = []
+        self.request.form['meeting_attendees'] = [meeting_attendee for meeting_attendee in meeting_attendees
+                                                  if not attendee_uids[2] in meeting_attendee]
+        self.assertEqual(len(self.request.form['meeting_attendees']), 3)
+        self.assertEqual(meeting.validate(self.request), {})
+        # itemSignatories
+        meeting.itemSignatories[item_uid] = {}
+        self.request.form['meeting_attendees'] = [meeting_attendee for meeting_attendee in meeting_attendees
+                                                  if not attendee_uids[3] in meeting_attendee]
+        self.assertEqual(len(self.request.form['meeting_attendees']), 3)
+        self.assertEqual(meeting.validate(self.request), {})
+
+        # does not break while creating an new meeting aka
+        # persistent attributes like itemNonAttendees or itemAbsents do not exist
+        # remove recurring items in self.meetingConfig
+        self._removeConfigObjectsFor(self.meetingConfig)
+        meeting2 = self.create('Meeting', date=DateTime('2020/09/23'))
+        delattr(meeting2, 'orderedContacts')
+        delattr(meeting2, 'itemAbsents')
+        delattr(meeting2, 'itemExcused')
+        delattr(meeting2, 'itemSignatories')
+        delattr(meeting2, 'itemNonAttendees')
+        self.assertEqual(meeting.validate(self.request), {})
+        self.request.form['meeting_attendees'] = meeting_attendees
+        self.assertEqual(meeting.validate(self.request), {})
+        meeting2.at_post_create_script()
+        self.assertEqual(meeting.validate(self.request), {})
 
 
 def test_suite():

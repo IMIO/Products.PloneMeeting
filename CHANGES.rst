@@ -2,8 +2,322 @@ Changelog
 =========
 
 
+4.2b7 (unreleased)
+------------------
 
-4.1.28 (unreleased)
+- Use correct icon for `itemfreeze/itempublish` transitions on item workflow
+  (were reversed).
+  [gbastien]
+- Optimized `MeetingItem.updateLocalRoles`, pass `cfg` and `item_state` when
+  possible and `ram.cache` for `utils.compute_item_roles_to_assign_to_suffixes`.
+  [gbastien]
+- Removed `Meeting.items` `ReferenceField`, manage it manually,
+  this will help migrating to `DX`.
+  [gbastien]
+- Do not fail in `vocabularies.PMUsers` when `user_id` contains special chars,
+  it may be the case when using `LDAP`, ignore these values.
+  [gbastien]
+- Optimized `utils.sendMailIfRelevant` to not send an email several times to
+  same address.  It was only done in `MeetingItem._sendMailToGroupMembers`.
+  Removed `MeetingItem._sendMailToGroupMembers` and manage it using new
+  parameter `isGroupIds=True` in `utils.sendMailIfRelevant`.
+  [gbastien]
+
+4.2b6 (2020-11-19)
+------------------
+
+- Added parameter `the_objects=False` to `GroupsInChargeVocabulary` and
+  `AssociatedGroupsVocabulary` so it is possible to get organization objects as
+  term value, this will be used by `plonemeeting.restapi` to return
+  `groups_in_charge` and `associated_groups` of a `MeetingConfig`.
+  [gbastien]
+- Optimized `PloneGroupSettingsValidator` when checking if `plonegroup` used on
+  items, do it only if some suffixes removed and use the `portal_catalog`.
+  [gbastien]
+- Make sure `attendees` are still editable on item by `MeetingManagers`
+  on a decided item if meeting is not closed.
+  [gbastien]
+- Fixed `MeetingItem._mayClone` that was failing when creating an item from
+  a template if `proposingGroup` was defined and `privacy` was `secret`.
+  [gbastien]
+- Added CompoundCriterion adapters `all-items-to-validate-of-highest-hierarchic-level`
+  and `all-items-to-validate-of-every-reviewer-groups` that will return items to
+  validate from `normal item validation WF` and
+  from `returned_to_proposing_group item validation WF`.
+  [gbastien]
+- Added email notifications `itemPresentedOwner`, `itemUnpresentedOwner`,
+  `itemDelayedOwner` and `returnedToProposingGroupOwner` that notify item
+  `Owner` in addition to existing notification `itemPresented`,
+  `itemUnpresented`, `itemDelayed` and `returnedToProposingGroup` that notify
+  the entire `creators` group.
+  In `utils.sendMail`, if event name ends with `Owner` we use mail subject and
+  body of corresponding event without the `Owner` suffix.
+  [gbastien]
+- Completed `Migrate_To_4200._configureItemWFValidationLevels`, migrate fields
+  `MeetingConfig.itemAnnexConfidentialVisibleFor`,
+  `MeetingConfig.adviceAnnexConfidentialVisibleFor` and
+  `MeetingConfig.meetingAnnexConfidentialVisibleFor` that may contain not
+  allowed values, but that were not validated in previous version.
+  [gbastien]
+- Fixed JS form unload protection, that was broken because we redefined
+  `window.onbeforeunload`.
+  [gbastien]
+- Fixed order of CSS (`portal_css`) and JS (`portal_javascripts`) regarding new
+  resources (`dexterity.localroles`, `eea.facetednavigation` multiselect widget).
+  [gbastien]
+- Fixed `Migrate_To_4200._migrateKeepAccessToItemWhenAdviceIsGiven` in case
+  attribute `keep_access_to_item_when_advice_is_given` does not exist on
+  organization.
+  [gbastien]
+
+4.2b5 (2020-10-26)
+------------------
+
+- Do not let `siteadmin` delete a user in production application because,
+  that could lead to :
+
+  - losing information (`fullname`) on elements the user interacted with;
+  - loading the application and maybe break it as `local_roles` are recomputed
+    on every existing elements by Plone when deleting a user.
+
+  [gbastien]
+
+- Fixed adding a MeetingConfig TTW, set correct default values.
+  [gbastien]
+- Display group `Administrators` members on the MeetingConfig view.
+- Manage in and out sentences when attendee was `absent/excused/non attendee`
+  from first item. Manage also when attendee is `excused/absent` then
+  `non attendee` and so still not present.
+  [gbastien]
+- Fixed activate correct `portal_tab` while using grouped configs and several
+  MC start with same id.
+  [gbastien]
+- Use position `bottom` to display tooltipster `usersGroupInfos`
+  to avoid screen overflow.
+  [gbastien]
+- Be explicit and always show attendees management icons on the item view,
+  was only shown on hover before.
+  [gbastien]
+- Fixed ploneMeetingSelectItem box (dropdown box for selecting a meeting in the
+  plonemeeting portlet) CSS to use light grey background color now that meeting
+  state color is kept (was turned to white before).
+  [gbastien]
+- Changed `MeetingConfig.keepAccessToItemWhenAdviceIsGiven` to
+  `MeetingConfig.keepAccessToItemWhenAdvice` so it may handle keeping access to
+  item when advice is given or has been giveable.
+  [gbastien]
+- While using `grouped configs` (dropdown menu in `portal_tabs`), display an
+  icon next to the currently selected MeetingConfig.
+- Turn `portlet_plonemeeting` label displaying MeetingConfig title into a link
+  to the home folder (like the `Home` icon).
+  [gbastien]
+
+4.2b4 (2020-10-14)
+------------------
+
+- Make sure `state color` on links is applied everywhere
+  (livesearch, livesearch results, folder_contents, ...).
+  [gbastien]
+- Make sure `events.item_added_or_initialized` is only called one time when
+  a new item is created or it may break things done in-between.
+  [gbastien]
+
+4.2b3 (2020-10-02)
+------------------
+
+- Added boolean attribute `ConfigurablePODTemplate.store_as_annex_empty_file`,
+  when `True`, this will store as annex an empty file instead a generated
+  POD template to avoid useless LibreOffice call when stored annex is
+  just stored to be replaced by the AMQP process. Moreover when storing as annex
+  from the item view, user is no more redirected to the annexes tab, it stays on
+  the item view.
+  [gbastien]
+- Fixed `Migrate_To_4_1._adaptForPlonegroup` to take into account new key
+  `enabled` when setting plonegroup functions.
+  [gbastien]
+- In `imgselectbox` (the box used to select a meeting in the portlet),
+  do not append a `/view` to the url of the meeting or it breaks caching because
+  by default, other places link to meeting without this `/view`.
+  [gbastien]
+- Added a new default key displayAdviceReviewState in adaptable method
+  `MeetingItem.getCustomAdviceMessageFor` to be able to display advice
+  `review_state` to users that may not view the advice.
+  [gbastien]
+- Fixed link `Go to bottom of the page` on item view for Chrome.
+  [gbastien]
+- Fixed `@@toggle_item_is_signed` that still reindexed old index
+  `getItemIsSigned`, instead new index `item_is_signed`.
+  [gbastien]
+- Adapted `config.MEETING_GROUP_SUFFIXES` regarding changes in
+  `collective.contact.plonegroup`, new key `fct_management` in functions.
+  [gbastien]
+- Added `held_position.represented_organizations` Relation field to be able to
+  specify held_positions representatives of various organizations.
+  Moreover, a helper method `organization.get_representatives` is added to get
+  representatives held_positions from the organization.
+  [gbastien]
+- Package `plonemeeting.restapi` is now a direct dependency of `Products.PloneMeeting`.
+  [gbastien]
+- Added holidays for 2021 and adapted upgrade step to 4200.
+  [gbastien]
+- Added validation for meeting attendees so it is not possible to unselect an
+  attendee if it was redefined on items (itemAbsent, itemExcused,
+  itemSignatories, itemNonAttendees).
+  [gbastien]
+- Added new fields `MeetingItem.decisionEnd`, `MeetingItem.meetingManagersNotesSuite`,
+  `MeetingItem.meetingManagersNotesEnd` and
+  `MeetingItem.otherMeetingConfigsClonableToFieldDecisionEnd`.
+  [gbastien]
+- Make `organization.acronym` field viewable/editable also on organizations
+  outside `My organization` as it may be used as `associatedGroups` and displayed
+  in dashboard in the `Associated groups acronym` column.
+  [gbastien]
+- Manage down/up WF for some specific advices so icon `waiting_advices_from.png`
+  is red when down WF, green when up WF again and blue otherwise.
+  [gbastien]
+- Refactored `waiting_advices` WFAdaptations to manage more cases.
+  [gbastien]
+- Added helper `PloneMeetingTestCase.addAdvice`.
+  [gbastien]
+- Completed `MeetingConfig.validate_itemWFValidationLevels` to not be able to
+  disable level if used in the MeetingConfig.
+  [gbastien]
+- Completed `PloneGroupSettingsValidator` validator, check also composed values
+  stored on `MeetingConfig` and using a suffix,
+  so values like `suffix_proposing_group_level1reviewers`.
+  [gbastien]
+- Removed `config.ITEM_STATES_NOT_LINKED_TO_MEETING`, get states in which an item
+  is removed from a meeting using `MeetingConfig.itemWFValidationLevels`.
+- Setup WFT `default_chain` in `testing.setUpPloneSite` instead `PloneMeetingTestCase.setUp`.
+  [gbastien]
+- Added parameter `clean=False` to `BaseDGHV.printXhtml` that will use
+  `imio.helpers.xhtml.separate_images` to avoid several `<img>` in same `<p>`.
+  [gbastien]
+
+4.2b2 (2020-09-10)
+------------------
+
+- Setup more default values for documentenerator.
+  [odelaere]
+- Added `To discuss?` faceted filter.
+  Renamed catalog indexes `getItemIsSigned`, `sendToAuthority` and
+  `toDiscuss` to `item_is_signed`, `send_to_authority` and `to_discuss`.
+  [gbastien]
+- Added CompoundCriterion adapter `items-with-negative-previous-index`, this
+  will lookup previous index in the query then negativize defined values.
+  [gbastien]
+- Added collapsible sections for `budget` and `clonable to other mcs` on item
+  view. Added `Toggle show/hide all details action` on the item view to be able
+  to toggle every collapsible in one click.
+  [gbastien]
+- Added an accessor `MeetingItem.getAssociatedGroups` for associatedGroups
+  field.
+  [aduchene]
+- Fixed one security.declarePublic in `MeetingConfig`.
+  [aduchene]
+- Do not break in `utils.applyOnTransitionFieldTransform` if TAL expression
+  does not return a string (especially when it returns `False`).
+  [gbastien]
+- Refactored item view and edit form to make fields order correspond:
+
+    - order defined on the original item view is used;
+    - simple fields (non RichText) are at the top, RichText fields are under;
+    - exception for field MeetingItem.otherMeetingConfigsClonableTo, when using
+      only simple fields, it is displayed at the top, under
+      MeetingItem.sendToAuthority, when using RichText fields
+      (otherMeetingConfigsClonableToFieldXXX) it is displayed under the decisions
+      fields.
+
+    [gbastien]
+- Display field label and fieldset legend a bit larger.
+  [gbastien]
+- Added parameter `insert_index` to `utils.add_wf_history_action`, this gives
+  the possibility to insert a `workflow_history` event at arbitrary position,
+  and is used for example when creating an item from `REST WS` and WF
+  transitions are triggered, we add event after WF transitions.
+  [gbastien]
+- Fixed `@@advices-icons` when no advice at all and `Add advice icon` is
+  displayed to `power advisers`, the add icon was wrongly styled.
+  [gbastien]
+
+4.2b1 (2020-08-24)
+------------------
+
+- Merged changes from 4.1.28
+- Added `waiting_advices_from_last_val_level_advices_required_to_validate`
+  WFAdaptation to be able to block item validation in case advices still
+  need to be given.
+- Added adaptable methods `MeetingConfig.extra_item_decided_states` and
+  `MeetingConfig.extra_item_positive_decided_states` to formalize how to extend
+  `item_decided_states` and `item_positive_decided_states`.
+- Added possibility to define data (`title/description/motivation/decision/decisionSuite`)
+  to use on an item that will be cloned to another MeetingConfig, data defined on original item
+  will replace basic data on resulting item
+- Added possibility to configure in `MeetingConfig.itemsVisibleFields` data to display on linked items.
+  It is also possible using the `MeetingConfig.itemsNotViewableVisibleFields` and
+  `MeetingConfig.itemsNotViewableVisibleFieldsTALExpr` fields to select specific
+  data that will be displayed to users that may not access to the linked items
+- Workflow adaptations `no_global_observation`, `creator_initiated_decisions` and
+  `archiving` were removed as always either enabled or disabled
+
+4.2a7 (2020-06-24)
+------------------
+
+- Merged changes from 4.1.27.1
+
+4.2a6 (2020-06-24)
+------------------
+
+- Merged changes from 4.1.20
+- Merged changes from 4.1.21
+- Merged changes from 4.1.22
+- Merged changes from 4.1.23
+- Merged changes from 4.1.24
+- Merged changes from 4.1.25
+- Merged changes from 4.1.26
+- Merged changes from 4.1.26.1
+- Merged changes from 4.1.27
+
+4.2a5 (2020-03-17)
+------------------
+
+- Merged changes from 4.1.19.2
+
+4.2a4 (2020-03-13)
+------------------
+
+- Merged changes from 4.1.19
+
+4.2a3 (2020-02-21)
+------------------
+
+- Merged changes from 4.1.18
+
+4.2a2 (2020-02-21)
+------------------
+
+- Merged changes from 4.1.x
+
+4.2a1 (2020-02-06)
+------------------
+
+- Item validation workflow is now designed in the MeetingConfig.itemWFValidationLevels, this imply :
+    - to no longer rely on MEETINGROLES and MEETINGREVIEWERS constants;
+    - reviewer levels and mapping between review_state and organization suffix that manage the item is computed from the MeetingConfig;
+    - item validation specific roles (MeetingMember, MeetingReviewer, MeetingPreReviewer are removed from item workflows, local roles are dynamically given and
+      we only use common roles (Reader, Editor, Reviewer and Contributor)
+- Use roles 'Reviewer' and 'Contributor' in meetingadvice_workflow
+- Added bypass for users having 'Manage portal' in MeetingItemWorkflowConditions in 'mayWait_advices_from', 'mayValidate' and 'mayPresent'
+
+4.1.28.1 (2020-08-21)
+---------------------
+
+- When getting a `position_type_attr` on a `held_position.get_label`, added possibility to fallback to another `position_type_attr`
+  if given one is empty.  This makes it possible to fallback to `position_type` while trying to get `secondary_position_type`
+  and this last is empty
+- Hide button `Add group` in Plone groups configuration panel with CSS, this avoid users to add Plone groups instead organizations
+
+4.1.28 (2020-08-21)
 -------------------
 
 - Moved `Meeting.getNextMeeting` logic to `utils.get_next_meeting` so it can be used from outside a `Meeting` instance,

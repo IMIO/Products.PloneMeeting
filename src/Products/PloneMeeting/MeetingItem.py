@@ -20,7 +20,7 @@ from datetime import datetime
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.helpers.content import get_vocab
 from imio.helpers.content import uuidsToObjects
-from imio.history.utils import getLastWFAction
+from imio.history.utils import get_all_history_attr
 from imio.prettylink.interfaces import IPrettyLink
 from natsort import realsorted
 from OFS.ObjectManager import BeforeDeleteException
@@ -46,6 +46,7 @@ from Products.Archetypes.atapi import StringField
 from Products.Archetypes.atapi import StringWidget
 from Products.Archetypes.atapi import TextAreaWidget
 from Products.Archetypes.atapi import TextField
+from Products.CMFCore.permissions import ManagePortal
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import ReviewPortalContent
 from Products.CMFCore.permissions import View
@@ -69,8 +70,7 @@ from Products.PloneMeeting.config import INSERTING_ON_ITEM_DECISION_FIRST_WORDS_
 from Products.PloneMeeting.config import ITEM_COMPLETENESS_ASKERS
 from Products.PloneMeeting.config import ITEM_COMPLETENESS_EVALUATORS
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
-from Products.PloneMeeting.config import ITEM_STATES_NOT_LINKED_TO_MEETING
-from Products.PloneMeeting.config import MEETINGROLES
+from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
 from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
@@ -91,8 +91,10 @@ from Products.PloneMeeting.utils import add_wf_history_action
 from Products.PloneMeeting.utils import addDataChange
 from Products.PloneMeeting.utils import AdvicesUpdatedEvent
 from Products.PloneMeeting.utils import cleanMemoize
+from Products.PloneMeeting.utils import compute_item_roles_to_assign_to_suffixes
 from Products.PloneMeeting.utils import decodeDelayAwareId
 from Products.PloneMeeting.utils import display_as_html
+from Products.PloneMeeting.utils import down_or_up_wf
 from Products.PloneMeeting.utils import fieldIsEmpty
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
 from Products.PloneMeeting.utils import fplog
@@ -172,6 +174,28 @@ class MeetingItemWorkflowConditions(object):
         obj = getCurrentMeetingObject(self.context)
         return isinstance(obj, Meeting)
 
+    def _getLastValidationState(self, before_last=False):
+        '''Last validation state is validation level state defined in
+           MeetingConfig.itemWFValidationLevels for which the linked
+           suffixed Plone group is not empty.
+           If p_before_last=True, then we return before_last level.'''
+        levels = list(self.cfg.getItemWFValidationLevels(only_enabled=True))
+        res = 'itemcreated'
+        # get suffixed Plone group in reverse order of defined validation levels
+        levels.reverse()
+        found_last = False
+        found_before_last = False
+        for level in levels:
+            if self.tool.group_is_not_empty(self.context.getProposingGroup(), level['suffix']):
+                res = level['state']
+                if found_last:
+                    found_before_last = True
+                else:
+                    found_last = True
+                if (found_last and not before_last) or found_before_last:
+                    break
+        return res
+
     def _check_required_data(self):
         ''' '''
         msg = None
@@ -193,27 +217,91 @@ class MeetingItemWorkflowConditions(object):
                 res = msg
         return res
 
-    security.declarePublic('mayPropose')
+    security.declarePublic('mayProposeToNextValidationLevel')
 
-    def mayPropose(self):
-        '''We may propose an item if the workflow permits it and if the
-           necessary fields are filled.  In the case an item is transferred from
-           another meetingConfig, the category could not be defined.'''
-        return self._check_review_and_required()
+    def mayProposeToNextValidationLevel(self, destinationState=None):
+        '''Check if able to propose to next validation level.'''
+        res = False
+        if _checkPermission(ReviewPortalContent, self.context):
+            # check if next validation level suffixed Plone group is not empty
+            suffix = self.cfg.getItemWFValidationLevels(
+                state=destinationState, data='suffix', only_enabled=True)
+            res = self.tool.group_is_not_empty(self.context.getProposingGroup(), suffix)
+        # check category after transition as transition could not be doable
+        # at all and in this case, we would display a No button for a transition not doable...
+        if res:
+            msg = self._check_required_data()
+            if msg is not None:
+                res = msg
+        return res
 
-    security.declarePublic('mayPrevalidate')
+    def _has_waiting_advices_transitions(self):
+        '''Are there 'wait_advices_' transitions from current state and
+           are there advices to wait, aka the transition would be available?'''
+        res = False
+        if 'waiting_advices_given_advices_required_to_validate' in \
+           self.cfg.getWorkflowAdaptations():
+            review_state = self.context.queryState()
+            wf_tool = api.portal.get_tool('portal_workflow')
+            item_wf = wf_tool.getWorkflowsFor(self.context)[0]
+            transitions = item_wf.states[review_state].transitions
+            wait_advices_transitions = [tr for tr in transitions
+                                        if tr.startswith('wait_advices_')]
+            for wait_advices_tr in wait_advices_transitions:
+                if self._hasAdvicesToGive(item_wf.transitions[wait_advices_tr].new_state_id):
+                    res = True
+                    break
+        return res
 
-    def mayPrevalidate(self):
-        return self._check_review_and_required()
+    def _get_waiting_advices_icon_advisers(self):
+        '''To be overrided, return adviser ids for which the waiting_advices icon
+           color must be computed.'''
+        return []
+
+    def get_waiting_advices_icon_infos(self):
+        '''Return advice for which the waiting_advices icon (pretty link)
+           must be managed (red/green/blue).
+           If some _get_waiting_advices_icon_advisers, check if one of these advice
+           is giveable in current state, if it is the case, then compute icon color.
+           Return icon name and translation msgid.'''
+        res = 'wait_advices_from.png', 'icon_help_waiting_advices'
+        for adviser_uid in self._get_waiting_advices_icon_advisers():
+            if adviser_uid in self.context.adviceIndex and \
+               self.context.adviceIndex[adviser_uid]['advice_editable']:
+                # check if advice is up or down WF
+                advice_obj = self.context.getAdviceObj(adviser_uid)
+                down_or_up = down_or_up_wf(advice_obj)
+                if down_or_up:
+                    res = 'wait_advices_{0}_from.png'.format(down_or_up), \
+                        'icon_help_waiting_advices_{0}'.format(down_or_up)
+        return res
 
     security.declarePublic('mayValidate')
 
     def mayValidate(self):
-        return self._check_review_and_required()
+        '''May validate if having ReviewPortalContent and being last item validation level.'''
+        res = False
+        if _checkPermission(ReviewPortalContent, self.context):
+            # bypass for Manager, works with adopt_roles
+            if _checkPermission(ManagePortal, self.context):
+                res = True
+            else:
+                item_state = self.context.queryState()
+                last_validation_state = self._getLastValidationState()
+                if item_state == last_validation_state:
+                    res = True
+                    if self._has_waiting_advices_transitions():
+                        res = No(_('has_required_waiting_advices'))
+        if res:
+            msg = self._check_required_data()
+            if msg is not None:
+                res = msg
+        return res
 
     security.declarePublic('mayPresent')
 
     def mayPresent(self):
+        ''' '''
         # only MeetingManagers may present an item, the 'Review portal content'
         # permission is not enough as MeetingReviewer may have the 'Review portal content'
         # when using the 'reviewers_take_back_validated_item' wfAdaptation
@@ -275,20 +363,114 @@ class MeetingItemWorkflowConditions(object):
            self.context.getMeeting().queryState() in ('decided', 'decisions_published', 'closed'):
             return True
 
+    def _currentUserIsAdviserAbleToSendItemBackExtraCondition(self, org, destinationState):
+        ''' '''
+        return True
+
+    def _adviceSendableBackOnlyWhenNoMoreEditable(self, org_uid):
+        '''Depending on advice WF, advice may be sendable back by adviser
+           only when advice no more editable.
+           By default this is not the case as default advice WF as only one
+           state in which advice is always editable.'''
+        return False
+
+    def _currentUserIsAdviserAbleToSendItemBack(self, destinationState):
+        '''Is current user an adviser able to send an item 'waiting_advices' back to other states?
+           To do so :
+           - every advices that should be given have to be given;
+           - user must be adviser for advice;
+           - if advice not given, user must be able to evaluate completeness and item must be incomplete.'''
+        item_state = self.context.queryState()
+        user_plone_groups = self.tool.get_plone_groups_for_user()
+        res = False
+        for org_uid in self.context.adviceIndex:
+            org = get_organization(org_uid)
+            # org can give advice in current state and member is adviser for it
+            # user able to evaluate completeness and item complete or
+            # not able to evaluate completeness but completeness evaluation not required
+            # but advice not editable, this means also advice still not added
+            # this last case is "not using completeness"
+            may_eval_completeness = self.context.adapted().mayEvaluateCompleteness()
+            if item_state in org.get_item_advice_states(self.cfg) and \
+               get_plone_group_id(org_uid, 'advisers') in user_plone_groups and \
+               (self.context._advice_is_given(org_uid) or
+                (may_eval_completeness and
+                 not self.context.adapted()._is_complete()) or
+                (not may_eval_completeness and
+                 self.context.getCompleteness() in ['completeness_evaluation_not_required',
+                                                    'completeness_not_yet_evaluated']) and
+                (not self._adviceSendableBackOnlyWhenNoMoreEditable(org_uid) or
+                 not self.context.adviceIndex[org_uid]['advice_editable'])) and \
+               self._currentUserIsAdviserAbleToSendItemBackExtraCondition(org, destinationState):
+                res = True
+                break
+        return res
+
     security.declarePublic('mayCorrect')
 
     def mayCorrect(self, destinationState=None):
         '''See doc in interfaces.py.'''
-        # If the item is not linked to a meeting, the user just need the
-        # 'Review portal content' permission, if it is linked to a meeting, an item
-        # may still be corrected until the meeting is 'closed'.
         res = False
         meeting = self.context.getMeeting()
         if not meeting or (meeting and meeting.queryState() != 'closed'):
-            # item is not linked to a meeting, or in a meeting that is not 'closed',
-            # just check for 'Review portal content' permission
-            if _checkPermission(ReviewPortalContent, self.context):
-                res = True
+            proposingGroup = self.context.getProposingGroup()
+            # when item is validated, we may eventually send back to last validation state
+            item_state = self.context.queryState()
+            wfas = self.cfg.getWorkflowAdaptations()
+            if item_state == 'validated':
+                last_val_state = self._getLastValidationState()
+                if destinationState == last_val_state:
+                    # MeetingManager probably
+                    if _checkPermission(ReviewPortalContent, self.context):
+                        res = True
+                    # manage the reviewers_take_back_validated_item WFAdaptation
+                    elif 'reviewers_take_back_validated_item' in self.cfg.getWorkflowAdaptations():
+                        # is current user member of last validation level?
+                        suffix = self.cfg.getItemWFValidationLevels(state=last_val_state, data='suffix')
+                        res = self.tool.group_is_not_empty(
+                            proposingGroup, suffix, user_id=api.user.get_current().id)
+            # using 'waiting_advices_XXX_send_back' WFAdaptations,
+            elif item_state.endswith('_waiting_advices'):
+                item_validation_states = self.cfg.getItemWFValidationLevels(data='state', only_enabled=True)
+                # compute sendable back states
+                sendable_back_states = []
+                # when using from last/before last validation level, able to send back to last level
+                if 'waiting_advices_from_before_last_val_level' in wfas:
+                    sendable_back_states.append(self._getLastValidationState(before_last=True))
+                if 'waiting_advices_from_last_val_level' in wfas:
+                    sendable_back_states.append(self._getLastValidationState())
+                if 'waiting_advices_from_every_val_levels' in wfas:
+                    sendable_back_states = list(item_validation_states)
+                if not sendable_back_states:
+                    # use custom values from WAITING_ADVICES_FROM_STATES
+                    from Products.PloneMeeting.model import adaptations
+                    for waiting_advice_config in adaptations.WAITING_ADVICES_FROM_STATES:
+                        sendable_back_states += list(waiting_advice_config['back_states'])
+
+                if destinationState in sendable_back_states or destinationState not in item_validation_states:
+                    # bypass for Manager
+                    if _checkPermission(ReviewPortalContent, self.context):
+                        res = True
+                    else:
+                        if 'waiting_advices_proposing_group_send_back' in wfas:
+                            # is current user member of destinationState level?
+                            suffix = self.cfg.getItemWFValidationLevels(state=destinationState, data='suffix')
+                            res = self.tool.group_is_not_empty(
+                                proposingGroup, suffix, user_id=api.user.get_current().id)
+                        # if not, maybe it is an adviser able to give an advice?
+                        if not res and 'waiting_advices_adviser_send_back' in wfas:
+                            # adviser may send back to validated when using
+                            # 'waiting_advices_adviser_may_validate'
+                            if 'waiting_advices_adviser_may_validate' in wfas:
+                                sendable_back_states.append('validated')
+
+                            # get advisers that are able to trigger transition
+                            res = self._currentUserIsAdviserAbleToSendItemBack(destinationState)
+            else:
+                # maybe destinationState is a validation state? in this case return True only if group not empty
+                suffix = self.cfg.getItemWFValidationLevels(state=destinationState, data='suffix')
+                res = _checkPermission(ReviewPortalContent, self.context) and \
+                    (not suffix or self.tool.group_is_not_empty(proposingGroup, suffix))
         return res
 
     security.declarePublic('mayBackToMeeting')
@@ -341,16 +523,6 @@ class MeetingItemWorkflowConditions(object):
         if _checkPermission(ReviewPortalContent, self.context):
             meeting = self.context.hasMeeting() and self.context.getMeeting() or None
             if meeting and meeting.queryState() not in meeting.getStatesBefore('frozen'):
-                res = True
-        return res
-
-    security.declarePublic('mayArchive')
-
-    def mayArchive(self):
-        res = False
-        if _checkPermission(ReviewPortalContent, self.context):
-            if self.context.hasMeeting() and \
-               (self.context.getMeeting().queryState() == 'archived'):
                 res = True
         return res
 
@@ -409,27 +581,41 @@ class MeetingItemWorkflowConditions(object):
         wfTool = api.portal.get_tool('portal_workflow')
         itemWF = wfTool.getWorkflowsFor(self.context)[0]
         originState = itemWF.states[originStateId]
-        waiting_advices_transition = [tr for tr in originState.getTransitions()
+        waiting_advices_transition = [tr for tr in originState.transitions
                                       if tr.startswith('wait_advices_from')][0]
         return itemWF.transitions[waiting_advices_transition].new_state_id
 
-    security.declarePublic('mayWait_advices_from_itemcreated')
+    security.declarePublic('mayWait_advices_from')
 
-    def mayWait_advices_from_itemcreated(self):
+    def mayWait_advices_from(self, fromState=None):
         """ """
-        return self._mayWaitAdvices(self._getWaitingAdvicesStateFrom('itemcreated'))
-
-    security.declarePublic('mayWait_advices_from_proposed')
-
-    def mayWait_advices_from_proposed(self):
-        """ """
-        return self._mayWaitAdvices(self._getWaitingAdvicesStateFrom('proposed'))
-
-    security.declarePublic('mayWait_advices_from_prevalidated')
-
-    def mayWait_advices_from_prevalidated(self):
-        """ """
-        return self._mayWaitAdvices(self._getWaitingAdvicesStateFrom('prevalidated'))
+        # when using the 'waiting_advices_from_XXX' WFAdaptation
+        # either from last_level, or from every levels
+        # only last validation level may ask advices
+        res = False
+        # bypass for Manager
+        if _checkPermission(ManagePortal, self.context):
+            res = True
+        else:
+            wfas = self.cfg.getWorkflowAdaptations()
+            from_states = []
+            if 'waiting_advices' in wfas:
+                if 'waiting_advices_from_last_val_level' in wfas:
+                    from_states.append(self._getLastValidationState())
+                if 'waiting_advices_from_before_last_val_level' in wfas:
+                    from_states.append(self._getLastValidationState(before_last=True))
+                if 'waiting_advices_from_every_val_levels' in wfas:
+                    item_validation_states = self.cfg.getItemWFValidationLevels(
+                        data='state', only_enabled=True)
+                    from_states = list(item_validation_states)
+                if not from_states:
+                    # use custom values from WAITING_ADVICES_FROM_STATES
+                    from Products.PloneMeeting.model import adaptations
+                    for waiting_advice_config in adaptations.WAITING_ADVICES_FROM_STATES:
+                        from_states += list(waiting_advice_config['from_states'])
+                if fromState in from_states:
+                    res = True
+        return res and self._mayWaitAdvices(self._getWaitingAdvicesStateFrom(fromState))
 
     security.declarePublic('mayAccept_out_of_meeting')
 
@@ -469,6 +655,17 @@ class MeetingItemWorkflowActions(object):
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
 
+    def _getCustomActionName(self, transitionId):
+        """ """
+        action = None
+        if transitionId in self.cfg.getItemWFValidationLevels(data='leading_transition', only_enabled=True):
+            action = 'doProposeToNextValidationLevel'
+        elif transitionId.startswith('wait_advices_from'):
+            action = 'doWait_advices_from'
+        elif transitionId.startswith('goTo_returned_to_proposing_group'):
+            action = 'doGoTo_returned_to_proposing_group'
+        return action
+
     security.declarePrivate('doActivate')
 
     def doActivate(self, stateChange):
@@ -481,14 +678,11 @@ class MeetingItemWorkflowActions(object):
         """Used for items in config."""
         pass
 
-    security.declarePrivate('doPropose')
+    security.declarePrivate('doProposeToNextValidationLevel')
 
-    def doPropose(self, stateChange):
-        pass
-
-    security.declarePrivate('doPrevalidate')
-
-    def doPrevalidate(self, stateChange):
+    def doProposeToNextValidationLevel(self, stateChange):
+        """Called by every item validation level defined
+           in MeetingConfig.itemWFValidationLevels."""
         pass
 
     security.declarePrivate('doValidate')
@@ -504,7 +698,7 @@ class MeetingItemWorkflowActions(object):
                 meeting = brains[0].getObject()
                 if self.context.wfConditions().isLateFor(meeting):
                     sendMailIfRelevant(self.context, 'lateItem',
-                                       'MeetingManager', isRole=True)
+                                       'meetingmanagers', isSuffix=True)
 
     def _forceInsertNormal(self):
         """ """
@@ -525,7 +719,8 @@ class MeetingItemWorkflowActions(object):
         # insert the item into the meeting
         self._insertItem(meeting)
         # We may have to send a mail.
-        sendMailIfRelevant(self.context, 'itemPresented', 'MeetingMember', isRole=True)
+        sendMailIfRelevant(self.context, 'itemPresented', 'creators', isSuffix=True)
+        sendMailIfRelevant(self.context, 'itemPresentedOwner', 'Owner', isRole=True)
 
     def _insertItem(self, meeting):
         """ """
@@ -542,13 +737,13 @@ class MeetingItemWorkflowActions(object):
         """Set presented item in a late state, this is done to be easy to override in case
            WF transitions to set an item late item is different, without redefining
            the entire doPresent.
-           By default, this will freeze the item."""
+           By default, this will freeze or publish the item."""
         wTool = api.portal.get_tool('portal_workflow')
         try:
+            wTool.doActionFor(self.context, 'itemfreeze')
             wTool.doActionFor(self.context, 'itempublish')
         except:
             pass  # Maybe does state 'itempublish' not exist.
-        wTool.doActionFor(self.context, 'itemfreeze')
 
     security.declarePrivate('doItemPublish')
 
@@ -633,7 +828,7 @@ class MeetingItemWorkflowActions(object):
            the copy is automatically validated and will be linked to this one.'''
         clonedItem = self._duplicateAndValidate(cloneEventAction='create_from_postponed_next_meeting')
         # Send, if configured, a mail to the person who created the item
-        sendMailIfRelevant(clonedItem, 'itemPostponedNextMeeting', 'MeetingMember', isRole=True)
+        sendMailIfRelevant(clonedItem, 'itemPostponedNextMeeting', 'creators', isSuffix=True)
 
     security.declarePrivate('doDelay')
 
@@ -648,7 +843,16 @@ class MeetingItemWorkflowActions(object):
                                         keepProposingGroup=True,
                                         setCurrentAsPredecessor=True)
         # Send, if configured, a mail to the person who created the item
-        sendMailIfRelevant(clonedItem, 'itemDelayed', 'MeetingMember', isRole=True)
+        sendMailIfRelevant(clonedItem, 'itemDelayed', 'creators', isSuffix=True)
+        sendMailIfRelevant(clonedItem, 'itemDelayedOwner', 'Owner', isRole=True)
+
+    def _get_item_states_removed_from_meeting(self):
+        '''Return item states in which an item is considered removed from a meeting.
+           By default, when using MeetingConfig.itemWFValidationStates, these are
+           the states in which item is no more linked to a meeting.'''
+        res = self.cfg.getItemWFValidationLevels(data='state', only_enabled=True)
+        res.append('validated')
+        return res
 
     security.declarePrivate('doCorrect')
 
@@ -659,9 +863,11 @@ class MeetingItemWorkflowActions(object):
           do some specific treatment.
         """
         # Remove item from meeting if necessary when going to a state where item is not linked to a meeting
-        if stateChange.new_state.id in ITEM_STATES_NOT_LINKED_TO_MEETING and self.context.hasMeeting():
+        if self.context.hasMeeting() and \
+           stateChange.new_state.id in self._get_item_states_removed_from_meeting():
             # We may have to send a mail
-            sendMailIfRelevant(self.context, 'itemUnpresented', 'MeetingMember', isRole=True)
+            sendMailIfRelevant(self.context, 'itemUnpresented', 'creators', isSuffix=True)
+            sendMailIfRelevant(self.context, 'itemUnpresentedOwner', 'Owner', isRole=True)
             # remove the item from the meeting
             self.context.getMeeting().removeItem(self.context)
         # if an item was returned to proposing group for corrections and that
@@ -669,7 +875,7 @@ class MeetingItemWorkflowActions(object):
         # send an email to warn the MeetingManagers if relevant
         if stateChange.old_state.id.startswith("returned_to_proposing_group"):
             # We may have to send a mail.
-            sendMailIfRelevant(self.context, 'returnedToMeetingManagers', 'MeetingManager', isRole=True)
+            sendMailIfRelevant(self.context, 'returnedToMeetingManagers', 'meetingmanagers', isSuffix=True)
 
         if 'decide_item_when_back_to_meeting_from_returned_to_proposing_group' in self.cfg.getWorkflowAdaptations() \
                 and stateChange.transition.getId() == 'backTo_itemfrozen_from_returned_to_proposing_group' \
@@ -677,47 +883,43 @@ class MeetingItemWorkflowActions(object):
             with api.env.adopt_roles(roles=['Manager']):
                 wTool = api.portal.get_tool('portal_workflow')
                 from config import ITEM_TRANSITION_WHEN_RETURNED_FROM_PROPOSING_GROUP_AFTER_CORRECTION
-                wTool.doActionFor(self.context, ITEM_TRANSITION_WHEN_RETURNED_FROM_PROPOSING_GROUP_AFTER_CORRECTION)
-
-    security.declarePrivate('doConfirm')
-
-    def doConfirm(self, stateChange):
-        pass
-
-    security.declarePrivate('doItemArchive')
-
-    def doItemArchive(self, stateChange):
-        pass
+                wf_comment = _('wf_transition_triggered_by_application')
+                if 'no_publication' not in self.cfg.getWorkflowAdaptations():
+                    wTool.doActionFor(self.context, 'itempublish', comment=wf_comment)
+                wTool.doActionFor(self.context,
+                                  ITEM_TRANSITION_WHEN_RETURNED_FROM_PROPOSING_GROUP_AFTER_CORRECTION,
+                                  comment=wf_comment)
 
     security.declarePrivate('doReturn_to_proposing_group')
 
     def doReturn_to_proposing_group(self, stateChange):
         '''Send an email when returned to proposing group if relevant...'''
-        sendMailIfRelevant(self.context, 'returnedToProposingGroup', 'MeetingMember', isRole=True)
+        sendMailIfRelevant(self.context, 'returnedToProposingGroup', 'creators', isSuffix=True)
+        sendMailIfRelevant(self.context, 'returnedToProposingGroupOwner', 'Owner', isRole=True)
 
     security.declarePrivate('doGoTo_returned_to_proposing_group_proposed')
 
     def doGoTo_returned_to_proposing_group_proposed(self, stateChange):
         pass
 
-    security.declarePrivate('doGoTo_returned_to_proposing_group_prevalidated')
+    security.declarePrivate('doGoTo_returned_to_proposing_group')
 
-    def doGoTo_returned_to_proposing_group_prevalidated(self, stateChange):
+    def doGoTo_returned_to_proposing_group(self, stateChange):
         pass
 
-    security.declarePrivate('doWait_advices_from_itemcreated')
+    security.declarePrivate('doWait_advices_from')
 
-    def doWait_advices_from_itemcreated(self, stateChange):
+    def doWait_advices_from(self, stateChange):
         pass
 
-    security.declarePrivate('doWait_advices_from_proposed')
+    security.declarePrivate('doAccept_but_modify')
 
-    def doWait_advices_from_proposed(self, stateChange):
+    def doAccept_but_modify(self, stateChange):
         pass
 
-    security.declarePrivate('doWait_advices_from_prevalidated')
+    security.declarePrivate('doPre_accept')
 
-    def doWait_advices_from_prevalidated(self, stateChange):
+    def doPre_accept(self, stateChange):
         pass
 
 
@@ -1009,10 +1211,25 @@ schema = Schema((
     TextField(
         name='decisionSuite',
         widget=RichWidget(
-            rows=15,
             condition="python: here.attributeIsUsed('decisionSuite')",
             label='DecisionSuite',
             label_msgid='PloneMeeting_label_decisionSuite',
+            i18n_domain='PloneMeeting',
+        ),
+        default_content_type="text/html",
+        read_permission="PloneMeeting: Read decision",
+        searchable=True,
+        allowable_content_types=('text/html',),
+        default_output_type="text/x-html-safe",
+        optional=True,
+        write_permission="PloneMeeting: Write decision",
+    ),
+    TextField(
+        name='decisionEnd',
+        widget=RichWidget(
+            condition="python: here.attributeIsUsed('decisionEnd')",
+            label='DecisionEnd',
+            label_msgid='PloneMeeting_label_decisionEnd',
             i18n_domain='PloneMeeting',
         ),
         default_content_type="text/html",
@@ -1104,6 +1321,38 @@ schema = Schema((
             description_msgid="field_reserved_to_meeting_managers_descr",
             label_msgid="PloneMeeting_label_meetingManagersNotes",
             label='Meetingmanagersnotes',
+            i18n_domain='PloneMeeting',
+        ),
+        default_content_type="text/html",
+        default_output_type="text/x-html-safe",
+        optional=True,
+        write_permission="PloneMeeting: Write item MeetingManager reserved fields",
+    ),
+    TextField(
+        name='meetingManagersNotesSuite',
+        allowable_content_types=('text/html',),
+        widget=RichWidget(
+            condition="python: here.showMeetingManagerReservedField('meetingManagersNotesSuite')",
+            description="MeetingManagersNotesSuite",
+            description_msgid="field_reserved_to_meeting_managers_descr",
+            label_msgid="PloneMeeting_label_meetingManagersNotesSuite",
+            label='Meetingmanagersnotessuite',
+            i18n_domain='PloneMeeting',
+        ),
+        default_content_type="text/html",
+        default_output_type="text/x-html-safe",
+        optional=True,
+        write_permission="PloneMeeting: Write item MeetingManager reserved fields",
+    ),
+    TextField(
+        name='meetingManagersNotesEnd',
+        allowable_content_types=('text/html',),
+        widget=RichWidget(
+            condition="python: here.showMeetingManagerReservedField('meetingManagersNotesEnd')",
+            description="MeetingManagersNotesEnd",
+            description_msgid="field_reserved_to_meeting_managers_descr",
+            label_msgid="PloneMeeting_label_meetingManagersNotesEnd",
+            label='Meetingmanagersnotesend',
             i18n_domain='PloneMeeting',
         ),
         default_content_type="text/html",
@@ -1353,7 +1602,7 @@ schema = Schema((
     LinesField(
         name='otherMeetingConfigsClonableTo',
         widget=MultiSelectionWidget(
-            condition="here/showClonableToOtherMeetingConfigs",
+            condition="here/showClonableToOtherMCs",
             format="checkbox",
             label='Othermeetingconfigsclonableto',
             label_msgid='PloneMeeting_label_otherMeetingConfigsClonableTo',
@@ -1390,6 +1639,97 @@ schema = Schema((
         enforceVocabulary=True,
         multiValued=1,
         vocabulary='listOtherMeetingConfigsClonableToPrivacy',
+    ),
+    StringField(
+        name='otherMeetingConfigsClonableToFieldTitle',
+        searchable=True,
+        default='',
+        widget=StringWidget(
+            condition="python: here.attributeIsUsed('otherMeetingConfigsClonableToFieldTitle')",
+            label_msgid="PloneMeeting_label_itemTitle",
+            label='OtherMeetingConfigsClonableToFieldTitle',
+            i18n_domain='PloneMeeting',
+            maxlength=750,
+        ),
+        optional=True,
+    ),
+    TextField(
+        name='otherMeetingConfigsClonableToFieldDescription',
+        widget=RichWidget(
+            condition="python: here.attributeIsUsed('otherMeetingConfigsClonableToFieldDescription')",
+            label_msgid="PloneMeeting_label_itemDescription",
+            label='Description',
+            i18n_domain='PloneMeeting',
+        ),
+        default_content_type="text/html",
+        searchable=True,
+        allowable_content_types=('text/html',),
+        default_output_type="text/x-html-safe",
+        optional=True,
+    ),
+    TextField(
+        name='otherMeetingConfigsClonableToFieldMotivation',
+        widget=RichWidget(
+            condition="python: here.attributeIsUsed('otherMeetingConfigsClonableToFieldMotivation')",
+            label='OtherMeetingConfigsClonableToFieldMotivation',
+            label_msgid='PloneMeeting_label_motivation',
+            i18n_domain='PloneMeeting',
+        ),
+        default_content_type="text/html",
+        read_permission="PloneMeeting: Read decision",
+        searchable=True,
+        allowable_content_types=('text/html',),
+        default_output_type="text/x-html-safe",
+        optional=True,
+        write_permission="PloneMeeting: Write decision",
+    ),
+    TextField(
+        name='otherMeetingConfigsClonableToFieldDecision',
+        widget=RichWidget(
+            condition="python: here.attributeIsUsed('otherMeetingConfigsClonableToFieldDecision')",
+            label='OtherMeetingConfigsClonableToFieldDecision',
+            label_msgid='PloneMeeting_label_decision',
+            i18n_domain='PloneMeeting',
+        ),
+        default_content_type="text/html",
+        read_permission="PloneMeeting: Read decision",
+        searchable=True,
+        allowable_content_types=('text/html',),
+        default_output_type="text/x-html-safe",
+        optional=True,
+        write_permission="PloneMeeting: Write decision",
+    ),
+    TextField(
+        name='otherMeetingConfigsClonableToFieldDecisionSuite',
+        widget=RichWidget(
+            condition="python: here.attributeIsUsed('otherMeetingConfigsClonableToFieldDecisionSuite')",
+            label='OtherMeetingConfigsClonableToFieldDecisionSuite',
+            label_msgid='PloneMeeting_label_decisionSuite',
+            i18n_domain='PloneMeeting',
+        ),
+        default_content_type="text/html",
+        read_permission="PloneMeeting: Read decision",
+        searchable=True,
+        allowable_content_types=('text/html',),
+        default_output_type="text/x-html-safe",
+        optional=True,
+        write_permission="PloneMeeting: Write decision",
+    ),
+    TextField(
+        name='otherMeetingConfigsClonableToFieldDecisionEnd',
+        widget=RichWidget(
+            condition="python: here.attributeIsUsed('otherMeetingConfigsClonableToFieldDecisionEnd')",
+            label='OtherMeetingConfigsClonableToFieldDecisionEnd',
+            label_msgid='PloneMeeting_label_decisionEnd',
+            i18n_domain='PloneMeeting',
+        ),
+        default_content_type="text/html",
+        read_permission="PloneMeeting: Read decision",
+        searchable=True,
+        allowable_content_types=('text/html',),
+        default_output_type="text/x-html-safe",
+        optional=True,
+        write_permission="PloneMeeting: Write decision",
     ),
     BooleanField(
         name='isAcceptableOutOfMeeting',
@@ -1610,10 +1950,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        # Value could be '_none_' if it was displayed as listbox or None if
-        # it was displayed as radio buttons...  Category uses 'flex' format
-        if (not cfg.getUseGroupsAsCategories()) and \
-           (value == '_none_' or not value):
+        # check if value is among categories defined in the MeetingConfig
+        if not cfg.getUseGroupsAsCategories() and value not in cfg.categories.objectIds():
             return translate('category_required', domain='PloneMeeting', context=self.REQUEST)
 
     security.declarePrivate('validate_classifier')
@@ -1626,10 +1964,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if self.isDefinedInTool(item_type='itemtemplate'):
             return
 
-        # Value could be '_none_' if it was displayed as listbox or None if
-        # it was displayed as radio buttons...  Classifier uses 'flex' format
-        if (self.attributeIsUsed('classifier')) and \
-           (value == '_none_' or not value):
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        # check if value is among classifiers defined in the MeetingConfig
+        if (self.attributeIsUsed('classifier')) and value not in cfg.classifiers.objectIds():
             return translate('classifier_required', domain='PloneMeeting', context=self.REQUEST)
 
     security.declarePrivate('validate_groupsInCharge')
@@ -2001,12 +2339,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if item.isDefinedInTool():
             return False
 
+        res = False
+        tool = api.portal.get_tool('portal_plonemeeting')
         member = api.user.get_current()
         # user must be an item completeness editor (one of corresponding role)
-        if not member.has_permission(ModifyPortalContent, item) or \
-           not member.has_role(ITEM_COMPLETENESS_EVALUATORS, item):
-            return False
-        return True
+        if member.has_permission(ModifyPortalContent, item) and \
+           (tool.userIsAmong(ITEM_COMPLETENESS_EVALUATORS) or tool.isManager(item)):
+            res = True
+        return res
 
     security.declarePublic('mayAskCompletenessEvalAgain')
 
@@ -2016,13 +2356,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         item = self.getSelf()
         if item.isDefinedInTool():
             return
+
+        res = False
+        tool = api.portal.get_tool('portal_plonemeeting')
         member = api.user.get_current()
         # user must be an item completeness editor (one of corresponding role)
-        if not item.getCompleteness() == 'completeness_incomplete' or \
-           not member.has_permission(ModifyPortalContent, item) or \
-           not member.has_role(ITEM_COMPLETENESS_ASKERS, item):
-            return False
-        return True
+        if item.getCompleteness() == 'completeness_incomplete' and \
+           member.has_permission(ModifyPortalContent, item) and \
+           (tool.userIsAmong(ITEM_COMPLETENESS_ASKERS) or tool.isManager(item)):
+            res = True
+        return res
 
     def _is_complete(self):
         '''Check doc in interfaces.py.'''
@@ -2330,17 +2673,35 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         elif item_type == 'itemtemplate':
             return is_in_tool and self.portal_type.startswith('MeetingItemTemplate')
 
-    security.declarePublic('showClonableToOtherMeetingConfigs')
+    security.declarePublic('showClonableToOtherMCs')
 
-    def showClonableToOtherMeetingConfigs(self):
+    def showClonableToOtherMCs(self):
         '''Returns True if the current item can be cloned to another
            meetingConfig. This method is used as a condition for showing
            or not the 'otherMeetingConfigsClonableTo' field.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self)
-        if cfg.getMeetingConfigsToCloneTo():
-            return True
-        return False
+        res = False
+        if self.getOtherMeetingConfigsClonableTo():
+            res = True
+        else:
+            tool = api.portal.get_tool('portal_plonemeeting')
+            cfg = tool.getMeetingConfig(self)
+            res = cfg.getMeetingConfigsToCloneTo()
+        return res
+
+    security.declarePublic('showAdvancedClonableToOtherMCs')
+
+    def showAdvancedClonableToOtherMCs(self, showClonableToOtherMCs=False):
+        '''Display otherMeetingConfigsClonableTo as advanced or not.
+           Functionnality enabled and using relevant otherMeetingConfigsClonableToFieldXXX are used.'''
+        item = self.getSelf()
+        res = False
+        if showClonableToOtherMCs:
+            tool = api.portal.get_tool('portal_plonemeeting')
+            cfg = tool.getMeetingConfig(item)
+            usedAttrs = [usedAttr for usedAttr in cfg.getUsedItemAttributes()
+                         if usedAttr.startswith('otherMeetingConfigsClonableToField')]
+            res = bool(usedAttrs)
+        return res
 
     security.declarePublic('getItemNumber')
 
@@ -2409,28 +2770,32 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         cfg = tool.getMeetingConfig(self)
         return cfg.getDefaultPollType()
 
-    def getMeeting_cachekey(method, self, brain=False):
-        '''cachekey method for self.getMeeting.'''
-        return (self, str(hasattr(self, 'REQUEST') and self.REQUEST._debug or False), brain)
+    def _update_meeting_link(self, meeting_uid):
+        """ """
+        self.linked_meeting_uid = None
+        self.linked_meeting_path = None
+        if meeting_uid is not None:
+            catalog = api.portal.get_tool('portal_catalog')
+            self.linked_meeting_uid = meeting_uid
+            meeting_brain = catalog(UID=meeting_uid)[0]
+            self.linked_meeting_path = meeting_brain.getPath()
 
-    security.declarePublic('getMeeting')
-
-    @ram.cache(getMeeting_cachekey)
-    def getMeeting(self, brain=False):
+    def getMeeting(self, only_uid=False, caching=True):
         '''Returns the linked meeting if it exists.'''
-        # getBRefs returns linked *objects* through a relationship defined in
-        # a ReferenceField, while reference_catalog.getBackReferences returns
-        # *brains*.
-
-        refCatalog = api.portal.get_tool('reference_catalog')
         res = None
-
-        if brain:  # Faster
-            brains = refCatalog.getBackReferences(self, 'MeetingItems')
+        if only_uid:
+            res = getattr(self, 'linked_meeting_uid', None)
         else:
-            brains = self.getBRefs('MeetingItems')
-        if brains:
-            res = brains[0]
+            meeting_path = getattr(self, 'linked_meeting_path', None)
+            if meeting_path:
+                if caching and hasattr(self, "REQUEST"):
+                    meeting_uid = getattr(self, 'linked_meeting_uid', None)
+                    res = self.REQUEST.get('meeting__%s' % meeting_uid)
+                if not res:
+                    portal = api.portal.get()
+                    res = portal.unrestrictedTraverse(meeting_path)
+                    if caching and hasattr(self, "REQUEST"):
+                        self.REQUEST.set('meeting__%s' % meeting_uid, res)
         return res
 
     def getMeetingToInsertIntoWhenNoCurrentMeetingObject_cachekey(method, self):
@@ -2817,7 +3182,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def hasMeeting(self):
         '''Is there a meeting tied to me?'''
-        return self.getMeeting(brain=True) is not None
+        return self.getMeeting(only_uid=True) is not None
 
     security.declarePublic('isLate')
 
@@ -3002,6 +3367,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if res and first:
             res = res[0]
 
+        return res
+
+    security.declarePublic('getAssociatedGroups')
+
+    def getAssociatedGroups(self, theObjects=False, **kwargs):
+        '''This redefined accessor may return associated group ids or the real
+           groups if p_theObjects is True.'''
+        res = self.getField('associatedGroups').get(self, **kwargs)
+        if res and theObjects:
+            return tuple(uuidsToObjects(uuids=res, ordered=True))
         return res
 
     security.declarePublic('fieldIsEmpty')
@@ -3314,12 +3689,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         return signatories
 
-    def getInAndOutAttendees(self, theObjects=True):
+    def getInAndOutAttendees(self, ignore_before_first_item=True, theObjects=True):
         """Returns a dict with informations about assembly moves :
            - who left at the beginning of the item;
            - who entered at the beginning of the item;
            - who left at the end of the item;
-           - who entered at the end of the item."""
+           - who entered at the end of the item.
+           """
         res = {'left_before': (),
                'entered_before': (),
                'left_after': (),
@@ -3333,52 +3709,58 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             items = meeting.getItems(ordered=True, unrestricted=True)
             item_index = items.index(self)
             previous = None
+            # only fill a value if attendee present for current item
+            # this manage fact that an attendee may be absent for an item,
+            # then not attendee for next item
+            attendees = self.getAttendees(theObjects=theObjects)
             absents = self.getItemAbsents(theObjects=theObjects)
             excused = self.getItemExcused(theObjects=theObjects)
             non_attendees = self.getItemNonAttendees(theObjects=theObjects)
             if item_index:
                 previous = items[item_index - 1]
-                # absents/excused
+                # before absents/excused
+                previous_attendees = previous.getAttendees(theObjects=theObjects)
                 previous_absents = previous.getItemAbsents(theObjects=theObjects)
                 previous_excused = previous.getItemExcused(theObjects=theObjects)
-                left_before = tuple(set(absents + excused).difference(
-                    set(previous_absents + previous_excused)))
-                entered_before = tuple(set(previous_absents + previous_excused).difference(
-                    set(absents + excused)))
+                left_before = tuple(set(absents + excused).intersection(
+                    set(previous_attendees)))
+                entered_before = tuple(set(previous_absents + previous_excused).intersection(
+                    set(attendees)))
                 res['left_before'] = left_before
                 res['entered_before'] = entered_before
                 # non attendees
-                previous_non_attendee = previous.getItemNonAttendees(theObjects=theObjects)
-                non_attendee_before = tuple(set(non_attendees).difference(
-                    set(previous_non_attendee)))
-                attendee_again_before = tuple(set(previous_non_attendee).difference(
-                    set(non_attendees)))
+                previous_non_attendees = previous.getItemNonAttendees(theObjects=theObjects)
+                non_attendee_before = tuple(set(non_attendees).intersection(
+                    set(previous_attendees)))
+                attendee_again_before = tuple(set(previous_non_attendees).intersection(
+                    set(attendees)))
                 res['non_attendee_before'] = non_attendee_before
                 res['attendee_again_before'] = attendee_again_before
-            else:
-                # self is first item, get absents
+            elif not ignore_before_first_item:
+                # self is first item
                 res['left_before'] = absents + excused
+                res['non_attendee_before'] = non_attendees
             next = None
             if self != items[-1]:
                 next = items[item_index + 1]
-                # absents/excused
+                # after absents/excused
+                next_attendees = next.getAttendees(theObjects=theObjects)
                 next_absents = next.getItemAbsents(theObjects=theObjects)
                 next_excused = next.getItemExcused(theObjects=theObjects)
-                left_after = tuple(set(next_absents + next_excused).difference(
-                    set(absents + excused)))
-                entered_after = tuple(set(absents + excused).difference(
-                    set(next_absents + next_excused)))
+                next_non_attendees = next.getItemNonAttendees(theObjects=theObjects)
+                left_after = tuple(set(next_excused + next_absents).intersection(
+                    set(attendees)))
+                entered_after = tuple(set(excused + absents).intersection(
+                    set(next_attendees)))
                 res['left_after'] = left_after
                 res['entered_after'] = entered_after
                 # non attendees
-                next_non_attendee = next.getItemNonAttendees(theObjects=theObjects)
-                non_attendee_after = tuple(set(next_non_attendee).difference(
+                non_attendee_after = tuple(set(attendees).intersection(
+                    set(next_non_attendees)))
+                attendee_again_after = tuple(set(next_attendees).intersection(
                     set(non_attendees)))
-                attendee_again_after = tuple(set(non_attendees).difference(
-                    set(next_non_attendee)))
                 res['non_attendee_after'] = non_attendee_after
                 res['attendee_again_after'] = attendee_again_after
-
         return res
 
     security.declarePublic('mustShowItemReference')
@@ -3496,6 +3878,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def getCustomAdviceMessageFor(self, advice):
         '''See doc in interfaces.py.'''
         return {'displayDefaultComplementaryMessage': True,
+                'displayAdviceReviewState': False,
                 'customAdviceMessage': None}
 
     def _getInsertOrder(self, cfg):
@@ -3686,13 +4069,15 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def _sendAdviceToGiveMailIfRelevant(self,
                                         old_review_state,
                                         new_review_state,
-                                        force_resend_if_in_advice_review_states=False):
+                                        force_resend_if_in_advice_review_states=False,
+                                        debug=False):
         '''A transition was fired on self, check if, in the new item state,
            advices need to be given, that had not to be given in the previous item state.'''
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         if 'adviceToGive' not in cfg.getMailItemEvents():
             return
+        plone_group_ids = []
         for org_uid, adviceInfo in self.adviceIndex.iteritems():
             # call hook '_sendAdviceToGiveToGroup' to be able to bypass
             # send of this notification to some defined groups
@@ -3710,13 +4095,17 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # do not consider groups that already gave their advice
             if adviceInfo['type'] not in ['not_given', 'asked_again']:
                 continue
-            # Send a mail to every person from group _advisers.
-            labelType = adviceInfo['optional'] and 'advice_optional' or 'advice_mandatory'
-            translated_type = translate(labelType, domain='PloneMeeting', context=self.REQUEST).lower()
             plone_group_id = get_plone_group_id(org_uid, 'advisers')
-            self._sendMailToGroupMembers([plone_group_id],
-                                         event_id='adviceToGive',
-                                         mapping={'type': translated_type})
+            plone_group_ids.append(plone_group_id)
+
+        # send mail if plone_group_ids
+        if plone_group_ids:
+            params = {"obj": self,
+                      "event": "adviceToGive",
+                      "permissionOrSuffixOrRoleOrGroupIds": plone_group_ids,
+                      "isGroupIds": True,
+                      "debug": debug}
+            return sendMailIfRelevant(**params)
 
     def _sendAdviceToGiveToGroup(self, org_uid):
         """See docstring in interfaces.py"""
@@ -3744,34 +4133,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 continue
             plone_group_ids.append(plone_group_id)
         if plone_group_ids:
-            self._sendMailToGroupMembers(plone_group_ids,
-                                         event_id='copyGroups')
+            return sendMailIfRelevant(self, 'copyGroups', plone_group_ids, isGroupIds=True)
 
     def _sendCopyGroupsToGroup(self, groupId):
         """See docstring in interfaces.py"""
         return True
-
-    def _sendMailToGroupMembers(self, plone_group_ids, event_id, mapping={}):
-        """ """
-        tool = api.portal.get_tool('portal_plonemeeting')
-        # save mail addresses the notification was sent to to avoid
-        # sending this mail several times to the same address in case
-        # same address is used for several users (case of "group" address)
-        sent_mail_addresses = []
-        for plone_group_id in plone_group_ids:
-            plone_group = api.group.get(plone_group_id)
-            for memberId in plone_group.getMemberIds():
-                # Send a mail to this user
-                recipient = tool.getMailRecipient(memberId)
-                if recipient:
-                    username, email = recipient.split('<')
-                    if email in sent_mail_addresses:
-                        continue
-                    sent_mail_addresses.append(email)
-                    sendMail([recipient],
-                             self,
-                             event_id,
-                             mapping=mapping)
 
     security.declarePublic('sendAdviceDelayWarningMailIfRelevant')
 
@@ -3811,15 +4177,19 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 event_id = 'adviceDelayWarning'
                 if left_delay == -1 or just_timed_out:
                     event_id = 'adviceDelayExpired'
+
                 if event_id in cfg.getMailItemEvents():
                     plone_group_id = '{0}_advisers'.format(group_id)
-                    self._sendMailToGroupMembers(
-                        [plone_group_id],
+                    sendMailIfRelevant(
+                        self,
                         event_id,
-                        mapping={'left_delay': left_delay,
-                                 'limit_date': limit_date,
-                                 'group_name': self.adviceIndex[group_id]['name'],
-                                 'delay_label': self.adviceIndex[group_id]['delay_label']})
+                        [plone_group_id],
+                        mapping={
+                            'left_delay': left_delay,
+                            'limit_date': limit_date,
+                            'group_name': self.adviceIndex[group_id]['name'],
+                            'delay_label': self.adviceIndex[group_id]['delay_label']},
+                        isGroupIds=True)
 
     def getUnhandledInheritedAdvisersData(self, adviserUids, optional):
         """ """
@@ -4056,8 +4426,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if not cfg.getUseAdvices():
             return ([], [])
         # Logged user must be an adviser
-        orgs = tool.get_orgs_for_user(suffixes=['advisers'])
-        if not orgs:
+        user_orgs = tool.get_orgs_for_user(suffixes=['advisers'])
+        if not user_orgs:
             return ([], [])
         # Produce the lists of groups to which the user belongs and for which,
         # - no advice has been given yet (list of advices to add)
@@ -4066,30 +4436,34 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         toEdit = []
         powerAdvisers = cfg.getPowerAdvisersGroups()
         itemState = self.queryState()
-        for org in orgs:
-            org_uid = org.UID()
-            if org_uid in self.adviceIndex:
-                advice = self.adviceIndex[org_uid]
+        for user_org in user_orgs:
+            user_org_uid = user_org.UID()
+            if user_org_uid in self.adviceIndex:
+                advice = self.adviceIndex[user_org_uid]
                 if compute_to_add and advice['type'] == NOT_GIVEN_ADVICE_VALUE and \
                    advice['advice_addable'] and \
-                   self.adapted()._adviceIsAddableByCurrentUser(org_uid):
-                    toAdd.append((org_uid, org.get_full_title()))
+                   self.adapted()._adviceIsAddableByCurrentUser(user_org_uid):
+                    toAdd.append((user_org_uid, user_org.get_full_title()))
                 if compute_to_edit and advice['type'] != NOT_GIVEN_ADVICE_VALUE and \
                    advice['advice_editable'] and \
-                   self.adapted()._adviceIsEditableByCurrentUser(org_uid):
-                    toEdit.append((org_uid, org.get_full_title()))
+                   self.adapted()._adviceIsEditableByCurrentUser(user_org_uid):
+                    toEdit.append((user_org_uid, user_org.get_full_title()))
             # if not in self.adviceIndex, aka not already given
             # check if group is a power adviser and if he is allowed
             # to add an advice in current item state
             elif compute_to_add and \
-                    org_uid in powerAdvisers and \
-                    itemState in org.get_item_advice_states(cfg):
-                toAdd.append((org_uid, org.get_full_title()))
+                    user_org_uid in powerAdvisers and \
+                    itemState in user_org.get_item_advice_states(cfg):
+                toAdd.append((user_org_uid, user_org.get_full_title()))
         return (toAdd, toEdit)
 
     def _advicePortalTypeForAdviser(self, org_uid):
         '''See doc in interfaces.py.'''
-        return 'meetingadvice'
+        tool = api.portal.get_tool('portal_plonemeeting')
+        extra_infos = tool.adapted().get_extra_adviser_infos()
+        adviser_infos = extra_infos.get(org_uid, {})
+        advice_portal_type = adviser_infos.get('portal_type', None)
+        return advice_portal_type or 'meetingadvice'
 
     def _adviceTypesForAdviser(self, meeting_advice_portal_type):
         '''See doc in interfaces.py.'''
@@ -4597,7 +4971,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         return delay_infos['delay_status'] == 'timed_out' or \
             delay_infos['delay_status_when_stopped'] == 'stopped_timed_out'
 
-    def _updateAdvices(self, invalidate=False, triggered_by_transition=None, inheritedAdviserUids=[]):
+    def _updateAdvices(self,
+                       cfg,
+                       item_state,
+                       invalidate=False,
+                       triggered_by_transition=None,
+                       inheritedAdviserUids=[]):
         '''Every time an item is created or updated, this method updates the
            dictionary self.adviceIndex: a key is added for every advice that needs
            to be given, a key is removed for every advice that does not need to
@@ -4624,9 +5003,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         isDefinedInTool = self.isDefinedInTool()
         if isDefinedInTool:
             self.adviceIndex = PersistentMapping()
-        tool = api.portal.get_tool('portal_plonemeeting')
         plone_utils = api.portal.get_tool('plone_utils')
-        cfg = tool.getMeetingConfig(self)
 
         # check if the given p_triggered_by_transition transition name
         # is the transition that will restart delays
@@ -4649,8 +5026,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     # Send a mail to the group that can give the advice.
                     if 'adviceInvalidated' in cfg.getMailItemEvents():
                         plone_group_id = get_plone_group_id(org_uid, 'advisers')
-                        self._sendMailToGroupMembers([plone_group_id],
-                                                     event_id='adviceInvalidated')
+                        sendMailIfRelevant(self,
+                                           'adviceInvalidated',
+                                           [plone_group_id],
+                                           isGroupIds=True)
             plone_utils.addPortalMessage(translate('advices_invalidated',
                                                    domain="PloneMeeting",
                                                    context=self.REQUEST),
@@ -4834,7 +5213,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # manage PowerAdvisers
         # we will give those groups the ability to give an advice on this item
         # even if the advice was not asked...
-        itemState = self.queryState()
         for org_uid in cfg.getPowerAdvisersGroups():
             # if group already gave advice, we continue
             if org_uid in self.adviceIndex:
@@ -4843,7 +5221,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # empty because this does not change anything in the UI and adding a
             # user after in the _advisers suffixed Plone group will do things work as expected
             org = get_organization(org_uid)
-            if itemState in org.get_item_advice_states(cfg):
+            if item_state in org.get_item_advice_states(cfg):
                 plone_group_id = get_plone_group_id(org_uid, suffix='advisers')
                 # power advisers get only the right to add the advice, but not to see the item
                 # this must be provided using another functionnality, like power observers or so
@@ -4865,9 +5243,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             if 'advice_id' in self.adviceIndex[org_uid]:
                 adviceObj = getattr(self, self.adviceIndex[org_uid]['advice_id'])
             giveReaderAccess = True
-            if itemState not in itemAdviceStates and \
-               itemState not in itemAdviceEditStates and \
-               itemState not in itemAdviceViewStates:
+            if item_state not in itemAdviceStates and \
+               item_state not in itemAdviceEditStates and \
+               item_state not in itemAdviceViewStates:
                 giveReaderAccess = False
                 # in this case, the advice is no more accessible in any way by the adviser
                 # make sure the advice given by groupId is no more editable
@@ -4880,7 +5258,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     self.REQUEST.set('mayGiveAdvice', False)
                 # in case advice was not given or access to given advice is not kept,
                 # we are done with this one
-                if adviceObj and org.get_keep_access_to_item_when_advice_is_given(cfg):
+                # just check the keep_access_to_item_when_advice
+                # when 'was_giveable' if item was in a state where advices were giveable
+                # access is kept, when 'is_given', access is kept if advice given
+                keep_access_to_item_when_advice = org.get_keep_access_to_item_when_advice(cfg)
+                if (adviceObj and keep_access_to_item_when_advice == 'is_given') or \
+                   (keep_access_to_item_when_advice == 'was_giveable' and
+                        set(itemAdviceStates).intersection(
+                            get_all_history_attr(self, attr_name='review_state'))):
                     giveReaderAccess = True
 
             if self.adapted()._itemToAdviceIsViewable(org_uid) and giveReaderAccess:
@@ -4891,7 +5276,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # manage delay, add/edit access only if advice is not inherited
             if not self.adviceIsInherited(org_uid):
                 # manage delay-aware advice, we start the delay if not already started
-                if itemState in itemAdviceStates and \
+                if item_state in itemAdviceStates and \
                    self.adviceIndex[org_uid]['delay'] and not \
                    self.adviceIndex[org_uid]['delay_started_on'] and \
                    self.adapted()._adviceDelayMayBeStarted(org_uid):
@@ -4900,7 +5285,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 # check if user must be able to add an advice, if not already given
                 # check also if the delay is not exceeded, in this case the advice can not be given anymore
                 delayIsNotExceeded = not self._adviceDelayIsTimedOut(org_uid, computeNewDelayInfos=True)
-                if itemState in itemAdviceStates and \
+                if item_state in itemAdviceStates and \
                    not adviceObj and \
                    delayIsNotExceeded and \
                    self.adapted()._adviceIsAddable(org_uid):
@@ -4915,7 +5300,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     self.adviceIndex[org_uid]['advice_addable'] = True
 
                 # is advice still editable?
-                if itemState in itemAdviceEditStates and \
+                if item_state in itemAdviceEditStates and \
                    delayIsNotExceeded and \
                    adviceObj and \
                    self.adapted()._adviceIsEditable(org_uid):
@@ -4944,18 +5329,18 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                         self.REQUEST.set('mayGiveAdvice', False)
                 # if item needs to be accessible by advisers, it is already
                 # done by self.manage_addLocalRoles here above because it is necessary in any case
-                if itemState in itemAdviceViewStates:
+                if item_state in itemAdviceViewStates:
                     pass
 
                 # make sure there is no 'delay_stopped_on' date if advice still giveable
-                if itemState in itemAdviceStates:
+                if item_state in itemAdviceStates:
                     self.adviceIndex[org_uid]['delay_stopped_on'] = None
                 # the delay is stopped for advices
                 # when the advice can not be given anymore due to a workflow transition
                 # we only do that if not already done (a stopped date is already defined)
                 # and if we are not on the transition that reinitialize delays
                 # and if ever delay was started
-                if itemState not in itemAdviceStates and \
+                if item_state not in itemAdviceStates and \
                    self.adviceIndex[org_uid]['delay'] and \
                    self.adviceIndex[org_uid]['delay_started_on'] and \
                    not isTransitionReinitializingDelays and \
@@ -5284,20 +5669,43 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             res.append(proposingGroup)
         return res
 
-    def _assign_roles_to_group_suffixes(self,
-                                        organization,
-                                        roles=MEETINGROLES):
-        """Method that do the work of assigning roles to every suffixed group of an organization."""
-        org_uid = organization.UID()
-        for suffix in get_all_suffixes(org_uid):
-            # like it is the case by default for suffix 'advisers'
-            if not roles.get(suffix, None):
-                continue
-            # if we have a Plone group related to this suffix, apply a local role for it
-            plone_group_id = get_plone_group_id(org_uid, suffix)
-            role = roles.get(suffix)
-            if role:
-                self.manage_addLocalRoles(plone_group_id, (role, ))
+    def assign_roles_to_group_suffixes(self, cfg, item_state):
+        """Method that do the work of assigning relevant roles to
+           suffixed groups of an organization depending on current state :
+           - suffix '_observers' will have 'Reader' role in every cases;
+           - state 'itemcreated', _creators is 'Editor';
+           - states managed by MeetingConfig.itemWFValidationLevels.
+           For now, we manage every roles :
+           - itemcreated;
+           - validation levels
+           For unknown states, method _get_corresponding_state_to_assign_local_roles
+           will be used to determinate a known configuration to take into ccount"""
+        # Add the local roles corresponding to the group managing the item
+        org = self.adapted()._getGroupManagingItem(item_state)
+        # in some case like ItemTemplate, we have no proposing group
+        if not org:
+            return
+        apply_meetingmanagers_access, suffix_roles = compute_item_roles_to_assign_to_suffixes(
+            cfg, item_state, org)
+
+        # apply local roles to computed suffixes
+        for suffix, roles in suffix_roles.items():
+            # suffix_roles keep only existing suffixes
+            plone_group_id = get_plone_group_id(org.UID(), suffix)
+            self.manage_addLocalRoles(plone_group_id, tuple(roles))
+
+        # MeetingManagers get access if item at least validated or decided
+        # decided will include states "decided out of meeting"
+        # if it is still not decided, it gets full access
+        if apply_meetingmanagers_access:
+            mmanagers_item_states = ['validated'] + list(cfg.getItemDecidedStates())
+            if item_state in mmanagers_item_states or self.hasMeeting():
+                mmanagers_group_id = "{0}_{1}".format(cfg.getId(), MEETINGMANAGERS_GROUP_SUFFIX)
+                # 'Reviewer' also on decided item, the WF guard will avoid correct is meeting closed
+                mmanagers_roles = ['Reader', 'Reviewer']
+                if item_state not in cfg.getItemDecidedStates():
+                    mmanagers_roles += ['Editor', 'Contributor']
+                self.manage_addLocalRoles(mmanagers_group_id, tuple(mmanagers_roles))
 
     security.declareProtected(ModifyPortalContent, 'updateLocalRoles')
 
@@ -5316,38 +5724,41 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # add 'Owner' local role
         self.manage_addLocalRoles(self.owner_info()['id'], ('Owner',))
 
-        # Add the local roles corresponding to the group managing the item
-        org = self.adapted()._getGroupManagingItem(self.queryState())
-        # in some case like ItemTemplate, we have no proposing group
-        if org:
-            self._assign_roles_to_group_suffixes(org)
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        item_state = self.queryState()
+
+        # update suffixes related local roles
+        self.assign_roles_to_group_suffixes(cfg, item_state)
 
         # indexes to update regarding local roles changes
         idxs = []
 
         # update local roles regarding copyGroups
         isCreated = kwargs.get('isCreated', None)
-        idxs += self._updateCopyGroupsLocalRoles(isCreated)
+        idxs += self._updateCopyGroupsLocalRoles(isCreated, cfg, item_state)
         # Update advices after updateLocalRoles because updateLocalRoles
         # reinitialize existing local roles
         triggered_by_transition = kwargs.get('triggered_by_transition', None)
         invalidate = kwargs.get('invalidate', False)
         inheritedAdviserUids = kwargs.get('inheritedAdviserUids', [])
         idxs += self._updateAdvices(
+            cfg,
+            item_state,
             invalidate=invalidate,
             triggered_by_transition=triggered_by_transition,
             inheritedAdviserUids=inheritedAdviserUids)
         # Update every 'power observers' local roles given to the
         # corresponding MeetingConfig.powerObsevers
         # it is done on every edit because of 'item_access_on' TAL expression
-        self._updatePowerObserversLocalRoles()
+        self._updatePowerObserversLocalRoles(cfg, item_state)
         # update budget impact editors local roles
         # actually it could be enough to do in in the onItemTransition but as it is
         # always done after updateLocalRoles, we do it here as it is trivial
-        self._updateBudgetImpactEditorsLocalRoles()
+        self._updateBudgetImpactEditorsLocalRoles(cfg, item_state)
         # update group in charge local roles
         # we will give the current groupsInCharge _observers sub group access to this item
-        idxs += self._updateGroupsInChargeLocalRoles()
+        idxs += self._updateGroupsInChargeLocalRoles(cfg, item_state)
         # manage automatically given permissions
         _addManagedPermissions(self)
         # clean borg.localroles caching
@@ -5363,7 +5774,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # update categorized elements on contained advices too
             for advice in self.getAdvices():
                 updateAnnexesAccess(advice)
-
+        # propagate Reader local_roles to sub elements
+        # this way for example users that have Reader role on item may view the advices
+        self._propagateReaderAndMeetingManagerLocalRolesToSubObjects(cfg)
         # reindex object security except if avoid_reindex_security=True and localroles are the same
         avoid_reindex_security = kwargs.get('avoid_reindex_security', False)
         force_avoid_reindex_security = kwargs.get('force_avoid_reindex_security', False)
@@ -5372,18 +5785,28 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             self.reindexObjectSecurity()
         return idxs
 
-    def _updateCopyGroupsLocalRoles(self, isCreated):
+    def _propagateReaderAndMeetingManagerLocalRolesToSubObjects(self, cfg):
+        """Propagate the 'Reader' and 'MeetingManager' local roles to
+           sub objects that are blocking local roles inheritance."""
+        grp_reader_localroles = [
+            grp_id for grp_id in self.__ac_local_roles__
+            if 'Reader' in self.__ac_local_roles__[grp_id]]
+        meetingmanager_group_id = get_plone_group_id(cfg.getId(), MEETINGMANAGERS_GROUP_SUFFIX)
+        for obj in self.objectValues():
+            if getattr(obj, '__ac_local_roles_block__', False):
+                for grp_id in grp_reader_localroles:
+                    obj.manage_addLocalRoles(grp_id, ['Reader'])
+                obj.manage_addLocalRoles(meetingmanager_group_id, ['MeetingManager'])
+
+    def _updateCopyGroupsLocalRoles(self, isCreated, cfg, item_state):
         '''Give the 'Reader' local role to the copy groups
            depending on what is defined in the corresponding meetingConfig.'''
         idxs = ['getCopyGroups']
         if self.isCopiesEnabled():
             # Check if some copyGroups must be automatically added
             self.addAutoCopyGroups(isCreated=isCreated)
-            tool = api.portal.get_tool('portal_plonemeeting')
-            cfg = tool.getMeetingConfig(self)
             # check if copyGroups should have access to this item for current review state
-            itemState = self.queryState()
-            if itemState in cfg.getItemCopyGroupsStates():
+            if item_state in cfg.getItemCopyGroupsStates():
                 # Add the local roles corresponding to the selected copyGroups.
                 # We give the 'Reader' role to the selected groups.
                 # This will give them a read-only access to the item.
@@ -5392,43 +5815,37 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     self.manage_addLocalRoles(copyGroupId, (READER_USECASES['copy_groups'],))
         return idxs
 
-    def _updatePowerObserversLocalRoles(self):
+    def _updatePowerObserversLocalRoles(self, cfg, item_state):
         '''Give local roles to the groups defined in MeetingConfig.powerObservers.'''
         extra_expr_ctx = _base_extra_expr_ctx(self)
         extra_expr_ctx.update({'item': self, })
-        cfg = extra_expr_ctx['cfg']
         cfg_id = cfg.getId()
-        itemState = self.queryState()
         for po_infos in cfg.getPowerObservers():
-            if itemState in po_infos['item_states'] and \
+            if item_state in po_infos['item_states'] and \
                _evaluateExpression(self,
                                    expression=po_infos['item_access_on'],
                                    extra_expr_ctx=extra_expr_ctx):
                 powerObserversGroupId = "%s_%s" % (cfg_id, po_infos['row_id'])
-                self.manage_addLocalRoles(powerObserversGroupId, (READER_USECASES['powerobservers'],))
+                self.manage_addLocalRoles(powerObserversGroupId,
+                                          (READER_USECASES['powerobservers'],))
 
-    def _updateBudgetImpactEditorsLocalRoles(self):
+    def _updateBudgetImpactEditorsLocalRoles(self, cfg, item_state):
         '''Configure local role for use case 'budget_impact_reviewers' to the corresponding
            MeetingConfig 'budgetimpacteditors' group.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self)
-        itemState = self.queryState()
-        if itemState not in cfg.getItemBudgetInfosStates():
+        if item_state not in cfg.getItemBudgetInfosStates():
             return
         budgetImpactEditorsGroupId = "%s_%s" % (cfg.getId(), BUDGETIMPACTEDITORS_GROUP_SUFFIX)
         self.manage_addLocalRoles(budgetImpactEditorsGroupId, ('MeetingBudgetImpactEditor',))
 
-    def _updateGroupsInChargeLocalRoles(self):
+    def _updateGroupsInChargeLocalRoles(self, cfg, item_state):
         '''Get the current groupsInCharge and give View access to the _observers Plone group.'''
         idxs = ['getGroupsInCharge']
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self)
-        itemState = self.queryState()
-        if itemState in cfg.getItemGroupsInChargeStates():
-            groupsInCharge = self.getGroupsInCharge(theObjects=True, includeAuto=True)
-            for groupInCharge in groupsInCharge:
-                observersPloneGroupId = get_plone_group_id(groupInCharge.UID(), 'observers')
-                self.manage_addLocalRoles(observersPloneGroupId, (READER_USECASES['groupsincharge'],))
+        if item_state not in cfg.getItemGroupsInChargeStates():
+            return
+        groupsInCharge = self.getGroupsInCharge(theObjects=True, includeAuto=True)
+        for groupInCharge in groupsInCharge:
+            observersPloneGroupId = get_plone_group_id(groupInCharge.UID(), 'observers')
+            self.manage_addLocalRoles(observersPloneGroupId, (READER_USECASES['groupsincharge'],))
         return idxs
 
     def _versionateAdvicesOnItemEdit(self):
@@ -5573,9 +5990,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # first check that we are not trying to clone an item
         # we can not access because of privacy status
         # do this check if we are not creating an item from an itemTemplate
-        # for wich there is no proposingGroup selected or it will not be
+        # because if a proposingGroup is defined, it will not be
         # privacyViewable and using such an item template will always fail...
-        if self.getProposingGroup() and not self.adapted().isPrivacyViewable():
+        if not self.isDefinedInTool() and not self.adapted().isPrivacyViewable():
             raise Unauthorized
 
         # 'duplicate' and 'duplicate and keep link'
@@ -5834,6 +6251,20 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            'privacy' in destMeetingConfig.getUsedItemAttributes():
             newItem.setPrivacy('secret')
 
+        # handle 'otherMeetingConfigsClonableToFieldXXX' of original item
+        other_mc_field_names = [field_name for field_name in cfg.getUsedItemAttributes()
+                                if field_name.startswith('otherMeetingConfigsClonableToField')]
+        for other_mc_field_name in other_mc_field_names:
+            # first check if original field not empty
+            if self.fieldIsEmpty(other_mc_field_name):
+                continue
+            other_mc_field = self.getField(other_mc_field_name)
+            other_mc_field_value = other_mc_field.get(self)
+            dest_field_name = other_mc_field_name.replace('otherMeetingConfigsClonableToField', '')
+            dest_field_name = dest_field_name[0].lower() + dest_field_name[1:]
+            dest_field = newItem.getField(dest_field_name)
+            dest_field.set(newItem, other_mc_field_value)
+
         # execute some transitions on the newItem if it was defined in the cfg
         # find the transitions to trigger
         triggerUntil = NO_TRIGGER_WF_TRANSITION_UNTIL
@@ -5913,8 +6344,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         sendMailIfRelevant(newItem,
                            'itemClonedToThisMC',
                            ModifyPortalContent,
-                           isRole=False,
-                           mapping=mapping)
+                           mapping=mapping,
+                           isPermission=True)
         plone_utils.addPortalMessage(
             translate('sendto_success',
                       mapping={'cfgTitle': safe_unicode(destMeetingConfig.Title())},
@@ -6061,8 +6492,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         attendees = meeting.getAttendees(theObjects=False)
         itemAbsents = self.getItemAbsents()
         itemExcused = self.getItemExcused()
+        itemNonAttendees = self.getItemNonAttendees()
         attendees = [attendee for attendee in attendees
-                     if attendee not in itemAbsents + itemExcused]
+                     if attendee not in itemAbsents + itemExcused + itemNonAttendees]
         # get really present attendees now
         attendees = meeting._getContacts(uids=attendees, theObjects=theObjects)
         return attendees
@@ -6138,32 +6570,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def downOrUpWorkflowAgain(self):
         """Was current item already in same review_state before?
            And if so, is it up or down the workflow?"""
-        res = ''
+        res = ""
         if not self.hasMeeting() and \
            not self.queryState() == 'validated' and \
            not self.isDefinedInTool():
-            # down the workflow, the last transition was a backTo... transition
-            wfTool = api.portal.get_tool('portal_workflow')
-            itemWF = wfTool.getWorkflowsFor(self)[0]
-            backTransitionIds = [tr for tr in itemWF.transitions if tr.startswith('back')]
-            transitionIds = [tr for tr in itemWF.transitions if not tr.startswith('back')]
-            # get the last event that is a real workflow transition event
-            lastEvent = getLastWFAction(self, transition=backTransitionIds + transitionIds)
-            if lastEvent and lastEvent['action']:
-                if lastEvent['action'].startswith('back'):
-                    res = "down"
-                # make sure it is a transition because we save other actions too in workflow_history
-                else:
-                    # up the workflow for at least second times and not linked to a meeting
-                    # check if last event was already made in item workflow_history
-                    history = self.workflow_history[itemWF.getId()]
-                    i = 0
-                    for event in history:
-                        if event['action'] == lastEvent['action']:
-                            i = i + 1
-                            if i > 1:
-                                res = "up"
-                                break
+            res = down_or_up_wf(self)
         return res
 
     security.declarePublic('showVotes')
@@ -6427,9 +6838,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return True
 
     def _mayChangeAttendees(self):
-        """Check that user may quickEdit itemAbsents/itemExcused/itemNonAttendees."""
-        tool = api.portal.get_tool('portal_plonemeeting')
-        return tool.isManager(self) and self.hasMeeting() and self._checkMayQuickEdit()
+        """Check that user may quickEdit
+           itemAbsents/itemExcused/itemNonAttendees/votes/..."""
+        return self.hasMeeting() and self._checkMayQuickEdit(
+            bypassWritePermissionCheck=True, onlyForManagers=True)
 
     def displayProposingGroupUsers(self):
         """ """

@@ -1,19 +1,38 @@
 <div name="pmDescription"
       i18n:domain="PloneMeeting"
       class="pmMoreInfo"
-      tal:define="mode string:view;">
-    <tal:loop repeat="visibleFieldInfos python: view.getItemsListVisibleFields().items()">
+      tal:define="mode string:view;
+                  global displayed python:False;">
+    <tal:loop repeat="visibleFieldInfos python: view.getVisibleFields().items()">
         <span tal:define="visibleFieldName python: visibleFieldInfos[0];
                           visibleFieldRenderer python: visibleFieldInfos[1];
                           field python: context.getField(visibleFieldName);"
-              tal:condition="python: not context.fieldIsEmpty(visibleFieldName) and ((visibleFieldName == 'budgetInfos' and
+              tal:condition="python: field and not context.fieldIsEmpty(visibleFieldName) and ((visibleFieldName == 'budgetInfos' and
                              context.getBudgetRelated() or not visibleFieldName == 'budgetInfos') and True or False) and not visibleFieldName in view.visibleColumns">
-            <tal:customRenderer condition="visibleFieldRenderer">
-                <span tal:replace="structure python: context.restrictedTraverse(visibleFieldRenderer)(visibleFieldName)" />
-            </tal:customRenderer> 
-            <tal:defaultRenderer condition="not: visibleFieldRenderer">
-                <metal:render use-macro="context/widgets/field/macros/view" />
-            </tal:defaultRenderer> 
+            <tal:displayed define="global displayed python:True">
+                <tal:customRenderer condition="visibleFieldRenderer">
+                    <span tal:replace="structure python: context.restrictedTraverse(visibleFieldRenderer)(visibleFieldName)" />
+                </tal:customRenderer>
+                <tal:defaultRenderer condition="not: visibleFieldRenderer">
+                    <metal:render use-macro="context/widgets/field/macros/view" />
+                </tal:defaultRenderer>
+            </tal:displayed>
         </span>
+        <tal:comment replace="nothing">Sepcial case for displaying annexes</tal:comment>
+        <div class="item_annexes" tal:condition="python: visibleFieldInfos[0] == 'annexes'">
+            <span class="item_attribute_label"
+                  i18n:translate="existing_annexes">Annexes</span>:&nbsp;&nbsp;
+            <tal:annexes define="global displayed python:True"
+                         replace="structure view/render_annexes" />
+        </div>
+        <tal:comment replace="nothing">Sepcial case for displaying advices</tal:comment>
+        <div class="item_annexes" tal:condition="python: visibleFieldInfos[0] == 'advices'">
+            <span class="item_attribute_label"
+                  i18n:translate="PloneMeeting_label_advices"></span>:&nbsp;&nbsp;
+            <tal:advices define="global displayed python:True"
+                         replace="structure context/@@advices-icons" />
+        </div>
     </tal:loop>
+    <p class="discreet" tal:condition="not:displayed" i18n:translate="">Nothing to display.</p>
+    <script>categorizedChildsInfos();</script>
 </div>

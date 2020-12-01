@@ -35,17 +35,14 @@ class PMLayer(PloneWithPackageLayer):
 
     def setUpPloneSite(self, portal):
         setLocal('request', portal.REQUEST)
+        # configure default workflows so Folder has a workflow
+        # make sure we have a default workflow
+        portal.portal_workflow.setDefaultChain('simple_publication_workflow')
         super(PMLayer, self).setUpPloneSite(portal)
-        # Create some member areas
-        for userId in ('pmManager',
-                       'pmCreator1',
-                       'pmCreator1b',
-                       'pmCreator2',
-                       'siteadmin',
-                       'powerobserver1'):
+        # Create member area of existing users
+        for user in api.user.get_users():
             # this layer is used by imio.pm.wsclient
-            if api.user.get(userId):
-                _createMemberarea(portal, userId)
+            _createMemberarea(portal, user.getId())
 
 
 PM_ZCML = zca.ZCMLSandbox(filename="testing.zcml",

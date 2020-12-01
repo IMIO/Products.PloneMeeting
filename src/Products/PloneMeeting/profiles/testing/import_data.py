@@ -1,23 +1,7 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2016 by PloneGov
-#
 # GNU General Public License (GPL)
 #
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
-# 02110-1301, USA.
 
 from copy import deepcopy
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
@@ -235,6 +219,7 @@ developers.advisers.append(pmManager)
 
 vendors = OrgDescriptor('vendors', 'Vendors', u'Devil')
 vendors.creators.append(pmCreator2)
+vendors.prereviewers.append(pmReviewer2)
 vendors.reviewers.append(pmReviewer2)
 vendors.observers.append(pmReviewer2)
 vendors.observers.append(pmObserver2)
@@ -294,61 +279,53 @@ meetingPma.annexTypes = [financialAnalysis, budgetAnalysisCfg1, overheadAnalysis
 meetingPma.usedItemAttributes = ('description', 'toDiscuss', 'itemTags', 'itemIsSigned',)
 meetingPma.usedMeetingAttributes = ('place',)
 meetingPma.maxShownListings = '100'
-meetingPma.itemDecidedStates = ('accepted', 'delayed', 'confirmed', 'itemarchived')
-meetingPma.workflowAdaptations = []
-meetingPma.itemPositiveDecidedStates = ['accepted', 'confirmed']
+meetingPma.workflowAdaptations = ['delayed']
+meetingPma.itemPositiveDecidedStates = ['accepted']
 meetingPma.transitionsForPresentingAnItem = ('propose', 'validate', 'present', )
 meetingPma.onMeetingTransitionItemActionToExecute = (
+    {'meeting_transition': 'freeze',
+     'item_action': 'itemfreeze',
+     'tal_expression': ''},
+
+    {'meeting_transition': 'publish',
+     'item_action': 'itemfreeze',
+     'tal_expression': ''},
     {'meeting_transition': 'publish',
      'item_action': 'itempublish',
      'tal_expression': ''},
 
-    {'meeting_transition': 'freeze',
-     'item_action': 'itempublish',
-     'tal_expression': ''},
-    {'meeting_transition': 'freeze',
-     'item_action': 'itemfreeze',
-     'tal_expression': ''},
-
-    {'meeting_transition': 'decide',
-     'item_action': 'itempublish',
-     'tal_expression': ''},
     {'meeting_transition': 'decide',
      'item_action': 'itemfreeze',
      'tal_expression': ''},
-
-    {'meeting_transition': 'close',
+    {'meeting_transition': 'decide',
      'item_action': 'itempublish',
-     'tal_expression': ''},
-    {'meeting_transition': 'close',
-     'item_action': 'itemfreeze',
-     'tal_expression': ''},
-    {'meeting_transition': 'close',
-     'item_action': 'accept',
-     'tal_expression': ''},
-    {'meeting_transition': 'close',
-     'item_action': 'confirm',
      'tal_expression': ''},
 
     {'meeting_transition': 'publish_decisions',
-     'item_action': 'itempublish',
+     'item_action': 'itemfreeze',
      'tal_expression': ''},
     {'meeting_transition': 'publish_decisions',
-     'item_action': 'itemfreeze',
+     'item_action': 'itempublish',
      'tal_expression': ''},
     {'meeting_transition': 'publish_decisions',
      'item_action': 'accept',
      'tal_expression': ''},
-    {'meeting_transition': 'publish_decisions',
-     'item_action': 'confirm',
-     'tal_expression': ''},
 
-    {'meeting_transition': 'archive',
-     'item_action': 'itemarchive',
+    {'meeting_transition': 'close',
+     'item_action': 'itemfreeze',
+     'tal_expression': ''},
+    {'meeting_transition': 'close',
+     'item_action': 'itempublish',
+     'tal_expression': ''},
+    {'meeting_transition': 'close',
+     'item_action': 'accept',
      'tal_expression': ''},
 
     {'meeting_transition': 'backToCreated',
      'item_action': 'backToItemPublished',
+     'tal_expression': ''},
+    {'meeting_transition': 'backToCreated',
+     'item_action': 'backToItemFrozen',
      'tal_expression': ''},
     {'meeting_transition': 'backToCreated',
      'item_action': 'backToPresented',
@@ -359,7 +336,7 @@ meetingPma.useGroupsAsCategories = True
 meetingPma.defaultLabels = [
     {'color': 'blue', 'by_user': False, 'title': 'Label'},
     {'color': 'yellow', 'by_user': True, 'title': 'Personal label'},
-    {'color': 'green', 'by_user': True, 'title': 'Read'},
+    {'color': 'green', 'by_user': True, 'title': 'Lu'},
     {'color': 'yellow', 'by_user': True, 'title': 'Suivi'}]
 meetingPma.useAdvices = True
 meetingPma.selectableAdvisers = ['developers', 'vendors']
@@ -367,6 +344,7 @@ meetingPma.itemAdviceStates = ['proposed']
 meetingPma.itemAdviceEditStates = ['proposed', 'validated']
 meetingPma.itemAdviceViewStates = ['presented']
 meetingPma.transitionsReinitializingDelays = ('backToItemCreated', )
+meetingPma.orderedGroupsInCharge = ['developers', 'vendors']
 meetingPma.allItemTags = '\n'.join(('Strategic decision', 'Genericity mechanism', 'User interface'))
 meetingPma.sortAllItemTags = True
 meetingPma.recurringItems = (recItem1, recItem2, )
@@ -413,14 +391,14 @@ meetingPga.onMeetingTransitionItemActionToExecute = deepcopy(
     meetingPma.onMeetingTransitionItemActionToExecute)
 meetingPga.insertingMethodsOnAddItem = ({'insertingMethod': 'on_categories', 'reverse': '0'}, )
 meetingPga.useGroupsAsCategories = False
+meetingPga.orderedGroupsInCharge = ['developers', 'vendors']
 meetingPga.itemTemplates = (template1, template2, )
+meetingPga.workflowAdaptations = ['delayed']
 meetingPga.useAdvices = False
 meetingPga.selectableAdvisers = []
 # use same values as meetingPma for powerObserversStates
 meetingPga.powerObservers = deepcopy(meetingPma.powerObservers)
-meetingPga.itemDecidedStates = ('accepted', 'delayed', 'confirmed', 'itemarchived')
-meetingPga.workflowAdaptations = []
-meetingPga.itemPositiveDecidedStates = ['accepted', 'confirmed']
+meetingPga.itemPositiveDecidedStates = ['accepted']
 meetingPga.useCopies = True
 meetingPga.selectableCopyGroups = [developers.getIdSuffixed('reviewers'), vendors.getIdSuffixed('reviewers')]
 meetingPga.itemCopyGroupsStates = ['validated', 'itempublished', 'itemfrozen', 'accepted', 'delayed']

@@ -660,9 +660,10 @@ class testToolPloneMeeting(PloneMeetingTestCase):
 
     def test_pm_UpdateContentCategoryAfterSentToOtherMeetingConfigRemovesElementsWithoutTypeCorrespondence(self):
         '''Test the ToolPloneMeeting._updateContentCategoryAfterSentToOtherMeetingConfig method.
-           When sending elements to another MC, if a annex_type has no correspondence and no annex_type exist
-           in destination MeetingConfig, the annex is not kept.
-           So if a annex_decision type has no correspondence and no annex_decision types exist at all in destination
+           When sending elements to another MC, if a annex_type has no correspondence and
+           no annex_type exist in destination MeetingConfig, the annex is not kept.
+           So if a annex_decision type has no correspondence and
+           no annex_decision types exist at all in destination
            configuration, the annex is not kept (it is deleted).
         '''
         cfg = self.meetingConfig
@@ -1003,11 +1004,13 @@ class testToolPloneMeeting(PloneMeetingTestCase):
     def test_pm__users_groups_value(self):
         """Test that this cached method behaves normally."""
         # get pmManager groups
-        pmManagerGroups = [groups for groups, user in self.tool._users_groups_value() if user == 'pmManager'][0]
+        pmManagerGroups = [groups for groups, user in self.tool._users_groups_value()
+                           if user == 'pmManager'][0]
         self.assertTrue(self.developers_creators in pmManagerGroups)
         # remove pmManager from developers creators
-        self._removePrincipalFromGroup('pmManager', self.developers_creators)
-        pmManagerGroups = [groups for groups, user in self.tool._users_groups_value() if user == 'pmManager'][0]
+        self._removePrincipalFromGroups('pmManager', [self.developers_creators])
+        pmManagerGroups = [groups for groups, user in self.tool._users_groups_value()
+                           if user == 'pmManager'][0]
         self.assertFalse(self.developers_creators in pmManagerGroups)
 
     def test_pm_Get_plone_groups_for_user(self):
@@ -1089,19 +1092,28 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         cfg = self.meetingConfig
         self.changeUser('pmManager')
         self.assertFalse(self.tool.isPowerObserverForCfg(cfg))
-        self.assertFalse(self.tool.isPowerObserverForCfg(cfg, power_observer_type='powerobservers'))
-        self.assertFalse(self.tool.isPowerObserverForCfg(cfg, power_observer_type='restrictedpowerobservers'))
-        self.assertFalse(self.tool.isPowerObserverForCfg(cfg, power_observer_type='unknown'))
+        self.assertFalse(self.tool.isPowerObserverForCfg(cfg,
+                                                         power_observer_type='powerobservers'))
+        self.assertFalse(self.tool.isPowerObserverForCfg(cfg,
+                                                         power_observer_type='restrictedpowerobservers'))
+        self.assertFalse(self.tool.isPowerObserverForCfg(cfg,
+                                                         power_observer_type='unknown'))
         self.changeUser('powerobserver1')
         self.assertTrue(self.tool.isPowerObserverForCfg(cfg))
-        self.assertTrue(self.tool.isPowerObserverForCfg(cfg, power_observer_type='powerobservers'))
-        self.assertFalse(self.tool.isPowerObserverForCfg(cfg, power_observer_type='restrictedpowerobservers'))
-        self.assertFalse(self.tool.isPowerObserverForCfg(cfg, power_observer_type='unknown'))
+        self.assertTrue(self.tool.isPowerObserverForCfg(cfg,
+                                                        power_observer_type='powerobservers'))
+        self.assertFalse(self.tool.isPowerObserverForCfg(cfg,
+                                                         power_observer_type='restrictedpowerobservers'))
+        self.assertFalse(self.tool.isPowerObserverForCfg(cfg,
+                                                         power_observer_type='unknown'))
         self.changeUser('restrictedpowerobserver1')
         self.assertTrue(self.tool.isPowerObserverForCfg(cfg))
-        self.assertFalse(self.tool.isPowerObserverForCfg(cfg, power_observer_type='powerobservers'))
-        self.assertTrue(self.tool.isPowerObserverForCfg(cfg, power_observer_type='restrictedpowerobservers'))
-        self.assertFalse(self.tool.isPowerObserverForCfg(cfg, power_observer_type='unknown'))
+        self.assertFalse(self.tool.isPowerObserverForCfg(cfg,
+                                                         power_observer_type='powerobservers'))
+        self.assertTrue(self.tool.isPowerObserverForCfg(cfg,
+                                                        power_observer_type='restrictedpowerobservers'))
+        self.assertFalse(self.tool.isPowerObserverForCfg(cfg,
+                                                         power_observer_type='unknown'))
 
     def test_pm_ToolAccessibleByUsersWithoutGroups(self):
         """Whe a user without any group logs in, he may access methods on portal_plonemeeting,
