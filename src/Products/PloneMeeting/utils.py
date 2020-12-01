@@ -1076,6 +1076,7 @@ def applyOnTransitionFieldTransform(obj, transitionId):
     # when moving to dexerity, will be able to reindex more efficiently
     if False and idxs:
         obj.reindexObject(idxs=idxs)
+    return idxs
 
 
 # ------------------------------------------------------------------------------
