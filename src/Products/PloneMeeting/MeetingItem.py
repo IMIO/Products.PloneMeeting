@@ -5801,8 +5801,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def _updateCopyGroupsLocalRoles(self, isCreated, cfg, item_state):
         '''Give the 'Reader' local role to the copy groups
            depending on what is defined in the corresponding meetingConfig.'''
-        idxs = ['getCopyGroups']
+        idxs = []
         if self.isCopiesEnabled():
+            idxs.append('getCopyGroups')
             # Check if some copyGroups must be automatically added
             self.addAutoCopyGroups(isCreated=isCreated)
             # check if copyGroups should have access to this item for current review state
@@ -5839,13 +5840,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def _updateGroupsInChargeLocalRoles(self, cfg, item_state):
         '''Get the current groupsInCharge and give View access to the _observers Plone group.'''
-        idxs = ['getGroupsInCharge']
-        if item_state not in cfg.getItemGroupsInChargeStates():
-            return
-        groupsInCharge = self.getGroupsInCharge(theObjects=True, includeAuto=True)
-        for groupInCharge in groupsInCharge:
-            observersPloneGroupId = get_plone_group_id(groupInCharge.UID(), 'observers')
-            self.manage_addLocalRoles(observersPloneGroupId, (READER_USECASES['groupsincharge'],))
+        idxs = []
+        if item_state in cfg.getItemGroupsInChargeStates():
+            idxs.append('getGroupsInCharge')
+            groupsInCharge = self.getGroupsInCharge(theObjects=True, includeAuto=True)
+            for groupInCharge in groupsInCharge:
+                observersPloneGroupId = get_plone_group_id(groupInCharge.UID(), 'observers')
+                self.manage_addLocalRoles(observersPloneGroupId, (READER_USECASES['groupsincharge'],))
         return idxs
 
     def _versionateAdvicesOnItemEdit(self):
