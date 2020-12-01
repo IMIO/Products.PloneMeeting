@@ -5,7 +5,7 @@
       lang="en"
       metal:use-macro="context/main_template/macros/master"
       i18n:domain="PloneMeeting">
-<body>
+<body class="meetingadvice-view">
 
   <metal:title fill-slot="content-title">
       <tal:header replace="structure context/@@header" />
@@ -30,7 +30,16 @@
         </tal:back_to_item>
         <table class="no-style-table" width="100%">
             <tal:loop repeat="widget view/widgets/values">
-            <tr tal:condition="python: widget.mode != 'hidden'" tal:attributes="id string:row-${widget/id}">
+            <tr tal:condition="python: widget.mode != 'hidden'"
+                tal:define="is_rich python: widget.field.__class__.__name__ == 'RichText'"
+                tal:attributes="id string:row-${widget/id};
+                                class python: is_rich and 'no-border' or ''">
+              <tal:is_rich condition="is_rich">
+                <td colspan="2">
+                     <tal:render tal:content="structure widget/render">Value</tal:render>
+                </td>
+              </tal:is_rich>
+              <tal:not_is_rich condition="not:is_rich">
                 <td class="table_widget_label"><label tal:content="widget/label">Label</label></td>
                 <td class="table_widget_value">
                     <tal:adviceType condition="python: widget.name == 'form.widgets.advice_type'">
@@ -43,6 +52,7 @@
                       <metal:previousAdviceType use-macro="context/@@pm-macros/previousAdviceType" />
                     </tal:previousAdviceType>
                 </td>
+              </tal:not_is_rich>
             </tr>
             </tal:loop>
         </table>

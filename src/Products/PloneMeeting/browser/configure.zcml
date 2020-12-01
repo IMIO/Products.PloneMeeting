@@ -83,6 +83,12 @@
             class="Products.PloneMeeting.browser.overrides.PMAjaxSave"
             attribute="AT_save"
             permission="cmf.ModifyPortalContent"/>
+        <browser:page
+            name="cke-save"
+            for="Products.PloneMeeting.content.advice.IMeetingAdvice"
+            class="Products.PloneMeeting.browser.overrides.PMAjaxSave"
+            attribute="dexterity_save"
+            permission="cmf.ModifyPortalContent"/>
     </configure>
 
     <!-- Annexes table view, override @@iconifiedcategory and make it available under name @@categorized-annexes -->
@@ -743,26 +749,31 @@
         for="*"
         class=".advices.AdvicesIconsInfos"
         template="templates/advices-icons-infos.pt"
-        permission="zope2.View"/>
+        permission="zope2.View" />
     <browser:view
         name="pm-notify-event"
         class=".notify.NotifyEvent"
         for="*"
-        permission="zope2.View"/>
+        permission="zope2.View" />
+
+    <!-- Render single widget -->
+    <browser:view
+        name="render-single-widget"
+        class=".views.RenderSingleWidgetView"
+        for="*"
+        permission="zope2.View" />
 
     <!-- document-generation view -->
     <browser:page
         for="Products.Archetypes.interfaces.base.IBaseObject"
         name="document-generation"
         class=".overrides.PMDocumentGenerationView"
-        permission="zope2.View"
-        />
+        permission="zope2.View" />
     <browser:page
         for="plone.dexterity.interfaces.IDexterityContainer"
         name="document-generation"
         class=".overrides.PMDocumentGenerationView"
-        permission="zope2.View"
-        />
+        permission="zope2.View" />
 
     <!-- Form that manage item assembly -->
     <browser:page
@@ -801,7 +812,8 @@
         permission="zope2.View"
       />
 
-    <!-- special view that make it possible to redirect from an overlay and show status messages afterward -->
+    <!-- special view that make it possible to redirect from an overlay
+         and show status messages afterward -->
     <browser:page
         for="*"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"

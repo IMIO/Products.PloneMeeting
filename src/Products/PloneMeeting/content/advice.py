@@ -25,6 +25,7 @@ from Products.PloneMeeting.utils import getWorkflowAdapter
 from Products.PloneMeeting.utils import isModifiedSinceLastVersion
 from Products.PloneMeeting.utils import main_item_data
 from Products.PloneMeeting.utils import version_object
+from Products.PloneMeeting.widgets.pm_richtext import PMRichTextFieldWidget
 from z3c.form.browser.radio import RadioFieldWidget
 from zope import schema
 from zope.i18n import translate
@@ -61,21 +62,19 @@ class IMeetingAdvice(IMeetingContent):
                       "to publish it nevertheless."),
         required=False,
     )
+    form.widget('advice_comment', PMRichTextFieldWidget)
     advice_comment = RichText(
         title=_(u"Advice official comment"),
         description=_("Enter the official comment."),
         required=False,
-        default_mime_type='text/html',
-        output_mime_type='text/html',
-        allowed_mime_types=('text/html',),
+        allowed_mime_types=(u"text/html", )
     )
+    form.widget('advice_observations', PMRichTextFieldWidget)
     advice_observations = RichText(
         title=_(u"Advice observations"),
         description=_("Enter optionnal observations if necessary."),
         required=False,
-        default_mime_type='text/html',
-        output_mime_type='text/html',
-        allowed_mime_types=('text/html',),
+        allowed_mime_types=(u"text/html", )
     )
     advice_reference = schema.TextLine(
         title=_(u"Advice reference"),

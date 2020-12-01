@@ -74,7 +74,7 @@ from Products.PloneMeeting.utils import hasHistory
 from Products.PloneMeeting.utils import ItemDuplicatedFromConfigEvent
 from Products.PloneMeeting.utils import MeetingLocalRolesUpdatedEvent
 from Products.PloneMeeting.utils import rememberPreviousData
-from Products.PloneMeeting.utils import setFieldFromAjax
+from Products.PloneMeeting.utils import set_field_from_ajax
 from Products.PloneMeeting.utils import toHTMLStrikedContent
 from Products.PloneMeeting.utils import transformAllRichTextFields
 from Products.PloneMeeting.utils import updateAnnexesAccess
@@ -1803,12 +1803,6 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
                 powerObserversGroupId = "%s_%s" % (cfg_id, po_infos['row_id'])
                 self.manage_addLocalRoles(powerObserversGroupId, (READER_USECASES['powerobservers'],))
 
-    security.declareProtected(ModifyPortalContent, 'transformRichTextField')
-
-    def transformRichTextField(self, fieldName, richContent):
-        '''See doc in interfaces.py.'''
-        return richContent
-
     security.declareProtected(ModifyPortalContent, 'onEdit')
 
     def onEdit(self, isCreated):
@@ -1878,7 +1872,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
 
     def setFieldFromAjax(self, fieldName, fieldValue):
         '''See doc in utils.py.'''
-        return setFieldFromAjax(self, fieldName, fieldValue)
+        return set_field_from_ajax(self, fieldName, fieldValue)
 
     security.declarePublic('getFieldVersion')
 

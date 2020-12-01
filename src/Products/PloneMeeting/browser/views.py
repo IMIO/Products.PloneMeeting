@@ -48,10 +48,12 @@ from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import _itemNumber_to_storedItemNumber
 from Products.PloneMeeting.utils import _storedItemNumber_to_itemNumber
 from Products.PloneMeeting.utils import get_annexes
+from Products.PloneMeeting.utils import get_dx_widget
 from Products.PloneMeeting.utils import get_person_from_userid
 from Products.PloneMeeting.utils import signatureNotAlone
 from Products.PloneMeeting.utils import toHTMLStrikedContent
 from z3c.form.field import Fields
+from z3c.form.interfaces import DISPLAY_MODE
 from zope import schema
 from zope.i18n import translate
 
@@ -2181,3 +2183,19 @@ class PODTemplateMailingLists(BrowserView):
         tool = api.portal.get_tool('portal_plonemeeting')
         pod_template = api.content.find(UID=self.template_uid)[0].getObject()
         return tool.getAvailableMailingLists(self.context, pod_template)
+
+
+class RenderSingleWidgetView(BrowserView):
+    """ """
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+        self.portal_url = api.portal.get().absolute_url()
+
+    def __call__(self, field_name, mode=DISPLAY_MODE):
+        """ """
+        self.field_name = field_name
+        self.mode = mode
+        widget = get_dx_widget(self.context, field_name, mode)
+        rendered = widget.render()
+        return rendered

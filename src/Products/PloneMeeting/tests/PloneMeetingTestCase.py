@@ -461,7 +461,8 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
     def addAdvice(self,
                   item,
                   advice_group=None,
-                  advice_type=u'positive',
+                  advice_type=u"positive",
+                  advice_comment=u"My comment",
                   advice_hide_during_redaction=False,
                   advice_portal_type='meetingadvice'):
         if not advice_group:
@@ -477,7 +478,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             **{'advice_group': advice_group,
                'advice_type': advice_type,
                'advice_hide_during_redaction': advice_hide_during_redaction,
-               'advice_comment': RichTextValue(u'My comment')})
+               'advice_comment': RichTextValue(advice_comment)})
         return advice
 
     def deleteAsManager(self, uid):
