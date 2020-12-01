@@ -81,7 +81,8 @@ def do(action, event):
         # Send mail regarding advices to give if relevant
         event.object.sendStateDependingMailIfRelevant(event.old_state.id, event.new_state.id)
         # Send mail if relevant
-        sendMailIfRelevant(event.object, "item_state_changed_%s" % event.transition.id, 'View')
+        event_id = "item_state_changed_%s" % event.transition.id
+        sendMailIfRelevant(event.object, event_id, 'View', isPermission=True)
         # apply on transition field transform if any
         applyOnTransitionFieldTransform(event.object, event.transition.id)
         # update modification date upon state change
@@ -92,7 +93,8 @@ def do(action, event):
         # Add recurring items to the meeting if relevant
         addRecurringItemsIfRelevant(event.object, event.transition.id)
         # Send mail if relevant
-        sendMailIfRelevant(event.object, "meeting_state_changed_%s" % event.transition.id, 'View')
+        event_id = "meeting_state_changed_%s" % event.transition.id
+        sendMailIfRelevant(event.object, event_id, 'View', isPermission=True)
         # trigger some transitions on contained items depending on
         # MeetingConfig.onMeetingTransitionItemActionToExecute
         meetingExecuteActionOnLinkedItems(event.object, event.transition.id)
@@ -769,7 +771,7 @@ def onAdviceModified(advice, event):
     _advice_update_item(item)
 
     # Send mail if relevant
-    sendMailIfRelevant(item, 'adviceEdited', 'MeetingMember', isRole=True)
+    sendMailIfRelevant(item, 'adviceEdited', 'creators', isSuffix=True)
     sendMailIfRelevant(item, 'adviceEditedOwner', 'Owner', isRole=True)
 
 

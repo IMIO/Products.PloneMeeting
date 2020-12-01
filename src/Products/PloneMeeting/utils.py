@@ -453,7 +453,7 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
         body = safe_unicode(customRes[1])
     else:
         # some event end with "Owner", we use same event without the "Owner" suffix
-        subjectLabel = u'%s_mail_subject' % event.rstrip("Owner")
+        subjectLabel = u'%s_mail_subject' % event.replace("Owner", "")
         subject = translate(subjectLabel,
                             domain=d,
                             mapping=translationMapping,
@@ -474,7 +474,7 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
                                 context=obj.REQUEST)
         subject = safe_unicode(subject)
         # some event end with "Owner", we use same event without the "Owner" suffix
-        bodyLabel = u'%s_mail_body' % event.rstrip("Owner")
+        bodyLabel = u'%s_mail_body' % event.replace("Owner", "")
         body = translate(bodyLabel,
                          domain=d,
                          mapping=translationMapping,
@@ -524,10 +524,17 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
                       attachments)
     except EmailError, ee:
         logger.warn(str(ee))
+    return subject, body
 
 
-def sendMailIfRelevant(obj, event, permissionOrSuffixOrRole, isSuffix=False,
-                       customEvent=False, mapping={}, isRole=False):
+def sendMailIfRelevant(obj, event, permissionOrSuffixOrRoleOrGroupIds,
+                       customEvent=False,
+                       mapping={},
+                       isSuffix=False,
+                       isRole=False,
+                       isGroupIds=False,
+                       isPermission=False,
+                       debug=False):
     '''An p_event just occurred on meeting or item p_obj. If the corresponding
        meeting config specifies that a mail needs to be sent, this function
        will send a mail. The mail subject and body are defined from i18n labels
@@ -543,6 +550,7 @@ def sendMailIfRelevant(obj, event, permissionOrSuffixOrRole, isSuffix=False,
        A plug-in may use this method for sending custom events that are not
        defined in the MeetingConfig. In this case, you must specify
        p_customEvent = True.'''
+    debug = debug or obj.REQUEST.get('debug_sendMailIfRelevant', False)
     tool = api.portal.get_tool(TOOL_ID)
     membershipTool = api.portal.get_tool('portal_membership')
     currentUser = membershipTool.getAuthenticatedMember()
@@ -560,18 +568,27 @@ def sendMailIfRelevant(obj, event, permissionOrSuffixOrRole, isSuffix=False,
     userIds = []
     if isSuffix:
         org = obj.adapted()._getGroupManagingItem(obj.queryState())
-        plone_group = get_plone_group(org.UID(), permissionOrSuffixOrRole)
+        plone_group = get_plone_group(org.UID(), permissionOrSuffixOrRoleOrGroupIds)
         if not plone_group:
             # maybe the suffix is a MeetingConfig related suffix, like _meetingmanagers
-            plone_group = get_plone_group(cfg.getId(), permissionOrSuffixOrRole)
+            plone_group = get_plone_group(cfg.getId(), permissionOrSuffixOrRoleOrGroupIds)
         if plone_group:
             userIds = plone_group.getGroupMemberIds()
-    else:
-        if isRole and (permissionOrSuffixOrRole == 'Owner'):
+    elif isRole:
+        if permissionOrSuffixOrRoleOrGroupIds == 'Owner':
             userIds = [obj.Creator()]
         else:
-            # Warning "_members" returns all users (even deleted users), the filter must do this afterwards.
+            # Warning "_members" returns all users (even deleted users),
+            # the filter must do this afterwards.
             userIds = api.portal.get_tool('portal_memberdata')._members
+    else:
+        # isGroupIds
+        for plone_group_id in permissionOrSuffixOrRoleOrGroupIds:
+            plone_group = api.group.get(plone_group_id)
+            userIds += plone_group.getMemberIds()
+
+    # remove duplicate
+    userIds = list(set(userIds))
     for userId in userIds:
         user = membershipTool.getMemberById(userId)
         # do not warn user doing the action
@@ -579,28 +596,38 @@ def sendMailIfRelevant(obj, event, permissionOrSuffixOrRole, isSuffix=False,
             continue
         if not user.getProperty('email'):
             continue
-        # Does the user have the corresponding permission on p_obj ?
-        if not isSuffix:
-            if not isRole:
-                if not api.user.has_permission(permission=permissionOrSuffixOrRole, obj=obj, user=user):
-                    continue
-            else:
-                if not user.has_role(permissionOrSuffixOrRole, obj):
-                    continue
+        if isPermission:
+            # then "isPermission"
+            # Does the user have the corresponding permission on p_obj ?
+            # we do this here for performance reason as we have the "user" object
+            if not api.user.has_permission(permission=permissionOrSuffixOrRoleOrGroupIds,
+                                           obj=obj,
+                                           user=user):
+                continue
+        elif isRole:
+            if not user.has_role(permissionOrSuffixOrRoleOrGroupIds, obj):
+                continue
 
         recipient = tool.getMailRecipient(user)
         # Must we avoid sending mail to this recipient for some custom reason?
         if not adap.includeMailRecipient(event, userId):
             continue
-        # Has the user unsubscribed to this event in his preferences ?
-        itemEvents = cfg.getMailItemEvents()
-        meetingEvents = cfg.getMailMeetingEvents()
-        if (event not in itemEvents) and (event not in meetingEvents):
-            continue
         # After all, we will add this guy to the list of recipients.
         recipients.append(recipient)
+    mail_subject = mail_body = None
     if recipients:
-        sendMail(recipients, obj, event, mapping=mapping)
+        # wipeout recipients to avoid sendind same email to several users
+        unique_emails = []
+        unique_email_recipients = []
+        for recipient in recipients:
+            username, email = recipient.split('<')
+            if email in unique_emails:
+                continue
+            unique_emails.append(email)
+            unique_email_recipients.append(recipient)
+        mail_subject, mail_body = sendMail(unique_email_recipients, obj, event, mapping=mapping)
+    if debug:
+        return recipients, mail_subject, mail_body
     return True
 
 
