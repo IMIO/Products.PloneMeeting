@@ -364,7 +364,10 @@ document.location.reload(true);
   <tr valign="top" class="nosort">
     <th class="header-attendee-item-specific">
      <span i18n:translate="item_specific">For this item</span>
-     <div class="refresh-attendees-container" onclick="refresh_attendees(highlight='.attendee-value');">
+     <div class="refresh-attendees-container"
+          onclick="refresh_attendees(highlight='.attendee-value');"
+          i18n:attributes="title refresh_values"
+          title="Refresh">
       <span class="fa refresh-attendees link-action"></span>
      </div>
     </th>

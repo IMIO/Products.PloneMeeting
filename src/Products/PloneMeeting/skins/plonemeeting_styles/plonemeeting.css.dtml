@@ -1665,7 +1665,7 @@ table.listing tbody tr.even.dragging td {
 
 /* refresh attendees */
 #content span.refresh-attendees:before {
-    content: "\f2f1";
+    content: "\f2f9";
     color: &dtml-linkColor;;
 }
 #content div.refresh-attendees-container {
