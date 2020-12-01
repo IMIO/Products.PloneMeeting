@@ -94,17 +94,25 @@ function manageAttendees() {
 function refresh_meeting_attendees() {
   tag = $("#collapsible-assembly-and-signatures");
   var timeStamp = new Date();
-  result = loadCollapsibleContent(
-    tag, load_view='@@load_meeting_assembly_and_signatures?cache_date=' + timeStamp, async=false);
+  result = loadContent(
+    tag,
+    load_view='@@load_meeting_assembly_and_signatures?cache_date=' + timeStamp,
+    async=false,
+    base_url=null,
+    event_name="toggle_details_ajax_success");
   highlight_attendees();
 }
 
 // refresh item attendees panel
 function refresh_attendees(highlight=null, click_cancel=false) {
-  tag = $("#collapsible-assembly-and-signatures");
+  tag = $("#collapsible-assembly-and-signatures div")[0];
   var timeStamp = new Date();
-  result = loadCollapsibleContent(
-    tag, load_view='@@load_item_assembly_and_signatures?cache_date=' + timeStamp, async=false);
+  result = loadContent(
+    tag,
+    load_view='@@load_item_assembly_and_signatures?cache_date=' + timeStamp,
+    async=false,
+    base_url=null,
+    event_name="toggle_details_ajax_success");
   if (click_cancel) {
     $('input#form-buttons-cancel').click();
   }
