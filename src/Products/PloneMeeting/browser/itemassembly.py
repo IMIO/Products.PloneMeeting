@@ -4,6 +4,7 @@
 #
 
 from AccessControl import Unauthorized
+from imio.helpers.cache import invalidate_cachekey_volatile_for
 from plone import api
 from plone.z3cform.layout import wrap_form
 from Products.CMFPlone.utils import safe_unicode
@@ -408,6 +409,11 @@ class ManageItemAssemblyForm(form.Form):
             if self.item_guests != item_guests_def:
                 itemToUpdate.setItemAssemblyGuests(self.item_guests)
             notifyModifiedAndReindex(itemToUpdate)
+
+        # invalidate assembly async load on item
+        invalidate_cachekey_volatile_for(
+            'Products.PloneMeeting.browser.async.AsyncLoadItemAssemblyAndSignatures',
+            get_again=True)
 
         first_item_number = items_to_update[0].getItemNumber(for_display=True)
         last_item_number = items_to_update[-1].getItemNumber(for_display=True)

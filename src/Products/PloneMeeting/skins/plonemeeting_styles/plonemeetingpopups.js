@@ -92,7 +92,7 @@ function manageAttendees() {
 
 // refresh meeting attendees panel
 function refresh_meeting_attendees() {
-  tag = $("#collapsible-assembly-and-signatures");
+  tag = $("#collapsible-assembly-and-signatures div")[0];
   var timeStamp = new Date();
   result = loadContent(
     tag,

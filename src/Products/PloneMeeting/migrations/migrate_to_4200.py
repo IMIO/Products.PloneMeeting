@@ -181,6 +181,7 @@ class Migrate_To_4200(Migrator):
 
         # manage link between item and meeting manually
         self._removeMeetingItemsReferenceField()
+        self._configureVotes()
 
         # update RichTextValue stored on DX types (advices)
         self._fixRichTextValueMimeType()
@@ -192,7 +193,6 @@ class Migrate_To_4200(Migrator):
         self.runProfileSteps('Products.PloneMeeting', steps=['workflow'], profile='default')
         # configure wfAdaptations before reinstall
         self._configureItemWFValidationLevels()
-        self._configureVotes()
         self._migrateKeepAccessToItemWhenAdviceIsGiven()
 
         # reinstall so versions are correctly shown in portal_quickinstaller

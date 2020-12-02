@@ -1933,6 +1933,10 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         # invalidate item voters vocabulary in case new voters (un)selected
         invalidate_cachekey_volatile_for(
             'Products.PloneMeeting.vocabularies.itemvotersvocabulary', get_again=True)
+        # invalidate assembly async load on meeting
+        invalidate_cachekey_volatile_for(
+            'Products.PloneMeeting.browser.async.AsyncLoadMeetingAssemblyAndSignatures',
+            get_again=True)
         if need_reindex:
             self.reindexObject()
 

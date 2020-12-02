@@ -1902,8 +1902,9 @@ a.portlet_pm_dashboard_link {
    line-height: 2em;
 }
 
-/* add some margin under fieldsets displayed in base_edit forms */
-body.template-base_edit #content fieldset {
+/* add some margin under fieldsets displayed in forms */
+body.template-base_edit #content fieldset,
+form#form fieldset {
    margin-bottom: 0.5em;
 }
 
