@@ -259,8 +259,8 @@ EXTRA_COPIED_FIELDS_FROM_ITEM_TEMPLATE = ['observations', 'inAndOutMoves', 'note
 ITEM_ICON_COLORS = ("azur", "black", "green", "grey", "orange",
                     "pink", "purple", "red", "yellow")
 
-NOT_ENCODED_VOTE_VALUE = 'not_yet'
-NOT_CONSULTABLE_VOTE_VALUE = 'not_consultable'
+NOT_ENCODED_VOTE_VALUE = u'not_yet'
+NOT_VOTABLE_LINKED_TO_VALUE = u'not_votable_linked_to'
 NOT_GIVEN_ADVICE_VALUE = 'not_given'
 HIDDEN_DURING_REDACTION_ADVICE_VALUE = 'hidden_during_redaction'
 CONSIDERED_NOT_GIVEN_ADVICE_VALUE = 'considered_not_given_hidden_during_redaction'

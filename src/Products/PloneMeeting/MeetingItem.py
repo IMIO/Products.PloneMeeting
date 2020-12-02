@@ -54,6 +54,7 @@ from Products.CMFCore.utils import _checkPermission
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 from Products.CMFPlone.utils import safe_unicode
+from Products.PloneMeeting.browser.itemvotes import next_vote_is_linked
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import AddAdvice
 from Products.PloneMeeting.config import AUTO_COPY_GROUP_PREFIX
@@ -74,6 +75,7 @@ from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
 from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
+from Products.PloneMeeting.config import NOT_VOTABLE_LINKED_TO_VALUE
 from Products.PloneMeeting.config import PROJECTNAME
 from Products.PloneMeeting.config import READER_USECASES
 from Products.PloneMeeting.config import SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY
@@ -1442,8 +1444,7 @@ schema = Schema((
         name='itemAssembly',
         allowable_content_types=('text/plain',),
         widget=TextAreaWidget(
-            condition="python: here.getItemAssembly(real=True) or "
-            "(here.hasMeeting() and here.getMeeting().attributeIsUsed('assembly'))",
+            condition="python: here.is_assembly_field_used('itemAssembly')",
             description="ItemAssemblyDescrMethod",
             description_msgid="item_assembly_descr",
             label_method="getLabelItemAssembly",
@@ -1458,8 +1459,7 @@ schema = Schema((
         name='itemAssemblyExcused',
         allowable_content_types=('text/plain',),
         widget=TextAreaWidget(
-            condition="python: here.getItemAssemblyExcused(real=True) or "
-            "(here.hasMeeting() and here.getMeeting().attributeIsUsed('assemblyExcused'))",
+            condition="python: here.is_assembly_field_used('itemAssemblyExcused')",
             description="ItemAssemblyExcusedDescrMethod",
             description_msgid="item_assembly_excused_descr",
             label='Itemassemblyexcused',
@@ -1473,8 +1473,7 @@ schema = Schema((
         name='itemAssemblyAbsents',
         allowable_content_types=('text/plain',),
         widget=TextAreaWidget(
-            condition="python: here.getItemAssemblyAbsents(real=True) or "
-            "(here.hasMeeting() and here.getMeeting().attributeIsUsed('assemblyAbsents'))",
+            condition="python: here.is_assembly_field_used('itemAssemblyAbsents')",
             description="ItemAssemblyAbsentsDescrMethod",
             description_msgid="item_assembly_absents_descr",
             label='Itemassemblyabsents',
@@ -1488,8 +1487,7 @@ schema = Schema((
         name='itemAssemblyGuests',
         allowable_content_types=('text/plain',),
         widget=TextAreaWidget(
-            condition="python: here.getItemAssemblyGuests(real=True) or "
-            "(here.hasMeeting() and here.getMeeting().attributeIsUsed('assemblyGuests'))",
+            condition="python: here.is_assembly_field_used('itemAssemblyGuests')",
             description="ItemAssemblyGuestsDescrMethod",
             description_msgid="item_assembly_guests_descr",
             label='Itemassemblyguests',
@@ -1503,8 +1501,7 @@ schema = Schema((
         name='itemSignatures',
         allowable_content_types=('text/plain',),
         widget=TextAreaWidget(
-            condition="python: here.getItemSignatures(real=True) or "
-            "(here.hasMeeting() and here.getMeeting().attributeIsUsed('signatures'))",
+            condition="python: here.is_assembly_field_used('itemSignatures')",
             description="ItemSignaturesDescrMethod",
             description_msgid="item_signatures_descr",
             label='Itemsignatures',
@@ -1559,15 +1556,21 @@ schema = Schema((
         optional=True,
         write_permission="PloneMeeting: Write item MeetingManager reserved fields",
     ),
-    BooleanField(
-        name='votesAreSecret',
-        default=False,
-        widget=BooleanField._properties['widget'](
-            visible=False,
-            label='Votesaresecret',
-            label_msgid='PloneMeeting_label_votesAreSecret',
+    TextField(
+        name='votesObservations',
+        widget=RichWidget(
+            label_msgid="PloneMeeting_label_votesObservations",
+            condition="python: here.attributeIsUsed('votesObservations')",
+            description_msgid="field_vieawable_by_everyone_descr",
+            label='Votesobservations',
             i18n_domain='PloneMeeting',
         ),
+        default_content_type="text/html",
+        searchable=True,
+        allowable_content_types=('text/html',),
+        default_output_type="text/x-html-safe",
+        optional=True,
+        write_permission="PloneMeeting: Write item MeetingManager reserved fields",
     ),
     ReferenceField(
         name='predecessor',
@@ -2202,6 +2205,18 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if item.hasMeeting() and tool.isManager(item):
             return True
         return False
+
+    security.declarePublic('mayChangePollType')
+
+    def mayChangePollType(self):
+        '''Condition for editing 'pollType' field.'''
+        item = self.getSelf()
+        res = False
+        if _checkPermission(ModifyPortalContent, item):
+            tool = api.portal.get_tool('portal_plonemeeting')
+            if not item.hasMeeting() or tool.isManager(item):
+                res = True
+        return res
 
     security.declarePublic('maySignItem')
 
@@ -3527,6 +3542,25 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         return item.getProposingGroup(theObject=True).get_certified_signatures(
             computed=True, cfg=cfg, group_in_charge=selected_group_in_charge, listify=listify)
 
+    def is_assembly_field_used(self, field_name):
+        """Helper method that return True if an assembly field is used
+           or if it is filled (no more used, swtiched to contacts but filled on old items)."""
+        meeting = self.getMeeting()
+        attr_names_mapping = {"itemAssembly": "assembly",
+                              "itemAssemblyExcused": "assemblyExcused",
+                              "itemAssemblyAbsents": "assemblyAbsents",
+                              "itemAssemblyGuests": "assemblyGuests",
+                              "itemSignatures": "signatures"}
+        res = False
+        if meeting.attributeIsUsed(attr_names_mapping[field_name]):
+            res = True
+        else:
+            # maybe it was used before?
+            accessor = self.getField(field_name).getAccessor(self)
+            if accessor(real=True) or accessor(real=False):
+                res = True
+        return res
+
     security.declarePublic('redefinedItemAssemblies')
 
     def redefinedItemAssemblies(self):
@@ -3684,6 +3718,127 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             signatories = {v: k for k, v in signatories.items()}
 
         return signatories
+
+    def getVotesAreSecret(self):
+        """ """
+        return bool(self.getPollType().startswith('secret'))
+
+    security.declarePublic('getItemVotes')
+
+    def getItemVotes(self,
+                     vote_number='all',
+                     include_vote_number=True,
+                     include_unexisting=True,
+                     unexisting_value=NOT_ENCODED_VOTE_VALUE,
+                     ignored_vote_values=[]):
+        '''p_vote_number may be 'all' (default), return a list of every votes,
+           or an integer like 0, returns the vote with given number.
+           If p_include_vote_number, for convenience, a key 'vote_number'
+           is added to the returned value.
+           If p_include_unexisting, will return p_unexisting_value for votes that
+           does not exist, so when votes just enabled, new voter selected, ...'''
+        votes = []
+        if not self.hasMeeting():
+            return votes
+        meeting = self.getMeeting()
+        item_votes = meeting.getItemVotes().get(self.UID(), [])
+        voter_uids = self.getItemVoters()
+        votes_are_secret = self.getVotesAreSecret()
+        # all votes
+        if vote_number == 'all':
+            # votes will be a list
+            votes = deepcopy(item_votes)
+            if include_vote_number:
+                # add a 'vote_number' key into the result for convenience
+                i = 0
+                for vote_infos in votes:
+                    vote_infos['vote_number'] = i
+                    vote_infos['linked_to_previous'] = vote_infos.get('linked_to_previous', False)
+                    i += 1
+        # vote_number
+        elif len(item_votes) - 1 >= vote_number:
+            votes.append(item_votes[vote_number])
+
+        # secret votes
+        if votes_are_secret:
+            if include_unexisting:
+                # first or not existing
+                if not votes:
+                    votes = [{'label': None,
+                              'votes': {},
+                              # if first, never linked_to_previous
+                              # this check is done so it works when nothing still encoded
+                              # and addind a linked vote immediatelly
+                              'linked_to_previous': vote_number != 0 and self.REQUEST.get(
+                                  'form.widgets.linked_to_previous', False) or False}]
+                    if include_vote_number:
+                        votes[0]['vote_number'] = 0
+                    # define vote_value = '' for every used vote values
+                    tool = api.portal.get_tool('portal_plonemeeting')
+                    cfg = tool.getMeetingConfig(self)
+                    for used_vote in cfg.getUsedVoteValues():
+                        votes[0]['votes'][used_vote] = 0
+        # public votes
+        else:
+            # add an empty vote in case nothing in itemVotes
+            # this is useful when no votes encoded, new voters selected, ...
+            if include_unexisting:
+                # first or not existing
+                if not votes:
+                    votes = [
+                        {
+                            'label': None,
+                            'voters': {},
+                            'linked_to_previous': vote_number != 0 and self.REQUEST.get(
+                                'form.widgets.linked_to_previous', False) or False}]
+                    if include_vote_number:
+                        votes[0]['vote_number'] = 0
+                    # define vote not encoded for every voters
+                    for voter_uid in voter_uids:
+                        votes[0]['voters'][voter_uid] = NOT_ENCODED_VOTE_VALUE
+                else:
+                    # add new values if some voters were added
+                    for vote in votes:
+                        stored_voter_uids = vote['voters'].keys()
+                        for voter_uid in voter_uids:
+                            if voter_uid not in stored_voter_uids:
+                                vote['voters'][voter_uid] = NOT_ENCODED_VOTE_VALUE
+            # make sure we only have current voters in 'voters'
+            # this could not be the case when encoding votes
+            # for a voter then setting him absent
+            # discard also ignored_vote_values
+            for vote in votes:
+                vote['voters'] = {vote_voter_uid: vote_voter_value
+                                  for vote_voter_uid, vote_voter_value in vote['voters'].items()
+                                  if vote_voter_uid in voter_uids and
+                                  (not ignored_vote_values or
+                                   vote_voter_value not in ignored_vote_values)}
+
+        # when asking a vote_number, only return this one as a dict, not as a list
+        if votes and vote_number != 'all':
+            votes = votes[0]
+        return votes
+
+    def get_voted_voters(self):
+        '''Voter uids that actually voted on this item.'''
+        item_votes = self.getItemVotes(
+            ignored_vote_values=[NOT_ENCODED_VOTE_VALUE])
+        voted_voters = []
+        for vote in item_votes:
+            voters = vote.get('voters', {}).keys()
+            voted_voters += voters
+        return tuple(set(voted_voters))
+
+    security.declarePublic('getItemVoters')
+
+    def getItemVoters(self, theObjects=False):
+        '''Return held positions able to vote on current item.
+           By default, held_position UIDs are returned.
+           If p_theObjects=True, held_position objects are returned.'''
+        meeting = self.getMeeting()
+        attendee_uids = self.getAttendees() or None
+        voters = meeting.getVoters(uids=attendee_uids, theObjects=theObjects)
+        return voters
 
     def getInAndOutAttendees(self, ignore_before_first_item=True, theObjects=True):
         """Returns a dict with informations about assembly moves :
@@ -5075,10 +5230,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # if we have an adviceIndex, check that every inherited adviserIds are handled
         unhandledAdviserUids += [
             org_uid for org_uid in self.adviceIndex
-            if self.adviceIndex[org_uid].get('inherited', False) and org_uid not in handledAdviserUids]
+            if self.adviceIndex[org_uid].get('inherited', False) and
+            org_uid not in handledAdviserUids]
         if unhandledAdviserUids:
-            optionalAdvisers += self.getUnhandledInheritedAdvisersData(unhandledAdviserUids, optional=True)
-            automaticAdvisers += self.getUnhandledInheritedAdvisersData(unhandledAdviserUids, optional=False)
+            optionalAdvisers += self.getUnhandledInheritedAdvisersData(
+                unhandledAdviserUids, optional=True)
+            automaticAdvisers += self.getUnhandledInheritedAdvisersData(
+                unhandledAdviserUids, optional=False)
         # we keep the optional and automatic advisers separated because we need
         # to know what advices are optional or not
         # if an advice is in both optional and automatic advisers, the automatic is kept
@@ -5101,7 +5259,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 d['delay'] = adviceInfo['delay']
                 d['delay_left_alert'] = adviceInfo['delay_left_alert']
                 d['delay_label'] = adviceInfo['delay_label']
-                d['gives_auto_advice_on_help_message'] = adviceInfo['gives_auto_advice_on_help_message']
+                d['gives_auto_advice_on_help_message'] = \
+                    adviceInfo['gives_auto_advice_on_help_message']
                 d['row_id'] = adviceInfo['row_id']
                 d['hidden_during_redaction'] = False
                 # manage the 'delay_started_on' data that was saved prior
@@ -5554,12 +5713,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # The following field allows to store events that occurred in the life
         # of an item, like annex deletions or additions.
         self.itemHistory = PersistentList()
-        # Add a dictionary that will store the votes on this item. Keys are
-        # MeetingUser ids, values are vote vales (strings). If votes are secret
-        # (self.votesAreSecret is True), the structure is different: keys are
-        # vote values and values are numbers of times the vote value has been
-        # chosen.
-        self.votes = PersistentMapping()
         # Add a place to store automatically added copyGroups
         self.autoCopyGroups = PersistentList()
         # Remove temp local role that allowed to create the item in
@@ -6548,11 +6701,15 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def showVotes(self):
         '''Must I show the "votes" tab on this item?'''
+        res = False
         if self.hasMeeting() and self.getMeeting().adapted().showVotes():
             # Checks whether votes may occur on this item
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(self)
-            return cfg.isVotable(self)
+            res = self.getPollType() != 'no_vote' and \
+                self.getItemVoters() and \
+                cfg.isVotable(self)
+        return res
 
     security.declarePublic('hasVotes')
 
@@ -6569,196 +6726,55 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getVoteValue')
 
-    def getVoteValue(self, userId):
+    def getVoteValue(self, hp_uid, vote_number=0):
         '''What is the vote value for user with id p_userId?'''
         if self.getVotesAreSecret():
             raise 'Unusable when votes are secret.'
-        if userId in self.votes:
-            return self.votes[userId]
+        itemVotes = self.getItemVotes(vote_number=vote_number)
+        if hp_uid in itemVotes['voters']:
+            return itemVotes[hp_uid]
         else:
-            tool = api.portal.get_tool('portal_plonemeeting')
-            cfg = tool.getMeetingConfig(self)
-            return cfg.getDefaultVoteValue()
+            return NOT_ENCODED_VOTE_VALUE
 
     security.declarePublic('getVoteCount')
 
-    def getVoteCount(self, voteValue):
-        '''Gets the number of votes for p_voteValue.'''
+    def getVoteCount(self, vote_value, vote_number=0):
+        '''Gets the number of votes for p_vote_value.
+           A special value 'any_votable' may be passed for p_vote_value,
+           in this case every values other than NOT_VOTABLE_LINKED_TO_VALUE are counted.'''
         res = 0
-        if not self.getVotesAreSecret():
-            for aValue in self.votes.itervalues():
-                if aValue == voteValue:
+        itemVotes = self.getItemVotes(vote_number)
+        item_voter_uids = self.getItemVoters()
+        # when initializing, so Meeting.itemVotes is empty
+        # only return count for NOT_ENCODED_VOTE_VALUE
+        if not itemVotes and vote_value == NOT_ENCODED_VOTE_VALUE:
+            res = len(item_voter_uids)
+        elif not self.getVotesAreSecret():
+            # public
+            for item_voter_uid in item_voter_uids:
+                if (item_voter_uid not in itemVotes['voters'] and
+                        vote_value == NOT_ENCODED_VOTE_VALUE) or \
+                   (item_voter_uid in itemVotes['voters'] and
+                        vote_value == itemVotes['voters'][item_voter_uid]) or \
+                   (item_voter_uid in itemVotes['voters'] and
+                        vote_value == 'any_votable' and
+                        itemVotes['voters'][item_voter_uid] != NOT_VOTABLE_LINKED_TO_VALUE):
                     res += 1
         else:
-            if voteValue in self.votes:
-                res = self.votes[voteValue]
+            # secret
+            if vote_value in itemVotes['votes']:
+                res = itemVotes['votes'][vote_value] or 0
+            elif vote_value == 'any_votable':
+                res = len(item_voter_uids)
+            elif vote_value == NOT_ENCODED_VOTE_VALUE:
+                total = len(item_voter_uids)
+                voted = sum([item_vote_count or 0 for item_vote_value, item_vote_count
+                             in itemVotes['votes'].items()])
+                res = total - voted
+            elif vote_value == 'any_voted':
+                res = sum([item_vote_count or 0 for item_vote_value, item_vote_count
+                           in itemVotes['votes'].items()])
         return res
-
-    security.declarePublic('getVotePrint')
-
-    def getVotePrint(self, voteValues=('yes', 'no', 'abstain')):
-        '''Returns the "voteprint" for this item. A "voteprint" is a string that
-           integrates all votes with vote values in p_voteValues. Useful for
-           grouping items having the same vote value.'''
-        if self.getVotesAreSecret():
-            raise Exception('Works only for non-secret votes.')
-        if not self.votes:
-            return ''
-        voters = self.votes.keys()
-        voters.sort()
-        res = []
-        for voter in voters:
-            if self.votes[voter] in voteValues:
-                # Reduce the vote value to a single letter
-                value = self.votes[voter]
-                if value == NOT_ENCODED_VOTE_VALUE:
-                    v = 't'
-                elif value == 'not_found':
-                    v = 'f'
-                else:
-                    v = value[0]
-                res.append('%s.%s' % (voter, v))
-        return ''.join(res)
-
-    security.declarePrivate('saveVoteValues')
-
-    def saveVoteValues(self, newVoteValues):
-        '''p_newVoteValues is a dictionary that contains a bunch of new vote
-           values.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self)
-        user = api.user.get_current()
-        usedVoteValues = cfg.getUsedVoteValues()
-        for userId in newVoteValues.iterkeys():
-            # Check that the current user can update the vote of this user
-            meetingUser = cfg.getMeetingUserFromPloneUser(userId)
-            if not newVoteValues[userId] in usedVoteValues:
-                raise ValueError('Trying to set vote with another value than '
-                                 'ones defined in meetingConfig.usedVoteValues!')
-            elif meetingUser.adapted().mayEditVote(user, self):
-                self.votes[userId] = newVoteValues[userId]
-            else:
-                raise Unauthorized
-
-    security.declarePrivate('saveVoteCounts')
-
-    def saveVoteCounts(self, newVoteCounts):
-        '''p_newVoteCounts is a dictionary that contains, for every vote value,
-           new vote counts.'''
-        if not self.mayEditVotes():
-            raise Unauthorized
-        for voteValue, voteCount in newVoteCounts.iteritems():
-            self.votes[voteValue] = voteCount
-
-    security.declarePublic('onSaveItemPeopleInfos')
-
-    def onSaveItemPeopleInfos(self):
-        '''This method is called when the user saves item-related people info:
-           - votes.'''
-        rq = self.REQUEST
-        # If votes are secret, we get vote counts. Else, we get vote values.
-        secret = self.getVotesAreSecret()
-        requestVotes = {}
-        numberOfVotes = 0
-        voters = self.getAttendees(usage='voter')
-        voterIds = [voter.getId() for voter in voters]
-        numberOfVoters = len(voters)
-        rq.set('error', True)  # If everything OK, we'll set "False" in the end.
-        # If allYes is True, we must set vote value "yes" for every voter.
-        allYes = rq.get('allYes') == 'true'
-        for key in rq.keys():
-            if key.startswith('vote_value_') and not secret:
-                voterId = key[11:]
-                if voterId not in voterIds:
-                    raise KeyError("Trying to set vote for unexisting voter!")
-                requestVotes[voterId] = allYes and 'yes' or rq[key]
-                secret = False
-            elif key.startswith('vote_count_') and secret:
-                voteValue = key[11:]
-                # If allYes, we cheat
-                if allYes:
-                    if voteValue == 'yes':
-                        v = numberOfVoters
-                    else:
-                        v = 0
-                else:
-                    # Check that the entered value is positive integer
-                    inError = False
-                    v = 0
-                    try:
-                        v = int(rq[key])
-                        if v < 0:
-                            inError = True
-                    except ValueError:
-                        inError = True
-                    if inError:
-                        rq.set('peopleMsg',
-                               translate('vote_count_not_int',
-                                         domain='PloneMeeting',
-                                         context=rq))
-                        return
-                numberOfVotes += v
-                requestVotes[voteValue] = v
-        # Check the total number of votes
-        if secret:
-            if numberOfVotes != numberOfVoters:
-                rq.set('peopleMsg', translate('vote_count_wrong',
-                                              domain='PloneMeeting',
-                                              context=rq))
-                return
-        # Update the vote values
-        rq.set('peopleMsg', translate('Changes saved.', domain="plone", context=self.REQUEST))
-        rq.set('error', False)
-        if secret:
-            self.saveVoteCounts(requestVotes)
-        else:
-            self.saveVoteValues(requestVotes)
-
-    security.declarePublic('maySwitchVotes')
-
-    def maySwitchVotes(self):
-        '''Check if current user may switch votes mode.'''
-        member = self.restrictedTraverse('@@plone_portal_state').member()
-        if not self.hasVotes() and \
-           member.has_permission(ModifyPortalContent, self) and \
-           api.portal.get_tool('portal_plonemeeting').isManager(self):
-            return True
-        return False
-
-    security.declarePublic('onSwitchVotes')
-
-    def onSwitchVotes(self):
-        '''Switches votes (secret / not secret).'''
-        if not self.maySwitchVotes():
-            raise Unauthorized
-        self.setVotesAreSecret(not self.getVotesAreSecret())
-        self.votes = {}
-
-    security.declarePublic('mayConsultVotes')
-
-    def mayConsultVotes(self):
-        '''Returns True if the current user may consult all votes for p_self.'''
-        user = api.user.get_current()
-        voters = self.getAttendees(usage='voter')
-        if not voters:
-            return False
-        for mUser in voters:
-            if not mUser.adapted().mayConsultVote(user, self):
-                return False
-        return True
-
-    security.declarePublic('mayEditVotes')
-
-    def mayEditVotes(self):
-        '''Returns True if the current user may edit all votes for p_self.'''
-        user = api.user.get_current()
-        voters = self.getAttendees(usage='voter')
-        if not voters:
-            return False
-        for mUser in voters:
-            if not mUser.adapted().mayEditVote(user, self):
-                return False
-        return True
 
     security.declarePublic('setFieldFromAjax')
 
@@ -6802,6 +6818,17 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            itemAbsents/itemExcused/itemNonAttendees/votes/..."""
         return self.hasMeeting() and checkMayQuickEdit(
             self, bypassWritePermissionCheck=True, onlyForManagers=True)
+
+    def _voteIsDeletable(self, vote_number):
+        """ """
+        res = False
+        item_votes = self.getMeeting().itemVotes.get(self.UID())
+        if item_votes:
+            vote_infos = item_votes[vote_number]
+            if vote_infos['linked_to_previous'] or \
+               not next_vote_is_linked(item_votes, vote_number):
+                res = True
+        return res
 
     def displayProposingGroupUsers(self):
         """ """

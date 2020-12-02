@@ -58,7 +58,7 @@
        onclick="toggleDetails('faceted-form', toggle_parent_active=true, parent_tag=this)">
     <span i18n:translate="presented_items">Presented items</span> (<span class="meeting_number_of_items" tal:content="context/numberOfItems"/>)
   </h2>
-  <span class="fa fa-question-circle help-doc pmAction tooltipster-inserting-methods-helper-msg"
+  <span class="fa show-help link-action tooltipster-inserting-methods-helper-msg"
         tal:condition="python: view.tool.isManager(context)"
         tal:attributes="data-base_url string:${context/absolute_url}">
   </span>

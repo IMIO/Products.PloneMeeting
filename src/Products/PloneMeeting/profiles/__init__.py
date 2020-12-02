@@ -444,13 +444,15 @@ class MeetingConfigDescriptor(Descriptor):
                          'customAdvisers', 'selectableCopyGroups', 'itemCopyGroupsStates', 'votesEncoder',
                          'meetingTopicStates', 'decisionTopicStates', 'itemFieldsToKeepConfigSortingFor',
                          'listTypes', 'selectablePrivacies', 'xhtmlTransformFields', 'xhtmlTransformTypes',
-                         'usedVoteValues', 'insertingMethodsOnAddItem',
+                         'usedVoteValues', 'firstLinkedVoteUsedVoteValues', 'nextLinkedVotesUsedVoteValues',
+                         'usedPollTypes', 'insertingMethodsOnAddItem',
                          'annexRestrictShownAndEditableAttributes', 'itemAnnexConfidentialVisibleFor',
                          'adviceAnnexConfidentialVisibleFor', 'meetingAnnexConfidentialVisibleFor',
                          'enableAdviceConfidentiality', 'adviceConfidentialityDefault', 'adviceConfidentialFor',
                          'hideNotViewableLinkedItemsTo', 'inheritedAdviceRemoveableByAdviser', 'usingGroups',
                          'hideHistoryTo', 'orderedAssociatedOrganizations',
                          'orderedGroupsInCharge', 'orderedItemInitiators')
+
     excludedFields = ['addContactsCSV',
                       'defaultLabels',
                       'disabled_collections',
@@ -834,13 +836,17 @@ class MeetingConfigDescriptor(Descriptor):
         self.customAdvisers = []
 
         # Votes parameters -----------------------------------------------------
-        self.usedPollTypes = ('freehand', 'no_vote', 'secret', 'secret_separated')
+        self.usedPollTypes = ('freehand',
+                              'no_vote',
+                              'secret',
+                              'secret_separated')
         self.defaultPollType = 'freehand'
         self.useVotes = False
-        self.votesEncoder = ('theVoterHimself',)
-        self.usedVoteValues = ('not_yet', 'yes', 'no', 'abstain')
-        self.defaultVoteValue = 'not_yet'
-        self.voteCondition = 'True'
+        self.votesEncoder = ('aMeetingManager',)
+        self.usedVoteValues = ('yes', 'no', 'abstain')
+        self.firstLinkedVoteUsedVoteValues = ('no', 'abstain')
+        self.nextLinkedVotesUsedVoteValues = ('yes', )
+        self.voteCondition = ''
 
         # Contacts parameters -----------------------------------------------------
         # bulk import of contacts using CSV related files

@@ -67,6 +67,7 @@ from Products.PloneMeeting.interfaces import IItemDuplicatedFromConfigEvent
 from Products.PloneMeeting.interfaces import IItemDuplicatedToOtherMCEvent
 from Products.PloneMeeting.interfaces import IItemListTypeChangedEvent
 from Products.PloneMeeting.interfaces import IItemLocalRolesUpdatedEvent
+from Products.PloneMeeting.interfaces import IItemPollTypeChangedEvent
 from Products.PloneMeeting.interfaces import IMeetingAfterTransitionEvent
 from Products.PloneMeeting.interfaces import IMeetingConfigCustom
 from Products.PloneMeeting.interfaces import IMeetingCustom
@@ -2025,6 +2026,7 @@ def _base_extra_expr_ctx(obj):
     """ """
     tool = api.portal.get_tool('portal_plonemeeting')
     cfg = tool.getMeetingConfig(obj)
+    # member, context and portal are managed by collective.behavior.talcondition
     data = {'tool': tool,
             'cfg': cfg,
             'pm_utils': SecureModuleImporter['Products.PloneMeeting.utils'],
@@ -2134,6 +2136,14 @@ class ItemListTypeChangedEvent(ObjectEvent):
     def __init__(self, object, old_listType):
         self.object = object
         self.old_listType = old_listType
+
+
+class ItemPollTypeChangedEvent(ObjectEvent):
+    implements(IItemPollTypeChangedEvent)
+
+    def __init__(self, object, old_pollType):
+        self.object = object
+        self.old_pollType = old_pollType
 
 
 class ItemLocalRolesUpdatedEvent(ObjectEvent):

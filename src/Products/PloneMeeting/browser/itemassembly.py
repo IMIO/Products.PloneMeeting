@@ -1,26 +1,10 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2015 by Imio.be
-#
 # GNU General Public License (GPL)
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
-# 02110-1301, USA.
 #
 
 from AccessControl import Unauthorized
+from imio.helpers.cache import invalidate_cachekey_volatile_for
 from plone import api
 from plone.z3cform.layout import wrap_form
 from Products.CMFPlone.utils import safe_unicode
@@ -202,12 +186,7 @@ class DisplayAssemblyFromMeetingProvider(ContentProviderBase):
             return 'display_meeting_assembly_legend'
 
     def render(self):
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self.context)
-        if 'assembly' in cfg.getUsedMeetingAttributes():
-            return self.template()
-        else:
-            return ''
+        return self.template()
 
 
 class DisplayExcusedFromMeetingProvider(ContentProviderBase):
@@ -235,9 +214,7 @@ class DisplayExcusedFromMeetingProvider(ContentProviderBase):
         return meeting.getAssemblyExcused() or u'<p class="discreet">{0}</p>'.format(nothing_defined_msg)
 
     def render(self):
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self.context)
-        if 'assemblyExcused' in cfg.getUsedMeetingAttributes():
+        if self.context.is_assembly_field_used('itemAssemblyExcused'):
             return self.template()
         else:
             return ''
@@ -268,9 +245,7 @@ class DisplayAbsentsFromMeetingProvider(ContentProviderBase):
         return meeting.getAssemblyAbsents() or u'<p class="discreet">{0}</p>'.format(nothing_defined_msg)
 
     def render(self):
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self.context)
-        if 'assemblyAbsents' in cfg.getUsedMeetingAttributes():
+        if self.context.is_assembly_field_used('itemAssemblyAbsents'):
             return self.template()
         else:
             return ''
@@ -370,16 +345,22 @@ class ManageItemAssemblyForm(form.Form):
         self.fields['item_absents'].mode = 'hidden'
         self.fields['item_guests'].mode = 'hidden'
         changeItemAssemblyTitleAndDescr = False
-        # this firm is also used to edit only 'guests' hen using attendees
-        if 'assembly' in usedMeetingAttributes:
+        # this form is also used to edit only 'guests' when using attendees
+        # manage also when switching from assembly to attendees
+        # "assembly" field may be disabled but assembly used on meeting
+        if 'assembly' in usedMeetingAttributes or \
+                self.context.getItemAssembly():
             self.fields['item_assembly'].mode = 'input'
-        if 'assemblyExcused' in usedMeetingAttributes:
+        if 'assemblyExcused' in usedMeetingAttributes or \
+                self.context.getItemAssemblyExcused():
             changeItemAssemblyTitleAndDescr = True
             self.fields['item_excused'].mode = 'input'
-        if 'assemblyAbsents' in usedMeetingAttributes:
+        if 'assemblyAbsents' in usedMeetingAttributes or \
+                self.context.getItemAssemblyAbsents():
             changeItemAssemblyTitleAndDescr = True
             self.fields['item_absents'].mode = 'input'
-        if 'assemblyGuests' in usedMeetingAttributes:
+        if 'assemblyGuests' in usedMeetingAttributes or \
+                self.context.getItemAssemblyGuests():
             changeItemAssemblyTitleAndDescr = True
             self.fields['item_guests'].mode = 'input'
         if changeItemAssemblyTitleAndDescr:
@@ -428,6 +409,11 @@ class ManageItemAssemblyForm(form.Form):
             if self.item_guests != item_guests_def:
                 itemToUpdate.setItemAssemblyGuests(self.item_guests)
             notifyModifiedAndReindex(itemToUpdate)
+
+        # invalidate assembly async load on item
+        invalidate_cachekey_volatile_for(
+            'Products.PloneMeeting.browser.async.AsyncLoadItemAssemblyAndSignatures',
+            get_again=True)
 
         first_item_number = items_to_update[0].getItemNumber(for_display=True)
         last_item_number = items_to_update[-1].getItemNumber(for_display=True)

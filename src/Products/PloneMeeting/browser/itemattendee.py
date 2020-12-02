@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 
 from AccessControl import Unauthorized
+from imio.helpers.cache import invalidate_cachekey_volatile_for
 from plone import api
-from plone.z3cform.layout import wrap_form
 from Products.PloneMeeting.browser.itemassembly import _itemsToUpdate
 from Products.PloneMeeting.browser.itemassembly import validate_apply_until_item_number
+from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import IRedirect
 from Products.PloneMeeting.utils import _itemNumber_to_storedItemNumber
@@ -17,6 +18,7 @@ from zope import schema
 from zope.component.hooks import getSite
 from zope.i18n import translate
 from zope.interface import Interface
+from z3c.form.interfaces import NO_VALUE
 
 
 def person_uid_default():
@@ -38,7 +40,7 @@ class IBaseAttendee(Interface):
 
 
 class BaseAttendeeForm(form.Form):
-    """Factorize common code used by ByeBye attendee and Welcome attendee forms."""
+    """Factorize common code used by attendees management forms."""
 
     description = u''
     _finished = False
@@ -48,6 +50,7 @@ class BaseAttendeeForm(form.Form):
         self.context = context
         self.request = request
         self.label = translate(self.label, domain='PloneMeeting', context=request)
+        self.request.set('disable_border', 1)
 
     def updateWidgets(self):
         # XXX manipulate self.fields BEFORE doing form.Form.updateWidgets
@@ -61,6 +64,18 @@ class BaseAttendeeForm(form.Form):
         # after calling parent's update, self.actions are available
         self.actions.get('cancel').addClass('standalone')
         self.buttons = self.buttons.select('apply', 'cancel')
+
+    def extractData(self, setErrors=True):
+        """ """
+        # when using datagridfield in an overlay, it adds empty rows...
+        # removes it
+        for wid in self.widgets.values():
+            # datagridfield
+            if hasattr(wid, 'allow_insert'):
+                wid.widgets = [sub_wid for sub_wid in wid.widgets
+                               if sub_wid._value != NO_VALUE]
+        data, errors = super(BaseAttendeeForm, self).extractData()
+        return data, errors
 
     @button.buttonAndHandler(_('Apply'), name='apply')
     def handleApply(self, action):
@@ -77,10 +92,23 @@ class BaseAttendeeForm(form.Form):
             )
         self.meeting = self.context.getMeeting()
         self._doApply()
+        # in any case, if attendee (un)set absent/excused/... invalidate itemvoters caching
+        invalidate_cachekey_volatile_for(
+            'Products.PloneMeeting.vocabularies.itemvotersvocabulary',
+            get_again=True)
+        # invalidate attendees async load on item and meeting
+        invalidate_cachekey_volatile_for(
+            'Products.PloneMeeting.browser.async.AsyncLoadItemAssemblyAndSignatures',
+            get_again=True)
+        invalidate_cachekey_volatile_for(
+            'Products.PloneMeeting.browser.async.AsyncLoadMeetingAssemblyAndSignatures',
+            get_again=True)
 
     @button.buttonAndHandler(_('Cancel'), name='cancel')
     def handleCancel(self, action):
         self._finished = True
+        IRedirect(self.request).redirect(self.context.absolute_url())
+        return ""
 
     def mayChangeAttendees(self):
         """ """
@@ -92,7 +120,10 @@ class BaseAttendeeForm(form.Form):
 
     def render(self):
         if self._finished:
-            IRedirect(self.request).redirect(self.context.absolute_url())
+            # make sure we return nothing, taken into account by ajax query
+            self.request.RESPONSE.setStatus(204)
+            if not self.request.form.get('ajax_load', ''):
+                IRedirect(self.request).redirect(self.context.absolute_url())
             return ""
         return super(BaseAttendeeForm, self).render()
 
@@ -124,6 +155,90 @@ class ByeByeAttendeeForm(BaseAttendeeForm):
     NOT_PRESENT_MAPPING = {'absent': 'itemAbsents',
                            'excused': 'itemExcused'}
 
+    def _mayByeByeAttendeePrecondition(self, items_to_update):
+        """Are there condition at execution time that
+           makes attendee byebyeable?
+           This is the case if used in votes, redefined signatory, ..."""
+        error = False
+        for item_to_update in items_to_update:
+            # item signatory
+            if self.person_uid in item_to_update.getItemSignatories(real=True):
+                api.portal.show_message(
+                    _("Can not set ${not_present_type} a person selected as signatory on an item!",
+                      mapping={'not_present_type': _('item_not_present_type_{0}'.format(self.not_present_type))}),
+                    type='warning',
+                    request=self.request)
+                error = True
+            # already excused
+            if self.not_present_type == 'absent' and self.person_uid in item_to_update.getItemExcused():
+                api.portal.show_message(
+                    _("Can not set excused a person selected as absent on an item!"),
+                    type='warning',
+                    request=self.request)
+                error = True
+            # already absent
+            if self.not_present_type == 'excused' and self.person_uid in item_to_update.getItemAbsents():
+                api.portal.show_message(
+                    _("Can not set absent a person selected as excused on an item!"),
+                    type='warning',
+                    request=self.request)
+                error = True
+            # item voter
+            # if not a voter, continue
+            tool = api.portal.get_tool('portal_plonemeeting')
+            cfg = tool.getMeetingConfig(item_to_update)
+            if cfg.getUseVotes():
+                voters = item_to_update.getItemVoters()
+                if self.person_uid in voters:
+                    # secret
+                    if item_to_update.getVotesAreSecret():
+                        # is there place to remove a voter?
+                        len_voters = len(voters)
+                        all_item_votes = item_to_update.getItemVotes()
+                        i = 0
+                        for item_vote in all_item_votes:
+                            encoded_votes_count = item_to_update.getVoteCount(
+                                vote_value='any_voted', vote_number=i)
+                            if len_voters == encoded_votes_count:
+                                api.portal.show_message(
+                                    _("Can not set ${not_present_type} "
+                                      "a person that voted on an item!",
+                                      mapping={
+                                          'not_present_type':
+                                              _('item_not_present_type_{0}'.format(
+                                                self.not_present_type))}),
+                                    type='warning',
+                                    request=self.request)
+                                error = True
+                    # public
+                    else:
+                        all_item_votes = item_to_update.getItemVotes(
+                            ignored_vote_values=[NOT_ENCODED_VOTE_VALUE])
+                        hp_uid_in_voters = bool([item_vote for item_vote in all_item_votes
+                                                 if self.person_uid in item_vote['voters']])
+                        if hp_uid_in_voters:
+                            api.portal.show_message(
+                                _("Can not set ${not_present_type} "
+                                  "a person that voted on an item!",
+                                  mapping={
+                                      'not_present_type':
+                                          _('item_not_present_type_{0}'.format(
+                                            self.not_present_type))}),
+                                type='warning',
+                                request=self.request)
+                            error = True
+
+            if error:
+                if item_to_update != self.context:
+                    api.portal.show_message(
+                        _("Please check item number ${item_number} at ${item_url}.",
+                          mapping={'item_number': item_to_update.getItemNumber(for_display=True),
+                                   'item_url': item_to_update.absolute_url()}),
+                        type='warning',
+                        request=self.request)
+                break
+        return error
+
     def _doApply(self):
         """ """
         if not self.mayChangeAttendees():
@@ -139,37 +254,10 @@ class ByeByeAttendeeForm(BaseAttendeeForm):
         # user will first have to select another signatory on meeting or item
         # return a portal_message if trying to set absent and item that is
         # already excused (and the other way round)
-        error = False
-        for item_to_update in items_to_update:
-            if self.person_uid in item_to_update.getItemSignatories(real=True):
-                api.portal.show_message(
-                    _("Can not set ${not_present_type} a person selected as signatory on an item!",
-                      mapping={'not_present_type': _('item_not_present_type_{0}'.format(self.not_present_type))}),
-                    type='warning',
-                    request=self.request)
-                error = True
-            if self.not_present_type == 'absent' and self.person_uid in item_to_update.getItemExcused():
-                api.portal.show_message(
-                    _("Can not set excused a person selected as absent on an item!"),
-                    type='warning',
-                    request=self.request)
-                error = True
-            if self.not_present_type == 'excused' and self.person_uid in item_to_update.getItemAbsents():
-                api.portal.show_message(
-                    _("Can not set absent a person selected as excused on an item!"),
-                    type='warning',
-                    request=self.request)
-                error = True
-
-            if error:
-                if item_to_update != self.context:
-                    api.portal.show_message(
-                        _("Please check item at ${item_url}.",
-                          mapping={'item_url': item_to_update.absolute_url()}),
-                        type='warning',
-                        request=self.request)
-                self._finished = True
-                return
+        error = self._mayByeByeAttendeePrecondition(items_to_update)
+        if error:
+            self._finished = True
+            return
 
         # apply itemAbsents/itemExcused
         meeting_not_present_attr = getattr(
@@ -181,7 +269,6 @@ class ByeByeAttendeeForm(BaseAttendeeForm):
                 item_not_present.append(self.person_uid)
                 meeting_not_present_attr[item_to_update_uid] = item_not_present
                 notifyModifiedAndReindex(item_to_update)
-        notifyModifiedAndReindex(self.meeting)
         first_item_number = items_to_update[0].getItemNumber(for_display=True)
         last_item_number = items_to_update[-1].getItemNumber(for_display=True)
         extras = 'item={0} hp={1} not_present_type={2} from_item_number={3} until_item_number={4}'.format(
@@ -194,7 +281,8 @@ class ByeByeAttendeeForm(BaseAttendeeForm):
         self._finished = True
 
 
-ByeByeAttendeeFormWrapper = wrap_form(ByeByeAttendeeForm)
+# do not wrap_form or it breaks the portal_messages displayed in xhr request
+# ByeByeAttendeeFormWrapper = wrap_form(ByeByeAttendeeForm)
 
 
 class IWelcomeAttendee(IBaseAttendee):
@@ -245,7 +333,6 @@ class WelcomeAttendeeForm(BaseAttendeeForm):
                 item_absents.remove(self.person_uid)
                 meeting_absent_attr[item_to_update_uid] = item_absents
                 notifyModifiedAndReindex(item_to_update)
-        notifyModifiedAndReindex(self.meeting)
         first_item_number = items_to_update[0].getItemNumber(for_display=True)
         last_item_number = items_to_update[-1].getItemNumber(for_display=True)
         extras = 'item={0} hp={1} from_item_number={2} until_item_number={3}'.format(
@@ -255,7 +342,8 @@ class WelcomeAttendeeForm(BaseAttendeeForm):
         self._finished = True
 
 
-WelcomeAttendeeFormWrapper = wrap_form(WelcomeAttendeeForm)
+# do not wrap_form or it breaks the portal_messages displayed in xhr request
+# WelcomeAttendeeFormWrapper = wrap_form(WelcomeAttendeeForm)
 
 
 class IByeByeNonAttendee(IBaseAttendee):
@@ -279,7 +367,8 @@ class ByeByeNonAttendeeForm(ByeByeAttendeeForm):
     not_present_type = 'non_attendee'
 
 
-ByeByeNonAttendeeFormWrapper = wrap_form(ByeByeNonAttendeeForm)
+# do not wrap_form or it breaks the portal_messages displayed in xhr request
+# ByeByeNonAttendeeFormWrapper = wrap_form(ByeByeNonAttendeeForm)
 
 
 class IWelcomeNonAttendee(IBaseAttendee):
@@ -306,7 +395,8 @@ class WelcomeNonAttendeeForm(WelcomeAttendeeForm):
         return self.meeting.itemNonAttendees
 
 
-WelcomeNonAttendeeFormWrapper = wrap_form(WelcomeNonAttendeeForm)
+# do not wrap_form or it breaks the portal_messages displayed in xhr request
+# WelcomeNonAttendeeFormWrapper = wrap_form(WelcomeNonAttendeeForm)
 
 
 class IRedefinedSignatory(IBaseAttendee):
@@ -323,7 +413,7 @@ class IRedefinedSignatory(IBaseAttendee):
         title=_(u"Signature number"),
         description=_(u""),
         required=True,
-        values=['1', '2', '3', '4', '5'])
+        vocabulary=u"Products.PloneMeeting.vocabularies.signaturenumbervocabulary")
 
 
 class RedefinedSignatoryForm(BaseAttendeeForm):
@@ -363,7 +453,6 @@ class RedefinedSignatoryForm(BaseAttendeeForm):
                 item_signatories[self.signature_number] = self.person_uid
                 self.meeting.itemSignatories[item_to_update_uid] = item_signatories
                 notifyModifiedAndReindex(item_to_update)
-        notifyModifiedAndReindex(self.meeting)
         first_item_number = items_to_update[0].getItemNumber(for_display=True)
         last_item_number = items_to_update[-1].getItemNumber(for_display=True)
         extras = 'item={0} hp={1} signature_number={2} from_item_number={3} until_item_number={4}'.format(
@@ -373,7 +462,8 @@ class RedefinedSignatoryForm(BaseAttendeeForm):
         self._finished = True
 
 
-RedefinedSignatoryFormWrapper = wrap_form(RedefinedSignatoryForm)
+# do not wrap_form or it breaks the portal_messages displayed in xhr request
+# RedefinedSignatoryFormWrapper = wrap_form(RedefinedSignatoryForm)
 
 
 class IRemoveRedefinedSignatory(IBaseAttendee):
@@ -417,7 +507,6 @@ class RemoveRedefinedSignatoryForm(BaseAttendeeForm):
                 else:
                     del self.meeting.itemSignatories[item_to_update_uid]
                 notifyModifiedAndReindex(item_to_update)
-        notifyModifiedAndReindex(self.meeting)
         first_item_number = items_to_update[0].getItemNumber(for_display=True)
         last_item_number = items_to_update[-1].getItemNumber(for_display=True)
         extras = 'item={0} hp={1} from_item_number={2} until_item_number={3}'.format(
@@ -427,4 +516,5 @@ class RemoveRedefinedSignatoryForm(BaseAttendeeForm):
         self._finished = True
 
 
-RemoveRedefinedSignatoryFormWrapper = wrap_form(RemoveRedefinedSignatoryForm)
+# do not wrap_form or it breaks the portal_messages displayed in xhr request
+# RemoveRedefinedSignatoryFormWrapper = wrap_form(RemoveRedefinedSignatoryForm)

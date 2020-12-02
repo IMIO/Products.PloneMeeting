@@ -1,0 +1,16 @@
+<div class="select-all-vote-values" i18n:domain="PloneMeeting">
+  <tal:loop repeat="usedVoteValue view/usedVoteValues">
+    <span class="option">
+      <label tal:define="css_id string:select-all-vote-value-${usedVoteValue}"
+             tal:attributes="for css_id">
+        <input tal:attributes="id css_id;
+                               value usedVoteValue;"
+               name="select-all-vote-values"
+               class="radio-widget required choice-field"
+               onclick="selectAllVoteValues(this);"
+               type="radio">
+          <span class="label" i18n:translate="" tal:content="string:vote_value_${usedVoteValue}">Vote value</span>
+      </label>
+    </span>
+  </tal:loop>
+</div>

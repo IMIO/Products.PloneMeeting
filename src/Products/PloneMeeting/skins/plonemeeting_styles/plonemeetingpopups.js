@@ -55,6 +55,121 @@ function advicePreview() {
     });
 }
 
+// opening the encode votes form
+function manageAttendees() {
+    jQuery(function($){
+        $('a.link-overlay-pm-manage-attendees').prepOverlay({
+            api: true,
+            subtype: 'ajax',
+            noform: 'redirect',
+            redirect: $.plonepopups.redirectbasehref,
+            closeselector: '[name="form.buttons.cancel"]',
+            config: {
+                onBeforeLoad : function (e) {
+                  async_submit_form(this.form);
+                  return true;
+                },
+              onClose : function (e) {
+                selector = '.attendee-value'
+                if (e.target.innerHTML.includes('item_encode_votes_form')) {
+                  selector = '.vote-value';
+                }
+                else if (e.target.innerHTML.includes('_attendee_form')) {
+                  selector = '.attendee-assembly';
+                }
+                else if (e.target.innerHTML.includes('_signatory_form')) {
+                  selector = '.attendee-signatory';
+                }
+                else if (e.target.innerHTML.includes('_nonattendee_form')) {
+                  selector = '.attendee-nonattendee';
+                }
+                highlight_attendees(selector);
+              },
+            }
+       });
+    });
+}
+
+// refresh meeting attendees panel
+function refresh_meeting_attendees() {
+  tag = $("#collapsible-assembly-and-signatures div")[0];
+  var timeStamp = new Date();
+  result = loadContent(
+    tag,
+    load_view='@@load_meeting_assembly_and_signatures?cache_date=' + timeStamp,
+    async=false,
+    base_url=null,
+    event_name="toggle_details_ajax_success");
+  highlight_attendees();
+}
+
+// refresh item attendees panel
+function refresh_attendees(highlight=null, click_cancel=false) {
+  tag = $("#collapsible-assembly-and-signatures div")[0];
+  var timeStamp = new Date();
+  result = loadContent(
+    tag,
+    load_view='@@load_item_assembly_and_signatures?cache_date=' + timeStamp,
+    async=false,
+    base_url=null,
+    event_name="toggle_details_ajax_success");
+  if (click_cancel) {
+    $('input#form-buttons-cancel').click();
+  }
+  if (highlight) {
+    $.when(highlight_attendees(highlight));
+  }
+}
+// highlight votes when is is refreshed
+function highlight_attendees(highlight_selector='') {
+  $.when($("#collapsible-assembly-and-signatures table tr td" + highlight_selector).effect(
+    'highlight', {}, 2000));
+}
+
+function async_submit_form() {
+  // odd even for datagridfield
+  $('table tbody').each(setoddeven);
+  // onclick for submit button
+  $('input#form-buttons-apply').click(function(event) {
+    event.preventDefault();
+    var data = {'ajax_load': true};
+    $(this.form.elements).each(function(){
+        // use checked instead value for checkbox and radio
+        if (this.type == 'checkbox' && !this.checked) {
+          // unchecked checkboxes are ignored
+          return;
+        }
+        if (this.type == 'radio') {
+          if (this.checked) {
+            data[this.name] = this.value;
+          }
+          else {
+            return;
+          }
+        }
+        // default
+        data[this.name] = this.value;
+      });
+    $.ajax( {
+    type: 'POST',
+    url: this.form.action,
+    data: data,
+    cache: false,
+    async: true,
+    success: function(data) {
+          if (data) {
+            $("div.pb-ajax div")[0].innerHTML = data;
+          }
+          else {
+            refresh_attendees(highlight=null, click_cancel=true);
+          }
+    },
+    error: function(jqXHR, textStatus, errorThrown) {
+      window.location.href = canonical_url();
+    }, } ); });
+}
+
+
 // the content history popup
 function contentHistory() {
     jQuery(function($) {
@@ -139,6 +254,7 @@ jQuery(document).ready(function($) {
     advicesInfos();
     adviceAddEdit();
     listTypeChange();
+    pollTypeChange();
     emergencyChange();
     completenessChange();
     availableMailingLists();
@@ -150,6 +266,10 @@ jQuery(document).ready(function($) {
                        data_parameters=[],
                        options={position: 'bottom',
                                 trigger: 'click'});
+    pmCommonOverlays();
+});
+
+function attendeesInfos() {
     // item absents on meeting_view
     tooltipster_helper(selector='.tooltipster-meeting-item-not-present',
                        view_name='@@display-meeting-item-not-present',
@@ -158,9 +278,7 @@ jQuery(document).ready(function($) {
     tooltipster_helper(selector='.tooltipster-meeting-item-signatories',
                        view_name='@@display-meeting-item-signatories',
                        data_parameters=['signatory_uid']);
-                       
-    pmCommonOverlays();
-});
+}
 
 // prepare overlays and tooltipsters in dashboards
 function initializeDashboard(){
@@ -238,11 +356,19 @@ function editAnnex(){
 }
 
 function listTypeChange() {
-    // listtype change on meeting_view
+    // listType change on meeting_view
     tooltipster_helper(selector='.tooltipster-item-listtype-change',
                        view_name='@@item-listtype',
                        data_parameters=[],
                        options={position: 'right'});
+}
+
+function pollTypeChange() {
+    // pollType change on meeting_view
+    tooltipster_helper(selector='.tooltipster-item-polltype-change',
+                       view_name='@@item-polltype',
+                       data_parameters=[],
+                       options={});
 }
 
 function emergencyChange() {

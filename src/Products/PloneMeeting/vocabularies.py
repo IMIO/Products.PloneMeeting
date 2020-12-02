@@ -24,8 +24,8 @@ from DateTime import DateTime
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from imio.annex.content.annex import IAnnex
 from imio.helpers.cache import get_cachekey_volatile
-from imio.helpers.content import uuidsToObjects
 from imio.helpers.content import get_vocab
+from imio.helpers.content import uuidsToObjects
 from natsort import humansorted
 from operator import attrgetter
 from plone import api
@@ -33,6 +33,7 @@ from plone.app.vocabularies.users import UsersFactory
 from plone.memoize import ram
 from plone.uuid.interfaces import ATTRIBUTE_NAME
 from Products.CMFPlone.utils import safe_unicode
+from Products.PloneMeeting.browser.itemvotes import next_vote_is_linked
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import CONSIDERED_NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import EMPTY_STRING
@@ -650,7 +651,7 @@ class AskedAdvicesVocabulary(object):
     def __call__(self, context):
         """ """
         res = []
-        context = get_context_with_request(context)
+        context = get_context_with_request(context) or context
 
         self.tool = api.portal.get_tool('portal_plonemeeting')
         try:
@@ -1023,6 +1024,61 @@ class ListTypesVocabulary(object):
 ListTypesVocabularyFactory = ListTypesVocabulary()
 
 
+class UsedVoteValuesVocabulary(object):
+    implements(IVocabularyFactory)
+
+    def is_first_linked_vote(self, vote_number):
+        """ """
+        itemVotes = self.context.getItemVotes()
+        return next_vote_is_linked(itemVotes, vote_number)
+
+    def is_linked_vote(self):
+        """ """
+        return self.item_vote['linked_to_previous']
+
+    def __call___cachekey(method, self, context, vote_number=None):
+        '''cachekey method for self.__call__.'''
+        context = get_context_with_request(context)
+        request_debug = str(hasattr(context, 'REQUEST') and context.REQUEST._debug or None)
+        return request_debug, vote_number
+
+    @ram.cache(__call___cachekey)
+    def __call__(self, context, vote_number=None):
+        """ """
+        # as used in a datagridfield, context may vary...
+        self.context = get_context_with_request(context)
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
+        res = []
+        # get vote_number, as _voter_number when editing
+        # as form.widgets.vote_number when saving
+        if vote_number is None:
+            vote_number = int(self.context.REQUEST.form.get(
+                'vote_number',
+                self.context.REQUEST.form.get('form.widgets.vote_number')))
+        self.item_vote = self.context.getItemVotes(vote_number=vote_number)
+        used_values_attr = 'usedVoteValues'
+        if self.is_linked_vote():
+            used_values_attr = 'nextLinkedVotesUsedVoteValues'
+        elif self.is_first_linked_vote(vote_number):
+            used_values_attr = 'firstLinkedVoteUsedVoteValues'
+        for usedVoteValue in cfg.getUsedVoteValues(
+                used_values_attr=used_values_attr,
+                include_not_encoded=not self.context.getVotesAreSecret()):
+            res.append(
+                SimpleTerm(
+                    usedVoteValue,
+                    usedVoteValue,
+                    translate(
+                        'vote_value_{0}'.format(usedVoteValue),
+                        domain='PloneMeeting',
+                        context=self.context.REQUEST)))
+        return SimpleVocabulary(res)
+
+
+UsedVoteValuesVocabularyFactory = UsedVoteValuesVocabulary()
+
+
 class SelectablePrivaciesVocabulary(object):
     implements(IVocabularyFactory)
 
@@ -1074,7 +1130,12 @@ class PollTypesVocabulary(object):
         res = []
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        for usedPollType in cfg.getUsedPollTypes():
+        usedPollTypes = list(cfg.getUsedPollTypes())
+        # if on an item, include values not unselected in config
+        if context.meta_type == 'MeetingItem' and context.getPollType() not in usedPollTypes:
+            usedPollTypes.append(context.getPollType())
+
+        for usedPollType in usedPollTypes:
             res.append(SimpleTerm(usedPollType,
                                   usedPollType,
                                   safe_unicode(translate("polltype_{0}".format(usedPollType),
@@ -1429,6 +1490,8 @@ class HeldPositionDefaultsVocabulary(object):
         res = []
         res.append(
             SimpleTerm('present', 'present', _('present')))
+        res.append(
+            SimpleTerm('voter', 'voter', _('voter')))
         return SimpleVocabulary(res)
 
 
@@ -1460,7 +1523,8 @@ class SignatureNumberVocabulary(object):
 
     def __call__(self, context):
         res = []
-        for signature_number in range(1, 11):
+        for signature_number in range(1, 21):
+            # make signature_number a str
             sign_num_str = str(signature_number)
             res.append(SimpleTerm(sign_num_str, sign_num_str, sign_num_str))
         return SimpleVocabulary(res)
@@ -1704,6 +1768,40 @@ class SelectableItemInitiatorsVocabulary(BaseHeldPositionsVocabulary):
 
 
 SelectableItemInitiatorsVocabularyFactory = SelectableItemInitiatorsVocabulary()
+
+
+class ItemVotersVocabulary(BaseHeldPositionsVocabulary):
+    """ """
+
+    def __call___cachekey(method, self, context):
+        '''cachekey method for self.__call__.'''
+        date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.itemvotersvocabulary')
+        # as used in a datagridfield, context may vary...
+        context = get_context_with_request(context)
+        return date, context.UID()
+
+    @ram.cache(__call___cachekey)
+    def __call__(self, context):
+        context = get_context_with_request(context)
+        item_voter_uids = context.getItemVoters()
+        terms = super(ItemVotersVocabulary, self).__call__(
+            context,
+            uids=item_voter_uids,
+            include_usages=False,
+            include_defaults=False,
+            include_signature_number=False,
+            review_state=[], )
+        # do not modify original terms
+        terms = list(terms._terms)
+
+        # keep order of item attendees
+        def getKey(term):
+            return item_voter_uids.index(term.token)
+        terms = sorted(terms, key=getKey)
+        return SimpleVocabulary(terms)
+
+
+ItemVotersVocabularyFactory = ItemVotersVocabulary()
 
 
 class PMDetailedEveryOrganizationsVocabulary(EveryOrganizationsVocabulary):

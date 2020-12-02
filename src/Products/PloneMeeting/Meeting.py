@@ -22,9 +22,9 @@ from imio.helpers.cache import cleanRamCacheFor
 from imio.helpers.cache import invalidate_cachekey_volatile_for
 from imio.prettylink.interfaces import IPrettyLink
 from OFS.ObjectManager import BeforeDeleteException
+from persistent.list import PersistentList
 from persistent.mapping import PersistentMapping
 from plone import api
-from plone.api.validation import mutually_exclusive_parameters
 from plone.app.querystring.querybuilder import queryparser
 from plone.app.uuid.utils import uuidToCatalogBrain
 from plone.memoize import ram
@@ -49,6 +49,9 @@ from Products.PloneMeeting.browser.itemchangeorder import _compute_value_to_add
 from Products.PloneMeeting.browser.itemchangeorder import _is_integer
 from Products.PloneMeeting.browser.itemchangeorder import _to_integer
 from Products.PloneMeeting.browser.itemchangeorder import _use_same_integer
+from Products.PloneMeeting.browser.itemvotes import clean_voters_linked_to
+from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
+from Products.PloneMeeting.config import NOT_VOTABLE_LINKED_TO_VALUE
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import PROJECTNAME
 from Products.PloneMeeting.config import READER_USECASES
@@ -827,6 +830,20 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         # selectedViewFields must return a list of tuple
         return [(elt, elt) for elt in itemsListVisibleColumns]
 
+    def _get_all_redefined_attendees(self, by_persons=False, only_keys=True):
+        """Returns a list of dicts."""
+        itemNonAttendees = self.getItemNonAttendees(by_persons=by_persons)
+        itemAbsents = self.getItemAbsents(by_persons=by_persons)
+        itemExcused = self.getItemExcused(by_persons=by_persons)
+        itemSignatories = self.getItemSignatories(by_signatories=by_persons)
+        if only_keys:
+            redefined_item_attendees = itemNonAttendees.keys() + \
+                itemAbsents.keys() + itemExcused.keys() + itemSignatories.keys()
+        else:
+            redefined_item_attendees = itemNonAttendees, itemAbsents, \
+                itemExcused, itemSignatories
+        return redefined_item_attendees
+
     def post_validate(self, REQUEST=None, errors=None):
         '''Validate attendees in post_validate as there is no field in schema for it.
            - an attendee may not be unselected if something is redefined for it on an item.'''
@@ -834,6 +851,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         cfg = tool.getMeetingConfig(self)
 
         if cfg.isUsingContacts() and not self.isTemporary():
+            # removed attendees
             # REQUEST.form['meeting_attendees'] is like
             # ['muser_attendeeuid1_attendee', 'muser_attendeeuid2_excused']
             stored_attendees = self.getAllUsedHeldPositions(the_objects=False)
@@ -841,13 +859,9 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
                                  in REQUEST.form.get('meeting_attendees', [])]
             removed_meeting_attendees = set(stored_attendees).difference(meeting_attendees)
             # attendees redefined on items
-            itemNonAttendees = self.getItemNonAttendees(by_persons=True)
-            itemAbsents = self.getItemAbsents(by_persons=True)
-            itemExcused = self.getItemExcused(by_persons=True)
-            itemSignatories = self.getItemSignatories(by_signatories=True)
-            redefined_item_attendees = itemNonAttendees.keys() + \
-                itemAbsents.keys() + itemExcused.keys() + itemSignatories.keys()
-            conflict_attendees = removed_meeting_attendees.intersection(redefined_item_attendees)
+            redefined_item_attendees = self._get_all_redefined_attendees(by_persons=True)
+            conflict_attendees = removed_meeting_attendees.intersection(
+                redefined_item_attendees)
             if conflict_attendees:
                 attendee_uid = tuple(removed_meeting_attendees)[0]
                 attendee_brain = uuidToCatalogBrain(attendee_uid)
@@ -856,6 +870,43 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
                     mapping={'attendee_title': attendee_brain.get_full_title},
                     domain='PloneMeeting',
                     context=REQUEST)
+            else:
+                # removed voters
+                stored_voters = self.getVoters()
+                meeting_voters = [voter.split('_')[1] for voter
+                                  in REQUEST.form.get('meeting_voters', [])]
+                removed_meeting_voters = set(stored_voters).difference(meeting_voters)
+                # public, voters are known
+                item_votes = self.getItemVotes()
+                voter_uids = []
+                highest_secret_votes = 0
+                for votes in item_votes.values():
+                    for vote in votes:
+                        if 'voters' in vote:
+                            # public
+                            voter_uids += [k for k, v in vote['voters'].items()
+                                           if v != NOT_ENCODED_VOTE_VALUE]
+                        else:
+                            secret_votes = sum([v for k, v in vote['votes'].items()])
+                            if secret_votes > highest_secret_votes:
+                                highest_secret_votes = secret_votes
+                voter_uids = list(set(voter_uids))
+                conflict_voters = removed_meeting_voters.intersection(
+                    voter_uids)
+                if conflict_voters:
+                    voter_uid = tuple(removed_meeting_voters)[0]
+                    voter_brain = uuidToCatalogBrain(voter_uid)
+                    errors['meeting_attendees'] = translate(
+                        'can_not_remove_public_voter_voted_on_items',
+                        mapping={'attendee_title': voter_brain.get_full_title},
+                        domain='PloneMeeting',
+                        context=REQUEST)
+                elif highest_secret_votes > len(meeting_voters):
+                    errors['meeting_attendees'] = translate(
+                        'can_not_remove_secret_voter_voted_on_items',
+                        domain='PloneMeeting',
+                        context=REQUEST)
+
         return errors
 
     security.declarePrivate('validate_date')
@@ -957,7 +1008,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('getDefaultSignatories')
 
     def getDefaultSignatories(self):
-        '''The default signatiries are the active held_positions
+        '''The default signatories are the active held_positions
            with a defined signature_number.'''
         res = []
         if self.checkCreationFlag():
@@ -966,14 +1017,25 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
                    if held_pos.defaults and 'present' in held_pos.defaults and held_pos.signature_number]
         return {signer.UID(): signer.signature_number for signer in res}
 
-    @mutually_exclusive_parameters('contact_type', 'uids')
+    security.declarePublic('getDefaultVoters')
+
+    def getDefaultVoters(self):
+        '''The default voters are the active held_positions
+           with 'voter' in defaults.'''
+        res = []
+        if self.checkCreationFlag():
+            used_held_positions = self.getAllUsedHeldPositions(include_new=True)
+            res = [held_pos.UID() for held_pos in used_held_positions
+                   if held_pos.defaults and 'voter' in held_pos.defaults]
+        return res
+
     def _getContacts(self, contact_type=None, uids=None, theObjects=False):
         """ """
         res = []
         orderedContacts = getattr(self, 'orderedContacts', OrderedDict())
         if contact_type:
             for uid, infos in orderedContacts.items():
-                if infos[contact_type]:
+                if infos[contact_type] and (not uids or uid in uids):
                     res.append(uid)
         else:
             res = uids
@@ -1006,6 +1068,13 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
     def getAbsents(self, theObjects=False):
         '''Returns the absents in this meeting.'''
         return self._getContacts('absent', theObjects=theObjects)
+
+    security.declarePublic('getVoters')
+
+    def getVoters(self, uids=None, theObjects=False):
+        '''Returns the voters in this meeting.'''
+        voters = self._getContacts('voter', uids=uids, theObjects=theObjects)
+        return voters
 
     security.declarePublic('getSignatories')
 
@@ -1078,6 +1147,79 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         else:
             signatories = self.itemSignatories.data
         return signatories
+
+    security.declarePublic('getItemVotes')
+
+    def getItemVotes(self):
+        ''' '''
+        votes = deepcopy(self.itemVotes.data)
+        return votes
+
+    security.declarePrivate('setItemPublicVote')
+
+    def setItemPublicVote(self, item, data, vote_number=0):
+        """ """
+        data = deepcopy(data)
+        item_uid = item.UID()
+        # set new itemVotes value on meeting
+        # first votes
+        if item_uid not in self.itemVotes:
+            self.itemVotes[item_uid] = PersistentList()
+            # check if we are not adding a new vote on an item containing no votes at all
+            if vote_number == 1:
+                # add an empty vote 0
+                data_item_vote_0 = item.getItemVotes(
+                    vote_number=0,
+                    include_vote_number=False,
+                    include_unexisting=True)
+                # make sure we use persistent for 'voters'
+                data_item_vote_0['voters'] = PersistentMapping(data_item_vote_0['voters'])
+                self.itemVotes[item_uid].append(PersistentMapping(data_item_vote_0))
+        new_voters = data.get('voters')
+        # new vote_number
+        if vote_number + 1 > len(self.itemVotes[item_uid]):
+            # complete data before storing, if some voters are missing it is
+            # because of NOT_VOTABLE_LINKED_TO_VALUE, we add it
+            item_voter_uids = item.getItemVoters()
+            for item_voter_uid in item_voter_uids:
+                if item_voter_uid not in data['voters']:
+                    data['voters'][item_voter_uid] = NOT_VOTABLE_LINKED_TO_VALUE
+            self.itemVotes[item_uid].append(PersistentMapping(data))
+        else:
+            # use update in case we only update a subset of votes
+            # when some vote NOT_VOTABLE_LINKED_TO_VALUE or so
+            # we have nested dicts, data is a dict, containing 'voters' dict
+            self.itemVotes[item_uid][vote_number]['voters'].update(data['voters'])
+            data.pop('voters')
+            self.itemVotes[item_uid][vote_number].update(data)
+        # manage linked_to_previous
+        # if current vote is linked to other votes, we will set NOT_VOTABLE_LINKED_TO_VALUE
+        # as value of vote of voters of other linked votes
+        clean_voters_linked_to(item, self, vote_number, new_voters)
+
+    security.declarePrivate('setItemSecretVote')
+
+    def setItemSecretVote(self, item, data, vote_number):
+        """ """
+        data = deepcopy(data)
+        item_uid = item.UID()
+        # set new itemVotes value on meeting
+        # first votes
+        if item_uid not in self.itemVotes:
+            self.itemVotes[item_uid] = PersistentList()
+            # check if we are not adding a new vote on an item containing no votes at all
+            if vote_number == 1:
+                # add an empty vote 0
+                data_item_vote_0 = item.getItemVotes(
+                    vote_number=0,
+                    include_vote_number=False,
+                    include_unexisting=True)
+                self.itemVotes[item_uid].append(PersistentMapping(data_item_vote_0))
+        # new vote_number
+        if vote_number + 1 > len(self.itemVotes[item_uid]):
+            self.itemVotes[item_uid].append(PersistentMapping(data))
+        else:
+            self.itemVotes[item_uid][vote_number].update(data)
 
     security.declarePublic('displayUserReplacement')
 
@@ -1457,6 +1599,8 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             del self.itemNonAttendees[item_uid]
         if item_uid in self.itemSignatories:
             del self.itemSignatories[item_uid]
+        if item_uid in self.itemVotes:
+            del self.itemVotes[item_uid]
 
         # remove item UID from _insert_order_cache
         self._invalidate_insert_order_cache_for(item)
@@ -1618,11 +1762,17 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         '''Adaptable method to filter possible user replacement.'''
         return allUsers
 
-    def _doUpdateContacts(self, attendees=OrderedDict(), signatories={}, replacements={}):
+    def _doUpdateContacts(self,
+                          attendees=OrderedDict(),
+                          signatories={},
+                          replacements={},
+                          voters=[]):
         ''' '''
         # attendees must be an OrderedDict to keep order
         if not isinstance(attendees, OrderedDict):
-            raise ValueError('Parameter attendees passed to Meeting._doUpdateContacts must be an OrderedDict !!!')
+            raise ValueError(
+                'Parameter attendees passed to Meeting._doUpdateContacts '
+                'must be an OrderedDict !!!')
         # save the ordered contacts so we rely on this, especially when
         # users are disabled in the configuration
         self.orderedContacts.clear()
@@ -1635,7 +1785,8 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
                      'absent': False,
                      'signer': False,
                      'signature_number': None,
-                     'replacement': None}
+                     'replacement': None,
+                     'voter': False}
             self.orderedContacts[attendee_uid][attendee_type] = True
 
         for signatory_uid, signature_number in signatories.items():
@@ -1644,6 +1795,10 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
 
         for replaced_uid, replacer_uid in replacements.items():
             self.orderedContacts[replaced_uid]['replacement'] = replacer_uid
+
+        for voter_uid in voters:
+            self.orderedContacts[voter_uid]['voter'] = True
+
         self._p_changed = True
 
     security.declarePrivate('updateContacts')
@@ -1658,7 +1813,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         if not cfg.isUsingContacts():
             return
 
-        # manage attendees, excused, absents
+        # attendees, excused, absents
         meeting_attendees = self.REQUEST.get('meeting_attendees', [])
         # remove leading muser_ and return a list of tuples, position_uid, attendee_type
         attendees = OrderedDict()
@@ -1667,7 +1822,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             prefix, position_uid, attendee_type = key.split('_')
             attendees[position_uid] = attendee_type
 
-        # manage signatories, remove ''
+        # signatories, remove ''
         meeting_signatories = [
             signatory for signatory in self.REQUEST.get('meeting_signatories', []) if signatory]
         signatories = {}
@@ -1675,7 +1830,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             signatory, signature_number = key.split('__signaturenumber__')
             signatories[signatory] = signature_number
 
-        # manage replacements, remove ''
+        # replacements, remove ''
         meeting_replacements = [
             replacer for replacer in self.REQUEST.get('meeting_replacements', []) if replacer]
         replacements = {}
@@ -1683,7 +1838,16 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             replaced, replacer = key.split('__replacedby__')
             replacements[replaced] = replacer
 
-        self._doUpdateContacts(attendees, signatories, replacements)
+        # voters
+        meeting_voters = self.REQUEST.get('meeting_voters', [])
+        # remove leading muser_ and return a list of tuples, position_uid, attendee_type
+        voters = []
+        for key in meeting_voters:
+            # remove leading muser_ and ending _voter
+            prefix, position_uid, suffix = key.split('_')
+            voters.append(position_uid)
+
+        self._doUpdateContacts(attendees, signatories, replacements, voters)
 
     security.declarePrivate('at_post_create_script')
 
@@ -1697,6 +1861,8 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         self.itemNonAttendees = PersistentMapping()
         # place to store item signatories
         self.itemSignatories = PersistentMapping()
+        # place to store item votes
+        self.itemVotes = PersistentMapping()
         # place to store attendees when using contacts
         self.orderedContacts = OrderedDict()
         self.updateTitle()
@@ -1762,7 +1928,15 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         # Call sub-product-specific behaviour
         self.adapted().onEdit(isCreated=False)
         # invalidate last meeting modified
-        invalidate_cachekey_volatile_for('Products.PloneMeeting.Meeting.modified', get_again=True)
+        invalidate_cachekey_volatile_for(
+            'Products.PloneMeeting.Meeting.modified', get_again=True)
+        # invalidate item voters vocabulary in case new voters (un)selected
+        invalidate_cachekey_volatile_for(
+            'Products.PloneMeeting.vocabularies.itemvotersvocabulary', get_again=True)
+        # invalidate assembly async load on meeting
+        invalidate_cachekey_volatile_for(
+            'Products.PloneMeeting.browser.async.AsyncLoadMeetingAssemblyAndSignatures',
+            get_again=True)
         if need_reindex:
             self.reindexObject()
 
@@ -1992,15 +2166,10 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         '''See doc in interfaces.py.'''
         res = False
         meeting = self.getSelf()
-        meetingConfig = meeting.portal_plonemeeting.getMeetingConfig(meeting)
-        if meetingConfig.getUseVotes():
-            # The meeting must have started. But what date to take into account?
-            now = DateTime()
-            meetingStartDate = meeting.getDate()
-            if meeting.attributeIsUsed('startDate') and meeting.getStartDate():
-                meetingStartDate = meeting.getStartDate()
-            if meetingStartDate < now:
-                res = True
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(meeting)
+        if cfg.getUseVotes() or meeting.getVoters():
+            res = True
         return res
 
     security.declarePublic('getPreviousMeeting')

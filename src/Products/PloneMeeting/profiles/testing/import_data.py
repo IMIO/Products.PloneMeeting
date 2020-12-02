@@ -411,10 +411,24 @@ meetingPga.styleTemplates = [stylesTemplate1, stylesTemplate2]
 meetingPga.podTemplates = [pgaItemTemplate]
 
 # Define held positions to use on persons
-held_pos1 = HeldPositionDescriptor('held_pos1', u'Assembly member 1', signature_number='1')
-held_pos2 = HeldPositionDescriptor('held_pos2', u'Assembly member 2')
-held_pos3 = HeldPositionDescriptor('held_pos3', u'Assembly member 3')
-held_pos4 = HeldPositionDescriptor('held_pos4', u'Assembly member 4 & 5', signature_number='2')
+held_pos1 = HeldPositionDescriptor('held_pos1',
+                                   u'Assembly member 1',
+                                   defaults=['present', 'voter'],
+                                   usages=['assemblyMember'],
+                                   signature_number='1')
+held_pos2 = HeldPositionDescriptor('held_pos2',
+                                   u'Assembly member 2',
+                                   defaults=['present', 'voter'],
+                                   usages=['assemblyMember'])
+held_pos3 = HeldPositionDescriptor('held_pos3',
+                                   u'Assembly member 3',
+                                   defaults=['present', 'voter'],
+                                   usages=['assemblyMember'])
+held_pos4 = HeldPositionDescriptor('held_pos4',
+                                   u'Assembly member 4 & 5',
+                                   defaults=['present', 'voter'],
+                                   usages=['assemblyMember'],
+                                   signature_number='2')
 
 # Add persons
 person1 = PersonDescriptor('person1', u'Person1LastName', u'Person1FirstName', held_positions=[held_pos1])

@@ -2898,11 +2898,6 @@ class testMeetingItem(PloneMeetingTestCase):
         item.setDecision('<p>A decision</p>')
         self.changeUser('pmManager')
         meeting = self.create('Meeting', date=DateTime())
-        # define an assembly on the meeting
-        meeting.setAssembly('Meeting assembly')
-        meeting.setAssemblyAbsents('Meeting assembly absents')
-        meeting.setAssemblyExcused('Meeting assembly excused')
-        meeting.setSignatures('Meeting signatures')
         self.presentItem(item)
         # make the form item_assembly_default works
         self.request['PUBLISHED'].context = item
@@ -2923,8 +2918,17 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg.setUsedMeetingAttributes(('assembly', ))
         self.assertIsNone(formAssembly.update())
         self.assertRaises(Unauthorized, formSignatures.update)
+        # if fields not used but filled (like when switching from assembly to attendees)
+        # then is it still possible to edit it
+        cfg.setUsedMeetingAttributes(())
+        meeting.setAssembly('Meeting assembly')
+        meeting.setAssemblyAbsents('Meeting assembly absents')
+        meeting.setAssemblyExcused('Meeting assembly excused')
+        meeting.setSignatures('Meeting signatures')
+        self.assertIsNone(formSignatures.update())
+        self.assertIsNone(formAssembly.update())
+        # now when fields enabled, current user must be at least MeetingManager to use this
         cfg.setUsedMeetingAttributes(('assembly', 'signatures'))
-        # current user must be at least MeetingManager to use this
         self.changeUser('pmCreator1')
         self.assertRaises(Unauthorized, formAssembly.update)
         self.assertRaises(Unauthorized, formAssembly._doApplyItemAssembly)
@@ -3148,12 +3152,18 @@ class testMeetingItem(PloneMeetingTestCase):
         self.do(item, 'accept')
         _checkOnlyEditableByManagers(item)
         # if not used, fields are not editable
+        # but if it contains something, then is is still editable
+        # this can be the case when switching from assembly to attendees
         cfg.setUsedMeetingAttributes(())
+        _checkOnlyEditableByManagers(item)
+        # empty fields
+        meeting.setAssembly('')
+        meeting.setSignatures('')
         _checkOnlyEditableByManagers(item,
                                      may_edit=[],
                                      may_not_edit=['pmManager', 'pmCreator1', 'pmReviewer1'])
-        cfg.setUsedMeetingAttributes(('assembly', 'signatures'))
         # change itemAssembly/itemSignatures
+        cfg.setUsedMeetingAttributes(('assembly', 'signatures'))
         item.setItemAssembly('New assembly')
         item.setItemSignatures('New signatures')
         _checkOnlyEditableByManagers(item)
@@ -4929,7 +4939,7 @@ class testMeetingItem(PloneMeetingTestCase):
             'marginalNotes', 'observations', 'pollTypeObservations',
             'predecessor', 'preferredMeeting', 'proposingGroup',
             'takenOverBy', 'templateUsingGroups',
-            'toDiscuss', 'votesAreSecret', 'otherMeetingConfigsClonableToEmergency',
+            'toDiscuss', 'votesObservations', 'otherMeetingConfigsClonableToEmergency',
             'internalNotes', 'externalIdentifier', 'isAcceptableOutOfMeeting']
         NEUTRAL_FIELDS += self._extraNeutralFields()
         # neutral + default + extra + getExtraFieldsToCopyWhenCloning(True) +

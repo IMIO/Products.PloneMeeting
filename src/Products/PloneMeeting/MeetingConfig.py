@@ -1,17 +1,12 @@
 # -*- coding: utf-8 -*-
 #
-# File: MeetingConfig.py
-#
-# Copyright (c) 2019 by Imio.be
-# Generator: ArchGenXML Version 2.7
-#            http://plone.org/products/archgenxml
-#
 # GNU General Public License (GPL)
 #
 
 from AccessControl import ClassSecurityInfo
 from AccessControl import Unauthorized
 from collections import OrderedDict
+from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.contact.plonegroup.utils import get_organization
 from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_plone_groups
@@ -77,6 +72,7 @@ from Products.PloneMeeting.config import ITEM_INSERT_METHODS
 from Products.PloneMeeting.config import ITEMTEMPLATESMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import MEETING_CONFIG
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
+from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
 from Products.PloneMeeting.config import PROJECTNAME
 from Products.PloneMeeting.config import READER_USECASES
@@ -104,6 +100,7 @@ from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.model.adaptations import _getValidationReturnedStates
 from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
 from Products.PloneMeeting.profiles import MeetingConfigDescriptor
+from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import computeCertifiedSignatures
 from Products.PloneMeeting.utils import createOrUpdatePloneGroup
 from Products.PloneMeeting.utils import duplicate_workflow
@@ -1028,38 +1025,6 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         schemata="data",
-        write_permission="PloneMeeting: Write risky config",
-    ),
-    LinesField(
-        name='usedPollTypes',
-        widget=InAndOutWidget(
-            description="UsedPollTypes",
-            description_msgid="used_poll_types_descr",
-            label='Usedpolltypes',
-            label_msgid='PloneMeeting_label_usedPollTypes',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="data",
-        multiValued=1,
-        vocabulary='listPollTypes',
-        default=defValues.usedPollTypes,
-        enforceVocabulary=True,
-        write_permission="PloneMeeting: Write risky config",
-    ),
-    StringField(
-        name='defaultPollType',
-        widget=SelectionWidget(
-            description="DefaultPollType",
-            description_msgid="default_poll_type_descr",
-            format="select",
-            label='Defaultpolltype',
-            label_msgid='PloneMeeting_label_defaultPollType',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="data",
-        vocabulary='listPollTypes',
-        default=defValues.defaultPollType,
-        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
     StringField(
@@ -2419,7 +2384,6 @@ schema = Schema((
             label='Usevotes',
             label_msgid='PloneMeeting_label_useVotes',
             i18n_domain='PloneMeeting',
-            visible=False,
         ),
         schemata="votes",
         write_permission="PloneMeeting: Write risky config",
@@ -2433,12 +2397,43 @@ schema = Schema((
             label='Votesencoder',
             label_msgid='PloneMeeting_label_votesEncoder',
             i18n_domain='PloneMeeting',
-            visible=False,
         ),
         schemata="votes",
         multiValued=1,
         vocabulary='listVotesEncoders',
         default=defValues.votesEncoder,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    LinesField(
+        name='usedPollTypes',
+        widget=InAndOutWidget(
+            description="UsedPollTypes",
+            description_msgid="used_poll_types_descr",
+            label='Usedpolltypes',
+            label_msgid='PloneMeeting_label_usedPollTypes',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="votes",
+        multiValued=1,
+        vocabulary='listPollTypes',
+        default=defValues.usedPollTypes,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    StringField(
+        name='defaultPollType',
+        widget=SelectionWidget(
+            description="DefaultPollType",
+            description_msgid="default_poll_type_descr",
+            format="select",
+            label='Defaultpolltype',
+            label_msgid='PloneMeeting_label_defaultPollType',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="votes",
+        vocabulary='listPollTypes',
+        default=defValues.defaultPollType,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
@@ -2451,7 +2446,6 @@ schema = Schema((
             label='Usedvotevalues',
             label_msgid='PloneMeeting_label_usedVoteValues',
             i18n_domain='PloneMeeting',
-            visible=False,
         ),
         schemata="votes",
         multiValued=1,
@@ -2460,19 +2454,37 @@ schema = Schema((
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
-    StringField(
-        name='defaultVoteValue',
-        widget=SelectionWidget(
-            description="DefaultVoteValue",
-            description_msgid="default_vote_value_descr",
-            label='Defaultvotevalue',
-            label_msgid='PloneMeeting_label_defaultVoteValue',
+    LinesField(
+        name='firstLinkedVoteUsedVoteValues',
+        widget=MultiSelectionWidget(
+            description="FirstLinkedVoteUsedVoteValues",
+            description_msgid="first_linked_vote_used_vote_values_descr",
+            format="checkbox",
+            label='Firstlinkedvoteusedvotevalues',
+            label_msgid='PloneMeeting_label_firstLinkedVoteUsedVoteValues',
             i18n_domain='PloneMeeting',
-            visible=False,
         ),
         schemata="votes",
+        multiValued=1,
         vocabulary='listAllVoteValues',
-        default=defValues.defaultVoteValue,
+        default=defValues.firstLinkedVoteUsedVoteValues,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    LinesField(
+        name='nextLinkedVotesUsedVoteValues',
+        widget=MultiSelectionWidget(
+            description="NextLinkedVotesUsedVoteValues",
+            description_msgid="next_linked_votes_used_vote_values_descr",
+            format="checkbox",
+            label='nextlinkedvotesusedvotevalues',
+            label_msgid='PloneMeeting_label_nextLinkedVotesUsedVoteValues',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="votes",
+        multiValued=1,
+        vocabulary='listAllVoteValues',
+        default=defValues.nextLinkedVotesUsedVoteValues,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
@@ -2486,7 +2498,6 @@ schema = Schema((
             label='Votecondition',
             label_msgid='PloneMeeting_label_voteCondition',
             i18n_domain='PloneMeeting',
-            visible=False,
         ),
         schemata="votes",
         write_permission="PloneMeeting: Write risky config",
@@ -3209,6 +3220,23 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # need to use ICriteria.edit to make change persistent
                 criteria.edit(criterion.__name__, **{'default': value})
         self.getField('maxShownListings').set(self, value, **kwargs)
+
+    security.declarePublic('getUsedVoteValues')
+
+    def getUsedVoteValues(self,
+                          used_values_attr='usedVoteValues',
+                          include_not_encoded=False,
+                          **kwargs):
+        '''Overridde 'usedVoteValues' field accessor.
+           Manage in p_used_values_attr from which attr we get the value,
+           'usedVoteValues' by default but may be
+           'firstLinkedVoteUsedVoteValues' or 'nextLinkedVotesUsedVoteValues'.
+           Manage also the 'include_not_encoded' technical vote value.'''
+        res = self.getField(used_values_attr).get(self, **kwargs)
+        # include special value NOT_ENCODED_VOTE_VALUE
+        if include_not_encoded:
+            res = (NOT_ENCODED_VOTE_VALUE, ) + res
+        return res
 
     def getItemDecidedStates(self):
         '''Return list of item decided states.'''
@@ -4835,7 +4863,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         d = "PloneMeeting"
         res = DisplayList((
             ("aMeetingManager", translate('a_meeting_manager', domain=d, context=self.REQUEST)),
-            ("theVoterHimself", translate('the_voter_himself', domain=d, context=self.REQUEST)),
+            # ("theVoterHimself", translate('the_voter_himself', domain=d, context=self.REQUEST)),
         ))
         return res
 
@@ -4878,12 +4906,16 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     def listPollTypes(self):
         res = [
+            ("out_loud",
+             translate('polltype_out_loud',
+                       domain='PloneMeeting',
+                       context=self.REQUEST)),
             ("freehand",
              translate('polltype_freehand',
                        domain='PloneMeeting',
                        context=self.REQUEST)),
-            ("no_vote",
-             translate('polltype_no_vote',
+            ("mechanical",
+             translate('polltype_mechanical',
                        domain='PloneMeeting',
                        context=self.REQUEST)),
             ("secret",
@@ -4892,6 +4924,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                        context=self.REQUEST)),
             ("secret_separated",
              translate('polltype_secret_separated',
+                       domain='PloneMeeting',
+                       context=self.REQUEST)),
+            ("no_vote",
+             translate('polltype_no_vote',
                        domain='PloneMeeting',
                        context=self.REQUEST)),
         ]
@@ -4999,7 +5035,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def listAllVoteValues(self):
         d = "PloneMeeting"
         res = DisplayList((
-            ("not_yet", translate('vote_value_not_yet', domain=d, context=self.REQUEST)),
             ("yes", translate('vote_value_yes', domain=d, context=self.REQUEST)),
             ("no", translate('vote_value_no', domain=d, context=self.REQUEST)),
             ("abstain", translate('vote_value_abstain', domain=d, context=self.REQUEST)),
@@ -5011,8 +5046,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             ("not_found", translate('vote_value_not_found',
                                     domain=d,
                                     context=self.REQUEST)),
-            # 'invalid' represents, when the vote is done manually, an invalid
-            # ballot.
+            # 'invalid' represents, when the vote is done manually, an invalid ballot.
             ("invalid", translate('vote_value_invalid',
                                   domain=d,
                                   context=self.REQUEST)),
@@ -5194,8 +5228,15 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('isVotable')
 
     def isVotable(self, item):
-        # exec 'condition = %s' % self.getVoteCondition()
-        return True
+        extra_expr_ctx = _base_extra_expr_ctx(item)
+        extra_expr_ctx.update({'item': item})
+        res = _evaluateExpression(
+            item,
+            expression=self.getVoteCondition(),
+            roles_bypassing_expression=[],
+            extra_expr_ctx=extra_expr_ctx,
+            empty_expr_is_true=True)
+        return res
 
     security.declarePublic('deadlinesAreEnabled')
 

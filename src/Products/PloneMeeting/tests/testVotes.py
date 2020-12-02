@@ -2,365 +2,615 @@
 #
 # File: testVotes.py
 #
-# Copyright (c) 2015 by Imio.be
-#
-# GNU General Public License (GPL)
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
-# 02110-1301, USA.
-#
 
 from AccessControl import Unauthorized
 from DateTime import DateTime
+from Products.PloneMeeting.browser.itemvotes import secret_votes_default
+from Products.PloneMeeting.browser.itemvotes import votes_default
+from Products.PloneMeeting.browser.itemvotes import IEncodeSecretVotes
 from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
+from Products.PloneMeeting.config import NOT_VOTABLE_LINKED_TO_VALUE
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from zope.i18n import translate
-
-
-################################################################################
-#                                                                              #
-#               VOTES TESTS ARE NOT LAUNCHED FOR NOW !!!                       #
-#                                                                              #
-#               SEE TEST SUITE PREFIX AT THE END OF FILE !!!                   #
-#                                                                              #
-################################################################################
+from zope.interface import Invalid
 
 
 class testVotes(PloneMeetingTestCase):
-    '''Tests various aspects of votes management.
-       Advices are enabled for PloneMeeting Assembly, not for PloneGov Assembly.
-       By default, vote are encoded by 'theVoterHimself'.'''
+    '''Tests various aspects of votes management.'''
 
     def setUp(self):
         # call parent setUp
         super(testVotes, self).setUp()
-        # avoid recurring items
-        self.changeUser('admin')
-        self.meetingConfig.recurringitems.manage_delObjects(
-            [self.meetingConfig.recurringitems.objectValues()[0].getId(), ])
+        self._setUpOrderedContacts()
+        self._removeConfigObjectsFor(self.meetingConfig)
 
-    def test_pm_MayConsultVotes(self):
-        '''Test when a user may consult votes...'''
-        # creator an item
+    def _createMeetingWithVotes(self, include_yes=True):
+        """ """
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime('2020/11/09'))
+        public_item = self.create('MeetingItem')
+        secret_item = self.create('MeetingItem', pollType='secret')
+        self.presentItem(public_item)
+        if include_yes:
+            yes_public_item = self.create('MeetingItem')
+            self.presentItem(yes_public_item)
+        self.presentItem(secret_item)
+        if include_yes:
+            yes_secret_item = self.create('MeetingItem', pollType='secret')
+            self.presentItem(yes_secret_item)
+        voters = meeting.getVoters()
+        # public votes
+        public_votes = public_item.getItemVotes()[0]
+        public_votes['voters'][voters[0]] = "yes"
+        public_votes['voters'][voters[1]] = "yes"
+        public_votes['voters'][voters[2]] = "no"
+        public_votes['voters'][voters[3]] = "abstain"
+        meeting.setItemPublicVote(public_item, public_votes, 0)
+        # encode secret votes
+        secret_votes = secret_item.getItemVotes()[0]
+        secret_votes['votes']['abstain'] = 2
+        secret_votes['votes']['no'] = 1
+        secret_votes['votes']['yes'] = 1
+        meeting.setItemSecretVote(secret_item, secret_votes, 0)
+        # all yes public votes
+        if include_yes:
+            public_votes['voters'][voters[2]] = "yes"
+            public_votes['voters'][voters[3]] = "yes"
+            meeting.setItemPublicVote(yes_public_item, public_votes, 0)
+            # all yes secret votes
+            secret_votes['votes']['abstain'] = 0
+            secret_votes['votes']['no'] = 0
+            secret_votes['votes']['yes'] = 4
+            meeting.setItemSecretVote(yes_secret_item, secret_votes, 0)
+        res = meeting, public_item, secret_item
+        if include_yes:
+            res = meeting, public_item, yes_public_item, secret_item, yes_secret_item
+        return res
+
+    def test_pm_ShowVotes(self):
+        """Votes are only shown on an item presented to a meeting,
+           unless pollType is "no_vote"."""
+        cfg = self.meetingConfig
+        self.changeUser('pmManager')
+        self.assertTrue(cfg.getUseVotes())
+        meeting = self.create('Meeting', date=DateTime('2020/11/17'))
+        self.assertTrue(meeting.getVoters())
+        item = self.create('MeetingItem')
+        self.assertFalse(item.showVotes())
+        self.presentItem(item)
+        self.assertEqual(item.getPollType(), 'freehand')
+        self.assertTrue(item.showVotes())
+        item.setPollType('secret')
+        self.assertTrue(item.showVotes())
+        item.setPollType('no_vote')
+        self.assertFalse(item.showVotes())
+        item.setPollType('secret')
+        self.assertTrue(item.showVotes())
+        # disable votes
+        cfg.setUseVotes(False)
+        # still shown because voters
+        self.assertTrue(item.showVotes())
+
+        # do not showVotes if not voter
+        # this will avoid showing votes on older
+        # meeting where votes were not enabled
+        no_vote_meeting = self.create('Meeting', date=DateTime('2020/11/19'))
+        no_vote_item = self.create('MeetingItem')
+        self.presentItem(no_vote_item)
+        self.assertFalse(no_vote_meeting.getVoters())
+        self.assertFalse(no_vote_item.getItemVoters())
+        self.assertFalse(no_vote_item.showVotes())
+        # even if enabled, if nothing to show, nothing shown
+        cfg.setUseVotes(True)
+        self.assertFalse(no_vote_item.showVotes())
+
+    def test_pm_GetItemVotes(self):
+        """Returns votes on an item."""
+        self.changeUser('pmManager')
+        public_item = self.create('MeetingItem')
+        secret_item = self.create('MeetingItem', pollType='secret')
+        meeting = self.create('Meeting', date=DateTime('2020/11/10'))
+        # return an empty list of not linked to a meeting
+        self.assertEqual(public_item.getItemVotes(), [])
+        self.assertEqual(secret_item.getItemVotes(), [])
+        self.presentItem(public_item)
+        self.presentItem(secret_item)
+        # return an empty vote when nothing encoded
+        # when include_unexisting=True (default)
+        public_vote = public_item.getItemVotes()[0]
+        secret_vote = secret_item.getItemVotes()[0]
+        self.assertEqual(public_vote['vote_number'], 0)
+        self.assertEqual(secret_vote['vote_number'], 0)
+        # voters are on public vote
+        voters = meeting.getVoters()
+        self.assertEqual(sorted(public_vote['voters'].keys()), sorted(voters))
+        # not on secret
+        self.assertFalse('voters' in secret_vote)
+        self.assertTrue('votes' in secret_vote)
+        self.assertTrue('yes' in secret_vote['votes'])
+        self.assertTrue('no' in secret_vote['votes'])
+        self.assertTrue('abstain' in secret_vote['votes'])
+
+    def test_pm_PrintVotes(self):
+        """Test the print_votes helper."""
+        meeting, public_item, yes_public_item, secret_item, yes_secret_item = \
+            self._createMeetingWithVotes()
+
+        # print_votes
+        view = public_item.restrictedTraverse('document-generation')
+        helper_public = view.get_generation_context_helper()
+        view = yes_public_item.restrictedTraverse('document-generation')
+        helper_yes_public = view.get_generation_context_helper()
+        view = secret_item.restrictedTraverse('document-generation')
+        helper_secret = view.get_generation_context_helper()
+        view = yes_secret_item.restrictedTraverse('document-generation')
+        helper_yes_secret = view.get_generation_context_helper()
+        # public vote
+        self.assertEqual(helper_public.print_votes(),
+                         u'<p>Par 2 voix pour, une voix contre et une abstention,</p>')
+        self.assertEqual(helper_public.print_votes(single_vote_value=u"1"),
+                         u'<p>Par 2 voix pour, 1 voix contre et 1 abstention,</p>')
+        # public vote all yes
+        self.assertEqual(helper_yes_public.print_votes(),
+                         u"<p>\xc0 l'unanimit\xe9,</p>")
+        # secret vote
+        self.assertEqual(helper_secret.print_votes(),
+                         u'<p>Au scrutin secret,</p>'
+                         u'<p>Par une voix pour, une voix contre et 2 abstentions,</p>')
+        # public vote all yes and secret_intro
+        self.assertEqual(helper_yes_secret.print_votes(secret_intro=u"<p>À bulletin secret,</p>"),
+                         u"<p>\xc0 bulletin secret,</p>"
+                         u"<p>\xc0 l'unanimit\xe9,</p>")
+
+    def test_pm_ItemDeleteVoteView(self):
+        """This view will remove a vote, only doable by MeetingManagers."""
+        self.changeUser('pmManager')
+        meeting, public_item, yes_public_item, secret_item, yes_secret_item = \
+            self._createMeetingWithVotes()
+
         self.changeUser('pmCreator1')
-        data = {
-            'title': 'Item to vote on',
-            'category': 'maintenance',
-        }
-        item1 = self.create('MeetingItem', **data)
-        item1.setDecision('<p>A decision</p>')
-        # nobody can consult votes until the item is presented
-        self._checkVotesNotConsultableFor(item1, userIds=['pmCreator1', ])
-        self.proposeItem(item1)
-        self._checkVotesNotConsultableFor(item1, userIds=['pmCreator1', 'pmReviewer1', 'voter1', 'voter2', ])
-        self.changeUser('pmReviewer1')
-        self.validateItem(item1)
-        self._checkVotesNotConsultableFor(item1, userIds=['pmCreator1', 'pmReviewer1', 'voter1', 'voter2', ])
+        delete_view = public_item.restrictedTraverse('@@item_delete_vote')
+        self.assertRaises(Unauthorized, delete_view, 0, redirect=False)
         self.changeUser('pmManager')
-        m1 = self.create('Meeting', date=DateTime('2008/06/12 08:00:00'))
-        self.presentItem(item1)
-        # even while presented, creators and reviewers
-        # can not consult votes
-        self._checkVotesNotConsultableFor(item1, userIds=['pmCreator1', 'pmReviewer1', 'voter1', 'voter2', ])
-        # decide the meeting
+        self.assertTrue(delete_view.context.getItemVotes(include_unexisting=False))
+        delete_view(0, redirect=False)
+        self.assertFalse(delete_view.context.getItemVotes(include_unexisting=False))
+
+    def test_pm_ItemDeleteVoteViewCanNotDeleteFirstLinkedVote(self):
+        """When votes are linked, the first linked vote may not be deleted."""
         self.changeUser('pmManager')
-        self.decideMeeting(m1)
-        # now that the meeting is decided, votes are consultable by everybody
-        self._checkVotesConsultableFor(item1)
-        # close the meeting so items are decided
-        self.closeMeeting(m1)
-        self._checkVotesConsultableFor(item1)
+        meeting, public_item, yes_public_item, secret_item, yes_secret_item = \
+            self._createMeetingWithVotes()
 
-    def _checkVotesConsultableFor(self, item, userIds=['voter1', 'voter2', 'pmCreator1', 'pmReviewer1', 'pmManager', ]):
-        '''Helper method for checking that a user can consult votes.'''
-        originalUserId = self.member.getId()
-        for userId in userIds:
-            self.changeUser(userId)
-            self.failUnless(item.mayConsultVotes())
-        self.changeUser(originalUserId)
+        # set linked votes
+        self.changeUser('pmManager')
+        public_votes = public_item.getItemVotes()[0]
+        meeting.setItemPublicVote(public_item, public_votes, 0)
+        public_votes['linked_to_previous'] = True
+        meeting.setItemPublicVote(public_item, public_votes, 1)
+        self.assertEqual(len(public_item.getItemVotes(include_unexisting=False)), 2)
+        # vote 0 is not deletable
+        self.assertFalse(public_item._voteIsDeletable(0))
+        self.assertTrue(public_item._voteIsDeletable(1))
+        delete_view = public_item.restrictedTraverse('@@item_delete_vote')
+        self.assertRaises(AssertionError, delete_view, object_uid=0)
+        # delete vote 1, then vote 0 is deletable
+        delete_view(object_uid=1)
+        self.assertTrue(public_item._voteIsDeletable(0))
+        delete_view(object_uid=0)
+        self.assertFalse(public_item.getItemVotes(include_unexisting=False))
 
-    def _checkVotesNotConsultableFor(self, item, userIds=['voter1',
-                                                          'voter2',
-                                                          'pmCreator1',
-                                                          'pmReviewer1',
-                                                          'pmManager', ]):
-        '''Helper method for checking that a user can NOT consult votes.'''
-        originalUserId = self.member.getId()
-        for userId in userIds:
-            self.changeUser(userId)
-            self.failIf(item.mayConsultVotes())
-        self.changeUser(originalUserId)
+    def test_pm_ItemDeleteVoteViewDeleteSeveralNotLinkedVotes(self):
+        """When votes are not linked, any may be deleted."""
+        self.changeUser('pmManager')
+        meeting, public_item, yes_public_item, secret_item, yes_secret_item = \
+            self._createMeetingWithVotes()
 
-    def test_pm_MayEditVotes(self):
-        '''Test the MeetingItem.mayEditVotes method.
-           Only MeetingManagers (depending on MeetingConfig.votesEncoder)
-           can edit every votes when the item is linked to a meeting.'''
-        # creator an item
+        # add several votes
+        self.changeUser('pmManager')
+        public_votes = public_item.getItemVotes()[0]
+        meeting.setItemPublicVote(public_item, public_votes, 0)
+        meeting.setItemPublicVote(public_item, public_votes, 1)
+        meeting.setItemPublicVote(public_item, public_votes, 2)
+        self.assertEqual(len(public_item.getItemVotes(include_unexisting=False)), 3)
+        self.assertTrue(public_item._voteIsDeletable(0))
+        self.assertTrue(public_item._voteIsDeletable(1))
+        self.assertTrue(public_item._voteIsDeletable(2))
+        delete_view = public_item.restrictedTraverse('@@item_delete_vote')
+        delete_view(object_uid=1)
+        # vote 2 is not vote 1
+        delete_view(object_uid=1)
+        delete_view(object_uid=0)
+
+    def test_pm_CanNotUnselectVoterOnMeetingIfUsedOnItem(self):
+        """This will not be possible to unselect a voter on a meeting
+           if it voted on an item :
+           - either public vote;
+           - or secret vote (number of voters).
+        """
+        self.changeUser('pmManager')
+        meeting, public_item, yes_public_item, secret_item, yes_secret_item = \
+            self._createMeetingWithVotes()
+
+        attendee_uids = meeting.getAttendees()
+        # now while validating meeting_attendees, None may be unselected
+        meeting_attendees = ['muser_{0}_attendee'.format(attendee_uid)
+                             for attendee_uid in attendee_uids]
+        meeting_voters = ['muser_{0}'.format(attendee_uid)
+                          for attendee_uid in attendee_uids]
+
+        # now test with meeting_attendees
+        self.request.form['meeting_attendees'] = meeting_attendees
+        self.request.form['meeting_voters'] = meeting_voters
+        self.assertEqual(meeting.validate(self.request), {})
+
+        # unselecting one would break validation
+        # public
+        voter0 = meeting_voters.pop(0)
+        self.request.form['meeting_voters'] = meeting_voters
+        public_error_msg = translate(
+            u'can_not_remove_public_voter_voted_on_items',
+            domain='PloneMeeting',
+            mapping={
+                'attendee_title':
+                    u'Monsieur Person1FirstName Person1LastName, '
+                    u'Assembly member 1 (Mon organisation)'},
+            context=self.request)
+        self.assertEqual(
+            meeting.validate(self.request),
+            {'meeting_attendees': public_error_msg})
+        meeting_voters.insert(0, voter0)
+        self.assertEqual(meeting.validate(self.request), {})
+
+        # secret
+        voter0 = meeting_voters.pop(0)
+        # remove public votes
+        delete_view = public_item.restrictedTraverse('@@item_delete_vote')
+        delete_view(0, redirect=False)
+        self.assertEqual(public_item.getItemVotes(include_unexisting=False), [])
+        delete_view = yes_public_item.restrictedTraverse('@@item_delete_vote')
+        delete_view(0, redirect=False)
+        self.assertEqual(yes_public_item.getItemVotes(include_unexisting=False), [])
+        self.request.form['meeting_voters'] = meeting_voters
+        secret_error_msg = translate(
+            u'can_not_remove_secret_voter_voted_on_items',
+            domain='PloneMeeting',
+            context=self.request)
+        self.assertEqual(
+            meeting.validate(self.request),
+            {'meeting_attendees': secret_error_msg})
+        meeting_voters.insert(0, voter0)
+        self.assertEqual(meeting.validate(self.request), {})
+
+    def test_pm_CanNotSetAbsentAnAttendeeThatVoted(self):
+        """ """
+        self.changeUser('pmManager')
+        meeting, public_item, secret_item = \
+            self._createMeetingWithVotes(include_yes=False)
+
+        # byebye person on public_item
+        person1 = self.portal.contacts.get('person1')
+        hp1 = person1.get_held_positions()[0]
+        hp1_uid = hp1.UID()
+        byebye_form = public_item.restrictedTraverse('@@item_byebye_attendee_form')
+        byebye_form.meeting = meeting
+        byebye_form.person_uid = hp1_uid
+        byebye_form.not_present_type = 'excused'
+        byebye_form.apply_until_item_number = '200'
+        byebye_form._doApply()
+        # was not set excused
+        self.assertFalse(meeting.getItemExcused(by_persons=True))
+
+        # now remove hp1 from public_item and secret_item
+        public_votes = public_item.getItemVotes()[0]
+        public_votes['voters'][hp1_uid] = NOT_ENCODED_VOTE_VALUE
+        meeting.setItemPublicVote(public_item, public_votes, 0)
+        # not done because could not be done on secret_item
+        byebye_form._doApply()
+        self.assertFalse(meeting.getItemExcused(by_persons=True))
+        # encode secret votes
+        secret_votes = secret_item.getItemVotes()[0]
+        secret_votes['votes']['yes'] = 0
+        meeting.setItemSecretVote(secret_item, secret_votes, 0)
+        byebye_form._doApply()
+        self.assertEqual(
+            sorted(meeting.getItemExcused(by_persons=True)[hp1_uid]),
+            sorted([public_item.UID(), secret_item.UID()]))
+
+    def test_pm_EncodePublicVotesForm(self):
+        """ """
+        self.changeUser('pmManager')
+        meeting, public_item, secret_item = \
+            self._createMeetingWithVotes(include_yes=False)
+
+        # encode votes form
+        person1 = self.portal.contacts.get('person1')
+        hp1 = person1.get_held_positions()[0]
+        hp1_uid = hp1.UID()
+        person2 = self.portal.contacts.get('person2')
+        hp2 = person2.get_held_positions()[0]
+        hp2_uid = hp2.UID()
+        person3 = self.portal.contacts.get('person3')
+        hp3 = person3.get_held_positions()[0]
+        hp3_uid = hp3.UID()
+        person4 = self.portal.contacts.get('person4')
+        hp4 = person4.get_held_positions()[0]
+        hp4_uid = hp4.UID()
+        votes_form = public_item.restrictedTraverse('@@item_encode_votes_form').form_instance
+        votes_form.meeting = meeting
+        # change vote to all 'no'
+        votes_form.votes = [{'voter_uid': hp1_uid, 'vote_value': 'no'},
+                            {'voter_uid': hp2_uid, 'vote_value': 'no'},
+                            {'voter_uid': hp3_uid, 'vote_value': 'no'},
+                            {'voter_uid': hp4_uid, 'vote_value': 'no'}]
+        votes_form.vote_number = 0
+        votes_form.label = u"My label"
+        votes_form.linked_to_previous = False
+        # only for MeetingManagers
         self.changeUser('pmCreator1')
-        data = {
-            'title': 'Item to vote on',
-            'category': 'maintenance',
-        }
-        item1 = self.create('MeetingItem', **data)
-        item1.setDecision('<p>A decision</p>')
-        # nobody can edit votes until the item is presented
-        self._checkVotesNotEditableFor(item1)
-        self.proposeItem(item1)
-        self._checkVotesNotEditableFor(item1)
-        self.changeUser('pmReviewer1')
-        self.validateItem(item1)
-        self._checkVotesNotEditableFor(item1)
+        self.assertRaises(Unauthorized, votes_form._doApply)
         self.changeUser('pmManager')
-        m1 = self.create('Meeting', date=DateTime('2008/06/12 08:00:00'))
-        self.presentItem(item1)
-        # even while presented, creators, reviewers, voters and MeetingManagers (not in MeetingConfig.votesEncoder)
-        # can not edit votes
-        self._checkVotesNotEditableFor(item1)
-        # check if adding MeetingManagers to MeetingConfig.votesEncoder works
-        self.changeUser('admin')
-        self.meetingConfig.setVotesEncoder(['aMeetingManager', 'theVoterHimself', ])
-        # now MeetingManagers can edit votes
+        self.assertEqual(public_item.getVoteCount('yes'), 2)
+        votes_form._doApply()
+        # votes were updated
+        self.assertEqual(public_item.getVoteCount('yes'), 0)
+        self.assertEqual(public_item.getVoteCount('no'), 4)
+
+    def test_pm_EncodePublicVotesFormLinkedToPrevious(self):
+        """ """
         self.changeUser('pmManager')
-        self._checkVotesEditableFor(item1, userIds=['pmManager', ])
-        # check while meeting evolve
-        lastState = m1.queryState()
-        while not m1.adapted().isDecided():
-            for tr in self._getTransitionsToCloseAMeeting():
-                if tr in self.transitions(m1):
-                    self.do(m1, tr)
-                    break
-            self._checkVotesEditableFor(item1, userIds=['pmManager', ])
-            self._checkVotesNotEditableFor(item1, userIds=['voter1', 'voter2', 'pmCreator1', 'pmReviewer1', ])
-            if m1.queryState() == lastState:
-                raise Exception("Infinite loop...  Not able to find a 'decided' state for the Meeting 'm1'.")
-            else:
-                lastState = m1.queryState()
-        # close the meeting so votes are not editable anymore by anybody
-        self.closeMeeting(m1)
-        self._checkVotesNotEditableFor(item1)
+        meeting, public_item, secret_item = \
+            self._createMeetingWithVotes(include_yes=False)
 
-    def _checkVotesNotEditableFor(self, item, userIds=['voter1', 'voter2', 'pmCreator1', 'pmReviewer1', 'pmManager', ]):
-        '''Helper method for checking that a user can NOT edit votes.'''
-        originalUserId = self.member.getId()
-        for userId in userIds:
-            self.changeUser(userId)
-            self.failIf(item.mayEditVotes())
-        self.changeUser(originalUserId)
+        # encode votes form
+        person1 = self.portal.contacts.get('person1')
+        hp1 = person1.get_held_positions()[0]
+        hp1_uid = hp1.UID()
+        person2 = self.portal.contacts.get('person2')
+        hp2 = person2.get_held_positions()[0]
+        hp2_uid = hp2.UID()
+        person3 = self.portal.contacts.get('person3')
+        hp3 = person3.get_held_positions()[0]
+        hp3_uid = hp3.UID()
+        person4 = self.portal.contacts.get('person4')
+        hp4 = person4.get_held_positions()[0]
+        hp4_uid = hp4.UID()
+        votes_form = public_item.restrictedTraverse('@@item_encode_votes_form').form_instance
+        votes_form.meeting = meeting
+        # there are 'yes' votes so not able to link to previous
+        self.assertEqual(public_item.getVoteCount('yes'), 2)
+        load_view = public_item.restrictedTraverse('@@load_item_assembly_and_signatures')
+        load_view._update()
+        self.assertFalse(load_view.show_add_vote_linked_to_previous_icon(vote_number=0))
 
-    def _checkVotesEditableFor(self, item, userIds=['voter1', 'voter2', 'pmCreator1', 'pmReviewer1', 'pmManager', ]):
-        '''Helper method for checking that a user can edit votes.'''
-        originalUserId = self.member.getId()
-        for userId in userIds:
-            self.changeUser(userId)
-            self.failUnless(item.mayEditVotes())
-        self.changeUser(originalUserId)
+        # make linked vote addable
+        votes_form.votes = [{'voter_uid': hp1_uid, 'vote_value': 'no'},
+                            {'voter_uid': hp2_uid, 'vote_value': 'abstain'},
+                            {'voter_uid': hp3_uid, 'vote_value': NOT_ENCODED_VOTE_VALUE},
+                            {'voter_uid': hp4_uid, 'vote_value': NOT_ENCODED_VOTE_VALUE}]
+        votes_form.vote_number = 0
+        votes_form.label = u"My label"
+        votes_form.linked_to_previous = False
+        votes_form._doApply()
+        load_view._update()
+        self.assertTrue(load_view.show_add_vote_linked_to_previous_icon(vote_number=0))
 
-    def test_pm_OnSaveItemPeopleInfos(self):
-        '''Test the MeetingItem.onSaveItemPeopleInfos method.
-           Only voters and MeetingManagers (depending on MeetingConfig.votesEncoder)
-           can edit votes when the item is linked to a meeting.  MeetingManagers can edit every
-           votes but a voter can only edit his vote.'''
-        # creator an item
+        # add linked vote
+        self.request.set('form.widgets.linked_to_previous', True)
+        self.request.set('vote_number', 1)
+        # votes default only show encodable values for hp3/hp4
+        self.assertEqual(
+            votes_default(public_item),
+            [{'vote_value': NOT_ENCODED_VOTE_VALUE,
+              'voter': hp3_uid,
+              'voter_uid': hp3_uid},
+             {'vote_value': NOT_ENCODED_VOTE_VALUE,
+              'voter': hp4_uid,
+              'voter_uid': hp4_uid}])
+        # apply linked vote
+        votes_form.vote_number = 1
+        votes_form.label = u"My label 1"
+        votes_form.linked_to_previous = True
+        votes_form.votes = [{'voter_uid': hp3_uid, 'vote_value': 'yes'},
+                            {'voter_uid': hp4_uid, 'vote_value': NOT_ENCODED_VOTE_VALUE}]
+        votes_form._doApply()
+        # 2 encoded votes
+        item_votes = public_item.getItemVotes()
+        self.assertEqual(len(item_votes), 2)
+        # votes not useable in vote_number 0 or 1 are marked NOT_VOTABLE_LINKED_TO_VALUE
+        self.assertEqual(item_votes[0]['voters'][hp3_uid], NOT_VOTABLE_LINKED_TO_VALUE)
+        self.assertEqual(item_votes[1]['voters'][hp1_uid], NOT_VOTABLE_LINKED_TO_VALUE)
+        self.assertEqual(item_votes[1]['voters'][hp2_uid], NOT_VOTABLE_LINKED_TO_VALUE)
+        # if not encoded in vote_number 0 and 1, some values appear in both
+        self.assertEqual(item_votes[0]['voters'][hp4_uid], NOT_ENCODED_VOTE_VALUE)
+        self.assertEqual(item_votes[1]['voters'][hp4_uid], NOT_ENCODED_VOTE_VALUE)
+        # finally encode hp4_uid
+        votes_form.votes = [{'voter_uid': hp3_uid, 'vote_value': 'yes'},
+                            {'voter_uid': hp4_uid, 'vote_value': 'yes'}]
+        votes_form._doApply()
+        item_votes = public_item.getItemVotes()
+        self.assertEqual(item_votes[0]['voters'][hp4_uid], NOT_VOTABLE_LINKED_TO_VALUE)
+        self.assertEqual(item_votes[1]['voters'][hp4_uid], 'yes')
+
+    def test_pm_EncodeSecretVotesForm(self):
+        """ """
+        self.changeUser('pmManager')
+        meeting, public_item, secret_item = \
+            self._createMeetingWithVotes(include_yes=False)
+
+        # encode votes form
+        votes_form = secret_item.restrictedTraverse('@@item_encode_secret_votes_form').form_instance
+        votes_form.meeting = meeting
+        votes_form.votes = [
+            {'vote_value': 'yes', 'vote_count': 0, 'vote_value_id': 'yes'},
+            {'vote_value': 'no', 'vote_count': 4, 'vote_value_id': 'no'},
+            {'vote_value': 'abstain', 'vote_count': 0, 'vote_value_id': 'abstain'}]
+        votes_form.vote_number = 0
+        votes_form.label = u"My label"
+        votes_form.linked_to_previous = False
+        # only for MeetingManagers
         self.changeUser('pmCreator1')
-        data = {
-            'title': 'Item to vote on',
-            'category': 'maintenance',
-        }
-        item1 = self.create('MeetingItem', **data)
-        item1.setDecision('<p>A decision</p>')
-        # nobody can save item people infos until the item is presented
-        # nevertheless, if nothing is saved while calling MeetingItem.onSaveItemPeopleInfos
-        # then it is ok...
-        item1.onSaveItemPeopleInfos()
-        # but if we try to save a vote...
-        self.request.set('vote_value_voter1', 'yes')
-        # for now, as the item is not in a meeting, MeetingItem.onSaveItemPeopleInfos
-        # raises KeyError, "Trying to set vote for unexisting voter!"
-        self.assertRaises(KeyError, item1.onSaveItemPeopleInfos)
-        with self.assertRaises(KeyError) as cm:
-            item1.onSaveItemPeopleInfos()
-        self.assertEquals(cm.exception.message, 'Trying to set vote for unexisting voter!')
-        # in fact, no voter available...
-        self.failIf(item1.getAttendees('voter'))
-        self.proposeItem(item1)
-        self.failIf(item1.getAttendees('voter'))
-        self.changeUser('pmReviewer1')
-        self.validateItem(item1)
-        self.failIf(item1.getAttendees('voter'))
-        # ...until the item is in a meeting
+        self.assertRaises(Unauthorized, votes_form._doApply)
         self.changeUser('pmManager')
-        m1 = self.create('Meeting', date=DateTime('2008/06/12 08:00:00'))
-        self.presentItem(item1)
-        self.assertEquals([voter.getId() for voter in item1.getAttendees('voter')], ['voter1', 'voter2', ])
-        # now voters and MeetingManagers can edit votes
-        # a voter can not vote for somebody else
-        # we still have the 'vote_value_voter1', 'yes' in the REQUEST
-        self.changeUser('voter2')
-        self.assertRaises(Unauthorized, item1.onSaveItemPeopleInfos)
-        # the right voter can vote...
-        self.changeUser('voter1')
-        self.failIf(item1.hasVotes())
-        item1.onSaveItemPeopleInfos()
-        self.failUnless('voter1' in item1.votes)
-        # a MeetingManager can vote for another obviously
-        self.changeUser('pmManager')
-        # change voter1 vote value
-        self.assertEquals(item1.votes['voter1'], 'yes')
-        self.request.set('vote_value_voter1', 'no')
-        # warning, a MeetingManager can not change vote value if not in MeetingConfig.votesEncoder...
-        self.assertRaises(Unauthorized, item1.onSaveItemPeopleInfos)
-        # add MeetingManagers to voters
-        self.changeUser('admin')
-        self.meetingConfig.setVotesEncoder(['aMeetingManager', 'theVoterHimself', ])
-        # now a MeetingManager can change a vote value or even vote for an existing voter
-        self.changeUser('pmManager')
-        item1.onSaveItemPeopleInfos()
-        self.assertEquals(item1.votes['voter1'], 'no')
-        # vote for voter2
-        self.request.set('vote_value_voter2', 'yes')
-        item1.onSaveItemPeopleInfos()
-        self.assertEquals(item1.votes.keys(), ['voter1', 'voter2', ])
-        # if a voter try to encode an non existing vote value, it raises ValueError
-        self.request.set('vote_value_voter2', 'wrong_value')
-        with self.assertRaises(ValueError) as cm:
-            item1.onSaveItemPeopleInfos()
-        self.assertEquals(cm.exception.message,
-                          'Trying to set vote with another value than ones defined in meetingConfig.usedVoteValues!')
-        # voters can vote until the meeting is closed
-        lastState = m1.queryState()
-        while not lastState == 'closed':
-            for tr in self._getTransitionsToCloseAMeeting():
-                if tr in self.transitions(m1):
-                    self.do(m1, tr)
-                    break
-            if m1.queryState() == lastState:
-                raise Exception("Infinite loop...  Not able to find a 'closed' state for the Meeting 'm1'.")
-            else:
-                lastState = m1.queryState()
-        # a MeetingManager can not change vote values
-        self.assertRaises(Unauthorized, item1.onSaveItemPeopleInfos)
+        self.assertEqual(secret_item.getVoteCount('yes'), 1)
+        votes_form._doApply()
+        # votes were updated
+        self.assertEqual(secret_item.getVoteCount('yes'), 0)
+        self.assertEqual(secret_item.getVoteCount('no'), 4)
 
-    def test_pm_SecretVotes(self):
-        '''Test the votes functionnality when votes are secret.
-           When votes are secret, only the MeetingManagers can encode votes.'''
-        # creator an item
-        self.changeUser('pmCreator1')
-        data = {
-            'title': 'Item to vote on',
-            'category': 'maintenance',
-        }
-        item1 = self.create('MeetingItem', **data)
-        item1.setDecision('<p>A decision</p>')
-        # present the item in a meeting so votes functionnality is active
-        self.proposeItem(item1)
-        self.changeUser('pmReviewer1')
-        self.validateItem(item1)
+    def test_pm_EncodeSecretVotesFormLinkedToPrevious(self):
+        """ """
         self.changeUser('pmManager')
-        self.create('Meeting', date=DateTime('2008/06/12 08:00:00'))
-        self.presentItem(item1)
-        # votes are not secret by default
-        self.failIf(item1.getVotesAreSecret())
-        # can not switch votes mode to secret if some votes already encoded
-        self.failUnless(item1.maySwitchVotes())
-        # only MeetingManagers can switch votes mode
-        self.changeUser('voter1')
-        self.failIf(item1.maySwitchVotes())
-        # can only switch if no vote encoded
-        self.request.set('vote_value_voter1', 'yes')
-        item1.onSaveItemPeopleInfos()
-        # even then voter can not switch
-        self.failIf(item1.maySwitchVotes())
-        # assert user can not switch votes
-        self.assertRaises(Unauthorized, item1.onSwitchVotes)
-        # and MeetingManagers neither
+        meeting, public_item, secret_item = \
+            self._createMeetingWithVotes(include_yes=False)
+
+        # there are 'yes' votes so not able to link to previous
+        self.assertEqual(secret_item.getVoteCount('yes'), 1)
+        load_view = secret_item.restrictedTraverse('@@load_item_assembly_and_signatures')
+        load_view._update()
+        self.assertFalse(load_view.show_add_vote_linked_to_previous_icon(vote_number=0))
+
+        # make linked vote addable
+        votes_form = secret_item.restrictedTraverse('@@item_encode_secret_votes_form').form_instance
+        votes_form.meeting = meeting
+        votes_form.votes = [
+            {'vote_value': 'yes', 'vote_count': 0, 'vote_value_id': 'yes'},
+            {'vote_value': 'no', 'vote_count': 2, 'vote_value_id': 'no'},
+            {'vote_value': 'abstain', 'vote_count': 0, 'vote_value_id': 'abstain'}]
+        votes_form.vote_number = 0
+        votes_form.label = u"My label"
+        votes_form.linked_to_previous = False
+        votes_form._doApply()
+        load_view._update()
+        self.assertTrue(load_view.show_add_vote_linked_to_previous_icon(vote_number=0))
+
+        # add linked vote
+        self.request.set('form.widgets.linked_to_previous', True)
+        self.request.set('vote_number', 1)
+        # votes default only show encodable values for hp3/hp4
+        self.assertEqual(
+            secret_votes_default(secret_item),
+            [{'vote_value': 'yes', 'vote_count': 0, 'vote_value_id': 'yes'}])
+        # apply linked vote
+        votes_form.vote_number = 1
+        votes_form.label = u"My label 1"
+        votes_form.linked_to_previous = True
+        votes_form.votes = [{'vote_value': 'yes', 'vote_count': 1, 'vote_value_id': 'yes'}]
+        votes_form._doApply()
+        # 2 encoded votes
+        item_votes = secret_item.getItemVotes()
+        self.assertEqual(len(item_votes), 2)
+
+    def test_pm_EncodeSecretVotesFormInvariant(self):
+        """The validate_votes invariant check that encoded values do not
+           overflow maximum number of votes."""
+
+        class DummyData(object):
+            def __init__(self, context, votes, vote_number=0):
+                self.__context__ = context
+                self.votes = votes
+                self.vote_number = vote_number
+
         self.changeUser('pmManager')
-        self.failIf(item1.maySwitchVotes())
-        # switch votes to 'secret'
-        # remove existing votes
-        # if no votes or every votes are 'not_yet' encoded, switch is possible for MeetingManagers
-        self.changeUser('voter1')
-        self.request.set('vote_value_voter1', NOT_ENCODED_VOTE_VALUE)
-        item1.onSaveItemPeopleInfos()
-        # if every encoded votes are NOT_ENCODED_VOTE_VALUE it is considered like 'not votes encoded'
-        self.failIf(item1.hasVotes())
-        # MeetingManager can switch votes even if not in self.meetingConfig.setVotesEncoder
+        meeting, public_item, secret_item = \
+            self._createMeetingWithVotes(include_yes=False)
+
+        # one vote, maximum voter is 4
+        invariant = IEncodeSecretVotes.getTaggedValue('invariants')[0]
+        votes = [
+            {'vote_value': 'yes', 'vote_count': 0, 'vote_value_id': 'yes'},
+            {'vote_value': 'no', 'vote_count': 2, 'vote_value_id': 'no'},
+            {'vote_value': 'abstain', 'vote_count': 0, 'vote_value_id': 'abstain'}]
+        data = DummyData(secret_item, votes)
+        self.assertIsNone(invariant(data))
+        # validation fails if total > 4
+        error_msg = translate('error_can_not_encode_more_than_max_voters',
+                              mapping={'max_voters': 4},
+                              domain='PloneMeeting',
+                              context=self.request)
+        votes = [
+            {'vote_value': 'yes', 'vote_count': 2, 'vote_value_id': 'yes'},
+            {'vote_value': 'no', 'vote_count': 2, 'vote_value_id': 'no'},
+            {'vote_value': 'abstain', 'vote_count': 2, 'vote_value_id': 'abstain'}]
+        data = DummyData(secret_item, votes)
+        with self.assertRaises(Invalid) as cm:
+            invariant(data)
+        self.assertEqual(cm.exception.message, error_msg)
+
+        # linked vote
+        self.request.form['form.widgets.linked_to_previous'] = True
+        # already 4 votes, encoding 0 pass
+        votes = [{'vote_value': 'yes', 'vote_count': 0, 'vote_value_id': 'yes'}, ]
+        data = DummyData(secret_item, votes, vote_number=1)
+        self.assertIsNone(invariant(data))
+        # already 4 votes, encoding 1 would do 5 and fails
+        votes = [{'vote_value': 'yes', 'vote_count': 1, 'vote_value_id': 'yes'}, ]
+        data = DummyData(secret_item, votes, vote_number=1)
+        with self.assertRaises(Invalid) as cm:
+            invariant(data)
+        self.assertEqual(cm.exception.message, error_msg)
+
+    def test_pm_ItemVotesWhenItemRemovedFromMeeting(self):
+        """Ensure Meeting.itemVotes correctly wiped out when item removed from meeting."""
         self.changeUser('pmManager')
-        self.failUnless(item1.maySwitchVotes())
-        # switch votes so!
-        item1.onSwitchVotes()
-        self.failUnless(item1.getVotesAreSecret())
-        # may switch back to 'non secret'
-        self.failUnless(item1.maySwitchVotes())
-        # but no more when some values encoded
-        self.request.set('vote_count_yes', 2)
-        # MeetingManagers can not encode votes if not in MeetingConfig.votesEncoder
-        self.assertRaises(Unauthorized, item1.onSaveItemPeopleInfos)
-        self.changeUser('admin')
-        self.meetingConfig.setVotesEncoder(['aMeetingManager', 'theVoterHimself', ])
+        meeting, public_item, yes_public_item, secret_item, yes_secret_item = \
+            self._createMeetingWithVotes()
+
+        public_item_uid = public_item.UID()
+        self.assertTrue(public_item_uid in meeting.itemVotes)
+        secret_item_uid = secret_item.UID()
+        self.assertTrue(secret_item_uid in meeting.itemVotes)
+        self.backToState(public_item, 'validated')
+        self.assertFalse(public_item_uid in meeting.itemVotes)
+        self.backToState(secret_item, 'validated')
+        self.assertFalse(secret_item_uid in meeting.itemVotes)
+
+    def test_pm_DisplayMeetingItemVoters(self):
+        """The view that displays items for which votes are (not) completed."""
         self.changeUser('pmManager')
-        # encode votes count
-        item1.onSaveItemPeopleInfos()
-        self.assertEquals(item1.votes['yes'], 2)
-        # if a wrong value is encoded, it is ignored and a message is diaplayed to the user
-        # explaining the wrong manipulation he made, the message is added to the request
-        self.failUnless(self.request['peopleMsg'] == u'Changes saved.')
-        self.request.set('vote_count_yes', 3)
-        item1.onSaveItemPeopleInfos()
-        # the value did not changed and a message is added to the request
-        self.assertEquals(item1.votes['yes'], 2)
-        self.failUnless(self.request['peopleMsg'] == translate('vote_count_wrong',
-                                                               domain='PloneMeeting',
-                                                               context=self.request))
-        # the same while doing wrong counts with other vote values
-        self.request.set('vote_count_yes', 1)
-        self.request.set('vote_count_no', 1)
-        self.request.set('vote_count_not_yet', 1)
-        self.assertEquals(item1.votes['yes'], 2)
-        self.failUnless(self.request['peopleMsg'] == translate('vote_count_wrong',
-                                                               domain='PloneMeeting',
-                                                               context=self.request))
-        # if setting anything else but an integer for a vote_count_
-        # does not change anything, but add a message to the request
-        self.request.set('vote_count_yes', 'not_an_integer')
-        item1.onSaveItemPeopleInfos()
-        self.assertEquals(item1.votes['yes'], 2)
-        self.failUnless(self.request['peopleMsg'] == translate('vote_count_not_int',
-                                                               domain='PloneMeeting',
-                                                               context=self.request))
-        # values are encoded so mayNotSwitch
-        self.failIf(item1.maySwitchVotes())
-        # remove encoded votes so MeetingManager can switch
-        # not_yet encoded votes must be total number of available voters
-        self.request.set('vote_count_not_yet', 2)
-        self.request.set('vote_count_no', 0)
-        self.request.set('vote_count_yes', 0)
-        item1.onSaveItemPeopleInfos()
-        self.assertEquals(item1.votes['not_yet'], 2)
-        self.assertEquals(item1.votes['yes'], 0)
-        self.assertEquals(item1.votes['no'], 0)
-        # every votes to not_yet is considered like 'not votes encoded'
-        self.failIf(item1.hasVotes())
-        self.failUnless(item1.maySwitchVotes())
-        # while switching votes, the votes are set back to {}
-        item1.onSwitchVotes()
-        self.assertEquals(item1.votes, {})
-        self.failIf(item1.getVotesAreSecret())
+        meeting, public_item, yes_public_item, secret_item, yes_secret_item = \
+            self._createMeetingWithVotes()
+
+        # for now every voters voted
+        # non voted
+        non_voted_view = meeting.restrictedTraverse('@@display-meeting-item-voters')
+        self.assertEqual(non_voted_view.getNonVotedItems(),
+                         {'secret': [], 'public': []})
+        non_voted_view()
+        # voted
+        voted_view = meeting.restrictedTraverse('@@display-meeting-item-voters')
+        voted_view.show_voted_items = True
+        voted_items = voted_view.getVotedItems()
+        self.assertTrue(public_item in voted_items['public'])
+        self.assertTrue(yes_public_item in voted_items['public'])
+        self.assertTrue(secret_item in voted_items['secret'])
+        self.assertTrue(yes_secret_item in voted_items['secret'])
+        voted_view()
+
+        # remove one voter on public_item and secret_item
+        # public vote
+        voters = meeting.getVoters()
+        public_votes = public_item.getItemVotes()[0]
+        public_votes['voters'][voters[0]] = NOT_ENCODED_VOTE_VALUE
+        meeting.setItemPublicVote(public_item, public_votes, 0)
+        # secret vote
+        secret_votes = secret_item.getItemVotes()[0]
+        secret_votes['votes']['yes'] = 0
+        meeting.setItemSecretVote(secret_item, secret_votes, 0)
+        # non voted
+        non_voted_items = non_voted_view.getNonVotedItems()
+        self.assertTrue(public_item in non_voted_items['public'])
+        self.assertTrue(secret_item in non_voted_items['secret'])
+        non_voted_view()
+        # voted
+        voted_items = voted_view.getVotedItems()
+        self.assertFalse(public_item in voted_items['public'])
+        self.assertFalse(secret_item in voted_items['secret'])
+        voted_view()
 
 
 def test_suite():
     from unittest import TestSuite, makeSuite
     suite = TestSuite()
-    suite.addTest(makeSuite(testVotes, prefix='test_pm_xxx'))
+    suite.addTest(makeSuite(testVotes, prefix='test_pm_'))
     return suite

@@ -2,7 +2,9 @@
      i18n:domain="PloneMeeting"
      class="meeting_item_not_present_tooltipster"
      tal:define="viewableItemNotPresent view/getItemsForNotPresent">
-  <h4><span i18n:translate="">This attendee is marked as <span i18n:name="not_present_type" i18n:translate="" tal:content="string:item_not_present_type_${view/not_present_type}">not present type</span> for following items</span> :</h4>
+  <h4><span i18n:translate="">This attendee is marked as
+    <span i18n:name="not_present_type" i18n:translate="" tal:content="string:item_not_present_type_${view/not_present_type}">not present type</span> for the
+    <span i18n:name="number" tal:content="python: len(viewableItemNotPresent)">number</span> following items</span> :</h4>
   <ul tal:condition="viewableItemNotPresent">
     <li tal:repeat="item viewableItemNotPresent">
       <span tal:content="python: item.getItemNumber(for_display=True)" />. <span tal:replace="structure item/getPrettyLink" /></li>

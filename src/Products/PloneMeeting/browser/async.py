@@ -2,12 +2,14 @@
 
 from AccessControl import Unauthorized
 from imio.helpers.cache import get_cachekey_volatile
+from imio.helpers.content import get_vocab
 from plone import api
 from plone.memoize import ram
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.utils import _checkPermission
 from Products.Five import BrowserView
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
+from Products.PloneMeeting.config import NOT_VOTABLE_LINKED_TO_VALUE
 from Products.PloneMeeting.config import WriteBudgetInfos
 from Products.PloneMeeting.utils import sendMailIfRelevant
 from zope.i18n import translate
@@ -311,4 +313,197 @@ class AsyncLoadLinkedItems(BrowserView):
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
         self.portal_url = api.portal.get().absolute_url()
+        return self.index()
+
+
+class AsyncLoadItemAssemblyAndSignatures(BrowserView):
+    """ """
+
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+        self.portal = api.portal.get()
+        self.portal_url = self.portal.absolute_url()
+
+    def show(self):
+        """ """
+        return self.meeting is not None
+
+    def vote_counts(self):
+        """Returns informations regarding votes count."""
+        data = []
+        counts = []
+        for vote_number in range(len(self.itemVotes)):
+            sub_counts = []
+            total_votes = self.context.getVoteCount('any_votable', vote_number)
+            number_of_votes_msg = translate(
+                'number_of_voters', domain='PloneMeeting', context=self.request)
+            res = [u'<span title="{0}">{1}</span>'.format(
+                number_of_votes_msg,
+                total_votes)]
+            # specify how much voted for this vote if secret
+            if self.votesAreSecret:
+                voted = self.context.getVoteCount('any_voted', vote_number)
+                total_votes = "{0} / {1}".format(voted, total_votes)
+            sub_counts.append((number_of_votes_msg, total_votes, 'vote_value_number_of_voters'))
+
+            pattern = u'<span class="vote_value_{0}" title="{1}">{2}</span>'
+            used_vote_terms = get_vocab(
+                self.context,
+                "Products.PloneMeeting.vocabularies.usedvotevaluesvocabulary",
+                vote_number=vote_number)
+            usedVoteValues = [term.token for term in used_vote_terms._terms]
+            for usedVoteValue in usedVoteValues:
+                translated_used_vote_value = translate(
+                    'vote_value_{0}'.format(usedVoteValue),
+                    domain='PloneMeeting',
+                    context=self.request)
+                count = self.context.getVoteCount(usedVoteValue, vote_number)
+                res.append(pattern.format(
+                    usedVoteValue,
+                    translated_used_vote_value,
+                    count))
+                sub_counts.append((translated_used_vote_value, count, 'vote_value_' + usedVoteValue))
+            votes = u" / ".join(res)
+            data.append(votes)
+            counts.append(sub_counts)
+        return data, counts
+
+    def compute_next_vote_number(self):
+        """Return next vote_number."""
+        return len(self.itemVotes)
+
+    def show_add_vote_linked_to_previous_icon(self, vote_number):
+        """Show add linked_to_previous icon only on last element.
+           More over, may only add linked_to_previous if :
+           - already a linked_to_previous element;
+           - not linked_to_previous element does not use forbidden vote_values,
+             aka vote_values not in MeetingConfig.firstLinkedVoteUsedVoteValues."""
+        res = False
+        vote_infos = self.itemVotes[vote_number]
+        if (vote_infos['vote_number'] + 1 == self.next_vote_number):
+            if vote_infos['linked_to_previous']:
+                res = True
+            else:
+                # check vote_values not out of MeetingConfig.firstLinkedVoteUsedVoteValues
+                if self.votesAreSecret:
+                    vote_values = [vote_value for vote_value, vote_count
+                                   in vote_infos['votes'].items()
+                                   if vote_count and vote_value in self.cfg.getUsedVoteValues()]
+                else:
+                    vote_values = [vote_value for vote_value in vote_infos['voters'].values()]
+                if not set(vote_values).difference(
+                    self.cfg.getUsedVoteValues(
+                        used_values_attr='firstLinkedVoteUsedVoteValues',
+                        include_not_encoded=True)):
+                    res = True
+        return res
+
+    def __call___cachekey(method, self):
+        '''cachekey method for self.__call__.
+           Cache is invalidated depending on :
+           - current user may edit or not;
+           - something is redefined for current item or not.'''
+        date = get_cachekey_volatile(
+            'Products.PloneMeeting.browser.async.AsyncLoadItemAssemblyAndSignatures')
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
+        cfg_modified = cfg.modified()
+        meeting = self.context.getMeeting()
+        ordered_contacts = meeting.orderedContacts.items()
+        redefined_item_attendees = meeting._get_all_redefined_attendees(only_keys=False)
+        show_votes = self.context.showVotes()
+        item_votes = self.context.getItemVotes(include_vote_number=False)
+        context_uid = self.context.UID()
+        # if something redefined for context or not
+        if context_uid not in str(redefined_item_attendees):
+            redefined_item_attendees = []
+        may_change_attendees = self.context._mayChangeAttendees()
+        poll_type = self.context.getPollType()
+        cache_date = self.request.get('cache_date', None)
+        return (date,
+                self.context.UID(),
+                cfg_modified,
+                ordered_contacts,
+                redefined_item_attendees,
+                show_votes,
+                item_votes,
+                may_change_attendees,
+                poll_type,
+                cache_date)
+
+    def _update(self):
+        """ """
+        self.error_msg = self.request.get('attendees_error_msg')
+        self.tool = api.portal.get_tool('portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(self.context)
+        self.usedMeetingAttrs = self.cfg.getUsedMeetingAttributes()
+        self.meeting = self.context.getMeeting()
+        self.showVotes = self.context.showVotes()
+        if self.showVotes:
+            self.votesAreSecret = self.context.getVotesAreSecret()
+            self.voters = self.context.getItemVoters() or []
+            self.itemVotes = self.context.getItemVotes(
+                include_unexisting=True,
+                ignored_vote_values=[NOT_VOTABLE_LINKED_TO_VALUE]) or []
+            self.voted_voters = ()
+            if not self.votesAreSecret:
+                self.voted_voters = self.context.get_voted_voters()
+            self.next_vote_number = self.compute_next_vote_number()
+            vote_counts = self.vote_counts()
+            self.displayable_counts = vote_counts[0]
+            self.counts = vote_counts[1]
+        else:
+            self.votesAreSecret = False
+            self.voters = []
+            self.itemVotes = []
+            self.voted_voters = []
+            self.next_vote_number = None
+            self.counts = None
+
+    @ram.cache(__call___cachekey)
+    def __call__(self):
+        """ """
+        self._update()
+        return self.index()
+
+
+class AsyncLoadMeetingAssemblyAndSignatures(BrowserView):
+    """ """
+
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+        self.portal = api.portal.get()
+        self.portal_url = self.portal.absolute_url()
+
+    def __call___cachekey(method, self):
+        '''cachekey method for self.__call__.
+           Cache is invalidated depending on :
+           - current user may edit or not;
+           - something is redefined for current item or not.'''
+        date = get_cachekey_volatile(
+            'Products.PloneMeeting.browser.async.AsyncLoadMeetingAssemblyAndSignatures')
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
+        cfg_modified = cfg.modified()
+        ordered_contacts = self.context.orderedContacts.items()
+        item_votes = self.context.getItemVotes()
+        context_uid = self.context.UID()
+        cache_date = self.request.get('cache_date', None)
+        return (date,
+                cfg_modified,
+                ordered_contacts,
+                item_votes,
+                context_uid,
+                cache_date)
+
+    @ram.cache(__call___cachekey)
+    def __call__(self):
+        """ """
+        self.tool = api.portal.get_tool('portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(self.context)
+        self.usedAttrs = self.cfg.getUsedMeetingAttributes()
+        self.showVoters = self.cfg.getUseVotes()
+        self.voters = self.context.getVoters()
         return self.index()

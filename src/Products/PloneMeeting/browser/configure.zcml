@@ -304,6 +304,20 @@
 
     <browser:page
       for="Products.PloneMeeting.interfaces.IMeetingItem"
+      name="load_item_assembly_and_signatures"
+      template="templates/itemassemblyandsignatures.pt"
+      class=".async.AsyncLoadItemAssemblyAndSignatures"
+      permission="zope2.View" />
+
+    <browser:page
+      for="Products.PloneMeeting.interfaces.IMeeting"
+      name="load_meeting_assembly_and_signatures"
+      template="templates/meetingassemblyandsignatures.pt"
+      class=".async.AsyncLoadMeetingAssemblyAndSignatures"
+      permission="zope2.View" />
+
+    <browser:page
+      for="Products.PloneMeeting.interfaces.IMeetingItem"
       name="header"
       template="templates/header_item.pt"
       class=".views.ItemHeaderView"
@@ -342,8 +356,14 @@
       name="display-meeting-item-signatories"
       template="templates/meeting_item_signatories.pt"
       class=".views.DisplayMeetingItemSignatories"
-      permission="zope2.View"
-      />
+      permission="zope2.View" />
+
+    <browser:page
+      for="Products.PloneMeeting.interfaces.IMeetingContent"
+      name="display-meeting-item-voters"
+      template="templates/meeting_item_voters.pt"
+      class=".views.DisplayMeetingItemVoters"
+      permission="zope2.View" />
 
     <!-- Custom view for meetingadvice -->
     <browser:page
@@ -377,39 +397,57 @@
         for="Products.PloneMeeting.interfaces.IMeetingItem"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         name="item_byebye_attendee_form"
-        class=".itemattendee.ByeByeAttendeeFormWrapper"
+        class=".itemattendee.ByeByeAttendeeForm"
         permission="zope2.View" />
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingItem"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         name="item_welcome_attendee_form"
-        class=".itemattendee.WelcomeAttendeeFormWrapper"
+        class=".itemattendee.WelcomeAttendeeForm"
         permission="zope2.View" />
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingItem"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         name="item_byebye_nonattendee_form"
-        class=".itemattendee.ByeByeNonAttendeeFormWrapper"
+        class=".itemattendee.ByeByeNonAttendeeForm"
         permission="zope2.View" />
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingItem"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         name="item_welcome_nonattendee_form"
-        class=".itemattendee.WelcomeNonAttendeeFormWrapper"
+        class=".itemattendee.WelcomeNonAttendeeForm"
         permission="zope2.View" />
+    <browser:page
+       for="Products.PloneMeeting.interfaces.IMeetingItem"
+       layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+       name="item_redefine_signatory_form"
+       class=".itemattendee.RedefinedSignatoryForm"
+       permission="zope2.View" />
      <browser:page
-        for="Products.PloneMeeting.interfaces.IMeetingItem"
-        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
-        name="item_redefine_signatory_form"
-        class=".itemattendee.RedefinedSignatoryFormWrapper"
-        permission="zope2.View" />
-      <browser:page
-        for="Products.PloneMeeting.interfaces.IMeetingItem"
-        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
-        name="item_remove_redefined_signatory_form"
-        class=".itemattendee.RemoveRedefinedSignatoryFormWrapper"
-        permission="zope2.View" />
- 
+       for="Products.PloneMeeting.interfaces.IMeetingItem"
+       layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+       name="item_remove_redefined_signatory_form"
+       class=".itemattendee.RemoveRedefinedSignatoryForm"
+       permission="zope2.View" />
+     <browser:page
+       for="Products.PloneMeeting.interfaces.IMeetingItem"
+       layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+       name="item_encode_votes_form"
+       class=".itemvotes.EncodeVotesFormWrapper"
+       permission="zope2.View" />
+     <browser:page
+       for="Products.PloneMeeting.interfaces.IMeetingItem"
+       layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+       name="item_encode_secret_votes_form"
+       class=".itemvotes.EncodeSecretVotesFormWrapper"
+       permission="zope2.View" />
+   <browser:view
+       for="Products.PloneMeeting.interfaces.IMeetingItem"
+       layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+       name="item_delete_vote"
+       class=".itemvotes.ItemDeleteVoteView"
+       permission="zope2.View" />
+
     <!-- Asynchronous calls (ajax) -->
     <browser:page
         name="toggle_to_discuss"
@@ -624,6 +662,23 @@
         for="Products.PloneMeeting.interfaces.IMeetingItem"
         name="change-item-listtype"
         class=".itemlisttype.ChangeItemListTypeView"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        permission="zope2.View" />
+
+    <!-- the view that show MeetingItem.pollType on the meetingitem_view -->
+    <browser:page
+        for="Products.PloneMeeting.interfaces.IMeetingItem"
+        name="item-polltype"
+        class=".itempolltype.ItemPollTypeView"
+        template="templates/itempolltype.pt"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        permission="zope2.View" />
+
+    <!-- the view that change MeetingItem.pollType value then refresh page -->
+    <browser:view
+        for="Products.PloneMeeting.interfaces.IMeetingItem"
+        name="change-item-polltype"
+        class=".itempolltype.ChangeItemPollTypeView"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="zope2.View" />
 

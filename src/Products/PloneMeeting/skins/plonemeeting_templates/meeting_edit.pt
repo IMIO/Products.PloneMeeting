@@ -68,12 +68,17 @@
                     if (obox) obox.checked = false;}
                 });
             }
-            // finally, if the attendee box is unckecked, disable the 'signatory' box
+            // finally, if the attendee box is unckecked, disable the 'signatory/voter' boxes
             var attendee_box = document.getElementById('muser_'+userId+'_attendee');
             var signer_box = document.getElementById('muser_'+userId+'_signer');
             if (signer_box) {
                 if (!attendee_box.checked) {signer_box.checked = false; signer_box.value = ''; signer_box.disabled = true;}
                 else {signer_box.disabled = false;}
+            }
+            var voter_box = document.getElementById('muser_'+userId+'_voter');
+            if (voter_box) {
+                if (!attendee_box.checked) {voter_box.checked = false; voter_box.value = ''; voter_box.disabled = true;}
+                else {voter_box.disabled = false;}
             }
 
         if (boxType == 'attendee' && box.checked) {
@@ -171,8 +176,10 @@
                                attendees python: context.getAttendees() or (not context.getAllUsedHeldPositions(include_new=False) and context.getDefaultAttendees()) or [];
                                excused context/getExcused;
                                absents context/getAbsents;
+                               voters context/getVoters;
                                signers python: context.getSignatories() or context.getDefaultSignatories();
-                               userReplacements context/getUserReplacements">
+                               userReplacements context/getUserReplacements;
+                               useVotes meetingConfig/getUseVotes">
               <tal:comment replace="nothing">Column captions</tal:comment>
               <thead>
                 <tr>
@@ -187,16 +194,19 @@
                       i18n:translate="is_signer"></th>
                   <th class="nosort" tal:condition="useUserReplacements"
                       i18n:translate="is_replaced"></th>
+                  <th class="nosort" tal:condition="useVotes"
+                      i18n:translate="is_voter"></th>
                 </tr>
               </thead>
               <tbody>
                 <tr tal:repeat="mUser allUsers">
                       <td class="draggable">⣿</td>
-                      <tal:defines define="muid mUser/UID;">
+                      <tal:defines define="muid mUser/UID;
+                                           attendee_id python: 'muser_%s_attendee' % muid;">
                         <td><img tal:attributes="src string:${mUser/getIconURL}" /> <b tal:content="mUser/get_short_title"></b></td>
                         <td align="center">
                           <input type="checkbox" class="noborder"
-                                 tal:define="cbid python: 'muser_%s_attendee' % muid;"
+                                 tal:define="cbid attendee_id"
                                  tal:attributes="id cbid;
                                                  name string:meeting_attendees:list;
                                                  value cbid;
@@ -226,10 +236,10 @@
                                  tal:attributes="id sid;
                                                  name string:meeting_signatories:list;
                                                  value sid;
-                                                 disabled python: test(errors, not [v for v in request.get('meeting_signatories', []) if v.startswith(muid)], muid not in attendees);
+                                                 disabled python: test(errors, attendee_id not in request.get('meeting_attendees', []), muid not in attendees);
                                                  onClick python: 'onClickBox(this, \'signer\', \'%s\')' % muid">
                             <option value="">-</option>
-                            <tal:signature_number repeat="signature_number python: [str(i) for i in range(1, 11)]">
+                            <tal:signature_number repeat="signature_number python: [str(i) for i in range(1, 21)]">
                                   <tal:defines define="value string:${muid}__signaturenumber__${signature_number};">
                                   <option
                                       tal:attributes="
@@ -247,7 +257,7 @@
                         <td tal:condition="useUserReplacements">
                           <select tal:define="mid mUser/getId;
                                               sid python: 'muser_%s_replacement' % muid;
-                                              aid python: 'muser_%s_attendee' % muid;
+                                              aid python: attendee_id;
                                               eid python: 'muser_%s_excused' % muid;
                                               abid python: 'muser_%s_absent' % muid;
                                               show python: test(errors, (eid in request.get('meeting_attendees', []) or abid in request.get('meeting_attendees', [])), muid in (excused + absents))"
@@ -269,6 +279,16 @@
                               </tal:defines>
                             </tal:other>
                           </select>
+                        </td>
+                        <td align="center" tal:condition="useVotes">
+                          <input type="checkbox" class="noborder"
+                                 tal:define="cbid python: 'muser_%s_voter' % muid;"
+                                 tal:attributes="id cbid;
+                                                 name string:meeting_voters:list;
+                                                 value cbid;
+                                                 disabled python: test(errors, attendee_id not in request.get('meeting_attendees', []), muid not in attendees);
+                                                 checked python: test(errors, cbid in request.get('meeting_voters', []), muid in voters);
+                                                 onClick python: 'onClickBox(this, \'voter\', \'%s\')' % muid"/>
                         </td>
                       </tal:defines>
                 </tr>

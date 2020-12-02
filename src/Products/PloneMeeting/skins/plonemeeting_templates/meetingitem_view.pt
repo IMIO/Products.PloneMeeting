@@ -137,102 +137,6 @@
                 <span tal:condition="not: copyGroups">-</span>
             </div>
 
-            <tal:comment replace="nothing">Assembly and signatures</tal:comment>
-            <tal:assembly_and_signatures condition="nocall:meeting">
-              <tal:defines
-                define="redefinedItemAssemblies python: context.redefinedItemAssemblies();
-                        redefinedItemSignatures python: context.getItemSignatures(real=True) or context.getItemSignatories(real=True);
-                        mayQuickEditItemAssembly context/mayQuickEditItemAssembly;
-                        mayQuickEditItemSignatures context/mayQuickEditItemSignatures;">
-              <div id="assembly-and-signatures"
-                  onclick="togglePersonsCookie();;toggleDetails('collapsible-assembly-and-signatures');"
-                  class="collapsible discreet">
-                  <span class="meeting_attribute_label" i18n:translate="redefinable_assembly_and_signatures">
-                      <span i18n:name="assembly" tal:define="class_to_use python: redefinedItemAssemblies and 'highlightValue' or ''"
-                            tal:attributes="class class_to_use"
-                            i18n:translate="meeting_assembly">Assembly</span>
-                      <a i18n:name="assembly_edit" tal:condition="mayQuickEditItemAssembly" href="manage_item_assembly_form?initial_edit=1" class="link-overlay-pm">
-                          <img src="edit.png"
-                               tal:attributes="src string:${portal_url}/edit.png" />
-                      </a>
-                      <span i18n:name="assembly_edit" tal:condition="not:mayQuickEditItemAssembly" />
-                      and
-                      <span i18n:name="signatures" tal:define="class_to_use python: redefinedItemSignatures and 'highlightValue' or ''"
-                            tal:attributes="class class_to_use"
-                            i18n:translate="meeting_signatures">signatures</span>
-                      <a i18n:name="signatures_edit" tal:condition="mayQuickEditItemSignatures" href="manage_item_signatures_form" class="link-overlay-pm">
-                          <img src="edit.png"
-                               tal:attributes="src string:${portal_url}/edit.png" />
-                      </a>
-                      <span i18n:name="signatures_edit" tal:condition="not:mayQuickEditItemSignatures" />
-                  </span>
-              </div>
-              <div id="collapsible-assembly-and-signatures" class="collapsible-content discreet" style="display: none;">
-                <div class="collapsible-inner-content">
-                  <tal:item_assembly tal:condition="python: ('assembly' in usedMeetingAttrs or meeting.getAssembly()) and not meeting.getAttendees()">
-                      <tal:defines define="mayQuickEdit python: context.mayQuickEdit('itemAssembly', bypassWritePermissionCheck=True);
-                                           class_if_highlighted python: redefinedItemAssemblies and 'highlightValue' or '';
-                                           class_to_use python: mayQuickEdit and (class_if_highlighted and class_if_highlighted + ' item_attribute_label' or ' item_attribute_label') or class_if_highlighted + ' item_attribute_label'">
-                        <div>
-                            <tal:comment replace="nothing">Display a label 'Attendees' if we use item excused and absents,
-                                                           if only using 'assembly', the entire information is in this single field
-                                                           where absents are striked.</tal:comment>
-                            <tal:displayAssemblyLabel condition="python: ('assemblyExcused' in usedMeetingAttrs or 'assemblyExcused' in redefinedItemAssemblies) or ('assemblyAbsents' in usedMeetingAttrs or 'assemblyAbsents' in redefinedItemAssemblies) or ('assemblyGuests' in usedMeetingAttrs or 'assemblyGuests' in redefinedItemAssemblies)">
-                                <span class="item_attribute_label"
-                                      tal:attributes="class python: 'assembly' in redefinedItemAssemblies and 'item_attribute_label highlightValue' or 'item_attribute_label'"
-                                      i18n:translate="attendees_for_item"></span>:&nbsp;&nbsp;
-                            </tal:displayAssemblyLabel>
-                            <span tal:replace="structure python: context.displayStrikedItemAssembly() or '-'">Assembly</span>
-                        </div>
-                        <div tal:condition="python: 'assemblyExcused' in usedMeetingAttrs or 'assemblyExcused' in redefinedItemAssemblies">
-                            <span class="item_attribute_label"
-                                  tal:attributes="class python: 'assemblyExcused' in redefinedItemAssemblies and 'item_attribute_label highlightValue' or 'item_attribute_label'"
-                                  i18n:translate="PloneMeeting_label_itemAssemblyExcused"></span>:&nbsp;&nbsp;
-                            <span tal:replace="structure python: context.getItemAssemblyExcused() or '-'">Assembly excused</span>
-                        </div>
-                        <div tal:condition="python: 'assemblyAbsents' in usedMeetingAttrs or 'assemblyAbsents' in redefinedItemAssemblies">
-                            <span class="item_attribute_label"
-                                  tal:attributes="class python: 'assemblyAbsents' in redefinedItemAssemblies and 'item_attribute_label highlightValue' or 'item_attribute_label'"
-                                  i18n:translate="PloneMeeting_label_itemAssemblyAbsents"></span>:&nbsp;&nbsp;
-                            <span tal:replace="structure python: context.getItemAssemblyAbsents() or '-'">Assembly absents</span>
-                        </div>
-                      </tal:defines>
-                  </tal:item_assembly>
-
-                  <div tal:condition="python: ('attendees' in usedMeetingAttrs or meeting.getAttendees()) and not meeting.getAssembly()">
-                    <tal:comment replace="nothing">People (item attendees, signers and votes)</tal:comment>
-                    <metal:people use-macro="here/@@pm-macros/itemPeople"/>
-                  </div>
-
-                  <tal:item_assembly_common_fields>
-                    <div tal:condition="python: 'assemblyGuests' in usedMeetingAttrs or 'assemblyGuests' in redefinedItemAssemblies">
-                        <span class="item_attribute_label"
-                              tal:attributes="class python: 'assemblyGuests' in redefinedItemAssemblies and 'item_attribute_label highlightValue' or 'item_attribute_label'"
-                              i18n:translate="PloneMeeting_label_itemAssemblyGuests"></span>:&nbsp;&nbsp;
-                        <span tal:replace="structure python: context.getItemAssemblyGuests() or '-'">Assembly guests</span>
-                    </div>
-                  </tal:item_assembly_common_fields>
-
-                  <tal:comment replace="nothing">Item signatures</tal:comment>
-                  <tal:item_signatures tal:condition="python: ('signatures' in usedMeetingAttrs or context.getItemSignatures()) and not meeting.getSignatories()">
-                      <tal:defines define="class_if_highlighted python: redefinedItemSignatures and 'highlightValue' or '';
-                                           class_to_use python: mayQuickEditItemSignatures and (class_if_highlighted and class_if_highlighted + ' item_attribute_label' or ' item_attribute_label') or class_if_highlighted + ' item_attribute_label'">
-                        <div class="item_signatures">
-                            <span class="item_attribute_label"
-                                  tal:attributes="class string:${class_to_use}"
-                                  i18n:translate="PloneMeeting_label_itemSignatures"></span>:&nbsp;&nbsp;
-                            <span tal:replace="structure python: context.getItemSignatures(for_display=True) or '-'">Signatures</span>
-                        </div>
-                      </tal:defines>
-                  </tal:item_signatures>
-                </div>
-              </div>
-              </tal:defines>
-              <script>
-                initializePersonsCookie();
-              </script>
-            </tal:assembly_and_signatures>
-
             <tal:comment replace="nothing">Item is signed?</tal:comment>
             <div class="discreet"
                  tal:condition="python: 'itemIsSigned' in usedAttrs">
@@ -355,16 +259,17 @@
             <div class="discreet" tal:condition="python: 'pollType' in usedAttrs">
                 <span class="item_attribute_label"
                       i18n:translate="PloneMeeting_label_pollType"></span>:&nbsp;&nbsp;
-                <span metal:use-macro="python: here.widget('pollType', mode='view')" />
+                <span data-base_url="#"
+                   style="display: inline;"
+                   tal:define="edit_css_classes python: context.mayQuickEdit('pollType') and 'tooltipster-item-polltype-change item_polltype Editable pmAction' or ''"
+                   tal:attributes="data-base_url string:${context_url};
+                                   class string:${edit_css_classes} item_polltype_${context/getPollType}">
+                    <span metal:use-macro="python: here.widget('pollType', mode='view')" />
+                </span>
                 <tal:displayPollTypeObservations tal:condition="python: 'pollTypeObservations' in usedAttrs">
-                    <span class="fa fa-question-circle help-doc"
-                       id="showPollTypeObservations"
-                       onclick="toggleDetails('dataPollTypeObservations', toggle_parent_active=false);"
-                       i18n:attributes="title" title="show_or_hide_pollTypeObservations"></span>
-                    <fieldset id="dataPollTypeObservations" style="display: none; margin-top: 0;">
-                        <legend i18n:translate="PloneMeeting_label_pollTypeObservations">Poll type observations</legend>
-                        <span metal:use-macro="python: here.widget('pollTypeObservations', mode='view')" />
-                    </fieldset>
+                — <a class="discreet"
+                     tal:attributes="href string:${context_url}#pollTypeObservations"
+                     i18n:translate="legend_details" i18n:domain="plone">Details</a>
                 </tal:displayPollTypeObservations>
             </div>
 
@@ -415,12 +320,82 @@
       </tr>
     </table>
 
+    <tal:comment replace="nothing">Assembly and signatures</tal:comment>
+    <tal:assembly_and_signatures condition="nocall:meeting">
+      <tal:defines define="mayQuickEditItemAssembly context/mayQuickEditItemAssembly;
+                           mayQuickEditItemSignatures context/mayQuickEditItemSignatures;
+                           redefinedItemAssemblies python: context.redefinedItemAssemblies();
+                           redefinedItemSignatures python: context.getItemSignatures(real=True) or context.getItemSignatories(real=True);
+                           isUsingContacts python: not context.is_assembly_field_used('itemAssembly') and meetingConfig.isUsingContacts()">
+      <div id="assembly-and-signatures"
+          onclick="togglePersonsCookie();;toggleDetails('collapsible-assembly-and-signatures', toggle_parent_active=true, parent_tag=null, load_view='@@load_item_assembly_and_signatures');"
+          class="collapsible discreet">
+          <span class="meeting_attribute_label" i18n:translate="redefinable_assembly_and_signatures">
+              <span i18n:name="assembly"
+                    tal:define="class_to_use python: redefinedItemAssemblies and 'highlightValue' or ''"
+                    tal:attributes="class class_to_use">
+                    <tal:block i18n:translate="meeting_assembly">Assembly</tal:block>
+                    <tal:block condition="isUsingContacts"
+                               content="python:'(' + str(len(context.getAttendees())) + '/' + str(len(meeting.getAttendees())) + ')'">Number of attendees</tal:block>
+              </span>
+
+              <a i18n:name="assembly_edit" tal:condition="mayQuickEditItemAssembly" href="manage_item_assembly_form?initial_edit=1" class="link-overlay-pm">
+                <img tal:attributes="src string:$portal_url/edit.png" />
+              </a>
+              <span i18n:name="assembly_edit" tal:condition="not:mayQuickEditItemAssembly" />
+              and
+              <span i18n:name="signatures" tal:define="class_to_use python: redefinedItemSignatures and 'highlightValue' or ''"
+                    tal:attributes="class class_to_use">
+                    <tal:block i18n:translate="meeting_signatures">signatures</tal:block>
+                    <tal:block condition="isUsingContacts"
+                               content="python:'(' + str(len(context.getItemSignatories(by_signature_number=True))) + ')'">Number of attendees</tal:block>
+              </span>
+
+              <a i18n:name="signatures_edit" tal:condition="mayQuickEditItemSignatures" href="manage_item_signatures_form" class="link-overlay-pm">
+                <img tal:attributes="src string:$portal_url/edit.png" />
+              </a>
+              <span i18n:name="signatures_edit" tal:condition="not:mayQuickEditItemSignatures" />
+          </span>
+      </div>
+      <div id="collapsible-assembly-and-signatures" class="collapsible-content discreet" style="display: none;">
+        <div class="collapsible-inner-content">
+         <img tal:attributes="src string:${portal_url}/spinner_small.gif" />
+        </div>
+      </div>
+      <script>
+        initializePersonsCookie();
+      </script>
+      </tal:defines>
+    </tal:assembly_and_signatures>
+
+    <tal:assembly_and_signatures_no_meeting condition="not:nocall:meeting">
+      <div id="assembly-and-signatures"
+          onclick="toggleDetails('collapsible-assembly-and-signatures', toggle_parent_active=true);"
+          class="collapsible discreet">
+          <span class="meeting_attribute_label" i18n:translate="redefinable_assembly_and_signatures">
+              <span i18n:name="assembly">
+                    <tal:block i18n:translate="meeting_assembly">Assembly</tal:block>
+              </span>
+              <span i18n:name="assembly_edit" />
+              <span i18n:name="signatures">
+                    <tal:block i18n:translate="meeting_signatures">signatures</tal:block>
+              </span>
+              <span i18n:name="signatures_edit" />
+          </span>
+      </div>
+      <div id="collapsible-assembly-and-signatures" class="collapsible-content discreet" style="display: none;">
+        <div class="collapsible-inner-content">
+         <span i18n:translate="">Nothing to display when item is not presented into a meeting.</span>
+        </div>
+      </div>
+    </tal:assembly_and_signatures_no_meeting  >
+
     <tal:comment replace="nothing">Linked items</tal:comment>
     <tal:defines define="predecessors python: context.adapted().getPredecessors(only_viewable=True);
                          linkedItems python: context.getManuallyLinkedItems(only_viewable=True);
                          showManuallyLinkedItems python: 'manuallyLinkedItems' in usedAttrs or linkedItems;
                          class_to_use python: (predecessors or linkedItems) and 'item_attribute_label highlightValue' or 'item_attribute_label';">
-        <div id="linkedItems" class="collapsible discreet" onclick="toggleDetails('collapsible-linked-items', toggle_parent_active=true, parent_tag=null, load_view='@@load_linked_items');">
+        <div id="linked-items" class="collapsible discreet" onclick="toggleDetails('collapsible-linked-items', toggle_parent_active=true, parent_tag=null, load_view='@@load_linked_items');">
           <span tal:condition="showManuallyLinkedItems"
                 class="item_attribute_label"
                 tal:attributes="class class_to_use"
@@ -617,6 +592,11 @@
     <tal:comment replace="nothing">Meeting managers notes end</tal:comment>
 
     <tal:field define="fieldName python: 'meetingManagersNotesEnd'; ajaxEdit python:True">
+       <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+    </tal:field>
+
+    <tal:comment replace="nothing">Poll type observations</tal:comment>
+    <tal:field define="fieldName python: 'pollTypeObservations'; ajaxEdit python:True">
        <metal:f use-macro="context/@@pm-macros/viewContentField"/>
     </tal:field>
 

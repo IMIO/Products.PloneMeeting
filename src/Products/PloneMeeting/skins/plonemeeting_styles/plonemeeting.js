@@ -126,8 +126,10 @@ function initializePersonsCookie() {
   label_tag = $('div#assembly-and-signatures')[0];
   tag = $('div#collapsible-assembly-and-signatures')[0];
   if (show == 'true') {
-    label_tag.classList.add('active');
-    tag.style.display = 'block';
+    label_tag.click();
+    createCookie('showPersons', 'true');
+    //label_tag.classList.add('active');
+    //tag.style.display = 'block';
   }
 }
 
@@ -301,31 +303,6 @@ function askAjaxChunk(hook, mode, url, page, macro, params, beforeSend, onGet) {
       else if (window.ActiveXObject) { rq.xhr.send(); }
     }
   }
-}
-
-// Triggers recording of item-people-related info like votes, questioners, answerers.
-function saveItemPeopleInfos(itemUrl, allVotesYes) {
-  // If "allVotesYes" is true, all vote values must be set to "yes".
-  theForm = document.forms.itemPeopleForm;
-  params = {'action': 'SaveItemPeopleInfos', 'allYes': allVotesYes};
-  // Collect params to send via the AJAX request.
-  for (var i=0; i<theForm.elements.length; i++) {
-    widget = theForm.elements[i];
-    if ((widget.type == "text") || widget.checked) {
-      params[widget.name] = widget.value;
-    }
-  }
-  askAjaxChunk('meeting_users_', 'POST', itemUrl, '@@pm-macros', 'itemPeople', params);
-}
-
-// Refresh the vote values
-function refreshVotes(itemUrl) {
-  askAjaxChunk('meeting_users_', 'POST', itemUrl, '@@pm-macros', 'itemPeople');
-}
-// Switch votes mode (secret / not secret)
-function switchVotes(itemUrl, secret) {
-  var params = {'action': 'SwitchVotes', 'secret': secret};
-  askAjaxChunk('meeting_users_', 'POST', itemUrl, '@@pm-macros', 'itemPeople', params);
 }
 
 function askObjectHistory(hookId, objectUrl, maxPerPage, startNumber) {
@@ -581,10 +558,11 @@ function synchronizeMeetingFaceteds(infos) {
 }
 
 // event subscriber when a element is delete in a dashboard, refresh numberOfItems if we are on a meeting
-$(document).on('ap_delete_givenuid', updateNumberOfItems);
+$(document).on('ap_delete_givenuid', refreshAfterDelete);
 
-// update the number of items displayed on the meeting_view when items have been presented/removed of the meeting
 function updateNumberOfItems() {
+  // update the number of items displayed on the meeting_view when
+  // items have been presented/removed of the meeting
   // get numberOfItems using an ajax call if on the meeting_view
   if (parent.$('.meeting_number_of_items').length) {
     response = $.ajax({
@@ -601,11 +579,29 @@ function updateNumberOfItems() {
   }
 }
 
+function refreshAfterDelete(event) {
+  // refresh number of items if relevant
+  updateNumberOfItems();
+  // refresh attendees if we removed a vote
+  css_id = event.tag.id;
+  if (css_id == 'delete-vote-action') {
+    refresh_attendees(highlight='.vote-value');
+  }
+}
+
 $(document).on('toggle_details_ajax_success', init_tooltipsters);
 
-function init_tooltipsters() {
-    categorizedChildsInfos({selector: 'div.item-linkeditems .tooltipster-childs-infos', });
-    advicesInfos();
+function init_tooltipsters(event) {
+    css_id = event.tag.parentElement.id;
+    if (css_id == 'collapsible-assembly-and-signatures') {
+      pmCommonOverlays(selector_prefix='table#meeting_users ');
+      attendeesInfos();
+      manageAttendees();
+    }
+    if (css_id.startsWith('collapsible-text-linkeditem-')) {
+      categorizedChildsInfos({selector: 'div.item-linkeditems .tooltipster-childs-infos', });
+      advicesInfos();
+    }
 }
 
 $(document).on('ckeditor_prepare_ajax_success', init_ckeditor);
@@ -714,7 +710,7 @@ function update_search_term(tag){
     dataType: 'html',
     data: {collection_uid: tag.dataset.collection_uid},
     cache: false,
-    // async: true provokes ConflictErrors when freezing a meeting
+    // async: true provokes ConflictErrors when freezing a meeting???
     async: true,
     success: function(data) {
       $(tag).replaceWith(data);
@@ -794,4 +790,11 @@ function toggleAllDetails() {
     localStorage.setItem("toggleAllDetails", "1");
     $('div.collapsible:not(.active):not(.discreet)').each(function() {$(this).click();});
   }
+}
+
+function selectAllVoteValues(tag) {
+  $('input[value='+tag.value+']').each(function() {
+    this.checked = true;
+    }
+  );
 }

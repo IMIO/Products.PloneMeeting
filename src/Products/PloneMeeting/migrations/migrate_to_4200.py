@@ -3,10 +3,12 @@
 from collective.contact.plonegroup.utils import get_organizations
 from copy import deepcopy
 from imio.helpers.content import richtextval
+from persistent.mapping import PersistentMapping
 from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_NEW
 from Products.PloneMeeting.content.advice import IMeetingAdvice
 from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator
+from Products.PloneMeeting.profiles import MeetingConfigDescriptor
 from Products.ZCatalog.ProgressHandler import ZLogHandler
 
 
@@ -81,6 +83,32 @@ class Migrate_To_4200(Migrator):
             cfg.at_post_edit_script()
         logger.info('Done.')
 
+    def _configureVotes(self):
+        """Some votes attributes on MeetingConfig already exist before changing all
+           this, re-apply default values from MeetingConfigDescriptor."""
+        logger.info("Configuring 'votes' for every MeetingConfigs...")
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            config_descr = MeetingConfigDescriptor(None, None, None)
+            cfg.setUseVotes(config_descr.useVotes)
+            cfg.setVotesEncoder(config_descr.votesEncoder)
+            cfg.setUsedVoteValues(config_descr.usedVoteValues)
+            cfg.setFirstLinkedVoteUsedVoteValues(config_descr.firstLinkedVoteUsedVoteValues)
+            cfg.setNextLinkedVotesUsedVoteValues(config_descr.nextLinkedVotesUsedVoteValues)
+            cfg.setVoteCondition(config_descr.voteCondition)
+        # add itemVotes on every meetings
+        brains = self.catalog(meta_type='Meeting')
+        logger.info('Adding "itemVotes" to every meetings...')
+        for brain in brains:
+            meeting = brain.getObject()
+            if hasattr(meeting, 'itemVotes'):
+                continue
+            meeting.itemVotes = PersistentMapping()
+            # add the 'voter' key to Meeting.orderedContacts
+            for value in meeting.orderedContacts.values():
+                value['voter'] = False
+            meeting._p_changed = True
+        logger.info('Done.')
+
     def _migrateKeepAccessToItemWhenAdviceIsGiven(self):
         """Boolean field MeetingConfig.keepAccessToItemWhenAdviceIsGiven
            is now single select MeetingConfig.keepAccessToItemWhenAdvice."""
@@ -153,6 +181,7 @@ class Migrate_To_4200(Migrator):
 
         # manage link between item and meeting manually
         self._removeMeetingItemsReferenceField()
+        self._configureVotes()
 
         # update RichTextValue stored on DX types (advices)
         self._fixRichTextValueMimeType()

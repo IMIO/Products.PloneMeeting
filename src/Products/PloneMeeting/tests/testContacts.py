@@ -151,14 +151,14 @@ class testContacts(PloneMeetingTestCase):
         meeting_attendees = [hp for hp in meeting.getAttendees()
                              if hp not in meeting.getSignatories()]
         self.assertTrue(meeting_attendees)
-        byebye_form = item.restrictedTraverse('@@item_byebye_attendee_form').form_instance
-        byebye_nonattendee_form = item.restrictedTraverse('@@item_byebye_nonattendee_form').form_instance
-        signatory_form = item.restrictedTraverse('@@item_redefine_signatory_form').form_instance
+        byebye_form = item.restrictedTraverse('@@item_byebye_attendee_form')
+        byebye_nonattendee_form = item.restrictedTraverse('@@item_byebye_nonattendee_form')
+        signatory_form = item.restrictedTraverse('@@item_redefine_signatory_form')
         signatory_form.person_uid = meeting_attendees[0]
         signatory_form.meeting = meeting
-        welcome_form = item.restrictedTraverse('@@item_welcome_attendee_form').form_instance
-        welcome_nonattendee_form = item.restrictedTraverse('@@item_welcome_nonattendee_form').form_instance
-        remove_signatory_form = item.restrictedTraverse('@@item_remove_redefined_signatory_form').form_instance
+        welcome_form = item.restrictedTraverse('@@item_welcome_attendee_form')
+        welcome_nonattendee_form = item.restrictedTraverse('@@item_welcome_nonattendee_form')
+        remove_signatory_form = item.restrictedTraverse('@@item_remove_redefined_signatory_form')
 
         def _check(username, should=True):
             ''' '''
@@ -216,8 +216,8 @@ class testContacts(PloneMeetingTestCase):
         # byebye person on item1 and item2
         hp1_uid = meeting_attendees[0]
         hp2_uid = meeting_attendees[1]
-        byebye_form = item1.restrictedTraverse('@@item_byebye_attendee_form').form_instance
-        byebye_nonattendee_form = item1.restrictedTraverse('@@item_byebye_nonattendee_form').form_instance
+        byebye_form = item1.restrictedTraverse('@@item_byebye_attendee_form')
+        byebye_nonattendee_form = item1.restrictedTraverse('@@item_byebye_nonattendee_form')
         byebye_form.meeting = meeting
         byebye_nonattendee_form.meeting = meeting
         byebye_form.person_uid = hp1_uid
@@ -286,7 +286,7 @@ class testContacts(PloneMeetingTestCase):
             sorted([item1_uid, item2_uid]))
 
         # welcome hp1 on item2
-        welcome_form = item2.restrictedTraverse('@@item_welcome_attendee_form').form_instance
+        welcome_form = item2.restrictedTraverse('@@item_welcome_attendee_form')
         welcome_form.meeting = meeting
         welcome_form.person_uid = hp1_uid
         welcome_form.apply_until_item_number = u''
@@ -295,7 +295,7 @@ class testContacts(PloneMeetingTestCase):
         self.assertEqual(item1.getItemNonAttendees(), (hp1_uid, ))
         self.assertFalse(item2.getItemAbsents())
         # welcome hp1 on item1
-        welcome_form = item1.restrictedTraverse('@@item_welcome_attendee_form').form_instance
+        welcome_form = item1.restrictedTraverse('@@item_welcome_attendee_form')
         welcome_form.meeting = meeting
         welcome_form.person_uid = hp1_uid
         welcome_form.apply_until_item_number = u''
@@ -304,7 +304,7 @@ class testContacts(PloneMeetingTestCase):
         self.assertEqual(item1.getItemNonAttendees(), (hp1_uid, ))
         self.assertFalse(item2.getItemAbsents())
         # welcome hp2 on item1
-        welcome_form = item1.restrictedTraverse('@@item_welcome_attendee_form').form_instance
+        welcome_form = item1.restrictedTraverse('@@item_welcome_attendee_form')
         welcome_form.meeting = meeting
         welcome_form.person_uid = hp2_uid
         welcome_form.apply_until_item_number = u''
@@ -313,7 +313,7 @@ class testContacts(PloneMeetingTestCase):
         self.assertFalse(item2.getItemExcused())
         self.assertEqual(item1.getItemNonAttendees(), (hp1_uid, ))
         # welcome non attendee hp1 on item1 and item2
-        welcome_nonattendee_form = item1.restrictedTraverse('@@item_welcome_nonattendee_form').form_instance
+        welcome_nonattendee_form = item1.restrictedTraverse('@@item_welcome_nonattendee_form')
         welcome_nonattendee_form.meeting = meeting
         welcome_nonattendee_form.person_uid = hp1_uid
         welcome_nonattendee_form.apply_until_item_number = u'200'
@@ -346,7 +346,7 @@ class testContacts(PloneMeetingTestCase):
         hp1 = person1.get_held_positions()[0]
         hp1_uid = hp1.UID()
         # set hp1 absent for item1 and item2
-        byebye_form = item1.restrictedTraverse('@@item_byebye_attendee_form').form_instance
+        byebye_form = item1.restrictedTraverse('@@item_byebye_attendee_form')
         byebye_form.meeting = meeting
         byebye_form.person_uid = hp1_uid
         byebye_form.not_present_type = 'absent'
@@ -357,7 +357,7 @@ class testContacts(PloneMeetingTestCase):
             sorted([item1_uid, item2_uid]))
         # then set hp1 excused for item2
         # nothing is done
-        byebye_form = item2.restrictedTraverse('@@item_byebye_attendee_form').form_instance
+        byebye_form = item2.restrictedTraverse('@@item_byebye_attendee_form')
         byebye_form.meeting = meeting
         byebye_form.person_uid = hp1_uid
         byebye_form.not_present_type = 'excused'
@@ -392,7 +392,7 @@ class testContacts(PloneMeetingTestCase):
         person = self.portal.contacts.get('person3')
         hp = person.get_held_positions()[0]
         hp_uid = hp.UID()
-        signatory_form = item1.restrictedTraverse('@@item_redefine_signatory_form').form_instance
+        signatory_form = item1.restrictedTraverse('@@item_redefine_signatory_form')
         signatory_form.meeting = meeting
         signatory_form.person_uid = hp_uid
         signatory_form.apply_until_item_number = 200
@@ -408,7 +408,7 @@ class testContacts(PloneMeetingTestCase):
         self.assertTrue(item2_uid in meeting_item_signatories)
 
         # remove redefined signatory on item2
-        remove_signatory_form = item2.restrictedTraverse('@@item_remove_redefined_signatory_form').form_instance
+        remove_signatory_form = item2.restrictedTraverse('@@item_remove_redefined_signatory_form')
         remove_signatory_form.meeting = meeting
         remove_signatory_form.person_uid = hp_uid
         remove_signatory_form.apply_until_item_number = u''
@@ -456,7 +456,7 @@ class testContacts(PloneMeetingTestCase):
         person = self.portal.contacts.get('person1')
         hp = person.get_held_positions()[0]
         hp_uid = hp.UID()
-        byebye_form = item1.restrictedTraverse('@@item_byebye_attendee_form').form_instance
+        byebye_form = item1.restrictedTraverse('@@item_byebye_attendee_form')
         byebye_form.meeting = meeting
         byebye_form.person_uid = hp_uid
         byebye_form.not_present_type = 'absent'
@@ -468,7 +468,7 @@ class testContacts(PloneMeetingTestCase):
         self.assertEqual(item2.getItemAbsents(), (hp_uid, ))
 
         # welcome person on item2
-        welcome_form = item2.restrictedTraverse('@@item_welcome_attendee_form').form_instance
+        welcome_form = item2.restrictedTraverse('@@item_welcome_attendee_form')
         welcome_form.meeting = meeting
         welcome_form.person_uid = hp_uid
         welcome_form.apply_until_item_number = u''
@@ -1034,6 +1034,7 @@ class testContacts(PloneMeetingTestCase):
         # excused
         self.backToState(item_with_excused, 'validated')
         self.assertFalse(excused_hp_uid in meeting.getItemExcused(by_persons=True))
+        self.assertFalse(excused_hp_uid in meeting.itemExcused)
         self.assertFalse(signer_hp_uid in item_with_excused.getItemSignatories())
         self.assertFalse(item_with_excused.getItemExcused())
         self.assertFalse(item_with_excused.redefinedItemAssemblies())

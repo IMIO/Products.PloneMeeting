@@ -43,4 +43,19 @@
         template="pm_richtext_edit.pt"
         permission="zope2.View" />
 
+  <!-- text -->
+  <z3c:widgetTemplate
+    mode="input"
+    widget=".pm_number.IPMNumberWidget"
+    template="pm_number_input.pt"
+    layer="z3c.form.interfaces.IFormLayer" />
+
+  <!-- readonly select -->
+  <z3c:widgetTemplate
+    mode="input"
+    widget=".pm_selectreadonly.PMSelectReadonlyWidget"
+    template="pm_selectreadonly_input.pt"
+    layer="z3c.form.interfaces.IFormLayer" />
+
+
 </configure>

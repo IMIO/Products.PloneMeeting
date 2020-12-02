@@ -206,10 +206,17 @@ div[id^='hook_'] > img {
    margin-top: 0.5em;
 }
 
+div.change-item-order {
+   width: 65px;
+}
+
 #content table.no-style-table.advices {
     margin-bottom: 0;
 }
 
+#content table.no-style-table.advices tr {
+    border-left: 0px transparent;
+}
 /* avoid background of parent table (list of items) being used for advices popup table */
 #content table.no-style-table.advices tr td {
     background-color: transparent;
@@ -514,7 +521,14 @@ td.noPadding a {
     padding: 0 !important;
 }
 
-#meeting_users td { padding: 0 0.4em 0 0.4em; }
+table#meeting_users th {
+   text-align: center;
+}
+/* increase size of FontAwesome in meeting_users */
+table#meeting_users tbody span.fa {
+   font-size: 110%;
+}
+
 .image-right { border:0px solid Black; clear:both; float:right; margin:0.5em; }
 
 dd.portletCell.pmLink {
@@ -989,35 +1003,46 @@ span.advices_of_type {
     font-size: 90%;
     vertical-align: sub;
 }
-
-#vote-abstain {
-    color: orange;
-    font-weight: bold;
+/* vote_value "yes" + vote edit form public/secret */
+span.vote_value_yes,
+input[value="yes"] + span.label,
+span.select-widget.yes span {
+   color: green;
 }
-
-#vote-yes {
-    color: green;
-    font-weight: bold;
+span.vote_value_no,
+input[value="no"] + span.label,
+span.select-widget.no span {
+   color: red;
 }
-
-#vote-no {
-    color: red;
-    font-weight: bold;
+span.vote_value_abstain,
+input[value="abstain"] + span.label,
+span.select-widget.abstain span {
+   color: orange;
 }
-
-#vote-not_yet {
-    color: grey;
-    font-weight: bold;
+span.vote_value_not_yet,
+input[value="not_yet"] + span.label,
+span.select-widget.not_yet span {
+   color: grey;
 }
-
-#vote-does_not_vote {
-    color: blue;
-    font-weight: bold;
+span.vote_value_does_not_vote,
+input[value="does_not_vote"] + span.label,
+span.select-widget.does_not_vote span {
+   color: blue;
 }
-
-#vote-not_consultable {
-    color: black;
-    font-weight: bold;
+span.vote_value_not_consultable,
+input[value="not_consultable"] + span.label,
+span.select-widget.not_consultable span {
+   color: black;
+}
+span.secret_vote_value {
+   font-weight: bold;
+}
+span.vote_value_number_of_voters {
+    display: inline-block;
+    padding-bottom: 1.5em;
+}
+table#meeting_users td.secret-vote {
+   padding-top: 2em;
 }
 
 table.listing tr[class][class] td.meeting_item_listType_normal {
@@ -1029,13 +1054,26 @@ div.tooltipster-content a.item_listType_normal:visited {
     color: &dtml-discreetColor;;
 }
 
-table.listing tr[class][class] td.meeting_item_listType_late {
+#content table#faceted_table.listing tr[class][class] td.meeting_item_listType_late {
     background-color: red;
 }
 span.item_listType_late,
 div.tooltipster-content a.item_listType_late:link,
 div.tooltipster-content a.item_listType_late:visited {
     color: red;
+}
+
+.item_polltype_secret,
+.item_polltype_secret_separated {
+   color: red !important;
+}
+.item_polltype_no_vote {
+   color: grey !important;
+}
+
+a[class*="item_polltype_"]:not([class*='item_polltype_secret']):not([class*='item_polltype_no_vote']),
+span[class*="item_polltype_"]:not([class*='item_polltype_secret']):not([class*='item_polltype_no_vote']) {
+   color: green;
 }
 
 .item_completeness_incomplete,
@@ -1128,6 +1166,7 @@ a:link.item_emergency_refused {
 .item_emergency_accepted.Editable,
 .item_emergency_refused.Editable,
 .item_listType.Editable,
+.item_polltype.Editable,
 .advice_change_delay.Editable {
     border-bottom: 1px dotted;
     cursor: pointer;
@@ -1576,12 +1615,6 @@ div.grouped-configs span.fa.selected::before {
     height: 6px;
 }
 
-#content span.help-doc {
-   border-bottom: 1px dotted;
-   padding-bottom: 2px;
-   cursor: pointer;
-}
-
 /* meeting_users table on meeting_edit */
 table#meeting_users td {
    padding: 0.5em;
@@ -1593,6 +1626,33 @@ table#faceted_table td.draggable {
 table#meeting_users select[id$="_replacement"] {
    width: 500px;
 }
+
+#content table#meeting_users.listing tbody tr.even,
+#content table#meeting_users.listing tbody tr.odd,
+#content table#faceted_table.listing tbody tr.even,
+#content table#faceted_table.listing tbody tr.odd,
+#content table.datagridwidget-table-view.listing tbody tr.even,
+#content table.datagridwidget-table-view.listing tbody tr.odd {
+   border-left: 2px solid &dtml-tableHeaderBackgroundColor;;
+}
+#content table#meeting_users.listing tbody tr.even:hover,
+#content table#meeting_users.listing tbody tr.odd:hover,
+#content table#faceted_table.listing tbody tr.even:hover,
+#content table#faceted_table.listing tbody tr.odd:hover,
+#content table.datagridwidget-table-view.listing tbody tr.even:hover,
+#content table.datagridwidget-table-view.listing tbody tr.odd:hover {
+   border-left: 2px solid grey;
+}
+/* special handling for table border left highlight for faceted on meeting_view */
+body.template-meeting_view #content table#faceted_table.listing tbody tr.even,
+body.template-meeting_view #content table#faceted_table.listing tbody tr.odd {
+   border-left: 3px solid &dtml-tableHeaderBackgroundColor;;
+}
+body.template-meeting_view #content table#faceted_table.listing tbody tr.even:hover,
+body.template-meeting_view #content table#faceted_table.listing tbody tr.odd:hover {
+   border-left: 3px solid grey;
+}
+
 table#meeting_users tr.item-non-attendee {
     color: gray;
 }
@@ -1601,6 +1661,17 @@ table.listing tbody tr.odd.dragging td,
 table.listing tbody tr.even.selected td,
 table.listing tbody tr.even.dragging td {
     background-color: #ffa;
+}
+
+/* refresh attendees */
+#content span.refresh-attendees:before {
+    content: "\f2f9";
+    color: &dtml-linkColor;;
+}
+#content div.refresh-attendees-container {
+    display: inline;
+    padding-left: 2em;
+    cursor: pointer;
 }
 
 /* check in item people tables */
@@ -1627,8 +1698,17 @@ table.listing tbody tr.even.dragging td {
 #content span.people-edit-signatory:hover {
     opacity: 1;
 }
-#content span.people-action {
+#content span.link-action {
     border-bottom: 1px dotted;
+    padding-bottom: 2px;
+    cursor: pointer;
+    color: &dtml-linkColor;;
+}
+
+#content span.link-help {
+    border-bottom: 1px dotted;
+    padding-bottom: 2px;
+    cursor: help;
 }
 
 #content span.people-edit-signatory:before {
@@ -1640,7 +1720,6 @@ table.listing tbody tr.even.dragging td {
     content: "\f00c";
     font-size: 120%;
     color: green;
-    cursor: help;
 }
 .item-signatory-replacer-signature-number {
     font-family: &dtml-fontFamily;;
@@ -1651,6 +1730,55 @@ table.listing tbody tr.even.dragging td {
    color: green;
 }
 
+/* edit icon */
+#content span.edit-element:before {
+   content: "\f304";
+}
+#content legend span.edit-element {
+   font-size: 90%;
+   color: &dtml-linkColor;;
+}
+
+/* linked-to-previous icon */
+#content span.vote-linked-to-previous:before {
+   content: "\f12e";
+}
+/* add icon */
+#content span.add-element:before {
+   content: "\f067";
+}
+#content span.add-element {
+   color: &dtml-linkColor;;
+}
+/* delete icon */
+#content span.delete-element:before {
+   content: "\f2ed";
+}
+#content span.delete-element {
+   color: red;
+}
+#content span.show-info:before {
+   content: "\f05a";
+}
+#content span.show-help:before {
+   content: "\f059";
+}
+
+/* icon colors */
+#content span.fa.leading-icon {
+   color: &dtml-discreetColor;;
+   cursor: help;
+}
+#content span.fa.disabled {
+   color: lightgrey;
+   cursor: help;
+}
+#content span.fa.green-colored {
+   color: green;
+}
+#content span.fa.red-colored {
+   color: red;
+}
 #content span.pmHelp {
    cursor: help;
 }
@@ -1753,11 +1881,6 @@ div.config_sub_categories table {
     color: red;
 }
 
-/* increase FontAwesome base size when parent is using discreet */
-.discreet .fa, .fas {
-    font-size: 110%;
-}
-
 h2.available-items,
 h2.presented-items,
 h2.pm-inserting-methods-helper-msg {
@@ -1779,8 +1902,9 @@ a.portlet_pm_dashboard_link {
    line-height: 2em;
 }
 
-/* add some margin under fieldsets displayed in base_edit forms */
-body.template-base_edit #content fieldset {
+/* add some margin under fieldsets displayed in forms */
+body.template-base_edit #content fieldset,
+form#form fieldset {
    margin-bottom: 0.5em;
 }
 
@@ -1915,6 +2039,7 @@ body.template-usergroup-userprefs input[name="form.button.AddUser"] {
 div.item-linkeditems div.collapsible-content {
    margin-top: 0.25em;
 }
+
 /* avoid textarea too large */
 #content textarea {
     width: 99%;
@@ -1953,6 +2078,48 @@ div#doc-generation-view {
 #content .discreet {
    font-size: 100%;
 }
+
+span.vote-number span,
+span.item-not-voter {
+   cursor: help;
+}
+
+/* datagrid field for encoding votes */
+table#form-widgets-votes span.option {
+   display: inline;
+}
+
+table#meeting_users th.header-attendee-present,
+table#meeting_users th.header-attendee-excused,
+table#meeting_users th.header-attendee-absent,
+table#meeting_users th.header-attendee-non-attendee,
+table#meeting_users th.header-attendee-signatory {
+   width: 60px;
+}
+
+div.select-all-vote-values {
+   position: absolute;
+   right: 14px;
+   padding-top: 25px;
+   font-weight: normal;
+   display: inline;
+}
+div.select-all-vote-values span.option {
+   display: inline;
+}
+/* make sure radio button is displayed on one line */
+div#formfield-form-widgets-votes td.cell-3 {
+   text-align: right;
+   white-space: nowrap;
+}
+table#form-widgets-votes td,
+table#form-widgets-votes th {
+   padding: 0.5em;
+}
+div#formfield-form-widgets-linked_to_previous {
+   display: none;
+}
+
 
 /* </dtml-with> */
 

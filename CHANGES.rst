@@ -31,6 +31,21 @@ Changelog
   - use `PMRichTextWidget` on meetingadvice.
 
   [gbastien]
+- Implement votes functionnality :
+
+  - Added possibility to manage public and secret votes depending
+    on MeetingItem.pollType;
+  - Added new optional field MeetingItem.votesObservations;
+  - Load and manage attendees displayed on item view asynchronously;
+  - Use `Products.PloneMeeting.vocabularies.signaturenumbervocabulary`
+    everywhere possible and changed from 10 to 20 possible signatories;
+  - highlight row in tables to know where we are;
+  - Added method for printing votes (print_votes);
+  - Refactored the way assembly fields are handled on meeting and item so when
+    switching to contacts it behaves correctly when viewing/editing assembly
+    fields on old meetings/items.
+
+  [gbastien]
 
 4.2b6 (2020-11-19)
 ------------------
@@ -42,7 +57,6 @@ Changelog
   [gbastien]
 - Optimized `PloneGroupSettingsValidator` when checking if `plonegroup` used on
   items, do it only if some suffixes removed and use the `portal_catalog`.
-  [gbastien]
 - Make sure `attendees` are still editable on item by `MeetingManagers`
   on a decided item if meeting is not closed.
   [gbastien]
