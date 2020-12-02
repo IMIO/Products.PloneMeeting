@@ -12,14 +12,14 @@ Changelog
   - Refactored the way assembly fields are handled on meeting and item so when
     switching to contacts it behaves correctly when viewing/editing assembly
     fields on old meetings/items.
-  [gbastien]
+    [gbastien]
   - By default, `searchnotdecidedmeetings` and `searchlastdecisions` Collections
     are displayed chronologically (was reversed before).  No migration applied
     as this may be changed when necessary on Collection itself.
-  [gbastien]
+    [gbastien]
   - Added parameters `include_hp=False` and `abbreviate_firstname=False` to
     `ItemDocumentGenerationHelperView.print_in_and_out_attendees`.
-  [gbastien]
+    [gbastien]
 
 4.1.28.15 (2020-11-19)
 ----------------------
