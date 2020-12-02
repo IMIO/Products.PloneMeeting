@@ -2980,7 +2980,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                          'v': ['created', 'frozen', 'published']},
                     ],
                     'sort_on': u'sortable_title',
-                    'sort_reversed': True,
+                    'sort_reversed': False,
                     'showNumberOfItems': False,
                     'tal_condition': '',
                     'roles_bypassing_talcondition': ['Manager', ]
@@ -3005,7 +3005,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                          'v': 'last-decisions'},
                     ],
                     'sort_on': u'sortable_title',
-                    'sort_reversed': True,
+                    'sort_reversed': False,
                     'showNumberOfItems': False,
                     'tal_condition': '',
                     'roles_bypassing_talcondition': ['Manager', ]
