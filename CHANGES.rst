@@ -7,6 +7,11 @@ Changelog
 
 - Requires `imio.helpers[test]` for test so we get `collective.MockMailHost`.
   [gbastien]
+- Backport from 4.2.x:
+  - Refactored the way assembly fields are handled on meeting and item so when
+    switching to contacts it behaves correctly when viewing/editing assembly
+    fields on old meetings/items.
+  [gbastien]
 
 4.1.28.15 (2020-11-19)
 ----------------------
