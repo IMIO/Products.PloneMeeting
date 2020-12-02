@@ -10,6 +10,7 @@ from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import IRedirect
 from Products.PloneMeeting.utils import _itemNumber_to_storedItemNumber
 from Products.PloneMeeting.utils import fplog
+from Products.PloneMeeting.utils import notifyModifiedAndReindex
 from z3c.form import button
 from z3c.form import field
 from z3c.form import form
@@ -267,6 +268,7 @@ class ByeByeAttendeeForm(BaseAttendeeForm):
             if self.person_uid not in item_not_present:
                 item_not_present.append(self.person_uid)
                 meeting_not_present_attr[item_to_update_uid] = item_not_present
+                notifyModifiedAndReindex(item_to_update)
         first_item_number = items_to_update[0].getItemNumber(for_display=True)
         last_item_number = items_to_update[-1].getItemNumber(for_display=True)
         extras = 'item={0} hp={1} not_present_type={2} from_item_number={3} until_item_number={4}'.format(
@@ -330,6 +332,7 @@ class WelcomeAttendeeForm(BaseAttendeeForm):
             if self.person_uid in item_absents:
                 item_absents.remove(self.person_uid)
                 meeting_absent_attr[item_to_update_uid] = item_absents
+                notifyModifiedAndReindex(item_to_update)
         first_item_number = items_to_update[0].getItemNumber(for_display=True)
         last_item_number = items_to_update[-1].getItemNumber(for_display=True)
         extras = 'item={0} hp={1} from_item_number={2} until_item_number={3}'.format(
@@ -449,6 +452,7 @@ class RedefinedSignatoryForm(BaseAttendeeForm):
             if self.person_uid not in item_signatories.values():
                 item_signatories[self.signature_number] = self.person_uid
                 self.meeting.itemSignatories[item_to_update_uid] = item_signatories
+                notifyModifiedAndReindex(item_to_update)
         first_item_number = items_to_update[0].getItemNumber(for_display=True)
         last_item_number = items_to_update[-1].getItemNumber(for_display=True)
         extras = 'item={0} hp={1} signature_number={2} from_item_number={3} until_item_number={4}'.format(
@@ -502,6 +506,7 @@ class RemoveRedefinedSignatoryForm(BaseAttendeeForm):
                     self.meeting.itemSignatories[item_to_update_uid] = item_signatories
                 else:
                     del self.meeting.itemSignatories[item_to_update_uid]
+                notifyModifiedAndReindex(item_to_update)
         first_item_number = items_to_update[0].getItemNumber(for_display=True)
         last_item_number = items_to_update[-1].getItemNumber(for_display=True)
         extras = 'item={0} hp={1} from_item_number={2} until_item_number={3}'.format(
