@@ -2168,7 +2168,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         meeting = self.getSelf()
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(meeting)
-        if cfg.getUseVotes() or self.getVoters():
+        if cfg.getUseVotes() or meeting.getVoters():
             res = True
         return res
 
