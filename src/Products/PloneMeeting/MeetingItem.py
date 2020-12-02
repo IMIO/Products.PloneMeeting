@@ -1444,8 +1444,7 @@ schema = Schema((
         name='itemAssembly',
         allowable_content_types=('text/plain',),
         widget=TextAreaWidget(
-            condition="python: here.getItemAssembly(real=True) or "
-            "(here.hasMeeting() and here.getMeeting().attributeIsUsed('assembly'))",
+            condition="python: here.is_assembly_field_used('itemAssembly')",
             description="ItemAssemblyDescrMethod",
             description_msgid="item_assembly_descr",
             label_method="getLabelItemAssembly",
@@ -1460,8 +1459,7 @@ schema = Schema((
         name='itemAssemblyExcused',
         allowable_content_types=('text/plain',),
         widget=TextAreaWidget(
-            condition="python: here.getItemAssemblyExcused(real=True) or "
-            "(here.hasMeeting() and here.getMeeting().attributeIsUsed('assemblyExcused'))",
+            condition="python: here.is_assembly_field_used('itemAssemblyExcused')",
             description="ItemAssemblyExcusedDescrMethod",
             description_msgid="item_assembly_excused_descr",
             label='Itemassemblyexcused',
@@ -1475,8 +1473,7 @@ schema = Schema((
         name='itemAssemblyAbsents',
         allowable_content_types=('text/plain',),
         widget=TextAreaWidget(
-            condition="python: here.getItemAssemblyAbsents(real=True) or "
-            "(here.hasMeeting() and here.getMeeting().attributeIsUsed('assemblyAbsents'))",
+            condition="python: here.is_assembly_field_used('itemAssemblyAbsents')",
             description="ItemAssemblyAbsentsDescrMethod",
             description_msgid="item_assembly_absents_descr",
             label='Itemassemblyabsents',
@@ -1490,8 +1487,7 @@ schema = Schema((
         name='itemAssemblyGuests',
         allowable_content_types=('text/plain',),
         widget=TextAreaWidget(
-            condition="python: here.getItemAssemblyGuests(real=True) or "
-            "(here.hasMeeting() and here.getMeeting().attributeIsUsed('assemblyGuests'))",
+            condition="python: here.is_assembly_field_used('itemAssemblyGuests')",
             description="ItemAssemblyGuestsDescrMethod",
             description_msgid="item_assembly_guests_descr",
             label='Itemassemblyguests',
@@ -1505,8 +1501,7 @@ schema = Schema((
         name='itemSignatures',
         allowable_content_types=('text/plain',),
         widget=TextAreaWidget(
-            condition="python: here.getItemSignatures(real=True) or "
-            "(here.hasMeeting() and here.getMeeting().attributeIsUsed('signatures'))",
+            condition="python: here.is_assembly_field_used('itemSignatures')",
             description="ItemSignaturesDescrMethod",
             description_msgid="item_signatures_descr",
             label='Itemsignatures',
@@ -3546,6 +3541,25 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # this list is ordered by signature number defined on the organization/MeetingConfig
         return item.getProposingGroup(theObject=True).get_certified_signatures(
             computed=True, cfg=cfg, group_in_charge=selected_group_in_charge, listify=listify)
+
+    def is_assembly_field_used(self, field_name):
+        """Helper method that return True if an assembly field is used
+           or if it is filled (no more used, swtiched to contacts but filled on old items)."""
+        meeting = self.getMeeting()
+        attr_names_mapping = {"itemAssembly": "assembly",
+                              "itemAssemblyExcused": "assemblyExcused",
+                              "itemAssemblyAbsents": "assemblyAbsents",
+                              "itemAssemblyGuests": "assemblyGuests",
+                              "itemSignatures": "signatures"}
+        res = False
+        if meeting.attributeIsUsed(attr_names_mapping[field_name]):
+            res = True
+        else:
+            # maybe it was used before?
+            accessor = self.getField(field_name).getAccessor(self)
+            if accessor(real=True) or accessor(real=False):
+                res = True
+        return res
 
     security.declarePublic('redefinedItemAssemblies')
 

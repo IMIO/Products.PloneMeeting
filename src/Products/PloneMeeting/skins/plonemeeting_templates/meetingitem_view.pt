@@ -326,7 +326,7 @@
                            mayQuickEditItemSignatures context/mayQuickEditItemSignatures;
                            redefinedItemAssemblies python: context.redefinedItemAssemblies();
                            redefinedItemSignatures python: context.getItemSignatures(real=True) or context.getItemSignatories(real=True);
-                           isUsingContacts meetingConfig/isUsingContacts">
+                           isUsingContacts python: not context.is_assembly_field_used('itemAssembly') and meetingConfig.isUsingContacts()">
       <div id="assembly-and-signatures"
           onclick="togglePersonsCookie();;toggleDetails('collapsible-assembly-and-signatures', toggle_parent_active=true, parent_tag=null, load_view='@@load_item_assembly_and_signatures');"
           class="collapsible discreet">

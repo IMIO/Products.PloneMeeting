@@ -41,7 +41,9 @@ Changelog
     everywhere possible and changed from 10 to 20 possible signatories;
   - highlight row in tables to know where we are;
   - Added method for printing votes (print_votes);
-  - ...
+  - Refactored the way assembly fields are handled on meeting and item so when
+    switching to contacts it behaves correctly when viewing/editing assembly
+    fields on old meetings/items.
 
   [gbastien]
 
