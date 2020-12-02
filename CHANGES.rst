@@ -50,6 +50,9 @@ Changelog
   are displayed chronologically (was reversed before).  No migration applied
   as this may be changed when necessary on Collection itself.
   [gbastien]
+- Added parameters `include_hp=False` and `abbreviate_firstname=False` to
+  `ItemDocumentGenerationHelperView.print_in_and_out_attendees`.
+  [gbastien]
 
 4.2b6 (2020-11-19)
 ------------------
