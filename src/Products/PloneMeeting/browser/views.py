@@ -1705,7 +1705,9 @@ class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV)
             include_person_title=True,
             render_as_html=True,
             html_pattern=u'<p>{0}</p>',
-            ignore_before_first_item=True):
+            ignore_before_first_item=True,
+            include_hp=False,
+            abbreviate_firstname=False):
         """Print in an out moves depending on the previous/next item.
            If p_in_and_out_types is given, only given types are considered among
            patterns keys ('left_before', 'entered_before', ...).
@@ -1735,9 +1737,16 @@ class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV)
                       if (not in_and_out_types or in_and_out_type in in_and_out_types)}
         for in_and_out_type, held_positions in in_and_out.items():
             for held_position in held_positions:
-                person_res[in_and_out_type].append(
-                    held_position.get_person().get_full_title(
-                        include_person_title=include_person_title))
+                if include_hp:
+                    person_short_title = held_position.get_short_title(
+                        include_sub_organizations=False,
+                        include_person_title=include_person_title,
+                        abbreviate_firstname=abbreviate_firstname)
+                else:
+                    person_short_title = held_position.get_person_short_title(
+                        include_person_title=include_person_title,
+                        abbreviate_firstname=abbreviate_firstname)
+                person_res[in_and_out_type].append(person_short_title)
 
         if render_as_html:
             html_res = person_res.copy()

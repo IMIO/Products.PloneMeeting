@@ -792,6 +792,37 @@ class testContacts(PloneMeetingTestCase):
              'left_before': u'<p>Monsieur Person3FirstName Person3LastName quitte la '
                 u's\xe9ance avant la discussion du point.</p>'})
 
+    def test_pm_Print_in_and_out_attendees_include_hp(self):
+        """Test the print_in_and_out_attendees method include_hp parameter."""
+        meeting, meeting_attendees, item1, item2, item3 = self._setupInAndOutAttendees()
+        view = item1.restrictedTraverse('document-generation')
+        helper = view.get_generation_context_helper()
+        # include_hp=True
+        self.assertEqual(
+            helper.print_in_and_out_attendees(
+                include_hp=True),
+            {'entered_after': u'<p>Monsieur Person3FirstName Person3LastName, '
+                u'Assembly member 3 entre en s\xe9ance apr\xe8s la discussion du point.</p>'
+                u'<p>Monsieur Person2FirstName Person2LastName, Assembly member 2 participe \xe0 '
+                u'la s\xe9ance apr\xe8s la discussion du point.</p>',
+             'entered_before': '',
+             'left_after': u'<p>Monsieur Person4FirstName Person4LastName, '
+                u'Assembly member 4 & 5 quitte la s\xe9ance apr\xe8s la discussion du point.</p>',
+             'left_before': ''})
+        # abbreviate_firstname
+        self.assertEqual(
+            helper.print_in_and_out_attendees(
+                include_hp=True,
+                abbreviate_firstname=True),
+            {'entered_after': u'<p>Monsieur P3 Person3LastName, '
+                u'Assembly member 3 entre en s\xe9ance apr\xe8s la discussion du point.</p>'
+                u'<p>Monsieur P2 Person2LastName, Assembly member 2 participe \xe0 '
+                u'la s\xe9ance apr\xe8s la discussion du point.</p>',
+             'entered_before': '',
+             'left_after': u'<p>Monsieur P4 Person4LastName, '
+                u'Assembly member 4 & 5 quitte la s\xe9ance apr\xe8s la discussion du point.</p>',
+             'left_before': ''})
+
     def test_pm_Print_in_and_out_attendees_custom_patterns(self):
         """Test the print_in_and_out_attendees method."""
         meeting, meeting_attendees, item1, item2, item3 = self._setupInAndOutAttendees()

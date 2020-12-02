@@ -318,6 +318,7 @@ class PersonDescriptor(Descriptor):
         self.firstname = firstname
         self.person_title = person_title
         self.held_positions = held_positions
+        self.firstname_abbreviated = None
         self.photo = None
         self.website = None
         self.city = None
