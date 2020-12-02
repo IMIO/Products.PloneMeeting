@@ -8,13 +8,14 @@ Changelog
 - Requires `imio.helpers[test]` for test so we get `collective.MockMailHost`.
   [gbastien]
 - Backport from 4.2.x:
+
   - Refactored the way assembly fields are handled on meeting and item so when
     switching to contacts it behaves correctly when viewing/editing assembly
     fields on old meetings/items.
   [gbastien]
-- By default, `searchnotdecidedmeetings` and `searchlastdecisions` Collections
-  are displayed chronologically (was reversed before).  No migration applied
-  as this may be changed when necessary on Collection itself.
+  - By default, `searchnotdecidedmeetings` and `searchlastdecisions` Collections
+    are displayed chronologically (was reversed before).  No migration applied
+    as this may be changed when necessary on Collection itself.
   [gbastien]
 
 4.1.28.15 (2020-11-19)
