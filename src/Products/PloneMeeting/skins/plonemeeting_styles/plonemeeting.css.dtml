@@ -4,6 +4,10 @@
 
 fieldset {line-height: 1em; margin: 0.5em 0; }
 
+table.listing tbody tr td {
+   vertical-align: inherit;
+}
+
 /* background of secret items when displayed on the meeting */
 table.listing tbody tr.odd.meeting_item_privacy_secret td {
     background-color: #fffacd;
@@ -1617,7 +1621,7 @@ div.grouped-configs span.fa.selected::before {
 
 /* meeting_users table on meeting_edit */
 table#meeting_users td {
-   padding: 0.5em;
+   padding: 0.35em;
 }
 table#meeting_users td.draggable,
 table#faceted_table td.draggable {
