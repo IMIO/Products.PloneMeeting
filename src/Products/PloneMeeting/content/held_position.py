@@ -96,6 +96,7 @@ class PMHeldPosition(HeldPosition):
                         include_defaults=False,
                         include_signature_number=False,
                         include_sub_organizations=True,
+                        include_person_title=True,
                         abbreviate_firstname=False,
                         highlight=False):
         """Returns short name for held position :
@@ -116,7 +117,7 @@ class PMHeldPosition(HeldPosition):
             while organization != root_organization:
                 sub_organizations.append(organization)
                 organization = organization.aq_parent
-        person_label = self.get_person_short_title(include_person_title=True,
+        person_label = self.get_person_short_title(include_person_title=include_person_title,
                                                    abbreviate_firstname=abbreviate_firstname)
         held_position_label = self.get_label() or translate(
             'No label defined on held position',
