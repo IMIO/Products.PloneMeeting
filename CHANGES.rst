@@ -53,6 +53,11 @@ Changelog
 - Added parameters `include_hp=False` and `abbreviate_firstname=False` to
   `ItemDocumentGenerationHelperView.print_in_and_out_attendees`.
   [gbastien]
+- Fields `committeeObservations` and `votesObservations` are now available on
+  both `Meeting` and `MeetingItem`. The `votesObservations` field is only
+  writable by `MeetingManagers` and viewable by everybody when meeting or item
+  is decided.
+  [gbastien]
 
 4.2b6 (2020-11-19)
 ------------------

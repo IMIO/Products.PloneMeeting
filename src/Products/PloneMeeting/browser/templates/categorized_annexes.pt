@@ -9,6 +9,8 @@
         <br />
       </tal:back_to_item>
 
+      <p class="discreet" i18n:translate="annexes_descr">Annexes description</p>
+
       <fieldset tal:condition="view/showAnnexesSection">
         <legend>
           <a name="annexes"><span i18n:translate="">Annexes</span></a>

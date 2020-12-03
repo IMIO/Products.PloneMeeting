@@ -570,6 +570,16 @@
        <metal:f use-macro="context/@@pm-macros/viewContentField"/>
     </tal:field>
 
+    <tal:comment replace="nothing">Committee observations</tal:comment>
+    <tal:field define="fieldName python: 'committeeObservations'; ajaxEdit python:True">
+       <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+    </tal:field>
+
+    <tal:comment replace="nothing">Votes observations</tal:comment>
+    <tal:field define="fieldName python: 'votesObservations'; ajaxEdit python:True">
+       <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+    </tal:field>
+
     <tal:comment replace="nothing">Marginal notes</tal:comment>
     <tal:field define="fieldName python: 'marginalNotes'; ajaxEdit python:True">
        <metal:f use-macro="context/@@pm-macros/viewContentField"/>
