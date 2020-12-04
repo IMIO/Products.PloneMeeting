@@ -7,6 +7,7 @@
                        excused context/getExcused;
                        absents context/getAbsents;
                        signers context/getSignatories;
+                       applied_signers python: context.getSignatories(by_signature_number=True).values();
                        useUserReplacements python: 'replacements' in view.usedAttrs;
                        itemNonAttendees python: context.getItemNonAttendees(by_persons=True);
                        userReplacements context/getUserReplacements;
@@ -58,10 +59,10 @@
           tal:attributes="class classOddEven">
         <td><b tal:content="mUser/get_short_title"></b></td>
         <td align="center">
-          <span tal:condition="python: aUid in attendees" class="fa people-checked" ></span>
+          <span tal:condition="python: aUid in attendees" class="fa people-checked"></span>
         </td>
         <td align="center" tal:condition="showExcused">
-          <span tal:condition="python: aUid in excused" class="fa people-checked" ></span>
+          <span tal:condition="python: aUid in excused" class="fa people-checked"></span>
           <span tal:condition="python: aUid in itemExcused"
                    class="tooltipster-meeting-item-not-present fa people-left link-help"
                    tal:attributes="data-base_url string:${context/absolute_url};
@@ -70,7 +71,7 @@
           </span>
         </td>
         <td align="center" tal:condition="showAbsents">
-          <span tal:condition="python: aUid in absents" class="fa people-checked" ></span>
+          <span tal:condition="python: aUid in absents" class="fa people-checked"></span>
           <span tal:condition="python: aUid in itemAbsents"
                    class="tooltipster-meeting-item-not-present fa people-left link-help"
                    tal:attributes="data-base_url string:${context/absolute_url};
@@ -79,10 +80,18 @@
           </span>
         </td>
         <td align="center" tal:condition="showSignatories">
-         <tal:is_signer condition="python: aUid in signers">
-          <span class="fa people-checked" ></span>
+         <tal:is_applied_signer condition="python: aUid in signers and aUid in applied_signers">
+          <span class="fa people-checked"></span>
           <span tal:content="python: signers[aUid]" />
-         </tal:is_signer>
+         </tal:is_applied_signer>
+         <tal:not_applied_signer condition="python: aUid in signers and aUid not in applied_signers">
+          (<span class="signatory-checked"
+                 title="Meeting signatory not used, another signatory with same signature number is used"
+                 i18n:attributes="title">
+           <span class="fa people-checked"></span>
+           <span tal:content="python: signers[aUid]" />
+          </span>)
+         </tal:not_applied_signer>
          <span tal:condition="python: aUid in itemSignatories"
                   class="tooltipster-meeting-item-signatories fa people-signatory-replacer link-help"
                   tal:attributes="data-base_url string:${context/absolute_url};

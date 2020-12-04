@@ -434,6 +434,59 @@ class testContacts(PloneMeetingTestCase):
         self.assertTrue(absent_uid in meeting.getExcused())
         signatory_form.person_uid = absent_uid
 
+    def test_pm_ItemSignatoriesSameSignatureNumberOnMeeting(self):
+        '''Check how signatories are considered when several same signature_number on meeting.
+           This is the case if we want :
+           - a present that is signatory 2 and another present that that has also signature 2,
+             and that will be signatory when signatory 2 is absent on item, by default order of
+             attendees is important on meeting, if both are present, the first win;
+           - an attendee that is non participant on most items and just added to be able to
+             replace a signatory on some items.'''
+        cfg = self.meetingConfig
+        # remove recurring items
+        self._removeConfigObjectsFor(cfg)
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime())
+        # by default hp4 is signatory 2
+        hp2 = self.portal.contacts.person2.held_pos2
+        hp2_uid = hp2.UID()
+        hp3 = self.portal.contacts.person3.held_pos3
+        hp3_uid = hp3.UID()
+        hp4 = self.portal.contacts.person4.held_pos4
+        hp4_uid = hp4.UID()
+        self.assertEqual(meeting.orderedContacts[hp4_uid]['signature_number'], '2')
+        # set hp3 signatory 2
+        self.assertIsNone(meeting.orderedContacts[hp3_uid]['signature_number'])
+        meeting.orderedContacts[hp3_uid]['signer'] = True
+        meeting.orderedContacts[hp3_uid]['signature_number'] = '2'
+        meeting_signatories = meeting.getSignatories()
+        self.assertEqual(len(meeting_signatories), 3)
+        # when by_signature_number=True, the first is kept
+        meeting_signatories = meeting.getSignatories(by_signature_number=True)
+        self.assertEqual(len(meeting_signatories), 2)
+        self.assertEqual(meeting_signatories['2'], hp3_uid)
+        # set hp2 signatory 2
+        self.assertIsNone(meeting.orderedContacts[hp2_uid]['signature_number'])
+        meeting.orderedContacts[hp2_uid]['signer'] = True
+        meeting.orderedContacts[hp2_uid]['signature_number'] = '2'
+        meeting_signatories = meeting.getSignatories(by_signature_number=True)
+        self.assertEqual(len(meeting_signatories), 2)
+        # the first win
+        self.assertEqual(meeting_signatories['2'], hp2_uid)
+
+        # on item, by default still first win
+        item = self.create('MeetingItem')
+        self.presentItem(item)
+        self.assertEqual(item.getItemSignatories(by_signature_number=True)['2'], hp2_uid)
+        # set hp2 absent on meeting
+        meeting.orderedContacts[hp2_uid]['attendee'] = False
+        meeting.orderedContacts[hp2_uid]['absent'] = True
+        # then hp3 is the first signature_number 2
+        self.assertEqual(item.getItemSignatories(by_signature_number=True)['2'], hp3_uid)
+        # set hp3 absent on item
+        meeting.itemExcused[item.UID()] = [hp3_uid]
+        self.assertEqual(item.getItemSignatories(by_signature_number=True)['2'], hp4_uid)
+
     def test_pm_MeetingGetItemAbsents(self):
         '''Test the Meeting.getItemAbsents method.'''
         cfg = self.meetingConfig

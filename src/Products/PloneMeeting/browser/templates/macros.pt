@@ -523,7 +523,9 @@ document.location.reload(true);
       </tal:meetingSigner>
 
       <tal:replacedMeetingSigner condition="python: aUid in meetingSignatories and aUid not in itemSignatories">
-       (<span class="signatory-checked" title="Meeting signatory replaced for this item" i18n:attributes="title">
+       (<span class="signatory-checked"
+              title="Meeting signatory not used, another signatory with same signature number is used"
+              i18n:attributes="title">
         <span class="fa people-checked"></span>
         <span tal:content="python: meetingSignatories[aUid]" />
        </span>)

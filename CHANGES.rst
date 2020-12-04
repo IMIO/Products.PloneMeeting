@@ -58,6 +58,12 @@ Changelog
   writable by `MeetingManagers` and viewable by everybody when meeting or item
   is decided.
   [gbastien]
+- When several attendees defined on meeting with same `signature_number`,
+  do it correctly useable on items when an signatory is absent.
+  When several same `signature_number`, the first present win,
+  if not redefined on item, and when redefined, it takes precedence over what
+  is defined in meeting.
+  [gbastien]
 
 4.2b6 (2020-11-19)
 ------------------
