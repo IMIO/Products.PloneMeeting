@@ -3734,7 +3734,20 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return signatories
         meeting = self.getMeeting()
         if not real:
-            signatories = meeting.getSignatories(by_signature_number=True)
+            # we could have several signatories having same signature_number
+            # this is the case when having a signatory replacer on some items
+            # we may define for example 2 signatory "2" and use it on specific items
+            signatories = meeting.getSignatories(by_signature_number=False)
+            # keep signatories that are attendees for this item
+            # keep order so we may have 2 signatory 2 present and the first win
+            # we reverse attendees order so when reversing key/values here under
+            # the second same signature numnber is actually the first
+            attendees = reversed(self.getAttendees())
+            signatories = OrderedDict([(k, signatories[k]) for k in attendees
+                                       if k in signatories])
+            # reverse as keys were signatory UID, we want signature_number
+            signatories = {v: k for k, v in signatories.items()}
+
         item_signatories = meeting.getItemSignatories().get(self.UID(), {})
         signatories.update(item_signatories)
 

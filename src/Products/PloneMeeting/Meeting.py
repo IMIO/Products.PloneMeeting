@@ -1097,15 +1097,21 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
     def getSignatories(self, theObjects=False, by_signature_number=False):
         '''See docstring in previous method.'''
         signers = self._getContacts('signer', theObjects=theObjects)
+        # order is important in case we have several same signature_number, the first win
         if theObjects:
-            res = {signer: self.orderedContacts[signer.UID()]['signature_number']
-                   for signer in signers}
+            res = OrderedDict(
+                [(signer, self.orderedContacts[signer.UID()]['signature_number'])
+                 for signer in signers])
         else:
-            res = {signer_uid: self.orderedContacts[signer_uid]['signature_number']
-                   for signer_uid in signers}
+            res = OrderedDict(
+                [(signer_uid, self.orderedContacts[signer_uid]['signature_number'])
+                 for signer_uid in signers])
         if by_signature_number:
+            # reverse res so when several same signature_number, the first win
+            res = OrderedDict(reversed(res.items()))
+            # keys are values, values are keys
             res = {v: k for k, v in res.items()}
-        return res
+        return dict(res)
 
     security.declarePublic('getReplacements')
 
