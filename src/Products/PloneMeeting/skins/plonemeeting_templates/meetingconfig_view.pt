@@ -596,6 +596,7 @@
         <legend>
          <span i18n:translate="Categories"></span>
           <a href="#"
+             class="link-overlay-pm"
              title="add_object"
              i18n:attributes="title"
              tal:condition="isRealManager"
@@ -615,6 +616,7 @@
         <legend>
          <span i18n:translate="Classifiers"></span>
           <a href="#"
+             class="link-overlay-pm"
              title="add_object"
              i18n:attributes="title"
              tal:condition="isRealManager"
