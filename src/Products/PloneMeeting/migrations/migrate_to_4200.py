@@ -208,7 +208,7 @@ class Migrate_To_4200(Migrator):
         self.cleanMeetingConfigs(field_names=['itemDecidedStates', 'itemPositiveDecidedStates'])
 
         # init otherMeetingConfigsClonableToFieldXXX and XXXSuite/XXXEnd new fields
-        self.initNewHTMLFields()
+        self.initNewHTMLFields(query={'meta_type': ('Meeting', 'MeetingItem')})
 
         # update faceted filters
         self.updateFacetedFilters(xml_filename='upgrade_step_4200_add_item_widgets.xml')
@@ -216,8 +216,8 @@ class Migrate_To_4200(Migrator):
         # update holidays
         self.updateHolidays()
 
-        self.tool.updateAllLocalRoles(meta_type=('MeetingItem', ))
-        self.refreshDatabase(workflows=True, catalogsToUpdate=[])
+        #self.tool.updateAllLocalRoles(meta_type=('MeetingItem', ))
+        #self.refreshDatabase(workflows=True, catalogsToUpdate=[])
 
 
 def migrate(context):

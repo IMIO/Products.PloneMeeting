@@ -348,6 +348,9 @@ class IMeetingItemDocumentation:
     def getAdviceRelatedIndexes(self):
         '''Return item indexes related to advices, by default
            only the 'indexAdvisers' index is returned.'''
+    def showVotesObservations():
+        '''Votes observations field is only viewable by MeetingManagers and
+           power observers until item is decided, in this case everybody may see it.'''
 
 
 class IMeetingItemWorkflowConditions(Interface):
@@ -473,6 +476,9 @@ class IMeetingDocumentation:
            of this meeting? The default implementation for this method
            returns True when the meeting has started (based on meeting.date or
            meeting.startDate if used).'''
+    def showVotesObservations():
+        '''Votes observations field is only viewable by MeetingManagers and
+           power observers until meeting is decided, in this case everybody may see it.'''
     def onEdit(isCreated):
         '''This method is called every time a meeting is created or updated.'''
     def showInsertOrRemoveSelectedItemsAction():

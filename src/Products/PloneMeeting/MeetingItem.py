@@ -1557,11 +1557,28 @@ schema = Schema((
         write_permission="PloneMeeting: Write item MeetingManager reserved fields",
     ),
     TextField(
+        name='committeeObservations',
+        allowable_content_types=('text/html',),
+        widget=RichWidget(
+            condition="python: here.attributeIsUsed('committeeObservations')",
+            description_msgid="field_vieawable_by_everyone_descr",
+            label='Committeeobservations',
+            label_msgid='PloneMeeting_label_committeeObservations',
+            i18n_domain='PloneMeeting',
+        ),
+        default_content_type="text/html",
+        default_output_type="text/x-html-safe",
+        searchable=True,
+        optional=True,
+        write_permission="PloneMeeting: Write item MeetingManager reserved fields",
+    ),
+    TextField(
         name='votesObservations',
         widget=RichWidget(
             label_msgid="PloneMeeting_label_votesObservations",
-            condition="python: here.attributeIsUsed('votesObservations')",
-            description_msgid="field_vieawable_by_everyone_descr",
+            condition="python: here.attributeIsUsed('votesObservations') and "
+                      "here.adapted().showVotesObservations()",
+            description_msgid="field_vieawable_by_everyone_once_item_decided_descr",
             label='Votesobservations',
             i18n_domain='PloneMeeting',
         ),
@@ -2110,6 +2127,19 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def showObservations(self):
         '''See doc in interfaces.py.'''
         return True
+
+    security.declarePublic('showVotesObservations')
+
+    def showVotesObservations(self):
+        '''See doc in interfaces.py.'''
+        item = self.getSelf()
+        tool = api.portal.get_tool('portal_plonemeeting')
+        res = tool.isManager(item)
+        if not res:
+            cfg = tool.getMeetingConfig(item)
+            res = tool.isPowerObserverForCfg(cfg) or \
+                item.queryState() in cfg.getItemDecidedStates()
+        return res
 
     security.declarePublic('showIsAcceptableOutOfMeeting')
 

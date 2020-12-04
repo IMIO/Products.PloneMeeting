@@ -31,6 +31,7 @@ from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCas
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
 from Products.PloneMeeting.tests.testUtils import ASSEMBLY_CORRECT_VALUE
 from Products.PloneMeeting.tests.testUtils import ASSEMBLY_WRONG_VALUE
+from Products.PloneMeeting.utils import checkMayQuickEdit
 from Products.PloneMeeting.utils import getCurrentMeetingObject
 from Products.PloneMeeting.utils import set_field_from_ajax
 from Products.ZCatalog.Catalog import AbstractCatalogBrain
@@ -3419,6 +3420,60 @@ class testMeeting(PloneMeetingTestCase):
         self.assertEqual(meeting.validate(self.request), {})
         meeting2.at_post_create_script()
         self.assertEqual(meeting.validate(self.request), {})
+
+    def test_pm_VotesObservations(self):
+        """Fields Meeting.votesObservations and MeetingItem.votesObservations
+           are only viewable to everybody when meeting/item is decided."""
+        def _check_access(field, obj, read=True, write=True):
+            """ """
+            parent = obj.aq_inner.aq_parent
+            cond_res = field.widget.testCondition(parent, self.portal, obj)
+            if read:
+                self.assertTrue(cond_res)
+            else:
+                self.assertFalse(cond_res)
+            may_quick_edit = checkMayQuickEdit(obj, permission=field.write_permission)
+            if write:
+                self.assertTrue(may_quick_edit)
+            else:
+                self.assertFalse(may_quick_edit)
+
+        self._enableField('votesObservations')
+        self._enableField('votesObservations', related_to='Meeting')
+        # viewable/editable as MeetingManager
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime('2020/12/03'))
+        m_field = meeting.getField('votesObservations')
+        item = self.create('MeetingItem', decision=self.decisionText)
+        i_field = item.getField('votesObservations')
+        _check_access(m_field, meeting)
+        _check_access(i_field, item)
+        # not viewable/editable as creator
+        self.changeUser('pmCreator1')
+        _check_access(m_field, meeting, read=False, write=False)
+        _check_access(i_field, item, read=False, write=False)
+        # viewable but not editable by powerobservers
+        self.changeUser('powerobserver1')
+        _check_access(m_field, meeting, read=True, write=False)
+        _check_access(i_field, item, read=True, write=False)
+        # decide meeting and item
+        self.changeUser('pmManager')
+        self.presentItem(item)
+        _check_access(i_field, item)
+        self.decideMeeting(meeting)
+        _check_access(m_field, meeting)
+        _check_access(i_field, item)
+        self.closeMeeting(meeting)
+        _check_access(m_field, meeting, read=True, write=False)
+        _check_access(i_field, item, read=True, write=False)
+        # viewable by creator
+        self.changeUser('pmCreator1')
+        _check_access(m_field, meeting, read=True, write=False)
+        _check_access(i_field, item, read=True, write=False)
+        # still viewable but not editable by powerobservers
+        self.changeUser('powerobserver1')
+        _check_access(m_field, meeting, read=True, write=False)
+        _check_access(i_field, item, read=True, write=False)
 
 
 def test_suite():

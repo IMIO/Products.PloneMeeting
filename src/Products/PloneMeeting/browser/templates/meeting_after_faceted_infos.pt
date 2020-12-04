@@ -36,6 +36,11 @@
     <metal:f use-macro="context/@@pm-macros/viewContentField"/>
   </tal:field>
 
+  <tal:comment replace="nothing">Votes observations</tal:comment>
+  <tal:field define="fieldName python: 'votesObservations'; ajaxEdit python:True">
+    <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+  </tal:field>
+
   <tal:comment replace="nothing">Public meeting observations</tal:comment>
   <tal:field define="fieldName python: 'publicMeetingObservations'; ajaxEdit python:True">
     <metal:f use-macro="context/@@pm-macros/viewContentField"/>

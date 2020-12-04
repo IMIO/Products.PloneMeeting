@@ -345,6 +345,9 @@
         <tal:field define="fieldName python: 'committeeObservations'">
           <metal:f use-macro="context/@@pm-macros/editContentField"/>
         </tal:field>
+        <tal:field define="fieldName python: 'votesObservations'">
+          <metal:f use-macro="context/@@pm-macros/editContentField"/>
+        </tal:field>
         <tal:field define="fieldName python: 'publicMeetingObservations'">
           <metal:f use-macro="context/@@pm-macros/editContentField"/>
         </tal:field>

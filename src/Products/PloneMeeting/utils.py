@@ -1686,10 +1686,11 @@ def checkMayQuickEdit(obj,
     tool = api.portal.get_tool('portal_plonemeeting')
     member = api.user.get_current()
     res = False
+    meeting = obj.meta_type == "Meeting" and obj or (obj.hasMeeting() and obj.getMeeting())
     if (not onlyForManagers or (onlyForManagers and tool.isManager(obj))) and \
        (bypassWritePermissionCheck or member.has_permission(permission, obj)) and \
        (_evaluateExpression(obj, expression)) and \
-       (not (obj.hasMeeting() and obj.getMeeting().queryState() in Meeting.meetingClosedStates) or
+       (not (meeting and meeting.queryState() in Meeting.meetingClosedStates) or
             tool.isManager(obj, realManagers=True)):
         res = True
     return res

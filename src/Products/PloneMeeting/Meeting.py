@@ -607,6 +607,22 @@ schema = Schema((
         optional=True,
     ),
     TextField(
+        name='votesObservations',
+        allowable_content_types=('text/html',),
+        widget=RichWidget(
+            condition="python: here.attributeIsUsed('votesObservations') and "
+                      "here.adapted().showVotesObservations()",
+            description_msgid="field_vieawable_by_everyone_once_meeting_decided_descr",
+            label='Votesobservations',
+            label_msgid='PloneMeeting_label_votesObservations',
+            i18n_domain='PloneMeeting',
+        ),
+        default_content_type="text/html",
+        default_output_type="text/x-html-safe",
+        searchable=True,
+        optional=True,
+    ),
+    TextField(
         name='publicMeetingObservations',
         allowable_content_types=('text/html',),
         widget=RichWidget(
@@ -2159,6 +2175,19 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
     def showSignatures(self):
         '''Show the 'signatures' field?'''
         return self.attributeIsUsed('signatures') or self.getSignatures()
+
+    security.declarePublic('showVotesObservations')
+
+    def showVotesObservations(self):
+        '''See doc in interfaces.py.'''
+        meeting = self.getSelf()
+        tool = api.portal.get_tool('portal_plonemeeting')
+        res = tool.isManager(meeting)
+        if not res:
+            cfg = tool.getMeetingConfig(meeting)
+            res = tool.isPowerObserverForCfg(cfg) or \
+                meeting.adapted().isDecided()
+        return res
 
     security.declarePublic('showVotes')
 
