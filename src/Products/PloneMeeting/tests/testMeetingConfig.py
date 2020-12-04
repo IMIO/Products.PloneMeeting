@@ -1955,7 +1955,6 @@ class testMeetingConfig(PloneMeetingTestCase):
     def test_pm_Validate_itemWFValidationLevels_removed_used_state_item(self):
         """Test MeetingConfig.validate_itemWFValidationLevels, if we remove a validation
            level state that is used by an item."""
-        # ease override by subproducts
         cfg = self.meetingConfig
         # make sure not used in config
         cfg.setItemAdviceStates(())
@@ -2001,10 +2000,46 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.deleteAsManager(item.UID())
         self.failIf(cfg.validate_itemWFValidationLevels(values_disabled_proposed))
 
+    def test_pm_Validate_itemWFValidationLevels_removed_depending_used_state_item(self):
+        """Test MeetingConfig.validate_itemWFValidationLevels, if we remove a validation
+           level state that is used by an item, not directly but by a workflowAdaptation
+           that is using it, like for example the "prevalidated_waiting_advices" states."""
+        # ease override by subproducts
+        cfg = self.meetingConfig
+        if not self._check_wfa_available(['waiting_advices']):
+            return
+
+        # config
+        cfg = self.meetingConfig
+        waiting_advices_proposed_state = '{0}_waiting_advices'.format(
+            self._stateMappingFor('proposed'))
+        cfg.setItemAdviceStates((waiting_advices_proposed_state, ))
+        cfg.setItemAdviceEditStates((waiting_advices_proposed_state, ))
+        cfg.setItemAdviceViewStates((waiting_advices_proposed_state, ))
+
+        # add item and set it in waiting_advices_proposed_state
+        self.changeUser('pmManager')
+        self._activate_wfas(('waiting_advices', ))
+        item = self.create('MeetingItem')
+        item.setOptionalAdvisers((self.vendors_uid, ))
+        self.proposeItem(item)
+        self._setItemToWaitingAdvices(item, 'wait_advices_from_proposed')
+        # values_disabled_proposed
+        self._disableItemValidationLevel(cfg, level='proposed')
+        values_disabled_proposed = deepcopy(cfg.getItemWFValidationLevels())
+        self._enableItemValidationLevel(cfg, level='proposed')
+        level_removed_error = \
+            translate('item_wf_val_states_can_not_be_removed_in_use',
+                      domain='PloneMeeting',
+                      mapping={'item_state': "Waiting advices (proposed)",
+                               'item_url': item.absolute_url()},
+                      context=self.request)
+        self.assertEqual(cfg.validate_itemWFValidationLevels(values_disabled_proposed),
+                         level_removed_error)
+
     def test_pm_Validate_itemWFValidationLevels_removed_used_state_in_config(self):
         """Test MeetingConfig.validate_itemWFValidationLevels, if we remove a validation
            level state that is used by the MeetingConfig."""
-        # ease override by subproducts
         cfg = self.meetingConfig
         cfg.setItemAdviceEditStates(())
 

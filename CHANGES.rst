@@ -64,6 +64,14 @@ Changelog
   if not redefined on item, and when redefined, it takes precedence over what
   is defined in meeting.
   [gbastien]
+- Completed `MeetingConfig.itemWFValidationLevels` to check, when an state is
+  removed, if it is not used by a workflowAdaptation.
+  For example workflowAdaptation `waiting_advices` may creates state
+  `proposed_waiting_advices`, in this case state `proposed` can not be removed
+  if some items still in `proposed_waiting_advices`.
+  We check every states id beginning with removed states or containing
+  `_` + removed state.
+  [gbastien]
 
 4.2b6 (2020-11-19)
 ------------------
