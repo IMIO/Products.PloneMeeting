@@ -23,6 +23,7 @@ Changelog
   parameter `isGroupIds=True` in `utils.sendMailIfRelevant`.
   [gbastien]
 - Make the `quick edit RichText field` work for DX content types :
+
   - added `PMRichTextWidget` useable in DX schema;
   - renamed `utils.setFieldFromAjax` to `utils.set_field_from_ajax`;
   - migrate `RichTextValue` stored on advices to fix `mimeType/outputMimeType`;
