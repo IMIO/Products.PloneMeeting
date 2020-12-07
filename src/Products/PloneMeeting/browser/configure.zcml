@@ -955,28 +955,35 @@
         for="Products.PloneMeeting.content.advice.IMeetingAdvice"
         class=".views.AdviceDocumentGenerationHelperView"
         permission="zope2.View"
-        name="document_generation_helper_view"
-     />
+        name="document_generation_helper_view" />
 
     <!-- ckeditor browser, override for Meeting, MeetingItem and meetingadvice -->
     <browser:page
         name="plone_ckfinder"
         for="Products.PloneMeeting.interfaces.IMeeting"
         class=".overrides.PMCKFinder"
-        permission="zope2.View"
-        />
+        permission="zope2.View" />
     <browser:page
         name="plone_ckfinder"
         for="Products.PloneMeeting.interfaces.IMeetingItem"
         class=".overrides.PMCKFinder"
-        permission="zope2.View"
-        />
+        permission="zope2.View" />
     <browser:page
         name="plone_ckfinder"
         for="Products.PloneMeeting.content.advice.IMeetingAdvice"
         class=".overrides.PMCKFinder"
-        permission="zope2.View"
-        />
+        permission="zope2.View" />
+
+    <!-- override the @@at_utils view to make it public so accessible
+         when called from non accessible item, useful when using
+         MeetingConfig.itemsNotViewableVisibleFields, for example showing
+         MeetingItem.category would raise Unauthorized because of access to @@at_utils -->
+    <browser:page
+        for="Products.PloneMeeting.interfaces.IMeetingContent"
+        name="at_utils"
+        class="Products.Archetypes.browser.utils.Utils"
+        allowed_interface="Products.Archetypes.interfaces.utils.IUtils"
+        permission="zope2.Public" />
 
     <!-- override the @@at_utils view for MeetingConfig -->
     <browser:page
@@ -993,44 +1000,38 @@
             permission="zope2.View"
             class="Products.PloneMeeting.browser.overrides.PMCategorizedChildView"
             layer="collective.iconifiedcategory.interfaces.ICollectiveIconifiedCategoryLayer"
-            template="browser/templates/categorized-childs.pt"
-          />
+            template="browser/templates/categorized-childs.pt" />
         <browser:page
             for="Products.PloneMeeting.interfaces.IMeetingContent"
             name="categorized-childs-infos"
             permission="zope2.View"
             class="Products.PloneMeeting.browser.overrides.PMCategorizedChildInfosView"
             layer="collective.iconifiedcategory.interfaces.ICollectiveIconifiedCategoryLayer"
-            template="browser/templates/categorized-childs-infos.pt"
-          />
+            template="browser/templates/categorized-childs-infos.pt" />
         <browser:page
           name="iconified-confidential"
           for="imio.annex.content.annex.IAnnex"
           layer="collective.iconifiedcategory.interfaces.ICollectiveIconifiedCategoryLayer"
           class="Products.PloneMeeting.browser.overrides.PMConfidentialChangeView"
-          permission="zope2.View"
-          />
+          permission="zope2.View" />
         <browser:page
           name="iconified-publishable"
           for="imio.annex.content.annex.IAnnex"
           layer="collective.iconifiedcategory.interfaces.ICollectiveIconifiedCategoryLayer"
           class="Products.PloneMeeting.browser.overrides.PMPublishableChangeView"
-          permission="zope2.View"
-          />
+          permission="zope2.View" />
         <browser:page
           name="iconified-signed"
           for="imio.annex.content.annex.IAnnex"
           layer="collective.iconifiedcategory.interfaces.ICollectiveIconifiedCategoryLayer"
           class="Products.PloneMeeting.browser.overrides.PMSignedChangeView"
-          permission="zope2.View"
-          />
+          permission="zope2.View" />
         <browser:page
           name="iconified-print"
           for="imio.annex.content.annex.IAnnex"
           layer="collective.iconifiedcategory.interfaces.ICollectiveIconifiedCategoryLayer"
           class="Products.PloneMeeting.browser.overrides.PMToPrintChangeView"
-          permission="zope2.View"
-          />
+          permission="zope2.View" />
     </configure>
 
     <browser:page

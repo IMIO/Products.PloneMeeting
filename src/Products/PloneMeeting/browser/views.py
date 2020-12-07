@@ -118,7 +118,7 @@ class ItemMoreInfosView(BrowserView):
                                       extra_expr_ctx=extra_expr_ctx)
             if res:
                 self.visibleFields = self.cfg.getField('itemsNotViewableVisibleFields').get(self.cfg)
-                with api.env.adopt_roles(['Manager']):
+                with api.env.adopt_roles(roles=['Manager']):
                     return super(ItemMoreInfosView, self).__call__()
             else:
                 self.visibleFields = ()

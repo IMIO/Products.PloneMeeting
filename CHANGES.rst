@@ -72,6 +72,10 @@ Changelog
   We check every states id beginning with removed states or containing
   `_` + removed state.
   [gbastien]
+- Override `@@at_utils` for `IMeetingContent` to fix `Unauthorized` access to
+  `@@at_utils` when using `MeetingConfig.itemsNotViewableVisibleFields`
+  to show `MeetingItem.category` field.
+  [gbastien]
 
 4.2b6 (2020-11-19)
 ------------------
