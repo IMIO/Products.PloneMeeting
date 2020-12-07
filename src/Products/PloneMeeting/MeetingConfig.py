@@ -1446,7 +1446,7 @@ schema = Schema((
             description="ItemsNotViewableVisibleFields",
             description_msgid="items_not_viewable_visible_fields_descr",
             label='Itemsnotviewablevisiblefields',
-            label_msgid='PloneMeeting_label_NotViewable',
+            label_msgid='PloneMeeting_label_itemsNotViewableVisibleFields',
             i18n_domain='PloneMeeting',
             size='10',
         ),
