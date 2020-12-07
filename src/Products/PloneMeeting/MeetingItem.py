@@ -3722,7 +3722,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getItemSignatories')
 
-    def getItemSignatories(self, theObjects=False, by_signature_number=False, real=False, **kwargs):
+    def getItemSignatories(self,
+                           theObjects=False,
+                           by_signature_number=False,
+                           real=False,
+                           **kwargs):
         '''Returns the signatories for this item. If no signatory is defined,
            meeting signatories are returned.
            If p_theObjects=False, the returned result is an dict with
@@ -3755,7 +3759,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             uids = signatories.values()
             signatories_objs = meeting._getContacts(uids=uids, theObjects=theObjects)
             reversed_signatories = {v: k for k, v in signatories.items()}
-            signatories = {reversed_signatories[signatory.UID()]: signatory for signatory in signatories_objs}
+            signatories = {reversed_signatories[signatory.UID()]: signatory
+                           for signatory in signatories_objs}
 
         if not by_signature_number:
             signatories = {v: k for k, v in signatories.items()}

@@ -5,6 +5,7 @@ from copy import deepcopy
 from imio.helpers.content import richtextval
 from persistent.mapping import PersistentMapping
 from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_NEW
+from Products.PloneMeeting.browser.itemattendee import label_default
 from Products.PloneMeeting.content.advice import IMeetingAdvice
 from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator
@@ -109,6 +110,23 @@ class Migrate_To_4200(Migrator):
             meeting._p_changed = True
         logger.info('Done.')
 
+    def _updateItemSignatories(self):
+        """Now that an arbitraty label may be defined when redefining item signatory,
+           store it, the default value was the secondary_position_type or the position_type."""
+        logger.info("Updating 'itemSignagtories' for every Meetings...")
+        brains = self.catalog(meta_type='Meeting')
+        for brain in brains:
+            meeting = brain.getObject()
+            for item_uid, signatories in meeting.itemSignatories.items():
+                for signature_number, hp_uid in signatories.items():
+                    if isinstance(hp_uid, PersistentMapping):
+                        return self._already_migrated()
+                    self.request.set('person_uid', hp_uid)
+                    label = label_default()
+                    meeting.itemSignatories[item_uid][signature_number] = \
+                        PersistentMapping({'hp_uid': hp_uid, 'label': label})
+        logger.info('Done.')
+
     def _migrateKeepAccessToItemWhenAdviceIsGiven(self):
         """Boolean field MeetingConfig.keepAccessToItemWhenAdviceIsGiven
            is now single select MeetingConfig.keepAccessToItemWhenAdvice."""
@@ -182,7 +200,9 @@ class Migrate_To_4200(Migrator):
         # manage link between item and meeting manually
         self._removeMeetingItemsReferenceField()
         self._configureVotes()
+        self._updateItemSignatories()
 
+        # update stored Meeting.itemSignatories
         # update RichTextValue stored on DX types (advices)
         self._fixRichTextValueMimeType()
 
@@ -216,8 +236,8 @@ class Migrate_To_4200(Migrator):
         # update holidays
         self.updateHolidays()
 
-        self.tool.updateAllLocalRoles(meta_type=('MeetingItem', ))
-        self.refreshDatabase(workflows=True, catalogsToUpdate=[])
+        #self.tool.updateAllLocalRoles(meta_type=('MeetingItem', ))
+        #self.refreshDatabase(workflows=True, catalogsToUpdate=[])
 
 
 def migrate(context):

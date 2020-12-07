@@ -2,11 +2,13 @@
 
 from AccessControl import Unauthorized
 from imio.helpers.cache import invalidate_cachekey_volatile_for
+from persistent.mapping import PersistentMapping
 from plone import api
+from plone.app.uuid.utils import uuidToObject
 from Products.PloneMeeting.browser.itemassembly import _itemsToUpdate
 from Products.PloneMeeting.browser.itemassembly import validate_apply_until_item_number
-from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
 from Products.PloneMeeting.config import PMMessageFactory as _
+from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
 from Products.PloneMeeting.interfaces import IRedirect
 from Products.PloneMeeting.utils import _itemNumber_to_storedItemNumber
 from Products.PloneMeeting.utils import fplog
@@ -14,11 +16,11 @@ from Products.PloneMeeting.utils import notifyModifiedAndReindex
 from z3c.form import button
 from z3c.form import field
 from z3c.form import form
+from z3c.form.interfaces import NO_VALUE
 from zope import schema
 from zope.component.hooks import getSite
 from zope.i18n import translate
 from zope.interface import Interface
-from z3c.form.interfaces import NO_VALUE
 
 
 def person_uid_default():
@@ -399,6 +401,16 @@ class WelcomeNonAttendeeForm(WelcomeAttendeeForm):
 # WelcomeNonAttendeeFormWrapper = wrap_form(WelcomeNonAttendeeForm)
 
 
+def label_default():
+    """ """
+    person_uid = person_uid_default()
+    hp = uuidToObject(person_uid)
+    label = hp.get_label(
+        position_type_attr='secondary_position_type',
+        fallback_position_type_attr='position_type')
+    return label
+
+
 class IRedefinedSignatory(IBaseAttendee):
 
     apply_until_item_number = schema.TextLine(
@@ -408,6 +420,12 @@ class IRedefinedSignatory(IBaseAttendee):
                       u"Leave empty to only apply for current item."),
         required=False,
         constraint=validate_apply_until_item_number,)
+
+    label = schema.TextLine(
+        title=_(u"Label"),
+        description=_(u"Label to use for the signature."),
+        defaultFactory=label_default,
+        required=False)
 
     signature_number = schema.Choice(
         title=_(u"Signature number"),
@@ -450,7 +468,8 @@ class RedefinedSignatoryForm(BaseAttendeeForm):
             item_to_update_uid = item_to_update.UID()
             item_signatories = self.meeting.getItemSignatories().get(item_to_update_uid, {})
             if self.person_uid not in item_signatories.values():
-                item_signatories[self.signature_number] = self.person_uid
+                item_signatories[self.signature_number] = PersistentMapping(
+                    {'hp_uid': self.person_uid, 'label': self.label})
                 self.meeting.itemSignatories[item_to_update_uid] = item_signatories
                 notifyModifiedAndReindex(item_to_update)
         first_item_number = items_to_update[0].getItemNumber(for_display=True)

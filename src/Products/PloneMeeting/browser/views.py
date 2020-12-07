@@ -2349,7 +2349,7 @@ class DisplayMeetingItemSignatories(BrowserView):
         self.signatory_uid = signatory_uid
         return self.index()
 
-    def getItemsForSignatory(self):
+    def get_items_for_signatory(self):
         """Returns the list of items the signatory_uid is signatory for."""
         item_uids = self.meeting.getItemSignatories(by_signatories=True).get(self.signatory_uid, [])
         catalog = api.portal.get_tool('portal_catalog')
