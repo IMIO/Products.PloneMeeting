@@ -671,3 +671,14 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             # manage cache
             notify(ObjectModifiedEvent(obj))
         self.cleanMemoize()
+
+    def _check_wfa_available(self, wfas):
+        available = True
+        available_wfas = self.meetingConfig.listWorkflowAdaptations()
+        for wfa in wfas:
+            if wfa not in available_wfas:
+                available = False
+                pm_logger.info('Bypassing {0} because WFAdaptation {1} is not available!'.format(
+                    self._testMethodName, wfa))
+                break
+        return available

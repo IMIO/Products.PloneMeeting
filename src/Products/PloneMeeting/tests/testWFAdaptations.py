@@ -1562,22 +1562,6 @@ class testWFAdaptations(PloneMeetingTestCase):
         # back to original configuration
         adaptations.WAITING_ADVICES_FROM_STATES = original_WAITING_ADVICES_FROM_STATES
 
-    def _setItemToWaitingAdvices(self, item, transition):
-        """Done to be overrided, sometimes it is necessary to do something more to be able
-           to set item to 'waiting_advices'."""
-        self.do(item, transition)
-
-    def _userAbleToBackFromWaitingAdvices(self, currentState):
-        """Return username able to back from waiting advices."""
-        if currentState == 'itemcreated_waiting_advices':
-            return 'pmCreator1'
-        else:
-            return 'pmReviewer1'
-
-    def _afterItemCreatedWaitingAdviceWithPrevalidation(self, item):
-        """Made to be overrided..."""
-        return
-
     def test_pm_WFA_waiting_advices_from_last_val_level(self):
         '''Set item to waiting_advices from last validation level.'''
         cfg = self.meetingConfig

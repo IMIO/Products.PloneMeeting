@@ -4300,18 +4300,32 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                              domain='PloneMeeting',
                              context=self.REQUEST)
 
-        # make sure no item in state that were removed or disabled
-        catalog = api.portal.get_tool('portal_catalog')
-        brains = catalog(portal_type=self.getItemTypeName(), review_state=removed_or_disabled_states)
-        if brains:
-            aBrain = brains[0]
-            return translate('item_wf_val_states_can_not_be_removed_in_use',
-                             domain='PloneMeeting',
-                             mapping={'item_state': translate(aBrain.review_state,
-                                                              domain="plone",
-                                                              context=self.REQUEST),
-                                      'item_url': aBrain.getURL()},
-                             context=self.REQUEST)
+        # make sure no item is using a state using a removed or disabled state
+        # either directly the state or a state depending on it
+        # for example removing prevalidated and having item in state
+        # returned_to_proposing_group_prevalidated or prevalidated_waiting_advices
+        # so get from the item workflow, every states starting with a removed state
+        # or containing "_" + a removed state
+        item_states = self.getItemWorkflow(True).states
+        item_contained_states = []
+        for removed_or_disabled_state in removed_or_disabled_states:
+            for item_state in item_states:
+                if item_state.startswith(removed_or_disabled_state) or \
+                   "_%s" % removed_or_disabled_state in item_state:
+                    item_contained_states.append(item_state)
+        item_contained_states += list(removed_or_disabled_states)
+        if item_contained_states:
+            catalog = api.portal.get_tool('portal_catalog')
+            brains = catalog(portal_type=self.getItemTypeName(), review_state=item_contained_states)
+            if brains:
+                aBrain = brains[0]
+                return translate('item_wf_val_states_can_not_be_removed_in_use',
+                                 domain='PloneMeeting',
+                                 mapping={'item_state': translate(aBrain.review_state,
+                                                                  domain="plone",
+                                                                  context=self.REQUEST),
+                                          'item_url': aBrain.getURL()},
+                                 context=self.REQUEST)
 
         # make sure the MeetingConfig does not use a state that was removed or disabled
         # either using state or transition

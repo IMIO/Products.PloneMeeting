@@ -495,3 +495,19 @@ class PloneMeetingTestingHelpers:
         ordered_contacts = cfg.getField('orderedContacts').Vocabulary(cfg).keys()
         cfg.setOrderedContacts(ordered_contacts)
         logout()
+
+    def _setItemToWaitingAdvices(self, item, transition):
+        """Done to be overrided, sometimes it is necessary to do something more to be able
+           to set item to 'waiting_advices'."""
+        self.do(item, transition)
+
+    def _userAbleToBackFromWaitingAdvices(self, currentState):
+        """Return username able to back from waiting advices."""
+        if currentState == 'itemcreated_waiting_advices':
+            return 'pmCreator1'
+        else:
+            return 'pmReviewer1'
+
+    def _afterItemCreatedWaitingAdviceWithPrevalidation(self, item):
+        """Made to be overrided..."""
+        return
