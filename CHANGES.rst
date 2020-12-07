@@ -5,6 +5,7 @@ Changelog
 4.2b7 (unreleased)
 ------------------
 
+- CHEH
 - Use correct icon for `itemfreeze/itempublish` transitions on item workflow
   (were reversed).
   [gbastien]
