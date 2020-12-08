@@ -401,14 +401,12 @@ class WelcomeNonAttendeeForm(WelcomeAttendeeForm):
 # WelcomeNonAttendeeFormWrapper = wrap_form(WelcomeNonAttendeeForm)
 
 
-def label_default():
+def position_type_default():
     """ """
     person_uid = person_uid_default()
     hp = uuidToObject(person_uid)
-    label = hp.get_label(
-        position_type_attr='secondary_position_type',
-        fallback_position_type_attr='position_type')
-    return label
+    position_type = hp.secondary_position_type or hp.position_type
+    return position_type
 
 
 class IRedefinedSignatory(IBaseAttendee):
@@ -421,11 +419,12 @@ class IRedefinedSignatory(IBaseAttendee):
         required=False,
         constraint=validate_apply_until_item_number,)
 
-    label = schema.TextLine(
-        title=_(u"Label"),
-        description=_(u"Label to use for the signature."),
-        defaultFactory=label_default,
-        required=False)
+    position_type = schema.Choice(
+        title=_(u"Signature position type"),
+        description=_(u"Position type to use as label for the signature."),
+        defaultFactory=position_type_default,
+        required=True,
+        vocabulary="PositionTypes")
 
     signature_number = schema.Choice(
         title=_(u"Signature number"),
@@ -466,10 +465,10 @@ class RedefinedSignatoryForm(BaseAttendeeForm):
         # apply signatory
         for item_to_update in items_to_update:
             item_to_update_uid = item_to_update.UID()
-            item_signatories = self.meeting.getItemSignatories().get(item_to_update_uid, {})
+            item_signatories = self.meeting.itemSignatories.get(item_to_update_uid, {})
             if self.person_uid not in item_signatories.values():
                 item_signatories[self.signature_number] = PersistentMapping(
-                    {'hp_uid': self.person_uid, 'label': self.label})
+                    {'hp_uid': self.person_uid, 'position_type': self.position_type})
                 self.meeting.itemSignatories[item_to_update_uid] = item_signatories
                 notifyModifiedAndReindex(item_to_update)
         first_item_number = items_to_update[0].getItemNumber(for_display=True)
@@ -516,8 +515,9 @@ class RemoveRedefinedSignatoryForm(BaseAttendeeForm):
         # apply signatory
         for item_to_update in items_to_update:
             item_to_update_uid = item_to_update.UID()
-            item_signatories = self.meeting.getItemSignatories().get(item_to_update_uid, {})
-            signature_number = [k for k, v in item_signatories.items() if v == self.person_uid]
+            item_signatories = self.meeting.itemSignatories.get(item_to_update_uid, {})
+            signature_number = [k for k, v in item_signatories.items()
+                                if v['hp_uid'] == self.person_uid]
             if signature_number:
                 del item_signatories[signature_number[0]]
                 # if no more redefined item signatories, remove item UID from meeting.itemSignatories

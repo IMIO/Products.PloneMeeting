@@ -1104,7 +1104,9 @@ class testContacts(PloneMeetingTestCase):
         signer = self.portal.contacts.get('person2')
         signer_hp = signer.get_held_positions()[0]
         signer_hp_uid = signer_hp.UID()
-        meeting.itemSignatories[item_with_absent.UID()] = {'1': signer_hp_uid}
+        meeting.itemSignatories[item_with_absent.UID()] = {
+            '1': {'hp_uid': signer_hp_uid,
+                  'position_type': u'default'}}
         self.assertTrue(signer_hp_uid in item_with_absent.getItemSignatories())
 
         # remove items from meeting, everything is reinitialized

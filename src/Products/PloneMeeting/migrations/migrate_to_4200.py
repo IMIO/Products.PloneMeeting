@@ -5,7 +5,7 @@ from copy import deepcopy
 from imio.helpers.content import richtextval
 from persistent.mapping import PersistentMapping
 from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_NEW
-from Products.PloneMeeting.browser.itemattendee import label_default
+from Products.PloneMeeting.browser.itemattendee import position_type_default
 from Products.PloneMeeting.content.advice import IMeetingAdvice
 from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator
@@ -122,9 +122,9 @@ class Migrate_To_4200(Migrator):
                     if isinstance(hp_uid, PersistentMapping):
                         return self._already_migrated()
                     self.request.set('person_uid', hp_uid)
-                    label = label_default()
+                    position_type = position_type_default()
                     meeting.itemSignatories[item_uid][signature_number] = \
-                        PersistentMapping({'hp_uid': hp_uid, 'label': label})
+                        PersistentMapping({'hp_uid': hp_uid, 'position_type': position_type})
         logger.info('Done.')
 
     def _migrateKeepAccessToItemWhenAdviceIsGiven(self):
@@ -236,8 +236,8 @@ class Migrate_To_4200(Migrator):
         # update holidays
         self.updateHolidays()
 
-        #self.tool.updateAllLocalRoles(meta_type=('MeetingItem', ))
-        #self.refreshDatabase(workflows=True, catalogsToUpdate=[])
+        self.tool.updateAllLocalRoles(meta_type=('MeetingItem', ))
+        self.refreshDatabase(workflows=True, catalogsToUpdate=[])
 
 
 def migrate(context):

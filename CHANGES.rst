@@ -5,8 +5,9 @@ Changelog
 4.2b8 (unreleased)
 ------------------
 
-- Nothing changed yet.
-
+- While redefining a signatory on an item, add possibility to select a
+  `position_type` as label to use for the signature generated in POD templates.
+  [gbastien]
 
 4.2b7 (2020-12-08)
 ------------------

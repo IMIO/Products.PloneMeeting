@@ -9,8 +9,8 @@
         <tal:signature_infos define="signature_infos python: view.meeting.get_signature_infos_for(item.UID(), view.signatory_uid)">
         [<strong i18n:translate="">Signature number</strong>:
          <span tal:content="signature_infos/signature_number"></span> -
-         <strong i18n:translate="">Label</strong>:
-         <span tal:content="signature_infos/label"></span>]
+         <strong i18n:translate="">Signature position type</strong>:
+         <span tal:content="signature_infos/position_type"></span>]
         </tal:signature_infos>
        </li>
   </ul>
