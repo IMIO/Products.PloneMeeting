@@ -4,10 +4,6 @@
 
 fieldset {line-height: 1em; margin: 0.5em 0; }
 
-table.listing tbody tr td {
-   vertical-align: inherit;
-}
-
 /* background of secret items when displayed on the meeting */
 table.listing tbody tr.odd.meeting_item_privacy_secret td {
     background-color: #fffacd;
@@ -525,6 +521,9 @@ td.noPadding a {
     padding: 0 !important;
 }
 
+table#meeting_users.listing tbody tr td {
+   vertical-align: inherit;
+}
 table#meeting_users th {
    text-align: center;
 }
