@@ -1188,7 +1188,8 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         catalog = api.portal.get_tool('portal_catalog')
         res['signature_number'] = data.keys()[0]
         hp = catalog(UID=signatory_uid)[0].getObject()
-        res['position_type'] = hp.get_label(position_type_value=data.values()[0]['position_type'])
+        res['position_type'] = hp.get_label(
+            forced_position_type_value=data.values()[0]['position_type'])
         return res
 
     security.declarePublic('getItemVotes')
