@@ -397,6 +397,7 @@ class testContacts(PloneMeetingTestCase):
         signatory_form.person_uid = hp_uid
         signatory_form.apply_until_item_number = 200
         signatory_form.signature_number = '1'
+        signatory_form.position_type = u'default'
         signatory_form._doApply()
 
         self.assertEqual(item1.getItemSignatories(real=True), {hp_uid: '1'})
