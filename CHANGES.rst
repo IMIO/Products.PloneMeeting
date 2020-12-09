@@ -5,8 +5,9 @@ Changelog
 4.2b8 (unreleased)
 ------------------
 
-- Nothing changed yet.
-
+- Fixed `MeetingItem.is_assembly_field_used`, only evaluate when item is linked
+  to a meeting, that broke the item edit form.
+  [gbastien]
 
 4.2b7 (2020-12-08)
 ------------------
