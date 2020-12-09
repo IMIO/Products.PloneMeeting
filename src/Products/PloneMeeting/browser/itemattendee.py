@@ -433,6 +433,18 @@ class IRedefinedSignatory(IBaseAttendee):
         vocabulary=u"Products.PloneMeeting.vocabularies.signaturenumbervocabulary")
 
 
+def set_meeting_item_signatory(meeting, item_uid, signature_number, hp_uid, position_type):
+    """ """
+    updated = False
+    item_signatories = meeting.itemSignatories.get(item_uid, {})
+    if hp_uid not in item_signatories.values():
+        updated = True
+        item_signatories[signature_number] = PersistentMapping(
+            {'hp_uid': hp_uid, 'position_type': position_type})
+        meeting.itemSignatories[item_uid] = item_signatories
+    return updated
+
+
 class RedefinedSignatoryForm(BaseAttendeeForm):
     """ """
 
@@ -465,11 +477,13 @@ class RedefinedSignatoryForm(BaseAttendeeForm):
         # apply signatory
         for item_to_update in items_to_update:
             item_to_update_uid = item_to_update.UID()
-            item_signatories = self.meeting.itemSignatories.get(item_to_update_uid, {})
-            if self.person_uid not in item_signatories.values():
-                item_signatories[self.signature_number] = PersistentMapping(
-                    {'hp_uid': self.person_uid, 'position_type': self.position_type})
-                self.meeting.itemSignatories[item_to_update_uid] = item_signatories
+            updated = set_meeting_item_signatory(
+                self.meeting,
+                item_to_update_uid,
+                self.signature_number,
+                self.person_uid,
+                self.position_type)
+            if updated:
                 notifyModifiedAndReindex(item_to_update)
         first_item_number = items_to_update[0].getItemNumber(for_display=True)
         last_item_number = items_to_update[-1].getItemNumber(for_display=True)

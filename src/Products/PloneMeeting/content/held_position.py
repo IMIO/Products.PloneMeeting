@@ -93,14 +93,15 @@ class PMHeldPosition(HeldPosition):
     def get_label(self,
                   position_type_attr='position_type',
                   fallback_position_type_attr='position_type',
-                  position_type_value=None):
+                  forced_position_type_value=None):
         """Override get_label to use position_type if label is empty."""
         value = self.label
-        if not value:
+        if not value or \
+           (forced_position_type_value and forced_position_type_value != u'default'):
             values = self.gender_and_number_from_position_type(
                 position_type_attr=position_type_attr,
                 fallback_position_type_attr=fallback_position_type_attr,
-                position_type_value=position_type_value)
+                forced_position_type_value=forced_position_type_value)
             gender = self.get_person().gender
             if gender == 'M':
                 value = values['MS']
@@ -191,10 +192,10 @@ class PMHeldPosition(HeldPosition):
     def gender_and_number_from_position_type(self,
                                              position_type_attr='position_type',
                                              fallback_position_type_attr='position_type',
-                                             position_type_value=None):
+                                             forced_position_type_value=None):
         """Split the position_type and generates a dict with gender and number possibilities."""
         vocab = get_vocab(self, "PositionTypes")
-        value = position_type_value or \
+        value = forced_position_type_value or \
             (position_type_attr and getattr(self, position_type_attr)) or \
             (fallback_position_type_attr and getattr(self, fallback_position_type_attr))
         if value:
@@ -218,7 +219,8 @@ class PMHeldPosition(HeldPosition):
                                          use_by=False,
                                          use_to=False,
                                          position_type_attr='position_type',
-                                         fallback_position_type_attr='position_type'):
+                                         fallback_position_type_attr='position_type',
+                                         forced_position_type_value=None):
         """Get prefix to use depending on given value."""
         value_starting_vowel = {'MS': u'L\'',
                                 'MP': u'Les ',
@@ -269,7 +271,8 @@ class PMHeldPosition(HeldPosition):
 
         res = u''
         value = self.get_label(position_type_attr=position_type_attr,
-                               fallback_position_type_attr=fallback_position_type_attr)
+                               fallback_position_type_attr=fallback_position_type_attr,
+                               forced_position_type_value=forced_position_type_value)
         if not value:
             return res
 
@@ -281,7 +284,10 @@ class PMHeldPosition(HeldPosition):
             mappings = value_starting_vowel
         else:
             mappings = value_starting_consonant
-        values = {k: v for k, v in self.gender_and_number_from_position_type(position_type_attr).items()
+        values = {k: v for k, v in self.gender_and_number_from_position_type(
+                  position_type_attr,
+                  fallback_position_type_attr,
+                  forced_position_type_value).items()
                   if v == value}
         res = values and mappings.get(get_gender_and_number(
             [self.get_person()], use_by=use_by, use_to=use_to), u'') or u''
