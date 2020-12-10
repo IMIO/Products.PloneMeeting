@@ -1403,27 +1403,45 @@ class BaseDGHV(object):
         --------------------------------------------------------------------------------------------
         """
         signature_lines = OrderedDict()
+        forced_position_type_values = {}
         if self.context.meta_type == 'Meeting':
             signatories = self.context.getSignatories(theObjects=True, by_signature_number=True)
         else:
             signatories = self.context.getItemSignatories(theObjects=True, by_signature_number=True)
+            if self.context.hasMeeting():
+                # if we have redefined signatories, use the selected position_type
+                meeting = self.context.getMeeting()
+                item_uid = self.context.UID()
+                item_signatories = meeting.getItemSignatories(include_position_type=True)
+                if item_uid in item_signatories:
+                    forced_position_type_values = {
+                        k: v['position_type'] for k, v in
+                        item_signatories[item_uid].items()}
 
         line = 0
-        sorted_signatories = [v for k, v in sorted(signatories.items(), key=lambda item: int(item[0]))]
-        for signatory in sorted_signatories:
+        sorted_signatories = [(v, forced_position_type_values.get(k, None))
+                              for k, v in sorted(signatories.items(),
+                                                 key=lambda item: int(item[0]))]
+        for signatory, forced_position_type_value in sorted_signatories:
             for attr in signature_format:
                 if u'position_type' == attr:
-                    signature_lines[line] = signatory.get_label(position_type_attr=attr)
+                    signature_lines[line] = signatory.get_label(
+                        position_type_attr=attr,
+                        forced_position_type_value=forced_position_type_value)
                 elif u'prefixed_position_type' == attr:
                     signature_lines[line] = signatory.get_prefix_for_gender_and_number(
                         include_value=True,
-                        position_type_attr='position_type')
+                        position_type_attr='position_type',
+                        forced_position_type_value=forced_position_type_value)
                 elif u'secondary_position_type' == attr:
-                    signature_lines[line] = signatory.get_label(position_type_attr=attr)
+                    signature_lines[line] = signatory.get_label(
+                        position_type_attr=attr,
+                        forced_position_type_value=forced_position_type_value)
                 elif u'prefixed_secondary_position_type' == attr:
                     signature_lines[line] = signatory.get_prefix_for_gender_and_number(
                         include_value=True,
-                        position_type_attr='secondary_position_type')
+                        position_type_attr='secondary_position_type',
+                        forced_position_type_value=forced_position_type_value)
                 elif attr == u'person':
                     signature_lines[line] = signatory.get_person_title(include_person_title=False)
                 elif attr == u'person_with_title':
@@ -2359,7 +2377,7 @@ class DisplayMeetingItemSignatories(BrowserView):
         self.signatory_uid = signatory_uid
         return self.index()
 
-    def getItemsForSignatory(self):
+    def get_items_for_signatory(self):
         """Returns the list of items the signatory_uid is signatory for."""
         item_uids = self.meeting.getItemSignatories(by_signatories=True).get(self.signatory_uid, [])
         catalog = api.portal.get_tool('portal_catalog')

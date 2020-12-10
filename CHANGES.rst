@@ -12,6 +12,9 @@ Changelog
   presented into a meeting, this way previous transitions may be triggered by
   configured process like Webservice call or when item sent from another cfg.
   [gbastien]
+- While redefining a signatory on an item, add possibility to select a
+  `position_type` as label to use for the signature generated in POD templates.
+  [gbastien]
 
 4.2b7 (2020-12-08)
 ------------------

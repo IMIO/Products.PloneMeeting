@@ -3349,7 +3349,9 @@ class testMeeting(PloneMeetingTestCase):
         meeting.itemAbsents[item_uid] = [attendee_uids[0]]
         meeting.itemExcused[item_uid] = [attendee_uids[1]]
         meeting.itemNonAttendees[item_uid] = [attendee_uids[2]]
-        meeting.itemSignatories[item_uid] = {'2': attendee_uids[3]}
+        meeting.itemSignatories[item_uid] = {
+            '2': {'hp_uid': attendee_uids[3],
+                  'position_type': u'default'}}
         # now while validating meeting_attendees, None may be unselected
         meeting_attendees = ['muser_{0}_attendee'.format(attendee_uid)
                              for attendee_uid in attendee_uids]

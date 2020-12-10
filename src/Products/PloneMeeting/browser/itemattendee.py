@@ -2,11 +2,13 @@
 
 from AccessControl import Unauthorized
 from imio.helpers.cache import invalidate_cachekey_volatile_for
+from persistent.mapping import PersistentMapping
 from plone import api
+from plone.app.uuid.utils import uuidToObject
 from Products.PloneMeeting.browser.itemassembly import _itemsToUpdate
 from Products.PloneMeeting.browser.itemassembly import validate_apply_until_item_number
-from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
 from Products.PloneMeeting.config import PMMessageFactory as _
+from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
 from Products.PloneMeeting.interfaces import IRedirect
 from Products.PloneMeeting.utils import _itemNumber_to_storedItemNumber
 from Products.PloneMeeting.utils import fplog
@@ -14,11 +16,11 @@ from Products.PloneMeeting.utils import notifyModifiedAndReindex
 from z3c.form import button
 from z3c.form import field
 from z3c.form import form
+from z3c.form.interfaces import NO_VALUE
 from zope import schema
 from zope.component.hooks import getSite
 from zope.i18n import translate
 from zope.interface import Interface
-from z3c.form.interfaces import NO_VALUE
 
 
 def person_uid_default():
@@ -399,6 +401,14 @@ class WelcomeNonAttendeeForm(WelcomeAttendeeForm):
 # WelcomeNonAttendeeFormWrapper = wrap_form(WelcomeNonAttendeeForm)
 
 
+def position_type_default():
+    """ """
+    person_uid = person_uid_default()
+    hp = uuidToObject(person_uid)
+    position_type = hp.secondary_position_type or hp.position_type
+    return position_type
+
+
 class IRedefinedSignatory(IBaseAttendee):
 
     apply_until_item_number = schema.TextLine(
@@ -409,11 +419,30 @@ class IRedefinedSignatory(IBaseAttendee):
         required=False,
         constraint=validate_apply_until_item_number,)
 
+    position_type = schema.Choice(
+        title=_(u"Signature position type"),
+        description=_(u"Position type to use as label for the signature."),
+        defaultFactory=position_type_default,
+        required=True,
+        vocabulary="PositionTypes")
+
     signature_number = schema.Choice(
         title=_(u"Signature number"),
         description=_(u""),
         required=True,
         vocabulary=u"Products.PloneMeeting.vocabularies.signaturenumbervocabulary")
+
+
+def set_meeting_item_signatory(meeting, item_uid, signature_number, hp_uid, position_type):
+    """ """
+    updated = False
+    item_signatories = meeting.itemSignatories.get(item_uid, {})
+    if hp_uid not in item_signatories.values():
+        updated = True
+        item_signatories[signature_number] = PersistentMapping(
+            {'hp_uid': hp_uid, 'position_type': position_type})
+        meeting.itemSignatories[item_uid] = item_signatories
+    return updated
 
 
 class RedefinedSignatoryForm(BaseAttendeeForm):
@@ -448,10 +477,13 @@ class RedefinedSignatoryForm(BaseAttendeeForm):
         # apply signatory
         for item_to_update in items_to_update:
             item_to_update_uid = item_to_update.UID()
-            item_signatories = self.meeting.getItemSignatories().get(item_to_update_uid, {})
-            if self.person_uid not in item_signatories.values():
-                item_signatories[self.signature_number] = self.person_uid
-                self.meeting.itemSignatories[item_to_update_uid] = item_signatories
+            updated = set_meeting_item_signatory(
+                self.meeting,
+                item_to_update_uid,
+                self.signature_number,
+                self.person_uid,
+                self.position_type)
+            if updated:
                 notifyModifiedAndReindex(item_to_update)
         first_item_number = items_to_update[0].getItemNumber(for_display=True)
         last_item_number = items_to_update[-1].getItemNumber(for_display=True)
@@ -497,8 +529,9 @@ class RemoveRedefinedSignatoryForm(BaseAttendeeForm):
         # apply signatory
         for item_to_update in items_to_update:
             item_to_update_uid = item_to_update.UID()
-            item_signatories = self.meeting.getItemSignatories().get(item_to_update_uid, {})
-            signature_number = [k for k, v in item_signatories.items() if v == self.person_uid]
+            item_signatories = self.meeting.itemSignatories.get(item_to_update_uid, {})
+            signature_number = [k for k, v in item_signatories.items()
+                                if v['hp_uid'] == self.person_uid]
             if signature_number:
                 del item_signatories[signature_number[0]]
                 # if no more redefined item signatories, remove item UID from meeting.itemSignatories
