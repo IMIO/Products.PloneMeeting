@@ -1155,20 +1155,42 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getItemSignatories')
 
-    def getItemSignatories(self, by_signatories=False):
+    def getItemSignatories(self, by_signatories=False, include_position_type=False):
         '''Return itemSignatories, by default the itemSignatories dict has the item UID as key and list
            of signatories as values but if 'p_by_signatories' is True, the informations are returned with
-           signatory as key and list of items as value.'''
+           signatory as key and list of items as value.
+           p_include_position_type=True is only relevant when p_by_signatories=False.'''
+        signatories = {}
         if by_signatories:
-            signatories = {}
             for item_uid, signatories_infos in self.itemSignatories.items():
-                for signature_number, signatory_uid in signatories_infos.items():
+                for signature_number, signatory_infos in signatories_infos.items():
+                    # do not keep 'position_type' from the stored itemSignatories
+                    signatory_uid = signatory_infos['hp_uid']
                     if signatory_uid not in signatories:
                         signatories[signatory_uid] = []
                     signatories[signatory_uid].append(item_uid)
         else:
-            signatories = self.itemSignatories.data
+            for item_uid, signatory_infos in self.itemSignatories.data.items():
+                if include_position_type:
+                    signatories[item_uid] = signatory_infos.copy()
+                else:
+                    signatories[item_uid] = {k: v['hp_uid'] for k, v in signatory_infos.items()}
+
         return signatories
+
+    def get_signature_infos_for(self, item_uid, signatory_uid):
+        """Return the signature position_type to use as label and signature_number
+           for given p_item_uid and p_signatory_uid."""
+        data = self.getItemSignatories(by_signatories=False, include_position_type=True)
+        data = {k: v for k, v in data[item_uid].items()
+                if v['hp_uid'] == signatory_uid}
+        res = {}
+        catalog = api.portal.get_tool('portal_catalog')
+        res['signature_number'] = data.keys()[0]
+        hp = catalog(UID=signatory_uid)[0].getObject()
+        res['position_type'] = hp.get_label(
+            forced_position_type_value=data.values()[0]['position_type'])
+        return res
 
     security.declarePublic('getItemVotes')
 

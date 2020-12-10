@@ -12,6 +12,7 @@ from imio.helpers.content import validate_fields
 from OFS.ObjectManager import BeforeDeleteException
 from plone import api
 from Products.CMFCore.permissions import View
+from Products.PloneMeeting.browser.itemattendee import set_meeting_item_signatory
 from Products.PloneMeeting.content.directory import IPMDirectory
 from Products.PloneMeeting.content.source import PMContactSourceBinder
 from Products.PloneMeeting.Extensions.imports import import_contacts
@@ -397,6 +398,7 @@ class testContacts(PloneMeetingTestCase):
         signatory_form.person_uid = hp_uid
         signatory_form.apply_until_item_number = 200
         signatory_form.signature_number = '1'
+        signatory_form.position_type = u'default'
         signatory_form._doApply()
 
         self.assertEqual(item1.getItemSignatories(real=True), {hp_uid: '1'})
@@ -613,14 +615,47 @@ class testContacts(PloneMeetingTestCase):
             }
         )
 
+        # test when some signatories redefined on item
+        # redefine signature_number "2"
+        contacts = meeting.orderedContacts.items()
+        signatory3 = contacts[1]
+        signatory3_uid = signatory3[0]
+        self.assertFalse(signatory3[1]['signer'])
+        # when a position_type used for signatory, it overcomes
+        # defined label if it is not u'default'
+        # try with default
+        set_meeting_item_signatory(meeting, item.UID(), '2', signatory3_uid, u'default')
+        printed_signatories = helper.print_signatories_by_position(
+            signature_format=(u'prefixed_position_type', u'person'))
+        self.assertEqual(
+            printed_signatories,
+            {
+                0: u"La Directrice Générale,",
+                1: u"Jane Doe",
+                2: u"Signatory3,",
+                3: u"Person2FirstName Person2LastName",
+            }
+        )
+        # try with something else than default
+        set_meeting_item_signatory(meeting, item.UID(), '2', signatory3_uid, u'super')
+        printed_signatories = helper.print_signatories_by_position(
+            signature_format=(u'prefixed_position_type', u'person'))
+        self.assertEqual(
+            printed_signatories,
+            {
+                0: u"La Directrice Générale,",
+                1: u"Jane Doe",
+                2: u"Le Super-héro,",
+                3: u"Person2FirstName Person2LastName",
+            }
+        )
+
         # On Meeting, with 4 signatories
         view = meeting.restrictedTraverse("document-generation")
         helper = view.get_generation_context_helper()
-
         # Add two more signatories
-        contacts = meeting.orderedContacts.items()
-        signatory3 = contacts[1][1]
         # Set an absurd value to see if it will be correctly sorted
+        signatory3 = contacts[1][1]
         signatory3["signature_number"] = "10"
         signatory3["signer"] = True
         signatory4 = contacts[2][1]
@@ -1104,7 +1139,9 @@ class testContacts(PloneMeetingTestCase):
         signer = self.portal.contacts.get('person2')
         signer_hp = signer.get_held_positions()[0]
         signer_hp_uid = signer_hp.UID()
-        meeting.itemSignatories[item_with_absent.UID()] = {'1': signer_hp_uid}
+        meeting.itemSignatories[item_with_absent.UID()] = {
+            '1': {'hp_uid': signer_hp_uid,
+                  'position_type': u'default'}}
         self.assertTrue(signer_hp_uid in item_with_absent.getItemSignatories())
 
         # remove items from meeting, everything is reinitialized
