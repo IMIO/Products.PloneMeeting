@@ -3157,8 +3157,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     res.append((key, u'{0} ({1})'.format(v, groupInCharge.get_full_title())))
         res = DisplayList(tuple(res))
 
-        import ipdb; ipdb.set_trace()
-
         # make sure current value is still in the vocabulary
         current_value = self.getProposingGroupWithGroupInCharge()
         if current_value and current_value not in res.keys():
@@ -6419,7 +6417,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         meeting = self._otherMCMeetingToBePresentedIn(destMeetingConfig)
         if meeting:
             newItem.setPreferredMeeting(meeting.UID())
-
         # handle 'otherMeetingConfigsClonableToPrivacy' of original item
         if destMeetingConfigId in self.getOtherMeetingConfigsClonableToPrivacy() and \
            'privacy' in destMeetingConfig.getUsedItemAttributes():
@@ -6465,7 +6462,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     try:
                         # special handling for the 'present' transition
                         # that needs a meeting as 'PUBLISHED' object to work
-                        if tr == 'present':
+                        if tr == 'present' and \
+                           not isinstance(newItem.wfConditions()._check_required_data("presented"), No):
                             if not meeting:
                                 plone_utils.addPortalMessage(
                                     _('could_not_present_item_no_meeting_accepting_items',
