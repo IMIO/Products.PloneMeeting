@@ -198,7 +198,10 @@ class PMHeldPosition(HeldPosition):
         value = forced_position_type_value or \
             (position_type_attr and getattr(self, position_type_attr)) or \
             (fallback_position_type_attr and getattr(self, fallback_position_type_attr))
-        if value:
+        # sometimes, self does not have acqusition,
+        # this is the case when called from self.get_title
+        # in this case, the vocabulary is not correct
+        if value and value in vocab:
             value = vocab.getTerm(value).title
         values = value and value.split('|') or [u'', u'', u'', u'']
         if len(values) > 1:
