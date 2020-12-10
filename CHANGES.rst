@@ -5,6 +5,9 @@ Changelog
 4.2b8 (unreleased)
 ------------------
 
+- Fixed `MeetingItem.is_assembly_field_used`, only evaluate when item is linked
+  to a meeting, that broke the item edit form.
+  [gbastien]
 - While redefining a signatory on an item, add possibility to select a
   `position_type` as label to use for the signature generated in POD templates.
   [gbastien]
