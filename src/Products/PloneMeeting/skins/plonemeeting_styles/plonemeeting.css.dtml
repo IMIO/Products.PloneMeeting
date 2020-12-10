@@ -1057,7 +1057,16 @@ div.tooltipster-content a.item_listType_normal:visited {
     color: &dtml-discreetColor;;
 }
 
-#content table#faceted_table.listing tr[class][class] td.meeting_item_listType_late {
+/* faceted table header sticky */
+#content table.faceted-table-results {
+   position: relative;
+}
+table.faceted-table-results th {
+   position: sticky;
+   top: 45px;
+}
+
+table#faceted_table.listing tr[class][class] td.meeting_item_listType_late {
     background-color: red;
 }
 span.item_listType_late,
@@ -1815,7 +1824,7 @@ p#download_vcard {
 
 .collapsible-content {
     /*max-height: 0;*/
-    overflow: hidden;
+    /*overflow: hidden;*/
     transition: max-height 0.2s ease-out;
     margin-bottom: 0.5em;
 }
