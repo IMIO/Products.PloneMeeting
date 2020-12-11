@@ -41,6 +41,7 @@ class ItemClassifierColumn(VocabularyColumn):
 class ItemProposingGroupColumn(VocabularyColumn):
     """A column that display the MeetingItem.proposingGroup."""
     vocabulary = u'Products.PloneMeeting.vocabularies.proposinggroupsvocabulary'
+    header_help = u'header_getProposingGroup_help'
 
 
 class ItemProposingGroupAcronymColumn(AbbrColumn):
@@ -48,12 +49,14 @@ class ItemProposingGroupAcronymColumn(AbbrColumn):
     attrName = 'getProposingGroup'
     vocabulary = u'Products.PloneMeeting.vocabularies.everyorganizationsacronymsvocabulary'
     full_vocabulary = u'Products.PloneMeeting.vocabularies.proposinggroupsvocabulary'
+    header_help = u'header_proposing_group_acronym_help'
 
 
 class ItemGroupsInChargeColumn(VocabularyColumn):
     """A column that display the groupsInCharge."""
     attrName = 'getGroupsInCharge'
     vocabulary = u'Products.PloneMeeting.vocabularies.groupsinchargevocabulary'
+    header_help = u"header_getGroupsInCharge_help"
 
 
 class ItemGroupsInChargeAcronymColumn(AbbrColumn):
@@ -61,12 +64,14 @@ class ItemGroupsInChargeAcronymColumn(AbbrColumn):
     attrName = 'getGroupsInCharge'
     vocabulary = u'Products.PloneMeeting.vocabularies.everyorganizationsacronymsvocabulary'
     full_vocabulary = u'Products.PloneMeeting.vocabularies.proposinggroupsvocabulary'
+    header_help = u"header_groups_in_charge_acronym_help"
 
 
 class ItemAssociatedGroupsColumn(VocabularyColumn):
     """A column that display the associatedGroups."""
     attrName = 'getAssociatedGroups'
     vocabulary = u'Products.PloneMeeting.vocabularies.everyorganizationsvocabulary'
+    header_help = u"header_getAssociatedGroups_help"
 
 
 class ItemAssociatedGroupsAcronymColumn(AbbrColumn):
@@ -74,6 +79,7 @@ class ItemAssociatedGroupsAcronymColumn(AbbrColumn):
     attrName = 'getAssociatedGroups'
     vocabulary = u'Products.PloneMeeting.vocabularies.everyorganizationsacronymsvocabulary'
     full_vocabulary = u'Products.PloneMeeting.vocabularies.everyorganizationsvocabulary'
+    header_help = u"header_associated_groups_acronym_help"
 
 
 class ItemAdvicesColumn(BrowserViewCallColumn):

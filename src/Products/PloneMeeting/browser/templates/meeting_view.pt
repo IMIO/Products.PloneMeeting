@@ -15,7 +15,10 @@
     tal:content="string:jQuery(window).unload(function(){
         Faceted.Unload();
     });"></script>
-</metal:jsslot>
+  <script>
+    window.onscroll = function() {onScrollMeetingView()};
+  </script>
+  </metal:jsslot>
 
 <body>
   <metal:title fill-slot="content-title">
@@ -42,14 +45,16 @@
          onclick="toggleDetails('collapsible-available-items', toggle_parent_active=true, parent_tag=this)">
       <span i18n:translate='available_items'>Available items</span>
     </h2>
+
     <iframe src="@@meeting_available_items_view"
             id="collapsible-available-items"
             tal:attributes="src string:${context/absolute_url}/@@meeting_available_items_view?ajax_load=0&ajax_include_head=1"
-            class="auto-height" style="width: 100%; padding-bottom: 2em;">
+            class="auto-height"
+            style="width: 100%; padding-bottom: 2em;">
     </iframe>
     
     <script>
-        $('iframe.auto-height').iFrameResize({log:false, scrolling:true})
+        $('iframe.auto-height').iFrameResize({log:false, scrolling:false})
     </script>
   </tal:availableItems>
 
@@ -58,6 +63,7 @@
        onclick="toggleDetails('faceted-form', toggle_parent_active=true, parent_tag=this)">
     <span i18n:translate="presented_items">Presented items</span> (<span class="meeting_number_of_items" tal:content="context/numberOfItems"/>)
   </h2>
+
   <span class="fa show-help link-action tooltipster-inserting-methods-helper-msg"
         tal:condition="python: view.tool.isManager(context)"
         tal:attributes="data-base_url string:${context/absolute_url}">

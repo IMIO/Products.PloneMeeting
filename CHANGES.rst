@@ -15,6 +15,10 @@ Changelog
 - While redefining a signatory on an item, add possibility to select a
   `position_type` as label to use for the signature generated in POD templates.
   [gbastien]
+- Make the dashboard table header sticky so it is always viewable when
+  scrolling, this is the case for every dashboards including
+  `available/presented` items on the `meeting_view`.
+  [gbastien]
 
 4.2b7 (2020-12-08)
 ------------------
