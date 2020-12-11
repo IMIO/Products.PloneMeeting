@@ -18,6 +18,7 @@ from collective.eeafaceted.batchactions.utils import listify_uids
 from eea.facetednavigation.browser.app.view import FacetedContainerView
 from eea.facetednavigation.interfaces import ICriteria
 from ftw.labels.interfaces import ILabeling
+from imio.helpers.content import uuidsToObjects
 from imio.helpers.xhtml import addClassToContent
 from imio.helpers.xhtml import CLASS_TO_LAST_CHILDREN_NUMBER_OF_CHARS_DEFAULT
 from imio.helpers.xhtml import imagesToPath
@@ -31,6 +32,7 @@ from Products.CMFCore.permissions import ManagePortal
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.CMFCore.utils import _checkPermission
+from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFPlone.utils import safe_unicode
 from Products.Five import BrowserView
 from Products.PloneMeeting import logger
@@ -206,14 +208,22 @@ class PresentSeveralItemsView(BrowserView):
 
     def __call__(self, uids):
         """ """
-        uid_catalog = api.portal.get_tool('uid_catalog')
         wfTool = api.portal.get_tool('portal_workflow')
         # defer call to Meeting.updateItemReferences
         self.request.set('defer_Meeting_updateItemReferences', True)
         lowest_itemNumber = 0
-        for uid in uids:
-            obj = uid_catalog.searchResults(UID=uid)[0].getObject()
-            wfTool.doActionFor(obj, 'present')
+        objs = uuidsToObjects(uids, ordered=True)
+        for obj in objs:
+            try:
+                wfTool.doActionFor(obj, 'present')
+            except WorkflowException:
+                # sometimes an item may not be presented,
+                # even if shown in presentable items
+                api.portal.show_message(
+                    _('Item \"${item_title}\" could not be presented!',
+                      mapping={'item_title': safe_unicode(obj.Title())}),
+                    request=self.request,
+                    type='warning')
             if not lowest_itemNumber or obj.getItemNumber() < lowest_itemNumber:
                 lowest_itemNumber = obj.getItemNumber()
         self.request.set('defer_Meeting_updateItemReferences', False)

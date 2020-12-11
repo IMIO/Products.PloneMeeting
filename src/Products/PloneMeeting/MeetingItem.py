@@ -199,23 +199,26 @@ class MeetingItemWorkflowConditions(object):
                     break
         return res
 
-    def _check_required_data(self):
-        ''' '''
+    def _check_required_data(self, destination_state):
+        '''Make sure required data are encoded when necessary.'''
         msg = None
-        if not self.context.getCategory(theObject=True):
-            msg = No(_('required_category_ko'))
-        elif self.context.attributeIsUsed('classifier') and not self.context.getClassifier():
-            msg = No(_('required_classifier_ko'))
-        elif self.context.attributeIsUsed('groupsInCharge') and not self.context.getGroupsInCharge():
-            msg = No(_('required_groupsInCharge_ko'))
+        if destination_state == 'presented':
+            if not self.context.getCategory(theObject=True):
+                msg = No(_('required_category_ko'))
+            elif self.context.attributeIsUsed('classifier') and \
+                    not self.context.getClassifier():
+                msg = No(_('required_classifier_ko'))
+            elif self.context.attributeIsUsed('groupsInCharge') and \
+                    not self.context.getGroupsInCharge():
+                msg = No(_('required_groupsInCharge_ko'))
         return msg
 
-    def _check_review_and_required(self):
+    def _check_review_and_required(self, destination_state):
         """Base check that will check for ReviewPortalContent and required data."""
         res = False
         if _checkPermission(ReviewPortalContent, self.context):
             res = True
-            msg = self._check_required_data()
+            msg = self._check_required_data(destination_state)
             if msg is not None:
                 res = msg
         return res
@@ -233,7 +236,7 @@ class MeetingItemWorkflowConditions(object):
         # check category after transition as transition could not be doable
         # at all and in this case, we would display a No button for a transition not doable...
         if res:
-            msg = self._check_required_data()
+            msg = self._check_required_data(destinationState)
             if msg is not None:
                 res = msg
         return res
@@ -296,7 +299,7 @@ class MeetingItemWorkflowConditions(object):
                     if self._has_waiting_advices_transitions():
                         res = No(_('has_required_waiting_advices'))
         if res:
-            msg = self._check_required_data()
+            msg = self._check_required_data('validated')
             if msg is not None:
                 res = msg
         return res
@@ -321,7 +324,7 @@ class MeetingItemWorkflowConditions(object):
 
         # if WFAdaptation 'items_come_validated' is enabled, an item
         # could miss it's category
-        msg = self._check_required_data()
+        msg = self._check_required_data('presented')
         if msg is not None:
             return msg
 
@@ -569,7 +572,7 @@ class MeetingItemWorkflowConditions(object):
         res = False
         if _checkPermission(ReviewPortalContent, self.context):
             res = True
-        msg = self._check_required_data()
+        msg = self._check_required_data(destination_state)
         if msg is not None:
             res = msg
         elif not self._hasAdvicesToGive(destination_state):
@@ -6414,7 +6417,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         meeting = self._otherMCMeetingToBePresentedIn(destMeetingConfig)
         if meeting:
             newItem.setPreferredMeeting(meeting.UID())
-
         # handle 'otherMeetingConfigsClonableToPrivacy' of original item
         if destMeetingConfigId in self.getOtherMeetingConfigsClonableToPrivacy() and \
            'privacy' in destMeetingConfig.getUsedItemAttributes():
@@ -6460,7 +6462,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     try:
                         # special handling for the 'present' transition
                         # that needs a meeting as 'PUBLISHED' object to work
-                        if tr == 'present':
+                        if tr == 'present' and \
+                           not isinstance(newItem.wfConditions()._check_required_data("presented"), No):
                             if not meeting:
                                 plone_utils.addPortalMessage(
                                     _('could_not_present_item_no_meeting_accepting_items',
