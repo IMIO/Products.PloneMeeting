@@ -3157,8 +3157,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     res.append((key, u'{0} ({1})'.format(v, groupInCharge.get_full_title())))
         res = DisplayList(tuple(res))
 
-        import ipdb; ipdb.set_trace()
-
         # make sure current value is still in the vocabulary
         current_value = self.getProposingGroupWithGroupInCharge()
         if current_value and current_value not in res.keys():
