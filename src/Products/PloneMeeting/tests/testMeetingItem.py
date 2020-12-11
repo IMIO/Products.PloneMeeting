@@ -968,7 +968,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # remove the items and define that we want the item to be 'validated' when sent
         cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % cfg2Id,
                                          'trigger_workflow_transitions_until': '%s.%s' %
-                                         (cfg2Id, 'validate')},))
+                                         (cfg2Id, 'present')},))
         self.deleteAsManager(newItem.UID())
         originalItem = data['originalItem']
         self.deleteAsManager(originalItem.UID())
@@ -979,14 +979,12 @@ class testMeetingItem(PloneMeetingTestCase):
         data = self._setupSendItemToOtherMC(with_advices=True)
         newItem = data['newItem']
         self.assertFalse(cfg2.getUseGroupsAsCategories())
-        # item is not 'validated' unless it was it's initial_state...
-        wf_name = self.wfTool.getWorkflowsFor(newItem)[0].getId()
-        if not self.wfTool[wf_name].initial_state == 'validated':
-            self.assertNotEqual(newItem.queryState(), 'validated')
-            fail_to_trigger_msg = u'Some transitions could not be triggered for the item ' \
-                u'sent to "\xe9 and \xe9", please check the new item.'
-            lastPortalMessage = IStatusMessage(self.request).showStatusMessages()[-1]
-            self.assertEqual(lastPortalMessage.message, fail_to_trigger_msg)
+        # item is not 'presented' as category is required to present
+        self.assertEqual(newItem.queryState(), 'validated')
+        fail_to_trigger_msg = u'Some transitions could not be triggered for the item ' \
+            u'sent to "\xe9 and \xe9", please check the new item.'
+        lastPortalMessage = IStatusMessage(self.request).showStatusMessages()[-1]
+        self.assertEqual(lastPortalMessage.message, fail_to_trigger_msg)
 
         # now adapt cfg2 to not use categories,
         # the required transitions should have been triggerd this time
@@ -1756,21 +1754,22 @@ class testMeetingItem(PloneMeetingTestCase):
         new_item_without_category = item.clone()
         self.assertFalse(new_item_without_category.getCategory())
 
-    def test_pm_ItemCreatedWithoutCategoryCanNotChangeReviewState(self):
+    def test_pm_ItemCreatedWithoutCategoryCanNotBePresentedToAMeeting(self):
         '''When using categories, if created item does not have a category,
            it is the case when duplicating an item without category of having a
            disabled category or when sending an item to another MC, an item without
-           category can not change of WF review_state.'''
+           category can not be "presented".'''
         cfg = self.meetingConfig
         cfg.setUseGroupsAsCategories(False)
-        self.changeUser('pmCreator1')
+        self.changeUser('pmManager')
+        self.create('Meeting', date=DateTime('2020/12/10'))
         item = self.create('MeetingItem')
-        item.setCategory('research')
-        item._update_after_edit()
-        self.assertTrue(self.transitions(item))
+        self.validateItem(item)
+        self.assertTrue(item.getCategory(True))
+        self.assertTrue('present' in self.transitions(item))
         item.setCategory('')
-        item._update_after_edit()
-        self.assertFalse(self.transitions(item))
+        self.assertFalse(item.getCategory(True))
+        self.assertFalse('present' in self.transitions(item))
 
     def test_pm_DuplicatedItemDoesNotKeepDecisionAnnexes(self):
         """When an item is duplicated using the 'duplicate and keep link',
@@ -4272,17 +4271,20 @@ class testMeetingItem(PloneMeetingTestCase):
         """Actions panel cache is invalidated when an item is modified."""
         item, actions_panel, rendered_actions_panel = self._setupItemActionsPanelInvalidation()
         # invalidated when item edited
-        # an item can not be proposed if no selected category
+        # an item can not be presented if no selected category
         # remove selected category and notify edited
         originalCategory = item.getCategory()
         item.setCategory('')
-        item._update_after_edit()
-        self.assertFalse(self.transitions(item))
+        self.changeUser('pmManager')
+        self.create('Meeting', date=DateTime('2020/12/10'))
+        self.validateItem(item)
+        self.assertFalse('present' in self.transitions(item))
         actions_panel._transitions = None
         no_category_rendered_actions_panel = actions_panel()
         self.assertNotEqual(no_category_rendered_actions_panel, rendered_actions_panel)
         item.setCategory(originalCategory)
         item._update_after_edit()
+        self.assertTrue('present' in self.transitions(item))
         # changed again
         actions_panel._transitions = None
         rendered_actions_panel = actions_panel()

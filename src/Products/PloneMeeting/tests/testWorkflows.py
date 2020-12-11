@@ -822,25 +822,27 @@ class testWorkflows(PloneMeetingTestCase):
         # but not other fields
         self.assertFalse(obsField.writeable(item))
 
-    def test_pm_RequiredDataToTriggerTransition(self):
+    def test_pm_RequiredDataToPresentItem(self):
         """When MeetingItem.category or MeetingItem.groupsInCharge is used,
-           it is required to trigger a transition."""
+           it is required to present an item."""
         cfg = self.meetingConfig
         cfg.setUseGroupsAsCategories(False)
         self._enableField('groupsInCharge')
-        self.changeUser('pmCreator1')
+        self.changeUser('pmManager')
+        self.create('Meeting', date=DateTime('2020/12/10'))
         item = self.create('MeetingItem')
+        self.validateItem(item)
         # groupsInCharge
         self.assertTrue(item.getCategory(theObject=True))
         self.assertFalse(item.getGroupsInCharge())
-        self.assertFalse(self.transitions(item))
+        self.assertFalse('present' in self.transitions(item))
         item.setGroupsInCharge((self.vendors_uid, ))
-        self.assertTrue(self.transitions(item))
+        self.assertTrue('present' in self.transitions(item))
         # category
         item.setCategory('')
-        self.assertFalse(self.transitions(item))
+        self.assertFalse('present' in self.transitions(item))
         item.setCategory('development')
-        self.assertTrue(self.transitions(item))
+        self.assertTrue('present' in self.transitions(item))
 
 
 def test_suite():
