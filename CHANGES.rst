@@ -8,10 +8,6 @@ Changelog
 - Fixed `MeetingItem.is_assembly_field_used`, only evaluate when item is linked
   to a meeting, that broke the item edit form.
   [gbastien]
-- Only call `MeetingItem._check_required_data` when item is about to be
-  presented into a meeting, this way previous transitions may be triggered by
-  configured process like Webservice call or when item sent from another cfg.
-  [gbastien]
 - While redefining a signatory on an item, add possibility to select a
   `position_type` as label to use for the signature generated in POD templates.
   [gbastien]

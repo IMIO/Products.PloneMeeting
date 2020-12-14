@@ -18,7 +18,7 @@
   <script>
     window.onscroll = function() {onScrollMeetingView()};
   </script>
-  </metal:jsslot>
+</metal:jsslot>
 
 <body>
   <metal:title fill-slot="content-title">
