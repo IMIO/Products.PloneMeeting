@@ -763,6 +763,13 @@ acronym img {
    cursor: pointer;
 }
 
+table.listing th {
+    white-space: nowrap;
+}
+table.listing th td {
+    vertical-align: inherit;
+}
+
 /* TH of the table listing items are stylable th by th */
 /* using 1% limit the width as much as possible... */
 table.listing th.th_header_actions,
@@ -982,6 +989,7 @@ div.discreet.advice_additional_infos {
     margin-right: -6px;
     font-weight: bold;
     display: inline-block;
+    z-index: 40;
 }
 
 .advice_delay_never_giveable,
@@ -1057,7 +1065,23 @@ div.tooltipster-content a.item_listType_normal:visited {
     color: &dtml-discreetColor;;
 }
 
-#content table#faceted_table.listing tr[class][class] td.meeting_item_listType_late {
+/* faceted table header sticky */
+#content table.faceted-table-results {
+   position: relative;
+}
+table.faceted-table-results th {
+   position: sticky;
+   top: 45px;
+   z-index: 45;
+}
+/* body.template-meeting_available_items_view table.faceted-table-results th {
+   top: -2px;
+}
+iframe#collapsible-available-items {
+   max-height: 650px;
+} */
+
+table#faceted_table.listing tr[class][class] td.meeting_item_listType_late {
     background-color: red;
 }
 span.item_listType_late,
@@ -1454,7 +1478,9 @@ body.template-meeting_available_items_view div#faceted-form {
     margin-left: -0.5em;
     width: 99.5%;
 }
-
+body.template-meeting_available_items_view #portal-column-content.cell.width-full.position-0 {
+   width: 100%;
+}
 /* temporary until collective.documentgenerator 0.6 is out */
 div#doc-generation-view ul.pod-template li {
     display: inline-block;
@@ -1482,11 +1508,6 @@ h2.check_pod_template_dashboard_templates_not_managed {
 }
 h2.check_pod_template_clean {
     color: green;
-}
-
-iframe#iFrameResizer0 {
-    overflow-x: auto;
-    overflow-y: hidden;
 }
 
 div.customAdviceMessage {
@@ -1815,7 +1836,7 @@ p#download_vcard {
 
 .collapsible-content {
     /*max-height: 0;*/
-    overflow: hidden;
+    /*overflow: hidden;*/
     transition: max-height 0.2s ease-out;
     margin-bottom: 0.5em;
 }
@@ -2021,7 +2042,7 @@ span#newTemplateItemCreationDisabledDuringEdit {
    padding-left: 0;
 }
 
-/* make sure ajax spinner is diaplayed in available items iframe */
+/* make sure ajax spinner is displayed in available items iframe */
 body.template-meeting_available_items_view div#ajax-spinner {
    top: -35px;
 }

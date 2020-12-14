@@ -798,3 +798,19 @@ function selectAllVoteValues(tag) {
     }
   );
 }
+
+/* while scrolling on meeting manage available items sticky table header */
+function onScrollMeetingView() {
+  var iframe = $("iframe");
+  if (iframe.length) {
+    iframe_top = $("iframe")[0].getBoundingClientRect().top;
+    if ((iframe_top ) < 0) {
+      table = $("iframe").contents().find('table');
+      header = $("iframe").contents().find('table thead');
+      table_top = table.offset().top;
+      portal_header_height = $("#portal-header").height();
+      $("th", header).css("top",
+                          (table_top - iframe_top - (table_top - portal_header_height)).toString() + "px");
+    }
+  }
+}

@@ -15,6 +15,10 @@ Changelog
   presented into a meeting, this way previous transitions may be triggered by
   configured process like Webservice call or when item sent from another cfg.
   [gbastien]
+- Make the dashboard table header sticky so it is always viewable when
+  scrolling, this is the case for every dashboards including
+  `available/presented` items on the `meeting_view`.
+  [gbastien]
 
 4.2b7 (2020-12-08)
 ------------------
