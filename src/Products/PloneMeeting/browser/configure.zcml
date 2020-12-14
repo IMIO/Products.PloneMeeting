@@ -261,11 +261,15 @@
 
     <!-- Batch actions -->
     <browser:page
+        for="collective.eeafaceted.batchactions.interfaces.IBatchActionsMarker"
+        name="labels-batch-action"
+        class="collective.eeafaceted.batchactions.browser.views.LabelsBatchActionForm"
+        permission="zope2.View" />
+    <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingBatchActionsMarker"
         name="store-items-template-as-annex-batch-action"
         class=".views.MeetingStoreItemsPodTemplateAsAnnexBatchActionForm"
         permission="zope2.View" />
-
     <browser:page
         for="collective.eeafaceted.batchactions.interfaces.IBatchActionsMarker"
         name="update-local-roles-batch-action"

@@ -19,6 +19,8 @@ Changelog
   scrolling, this is the case for every dashboards including
   `available/presented` items on the `meeting_view`.
   [gbastien]
+- Enable the `Change ftw labels` batch action on dashboards.
+  [gbastien]
 
 4.2b7 (2020-12-08)
 ------------------
