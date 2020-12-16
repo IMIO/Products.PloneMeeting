@@ -1,16 +1,21 @@
 # -*- coding: utf-8 -*-
 
 from collective.contact.plonegroup.utils import get_organizations
+from collective.eeafaceted.batchactions.interfaces import IBatchActionsMarker
 from copy import deepcopy
 from imio.helpers.content import richtextval
 from persistent.mapping import PersistentMapping
 from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_NEW
 from Products.PloneMeeting.browser.itemattendee import position_type_default
 from Products.PloneMeeting.content.advice import IMeetingAdvice
+from Products.PloneMeeting.interfaces import IMeetingDashboardBatchActionsMarker
+from Products.PloneMeeting.interfaces import IMeetingItemDashboardBatchActionsMarker
 from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator
 from Products.PloneMeeting.profiles import MeetingConfigDescriptor
 from Products.ZCatalog.ProgressHandler import ZLogHandler
+from zope.interface import alsoProvides
+from zope.interface import noLongerProvides
 
 
 class Migrate_To_4200(Migrator):
@@ -190,20 +195,34 @@ class Migrate_To_4200(Migrator):
         pghandler.finish()
         logger.info('Done.')
 
-    def _synchSearches(self):
-        """Call _synchSearches on every MeetingConfig to update batch actions
-           marker applied to sub folders, now there is a different marker for
+    def _updateSearchedFolderBatchActionsMarkerInterface(self):
+        """Update every MeetingConfig batch actions marker applied
+           to sub folders, now there is a different marker for
            dashboards displaying items or meetings."""
-        logger.info("Calling _synchSearches on every MeetingConfigs...")
+        logger.info("Updating every meeting folders batch actions marker interfaces...")
         for cfg in self.tool.objectValues('MeetingConfig'):
-            cfg._synchSearches()
+            folders = cfg._get_all_meeting_folders()
+            for folder in folders:
+                for sub_folder in folder.objectValues('ATFolder'):
+                    if not sub_folder.getId().startswith('searches_') or \
+                       not IBatchActionsMarker.providedBy(sub_folder):
+                        continue
+                    noLongerProvides(sub_folder, IBatchActionsMarker)
+                    if sub_folder.getId() == "searches_items":
+                        # item related searches
+                        alsoProvides(sub_folder, IMeetingItemDashboardBatchActionsMarker)
+                    else:
+                        # meeting related searches
+                        alsoProvides(sub_folder, IMeetingDashboardBatchActionsMarker)
+                    sub_folder.reindexObject(idxs=['object_provides'])
         logger.info('Done.')
 
     def run(self, extra_omitted=[]):
         logger.info('Migrating to PloneMeeting 4200...')
 
-        # resynch searches to apply correct batch actions marker
-        self._synchSearches()
+        # apply correct batch actions marker on searches_* folders
+        self._updateSearchedFolderBatchActionsMarkerInterface()
+        return
 
         # remove useless catalog indexes and columns, were renamed to snake case
         self.removeUnusedIndexes(indexes=['getItemIsSigned', 'sendToAuthority', 'toDiscuss'])
@@ -255,8 +274,7 @@ class Migrate_To_4200(Migrator):
 def migrate(context):
     '''This migration function will:
 
-       1) Re-synch searches on MeetingConfig to mark created subfolders with
-          correct batch action marker interface;
+       1) Update applied batch actions marker interface on every member folders;
        2) Remove unused indexes and metadata;
        3) Remove Meeting.items reference field;
        4) Configure votes;

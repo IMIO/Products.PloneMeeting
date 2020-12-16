@@ -6629,6 +6629,20 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             raise Unauthorized
         return self.REQUEST.RESPONSE.redirect(self.absolute_url() + '/@@check-pod-templates')
 
+    def _get_all_meeting_folders(self):
+        """Return every meeting folders for this MeetingConfig."""
+        folders = []
+        portal = api.portal.get()
+        for userFolder in portal.Members.objectValues():
+            mymeetings = getattr(userFolder, 'mymeetings', None)
+            if not mymeetings:
+                continue
+            meetingFolder = getattr(mymeetings, self.getId(), None)
+            if not meetingFolder:
+                continue
+            folders.append(meetingFolder)
+        return folders
+
     def _synchSearches(self, folder=None):
         """Synchronize the searches for a givan meetingFolder p_folder, if it is not given,
            every user folder for this MeetingConfig will be synchronized.
@@ -6641,21 +6655,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
            - we will copy the facetednav annotation from the MeetingConfig.searches and
              MeetingConfig.searches_* folders to the corresponding folders in p_folder;
            - we will update the default for the collection widget."""
-        folders = []
         # synchronize only one folder
         if folder:
             folders = [folder, ]
         else:
-            # synchronize every user folders
-            portal = api.portal.get()
-            for userFolder in portal.Members.objectValues():
-                mymeetings = getattr(userFolder, 'mymeetings', None)
-                if not mymeetings:
-                    continue
-                meetingFolder = getattr(mymeetings, self.getId(), None)
-                if not meetingFolder:
-                    continue
-                folders.append(meetingFolder)
+            folders = self._get_all_meeting_folders()
 
         for folder in folders:
             logger.info("Synchronizing searches with folder at '{0}'".format('/'.join(folder.getPhysicalPath())))
