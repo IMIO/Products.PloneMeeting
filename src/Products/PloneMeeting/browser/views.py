@@ -2286,7 +2286,7 @@ class UpdateLocalRolesBatchActionForm(BaseBatchActionForm):
     def _apply(self, **data):
         """ """
         uids = listify_uids(data['uids'])
-        self.tool.updateAllLocalRoles(**{'UID': uids})
+        self.tool.updateAllLocalRoles(**{'UID': uids, 'log': False})
         msg = translate('update_selected_elements',
                         domain="PloneMeeting",
                         mapping={'number_of_elements': len(uids)},

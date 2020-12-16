@@ -12,7 +12,6 @@ from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_plone_groups
 from collective.datagridcolumns.MultiSelectColumn import MultiSelectColumn
 from collective.datagridcolumns.SelectColumn import SelectColumn
-from collective.eeafaceted.batchactions.interfaces import IBatchActionsMarker
 from collective.eeafaceted.collectionwidget.interfaces import IDashboardCollection
 from collective.eeafaceted.collectionwidget.utils import _get_criterion
 from collective.eeafaceted.collectionwidget.utils import _updateDefaultCollectionFor
@@ -72,8 +71,8 @@ from Products.PloneMeeting.config import ITEM_INSERT_METHODS
 from Products.PloneMeeting.config import ITEMTEMPLATESMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import MEETING_CONFIG
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
-from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
+from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
 from Products.PloneMeeting.config import PROJECTNAME
 from Products.PloneMeeting.config import READER_USECASES
 from Products.PloneMeeting.config import TOOL_FOLDER_ANNEX_TYPES
@@ -90,7 +89,9 @@ from Products.PloneMeeting.interfaces import IMeeting
 from Products.PloneMeeting.interfaces import IMeetingAdviceWorkflowActions
 from Products.PloneMeeting.interfaces import IMeetingAdviceWorkflowConditions
 from Products.PloneMeeting.interfaces import IMeetingConfig
+from Products.PloneMeeting.interfaces import IMeetingDashboardBatchActionsMarker
 from Products.PloneMeeting.interfaces import IMeetingItem
+from Products.PloneMeeting.interfaces import IMeetingItemDashboardBatchActionsMarker
 from Products.PloneMeeting.interfaces import IMeetingItemWorkflowActions
 from Products.PloneMeeting.interfaces import IMeetingItemWorkflowConditions
 from Products.PloneMeeting.interfaces import IMeetingWorkflowActions
@@ -6678,7 +6679,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 enableFacetedDashboardFor(subFolderObj,
                                           xmlpath=os.path.dirname(__file__) +
                                           '/faceted_conf/default_dashboard_widgets.xml')
-                alsoProvides(subFolderObj, IBatchActionsMarker)
+                if subFolderObj.getId() == "searches_items":
+                    # item related searches
+                    alsoProvides(subFolderObj, IMeetingItemDashboardBatchActionsMarker)
+                else:
+                    # meeting related searches
+                    alsoProvides(subFolderObj, IMeetingDashboardBatchActionsMarker)
                 subFolderObj.reindexObject()
 
     def getMeetingStatesAcceptingItems(self):

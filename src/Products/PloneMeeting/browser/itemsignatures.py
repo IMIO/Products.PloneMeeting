@@ -4,6 +4,7 @@
 #
 
 from AccessControl import Unauthorized
+from imio.helpers.security import fplog
 from plone import api
 from plone.z3cform.layout import wrap_form
 from Products.CMFPlone.utils import safe_unicode
@@ -12,7 +13,6 @@ from Products.PloneMeeting.browser.itemassembly import validate_apply_until_item
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import IRedirect
 from Products.PloneMeeting.utils import _itemNumber_to_storedItemNumber
-from Products.PloneMeeting.utils import fplog
 from z3c.form import button
 from z3c.form import field
 from z3c.form import form

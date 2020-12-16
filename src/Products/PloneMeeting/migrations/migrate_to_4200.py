@@ -190,8 +190,20 @@ class Migrate_To_4200(Migrator):
         pghandler.finish()
         logger.info('Done.')
 
+    def _synchSearches(self):
+        """Call _synchSearches on every MeetingConfig to update batch actions
+           marker applied to sub folders, now there is a different marker for
+           dashboards displaying items or meetings."""
+        logger.info("Calling _synchSearches on every MeetingConfigs...")
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            cfg._synchSearches()
+        logger.info('Done.')
+
     def run(self, extra_omitted=[]):
         logger.info('Migrating to PloneMeeting 4200...')
+
+        # resynch searches to apply correct batch actions marker
+        self._synchSearches()
 
         # remove useless catalog indexes and columns, were renamed to snake case
         self.removeUnusedIndexes(indexes=['getItemIsSigned', 'sendToAuthority', 'toDiscuss'])
@@ -200,9 +212,9 @@ class Migrate_To_4200(Migrator):
         # manage link between item and meeting manually
         self._removeMeetingItemsReferenceField()
         self._configureVotes()
+        # update stored Meeting.itemSignatories
         self._updateItemSignatories()
 
-        # update stored Meeting.itemSignatories
         # update RichTextValue stored on DX types (advices)
         self._fixRichTextValueMimeType()
 
@@ -243,10 +255,20 @@ class Migrate_To_4200(Migrator):
 def migrate(context):
     '''This migration function will:
 
-       1) Configure field MeetingConfig.itemWFValidationLevels depending on old wfAdaptations;
-       2) Migrate MeetingConfig.keepAccessToItemWhenAdviceIsGiven to
+       1) Re-synch searches on MeetingConfig to mark created subfolders with
+          correct batch action marker interface;
+       2) Remove unused indexes and metadata;
+       3) Remove Meeting.items reference field;
+       4) Configure votes;
+       5) Update Meeting.itemSignatories to manage stored position_type;
+       6) Fix DX RichText mimetype;
+       7) Configure field MeetingConfig.itemWFValidationLevels depending on old wfAdaptations;
+       8) Migrate MeetingConfig.keepAccessToItemWhenAdviceIsGiven to
           MeetingConfig.keepAccessToItemWhenAdvice;
-       3) Init otherMeetingConfigsClonableToFieldXXX new fields.
+       9) Init otherMeetingConfigsClonableToFieldXXX new fields;
+       10) Update faceted filters;
+       11) Update holidays;
+       12) Refresh items local roles and recatalog.
     '''
     migrator = Migrate_To_4200(context)
     migrator.run()

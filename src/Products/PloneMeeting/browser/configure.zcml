@@ -260,16 +260,24 @@
       permission="zope2.View" />
 
     <!-- Batch actions -->
+    <!-- Batch actions dashboards displaying items -->
     <browser:page
-        for="collective.eeafaceted.batchactions.interfaces.IBatchActionsMarker"
+        for="Products.PloneMeeting.interfaces.IMeetingItemDashboardBatchActionsMarker"
         name="labels-batch-action"
         class="collective.eeafaceted.batchactions.browser.views.LabelsBatchActionForm"
         permission="zope2.View" />
+    <!-- Batch actions Meeting -->
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingBatchActionsMarker"
         name="store-items-template-as-annex-batch-action"
         class=".views.MeetingStoreItemsPodTemplateAsAnnexBatchActionForm"
         permission="zope2.View" />
+    <browser:page
+        for="Products.PloneMeeting.interfaces.IMeetingBatchActionsMarker"
+        name="labels-batch-action"
+        class="collective.eeafaceted.batchactions.browser.views.LabelsBatchActionForm"
+        permission="zope2.View" />
+    <!-- Batch actions everywhere -->
     <browser:page
         for="collective.eeafaceted.batchactions.interfaces.IBatchActionsMarker"
         name="update-local-roles-batch-action"
