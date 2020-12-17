@@ -45,6 +45,7 @@
   <include package=".filters" />
   <include package=".ftw_labels" />
   <include package=".widgets" />
+  <include package=".workflows" />
 
   <include file="columns.zcml" />
   <include file="events.zcml" />
@@ -64,24 +65,12 @@
   <permission id="PloneMeeting.write_userid_field"
               title="PloneMeeting: Write userid field"/>
 
-  <adapter for=".content.advice.IMeetingAdvice"
-           factory=".content.advice.MeetingAdviceWorkflowConditions"
-           provides=".interfaces.IMeetingAdviceWorkflowConditions" />
-  <adapter for=".content.advice.IMeetingAdvice"
-           factory=".content.advice.MeetingAdviceWorkflowActions"
-           provides=".interfaces.IMeetingAdviceWorkflowActions" />
   <adapter for=".interfaces.IMeetingItem"
            factory=".MeetingItem.MeetingItemWorkflowConditions"
            provides=".interfaces.IMeetingItemWorkflowConditions" />
   <adapter for=".interfaces.IMeetingItem"
            factory=".MeetingItem.MeetingItemWorkflowActions"
            provides=".interfaces.IMeetingItemWorkflowActions" />
-  <adapter for=".interfaces.IMeeting"
-           factory=".Meeting.MeetingWorkflowConditions"
-           provides=".interfaces.IMeetingWorkflowConditions" />
-  <adapter for=".interfaces.IMeeting"
-           factory=".Meeting.MeetingWorkflowActions"
-           provides=".interfaces.IMeetingWorkflowActions" />
   <adapter for="Products.PloneMeeting.interfaces.IMeeting"
            factory=".adapters.PMWfHistoryAdapter"
            name="workflow"
