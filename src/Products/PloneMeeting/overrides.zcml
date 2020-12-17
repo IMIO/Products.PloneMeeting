@@ -224,31 +224,32 @@
              factory=".vocabularies.PMCategoryTitleVocabulary" />
     <utility component=".vocabularies.PMMergeTemplatesVocabularyFactory"
              name="collective.documentgenerator.MergeTemplates" />
-  
-    <browser:page
-      for="collective.eeafaceted.batchactions.interfaces.IBatchActionsMarker"
-      name="transition-batch-action"
-      class=".browser.overrides.PMTransitionBatchActionForm"
-      permission="zope2.View" />
 
-  <browser:page
-      for="*"
-      name="plone"
-      class="Products.PloneMeeting.browser.overrides.PMPlone"
-      permission="zope.Public"
-      allowed_interface="Products.CMFPlone.browser.interfaces.IPlone" />
-
-  <configure package="plone.app.search"
-    zcml:condition="installed collective.solr">
+    <!-- Batch actions overrides -->
     <browser:page
-      name="search"
-      class="plone.app.search.browser.Search"
-      permission="zope2.View"
-      for="plone.app.layout.navigation.interfaces.INavigationRoot"
-      template="search.pt"
-      layer="collective.solr.browser.interfaces.IThemeSpecific"
-      zcml:condition="not-have plone-5"
-      />
-  </configure>
+        for="collective.eeafaceted.batchactions.interfaces.IBatchActionsMarker"
+        name="transition-batch-action"
+        class=".browser.overrides.PMTransitionBatchActionForm"
+        permission="zope2.View" />
+
+    <browser:page
+        for="*"
+        name="plone"
+        class="Products.PloneMeeting.browser.overrides.PMPlone"
+        permission="zope.Public"
+        allowed_interface="Products.CMFPlone.browser.interfaces.IPlone" />
+
+    <configure package="plone.app.search"
+      zcml:condition="installed collective.solr">
+      <browser:page
+        name="search"
+        class="plone.app.search.browser.Search"
+        permission="zope2.View"
+        for="plone.app.layout.navigation.interfaces.INavigationRoot"
+        template="search.pt"
+        layer="collective.solr.browser.interfaces.IThemeSpecific"
+        zcml:condition="not-have plone-5"
+        />
+    </configure>
 
 </configure>

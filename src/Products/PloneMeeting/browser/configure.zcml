@@ -264,7 +264,7 @@
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingItemDashboardBatchActionsMarker"
         name="labels-batch-action"
-        class="collective.eeafaceted.batchactions.browser.views.LabelsBatchActionForm"
+        class=".overrides.PMLabelsBatchActionForm"
         permission="zope2.View" />
     <!-- Batch actions Meeting -->
     <browser:page
@@ -275,7 +275,7 @@
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingBatchActionsMarker"
         name="labels-batch-action"
-        class="collective.eeafaceted.batchactions.browser.views.LabelsBatchActionForm"
+        class=".overrides.PMLabelsBatchActionForm"
         permission="zope2.View" />
     <!-- Batch actions everywhere -->
     <browser:page
