@@ -2,6 +2,7 @@
 
 from AccessControl import Unauthorized
 from imio.helpers.cache import invalidate_cachekey_volatile_for
+from imio.helpers.security import fplog
 from persistent.mapping import PersistentMapping
 from plone import api
 from plone.app.uuid.utils import uuidToObject
@@ -11,7 +12,6 @@ from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
 from Products.PloneMeeting.interfaces import IRedirect
 from Products.PloneMeeting.utils import _itemNumber_to_storedItemNumber
-from Products.PloneMeeting.utils import fplog
 from Products.PloneMeeting.utils import notifyModifiedAndReindex
 from z3c.form import button
 from z3c.form import field
@@ -436,7 +436,7 @@ class IRedefinedSignatory(IBaseAttendee):
 def set_meeting_item_signatory(meeting, item_uid, signature_number, hp_uid, position_type):
     """ """
     updated = False
-    item_signatories = meeting.itemSignatories.get(item_uid, {})
+    item_signatories = meeting.itemSignatories.get(item_uid, PersistentMapping)
     if hp_uid not in item_signatories.values():
         updated = True
         item_signatories[signature_number] = PersistentMapping(

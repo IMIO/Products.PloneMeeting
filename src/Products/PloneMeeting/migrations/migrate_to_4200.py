@@ -120,9 +120,12 @@ class Migrate_To_4200(Migrator):
             for item_uid, signatories in meeting.itemSignatories.items():
                 for signature_number, hp_uid in signatories.items():
                     if isinstance(hp_uid, PersistentMapping):
-                        return self._already_migrated()
+                        continue
                     self.request.set('person_uid', hp_uid)
                     position_type = position_type_default()
+                    # make sure we have a PersistentMapping
+                    meeting.itemSignatories[item_uid] = PersistentMapping(
+                        meeting.itemSignatories[item_uid])
                     meeting.itemSignatories[item_uid][signature_number] = \
                         PersistentMapping({'hp_uid': hp_uid, 'position_type': position_type})
         logger.info('Done.')
