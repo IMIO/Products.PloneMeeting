@@ -8,6 +8,7 @@ from collective.contact.plonegroup.config import set_registry_organizations
 from collective.contact.plonegroup.utils import get_organizations
 from copy import deepcopy
 from DateTime import DateTime
+from datetime import datetime
 from eea.facetednavigation.interfaces import IFacetedLayout
 from imio.helpers.cache import cleanRamCacheFor
 from os import path
@@ -1886,11 +1887,11 @@ class testMeeting(PloneMeetingTestCase):
         # create 3 meetings
         # we can do every steps as a MeetingManager
         self.changeUser('pmManager')
-        meetingDate = DateTime('2008/06/12 08:00:00')
+        meetingDate = datetime(2008, 6, 12, 8, 0)
         m1 = self.create('Meeting', date=meetingDate)
-        meetingDate = DateTime('2008/06/19 08:00:00')
+        meetingDate = datetime(2008, 6, 19, 8, 0)
         m2 = self.create('Meeting', date=meetingDate)
-        meetingDate = DateTime('2008/06/26 08:00:00')
+        meetingDate = datetime(2008, 6, 26, 8, 0)
         m3 = self.create('Meeting', date=meetingDate)
         # create 3 items
         # one with no preferredMeeting

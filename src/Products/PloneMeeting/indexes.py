@@ -166,7 +166,7 @@ def getPreferredMeetingDate(obj):
         # use uid_catalog because as getPreferredMeetingDate is in the portal_catalog
         # if we clear and rebuild the portal_catalog, preferredMeetingUID will not be found...
         catalog = api.portal.get_tool('portal_catalog')
-        res = catalog(UID=preferredMeetingUID)[0].getDate
+        res = catalog(UID=preferredMeetingUID)[0].getObject().date
     else:
         res = datetime(1950, 1, 1)
     return res or _marker

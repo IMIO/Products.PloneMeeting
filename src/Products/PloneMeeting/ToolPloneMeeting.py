@@ -1316,7 +1316,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             lang = api.portal.get_tool('portal_languages').getDefaultLanguage()
 
         # Manage month
-        month = translate(monthsIds[date.month()], target_language=lang,
+        month = translate(monthsIds[date.month], target_language=lang,
                           domain='plonelocales', context=self.REQUEST)
         fmt = fmt.replace('%mt', month.lower())
         fmt = fmt.replace('%MT', month)
