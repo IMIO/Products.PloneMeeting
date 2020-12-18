@@ -4,7 +4,8 @@
     i18n_domain="Products.PloneMeeting">
 
     <!-- We need to grok here for plone.directives to work...
-         We put this in this configure.zcml because it is removed from main configure.zcml by archgenxml... -->
+         We put this in this configure.zcml because it is removed
+         from main configure.zcml by archgenxml... -->
     <include package="five.grok" />
     <grok:grok package="." />
 
@@ -23,6 +24,8 @@
       name="Products.PloneMeeting.content.category.category_mapping_when_cloning_to_other_mc_vocabulary" />
 
     <!-- Schema policies -->
+    <utility factory=".meeting.MeetingSchemaPolicy"
+             name="schema_policy_meeting" />
     <utility factory=".advice.MeetingAdviceSchemaPolicy"
              name="schema_policy_meetingadvice" />
     <utility factory=".category.MeetingCategorySchemaPolicy"

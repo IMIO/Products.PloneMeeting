@@ -3,8 +3,6 @@
         meta_type="Plone Types Tool">
  <object name="MeetingItem"
          meta_type="Factory-based Type Information with dynamic views"/>
- <object name="Meeting"
-         meta_type="Factory-based Type Information with dynamic views"/>
  <object name="ToolPloneMeeting"
          meta_type="Factory-based Type Information with dynamic views"/>
  <object name="MeetingConfig"
@@ -28,4 +26,5 @@
  <object name="held_position" meta_type="Dexterity FTI"/>
  <object name="organization" meta_type="Dexterity FTI"/>
  <object name="meetingcategory" meta_type="Dexterity FTI"/>
+ <object name="Meeting" meta_type="Dexterity FTI"/>
 </object>

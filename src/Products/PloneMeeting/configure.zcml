@@ -54,6 +54,8 @@
   <includeOverrides file="overrides.zcml" />
   <includeOverrides file="ftw_labels/overrides.zcml" />
 
+  <permission id="PloneMeeting.AddMeeting"
+              title="PloneMeeting: Add Meeting"/>
   <permission id="PloneMeeting.AddAdvice"
               title="PloneMeeting: Add advice"/>
   <permission id="PloneMeeting.AddAnnex"

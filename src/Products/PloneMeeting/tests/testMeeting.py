@@ -1918,9 +1918,9 @@ class testMeeting(PloneMeetingTestCase):
         # for now, no items are presentable...
         # except if items are already 'validated', this could be the case when using
         # 'items_come_validated' wfAdaptation or if item initial_state is 'validated'
-        m1_query = queryparser.parseFormquery(m1, m1.adapted()._availableItemsQuery())
-        m2_query = queryparser.parseFormquery(m2, m2.adapted()._availableItemsQuery())
-        m3_query = queryparser.parseFormquery(m3, m3.adapted()._availableItemsQuery())
+        m1_query = queryparser.parseFormquery(m1, m1.adapted()._available_items_query())
+        m2_query = queryparser.parseFormquery(m2, m2.adapted()._available_items_query())
+        m3_query = queryparser.parseFormquery(m3, m3.adapted()._available_items_query())
         wf_name = self.wfTool.getWorkflowsFor(i1)[0].getId()
         if not self.wfTool[wf_name].initial_state == 'validated':
             self.assertEqual(len(self.catalog(m1_query)), 0)
@@ -1931,19 +1931,19 @@ class testMeeting(PloneMeetingTestCase):
             self.validateItem(item)
         # now, check that available items have some respect
         # the first meeting has only one item, the one with no preferred meeting selected
-        m1_query = queryparser.parseFormquery(m1, m1.adapted()._availableItemsQuery())
+        m1_query = queryparser.parseFormquery(m1, m1.adapted()._available_items_query())
         itemTitles = [brain.Title for brain in self.catalog(m1_query)]
         self.assertEqual(itemTitles, ['i1', ])
         # the second meeting has 2 items, the no preferred meeting one and the i2
         # for wich we selected this meeting as preferred
-        m2_query = queryparser.parseFormquery(m2, m2.adapted()._availableItemsQuery())
+        m2_query = queryparser.parseFormquery(m2, m2.adapted()._available_items_query())
         itemTitles = [brain.Title for brain in self.catalog(m2_query)]
         self.assertEqual(set(itemTitles), set(['i1', 'i2', ]))
         # the third has 3 items
         # --> no preferred meeting item
         # --> the second item because the meeting date is in the future
         # --> the i3 where we selected m3 as preferred meeting
-        m3_query = queryparser.parseFormquery(m3, m3.adapted()._availableItemsQuery())
+        m3_query = queryparser.parseFormquery(m3, m3.adapted()._available_items_query())
         itemTitles = [brain.Title for brain in self.catalog(m3_query)]
         self.assertEqual(set(itemTitles), set(['i1', 'i2', 'i3', ]))
 
@@ -1952,7 +1952,7 @@ class testMeeting(PloneMeetingTestCase):
         self.setCurrentMeeting(m1)
         self.presentItem(i1)
         self.freezeMeeting(m1)
-        m1_query = queryparser.parseFormquery(m1, m1.adapted()._availableItemsQuery())
+        m1_query = queryparser.parseFormquery(m1, m1.adapted()._available_items_query())
         self.assertTrue(not self.catalog(m1_query))
         # turn i2 into a late item
         proposedState = self._stateMappingFor('proposed')
@@ -1965,13 +1965,13 @@ class testMeeting(PloneMeetingTestCase):
             self.validateItem(i2)
             # i1 is a late item
             self.assertTrue(i2.wfConditions().isLateFor(m1))
-            m1_query = queryparser.parseFormquery(m1, m1.adapted()._availableItemsQuery())
+            m1_query = queryparser.parseFormquery(m1, m1.adapted()._available_items_query())
             self.assertTrue([brain.UID for brain in self.catalog(m1_query)] == [i2.UID()])
 
         # if a meeting is not in a state accepting items, it does not accept items anymore
         self.closeMeeting(m1)
         self.assertTrue(m1.queryState() not in cfg.adapted().getMeetingStatesAcceptingItems())
-        m1_query = queryparser.parseFormquery(m1, m1.adapted()._availableItemsQuery())
+        m1_query = queryparser.parseFormquery(m1, m1.adapted()._available_items_query())
         self.assertFalse(self.catalog(m1_query))
 
     def test_pm_LateItemsAreAvailableForLateMeetingAndFutureLateMeetings(self):

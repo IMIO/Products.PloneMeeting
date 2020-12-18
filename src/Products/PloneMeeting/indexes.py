@@ -2,14 +2,13 @@
 #
 # File: indexes.py
 #
-# Copyright (c) 2017 by Imio.be
-#
 # GNU General Public License (GPL)
 #
 
 from collective.contact.core.content.organization import IOrganization
 from collective.iconifiedcategory.indexes import content_category_uid
 from DateTime import DateTime
+from datetime import datetime
 from imio.annex.content.annex import IAnnex
 from imio.helpers.content import _contained_objects
 from imio.history.interfaces import IImioHistory
@@ -166,10 +165,10 @@ def getPreferredMeetingDate(obj):
     if preferredMeetingUID != ITEM_NO_PREFERRED_MEETING_VALUE:
         # use uid_catalog because as getPreferredMeetingDate is in the portal_catalog
         # if we clear and rebuild the portal_catalog, preferredMeetingUID will not be found...
-        uid_catalog = api.portal.get_tool('uid_catalog')
-        res = uid_catalog(UID=preferredMeetingUID)[0].getObject().getDate()
+        catalog = api.portal.get_tool('portal_catalog')
+        res = catalog(UID=preferredMeetingUID)[0].getDate
     else:
-        res = DateTime('1950/01/01')
+        res = datetime(1950, 1, 1)
     return res or _marker
 
 

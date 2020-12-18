@@ -340,24 +340,24 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             obj.processForm()
             if idInAttrs:
                 obj._at_rename_after_creation = True
-            if objectType == 'Meeting':
-                # manage attendees if using it after processForm
-                usedMeetingAttrs = cfg.getUsedMeetingAttributes()
-                if 'attendees' in usedMeetingAttrs:
-                    obj._at_creation_flag = True
-                    default_attendees = obj.getDefaultAttendees()
-                    default_attendees = OrderedDict((
-                        (attendee, 'attendee') for attendee in default_attendees))
-                    signatories = []
-                    if 'signatories' in usedMeetingAttrs:
-                        signatories = obj.getDefaultSignatories()
-                    voters = []
-                    if cfg.getUseVotes():
-                        voters = obj.getDefaultVoters()
-                    obj._at_creation_flag = False
-                    obj._doUpdateContacts(attendees=default_attendees,
-                                          signatories=signatories,
-                                          voters=voters)
+        if objectType == 'Meeting':
+            # manage attendees if using it after processForm
+            usedMeetingAttrs = cfg.getUsedMeetingAttributes()
+            if 'attendees' in usedMeetingAttrs:
+                obj._at_creation_flag = True
+                default_attendees = obj.getDefaultAttendees()
+                default_attendees = OrderedDict((
+                    (attendee, 'attendee') for attendee in default_attendees))
+                signatories = []
+                if 'signatories' in usedMeetingAttrs:
+                    signatories = obj.getDefaultSignatories()
+                voters = []
+                if cfg.getUseVotes():
+                    voters = obj.getDefaultVoters()
+                obj._at_creation_flag = False
+                obj._doUpdateContacts(attendees=default_attendees,
+                                      signatories=signatories,
+                                      voters=voters)
         # make sure we do not have permission check cache problems...
         self.cleanMemoize()
         return obj

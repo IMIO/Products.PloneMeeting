@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from AccessControl import Unauthorized
+from collections import OrderedDict
 from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_own_organization
@@ -8,6 +9,7 @@ from collective.contact.plonegroup.utils import get_plone_group
 from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.contact.plonegroup.utils import get_plone_groups
 from collective.documentviewer.async import queueJob
+from collective.eeafaceted.dashboard.utils import enableFacetedDashboardFor
 from collective.iconifiedcategory.utils import update_all_categorized_elements
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.helpers.cache import invalidate_cachekey_volatile_for
@@ -34,7 +36,6 @@ from Products.PloneMeeting.config import TOOL_FOLDER_SEARCHES
 from Products.PloneMeeting.interfaces import IConfigElement
 from Products.PloneMeeting.interfaces import IMeetingContent
 from Products.PloneMeeting.utils import _addManagedPermissions
-from Products.PloneMeeting.utils import addRecurringItemsIfRelevant
 from Products.PloneMeeting.utils import AdviceAfterAddEvent
 from Products.PloneMeeting.utils import AdviceAfterModifyEvent
 from Products.PloneMeeting.utils import AdviceAfterTransitionEvent
@@ -46,6 +47,7 @@ from Products.PloneMeeting.utils import MeetingAfterTransitionEvent
 from Products.PloneMeeting.utils import meetingExecuteActionOnLinkedItems
 from Products.PloneMeeting.utils import notifyModifiedAndReindex
 from Products.PloneMeeting.utils import sendMailIfRelevant
+from Products.PloneMeeting.utils import transformAllRichTextFields
 from zExceptions import Redirect
 from zope.container.contained import ContainerModifiedEvent
 from zope.event import notify
@@ -56,6 +58,7 @@ from zope.interface import noLongerProvides
 from zope.lifecycleevent import IObjectRemovedEvent
 
 import logging
+import os
 
 
 __author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
@@ -91,7 +94,7 @@ def do(action, event):
         # update every local roles
         event.object.updateLocalRoles()
         # Add recurring items to the meeting if relevant
-        addRecurringItemsIfRelevant(event.object, event.transition.id)
+        event.object.add_recurring_items_if_relevant(event.transition.id)
         # Send mail if relevant
         event_id = "meeting_state_changed_%s" % event.transition.id
         sendMailIfRelevant(event.object, event_id, 'View', isPermission=True)
@@ -970,21 +973,53 @@ def onItemRemoved(item, event):
 
 
 def onMeetingAdded(meeting, event):
-    '''This method is called every time a Meeting is created, even in
-       portal_factory. Local roles defined on a meeting define who may view
-       or edit it. But at the time the meeting is created in portal_factory,
-       local roles are not defined yet. This can be a problem when some
-       workflow adaptations are enabled. So here
-       we grant role 'Owner' to the currently logged user that allows him,
-       in every case, to create the meeting.'''
-    userId = api.user.get_current().getId()
-    meeting.manage_addLocalRoles(userId, ('Owner',))
+    '''This method is called every time a Meeting is added to a folder,
+       after the created and moved events.'''
+    meeting.update_title()
+    meeting.compute_dates()
+    # Update contact-related info (attendees, signatories, replacements...)
+    meeting.update_contacts()
+    meeting.add_recurring_items_if_relevant('_init_')
+    # Apply potential transformations to richtext fields
+    transformAllRichTextFields(meeting)
+    meeting.update_local_roles()
+    # activate the faceted navigation
+    enableFacetedDashboardFor(meeting,
+                              xmlpath=os.path.dirname(__file__) +
+                              '/faceted_conf/default_dashboard_widgets.xml')
+    meeting.setLayout('meeting_view')
+    # update every items itemReference if needed
+    meeting.update_item_references(check_needed=True)
+
     # clean cache for "Products.PloneMeeting.vocabularies.meetingdatesvocabulary"
     # use get_again for async meetings term render
     invalidate_cachekey_volatile_for(
         'Products.PloneMeeting.vocabularies.meetingdatesvocabulary', get_again=True)
     invalidate_cachekey_volatile_for(
         'Products.PloneMeeting.Meeting.modified', get_again=True)
+
+
+def onMeetingCreated(meeting, event):
+    """First event triggerd when new meeting created.
+       Event order is :
+       - created;
+       - moved;
+       - added."""
+    userId = api.user.get_current().getId()
+    meeting.manage_addLocalRoles(userId, ('Owner',))
+
+    # place to store item absents
+    meeting.item_absents = PersistentMapping()
+    # place to store item excused
+    meeting.item_excused = PersistentMapping()
+    # place to store item non attendees
+    meeting.item_non_attendees = PersistentMapping()
+    # place to store item signatories
+    meeting.item_signatories = PersistentMapping()
+    # place to store item votes
+    meeting.item_votes = PersistentMapping()
+    # place to store attendees when using contacts
+    meeting.ordered_contacts = OrderedDict()
 
 
 def onMeetingMoved(meeting, event):
@@ -994,7 +1029,7 @@ def onMeetingMoved(meeting, event):
         return
 
     # update linked_meeting_path on every items because path changed
-    for item in meeting.getItems():
+    for item in meeting.get_items():
         item._update_meeting_link(meeting.UID())
 
 

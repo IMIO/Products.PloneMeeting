@@ -186,7 +186,7 @@ def getCustomAdapter(obj):
     '''Tries to get the custom adapter for a PloneMeeting object. If no adapter
        is defined, returns the object.'''
     res = obj
-    theInterface = adaptables[obj.meta_type]['interface']
+    theInterface = adaptables[obj.__class__.__name__]['interface']
     try:
         res = theInterface(obj)
     except TypeError:
@@ -630,19 +630,6 @@ def sendMailIfRelevant(obj, event, permissionOrSuffixOrRoleOrGroupIds,
     if debug:
         return recipients, mail_subject, mail_body
     return True
-
-
-def addRecurringItemsIfRelevant(meeting, transition):
-    '''Sees in the meeting config linked to p_meeting if the triggering of
-       p_transition must lead to the insertion of some recurring items in
-       p_meeting.'''
-    recItems = []
-    meetingConfig = meeting.portal_plonemeeting.getMeetingConfig(meeting)
-    for item in meetingConfig.getRecurringItems():
-        if item.getMeetingTransitionInsertingMe() == transition:
-            recItems.append(item)
-    if recItems:
-        meeting.addRecurringItems(recItems)
 
 
 # I wanted to put permission "ReviewPortalContent" among defaultPermissions,

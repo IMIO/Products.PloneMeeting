@@ -1296,7 +1296,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             date = meeting.getDate
         else:
             # received meeting is a Meeting instance
-            date = meeting.getDate()
+            date = meeting.date
         # Get the format for the rendering of p_aDate
         if short:
             fmt = '%d/%m/%Y'
@@ -1324,7 +1324,11 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         res = date.strftime(fmt)
         # Finally, prefix the date with "Meeting of" when required.
         if prefixed:
-            res = translate('meeting_of', domain='PloneMeeting', context=self.REQUEST) + ' ' + res
+            res = u"{0} {1}".format(
+                translate('meeting_of',
+                          domain='PloneMeeting',
+                          context=self.REQUEST),
+                res)
         return res
 
     security.declareProtected(ModifyPortalContent, 'convertAnnexes')

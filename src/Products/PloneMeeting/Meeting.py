@@ -56,7 +56,6 @@ from Products.PloneMeeting.interfaces import IMeetingWorkflowConditions
 from Products.PloneMeeting.utils import _addManagedPermissions
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import addDataChange
-from Products.PloneMeeting.utils import addRecurringItemsIfRelevant
 from Products.PloneMeeting.utils import display_as_html
 from Products.PloneMeeting.utils import displaying_available_items
 from Products.PloneMeeting.utils import fieldIsEmpty
@@ -1913,7 +1912,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         self.setMeetingConfigVersion(cfg.getConfigVersion())
-        addRecurringItemsIfRelevant(self, '_init_')
+        # addRecurringItemsIfRelevant(self, '_init_')
         # Apply potential transformations to richtext fields
         transformAllRichTextFields(self)
         # Make sure we have 'text/html' for every Rich fields

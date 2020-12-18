@@ -15,10 +15,10 @@
            provides="Products.PloneMeeting.interfaces.IMeetingAdviceWorkflowActions" />
 
   <!-- meeting -->
-  <adapter for="Products.PloneMeeting.interfaces.IMeeting"
+  <adapter for="Products.PloneMeeting.content.meeting.IMeeting"
            factory=".meeting.MeetingWorkflowConditions"
            provides="Products.PloneMeeting.interfaces.IMeetingWorkflowConditions" />
-  <adapter for="Products.PloneMeeting.interfaces.IMeeting"
+  <adapter for="Products.PloneMeeting.content.meeting.IMeeting"
            factory=".meeting.MeetingWorkflowActions"
            provides="Products.PloneMeeting.interfaces.IMeetingWorkflowActions" />
 

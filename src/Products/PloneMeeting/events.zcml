@@ -48,7 +48,7 @@
                    Products.DCWorkflow.interfaces.IBeforeTransitionEvent"
               handler=".events.onItemBeforeTransition" />
 
-  <subscriber for=".interfaces.IMeeting
+  <subscriber for=".content.meeting.IMeeting
                    Products.DCWorkflow.interfaces.IBeforeTransitionEvent"
               handler=".events.onMeetingBeforeTransition" />
 
@@ -64,19 +64,23 @@
                    Products.Archetypes.interfaces.IEditCancelledEvent"
               handler=".events.onItemEditCancelled" />
 
-  <subscriber for=".interfaces.IMeeting
+  <subscriber for=".content.meeting.IMeeting
                    zope.lifecycleevent.interfaces.IObjectAddedEvent"
               handler=".events.onMeetingAdded" />
 
-  <subscriber for=".interfaces.IMeeting
+  <subscriber for=".content.meeting.IMeeting
+                   zope.lifecycleevent.interfaces.IObjectCreatedEvent"
+              handler=".events.onMeetingCreated" />
+
+  <subscriber for=".content.meeting.IMeeting
                    Products.DCWorkflow.interfaces.IAfterTransitionEvent"
               handler=".events.onMeetingTransition" />
 
-  <subscriber for=".interfaces.IMeeting
+  <subscriber for=".content.meeting.IMeeting
                    zope.lifecycleevent.ObjectMovedEvent"
               handler=".events.onMeetingMoved" />
 
-  <subscriber for=".interfaces.IMeeting
+  <subscriber for=".content.meeting.IMeeting
                    zope.container.interfaces.IObjectRemovedEvent"
               handler=".events.onMeetingRemoved" />
 
