@@ -692,7 +692,7 @@ class BaseDGHV(object):
                    checkNeedSeparator=True,
                    addCSSClass=None,
                    use_safe_html=True,
-                   clean=False):
+                   clean=True):
         """Helper method to format a p_xhtmlContents.  The xhtmlContents is a list or a string containing
            either XHTML content or some specific recognized words like :
            - 'separator', in this case, it is replaced with the p_separatorValue;

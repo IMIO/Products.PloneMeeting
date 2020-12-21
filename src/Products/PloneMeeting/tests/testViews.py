@@ -1006,10 +1006,10 @@ class testViews(PloneMeetingTestCase):
         text = '<p>Text1</p><p><img src="http://plone/nohost/img1.png" />' \
             '<img src="http://plone/nohost/img2.png" /></p>' \
             '<p>Text2</p><p><img src="http://plone/nohost/img3.png" /></p>'
-        # not used by default
-        self.assertEqual(helper.printXhtml(item, text), text)
+        # True by default
+        self.assertEqual(helper.printXhtml(item, text, clean=False), text)
         # when used, images are moved in their own <p> when necessary
-        self.assertEqual(helper.printXhtml(item, text, clean=True),
+        self.assertEqual(helper.printXhtml(item, text),
                          '<p>Text1</p>'
                          '<p><img src="http://plone/nohost/img1.png" /></p>'
                          '<p><img src="http://plone/nohost/img2.png" /></p>'

@@ -3,7 +3,7 @@ Changelog
 
 
 4.1.28.16 (unreleased)
-------------------
+----------------------
 
 - Requires `imio.helpers[test]` for test so we get `collective.MockMailHost`.
   [gbastien]
@@ -22,6 +22,9 @@ Changelog
     [gbastien]
   - Fixed `MeetingItem.is_assembly_field_used`, only evaluate when item is linked
     to a meeting, that broke the item edit form.
+    [gbastien]
+  - `BaseDGHV.printXhtml` `clean` parameter is now `True` by default so it will
+    call `separate_images` to avoid several `<img>` in same `<p>`.
     [gbastien]
 
 4.1.28.15 (2020-11-19)
