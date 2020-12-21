@@ -34,6 +34,7 @@ from Products.PloneMeeting.tests.testUtils import ASSEMBLY_CORRECT_VALUE
 from Products.PloneMeeting.tests.testUtils import ASSEMBLY_WRONG_VALUE
 from Products.PloneMeeting.utils import checkMayQuickEdit
 from Products.PloneMeeting.utils import getCurrentMeetingObject
+from Products.PloneMeeting.utils import get_states_before
 from Products.PloneMeeting.utils import set_field_from_ajax
 from Products.ZCatalog.Catalog import AbstractCatalogBrain
 from zope.i18n import translate
@@ -1719,7 +1720,7 @@ class testMeeting(PloneMeetingTestCase):
 
         # presenting an item in a before late state (before frozen) will insert it as normal
         late_state = meeting.adapted().getLateState()
-        before_late_states = meeting.getStatesBefore(late_state)
+        before_late_states = get_states_before(meeting, late_state)
         self.assertTrue(meeting.queryState() in before_late_states)
         self.presentItem(normalItem)
         self.assertEqual(normalItem.getListType(), 'normal')
@@ -1992,12 +1993,12 @@ class testMeeting(PloneMeetingTestCase):
         self.freezeMeeting(after_meeting)
         # item1 and item2 are late for after_meeting, but only item1 is late for meeting
         meeting_query = queryparser.parseFormquery(
-            meeting, meeting.adapted()._availableItemsQuery())
+            meeting, meeting.adapted()._available_items_query())
         self.assertEqual(
             [brain.UID for brain in self.catalog(meeting_query)],
             [item1.UID()])
         after_meeting_query = queryparser.parseFormquery(
-            after_meeting, after_meeting.adapted()._availableItemsQuery())
+            after_meeting, after_meeting.adapted()._available_items_query())
         self.assertEqual(
             [brain.UID for brain in self.catalog(after_meeting_query)],
             [item1.UID(), item2.UID()])
@@ -2298,15 +2299,15 @@ class testMeeting(PloneMeetingTestCase):
 
         # for now, the next meeting is used
         late_state = meeting1.adapted().getLateState()
-        self.assertTrue(meeting1.queryState() in meeting1.getStatesBefore(late_state))
-        self.assertTrue(meeting2.queryState() in meeting2.getStatesBefore(late_state))
+        self.assertTrue(meeting1.queryState() in get_states_before(meeting1, late_state))
+        self.assertTrue(meeting2.queryState() in get_states_before(meeting2, late_state))
         self.assertTrue(meeting1.getDate() < meeting2.getDate())
         self.assertEqual(item.getMeetingToInsertIntoWhenNoCurrentMeetingObject(), meeting1)
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject')
         cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
         # freeze meeting1, meeting2 is used
         self.freezeMeeting(meeting1)
-        self.assertFalse(meeting1.queryState() in meeting1.getStatesBefore(late_state))
+        self.assertFalse(meeting1.queryState() in get_states_before(meeting1, late_state))
         self.assertEqual(item.getMeetingToInsertIntoWhenNoCurrentMeetingObject(), meeting2)
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject')
         cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
@@ -2989,7 +2990,7 @@ class testMeeting(PloneMeetingTestCase):
         # cleanUp zmcl.load_config because it impact other tests
         zcml.cleanUp()
 
-    def test_pm_GetStatesBefore(self):
+    def test_pm_Get_states_before(self):
         """This should return states before a given state.
            Essentially used to get states before the 'frozen' state.
            Test this especially because it is cached.
@@ -2998,7 +2999,7 @@ class testMeeting(PloneMeetingTestCase):
         cfg2 = self.meetingConfig2
         if 'no_publication' not in cfg.listWorkflowAdaptations() or \
            'no_publication' not in cfg2.listWorkflowAdaptations():
-            pm_logger.info("Bypassing test test_pm_GetStatesBefore because "
+            pm_logger.info("Bypassing test test_pm_Get_states_before because "
                            "it needs the 'no_publication' workflow adaptation.")
             return
 
@@ -3009,48 +3010,48 @@ class testMeeting(PloneMeetingTestCase):
 
         self.changeUser('pmManager')
         meeting = self.create('Meeting', date=DateTime('2018/04/09'))
-        self.assertEqual(sorted(meeting.getStatesBefore('frozen')),
+        self.assertEqual(sorted(get_states_before(meeting, 'frozen')),
                          ['created'])
-        self.assertEqual(sorted(meeting.getStatesBefore('published')),
+        self.assertEqual(sorted(get_states_before(meeting, 'published')),
                          ['created', 'frozen'])
         # use the no_publication WF adaptation to remove state 'published'
         cfg.setWorkflowAdaptations(('no_publication', ))
         # do not use at_post_edit_script that does a cleanRamCache()
         cfg.registerPortalTypes()
         transaction.commit()
-        self.assertEqual(sorted(meeting.getStatesBefore('frozen')),
+        self.assertEqual(sorted(get_states_before(meeting, 'frozen')),
                          ['created'])
         # state not found, every states are returned
-        self.assertEqual(sorted(meeting.getStatesBefore('unknown_state')),
+        self.assertEqual(sorted(get_states_before(meeting, 'unknown_state')),
                          ['closed', 'created', 'decided', 'frozen'])
         cfg.setWorkflowAdaptations(())
         # do not use at_post_edit_script that does a cleanRamCache()
         cfg.registerPortalTypes()
         transaction.commit()
-        self.assertEqual(sorted(meeting.getStatesBefore('frozen')),
+        self.assertEqual(sorted(get_states_before(meeting, 'frozen')),
                          ['created'])
-        self.assertEqual(sorted(meeting.getStatesBefore('published')),
+        self.assertEqual(sorted(get_states_before(meeting, 'published')),
                          ['created', 'frozen'])
 
         # different for 2 meetingConfigs
         self.setMeetingConfig(cfg2.getId())
         meeting2 = self.create('Meeting', date=DateTime('2018/04/09'))
-        self.assertEqual(sorted(meeting2.getStatesBefore('frozen')),
+        self.assertEqual(sorted(get_states_before(meeting2, 'frozen')),
                          ['created'])
-        self.assertEqual(sorted(meeting2.getStatesBefore('published')),
+        self.assertEqual(sorted(get_states_before(meeting2, 'published')),
                          ['created', 'frozen'])
         cfg2.setWorkflowAdaptations(('no_publication', ))
         cfg2.registerPortalTypes()
         transaction.commit()
 
         # different values for different meetings
-        self.assertEqual(sorted(meeting.getStatesBefore('frozen')),
+        self.assertEqual(sorted(get_states_before(meeting, 'frozen')),
                          ['created'])
-        self.assertEqual(sorted(meeting.getStatesBefore('published')),
+        self.assertEqual(sorted(get_states_before(meeting, 'published')),
                          ['created', 'frozen'])
-        self.assertEqual(sorted(meeting2.getStatesBefore('frozen')),
+        self.assertEqual(sorted(get_states_before(meeting2, 'frozen')),
                          ['created'])
-        self.assertEqual(sorted(meeting2.getStatesBefore('published')),
+        self.assertEqual(sorted(get_states_before(meeting2, 'published')),
                          ['closed', 'created', 'decided', 'frozen'])
 
         # if no frozen state found, every states are considered as before frozen
@@ -3058,7 +3059,7 @@ class testMeeting(PloneMeetingTestCase):
         meeting_wf = self.wfTool.get('meeting_workflow')
         meeting_wf.states.deleteStates(['frozen'])
         cfg.at_post_edit_script()
-        self.assertEqual(sorted(meeting.getStatesBefore('frozen')),
+        self.assertEqual(sorted(get_states_before(meeting, 'frozen')),
                          ['closed', 'created', 'decided', 'published'])
 
     def test_pm_GetPrettyLink(self):

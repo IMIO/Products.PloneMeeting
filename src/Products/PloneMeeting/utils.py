@@ -1144,7 +1144,7 @@ def meetingExecuteActionOnLinkedItems(meeting, transitionId):
     for config in cfg.getOnMeetingTransitionItemActionToExecute():
         if config['meeting_transition'] == transitionId:
             is_transition = not config['tal_expression']
-            for item in meeting.getItems():
+            for item in meeting.get_items():
                 if is_transition:
                     # do not fail if a transition could not be triggered, just add an
                     # info message to the log so configuration can be adapted to avoid this
@@ -1716,7 +1716,16 @@ def get_every_back_references(obj, relationship):
     return get_back_references(obj.getBRefs(relationship))
 
 
-def getStatesBefore(obj, review_state_id):
+def get_states_before_cachekey(method, obj, review_state):
+    '''cachekey method for get_states_before.'''
+    # do only re-compute if cfg changed or params changed
+    tool = api.portal.get_tool('portal_plonemeeting')
+    cfg = tool.getMeetingConfig(obj)
+    return (cfg.getId(), cfg._p_mtime, review_state)
+
+
+@ram.cache(get_states_before_cachekey)
+def get_states_before(obj, review_state_id):
     """
       Returns states before the p_review_state_id state.
     """

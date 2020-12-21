@@ -102,6 +102,7 @@ from Products.PloneMeeting.utils import fieldIsEmpty
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
 from Products.PloneMeeting.utils import fplog
 from Products.PloneMeeting.utils import get_every_back_references
+from Products.PloneMeeting.utils import get_states_before
 from Products.PloneMeeting.utils import getCurrentMeetingObject
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getFieldVersion
@@ -518,7 +519,7 @@ class MeetingItemWorkflowConditions(object):
         res = False
         if _checkPermission(ReviewPortalContent, self.context):
             meeting = self.context.getMeeting()
-            if meeting.queryState() not in meeting.getStatesBefore('published'):
+            if meeting.queryState() not in get_states_before(meeting, 'published'):
                 res = True
         return res
 
@@ -528,7 +529,7 @@ class MeetingItemWorkflowConditions(object):
         res = False
         if _checkPermission(ReviewPortalContent, self.context):
             meeting = self.context.hasMeeting() and self.context.getMeeting() or None
-            if meeting and meeting.queryState() not in meeting.getStatesBefore('frozen'):
+            if meeting and meeting.queryState() not in get_states_before(meeting, 'frozen'):
                 res = True
         return res
 
@@ -548,7 +549,7 @@ class MeetingItemWorkflowConditions(object):
             preferred_meeting = self.context.getPreferredMeeting(theObject=True)
             if preferred_meeting:
                 late_state = meeting.adapted().getLateState()
-                if (meeting.queryState() not in meeting.getStatesBefore(late_state)) and \
+                if (meeting.queryState() not in get_states_before(meeting, late_state)) and \
                    (meeting.getDate() >= preferred_meeting.getDate()):
                     return True
         return False
@@ -735,7 +736,7 @@ class MeetingItemWorkflowActions(object):
         # If the meeting is already in a late state and this item is a "late" item,
         # I must set automatically the item to the first "late state" (itemfrozen by default).
         late_state = meeting.adapted().getLateState()
-        before_late_states = meeting.getStatesBefore(late_state)
+        before_late_states = get_states_before(meeting, late_state)
         if before_late_states and meeting.queryState() not in before_late_states:
             self._latePresentedItem()
 
@@ -2881,7 +2882,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # that current user may edit returned meeting
             late_state = meeting.adapted().getLateState()
             if meeting.wfConditions().mayAcceptItems() and (
-                    meeting.queryState() in meeting.getStatesBefore(late_state) or
+                    meeting.queryState() in get_states_before(meeting, late_state) or
                     self.wfConditions().isLateFor(meeting)):
                 return meeting
         return None
@@ -3504,7 +3505,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if meeting:
             late_state = meeting.adapted().getLateState()
         return bool(
-            meeting and meeting.queryState() not in meeting.getStatesBefore(late_state))
+            meeting and meeting.queryState() not in get_states_before(meeting, late_state))
 
     security.declarePublic('updateItemReference')
 

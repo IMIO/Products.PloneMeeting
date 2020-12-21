@@ -42,6 +42,7 @@ from Products.PloneMeeting.utils import AdviceAfterTransitionEvent
 from Products.PloneMeeting.utils import applyOnTransitionFieldTransform
 from Products.PloneMeeting.utils import fplog
 from Products.PloneMeeting.utils import get_annexes
+from Products.PloneMeeting.utils import get_states_before
 from Products.PloneMeeting.utils import ItemAfterTransitionEvent
 from Products.PloneMeeting.utils import MeetingAfterTransitionEvent
 from Products.PloneMeeting.utils import meetingExecuteActionOnLinkedItems
@@ -92,7 +93,7 @@ def do(action, event):
         event.object.notifyModified()
     elif objectType == 'Meeting':
         # update every local roles
-        event.object.updateLocalRoles()
+        event.object.update_local_roles()
         # Add recurring items to the meeting if relevant
         event.object.add_recurring_items_if_relevant(event.transition.id)
         # Send mail if relevant
@@ -159,11 +160,11 @@ def onMeetingTransition(meeting, event):
     do(action, event)
     # update items references if meeting is going from before late state
     # to late state or the other way round
-    late_state = meeting.adapted().getLateState()
-    beforeLateStates = meeting.getStatesBefore(late_state)
+    late_state = meeting.adapted().get_late_state()
+    beforeLateStates = get_states_before(late_state)
     if (event.old_state.id in beforeLateStates and event.new_state.id not in beforeLateStates) or \
        (event.old_state.id not in beforeLateStates and event.new_state.id in beforeLateStates):
-        meeting.updateItemReferences()
+        meeting.update_item_references()
 
     # invalidate last meeting modified, use get_again for async meetings term render
     invalidate_cachekey_volatile_for('Products.PloneMeeting.Meeting.modified', get_again=True)

@@ -1,23 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2015 by Imio.be
-#
 # GNU General Public License (GPL)
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
-# 02110-1301, USA.
 #
 
 from collections import OrderedDict
@@ -27,6 +10,7 @@ from plone.app.layout.viewlets import ViewletBase
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from Products.PloneMeeting.events import _is_held_pos_uid_used_by
 from Products.PloneMeeting.utils import displaying_available_items
+from Products.PloneMeeting.utils import get_states_before
 from zope.component import getMultiAdapter
 
 
@@ -40,8 +24,8 @@ class ForceInsertNormal(ViewletBase):
 
     def enabled(self):
         """Is the checkbox enabled?  Only necessary if meeting is in a late state."""
-        late_state = self.context.adapted().getLateState()
-        return self.context.queryState() not in self.context.getStatesBefore(late_state)
+        late_state = self.context.adapted().get_late_state()
+        return self.context.query_state() not in get_states_before(self.context, late_state)
 
     def render(self):
         if self.available():

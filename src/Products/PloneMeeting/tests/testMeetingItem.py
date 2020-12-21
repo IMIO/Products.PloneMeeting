@@ -63,6 +63,7 @@ from Products.PloneMeeting.tests.PloneMeetingTestCase import TestRequest
 from Products.PloneMeeting.tests.testUtils import ASSEMBLY_CORRECT_VALUE
 from Products.PloneMeeting.tests.testUtils import ASSEMBLY_WRONG_VALUE
 from Products.PloneMeeting.utils import get_annexes
+from Products.PloneMeeting.utils import get_states_before
 from Products.PloneMeeting.utils import getFieldVersion
 from Products.PloneMeeting.utils import getTransitionToReachState
 from Products.PloneMeeting.utils import ON_TRANSITION_TRANSFORM_TAL_EXPR_ERROR
@@ -2849,7 +2850,7 @@ class testMeetingItem(PloneMeetingTestCase):
         for tr in self.TRANSITIONS_FOR_CLOSING_MEETING_2:
             if tr in self.transitions(meeting):
                 self.do(meeting, tr)
-            if meeting.queryState() not in meeting.getStatesBefore(late_state):
+            if meeting.queryState() not in get_states_before(meeting, late_state):
                 self.failUnless(lateItem.wfConditions().isLateFor(meeting))
             else:
                 self.failIf(lateItem.wfConditions().isLateFor(meeting))

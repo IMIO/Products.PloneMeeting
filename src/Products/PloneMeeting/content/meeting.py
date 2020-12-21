@@ -44,9 +44,9 @@ from Products.PloneMeeting.utils import displaying_available_items
 from Products.PloneMeeting.utils import fieldIsEmpty
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
 from Products.PloneMeeting.utils import get_next_meeting
+from Products.PloneMeeting.utils import get_states_before
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getFieldVersion
-from Products.PloneMeeting.utils import getStatesBefore
 from Products.PloneMeeting.utils import getWorkflowAdapter
 from Products.PloneMeeting.utils import hasHistory
 from Products.PloneMeeting.utils import ItemDuplicatedFromConfigEvent
@@ -231,6 +231,7 @@ class IMeeting(IMeetingContent):
     meeting_number = Int(
         title=_(u"title_meeting_number"),
         description=_("field_reserved_to_meeting_managers_descr"),
+        default=-1,
         required=False)
 
     form.write_permission(first_item_number=ManagePortal)
@@ -312,7 +313,7 @@ class Meeting(Container):
 
         # before late state, accept items having any preferred meeting
         late_state = self.adapted().get_late_state()
-        if meeting_state in self.get_states_before(late_state):
+        if meeting_state in get_states_before(self, late_state):
             # get items for which the getPreferredMeetingDate is lower or
             # equal to the date of this meeting (self)
             # a no preferred meeting item getPreferredMeetingDate is 1950/01/01
@@ -939,20 +940,6 @@ class Meeting(Container):
     def get_late_state(self):
         '''See doc in interfaces.py.'''
         return 'frozen'
-
-    def get_states_before_cachekey(method, self, review_state):
-        '''cachekey method for self.get_states_before.'''
-        # do only re-compute if cfg changed or params changed
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self)
-        return (cfg.getId(), cfg._p_mtime, review_state)
-
-    @ram.cache(get_states_before_cachekey)
-    def get_states_before(self, review_state):
-        """
-          Returns states before the p_review_state state.
-        """
-        return getStatesBefore(self, review_state)
 
     def _check_insert_order_cache(self, cfg):
         '''See doc in interfaces.py.'''

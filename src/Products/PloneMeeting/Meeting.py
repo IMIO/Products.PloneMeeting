@@ -66,7 +66,7 @@ from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getDateFromDelta
 from Products.PloneMeeting.utils import getFieldVersion
 from Products.PloneMeeting.utils import get_next_meeting
-from Products.PloneMeeting.utils import getStatesBefore
+# from Products.PloneMeeting.utils import getStatesBefore
 from Products.PloneMeeting.utils import getWorkflowAdapter
 from Products.PloneMeeting.utils import hasHistory
 from Products.PloneMeeting.utils import ItemDuplicatedFromConfigEvent

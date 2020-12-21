@@ -41,7 +41,7 @@ class MeetingWorkflowConditions(object):
     security.declarePublic('mayAcceptItems')
 
     def mayAcceptItems(self):
-        if self.context.queryState() in self.cfg.adapted().getMeetingStatesAcceptingItems():
+        if self.context.query_state() in self.cfg.adapted().getMeetingStatesAcceptingItems():
             return True
 
     security.declarePublic('mayPublish')
@@ -83,7 +83,7 @@ class MeetingWorkflowConditions(object):
         if not _checkPermission(ReviewPortalContent, self.context):
             return
 
-        meeting_state = self.context.queryState()
+        meeting_state = self.context.query_state()
         if meeting_state == 'closed':
             if self.tool.isManager(self.context, realManagers=True) or \
                'meetingmanager_correct_closed_meeting' in self.cfg.getWorkflowAdaptations():
@@ -104,7 +104,7 @@ class MeetingWorkflowConditions(object):
     def mayChangeItemsOrder(self):
         res = True
         if not _checkPermission(ModifyPortalContent, self.context) or \
-           self.context.queryState() in Meeting.meetingClosedStates:
+           self.context.query_state() in Meeting.MEETINGCLOSEDSTATES:
             res = False
         return res
 
@@ -121,38 +121,38 @@ class MeetingWorkflowActions(object):
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
 
-    security.declarePrivate('initSequenceNumber')
+    security.declarePrivate('init_sequence_number')
 
-    def initSequenceNumber(self):
+    def init_sequence_number(self):
         '''When a meeting is published (or frozen, depending on workflow
            adaptations), we attribute him a sequence number.'''
-        if self.context.getMeetingNumber() != -1:
+        if self.context.meeting_number != -1:
             return  # Already done.
         if self.cfg.getYearlyInitMeetingNumber():
             # I must reinit the meeting number to 0 if it is the first
             # meeting of this year.
-            prev = self.context.getPreviousMeeting()
+            prev = self.context.get_previous_meeting()
             if prev and \
-               (prev.getDate().year() != self.context.getDate().year()):
-                self.context.setMeetingNumber(1)
+               (prev.date.year != self.context.date.year):
+                self.context.meeting_number = 1
                 self.cfg.setLastMeetingNumber(1)
                 return
         # If we are here, we must simply increment the meeting number.
-        meetingNumber = self.cfg.getLastMeetingNumber() + 1
-        self.context.setMeetingNumber(meetingNumber)
-        self.cfg.setLastMeetingNumber(meetingNumber)
+        meeting_number = self.cfg.getLastMeetingNumber() + 1
+        self.context.meeting_number = meeting_number
+        self.cfg.setLastMeetingNumber(meeting_number)
 
     security.declarePrivate('doPublish')
 
     def doPublish(self, stateChange):
         '''When publishing the meeting, initialize the sequence number.'''
-        self.initSequenceNumber()
+        self.init_sequence_number()
 
     security.declarePrivate('doFreeze')
 
     def doFreeze(self, stateChange):
         '''When freezing the meeting, we initialize sequence number.'''
-        self.initSequenceNumber()
+        self.init_sequence_number()
 
     security.declarePrivate('doDecide')
 
@@ -165,14 +165,15 @@ class MeetingWorkflowActions(object):
     def doClose(self, stateChange):
         ''' '''
         # Set the firstItemNumber
-        unrestrictedMethodsView = getMultiAdapter((self.context, self.context.REQUEST),
-                                                  name='pm_unrestricted_methods')
-        self.context.setFirstItemNumber(unrestrictedMethodsView.findFirstItemNumberForMeeting(self.context))
-        self.context.updateItemReferences()
+        unrestricted_methods = getMultiAdapter((self.context, self.context.REQUEST),
+                                               name='pm_unrestricted_methods')
+        self.context.first_item_number = \
+            unrestricted_methods.findFirstItemNumberForMeeting(self.context)
+        self.context.update_item_references()
         # remove annex previews of every items if relevant
         if self.cfg.getRemoveAnnexesPreviewsOnMeetingClosure():
             # add logging message to fingerpointing log
-            for item in self.context.getItems(ordered=True):
+            for item in self.context.get_items(ordered=True):
                 annexes = get_annexes(item)
                 if annexes:
                     for annex in annexes:
@@ -202,18 +203,13 @@ class MeetingWorkflowActions(object):
     def doBackToDecided(self, stateChange):
         # Oups when closing a meeting we have updated the firsItemNumber
         # we need to reverse our action
-        self.context.setFirstItemNumber(-1)
+        self.context.first_item_number = -1
 
     security.declarePrivate('doBackToPublished')
 
     def doBackToPublished(self, stateChange):
-        wfTool = api.portal.get_tool('portal_workflow')
-        for item in self.context.getItems():
-            if item.queryState() == 'itemfrozen':
-                wfTool.doActionFor(item, 'backToItemPublished')
-                if item.isLate():
-                    wfTool.doActionFor(item, 'backToPresented')
-                    # This way we "hide" again all late items.
+        ''' '''
+        pass
 
     security.declarePrivate('doBackToDecisionsPublished')
 
