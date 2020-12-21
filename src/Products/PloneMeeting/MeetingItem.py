@@ -346,7 +346,7 @@ class MeetingItemWorkflowConditions(object):
         if _checkPermission(ReviewPortalContent, self.context) and \
            self.context.hasMeeting():
             meeting = self.context.getMeeting()
-            if meeting.getDate().isPast():
+            if meeting.date < datetime.now():
                 if not self.context.fieldIsEmpty('decision') or not \
                    self.context.fieldIsEmpty('motivation'):
                     res = True
@@ -419,7 +419,7 @@ class MeetingItemWorkflowConditions(object):
         '''See doc in interfaces.py.'''
         res = False
         meeting = self.context.getMeeting()
-        if not meeting or (meeting and meeting.queryState() != 'closed'):
+        if not meeting or (meeting and meeting.query_state() != 'closed'):
             proposingGroup = self.context.getProposingGroup()
             # when item is validated, we may eventually send back to last validation state
             item_state = self.context.queryState()
@@ -491,7 +491,7 @@ class MeetingItemWorkflowConditions(object):
             return
         # get the linked meeting
         meeting = self.context.getMeeting()
-        meetingState = meeting.queryState()
+        meetingState = meeting.query_state()
         # use RETURN_TO_PROPOSING_GROUP_MAPPINGS to know in wich meetingStates
         # the given p_transitionName can be triggered
         authorizedMeetingStates = RETURN_TO_PROPOSING_GROUP_MAPPINGS[transitionName]
@@ -519,7 +519,7 @@ class MeetingItemWorkflowConditions(object):
         res = False
         if _checkPermission(ReviewPortalContent, self.context):
             meeting = self.context.getMeeting()
-            if meeting.queryState() not in get_states_before(meeting, 'published'):
+            if meeting.query_state() not in get_states_before(meeting, 'published'):
                 res = True
         return res
 
@@ -529,7 +529,7 @@ class MeetingItemWorkflowConditions(object):
         res = False
         if _checkPermission(ReviewPortalContent, self.context):
             meeting = self.context.hasMeeting() and self.context.getMeeting() or None
-            if meeting and meeting.queryState() not in get_states_before(meeting, 'frozen'):
+            if meeting and meeting.query_state() not in get_states_before(meeting, 'frozen'):
                 res = True
         return res
 
@@ -548,9 +548,9 @@ class MeetingItemWorkflowConditions(object):
         if meeting:
             preferred_meeting = self.context.getPreferredMeeting(theObject=True)
             if preferred_meeting:
-                late_state = meeting.adapted().getLateState()
-                if (meeting.queryState() not in get_states_before(meeting, late_state)) and \
-                   (meeting.getDate() >= preferred_meeting.getDate()):
+                late_state = meeting.adapted().get_late_state()
+                if (meeting.query_state() not in get_states_before(meeting, late_state)) and \
+                   (meeting.date >= preferred_meeting.date):
                     return True
         return False
 
@@ -735,9 +735,9 @@ class MeetingItemWorkflowActions(object):
         meeting.insertItem(self.context, forceNormal=self._forceInsertNormal())
         # If the meeting is already in a late state and this item is a "late" item,
         # I must set automatically the item to the first "late state" (itemfrozen by default).
-        late_state = meeting.adapted().getLateState()
+        late_state = meeting.adapted().get_late_state()
         before_late_states = get_states_before(meeting, late_state)
-        if before_late_states and meeting.queryState() not in before_late_states:
+        if before_late_states and meeting.query_state() not in before_late_states:
             self._latePresentedItem()
 
     def _latePresentedItem(self):
@@ -1918,7 +1918,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # but the meeting in this case is still editable
         meeting = self.getMeeting()
         if meeting and 'hide_decisions_when_under_writing' in adaptations and \
-           meeting.queryState() == 'decided' and \
+           meeting.query_state() == 'decided' and \
            not (_checkPermission(ModifyPortalContent, self) or
                 _checkPermission(ModifyPortalContent, meeting)):
             # do not return unicode as getDecision returns 'utf-8' usually
@@ -2275,7 +2275,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # not "unsigned".  This way, a final state 'signed' exists for the item
         meeting = item.getMeeting()
         if meeting and \
-           meeting.queryState() in Meeting.meetingClosedStates and \
+           meeting.query_state() in Meeting.meetingClosedStates and \
            item.getItemIsSigned():
             return False
         return True
@@ -2549,7 +2549,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 item2Meeting = item2.getMeeting()
                 if item1Meeting and item2Meeting:
                     # both items have a meeting, compare meeting dates
-                    return cmp(item2Meeting.getDate(), item1Meeting.getDate())
+                    return cmp(item2Meeting.date, item1Meeting.date)
                 elif item1Meeting and not item2Meeting:
                     # only item1 has a Meeting, it will be displayed before
                     return -1
@@ -2880,9 +2880,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # in case meeting is frozen, make sure current item isLateFor(meeting)
             # also in case no meetingStates, a closed meeting could be returned, check
             # that current user may edit returned meeting
-            late_state = meeting.adapted().getLateState()
+            late_state = meeting.adapted().get_late_state()
             if meeting.wfConditions().mayAcceptItems() and (
-                    meeting.queryState() in get_states_before(meeting, late_state) or
+                    meeting.query_state() in get_states_before(meeting, late_state) or
                     self.wfConditions().isLateFor(meeting)):
                 return meeting
         return None
@@ -3503,9 +3503,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         meeting = item.getMeeting()
         late_state = None
         if meeting:
-            late_state = meeting.adapted().getLateState()
+            late_state = meeting.adapted().get_late_state()
         return bool(
-            meeting and meeting.queryState() not in get_states_before(meeting, late_state))
+            meeting and meeting.query_state() not in get_states_before(meeting, late_state))
 
     security.declarePublic('updateItemReference')
 
@@ -3910,7 +3910,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                'attendee_again_after': ()}
         meeting = self.getMeeting()
         if meeting:
-            items = meeting.getItems(ordered=True, unrestricted=True)
+            items = meeting.get_items(ordered=True, unrestricted=True)
             item_index = items.index(self)
             previous = None
             # only fill a value if attendee present for current item
@@ -6111,8 +6111,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if self.hasMeeting():
             meeting = self.getMeeting()
             # use catalog query so returned items are really accessible by current user
-            brains = meeting.getItems(ordered=True,
-                                      theObjects=False)
+            brains = meeting.get_items(ordered=True, the_objects=False)
             itemUids = [brain.UID for brain in brains]
             itemUid = self.UID()
             itemUidIndex = itemUids.index(itemUid)

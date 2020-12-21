@@ -31,6 +31,7 @@ from collective.documentviewer.settings import GlobalSettings
 from collective.iconifiedcategory.utils import calculate_category_id
 from collective.iconifiedcategory.utils import get_config_root
 from copy import deepcopy
+from datetime import datetime
 from imio.helpers.cache import cleanRamCacheFor
 from imio.helpers.testing import testing_logger
 from plone import api
@@ -309,6 +310,8 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         idInAttrs = 'id' in attrs
         if not idInAttrs:
             attrs.update({'id': self._generateId(folder)})
+        if objectType == 'Meeting' and 'date' not in attrs:
+            attrs.update({'date': datetime.now()})
         if objectType == 'MeetingItem':
             if 'proposingGroup' not in attrs.keys():
                 cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.get_orgs_for_user')

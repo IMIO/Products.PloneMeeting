@@ -493,6 +493,9 @@ class IMeetingDocumentation:
         '''Returns the field names of the MeetingConfig to take into account for
            Meeting items insert order caching.  If one of these fields value changed
            the cache would be invalidated.'''
+    def get_late_state(self):
+        '''Returns the meeting first review state from which presented items
+           will be considered 'late'.'''
 
 
 class IMeetingWorkflowConditions(Interface):
@@ -593,8 +596,6 @@ class IMeetingConfigDocumentation:
     def extraAdviceTypes(self):
         '''Method for defining extra advice types, needs to return a list of
            ids that will be used for id and translated for title.'''
-    def getLateState(self):
-        '''Returns the meeting first review state from which presented items will be considered 'late'.'''
     def getMeetingStatesAcceptingItems(self):
         '''In those states, the meeting accept items, normal or late.
            Must return a tuple of meeting review_states.'''

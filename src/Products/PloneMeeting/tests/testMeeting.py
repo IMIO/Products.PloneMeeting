@@ -1719,7 +1719,7 @@ class testMeeting(PloneMeetingTestCase):
         lateItem.setPreferredMeeting(meeting.UID())
 
         # presenting an item in a before late state (before frozen) will insert it as normal
-        late_state = meeting.adapted().getLateState()
+        late_state = meeting.adapted().get_late_state()
         before_late_states = get_states_before(meeting, late_state)
         self.assertTrue(meeting.queryState() in before_late_states)
         self.presentItem(normalItem)
@@ -1972,7 +1972,7 @@ class testMeeting(PloneMeetingTestCase):
 
         # if a meeting is not in a state accepting items, it does not accept items anymore
         self.closeMeeting(m1)
-        self.assertTrue(m1.queryState() not in cfg.adapted().getMeetingStatesAcceptingItems())
+        self.assertTrue(m1.query_state() not in cfg.adapted().getMeetingStatesAcceptingItems())
         m1_query = queryparser.parseFormquery(m1, m1.adapted()._available_items_query())
         self.assertFalse(self.catalog(m1_query))
 
@@ -2298,7 +2298,7 @@ class testMeeting(PloneMeetingTestCase):
         item.REQUEST['PUBLISHED'] = item
 
         # for now, the next meeting is used
-        late_state = meeting1.adapted().getLateState()
+        late_state = meeting1.adapted().get_late_state()
         self.assertTrue(meeting1.queryState() in get_states_before(meeting1, late_state))
         self.assertTrue(meeting2.queryState() in get_states_before(meeting2, late_state))
         self.assertTrue(meeting1.getDate() < meeting2.getDate())
@@ -3304,7 +3304,7 @@ class testMeeting(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         item_uid = item.UID()
         self.validateItem(item)
-        meeting = self.create('Meeting', date=DateTime('2020/05/07'))
+        meeting = self.create('Meeting')
         # change current URL so displaying_available_items is True
         self.request['URL'] = meeting.absolute_url() + '/@@meeting_available_items_view'
         view = meeting.restrictedTraverse('@@faceted_query')
