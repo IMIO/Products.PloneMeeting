@@ -29,6 +29,9 @@ Changelog
   (is taken into account by Firefox as well now), use the `using-chrome`
   CSS class from `plonetheme.imioapps` to style only for Chrome.
   [gbastien]
+- `BaseDGHV.printXhtml` `clean` parameter is now `True` by default so it will
+  call `separate_images` to avoid several `<img>` in same `<p>`.
+  [gbastien]
 
 4.2b7 (2020-12-08)
 ------------------
