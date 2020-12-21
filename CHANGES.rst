@@ -30,6 +30,9 @@ Changelog
     (is taken into account by Firefox as well now), use the `using-chrome`
     CSS class from `plonetheme.imioapps` to style only for Chrome.
     [gbastien]
+  - Include management of `using-chrome/using-firefox` CSS class added to body
+    from plonetheme.imioapps.
+    [gbastien]
 
 4.1.28.15 (2020-11-19)
 ----------------------

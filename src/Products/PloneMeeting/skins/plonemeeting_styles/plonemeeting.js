@@ -753,3 +753,16 @@ $('table.faceted-table-results').tableDnD({
 
 });
 }
+
+/* backport from plonetheme.imioapps for Products.PloneMeeting 4.1.x */
+var isChrome = /chrom/.test(navigator.userAgent.toLowerCase());
+var isFirefox = /firefox/.test(navigator.userAgent.toLowerCase());
+
+$(document).ready(function () {
+    if (isChrome) {
+        document.body.classList.add('using-chrome');
+    }
+    if (isFirefox) {
+        document.body.classList.add('using-firefox');
+    }
+});
