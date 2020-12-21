@@ -3149,20 +3149,21 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def is_assembly_field_used(self, field_name):
         """Helper method that return True if an assembly field is used
            or if it is filled (no more used, swtiched to contacts but filled on old items)."""
-        meeting = self.getMeeting()
-        attr_names_mapping = {"itemAssembly": "assembly",
-                              "itemAssemblyExcused": "assemblyExcused",
-                              "itemAssemblyAbsents": "assemblyAbsents",
-                              "itemAssemblyGuests": "assemblyGuests",
-                              "itemSignatures": "signatures"}
         res = False
-        if meeting.attributeIsUsed(attr_names_mapping[field_name]):
-            res = True
-        else:
-            # maybe it was used before?
-            accessor = self.getField(field_name).getAccessor(self)
-            if accessor(real=True) or accessor(real=False):
+        if self.hasMeeting():
+            meeting = self.getMeeting()
+            attr_names_mapping = {"itemAssembly": "assembly",
+                                  "itemAssemblyExcused": "assemblyExcused",
+                                  "itemAssemblyAbsents": "assemblyAbsents",
+                                  "itemAssemblyGuests": "assemblyGuests",
+                                  "itemSignatures": "signatures"}
+            if meeting.attributeIsUsed(attr_names_mapping[field_name]):
                 res = True
+            else:
+                # maybe it was used before?
+                accessor = self.getField(field_name).getAccessor(self)
+                if accessor(real=True) or accessor(real=False):
+                    res = True
         return res
 
     security.declarePublic('redefinedItemAssemblies')

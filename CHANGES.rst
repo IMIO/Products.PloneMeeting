@@ -3,7 +3,7 @@ Changelog
 
 
 4.1.28.16 (unreleased)
-----------------------
+------------------
 
 - Requires `imio.helpers[test]` for test so we get `collective.MockMailHost`.
   [gbastien]
@@ -19,6 +19,9 @@ Changelog
     [gbastien]
   - Added parameters `include_hp=False` and `abbreviate_firstname=False` to
     `ItemDocumentGenerationHelperView.print_in_and_out_attendees`.
+    [gbastien]
+  - Fixed `MeetingItem.is_assembly_field_used`, only evaluate when item is linked
+    to a meeting, that broke the item edit form.
     [gbastien]
 
 4.1.28.15 (2020-11-19)
