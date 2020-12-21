@@ -161,7 +161,7 @@ def onMeetingTransition(meeting, event):
     # update items references if meeting is going from before late state
     # to late state or the other way round
     late_state = meeting.adapted().get_late_state()
-    beforeLateStates = get_states_before(late_state)
+    beforeLateStates = get_states_before(meeting, late_state)
     if (event.old_state.id in beforeLateStates and event.new_state.id not in beforeLateStates) or \
        (event.old_state.id not in beforeLateStates and event.new_state.id in beforeLateStates):
         meeting.update_item_references()
