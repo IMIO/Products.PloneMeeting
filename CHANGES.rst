@@ -5,8 +5,11 @@ Changelog
 4.1.28.17 (unreleased)
 ----------------------
 
-- Nothing changed yet.
+- Backport from 4.2.x:
 
+  - Avoid overflowing on content under when a user increase height
+    of a CKeditor widget.
+    [gbastien]
 
 4.1.28.16 (2020-12-21)
 ----------------------

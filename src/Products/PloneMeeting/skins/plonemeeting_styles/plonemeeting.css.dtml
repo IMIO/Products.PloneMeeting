@@ -1434,7 +1434,7 @@ div.dashboard_annexes {
 
 /* avoid screen size change when editing element as CKeditor takes some seconds to load */
 div.field.ArchetypesRichWidget {
-   height: 650px;
+   min-height: 650px;
    background-image: url(&dtml-portal_url;/spinner_small.gif);
    background-repeat: no-repeat;
    background-position: center;
