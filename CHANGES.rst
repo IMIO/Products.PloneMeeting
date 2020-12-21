@@ -19,6 +19,12 @@ Changelog
   scrolling, this is the case for every dashboards including
   `available/presented` items on the `meeting_view`.
   [gbastien]
+- Enable the `Change ftw labels` batch action on dashboards displaying items.
+  To do this, we needed to mark dashboards displaying items and dashboard
+  displaying meetings with different batch actions marker interfaces.
+  [gbastien]
+- Moved `utils.fplog` to `imio.helpers.security`, adapted code accordingly.
+  [gbastien]
 
 4.2b7 (2020-12-08)
 ------------------

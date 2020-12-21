@@ -12,7 +12,6 @@ from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_plone_groups
 from collective.datagridcolumns.MultiSelectColumn import MultiSelectColumn
 from collective.datagridcolumns.SelectColumn import SelectColumn
-from collective.eeafaceted.batchactions.interfaces import IBatchActionsMarker
 from collective.eeafaceted.collectionwidget.interfaces import IDashboardCollection
 from collective.eeafaceted.collectionwidget.utils import _get_criterion
 from collective.eeafaceted.collectionwidget.utils import _updateDefaultCollectionFor
@@ -72,8 +71,8 @@ from Products.PloneMeeting.config import ITEM_INSERT_METHODS
 from Products.PloneMeeting.config import ITEMTEMPLATESMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import MEETING_CONFIG
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
-from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
+from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
 from Products.PloneMeeting.config import PROJECTNAME
 from Products.PloneMeeting.config import READER_USECASES
 from Products.PloneMeeting.config import TOOL_FOLDER_ANNEX_TYPES
@@ -90,7 +89,9 @@ from Products.PloneMeeting.interfaces import IMeeting
 from Products.PloneMeeting.interfaces import IMeetingAdviceWorkflowActions
 from Products.PloneMeeting.interfaces import IMeetingAdviceWorkflowConditions
 from Products.PloneMeeting.interfaces import IMeetingConfig
+from Products.PloneMeeting.interfaces import IMeetingDashboardBatchActionsMarker
 from Products.PloneMeeting.interfaces import IMeetingItem
+from Products.PloneMeeting.interfaces import IMeetingItemDashboardBatchActionsMarker
 from Products.PloneMeeting.interfaces import IMeetingItemWorkflowActions
 from Products.PloneMeeting.interfaces import IMeetingItemWorkflowConditions
 from Products.PloneMeeting.interfaces import IMeetingWorkflowActions
@@ -6628,6 +6629,20 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             raise Unauthorized
         return self.REQUEST.RESPONSE.redirect(self.absolute_url() + '/@@check-pod-templates')
 
+    def _get_all_meeting_folders(self):
+        """Return every meeting folders for this MeetingConfig."""
+        folders = []
+        portal = api.portal.get()
+        for userFolder in portal.Members.objectValues():
+            mymeetings = getattr(userFolder, 'mymeetings', None)
+            if not mymeetings:
+                continue
+            meetingFolder = getattr(mymeetings, self.getId(), None)
+            if not meetingFolder:
+                continue
+            folders.append(meetingFolder)
+        return folders
+
     def _synchSearches(self, folder=None):
         """Synchronize the searches for a givan meetingFolder p_folder, if it is not given,
            every user folder for this MeetingConfig will be synchronized.
@@ -6640,21 +6655,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
            - we will copy the facetednav annotation from the MeetingConfig.searches and
              MeetingConfig.searches_* folders to the corresponding folders in p_folder;
            - we will update the default for the collection widget."""
-        folders = []
         # synchronize only one folder
         if folder:
             folders = [folder, ]
         else:
-            # synchronize every user folders
-            portal = api.portal.get()
-            for userFolder in portal.Members.objectValues():
-                mymeetings = getattr(userFolder, 'mymeetings', None)
-                if not mymeetings:
-                    continue
-                meetingFolder = getattr(mymeetings, self.getId(), None)
-                if not meetingFolder:
-                    continue
-                folders.append(meetingFolder)
+            folders = self._get_all_meeting_folders()
 
         for folder in folders:
             logger.info("Synchronizing searches with folder at '{0}'".format('/'.join(folder.getPhysicalPath())))
@@ -6678,7 +6683,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 enableFacetedDashboardFor(subFolderObj,
                                           xmlpath=os.path.dirname(__file__) +
                                           '/faceted_conf/default_dashboard_widgets.xml')
-                alsoProvides(subFolderObj, IBatchActionsMarker)
+                if subFolderObj.getId() == "searches_items":
+                    # item related searches
+                    alsoProvides(subFolderObj, IMeetingItemDashboardBatchActionsMarker)
+                else:
+                    # meeting related searches
+                    alsoProvides(subFolderObj, IMeetingDashboardBatchActionsMarker)
                 subFolderObj.reindexObject()
 
     def getMeetingStatesAcceptingItems(self):

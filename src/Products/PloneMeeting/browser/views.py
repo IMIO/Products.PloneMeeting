@@ -2281,12 +2281,13 @@ class UpdateLocalRolesBatchActionForm(BaseBatchActionForm):
 
     def available(self):
         """Hide it on meetings as it uses IMeetingBatchActionsMarker."""
-        return _checkPermission(ManagePortal, self.context) and not IMeeting.providedBy(self.context)
+        return _checkPermission(ManagePortal, self.context) and \
+            not IMeeting.providedBy(self.context)
 
     def _apply(self, **data):
         """ """
         uids = listify_uids(data['uids'])
-        self.tool.updateAllLocalRoles(**{'UID': uids})
+        self.tool.updateAllLocalRoles(**{'UID': uids, 'log': False})
         msg = translate('update_selected_elements',
                         domain="PloneMeeting",
                         mapping={'number_of_elements': len(uids)},

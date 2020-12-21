@@ -36,6 +36,7 @@ from imio.helpers.cache import cleanRamCache
 from imio.helpers.cache import cleanVocabularyCacheFor
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import invalidate_cachekey_volatile_for
+from imio.helpers.security import fplog
 from imio.prettylink.interfaces import IPrettyLink
 from OFS import CopySupport
 from persistent.mapping import PersistentMapping
@@ -77,7 +78,6 @@ from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.profiles import PloneMeetingConfiguration
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import add_wf_history_action
-from Products.PloneMeeting.utils import fplog
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getCustomSchemaFields
@@ -1405,7 +1405,11 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declareProtected(ModifyPortalContent, 'updateAllLocalRoles')
 
-    def updateAllLocalRoles(self, meta_type=('Meeting', 'MeetingItem'), portal_type=(), **kw):
+    def updateAllLocalRoles(self,
+                            meta_type=('Meeting', 'MeetingItem'),
+                            portal_type=(),
+                            log=True,
+                            **kw):
         '''Update local_roles on Meeting and MeetingItem,
            this is used to reflect configuration changes regarding access.'''
         startTime = time.time()
@@ -1419,8 +1423,9 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         brains = catalog(**query)
         numberOfBrains = len(brains)
         i = 1
-        extras = 'number_of_elements={0}'.format(numberOfBrains)
-        fplog('update_all_localroles', extras=extras)
+        if log:
+            extras = 'number_of_elements={0}'.format(numberOfBrains)
+            fplog('update_all_localroles', extras=extras)
         for brain in brains:
             itemOrMeeting = brain.getObject()
             logger.info('%d/%d Updating local roles of %s at %s' %

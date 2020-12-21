@@ -20,6 +20,7 @@ from datetime import datetime
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.helpers.content import get_vocab
 from imio.helpers.content import uuidsToObjects
+from imio.helpers.security import fplog
 from imio.history.utils import get_all_history_attr
 from imio.prettylink.interfaces import IPrettyLink
 from natsort import realsorted
@@ -100,7 +101,6 @@ from Products.PloneMeeting.utils import display_as_html
 from Products.PloneMeeting.utils import down_or_up_wf
 from Products.PloneMeeting.utils import fieldIsEmpty
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
-from Products.PloneMeeting.utils import fplog
 from Products.PloneMeeting.utils import get_every_back_references
 from Products.PloneMeeting.utils import getCurrentMeetingObject
 from Products.PloneMeeting.utils import getCustomAdapter

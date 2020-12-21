@@ -1,16 +1,21 @@
 # -*- coding: utf-8 -*-
 
 from collective.contact.plonegroup.utils import get_organizations
+from collective.eeafaceted.batchactions.interfaces import IBatchActionsMarker
 from copy import deepcopy
 from imio.helpers.content import richtextval
 from persistent.mapping import PersistentMapping
 from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_NEW
 from Products.PloneMeeting.browser.itemattendee import position_type_default
 from Products.PloneMeeting.content.advice import IMeetingAdvice
+from Products.PloneMeeting.interfaces import IMeetingDashboardBatchActionsMarker
+from Products.PloneMeeting.interfaces import IMeetingItemDashboardBatchActionsMarker
 from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator
 from Products.PloneMeeting.profiles import MeetingConfigDescriptor
 from Products.ZCatalog.ProgressHandler import ZLogHandler
+from zope.interface import alsoProvides
+from zope.interface import noLongerProvides
 
 
 class Migrate_To_4200(Migrator):
@@ -193,8 +198,34 @@ class Migrate_To_4200(Migrator):
         pghandler.finish()
         logger.info('Done.')
 
+    def _updateSearchedFolderBatchActionsMarkerInterface(self):
+        """Update every MeetingConfig batch actions marker applied
+           to sub folders, now there is a different marker for
+           dashboards displaying items or meetings."""
+        logger.info("Updating every meeting folders batch actions marker interfaces...")
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            folders = cfg._get_all_meeting_folders()
+            for folder in folders:
+                for sub_folder in folder.objectValues('ATFolder'):
+                    if not sub_folder.getId().startswith('searches_') or \
+                       not IBatchActionsMarker.providedBy(sub_folder):
+                        continue
+                    noLongerProvides(sub_folder, IBatchActionsMarker)
+                    if sub_folder.getId() == "searches_items":
+                        # item related searches
+                        alsoProvides(sub_folder, IMeetingItemDashboardBatchActionsMarker)
+                    else:
+                        # meeting related searches
+                        alsoProvides(sub_folder, IMeetingDashboardBatchActionsMarker)
+                    sub_folder.reindexObject(idxs=['object_provides'])
+        logger.info('Done.')
+
     def run(self, extra_omitted=[]):
         logger.info('Migrating to PloneMeeting 4200...')
+
+        # apply correct batch actions marker on searches_* folders
+        self._updateSearchedFolderBatchActionsMarkerInterface()
+        return
 
         # remove useless catalog indexes and columns, were renamed to snake case
         self.removeUnusedIndexes(indexes=['getItemIsSigned', 'sendToAuthority', 'toDiscuss'])
@@ -203,9 +234,9 @@ class Migrate_To_4200(Migrator):
         # manage link between item and meeting manually
         self._removeMeetingItemsReferenceField()
         self._configureVotes()
+        # update stored Meeting.itemSignatories
         self._updateItemSignatories()
 
-        # update stored Meeting.itemSignatories
         # update RichTextValue stored on DX types (advices)
         self._fixRichTextValueMimeType()
 
@@ -246,10 +277,19 @@ class Migrate_To_4200(Migrator):
 def migrate(context):
     '''This migration function will:
 
-       1) Configure field MeetingConfig.itemWFValidationLevels depending on old wfAdaptations;
-       2) Migrate MeetingConfig.keepAccessToItemWhenAdviceIsGiven to
+       1) Update applied batch actions marker interface on every member folders;
+       2) Remove unused indexes and metadata;
+       3) Remove Meeting.items reference field;
+       4) Configure votes;
+       5) Update Meeting.itemSignatories to manage stored position_type;
+       6) Fix DX RichText mimetype;
+       7) Configure field MeetingConfig.itemWFValidationLevels depending on old wfAdaptations;
+       8) Migrate MeetingConfig.keepAccessToItemWhenAdviceIsGiven to
           MeetingConfig.keepAccessToItemWhenAdvice;
-       3) Init otherMeetingConfigsClonableToFieldXXX new fields.
+       9) Init otherMeetingConfigsClonableToFieldXXX new fields;
+       10) Update faceted filters;
+       11) Update holidays;
+       12) Refresh items local roles and recatalog.
     '''
     migrator = Migrate_To_4200(context)
     migrator.run()
