@@ -26,6 +26,10 @@ Changelog
   - `BaseDGHV.printXhtml` `clean` parameter is now `True` by default so it will
     call `separate_images` to avoid several `<img>` in same `<p>`.
     [gbastien]
+  - As CSS hacks to apply a styling rule only for `Chrome` does not work anymore
+    (is taken into account by Firefox as well now), use the `using-chrome`
+    CSS class from `plonetheme.imioapps` to style only for Chrome.
+    [gbastien]
 
 4.1.28.15 (2020-11-19)
 ----------------------
