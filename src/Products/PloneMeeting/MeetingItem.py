@@ -2275,7 +2275,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # not "unsigned".  This way, a final state 'signed' exists for the item
         meeting = item.getMeeting()
         if meeting and \
-           meeting.query_state() in Meeting.meetingClosedStates and \
+           meeting.query_state() in Meeting.MEETINGCLOSEDSTATES and \
            item.getItemIsSigned():
             return False
         return True

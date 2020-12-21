@@ -671,7 +671,7 @@ class testChangeItemOrderView(PloneMeetingTestCase):
             if tr in self.transitions(meeting):
                 self.do(meeting, tr)
                 # order still changeable
-                if not meeting.queryState() in meeting.meetingClosedStates:
+                if not meeting.queryState() in meeting.MEETINGCLOSEDSTATES:
                     self.assertTrue(meeting.wfConditions().mayChangeItemsOrder())
                 else:
                     # if the meeting is in a closed state, order is no more changeable
