@@ -39,9 +39,9 @@ table.listing tr[class][class] td[class^='meeting_item_listType_'] {
     height: 100%;
 }
 
-/* only for Chrome, the hack :not(*:root) */
-table.listing:not(*:root) tr[class][class] td[class^='meeting_item_listType_'] {
-    height: inherit;
+/* only for Chrome */
+body.using-chrome table.listing tr[class][class] td[class^='meeting_item_listType_'] {
+   height: inherit;
 }
 
 /* grey the items with a subnumber itemnumber input */

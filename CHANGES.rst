@@ -25,6 +25,10 @@ Changelog
   [gbastien]
 - Moved `utils.fplog` to `imio.helpers.security`, adapted code accordingly.
   [gbastien]
+- As CSS hacks to apply a styling rule only for `Chrome` does not work anymore
+  (is taken into account by Firefox as well now), use the `using-chrome`
+  CSS class from `plonetheme.imioapps` to style only for Chrome.
+  [gbastien]
 
 4.2b7 (2020-12-08)
 ------------------
