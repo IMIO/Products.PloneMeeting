@@ -1104,7 +1104,7 @@ class Meeting(Container):
         '''Removes p_item from me.'''
         # Remember the item number now; once the item will not be in the meeting
         # anymore, it will loose its number.
-        item_number = item.get_item_number()
+        item_number = item.getItemNumber()
         items = self.get_items()
         try:
             item._update_meeting_link(meeting_uid=None)

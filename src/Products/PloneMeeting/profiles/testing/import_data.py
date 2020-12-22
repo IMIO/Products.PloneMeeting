@@ -121,7 +121,7 @@ decisionsTemplate = PodTemplateDescriptor('decisionsTemplate',
                                           'Meeting decisions')
 decisionsTemplate.odt_file = 'Decisions.odt'
 decisionsTemplate.pod_portal_types = ['Meeting']
-decisionsTemplate.tal_condition = u'python:here.adapted().isDecided()'
+decisionsTemplate.tal_condition = u'python:here.adapted().is_decided()'
 decisionsTemplate.roles_bypassing_talcondition = set(['Manager'])
 decisionsTemplate.style_template = ['styles1']
 

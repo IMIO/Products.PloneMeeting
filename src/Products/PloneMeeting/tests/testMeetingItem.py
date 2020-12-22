@@ -3260,8 +3260,8 @@ class testMeetingItem(PloneMeetingTestCase):
         # in the meetingConfig and relativeTo='meeting' behaves normally
         meeting_before = self._createMeetingWithItems(meetingDate=DateTime('2012/05/05 12:00'))
         # we have 7 items in meeting_before and firstItemNumber is not set
-        self.assertEqual(meeting_before.numberOfItems(), '7')
-        self.assertEqual(meeting_before.getFirstItemNumber(), -1)
+        self.assertEqual(meeting_before.number_of_items(), '7')
+        self.assertEqual(meeting_before.first_item_number, -1)
         self.assertEqual(
             meeting_before.getItems(ordered=True)[-1].getItemNumber(relativeTo='meetingConfig'),
             700)
