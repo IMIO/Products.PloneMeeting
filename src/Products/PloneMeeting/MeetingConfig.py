@@ -6833,5 +6833,24 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''See doc in interfaces.py.'''
         return True, []
 
+    def render_editform_errors(self, errors):
+        """Render errors in the edit form in case it comes from another fieldset."""
+        tool = api.portal.get_tool('portal_plonemeeting')
+        if not tool.isManager(self, realManagers=True):
+            return
+        error_pattern = u"<dl class=\"portalMessage error\"><dt>{0}</dt><dd>{1}</dd></dl>"
+        res = []
+        for error_field_id, error_msg in errors.items():
+            res.append(error_pattern.format(
+                translate(u"Error",
+                          domain="plone",
+                          context=self.REQUEST),
+                u"<strong>{0}</strong>: {1}".format(
+                    translate("PloneMeeting_label_" + error_field_id,
+                              domain="PloneMeeting",
+                              context=self.REQUEST),
+                    error_msg)))
+        return u'\n'.join(res)
+
 
 registerType(MeetingConfig, PROJECTNAME)
