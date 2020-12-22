@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from collective.contact.plonegroup.utils import select_organization
-from DateTime import DateTime
 from imio.helpers.cache import cleanRamCacheFor
 from plone import api
 from plone.app.testing import logout
@@ -108,7 +107,7 @@ class PloneMeetingTestingHelpers:
             pattern = 'WF_MEETING_TRANSITION_NAME_MAPPINGS_%d'
         return getattr(self, (pattern % meetingConfigNumber)).get(transition_name, transition_name)
 
-    def _createMeetingWithItems(self, meetingDate=DateTime()):
+    def _createMeetingWithItems(self, meetingDate=None):
         '''Create a meeting with a bunch of items.'''
         def _set_proposing_group(item, org):
             """Take into account fact that configuration uses groupsInCharge."""

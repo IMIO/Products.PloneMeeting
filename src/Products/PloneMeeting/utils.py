@@ -203,8 +203,7 @@ def getCurrentMeetingObject(context):
         return obj.context
     elif obj and \
             hasattr(obj, 'context') and \
-            hasattr(obj.context, 'meta_type') and \
-            obj.context.meta_type == 'Meeting':
+            obj.context.__class__.__name__ == 'Meeting':
         return obj.context
 
     if not (className in ('Meeting', 'MeetingItem')):
@@ -246,7 +245,7 @@ def getCurrentMeetingObject(context):
                 obj = None
 
     toReturn = None
-    if obj and hasattr(obj, 'meta_type') and obj.meta_type == 'Meeting':
+    if obj and obj.__class__.__name__ == 'Meeting':
         toReturn = obj
     return toReturn
 

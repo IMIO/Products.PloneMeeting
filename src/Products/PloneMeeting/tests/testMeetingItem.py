@@ -6878,7 +6878,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(item3.getItemReference(), '20170305/12/4/14')
         self.assertEqual(item4.getItemReference(), '20170305/12/4/15')
         # confirm test
-        meeting.updateItemReferences()
+        meeting.update_item_references()
         self.assertEqual(item1.getItemReference(), '12')
         self.assertEqual(item2.getItemReference(), '13')
         self.assertEqual(item3.getItemReference(), '14')
@@ -6886,7 +6886,7 @@ class testMeetingItem(PloneMeetingTestCase):
 
     def test_pm_ItemReferenceUpdateWhenSeveralItemsPresentedOrRemovedAtOnce(self):
         """When presenting items using the '@@present-several-items' view,
-           the item reference is correct, moreover, call to Meeting.updateItemReferences
+           the item reference is correct, moreover, call to Meeting.update_item_references
            is made only once.  This is the same when removing several items
            using the '@@remove-several-items' view."""
         # remove recurring items in self.meetingConfig

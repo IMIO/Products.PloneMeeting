@@ -85,7 +85,7 @@ from Products.PloneMeeting.events import item_added_or_initialized
 from Products.PloneMeeting.interfaces import IMeetingItem
 from Products.PloneMeeting.interfaces import IMeetingItemWorkflowActions
 from Products.PloneMeeting.interfaces import IMeetingItemWorkflowConditions
-from Products.PloneMeeting.Meeting import Meeting
+from Products.PloneMeeting.content.meeting import Meeting
 from Products.PloneMeeting.model.adaptations import RETURN_TO_PROPOSING_GROUP_MAPPINGS
 from Products.PloneMeeting.utils import _addManagedPermissions
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
@@ -714,9 +714,7 @@ class MeetingItemWorkflowActions(object):
     security.declarePrivate('doPresent')
 
     def doPresent(self, stateChange):
-        '''Presents an item into a meeting. If p_forceNormal is True, and the
-           item should be inserted as a late item, it is nevertheless inserted
-           as a normal item.'''
+        '''Presents an item into a meeting.'''
         meeting = getCurrentMeetingObject(self.context)
         # if we were not on a meeting view, we will present
         # the item in the next available meeting
@@ -732,7 +730,7 @@ class MeetingItemWorkflowActions(object):
     def _insertItem(self, meeting):
         """ """
         self.context.REQUEST.set('currentlyInsertedItem', self.context)
-        meeting.insertItem(self.context, forceNormal=self._forceInsertNormal())
+        meeting.insert_item(self.context, force_normal=self._forceInsertNormal())
         # If the meeting is already in a late state and this item is a "late" item,
         # I must set automatically the item to the first "late state" (itemfrozen by default).
         late_state = meeting.adapted().get_late_state()
@@ -2623,33 +2621,33 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def setCategory(self, value, **kwargs):
         '''Overrides the field 'category' mutator to be able to
-           updateItemReferences if value changed.'''
+           update_item_references if value changed.'''
         current_category = self.getField('category').get(self, **kwargs)
         if not value == current_category:
-            # add a value in the REQUEST to specify that updateItemReferences is needed
-            self.REQUEST.set('need_Meeting_updateItemReferences', True)
+            # add a value in the REQUEST to specify that update_item_references is needed
+            self.REQUEST.set('need_Meeting_update_item_references', True)
         self.getField('category').set(self, value, **kwargs)
 
     security.declareProtected(ModifyPortalContent, 'setClassifier')
 
     def setClassifier(self, value, **kwargs):
         '''Overrides the field 'classifier' mutator to be able to
-           updateItemReferences if value changed.'''
+           update_item_references if value changed.'''
         current_classifier = self.getField('classifier').get(self, **kwargs)
         if not value == current_classifier:
-            # add a value in the REQUEST to specify that updateItemReferences is needed
-            self.REQUEST.set('need_Meeting_updateItemReferences', True)
+            # add a value in the REQUEST to specify that update_item_references is needed
+            self.REQUEST.set('need_Meeting_update_item_references', True)
         self.getField('classifier').set(self, value, **kwargs)
 
     security.declareProtected(ModifyPortalContent, 'setProposingGroup')
 
     def setProposingGroup(self, value, **kwargs):
         '''Overrides the field 'proposingGroup' mutator to be able to
-           updateItemReferences if value changed.'''
+           update_item_references if value changed.'''
         current_proposingGroup = self.getField('proposingGroup').get(self, **kwargs)
         if not value == current_proposingGroup:
-            # add a value in the REQUEST to specify that updateItemReferences is needed
-            self.REQUEST.set('need_Meeting_updateItemReferences', True)
+            # add a value in the REQUEST to specify that update_item_references is needed
+            self.REQUEST.set('need_Meeting_update_item_references', True)
         self.getField('proposingGroup').set(self, value, **kwargs)
 
     security.declareProtected(ModifyPortalContent, 'setProposingGroupWithGroupInCharge')
@@ -2679,11 +2677,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def setOtherMeetingConfigsClonableTo(self, value, **kwargs):
         '''Overrides the field 'otherMeetingConfigsClonableTo' mutator to be able to
-           updateItemReferences if value changed.'''
+           update_item_references if value changed.'''
         current_otherMeetingConfigsClonableTo = self.getField('otherMeetingConfigsClonableTo').get(self, **kwargs)
         if not self._adaptLinesValueToBeCompared(value) == current_otherMeetingConfigsClonableTo:
-            # add a value in the REQUEST to specify that updateItemReferences is needed
-            self.REQUEST.set('need_Meeting_updateItemReferences', True)
+            # add a value in the REQUEST to specify that update_item_references is needed
+            self.REQUEST.set('need_Meeting_update_item_references', True)
         self.getField('otherMeetingConfigsClonableTo').set(self, value, **kwargs)
 
     security.declareProtected(View, 'getManuallyLinkedItems')
@@ -3497,7 +3495,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             res = self.context
         return res
 
-    def _mayUpdateItemReference(self):
+    def _may_update_item_reference(self):
         '''See docstring in interfaces.py.'''
         item = self.getSelf()
         meeting = item.getMeeting()
@@ -3507,16 +3505,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         return bool(
             meeting and meeting.query_state() not in get_states_before(meeting, late_state))
 
-    security.declarePublic('updateItemReference')
+    security.declarePublic('update_item_reference')
 
-    def updateItemReference(self):
+    def update_item_reference(self):
         '''Update the item reference, recompute it,
            stores it and reindex 'getItemReference'.
-           This rely on _mayUpdateItemReference.'''
+           This rely on _may_update_item_reference.'''
         res = ''
         item = self.getSelf()
         meeting = item.getMeeting()
-        if self.adapted()._mayUpdateItemReference():
+        if self.adapted()._may_update_item_reference():
             extra_expr_ctx = _base_extra_expr_ctx(item)
             extra_expr_ctx.update({'item': item, 'meeting': meeting})
             cfg = extra_expr_ctx['cfg']

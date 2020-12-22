@@ -340,7 +340,7 @@ class IMeetingItemDocumentation:
         """This controls if advices need to be shown on the item view."""
     def showObservations(self):
         """This controls if field MeetingItem.observations must be shown."""
-    def _mayUpdateItemReference(self):
+    def _may_update_item_reference(self):
         """Condition to update item reference.  By default the item reference
            will be updated if item is in a meeting and meeting review_state is
            not 'before frozen'."""
@@ -534,10 +534,10 @@ class IMeetingWorkflowConditions(Interface):
 
     # The following conditions are not workflow conditions in the strict sense,
     # but are conditions that depend on the meeting state.
-    def mayAcceptItems():
+    def may_accept_items():
         '''May I accept new items to be integrated to me ? (am I in a relevant
            state, is my date still in the future, ...)'''
-    def mayChangeItemsOrder():
+    def may_change_items_order():
         '''May one change order of my list of items ?'''
 
 

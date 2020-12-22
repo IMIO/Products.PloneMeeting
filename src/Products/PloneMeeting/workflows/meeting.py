@@ -15,7 +15,7 @@ from Products.CMFCore.utils import _checkPermission
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import IMeetingWorkflowActions
 from Products.PloneMeeting.interfaces import IMeetingWorkflowConditions
-from Products.PloneMeeting.Meeting import Meeting
+from Products.PloneMeeting.content.meeting import Meeting
 from Products.PloneMeeting.utils import fplog
 from Products.PloneMeeting.utils import get_annexes
 from zope.component import getMultiAdapter
@@ -37,12 +37,6 @@ class MeetingWorkflowConditions(object):
         self.context = meeting
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
-
-    security.declarePublic('mayAcceptItems')
-
-    def mayAcceptItems(self):
-        if self.context.query_state() in self.cfg.adapted().getMeetingStatesAcceptingItems():
-            return True
 
     security.declarePublic('mayPublish')
 
@@ -99,9 +93,15 @@ class MeetingWorkflowConditions(object):
         if _checkPermission(ReviewPortalContent, self.context):
             return True
 
-    security.declarePublic('mayChangeItemsOrder')
+    security.declarePublic('may_accept_items')
 
-    def mayChangeItemsOrder(self):
+    def may_accept_items(self):
+        if self.context.query_state() in self.cfg.adapted().getMeetingStatesAcceptingItems():
+            return True
+
+    security.declarePublic('may_change_items_order')
+
+    def may_change_items_order(self):
         res = True
         if not _checkPermission(ModifyPortalContent, self.context) or \
            self.context.query_state() in Meeting.MEETINGCLOSEDSTATES:

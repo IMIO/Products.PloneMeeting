@@ -310,7 +310,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         idInAttrs = 'id' in attrs
         if not idInAttrs:
             attrs.update({'id': self._generateId(folder)})
-        if objectType == 'Meeting' and 'date' not in attrs:
+        if objectType == 'Meeting' and attrs.get('date', None) is None:
             attrs.update({'date': datetime.now()})
         if objectType == 'MeetingItem':
             if 'proposingGroup' not in attrs.keys():

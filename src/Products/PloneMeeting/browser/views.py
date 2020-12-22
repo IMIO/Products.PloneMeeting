@@ -209,8 +209,8 @@ class PresentSeveralItemsView(BrowserView):
     def __call__(self, uids):
         """ """
         wfTool = api.portal.get_tool('portal_workflow')
-        # defer call to Meeting.updateItemReferences
-        self.request.set('defer_Meeting_updateItemReferences', True)
+        # defer call to Meeting.update_item_references
+        self.request.set('defer_Meeting_update_item_references', True)
         lowest_itemNumber = 0
         objs = uuidsToObjects(uids, ordered=True)
         for obj in objs:
@@ -226,9 +226,9 @@ class PresentSeveralItemsView(BrowserView):
                     type='warning')
             if not lowest_itemNumber or obj.getItemNumber() < lowest_itemNumber:
                 lowest_itemNumber = obj.getItemNumber()
-        self.request.set('defer_Meeting_updateItemReferences', False)
-        # now we may call updateItemReferences
-        self.context.updateItemReferences(startNumber=lowest_itemNumber)
+        self.request.set('defer_Meeting_update_item_references', False)
+        # now we may call update_item_references
+        self.context.update_item_references(start_number=lowest_itemNumber)
         msg = translate('present_several_items_done',
                         domain='PloneMeeting',
                         context=self.request)
@@ -252,12 +252,12 @@ class RemoveSeveralItemsView(BrowserView):
         # by jQuery, we receive only one uid, as a string...
         if isinstance(uids, str):
             uids = [uids]
-        # defer call to Meeting.updateItemReferences
-        self.request.set('defer_Meeting_updateItemReferences', True)
+        # defer call to Meeting.update_item_references
+        self.request.set('defer_Meeting_update_item_references', True)
         lowest_itemNumber = 0
         for uid in uids:
             obj = uid_catalog(UID=uid)[0].getObject()
-            # save lowest_itemNumber for call to Meeting.updateItemReferences here under
+            # save lowest_itemNumber for call to Meeting.update_item_references here under
             if not lowest_itemNumber or obj.getItemNumber() < lowest_itemNumber:
                 lowest_itemNumber = obj.getItemNumber()
             # execute every 'back' transitions until item is in state 'validated'
@@ -277,9 +277,9 @@ class RemoveSeveralItemsView(BrowserView):
                         changedState = True
                         break
 
-        self.request.set('defer_Meeting_updateItemReferences', False)
-        # now we may call updateItemReferences
-        self.context.updateItemReferences(startNumber=lowest_itemNumber)
+        self.request.set('defer_Meeting_update_item_references', False)
+        # now we may call update_item_references
+        self.context.update_item_references(start_number=lowest_itemNumber)
         msg = translate('remove_several_items_done',
                         domain='PloneMeeting',
                         context=self.request)
@@ -296,8 +296,8 @@ class ItemNumberView(BrowserView):
         self.request = request
         self.portal_url = api.portal.get().absolute_url()
 
-    def __call__(self, mayChangeItemsOrder):
-        self.mayChangeItemsOrder = mayChangeItemsOrder
+    def __call__(self, may_change_items_order):
+        self.may_change_items_order = may_change_items_order
         return super(ItemNumberView, self).__call__()
 
     def is_integer(self, number):
@@ -475,11 +475,11 @@ class MeetingInsertingMethodsHelpMsgView(BrowserView):
 
 
 class MeetingUpdateItemReferences(BrowserView):
-    """Call Meeting.updateItemReferences from a meeting."""
+    """Call Meeting.update_item_references from a meeting."""
 
     def index(self):
         """ """
-        self.context.updateItemReferences()
+        self.context.update_item_references()
         msg = _('References of contained items have been updated.')
         api.portal.show_message(msg, request=self.request)
         return self.request.RESPONSE.redirect(self.context.absolute_url())

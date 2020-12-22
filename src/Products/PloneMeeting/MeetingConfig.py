@@ -5347,8 +5347,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     # so MeetingItem types are in it, this is usefull when managing item templates
                     # in the MeetingConfig because folders there have the 'folder_contents' layout
                     if portalTypeName not in site_properties.typesUseViewActionInListings:
-                        site_properties.typesUseViewActionInListings = site_properties.typesUseViewActionInListings + \
-                            (portalTypeName, )
+                        site_properties.typesUseViewActionInListings = \
+                            site_properties.typesUseViewActionInListings + (portalTypeName, )
 
         # Copy actions from the base portal type
         self._updatePortalTypes()
@@ -5414,6 +5414,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             else:
                 portalType.icon_expr = basePortalType.icon_expr
                 portalType.icon_expr_object = Expression(portalType.icon_expr)
+
+            # now copy common portal_type attributes
             portalType.content_meta_type = basePortalType.content_meta_type
             portalType.factory = basePortalType.factory
             portalType.immediate_view = basePortalType.immediate_view

@@ -37,6 +37,7 @@ from Products.PloneMeeting.config import TOOL_FOLDER_SEARCHES
 from Products.PloneMeeting.interfaces import IConfigElement
 from Products.PloneMeeting.interfaces import IMeetingContent
 from Products.PloneMeeting.utils import _addManagedPermissions
+from Products.PloneMeeting.utils import addDataChange
 from Products.PloneMeeting.utils import AdviceAfterAddEvent
 from Products.PloneMeeting.utils import AdviceAfterModifyEvent
 from Products.PloneMeeting.utils import AdviceAfterTransitionEvent
@@ -662,7 +663,7 @@ def onItemModified(item, event):
             invalidate_cachekey_volatile_for(
                 'Products.PloneMeeting.Meeting.UID.{0}'.format(meeting.UID()), get_again=True)
             # update item references if necessary
-            meeting.updateItemReferences(startNumber=item.getItemNumber(), check_needed=True)
+            meeting.update_item_references(start_number=item.getItemNumber(), check_needed=True)
             # invalidate Meeting.getItemInsertOrder caching
             meeting._invalidate_insert_order_cache_for(item)
 
@@ -1021,6 +1022,34 @@ def onMeetingCreated(meeting, event):
     meeting.item_votes = PersistentMapping()
     # place to store attendees when using contacts
     meeting.ordered_contacts = OrderedDict()
+
+
+def onMeetingModified(meeting, event):
+    """ """
+    need_reindex = meeting.updateTitle()
+    need_reindex = meeting.updatePlace() or need_reindex
+    # Update contact-related info (attendees, signatories, replacements...)
+    meeting.updateContacts()
+    # Add a line in history if historized fields have changed
+    addDataChange(meeting)
+    # Apply potential transformations to richtext fields
+    transformAllRichTextFields(meeting)
+    # update every items itemReference if needed
+    meeting.update_item_references(check_needed=True)
+    # update local roles as power observers local roles may vary depending on meeting_access_on
+    meeting.updateLocalRoles()
+    # invalidate last meeting modified
+    invalidate_cachekey_volatile_for(
+        'Products.PloneMeeting.Meeting.modified', get_again=True)
+    # invalidate item voters vocabulary in case new voters (un)selected
+    invalidate_cachekey_volatile_for(
+        'Products.PloneMeeting.vocabularies.itemvotersvocabulary', get_again=True)
+    # invalidate assembly async load on meeting
+    invalidate_cachekey_volatile_for(
+        'Products.PloneMeeting.browser.async.AsyncLoadMeetingAssemblyAndSignatures',
+        get_again=True)
+    if need_reindex:
+        meeting.reindexObject()
 
 
 def onMeetingMoved(meeting, event):

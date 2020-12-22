@@ -293,31 +293,31 @@ class ItemNumberColumn(BrowserViewCallColumn):
     def cssClasses(self):
         """ """
         cssClasses = super(ItemNumberColumn, self).cssClasses
-        if self.mayChangeItemsOrder(self.context):
+        if self.may_change_items_order(self.context):
             cssClasses['th'] = 'th_header_draggable'
             cssClasses['td'] = 'draggable'
         return cssClasses
 
-    def mayChangeItemsOrder(self, meeting):
+    def may_change_items_order(self, meeting):
         """ """
-        _mayChangeItemsOrder = getattr(self.table, '_mayChangeItemsOrder', None)
-        if _mayChangeItemsOrder is None:
-            self.table._mayChangeItemsOrder = meeting.wfConditions().mayChangeItemsOrder()
-        return self.table._mayChangeItemsOrder
+        _may_change_items_order = getattr(self.table, '_may_change_items_order', None)
+        if _may_change_items_order is None:
+            self.table._may_change_items_order = meeting.wfConditions().may_change_items_order()
+        return self.table._may_change_items_order
 
     def renderHeadCell(self):
         """ """
         cell = super(ItemNumberColumn, self).renderHeadCell()
-        if self.mayChangeItemsOrder(self.context):
+        if self.may_change_items_order(self.context):
             cell = u'</th><th class="th_header_getItemNumber">' + cell
         return cell
 
     def renderCell(self, item):
         """ """
-        mayChangeItemsOrder = self.mayChangeItemsOrder(self.context)
-        self.params = {'mayChangeItemsOrder': mayChangeItemsOrder}
+        may_change_items_order = self.may_change_items_order(self.context)
+        self.params = {'may_change_items_order': may_change_items_order}
         cell = super(ItemNumberColumn, self).renderCell(item)
-        if mayChangeItemsOrder:
+        if may_change_items_order:
             cell = u"⣿</td><td td_cell_getItemNumber data-item_number='{0}'>".format(
                 item.getItemNumber) + cell
         return cell

@@ -280,10 +280,10 @@ class Meeting(Container):
             adapted.link_pattern = link_pattern
         return adapted.getLink()
 
-    security.declarePublic('getRawQuery')
+    security.declarePublic('get_raw_query')
 
-    def getRawQuery(self, force_linked_items_query=False, **kwargs):
-        """Override default getRawQuery to manage our own."""
+    def get_raw_query(self, force_linked_items_query=False, **kwargs):
+        """Override default get_raw_query to manage our own."""
         # available items?
         if displaying_available_items(self) and not force_linked_items_query:
             res = self._available_items_query()
@@ -795,12 +795,12 @@ class Meeting(Container):
 
     def setDate(self, value, **kwargs):
         '''Overrides the field 'date' mutator so we reindex every linked
-           items if date value changed.  Moreover we manage updateItemReferences
+           items if date value changed.  Moreover we manage update_item_references
            if value changed.'''
         current_date = self.getField('date').get(self, **kwargs)
         if not value == current_date:
-            # add a value in the REQUEST to specify that updateItemReferences is needed
-            self.REQUEST.set('need_Meeting_updateItemReferences', True)
+            # add a value in the REQUEST to specify that update_item_references is needed
+            self.REQUEST.set('need_Meeting_update_item_references', True)
             # store new date before updating items so items get
             # right date when calling meeting.getDate
             self.getField('date').set(self, value, **kwargs)
@@ -824,22 +824,22 @@ class Meeting(Container):
 
     def setFirstItemNumber(self, value, **kwargs):
         '''Overrides the field 'firstItemNumber' mutator to be able to
-           updateItemReferences if value changed.'''
+           update_item_references if value changed.'''
         current_first_item_number = self.getField('firstItemNumber').get(self, **kwargs)
         if not value == current_first_item_number:
-            # add a value in the REQUEST to specify that updateItemReferences is needed
-            self.REQUEST.set('need_Meeting_updateItemReferences', True)
+            # add a value in the REQUEST to specify that update_item_references is needed
+            self.REQUEST.set('need_Meeting_update_item_references', True)
         self.getField('firstItemNumber').set(self, value, **kwargs)
 
     security.declarePrivate('setMeetingNumber')
 
     def setMeetingNumber(self, value, **kwargs):
         '''Overrides the field 'meetingNumber' mutator to be able to
-           updateItemReferences if value changed.'''
+           update_item_references if value changed.'''
         current_meetingNumber = self.getField('meetingNumber').get(self, **kwargs)
         if not value == current_meetingNumber:
-            # add a value in the REQUEST to specify that updateItemReferences is needed
-            self.REQUEST.set('need_Meeting_updateItemReferences', True)
+            # add a value in the REQUEST to specify that update_item_references is needed
+            self.REQUEST.set('need_Meeting_update_item_references', True)
         self.getField('meetingNumber').set(self, value, **kwargs)
 
     security.declarePublic('showMeetingManagerReservedField')
@@ -885,13 +885,13 @@ class Meeting(Container):
            - returned ordered (by getItemNumber) if p_ordered is True;
            - if p_the_objects is True, MeetingItem objects are returned, else, brains are returned;
            - if p_unrestricted is True it will return every items, not checking permission;
-           - if p_force_linked_items_query is True, it will call self.getRawQuery with
+           - if p_force_linked_items_query is True, it will call self.get_raw_query with
              same parameter and force use of query showing linked items, not displaying
              available items.
         '''
         # execute the query using the portal_catalog
         catalog = api.portal.get_tool('portal_catalog')
-        catalog_query = self.getRawQuery(force_linked_items_query=force_linked_items_query)
+        catalog_query = self.get_raw_query(force_linked_items_query=force_linked_items_query)
         if list_types:
             catalog_query.append({'i': 'listType',
                                   'o': 'plone.app.querystring.operation.selection.is',
@@ -1082,7 +1082,7 @@ class Meeting(Container):
         # invalidate RAMCache for MeetingItem.getMeeting
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeeting')
         # reindex getItemNumber when item is in the meeting or getItemNumber returns None
-        # and reindex linkedMeeting indexes that is used by updateItemReferences using getItems
+        # and reindex linkedMeeting indexes that is used by update_item_references using getItems
         lowest_item_number = 0
         for item in items_to_update:
             item_number = item.getRawItemNumber()
@@ -1092,12 +1092,12 @@ class Meeting(Container):
                                      'listType',
                                      'linkedMeetingUID',
                                      'linkedMeetingDate'])
-        # meeting is considered modified, do this before updateItemReferences
+        # meeting is considered modified, do this before update_item_references
         self.notifyModified()
 
         # update itemReference after 'getItemNumber' has been reindexed of item and
         # items with a higher itemNumber
-        self.updateItemReferences(start_number=lowest_item_number)
+        self.update_item_references(start_number=lowest_item_number)
 
     security.declareProtected(ModifyPortalContent, 'remove_item')
 
@@ -1160,13 +1160,13 @@ class Meeting(Container):
         # reindex relevant indexes now that item is removed
         item.reindexObject(idxs=['listType', 'linkedMeetingUID', 'linkedMeetingDate'])
 
-        # meeting is considered modified, do this before updateItemReferences
+        # meeting is considered modified, do this before update_item_references
         self.notifyModified()
 
         # update itemReference of item that is no more linked to self and so that will not
-        # be updated by Meeting.updateItemReferences and then update items that used
+        # be updated by Meeting.update_item_references and then update items that used
         # a higher item number
-        item.updateItemReference()
+        item.update_item_reference()
         self.update_item_references(start_number=item_number)
 
     def update_item_references(self, start_number=0, check_needed=False):
@@ -1175,7 +1175,7 @@ class Meeting(Container):
            By default, if p_start_number=0, every linked items will be updated.
            If p_check_needed is True, we check if value 'need_Meeting_update_item_references'
            in REQUEST is True."""
-        # call to updateItemReferences may be deferred for optimization
+        # call to update_item_references may be deferred for optimization
         if self.REQUEST.get('defer_Meeting_update_item_references', False):
             return
         if check_needed and not self.REQUEST.get('need_Meeting_update_item_references', False):
@@ -1402,7 +1402,7 @@ class Meeting(Container):
                                   '/faceted_conf/default_dashboard_widgets.xml')
         self.setLayout('meeting_view')
         # update every items itemReference if needed
-        self.updateItemReferences(check_needed=True)
+        self.update_item_references(check_needed=True)
         # invalidate last meeting modified
         invalidate_cachekey_volatile_for('Products.PloneMeeting.Meeting.modified', get_again=True)
         # Call sub-product-specific behaviour
@@ -1415,39 +1415,6 @@ class Meeting(Container):
            This is called when we change something on an element without
            tiggering too much things."""
         notifyModifiedAndReindex(self, extra_idxs=idxs, notify_event=True)
-
-    security.declarePrivate('at_post_edit_script')
-
-    def at_post_edit_script(self):
-        '''Updates the meeting title.'''
-        need_reindex = self.updateTitle()
-        need_reindex = self.updatePlace() or need_reindex
-        # Update contact-related info (attendees, signatories, replacements...)
-        self.updateContacts()
-        # Add a line in history if historized fields have changed
-        addDataChange(self)
-        # Apply potential transformations to richtext fields
-        transformAllRichTextFields(self)
-        # Make sure we have 'text/html' for every Rich fields
-        forceHTMLContentTypeForEmptyRichFields(self)
-        # update every items itemReference if needed
-        self.updateItemReferences(check_needed=True)
-        # update local roles as power observers local roles may vary depending on meeting_access_on
-        self.updateLocalRoles()
-        # Call sub-product-specific behaviour
-        self.adapted().onEdit(isCreated=False)
-        # invalidate last meeting modified
-        invalidate_cachekey_volatile_for(
-            'Products.PloneMeeting.Meeting.modified', get_again=True)
-        # invalidate item voters vocabulary in case new voters (un)selected
-        invalidate_cachekey_volatile_for(
-            'Products.PloneMeeting.vocabularies.itemvotersvocabulary', get_again=True)
-        # invalidate assembly async load on meeting
-        invalidate_cachekey_volatile_for(
-            'Products.PloneMeeting.browser.async.AsyncLoadMeetingAssemblyAndSignatures',
-            get_again=True)
-        if need_reindex:
-            self.reindexObject()
 
     def update_local_roles(self, **kwargs):
         """Update various local roles."""

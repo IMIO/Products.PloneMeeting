@@ -2,24 +2,7 @@
 #
 # File: testPerformances.py
 #
-# Copyright (c) 2015 by Imio.be
-#
 # GNU General Public License (GPL)
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
-# 02110-1301, USA.
 #
 
 from collective.contact.plonegroup.utils import get_organizations
@@ -161,10 +144,10 @@ class testPerformances(PloneMeetingTestCase):
         # item references are only updated once meeting is frozen
         # freeze meeting but defer references update
         # update every items
-        pm_logger.info('Freezing meeting without updateItemReferences.')
-        self.request.set('defer_Meeting_updateItemReferences', True)
+        pm_logger.info('Freezing meeting without update_item_references.')
+        self.request.set('defer_Meeting_update_item_references', True)
         self.freezeMeeting(meeting)
-        self.request.set('defer_Meeting_updateItemReferences', False)
+        self.request.set('defer_Meeting_update_item_references', False)
         # update every items
         pm_logger.info(
             'Updating item references for %d items presented in a meeting starting from item number %s.' % (250, 0))
@@ -172,19 +155,19 @@ class testPerformances(PloneMeetingTestCase):
         # update items starting from 100th item
         pm_logger.info(
             'Updating item references for %d items presented in a meeting starting from item number %s.' % (250, 100))
-        self._updateItemReferences(meeting, startNumber=100 * 100)
+        self._updateItemReferences(meeting, start_number=100 * 100)
         # update items starting from 200th item
         pm_logger.info(
             'Updating item references for %d items presented in a meeting starting from item number %s.' % (250, 200))
-        self._updateItemReferences(meeting, startNumber=200 * 100)
+        self._updateItemReferences(meeting, start_number=200 * 100)
 
     @timecall
-    def _updateItemReferences(self, meeting, startNumber=0):
+    def _updateItemReferences(self, meeting, start_number=0):
         '''Helper method that actually compute every items itemReference for p_meeting.'''
         # set back every items reference to '' so the entire process including reindex of SearchableText is done
         for item in meeting.getItems():
             item.setItemReference('')
-        meeting.updateItemReferences(startNumber=startNumber)
+        meeting.update_item_references(start_number=start_number)
 
     def test_pm_Present50ItemsWithoutAnnexesSeveralTimes(self):
         '''While presenting items, these items are inserted in a given order.
