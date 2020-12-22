@@ -396,14 +396,14 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
            If no p_annexTitle is specified, the predefined title of the annex type is used.'''
 
         if annexType is None:
-            if context.meta_type == 'MeetingItem':
+            if context.__class__.__name__ == 'MeetingItem':
                 if not relatedTo:
                     annexType = self.annexFileType
                 elif relatedTo == 'item_decision':
                     annexType = self.annexFileTypeDecision
             elif context.portal_type.startswith('meetingadvice'):
                 annexType = self.annexFileTypeAdvice
-            elif context.meta_type == 'Meeting':
+            elif context.__class__.__name__ == 'Meeting':
                 annexType = self.annexFileTypeMeeting
 
         # get complete annexType id that is like

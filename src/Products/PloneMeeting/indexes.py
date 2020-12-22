@@ -19,7 +19,7 @@ from Products.PloneMeeting.config import EMPTY_STRING
 from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
-from Products.PloneMeeting.interfaces import IMeeting
+from Products.PloneMeeting.content.meeting import IMeeting
 from Products.PloneMeeting.interfaces import IMeetingContent
 from Products.PloneMeeting.interfaces import IMeetingItem
 from Products.PloneMeeting.utils import get_annexes
@@ -441,14 +441,6 @@ def contained_uids_meeting(obj):
 
 @indexer(IMeetingItem)
 def content_category_uid_item(obj):
-    """
-      Indexes the content_category of every contained elements.
-    """
-    return content_category_uid(obj)
-
-
-@indexer(IMeeting)
-def content_category_uid_meeting(obj):
     """
       Indexes the content_category of every contained elements.
     """

@@ -1751,7 +1751,7 @@ class testMeeting(PloneMeetingTestCase):
 
         # remove an item
         item4 = getattr(meeting, 'item-4')
-        meeting.removeItem(item4)
+        meeting.remove_item(item4)
         self.assertEqual([item.getId() for item in meeting.get_items(ordered=True)],
                          ['recItem1', 'recItem2', 'item-2', 'item-1', 'item-3', 'item-5'])
         self.assertEqual([item.getItemNumber() for item in meeting.get_items(ordered=True)],

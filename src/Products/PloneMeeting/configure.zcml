@@ -77,6 +77,10 @@
            factory=".adapters.PMWfHistoryAdapter"
            name="workflow"
            provides="imio.history.interfaces.IImioWfHistory" />
+  <adapter for="Products.PloneMeeting.content.meeting.IMeeting"
+           factory=".adapters.PMWfHistoryAdapter"
+           name="workflow"
+           provides="imio.history.interfaces.IImioWfHistory" />
   <adapter for="Products.PloneMeeting.interfaces.IMeetingItem"
            factory=".adapters.PMWfHistoryAdapter"
            name="workflow"
@@ -240,9 +244,8 @@
   <adapter name="get_full_title" factory=".indexes.get_full_title" />
   <adapter name="contained_uids" factory=".indexes.contained_uids_item" />
   <adapter name="contained_uids" factory=".indexes.contained_uids_meeting" />
-  <!-- content_category_uid for Meeting and MeetingItem until these are DX -->
+  <!-- content_category_uid for MeetingItem until it is DX -->
   <adapter name="content_category_uid" factory=".indexes.content_category_uid_item" />
-  <adapter name="content_category_uid" factory=".indexes.content_category_uid_meeting" />
 
   <adapter
     for="imio.annex.content.annex.IAnnex"
@@ -268,6 +271,9 @@
   <adapter for="Products.PloneMeeting.interfaces.IMeeting"
            factory=".adapters.MeetingPrettyLinkAdapter"
            provides="imio.prettylink.interfaces.IPrettyLink" />
+  <adapter for="Products.PloneMeeting.content.meeting.IMeeting"
+           factory=".adapters.MeetingPrettyLinkAdapter"
+           provides="imio.prettylink.interfaces.IPrettyLink" />
 
   <adapter for="*"
            factory=".adapters.IconifiedCategoryConfigAdapter"
@@ -283,6 +289,10 @@
            provides="collective.iconifiedcategory.interfaces.IIconifiedCategoryGroup" />
   <adapter for="plone.app.contenttypes.interfaces.IFolder
                 Products.PloneMeeting.interfaces.IMeeting"
+           factory=".adapters.IconifiedCategoryGroupAdapter"
+           provides="collective.iconifiedcategory.interfaces.IIconifiedCategoryGroup" />
+  <adapter for="plone.app.contenttypes.interfaces.IFolder
+                Products.PloneMeeting.content.meeting.IMeeting"
            factory=".adapters.IconifiedCategoryGroupAdapter"
            provides="collective.iconifiedcategory.interfaces.IIconifiedCategoryGroup" />
   <adapter for="plone.app.contenttypes.interfaces.IFolder

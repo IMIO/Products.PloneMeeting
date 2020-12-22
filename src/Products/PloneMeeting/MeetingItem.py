@@ -874,7 +874,7 @@ class MeetingItemWorkflowActions(object):
             sendMailIfRelevant(self.context, 'itemUnpresented', 'creators', isSuffix=True)
             sendMailIfRelevant(self.context, 'itemUnpresentedOwner', 'Owner', isRole=True)
             # remove the item from the meeting
-            self.context.getMeeting().removeItem(self.context)
+            self.context.getMeeting().remove_item(self.context)
         # if an item was returned to proposing group for corrections and that
         # this proposing group sends the item back to the meeting managers, we
         # send an email to warn the MeetingManagers if relevant
@@ -2770,7 +2770,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         res = self.getField('itemNumber').get(self, **kwargs)
         if relativeTo == 'meetingConfig':
             meeting = self.getMeeting()
-            meetingFirstItemNumber = meeting.getFirstItemNumber()
+            meetingFirstItemNumber = meeting.first_item_number
             if meetingFirstItemNumber != -1:
                 res = meetingFirstItemNumber * 100 + self.getItemNumber(relativeTo='meeting') - 100
             else:
@@ -2778,7 +2778,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 # we call findBaseNumberRelativeToMeetingConfig, see docstring there
                 # call the view on meeting because it is memoized and for example in meeting_view
                 # the meeting does not change but the item does
-                unrestrictedMethodsView = getMultiAdapter((meeting, meeting.REQUEST),
+                unrestrictedMethodsView = getMultiAdapter((meeting, self.REQUEST),
                                                           name='pm_unrestricted_methods')
                 currentMeetingComputedFirstNumber = unrestrictedMethodsView.findFirstItemNumberForMeeting(meeting)
                 # now that we have the currentMeetingComputedFirstNumber, that is
@@ -2879,7 +2879,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # also in case no meetingStates, a closed meeting could be returned, check
             # that current user may edit returned meeting
             late_state = meeting.adapted().get_late_state()
-            if meeting.wfConditions().mayAcceptItems() and (
+            if meeting.wfConditions().may_accept_items() and (
                     meeting.query_state() in get_states_before(meeting, late_state) or
                     self.wfConditions().isLateFor(meeting)):
                 return meeting
@@ -3540,7 +3540,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if real:
             return res
         if not res and self.hasMeeting():
-            res = self.getMeeting().getSignatures(**kwargs)
+            res = self.getMeeting().signatures
         if for_display:
             res = display_as_html(res, self)
         return res
@@ -3585,7 +3585,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                   "itemAssemblyAbsents": "assemblyAbsents",
                                   "itemAssemblyGuests": "assemblyGuests",
                                   "itemSignatures": "signatures"}
-            if meeting.attributeIsUsed(attr_names_mapping[field_name]):
+            if meeting.attribute_is_used(attr_names_mapping[field_name]):
                 res = True
             else:
                 # maybe it was used before?
@@ -3630,7 +3630,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if real:
             return res
         if not res and self.hasMeeting():
-            res = self.getMeeting().getAssembly(**kwargs)
+            res = self.getMeeting().assembly
         return res
 
     security.declarePublic('getItemAssemblyExcused')
@@ -3642,7 +3642,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if real:
             return res
         if not res and self.hasMeeting():
-            res = self.getMeeting().getAssemblyExcused(**kwargs)
+            res = self.getMeeting().assembly_excused
         return res
 
     security.declarePublic('getItemAssemblyAbsents')
@@ -3654,7 +3654,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if real:
             return res
         if not res and self.hasMeeting():
-            res = self.getMeeting().getAssemblyAbsents(**kwargs)
+            res = self.getMeeting().assembly_absents
         return res
 
     security.declarePublic('getItemAssemblyGuests')
@@ -3666,7 +3666,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if real:
             return res
         if not res and self.hasMeeting():
-            res = self.getMeeting().getAssemblyGuests(**kwargs)
+            res = self.getMeeting().assembly_guests
         return res
 
     security.declarePublic('displayStrikedItemAssembly')
@@ -3684,9 +3684,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if not self.hasMeeting():
             return res
         meeting = self.getMeeting()
-        meeting_item_absents = meeting.getItemAbsents().get(self.UID(), [])
+        meeting_item_absents = meeting.get_item_absents().get(self.UID(), [])
         if theObjects:
-            item_absents = meeting._getContacts(uids=meeting_item_absents, theObjects=theObjects)
+            item_absents = meeting._get_contacts(uids=meeting_item_absents, the_objects=theObjects)
         else:
             item_absents = tuple(meeting_item_absents)
         return item_absents
@@ -3700,9 +3700,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if not self.hasMeeting():
             return res
         meeting = self.getMeeting()
-        meeting_item_excused = meeting.getItemExcused().get(self.UID(), [])
+        meeting_item_excused = meeting.get_item_excused().get(self.UID(), [])
         if theObjects:
-            item_excused = meeting._getContacts(uids=meeting_item_excused, theObjects=theObjects)
+            item_excused = meeting._get_contacts(uids=meeting_item_excused, the_objects=theObjects)
         else:
             item_excused = tuple(meeting_item_excused)
         return item_excused
@@ -3716,9 +3716,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if not self.hasMeeting():
             return res
         meeting = self.getMeeting()
-        meeting_item_nonAttendees = meeting.getItemNonAttendees().get(self.UID(), [])
+        meeting_item_nonAttendees = meeting.get_item_non_attendees().get(self.UID(), [])
         if theObjects:
-            item_nonAttendees = meeting._getContacts(uids=meeting_item_nonAttendees, theObjects=theObjects)
+            item_nonAttendees = meeting._get_contacts(uids=meeting_item_nonAttendees, the_objects=theObjects)
         else:
             item_nonAttendees = tuple(meeting_item_nonAttendees)
         return item_nonAttendees
@@ -3744,7 +3744,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # we could have several signatories having same signature_number
             # this is the case when having a signatory replacer on some items
             # we may define for example 2 signatory "2" and use it on specific items
-            signatories = meeting.getSignatories(by_signature_number=False)
+            signatories = meeting.get_signatories(by_signature_number=False)
             # keep signatories that are attendees for this item
             # keep order so we may have 2 signatory 2 present and the first win
             # we reverse attendees order so when reversing key/values here under
@@ -3755,12 +3755,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # reverse as keys were signatory UID, we want signature_number
             signatories = {v: k for k, v in signatories.items()}
 
-        item_signatories = meeting.getItemSignatories().get(self.UID(), {})
+        item_signatories = meeting.get_item_signatories().get(self.UID(), {})
         signatories.update(item_signatories)
 
         if theObjects:
             uids = signatories.values()
-            signatories_objs = meeting._getContacts(uids=uids, theObjects=theObjects)
+            signatories_objs = meeting._get_contacts(uids=uids, the_objects=theObjects)
             reversed_signatories = {v: k for k, v in signatories.items()}
             signatories = {reversed_signatories[signatory.UID()]: signatory
                            for signatory in signatories_objs}
@@ -3792,7 +3792,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if not self.hasMeeting():
             return votes
         meeting = self.getMeeting()
-        item_votes = meeting.getItemVotes().get(self.UID(), [])
+        item_votes = meeting.get_item_votes().get(self.UID(), [])
         voter_uids = self.getItemVoters()
         votes_are_secret = self.getVotesAreSecret()
         # all votes
@@ -3888,7 +3888,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            If p_theObjects=True, held_position objects are returned.'''
         meeting = self.getMeeting()
         attendee_uids = self.getAttendees() or None
-        voters = meeting.getVoters(uids=attendee_uids, theObjects=theObjects)
+        voters = meeting.get_voters(uids=attendee_uids, the_objects=theObjects)
         return voters
 
     def getInAndOutAttendees(self, ignore_before_first_item=True, theObjects=True):
@@ -6635,7 +6635,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # in IObjectWillBeRemovedEvent references are already broken, we need to remove
             # the item from a meeting if it is inserted in there...
             if item.hasMeeting():
-                item.getMeeting().removeItem(item)
+                item.getMeeting().remove_item(item)
             # and to clean advice inheritance
             for adviceId in item.adviceIndex.keys():
                 self._cleanAdviceInheritance(item, adviceId)
@@ -6659,14 +6659,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if not self.hasMeeting():
             return res
         meeting = self.getMeeting()
-        attendees = meeting.getAttendees(theObjects=False)
+        attendees = meeting.get_attendees(the_objects=False)
         itemAbsents = self.getItemAbsents()
         itemExcused = self.getItemExcused()
         itemNonAttendees = self.getItemNonAttendees()
         attendees = [attendee for attendee in attendees
                      if attendee not in itemAbsents + itemExcused + itemNonAttendees]
         # get really present attendees now
-        attendees = meeting._getContacts(uids=attendees, theObjects=theObjects)
+        attendees = meeting._get_contacts(uids=attendees, the_objects=theObjects)
         return attendees
 
     security.declarePublic('getAssembly')
@@ -6674,7 +6674,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def getAssembly(self):
         '''Returns the assembly for this item.'''
         if self.hasMeeting():
-            return self.getMeeting().getAssembly()
+            return self.getMeeting().assembly
         return ''
 
     def _appendLinkedItem(self, item, only_viewable):
@@ -6921,7 +6921,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 </div>""" % (translate(msg,
                        domain='PloneMeeting',
                        context=self.REQUEST).encode(enc),
-             self.getMeeting().getAssembly() or '-')
+             self.getMeeting().assembly or '-')
         return value + collapsibleMeetingAssembly
 
     security.declareProtected(ModifyPortalContent, 'ItemAssemblyExcusedDescrMethod')
@@ -6945,7 +6945,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 </div>""" % (translate('assembly_excused_defined_on_meeting',
                        domain='PloneMeeting',
                        context=self.REQUEST).encode(enc),
-             self.getMeeting().getAssemblyExcused() or '-')
+             self.getMeeting().assembly_excused or '-')
         return value + collapsibleMeetingAssemblyExcused
 
     security.declareProtected(ModifyPortalContent, 'ItemAssemblyAbsentsDescrMethod')
@@ -6969,14 +6969,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 </div>""" % (translate('assembly_absents_defined_on_meeting',
                        domain='PloneMeeting',
                        context=self.REQUEST).encode(enc),
-             self.getMeeting().getAssemblyAbsents() or '-')
+             self.getMeeting().assembly_absents or '-')
         return value + collapsibleMeetingAssemblyAbsents
 
     security.declareProtected(ModifyPortalContent, 'ItemAssemblyGuestsDescrMethod')
 
     def ItemAssemblyGuestsDescrMethod(self):
         '''Special handling of itemAssemblyGuests field description where we display
-          the linked Meeting.assemblyGuests value so it is easily overridable.'''
+          the linked Meeting.assembly_guests value so it is easily overridable.'''
         portal_properties = api.portal.get_tool('portal_properties')
         enc = portal_properties.site_properties.getProperty(
             'default_charset')
@@ -6993,7 +6993,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 </div>""" % (translate('assembly_guests_defined_on_meeting',
                        domain='PloneMeeting',
                        context=self.REQUEST).encode(enc),
-             self.getMeeting().getAssemblyGuests() or '-')
+             self.getMeeting().assembly_guests or '-')
         return value + collapsibleMeetingAssemblyGuests
 
     security.declareProtected(ModifyPortalContent, 'ItemSignaturesDescrMethod')
@@ -7016,7 +7016,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 </div>""" % (translate('signatures_defined_on_meeting',
                        domain='PloneMeeting',
                        context=self.REQUEST).encode(enc),
-             self.getMeeting().getSignatures().replace('\n', '<br />'))
+             self.getMeeting().signatures.replace('\n', '<br />'))
         return value + collapsibleMeetingSignatures
 
     security.declarePublic('getLabelItemAssembly')

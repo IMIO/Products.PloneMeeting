@@ -955,14 +955,14 @@ class BaseDGHV(object):
            If use_print_attendees_by_type is True, we use print_attendees_by_type method instead of
            print_attendees.'''
 
-        if self.context.meta_type == 'MeetingItem' and not self.context.hasMeeting():
+        if self.context.__class__.__name__ == 'MeetingItem' and not self.context.hasMeeting():
             # There is nothing to print in this case
             return ''
 
         assembly = None
-        if self.context.meta_type == 'Meeting' and self.context.getAssembly():
+        if self.context.__class__.__name__ == 'Meeting' and self.context.getAssembly():
             assembly = self.context.getAssembly()
-        elif self.context.meta_type == 'MeetingItem' and self.context.getItemAssembly():
+        elif self.context.__class__.__name__ == 'MeetingItem' and self.context.getItemAssembly():
             assembly = self.context.getItemAssembly()
 
         if assembly:
@@ -984,7 +984,7 @@ class BaseDGHV(object):
         item_absents = []
         item_excused = []
         item_non_attendees = []
-        if self.context.meta_type == 'Meeting':
+        if self.context.__class__.__name__ == 'Meeting':
             meeting = self.context
             attendees = meeting.getAttendees()
             item_non_attendees = meeting.getItemNonAttendees()
@@ -1361,9 +1361,9 @@ class BaseDGHV(object):
         A dict is used to safely get a signature with the get method
         """
         signatures = None
-        if self.context.meta_type == 'Meeting' and self.context.getSignatures():
+        if self.context.__class__.__name__ == 'Meeting' and self.context.getSignatures():
             signatures = self.context.getSignatures()
-        elif self.context.meta_type == 'MeetingItem' and self.context.getItemSignatures():
+        elif self.context.__class__.__name__ == 'MeetingItem' and self.context.getItemSignatures():
             signatures = self.context.getItemSignatures()
 
         if signatures:
@@ -1404,7 +1404,7 @@ class BaseDGHV(object):
         """
         signature_lines = OrderedDict()
         forced_position_type_values = {}
-        if self.context.meta_type == 'Meeting':
+        if self.context.__class__.__name__ == 'Meeting':
             signatories = self.context.getSignatories(theObjects=True, by_signature_number=True)
         else:
             signatories = self.context.getItemSignatories(theObjects=True, by_signature_number=True)
@@ -2105,7 +2105,7 @@ class CheckPodTemplatesView(BrowserView):
                 continue
 
             for obj in objs:
-                if obj.meta_type == 'Meeting':
+                if obj.__class__.__name__ == 'Meeting':
                     self.request.form['facetedQuery'] = []
                 elif 'facetedQuery' in self.request.form:
                     del self.request.form['facetedQuery']

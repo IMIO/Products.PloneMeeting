@@ -179,7 +179,7 @@ class PMContentActionsViewlet(ContentActionsViewlet):
     '''
 
     def render(self):
-        if self.context.meta_type in (
+        if self.context.__class__.__name__ in (
             'ATTopic', 'Meeting', 'MeetingItem',
             'MeetingConfig', 'ToolPloneMeeting',) or \
            self.context.portal_type in (
@@ -266,7 +266,7 @@ class PMConfigActionsPanelViewlet(ActionsPanelViewlet):
         parent = self.context.getParentNode()
         if self.context.portal_type == 'DashboardCollection':
             url = '{0}?pageName=gui#searches'.format(cfg_url)
-        elif parent.meta_type == 'ATFolder':
+        elif parent.__class__.__name__ == 'ATBTreeFolder':
             # p_context is a sub-object in a sub-folder within a config
             root_subfolder = self._findRootSubfolder(parent)
             folderName = root_subfolder.getId()
@@ -817,7 +817,7 @@ class AnnexActionsPanelView(BaseActionsPanelView):
         # check isManager on parent (item) so caching is used as context is a key
         # used in the caching invalidation
         parent = self.context.aq_inner.aq_parent
-        while parent.meta_type not in ('MeetingItem', 'Meeting'):
+        while parent.__class__.__name__ not in ('MeetingItem', 'Meeting'):
             parent = parent.aq_inner.aq_parent
         return self.tool.isManager(parent, realManagers=True)
 
@@ -856,7 +856,7 @@ class ConfigActionsPanelView(ActionsPanelView):
             return "../../?pageName=gui#searches"
         if folderId == 'podtemplates':
             return "../?pageName=doc#podtemplates"
-        if self.context.meta_type == "MeetingConfig":
+        if self.context.__class__.__name__ == "MeetingConfig":
             return "#MeetingConfig"
         if self.context.portal_type == "organization":
             return "#organization"
@@ -1184,7 +1184,7 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
         # Send the mail with the document as attachment
         docName = self._get_filename()
         # generate event name depending on obj type
-        eventName = self.context.meta_type == 'Meeting' and 'podMeetingByMail' or 'podItemByMail'
+        eventName = self.context.__class__.__name__ == 'Meeting' and 'podMeetingByMail' or 'podItemByMail'
         sendMail(recipients,
                  self.context,
                  eventName,
@@ -1249,7 +1249,7 @@ class CategorizedAnnexesView(CategorizedTabView):
         """ """
         # check if context contains decisionAnnexes or if there
         # are some decisionAnnex annex types available in the configuration
-        if self.context.meta_type == 'MeetingItem' and \
+        if self.context.__class__.__name__ == 'MeetingItem' and \
             (get_annexes(self.context, portal_types=['annexDecision']) or
              self.showAddAnnexDecision()):
             return True
@@ -1399,9 +1399,9 @@ class PMTransitionBatchActionForm(TransitionBatchActionForm):
            and to non MeetingManagers on the meeting_view."""
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
-        return (self.context.meta_type == 'Meeting' and
+        return (self.context.__class__.__name__ == 'Meeting' and
                 _checkPermission(ModifyPortalContent, self.context)) or \
-               (not self.context.meta_type == 'Meeting' and
+               (not self.context.__class__.__name__ == 'Meeting' and
                 (tool.isManager(self.context) or
                  bool(tool.userIsAmong(suffixes=get_all_suffixes(None), cfg=cfg))))
 

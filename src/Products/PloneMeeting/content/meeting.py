@@ -38,7 +38,6 @@ from Products.PloneMeeting.config import READER_USECASES
 from Products.PloneMeeting.interfaces import IMeetingContent
 from Products.PloneMeeting.utils import _addManagedPermissions
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
-from Products.PloneMeeting.utils import addDataChange
 from Products.PloneMeeting.utils import display_as_html
 from Products.PloneMeeting.utils import displaying_available_items
 from Products.PloneMeeting.utils import fieldIsEmpty
@@ -1606,12 +1605,12 @@ class Meeting(Container):
                 item.REQUEST.set('items_to_remove', item.getItems())
         OrderedBaseFolder.manage_beforeDelete(self, item, container)
 
-    security.declarePublic('showAttendeesFields')
+    security.declarePublic('show_attendees_fields')
 
     def show_attendees_fields(self):
         '''Display attendee related fields in view/edit?'''
         return (self.attribute_is_used('attendees') or
-                self.get_attendees()) and not self.get_assembly()
+                self.get_attendees()) and not self.assembly
 
     def shown_assembly_fields_cachekey(method, self):
         '''cachekey method for self.shown_assembly_fields.'''
