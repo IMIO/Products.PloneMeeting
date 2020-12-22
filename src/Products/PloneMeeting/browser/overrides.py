@@ -12,6 +12,7 @@ from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.documentgenerator.viewlets.generationlinks import DocumentGeneratorLinksViewlet
+from collective.eeafaceted.batchactions.browser.views import LabelsBatchActionForm
 from collective.eeafaceted.batchactions.browser.views import TransitionBatchActionForm
 from collective.eeafaceted.collectionwidget.browser.views import FacetedDashboardView
 from collective.eeafaceted.dashboard.browser.overrides import DashboardDocumentGenerationView
@@ -1377,6 +1378,16 @@ class PMReferenceBrowserPopup(ReferenceBrowserPopup):
         return getattr(item, 'title_or_id', '') or \
             getattr(item, 'Title', '') or \
             getattr(item, 'getId', '')
+
+
+class PMLabelsBatchActionForm(LabelsBatchActionForm):
+    """ """
+
+    def available(self):
+        """Only available when labels are enabled."""
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
+        return cfg.getEnableLabels()
 
 
 class PMTransitionBatchActionForm(TransitionBatchActionForm):

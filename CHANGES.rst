@@ -19,6 +19,24 @@ Changelog
   scrolling, this is the case for every dashboards including
   `available/presented` items on the `meeting_view`.
   [gbastien]
+- Enable the `Change ftw labels` batch action on dashboards displaying items.
+  To do this, we needed to mark dashboards displaying items and dashboard
+  displaying meetings with different batch actions marker interfaces.
+  [gbastien]
+- Moved `utils.fplog` to `imio.helpers.security`, adapted code accordingly.
+  [gbastien]
+- As CSS hacks to apply a styling rule only for `Chrome` does not work anymore
+  (is taken into account by Firefox as well now), use the `using-chrome`
+  CSS class from `plonetheme.imioapps` to style only for Chrome.
+  [gbastien]
+- `BaseDGHV.printXhtml` `clean` parameter is now `True` by default so it will
+  call `separate_images` to avoid several `<img>` in same `<p>`.
+  [gbastien]
+- When an error occurs on the `MeetingConfig` because of a field in a fieldset
+  that is not currently viewable we get a validation error but we do not
+  know why.  Display every validation errors at the top of the page so the user
+  see what is happening.
+  [gbastien]
 
 4.2b7 (2020-12-08)
 ------------------

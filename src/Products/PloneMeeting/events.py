@@ -14,6 +14,7 @@ from collective.iconifiedcategory.utils import update_all_categorized_elements
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.helpers.cache import invalidate_cachekey_volatile_for
 from imio.helpers.content import richtextval
+from imio.helpers.security import fplog
 from imio.helpers.xhtml import storeImagesLocally
 from OFS.ObjectManager import BeforeDeleteException
 from persistent.list import PersistentList
@@ -40,7 +41,6 @@ from Products.PloneMeeting.utils import AdviceAfterAddEvent
 from Products.PloneMeeting.utils import AdviceAfterModifyEvent
 from Products.PloneMeeting.utils import AdviceAfterTransitionEvent
 from Products.PloneMeeting.utils import applyOnTransitionFieldTransform
-from Products.PloneMeeting.utils import fplog
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import get_states_before
 from Products.PloneMeeting.utils import ItemAfterTransitionEvent

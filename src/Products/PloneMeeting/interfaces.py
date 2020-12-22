@@ -119,6 +119,16 @@ class IMeeting(IATMeetingContent):
     """
 
 
+class IMeetingItemDashboardBatchActionsMarker(IBatchActionsMarker):
+    """Marker interfaces to register batch actions
+       for dashboards displaying items."""
+
+
+class IMeetingDashboardBatchActionsMarker(IBatchActionsMarker):
+    """Marker interfaces to register batch actions
+       for dashboards displaying meetings."""
+
+
 class IMeetingBatchActionsMarker(IBatchActionsMarker):
     """Marker interfaces to register batch actions for Meetings."""
 

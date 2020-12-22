@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 
 from AccessControl import Unauthorized
+from imio.helpers.security import fplog
 from plone import api
 from Products.Five import BrowserView
 from Products.PloneMeeting.utils import _itemNumber_to_storedItemNumber
 from Products.PloneMeeting.utils import _storedItemNumber_to_itemNumber
-from Products.PloneMeeting.utils import fplog
 from zope.i18n import translate
 
 

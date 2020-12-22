@@ -4,6 +4,7 @@ from AccessControl import Unauthorized
 from collective.z3cform.datagridfield import DataGridFieldFactory
 from collective.z3cform.datagridfield import DictRow
 from imio.helpers.content import get_vocab
+from imio.helpers.security import fplog
 from persistent.mapping import PersistentMapping
 from plone import api
 from plone.autoform.directives import widget
@@ -15,7 +16,6 @@ from Products.PloneMeeting.browser.itemattendee import IBaseAttendee
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
 from Products.PloneMeeting.config import NOT_VOTABLE_LINKED_TO_VALUE
-from Products.PloneMeeting.utils import fplog
 from Products.PloneMeeting.utils import get_context_with_request
 from Products.PloneMeeting.widgets.pm_number import PMNumberFieldWidget
 from Products.PloneMeeting.widgets.pm_selectreadonly import PMSelectReadonlyWidget

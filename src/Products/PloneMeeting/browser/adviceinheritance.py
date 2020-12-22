@@ -3,6 +3,7 @@
 from AccessControl import Unauthorized
 from imio.actionspanel.utils import findViewableURL
 from imio.helpers.content import get_vocab
+from imio.helpers.security import fplog
 from plone import api
 from plone.autoform import directives
 from plone.autoform.form import AutoExtensibleForm
@@ -10,7 +11,6 @@ from plone.supermodel import model
 from plone.z3cform.layout import wrap_form
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.utils import cleanMemoize
-from Products.PloneMeeting.utils import fplog
 from z3c.form import button
 from z3c.form import form
 from zope import schema

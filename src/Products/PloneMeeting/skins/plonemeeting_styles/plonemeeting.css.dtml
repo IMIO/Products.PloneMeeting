@@ -39,9 +39,9 @@ table.listing tr[class][class] td[class^='meeting_item_listType_'] {
     height: 100%;
 }
 
-/* only for Chrome, the hack :not(*:root) */
-table.listing:not(*:root) tr[class][class] td[class^='meeting_item_listType_'] {
-    height: inherit;
+/* only for Chrome */
+body.using-chrome table.listing tr[class][class] td[class^='meeting_item_listType_'] {
+   height: inherit;
 }
 
 /* grey the items with a subnumber itemnumber input */
@@ -1074,12 +1074,6 @@ table.faceted-table-results th {
    top: 45px;
    z-index: 45;
 }
-/* body.template-meeting_available_items_view table.faceted-table-results th {
-   top: -2px;
-}
-iframe#collapsible-available-items {
-   max-height: 650px;
-} */
 
 table#faceted_table.listing tr[class][class] td.meeting_item_listType_late {
     background-color: red;
@@ -1541,7 +1535,8 @@ div.item_annexes {
 
 /* avoid screen size change when editing element as CKeditor takes some seconds to load */
 div.field.ArchetypesRichWidget {
-   min-height: 650px;
+   /* min-height: 650px; removed in PloneMeeting 4.2+ as RichText fields are not
+      viewable on first page while editing (these fields are at the bottom) */
    background-image: url(&dtml-portal_url;/spinner_small.gif);
    background-repeat: no-repeat;
    background-position: center;

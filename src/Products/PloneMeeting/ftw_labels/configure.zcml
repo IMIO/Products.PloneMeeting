@@ -3,7 +3,13 @@
     xmlns:browser="http://namespaces.zope.org/browser"
     xmlns:plone="http://namespaces.plone.org/plone">
 
+    <!-- label jar on an item -->
     <adapter for="Products.PloneMeeting.interfaces.IMeetingItem"
+             factory=".adapters.ftw_labels_jar_discovery"
+             provides="ftw.labels.interfaces.ILabelJar" />
+
+    <!-- label jar from a dashboard displaying items for the change labeles batch action -->
+    <adapter for="collective.eeafaceted.batchactions.interfaces.IBatchActionsMarker"
              factory=".adapters.ftw_labels_jar_discovery"
              provides="ftw.labels.interfaces.ILabelJar" />
 

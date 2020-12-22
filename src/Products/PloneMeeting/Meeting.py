@@ -16,6 +16,7 @@ from copy import deepcopy
 from DateTime import DateTime
 from imio.helpers.cache import cleanRamCacheFor
 from imio.helpers.cache import invalidate_cachekey_volatile_for
+from imio.helpers.security import fplog
 from imio.prettylink.interfaces import IPrettyLink
 from OFS.ObjectManager import BeforeDeleteException
 from persistent.list import PersistentList
@@ -60,7 +61,6 @@ from Products.PloneMeeting.utils import display_as_html
 from Products.PloneMeeting.utils import displaying_available_items
 from Products.PloneMeeting.utils import fieldIsEmpty
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
-from Products.PloneMeeting.utils import fplog
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getDateFromDelta
