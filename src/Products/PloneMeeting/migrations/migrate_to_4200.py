@@ -48,7 +48,7 @@ class Migrate_To_4200(Migrator):
                             adapted_level['enabled'] = '0'
                         elif ('pre_validation_keep_reviewer_permissions' in stored_wfas or
                               'pre_validation' in stored_wfas):
-                            adapted_level['suffix'] = ['prereviewers']
+                            adapted_level['suffix'] = 'prereviewers'
                             if 'pre_validation_keep_reviewer_permissions' in stored_wfas:
                                 adapted_level['extra_suffixes'] = ['reviewers']
                     # prevalidated, disabled by default
@@ -56,8 +56,6 @@ class Migrate_To_4200(Migrator):
                        ('pre_validation' in stored_wfas or
                             'pre_validation_keep_reviewer_permissions' in stored_wfas):
                         adapted_level['enabled'] = '1'
-                        if 'pre_validation_keep_reviewer_permissions' in stored_wfas:
-                            adapted_level['enabled'] = '1'
                     adapted_itemWFValidationLevels.append(adapted_level)
                     cfg.setItemWFValidationLevels(adapted_itemWFValidationLevels)
 
