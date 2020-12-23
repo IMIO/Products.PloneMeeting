@@ -239,11 +239,14 @@ class ItemLinkedMeetingColumn(BaseColumn):
             if res:
                 return res
 
-        if not value or value.year() <= 1950:
+        if not value or value.year <= 1950:
             res = u'-'
         else:
-            catalog = api.portal.get_tool('uid_catalog')
-            meeting = catalog(UID=getattr(item, self.meeting_uid_attr))[0].getObject()
+            catalog = api.portal.get_tool('portal_catalog')
+            # done unrestricted because can be used to display meeting date
+            # in dashboard when current user may not see the meeting
+            brains = catalog.unrestrictedSearchResults(UID=getattr(item, self.meeting_uid_attr))
+            meeting = brains[0]._unrestrictedGetObject()
             prettyLinker = IPrettyLink(meeting)
             prettyLinker.target = '_parent'
             res = prettyLinker.getLink()

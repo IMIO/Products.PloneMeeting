@@ -13,7 +13,6 @@ from collective.eeafaceted.dashboard.content.pod_template import IDashboardPODTe
 from collective.iconifiedcategory.adapter import CategorizedObjectAdapter
 from collective.iconifiedcategory.adapter import CategorizedObjectInfoAdapter
 from collective.iconifiedcategory.utils import get_categories
-from DateTime import DateTime
 from datetime import datetime
 from eea.facetednavigation.criteria.handler import Criteria as eeaCriteria
 from eea.facetednavigation.interfaces import IFacetedNavigable
@@ -546,7 +545,7 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
                     res.append(('cloned_and_decided.png',
                                 translate(
                                     'icon_help_cloned_and_decided',
-                                    mapping={'meetingDate': tool.formatMeetingDate(predecessorMeeting),
+                                    mapping={'meetingDate': tool.format_date(predecessorMeeting.date),
                                              'meetingConfigTitle': safe_unicode(predecessorCfg.Title()),
                                              'predecessorState': translated_state},
                                     domain="PloneMeeting",
@@ -556,7 +555,7 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
                 else:
                     res.append(('cloned_not_decided.png',
                                 translate('icon_help_cloned_not_decided',
-                                          mapping={'meetingDate': tool.formatMeetingDate(predecessorMeeting),
+                                          mapping={'meetingDate': tool.format_date(predecessorMeeting.date),
                                                    'meetingConfigTitle': safe_unicode(predecessorCfg.Title()),
                                                    'predecessorState': translated_state},
                                           domain="PloneMeeting",
@@ -627,9 +626,9 @@ class MeetingPrettyLinkAdapter(PrettyLinkAdapter):
           Manage icons to display before the icons managed by PrettyLink._icons.
         """
         res = []
-        if self.context.getExtraordinarySession():
+        if self.context.extraordinary_session:
             res.append(('extraordinarySession.png',
-                        translate('this_meeting_is_extraodrinary_session',
+                        translate('this_meeting_is_extraordinary_session',
                                   domain="PloneMeeting",
                                   context=self.request)))
         return res
@@ -917,7 +916,7 @@ class LastDecisionsAdapter(CompoundCriterionBaseAdapter):
 
     @property
     def query_last_decisions(self):
-        '''Patch the query 'getDate' to not limit the search
+        '''Patch the query 'meeting_date' to not limit the search
            to 'today' but 60 days in the future.'''
         if not self.cfg:
             return {}
@@ -925,8 +924,8 @@ class LastDecisionsAdapter(CompoundCriterionBaseAdapter):
         # or it will lead to a RuntimeError: maximum recursion depth exceeded
         query = [term for term in self.context.query if term[u'i'] != u'CompoundCriterion']
         parsedQuery = parseFormquery(self.context, query)
-        # change the second date of getDate query, aka the 'max' date
-        parsedQuery['getDate']['query'][1] = DateTime() + 60
+        # change the second date of meeting_date query, aka the 'max' date
+        parsedQuery['meeting_date']['query'][1] = datetime.now() + 60
         return parsedQuery
 
     # we may not ram.cache methods in same file with same name...

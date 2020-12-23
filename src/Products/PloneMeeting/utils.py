@@ -428,7 +428,7 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
     })
     if obj.meta_type == 'Meeting':
         translationMapping['meetingTitle'] = safe_unicode(obj.Title())
-        translationMapping['meetingLongTitle'] = tool.formatMeetingDate(obj, prefixed=True)
+        translationMapping['meetingLongTitle'] = tool.format_date(obj.date, prefixed=True)
         translationMapping['meetingState'] = translate(obj.queryState(),
                                                        domain='plone',
                                                        context=obj.REQUEST)
@@ -440,7 +440,7 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
         meeting = obj.getMeeting()
         if meeting:
             translationMapping['meetingTitle'] = safe_unicode(meeting.Title())
-            translationMapping['meetingLongTitle'] = tool.formatMeetingDate(meeting, prefixed=True)
+            translationMapping['meetingLongTitle'] = tool.format_date(meeting.date, prefixed=True)
             translationMapping['itemNumber'] = obj.getItemNumber(
                 relativeTo='meeting')
     # Update the translationMapping with a sub-product-specific
@@ -1994,18 +1994,17 @@ def get_next_meeting(meetingDate, cfg, dateGap=0):
        the current meeting in which we do not look for next meeting'''
     meetingTypeName = cfg.getMeetingTypeName()
     catalog = api.portal.get_tool('portal_catalog')
-    # find every meetings after self.getDate
+    # find every meetings after meetingDate
     meetingDate += dateGap
     brains = catalog(portal_type=meetingTypeName,
-                     getDate={'query': meetingDate, 'range': 'min'},
-                     sort_on='getDate')
+                     meeting_date={'query': meetingDate, 'range': 'min'},
+                     sort_on='meeting_date')
     res = None
     for brain in brains:
-        if brain.getDate > meetingDate:
-            res = brain
+        meeting = brain.getObject()
+        if meeting.date > meetingDate:
+            res = meeting
             break
-    if res:
-        res = res.getObject()
     return res
 
 

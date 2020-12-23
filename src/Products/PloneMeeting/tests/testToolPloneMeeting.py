@@ -2,24 +2,7 @@
 #
 # File: testToolPloneMeeting.py
 #
-# Copyright (c) 2015 by Imio.be
-#
 # GNU General Public License (GPL)
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
-# 02110-1301, USA.
 #
 
 from AccessControl import Unauthorized
@@ -30,6 +13,7 @@ from collective.iconifiedcategory.utils import get_categories
 from collective.iconifiedcategory.utils import get_categorized_elements
 from collective.iconifiedcategory.utils import get_category_object
 from DateTime import DateTime
+from datetime import datetime
 from imio.helpers.cache import cleanRamCacheFor
 from persistent.mapping import PersistentMapping
 from plone import api
@@ -849,50 +833,59 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertTrue('%s_restrictedpowerobservers' % cfg.getId() in meeting.__ac_local_roles__)
         self.assertTrue(self.catalog(UID=meeting.UID()))
 
-    def test_pm_FormatMeetingDate(self):
-        """Test the formatMeetingDate method."""
+    def test_pm_Format_date(self):
+        """Test the format_date method."""
         self.changeUser('pmManager')
-        meeting = self.create('Meeting', date=DateTime('2015/05/05'))
+        meeting = self.create('Meeting', date=datetime(2015, 5, 5))
         self.portal.portal_languages.setDefaultLanguage('en')
-        self.assertEqual(self.tool.formatMeetingDate(meeting),
+        self.assertEqual(self.tool.format_date(meeting.date),
                          u'05 may 2015')
-        self.assertEqual(self.tool.formatMeetingDate(meeting, short=True),
+        self.assertEqual(self.tool.format_date(meeting.date, short=True),
                          u'05/05/2015')
         # hours are not shown if actually 0h00
-        self.assertEqual(self.tool.formatMeetingDate(meeting, short=True, withHour=True),
+        self.assertEqual(self.tool.format_date(meeting.date, short=True, with_hour=True),
                          u'05/05/2015')
-        self.assertEqual(self.tool.formatMeetingDate(meeting, short=True, withHour=True, prefixed=True),
+        self.assertEqual(self.tool.format_date(meeting.date, short=True, with_hour=True, prefixed=True),
                          u'Meeting of 05/05/2015')
 
         # add hours to the meeting date
         meeting.setDate('2015/05/05 14:30')
-        self.assertEqual(self.tool.formatMeetingDate(meeting),
+        self.assertEqual(self.tool.format_date(meeting.date),
                          u'05 may 2015')
-        self.assertEqual(self.tool.formatMeetingDate(meeting, short=True),
+        self.assertEqual(self.tool.format_date(meeting.date, short=True),
                          u'05/05/2015')
-        self.assertEqual(self.tool.formatMeetingDate(meeting, short=True, withHour=True),
+        self.assertEqual(self.tool.format_date(meeting.date, short=True, with_hour=True),
                          u'05/05/2015 (14:30)')
-        self.assertEqual(self.tool.formatMeetingDate(meeting, short=True, withHour=True, prefixed=True),
+        self.assertEqual(self.tool.format_date(meeting.date,
+                                               short=True,
+                                               with_hour=True,
+                                               prefixed=True),
                          u'Meeting of 05/05/2015 (14:30)')
 
-        # withWeekDayName
-        self.assertEqual(self.tool.formatMeetingDate(meeting, withWeekDayName=True),
+        # with_week_day_name
+        self.assertEqual(self.tool.format_date(meeting.date,
+                                               with_week_day_name=True),
                          u'Tuesday 05 may 2015')
-        self.assertEqual(self.tool.formatMeetingDate(meeting, short=True, withWeekDayName=True),
+        self.assertEqual(self.tool.format_date(meeting.date,
+                                               short=True,
+                                               with_week_day_name=True),
                          u'Tuesday 05/05/2015')
-        self.assertEqual(self.tool.formatMeetingDate(meeting, short=True, withHour=True, withWeekDayName=True),
+        self.assertEqual(self.tool.format_date(meeting.date,
+                                               short=True,
+                                               with_hour=True,
+                                               with_week_day_name=True),
                          u'Tuesday 05/05/2015 (14:30)')
-        self.assertEqual(self.tool.formatMeetingDate(meeting,
-                                                     short=True,
-                                                     withHour=True,
-                                                     prefixed=True,
-                                                     withWeekDayName=True),
+        self.assertEqual(self.tool.format_date(meeting.date,
+                                               short=True,
+                                               with_hour=True,
+                                               prefixed=True,
+                                               with_week_day_name=True),
                          u'Meeting of Tuesday 05/05/2015 (14:30)')
-        self.assertEqual(self.tool.formatMeetingDate(meeting,
-                                                     short=False,
-                                                     withHour=True,
-                                                     prefixed=True,
-                                                     withWeekDayName=True),
+        self.assertEqual(self.tool.format_date(meeting.date,
+                                               short=False,
+                                               with_hour=True,
+                                               prefixed=True,
+                                               with_week_day_name=True),
                          u'Meeting of Tuesday 05 may 2015 (14:30)')
 
     def test_pm_ShowHolidaysWarning(self):

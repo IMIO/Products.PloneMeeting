@@ -1232,7 +1232,7 @@ class testViews(PloneMeetingTestCase):
         # change itemReferenceFormat
         # change itemReferenceFormat to include an item data (Title)
         cfg.setItemReferenceFormat(
-            "python: here.getMeeting().getDate().strftime('%Y%m%d') + '/' + "
+            "python: here.getMeeting().date.strftime('%Y%m%d') + '/' + "
             "here.getItemNumber(for_display=True)")
         view = meeting.restrictedTraverse('@@update-item-references')
         view()

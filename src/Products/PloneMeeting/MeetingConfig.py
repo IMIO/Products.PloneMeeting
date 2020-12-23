@@ -19,6 +19,7 @@ from collective.eeafaceted.dashboard.utils import enableFacetedDashboardFor
 from collective.iconifiedcategory.utils import get_category_object
 from copy import deepcopy
 from DateTime import DateTime
+from datetime import datetime
 from eea.facetednavigation.interfaces import ICriteria
 from eea.facetednavigation.widgets.resultsperpage.widget import Widget as ResultsPerPageWidget
 from ftw.labels.interfaces import ILabeling
@@ -3102,7 +3103,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                         {'i': 'review_state',
                          'o': 'plone.app.querystring.operation.selection.is',
                          'v': ['decided', 'closed']},
-                        {'i': 'getDate',
+                        {'i': 'meeting_date',
                          'o': 'plone.app.querystring.operation.date.largerThanRelativeDate',
                          'v': '60'},
                         {'i': 'CompoundCriterion',
@@ -6723,13 +6724,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
         query = {'portal_type': self.getMeetingTypeName(),
                  'review_state': review_states,
-                 'sort_on': 'getDate'}
+                 'sort_on': 'meeting_date'}
         # querying empty review_state will return nothing
         if not review_states:
             query.pop('review_state')
 
         if inTheFuture:
-            query['getDate'] = {'query': DateTime(), 'range': 'min'}
+            query['meeting_date'] = {'query': datetime.now(), 'range': 'min'}
 
         return query
 

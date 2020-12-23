@@ -1,6 +1,6 @@
 <tal:comment replace="nothing">Title, with number of items</tal:comment>
 <h1 class="documentFirstHeading" i18n:domain="PloneMeeting" tal:define="is_decided python: context.adapted().is_decided()">
-  <span tal:replace="structure python: context.getPrettyLink(prefixed=True, short=False, showContentIcon=True)">Meeting title</span>&nbsp;-
+  <span tal:replace="structure python: context.get_pretty_link(prefixed=True, short=False, showContentIcon=True)">Meeting title</span>&nbsp;-
   <span tal:condition="not:is_decided"
         i18n:translate="agenda">Agenda</span>
   <span tal:condition="is_decided"

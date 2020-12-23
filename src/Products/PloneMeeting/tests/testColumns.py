@@ -2,30 +2,12 @@
 #
 # File: testAdvices.py
 #
-# Copyright (c) 2015 by Imio.be
-#
 # GNU General Public License (GPL)
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
-# 02110-1301, USA.
 #
 
 from collective.iconifiedcategory.browser.tabview import CategorizedContent
 from collective.iconifiedcategory.interfaces import IIconifiedCategorySettings
 from collective.iconifiedcategory.utils import get_categorized_elements
-from DateTime import DateTime
 from imio.helpers.cache import cleanRamCacheFor
 from plone import api
 from Products.PloneMeeting.columns import ItemLinkedMeetingColumn
@@ -171,7 +153,7 @@ class testColumns(PloneMeetingTestCase):
         item.folder_position_typeaware(position='up', id=annexDecision2.getId())
 
         # now when only annexDecision are addable
-        meeting = self.create('Meeting', date=DateTime('2016/06/06'))
+        meeting = self.create('Meeting')
         self.presentItem(item)
         self.closeMeeting(meeting)
         self.assertFalse(self.hasPermission(AddAnnex, item))
@@ -194,8 +176,7 @@ class testColumns(PloneMeetingTestCase):
         self._setPowerObserverStates(field_name='meeting_states', states=())
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
-        self.create('Meeting', date=DateTime('2018/03/21'))
-
+        self.create('Meeting')
         meetingFolder = self.getMeetingFolder()
         faceted_table = meetingFolder.restrictedTraverse('faceted-table-view')
         column = ItemLinkedMeetingColumn(meetingFolder, self.portal.REQUEST, faceted_table)

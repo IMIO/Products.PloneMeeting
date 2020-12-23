@@ -552,7 +552,7 @@ class MeetingDatesVocabulary(object):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         brains = catalog(portal_type=cfg.getMeetingTypeName(),
-                         sort_on='getDate',
+                         sort_on='meeting_date',
                          sort_order='reverse')
         res = [
             SimpleTerm(ITEM_NO_PREFERRED_MEETING_VALUE,
@@ -563,7 +563,7 @@ class MeetingDatesVocabulary(object):
         for brain in brains:
             res.append(SimpleTerm(brain.UID,
                                   brain.UID,
-                                  tool.formatMeetingDate(brain, withHour=True))
+                                  tool.format_date(brain.meeting_date, with_hour=True))
                        )
         return SimpleVocabulary(res)
 

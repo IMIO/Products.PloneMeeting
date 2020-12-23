@@ -230,6 +230,7 @@
   <adapter name="item_is_signed" factory=".indexes.item_is_signed" />
   <adapter name="linkedMeetingDate" factory=".indexes.linkedMeetingDate" />
   <adapter name="linkedMeetingUID" factory=".indexes.linkedMeetingUID" />
+  <adapter name="meeting_date" factory=".indexes.meeting_date" />
   <adapter name="previous_review_state" factory=".indexes.previous_review_state" />
   <adapter name="reviewProcessInfo" factory=".indexes.reviewProcessInfo" />
   <adapter name="SearchableText" factory=".indexes.SearchableText_item" />

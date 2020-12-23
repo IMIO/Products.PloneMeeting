@@ -2,10 +2,6 @@
 #
 # File: ToolPloneMeeting.py
 #
-# Copyright (c) 2018 by Imio.be
-# Generator: ArchGenXML Version 2.7
-#            http://plone.org/products/archgenxml
-#
 # GNU General Public License (GPL)
 #
 
@@ -1278,36 +1274,30 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     return True
         return False
 
-    security.declarePublic('formatMeetingDate')
+    security.declarePublic('format_date')
 
-    def formatMeetingDate(self, meeting, lang=None, short=False,
-                          withHour=False, prefixed=False, withWeekDayName=False):
-        '''Returns p_meeting.getDate formatted.
+    def format_date(self, date, lang=None, short=False,
+                    with_hour=False, prefixed=False, prefix="meeting_of",
+                    with_week_day_name=False):
+        '''Returns p_meeting.date formatted.
            - If p_lang is specified, it translates translatable elements (if
              any), like day of week or month, in p_lang. Else, it translates it
              in the user language (see tool.getUserLanguage).
            - if p_short is True, is uses a special, shortened, format (ie, day
              of month is replaced with a number)
-           - If p_prefix is True, the translated prefix "Meeting of" is
+           - If p_prefix is True, the translated prefix is
              prepended to the result.'''
-        # Received meeting could be a brain or an object
-        if meeting.__class__.__name__ in ['mybrains', 'CatalogContentListingObject', 'PloneFlare']:
-            # It is a meeting brain, take the 'getDate' metadata
-            date = meeting.getDate
-        else:
-            # received meeting is a Meeting instance
-            date = meeting.date
         # Get the format for the rendering of p_aDate
         if short:
             fmt = '%d/%m/%Y'
         else:
             fmt = '%d %mt %Y'
-        if withWeekDayName:
+        if with_week_day_name:
             fmt = fmt.replace('%d', '%A %d')
             dow = translate(weekdaysIds[date.dow()], target_language=lang,
                             domain='plonelocales', context=self.REQUEST)
             fmt = fmt.replace('%A', dow)
-        if withHour and (date._hour or date._minute):
+        if with_hour and (date.hour or date.minute):
             fmt += ' (%H:%M)'
         # Apply p_fmt to p_aDate. Manage first special symbols corresponding to
         # translated names of days and months.
@@ -1322,10 +1312,10 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         fmt = fmt.replace('%MT', month)
         # Resolve all other, standard, symbols
         res = date.strftime(fmt)
-        # Finally, prefix the date with "Meeting of" when required.
+        # Finally, prefix the date with p_prefix when required
         if prefixed:
             res = u"{0} {1}".format(
-                translate('meeting_of',
+                translate(prefix,
                           domain='PloneMeeting',
                           context=self.REQUEST),
                 res)
@@ -1368,7 +1358,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     def removeAnnexesPreviews(self, query={'meta_type': 'Meeting',
                                            'review_state': ('closed', ),
-                                           'sort_on': 'getDate'}):
+                                           'sort_on': 'meeting_date'}):
         '''Remove every annexes previews of items presented to closed meetings.'''
         if not self.isManager(self, realManagers=True):
             raise Unauthorized

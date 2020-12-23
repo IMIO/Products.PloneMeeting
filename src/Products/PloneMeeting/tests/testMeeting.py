@@ -2221,7 +2221,7 @@ class testMeeting(PloneMeetingTestCase):
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject')
         cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
         meeting.date = datetime.now() + timedelta(days=2)
-        meeting.reindexObject(idxs=['getDate', ])
+        meeting.reindexObject(idxs=['meeting_date', ])
         self.assertTrue(not cfg.getMeetingPresentItemWhenNoCurrentMeetingStates())
         # item may be presented in the meeting
         self.assertTrue(item.wfConditions().mayPresent())
@@ -2433,17 +2433,17 @@ class testMeeting(PloneMeetingTestCase):
         self.request.set('place', 'other')
         self.request.set('place_other', 'Another place')
         meeting = self.create('Meeting')
-        self.assertTrue(meeting.Title() == self.tool.formatMeetingDate(meeting))
+        self.assertTrue(meeting.Title() == self.tool.format_date(meeting.date))
         self.assertTrue(meeting.getPlace() == 'Another place')
         # now check that upon edition, title and place fields are correct
         self.request.set('place_other', 'Yet another place')
         meeting.setDate(DateTime('2014/06/06'))
         # for now, title and date are not updated
-        self.assertTrue(not meeting.Title() == self.tool.formatMeetingDate(meeting))
+        self.assertTrue(not meeting.Title() == self.tool.format_date(meeting.date))
         self.assertTrue(not meeting.getPlace() == 'Yet another place')
         # at_post_edit_script takes care of updating title and place
         meeting._update_after_edit()
-        self.assertTrue(meeting.Title() == self.tool.formatMeetingDate(meeting))
+        self.assertTrue(meeting.Title() == self.tool.format_date(meeting.date))
         self.assertTrue(meeting.getPlace() == 'Yet another place')
 
     def test_pm_GetItems(self):

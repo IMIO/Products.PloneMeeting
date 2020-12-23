@@ -1890,7 +1890,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             meeting = self.getMeeting()
             if meeting:
                 tool = api.portal.get_tool('portal_plonemeeting')
-                return "{0} ({1})".format(title, tool.formatMeetingDate(meeting, withHour=True).encode('utf-8'))
+                return "{0} ({1})".format(
+                    title, tool.format_date(meeting.date, with_hour=True).encode('utf-8'))
         return title
 
     security.declarePublic('getPrettyLink')
@@ -2991,7 +2992,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         cfg = tool.getMeetingConfig(self)
         # save meetingUIDs, it will be necessary here under
         for meetingBrain in cfg.getMeetingsAcceptingItems():
-            meetingDate = tool.formatMeetingDate(meetingBrain, withHour=True)
+            meetingDate = tool.format_date(meetingBrain.meeting_date, with_hour=True)
             meetingState = translate(meetingBrain.review_state,
                                      domain="plone",
                                      context=self.REQUEST)
@@ -3010,7 +3011,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             brains = catalog(UID=preferredMeetingUID)
             if brains:
                 preferredMeetingBrain = brains[0]
-                preferredMeetingDate = tool.formatMeetingDate(preferredMeetingBrain, withHour=True)
+                preferredMeetingDate = tool.format_date(
+                    preferredMeetingBrain.meeting_date, with_hour=True)
                 preferredMeetingState = translate(preferredMeetingBrain.review_state,
                                                   domain="plone",
                                                   context=self.REQUEST)

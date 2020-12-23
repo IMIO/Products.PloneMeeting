@@ -19,7 +19,7 @@ class UnrestrictedMethodsView(BrowserView):
         meeting = self.context.getMeeting()
         if meeting:
             tool = api.portal.get_tool('portal_plonemeeting')
-            return tool.formatMeetingDate(meeting, prefixed=True)
+            return tool.format_date(meeting.date, prefixed=True)
 
     def getLinkedMeetingDate(self):
         """

@@ -7,7 +7,6 @@
 
 from collective.contact.core.content.organization import IOrganization
 from collective.iconifiedcategory.indexes import content_category_uid
-from DateTime import DateTime
 from datetime import datetime
 from imio.annex.content.annex import IAnnex
 from imio.helpers.content import _contained_objects
@@ -58,7 +57,15 @@ def sortable_title(obj):
     """
       Indexes the sortable_title of meeting based on meeting.date
     """
-    return obj.getDate().strftime('%Y%m%d%H%M')
+    return obj.date.strftime('%Y%m%d%H%M')
+
+
+@indexer(IMeeting)
+def meeting_date(obj):
+    """
+      Indexes the meeting.date
+    """
+    return obj.date
 
 
 @indexer(IMeetingItem)
@@ -140,10 +147,10 @@ def linkedMeetingDate(obj):
     res = []
     meeting = obj.getMeeting()
     if meeting:
-        res = meeting.getDate()
+        res = meeting.date
     else:
         # for sorting it is necessary to have a date
-        res = DateTime('1950/01/01')
+        res = datetime(1950, 1, 1)
     return res
 
 
@@ -163,8 +170,9 @@ def getPreferredMeetingDate(obj):
     res = []
     preferredMeetingUID = obj.getPreferredMeeting()
     if preferredMeetingUID != ITEM_NO_PREFERRED_MEETING_VALUE:
-        # use uid_catalog because as getPreferredMeetingDate is in the portal_catalog
+        # XXX Meeting is no more in uid_catalog, this could be a problem
         # if we clear and rebuild the portal_catalog, preferredMeetingUID will not be found...
+        # need to fix this...
         catalog = api.portal.get_tool('portal_catalog')
         res = catalog(UID=preferredMeetingUID)[0].getObject().date
     else:

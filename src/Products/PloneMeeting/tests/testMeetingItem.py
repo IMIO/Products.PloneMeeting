@@ -16,6 +16,7 @@ from collective.iconifiedcategory.utils import get_category_object
 from collective.iconifiedcategory.utils import get_config_root
 from collective.iconifiedcategory.utils import get_group
 from DateTime import DateTime
+from datetime import timedelta
 from ftw.labels.interfaces import ILabeling
 from imio.actionspanel.interfaces import IContentDeletable
 from imio.helpers.cache import cleanRamCache
@@ -1160,7 +1161,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.deleteAsManager(sentItem.UID())
         # before frozenMeeting
         createdMeeting.setDate(now + 1)
-        createdMeeting.reindexObject(idxs=['getDate'])
+        createdMeeting.reindexObject(idxs=['meeting_date'])
         self.do(item, back_transition)
         cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
         self.do(item, 'accept')
@@ -1170,7 +1171,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # only presented in a meeting in the future
         self.deleteAsManager(sentItem.UID())
         createdMeeting.setDate(now - 1)
-        createdMeeting.reindexObject(idxs=['getDate'])
+        createdMeeting.reindexObject(idxs=['meeting_date'])
         self.do(item, back_transition)
         cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
         self.do(item, 'accept')
@@ -1180,9 +1181,9 @@ class testMeetingItem(PloneMeetingTestCase):
         # if not available meeting in the future, it is left 'validated'
         self.deleteAsManager(sentItem.UID())
         createdMeeting.setDate(now - 1)
-        createdMeeting.reindexObject(idxs=['getDate'])
+        createdMeeting.reindexObject(idxs=['meeting_date'])
         frozenMeeting.setDate(now - 1)
-        frozenMeeting.reindexObject(idxs=['getDate'])
+        frozenMeeting.reindexObject(idxs=['meeting_date'])
         self.do(item, back_transition)
         cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
         self.do(item, 'accept')
@@ -1479,8 +1480,8 @@ class testMeetingItem(PloneMeetingTestCase):
         self.setMeetingConfig(cfg2Id)
         meeting = self._createMeetingWithItems()
         # make meeting still accepting items
-        meeting.setDate(meeting.getDate() + 1)
-        meeting.reindexObject(idxs=['getDate'])
+        meeting.date = meeting.date + timedelta(days=1)
+        meeting.reindexObject(idxs=['meeting_date'])
         self.assertEqual(self.tool.getMeetingConfig(meeting), cfg2)
         self.assertEqual([anItem.getPrivacy() for anItem in meeting.getItems(ordered=True)],
                          ['public', 'public', 'public', 'secret', 'secret'])
@@ -4391,7 +4392,7 @@ class testMeetingItem(PloneMeetingTestCase):
                            name='dummy',
                            action='',
                            icon_expr='',
-                           condition="python: context.getMeeting().getDate().strftime('%Y/%d/%m') == '2010/10/10'",
+                           condition="python: context.getMeeting().date.strftime('%Y/%d/%m') == '2010/10/10'",
                            permission=(View,),
                            visible=True,
                            category='object_buttons')
@@ -6726,7 +6727,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # change itemReferenceFormat to include an item data (Title)
         cfg = self.meetingConfig
         cfg.setItemReferenceFormat(
-            "python: here.getMeeting().getDate().strftime('%Y%m%d') + '/' + "
+            "python: here.getMeeting().date.strftime('%Y%m%d') + '/' + "
             "str(here.getProposingGroup(True).get_acronym()) + '/' + "
             "str(here.getCategory()) + '/' + "
             "str(here.getRawClassifier() and here.getClassifier(theObject=True).getId() or '-') + '/' + "
@@ -6821,7 +6822,7 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg = self.meetingConfig
         self._removeConfigObjectsFor(cfg)
         cfg.setItemReferenceFormat(
-            "python: here.getMeeting().getDate().strftime('%Y%m%d') + '/' + "
+            "python: here.getMeeting().date.strftime('%Y%m%d') + '/' + "
             "str(here.getMeeting().getFirstItemNumber()) + '/' + "
             "str(here.getMeeting().getMeetingNumber()) + '/' + "
             "str(here.getItemNumber(relativeTo='meetingConfig', for_display=True))")
