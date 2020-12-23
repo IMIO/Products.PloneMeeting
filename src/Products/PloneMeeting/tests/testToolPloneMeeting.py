@@ -729,14 +729,14 @@ class testToolPloneMeeting(PloneMeetingTestCase):
                          [self.developers_uid, self.vendors_uid, ])
 
     def test_pm_UpdateCopyGroups(self):
-        """Test the updateAllLocalRoles method that update every items when configuration changed.
+        """Test the update_all_local_roles method that update every items when configuration changed.
            First set copy groups may view items in state 'itemcreated' then change to 'proposed'."""
         self.meetingConfig.setSelectableCopyGroups((self.developers_reviewers, self.vendors_reviewers))
         self.meetingConfig.setUseCopies(True)
         self.meetingConfig.setItemCopyGroupsStates(('itemcreated', ))
         # only available to 'Managers'
         self.changeUser('pmCreator1')
-        self.assertRaises(Unauthorized, self.tool.restrictedTraverse, 'updateAllLocalRoles')
+        self.assertRaises(Unauthorized, self.tool.restrictedTraverse, 'update_all_local_roles')
         item1 = self.create('MeetingItem')
         item1.setCopyGroups((self.vendors_reviewers,))
         item1._update_after_edit()
@@ -747,10 +747,10 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertTrue(self.vendors_reviewers in item1.__ac_local_roles__)
         self.assertFalse(self.vendors_reviewers in item2.__ac_local_roles__)
 
-        # change configuration, updateAllLocalRoles then check again
+        # change configuration, update_all_local_roles then check again
         self.changeUser('siteadmin')
         self.meetingConfig.setItemCopyGroupsStates((self._stateMappingFor('proposed'), ))
-        self.tool.restrictedTraverse('updateAllLocalRoles')()
+        self.tool.restrictedTraverse('update_all_local_roles')()
         self.assertFalse(self.vendors_reviewers in item1.__ac_local_roles__)
         self.assertTrue(self.vendors_reviewers in item2.__ac_local_roles__)
 
@@ -761,7 +761,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         cfg.setItemBudgetInfosStates(('itemcreated', ))
         # only available to 'Managers'
         self.changeUser('pmCreator1')
-        self.assertRaises(Unauthorized, self.tool.restrictedTraverse, 'updateAllLocalRoles')
+        self.assertRaises(Unauthorized, self.tool.restrictedTraverse, 'update_all_local_roles')
         item1 = self.create('MeetingItem')
         item1._update_after_edit()
         item2 = self.create('MeetingItem')
@@ -770,15 +770,15 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertTrue('%s_budgetimpacteditors' % cfg.getId() in item1.__ac_local_roles__)
         self.assertFalse('%s_budgetimpacteditors' % cfg.getId() in item2.__ac_local_roles__)
 
-        # change configuration, updateAllLocalRoles then check again
+        # change configuration, update_all_local_roles then check again
         self.changeUser('siteadmin')
         cfg.setItemBudgetInfosStates((self._stateMappingFor('proposed'), ))
-        self.tool.updateAllLocalRoles()
+        self.tool.update_all_local_roles()
         self.assertFalse('%s_budgetimpacteditors' % cfg.getId() in item1.__ac_local_roles__)
         self.assertTrue('%s_budgetimpacteditors' % cfg.getId() in item2.__ac_local_roles__)
 
     def test_pm_UpdatePowerObservers(self):
-        """Test the updateAllLocalRoles method that update every items when configuration changed.
+        """Test the update_all_local_roles method that update every items when configuration changed.
            First set (restricted) power observers may view in state 'itemcreated' then change to 'proposed'."""
         cfg = self.meetingConfig
         self._setPowerObserverStates(states=('itemcreated', ))
@@ -791,7 +791,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
                                      states=('closed', ))
         # only available to 'Managers'
         self.changeUser('pmManager')
-        self.assertRaises(Unauthorized, self.tool.restrictedTraverse, 'updateAllLocalRoles')
+        self.assertRaises(Unauthorized, self.tool.restrictedTraverse, 'update_all_local_roles')
         item1 = self.create('MeetingItem')
         item1._update_after_edit()
         item2 = self.create('MeetingItem')
@@ -805,7 +805,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertTrue('%s_restrictedpowerobservers' % cfg.getId() in item2.__ac_local_roles__)
         self.assertFalse('%s_restrictedpowerobservers' % cfg.getId() in meeting.__ac_local_roles__)
 
-        # change configuration, updateAllLocalRoles then check again
+        # change configuration, update_all_local_roles then check again
         self.changeUser('siteadmin')
         self._setPowerObserverStates(states=(self._stateMappingFor('proposed'), ))
         self._setPowerObserverStates(field_name='meeting_states',
@@ -815,7 +815,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self._setPowerObserverStates(field_name='meeting_states',
                                      observer_type='restrictedpowerobservers',
                                      states=('created', ))
-        self.tool.updateAllLocalRoles()
+        self.tool.update_all_local_roles()
         # local roles and catalog are updated
         self.changeUser('powerobserver1')
         self.assertFalse('%s_powerobservers' % cfg.getId() in item1.__ac_local_roles__)

@@ -675,7 +675,7 @@ class testWFAdaptations(PloneMeetingTestCase):
     def _no_publication_inactive(self):
         '''Tests while 'no_publication' wfAdaptation is inactive.'''
         meeting = self._createMeetingWithItems()
-        item = meeting.getItems()[0]
+        item = meeting.get_items()[0]
         self.publishMeeting(meeting)
         self.assertEqual(item.query_state(), 'itempublished')
         # item decided states point back to itempublished
@@ -689,7 +689,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         '''Tests while 'no_publication' wfAdaptation is active.'''
         m1 = self._createMeetingWithItems()
         self.failIf('publish' in self.transitions(m1))
-        for item in m1.getItems():
+        for item in m1.get_items():
             item.setDecision('<p>My decision<p>')
         for tr in self._getTransitionsToCloseAMeeting():
             if tr in self.transitions(m1):
@@ -1150,7 +1150,7 @@ class testWFAdaptations(PloneMeetingTestCase):
                          self.ITEM_WF_STATE_AFTER_MEETING_TRANSITION['publish_decisions'])
         self.changeUser('pmManager')
         # every items of the meeting are in the same final specific state
-        for itemInMeeting in meeting.getItems():
+        for itemInMeeting in meeting.get_items():
             self.assertEqual(itemInMeeting.query_state(),
                              self.ITEM_WF_STATE_AFTER_MEETING_TRANSITION['publish_decisions'])
         self.do(meeting, 'close')
@@ -1219,7 +1219,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         cfg.setUseCopies(True)
         cfg.setItemCopyGroupsStates((item.query_state(), ))
         item.setCopyGroups((self.vendors_reviewers, ))
-        item.updateLocalRoles()
+        item.update_local_roles()
         self.changeUser('pmReviewer2')
         self.assertTrue(self.hasPermission(View, item))
         self.assertFalse(self.hasPermission(ModifyPortalContent, item))

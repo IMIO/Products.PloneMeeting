@@ -486,7 +486,7 @@ class testViews(PloneMeetingTestCase):
         self.assertTrue(len(self.catalog(**query)) == 1)
         self.assertTrue(self.catalog(**query)[0].UID == itemWithDelayAwareAdvice.UID())
         # even once updated, it will still be found
-        itemWithDelayAwareAdvice.updateLocalRoles()
+        itemWithDelayAwareAdvice.update_local_roles()
         self.assertTrue(self.catalog(**query)[0].UID == itemWithDelayAwareAdvice.UID())
 
         # makes it no more editable
@@ -502,14 +502,14 @@ class testViews(PloneMeetingTestCase):
         itemWithDelayAwareAdvice.reindexObject()
         self.assertTrue(self.catalog(**query)[0].UID == itemWithDelayAwareAdvice.UID())
         # but once updated, it is not found anymore
-        itemWithDelayAwareAdvice.updateLocalRoles()
+        itemWithDelayAwareAdvice.update_local_roles()
         self.assertTrue(not self.catalog(**query))
 
         # try with an not_given timed_out advice as indexAdvisers behaves differently
-        # remove meetingadvice, back to not timed_out, updateLocalRoles then proceed
+        # remove meetingadvice, back to not timed_out,.update_local_roles then proceed
         self.deleteAsManager(itemWithDelayAwareAdvice.meetingadvice.UID())
         itemWithDelayAwareAdvice.adviceIndex[self.vendors_uid]['delay_started_on'] = datetime.now()
-        itemWithDelayAwareAdvice.updateLocalRoles()
+        itemWithDelayAwareAdvice.update_local_roles()
         # found for now
         itemWithDelayAwareAdvice.adviceIndex[self.vendors_uid]['delay_started_on'] = datetime(2016, 1, 1)
         self.assertTrue(self.catalog(**query)[0].UID == itemWithDelayAwareAdvice.UID())
@@ -517,7 +517,7 @@ class testViews(PloneMeetingTestCase):
         itemWithDelayAwareAdvice.reindexObject()
         self.assertTrue(self.catalog(**query)[0].UID == itemWithDelayAwareAdvice.UID())
         # but once updated, it is not found anymore
-        itemWithDelayAwareAdvice.updateLocalRoles()
+        itemWithDelayAwareAdvice.update_local_roles()
         self.assertTrue(not self.catalog(**query))
 
     def test_pm_UpdateDelayAwareAdvicesComputeQuery(self):
@@ -1291,7 +1291,7 @@ class testViews(PloneMeetingTestCase):
             'Ref. 20190118/6', 'Ref. 20190118/7', 'Ref. 20190118/8', 'Ref. 20190118/9', 'Ref. 20190118/10']
         self.assertEqual(right_ordered_items,
                          [item1, item2, item3, item4, item5, item6, item7, item8, item9, item10])
-        self.assertEqual(meeting.getItems(ordered=True), right_ordered_items)
+        self.assertEqual(meeting.get_items(ordered=True), right_ordered_items)
         self.assertEqual([item.getItemReference() for item in right_ordered_items], right_item_references)
 
         # change some items order using the @@change-item-order
@@ -1305,7 +1305,7 @@ class testViews(PloneMeetingTestCase):
         view('number', '2')
         view = item10.restrictedTraverse('@@change-item-order')
         view('number', '7')
-        mixed_items = meeting.getItems(ordered=True)
+        mixed_items = meeting.get_items(ordered=True)
         self.assertEqual(mixed_items,
                          [item7, item8, item3, item4, item5, item2, item10, item6, item1, item9])
         # references are correct
@@ -1314,7 +1314,7 @@ class testViews(PloneMeetingTestCase):
         view = meeting.restrictedTraverse('@@reorder-items')
         view()
         # order and references are correct
-        self.assertEqual(meeting.getItems(ordered=True), right_ordered_items)
+        self.assertEqual(meeting.get_items(ordered=True), right_ordered_items)
         self.assertEqual([item.getItemReference() for item in right_ordered_items], right_item_references)
 
     def test_pm_DisplayGroupUsersView(self):
@@ -1440,13 +1440,13 @@ class testViews(PloneMeetingTestCase):
         form = meeting.restrictedTraverse('@@store-items-template-as-annex-batch-action')
 
         # store annex for 3 first items
-        first_3_item_uids = [item.UID for item in meeting.getItems(ordered=True, theObjects=False)[0:3]]
+        first_3_item_uids = [item.UID for item in meeting.get_items(ordered=True, theObjects=False)[0:3]]
         self.request.form['form.widgets.uids'] = ','.join(first_3_item_uids)
         self.request.form['form.widgets.pod_template'] = 'itemTemplate__output_format__odt'
         form.update()
         form.handleApply(form, None)
         itemTemplateId = cfg.podtemplates.itemTemplate.getId()
-        items = meeting.getItems(ordered=True)
+        items = meeting.get_items(ordered=True)
         # 3 first item have the stored annex
         for i in range(0, 3):
             annexes = get_annexes(items[i])
@@ -1459,7 +1459,7 @@ class testViews(PloneMeetingTestCase):
 
         # call again with next 3 uids
         form = meeting.restrictedTraverse('@@store-items-template-as-annex-batch-action')
-        next_3_item_uids = [item.UID for item in meeting.getItems(ordered=True, theObjects=False)[3:6]]
+        next_3_item_uids = [item.UID for item in meeting.get_items(ordered=True, theObjects=False)[3:6]]
         self.request.form['form.widgets.uids'] = ','.join(next_3_item_uids)
         form.brains = None
         form.update()
@@ -1474,7 +1474,7 @@ class testViews(PloneMeetingTestCase):
 
         # call again, last is stored and it does not fail when no items left
         form = meeting.restrictedTraverse('@@store-items-template-as-annex-batch-action')
-        last_item_uid = meeting.getItems(ordered=True, theObjects=False)[-1].UID
+        last_item_uid = meeting.get_items(ordered=True, theObjects=False)[-1].UID
         self.request.form['form.widgets.uids'] = last_item_uid
         form.brains = None
         form.update()
@@ -1486,7 +1486,7 @@ class testViews(PloneMeetingTestCase):
 
         # call a last time, when nothing to do, nothing is done
         form = meeting.restrictedTraverse('@@store-items-template-as-annex-batch-action')
-        item_uids = [item.UID for item in meeting.getItems(ordered=True, theObjects=False)]
+        item_uids = [item.UID for item in meeting.get_items(ordered=True, theObjects=False)]
         self.request.form['form.widgets.uids'] = item_uids
         form.update()
         form.handleApply(form, None)
@@ -1522,7 +1522,7 @@ class testViews(PloneMeetingTestCase):
         # not available to others
         self._setPowerObserverStates(field_name='meeting_states',
                                      states=(self._stateMappingFor('frozen', meta_type='Meeting'),))
-        meeting.updateLocalRoles()
+        meeting.update_local_roles()
         self.changeUser('powerobserver1')
         self.assertTrue(self.hasPermission(View, meeting))
         self.assertFalse(form.available())
@@ -1534,7 +1534,7 @@ class testViews(PloneMeetingTestCase):
         self.assertFalse(form.available())
 
     def test_pm_UpdateLocalRolesBatchActionForm(self):
-        """This will call updateLocalRoles on selected elements."""
+        """This will call.update_local_roles on selected elements."""
         cfg = self.meetingConfig
         self._setPowerObserverStates(states=())
         powerobservers = '{0}_powerobservers'.format(cfg.getId())
@@ -1893,7 +1893,7 @@ class testViews(PloneMeetingTestCase):
         self.presentItem(publicItem2)
         self.presentItem(secretItem3)
         self.assertEqual(
-            meeting.getItems(ordered=True),
+            meeting.get_items(ordered=True),
             [secretItem1, publicItem1, secretItem2, publicItem2, secretItem3])
 
         self.changeUser('restrictedpowerobserver1')

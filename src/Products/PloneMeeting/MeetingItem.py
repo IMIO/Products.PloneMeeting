@@ -5168,7 +5168,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            that all advices will be NOT_GIVEN_ADVICE_VALUE again.
            If p_triggered_by_transition is given, we know that the advices are
            updated because of a workflow transition, we receive the transition name.
-           WARNING : this method is a sub-method of self.updateLocalRoles and is not supposed
+           WARNING : this method is a sub-method of self.update_local_roles and is not supposed
            to be called separately unless you know what you are doing!  Indeed, as this method involves
            localRoles management, various methods update localRoles sometimes same localRoles.'''
         # bypass advice update if we are pasting items containing advices
@@ -5560,7 +5560,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             if removedInheritedAdviserUids:
                 for removedInheritedAdviserUid in removedInheritedAdviserUids:
                     back_obj.adviceIndex[removedInheritedAdviserUid]['inherited'] = False
-                back_obj.updateLocalRoles()
+                back_obj.update_local_roles()
 
         # notify that advices have been updated so subproducts
         # may interact if necessary
@@ -5774,8 +5774,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         userId = api.user.get_current().getId()
         self.manage_delLocalRoles([userId])
         self.manage_addLocalRoles(userId, ('Owner',))
-        self.updateLocalRoles(isCreated=True,
-                              inheritedAdviserUids=kwargs.get('inheritedAdviserUids', []))
+        self.update_local_roles(isCreated=True,
+                                inheritedAdviserUids=kwargs.get('inheritedAdviserUids', []))
         # clean borg.localroles caching
         cleanMemoize(self, prefixes=['borg.localrole.workspace.checkLocalRolesAllowed'])
         # Apply potential transformations to richtext fields
@@ -5803,9 +5803,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('at_post_edit_script')
 
     def at_post_edit_script(self):
-        self.updateLocalRoles(invalidate=self.willInvalidateAdvices(),
-                              isCreated=False,
-                              avoid_reindex=True)
+        self.update_local_roles(invalidate=self.willInvalidateAdvices(),
+                                isCreated=False,
+                                avoid_reindex=True)
         # Apply potential transformations to richtext fields
         transformAllRichTextFields(self)
         # Add a line in history if historized fields have changed
@@ -5887,9 +5887,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     mmanagers_roles += ['Editor', 'Contributor']
                 self.manage_addLocalRoles(mmanagers_group_id, tuple(mmanagers_roles))
 
-    security.declareProtected(ModifyPortalContent, 'updateLocalRoles')
+    security.declareProtected(ModifyPortalContent, 'update_local_roles')
 
-    def updateLocalRoles(self, **kwargs):
+    def update_local_roles(self, **kwargs):
         '''Updates the local roles of this item, regarding :
            - the proposing group;
            - copyGroups;
@@ -5914,7 +5914,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # update local roles regarding copyGroups
         isCreated = kwargs.get('isCreated', None)
         self._updateCopyGroupsLocalRoles(isCreated, cfg, item_state)
-        # Update advices after updateLocalRoles because updateLocalRoles
+        # Update advices after update_local_roles because it
         # reinitialize existing local roles
         triggered_by_transition = kwargs.get('triggered_by_transition', None)
         invalidate = kwargs.get('invalidate', False)
@@ -5930,7 +5930,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         self._updatePowerObserversLocalRoles(cfg, item_state)
         # update budget impact editors local roles
         # actually it could be enough to do in in the onItemTransition but as it is
-        # always done after updateLocalRoles, we do it here as it is trivial
+        # always done after update_local_roles, we do it here as it is trivial
         self._updateBudgetImpactEditorsLocalRoles(cfg, item_state)
         # update group in charge local roles
         # we will give the current groupsInCharge _observers sub group access to this item
@@ -6652,7 +6652,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             if back_obj.adviceIndex.get(adviceId, None) and \
                back_obj.adviceIndex[adviceId]['inherited']:
                 back_obj.adviceIndex[adviceId]['inherited'] = False
-                back_obj.updateLocalRoles()
+                back_obj.update_local_roles()
 
     security.declarePublic('get_attendees')
 
@@ -6835,7 +6835,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''See doc in utils.py.'''
         # invalidate advices if needed
         if self.willInvalidateAdvices():
-            self.updateLocalRoles(invalidate=True)
+            self.update_local_roles(invalidate=True)
         # versionate given advices if necessary
         self._versionateAdvicesOnItemEdit()
         return set_field_from_ajax(self, fieldName, fieldValue)

@@ -292,7 +292,9 @@ CKEDITOR_MENUSTYLES_CUSTOMIZED_MSG = '/* Styles have been customized, do not rem
 # if a delay for giving an item is on saturday, we extends the delay to next avaialble day
 # so here, we define that weekday 5 (as weekday starts from 0) is unavailble
 DELAY_UNAVAILABLE_WEEKDAY_NUMBER = 5
-# Define the weekday mnemonics to match the date.weekday function
+# define the weekday mnemonics to match the date.weekday function
+# take care that Zope DateTime sunday is weekday number is 0
+# and python datetime sunday weekday number is 6...
 PY_DATETIME_WEEKDAYS = ('mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun')
 
 # default user password used when sample users are added to a PloneMeeting during install

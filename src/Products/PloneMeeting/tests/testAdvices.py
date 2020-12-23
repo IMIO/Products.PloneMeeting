@@ -495,7 +495,7 @@ class testAdvices(PloneMeetingTestCase):
         item.setOptionalAdvisers((
             self.developers_uid,
             '{0}__rowid__unique_id_123'.format(self.vendors_uid), ))
-        item.updateLocalRoles()
+        item.update_local_roles()
         # no advice to give as item is 'itemcreated'
         self.assertEqual(
             sorted(indexAdvisers.callable(item)),
@@ -694,7 +694,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertEqual(brains[0].UID, itemUID)
         # if a delay-aware advice delay is exceeded, it is indexed with an ending '2'
         item.adviceIndex[self.vendors_uid]['delay_started_on'] = datetime(2012, 01, 01)
-        item.updateLocalRoles()
+        item.update_local_roles()
         self.assertEqual(
             sorted(indexAdvisers.callable(item)),
             sorted(
@@ -717,13 +717,13 @@ class testAdvices(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         item1 = self.create('MeetingItem')
         item1.setOptionalAdvisers((self.developers_uid, self.vendors_uid, ))
-        item1.updateLocalRoles()
+        item1.update_local_roles()
         item2 = self.create('MeetingItem')
         item2.setOptionalAdvisers((self.developers_uid, ))
-        item2.updateLocalRoles()
+        item2.update_local_roles()
         item3 = self.create('MeetingItem')
         item3.setOptionalAdvisers(())
-        item3.updateLocalRoles()
+        item3.update_local_roles()
 
         # query not_given advices
         self.assertEquals(
@@ -867,14 +867,14 @@ class testAdvices(PloneMeetingTestCase):
         # 'developers' asked advice is still in item.optionalAdvisers
         self.assertTrue(self.developers_uid in item.getOptionalAdvisers())
 
-        # now make sure an adviser of 'vendors' may add his advice and updateLocalRoles
+        # now make sure an adviser of 'vendors' may add his advice and.update_local_roles
         # in MeetingItem._updateAdvices, this is why we call getAutomaticAdvisersData
         # with api.env.adopt_roles(['Reader', ])
         self.proposeItem(item)
-        item.updateLocalRoles()
+        item.update_local_roles()
         self.assertTrue(self.vendors_uid in item.adviceIndex)
         self.changeUser('pmReviewer2')
-        item.updateLocalRoles()
+        item.update_local_roles()
         # 'vendors' is still in adviceIndex, the TAL expr could be evaluated correctly
         self.assertTrue(self.vendors_uid in item.adviceIndex)
         self.assertEqual(item.getAdvicesGroupsInfosForUser(),
@@ -1233,14 +1233,14 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue(self.hasPermission(AddAdvice, item))
         # now make the delay exceeded and check again
         item.adviceIndex[self.vendors_uid]['delay_started_on'] = datetime(2012, 1, 1)
-        item.updateLocalRoles()
+        item.update_local_roles()
         # if delay is negative, we show complete delay
         self.assertEqual(item.getDelayInfosForAdvice(self.vendors_uid)['left_delay'], 5)
         self.assertEqual(item.getDelayInfosForAdvice(self.vendors_uid)['delay_status'], 'timed_out')
         self.assertFalse(self.hasPermission(AddAdvice, item))
         # recover delay, add the advice and check the 'edit' behaviour
         item.adviceIndex[self.vendors_uid]['delay_started_on'] = datetime.now()
-        item.updateLocalRoles()
+        item.update_local_roles()
         self.assertTrue(item.getDelayInfosForAdvice(self.vendors_uid)['left_delay'] > 0)
         self.assertTrue(self.hasPermission(AddAdvice, item))
         # add the advice
@@ -1255,7 +1255,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue(self.hasPermission(ModifyPortalContent, advice))
         # now make sure the advice is no more editable when delay is exceeded
         item.adviceIndex[self.vendors_uid]['delay_started_on'] = datetime(2012, 1, 1)
-        item.updateLocalRoles()
+        item.update_local_roles()
         # when delay is exceeded, left_delay is complete delay so we show it in red
         # we do not show the exceeded delay because it could be very large (-654?)
         # and represent nothing...
@@ -1371,7 +1371,7 @@ class testAdvices(PloneMeetingTestCase):
         # add pmAdviser1 to power observers
         self.changeUser('siteadmin')
         self._addPrincipalToGroup('pmAdviser1', '%s_powerobservers' % cfg.getId())
-        item.updateLocalRoles()
+        item.update_local_roles()
         self.changeUser('pmAdviser1')
         # pmAdviser1 can give advice for developers even if
         # not asked, aka not in item.adviceIndex
@@ -1396,7 +1396,7 @@ class testAdvices(PloneMeetingTestCase):
         self.changeUser('admin')
         self._addPrincipalToGroup('pmAdviser1', '{0}_advisers'.format(self.vendors_uid))
         cfg.setPowerAdvisersGroups((self.developers_uid, self.vendors_uid, ))
-        item.updateLocalRoles()
+        item.update_local_roles()
         # now as pmAdviser1 is adviser for vendors and vendors is a PowerAdviser,
         # he can add an advice for vendors
         self.changeUser('pmAdviser1')
@@ -1445,7 +1445,7 @@ class testAdvices(PloneMeetingTestCase):
         while not delay_started_on.weekday() == 0:
             delay_started_on = delay_started_on - timedelta(1)
         item.adviceIndex[self.vendors_uid]['delay_started_on'] = delay_started_on
-        item.updateLocalRoles()
+        item.update_local_roles()
         self.assertEqual(item.adviceIndex[self.vendors_uid]['delay_started_on'].weekday(), 0)
         # for now, weekends are days 5 and 6, so saturday and sunday
         self.assertEqual(self.tool.getNonWorkingDayNumbers(), [5, 6])
@@ -1458,7 +1458,7 @@ class testAdvices(PloneMeetingTestCase):
         # the method is ram.cached, check that it is correct when changed
         self.tool.notifyModified()
         self.assertEqual(self.tool.getNonWorkingDayNumbers(), [6, ])
-        item.updateLocalRoles()
+        item.update_local_roles()
         # this will decrease delay of one day
         self.assertEqual(limit_date_9_days - timedelta(1),
                          item.adviceIndex[self.vendors_uid]['delay_infos']['limit_date'])
@@ -1476,7 +1476,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertEqual(self.tool.getHolidaysAs_datetime(),
                          [datetime(2012, 5, 6), datetime(int(year), int(month), int(day)), ])
         # this should increase delay of one day, so as original limit_date_9_days
-        item.updateLocalRoles()
+        item.update_local_roles()
         self.assertEqual(limit_date_9_days, item.adviceIndex[self.vendors_uid]['delay_infos']['limit_date'])
         self.assertEqual(item.adviceIndex[self.vendors_uid]['delay_infos']['delay_status'], 'still_time')
 
@@ -1487,7 +1487,7 @@ class testAdvices(PloneMeetingTestCase):
         # the method getUnavailableWeekDaysNumbers is ram.cached, check that it is correct when changed
         self.tool.notifyModified()
         self.assertEqual(self.tool.getUnavailableWeekDaysNumbers(), [2, ])
-        item.updateLocalRoles()
+        item.update_local_roles()
         # this increase limit_date of one day, aka next available day
         self.assertEqual(limit_date_9_days + timedelta(1),
                          item.adviceIndex[self.vendors_uid]['delay_infos']['limit_date'])
@@ -1505,13 +1505,13 @@ class testAdvices(PloneMeetingTestCase):
         self.tool.notifyModified()
         # change 'delay_started_on' manually and check that last day, the advice is 'still_giveable'
         item.adviceIndex[self.vendors_uid]['delay_started_on'] = datetime.now() - timedelta(7)
-        item.updateLocalRoles()
+        item.update_local_roles()
         # we are the last day
         self.assertEqual(item.adviceIndex[self.vendors_uid]['delay_infos']['limit_date'].day, datetime.now().day)
         self.assertEqual(item.adviceIndex[self.vendors_uid]['delay_infos']['delay_status'], 'still_time')
         # one day more and it is not giveable anymore...
         item.adviceIndex[self.vendors_uid]['delay_started_on'] = datetime.now() - timedelta(8)
-        item.updateLocalRoles()
+        item.update_local_roles()
         self.assertTrue(item.adviceIndex[self.vendors_uid]['delay_infos']['limit_date'] < datetime.now())
         self.assertEqual(item.adviceIndex[self.vendors_uid]['delay_infos']['delay_status'], 'timed_out')
 
@@ -2546,7 +2546,7 @@ class testAdvices(PloneMeetingTestCase):
 
         # activate keepAccessToItemWhenAdvice, then item is visible again
         cfg.setKeepAccessToItemWhenAdvice('is_given')
-        item.updateLocalRoles()
+        item.update_local_roles()
         self.assertTrue(self.hasPermission(View, item))
 
         # access is only kept if advice was given
@@ -2571,7 +2571,7 @@ class testAdvices(PloneMeetingTestCase):
 
         # activate keepAccessToItemWhenAdvice, then item is visible again
         cfg.setKeepAccessToItemWhenAdvice('was_giveable')
-        item.updateLocalRoles()
+        item.update_local_roles()
         self.assertTrue(self.hasPermission(View, item))
 
         # access is also kept if advice was given
@@ -2594,7 +2594,7 @@ class testAdvices(PloneMeetingTestCase):
 
         # override MeetingConfig value
         self.vendors.keep_access_to_item_when_advice = 'is_given'
-        item.updateLocalRoles()
+        item.update_local_roles()
         self.assertTrue(self.hasPermission(View, item))
 
         # this does not interact with other given advices
@@ -2609,7 +2609,7 @@ class testAdvices(PloneMeetingTestCase):
         self.changeUser('pmReviewer2')
         self.vendors.keep_access_to_item_when_advice = 'use_meetingconfig_value'
         cfg.setKeepAccessToItemWhenAdvice('is_given')
-        item.updateLocalRoles()
+        item.update_local_roles()
         self.assertTrue(self.hasPermission(View, item))
 
         # use MeetingConfig value that is True
@@ -2619,7 +2619,7 @@ class testAdvices(PloneMeetingTestCase):
         # force disable keep access
         self.changeUser('pmReviewer2')
         self.vendors.keep_access_to_item_when_advice = 'default'
-        item.updateLocalRoles()
+        item.update_local_roles()
         self.assertFalse(self.hasPermission(View, item))
 
         # this does not interact with other given advices, still using MeetingConfig value
@@ -2633,7 +2633,7 @@ class testAdvices(PloneMeetingTestCase):
         self.changeUser('pmAdviser1')
         self.assertFalse(self.hasPermission(View, item))
         self.developers.keep_access_to_item_when_advice = 'was_giveable'
-        item.updateLocalRoles()
+        item.update_local_roles()
         self.assertTrue(self.hasPermission(View, item))
 
     def test_pm_AdviceAddImagePermission(self):
@@ -2771,7 +2771,7 @@ class testAdvices(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         item1 = self.create('MeetingItem')
         item1.setOptionalAdvisers((self.vendors_uid, '{0}__rowid__unique_id_123'.format(self.developers_uid)))
-        item1.updateLocalRoles()
+        item1.update_local_roles()
         self.changeUser('pmAdviser1')
         vendors_advice = createContentInContainer(
             item1,
@@ -2791,7 +2791,7 @@ class testAdvices(PloneMeetingTestCase):
         if addEndUsersAdvice:
             self._setupEndUsersPowerAdvisers()
             self.changeUser('pmAdviser1')
-            item1.updateLocalRoles()
+            item1.update_local_roles()
             endusers_advice = createContentInContainer(
                 item1,
                 'meetingadvice',
@@ -2831,7 +2831,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue(item3.adviceIndex[self.vendors_uid]['inherited'])
         self.assertTrue(item3.adviceIndex[self.endUsers_uid]['inherited'])
         # after an additional _updateAdvices, infos are still correct
-        item3.updateLocalRoles()
+        item3.update_local_roles()
         self.assertEqual(len(item3.adviceIndex), 3)
         self.assertTrue(item3.adviceIndex[self.developers_uid]['inherited'])
         self.assertTrue(item3.adviceIndex[self.vendors_uid]['inherited'])
@@ -3154,8 +3154,8 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue(
             item2.restrictedTraverse('@@advices-icons-infos')(
                 adviceType='positive'))
-        # following updateLocalRoles are correct
-        item2.updateLocalRoles()
+        # following.update_local_roles are correct
+        item2.update_local_roles()
         item2._update_after_edit()
         self.assertTrue(
             item2.restrictedTraverse('@@advices-icons')())
@@ -3202,7 +3202,7 @@ class testAdvices(PloneMeetingTestCase):
         item4 = item2.clone(setCurrentAsPredecessor=True, inheritAdvices=True)
         item4.setOptionalAdvisers(('{0}__rowid__unique_id_123'.format(self.developers_uid), ))
         del item4.adviceIndex[self.vendors_uid]
-        item4.updateLocalRoles()
+        item4.update_local_roles()
         self.assertFalse(self.vendors_uid in item4.adviceIndex)
         self.assertEqual(item4.getInheritedAdviceInfo(self.developers_uid)['adviceHolder'], item1)
 
@@ -3379,7 +3379,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertRaises(Unauthorized, form.handleSaveRemoveAdviceInheritance, form, None)
         # add item review_state to itemAdviceEditStates
         cfg.setItemAdviceEditStates((item2.query_state(),))
-        item2.updateLocalRoles()
+        item2.update_local_roles()
         # still raises as removing advice inheritance not enabled in MeetingConfig
         self.assertRaises(Unauthorized, form.handleSaveRemoveAdviceInheritance, form, None)
         cfg.setInheritedAdviceRemoveableByAdviser(True)

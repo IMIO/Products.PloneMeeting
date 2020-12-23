@@ -83,7 +83,7 @@ def do(action, event):
     actionMethod(event)
     if objectType == 'MeetingItem':
         # Update every local roles : advices, copyGroups, powerObservers, budgetImpactEditors, ...
-        event.object.updateLocalRoles(triggered_by_transition=event.transition.id)
+        event.object.update_local_roles(triggered_by_transition=event.transition.id)
         # Send mail regarding advices to give if relevant
         event.object.sendStateDependingMailIfRelevant(event.old_state.id, event.new_state.id)
         # Send mail if relevant
@@ -216,7 +216,7 @@ def onMeetingBeforeTransition(meeting, event):
         if 'return_to_proposing_group' in cfg.getWorkflowAdaptations():
             # raise a WorkflowException in case there are items still in state 'returned_to_proposing_group'
             additional_catalog_query = {'review_state': 'returned_to_proposing_group'}
-            if meeting.getItems(theObjects=False, additional_catalog_query=additional_catalog_query):
+            if meeting.get_items(theObjects=False, additional_catalog_query=additional_catalog_query):
                 msg = _('Can not close a meeting containing items returned to proposing group!')
                 raise WorkflowException(msg)
 
@@ -609,7 +609,7 @@ def item_added_or_initialized(item):
 
     # avoid multiple initialization
     # when using restapi for example, this empties adviceIndex
-    # because init/updateLocalRoles/init
+    # because init/update_local_roles/init
     if hasattr(item, '_v_already_initialized'):
         return
     item._v_already_initialized = True
@@ -731,7 +731,7 @@ def onAdviceAdded(advice, event):
         advice._updateAdviceRowId()
 
     item = advice.getParentNode()
-    item.updateLocalRoles()
+    item.update_local_roles()
 
     _addManagedPermissions(advice)
 
@@ -764,7 +764,7 @@ def onAdviceModified(advice, event):
     advice._updateAdviceRowId()
 
     item = advice.getParentNode()
-    item.updateLocalRoles()
+    item.update_local_roles()
 
     # make sure external images used in RichText fields are stored locally
     storeImagesLocallyDexterity(advice)
@@ -803,7 +803,7 @@ def onAdviceRemoved(advice, event):
         return
 
     try:
-        item.updateLocalRoles()
+        item.update_local_roles()
     except TypeError:
         # while removing an advice, if it was not anymore in the advice index
         # it can raise a TypeError, this can be the case when using ToolPloneMeeting.pasteItems
@@ -828,7 +828,7 @@ def onAnnexAdded(annex, event):
                                  annex,
                                  decisionRelated=annex.portal_type == 'annexDecision' and True or False)
             if annex.portal_type == 'annex' and parent.willInvalidateAdvices():
-                parent.updateLocalRoles(invalidate=True)
+                parent.update_local_roles(invalidate=True)
 
             # Potentially I must notify MeetingManagers through email.
             sendMailIfRelevant(parent, 'annexAdded', 'meetingmanagers', isSuffix=True)
@@ -883,7 +883,7 @@ def onAnnexRemoved(annex, event):
                              annex,
                              decisionRelated=annex.portal_type == 'annexDecision' and True or False)
         if parent.willInvalidateAdvices():
-            parent.updateLocalRoles(invalidate=True)
+            parent.update_local_roles(invalidate=True)
 
     # update modification date and SearchableText
     notifyModifiedAndReindex(parent, extra_idxs=['SearchableText', 'hasAnnexesToPrint', 'hasAnnexesToSign'])
@@ -1038,7 +1038,7 @@ def onMeetingModified(meeting, event):
     # update every items itemReference if needed
     meeting.update_item_references(check_needed=True)
     # update local roles as power observers local roles may vary depending on meeting_access_on
-    meeting.updateLocalRoles()
+    meeting.update_local_roles()
     # invalidate last meeting modified
     invalidate_cachekey_volatile_for(
         'Products.PloneMeeting.Meeting.modified', get_again=True)

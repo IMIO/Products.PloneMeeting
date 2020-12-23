@@ -121,10 +121,6 @@ monthsIds = {1: 'month_jan', 2: 'month_feb', 3: 'month_mar', 4: 'month_apr',
              5: 'month_may', 6: 'month_jun', 7: 'month_jul', 8: 'month_aug',
              9: 'month_sep', 10: 'month_oct', 11: 'month_nov', 12: 'month_dec'}
 
-weekdaysIds = {0: 'weekday_sun', 1: 'weekday_mon', 2: 'weekday_tue',
-               3: 'weekday_wed', 4: 'weekday_thu', 5: 'weekday_fri',
-               6: 'weekday_sat'}
-
 adaptables = {
     'MeetingItem': {'method': 'getItem', 'interface': IMeetingItemCustom},
     'Meeting': {'method': 'getMeeting', 'interface': IMeetingCustom},

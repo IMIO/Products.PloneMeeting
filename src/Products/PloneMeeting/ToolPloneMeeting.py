@@ -81,7 +81,6 @@ from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getCustomSchemaFields
 from Products.PloneMeeting.utils import monthsIds
-from Products.PloneMeeting.utils import weekdaysIds
 from Products.PloneMeeting.utils import workday
 from Products.ZCatalog.Catalog import AbstractCatalogBrain
 from ZODB.POSException import ConflictError
@@ -898,9 +897,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     def listWeekDays(self):
         '''Method returning list of week days used in vocabularies.'''
         res = DisplayList()
-        # we do not use utils.weekdaysIds because it is related
-        # to Zope DateTime where sunday weekday number is 0
-        # and python datetime where sunday weekday number is 6...
         for day in PY_DATETIME_WEEKDAYS:
             res.add(day,
                     translate('weekday_%s' % day,
@@ -1297,9 +1293,11 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             fmt = '%d %mt %Y'
         if with_week_day_name:
             fmt = fmt.replace('%d', '%A %d')
-            dow = translate(weekdaysIds[date.dow()], target_language=lang,
-                            domain='plonelocales', context=self.REQUEST)
-            fmt = fmt.replace('%A', dow)
+            weekday = translate('weekday_%s' % PY_DATETIME_WEEKDAYS[date.weekday()],
+                                target_language=lang,
+                                domain='plonelocales',
+                                context=self.REQUEST)
+            fmt = fmt.replace('%A', weekday)
         if with_hour and (date.hour or date.minute):
             fmt += ' (%H:%M)'
         # Apply p_fmt to p_aDate. Manage first special symbols corresponding to
@@ -1381,7 +1379,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                          brain.portal_type,
                          '/'.join(meeting.getPhysicalPath())))
             i = i + 1
-            for item in meeting.getItems(ordered=True):
+            for item in meeting.get_items(ordered=True):
                 annexes = get_annexes(item)
                 for annex in annexes:
                     self._removeAnnexPreviewFor(item, annex)
@@ -1402,22 +1400,23 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         '''Does given p_context contains annexes of type p_portal_type?'''
         return bool(get_categorized_elements(context, portal_type=portal_type))
 
-    security.declareProtected(ModifyPortalContent, 'updateAllLocalRoles')
+    security.declareProtected(ModifyPortalContent, 'update_all_local_roles')
 
-    def updateAllLocalRoles(self,
-                            meta_type=('Meeting', 'MeetingItem'),
-                            portal_type=(),
-                            log=True,
-                            **kw):
+    def update_all_local_roles(self,
+                               meta_type=('Meeting', 'MeetingItem'),
+                               portal_type=(),
+                               log=True,
+                               **kw):
         '''Update local_roles on Meeting and MeetingItem,
            this is used to reflect configuration changes regarding access.'''
         startTime = time.time()
         catalog = api.portal.get_tool('portal_catalog')
-        query = {}
+        # meta_type does not work in DX, use object_provides
+        query = {'object_provides': []}
         if 'Meeting' in meta_type:
-            query['object_provides'] = IMeeting.__identifier__
-        elif 'MeetingItem' in meta_type:
-            query['object_provides'] = IMeetingItem.__identifier__
+            query['object_provides'].append(IMeeting.__identifier__)
+        if 'MeetingItem' in meta_type:
+            query['object_provides'].append(IMeetingItem.__identifier__)
         if portal_type:
             query['portal_type'] = portal_type
         query.update(kw)
@@ -1435,7 +1434,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                          brain.portal_type,
                          '/'.join(itemOrMeeting.getPhysicalPath())))
             i = i + 1
-            indexes_to_update = itemOrMeeting.updateLocalRoles(avoid_reindex=True)
+            indexes_to_update = itemOrMeeting.update_local_roles(avoid_reindex=True)
             # if auto rules regarding copyGroups or groupsInCharge changed
             # we could have more or less copyGroups/groupsInCharge so reindex relevant indexes
             if indexes_to_update:
@@ -1471,7 +1470,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                          brain.portal_type,
                          '/'.join(itemOrMeeting.getPhysicalPath())))
             i = i + 1
-            indexes_to_update = itemOrMeeting.updateLocalRoles(avoid_reindex=True)
+            indexes_to_update = itemOrMeeting.update_local_roles(avoid_reindex=True)
             # if auto rules regarding copyGroups or groupsInCharge changed
             # we could have more or less copyGroups/groupsInCharge so reindex relevant indexes
             if indexes_to_update:

@@ -246,7 +246,7 @@ class MeetingWorkflowActions(object):
         # remove annex previews of every items if relevant
         if self.cfg.getRemoveAnnexesPreviewsOnMeetingClosure():
             # add logging message to fingerpointing log
-            for item in self.context.getItems(ordered=True):
+            for item in self.context.get_items(ordered=True):
                 annexes = get_annexes(item)
                 if annexes:
                     for annex in annexes:
@@ -282,7 +282,7 @@ class MeetingWorkflowActions(object):
 
     def doBackToPublished(self, stateChange):
         wfTool = api.portal.get_tool('portal_workflow')
-        for item in self.context.getItems():
+        for item in self.context.get_items():
             if item.query_state() == 'itemfrozen':
                 wfTool.doActionFor(item, 'backToItemPublished')
                 if item.isLate():
@@ -1355,7 +1355,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             label = 'pre_date_after_meeting_date'
             return translate(label, domain='PloneMeeting', context=self.REQUEST)
 
-    def getItems(self,
+    def get_items(self,
                  uids=[],
                  listTypes=[],
                  ordered=False,
@@ -1416,11 +1416,11 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
 
     def getItemsInOrder(self, late=False, uids=[]):
         """Deprecated, use Meeting.getItems instead."""
-        logger.warn('Meeting.getItemsInOrder is deprecated, use Meeting.getItems(ordered=True) instead.')
+        logger.warn('Meeting.getItemsInOrder is deprecated, use Meeting.get_items(ordered=True) instead.')
         listTypes = late and ['late'] or ['normal']
         if '' in uids:
             uids.remove('')
-        return self.getItems(uids=uids, listTypes=listTypes, ordered=True)
+        return self.get_items(uids=uids, listTypes=listTypes, ordered=True)
 
     security.declarePublic('getItemByNumber')
 
@@ -1527,7 +1527,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         else:
             item.setListType(item.adapted().getListTypeNormalValue(self))
             toDiscussValue = cfg.getToDiscussDefault()
-        items = self.getItems(ordered=True)
+        items = self.get_items(ordered=True)
         # Set the correct value for the 'toDiscuss' field if required
         if cfg.getToDiscussSetOnItemInsert():
             item.setToDiscuss(toDiscussValue)
@@ -1614,7 +1614,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         # Remember the item number now; once the item will not be in the meeting
         # anymore, it will loose its number.
         itemNumber = item.getItemNumber()
-        items = self.getItems()
+        items = self.get_items()
         try:
             item._update_meeting_link(meeting_uid=None)
             items.remove(item)
@@ -1690,7 +1690,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
 
         # we query items from startNumber to last item of the meeting
         # moreover we getItems unrestricted to be sure we have every elements
-        brains = self.getItems(
+        brains = self.get_items(
             ordered=True,
             theObjects=False,
             unrestricted=True,
@@ -1917,7 +1917,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         transformAllRichTextFields(self)
         # Make sure we have 'text/html' for every Rich fields
         forceHTMLContentTypeForEmptyRichFields(self)
-        self.updateLocalRoles()
+        self.update_local_roles()
         # activate the faceted navigation
         enableFacetedDashboardFor(self,
                                   xmlpath=os.path.dirname(__file__) +
@@ -1963,7 +1963,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         # update every items itemReference if needed
         self.updateItemReferences(check_needed=True)
         # update local roles as power observers local roles may vary depending on meeting_access_on
-        self.updateLocalRoles()
+        self.update_local_roles()
         # Call sub-product-specific behaviour
         self.adapted().onEdit(isCreated=False)
         # invalidate last meeting modified
@@ -1979,7 +1979,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         if need_reindex:
             self.reindexObject()
 
-    def updateLocalRoles(self, **kwargs):
+    def update_local_roles(self, **kwargs):
         """Update various local roles."""
         # remove every localRoles then recompute
         old_local_roles = self.__ac_local_roles__.copy()
@@ -2162,7 +2162,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         if item.meta_type == 'Meeting':
             member = api.user.get_current()
             if member.has_role('Manager'):
-                item.REQUEST.set('items_to_remove', item.getItems())
+                item.REQUEST.set('items_to_remove', item.get_items())
         OrderedBaseFolder.manage_beforeDelete(self, item, container)
 
     security.declarePublic('showAttendeesFields')

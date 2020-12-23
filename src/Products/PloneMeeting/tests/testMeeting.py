@@ -2448,7 +2448,7 @@ class testMeeting(PloneMeetingTestCase):
         self.assertTrue(meeting.Title() == self.tool.format_date(meeting.date))
         self.assertTrue(meeting.getPlace() == 'Yet another place')
 
-    def test_pm_GetItems(self):
+    def test_pm_Get_items(self):
         '''Test the Meeting.getItems method.'''
         self.changeUser('pmManager')
         meeting = self._createMeetingWithItems()
@@ -2967,7 +2967,7 @@ class testMeeting(PloneMeetingTestCase):
         meeting = self.create('Meeting')
         # for now, pmCreator2 does not have any local_roles
         self.assertFalse('pmCreator2' in meeting.__ac_local_roles__)
-        meeting.updateLocalRoles()
+        meeting.update_local_roles()
         self.assertFalse('pmCreator2' in meeting.__ac_local_roles__)
         # item is found by a query
         self.assertTrue(self.catalog(UID=meeting.UID()))
@@ -2976,9 +2976,9 @@ class testMeeting(PloneMeetingTestCase):
         self.changeUser('pmCreator2')
         self.assertFalse(self.hasPermission(ModifyPortalContent, meeting))
 
-        # load subscriber and updateLocalRoles
+        # load subscriber and.update_local_roles
         zcml.load_config('tests/events.zcml', products_plonemeeting)
-        meeting.updateLocalRoles()
+        meeting.update_local_roles()
         # pmCreator2 may edit now
         self.assertTrue('pmCreator2' in meeting.__ac_local_roles__)
         self.assertTrue(self.hasPermission(ModifyPortalContent, meeting))

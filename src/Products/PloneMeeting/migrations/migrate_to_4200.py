@@ -268,7 +268,7 @@ class Migrate_To_4200(Migrator):
         # update holidays
         self.updateHolidays()
 
-        self.tool.updateAllLocalRoles(meta_type=('MeetingItem', ))
+        self.tool.update_all_local_roles(meta_type=('MeetingItem', ))
         self.refreshDatabase(workflows=True, catalogsToUpdate=[])
 
 

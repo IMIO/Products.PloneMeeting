@@ -108,7 +108,7 @@ class testAnnexes(PloneMeetingTestCase):
         # give budget impact editors view on item
         cfg.setItemBudgetInfosStates([item_initial_state])
         cfg.setItemAnnexConfidentialVisibleFor(('configgroup_budgetimpacteditors', ))
-        item.updateLocalRoles()
+        item.update_local_roles()
         # give budget impact editors view on item
         # by default, budget impact editors local role will only give ability to edit budget infos, not to view item
         item.__ac_local_roles__['{0}_{1}'.format(cfg.getId(), BUDGETIMPACTEDITORS_GROUP_SUFFIX)] = ['Reader']
@@ -126,7 +126,7 @@ class testAnnexes(PloneMeetingTestCase):
 
         self._setPowerObserverStates(states=(item_initial_state, ))
         cfg.setItemAnnexConfidentialVisibleFor(('configgroup_powerobservers', ))
-        item.updateLocalRoles()
+        item.update_local_roles()
 
         self.changeUser('powerobserver1')
         self._checkElementConfidentialAnnexAccess(cfg, item, annexNotConfidential, annexConfidential,
@@ -141,7 +141,7 @@ class testAnnexes(PloneMeetingTestCase):
         self._setPowerObserverStates(observer_type='restrictedpowerobservers',
                                      states=(item_initial_state, ))
         cfg.setItemAnnexConfidentialVisibleFor(('configgroup_restrictedpowerobservers', ))
-        item.updateLocalRoles()
+        item.update_local_roles()
 
         self.changeUser('restrictedpowerobserver1')
         self._checkElementConfidentialAnnexAccess(cfg, item, annexNotConfidential, annexConfidential,
@@ -157,7 +157,7 @@ class testAnnexes(PloneMeetingTestCase):
         cfg.setItemAdviceEditStates((item_initial_state, ))
         cfg.setItemAnnexConfidentialVisibleFor(('reader_advices', ))
         item.setOptionalAdvisers((self.developers_uid, ))
-        item.updateLocalRoles()
+        item.update_local_roles()
 
         self.changeUser('pmAdviser1')
         self._checkElementConfidentialAnnexAccess(cfg, item, annexNotConfidential, annexConfidential,
@@ -173,7 +173,7 @@ class testAnnexes(PloneMeetingTestCase):
         cfg.setItemCopyGroupsStates((item_initial_state, ))
         cfg.setItemAnnexConfidentialVisibleFor(('reader_copy_groups', ))
         item.setCopyGroups((self.vendors_reviewers, ))
-        item.updateLocalRoles()
+        item.update_local_roles()
 
         self.changeUser('pmReviewer2')
         self._checkElementConfidentialAnnexAccess(cfg, item, annexNotConfidential, annexConfidential,
@@ -325,7 +325,7 @@ class testAnnexes(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         item.setOptionalAdvisers((self.vendors_uid, ))
-        item.updateLocalRoles()
+        item.update_local_roles()
         self.changeUser('pmReviewer2')
         advice = createContentInContainer(
             item,
@@ -370,7 +370,7 @@ class testAnnexes(PloneMeetingTestCase):
 
         cfg.setItemBudgetInfosStates([item_initial_state])
         cfg.setAdviceAnnexConfidentialVisibleFor(('configgroup_budgetimpacteditors', ))
-        item.updateLocalRoles()
+        item.update_local_roles()
         # give budget impact editors view on item
         # by default, budget impact editors local role will only give ability to edit budget infos, not to view item
         item.__ac_local_roles__['{0}_{1}'.format(cfg.getId(), BUDGETIMPACTEDITORS_GROUP_SUFFIX)] = ['Reader']
@@ -404,7 +404,7 @@ class testAnnexes(PloneMeetingTestCase):
         cfg.setItemCopyGroupsStates((item_initial_state, ))
         cfg.setAdviceAnnexConfidentialVisibleFor(('reader_copy_groups', ))
         item.setCopyGroups((self.vendors_reviewers, ))
-        item.updateLocalRoles()
+        item.update_local_roles()
 
         self.changeUser('pmReviewer2')
         self._checkElementConfidentialAnnexAccess(cfg, advice, annexNotConfidential, annexConfidential,
@@ -424,7 +424,7 @@ class testAnnexes(PloneMeetingTestCase):
         cfg.setAdviceAnnexConfidentialVisibleFor(('reader_groupsincharge', ))
         update_all_categorized_elements(item)
         self._setUpGroupsInCharge(item)
-        item.updateLocalRoles()
+        item.update_local_roles()
 
         self.changeUser('pmReviewer2')
         self._checkElementConfidentialAnnexAccess(cfg, advice, annexNotConfidential, annexConfidential,
@@ -438,7 +438,7 @@ class testAnnexes(PloneMeetingTestCase):
 
         self._setPowerObserverStates(states=(item_initial_state, ))
         cfg.setAdviceAnnexConfidentialVisibleFor(('configgroup_powerobservers', ))
-        item.updateLocalRoles()
+        item.update_local_roles()
 
         self.changeUser('powerobserver1')
         self._checkElementConfidentialAnnexAccess(cfg, advice, annexNotConfidential, annexConfidential,
@@ -453,7 +453,7 @@ class testAnnexes(PloneMeetingTestCase):
         self._setPowerObserverStates(observer_type='restrictedpowerobservers',
                                      states=(item_initial_state, ))
         cfg.setAdviceAnnexConfidentialVisibleFor(('configgroup_restrictedpowerobservers', ))
-        item.updateLocalRoles()
+        item.update_local_roles()
 
         self.changeUser('restrictedpowerobserver1')
         self._checkElementConfidentialAnnexAccess(cfg, advice, annexNotConfidential, annexConfidential,

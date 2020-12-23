@@ -830,7 +830,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(newItem.adviceIndex[self.vendors_uid]['inherited'])
         self.assertEqual(len(newItem.getGivenAdvices()), 0)
         # after an additional _updateAdvices, infos are still correct
-        newItem.updateLocalRoles()
+        newItem.update_local_roles()
         self.assertEqual(len(newItem.adviceIndex), 2)
         self.assertTrue(newItem.adviceIndex[self.developers_uid]['inherited'])
         self.assertTrue(newItem.adviceIndex[self.vendors_uid]['inherited'])
@@ -855,7 +855,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(len(newItem.getGivenAdvices()), 0)
 
         # after an additional _updateAdvices, infos are still correct
-        newItem.updateLocalRoles()
+        newItem.update_local_roles()
         self.assertEqual(len(newItem.adviceIndex), 1)
         self.assertTrue(newItem.adviceIndex[self.developers_uid]['inherited'])
 
@@ -865,7 +865,7 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg2.setItemAdviceEditStates([self._initial_state(newItem)])
         cfg2.setItemAdviceViewStates([self._initial_state(newItem)])
         newItem.setOptionalAdvisers((self.vendors_uid, self.developers_uid))
-        newItem.updateLocalRoles()
+        newItem.update_local_roles()
         # 'vendors' advice is asked and giveable but 'developers' is still the inherited one
         self.assertTrue(newItem.adviceIndex[self.developers_uid]['inherited'])
         self.assertFalse(newItem.adviceIndex[self.developers_uid]['advice_addable'])
@@ -1136,7 +1136,7 @@ class testMeetingItem(PloneMeetingTestCase):
         meeting = self.create('Meeting', date=now)
         self.presentItem(item)
         # presented in 'meeting'
-        self.assertTrue(item in meeting.getItems())
+        self.assertTrue(item in meeting.get_items())
         self.decideMeeting(meeting)
         self.do(item, 'accept')
         # has been sent and presented in createMeeting
@@ -1483,7 +1483,7 @@ class testMeetingItem(PloneMeetingTestCase):
         meeting.date = meeting.date + timedelta(days=1)
         meeting.reindexObject(idxs=['meeting_date'])
         self.assertEqual(self.tool.getMeetingConfig(meeting), cfg2)
-        self.assertEqual([anItem.getPrivacy() for anItem in meeting.getItems(ordered=True)],
+        self.assertEqual([anItem.getPrivacy() for anItem in meeting.get_items(ordered=True)],
                          ['public', 'public', 'public', 'secret', 'secret'])
         # insert an item using privacy 'secret'
         self.setMeetingConfig(cfg.getId())
@@ -1495,7 +1495,7 @@ class testMeetingItem(PloneMeetingTestCase):
         clonedItem2 = item2.cloneToOtherMeetingConfig(cfg2Id)
         self.assertEqual(clonedItem2.query_state(), 'presented')
         cleanRamCacheFor('Products.PloneMeeting.Meeting.getItems')
-        self.assertEqual([anItem.getPrivacy() for anItem in meeting.getItems(ordered=True)],
+        self.assertEqual([anItem.getPrivacy() for anItem in meeting.get_items(ordered=True)],
                          ['public', 'public', 'public', 'secret', 'secret', 'secret'])
 
     def test_pm_SendItemToOtherMCAutoReplacedFields(self):
@@ -1892,7 +1892,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # copyGroups are updated correctly
         self.vendors.as_copy_group_on = None
         self.changeUser('siteadmin')
-        self.tool.updateAllLocalRoles()
+        self.tool.update_all_local_roles()
         self.assertEqual(i5.autoCopyGroups,
                          ['auto__{0}'.format(self.developers_reviewers),
                           'auto__{0}'.format(self.developers_advisers)])
@@ -2023,7 +2023,7 @@ class testMeetingItem(PloneMeetingTestCase):
         i1 = self.create('MeetingItem')
         # add developers in optionalAdvisers
         i1.setOptionalAdvisers(self.developers_uid)
-        i1.updateLocalRoles()
+        i1.update_local_roles()
         for principalId, localRoles in i1.get_local_roles():
             if principalId.endswith('_advisers'):
                 self.failUnless(READER_USECASES['advices'] in localRoles)
@@ -2032,7 +2032,7 @@ class testMeetingItem(PloneMeetingTestCase):
             (self.developers_advisers, self.vendors_advisers))
         self.meetingConfig.setUseCopies(True)
         i1.setCopyGroups((self.developers_advisers, self.vendors_advisers))
-        i1.updateLocalRoles()
+        i1.update_local_roles()
         # first make sure that we still have 'developers_advisers' in local roles
         # because it is specified by copyGroups
         self.failUnless(self.developers_advisers in i1.__ac_local_roles__)
@@ -2046,7 +2046,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.failIf('Contributor' in i1.__ac_local_roles__[self.vendors_advisers])
         # now, remove developers in optionalAdvisers
         i1.setOptionalAdvisers(())
-        i1.updateLocalRoles()
+        i1.update_local_roles()
         # the 'copy groups' corresponding local role is still assigned because of copyGroups...
         for principalId, localRoles in i1.get_local_roles():
             if principalId == self.developers_advisers:
@@ -2145,9 +2145,9 @@ class testMeetingItem(PloneMeetingTestCase):
         meeting = self._createMeetingWithItems()
         # validated items are not viewable by 'powerobservers'
         # put an item back to validated
-        validatedItem = meeting.getItems()[0]
+        validatedItem = meeting.get_items()[0]
         self.do(validatedItem, 'backToValidated')
-        presentedItem = meeting.getItems()[0]
+        presentedItem = meeting.get_items()[0]
         self.changeUser(userThatCanSee)
         wf_name = self.wfTool.getWorkflowsFor(createdItem)[0].getId()
         createdItemInitialState = self.wfTool[wf_name].initial_state
@@ -2162,13 +2162,13 @@ class testMeetingItem(PloneMeetingTestCase):
         # powerobserver2 can not see anything in meetingConfig
         self.changeUser(userThatCanNotSee)
         self.failIf(self.hasPermission(View, (createdItem, presentedItem, validatedItem)))
-        # MeetingItem.updateLocalRoles does not break the functionnality...
+        # MeetingItem.update_local_roles does not break the functionnality...
         self.changeUser('pmManager')
         # check that the relevant powerobservers group is or not in the local_roles of the item
         powerObserversGroupId = "%s_%s" % (self.meetingConfig.getId(), 'powerobservers')
         self.failUnless(powerObserversGroupId in presentedItem.__ac_local_roles__)
         self.failIf(powerObserversGroupId in validatedItem.__ac_local_roles__)
-        validatedItem.updateLocalRoles()
+        validatedItem.update_local_roles()
         self.failUnless(powerObserversGroupId in presentedItem.__ac_local_roles__)
         self.changeUser(userThatCanSee)
         self.failIf(self.hasPermission(View, validatedItem))
@@ -2395,7 +2395,7 @@ class testMeetingItem(PloneMeetingTestCase):
         proposingGroup = item.getProposingGroup(theObject=True)
         self.assertFalse(proposingGroup.groups_in_charge)
         # this does not fail...
-        item.updateLocalRoles()
+        item.update_local_roles()
         self.assertFalse(self.vendors_observers in item.__ac_local_roles__)
 
         # define a group in charge
@@ -2404,13 +2404,13 @@ class testMeetingItem(PloneMeetingTestCase):
 
         # not right state in the configuration
         cfg.setItemGroupsInChargeStates([self._stateMappingFor('proposed')])
-        item.updateLocalRoles()
+        item.update_local_roles()
         self.assertFalse(self.vendors_observers in item.__ac_local_roles__)
 
         # right, back to correct configuration
         # check that changing item's state works, back to correct configuration
         cfg.setItemGroupsInChargeStates([self._stateMappingFor('itemcreated')])
-        item.updateLocalRoles()
+        item.update_local_roles()
         self.assertTrue(READER_USECASES['groupsincharge'] in item.__ac_local_roles__[self.vendors_observers])
         self.proposeItem(item)
         self.assertFalse(self.vendors_observers in item.__ac_local_roles__)
@@ -3264,7 +3264,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(meeting_before.number_of_items(), '7')
         self.assertEqual(meeting_before.first_item_number, -1)
         self.assertEqual(
-            meeting_before.getItems(ordered=True)[-1].getItemNumber(relativeTo='meetingConfig'),
+            meeting_before.get_items(ordered=True)[-1].getItemNumber(relativeTo='meetingConfig'),
             700)
         # itemNumber relativeTo itemsList/meeting does not change but relativeTo meetingConfig changed
         # for the normal item
@@ -3284,7 +3284,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(meeting_before.query_state(), 'closed')
         self.assertEqual(meeting_before.getFirstItemNumber(), 1)
         self.assertEqual(
-            meeting_before.getItems(ordered=True)[-1].getItemNumber(relativeTo='meetingConfig'),
+            meeting_before.get_items(ordered=True)[-1].getItemNumber(relativeTo='meetingConfig'),
             700)
         # getItemNumber is still behaving the same
         # for item
@@ -3310,23 +3310,23 @@ class testMeetingItem(PloneMeetingTestCase):
         # remove normal item number 3 and check others
         self.changeUser('admin')
         # we have 8 items, if we remove item number 5, others are correct
-        self.assertEqual(len(meeting.getItems(ordered=True)), 9)
+        self.assertEqual(len(meeting.get_items(ordered=True)), 9)
         self.assertEqual([anItem.getItemNumber(relativeTo='meeting') for anItem
-                         in meeting.getItems(ordered=True)],
+                         in meeting.get_items(ordered=True)],
                          [100, 200, 300, 400, 500, 600, 700, 800, 900])
         # relative to meetingConfig
         self.assertEqual([anItem.getItemNumber(relativeTo='meetingConfig') for anItem
-                         in meeting.getItems(ordered=True)],
+                         in meeting.get_items(ordered=True)],
                          [800, 900, 1000, 1100, 1200, 1300, 1400, 1500, 1600])
         # item is 5th of normal items
-        self.assertEqual(item.UID(), meeting.getItems(ordered=True)[4].UID())
+        self.assertEqual(item.UID(), meeting.get_items(ordered=True)[4].UID())
         self.portal.restrictedTraverse('@@delete_givenuid')(item.UID())
         self.assertEqual([anItem.getItemNumber(relativeTo='meeting') for anItem
-                         in meeting.getItems(ordered=True)],
+                         in meeting.get_items(ordered=True)],
                          [100, 200, 300, 400, 500, 600, 700, 800])
         # relative to meetingConfig
         self.assertEqual([anItem.getItemNumber(relativeTo='meetingConfig') for anItem
-                         in meeting.getItems(ordered=True)],
+                         in meeting.get_items(ordered=True)],
                          [800, 900, 1000, 1100, 1200, 1300, 1400, 1500])
 
     def test_pm_ListMeetingsAcceptingItems(self):
@@ -4018,7 +4018,7 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg = self.meetingConfig
         self.changeUser('pmManager')
         meeting = self._createMeetingWithItems()
-        items = meeting.getItems(ordered=True)
+        items = meeting.get_items(ordered=True)
         self.decideMeeting(meeting)
         # we will adapt item decision when the item is delayed
         item1 = items[0]
@@ -4109,7 +4109,7 @@ class testMeetingItem(PloneMeetingTestCase):
               'tal_expression': "python: imio_history_utils.getLastWFAction(context)['comments'] and "
                 "'<p>{0}</p>'.format(imio_history_utils.getLastWFAction(context)['comments']) or "
                 "'<p>Generic comment.</p>'"}, ))
-        item = meeting.getItems()[0]
+        item = meeting.get_items()[0]
         item.setDecision(self.decisionText)
         wf_comment = 'Delayed for this precise reason \xc3\xa9'
         # with comment in last WF transition
@@ -5035,8 +5035,8 @@ class testMeetingItem(PloneMeetingTestCase):
         # create a meeting, this will add recItem
         self.changeUser('pmManager')
         meeting = self.create('Meeting', date=DateTime('2015/05/05'))
-        self.assertEqual(len(meeting.getItems()), 1)
-        itemFromRecItems = meeting.getItems()[0]
+        self.assertEqual(len(meeting.get_items()), 1)
+        itemFromRecItems = meeting.get_items()[0]
         self.assertEqual(recItem.Title(), itemFromRecItems.Title())
         self.assertEqual(recItem.getAssociatedGroups(), itemFromRecItems.getAssociatedGroups())
 
@@ -6138,7 +6138,7 @@ class testMeetingItem(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         # for now, pmCreator2 does not have any local_roles
         self.assertFalse('pmCreator2' in item.__ac_local_roles__)
-        item.updateLocalRoles()
+        item.update_local_roles()
         self.assertFalse('pmCreator2' in item.__ac_local_roles__)
         # item is found by a query
         self.assertTrue(self.catalog(UID=item.UID()))
@@ -6148,9 +6148,9 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertFalse(self.hasPermission(View, item))
         self.assertFalse(self.catalog(UID=item.UID()))
 
-        # load subscriber and updateLocalRoles
+        # load subscriber and.update_local_roles
         zcml.load_config('tests/events.zcml', products_plonemeeting)
-        item.updateLocalRoles()
+        item.update_local_roles()
         # pmCreator2 has access now
         self.assertTrue('pmCreator2' in item.__ac_local_roles__)
         self.assertTrue(self.hasPermission(View, item))
@@ -7041,7 +7041,7 @@ class testMeetingItem(PloneMeetingTestCase):
         itemWFValidationLevels[0]['extra_suffixes'] = ['observers']
         cfg.setItemWFValidationLevels(itemWFValidationLevels)
         cfg.at_post_edit_script()
-        item.updateLocalRoles()
+        item.update_local_roles()
         self.assertTrue(self.hasPermission(View, item))
         self.assertTrue(self.hasPermission(ModifyPortalContent, item))
 
@@ -7154,7 +7154,7 @@ class testMeetingItem(PloneMeetingTestCase):
             item._sendAdviceToGiveMailIfRelevant('itemcreated', 'validated', debug=True), [])
         # set every groups as advisers so we check that email is not sent twice to same address
         item.setOptionalAdvisers(cfg.getSelectableAdvisers())
-        item.updateLocalRoles()
+        item.update_local_roles()
         # pmManager is in both groups but only notified one time
         self.assertTrue(self.developers_uid in item.adviceIndex)
         self.assertTrue(self.vendors_uid in item.adviceIndex)

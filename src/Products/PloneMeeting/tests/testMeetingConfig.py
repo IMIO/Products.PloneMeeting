@@ -1735,7 +1735,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.assertFalse(IConfigElement.providedBy(itemFromTemplate))
         # recurring item
         meeting = self.create('Meeting', date=DateTime('2019/03/11'))
-        recurring_item = meeting.getItems()[0]
+        recurring_item = meeting.get_items()[0]
         self.assertFalse(IConfigElement.providedBy(recurring_item))
 
     def test_pm_ConfigModifiedWhenConfigElementAddedModifiedRemoved(self):

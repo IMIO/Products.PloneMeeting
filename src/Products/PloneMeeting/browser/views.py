@@ -490,7 +490,7 @@ class MeetingReorderItems(BrowserView):
 
     def _recompute_items_order(self):
         """Get every items and order it by getItemInsertOrder."""
-        items = self.context.getItems(ordered=True)
+        items = self.context.get_items(ordered=True)
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
         # sort items by insertOrder then by date it was presented
@@ -655,7 +655,7 @@ class UpdateDelayAwareAdvicesView(BrowserView):
                 numberOfBrains,
                 '/'.join(item.getPhysicalPath())))
             i = i + 1
-            item.updateLocalRoles()
+            item.update_local_roles()
         logger.info('Done.')
 
 
@@ -2293,7 +2293,7 @@ class UpdateLocalRolesBatchActionForm(BaseBatchActionForm):
     def _apply(self, **data):
         """ """
         uids = listify_uids(data['uids'])
-        self.tool.updateAllLocalRoles(**{'UID': uids, 'log': False})
+        self.tool.update_all_local_roles(**{'UID': uids, 'log': False})
         msg = translate('update_selected_elements',
                         domain="PloneMeeting",
                         mapping={'number_of_elements': len(uids)},
@@ -2407,7 +2407,7 @@ class DisplayMeetingItemVoters(BrowserView):
 
     def getNonVotedItems(self):
         """Returns the list of items the voter_uid did not vote for."""
-        items = self.context.getItems(ordered=True)
+        items = self.context.get_items(ordered=True)
         res = {'public': [],
                'secret': []}
         for item in items:
@@ -2438,7 +2438,7 @@ class DisplayMeetingItemVoters(BrowserView):
     def getVotedItems(self):
         """ """
         non_voted_items = self.getNonVotedItems()
-        items = self.context.getItems(ordered=True)
+        items = self.context.get_items(ordered=True)
         res = {
             'public': [
                 item for item in items

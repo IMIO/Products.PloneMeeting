@@ -417,7 +417,7 @@ class PloneMeetingTestingHelpers:
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         item.setOptionalAdvisers((self.vendors_uid, ))
-        item.updateLocalRoles()
+        item.update_local_roles()
         self.changeUser('pmReviewer2')
         advice = createContentInContainer(
             item,
@@ -432,7 +432,7 @@ class PloneMeetingTestingHelpers:
         if not groups:
             groups = [self.vendors_uid]
         item.setGroupsInCharge(groups)
-        item.updateLocalRoles()
+        item.update_local_roles()
 
     def _tearDownGroupsInCharge(self, item):
         """If group in charge is overrided, it may be setup differently."""

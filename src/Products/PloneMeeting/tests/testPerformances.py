@@ -33,7 +33,7 @@ class testPerformances(PloneMeetingTestCase):
         self.decideMeeting(meeting)
         # in some wfs, deciding a meeting will accept every items...
         # set back items to the 'itemfrozen' state
-        for itemInMeeting in meeting.getItems():
+        for itemInMeeting in meeting.get_items():
             if itemInMeeting.query_state() == 'itemfrozen':
                 break
             self.do(itemInMeeting, 'backToItemFrozen')
@@ -165,7 +165,7 @@ class testPerformances(PloneMeetingTestCase):
     def _updateItemReferences(self, meeting, start_number=0):
         '''Helper method that actually compute every items itemReference for p_meeting.'''
         # set back every items reference to '' so the entire process including reindex of SearchableText is done
-        for item in meeting.getItems():
+        for item in meeting.get_items():
             item.setItemReference('')
         meeting.update_item_references(start_number=start_number)
 
@@ -230,13 +230,13 @@ class testPerformances(PloneMeetingTestCase):
         self.setMeetingConfig(cfg2Id)
         now = DateTime()
         meeting2 = self.create('Meeting', date=now + 1)
-        self.assertFalse(meeting2.getItems())
+        self.assertFalse(meeting2.get_items())
 
         # freeze the meeting, this will do the job
         self._freezeMeetingAndSendItemsToAnotherMC(meeting)
 
         # make sure meeting2 has items
-        self.assertEquals(len(meeting2.getItems()), 25)
+        self.assertEquals(len(meeting2.get_items()), 25)
 
     @timecall
     def _delaySeveralItems(self, meeting, uids):
@@ -300,7 +300,7 @@ class testPerformances(PloneMeetingTestCase):
     @timecall
     def _computeItemNumbersForMeeting(self, meeting):
         '''Helper method that actually compute item number for every items of the given p_meeting.'''
-        for item in meeting.getItems():
+        for item in meeting.get_items():
             item.getItemNumber(relativeTo='meetingConfig')
 
     def _setupForOrgs(self, number_of_orgs):
@@ -514,7 +514,7 @@ class testPerformances(PloneMeetingTestCase):
             self.meetingConfig.getCategories(userId='pmManager', caching=caching)
 
     def _setupItemsForUpdateLocalRoles(self, add_advices=True, add_annexes=True):
-        '''Call updateLocalRoles on items holding many annexes and advices.'''
+        '''Call.update_local_roles on items holding many annexes and advices.'''
         # configure several auto asked advices and manually asked advices
         cfg = self.meetingConfig
         self.changeUser('siteadmin')
@@ -555,7 +555,7 @@ class testPerformances(PloneMeetingTestCase):
         return items
 
     def test_pm_UpdateLocalRolesOn50ItemsWith0AnnexesAnd0Advices(self):
-        '''Call updateLocalRoles on items without any annexes or advices.'''
+        '''Call.update_local_roles on items without any annexes or advices.'''
         items = self._setupItemsForUpdateLocalRoles(add_advices=False,
                                                     add_annexes=False)
         number_of_advices = 0
@@ -569,16 +569,16 @@ class testPerformances(PloneMeetingTestCase):
             self.assertEqual(len(get_annexes(item)), number_of_annexes)
 
         pm_logger.info(
-            'Call 1 to updateLocalRoles on 50 items holding '
+            'Call 1 to.update_local_roles on 50 items holding '
             '{0} annexes and {1} auto asked advices.'.format(number_of_annexes, number_of_advices))
         self._updateItemLocalRoles(uids)
         pm_logger.info(
-            'Call 2 to updateLocalRoles on 50 items holding '
+            'Call 2 to.update_local_roles on 50 items holding '
             '{0} annexes and {1} auto asked advices.'.format(number_of_annexes, number_of_advices))
         self._updateItemLocalRoles(uids)
 
     def test_pm_UpdateLocalRolesOn50ItemsWith20AnnexesAnd0Advices(self):
-        '''Call updateLocalRoles on items with 20 annexes and 0 advices.'''
+        '''Call.update_local_roles on items with 20 annexes and 0 advices.'''
         items = self._setupItemsForUpdateLocalRoles(add_advices=False,
                                                     add_annexes=True)
         number_of_advices = 0
@@ -592,16 +592,16 @@ class testPerformances(PloneMeetingTestCase):
             self.assertEqual(len(get_annexes(item)), number_of_annexes)
 
         pm_logger.info(
-            'Call 1 to updateLocalRoles on 50 items holding '
+            'Call 1 to.update_local_roles on 50 items holding '
             '{0} annexes and {1} auto asked advices.'.format(number_of_annexes, number_of_advices))
         self._updateItemLocalRoles(uids)
         pm_logger.info(
-            'Call 2 to updateLocalRoles on 50 items holding '
+            'Call 2 to.update_local_roles on 50 items holding '
             '{0} annexes and {1} auto asked advices.'.format(number_of_annexes, number_of_advices))
         self._updateItemLocalRoles(uids)
 
     def test_pm_UpdateLocalRolesOn50ItemsWith0AnnexesAnd10Advices(self):
-        '''Call updateLocalRoles on items with 0 annexes and 10 advices.'''
+        '''Call.update_local_roles on items with 0 annexes and 10 advices.'''
         items = self._setupItemsForUpdateLocalRoles(add_advices=True,
                                                     add_annexes=False)
         number_of_advices = 10
@@ -614,16 +614,16 @@ class testPerformances(PloneMeetingTestCase):
         for item in items:
             self.assertEqual(len(get_annexes(item)), number_of_annexes)
         pm_logger.info(
-            'Call 1 to updateLocalRoles on 50 items holding '
+            'Call 1 to.update_local_roles on 50 items holding '
             '{0} annexes and {1} auto asked advices.'.format(number_of_annexes, number_of_advices))
         self._updateItemLocalRoles(uids)
         pm_logger.info(
-            'Call 2 to updateLocalRoles on 50 items holding '
+            'Call 2 to.update_local_roles on 50 items holding '
             '{0} annexes and {1} auto asked advices.'.format(number_of_annexes, number_of_advices))
         self._updateItemLocalRoles(uids)
 
     def test_pm_UpdateLocalRolesOn50ItemsWith20AnnexesAnd10Advices(self):
-        '''Call updateLocalRoles on items with 20 annexes and 10 advices.'''
+        '''Call.update_local_roles on items with 20 annexes and 10 advices.'''
         items = self._setupItemsForUpdateLocalRoles(add_advices=True,
                                                     add_annexes=True)
         number_of_advices = 10
@@ -637,18 +637,18 @@ class testPerformances(PloneMeetingTestCase):
             self.assertEqual(len(get_annexes(item)), number_of_annexes)
 
         pm_logger.info(
-            'Call 1 to updateLocalRoles on 50 items holding '
+            'Call 1 to.update_local_roles on 50 items holding '
             '{0} annexes and {1} auto asked advices.'.format(number_of_annexes, number_of_advices))
         self._updateItemLocalRoles(uids)
         pm_logger.info(
-            'Call 2 to updateLocalRoles on 50 items holding '
+            'Call 2 to.update_local_roles on 50 items holding '
             '{0} annexes and {1} auto asked advices.'.format(number_of_annexes, number_of_advices))
         self._updateItemLocalRoles(uids)
 
     @timecall
     def _updateItemLocalRoles(self, uids):
         '''Helper method that actually update local roles on items.'''
-        self.tool.updateAllLocalRoles(**{'UID': uids})
+        self.tool.update_all_local_roles(**{'UID': uids})
 
     def test_pm_DuplicateItemWith50Annexes(self):
         '''Duplicate an item containing 50 annexes.'''
