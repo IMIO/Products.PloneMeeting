@@ -377,13 +377,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
                          res2.workflow_history[item_wf_id][0]['review_state'])
 
         # now test while using newPortalType and WF initial_state is different in new WF
-        if 'items_come_validated' not in cfg2.listWorkflowAdaptations():
-            pm_logger.info(
-                "Could not test ToolPloneMeeting.pasteItem for items using different WF initial_states, "
-                "because WF adaptation 'items_come_validated' is not available for meetingConfig2.")
-            return
-        cfg2.setWorkflowAdaptations(('items_come_validated', ))
-        cfg2.at_post_edit_script()
+        self._disableItemValidationLevel(cfg2)
         res3 = self.tool.pasteItem(destFolder, copiedData, newPortalType=cfg2.getItemTypeName())
         self.assertTrue(isinstance(res3.workflow_history, PersistentMapping))
         self.assertFalse(item_wf_id in res3.workflow_history)
