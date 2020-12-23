@@ -46,9 +46,9 @@ class UnrestrictedMethodsView(BrowserView):
         # could be unaccessible to the current user, for example by default a
         # meeting in state 'created' is not viewable by items creators
         brains = catalog.unrestrictedSearchResults(portal_type=cfg.getMeetingTypeName(),
-                                                   getDate={'query': meeting.date,
-                                                            'range': 'max'},
-                                                   sort_on='getDate',
+                                                   meeting_date={'query': meeting.date,
+                                                                 'range': 'max'},
+                                                   sort_on='meeting_date',
                                                    sort_order='reverse')
         # while looking for previous meetings, the current meeting is
         # also returned so removes it from the brains

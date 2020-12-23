@@ -27,7 +27,7 @@ from collective.iconifiedcategory.browser.actionview import ToPrintChangeView
 from collective.iconifiedcategory.browser.tabview import CategorizedTabView
 from collective.iconifiedcategory.browser.views import CategorizedChildInfosView
 from collective.iconifiedcategory.browser.views import CategorizedChildView
-from DateTime import DateTime
+from datetime import datetime
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from imio.actionspanel.browser.viewlets import ActionsPanelViewlet
 from imio.actionspanel.browser.views import ActionsPanelView
@@ -466,8 +466,8 @@ class PMFacetedContainerView(FacetedDashboardView):
         """Make sure a user, even a Manager that is not the Zope Manager is redirected
            to it's own pmFolder if it is on the pmFolder of another user."""
         if not self.request.get('no_redirect') and self._redirectToNextMeeting():
-            meetingDate = DateTime(DateTime().strftime("%Y/%m/%d"))
-            next_meeting = get_next_meeting(meetingDate=meetingDate, cfg=self.cfg)
+            meetingDate = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+            next_meeting = get_next_meeting(meetingDate, cfg=self.cfg)
             if next_meeting:
                 self.request.RESPONSE.redirect(next_meeting.absolute_url())
         res = super(PMFacetedContainerView, self).__call__()

@@ -11,7 +11,6 @@ from datetime import timedelta
 from imio.helpers.cache import cleanRamCacheFor
 from imio.helpers.cache import invalidate_cachekey_volatile_for
 from imio.prettylink.interfaces import IPrettyLink
-from OFS.ObjectManager import BeforeDeleteException
 from persistent.list import PersistentList
 from persistent.mapping import PersistentMapping
 from plone import api
@@ -249,11 +248,7 @@ class Meeting(Container):
 
     MEETINGCLOSEDSTATES = ['closed']
 
-    # declarePublic so it is callable in item view template
-    # when the meeting is not viewable by the current user
-    security.declarePublic('getAssembly')
-
-    security.declarePublic('getPrettyLink')
+    security.declarePublic('get_pretty_link')
 
     def get_pretty_link(self,
                         prefixed=False,
@@ -1586,25 +1581,6 @@ class Meeting(Container):
         '''How much items in this meeting ?'''
         return str(len(self.get_raw_items()))
 
-    security.declarePrivate('manage_beforeDelete')
-
-    def manage_beforeDelete(self, item, container):
-        '''This is a workaround to avoid a Plone design problem where it is
-           possible to remove a folder containing objects you can not remove.'''
-        # If we are here, everything has already been checked before.
-        # Just check that the meeting is myself or a Plone Site.
-        # We can remove an meeting directly but not "through" his container.
-        if item.meta_type not in ('Plone Site', 'Meeting'):
-            user = api.user.get_current()
-            logger.warn(BEFOREDELETE_ERROR % (user.getId(), self.id))
-            raise BeforeDeleteException("can_not_delete_meeting_container")
-        # we are removing the meeting
-        if item.meta_type == 'Meeting':
-            member = api.user.get_current()
-            if member.has_role('Manager'):
-                item.REQUEST.set('items_to_remove', item.getItems())
-        OrderedBaseFolder.manage_beforeDelete(self, item, container)
-
     security.declarePublic('show_attendees_fields')
 
     def show_attendees_fields(self):
@@ -1677,7 +1653,7 @@ class Meeting(Container):
         catalog = api.portal.get_tool('portal_catalog')
         # find every meetings before searchMeetingsInterval days before self
         brains = catalog(portal_type=meeting_type_name,
-                         meeting_date={'query': self.date - interval,
+                         meeting_date={'query': self.date - timedelta(days=interval),
                                        'range': 'min'},
                          sort_on='meeting_date',
                          sort_order='reverse')

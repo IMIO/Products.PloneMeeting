@@ -81,6 +81,10 @@
               handler=".events.onMeetingMoved" />
 
   <subscriber for=".content.meeting.IMeeting
+                   OFS.interfaces.IObjectWillBeRemovedEvent"
+              handler=".events.onMeetingWillBeRemoved" />
+
+  <subscriber for=".content.meeting.IMeeting
                    zope.container.interfaces.IObjectRemovedEvent"
               handler=".events.onMeetingRemoved" />
 

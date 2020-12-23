@@ -186,7 +186,7 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
 
                 # display annexes
                 annexes = render_item_annexes(obj, tool)
-        elif obj.meta_type == 'Meeting':
+        elif obj.__class__.__name__ == 'Meeting':
             visibleColumns = cfg.getMeetingColumns()
             staticInfos = obj.restrictedTraverse('@@static-infos')(visibleColumns=visibleColumns)
             annexes += obj.restrictedTraverse('categorized-childs')(portal_type='annex')

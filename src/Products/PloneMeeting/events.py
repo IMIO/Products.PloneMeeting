@@ -34,6 +34,7 @@ from Products.PloneMeeting.config import ITEMTEMPLATESMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import ROOT_FOLDER
 from Products.PloneMeeting.config import TOOL_FOLDER_SEARCHES
+from Products.PloneMeeting.content.meeting import IMeeting
 from Products.PloneMeeting.interfaces import IConfigElement
 from Products.PloneMeeting.interfaces import IMeetingContent
 from Products.PloneMeeting.utils import _addManagedPermissions
@@ -1187,15 +1188,15 @@ def onDashboardCollectionAdded(collection, event):
 def _is_held_pos_uid_used_by(held_pos_uid, obj):
     """ """
     res = False
-    if obj.meta_type == 'MeetingConfig':
+    if obj.__class__.__name__ == 'MeetingConfig':
         if held_pos_uid in obj.getOrderedContacts() or \
            held_pos_uid in obj.getOrderedItemInitiators():
             res = True
-    elif obj.meta_type == 'Meeting':
+    elif obj.__class__.__name__ == 'Meeting':
         orderedContacts = getattr(obj, 'orderedContacts', {})
         if held_pos_uid in orderedContacts:
             res = True
-    elif obj.meta_type == 'MeetingItem':
+    elif obj.__class__.__name__ == 'MeetingItem':
         if held_pos_uid in obj.getItemInitiator():
             res = True
     return res
@@ -1219,7 +1220,7 @@ def onHeldPositionWillBeRemoved(held_pos, event):
     # check meetings
     if not using_obj:
         catalog = api.portal.get_tool('portal_catalog')
-        brains = catalog(meta_type='Meeting')
+        brains = catalog(object_provides=IMeeting.__identifier__)
         for brain in brains:
             meeting = brain.getObject()
             if _is_held_pos_uid_used_by(held_pos_uid, meeting):
@@ -1343,3 +1344,26 @@ def onCategoryWillBeRemoved(category, event):
                     mapping={'url': other_cat.absolute_url()},
                     context=category.REQUEST)
                 raise BeforeDeleteException(msg)
+
+
+def onMeetingWillBeRemoved(meeting, event):
+    """ """
+    # If we are trying to remove the whole Plone Site, bypass this hook.
+    if event.object.meta_type == 'Plone Site':
+        return
+
+    # We can remove an meeting directly but not "through" his container.
+    if meeting.__class__.__name__ != 'Meeting':
+        msg = translate(
+            u"can_not_delete_meeting_container",
+            domain='PloneMeeting',
+            context=meeting.REQUEST)
+        api.portal.show_message(
+            message=msg,
+            request=meeting.REQUEST,
+            type='error')
+        raise Redirect(meeting.REQUEST.get('HTTP_REFERER'))
+    # we are removing the meeting
+    member = api.user.get_current()
+    if member.has_role('Manager'):
+        meeting.REQUEST.set('items_to_remove', meeting.get_items())

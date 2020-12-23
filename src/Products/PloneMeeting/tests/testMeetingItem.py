@@ -2320,7 +2320,7 @@ class testMeetingItem(PloneMeetingTestCase):
                                      access_on='python:item.meta_type == "MeetingItem" and cfg and tool')
         self._setPowerObserverStates(field_name='meeting_states',
                                      states=('created', ),
-                                     access_on='python:meeting.meta_type == "Meeting" and cfg and tool')
+                                     access_on='python:meeting.__class__.__name__ == "Meeting" and cfg and tool')
         item._update_after_edit()
         meeting._update_after_edit()
         self.assertTrue(power_observer_group_id in item.__ac_local_roles__)

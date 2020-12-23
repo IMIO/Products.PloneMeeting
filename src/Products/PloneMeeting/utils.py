@@ -229,9 +229,10 @@ def getCurrentMeetingObject(context):
                     referer = referer[referer.index('/Members/'):]
                 # Then, add the real portal as URL prefix.
                 referer = portal_path + referer
-            # take care that the Meeting may contains annexes
+            # take care that the Meeting may contain annexes
             catalog = api.portal.get_tool('portal_catalog')
-            res = catalog(path=referer, meta_type='Meeting')
+            from Products.PloneMeeting.content.meeting import IMeeting
+            res = catalog(path=referer, object_provides=IMeeting.__identifier__)
             if res:
                 obj = res[0].getObject()
         else:
@@ -426,13 +427,13 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
         'meetingTitle': '', 'meetingLongTitle': '', 'itemTitle': '', 'user': userName,
         'groups': userGroups, 'meetingConfigTitle': safe_unicode(cfg.Title()),
     })
-    if obj.meta_type == 'Meeting':
+    if obj.__class__.__name__ == 'Meeting':
         translationMapping['meetingTitle'] = safe_unicode(obj.Title())
         translationMapping['meetingLongTitle'] = tool.format_date(obj.date, prefixed=True)
-        translationMapping['meetingState'] = translate(obj.queryState(),
+        translationMapping['meetingState'] = translate(obj.query_state(),
                                                        domain='plone',
                                                        context=obj.REQUEST)
-    elif obj.meta_type == 'MeetingItem':
+    elif obj.__class__.__name__ == 'MeetingItem':
         translationMapping['itemTitle'] = safe_unicode(obj.Title())
         translationMapping['itemState'] = translate(obj.queryState(),
                                                     domain='plone',
@@ -807,7 +808,7 @@ def rememberPreviousData(obj, name=None):
        value. Result is a dict ~{s_fieldName: previousFieldValue}~'''
     res = {}
     cfg = obj.portal_plonemeeting.getMeetingConfig(obj)
-    isItem = obj.meta_type == 'MeetingItem'
+    isItem = obj.__class__.__name__ == 'MeetingItem'
     # Do nothing if the object is not in a state when historization is enabled.
     if isItem:
         meth = cfg.getRecordItemHistoryStates
@@ -1094,7 +1095,7 @@ def applyOnTransitionFieldTransform(obj, transitionId):
         tal_expr = transform['tal_expression'].strip()
         if tal_expr and \
            transform['transition'] == transitionId and \
-           transform['field_name'].split('.')[0] == obj.meta_type:
+           transform['field_name'].split('.')[0] == obj.__class__.__name__:
             try:
                 extra_expr_ctx.update({'item': obj, })
                 res = _evaluateExpression(
@@ -1659,15 +1660,16 @@ def checkMayQuickEdit(obj,
                       expression='',
                       onlyForManagers=False):
     """ """
-    from Products.PloneMeeting.Meeting import Meeting
+    from Products.PloneMeeting.content.meeting import Meeting
     tool = api.portal.get_tool('portal_plonemeeting')
     member = api.user.get_current()
     res = False
-    meeting = obj.meta_type == "Meeting" and obj or (obj.hasMeeting() and obj.getMeeting())
+    import ipdb; ipdb.set_trace()
+    meeting = obj.__class__.__name__ == "Meeting" and obj or (obj.hasMeeting() and obj.getMeeting())
     if (not onlyForManagers or (onlyForManagers and tool.isManager(obj))) and \
        (bypassWritePermissionCheck or member.has_permission(permission, obj)) and \
        (_evaluateExpression(obj, expression)) and \
-       (not (meeting and meeting.queryState() in Meeting.MEETINGCLOSEDSTATES) or
+       (not (meeting and meeting.query_state() in Meeting.MEETINGCLOSEDSTATES) or
             tool.isManager(obj, realManagers=True)):
         res = True
     return res
@@ -1995,9 +1997,10 @@ def get_next_meeting(meetingDate, cfg, dateGap=0):
     meetingTypeName = cfg.getMeetingTypeName()
     catalog = api.portal.get_tool('portal_catalog')
     # find every meetings after meetingDate
-    meetingDate += dateGap
+    meetingDate += timedelta(days=dateGap)
     brains = catalog(portal_type=meetingTypeName,
-                     meeting_date={'query': meetingDate, 'range': 'min'},
+                     meeting_date={'query': meetingDate,
+                                   'range': 'min'},
                      sort_on='meeting_date')
     res = None
     for brain in brains:
