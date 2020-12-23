@@ -167,7 +167,7 @@ def getWorkflowAdapter(obj, conditions):
        (if p_condition is False).'''
     tool = api.portal.get_tool(TOOL_ID)
     cfg = tool.getMeetingConfig(obj)
-    interfaceMethod = adaptables[obj.__class__.__name__]['method']
+    interfaceMethod = adaptables[obj.getTagName()]['method']
     if conditions:
         interfaceMethod += 'Conditions'
     else:
@@ -184,7 +184,7 @@ def getCustomAdapter(obj):
     '''Tries to get the custom adapter for a PloneMeeting object. If no adapter
        is defined, returns the object.'''
     res = obj
-    theInterface = adaptables[obj.__class__.__name__]['interface']
+    theInterface = adaptables[obj.getTagName()]['interface']
     try:
         res = theInterface(obj)
     except TypeError:
@@ -198,12 +198,12 @@ methodTypes = ('FSPythonScript', 'FSControllerPythonScript', 'instancemethod')
 def getCurrentMeetingObject(context):
     '''What is the object currently published by Plone ?'''
     obj = context.REQUEST.get('PUBLISHED')
-    className = obj.__class__.__name__
+    className = obj.getTagName()
     if className == 'present-several-items':
         return obj.context
     elif obj and \
             hasattr(obj, 'context') and \
-            obj.context.__class__.__name__ == 'Meeting':
+            obj.context.getTagName() == 'Meeting':
         return obj.context
 
     if not (className in ('Meeting', 'MeetingItem')):
@@ -239,14 +239,14 @@ def getCurrentMeetingObject(context):
             # Check the parent (if it has sense)
             if hasattr(obj, 'getParentNode'):
                 obj = obj.getParentNode()
-                if not (obj.__class__.__name__ in ('Meeting', 'MeetingItem')):
+                if not (obj.getTagName() in ('Meeting', 'MeetingItem')):
                     obj = None
             else:
                 # It can be a method with attribute im_class
                 obj = None
 
     toReturn = None
-    if obj and obj.__class__.__name__ == 'Meeting':
+    if obj and obj.getTagName() == 'Meeting':
         toReturn = obj
     return toReturn
 
@@ -427,13 +427,13 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
         'meetingTitle': '', 'meetingLongTitle': '', 'itemTitle': '', 'user': userName,
         'groups': userGroups, 'meetingConfigTitle': safe_unicode(cfg.Title()),
     })
-    if obj.__class__.__name__ == 'Meeting':
+    if obj.getTagName() == 'Meeting':
         translationMapping['meetingTitle'] = safe_unicode(obj.Title())
         translationMapping['meetingLongTitle'] = tool.format_date(obj.date, prefixed=True)
         translationMapping['meetingState'] = translate(obj.query_state(),
                                                        domain='plone',
                                                        context=obj.REQUEST)
-    elif obj.__class__.__name__ == 'MeetingItem':
+    elif obj.getTagName() == 'MeetingItem':
         translationMapping['itemTitle'] = safe_unicode(obj.Title())
         translationMapping['itemState'] = translate(obj.queryState(),
                                                     domain='plone',
@@ -808,7 +808,7 @@ def rememberPreviousData(obj, name=None):
        value. Result is a dict ~{s_fieldName: previousFieldValue}~'''
     res = {}
     cfg = obj.portal_plonemeeting.getMeetingConfig(obj)
-    isItem = obj.__class__.__name__ == 'MeetingItem'
+    isItem = obj.getTagName() == 'MeetingItem'
     # Do nothing if the object is not in a state when historization is enabled.
     if isItem:
         meth = cfg.getRecordItemHistoryStates
@@ -1048,7 +1048,7 @@ def transformAllRichTextFields(obj, onlyField=None):
         fieldContent = storeImagesLocally(obj, field_raw_value)
         # Apply standard transformations as defined in the config
         # fieldsToTransform is like ('MeetingItem.description', 'MeetingItem.budgetInfos', )
-        if ("%s.%s" % (obj.__class__.__name__, field_name) in fieldsToTransform) and \
+        if ("%s.%s" % (obj.getTagName(), field_name) in fieldsToTransform) and \
            not xhtmlContentIsEmpty(fieldContent):
             if 'removeBlanks' in transformTypes:
                 fieldContent = removeBlanks(fieldContent)
@@ -1095,7 +1095,7 @@ def applyOnTransitionFieldTransform(obj, transitionId):
         tal_expr = transform['tal_expression'].strip()
         if tal_expr and \
            transform['transition'] == transitionId and \
-           transform['field_name'].split('.')[0] == obj.__class__.__name__:
+           transform['field_name'].split('.')[0] == obj.getTagName():
             try:
                 extra_expr_ctx.update({'item': obj, })
                 res = _evaluateExpression(
@@ -1664,8 +1664,7 @@ def checkMayQuickEdit(obj,
     tool = api.portal.get_tool('portal_plonemeeting')
     member = api.user.get_current()
     res = False
-    import ipdb; ipdb.set_trace()
-    meeting = obj.__class__.__name__ == "Meeting" and obj or (obj.hasMeeting() and obj.getMeeting())
+    meeting = obj.getTagName() == "Meeting" and obj or (obj.hasMeeting() and obj.getMeeting())
     if (not onlyForManagers or (onlyForManagers and tool.isManager(obj))) and \
        (bypassWritePermissionCheck or member.has_permission(permission, obj)) and \
        (_evaluateExpression(obj, expression)) and \

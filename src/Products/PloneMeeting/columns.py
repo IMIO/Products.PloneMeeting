@@ -186,7 +186,7 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
 
                 # display annexes
                 annexes = render_item_annexes(obj, tool)
-        elif obj.__class__.__name__ == 'Meeting':
+        elif obj.getTagName() == 'Meeting':
             visibleColumns = cfg.getMeetingColumns()
             staticInfos = obj.restrictedTraverse('@@static-infos')(visibleColumns=visibleColumns)
             annexes += obj.restrictedTraverse('categorized-childs')(portal_type='annex')
@@ -205,7 +205,7 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
         """Apply a particular class on the table row depending on the item's privacy
            if item is displayed in a meeting."""
         css_classes = super(PMPrettyLinkColumn, self).getCSSClasses(item)
-        if self.context.meta_type == 'Meeting':
+        if self.context.getTagName() == 'Meeting':
             # for TR
             trCSSClasses = []
             trCSSClasses.append('meeting_item_privacy_{0}'.format(item.privacy))
@@ -333,7 +333,7 @@ class ItemCheckBoxColumn(CheckBoxColumn):
         """Display the '(un)present every selected items' action depending
            on the faceted we are on, available or presented items."""
         head = super(ItemCheckBoxColumn, self).renderHeadCell()
-        if self.context.meta_type == 'Meeting':
+        if self.context.getTagName() == 'Meeting':
             if self.context.adapted().showInsertOrRemoveSelectedItemsAction():
                 if displaying_available_items(self.context):
                     present_msg = translate('present_several_items',

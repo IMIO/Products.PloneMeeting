@@ -6351,7 +6351,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('getSelf')
 
     def getSelf(self):
-        if self.__class__.__name__ != 'MeetingConfig':
+        if self.getTagName() != 'MeetingConfig':
             return self.context
         return self
 

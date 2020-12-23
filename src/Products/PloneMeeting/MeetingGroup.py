@@ -336,7 +336,7 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
     security.declarePublic('getSelf')
 
     def getSelf(self):
-        if self.__class__.__name__ != 'MeetingGroup':
+        if self.getTagName() != 'MeetingGroup':
             return self.context
         return self
 

@@ -70,6 +70,8 @@ from Products.PloneMeeting.config import PROJECTNAME
 from Products.PloneMeeting.config import PY_DATETIME_WEEKDAYS
 from Products.PloneMeeting.config import ROOT_FOLDER
 from Products.PloneMeeting.config import SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY
+from Products.PloneMeeting.content.meeting import IMeeting
+from Products.PloneMeeting.content.meeting import Meeting
 from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.profiles import PloneMeetingConfiguration
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
@@ -654,7 +656,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         # is linked to only one MeetingConfig, it is the case for Meeting and MeetingItem
         # portal_types, but if we have a 'Topic' or a 'Folder', we can not determinate
         # in wich MeetingConfig it is, we can not do caching...
-        if caching and context.meta_type in ('Meeting', 'MeetingItem', ):
+        if caching and context.getTagName() in ('Meeting', 'MeetingItem', ):
             key = "tool-getmeetingconfig-%s" % context.portal_type
             # async does not have a REQUEST
             if hasattr(self, 'REQUEST'):
@@ -724,7 +726,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
            the portal_catalog (not from the uid_catalog, because getObject()
            has been overridden in this tool and does an unrestrictedTraverse
            to the object.'''
-        klassName = value.__class__.__name__
+        klassName = value.getTagName()
         if klassName in ('MeetingItem', 'Meeting', 'MeetingConfig'):
             obj = value
         else:
@@ -817,7 +819,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         if context.meta_type == 'MeetingItem' and \
            (context.isTemporary() or context.isDefinedInTool()):
             return False
-        elif context.meta_type == 'Meeting' and context.isTemporary():
+        elif context.getTagName() == 'Meeting' and context.isTemporary():
             return False
         else:
             return True
@@ -1213,7 +1215,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('getSelf')
 
     def getSelf(self):
-        if self.__class__.__name__ != 'ToolPloneMeeting':
+        if self.getTagName() != 'ToolPloneMeeting':
             return self.context
         return self
 
@@ -1356,13 +1358,15 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declareProtected(ModifyPortalContent, 'removeAnnexesPreviews')
 
-    def removeAnnexesPreviews(self, query={'meta_type': 'Meeting',
-                                           'review_state': ('closed', ),
-                                           'sort_on': 'meeting_date'}):
+    def removeAnnexesPreviews(self, query={}):
         '''Remove every annexes previews of items presented to closed meetings.'''
         if not self.isManager(self, realManagers=True):
             raise Unauthorized
 
+        if not query:
+            query = {'object_provides': IMeeting.__identifier__,
+                     'review_state': Meeting.MEETINGCLOSEDSTATES,
+                     'sort_on': 'meeting_date'}
         catalog = api.portal.get_tool('portal_catalog')
         # remove annexes previews of items of closed Meetings
         brains = catalog(**query)

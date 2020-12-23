@@ -2077,7 +2077,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         '''Similar to MeetingItem.getSelf. Check MeetingItem.py for more
            info.'''
         res = self
-        if self.__class__.__name__ != 'Meeting':
+        if self.getTagName() != 'Meeting':
             res = self.context
         return res
 

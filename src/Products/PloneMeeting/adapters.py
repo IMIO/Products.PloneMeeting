@@ -683,7 +683,7 @@ class PMWfHistoryAdapter(ImioWfHistoryAdapter):
           history comment.
         """
         userMayAccessComment = True
-        if self.context.__class__.__name__ == 'MeetingItem':
+        if self.context.getTagName() == 'MeetingItem':
             if self.cfg.getHideItemHistoryCommentsToUsersOutsideProposingGroup() and \
                not self.tool.isManager(self.context):
                 userOrgUids = self.tool.get_orgs_for_user(the_objects=False)
@@ -1557,7 +1557,7 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
         """Compute 'View' permission if annex is confidential,
            apply local_roles and give 'View' to 'AnnexReader' either,
            remove every local_roles and acquire 'View'."""
-        if self.parent.__class__.__name__ == 'MeetingItem' or \
+        if self.parent.getTagName() == 'MeetingItem' or \
            self.parent.portal_type in self.tool.getAdvicePortalTypes(as_ids=True):
             # reinitialize permissions in case no more confidential
             # or confidentiality configuration changed
@@ -1599,7 +1599,7 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
     def _compute_visible_for_groups(self):
         """ """
         groups = []
-        parent_classname = self.parent.__class__.__name__
+        parent_classname = self.parent.getTagName()
         if parent_classname == 'MeetingItem':
             groups = self._item_visible_for_groups()
         elif parent_classname == 'Meeting':
@@ -1696,7 +1696,7 @@ class PMCategorizedObjectAdapter(CategorizedObjectAdapter):
     def can_view(self):
 
         # is the context a MeetingItem and privacy viewable?
-        if self.context.__class__.__name__ == 'MeetingItem' and \
+        if self.context.getTagName() == 'MeetingItem' and \
            self.cfg.getRestrictAccessToSecretItems() and \
            not self.context.adapted().isPrivacyViewable():
             return False
@@ -1711,7 +1711,7 @@ class PMCategorizedObjectAdapter(CategorizedObjectAdapter):
             return True
 
         # Meeting
-        if self.context.__class__.__name__ == 'Meeting':
+        if self.context.getTagName() == 'Meeting':
             # if we have a SUFFIXPROFILEPREFIX prefixed group,
             # check using "userIsAmong", this is only done for Meetings
             if set(self.tool.get_plone_groups_for_user()).intersection(infos['visible_for_groups']):
@@ -1767,11 +1767,11 @@ class IconifiedCategoryGroupAdapter(object):
         cfg = tool.getMeetingConfig(self.context)
         parent = self.context.getParentNode()
         # adding annex to an item
-        if self.context.__class__.__name__ == 'MeetingItem' or \
+        if self.context.getTagName() == 'MeetingItem' or \
            (self.context.portal_type in ('annex', 'annexDecision') and
-                parent.__class__.__name__ == 'MeetingItem'):
+                parent.getTagName() == 'MeetingItem'):
             isItemDecisionAnnex = False
-            if self.context.__class__.__name__ == 'MeetingItem':
+            if self.context.getTagName() == 'MeetingItem':
                 # it is possible to force to use the item_decision_annexes group
                 # or when using quickupload, the typeupload contains the type of element to add
                 if self.request.get('force_use_item_decision_annexes_group', False) or \
@@ -1802,13 +1802,13 @@ class IconifiedCategoryGroupAdapter(object):
                 return cfg.annexes_types.item_decision_annexes
 
         # adding annex to an advice
-        if self.context.__class__.__name__ == "MeetingAdvice" or \
-           parent.__class__.__name__ == "MeetingAdvice":
+        if self.context.getTagName() == "MeetingAdvice" or \
+           parent.getTagName() == "MeetingAdvice":
             return cfg.annexes_types.advice_annexes
 
         # adding annex to a meeting
-        if self.context.__class__.__name__ == 'Meeting' or \
-           parent.__class__.__name__ == 'Meeting':
+        if self.context.getTagName() == 'Meeting' or \
+           parent.getTagName() == 'Meeting':
             return cfg.annexes_types.meeting_annexes
 
     def get_every_categories(self, only_enabled=True):

@@ -2703,7 +2703,7 @@ class testMeeting(PloneMeetingTestCase):
                               name='dummyitemedited',
                               action='',
                               icon_expr='',
-                              condition="python: context.meta_type == 'Meeting'",
+                              condition="python: context.getTagName() == 'Meeting'",
                               permission=(View,),
                               visible=True,
                               category='object_buttons')

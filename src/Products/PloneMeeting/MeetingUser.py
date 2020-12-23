@@ -262,7 +262,7 @@ class MeetingUser(BaseContent, BrowserDefaultMixin):
     security.declarePublic('getSelf')
 
     def getSelf(self):
-        if self.__class__.__name__ != 'MeetingUser':
+        if self.getTagName() != 'MeetingUser':
             return self.context
         return self
 

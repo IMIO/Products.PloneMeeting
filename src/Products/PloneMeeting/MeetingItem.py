@@ -3493,7 +3493,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            methods can retrieve the MeetingItem instance through a call to
            m_getSelf.'''
         res = self
-        if self.__class__.__name__ != 'MeetingItem':
+        if self.getTagName() != 'MeetingItem':
             res = self.context
         return res
 

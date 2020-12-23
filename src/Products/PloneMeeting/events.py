@@ -76,7 +76,7 @@ podTransitionPrefixes = {'MeetingItem': 'pod_item', 'Meeting': 'pod_meeting'}
 # Code executed after a workflow transition has been triggered
 def do(action, event):
     '''What must I do when a transition is triggered on a meeting or item?'''
-    objectType = event.object.__class__.__name__
+    objectType = event.object.getTagName()
     actionsAdapter = event.object.wfActions()
     # Execute some actions defined in the corresponding adapter
     actionMethod = getattr(actionsAdapter, action)
@@ -1188,15 +1188,15 @@ def onDashboardCollectionAdded(collection, event):
 def _is_held_pos_uid_used_by(held_pos_uid, obj):
     """ """
     res = False
-    if obj.__class__.__name__ == 'MeetingConfig':
+    if obj.getTagName() == 'MeetingConfig':
         if held_pos_uid in obj.getOrderedContacts() or \
            held_pos_uid in obj.getOrderedItemInitiators():
             res = True
-    elif obj.__class__.__name__ == 'Meeting':
+    elif obj.getTagName() == 'Meeting':
         orderedContacts = getattr(obj, 'orderedContacts', {})
         if held_pos_uid in orderedContacts:
             res = True
-    elif obj.__class__.__name__ == 'MeetingItem':
+    elif obj.getTagName() == 'MeetingItem':
         if held_pos_uid in obj.getItemInitiator():
             res = True
     return res
@@ -1353,7 +1353,7 @@ def onMeetingWillBeRemoved(meeting, event):
         return
 
     # We can remove an meeting directly but not "through" his container.
-    if meeting.__class__.__name__ != 'Meeting':
+    if meeting.getTagName() != 'Meeting':
         msg = translate(
             u"can_not_delete_meeting_container",
             domain='PloneMeeting',
