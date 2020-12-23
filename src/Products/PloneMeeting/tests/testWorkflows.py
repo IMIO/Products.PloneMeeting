@@ -82,7 +82,7 @@ class testWorkflows(PloneMeetingTestCase):
                                                            pmFolder.searches_items.getLayout())
         allItems = collection.results()
         numberOfFoundItems = 0
-        if item.queryState() == 'validated':
+        if item.query_state() == 'validated':
             numberOfFoundItems = 1
         self.failIf(len(allItems) != numberOfFoundItems)
 
@@ -277,15 +277,15 @@ class testWorkflows(PloneMeetingTestCase):
         duplicatedItem = item3.getBRefs('ItemPredecessor')[0]
         self.assertEquals(duplicatedItem.getPredecessor().UID(), item3.UID())
         # When a meeting is decided, items are at least set to 'itempublished'
-        self.assertEquals(item1.queryState(), 'itempublished')
-        self.assertEquals(item2.queryState(), 'itempublished')
+        self.assertEquals(item1.query_state(), 'itempublished')
+        self.assertEquals(item2.query_state(), 'itempublished')
         # An already decided item keep his given decision
-        self.assertEqual(item3.queryState(), 'delayed')
+        self.assertEqual(item3.query_state(), 'delayed')
         self.failIf(len(self.transitions(meeting)) != 2)
         # When a meeting is closed, items without a decision are automatically 'accepted'
         self.do(meeting, 'close')
-        self.assertEquals(item1.queryState(), 'accepted')
-        self.assertEquals(item2.queryState(), 'accepted')
+        self.assertEquals(item1.query_state(), 'accepted')
+        self.assertEquals(item2.query_state(), 'accepted')
         # Reviewers can add decision annexes
         self.changeUser('pmReviewer1')
         self.failIf(self.hasPermission(AddAnnex, item1))
@@ -509,7 +509,7 @@ class testWorkflows(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         # 'pmManager' may propose the item but he will not be able to validate it
         self.proposeItem(item)
-        self.assertEqual(item.queryState(), self._stateMappingFor('proposed'))
+        self.assertEqual(item.query_state(), self._stateMappingFor('proposed'))
         # we have no avaialble transition, or just one, and in this case, it is a 'back' transition
         availableTransitions = self.wfTool.getTransitionsFor(item)
         if availableTransitions:
@@ -595,31 +595,31 @@ class testWorkflows(PloneMeetingTestCase):
         meeting = self._createMeetingWithItems()
         # for now, every items are 'presented'
         for item in meeting.getItems():
-            self.assertEqual(item.queryState(), 'presented')
+            self.assertEqual(item.query_state(), 'presented')
         # when we freeze a meeting, we want every contained items to be frozen as well
         self.freezeMeeting(meeting)
         for item in meeting.getItems():
-            self.assertEqual(item.queryState(), 'itemfrozen')
+            self.assertEqual(item.query_state(), 'itemfrozen')
         # when we close a meeting, we want every items to be automatically accepted
         # that is what is defined in the import_data of the testing profile
         self.closeMeeting(meeting)
         for item in meeting.getItems():
-            self.assertEqual(item.queryState(), self.ITEM_WF_STATE_AFTER_MEETING_TRANSITION['close'])
+            self.assertEqual(item.query_state(), self.ITEM_WF_STATE_AFTER_MEETING_TRANSITION['close'])
 
         # now test that it also works with 'back transitions' : when a meeting goes
         # back to 'created' from 'frozen', specify that every items must go back to 'presented'
         meeting2 = self._createMeetingWithItems()
         # for now, every items are 'presented'
         for item in meeting2.getItems():
-            self.assertEqual(item.queryState(), 'presented')
+            self.assertEqual(item.query_state(), 'presented')
         self.freezeMeeting(meeting2)
         # every items are now frozen
         for item in meeting2.getItems():
-            self.assertEqual(item.queryState(), 'itemfrozen')
+            self.assertEqual(item.query_state(), 'itemfrozen')
         self.backToState(meeting2, 'created')
         # every items are now back to presented
         for item in meeting2.getItems():
-            self.assertEqual(item.queryState(), 'presented')
+            self.assertEqual(item.query_state(), 'presented')
 
     def test_pm_MeetingExecuteActionOnLinkedItemsCaseTALExpression(self):
         '''Test the MeetingConfig.onMeetingTransitionItemActionToExecute parameter :
@@ -643,11 +643,11 @@ class testWorkflows(PloneMeetingTestCase):
         meeting = self._createMeetingWithItems()
         # for now, every items are 'presented'
         for item in meeting.getItems():
-            self.assertEqual(item.queryState(), 'presented')
+            self.assertEqual(item.query_state(), 'presented')
         # freeze the meeting, nothing is done by the expression and the items are frozen
         self.freezeMeeting(meeting)
         for item in meeting.getItems():
-            self.assertEqual(item.queryState(), 'itemfrozen')
+            self.assertEqual(item.query_state(), 'itemfrozen')
 
         # now a valid config, append ('accepted') to item title when meeting is decided
         title_suffix = " (accepted)"
@@ -666,7 +666,7 @@ class testWorkflows(PloneMeetingTestCase):
         self.decideMeeting(meeting)
         for item in meeting.getItems():
             self.assertTrue(title_suffix in item.Title())
-            self.assertEqual(item.queryState(), 'accepted')
+            self.assertEqual(item.query_state(), 'accepted')
 
     def test_pm_MeetingExecuteActionOnLinkedItemsGiveAccessToAcceptedItemsOfAMeetingToPowerAdvisers(self):
         '''Test the MeetingConfig.onMeetingTransitionItemActionToExecute parameter :
@@ -696,7 +696,7 @@ class testWorkflows(PloneMeetingTestCase):
               'tal_expression': ''},
              {'meeting_transition': 'close',
               'item_action': EXECUTE_EXPR_VALUE,
-              'tal_expression': 'python: item.queryState() in cfg.getItemDecidedStates() and '
+              'tal_expression': 'python: item.query_state() in cfg.getItemDecidedStates() and '
                 'item.updateLocalRoles()'},
              {'meeting_transition': 'close',
               'item_action': 'accept',
@@ -707,7 +707,7 @@ class testWorkflows(PloneMeetingTestCase):
              ])
         # configure access of powerobservers only access if meeting is 'closed'
         cfg.setPowerObservers([
-            {'item_access_on': 'python: item.getMeeting().queryState() == "closed"',
+            {'item_access_on': 'python: item.getMeeting().query_state() == "closed"',
              'item_states': ['accepted'],
              'label': 'Power observers',
              'meeting_access_on': '',
@@ -723,7 +723,7 @@ class testWorkflows(PloneMeetingTestCase):
         self.presentItem(item2)
         self.decideMeeting(meeting)
         self.do(item1, 'accept')
-        self.assertEqual(item1.queryState(), 'accepted')
+        self.assertEqual(item1.query_state(), 'accepted')
         # power observer does not have access to item1/item2
         self.changeUser('powerobserver1')
         self.assertFalse(self.hasPermission(View, item1))
@@ -734,8 +734,8 @@ class testWorkflows(PloneMeetingTestCase):
         # this test that meetingExecuteActionOnLinkedItems execute TAL exprs as 'Manager'
         self.closeMeeting(meeting)
         # items are accepted
-        self.assertEqual(item1.queryState(), 'accepted')
-        self.assertEqual(item2.queryState(), 'accepted')
+        self.assertEqual(item1.query_state(), 'accepted')
+        self.assertEqual(item2.query_state(), 'accepted')
         # and powerobserver has also access to item1 that was already accepted before meeting was closed
         self.changeUser('powerobserver1')
         self.assertTrue(self.hasPermission(View, item1))
@@ -804,12 +804,12 @@ class testWorkflows(PloneMeetingTestCase):
         self.assertFalse(marginalNotesField.writeable(item))
         meeting = self.create('Meeting', date=DateTime())
         self.presentItem(item)
-        self.assertEqual(item.queryState(), 'presented')
+        self.assertEqual(item.query_state(), 'presented')
         self.assertFalse(marginalNotesField.writeable(item))
 
         # writeable when meeting frozen
         self.freezeMeeting(meeting)
-        self.assertEqual(item.queryState(), 'itemfrozen')
+        self.assertEqual(item.query_state(), 'itemfrozen')
         self.assertTrue(marginalNotesField.writeable(item))
         # as other fields
         obsField = item.getField('observations')
@@ -817,7 +817,7 @@ class testWorkflows(PloneMeetingTestCase):
 
         # close meeting, still editable
         self.closeMeeting(meeting)
-        self.assertEqual(meeting.queryState(), 'closed')
+        self.assertEqual(meeting.query_state(), 'closed')
         self.assertTrue(marginalNotesField.writeable(item))
         # but not other fields
         self.assertFalse(obsField.writeable(item))

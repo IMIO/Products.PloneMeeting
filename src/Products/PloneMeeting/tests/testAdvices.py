@@ -89,9 +89,9 @@ class testAdvices(PloneMeetingTestCase):
         self.create('Meeting')
         for item in (item1, item2, item3):
             self.presentItem(item)
-        self.assertEqual(item1.queryState(), self._stateMappingFor('presented'))
-        self.assertEqual(item2.queryState(), self._stateMappingFor('presented'))
-        self.assertEqual(item3.queryState(), self._stateMappingFor('presented'))
+        self.assertEqual(item1.query_state(), self._stateMappingFor('presented'))
+        self.assertEqual(item2.query_state(), self._stateMappingFor('presented'))
+        self.assertEqual(item3.query_state(), self._stateMappingFor('presented'))
         # item1 still viewable because the item an advice is asked for is still viewable in the 'presented' state...
         self.changeUser('pmReviewer2')
         self.failUnless(self.hasPermission(View, item1))
@@ -1164,7 +1164,7 @@ class testAdvices(PloneMeetingTestCase):
         # advices are giveable when item is validated, so validate the item
         # this will initialize the 'delay_started_on' date
         self.validateItem(item)
-        self.assertEqual(item.queryState(), self._stateMappingFor('validated'))
+        self.assertEqual(item.query_state(), self._stateMappingFor('validated'))
         # we have datetime now in 'delay_started_on' and still nothing in 'delay_stopped_on'
         self.assertTrue(isinstance(item.adviceIndex[self.developers_uid]['delay_started_on'], datetime))
         self.assertTrue(item.adviceIndex[self.developers_uid]['delay_stopped_on'] is None)
@@ -1187,7 +1187,7 @@ class testAdvices(PloneMeetingTestCase):
         saved_developers_start_date = item.adviceIndex[self.developers_uid]['delay_started_on']
         saved_vendors_start_date = item.adviceIndex[self.vendors_uid]['delay_started_on']
         self.presentItem(item)
-        self.assertEqual(item.queryState(), self._stateMappingFor('presented'))
+        self.assertEqual(item.query_state(), self._stateMappingFor('presented'))
         self.assertEqual(item.adviceIndex[self.developers_uid]['delay_started_on'], saved_developers_start_date)
         self.assertEqual(item.adviceIndex[self.vendors_uid]['delay_started_on'], saved_vendors_start_date)
         # the 'delay_stopped_on' is now set on the delay-aware advice
@@ -1197,7 +1197,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertEqual(cfg.getTransitionsReinitializingDelays(),
                          (self._transitionMappingFor('backToItemCreated'), ))
         self.backToState(item, self._stateMappingFor('itemcreated'))
-        self.assertEqual(item.queryState(), self._stateMappingFor('itemcreated'))
+        self.assertEqual(item.query_state(), self._stateMappingFor('itemcreated'))
         # the delays have been reinitialized to None
         self.assertEqual([advice['delay_started_on'] for advice in item.adviceIndex.values()],
                          [None, None])
@@ -1284,7 +1284,7 @@ class testAdvices(PloneMeetingTestCase):
         item.setOptionalAdvisers((self.vendors_uid, ))
         item.at_post_create_script()
         self.proposeItem(item)
-        self.assertEqual(item.queryState(), self._stateMappingFor('proposed'))
+        self.assertEqual(item.query_state(), self._stateMappingFor('proposed'))
         # the advice is giveable by the vendors
         self.changeUser('pmReviewer2')
         self.assertTrue(self.vendors_uid in [key for key, value in item.getAdvicesGroupsInfosForUser()[0]])
@@ -1304,7 +1304,7 @@ class testAdvices(PloneMeetingTestCase):
         self.changeUser('pmManager')
         self.validateItem(item)
         self.changeUser('pmReviewer2')
-        self.assertEqual(item.queryState(), self._stateMappingFor('validated'))
+        self.assertEqual(item.query_state(), self._stateMappingFor('validated'))
         self.assertTrue(self.vendors_uid in [key for key, value in item.getAdvicesGroupsInfosForUser()[0]])
 
         # it is the same for itemAdviceEditStates and itemAdviceViewStates
@@ -2244,9 +2244,9 @@ class testAdvices(PloneMeetingTestCase):
                           {'field_name': 'decision', 'field_content': '<p>Item decision</p>'}])
         # when giving advice for a second time, if advice is not edited, it is not versioned uselessly
         self.backToState(item, self._stateMappingFor('proposed'))
-        self.assertEqual(advice.queryState(), 'advice_under_edit')
+        self.assertEqual(advice.query_state(), 'advice_under_edit')
         self.validateItem(item)
-        self.assertEqual(advice.queryState(), 'advice_given')
+        self.assertEqual(advice.query_state(), 'advice_given')
         h_metadata = pr.getHistoryMetadata(advice)
         self.assertEqual(h_metadata._available, [0])
 
@@ -3356,10 +3356,10 @@ class testAdvices(PloneMeetingTestCase):
         advice_infos = form._advice_infos(data={'advice_uid': self.vendors_uid})
         self.assertTrue(advice_infos.mayRemoveInheritedAdvice())
         self.presentItem(item2)
-        self.assertEqual(item2.queryState(), 'presented')
+        self.assertEqual(item2.query_state(), 'presented')
         self.assertTrue(advice_infos.mayRemoveInheritedAdvice())
         self.closeMeeting(meeting)
-        self.assertTrue(item2.queryState() in cfg.getItemDecidedStates())
+        self.assertTrue(item2.query_state() in cfg.getItemDecidedStates())
         self.assertFalse(advice_infos.mayRemoveInheritedAdvice())
 
     def test_pm_RemoveInheritedAdviceByAdviser(self):
@@ -3378,7 +3378,7 @@ class testAdvices(PloneMeetingTestCase):
         form.update()
         self.assertRaises(Unauthorized, form.handleSaveRemoveAdviceInheritance, form, None)
         # add item review_state to itemAdviceEditStates
-        cfg.setItemAdviceEditStates((item2.queryState(),))
+        cfg.setItemAdviceEditStates((item2.query_state(),))
         item2.updateLocalRoles()
         # still raises as removing advice inheritance not enabled in MeetingConfig
         self.assertRaises(Unauthorized, form.handleSaveRemoveAdviceInheritance, form, None)

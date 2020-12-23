@@ -1386,7 +1386,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         # disbable first recurring item
         recItem1 = cfg.getRecurringItems()[0]
         self.do(recItem1, 'deactivate')
-        self.assertTrue(recItem1.queryState() == 'inactive')
+        self.assertTrue(recItem1.query_state() == 'inactive')
         activeRecItems = cfg.recurringitems.objectIds('MeetingItem')
         activeRecItems.remove(recItem1.getId())
         self.assertTrue([item.getId() for item in cfg.getRecurringItems()] == activeRecItems)
@@ -1984,9 +1984,9 @@ class testMeetingConfig(PloneMeetingTestCase):
         # create an item that will be itemcreated
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
-        self.assertEqual(item.queryState(), 'itemcreated')
+        self.assertEqual(item.query_state(), 'itemcreated')
         self.do(item, 'propose')
-        self.assertEqual(item.queryState(), 'proposed')
+        self.assertEqual(item.query_state(), 'proposed')
         level_removed_error = \
             translate('item_wf_val_states_can_not_be_removed_in_use',
                       domain='PloneMeeting',
@@ -2090,14 +2090,14 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.assertFalse(cfg.getRemoveAnnexesPreviewsOnMeetingClosure())
         self.presentItem(item)
         self.closeMeeting(meeting)
-        self.assertEqual(meeting.queryState(), 'closed')
+        self.assertEqual(meeting.query_state(), 'closed')
         self.assertEqual(infos[annex.UID()]['preview_status'], 'converted')
         self.assertEqual(infos[annex_decision.UID()]['preview_status'], 'converted')
         # removeAnnexesPreviewsOnMeetingClosure=True
         cfg.setRemoveAnnexesPreviewsOnMeetingClosure(True)
         self.backToState(meeting, 'created')
         self.closeMeeting(meeting)
-        self.assertEqual(meeting.queryState(), 'closed')
+        self.assertEqual(meeting.query_state(), 'closed')
         infos = _categorized_elements(item)
         self.assertEqual(infos[annex.UID()]['preview_status'], 'not_converted')
         self.assertEqual(infos[annex_decision.UID()]['preview_status'], 'not_converted')

@@ -262,7 +262,7 @@ class RemoveSeveralItemsView(BrowserView):
                 lowest_itemNumber = obj.getItemNumber()
             # execute every 'back' transitions until item is in state 'validated'
             changedState = True
-            while not obj.queryState() == 'validated':
+            while not obj.query_state() == 'validated':
                 availableTransitions = [tr['id'] for tr in wfTool.getTransitionsFor(obj)]
                 if not availableTransitions or not changedState:
                     break

@@ -130,7 +130,7 @@ def onItemTransition(item, event):
     do(action, event)
 
     # check if we need to send the item to another meetingConfig
-    if item.queryState() in cfg.getItemAutoSentToOtherMCStates():
+    if item.query_state() in cfg.getItemAutoSentToOtherMCStates():
         otherMCs = item.getOtherMeetingConfigsClonableTo()
         for otherMC in otherMCs:
             # if already cloned to another MC, pass.  This could be the case
@@ -678,7 +678,7 @@ def onItemModified(item, event):
             itemWF = wfTool.getWorkflowsFor(item)[0]
             initial_state = itemWF.initial_state
             # only rename if this will effectively change the id
-            if initial_state == item.queryState() and item.getId() != item.generateNewId():
+            if initial_state == item.query_state() and item.getId() != item.generateNewId():
                 # in case a user of same group is editing the item of another user
                 # he does not have the 'Add portal content' permission that is necessary
                 # when renaming so do this as Manager

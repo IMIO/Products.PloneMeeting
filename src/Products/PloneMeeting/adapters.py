@@ -14,6 +14,7 @@ from collective.iconifiedcategory.adapter import CategorizedObjectAdapter
 from collective.iconifiedcategory.adapter import CategorizedObjectInfoAdapter
 from collective.iconifiedcategory.utils import get_categories
 from datetime import datetime
+from datetime import timedelta
 from eea.facetednavigation.criteria.handler import Criteria as eeaCriteria
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from eea.facetednavigation.widgets.resultsperpage.widget import Widget as ResultsPerPageWidget
@@ -215,7 +216,7 @@ class AdvicePrettyLinkAdapter(PrettyLinkAdapter):
         """
         res = []
         item = self.context.aq_inner.aq_parent
-        item_state = item.queryState()
+        item_state = item.query_state()
         # display the waiting advices icon if relevant
         if item_state.endswith('_waiting_advices'):
             item_wf_conditions = item.wfConditions()
@@ -336,14 +337,14 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
                         res.append(('late.png', translate('icon_help_late',
                                                           domain="PloneMeeting",
                                                           context=self.request)))
-                elif (meeting.queryState() == 'created') and \
+                elif (meeting.query_state() == 'created') and \
                         meeting.attributeIsUsed('deadlinePublish') and \
                         not self.context.lastValidatedBefore(meeting.getDeadlinePublish()):
                     res.append(('deadlineKo.png', translate('icon_help_publish_deadline_ko',
                                                             domain="PloneMeeting",
                                                             context=self.request)))
 
-        itemState = self.context.queryState()
+        itemState = self.context.query_state()
         # specifically manage states without leading icons to speed up things
         if itemState in ('itemcreated', 'proposed', 'validated'):
             pass
@@ -529,7 +530,7 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
         if predecessor:
             predecessorCfg = tool.getMeetingConfig(predecessor)
             predecessorMeeting = predecessor.getMeeting()
-            predecessor_state = predecessor.queryState()
+            predecessor_state = predecessor.query_state()
             translated_state = translate(predecessor_state, domain='plone', context=self.request)
             if not predecessorMeeting:
                 res.append(('cloned_not_decided.png',
@@ -925,7 +926,7 @@ class LastDecisionsAdapter(CompoundCriterionBaseAdapter):
         query = [term for term in self.context.query if term[u'i'] != u'CompoundCriterion']
         parsedQuery = parseFormquery(self.context, query)
         # change the second date of meeting_date query, aka the 'max' date
-        parsedQuery['meeting_date']['query'][1] = datetime.now() + 60
+        parsedQuery['meeting_date']['query'][1] = datetime.now() + timedelta(days=60)
         return parsedQuery
 
     # we may not ram.cache methods in same file with same name...

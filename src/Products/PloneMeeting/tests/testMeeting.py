@@ -1724,13 +1724,13 @@ class testMeeting(PloneMeetingTestCase):
         # presenting an item in a before late state (before frozen) will insert it as normal
         late_state = meeting.adapted().get_late_state()
         before_late_states = get_states_before(meeting, late_state)
-        self.assertTrue(meeting.queryState() in before_late_states)
+        self.assertTrue(meeting.query_state() in before_late_states)
         self.presentItem(normalItem)
         self.assertEqual(normalItem.getListType(), 'normal')
 
         # freeze the meeting and insert the late item
         self.freezeMeeting(meeting)
-        self.assertFalse(meeting.queryState() in before_late_states)
+        self.assertFalse(meeting.query_state() in before_late_states)
         self.presentItem(lateItem)
         self.assertEqual(lateItem.getListType(), 'late')
 
@@ -1738,7 +1738,7 @@ class testMeeting(PloneMeetingTestCase):
         # and insert it again, it will be inserted as a normal item
         self.backToState(meeting, 'created')
         self.backToState(lateItem, 'validated')
-        self.assertTrue(meeting.queryState() in before_late_states)
+        self.assertTrue(meeting.query_state() in before_late_states)
         self.presentItem(lateItem)
         self.assertEqual(lateItem.getListType(), 'normal')
 
@@ -2025,18 +2025,18 @@ class testMeeting(PloneMeetingTestCase):
         self.assertFalse(meeting.get_items())
         # every items are 'validated'
         for item in items:
-            self.assertEqual(item.queryState(), 'validated')
+            self.assertEqual(item.query_state(), 'validated')
             self.assertFalse(item.hasMeeting())
         # present items
         presentView = meeting.restrictedTraverse('@@present-several-items')
         # we can present one single item...
         presentView([items[0].UID()])
-        self.assertEqual(items[0].queryState(), 'presented')
+        self.assertEqual(items[0].query_state(), 'presented')
         # or many items
         presentView([item.UID() for item in items[1:]])
         # every items are 'presented' in the meeting
         for item in items:
-            self.assertEqual(item.queryState(), 'presented')
+            self.assertEqual(item.query_state(), 'presented')
             self.assertTrue(item.hasMeeting())
         self.assertEqual(
             [item.getItemNumber(for_display=True) for item in meeting.get_items(ordered=True)],
@@ -2101,7 +2101,7 @@ class testMeeting(PloneMeetingTestCase):
         # every items are 'presented'
         items = meeting.get_items()
         for item in items:
-            self.assertTrue(item.queryState() == 'presented')
+            self.assertTrue(item.query_state() == 'presented')
         # numbering is correct
         self.assertEqual(
             [numberedItem.getItemNumber(for_display=True) for numberedItem in meeting.get_items(ordered=True)],
@@ -2118,7 +2118,7 @@ class testMeeting(PloneMeetingTestCase):
         # every items are now 'validated'
         self.assertFalse(meeting.get_items())
         for item in items:
-            self.assertTrue(item.queryState() == 'validated')
+            self.assertTrue(item.query_state() == 'validated')
 
         # if we are not able to correct the items, it does not break
         meeting2 = self._createMeetingWithItems()
@@ -2129,7 +2129,7 @@ class testMeeting(PloneMeetingTestCase):
             ['1', '2', '3', '4', '5', '6', '7'])
         # every items are in a final state
         for item in meeting2.get_items():
-            self.assertTrue(item.queryState() == self.ITEM_WF_STATE_AFTER_MEETING_TRANSITION['close'])
+            self.assertTrue(item.query_state() == self.ITEM_WF_STATE_AFTER_MEETING_TRANSITION['close'])
         # we can not correct the items
         self.assertTrue(not [tr for tr in self.transitions(meeting2.get_items()[0]) if tr.startswith('back')])
         removeView = meeting2.restrictedTraverse('@@remove-several-items')
@@ -2140,7 +2140,7 @@ class testMeeting(PloneMeetingTestCase):
             ['1', '2', '3', '4', '5', '6', '7'])
         # items state was not changed
         for item in meeting2.get_items():
-            self.assertTrue(item.queryState() == self.ITEM_WF_STATE_AFTER_MEETING_TRANSITION['close'])
+            self.assertTrue(item.query_state() == self.ITEM_WF_STATE_AFTER_MEETING_TRANSITION['close'])
 
     def test_pm_PresentItemToPublishedMeeting(self):
         '''Test the functionnality to present an item.
@@ -2153,12 +2153,12 @@ class testMeeting(PloneMeetingTestCase):
         self.assertTrue(getCurrentMeetingObject(item).UID() == meeting.UID())
         # if we present the item, it will be presented in the published meeting
         self.presentItem(item)
-        self.assertTrue(item.queryState() == 'presented')
+        self.assertTrue(item.query_state() == 'presented')
         self.assertTrue(item.getMeeting().UID() == meeting.UID())
         # remove item from meeting
         self.backToState(item, 'validated')
         self.assertTrue(not item.hasMeeting())
-        self.assertTrue(item.queryState() == 'validated')
+        self.assertTrue(item.query_state() == 'validated')
         # now unset current meeting
         item.REQUEST['PUBLISHED'] = item
         # as no current meeting and no meeting in the future, the item
@@ -2174,7 +2174,7 @@ class testMeeting(PloneMeetingTestCase):
         item.reindexObject(idxs=['getPreferredMeeting', ])
         self.assertTrue(item.wfConditions().mayPresent())
         self.presentItem(item)
-        self.assertTrue(item.queryState() == 'itemfrozen')
+        self.assertTrue(item.query_state() == 'itemfrozen')
         self.assertTrue(item.isLate())
         self.assertTrue(item.getMeeting().UID() == meeting.UID())
 
@@ -2198,7 +2198,7 @@ class testMeeting(PloneMeetingTestCase):
         self.request['HTTP_REFERER'] = meeting.absolute_url() + '/@@meeting_available_items_view'
         self.assertEqual(getCurrentMeetingObject(item), meeting)
         self.presentItem(item)
-        self.assertEqual(item.queryState(), 'presented')
+        self.assertEqual(item.query_state(), 'presented')
 
     def test_pm_PresentItemWhenNoPublishedMeeting(self):
         '''Test the functionnality to present an item.
@@ -2238,7 +2238,7 @@ class testMeeting(PloneMeetingTestCase):
         self.assertEqual(item.getMeetingToInsertIntoWhenNoCurrentMeetingObject(), meeting)
         # present the item as normal item
         self.presentItem(item)
-        self.assertTrue(item.queryState() == 'presented')
+        self.assertTrue(item.query_state() == 'presented')
         self.assertFalse(item.isLate())
         self.assertTrue(item.getMeeting().UID() == meeting.UID())
         # remove the item, we will now insert it as late
@@ -2302,15 +2302,15 @@ class testMeeting(PloneMeetingTestCase):
 
         # for now, the next meeting is used
         late_state = meeting1.adapted().get_late_state()
-        self.assertTrue(meeting1.queryState() in get_states_before(meeting1, late_state))
-        self.assertTrue(meeting2.queryState() in get_states_before(meeting2, late_state))
+        self.assertTrue(meeting1.query_state() in get_states_before(meeting1, late_state))
+        self.assertTrue(meeting2.query_state() in get_states_before(meeting2, late_state))
         self.assertTrue(meeting1.date < meeting2.date)
         self.assertEqual(item.getMeetingToInsertIntoWhenNoCurrentMeetingObject(), meeting1)
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject')
         cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
         # freeze meeting1, meeting2 is used
         self.freezeMeeting(meeting1)
-        self.assertFalse(meeting1.queryState() in get_states_before(meeting1, late_state))
+        self.assertFalse(meeting1.query_state() in get_states_before(meeting1, late_state))
         self.assertEqual(item.getMeetingToInsertIntoWhenNoCurrentMeetingObject(), meeting2)
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject')
         cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
@@ -2830,7 +2830,7 @@ class testMeeting(PloneMeetingTestCase):
 
         # if item is removed from the meeting, it falls back to 1950
         self.do(item, 'backToValidated')
-        self.assertEqual(item.queryState(), 'validated')
+        self.assertEqual(item.query_state(), 'validated')
         itemBrain = self.catalog(UID=item.UID())[0]
         self.assertEqual(itemBrain.linkedMeetingDate, DateTime('1950/01/01'))
         # preferredMeetingDate is still the meetingDate

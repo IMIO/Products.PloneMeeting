@@ -5756,7 +5756,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         """Return the default item template if it is active."""
         item_templates = self.get(TOOL_FOLDER_ITEM_TEMPLATES)
         default_template = item_templates.get(ITEM_DEFAULT_TEMPLATE_ID, None)
-        if default_template and ignore_inactive and default_template.queryState() == 'inactive':
+        if default_template and ignore_inactive and default_template.query_state() == 'inactive':
             default_template = None
         return default_template
 
@@ -6428,7 +6428,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         else:
             res = []
             for item in itemsFolder.objectValues('MeetingItem'):
-                if item.queryState() == 'active':
+                if item.query_state() == 'active':
                     res.append(item)
         return res
 

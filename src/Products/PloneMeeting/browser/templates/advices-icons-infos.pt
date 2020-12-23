@@ -11,7 +11,7 @@
                        displayedReviewState python: False;
                        adviceStyle python: cfg.getAdviceStyle();
                        displayAdviceConfidentiality python: cfg.getEnableAdviceConfidentiality() and view.tool.isManager(context);
-                       item_review_state context/queryState;">
+                       item_review_state context/query_state;">
 
           <tal:comment replace="nothing">List of group names</tal:comment>
           <tal:loop repeat="advice python:advicesByType[adviceType]">

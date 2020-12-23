@@ -277,7 +277,7 @@ class MeetingUser(BaseContent, BrowserDefaultMixin):
         '''See doc in interfaces.py.'''
         pass
 
-    def queryState(self):
+    def query_state(self):
         '''In what state am I ?'''
         wfTool = api.portal.get_tool('portal_workflow')
         return wfTool.getInfoFor(self, 'review_state')
@@ -357,7 +357,7 @@ class MeetingUser(BaseContent, BrowserDefaultMixin):
         if loggedUser.has_role('Manager'):
             return True
         meeting = item.getMeeting()
-        if item.getMeeting().queryState() in meeting.meetingClosedStates:
+        if item.getMeeting().query_state() in meeting.meetingClosedStates:
             return False
         else:
             cfg = tool.getMeetingConfig(item)

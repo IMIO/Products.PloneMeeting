@@ -544,7 +544,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                 # can not remove the ITEM_DEFAULT_TEMPLATE_ID
                 if folderId == 'itemtemplates' and \
                    obj.getId() == ITEM_DEFAULT_TEMPLATE_ID:
-                    if obj.queryState() == 'active':
+                    if obj.query_state() == 'active':
                         # disable it instead removing it
                         api.content.transition(obj, 'deactivate')
                     continue

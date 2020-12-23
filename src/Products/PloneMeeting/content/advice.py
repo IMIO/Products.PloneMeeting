@@ -148,7 +148,7 @@ class MeetingAdvice(Container):
         """ """
         return self.Title()
 
-    def queryState(self):
+    def query_state(self):
         '''In what state am I ?'''
         wfTool = api.portal.get_tool('portal_workflow')
         return wfTool.getInfoFor(self, 'review_state')

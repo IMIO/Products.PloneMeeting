@@ -34,7 +34,7 @@ class testPerformances(PloneMeetingTestCase):
         # in some wfs, deciding a meeting will accept every items...
         # set back items to the 'itemfrozen' state
         for itemInMeeting in meeting.getItems():
-            if itemInMeeting.queryState() == 'itemfrozen':
+            if itemInMeeting.query_state() == 'itemfrozen':
                 break
             self.do(itemInMeeting, 'backToItemFrozen')
 

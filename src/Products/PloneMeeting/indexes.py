@@ -120,7 +120,7 @@ def reviewProcessInfo(obj):
       Compute a reviewProcessInfo, this concatenate the group managing item
       and the item review_state so it can be queryable in the catalog.
     """
-    item_state = obj.queryState()
+    item_state = obj.query_state()
     return '%s__reviewprocess__%s' % (
         obj.adapted()._getGroupManagingItem(item_state, theObject=False), item_state)
 
@@ -352,7 +352,7 @@ def _to_coded_adviser_index(obj, org_uid, advice_infos):
             # by default, a still editable advice is 'advice_under_edit'
             # and a no more editable advice is 'advice_given'
             advice_obj = getattr(obj, advice_infos['advice_id'])
-            suffixes.append('_%s' % advice_obj.queryState())
+            suffixes.append('_%s' % advice_obj.query_state())
         return suffixes
 
     res = []

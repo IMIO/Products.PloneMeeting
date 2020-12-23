@@ -72,6 +72,7 @@ from Products.PloneMeeting.config import ROOT_FOLDER
 from Products.PloneMeeting.config import SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY
 from Products.PloneMeeting.content.meeting import IMeeting
 from Products.PloneMeeting.content.meeting import Meeting
+from Products.PloneMeeting.interfaces import IMeetingItem
 from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.profiles import PloneMeetingConfiguration
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
@@ -1413,8 +1414,10 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         startTime = time.time()
         catalog = api.portal.get_tool('portal_catalog')
         query = {}
-        if meta_type:
-            query['meta_type'] = meta_type
+        if 'Meeting' in meta_type:
+            query['object_provides'] = IMeeting.__identifier__
+        elif 'MeetingItem' in meta_type:
+            query['object_provides'] = IMeetingItem.__identifier__
         if portal_type:
             query['portal_type'] = portal_type
         query.update(kw)

@@ -911,7 +911,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.do(item, 'validate')
         # no matter item is no more editable by 'pmReviewer1' when validated
         # it was sent to cfg2Id
-        self.assertEqual(item.queryState(), 'validated')
+        self.assertEqual(item.query_state(), 'validated')
         self.assertTrue(item.getItemClonedToOtherMC(cfg2Id, theObject=False))
 
     def test_pm_SendItemToOtherMCRespectWFInitialState(self):
@@ -963,7 +963,7 @@ class testMeetingItem(PloneMeetingTestCase):
         newItem = data['newItem']
         wf_name = self.wfTool.getWorkflowsFor(newItem)[0].getId()
         item_initial_state = self.wfTool[wf_name].initial_state
-        self.assertEqual(newItem.queryState(), item_initial_state)
+        self.assertEqual(newItem.query_state(), item_initial_state)
         self.assertEqual(cfg.getMeetingConfigsToCloneTo(),
                          ({'meeting_config': '%s' % cfg2Id,
                            'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL},))
@@ -982,7 +982,7 @@ class testMeetingItem(PloneMeetingTestCase):
         newItem = data['newItem']
         self.assertFalse(cfg2.getUseGroupsAsCategories())
         # item is not 'presented' as category is required to present
-        self.assertEqual(newItem.queryState(), 'validated')
+        self.assertEqual(newItem.query_state(), 'validated')
         fail_to_trigger_msg = u'Some transitions could not be triggered for the item ' \
             u'sent to "\xe9 and \xe9", please check the new item.'
         lastPortalMessage = IStatusMessage(self.request).showStatusMessages()[-1]
@@ -1000,7 +1000,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.deleteAsManager(originalItem.UID())
         data = self._setupSendItemToOtherMC(with_advices=True)
         newItem = data['newItem']
-        self.assertEqual(newItem.queryState(), 'validated')
+        self.assertEqual(newItem.query_state(), 'validated')
 
         # now try to present the item, it will be presented
         # to next available meeting in it's initial_state
@@ -1019,7 +1019,7 @@ class testMeetingItem(PloneMeetingTestCase):
         meeting_initial_state = self.wfTool[cfg2MeetingWF.getId()].initial_state
         self.assertEqual(len(cfg2.getMeetingsAcceptingItems(
             review_states=(meeting_initial_state, ))), 0)
-        self.assertEqual(newItem.queryState(), 'validated')
+        self.assertEqual(newItem.query_state(), 'validated')
         # a status message was added
         lastPortalMessage = IStatusMessage(self.request).showStatusMessages()[-1]
         self.assertEqual(
@@ -1038,7 +1038,7 @@ class testMeetingItem(PloneMeetingTestCase):
         data = self._setupSendItemToOtherMC(with_advices=True)
         newItem = data['newItem']
         # the item could not be presented
-        self.assertEqual(newItem.queryState(), 'validated')
+        self.assertEqual(newItem.query_state(), 'validated')
         # now create a meeting 15 days in the future
         self.setMeetingConfig(cfg2Id)
         futureDate = DateTime() + 15
@@ -1050,7 +1050,7 @@ class testMeetingItem(PloneMeetingTestCase):
         data = self._setupSendItemToOtherMC(with_advices=True)
         newItem = data['newItem']
         # the item could be presented
-        self.assertEqual(newItem.queryState(), 'presented')
+        self.assertEqual(newItem.query_state(), 'presented')
 
     def test_pm_SendItemToOtherMCTriggeredTransitionsAreUnrestricted(self):
         '''When the item is sent automatically to the other MC, if current user,
@@ -1090,7 +1090,7 @@ class testMeetingItem(PloneMeetingTestCase):
 
         # and it has been presented
         sentItem = vendorsItem.getItemClonedToOtherMC(destMeetingConfigId=cfg2Id)
-        self.assertEqual(sentItem.queryState(), 'presented')
+        self.assertEqual(sentItem.query_state(), 'presented')
 
     def test_pm_SendItemToOtherMCUsingEmergency(self):
         '''Test when sending an item to another MeetingConfig and emergency is asked,
@@ -1129,7 +1129,7 @@ class testMeetingItem(PloneMeetingTestCase):
         dummyItem = self.create('MeetingItem')
         self.presentItem(dummyItem)
         self.freezeMeeting(frozenMeeting)
-        self.assertEqual(frozenMeeting.queryState(), 'frozen')
+        self.assertEqual(frozenMeeting.query_state(), 'frozen')
         createdMeeting = self.create('Meeting', date=now + 10)
         # create the meeting in cfg
         self.setMeetingConfig(cfgId)
@@ -1189,7 +1189,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.do(item, 'accept')
         sentItem = item.getItemClonedToOtherMC(cfg2Id)
         self.assertIsNone(sentItem.getMeeting())
-        self.assertEqual(sentItem.queryState(), 'validated')
+        self.assertEqual(sentItem.query_state(), 'validated')
 
     def test_pm_SendItemToOtherMCUsingEmergencyInitializePreferredMeeting(self):
         """When an item is sent to another meeting configuration and emergency
@@ -1361,7 +1361,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # sendable because editable and in itemManualSentToOtherMCStates
         self.changeUser('pmReviewer1')
         self.assertTrue(self.hasPermission(ModifyPortalContent, item))
-        self.assertTrue(item.queryState() in cfg.getItemManualSentToOtherMCStates())
+        self.assertTrue(item.query_state() in cfg.getItemManualSentToOtherMCStates())
         self.assertTrue(item.mayCloneToOtherMeetingConfig(cfg2Id))
         # if we send it, every other things works like if it was sent automatically
         self.changeUser('pmManager')
@@ -1401,7 +1401,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.do(autoItem, 'validate')
         self.changeUser('pmCreator1')
         clonedAutoItem = autoItem.getItemClonedToOtherMC(cfg2Id)
-        self.assertEqual(clonedAutoItem.queryState(), 'validated')
+        self.assertEqual(clonedAutoItem.query_state(), 'validated')
 
         # automatically
         # create an item and validate it as a MeetingManager
@@ -1415,7 +1415,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.do(autoItem2, 'validate')
         clonedAutoItem2 = autoItem2.getItemClonedToOtherMC(cfg2Id)
         # this time transitions were triggered
-        self.assertEqual(clonedAutoItem2.queryState(), 'validated')
+        self.assertEqual(clonedAutoItem2.query_state(), 'validated')
 
         # manually
         # transitions not triggered as non MeetingManager
@@ -1427,7 +1427,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # transitions were not triggered, item was left in it's initial_state
         wf_name = self.wfTool.getWorkflowsFor(clonedManualItem)[0].getId()
         initial_state = self.wfTool[wf_name].initial_state
-        self.assertEqual(clonedManualItem.queryState(), initial_state)
+        self.assertEqual(clonedManualItem.query_state(), initial_state)
 
         # manually
         # user is MeetingManager, transitions are triggered
@@ -1437,7 +1437,7 @@ class testMeetingItem(PloneMeetingTestCase):
         manualItem2.setOtherMeetingConfigsClonableTo((cfg2Id,))
         clonedManualItem2 = manualItem2.cloneToOtherMeetingConfig(cfg2Id)
         # transitions were triggered, and manualItemLinkedToMeeting is 'validated'
-        self.assertEqual(clonedManualItem2.queryState(), 'validated')
+        self.assertEqual(clonedManualItem2.query_state(), 'validated')
 
     def test_pm_SendItemToOtherMCTransitionsTriggeredUntilPresented(self):
         '''Test when an item is sent to another MC and transitions are triggered
@@ -1466,7 +1466,7 @@ class testMeetingItem(PloneMeetingTestCase):
         item.setOtherMeetingConfigsClonableTo((cfg2Id,))
         clonedItem = item.cloneToOtherMeetingConfig(cfg2Id)
         # transitions were triggered, but only to validated as no meeting available
-        self.assertEqual(clonedItem.queryState(), 'validated')
+        self.assertEqual(clonedItem.query_state(), 'validated')
         messages = IStatusMessage(self.request).show()
         no_available_meeting_msg = translate(
             'could_not_present_item_no_meeting_accepting_items',
@@ -1493,7 +1493,7 @@ class testMeetingItem(PloneMeetingTestCase):
         item2.setOtherMeetingConfigsClonableToPrivacy((cfg2Id,))
         cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
         clonedItem2 = item2.cloneToOtherMeetingConfig(cfg2Id)
-        self.assertEqual(clonedItem2.queryState(), 'presented')
+        self.assertEqual(clonedItem2.query_state(), 'presented')
         cleanRamCacheFor('Products.PloneMeeting.Meeting.getItems')
         self.assertEqual([anItem.getPrivacy() for anItem in meeting.getItems(ordered=True)],
                          ['public', 'public', 'public', 'secret', 'secret', 'secret'])
@@ -2151,9 +2151,9 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser(userThatCanSee)
         wf_name = self.wfTool.getWorkflowsFor(createdItem)[0].getId()
         createdItemInitialState = self.wfTool[wf_name].initial_state
-        self.assertEqual(createdItem.queryState(), createdItemInitialState)
-        self.assertEqual(validatedItem.queryState(), 'validated')
-        self.assertEqual(presentedItem.queryState(), 'presented')
+        self.assertEqual(createdItem.query_state(), createdItemInitialState)
+        self.assertEqual(validatedItem.query_state(), 'validated')
+        self.assertEqual(presentedItem.query_state(), 'presented')
         # createItem is visible unless it's initial_state is 'validated'
         if createdItemInitialState != 'validated':
             self.failUnless(self.hasPermission(View, createdItem))
@@ -2240,7 +2240,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # frozen items/meetings are accessible by both powerobs
         self.changeUser('pmManager')
         self.freezeMeeting(meeting)
-        self.assertEqual(item.queryState(), 'itemfrozen')
+        self.assertEqual(item.query_state(), 'itemfrozen')
         self.changeUser('restrictedpowerobserver1')
         self.assertTrue(self.hasPermission(View, item))
         self.assertTrue(self.hasPermission(View, meeting))
@@ -2448,7 +2448,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.decideMeeting(meeting)
         self.assertTrue(item.maySignItem())
         # depending on the workflow used, 'deciding' a meeting can 'accept' every not yet accepted items...
-        if not item.queryState() == 'accepted':
+        if not item.query_state() == 'accepted':
             self.do(item, 'accept')
         # a signed item can still be unsigned until the meeting is closed
         self.assertTrue(item.maySignItem())
@@ -2851,7 +2851,7 @@ class testMeetingItem(PloneMeetingTestCase):
         for tr in self.TRANSITIONS_FOR_CLOSING_MEETING_2:
             if tr in self.transitions(meeting):
                 self.do(meeting, tr)
-            if meeting.queryState() not in get_states_before(meeting, late_state):
+            if meeting.query_state() not in get_states_before(meeting, late_state):
                 self.failUnless(lateItem.wfConditions().isLateFor(meeting))
             else:
                 self.failIf(lateItem.wfConditions().isLateFor(meeting))
@@ -3281,7 +3281,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmManager')
         self.closeMeeting(meeting_before)
         self.cleanMemoize()
-        self.assertTrue(meeting_before.queryState(), 'closed')
+        self.assertTrue(meeting_before.query_state(), 'closed')
         self.assertEqual(meeting_before.getFirstItemNumber(), 1)
         self.assertEqual(
             meeting_before.getItems(ordered=True)[-1].getItemNumber(relativeTo='meetingConfig'),
@@ -3297,7 +3297,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(meeting.getFirstItemNumber(), -1)
         self.closeMeeting(meeting)
         self.cleanMemoize()
-        self.assertTrue(meeting.queryState(), 'closed')
+        self.assertTrue(meeting.query_state(), 'closed')
         self.assertEqual(meeting.getFirstItemNumber(), 8)
         # getItemNumber is still behaving the same
         # for item
@@ -4062,7 +4062,7 @@ class testMeetingItem(PloneMeetingTestCase):
         item4.setDecision('<p>My decision that will not be touched.</p>')
         self.do(item4, 'accept')
         # transition was triggered
-        self.assertEqual(item4.queryState(), 'accepted')
+        self.assertEqual(item4.query_state(), 'accepted')
         # original decision was not touched
         self.assertEqual(item4.getDecision(), '<p>My decision that will not be touched.</p>')
         # a portal_message is displayed to the user that triggered the transition
@@ -4219,7 +4219,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(not item.takenOverByInfos)
         # take item over
         item.setTakenOverBy('pmCreator1')
-        item_created_key = "%s__wfstate__%s" % (cfg.getItemWorkflow(), item.queryState())
+        item_created_key = "%s__wfstate__%s" % (cfg.getItemWorkflow(), item.query_state())
         self.assertEqual(item.takenOverByInfos[item_created_key], 'pmCreator1')
         # if takenOverBy is removed, takenOverByInfos is cleaned too
         item.setTakenOverBy('')
@@ -5239,7 +5239,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.presentItem(item)
         self.decideMeeting(meeting)
         self.do(item, 'accept')
-        self.assertEqual(item.queryState(), 'accepted')
+        self.assertEqual(item.query_state(), 'accepted')
         annexDec = self.addAnnex(item, relatedTo='item_decision')
         annexDec_config = get_config_root(annexDec)
         annexDec_group = get_group(annexDec_config, annexDec)
@@ -6573,7 +6573,7 @@ class testMeetingItem(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         item.setOtherMeetingConfigsClonableTo((cfg2Id,))
         item2 = item.cloneToOtherMeetingConfig(cfg2Id)
-        self.assertEqual(item.queryState(), self._stateMappingFor('itemcreated'))
+        self.assertEqual(item.query_state(), self._stateMappingFor('itemcreated'))
         # check that date is not displayed as item is not into a meeting,
         # date is displayed at end of image title in case it is linked to a meeting
         self.assertTrue(
@@ -6584,17 +6584,17 @@ class testMeetingItem(PloneMeetingTestCase):
             u'src=\'http://nohost/plone/cloned_not_decided.png\' '
             u'style="width: 16px; height: 16px;" />'.format(
                 cfg.Title(),
-                translate(item.queryState(), domain="plone", context=self.request)
+                translate(item.query_state(), domain="plone", context=self.request)
             )
             in IPrettyLink(item2).getLink())
         self.proposeItem(item)
-        self.assertEqual(item.queryState(), self._stateMappingFor('proposed'))
+        self.assertEqual(item.query_state(), self._stateMappingFor('proposed'))
         self.assertTrue(
             u'<img title=\'Sent from {0}, original item is "{1}".\' '
             u'src=\'http://nohost/plone/cloned_not_decided.png\' '
             u'style="width: 16px; height: 16px;" />'.format(
                 cfg.Title(),
-                translate(item.queryState(), domain="plone", context=self.request)
+                translate(item.query_state(), domain="plone", context=self.request)
             )
             in IPrettyLink(item2).getLink())
 

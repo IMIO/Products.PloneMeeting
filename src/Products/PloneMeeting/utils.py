@@ -435,7 +435,7 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
                                                        context=obj.REQUEST)
     elif obj.getTagName() == 'MeetingItem':
         translationMapping['itemTitle'] = safe_unicode(obj.Title())
-        translationMapping['itemState'] = translate(obj.queryState(),
+        translationMapping['itemState'] = translate(obj.query_state(),
                                                     domain='plone',
                                                     context=obj.REQUEST)
         meeting = obj.getMeeting()
@@ -566,7 +566,7 @@ def sendMailIfRelevant(obj, event, permissionOrSuffixOrRoleOrGroupIds,
     adap = obj.adapted()
     userIds = []
     if isSuffix:
-        org = obj.adapted()._getGroupManagingItem(obj.queryState())
+        org = obj.adapted()._getGroupManagingItem(obj.query_state())
         plone_group = get_plone_group(org.UID(), permissionOrSuffixOrRoleOrGroupIds)
         if not plone_group:
             # maybe the suffix is a MeetingConfig related suffix, like _meetingmanagers
@@ -656,7 +656,7 @@ def clonePermissions(srcObj, destObj, permissions=(View,
         if permission in srcWorkflow.permissions:
             # Get the roles this permission is given to for srcObj in its
             # current state.
-            srcStateDef = getattr(srcWorkflow.states, srcObj.queryState())
+            srcStateDef = getattr(srcWorkflow.states, srcObj.query_state())
             permissionInfo = srcStateDef.getPermissionInfo(permission)
             destObj.manage_permission(permission,
                                       permissionInfo['roles'],
@@ -814,7 +814,7 @@ def rememberPreviousData(obj, name=None):
         meth = cfg.getRecordItemHistoryStates
     else:
         meth = cfg.getRecordMeetingHistoryStates
-    if obj.queryState() not in meth():
+    if obj.query_state() not in meth():
         return res
     # Store in res the values currently stored on p_obj.
     if isItem:
@@ -854,7 +854,7 @@ def addDataChange(obj, previousData=None):
     # Add an event in the history
     userId = obj.portal_membership.getAuthenticatedMember().getId()
     event = {'action': '_datachange_', 'actor': userId, 'time': DateTime(),
-             'comments': '', 'review_state': obj.queryState(),
+             'comments': '', 'review_state': obj.query_state(),
              'changes': previousData}
     if hasattr(obj, '_v_previousData'):
         del obj._v_previousData

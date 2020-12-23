@@ -114,7 +114,7 @@ class MeetingWorkflowConditions(object):
     security.declarePublic('mayAcceptItems')
 
     def mayAcceptItems(self):
-        if self.context.queryState() in self.cfg.adapted().getMeetingStatesAcceptingItems():
+        if self.context.query_state() in self.cfg.adapted().getMeetingStatesAcceptingItems():
             return True
 
     security.declarePublic('mayPublish')
@@ -156,7 +156,7 @@ class MeetingWorkflowConditions(object):
         if not _checkPermission(ReviewPortalContent, self.context):
             return
 
-        meeting_state = self.context.queryState()
+        meeting_state = self.context.query_state()
         if meeting_state == 'closed':
             if self.tool.isManager(self.context, realManagers=True) or \
                'meetingmanager_correct_closed_meeting' in self.cfg.getWorkflowAdaptations():
@@ -177,7 +177,7 @@ class MeetingWorkflowConditions(object):
     def mayChangeItemsOrder(self):
         res = True
         if not _checkPermission(ModifyPortalContent, self.context) or \
-           self.context.queryState() in Meeting.meetingClosedStates:
+           self.context.query_state() in Meeting.meetingClosedStates:
             res = False
         return res
 
@@ -283,7 +283,7 @@ class MeetingWorkflowActions(object):
     def doBackToPublished(self, stateChange):
         wfTool = api.portal.get_tool('portal_workflow')
         for item in self.context.getItems():
-            if item.queryState() == 'itemfrozen':
+            if item.query_state() == 'itemfrozen':
                 wfTool.doActionFor(item, 'backToItemPublished')
                 if item.isLate():
                     wfTool.doActionFor(item, 'backToPresented')
@@ -783,7 +783,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         meeting = self.getSelf()
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(meeting)
-        if meeting.queryState() not in cfg.adapted().getMeetingStatesAcceptingItems():
+        if meeting.query_state() not in cfg.adapted().getMeetingStatesAcceptingItems():
             # make sure the query returns nothing, add a dummy parameter
             return [{'i': 'UID',
                      'o': 'plone.app.querystring.operation.selection.is',
@@ -798,7 +798,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
 
         # before late state, accept items having any preferred meeting
         late_state = self.adapted().getLateState()
-        if meeting.queryState() in self.getStatesBefore(late_state):
+        if meeting.query_state() in self.getStatesBefore(late_state):
             # get items for which the getPreferredMeetingDate is lower or
             # equal to the date of this meeting (self)
             # a no preferred meeting item getPreferredMeetingDate is 1950/01/01
@@ -2007,7 +2007,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         extra_expr_ctx.update({'meeting': self, })
         cfg = extra_expr_ctx['cfg']
         cfg_id = cfg.getId()
-        meetingState = self.queryState()
+        meetingState = self.query_state()
         for po_infos in cfg.getPowerObservers():
             if meetingState in po_infos['meeting_states'] and \
                _evaluateExpression(self,
@@ -2059,14 +2059,14 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         meetingConfig = tool.getMeetingConfig(self)
         return (name in meetingConfig.getUsedMeetingAttributes())
 
-    def queryState_cachekey(method, self):
-        '''cachekey method for self.queryState.'''
+    def query_state_cachekey(method, self):
+        '''cachekey method for self.query_state.'''
         return self.workflow_history
 
-    security.declarePublic('queryState')
+    security.declarePublic('query_state')
 
-    @ram.cache(queryState_cachekey)
-    def queryState(self):
+    @ram.cache(query_state_cachekey)
+    def query_state(self):
         '''In what state am I ?'''
         wfTool = api.portal.get_tool('portal_workflow')
         return wfTool.getInfoFor(self, 'review_state')
@@ -2097,7 +2097,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
 
     def isDecided(self):
         meeting = self.getSelf()
-        return meeting.queryState() in ('decided', 'closed', 'decisions_published', )
+        return meeting.query_state() in ('decided', 'closed', 'decisions_published', )
 
     security.declarePublic('getSpecificMailContext')
 
@@ -2280,7 +2280,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         meeting = self.getSelf()
         member = api.user.get_current()
         return bool(member.has_permission(ModifyPortalContent, meeting) and
-                    not meeting.queryState() in meeting.meetingClosedStates)
+                    not meeting.query_state() in meeting.meetingClosedStates)
 
     security.declarePublic('getLabelAssembly')
 

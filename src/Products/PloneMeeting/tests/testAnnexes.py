@@ -212,7 +212,7 @@ class testAnnexes(PloneMeetingTestCase):
 
         # validate the item so it is visible by every roles of the proposing group
         self.validateItem(item)
-        self.assertEqual(item.queryState(), 'validated')
+        self.assertEqual(item.query_state(), 'validated')
 
         proposingGroupSuffixes = [k for k in cfg.listItemAnnexConfidentialVisibleFor()
                                   if k.startswith(PROPOSINGGROUPPREFIX)]
@@ -467,7 +467,7 @@ class testAnnexes(PloneMeetingTestCase):
 
         # validate the item so it is visible by every roles of the proposing group
         self.validateItem(item)
-        self.assertEqual(item.queryState(), 'validated')
+        self.assertEqual(item.query_state(), 'validated')
 
         proposingGroupSuffixes = [k for k in cfg.listItemAnnexConfidentialVisibleFor()
                                   if k.startswith(PROPOSINGGROUPPREFIX)]
@@ -987,7 +987,7 @@ class testAnnexes(PloneMeetingTestCase):
         self.assertEqual(item.objectValues(), [annex2, annex3, annex1])
         # only members able to add annexes are able to change position
         self.validateItem(item)
-        self.assertEqual(item.queryState(), 'validated')
+        self.assertEqual(item.query_state(), 'validated')
         self.assertFalse(self.hasPermission(AddAnnex, item))
         self.assertRaises(Unauthorized, item.folder_position_typeaware, position='up', id=annex1.getId())
 
@@ -1117,7 +1117,7 @@ class testAnnexes(PloneMeetingTestCase):
         self.presentItem(item)
         self.decideMeeting(meeting)
         self.do(item, 'accept')
-        self.assertEqual(item.queryState(), 'accepted')
+        self.assertEqual(item.query_state(), 'accepted')
         self.changeUser('pmCreator1')
         decisionAnnex1 = self.addAnnex(item, relatedTo='item_decision')
         self.assertTrue(decisionAnnex1 in item.objectValues())

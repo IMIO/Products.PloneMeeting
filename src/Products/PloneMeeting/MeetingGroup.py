@@ -201,9 +201,9 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
 
     schema = MeetingGroup_schema
 
-    security.declarePublic('queryState')
+    security.declarePublic('query_state')
 
-    def queryState(self):
+    def query_state(self):
         '''In what state am I ?'''
         return self.portal_workflow.getInfoFor(self, 'review_state')
 

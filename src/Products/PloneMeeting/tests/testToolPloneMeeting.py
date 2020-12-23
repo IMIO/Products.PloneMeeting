@@ -32,6 +32,7 @@ from Products.PloneMeeting.utils import get_annexes
 from zope.i18n import translate
 from zope.testing.testrunner.find import find_test_files
 
+import os
 import transaction
 
 
@@ -60,7 +61,6 @@ class testToolPloneMeeting(PloneMeetingTestCase):
                                 f.split('/')[-1].startswith('testCustom')]
         # get test files for PloneMeeting
         # find PloneMeeting package path
-        import os
         pm_path = None
         for path in os.sys.path:
             if 'Products.PloneMeeting' in path:
@@ -105,7 +105,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertEqual(self.tool.getMeetingConfig(item).getId(), cfgId)
         annex = self.addAnnex(item)
         self.assertEqual(self.tool.getMeetingConfig(annex).getId(), cfgId)
-        meeting = self.create('Meeting', date=DateTime('2012/05/05'))
+        meeting = self.create('Meeting')
         self.assertEqual(self.tool.getMeetingConfig(meeting).getId(), cfgId)
         # returns None if called with an element outside the application
         self.failIf(self.tool.getMeetingConfig(self.portal))
@@ -796,7 +796,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         item1._update_after_edit()
         item2 = self.create('MeetingItem')
         self.proposeItem(item2)
-        meeting = self.create('Meeting', date=DateTime('2015/05/05'))
+        meeting = self.create('Meeting')
         # powerObservers roles are correctly set
         self.assertTrue('%s_powerobservers' % cfg.getId() in item1.__ac_local_roles__)
         self.assertFalse('%s_powerobservers' % cfg.getId() in item2.__ac_local_roles__)
@@ -849,7 +849,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
                          u'Meeting of 05/05/2015')
 
         # add hours to the meeting date
-        meeting.setDate('2015/05/05 14:30')
+        meeting.date = datetime(2015, 5, 5, 14, 30)
         self.assertEqual(self.tool.format_date(meeting.date),
                          u'05 may 2015')
         self.assertEqual(self.tool.format_date(meeting.date, short=True),
@@ -1132,7 +1132,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         """Remove annexes previews of every items in closed meetings."""
         self._enableAutoConvert()
         self.changeUser('pmManager')
-        meeting = self.create('Meeting', date=DateTime('2020/03/31'))
+        meeting = self.create('Meeting')
         item = self.create('MeetingItem')
         annex = self.addAnnex(item)
         annex_decision = self.addAnnex(item, relatedTo='item_decision')
@@ -1141,7 +1141,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertEqual(infos[annex_decision.UID()]['preview_status'], 'converted')
         self.presentItem(item)
         # clean now and meeting not closed
-        self.assertNotEqual(meeting.queryState(), 'closed')
+        self.assertNotEqual(meeting.query_state(), 'closed')
         self.assertRaises(Unauthorized, self.tool.removeAnnexesPreviews)
         self.changeUser('siteadmin')
         self.tool.removeAnnexesPreviews()

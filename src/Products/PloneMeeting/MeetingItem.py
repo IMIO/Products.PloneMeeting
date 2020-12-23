@@ -248,7 +248,7 @@ class MeetingItemWorkflowConditions(object):
         res = False
         if 'waiting_advices_given_advices_required_to_validate' in \
            self.cfg.getWorkflowAdaptations():
-            review_state = self.context.queryState()
+            review_state = self.context.query_state()
             wf_tool = api.portal.get_tool('portal_workflow')
             item_wf = wf_tool.getWorkflowsFor(self.context)[0]
             transitions = item_wf.states[review_state].transitions
@@ -293,7 +293,7 @@ class MeetingItemWorkflowConditions(object):
             if _checkPermission(ManagePortal, self.context):
                 res = True
             else:
-                item_state = self.context.queryState()
+                item_state = self.context.query_state()
                 last_validation_state = self._getLastValidationState()
                 if item_state == last_validation_state:
                     res = True
@@ -367,7 +367,7 @@ class MeetingItemWorkflowConditions(object):
 
     def mayConfirm(self):
         if _checkPermission(ReviewPortalContent, self.context) and \
-           self.context.getMeeting().queryState() in ('decided', 'decisions_published', 'closed'):
+           self.context.getMeeting().query_state() in ('decided', 'decisions_published', 'closed'):
             return True
 
     def _currentUserIsAdviserAbleToSendItemBackExtraCondition(self, org, destinationState):
@@ -387,7 +387,7 @@ class MeetingItemWorkflowConditions(object):
            - every advices that should be given have to be given;
            - user must be adviser for advice;
            - if advice not given, user must be able to evaluate completeness and item must be incomplete.'''
-        item_state = self.context.queryState()
+        item_state = self.context.query_state()
         user_plone_groups = self.tool.get_plone_groups_for_user()
         res = False
         for org_uid in self.context.adviceIndex:
@@ -422,7 +422,7 @@ class MeetingItemWorkflowConditions(object):
         if not meeting or (meeting and meeting.query_state() != 'closed'):
             proposingGroup = self.context.getProposingGroup()
             # when item is validated, we may eventually send back to last validation state
-            item_state = self.context.queryState()
+            item_state = self.context.query_state()
             wfas = self.cfg.getWorkflowAdaptations()
             if item_state == 'validated':
                 last_val_state = self._getLastValidationState()
@@ -884,7 +884,7 @@ class MeetingItemWorkflowActions(object):
 
         if 'decide_item_when_back_to_meeting_from_returned_to_proposing_group' in self.cfg.getWorkflowAdaptations() \
                 and stateChange.transition.getId() == 'backTo_itemfrozen_from_returned_to_proposing_group' \
-                and self.context.getMeeting().queryState() == 'decided':
+                and self.context.getMeeting().query_state() == 'decided':
             with api.env.adopt_roles(roles=['Manager']):
                 wTool = api.portal.get_tool('portal_workflow')
                 from config import ITEM_TRANSITION_WHEN_RETURNED_FROM_PROPOSING_GROUP_AFTER_CORRECTION
@@ -2141,7 +2141,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if not res:
             cfg = tool.getMeetingConfig(item)
             res = tool.isPowerObserverForCfg(cfg) or \
-                item.queryState() in cfg.getItemDecidedStates()
+                item.query_state() in cfg.getItemDecidedStates()
         return res
 
     security.declarePublic('showIsAcceptableOutOfMeeting')
@@ -2227,7 +2227,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Condition for showing the 'itemIsSigned' field on views.
            The attribute must be used and the item must be decided.'''
         return self.attributeIsUsed('itemIsSigned') and \
-            (self.hasMeeting() or self.queryState() == 'validated')
+            (self.hasMeeting() or self.query_state() == 'validated')
 
     security.declarePublic('mayChangeListType')
 
@@ -2293,7 +2293,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # item is decided and user is member of the proposingGroup
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(item)
-            item_state = item.queryState()
+            item_state = item.query_state()
             if item_state in cfg.getItemDecidedStates() and \
                item.adapted()._getGroupManagingItem(item_state, theObject=False) in \
                tool.get_orgs_for_user(the_objects=False):
@@ -2318,7 +2318,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             else:
                 tool = api.portal.get_tool('portal_plonemeeting')
                 cfg = tool.getMeetingConfig(self)
-                wf_state = "%s__wfstate__%s" % (cfg.getItemWorkflow(), self.queryState())
+                wf_state = "%s__wfstate__%s" % (cfg.getItemWorkflow(), self.query_state())
             if value:
                 self.takenOverByInfos[wf_state] = value
             elif not value and wf_state in self.takenOverByInfos:
@@ -3472,14 +3472,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         cfg = tool.getMeetingConfig(self)
         return (name in cfg.getUsedItemAttributes())
 
-    def queryState_cachekey(method, self):
-        '''cachekey method for self.queryState.'''
+    def query_state_cachekey(method, self):
+        '''cachekey method for self.query_state.'''
         return getattr(aq_base(self), 'workflow_history', {})
 
-    security.declarePublic('queryState')
+    security.declarePublic('query_state')
 
-    @ram.cache(queryState_cachekey)
-    def queryState(self):
+    @ram.cache(query_state_cachekey)
+    def query_state(self):
         '''In what state am I ?'''
         wfTool = api.portal.get_tool('portal_workflow')
         return wfTool.getInfoFor(self, 'review_state')
@@ -3973,7 +3973,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def mustShowItemReference(self):
         '''See doc in interfaces.py'''
         item = self.getSelf()
-        if item.hasMeeting() and (item.getMeeting().queryState() != 'created'):
+        if item.hasMeeting() and (item.getMeeting().query_state() != 'created'):
             return True
 
     security.declarePublic('getSpecificMailContext')
@@ -4618,7 +4618,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         toAdd = []
         toEdit = []
         powerAdvisers = cfg.getPowerAdvisersGroups()
-        itemState = self.queryState()
+        itemState = self.query_state()
         for user_org in user_orgs:
             user_org_uid = user_org.UID()
             if user_org_uid in self.adviceIndex:
@@ -4996,7 +4996,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         if cfg.getEnableAdviceInvalidation() and self.hasAdvices() \
-           and (self.queryState() in cfg.getItemAdviceInvalidateStates()):
+           and (self.query_state() in cfg.getItemAdviceInvalidateStates()):
             return True
         return False
 
@@ -5435,7 +5435,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 giveReaderAccess = False
                 # in this case, the advice is no more accessible in any way by the adviser
                 # make sure the advice given by groupId is no more editable
-                if adviceObj and not adviceObj.queryState() == 'advice_given':
+                if adviceObj and not adviceObj.query_state() == 'advice_given':
                     self.REQUEST.set('mayGiveAdvice', True)
                     # add a comment for this transition triggered by the application,
                     # we want to show why it was triggered : item state change or delay exceeded
@@ -5492,7 +5492,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                    self.adapted()._adviceIsEditable(org_uid):
                     # make sure the advice given by groupId is no more in state 'advice_given'
                     # if it is the case, we set it back to the advice initial_state
-                    if adviceObj.queryState() == 'advice_given':
+                    if adviceObj.query_state() == 'advice_given':
                         try:
                             # make the guard_expr protecting 'mayBackToAdviceInitialState' alright
                             self.REQUEST.set('mayBackToAdviceInitialState', True)
@@ -5507,7 +5507,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     self.adviceIndex[org_uid]['advice_editable'] = True
                 else:
                     # make sure it is no more editable
-                    if adviceObj and not adviceObj.queryState() == 'advice_given':
+                    if adviceObj and not adviceObj.query_state() == 'advice_given':
                         self.REQUEST.set('mayGiveAdvice', True)
                         # add a comment for this transition triggered by the application
                         wf_comment = _('wf_transition_triggered_by_application')
@@ -5825,7 +5825,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # Update history only if the item is in some states
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        if self.queryState() in cfg.getRecordItemHistoryStates():
+        if self.query_state() in cfg.getRecordItemHistoryStates():
             # Create the event
             user = api.user.get_current()
             event = {'action': action, 'type': subObj.meta_type,
@@ -5906,7 +5906,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        item_state = self.queryState()
+        item_state = self.query_state()
 
         # update suffixes related local roles
         self.assign_roles_to_group_suffixes(cfg, item_state)
@@ -6556,7 +6556,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # - current state in itemAutoSentToOtherMCStates;
         # - current state in itemManualSentToOtherMCStates/itemAutoSentToOtherMCStates
         #   and user have ModifyPortalContent or is a MeetingManager.
-        item_state = item.queryState()
+        item_state = item.query_state()
         if not ((automatically and
                  item_state in cfg.getItemAutoSentToOtherMCStates()) or
                 (not automatically and
@@ -6745,7 +6745,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            And if so, is it up or down the workflow?"""
         res = ""
         if not self.hasMeeting() and \
-           not self.queryState() == 'validated' and \
+           not self.query_state() == 'validated' and \
            not self.isDefinedInTool():
             res = down_or_up_wf(self)
         return res

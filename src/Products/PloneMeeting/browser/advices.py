@@ -159,12 +159,12 @@ class AdvicesIconsInfos(BrowserView):
         res = False
         if self.adviceIsInherited:
             if self.tool.isManager(self.context) and \
-               self.context.queryState() not in self.cfg.getItemDecidedStates():
+               self.context.query_state() not in self.cfg.getItemDecidedStates():
                 res = True
             else:
                 if self.cfg.getInheritedAdviceRemoveableByAdviser() and \
                    self.advice_id in self.userAdviserOrgUids and \
-                   self.context.queryState() in get_organization(
+                   self.context.query_state() in get_organization(
                         self.advice_id).get_item_advice_edit_states(cfg=self.cfg):
                     return True
         return res
@@ -251,7 +251,7 @@ class ChangeAdviceAskedAgainView(BrowserView):
             self.request.RESPONSE.status = 200
 
         notify(ObjectModifiedEvent(self.context))
-        item_state = parent.queryState()
+        item_state = parent.query_state()
         parent._sendAdviceToGiveMailIfRelevant(old_review_state=item_state,
                                                new_review_state=item_state,
                                                force_resend_if_in_advice_review_states=True)

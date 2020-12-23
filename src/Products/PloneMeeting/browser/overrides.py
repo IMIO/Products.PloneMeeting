@@ -621,7 +621,7 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
         # if item is validated, the 'present' action could appear if a meeting
         # is now available for the item to be inserted into
         isPresentable = False
-        if self.context.queryState() == 'validated':
+        if self.context.query_state() == 'validated':
             isPresentable = self.context.wfConditions().mayPresent()
 
         # check also portal_url in case application is accessed thru different URI

@@ -947,7 +947,7 @@ class testViews(PloneMeetingTestCase):
         view()
         self.assertEqual(view.getVisibleFields().keys(), ['description'])
         # define TAL expression
-        cfg.setItemsNotViewableVisibleFieldsTALExpr("python: item.queryState() != 'itemcreated'")
+        cfg.setItemsNotViewableVisibleFieldsTALExpr("python: item.query_state() != 'itemcreated'")
         self.cleanMemoize()
         view()
         self.assertEqual(view.getVisibleFields().keys(), [])
@@ -2032,7 +2032,7 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(item_labeling.storage, {'label': [], 'personal-label': ['pmCreator1']})
         # powerobserver
         self.changeUser('siteadmin')
-        self._setPowerObserverStates(states=(item.queryState(),))
+        self._setPowerObserverStates(states=(item.query_state(),))
         item._update_after_edit()
         self.changeUser('powerobserver1')
         self.assertTrue(self.hasPermission(View, item))
