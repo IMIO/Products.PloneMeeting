@@ -1921,8 +1921,8 @@ class testMeeting(PloneMeetingTestCase):
         i2.reindexObject()
         i3.reindexObject()
         # for now, no items are presentable...
-        # except if items are already 'validated', this could be the case when using
-        # 'items_come_validated' wfAdaptation or if item initial_state is 'validated'
+        # except if items are already 'validated', this could be the case
+        # if item initial_state is 'validated'
         m1_query = queryparser.parseFormquery(m1, m1.adapted()._available_items_query())
         m2_query = queryparser.parseFormquery(m2, m2.adapted()._available_items_query())
         m3_query = queryparser.parseFormquery(m3, m3.adapted()._available_items_query())

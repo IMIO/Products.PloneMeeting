@@ -74,8 +74,7 @@ class testWorkflows(PloneMeetingTestCase):
         self.assertEqual(len(myItems), 1)
         self.changeUser('pmManager')
         # The manager may not see the item yet except if item is already 'validated'
-        # this could be the case if item initial_state is 'validated' or when using
-        # wfAdaptation 'items_come_validated'
+        # this could be the case if item initial_state is 'validated'
         pmFolder = self.tool.getPloneMeetingFolder(cfg.getId())
         collection = cfg.searches.searches_items.searchallitems
         self.request['PATH_TRANSLATED'] = "{0}/{1}".format(pmFolder.searches_items.absolute_url(),

@@ -323,8 +323,7 @@ class MeetingItemWorkflowConditions(object):
             meeting = self.context.getMeetingToInsertIntoWhenNoCurrentMeetingObject()
             return bool(meeting)
 
-        # if WFAdaptation 'items_come_validated' is enabled, an item
-        # could miss it's category
+        # if item initial_state is "validated", an item could miss it's category
         msg = self._check_required_data('presented')
         if msg is not None:
             return msg
