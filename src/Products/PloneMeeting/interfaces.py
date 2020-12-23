@@ -358,7 +358,7 @@ class IMeetingItemDocumentation:
     def getAdviceRelatedIndexes(self):
         '''Return item indexes related to advices, by default
            only the 'indexAdvisers' index is returned.'''
-    def showVotesObservations():
+    def show_votesObservations():
         '''Votes observations field is only viewable by MeetingManagers and
            power observers until item is decided, in this case everybody may see it.'''
 
@@ -481,12 +481,12 @@ class IMeetingDocumentation:
            to return True in all cases. (Adapt it if you want to filter the
            recipients of a notification belong other criteria than their role
            or permission.)'''
-    def showVotes():
+    def show_votes():
         '''Under what circumstances must I show the tab "Votes" for every item
            of this meeting? The default implementation for this method
            returns True when the meeting has started (based on meeting.date or
            meeting.startDate if used).'''
-    def showVotesObservations():
+    def show_votesObservations():
         '''Votes observations field is only viewable by MeetingManagers and
            power observers until meeting is decided, in this case everybody may see it.'''
     def onEdit(isCreated):

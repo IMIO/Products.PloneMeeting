@@ -1,4 +1,9 @@
 # -*- coding: utf-8 -*-
+#
+# File: testContacts.py
+#
+# GNU General Public License (GPL)
+#
 
 from AccessControl import Unauthorized
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
@@ -6,6 +11,7 @@ from collective.contact.plonegroup.utils import get_own_organization
 from collective.contact.plonegroup.utils import get_plone_groups
 from DateTime import DateTime
 from datetime import date
+from datetime import datetime
 from imio.helpers.content import disable_link_integrity_checks
 from imio.helpers.content import get_vocab
 from imio.helpers.content import validate_fields
@@ -48,23 +54,23 @@ class testContacts(PloneMeetingTestCase):
         # we have selectable contacts
         self.assertTrue(cfg.getOrderedContacts())
         # create meeting and select attendees on it
-        meeting = self.create('Meeting', date=DateTime())
+        meeting = self.create('Meeting')
         # contacts are still in correct order
-        self.assertEqual(cfg.getOrderedContacts(), meeting.getAttendees())
+        self.assertEqual(cfg.getOrderedContacts(), meeting.get_attendees())
 
-    def test_pm_MeetingGetAllUsedHeldPositions(self):
+    def test_pm_Get_all_used_held_positions(self):
         ''' '''
         cfg = self.meetingConfig
         self.changeUser('pmManager')
-        meeting = self.create('Meeting', date=DateTime())
+        meeting = self.create('Meeting')
         # returns attendees, excused, absents, ...
         self.assertEqual(
-            meeting.orderedContacts.keys(),
-            [hp.UID() for hp in meeting.getAllUsedHeldPositions()])
+            meeting.ordered_contacts.keys(),
+            [hp.UID() for hp in meeting.get_all_used_held_positions()])
         # for now, include_new=True does not change anything
         self.assertEqual(
-            meeting.getAllUsedHeldPositions(),
-            meeting.getAllUsedHeldPositions(include_new=True))
+            meeting.get_all_used_held_positions(),
+            meeting.get_all_used_held_positions(include_new=True))
         # add a new hp in configuration
         self.changeUser('siteadmin')
         person = self.portal.contacts.get('person1')
@@ -77,29 +83,29 @@ class testContacts(PloneMeetingTestCase):
         self.changeUser('pmManager')
         # still no new value as not selected in MeetingConfig.orderedContacts
         self.assertEqual(
-            meeting.getAllUsedHeldPositions(),
-            meeting.getAllUsedHeldPositions(include_new=True))
+            meeting.get_all_used_held_positions(),
+            meeting.get_all_used_held_positions(include_new=True))
         # select new hp
         ordered_contacts = cfg.getField('orderedContacts').Vocabulary(cfg).keys()
         cfg.setOrderedContacts(ordered_contacts)
         self.assertEqual(
-            meeting.getAllUsedHeldPositions() + (new_hp, ),
-            meeting.getAllUsedHeldPositions(include_new=True))
+            meeting.get_all_used_held_positions() + (new_hp, ),
+            meeting.get_all_used_held_positions(include_new=True))
         # unselect everything on MeetingConfig, all values still available on meeting
         cfg.setOrderedContacts(())
         self.assertEqual(
-            meeting.getAllUsedHeldPositions(), meeting.getAttendees(theObjects=True))
+            meeting.get_all_used_held_positions(), meeting.get_attendees(the_objects=True))
 
     def test_pm_CanNotRemoveUsedHeldPosition(self):
         ''' '''
         cfg = self.meetingConfig
         self.changeUser('pmManager')
         # test that held positition cannot be delete if used for assembly
-        meeting = self.create('Meeting', date=DateTime())
+        meeting = self.create('Meeting')
         person = self.portal.contacts.get('person1')
         hp = person.get_held_positions()[0]
         hp_uid = hp.UID()
-        self.assertTrue(hp_uid in meeting.getAttendees())
+        self.assertTrue(hp_uid in meeting.get_attendees())
         # hp not deletable because used in MC and meeting
         self.changeUser('siteadmin')
         self.assertRaises(Redirect, api.content.delete, hp)
@@ -112,12 +118,12 @@ class testContacts(PloneMeetingTestCase):
         self.assertRaises(Redirect, api.content.delete, hp)
 
         # unselect hp from meeting, now it is deletable
-        del meeting.orderedContacts[hp.UID()]
-        self.assertFalse(hp_uid in meeting.getAttendees())
+        del meeting.ordered_contacts[hp.UID()]
+        self.assertFalse(hp_uid in meeting.get_attendees())
 
         # test that held positition cannot be delete if used for itemInitiator
         cfg.setOrderedItemInitiators((hp_uid,))
-        item = self.create('MeetingItem', date=DateTime())
+        item = self.create('MeetingItem')
         self.presentItem(item)
         item.setItemInitiator((hp_uid,))
 
@@ -147,10 +153,10 @@ class testContacts(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem', decision=self.decisionText)
         self.changeUser('pmManager')
-        meeting = self.create('Meeting', date=DateTime())
+        meeting = self.create('Meeting')
         # attendees not signatories
-        meeting_attendees = [hp for hp in meeting.getAttendees()
-                             if hp not in meeting.getSignatories()]
+        meeting_attendees = [hp for hp in meeting.get_attendees()
+                             if hp not in meeting.get_signatories()]
         self.assertTrue(meeting_attendees)
         byebye_form = item.restrictedTraverse('@@item_byebye_attendee_form')
         byebye_nonattendee_form = item.restrictedTraverse('@@item_byebye_nonattendee_form')
@@ -190,14 +196,14 @@ class testContacts(PloneMeetingTestCase):
         _check('pmCreator1', should=False)
 
     def test_pm_ItemAbsentsAndExcusedAndNonAttendees(self):
-        '''Item absents management (itemAbsents, itemExcused, nonAttendees),
+        '''Item absents management (item_absents, item_excused, non_attendees),
            byebye and welcome forms.'''
         cfg = self.meetingConfig
         # remove recurring items
         self._removeConfigObjectsFor(cfg)
         self.changeUser('pmManager')
-        meeting = self.create('Meeting', date=DateTime())
-        meeting_attendees = meeting.getAttendees()
+        meeting = self.create('Meeting')
+        meeting_attendees = meeting.get_attendees()
         self.assertTrue(meeting_attendees)
         item1 = self.create('MeetingItem')
         item2 = self.create('MeetingItem')
@@ -207,12 +213,12 @@ class testContacts(PloneMeetingTestCase):
         self.presentItem(item2)
 
         # for now attendees are the same on meeting and items
-        self.assertEqual(meeting_attendees, item1.getAttendees())
-        self.assertEqual(meeting_attendees, item2.getAttendees())
-        self.assertFalse(meeting.getItemAbsents())
-        self.assertFalse(meeting.getItemAbsents(by_persons=True))
-        self.assertFalse(meeting.getItemExcused())
-        self.assertFalse(meeting.getItemExcused(by_persons=True))
+        self.assertEqual(meeting_attendees, item1.get_attendees())
+        self.assertEqual(meeting_attendees, item2.get_attendees())
+        self.assertFalse(meeting.get_item_absents())
+        self.assertFalse(meeting.get_item_absents(by_persons=True))
+        self.assertFalse(meeting.get_item_excused())
+        self.assertFalse(meeting.get_item_excused(by_persons=True))
 
         # byebye person on item1 and item2
         hp1_uid = meeting_attendees[0]
@@ -226,29 +232,29 @@ class testContacts(PloneMeetingTestCase):
         byebye_form.not_present_type = 'absent'
         byebye_form.apply_until_item_number = 200
         byebye_nonattendee_form.apply_until_item_number = 200
-        self.assertFalse(item1.getItemAbsents())
-        self.assertFalse(item2.getItemAbsents())
+        self.assertFalse(item1.get_item_absents())
+        self.assertFalse(item2.get_item_absents())
         # set hp1 absent
         byebye_form._doApply()
-        self.assertEqual(item1.getItemAbsents(), (hp1_uid, ))
-        self.assertEqual(item2.getItemAbsents(), (hp1_uid, ))
+        self.assertEqual(item1.get_item_absents(), (hp1_uid, ))
+        self.assertEqual(item2.get_item_absents(), (hp1_uid, ))
         self.assertEqual(
-            sorted(meeting.getItemAbsents().keys()),
+            sorted(meeting.get_item_absents().keys()),
             sorted([item1_uid, item2_uid]))
-        self.assertEqual(meeting.getItemAbsents(by_persons=True).keys(), [hp1_uid])
+        self.assertEqual(meeting.get_item_absents(by_persons=True).keys(), [hp1_uid])
         self.assertEqual(
-            sorted(meeting.getItemAbsents(by_persons=True)[hp1_uid]),
+            sorted(meeting.get_item_absents(by_persons=True)[hp1_uid]),
             sorted([item1_uid, item2_uid]))
         # set hp1 non attendee
         byebye_nonattendee_form._doApply()
-        self.assertEqual(item1.getItemNonAttendees(), (hp1_uid, ))
-        self.assertEqual(item2.getItemNonAttendees(), (hp1_uid, ))
+        self.assertEqual(item1.get_item_non_attendees(), (hp1_uid, ))
+        self.assertEqual(item2.get_item_non_attendees(), (hp1_uid, ))
         self.assertEqual(
-            sorted(meeting.getItemNonAttendees().keys()),
+            sorted(meeting.get_item_non_attendees().keys()),
             sorted([item1_uid, item2_uid]))
-        self.assertEqual(meeting.getItemNonAttendees(by_persons=True).keys(), [hp1_uid])
+        self.assertEqual(meeting.get_item_non_attendees(by_persons=True).keys(), [hp1_uid])
         self.assertEqual(
-            sorted(meeting.getItemNonAttendees(by_persons=True)[hp1_uid]),
+            sorted(meeting.get_item_non_attendees(by_persons=True)[hp1_uid]),
             sorted([item1_uid, item2_uid]))
         # set hp2 excused
         byebye_form.person_uid = hp2_uid
@@ -256,34 +262,34 @@ class testContacts(PloneMeetingTestCase):
         byebye_form.apply_until_item_number = 100
         byebye_form._doApply()
         # absent
-        self.assertEqual(item1.getItemAbsents(), (hp1_uid, ))
-        self.assertEqual(item2.getItemAbsents(), (hp1_uid, ))
+        self.assertEqual(item1.get_item_absents(), (hp1_uid, ))
+        self.assertEqual(item2.get_item_absents(), (hp1_uid, ))
         self.assertEqual(
-            sorted(meeting.getItemAbsents().keys()),
+            sorted(meeting.get_item_absents().keys()),
             sorted([item1_uid, item2_uid]))
-        self.assertEqual(meeting.getItemAbsents(by_persons=True).keys(), [hp1_uid])
+        self.assertEqual(meeting.get_item_absents(by_persons=True).keys(), [hp1_uid])
         self.assertEqual(
-            sorted(meeting.getItemAbsents(by_persons=True)[hp1_uid]),
+            sorted(meeting.get_item_absents(by_persons=True)[hp1_uid]),
             sorted([item1_uid, item2_uid]))
         # excused
-        self.assertEqual(item1.getItemExcused(), (hp2_uid, ))
-        self.assertEqual(item2.getItemExcused(), ())
+        self.assertEqual(item1.get_item_excused(), (hp2_uid, ))
+        self.assertEqual(item2.get_item_excused(), ())
         self.assertEqual(
-            sorted(meeting.getItemExcused().keys()),
+            sorted(meeting.get_item_excused().keys()),
             sorted([item1_uid]))
-        self.assertEqual(meeting.getItemExcused(by_persons=True).keys(), [hp2_uid])
+        self.assertEqual(meeting.get_item_excused(by_persons=True).keys(), [hp2_uid])
         self.assertEqual(
-            sorted(meeting.getItemExcused(by_persons=True)[hp2_uid]),
+            sorted(meeting.get_item_excused(by_persons=True)[hp2_uid]),
             sorted([item1_uid]))
         # non attendees
-        self.assertEqual(item1.getItemNonAttendees(), (hp1_uid, ))
-        self.assertEqual(item2.getItemNonAttendees(), (hp1_uid, ))
+        self.assertEqual(item1.get_item_non_attendees(), (hp1_uid, ))
+        self.assertEqual(item2.get_item_non_attendees(), (hp1_uid, ))
         self.assertEqual(
-            sorted(meeting.getItemNonAttendees().keys()),
+            sorted(meeting.get_item_non_attendees().keys()),
             sorted([item1_uid, item2_uid]))
-        self.assertEqual(meeting.getItemNonAttendees(by_persons=True).keys(), [hp1_uid])
+        self.assertEqual(meeting.get_item_non_attendees(by_persons=True).keys(), [hp1_uid])
         self.assertEqual(
-            sorted(meeting.getItemNonAttendees(by_persons=True)[hp1_uid]),
+            sorted(meeting.get_item_non_attendees(by_persons=True)[hp1_uid]),
             sorted([item1_uid, item2_uid]))
 
         # welcome hp1 on item2
@@ -292,39 +298,39 @@ class testContacts(PloneMeetingTestCase):
         welcome_form.person_uid = hp1_uid
         welcome_form.apply_until_item_number = u''
         welcome_form._doApply()
-        self.assertEqual(item1.getItemAbsents(), (hp1_uid, ))
-        self.assertEqual(item1.getItemNonAttendees(), (hp1_uid, ))
-        self.assertFalse(item2.getItemAbsents())
+        self.assertEqual(item1.get_item_absents(), (hp1_uid, ))
+        self.assertEqual(item1.get_item_non_attendees(), (hp1_uid, ))
+        self.assertFalse(item2.get_item_absents())
         # welcome hp1 on item1
         welcome_form = item1.restrictedTraverse('@@item_welcome_attendee_form')
         welcome_form.meeting = meeting
         welcome_form.person_uid = hp1_uid
         welcome_form.apply_until_item_number = u''
         welcome_form._doApply()
-        self.assertFalse(item1.getItemAbsents())
-        self.assertEqual(item1.getItemNonAttendees(), (hp1_uid, ))
-        self.assertFalse(item2.getItemAbsents())
+        self.assertFalse(item1.get_item_absents())
+        self.assertEqual(item1.get_item_non_attendees(), (hp1_uid, ))
+        self.assertFalse(item2.get_item_absents())
         # welcome hp2 on item1
         welcome_form = item1.restrictedTraverse('@@item_welcome_attendee_form')
         welcome_form.meeting = meeting
         welcome_form.person_uid = hp2_uid
         welcome_form.apply_until_item_number = u''
         welcome_form._doApply()
-        self.assertFalse(item1.getItemExcused())
-        self.assertFalse(item2.getItemExcused())
-        self.assertEqual(item1.getItemNonAttendees(), (hp1_uid, ))
+        self.assertFalse(item1.get_item_excused())
+        self.assertFalse(item2.get_item_excused())
+        self.assertEqual(item1.get_item_non_attendees(), (hp1_uid, ))
         # welcome non attendee hp1 on item1 and item2
         welcome_nonattendee_form = item1.restrictedTraverse('@@item_welcome_nonattendee_form')
         welcome_nonattendee_form.meeting = meeting
         welcome_nonattendee_form.person_uid = hp1_uid
         welcome_nonattendee_form.apply_until_item_number = u'200'
         welcome_nonattendee_form._doApply()
-        self.assertFalse(item1.getItemExcused())
-        self.assertFalse(item2.getItemExcused())
-        self.assertFalse(item1.getItemAbsents())
-        self.assertFalse(item2.getItemAbsents())
-        self.assertFalse(item1.getItemNonAttendees())
-        self.assertFalse(item2.getItemNonAttendees())
+        self.assertFalse(item1.get_item_excused())
+        self.assertFalse(item2.get_item_excused())
+        self.assertFalse(item1.get_item_absents())
+        self.assertFalse(item2.get_item_absents())
+        self.assertFalse(item1.get_item_non_attendees())
+        self.assertFalse(item2.get_item_non_attendees())
 
     def test_pm_CanNotSetItemAbsentAndExcusedSamePerson(self):
         """ """
@@ -332,8 +338,8 @@ class testContacts(PloneMeetingTestCase):
         # remove recurring items
         self._removeConfigObjectsFor(cfg)
         self.changeUser('pmManager')
-        meeting = self.create('Meeting', date=DateTime())
-        meeting_attendees = meeting.getAttendees()
+        meeting = self.create('Meeting')
+        meeting_attendees = meeting.get_attendees()
         self.assertTrue(meeting_attendees)
         item1 = self.create('MeetingItem')
         item2 = self.create('MeetingItem')
@@ -354,7 +360,7 @@ class testContacts(PloneMeetingTestCase):
         byebye_form.apply_until_item_number = 200
         byebye_form._doApply()
         self.assertEqual(
-            sorted(meeting.getItemAbsents(by_persons=True)[hp1_uid]),
+            sorted(meeting.get_item_absents(by_persons=True)[hp1_uid]),
             sorted([item1_uid, item2_uid]))
         # then set hp1 excused for item2
         # nothing is done
@@ -364,7 +370,7 @@ class testContacts(PloneMeetingTestCase):
         byebye_form.not_present_type = 'excused'
         byebye_form.apply_until_item_number = ''
         byebye_form._doApply()
-        self.assertFalse(meeting.getItemExcused(by_persons=True))
+        self.assertFalse(meeting.get_item_excused(by_persons=True))
 
     def test_pm_ItemSignatories(self):
         '''Item signatories management, define item signatory and remove item signatory.'''
@@ -372,8 +378,8 @@ class testContacts(PloneMeetingTestCase):
         # remove recurring items
         self._removeConfigObjectsFor(cfg)
         self.changeUser('pmManager')
-        meeting = self.create('Meeting', date=DateTime())
-        meeting_signatories = meeting.getSignatories()
+        meeting = self.create('Meeting')
+        meeting_signatories = meeting.get_signatories()
         self.assertTrue(meeting_signatories)
         item1 = self.create('MeetingItem')
         item2 = self.create('MeetingItem')
@@ -383,11 +389,11 @@ class testContacts(PloneMeetingTestCase):
         self.presentItem(item2)
 
         # for now signatories are the same on meeting and items
-        self.assertEqual(meeting_signatories, item1.getItemSignatories())
-        self.assertEqual(meeting_signatories, item2.getItemSignatories())
-        self.assertFalse(meeting.getItemSignatories())
-        self.assertFalse(item1.getItemSignatories(real=True))
-        self.assertFalse(item2.getItemSignatories(real=True))
+        self.assertEqual(meeting_signatories, item1.get_item_signatories())
+        self.assertEqual(meeting_signatories, item2.get_item_signatories())
+        self.assertFalse(meeting.get_item_signatories())
+        self.assertFalse(item1.get_item_signatories(real=True))
+        self.assertFalse(item2.get_item_signatories(real=True))
 
         # redefine signatory person on item1 and item2
         person = self.portal.contacts.get('person3')
@@ -401,11 +407,11 @@ class testContacts(PloneMeetingTestCase):
         signatory_form.position_type = u'default'
         signatory_form._doApply()
 
-        self.assertEqual(item1.getItemSignatories(real=True), {hp_uid: '1'})
-        self.assertEqual(item2.getItemSignatories(real=True), {hp_uid: '1'})
-        self.assertTrue(hp_uid in item1.getItemSignatories())
-        self.assertTrue(hp_uid in item2.getItemSignatories())
-        meeting_item_signatories = meeting.getItemSignatories()
+        self.assertEqual(item1.get_item_signatories(real=True), {hp_uid: '1'})
+        self.assertEqual(item2.get_item_signatories(real=True), {hp_uid: '1'})
+        self.assertTrue(hp_uid in item1.get_item_signatories())
+        self.assertTrue(hp_uid in item2.get_item_signatories())
+        meeting_item_signatories = meeting.get_item_signatories()
         self.assertTrue(item1_uid in meeting_item_signatories)
         self.assertTrue(item2_uid in meeting_item_signatories)
 
@@ -415,25 +421,25 @@ class testContacts(PloneMeetingTestCase):
         remove_signatory_form.person_uid = hp_uid
         remove_signatory_form.apply_until_item_number = u''
         remove_signatory_form._doApply()
-        self.assertTrue(hp_uid in item1.getItemSignatories())
-        self.assertFalse(hp_uid in item2.getItemSignatories())
-        meeting_item_signatories = meeting.getItemSignatories()
+        self.assertTrue(hp_uid in item1.get_item_signatories())
+        self.assertFalse(hp_uid in item2.get_item_signatories())
+        meeting_item_signatories = meeting.get_item_signatories()
         self.assertTrue(item1_uid in meeting_item_signatories)
         self.assertFalse(item2_uid in meeting_item_signatories)
 
         # trying to define a forbidden signatory (already signatory on meeting or not present)
         # will raise Unauthorized
         # 1) already signatory, try to define meeting signatory 2 as item signatory 2
-        meeting_signatory_2_uid = meeting.getSignatories(by_signature_number=True)['2']
+        meeting_signatory_2_uid = meeting.get_signatories(by_signature_number=True)['2']
         signatory_form.person_uid = meeting_signatory_2_uid
         self.assertRaises(Unauthorized, signatory_form._doApply)
 
         # set an attendee absent on item and try to select him as signatory on item1
         absent = self.portal.contacts.get('person2').get_held_positions()[0]
         absent_uid = absent.UID()
-        meeting.orderedContacts[absent_uid]['attendee'] = False
-        meeting.orderedContacts[absent_uid]['excused'] = True
-        self.assertTrue(absent_uid in meeting.getExcused())
+        meeting.ordered_contacts[absent_uid]['attendee'] = False
+        meeting.ordered_contacts[absent_uid]['excused'] = True
+        self.assertTrue(absent_uid in meeting.get_excused())
         signatory_form.person_uid = absent_uid
 
     def test_pm_ItemSignatoriesSameSignatureNumberOnMeeting(self):
@@ -448,7 +454,7 @@ class testContacts(PloneMeetingTestCase):
         # remove recurring items
         self._removeConfigObjectsFor(cfg)
         self.changeUser('pmManager')
-        meeting = self.create('Meeting', date=DateTime())
+        meeting = self.create('Meeting')
         # by default hp4 is signatory 2
         hp2 = self.portal.contacts.person2.held_pos2
         hp2_uid = hp2.UID()
@@ -456,22 +462,22 @@ class testContacts(PloneMeetingTestCase):
         hp3_uid = hp3.UID()
         hp4 = self.portal.contacts.person4.held_pos4
         hp4_uid = hp4.UID()
-        self.assertEqual(meeting.orderedContacts[hp4_uid]['signature_number'], '2')
+        self.assertEqual(meeting.ordered_contacts[hp4_uid]['signature_number'], '2')
         # set hp3 signatory 2
-        self.assertIsNone(meeting.orderedContacts[hp3_uid]['signature_number'])
-        meeting.orderedContacts[hp3_uid]['signer'] = True
-        meeting.orderedContacts[hp3_uid]['signature_number'] = '2'
-        meeting_signatories = meeting.getSignatories()
+        self.assertIsNone(meeting.ordered_contacts[hp3_uid]['signature_number'])
+        meeting.ordered_contacts[hp3_uid]['signer'] = True
+        meeting.ordered_contacts[hp3_uid]['signature_number'] = '2'
+        meeting_signatories = meeting.get_signatories()
         self.assertEqual(len(meeting_signatories), 3)
         # when by_signature_number=True, the first is kept
-        meeting_signatories = meeting.getSignatories(by_signature_number=True)
+        meeting_signatories = meeting.get_signatories(by_signature_number=True)
         self.assertEqual(len(meeting_signatories), 2)
         self.assertEqual(meeting_signatories['2'], hp3_uid)
         # set hp2 signatory 2
-        self.assertIsNone(meeting.orderedContacts[hp2_uid]['signature_number'])
-        meeting.orderedContacts[hp2_uid]['signer'] = True
-        meeting.orderedContacts[hp2_uid]['signature_number'] = '2'
-        meeting_signatories = meeting.getSignatories(by_signature_number=True)
+        self.assertIsNone(meeting.ordered_contacts[hp2_uid]['signature_number'])
+        meeting.ordered_contacts[hp2_uid]['signer'] = True
+        meeting.ordered_contacts[hp2_uid]['signature_number'] = '2'
+        meeting_signatories = meeting.get_signatories(by_signature_number=True)
         self.assertEqual(len(meeting_signatories), 2)
         # the first win
         self.assertEqual(meeting_signatories['2'], hp2_uid)
@@ -479,24 +485,24 @@ class testContacts(PloneMeetingTestCase):
         # on item, by default still first win
         item = self.create('MeetingItem')
         self.presentItem(item)
-        self.assertEqual(item.getItemSignatories(by_signature_number=True)['2'], hp2_uid)
+        self.assertEqual(item.get_item_signatories(by_signature_number=True)['2'], hp2_uid)
         # set hp2 absent on meeting
-        meeting.orderedContacts[hp2_uid]['attendee'] = False
-        meeting.orderedContacts[hp2_uid]['absent'] = True
+        meeting.ordered_contacts[hp2_uid]['attendee'] = False
+        meeting.ordered_contacts[hp2_uid]['absent'] = True
         # then hp3 is the first signature_number 2
-        self.assertEqual(item.getItemSignatories(by_signature_number=True)['2'], hp3_uid)
+        self.assertEqual(item.get_item_signatories(by_signature_number=True)['2'], hp3_uid)
         # set hp3 absent on item
-        meeting.itemExcused[item.UID()] = [hp3_uid]
-        self.assertEqual(item.getItemSignatories(by_signature_number=True)['2'], hp4_uid)
+        meeting.item_excused[item.UID()] = [hp3_uid]
+        self.assertEqual(item.get_item_signatories(by_signature_number=True)['2'], hp4_uid)
 
-    def test_pm_MeetingGetItemAbsents(self):
-        '''Test the Meeting.getItemAbsents method.'''
+    def test_pm_Meeting_Get_item_absents(self):
+        '''Test the Meeting.get_item_absents method.'''
         cfg = self.meetingConfig
         # remove recurring items
         self._removeConfigObjectsFor(cfg)
         self.changeUser('pmManager')
-        meeting = self.create('Meeting', date=DateTime())
-        meeting_attendees = meeting.getAttendees()
+        meeting = self.create('Meeting')
+        meeting_attendees = meeting.get_attendees()
         self.assertTrue(meeting_attendees)
         item1 = self.create('MeetingItem')
         item2 = self.create('MeetingItem')
@@ -504,8 +510,8 @@ class testContacts(PloneMeetingTestCase):
         self.presentItem(item2)
 
         # for now attendees are the same on meeting and items
-        self.assertEqual(meeting_attendees, item1.getAttendees())
-        self.assertEqual(meeting_attendees, item2.getAttendees())
+        self.assertEqual(meeting_attendees, item1.get_attendees())
+        self.assertEqual(meeting_attendees, item2.get_attendees())
 
         # byebye person on item1 and item2
         person = self.portal.contacts.get('person1')
@@ -516,11 +522,11 @@ class testContacts(PloneMeetingTestCase):
         byebye_form.person_uid = hp_uid
         byebye_form.not_present_type = 'absent'
         byebye_form.apply_until_item_number = 200
-        self.assertFalse(item1.getItemAbsents())
-        self.assertFalse(item2.getItemAbsents())
+        self.assertFalse(item1.get_item_absents())
+        self.assertFalse(item2.get_item_absents())
         byebye_form._doApply()
-        self.assertEqual(item1.getItemAbsents(), (hp_uid, ))
-        self.assertEqual(item2.getItemAbsents(), (hp_uid, ))
+        self.assertEqual(item1.get_item_absents(), (hp_uid, ))
+        self.assertEqual(item2.get_item_absents(), (hp_uid, ))
 
         # welcome person on item2
         welcome_form = item2.restrictedTraverse('@@item_welcome_attendee_form')
@@ -528,8 +534,8 @@ class testContacts(PloneMeetingTestCase):
         welcome_form.person_uid = hp_uid
         welcome_form.apply_until_item_number = u''
         welcome_form._doApply()
-        self.assertEqual(item1.getItemAbsents(), (hp_uid, ))
-        self.assertFalse(item2.getItemAbsents())
+        self.assertEqual(item1.get_item_absents(), (hp_uid, ))
+        self.assertFalse(item2.get_item_absents())
 
     def _setup_print_signatories_by_position(self):
         # Add a position_type
@@ -575,7 +581,7 @@ class testContacts(PloneMeetingTestCase):
         self._setup_print_signatories_by_position()
 
         self.changeUser("pmManager")
-        meeting = self.create("Meeting", date=DateTime())
+        meeting = self.create("Meeting")
         item = self.create("MeetingItem")
 
         # On MeetingItem
@@ -617,7 +623,7 @@ class testContacts(PloneMeetingTestCase):
 
         # test when some signatories redefined on item
         # redefine signature_number "2"
-        contacts = meeting.orderedContacts.items()
+        contacts = meeting.ordered_contacts.items()
         signatory3 = contacts[1]
         signatory3_uid = signatory3[0]
         self.assertFalse(signatory3[1]['signer'])
@@ -707,8 +713,8 @@ class testContacts(PloneMeetingTestCase):
         # remove recurring items
         self._removeConfigObjectsFor(cfg)
         self.changeUser('pmManager')
-        meeting = self.create('Meeting', date=DateTime())
-        meeting_attendees = meeting.getAttendees()
+        meeting = self.create('Meeting')
+        meeting_attendees = meeting.get_attendees()
         self.assertTrue(meeting_attendees)
         item1 = self.create('MeetingItem')
         item1_uid = item1.UID()
@@ -719,18 +725,18 @@ class testContacts(PloneMeetingTestCase):
         self.presentItem(item1)
         self.presentItem(item2)
         self.presentItem(item3)
-        self.assertEqual(meeting.getItems(ordered=True), [item1, item2, item3])
+        self.assertEqual(meeting.get_items(ordered=True), [item1, item2, item3])
         # item1
-        meeting.itemAbsents[item1_uid] = [meeting_attendees[0]]
-        meeting.itemExcused[item1_uid] = [meeting_attendees[2]]
-        meeting.itemNonAttendees[item1_uid] = [meeting_attendees[1]]
+        meeting.item_absents[item1_uid] = [meeting_attendees[0]]
+        meeting.item_excused[item1_uid] = [meeting_attendees[2]]
+        meeting.item_non_attendees[item1_uid] = [meeting_attendees[1]]
         # item2
         # was already absent on item1
-        meeting.itemNonAttendees[item2_uid] = [meeting_attendees[0]]
-        meeting.itemExcused[item2_uid] = [meeting_attendees[3]]
+        meeting.item_non_attendees[item2_uid] = [meeting_attendees[0]]
+        meeting.item_excused[item2_uid] = [meeting_attendees[3]]
         # item3
-        meeting.itemExcused[item3_uid] = [meeting_attendees[2]]
-        meeting.itemNonAttendees[item3_uid] = [meeting_attendees[0]]
+        meeting.item_excused[item3_uid] = [meeting_attendees[2]]
+        meeting.item_non_attendees[item3_uid] = [meeting_attendees[0]]
         return meeting, meeting_attendees, item1, item2, item3
 
     def test_pm_ItemInAndOutAttendees(self):
@@ -738,7 +744,7 @@ class testContacts(PloneMeetingTestCase):
            that entered/left the meeting before/after current item.'''
         meeting, meeting_attendees, item1, item2, item3 = self._setupInAndOutAttendees()
         self.assertEqual(
-            item1.getInAndOutAttendees(ignore_before_first_item=False, theObjects=False),
+            item1.get_in_and_out_attendees(ignore_before_first_item=False, the_objects=False),
             {'attendee_again_after': (meeting_attendees[1],),
              'attendee_again_before': (),
              'entered_after': (meeting_attendees[2],),
@@ -748,7 +754,7 @@ class testContacts(PloneMeetingTestCase):
              'non_attendee_after': (),
              'non_attendee_before': (meeting_attendees[1],)})
         self.assertEqual(
-            item1.getInAndOutAttendees(ignore_before_first_item=True, theObjects=False),
+            item1.get_in_and_out_attendees(ignore_before_first_item=True, the_objects=False),
             {'attendee_again_after': (meeting_attendees[1],),
              'attendee_again_before': (),
              'entered_after': (meeting_attendees[2],),
@@ -758,7 +764,7 @@ class testContacts(PloneMeetingTestCase):
              'non_attendee_after': (),
              'non_attendee_before': ()})
         self.assertEqual(
-            item2.getInAndOutAttendees(ignore_before_first_item=False, theObjects=False),
+            item2.get_in_and_out_attendees(ignore_before_first_item=False, the_objects=False),
             {'attendee_again_after': (),
              'attendee_again_before': (meeting_attendees[1],),
              'entered_after': (meeting_attendees[3],),
@@ -768,10 +774,10 @@ class testContacts(PloneMeetingTestCase):
              'non_attendee_after': (),
              'non_attendee_before': ()})
         self.assertEqual(
-            item2.getInAndOutAttendees(ignore_before_first_item=False, theObjects=False),
-            item2.getInAndOutAttendees(ignore_before_first_item=True, theObjects=False))
+            item2.get_in_and_out_attendees(ignore_before_first_item=False, the_objects=False),
+            item2.get_in_and_out_attendees(ignore_before_first_item=True, the_objects=False))
         self.assertEqual(
-            item3.getInAndOutAttendees(ignore_before_first_item=False, theObjects=False),
+            item3.get_in_and_out_attendees(ignore_before_first_item=False, the_objects=False),
             {'attendee_again_after': (),
              'attendee_again_before': (),
              'entered_after': (),
@@ -781,8 +787,8 @@ class testContacts(PloneMeetingTestCase):
              'non_attendee_after': (),
              'non_attendee_before': ()})
         self.assertEqual(
-            item3.getInAndOutAttendees(ignore_before_first_item=False, theObjects=False),
-            item3.getInAndOutAttendees(ignore_before_first_item=True, theObjects=False))
+            item3.get_in_and_out_attendees(ignore_before_first_item=False, the_objects=False),
+            item3.get_in_and_out_attendees(ignore_before_first_item=True, the_objects=False))
 
     def test_pm_Print_in_and_out_attendees(self):
         """Test the print_in_and_out_attendees method."""
@@ -1115,7 +1121,7 @@ class testContacts(PloneMeetingTestCase):
         # remove recurring items
         self._removeConfigObjectsFor(cfg)
         self.changeUser('pmManager')
-        meeting = self.create('Meeting', date=DateTime())
+        meeting = self.create('Meeting')
         item_with_absent = self.create('MeetingItem')
         self.presentItem(item_with_absent)
         item_with_excused = self.create('MeetingItem')
@@ -1125,41 +1131,41 @@ class testContacts(PloneMeetingTestCase):
         absent = self.portal.contacts.get('person1')
         absent_hp = absent.get_held_positions()[0]
         absent_hp_uid = absent_hp.UID()
-        meeting.itemAbsents[item_with_absent.UID()] = [absent_hp_uid]
-        self.assertTrue(absent_hp_uid in meeting.getItemAbsents(by_persons=True))
+        meeting.item_absents[item_with_absent.UID()] = [absent_hp_uid]
+        self.assertTrue(absent_hp_uid in meeting.get_item_absents(by_persons=True))
 
         # add an item excused
         excused = self.portal.contacts.get('person1')
         excused_hp = excused.get_held_positions()[0]
         excused_hp_uid = excused_hp.UID()
-        meeting.itemExcused[item_with_excused.UID()] = [excused_hp_uid]
-        self.assertTrue(excused_hp_uid in meeting.getItemExcused(by_persons=True))
+        meeting.item_excused[item_with_excused.UID()] = [excused_hp_uid]
+        self.assertTrue(excused_hp_uid in meeting.get_item_excused(by_persons=True))
 
         # redefine signatories on item
         signer = self.portal.contacts.get('person2')
         signer_hp = signer.get_held_positions()[0]
         signer_hp_uid = signer_hp.UID()
-        meeting.itemSignatories[item_with_absent.UID()] = {
+        meeting.item_signatories[item_with_absent.UID()] = {
             '1': {'hp_uid': signer_hp_uid,
                   'position_type': u'default'}}
-        self.assertTrue(signer_hp_uid in item_with_absent.getItemSignatories())
+        self.assertTrue(signer_hp_uid in item_with_absent.get_item_signatories())
 
         # remove items from meeting, everything is reinitialized
         # absent
         self.backToState(item_with_absent, 'validated')
-        self.assertFalse(absent_hp_uid in meeting.getItemAbsents(by_persons=True))
-        self.assertFalse(signer_hp_uid in item_with_absent.getItemSignatories())
-        self.assertFalse(item_with_absent.getItemAbsents())
+        self.assertFalse(absent_hp_uid in meeting.get_item_absents(by_persons=True))
+        self.assertFalse(signer_hp_uid in item_with_absent.get_item_signatories())
+        self.assertFalse(item_with_absent.get_item_absents())
         self.assertFalse(item_with_absent.redefinedItemAssemblies())
-        self.assertFalse(item_with_absent.getItemSignatories())
+        self.assertFalse(item_with_absent.get_item_signatories())
         # excused
         self.backToState(item_with_excused, 'validated')
-        self.assertFalse(excused_hp_uid in meeting.getItemExcused(by_persons=True))
-        self.assertFalse(excused_hp_uid in meeting.itemExcused)
-        self.assertFalse(signer_hp_uid in item_with_excused.getItemSignatories())
-        self.assertFalse(item_with_excused.getItemExcused())
+        self.assertFalse(excused_hp_uid in meeting.get_item_excused(by_persons=True))
+        self.assertFalse(excused_hp_uid in meeting.item_excused)
+        self.assertFalse(signer_hp_uid in item_with_excused.get_item_signatories())
+        self.assertFalse(item_with_excused.get_item_excused())
         self.assertFalse(item_with_excused.redefinedItemAssemblies())
-        self.assertFalse(item_with_excused.getItemSignatories())
+        self.assertFalse(item_with_excused.get_item_signatories())
 
     def test_pm_HeldPositionPositionsSourceDoNotShowOrgsInsidePlonegroup(self):
         """The source for field held_position.position will display
@@ -1917,8 +1923,8 @@ class testContacts(PloneMeetingTestCase):
             states=(self._stateMappingFor('created', meta_type='Meeting'),))
         self._removeConfigObjectsFor(cfg)
         self.changeUser('pmManager')
-        meeting = self.create('Meeting', date=DateTime())
-        meeting_attendees = meeting.getAttendees(theObjects=True)
+        meeting = self.create('Meeting')
+        meeting_attendees = meeting.get_attendees(the_objects=True)
         self.assertEqual(len(meeting_attendees), 4)
         hp = meeting_attendees[0]
         # deactivate an held_position
@@ -1926,15 +1932,15 @@ class testContacts(PloneMeetingTestCase):
         self.do(hp, 'deactivate')
         # still viewable by MeetingManagers
         self.changeUser('pmManager')
-        meeting_attendees = meeting.getAttendees(theObjects=True)
+        meeting_attendees = meeting.get_attendees(the_objects=True)
         self.assertEqual(len(meeting_attendees), 4)
         # and other users
         self.changeUser('pmCreator1')
-        meeting_attendees = meeting.getAttendees(theObjects=True)
+        meeting_attendees = meeting.get_attendees(the_objects=True)
         self.assertEqual(len(meeting_attendees), 4)
         self.changeUser('powerobserver1')
         self.assertTrue(self.hasPermission(View, meeting))
-        meeting_attendees = meeting.getAttendees(theObjects=True)
+        meeting_attendees = meeting.get_attendees(the_objects=True)
         self.assertEqual(len(meeting_attendees), 4)
 
     def test_pm_Directory_position_types_invariant(self):
@@ -2003,13 +2009,13 @@ class testContacts(PloneMeetingTestCase):
         self.assertEqual(org2.get_representatives(at_date=DateTime('2020/05/05')), [hp2])
         self.assertEqual(org1.get_representatives(at_date=DateTime('2020/06/06')), [hp2])
         self.assertEqual(org2.get_representatives(at_date=DateTime('2020/06/06')), [hp2])
-        self.assertEqual(org1.get_representatives(at_date=date(2020, 1, 1)), [hp1, hp2])
-        self.assertEqual(org2.get_representatives(at_date=date(2020, 1, 1)), [hp2])
-        self.assertEqual(org1.get_representatives(at_date=date(2020, 5, 5)), [hp1, hp2])
-        self.assertEqual(org2.get_representatives(at_date=date(2020, 5, 5)), [hp2])
-        self.assertEqual(org1.get_representatives(at_date=date(2020, 6, 6)), [hp2])
-        self.assertEqual(org1.get_representatives(at_date=date(2020, 6, 6)), [hp2])
-        self.assertEqual(org2.get_representatives(at_date=date(2020, 6, 6)), [hp2])
+        self.assertEqual(org1.get_representatives(at_date=datetime(2020, 1, 1)), [hp1, hp2])
+        self.assertEqual(org2.get_representatives(at_date=datetime(2020, 1, 1)), [hp2])
+        self.assertEqual(org1.get_representatives(at_date=datetime(2020, 5, 5)), [hp1, hp2])
+        self.assertEqual(org2.get_representatives(at_date=datetime(2020, 5, 5)), [hp2])
+        self.assertEqual(org1.get_representatives(at_date=datetime(2020, 6, 6)), [hp2])
+        self.assertEqual(org1.get_representatives(at_date=datetime(2020, 6, 6)), [hp2])
+        self.assertEqual(org2.get_representatives(at_date=datetime(2020, 6, 6)), [hp2])
         hp2.end_date = date(2020, 5, 5)
         self.assertEqual(org1.get_representatives(at_date=DateTime('2020/01/01')), [hp1, hp2])
         self.assertEqual(org2.get_representatives(at_date=DateTime('2020/01/01')), [hp2])
@@ -2017,13 +2023,13 @@ class testContacts(PloneMeetingTestCase):
         self.assertEqual(org2.get_representatives(at_date=DateTime('2020/05/05')), [hp2])
         self.assertEqual(org1.get_representatives(at_date=DateTime('2020/06/06')), [])
         self.assertEqual(org2.get_representatives(at_date=DateTime('2020/06/06')), [])
-        self.assertEqual(org1.get_representatives(at_date=date(2020, 1, 1)), [hp1, hp2])
-        self.assertEqual(org2.get_representatives(at_date=date(2020, 1, 1)), [hp2])
-        self.assertEqual(org1.get_representatives(at_date=date(2020, 5, 5)), [hp1, hp2])
-        self.assertEqual(org2.get_representatives(at_date=date(2020, 5, 5)), [hp2])
-        self.assertEqual(org1.get_representatives(at_date=date(2020, 6, 6)), [])
-        self.assertEqual(org1.get_representatives(at_date=date(2020, 6, 6)), [])
-        self.assertEqual(org2.get_representatives(at_date=date(2020, 6, 6)), [])
+        self.assertEqual(org1.get_representatives(at_date=datetime(2020, 1, 1)), [hp1, hp2])
+        self.assertEqual(org2.get_representatives(at_date=datetime(2020, 1, 1)), [hp2])
+        self.assertEqual(org1.get_representatives(at_date=datetime(2020, 5, 5)), [hp1, hp2])
+        self.assertEqual(org2.get_representatives(at_date=datetime(2020, 5, 5)), [hp2])
+        self.assertEqual(org1.get_representatives(at_date=datetime(2020, 6, 6)), [])
+        self.assertEqual(org1.get_representatives(at_date=datetime(2020, 6, 6)), [])
+        self.assertEqual(org2.get_representatives(at_date=datetime(2020, 6, 6)), [])
 
 
 def test_suite():

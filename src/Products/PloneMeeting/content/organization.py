@@ -9,6 +9,7 @@ from collective.z3cform.datagridfield import DataGridFieldFactory
 from collective.z3cform.datagridfield import DictRow
 from DateTime import DateTime
 from datetime import date
+from datetime import datetime
 from imio.helpers.content import get_back_relations
 from imio.helpers.content import uuidsToObjects
 from plone.autoform import directives as form
@@ -310,6 +311,8 @@ class PMOrganization(Organization):
             at_date = date.today()
         elif isinstance(at_date, DateTime):
             at_date = at_date.asdatetime().date()
+        elif isinstance(at_date, datetime):
+            at_date = at_date.date()
         res = []
         for hp in get_back_relations(self, 'represented_organizations'):
             if not hp.end_date or hp.end_date >= at_date:

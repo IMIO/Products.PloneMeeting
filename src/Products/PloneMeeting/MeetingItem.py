@@ -1579,7 +1579,7 @@ schema = Schema((
         widget=RichWidget(
             label_msgid="PloneMeeting_label_votesObservations",
             condition="python: here.attributeIsUsed('votesObservations') and "
-                      "here.adapted().showVotesObservations()",
+                      "here.adapted().show_votesObservations()",
             description_msgid="field_vieawable_by_everyone_once_item_decided_descr",
             label='Votesobservations',
             i18n_domain='PloneMeeting',
@@ -2131,9 +2131,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''See doc in interfaces.py.'''
         return True
 
-    security.declarePublic('showVotesObservations')
+    security.declarePublic('show_votesObservations')
 
-    def showVotesObservations(self):
+    def show_votesObservations(self):
         '''See doc in interfaces.py.'''
         item = self.getSelf()
         tool = api.portal.get_tool('portal_plonemeeting')
@@ -3615,12 +3615,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if self.getItemAssemblyGuests(real=True):
             res.append('assemblyGuests')
         # when using contacts
-        if self.getItemAbsents(theObjects=True):
-            res.append('itemAbsents')
-        if self.getItemExcused(theObjects=True):
-            res.append('itemExcused')
-        if self.getItemNonAttendees(theObjects=True):
-            res.append('itemNonAttendees')
+        if self.get_item_absents(the_objects=True):
+            res.append('item_absents')
+        if self.get_item_excused(the_objects=True):
+            res.append('item_excused')
+        if self.get_item_non_attendees(the_objects=True):
+            res.append('item_non_attendees')
         return res
 
     security.declarePublic('getItemAssembly')
@@ -3677,61 +3677,62 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         """ """
         return toHTMLStrikedContent(self.getItemAssembly())
 
-    security.declarePublic('getItemAbsents')
+    security.declarePublic('get_item_absents')
 
-    def getItemAbsents(self, theObjects=False, **kwargs):
+    def get_item_absents(self, the_objects=False, **kwargs):
         '''Gets the absents for this item.
-           Absent for an item are stored in the Meeting.itemAbsents dict.'''
+           Absent for an item are stored in the Meeting.item_absents dict.'''
         res = []
         if not self.hasMeeting():
             return res
         meeting = self.getMeeting()
         meeting_item_absents = meeting.get_item_absents().get(self.UID(), [])
-        if theObjects:
-            item_absents = meeting._get_contacts(uids=meeting_item_absents, the_objects=theObjects)
+        if the_objects:
+            item_absents = meeting._get_contacts(uids=meeting_item_absents, the_objects=the_objects)
         else:
             item_absents = tuple(meeting_item_absents)
         return item_absents
 
-    security.declarePublic('getItemExcused')
+    security.declarePublic('get_item_excused')
 
-    def getItemExcused(self, theObjects=False, **kwargs):
+    def get_item_excused(self, the_objects=False, **kwargs):
         '''Gets the excused for this item.
-           Excused for an item are stored in the Meeting.itemExcused dict.'''
+           Excused for an item are stored in the Meeting.item_excused dict.'''
         res = []
         if not self.hasMeeting():
             return res
         meeting = self.getMeeting()
         meeting_item_excused = meeting.get_item_excused().get(self.UID(), [])
-        if theObjects:
-            item_excused = meeting._get_contacts(uids=meeting_item_excused, the_objects=theObjects)
+        if the_objects:
+            item_excused = meeting._get_contacts(uids=meeting_item_excused, the_objects=the_objects)
         else:
             item_excused = tuple(meeting_item_excused)
         return item_excused
 
-    security.declarePublic('getItemNonAttendees')
+    security.declarePublic('get_item_non_attendees')
 
-    def getItemNonAttendees(self, theObjects=False, **kwargs):
-        '''Gets the nonAttendees for this item.
-           Non attendees for an item are stored in the Meeting.itemNonAttendees dict.'''
+    def get_item_non_attendees(self, the_objects=False, **kwargs):
+        '''Gets the non_attendees for this item.
+           Non attendees for an item are stored in the Meeting.item_non_attendees dict.'''
         res = []
         if not self.hasMeeting():
             return res
         meeting = self.getMeeting()
-        meeting_item_nonAttendees = meeting.get_item_non_attendees().get(self.UID(), [])
-        if theObjects:
-            item_nonAttendees = meeting._get_contacts(uids=meeting_item_nonAttendees, the_objects=theObjects)
+        meeting_item_non_attendees = meeting.get_item_non_attendees().get(self.UID(), [])
+        if the_objects:
+            item_non_attendees = meeting._get_contacts(
+                uids=meeting_item_non_attendees, the_objects=the_objects)
         else:
-            item_nonAttendees = tuple(meeting_item_nonAttendees)
-        return item_nonAttendees
+            item_non_attendees = tuple(meeting_item_non_attendees)
+        return item_non_attendees
 
-    security.declarePublic('getItemSignatories')
+    security.declarePublic('get_item_signatories')
 
-    def getItemSignatories(self,
-                           theObjects=False,
-                           by_signature_number=False,
-                           real=False,
-                           **kwargs):
+    def get_item_signatories(self,
+                             the_objects=False,
+                             by_signature_number=False,
+                             real=False,
+                             **kwargs):
         '''Returns the signatories for this item. If no signatory is defined,
            meeting signatories are returned.
            If p_theObjects=False, the returned result is an dict with
@@ -3751,7 +3752,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # keep order so we may have 2 signatory 2 present and the first win
             # we reverse attendees order so when reversing key/values here under
             # the second same signature numnber is actually the first
-            attendees = reversed(self.getAttendees())
+            attendees = reversed(self.get_attendees())
             signatories = OrderedDict([(k, signatories[k]) for k in attendees
                                        if k in signatories])
             # reverse as keys were signatory UID, we want signature_number
@@ -3760,9 +3761,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         item_signatories = meeting.get_item_signatories().get(self.UID(), {})
         signatories.update(item_signatories)
 
-        if theObjects:
+        if the_objects:
             uids = signatories.values()
-            signatories_objs = meeting._get_contacts(uids=uids, the_objects=theObjects)
+            signatories_objs = meeting._get_contacts(uids=uids, the_objects=the_objects)
             reversed_signatories = {v: k for k, v in signatories.items()}
             signatories = {reversed_signatories[signatory.UID()]: signatory
                            for signatory in signatories_objs}
@@ -3772,18 +3773,18 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         return signatories
 
-    def getVotesAreSecret(self):
+    def get_votes_are_secret(self):
         """ """
         return bool(self.getPollType().startswith('secret'))
 
-    security.declarePublic('getItemVotes')
+    security.declarePublic('get_item_votes')
 
-    def getItemVotes(self,
-                     vote_number='all',
-                     include_vote_number=True,
-                     include_unexisting=True,
-                     unexisting_value=NOT_ENCODED_VOTE_VALUE,
-                     ignored_vote_values=[]):
+    def get_item_votes(self,
+                       vote_number='all',
+                       include_vote_number=True,
+                       include_unexisting=True,
+                       unexisting_value=NOT_ENCODED_VOTE_VALUE,
+                       ignored_vote_values=[]):
         '''p_vote_number may be 'all' (default), return a list of every votes,
            or an integer like 0, returns the vote with given number.
            If p_include_vote_number, for convenience, a key 'vote_number'
@@ -3795,8 +3796,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return votes
         meeting = self.getMeeting()
         item_votes = meeting.get_item_votes().get(self.UID(), [])
-        voter_uids = self.getItemVoters()
-        votes_are_secret = self.getVotesAreSecret()
+        voter_uids = self.get_item_voters()
+        votes_are_secret = self.get_votes_are_secret()
         # all votes
         if vote_number == 'all':
             # votes will be a list
@@ -3874,7 +3875,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def get_voted_voters(self):
         '''Voter uids that actually voted on this item.'''
-        item_votes = self.getItemVotes(
+        item_votes = self.get_item_votes(
             ignored_vote_values=[NOT_ENCODED_VOTE_VALUE])
         voted_voters = []
         for vote in item_votes:
@@ -3882,18 +3883,18 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             voted_voters += voters
         return tuple(set(voted_voters))
 
-    security.declarePublic('getItemVoters')
+    security.declarePublic('get_item_voters')
 
-    def getItemVoters(self, theObjects=False):
+    def get_item_voters(self, theObjects=False):
         '''Return held positions able to vote on current item.
            By default, held_position UIDs are returned.
            If p_theObjects=True, held_position objects are returned.'''
         meeting = self.getMeeting()
-        attendee_uids = self.getAttendees() or None
+        attendee_uids = self.get_attendees() or None
         voters = meeting.get_voters(uids=attendee_uids, the_objects=theObjects)
         return voters
 
-    def getInAndOutAttendees(self, ignore_before_first_item=True, theObjects=True):
+    def get_in_and_out_attendees(self, ignore_before_first_item=True, the_objects=True):
         """Returns a dict with informations about assembly moves :
            - who left at the beginning of the item;
            - who entered at the beginning of the item;
@@ -3916,16 +3917,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # only fill a value if attendee present for current item
             # this manage fact that an attendee may be absent for an item,
             # then not attendee for next item
-            attendees = self.getAttendees(theObjects=theObjects)
-            absents = self.getItemAbsents(theObjects=theObjects)
-            excused = self.getItemExcused(theObjects=theObjects)
-            non_attendees = self.getItemNonAttendees(theObjects=theObjects)
+            attendees = self.get_attendees(the_objects=the_objects)
+            absents = self.get_item_absents(the_objects=the_objects)
+            excused = self.get_item_excused(the_objects=the_objects)
+            non_attendees = self.get_item_non_attendees(the_objects=the_objects)
             if item_index:
                 previous = items[item_index - 1]
                 # before absents/excused
-                previous_attendees = previous.getAttendees(theObjects=theObjects)
-                previous_absents = previous.getItemAbsents(theObjects=theObjects)
-                previous_excused = previous.getItemExcused(theObjects=theObjects)
+                previous_attendees = previous.get_attendees(the_objects=the_objects)
+                previous_absents = previous.get_item_absents(the_objects=the_objects)
+                previous_excused = previous.get_item_excused(the_objects=the_objects)
                 left_before = tuple(set(absents + excused).intersection(
                     set(previous_attendees)))
                 entered_before = tuple(set(previous_absents + previous_excused).intersection(
@@ -3933,7 +3934,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 res['left_before'] = left_before
                 res['entered_before'] = entered_before
                 # non attendees
-                previous_non_attendees = previous.getItemNonAttendees(theObjects=theObjects)
+                previous_non_attendees = previous.get_item_non_attendees(the_objects=the_objects)
                 non_attendee_before = tuple(set(non_attendees).intersection(
                     set(previous_attendees)))
                 attendee_again_before = tuple(set(previous_non_attendees).intersection(
@@ -3948,10 +3949,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             if self != items[-1]:
                 next = items[item_index + 1]
                 # after absents/excused
-                next_attendees = next.getAttendees(theObjects=theObjects)
-                next_absents = next.getItemAbsents(theObjects=theObjects)
-                next_excused = next.getItemExcused(theObjects=theObjects)
-                next_non_attendees = next.getItemNonAttendees(theObjects=theObjects)
+                next_attendees = next.get_attendees(the_objects=the_objects)
+                next_absents = next.get_item_absents(the_objects=the_objects)
+                next_excused = next.get_item_excused(the_objects=the_objects)
+                next_non_attendees = next.get_item_non_attendees(the_objects=the_objects)
                 left_after = tuple(set(next_excused + next_absents).intersection(
                     set(attendees)))
                 entered_after = tuple(set(excused + absents).intersection(
@@ -6653,22 +6654,22 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 back_obj.adviceIndex[adviceId]['inherited'] = False
                 back_obj.updateLocalRoles()
 
-    security.declarePublic('getAttendees')
+    security.declarePublic('get_attendees')
 
-    def getAttendees(self, theObjects=False):
+    def get_attendees(self, the_objects=False):
         '''Returns the attendees for this item.'''
         res = []
         if not self.hasMeeting():
             return res
         meeting = self.getMeeting()
         attendees = meeting.get_attendees(the_objects=False)
-        itemAbsents = self.getItemAbsents()
-        itemExcused = self.getItemExcused()
-        itemNonAttendees = self.getItemNonAttendees()
+        item_absents = self.get_item_absents()
+        item_excused = self.get_item_excused()
+        item_non_attendees = self.get_item_non_attendees()
         attendees = [attendee for attendee in attendees
-                     if attendee not in itemAbsents + itemExcused + itemNonAttendees]
+                     if attendee not in item_absents + item_excused + item_non_attendees]
         # get really present attendees now
-        attendees = meeting._get_contacts(uids=attendees, the_objects=theObjects)
+        attendees = meeting._get_contacts(uids=attendees, the_objects=the_objects)
         return attendees
 
     security.declarePublic('getAssembly')
@@ -6749,17 +6750,17 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             res = down_or_up_wf(self)
         return res
 
-    security.declarePublic('showVotes')
+    security.declarePublic('show_votes')
 
-    def showVotes(self):
+    def show_votes(self):
         '''Must I show the "votes" tab on this item?'''
         res = False
-        if self.hasMeeting() and self.getMeeting().adapted().showVotes():
+        if self.hasMeeting() and self.getMeeting().adapted().show_votes():
             # Checks whether votes may occur on this item
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(self)
             res = self.getPollType() != 'no_vote' and \
-                self.getItemVoters() and \
+                self.get_item_voters() and \
                 cfg.isVotable(self)
         return res
 
@@ -6771,7 +6772,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return False
         # we may also say that if every encoded votes are 'not_yet' (NOT_ENCODED_VOTE_VALUE) values
         # we consider that there is no votes
-        if self.getVotesAreSecret():
+        if self.get_votes_are_secret():
             return bool([v for v in self.votes if (v != NOT_ENCODED_VOTE_VALUE and self.votes[v] != 0)])
         else:
             return bool([val for val in self.votes.values() if val != NOT_ENCODED_VOTE_VALUE])
@@ -6780,9 +6781,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def getVoteValue(self, hp_uid, vote_number=0):
         '''What is the vote value for user with id p_userId?'''
-        if self.getVotesAreSecret():
+        if self.get_votes_are_secret():
             raise 'Unusable when votes are secret.'
-        itemVotes = self.getItemVotes(vote_number=vote_number)
+        itemVotes = self.get_item_votes(vote_number=vote_number)
         if hp_uid in itemVotes['voters']:
             return itemVotes[hp_uid]
         else:
@@ -6795,13 +6796,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            A special value 'any_votable' may be passed for p_vote_value,
            in this case every values other than NOT_VOTABLE_LINKED_TO_VALUE are counted.'''
         res = 0
-        itemVotes = self.getItemVotes(vote_number)
-        item_voter_uids = self.getItemVoters()
+        itemVotes = self.get_item_votes(vote_number)
+        item_voter_uids = self.get_item_voters()
         # when initializing, so Meeting.itemVotes is empty
         # only return count for NOT_ENCODED_VOTE_VALUE
         if not itemVotes and vote_value == NOT_ENCODED_VOTE_VALUE:
             res = len(item_voter_uids)
-        elif not self.getVotesAreSecret():
+        elif not self.get_votes_are_secret():
             # public
             for item_voter_uid in item_voter_uids:
                 if (item_voter_uid not in itemVotes['voters'] and
@@ -6867,7 +6868,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def _mayChangeAttendees(self):
         """Check that user may quickEdit
-           itemAbsents/itemExcused/itemNonAttendees/votes/..."""
+           item_absents/item_excused/item_non_attendees/votes/..."""
         return self.hasMeeting() and checkMayQuickEdit(
             self, bypassWritePermissionCheck=True, onlyForManagers=True)
 

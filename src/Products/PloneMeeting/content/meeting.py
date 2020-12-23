@@ -4,7 +4,6 @@ from AccessControl import ClassSecurityInfo
 from collections import OrderedDict
 from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.contact.plonegroup.config import get_registry_organizations
-from collective.eeafaceted.dashboard.utils import enableFacetedDashboardFor
 from copy import deepcopy
 from datetime import datetime
 from datetime import timedelta
@@ -40,7 +39,6 @@ from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import display_as_html
 from Products.PloneMeeting.utils import displaying_available_items
 from Products.PloneMeeting.utils import fieldIsEmpty
-from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
 from Products.PloneMeeting.utils import get_next_meeting
 from Products.PloneMeeting.utils import get_states_before
 from Products.PloneMeeting.utils import getCustomAdapter
@@ -51,7 +49,6 @@ from Products.PloneMeeting.utils import ItemDuplicatedFromConfigEvent
 from Products.PloneMeeting.utils import MeetingLocalRolesUpdatedEvent
 from Products.PloneMeeting.utils import notifyModifiedAndReindex
 from Products.PloneMeeting.utils import toHTMLStrikedContent
-from Products.PloneMeeting.utils import transformAllRichTextFields
 from Products.PloneMeeting.utils import updateAnnexesAccess
 from Products.PloneMeeting.utils import validate_item_assembly_value
 from Products.PloneMeeting.widgets.pm_richtext import PMRichTextFieldWidget
@@ -68,7 +65,6 @@ from zope.schema import TextLine
 import copy
 import itertools
 import logging
-import os
 
 logger = logging.getLogger('PloneMeeting')
 
@@ -374,7 +370,7 @@ class Meeting(Container):
             # removed attendees
             # REQUEST.form['meeting_attendees'] is like
             # ['muser_attendeeuid1_attendee', 'muser_attendeeuid2_excused']
-            stored_attendees = self.getAllUsedHeldPositions(the_objects=False)
+            stored_attendees = self.get_all_used_held_positions(the_objects=False)
             meeting_attendees = [attendee.split('_')[1] for attendee
                                  in REQUEST.form.get('meeting_attendees', [])]
             removed_meeting_attendees = set(stored_attendees).difference(meeting_attendees)
@@ -397,7 +393,7 @@ class Meeting(Container):
                                   in REQUEST.form.get('meeting_voters', [])]
                 removed_meeting_voters = set(stored_voters).difference(meeting_voters)
                 # public, voters are known
-                item_votes = self.getItemVotes()
+                item_votes = self.get_item_votes()
                 voter_uids = []
                 highest_secret_votes = 0
                 for votes in item_votes.values():
@@ -481,7 +477,7 @@ class Meeting(Container):
            of signatures are displayed on screen correctly."""
         return display_as_html(self.getSignatures(), self)
 
-    security.declarePublic('getAllUsedHeldPositions')
+    security.declarePublic('get_all_used_held_positions')
 
     def get_all_used_held_positions(self, include_new=False, the_objects=True):
         '''This will return every currently stored held_positions.
@@ -513,40 +509,37 @@ class Meeting(Container):
             contacts = [brain.getObject() for brain in brains]
         return tuple(contacts)
 
-    security.declarePublic('getDefaultAttendees')
+    security.declarePublic('get_default_attendees')
 
-    def getDefaultAttendees(self):
+    def get_default_attendees(self):
         '''The default attendees are the active held_positions
            with 'present' in defaults.'''
         res = []
-        if self.checkCreationFlag():
-            used_held_positions = self.getAllUsedHeldPositions(include_new=True)
-            res = [held_pos.UID() for held_pos in used_held_positions
-                   if held_pos.defaults and 'present' in held_pos.defaults]
+        used_held_positions = self.get_all_used_held_positions(include_new=True)
+        res = [held_pos.UID() for held_pos in used_held_positions
+               if held_pos.defaults and 'present' in held_pos.defaults]
         return res
 
-    security.declarePublic('getDefaultSignatories')
+    security.declarePublic('get_default_signatories')
 
-    def getDefaultSignatories(self):
+    def get_default_signatories(self):
         '''The default signatories are the active held_positions
            with a defined signature_number.'''
         res = []
-        if self.checkCreationFlag():
-            used_held_positions = self.getAllUsedHeldPositions(include_new=True)
-            res = [held_pos for held_pos in used_held_positions
-                   if held_pos.defaults and 'present' in held_pos.defaults and held_pos.signature_number]
+        used_held_positions = self.get_all_used_held_positions(include_new=True)
+        res = [held_pos for held_pos in used_held_positions
+               if held_pos.defaults and 'present' in held_pos.defaults and held_pos.signature_number]
         return {signer.UID(): signer.signature_number for signer in res}
 
-    security.declarePublic('getDefaultVoters')
+    security.declarePublic('get_default_voters')
 
-    def getDefaultVoters(self):
+    def get_default_voters(self):
         '''The default voters are the active held_positions
            with 'voter' in defaults.'''
         res = []
-        if self.checkCreationFlag():
-            used_held_positions = self.getAllUsedHeldPositions(include_new=True)
-            res = [held_pos.UID() for held_pos in used_held_positions
-                   if held_pos.defaults and 'voter' in held_pos.defaults]
+        used_held_positions = self.get_all_used_held_positions(include_new=True)
+        res = [held_pos.UID() for held_pos in used_held_positions
+               if held_pos.defaults and 'voter' in held_pos.defaults]
         return res
 
     def _get_contacts(self, contact_type=None, uids=None, the_objects=False):
@@ -626,9 +619,10 @@ class Meeting(Container):
                 for replaced_uid in replaced_uids}
 
     def _get_item_not_present(self, attr, by_persons=False):
-        '''Return item not present (itemAbsents, itemExcused) by default the attr dict has the item UID
-           as key and list of not_present as values but if 'p_by_persons' is True, the informations
-           are returned with not_present held position as key and list of items as value.'''
+        '''Return item not present (item_absents, item_excused, ...)
+           by default the attr dict has the item UID as key and list of not_present
+           as values but if 'p_by_persons' is True, the informations are returned with
+           not_present held position as key and list of items as value.'''
         if by_persons:
             # values are now keys, concatenate a list of lists and remove duplicates
             keys = tuple(set(list(itertools.chain.from_iterable(attr.values()))))
@@ -705,7 +699,7 @@ class Meeting(Container):
 
     security.declarePrivate('set_item_public_vote')
 
-    def setItemPublicVote(self, item, data, vote_number=0):
+    def set_item_public_vote(self, item, data, vote_number=0):
         """ """
         data = deepcopy(data)
         item_uid = item.UID()
@@ -1114,7 +1108,7 @@ class Meeting(Container):
             # so we pass
             pass
 
-        # remove item UID from self.itemAbsents/self.itemExcused and self.itemSignatories
+        # remove item UID from self.item_absents/self.item_excused and self.item_signatories
         item_uid = item.UID()
         if item_uid in self.item_absents:
             del self.item_absents[item_uid]
@@ -1360,49 +1354,6 @@ class Meeting(Container):
 
         self._do_update_contacts(attendees, signatories, replacements, voters)
 
-    security.declarePrivate('at_post_create_script')
-
-    def at_post_create_script(self):
-        ''' '''
-        # place to store item absents
-        self.itemAbsents = PersistentMapping()
-        # place to store item excused
-        self.itemExcused = PersistentMapping()
-        # place to store item non attendees
-        self.itemNonAttendees = PersistentMapping()
-        # place to store item signatories
-        self.itemSignatories = PersistentMapping()
-        # place to store item votes
-        self.itemVotes = PersistentMapping()
-        # place to store attendees when using contacts
-        self.orderedContacts = OrderedDict()
-        self.updateTitle()
-        self.updatePlace()
-        self.computeDates()
-        # Update contact-related info (attendees, signatories, replacements...)
-        self.updateContacts()
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self)
-        self.setMeetingConfigVersion(cfg.getConfigVersion())
-        # addRecurringItemsIfRelevant(self, '_init_')
-        # Apply potential transformations to richtext fields
-        transformAllRichTextFields(self)
-        # Make sure we have 'text/html' for every Rich fields
-        forceHTMLContentTypeForEmptyRichFields(self)
-        self.updateLocalRoles()
-        # activate the faceted navigation
-        enableFacetedDashboardFor(self,
-                                  xmlpath=os.path.dirname(__file__) +
-                                  '/faceted_conf/default_dashboard_widgets.xml')
-        self.setLayout('meeting_view')
-        # update every items itemReference if needed
-        self.update_item_references(check_needed=True)
-        # invalidate last meeting modified
-        invalidate_cachekey_volatile_for('Products.PloneMeeting.Meeting.modified', get_again=True)
-        # Call sub-product-specific behaviour
-        self.adapted().onEdit(isCreated=True)
-        self.reindexObject()
-
     def _update_after_edit(self, idxs=['*']):
         """Convenience method that make sure ObjectModifiedEvent is called.
            We also call reindexObject here so we avoid multiple reindexation.
@@ -1503,7 +1454,7 @@ class Meeting(Container):
         '''Similar to MeetingItem.getSelf. Check MeetingItem.py for more
            info.'''
         res = self
-        if self.__class__.__name__ != 'Meeting':
+        if self.getTagName() != 'Meeting':
             res = self.context
         return res
 

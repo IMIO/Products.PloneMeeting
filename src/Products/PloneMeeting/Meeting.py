@@ -606,7 +606,7 @@ schema = Schema((
         allowable_content_types=('text/html',),
         widget=RichWidget(
             condition="python: here.attributeIsUsed('votesObservations') and "
-                      "here.adapted().showVotesObservations()",
+                      "here.adapted().show_votesObservations()",
             description_msgid="field_vieawable_by_everyone_once_meeting_decided_descr",
             label='Votesobservations',
             label_msgid='PloneMeeting_label_votesObservations',
@@ -844,9 +844,9 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
     def _get_all_redefined_attendees(self, by_persons=False, only_keys=True):
         """Returns a list of dicts."""
         itemNonAttendees = self.getItemNonAttendees(by_persons=by_persons)
-        itemAbsents = self.getItemAbsents(by_persons=by_persons)
-        itemExcused = self.getItemExcused(by_persons=by_persons)
-        itemSignatories = self.getItemSignatories(by_signatories=by_persons)
+        itemAbsents = self.get_item_absents(by_persons=by_persons)
+        itemExcused = self.get_item_excused(by_persons=by_persons)
+        itemSignatories = self.get_item_signatories(by_signatories=by_persons)
         if only_keys:
             redefined_item_attendees = itemNonAttendees.keys() + \
                 itemAbsents.keys() + itemExcused.keys() + itemSignatories.keys()
@@ -865,7 +865,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             # removed attendees
             # REQUEST.form['meeting_attendees'] is like
             # ['muser_attendeeuid1_attendee', 'muser_attendeeuid2_excused']
-            stored_attendees = self.getAllUsedHeldPositions(the_objects=False)
+            stored_attendees = self.get_all_used_held_positions(the_objects=False)
             meeting_attendees = [attendee.split('_')[1] for attendee
                                  in REQUEST.form.get('meeting_attendees', [])]
             removed_meeting_attendees = set(stored_attendees).difference(meeting_attendees)
@@ -883,12 +883,12 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
                     context=REQUEST)
             else:
                 # removed voters
-                stored_voters = self.getVoters()
+                stored_voters = self.get_voters()
                 meeting_voters = [voter.split('_')[1] for voter
                                   in REQUEST.form.get('meeting_voters', [])]
                 removed_meeting_voters = set(stored_voters).difference(meeting_voters)
                 # public, voters are known
-                item_votes = self.getItemVotes()
+                item_votes = self.get_item_votes()
                 voter_uids = []
                 highest_secret_votes = 0
                 for votes in item_votes.values():
@@ -972,9 +972,9 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
            of signatures are displayed on screen correctly."""
         return display_as_html(self.getSignatures(), self)
 
-    security.declarePublic('getAllUsedHeldPositions')
+    security.declarePublic('get_all_used_held_positions')
 
-    def getAllUsedHeldPositions(self, include_new=False, the_objects=True):
+    def get_all_used_held_positions(self, include_new=False, the_objects=True):
         '''This will return every currently stored held_positions.
            If include_new=True, extra held_positions newly selected in the
            configuration are added.
@@ -1011,7 +1011,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
            with 'present' in defaults.'''
         res = []
         if self.checkCreationFlag():
-            used_held_positions = self.getAllUsedHeldPositions(include_new=True)
+            used_held_positions = self.get_all_used_held_positions(include_new=True)
             res = [held_pos.UID() for held_pos in used_held_positions
                    if held_pos.defaults and 'present' in held_pos.defaults]
         return res
@@ -1023,7 +1023,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
            with a defined signature_number.'''
         res = []
         if self.checkCreationFlag():
-            used_held_positions = self.getAllUsedHeldPositions(include_new=True)
+            used_held_positions = self.get_all_used_held_positions(include_new=True)
             res = [held_pos for held_pos in used_held_positions
                    if held_pos.defaults and 'present' in held_pos.defaults and held_pos.signature_number]
         return {signer.UID(): signer.signature_number for signer in res}
@@ -1035,7 +1035,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
            with 'voter' in defaults.'''
         res = []
         if self.checkCreationFlag():
-            used_held_positions = self.getAllUsedHeldPositions(include_new=True)
+            used_held_positions = self.get_all_used_held_positions(include_new=True)
             res = [held_pos.UID() for held_pos in used_held_positions
                    if held_pos.defaults and 'voter' in held_pos.defaults]
         return res
@@ -1062,9 +1062,9 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             res = sorted(res, key=getKey)
         return tuple(res)
 
-    security.declarePublic('getAttendees')
+    security.declarePublic('get_attendees')
 
-    def getAttendees(self, theObjects=False):
+    def get_attendees(self, theObjects=False):
         '''Returns the attendees in this meeting.'''
         return self._getContacts('attendee', theObjects=theObjects)
 
@@ -1080,16 +1080,16 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         '''Returns the absents in this meeting.'''
         return self._getContacts('absent', theObjects=theObjects)
 
-    security.declarePublic('getVoters')
+    security.declarePublic('get_voters')
 
-    def getVoters(self, uids=None, theObjects=False):
+    def get_voters(self, uids=None, theObjects=False):
         '''Returns the voters in this meeting.'''
         voters = self._getContacts('voter', uids=uids, theObjects=theObjects)
         return voters
 
-    security.declarePublic('getSignatories')
+    security.declarePublic('get_signatories')
 
-    def getSignatories(self, theObjects=False, by_signature_number=False):
+    def get_signatories(self, theObjects=False, by_signature_number=False):
         '''See docstring in previous method.'''
         signers = self._getContacts('signer', theObjects=theObjects)
         # order is important in case we have several same signature_number, the first win
@@ -1130,15 +1130,15 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             data = copy.deepcopy(attr.data)
         return data
 
-    security.declarePublic('getItemAbsents')
+    security.declarePublic('get_item_absents')
 
-    def getItemAbsents(self, by_persons=False):
+    def get_item_absents(self, by_persons=False):
         ''' '''
         return self._get_item_not_present(self.itemAbsents, by_persons=by_persons)
 
-    security.declarePublic('getItemExcused')
+    security.declarePublic('get_item_excused')
 
-    def getItemExcused(self, by_persons=False):
+    def get_item_excused(self, by_persons=False):
         ''' '''
         return self._get_item_not_present(self.itemExcused, by_persons=by_persons)
 
@@ -1148,9 +1148,9 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         ''' '''
         return self._get_item_not_present(self.itemNonAttendees, by_persons=by_persons)
 
-    security.declarePublic('getItemSignatories')
+    security.declarePublic('get_item_signatories')
 
-    def getItemSignatories(self, by_signatories=False, include_position_type=False):
+    def get_item_signatories(self, by_signatories=False, include_position_type=False):
         '''Return itemSignatories, by default the itemSignatories dict has the item UID as key and list
            of signatories as values but if 'p_by_signatories' is True, the informations are returned with
            signatory as key and list of items as value.
@@ -1176,7 +1176,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
     def get_signature_infos_for(self, item_uid, signatory_uid):
         """Return the signature position_type to use as label and signature_number
            for given p_item_uid and p_signatory_uid."""
-        data = self.getItemSignatories(by_signatories=False, include_position_type=True)
+        data = self.get_item_signatories(by_signatories=False, include_position_type=True)
         data = {k: v for k, v in data[item_uid].items()
                 if v['hp_uid'] == signatory_uid}
         res = {}
@@ -1187,9 +1187,9 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             forced_position_type_value=data.values()[0]['position_type'])
         return res
 
-    security.declarePublic('getItemVotes')
+    security.declarePublic('get_item_votes')
 
-    def getItemVotes(self):
+    def get_item_votes(self):
         ''' '''
         votes = deepcopy(self.itemVotes.data)
         return votes
@@ -1207,7 +1207,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             # check if we are not adding a new vote on an item containing no votes at all
             if vote_number == 1:
                 # add an empty vote 0
-                data_item_vote_0 = item.getItemVotes(
+                data_item_vote_0 = item.get_item_votes(
                     vote_number=0,
                     include_vote_number=False,
                     include_unexisting=True)
@@ -1219,7 +1219,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         if vote_number + 1 > len(self.itemVotes[item_uid]):
             # complete data before storing, if some voters are missing it is
             # because of NOT_VOTABLE_LINKED_TO_VALUE, we add it
-            item_voter_uids = item.getItemVoters()
+            item_voter_uids = item.get_item_voters()
             for item_voter_uid in item_voter_uids:
                 if item_voter_uid not in data['voters']:
                     data['voters'][item_voter_uid] = NOT_VOTABLE_LINKED_TO_VALUE
@@ -1249,7 +1249,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             # check if we are not adding a new vote on an item containing no votes at all
             if vote_number == 1:
                 # add an empty vote 0
-                data_item_vote_0 = item.getItemVotes(
+                data_item_vote_0 = item.get_item_votes(
                     vote_number=0,
                     include_vote_number=False,
                     include_unexisting=True)
@@ -2169,7 +2169,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
 
     def showAttendeesFields(self):
         '''Display attendee related fields in view/edit?'''
-        return (self.attributeIsUsed('attendees') or self.getAttendees()) and not self.getAssembly()
+        return (self.attributeIsUsed('attendees') or self.get_attendees()) and not self.getAssembly()
 
     def shownAssemblyFields_cachekey(method, self):
         '''cachekey method for self.shownAssemblyFields.'''
@@ -2199,9 +2199,9 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         '''Show the 'signatures' field?'''
         return self.attributeIsUsed('signatures') or self.getSignatures()
 
-    security.declarePublic('showVotesObservations')
+    security.declarePublic('show_votesObservations')
 
-    def showVotesObservations(self):
+    def show_votesObservations(self):
         '''See doc in interfaces.py.'''
         meeting = self.getSelf()
         tool = api.portal.get_tool('portal_plonemeeting')
@@ -2212,15 +2212,15 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
                 meeting.adapted().isDecided()
         return res
 
-    security.declarePublic('showVotes')
+    security.declarePublic('show_votes')
 
-    def showVotes(self):
+    def show_votes(self):
         '''See doc in interfaces.py.'''
         res = False
         meeting = self.getSelf()
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(meeting)
-        if cfg.getUseVotes() or meeting.getVoters():
+        if cfg.getUseVotes() or meeting.get_voters():
             res = True
         return res
 

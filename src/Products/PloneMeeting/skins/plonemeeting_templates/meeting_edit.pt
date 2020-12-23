@@ -172,12 +172,12 @@
                 <span class="formHelp" id="meeting_attendees_help"></span>
             </div>
             <table id="meeting_users" name="meeting_users" class="listing" i18n:domain="PloneMeeting"
-                   tal:define="allUsers python: context.getAllUsedHeldPositions(include_new=True);
-                               attendees python: context.getAttendees() or (not context.getAllUsedHeldPositions(include_new=False) and context.getDefaultAttendees()) or [];
+                   tal:define="allUsers python: context.get_all_used_held_positions(include_new=True);
+                               attendees python: context.get_attendees() or (not context.get_all_used_held_positions(include_new=False) and context.getDefaultAttendees()) or [];
                                excused context/getExcused;
                                absents context/getAbsents;
                                voters context/getVoters;
-                               signers python: context.getSignatories() or context.getDefaultSignatories();
+                               signers python: context.get_signatories() or context.getDefaultSignatories();
                                userReplacements context/getUserReplacements;
                                useVotes meetingConfig/getUseVotes">
               <tal:comment replace="nothing">Column captions</tal:comment>

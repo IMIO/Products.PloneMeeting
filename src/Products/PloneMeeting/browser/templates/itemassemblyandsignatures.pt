@@ -2,13 +2,13 @@
 <tal:assembly_and_signatures condition="view/show" i18n:domain="PloneMeeting">
   <tal:defines
     define="redefinedItemAssemblies python: context.redefinedItemAssemblies();
-            redefinedItemSignatures python: context.getItemSignatures(real=True) or context.getItemSignatories(real=True);
+            redefinedItemSignatures python: context.getItemSignatures(real=True) or context.get_item_signatories(real=True);
             mayQuickEditItemSignatures context/mayQuickEditItemSignatures;
             tool nocall:view/tool;
             meetingConfig nocall:view/cfg;
             meeting nocall:view/meeting;
             usedMeetingAttrs view/usedMeetingAttrs;">
-      <tal:item_assembly tal:condition="python: ('assembly' in usedMeetingAttrs or meeting.getAssembly()) and not meeting.getAttendees()">
+      <tal:item_assembly tal:condition="python: ('assembly' in usedMeetingAttrs or meeting.getAssembly()) and not meeting.get_attendees()">
           <tal:defines define="mayQuickEdit python: context.mayQuickEdit('itemAssembly', bypassWritePermissionCheck=True);
                                class_if_highlighted python: redefinedItemAssemblies and 'highlightValue' or '';
                                class_to_use python: mayQuickEdit and (class_if_highlighted and class_if_highlighted + ' item_attribute_label' or ' item_attribute_label') or class_if_highlighted + ' item_attribute_label'">
@@ -38,7 +38,7 @@
           </tal:defines>
       </tal:item_assembly>
 
-      <tal:block condition="python: ('attendees' in usedMeetingAttrs or meeting.getAttendees()) and not meeting.getAssembly()">
+      <tal:block condition="python: ('attendees' in usedMeetingAttrs or meeting.get_attendees()) and not meeting.assembly">
         <tal:comment replace="nothing">People (item attendees, signers and votes)</tal:comment>
         <metal:people use-macro="here/@@pm-macros/itemPeople"/>
       </tal:block>
@@ -53,7 +53,7 @@
       </tal:item_assembly_common_fields>
 
       <tal:comment replace="nothing">Item signatures</tal:comment>
-      <tal:item_signatures tal:condition="python: ('signatures' in usedMeetingAttrs or context.getItemSignatures()) and not meeting.getSignatories()">
+      <tal:item_signatures tal:condition="python: ('signatures' in usedMeetingAttrs or context.getItemSignatures()) and not meeting.get_signatories()">
           <tal:defines define="class_if_highlighted python: redefinedItemSignatures and 'highlightValue' or '';
                                class_to_use python: mayQuickEditItemSignatures and (class_if_highlighted and class_if_highlighted + ' item_attribute_label' or ' item_attribute_label') or class_if_highlighted + ' item_attribute_label'">
             <div class="item_signatures">

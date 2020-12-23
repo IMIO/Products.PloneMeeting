@@ -410,10 +410,10 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
         cfg = tool.getMeetingConfig(self.context)
         cfg_modified = cfg.modified()
         meeting = self.context.getMeeting()
-        ordered_contacts = meeting.orderedContacts.items()
+        ordered_contacts = meeting.ordered_contacts.items()
         redefined_item_attendees = meeting._get_all_redefined_attendees(only_keys=False)
-        show_votes = self.context.showVotes()
-        item_votes = self.context.getItemVotes(include_vote_number=False)
+        show_votes = self.context.show_votes()
+        item_votes = self.context.get_item_votes(include_vote_number=False)
         context_uid = self.context.UID()
         # if something redefined for context or not
         if context_uid not in str(redefined_item_attendees):
@@ -439,11 +439,11 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
         self.cfg = self.tool.getMeetingConfig(self.context)
         self.usedMeetingAttrs = self.cfg.getUsedMeetingAttributes()
         self.meeting = self.context.getMeeting()
-        self.showVotes = self.context.showVotes()
-        if self.showVotes:
-            self.votesAreSecret = self.context.getVotesAreSecret()
-            self.voters = self.context.getItemVoters() or []
-            self.itemVotes = self.context.getItemVotes(
+        self.show_votes = self.context.show_votes()
+        if self.show_votes:
+            self.votesAreSecret = self.context.get_votes_are_secret()
+            self.voters = self.context.get_item_voters() or []
+            self.itemVotes = self.context.get_item_votes(
                 include_unexisting=True,
                 ignored_vote_values=[NOT_VOTABLE_LINKED_TO_VALUE]) or []
             self.voted_voters = ()
@@ -487,8 +487,8 @@ class AsyncLoadMeetingAssemblyAndSignatures(BrowserView):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
         cfg_modified = cfg.modified()
-        ordered_contacts = self.context.orderedContacts.items()
-        item_votes = self.context.getItemVotes()
+        ordered_contacts = self.context.ordered_contacts.items()
+        item_votes = self.context.get_item_votes()
         context_uid = self.context.UID()
         cache_date = self.request.get('cache_date', None)
         return (date,

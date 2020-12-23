@@ -955,14 +955,14 @@ class BaseDGHV(object):
            If use_print_attendees_by_type is True, we use print_attendees_by_type method instead of
            print_attendees.'''
 
-        if self.context.__class__.__name__ == 'MeetingItem' and not self.context.hasMeeting():
+        if self.context.getTagName() == 'MeetingItem' and not self.context.hasMeeting():
             # There is nothing to print in this case
             return ''
 
         assembly = None
-        if self.context.__class__.__name__ == 'Meeting' and self.context.getAssembly():
+        if self.context.getTagName() == 'Meeting' and self.context.getAssembly():
             assembly = self.context.getAssembly()
-        elif self.context.__class__.__name__ == 'MeetingItem' and self.context.getItemAssembly():
+        elif self.context.getTagName() == 'MeetingItem' and self.context.getItemAssembly():
             assembly = self.context.getItemAssembly()
 
         if assembly:
@@ -984,28 +984,28 @@ class BaseDGHV(object):
         item_absents = []
         item_excused = []
         item_non_attendees = []
-        if self.context.__class__.__name__ == 'Meeting':
+        if self.context.getTagName() == 'Meeting':
             meeting = self.context
-            attendees = meeting.getAttendees()
-            item_non_attendees = meeting.getItemNonAttendees()
+            attendees = meeting.get_attendees()
+            item_non_attendees = meeting.get_item_non_attendees()
         else:
             # MeetingItem
             meeting = self.context.getMeeting()
             if meeting:
-                attendees = self.context.getAttendees()
-                item_absents = self.context.getItemAbsents()
-                item_excused = self.context.getItemExcused()
-            item_non_attendees = self.context.getItemNonAttendees()
+                attendees = self.context.get_attendees()
+                item_absents = self.context.get_item_absents()
+                item_excused = self.context.get_item_excused()
+            item_non_attendees = self.context.get_item_non_attendees()
         # generate content then group by sub organization if necessary
         contacts = []
         absents = []
         excused = []
         replaced = []
         if meeting:
-            contacts = meeting.getAllUsedHeldPositions()
-            excused = meeting.getExcused()
-            absents = meeting.getAbsents()
-            replaced = meeting.getReplacements()
+            contacts = meeting.get_all_used_held_positions()
+            excused = meeting.get_excused()
+            absents = meeting.get_absents()
+            replaced = meeting.get_replacements()
         return meeting, attendees, item_absents, item_excused, item_non_attendees, \
             contacts, excused, absents, replaced
 
@@ -1361,9 +1361,9 @@ class BaseDGHV(object):
         A dict is used to safely get a signature with the get method
         """
         signatures = None
-        if self.context.__class__.__name__ == 'Meeting' and self.context.getSignatures():
+        if self.context.getTagName() == 'Meeting' and self.context.getSignatures():
             signatures = self.context.getSignatures()
-        elif self.context.__class__.__name__ == 'MeetingItem' and self.context.getItemSignatures():
+        elif self.context.getTagName() == 'MeetingItem' and self.context.getItemSignatures():
             signatures = self.context.getItemSignatures()
 
         if signatures:
@@ -1404,15 +1404,15 @@ class BaseDGHV(object):
         """
         signature_lines = OrderedDict()
         forced_position_type_values = {}
-        if self.context.__class__.__name__ == 'Meeting':
-            signatories = self.context.getSignatories(theObjects=True, by_signature_number=True)
+        if self.context.getTagName() == 'Meeting':
+            signatories = self.context.get_signatories(the_objects=True, by_signature_number=True)
         else:
-            signatories = self.context.getItemSignatories(theObjects=True, by_signature_number=True)
+            signatories = self.context.get_item_signatories(the_objects=True, by_signature_number=True)
             if self.context.hasMeeting():
                 # if we have redefined signatories, use the selected position_type
                 meeting = self.context.getMeeting()
                 item_uid = self.context.UID()
-                item_signatories = meeting.getItemSignatories(include_position_type=True)
+                item_signatories = meeting.get_item_signatories(include_position_type=True)
                 if item_uid in item_signatories:
                     forced_position_type_values = {
                         k: v['position_type'] for k, v in
@@ -1463,7 +1463,7 @@ class BaseDGHV(object):
 
     def vote_infos(self, used_vote_values=[], include_null_vote_count_values=[], keep_vote_numbers=[]):
         """ """
-        item_votes = self.context.getItemVotes(include_unexisting=False)
+        item_votes = self.context.get_item_votes(include_unexisting=False)
         if not used_vote_values:
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(self.context)
@@ -1548,8 +1548,8 @@ class BaseDGHV(object):
             """ """
             voter_uids = [voter_uid for voter_uid, voter_vote_value in voters.items()
                           if voter_vote_value == vote_value]
-            # _getContacts return ordered contacts
-            voters = meeting._getContacts(uids=voter_uids, theObjects=True)
+            # _get_contacts return ordered contacts
+            voters = meeting._get_contacts(uids=voter_uids, the_objects=True)
             res = []
             for voter in voters:
                 if include_hp:
@@ -1593,7 +1593,7 @@ class BaseDGHV(object):
         patterns.update(custom_patterns)
         # get votes
         rendered = u""
-        secret = self.context.getVotesAreSecret()
+        secret = self.context.get_votes_are_secret()
         meeting = self.context.getMeeting()
         vote_infos = self.vote_infos(
             used_vote_values, include_null_vote_count_values, keep_vote_numbers)
@@ -1795,11 +1795,11 @@ class FolderDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGH
 
         for brain in brains:
             meeting = brain.getObject()
-            presents = meeting.getAttendees(True)
+            presents = meeting.get_attendees(True)
 
             if presents:  # if there is no attendee it's useless to continue
-                excused = meeting.getExcused(True)
-                absents = meeting.getAbsents(True)
+                excused = meeting.get_excused(True)
+                absents = meeting.get_absents(True)
                 _add_attendances_for_meeting(attendances, meeting, presents, excused, absents)
 
         res = attendances.values()
@@ -1812,7 +1812,13 @@ class FolderDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGH
         :return: A list of list of dict representing the attendance on a bunch of Meetings
                  organized by Meeting and by held position on every MeetingItems in each of the given Meetings.
         """
-        def _add_attendances_for_items(attendances, meetingItems, presents, excused, itemExcused, absents, itemAbsents):
+        def _add_attendances_for_items(attendances,
+                                       meeting_items,
+                                       presents,
+                                       excused,
+                                       item_excused,
+                                       absents,
+                                       item_absents):
             """
             Populates the statistics for a Meeting or a MeetingItem by held position in the assembly.
 
@@ -1840,38 +1846,38 @@ class FolderDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGH
                 attendances[attendance]['present'] -= 1
                 attendances[attendance][counter] += 1
 
-            _add_attendance(attendances, meetingItems, presents, 'present')
-            _add_attendance(attendances, meetingItems, excused, 'excused')
-            _add_attendance(attendances, meetingItems, absents, 'absent')
+            _add_attendance(attendances, meeting_items, presents, 'present')
+            _add_attendance(attendances, meeting_items, excused, 'excused')
+            _add_attendance(attendances, meeting_items, absents, 'absent')
 
             for attendance in attendances:
-                if attendance in itemExcused:
+                if attendance in item_excused:
                     _remove_attendances(attendance, 'excused')
-                if attendance in itemAbsents:
+                if attendance in item_absents:
                     _remove_attendances(attendance, 'absent')
 
         res = []
 
         for brain in brains:
             meeting = brain.getObject()
-            presents = list(meeting.getAttendees(True))
-            excused = list(meeting.getExcused(True))
-            absents = list(meeting.getAbsents(True))
-            itemExcused = meeting.getItemExcused(True)
-            itemAbsents = meeting.getItemAbsents(True)
-            meetingData = {'title': meeting.Title()}
+            presents = list(meeting.get_attendees(True))
+            excused = list(meeting.get_excused(True))
+            absents = list(meeting.get_absents(True))
+            item_excused = meeting.get_item_excused(True)
+            item_absents = meeting.get_item_absents(True)
+            meeting_data = {'title': meeting.Title()}
             attendances = OrderedDict({})
             _add_attendances_for_items(attendances,
-                                       meeting.getItems(ordered=True),
+                                       meeting.get_items(ordered=True),
                                        presents,
                                        excused,
-                                       itemExcused,
+                                       item_excused,
                                        absents,
-                                       itemAbsents)
+                                       item_absents)
 
-            meetingData['attendances'] = attendances.values()
-            self._compute_attendances_proportion(meetingData['attendances'])
-            res.append(meetingData)
+            meeting_data['attendances'] = attendances.values()
+            self._compute_attendances_proportion(meeting_data['attendances'])
+            res.append(meeting_data)
 
         return res
 
@@ -1904,7 +1910,7 @@ class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV)
             return noMeetingMarker
 
         if returnDateTime:
-            return meeting.getDate()
+            return meeting.date
         return meeting.Title()
 
     def printMeetingDate(self, returnDateTime=False, noMeetingMarker='-', unrestricted=True):
@@ -1929,7 +1935,7 @@ class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV)
             return noMeetingMarker
 
         if returnDateTime:
-            return preferred_meeting.getDate()
+            return preferred_meeting.date
         return preferred_meeting.Title()
 
     def print_in_and_out_attendees(
@@ -1970,7 +1976,7 @@ class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV)
                     'attendee_again_after': u'{0} participe à la séance après la discussion du point.'}
         patterns.update(custom_patterns)
 
-        in_and_out = self.context.getInAndOutAttendees(
+        in_and_out = self.context.get_in_and_out_attendees(
             ignore_before_first_item=ignore_before_first_item)
         person_res = {in_and_out_type: [] for in_and_out_type in in_and_out.keys()
                       if (not in_and_out_types or in_and_out_type in in_and_out_types)}
@@ -2105,7 +2111,7 @@ class CheckPodTemplatesView(BrowserView):
                 continue
 
             for obj in objs:
-                if obj.__class__.__name__ == 'Meeting':
+                if obj.getTagName() == 'Meeting':
                     self.request.form['facetedQuery'] = []
                 elif 'facetedQuery' in self.request.form:
                     del self.request.form['facetedQuery']
@@ -2352,11 +2358,11 @@ class DisplayMeetingItemNotPresent(BrowserView):
         """Returns the list of items the not_present_uid is absent for."""
         item_uids = []
         if self.not_present_type == 'absent':
-            item_uids = self.meeting.getItemAbsents(by_persons=True).get(self.not_present_uid, [])
+            item_uids = self.meeting.get_item_absents(by_persons=True).get(self.not_present_uid, [])
         elif self.not_present_type == 'excused':
-            item_uids = self.meeting.getItemExcused(by_persons=True).get(self.not_present_uid, [])
+            item_uids = self.meeting.get_item_excused(by_persons=True).get(self.not_present_uid, [])
         elif self.not_present_type == 'non_attendee':
-            item_uids = self.meeting.getItemNonAttendees(by_persons=True).get(self.not_present_uid, [])
+            item_uids = self.meeting.get_item_non_attendees(by_persons=True).get(self.not_present_uid, [])
         catalog = api.portal.get_tool('portal_catalog')
         brains = catalog(UID=item_uids, sort_on='getItemNumber')
         objs = [brain.getObject() for brain in brains]
@@ -2380,7 +2386,7 @@ class DisplayMeetingItemSignatories(BrowserView):
 
     def get_items_for_signatory(self):
         """Returns the list of items the signatory_uid is signatory for."""
-        item_uids = self.meeting.getItemSignatories(by_signatories=True).get(self.signatory_uid, [])
+        item_uids = self.meeting.get_item_signatories(by_signatories=True).get(self.signatory_uid, [])
         catalog = api.portal.get_tool('portal_catalog')
         brains = catalog(UID=item_uids, sort_on='getItemNumber')
         objs = [brain.getObject() for brain in brains]
@@ -2405,13 +2411,13 @@ class DisplayMeetingItemVoters(BrowserView):
         res = {'public': [],
                'secret': []}
         for item in items:
-            if not item.getVotesAreSecret():
-                if set(item.getItemVoters()).difference(item.get_voted_voters()):
+            if not item.get_votes_are_secret():
+                if set(item.get_item_voters()).difference(item.get_voted_voters()):
                     res['public'].append(item)
             else:
                 data = {}
                 total_voters = item.getVoteCount('any_votable')
-                for item_vote in item.getItemVotes():
+                for item_vote in item.get_item_votes():
                     vote_number = item_vote['vote_number']
                     i = vote_number
                     linked_numbers = _get_linked_item_vote_numbers(
@@ -2436,10 +2442,10 @@ class DisplayMeetingItemVoters(BrowserView):
         res = {
             'public': [
                 item for item in items
-                if item not in non_voted_items['public'] and not item.getVotesAreSecret()],
+                if item not in non_voted_items['public'] and not item.get_votes_are_secret()],
             'secret': [
                 item for item in items
-                if item not in non_voted_items['secret'] and item.getVotesAreSecret()]}
+                if item not in non_voted_items['secret'] and item.get_votes_are_secret()]}
         return res
 
 

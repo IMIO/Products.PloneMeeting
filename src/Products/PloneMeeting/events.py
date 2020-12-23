@@ -1193,8 +1193,8 @@ def _is_held_pos_uid_used_by(held_pos_uid, obj):
            held_pos_uid in obj.getOrderedItemInitiators():
             res = True
     elif obj.getTagName() == 'Meeting':
-        orderedContacts = getattr(obj, 'orderedContacts', {})
-        if held_pos_uid in orderedContacts:
+        ordered_contacts = getattr(obj, 'ordered_contacts', {})
+        if held_pos_uid in ordered_contacts:
             res = True
     elif obj.getTagName() == 'MeetingItem':
         if held_pos_uid in obj.getItemInitiator():

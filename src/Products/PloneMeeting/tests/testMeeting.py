@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 #
+# File: testMeeting.py
+#
 # GNU General Public License (GPL)
 #
 
@@ -3346,13 +3348,13 @@ class testMeeting(PloneMeetingTestCase):
         item_uid = item.UID()
         # configure the 4 assembly members
         # absent, excused, signatory, nonAttendee
-        attendee_uids = meeting.getAttendees()
-        meeting.orderedContacts[attendee_uids[0]]['signer'] = True
-        meeting.orderedContacts[attendee_uids[0]]['signature_number'] = '1'
-        meeting.itemAbsents[item_uid] = [attendee_uids[0]]
-        meeting.itemExcused[item_uid] = [attendee_uids[1]]
-        meeting.itemNonAttendees[item_uid] = [attendee_uids[2]]
-        meeting.itemSignatories[item_uid] = {
+        attendee_uids = meeting.get_attendees()
+        meeting.ordered_contacts[attendee_uids[0]]['signer'] = True
+        meeting.ordered_contacts[attendee_uids[0]]['signature_number'] = '1'
+        meeting.item_absents[item_uid] = [attendee_uids[0]]
+        meeting.item_excused[item_uid] = [attendee_uids[1]]
+        meeting.item_non_attendees[item_uid] = [attendee_uids[2]]
+        meeting.item_signatories[item_uid] = {
             '2': {'hp_uid': attendee_uids[3],
                   'position_type': u'default'}}
         # now while validating meeting_attendees, None may be unselected
@@ -3385,41 +3387,41 @@ class testMeeting(PloneMeetingTestCase):
                 {'meeting_attendees': tmp_error_msg})
             index += 1
         # do work unselect attendee by attendee
-        # itemAbsents
-        meeting.itemAbsents[item_uid] = []
+        # item_absents
+        meeting.item_absents[item_uid] = []
         self.request.form['meeting_attendees'] = [meeting_attendee for meeting_attendee in meeting_attendees
                                                   if not attendee_uids[0] in meeting_attendee]
         self.assertEqual(len(self.request.form['meeting_attendees']), 3)
         self.assertEqual(meeting.validate(self.request), {})
         # itemExcused
-        meeting.itemExcused[item_uid] = []
+        meeting.item_excused[item_uid] = []
         self.request.form['meeting_attendees'] = [meeting_attendee for meeting_attendee in meeting_attendees
                                                   if not attendee_uids[1] in meeting_attendee]
         self.assertEqual(len(self.request.form['meeting_attendees']), 3)
         self.assertEqual(meeting.validate(self.request), {})
         # itemNonAttendees
-        meeting.itemNonAttendees[item_uid] = []
+        meeting.item_non_attendees[item_uid] = []
         self.request.form['meeting_attendees'] = [meeting_attendee for meeting_attendee in meeting_attendees
                                                   if not attendee_uids[2] in meeting_attendee]
         self.assertEqual(len(self.request.form['meeting_attendees']), 3)
         self.assertEqual(meeting.validate(self.request), {})
         # itemSignatories
-        meeting.itemSignatories[item_uid] = {}
+        meeting.item_signatories[item_uid] = {}
         self.request.form['meeting_attendees'] = [meeting_attendee for meeting_attendee in meeting_attendees
                                                   if not attendee_uids[3] in meeting_attendee]
         self.assertEqual(len(self.request.form['meeting_attendees']), 3)
         self.assertEqual(meeting.validate(self.request), {})
 
         # does not break while creating an new meeting aka
-        # persistent attributes like itemNonAttendees or itemAbsents do not exist
+        # persistent attributes like item_non_attendees or item_absents do not exist
         # remove recurring items in self.meetingConfig
         self._removeConfigObjectsFor(self.meetingConfig)
         meeting2 = self.create('Meeting')
-        delattr(meeting2, 'orderedContacts')
-        delattr(meeting2, 'itemAbsents')
-        delattr(meeting2, 'itemExcused')
-        delattr(meeting2, 'itemSignatories')
-        delattr(meeting2, 'itemNonAttendees')
+        delattr(meeting2, 'ordered_contacts')
+        delattr(meeting2, 'item_absents')
+        delattr(meeting2, 'item_excused')
+        delattr(meeting2, 'item_signatories')
+        delattr(meeting2, 'item_non_attendees')
         self.assertEqual(meeting.validate(self.request), {})
         self.request.form['meeting_attendees'] = meeting_attendees
         self.assertEqual(meeting.validate(self.request), {})

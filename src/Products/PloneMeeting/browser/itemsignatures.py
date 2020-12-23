@@ -75,7 +75,7 @@ class DisplaySignaturesFromMeetingProvider(ContentProviderBase):
           Return Meeting.signatures
         """
         meeting = self.context.getMeeting()
-        return meeting.getSignatures().replace('\n', '<br />')
+        return meeting.signatures.replace('\n', '<br />')
 
     def render(self):
         return self.template()

@@ -325,7 +325,7 @@
       <tal:defines define="mayQuickEditItemAssembly context/mayQuickEditItemAssembly;
                            mayQuickEditItemSignatures context/mayQuickEditItemSignatures;
                            redefinedItemAssemblies python: context.redefinedItemAssemblies();
-                           redefinedItemSignatures python: context.getItemSignatures(real=True) or context.getItemSignatories(real=True);
+                           redefinedItemSignatures python: context.getItemSignatures(real=True) or context.get_item_signatories(real=True);
                            isUsingContacts python: not context.is_assembly_field_used('itemAssembly') and meetingConfig.isUsingContacts()">
       <div id="assembly-and-signatures"
           onclick="togglePersonsCookie();;toggleDetails('collapsible-assembly-and-signatures', toggle_parent_active=true, parent_tag=null, load_view='@@load_item_assembly_and_signatures');"
@@ -336,7 +336,7 @@
                     tal:attributes="class class_to_use">
                     <tal:block i18n:translate="meeting_assembly">Assembly</tal:block>
                     <tal:block condition="isUsingContacts"
-                               content="python:'(' + str(len(context.getAttendees())) + '/' + str(len(meeting.getAttendees())) + ')'">Number of attendees</tal:block>
+                               content="python:'(' + str(len(context.get_attendees())) + '/' + str(len(meeting.get_attendees())) + ')'">Number of attendees</tal:block>
               </span>
 
               <a i18n:name="assembly_edit" tal:condition="mayQuickEditItemAssembly" href="manage_item_assembly_form?initial_edit=1" class="link-overlay-pm">
@@ -348,7 +348,7 @@
                     tal:attributes="class class_to_use">
                     <tal:block i18n:translate="meeting_signatures">signatures</tal:block>
                     <tal:block condition="isUsingContacts"
-                               content="python:'(' + str(len(context.getItemSignatories(by_signature_number=True))) + ')'">Number of attendees</tal:block>
+                               content="python:'(' + str(len(context.get_item_signatories(by_signature_number=True))) + ')'">Number of attendees</tal:block>
               </span>
 
               <a i18n:name="signatures_edit" tal:condition="mayQuickEditItemSignatures" href="manage_item_signatures_form" class="link-overlay-pm">

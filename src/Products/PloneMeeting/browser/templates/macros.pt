@@ -334,17 +334,17 @@ document.location.reload(true);
  <div metal:use-macro="context/global_statusmessage/macros/portal_message">
    Portal status message
  </div>
-<table tal:define="allUsers meeting/getAllUsedHeldPositions;
-                   showVotes view/showVotes;
+<table tal:define="allUsers meeting/get_all_used_held_positions;
+                   show_votes view/show_votes;
                    excused meeting/getExcused;
                    absents meeting/getAbsents;
-                   itemSignatories context/getItemSignatories;
-                   realItemSignatories python: context.getItemSignatories(real=True);
-                   meetingSignatories meeting/getSignatories;
-                   itemAttendees context/getAttendees;
-                   itemAbsents context/getItemAbsents;
-                   itemExcused context/getItemExcused;
-                   itemNonAttendees context/getItemNonAttendees;
+                   itemSignatories context/get_item_signatories;
+                   realItemSignatories python: context.get_item_signatories(real=True);
+                   meetingSignatories meeting/get_signatories;
+                   itemAttendees context/get_attendees;
+                   itemAbsents context/get_item_absents;
+                   itemExcused context/get_item_excused;
+                   itemNonAttendees context/get_item_non_attendees;
                    itemVotes view/itemVotes;
                    showExcused python: 'excused' in usedMeetingAttributes or excused;
                    showAbsents python: 'absents' in usedMeetingAttributes or absents or itemAbsents;
@@ -376,8 +376,8 @@ document.location.reload(true);
     <th class="header-attendee-absent" tal:condition="showAbsents" i18n:translate="is_absent">Absent?</th>
     <th class="header-attendee-signatory" tal:condition="showSignatories" i18n:translate="is_signer">Signer?</th>
     <th class="header-attendee-non-attendee" tal:condition="showNonAttendees" i18n:translate="is_non_attendee">Non attendee?</th>
-    <th class="header-attendee-voter" tal:condition="showVotes" i18n:translate="is_voter">Voter?</th>
-    <tal:vote repeat="vote_infos itemVotes" tal:condition="showVotes">
+    <th class="header-attendee-voter" tal:condition="show_votes" i18n:translate="is_voter">Voter?</th>
+    <tal:vote repeat="vote_infos itemVotes" tal:condition="show_votes">
      <th class="header-attendee-vote" class="nosort">
       <span tal:condition="vote_infos/linked_to_previous"
             title="This vote is linked to previous vote"
@@ -588,13 +588,13 @@ document.location.reload(true);
 
      <td align="center"
          class="attendee-value attendee-voter"
-         tal:condition="showVotes">
+         tal:condition="show_votes">
        <tal:comment replace="nothing">The user is voter</tal:comment>
        <span tal:condition="isVoter" class="fa people-checked"></span>
        <span tal:condition="not:isVoter">-</span>
      </td>
 
-     <tal:vote repeat="vote_infos itemVotes" condition="python: showVotes and not votesAreSecret">
+     <tal:vote repeat="vote_infos itemVotes" condition="python: show_votes and not votesAreSecret">
       <td align="center" class="attendee-value vote-value public-vote">
         <tal:comment replace="nothing">Show "vote" value the user voted for this item</tal:comment>
         <tal:voted condition="python: aUid in voters and aUid in vote_infos['voters']">

@@ -489,7 +489,7 @@ class MeetingUser(BaseContent, BrowserDefaultMixin):
     def isPresent(self, item, meeting):
         '''Is this user present at p_meeting when p_item is discussed?'''
         aId = self.getId()
-        if aId in item.getItemAbsents():
+        if aId in item.get_item_absents():
             return False
         if aId in meeting.getLateAttendees():
             entranceNumber = meeting.getEntranceItem(aId)

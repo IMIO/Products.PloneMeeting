@@ -347,20 +347,19 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             # manage attendees if using it after processForm
             usedMeetingAttrs = cfg.getUsedMeetingAttributes()
             if 'attendees' in usedMeetingAttrs:
-                obj._at_creation_flag = True
-                default_attendees = obj.getDefaultAttendees()
+                default_attendees = obj.get_default_attendees()
                 default_attendees = OrderedDict((
                     (attendee, 'attendee') for attendee in default_attendees))
                 signatories = []
                 if 'signatories' in usedMeetingAttrs:
-                    signatories = obj.getDefaultSignatories()
+                    signatories = obj.get_default_signatories()
                 voters = []
                 if cfg.getUseVotes():
-                    voters = obj.getDefaultVoters()
+                    voters = obj.get_default_voters()
                 obj._at_creation_flag = False
-                obj._doUpdateContacts(attendees=default_attendees,
-                                      signatories=signatories,
-                                      voters=voters)
+                obj._do_update_contacts(attendees=default_attendees,
+                                        signatories=signatories,
+                                        voters=voters)
         # make sure we do not have permission check cache problems...
         self.cleanMemoize()
         return obj
@@ -396,14 +395,14 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
            If no p_annexTitle is specified, the predefined title of the annex type is used.'''
 
         if annexType is None:
-            if context.__class__.__name__ == 'MeetingItem':
+            if context.getTagName() == 'MeetingItem':
                 if not relatedTo:
                     annexType = self.annexFileType
                 elif relatedTo == 'item_decision':
                     annexType = self.annexFileTypeDecision
             elif context.portal_type.startswith('meetingadvice'):
                 annexType = self.annexFileTypeAdvice
-            elif context.__class__.__name__ == 'Meeting':
+            elif context.getTagName() == 'Meeting':
                 annexType = self.annexFileTypeMeeting
 
         # get complete annexType id that is like
