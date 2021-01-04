@@ -1,5 +1,5 @@
 <tal:comment replace="nothing">Attendees, excused, absents, replacements, signatories</tal:comment>
-<table id="meeting_users" class="listing discreet" cellspacing="0" cellpadding="0"
+<table id="meeting_users" class="listing discreet faceted-table-results" cellspacing="0" cellpadding="0"
        tal:condition="context/showAttendeesFields"
        i18n:domain="PloneMeeting">
   <tal:defines define="allUsers context/get_all_used_held_positions;

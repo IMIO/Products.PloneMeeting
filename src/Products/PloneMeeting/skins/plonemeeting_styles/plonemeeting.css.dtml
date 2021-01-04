@@ -521,6 +521,9 @@ td.noPadding a {
     padding: 0 !important;
 }
 
+#content table#meeting_users.listing {
+   width: inherit;
+}
 table#meeting_users.listing tbody tr td {
    vertical-align: inherit;
 }
