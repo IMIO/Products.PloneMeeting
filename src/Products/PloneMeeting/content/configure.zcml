@@ -39,4 +39,8 @@
     <utility factory=".person.PMPersonSchemaPolicy"
              name="schema_policy_pm_person" />
 
+    <adapter for="Products.PloneMeeting.content.meeting.IMeeting"
+             factory=".meeting.MeetingCollection"
+             provides="plone.app.contenttypes.behaviors.collection.ICollection" />
+
 </configure>

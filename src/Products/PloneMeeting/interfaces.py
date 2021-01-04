@@ -3,6 +3,7 @@
 from collective.eeafaceted.batchactions.interfaces import IBatchActionsMarker
 from collective.eeafaceted.collectionwidget.interfaces import ICollectiveEeafacetedCollectionwidgetLayer
 from ftw.labels.interfaces import ILabelSupport
+from plone.dexterity.interfaces import IDexterityContent
 from zope.component.interfaces import IObjectEvent
 from zope.interface import Interface
 
@@ -106,6 +107,11 @@ class IMeetingContent(Interface):
 
 class IATMeetingContent(IMeetingContent):
     """Base marker interface for AT content related elements
+    """
+
+
+class IDXMeetingContent(IMeetingContent, IDexterityContent):
+    """Base marker interface for DX content related elements
     """
 
 

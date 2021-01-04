@@ -200,63 +200,64 @@
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="zope2.View" />
 
+    <!-- Meeting -->
     <browser:page
-      for="Products.PloneMeeting.interfaces.IMeeting"
+      for="Products.PloneMeeting.content.meeting.IMeeting"
       name="meeting_view"
+      class="Products.PloneMeeting.browser.meeting.MeetingView"
       template="templates/meeting_view.pt"
-      class=".views.MeetingView"
       permission="zope2.View" />
 
     <browser:page
       for="Products.PloneMeeting.content.meeting.IMeeting"
       name="meeting_available_items_view"
       template="templates/meeting_available_items_view.pt"
-      class=".views.MeetingView"
+      class=".meeting.MeetingView"
       permission="zope2.View" />
 
     <browser:page
       for="Products.PloneMeeting.content.meeting.IMeeting"
       name="meeting-before-faceted-infos"
       template="templates/meeting_before_faceted_infos.pt"
-      class=".views.MeetingBeforeFacetedInfosView"
+      class=".meeting.MeetingBeforeFacetedInfosView"
       permission="zope2.View" />
 
     <browser:page
-      for="Products.PloneMeeting.interfaces.IMeeting"
+      for="Products.PloneMeeting.content.meeting.IMeeting"
       name="meeting-after-faceted-infos"
       template="templates/meeting_after_faceted_infos.pt"
-      class=".views.MeetingAfterFacetedInfosView"
+      class=".meeting.MeetingAfterFacetedInfosView"
       permission="zope2.View" />
 
     <browser:page
       for="Products.PloneMeeting.content.meeting.IMeeting"
       name="display-inserting-methods-helper-msg"
       template="templates/meeting_inserting_methods_help_msg.pt"
-      class=".views.MeetingInsertingMethodsHelpMsgView"
+      class=".meeting.MeetingInsertingMethodsHelpMsgView"
       permission="zope2.View" />
 
     <browser:view
       for="Products.PloneMeeting.content.meeting.IMeeting"
       name="update-item-references"
-      class=".views.MeetingUpdateItemReferences"
+      class=".meeting.MeetingUpdateItemReferences"
       permission="cmf.ModifyPortalContent" />
 
     <browser:view
       for="Products.PloneMeeting.content.meeting.IMeeting"
       name="reorder-items"
-      class=".views.MeetingReorderItems"
+      class=".meeting.MeetingReorderItems"
       permission="cmf.ModifyPortalContent" />
 
     <browser:view
       for="Products.PloneMeeting.content.meeting.IMeeting"
       name="present-several-items"
-      class=".views.PresentSeveralItemsView"
+      class=".meeting.PresentSeveralItemsView"
       permission="zope2.View" />
 
     <browser:view
       for="Products.PloneMeeting.content.meeting.IMeeting"
       name="remove-several-items"
-      class=".views.RemoveSeveralItemsView"
+      class=".meeting.RemoveSeveralItemsView"
       permission="zope2.View" />
 
     <!-- Batch actions -->

@@ -13,6 +13,8 @@ from imio.prettylink.interfaces import IPrettyLink
 from persistent.list import PersistentList
 from persistent.mapping import PersistentMapping
 from plone import api
+from plone.app.contenttypes.behaviors.collection import Collection
+from plone.app.contenttypes.behaviors.collection import ICollection
 from plone.app.querystring.querybuilder import queryparser
 from plone.app.textfield import RichText
 from plone.app.uuid.utils import uuidToCatalogBrain
@@ -33,7 +35,7 @@ from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
 from Products.PloneMeeting.config import NOT_VOTABLE_LINKED_TO_VALUE
 from Products.PloneMeeting.config import READER_USECASES
-from Products.PloneMeeting.interfaces import IMeetingContent
+from Products.PloneMeeting.interfaces import IDXMeetingContent
 from Products.PloneMeeting.utils import _addManagedPermissions
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import display_as_html
@@ -66,10 +68,11 @@ import copy
 import itertools
 import logging
 
+
 logger = logging.getLogger('PloneMeeting')
 
 
-class IMeeting(IMeetingContent):
+class IMeeting(IDXMeetingContent):
     """
         Meeting schema
     """
@@ -82,27 +85,27 @@ class IMeeting(IMeetingContent):
     form.widget('start_date', DatetimeFieldWidget, show_today_link=True, show_time=True)
     start_date = Datetime(
         title=_(u'title_start_date'),
-        required=True)
+        required=False)
 
     form.widget('mid_date', DatetimeFieldWidget, show_today_link=True, show_time=True)
     mid_date = Datetime(
         title=_(u'title_mid_date'),
-        required=True)
+        required=False)
 
     form.widget('end_date', DatetimeFieldWidget, show_today_link=True, show_time=True)
     end_date = Datetime(
         title=_(u'title_end_date'),
-        required=True)
+        required=False)
 
     form.widget('approval_date', DatetimeFieldWidget, show_today_link=True, show_time=True)
     approval_date = Datetime(
         title=_(u'title_approval_date'),
-        required=True)
+        required=False)
 
     form.widget('convocation_date', DatetimeFieldWidget, show_today_link=True, show_time=True)
     convocation_date = Datetime(
         title=_(u'title_convocation_date'),
-        required=True)
+        required=False)
 
     assembly = Text(
         title=_(u"title_assembly"),
@@ -173,7 +176,7 @@ class IMeeting(IMeetingContent):
     form.widget('pre_meeting_date', DatetimeFieldWidget, show_today_link=True, show_time=True)
     pre_meeting_date = Datetime(
         title=_(u'title_pre_meeting_date'),
-        required=True)
+        required=False)
 
     pre_meeting_place = TextLine(
         title=_(u"title_pre_meeting_place"),
@@ -245,7 +248,7 @@ class Meeting(Container):
 
     MEETINGCLOSEDSTATES = ['closed']
 
-    ORDERED_FIELD_INFOS = OrderedDict(
+    ORDERED_FIELD_INFOS = OrderedDict([
         ('date',
          {'optional': False,
           'condition': ''}),
@@ -330,7 +333,7 @@ class Meeting(Container):
         ('first_item_number',
          {'optional': False,
           'condition': ""}),
-    )
+    ])
 
     security.declarePublic('get_pretty_link')
 
@@ -357,19 +360,6 @@ class Meeting(Container):
         if link_pattern:
             adapted.link_pattern = link_pattern
         return adapted.getLink()
-
-    security.declarePublic('get_raw_query')
-
-    def get_raw_query(self, force_linked_items_query=False, **kwargs):
-        """Override default get_raw_query to manage our own."""
-        # available items?
-        if displaying_available_items(self) and not force_linked_items_query:
-            res = self._available_items_query()
-        else:
-            res = [{'i': 'linkedMeetingUID',
-                    'o': 'plone.app.querystring.operation.selection.is',
-                    'v': self.UID()}, ]
-        return res
 
     def _available_items_query(self):
         '''Check docstring in IMeeting.'''
@@ -961,13 +951,15 @@ class Meeting(Container):
            - returned ordered (by getItemNumber) if p_ordered is True;
            - if p_the_objects is True, MeetingItem objects are returned, else, brains are returned;
            - if p_unrestricted is True it will return every items, not checking permission;
-           - if p_force_linked_items_query is True, it will call self.get_raw_query with
+           - if p_force_linked_items_query is True, it will call _get_query with
              same parameter and force use of query showing linked items, not displaying
              available items.
         '''
         # execute the query using the portal_catalog
         catalog = api.portal.get_tool('portal_catalog')
-        catalog_query = self.get_raw_query(force_linked_items_query=force_linked_items_query)
+        collection_behavior = ICollection(self)
+        catalog_query = collection_behavior._get_query(
+            force_linked_items_query=force_linked_items_query)
         if list_types:
             catalog_query.append({'i': 'listType',
                                   'o': 'plone.app.querystring.operation.selection.is',
@@ -998,7 +990,8 @@ class Meeting(Container):
     def get_raw_items(self):
         """Simply get linked items."""
         catalog = api.portal.get_tool('portal_catalog')
-        catalog_query = self.get_raw_query(force_linked_items_query=True)
+        collection_behavior = ICollection(self)
+        catalog_query = collection_behavior._get_query(force_linked_items_query=True)
         query = queryparser.parseFormquery(self, catalog_query)
         res = [brain.UID for brain in catalog.unrestrictedSearchResults(**query)]
         return res
@@ -1754,3 +1747,23 @@ class MeetingSchemaPolicy(DexteritySchemaPolicy):
 
     def bases(self, schemaName, tree):
         return (IMeeting, )
+
+
+class MeetingCollection(Collection):
+    """ """
+
+    def _set_query(self, value):
+        self.context.query = value
+
+    def _get_query(self, force_linked_items_query=False, **kwargs):
+        """Override default ICollection behavior _get_query to manage our own."""
+        # available items?
+        if displaying_available_items(self.context) and not force_linked_items_query:
+            res = self.context._available_items_query()
+        else:
+            res = [{'i': 'linkedMeetingUID',
+                    'o': 'plone.app.querystring.operation.selection.is',
+                    'v': self.context.UID()}, ]
+        return res
+
+    query = property(_get_query, _set_query)

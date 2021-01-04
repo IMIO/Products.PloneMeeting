@@ -10,7 +10,7 @@
             <a id="newMeetingCreation" href="#"
                tal:condition="not:is_editing"
                onclick="if (!this.clicked){this.clicked = true; setTimeout(function(){this.clicked = false;} ,10000); this.children[0].src=this.children[0].src.replace('new.png', 'new_greyed.png');return true;} return false"
-               tal:attributes="href string:${meetingFolder/absolute_url}/createObject?type_name=Meeting${cfg/getShortName};">
+               tal:attributes="href string:${meetingFolder/absolute_url}/++add++${cfg/getMeetingTypeName};">
                 <img tal:attributes="src string:$portal_url/new.png"
                   title="create_meeting" i18n:attributes="title" />
             </a>

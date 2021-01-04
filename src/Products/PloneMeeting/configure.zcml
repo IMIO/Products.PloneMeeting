@@ -342,13 +342,11 @@
   </class>
   
   <!-- Make Meeting behave like a Collection to be faceted navigable -->
-  <class class="Products.PloneMeeting.Meeting.Meeting">
+  <class class="Products.PloneMeeting.content.meeting.Meeting">
     <implements interface="eea.facetednavigation.interfaces.IPossibleFacetedNavigable" />
-    <!-- still a plone.app.collection because need to be a DX to use
-         plone.app.contenttypes.interfaces.ICollection or it fails in eea.facetednavigation -->
-    <implements interface="plone.app.collection.interfaces.ICollection" />
     <implements interface="collective.plonefinder.browser.interfaces.IFinderUploadCapable" />
     <implements interface="collective.quickupload.interfaces.IQuickUploadCapable" />
+    <implements interface="plone.app.contenttypes.interfaces.ICollection" />
     <implements interface="Products.PloneMeeting.interfaces.IMeetingBatchActionsMarker" />
   </class>
   <!-- makes the MeetingItem implements IFinderUploadCapable and IQuickUploadCapable

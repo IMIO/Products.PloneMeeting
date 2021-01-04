@@ -242,7 +242,7 @@ def getCurrentMeetingObject(context):
                 obj = None
 
     toReturn = None
-    if obj and obj.getTagName() == 'Meeting':
+    if obj and obj.__class__.__name__ == 'Meeting':
         toReturn = obj
     return toReturn
 

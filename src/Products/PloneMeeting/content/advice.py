@@ -13,7 +13,7 @@ from plone.dexterity.content import Container
 from plone.dexterity.schema import DexteritySchemaPolicy
 from plone.directives import form
 from Products.PloneMeeting.config import PMMessageFactory as _
-from Products.PloneMeeting.interfaces import IMeetingContent
+from Products.PloneMeeting.interfaces import IDXMeetingContent
 from Products.PloneMeeting.utils import findMeetingAdvicePortalType
 from Products.PloneMeeting.utils import getWorkflowAdapter
 from Products.PloneMeeting.utils import isModifiedSinceLastVersion
@@ -29,7 +29,7 @@ from zope.schema.vocabulary import SimpleTerm
 from zope.schema.vocabulary import SimpleVocabulary
 
 
-class IMeetingAdvice(IMeetingContent):
+class IMeetingAdvice(IDXMeetingContent):
     """
         MeetingAdvice schema
     """

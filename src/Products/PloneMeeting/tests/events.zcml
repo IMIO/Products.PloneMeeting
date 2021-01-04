@@ -15,7 +15,7 @@
                      Products.PloneMeeting.interfaces.IItemLocalRolesUpdatedEvent"
                 handler=".tests.events.onItemLocalRolesUpdated"/>
 
-    <subscriber for="Products.PloneMeeting.interfaces.IMeeting
+    <subscriber for="Products.PloneMeeting.content.meeting.IMeeting
                      Products.PloneMeeting.interfaces.IMeetingLocalRolesUpdatedEvent"
                 handler=".tests.events.onMeetingLocalRolesUpdated"/>
 

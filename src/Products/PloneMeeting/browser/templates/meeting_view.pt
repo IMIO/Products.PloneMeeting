@@ -31,13 +31,50 @@
 <div metal:fill-slot="content-core"
      tal:define="showPage view/showPage;">
 
-<tal:showPage condition="showPage">
-  <script language="javascript"
-    tal:content="python: 'ploneEditor = \'%s\';' % (view.member.getProperty('wysiwyg_editor') or here.portal_properties.site_properties.default_editor)">
-  </script>
+<div class="discreet" tal:condition="showPage">
 
-  <tal:comment replace="nothing">XXX changed for PM, infos displayed before the faceted table.</tal:comment>
-  <tal:meetingBeforeFacetedInfos replace="structure context/@@meeting-before-faceted-infos" />
+  <tal:comment replace="nothing">Dates and date</tal:comment>
+  <div class="collapsible discreet"
+       onclick="toggleDetails('collapsible-dates-and-data', toggle_parent_active=true, parent_tag=this)">
+    <span class="meeting_attribute_label" i18n:translate='dates-and-data'>Dates and data</span>
+  </div>
+  <div id="collapsible-dates-and-data"
+       class="collapsible-inner-content"
+       style="display: none;"
+       tal:define="widgets python: view.get_section_widgets('date')">
+    <table class="no-style-table">
+      <tal:loop repeat="widget widgets">
+        <tr tal:attributes="id string:row-${widget/id}">
+            <td class="table_widget_label">
+              <label tal:content="widget/label">Label</label>
+            </td>
+            <td class="table_widget_value" tal:content="structure widget/render">Value</td>
+        </tr>
+      </tal:loop>
+    </table>
+  </div>
+  <div class="clear"></div>
+
+  <tal:comment replace="nothing">Assembly</tal:comment>
+  <div class="collapsible discreet"
+       onclick="toggleDetails('collapsible-assembly', toggle_parent_active=true, parent_tag=this)">
+    <span class="meeting_attribute_label" i18n:translate='assembly'>Assembly</span>
+  </div>
+  <div id="collapsible-assembly"
+       class="collapsible-inner-content"
+       style="display: none;"
+       tal:define="widgets python: view.get_section_widgets('assembly')">
+    <table class="no-style-table" width="100%">
+      <tal:loop repeat="widget widgets">
+        <tr tal:attributes="id string:row-${widget/id}">
+            <td class="table_widget_label">
+              <label tal:content="widget/label">Label</label>
+            </td>
+            <td class="table_widget_value" tal:content="structure widget/render">Value</td>
+        </tr>
+      </tal:loop>
+    </table>
+  </div>
   <br />
 
   <tal:availableItems condition="view/showAvailableItems">
@@ -61,7 +98,7 @@
   <div class="clear"></div>
   <h2 class="collapsible active presented-items"
        onclick="toggleDetails('faceted-form', toggle_parent_active=true, parent_tag=this)">
-    <span i18n:translate="presented_items">Presented items</span> (<span class="meeting_number_of_items" tal:content="context/numberOfItems"/>)
+    <span i18n:translate="presented_items">Presented items</span> (<span class="meeting_number_of_items" tal:content="python: context.number_of_items()"/>)
   </h2>
 
   <span class="fa show-help link-action tooltipster-inserting-methods-helper-msg"
@@ -90,7 +127,7 @@
   <tal:comment replace="nothing">XXX changed for PM, infos displayed after the faceted table.</tal:comment>
   <tal:meetingBeforeFacetedInfos replace="structure context/@@meeting-after-faceted-infos" />
 
-</tal:showPage>
+</div>
 
 <tal:notShowPage condition="not: showPage">
   <p i18n:translate="hide_meeting_view_page">This page is currently not accessible. Meeting managers will soon allow you to access it again. Sorry for the inconvenience.</p>

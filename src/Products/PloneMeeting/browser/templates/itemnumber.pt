@@ -1,4 +1,4 @@
-<tal:defines define="may_change_order python: view.may_change_items_order();
+<tal:defines define="may_change_order python: view.may_change_items_order;
                      itemNumber python: context.getItemNumber(for_display=True);"
              i18n:domain="PloneMeeting">
   <div class="change-item-order" tal:condition="may_change_order">

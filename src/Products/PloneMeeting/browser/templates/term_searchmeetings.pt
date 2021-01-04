@@ -9,7 +9,7 @@
         <li tal:repeat="brain brains">
             <div tal:define="meeting brain/getObject;
                              meeting_url meeting/absolute_url" tal:attributes="class python: meeting_url[meeting_url.index('Members'):] in view.request.getURL() and 'portletSelected' or ''">
-               <tal:meetingPrettyLink replace="structure python: meeting.getPrettyLink(prefixed=False)" />
+               <tal:meetingPrettyLink replace="structure python: meeting.get_pretty_link(prefixed=False)" />
             </div>
         </li>
     </ul>
