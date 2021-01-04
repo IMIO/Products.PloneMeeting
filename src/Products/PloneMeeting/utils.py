@@ -194,7 +194,7 @@ methodTypes = ('FSPythonScript', 'FSControllerPythonScript', 'instancemethod')
 def getCurrentMeetingObject(context):
     '''What is the object currently published by Plone ?'''
     obj = context.REQUEST.get('PUBLISHED')
-    className = obj.getTagName()
+    className = obj.__class__.__name__
     if className == 'present-several-items':
         return obj.context
     elif obj and \

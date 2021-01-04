@@ -8,7 +8,8 @@
 from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_plone_groups
 from collective.eeafaceted.batchactions.utils import listify_uids
-from DateTime import DateTime
+from datetime import datetime
+from datetime import timedelta
 from plone import api
 from PloneMeetingTestCase import pm_logger
 from Products.CMFCore.utils import getToolByName
@@ -58,7 +59,7 @@ class testPerformances(PloneMeetingTestCase):
         meeting = None
         if with_meeting:
             # create a meeting
-            meeting = self.create('Meeting', date='2007/12/11 09:00:00')
+            meeting = self.create('Meeting')
         data = {}
         uids = []
         items = []
@@ -228,8 +229,7 @@ class testPerformances(PloneMeetingTestCase):
 
         # create meeting in cfg2 in which items will be presented
         self.setMeetingConfig(cfg2Id)
-        now = DateTime()
-        meeting2 = self.create('Meeting', date=now + 1)
+        meeting2 = self.create('Meeting', date=datetime.now() + timedelta(days=1))
         self.assertFalse(meeting2.get_items())
 
         # freeze the meeting, this will do the job
@@ -270,7 +270,7 @@ class testPerformances(PloneMeetingTestCase):
         pm_logger.info('Adding %d meetings with %d items in each' % (number_of_meetings, number_of_items))
         for i in range(number_of_meetings):
             pm_logger.info('Creating meeting %d of %s' % (i + 1, number_of_meetings))
-            meeting = self.create('Meeting', date='2007/12/%d 09:00:00' % (i + 1))
+            meeting = self.create('Meeting', date=datetime.now() + timedelta(i + 1))
             meetings.append(meeting)
             for j in range(number_of_items):
                 data['title'] = 'Item number %d' % j
@@ -675,7 +675,7 @@ class testPerformances(PloneMeetingTestCase):
            We call the method 2000 times, this is what happens when displaying
            a dashboard of 100 items.'''
         self.changeUser('pmManager')
-        self.create('Meeting', date=DateTime('2020/11/23'))
+        self.create('Meeting')
         item = self.create('MeetingItem')
         self.presentItem(item)
         # call getMeeting 2000 times wihout caching
