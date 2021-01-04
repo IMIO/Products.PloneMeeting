@@ -189,17 +189,17 @@ class testPerformances(PloneMeetingTestCase):
         self._presentSeveralItems(items)
         # called second times whith items in the meeting
         pm_logger.info('Presenting %d items without annexes in a meeting containing %d items.'
-                       % (50, len(meeting.getRawItems())))
+                       % (50, meeting.number_of_items()))
         dummy_meeting, items = self._setupMeetingItemsWithAnnexes(50, 0, with_meeting=False, as_uids=False)
         self._presentSeveralItems(items)
         # called third times whith items in the meeting
         pm_logger.info('Presenting %d items without annexes in a meeting containing %d items.'
-                       % (50, len(meeting.getRawItems())))
+                       % (50, meeting.number_of_items()))
         dummy_meeting, items = self._setupMeetingItemsWithAnnexes(50, 0, with_meeting=False, as_uids=False)
         self._presentSeveralItems(items)
         # called fourth times whith items in the meeting
         pm_logger.info('Presenting %d items without annexes in a meeting containing %d items.'
-                       % (50, len(meeting.getRawItems())))
+                       % (50, meeting.number_of_items()))
         dummy_meeting, items = self._setupMeetingItemsWithAnnexes(50, 0, with_meeting=False, as_uids=False)
         self._presentSeveralItems(items)
 

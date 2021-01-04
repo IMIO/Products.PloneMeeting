@@ -232,6 +232,7 @@ class IMeeting(IMeetingContent):
     first_item_number = Int(
         title=_(u"title_first_item_number"),
         description=_("field_reserved_to_meeting_managers_descr"),
+        default=-1,
         required=False)
 
 
