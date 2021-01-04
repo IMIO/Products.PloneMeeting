@@ -258,7 +258,7 @@ class Meeting(Container):
         """Return the IPrettyLink version of the title."""
         adapted = IPrettyLink(self)
         tool = api.portal.get_tool('portal_plonemeeting')
-        adapted.contentValue = tool.format_date(self,
+        adapted.contentValue = tool.format_date(self.date,
                                                 with_hour=True,
                                                 prefixed=prefixed,
                                                 short=short)
@@ -1529,9 +1529,12 @@ class Meeting(Container):
 
     security.declarePublic('number_of_items')
 
-    def number_of_items(self):
+    def number_of_items(self, as_int=False):
         '''How much items in this meeting ?'''
-        return str(len(self.get_raw_items()))
+        total = len(self.get_raw_items())
+        if not as_int:
+            total = str(total)
+        return total
 
     security.declarePublic('show_attendees_fields')
 
