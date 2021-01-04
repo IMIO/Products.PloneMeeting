@@ -356,7 +356,7 @@ document.location.reload(true);
                    votesAreSecret view/votesAreSecret;
                    pollType context/getPollType;"
        id="meeting_users"
-       class="listing"
+       class="listing faceted-table-results"
        cellspacing="0"
        cellpadding="0">
   <tal:comment replace="nothing">Column headers</tal:comment>
