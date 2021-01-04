@@ -9,7 +9,6 @@ from AccessControl import Unauthorized
 from collective.contact.plonegroup.config import set_registry_organizations
 from collective.contact.plonegroup.utils import get_organizations
 from copy import deepcopy
-from DateTime import DateTime
 from datetime import datetime
 from datetime import timedelta
 from eea.facetednavigation.interfaces import IFacetedLayout
@@ -45,7 +44,7 @@ from zope.i18n import translate
 import transaction
 
 
-class testMeeting(PloneMeetingTestCase):
+class testMeetingContent(PloneMeetingTestCase):
     '''Tests various aspects of Meetings management.'''
 
     def test_pm_InsertItem(self):
@@ -1585,7 +1584,7 @@ class testMeeting(PloneMeetingTestCase):
              'M. PMManager', 'M. PMManager', 'M. PMManager', 'M. PMManager', 'M. PMManager'])
 
     def test_pm_GetItemInsertOrderByProposingGroup(self):
-        """Test the Meeting.getItemInsertOrder method caching when using order
+        """Test the Meeting.get_item_insert_order method caching when using order
            depending on proposing group."""
         self.changeUser('pmManager')
         cfg = self.meetingConfig
@@ -1596,19 +1595,19 @@ class testMeeting(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         self.presentItem(item)
         self.assertEqual(item.getProposingGroup(), self.developers_uid)
-        self.assertEqual(meeting.getItemInsertOrder(item, cfg), [1])
+        self.assertEqual(meeting.get_item_insert_order(item, cfg), [1])
         # editing an item invalidates cache
         item.setProposingGroup(self.vendors_uid)
         item._update_after_edit()
-        self.assertEqual(meeting.getItemInsertOrder(item, cfg), [2])
+        self.assertEqual(meeting.get_item_insert_order(item, cfg), [2])
         # change groups order
         set_registry_organizations([self.vendors_uid, self.developers_uid])
         self.cleanMemoize()
-        self.assertEqual(meeting.getItemInsertOrder(item, cfg), [1])
+        self.assertEqual(meeting.get_item_insert_order(item, cfg), [1])
         # edit MeetingConfig
         item.setProposingGroup(self.developers_uid)
         cfg.setSelectablePrivacies(('secret', 'public', ))
-        self.assertEqual(meeting.getItemInsertOrder(item, cfg), [2])
+        self.assertEqual(meeting.get_item_insert_order(item, cfg), [2])
         # remove item from meeting
         self.backToState(item, 'validated')
         self.assertFalse(item.UID() in meeting._insert_order_cache['items'])
@@ -1619,7 +1618,7 @@ class testMeeting(PloneMeetingTestCase):
         self.assertFalse(item.UID() in meeting._insert_order_cache['items'])
 
     def test_pm_GetItemInsertOrderByCategory(self):
-        """Test the Meeting.getItemInsertOrder method caching when using order
+        """Test the Meeting.get_item_insert_order method caching when using order
            depending on categories."""
         self.changeUser('pmManager')
         cfg = self.meetingConfig
@@ -1634,31 +1633,31 @@ class testMeeting(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         self.presentItem(item)
         self.assertEqual(item.getCategory(), 'development')
-        self.assertEqual(meeting.getItemInsertOrder(item, cfg), [0])
+        self.assertEqual(meeting.get_item_insert_order(item, cfg), [0])
         # editing an item invalidates cache
         item.setCategory('events')
         item._update_after_edit()
-        self.assertEqual(meeting.getItemInsertOrder(item, cfg), [2])
+        self.assertEqual(meeting.get_item_insert_order(item, cfg), [2])
         # change categories order
         self.changeUser('siteadmin')
         cfg.categories.folder_position(position='up', id=item.getCategory())
-        self.assertEqual(meeting.getItemInsertOrder(item, cfg), [1])
+        self.assertEqual(meeting.get_item_insert_order(item, cfg), [1])
         # disable category, it does not change because for performance reasons,
         # we consider every categories when computing insert order, but the cache was cleaned
         self._disableObj(cfg.categories.development)
         # the cache is invalidated
         self.assertTrue(meeting._check_insert_order_cache(cfg))
-        self.assertEqual(meeting.getItemInsertOrder(item, cfg), [1])
+        self.assertEqual(meeting.get_item_insert_order(item, cfg), [1])
         # remove a category
         self.deleteAsManager(cfg.categories.development.UID())
-        self.assertEqual(meeting.getItemInsertOrder(item, cfg), [0])
+        self.assertEqual(meeting.get_item_insert_order(item, cfg), [0])
         # edit MeetingConfig
         item.setCategory('research')
         cfg.setSelectablePrivacies(('secret', 'public', ))
-        self.assertEqual(meeting.getItemInsertOrder(item, cfg), [1])
+        self.assertEqual(meeting.get_item_insert_order(item, cfg), [1])
 
     def test_pm_GetItemInsertOrderByOrderedAssociatedOrganizations(self):
-        """Test the Meeting.getItemInsertOrder method caching when using order
+        """Test the Meeting.get_item_insert_order method caching when using order
            depending on associated organizations and using the
            MeetingConfig.orderedAssociatedOrganizations field."""
         self.changeUser('pmManager')
@@ -1671,20 +1670,20 @@ class testMeeting(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         item.setAssociatedGroups((self.developers_uid, ))
         self.presentItem(item)
-        self.assertEqual(meeting.getItemInsertOrder(item, cfg), [1.0])
+        self.assertEqual(meeting.get_item_insert_order(item, cfg), [1.0])
         # editing an item invalidates cache
         item.setAssociatedGroups((self.vendors_uid, ))
         item._update_after_edit()
-        self.assertEqual(meeting.getItemInsertOrder(item, cfg), [2.0])
+        self.assertEqual(meeting.get_item_insert_order(item, cfg), [2.0])
         # change MeetingConfig.orderedAssociatedOrganizations
         self.changeUser('siteadmin')
         cfg.setOrderedAssociatedOrganizations((self.vendors_uid, self.developers_uid))
         # cache was automatically invalidated
         self.assertTrue(meeting._check_insert_order_cache(cfg))
-        self.assertEqual(meeting.getItemInsertOrder(item, cfg), [1.0])
+        self.assertEqual(meeting.get_item_insert_order(item, cfg), [1.0])
 
     def test_pm_GetItemInsertOrderByOrderedGroupsInCharge(self):
-        """Test the Meeting.getItemInsertOrder method caching when using order
+        """Test the Meeting.get_item_insert_order method caching when using order
            depending on associated organizations and using the
            MeetingConfig.orderedGroupsInCharge field."""
         self.changeUser('pmManager')
@@ -1697,17 +1696,17 @@ class testMeeting(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         item.setGroupsInCharge((self.developers_uid, ))
         self.presentItem(item)
-        self.assertEqual(meeting.getItemInsertOrder(item, cfg), [1.0])
+        self.assertEqual(meeting.get_item_insert_order(item, cfg), [1.0])
         # editing an item invalidates cache
         item.setGroupsInCharge((self.vendors_uid, ))
         item._update_after_edit()
-        self.assertEqual(meeting.getItemInsertOrder(item, cfg), [2.0])
+        self.assertEqual(meeting.get_item_insert_order(item, cfg), [2.0])
         # change MeetingConfig.orderedGroupsInCharge
         self.changeUser('siteadmin')
         cfg.setOrderedGroupsInCharge((self.vendors_uid, self.developers_uid))
         # cache was automatically invalidated
         self.assertTrue(meeting._check_insert_order_cache(cfg))
-        self.assertEqual(meeting.getItemInsertOrder(item, cfg), [1.0])
+        self.assertEqual(meeting.get_item_insert_order(item, cfg), [1.0])
 
     def test_pm_NormalAndLateItem(self):
         """Test the normal/late mechanism when presenting items in a meeting."""
@@ -2213,7 +2212,7 @@ class testMeeting(PloneMeetingTestCase):
         item.REQUEST['PUBLISHED'] = item
         # as no current meeting and no meeting in the future, the item
         # may not be presented
-        self.assertTrue(not item.wfConditions().mayPresent())
+        self.assertFalse(item.wfConditions().mayPresent())
         # MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject returns nothing
         # as no meeting in the future
         self.assertIsNone(item.getMeetingToInsertIntoWhenNoCurrentMeetingObject())
@@ -2335,7 +2334,7 @@ class testMeeting(PloneMeetingTestCase):
 
         # close meeting1, meeting2 is used
         self.closeMeeting(meeting1)
-        self.assertFalse(meeting1.wfConditions().mayAcceptItems())
+        self.assertFalse(meeting1.wfConditions().may_accept_items())
         self.assertEqual(item.getMeetingToInsertIntoWhenNoCurrentMeetingObject(), meeting2)
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject')
         cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
@@ -2436,20 +2435,20 @@ class testMeeting(PloneMeetingTestCase):
         self.request.set('place_other', 'Another place')
         meeting = self.create('Meeting')
         self.assertTrue(meeting.Title() == self.tool.format_date(meeting.date))
-        self.assertTrue(meeting.getPlace() == 'Another place')
+        self.assertTrue(meeting.place == 'Another place')
         # now check that upon edition, title and place fields are correct
         self.request.set('place_other', 'Yet another place')
-        meeting.setDate(DateTime('2014/06/06'))
+        meeting.date = datetime(2014, 6, 6)
         # for now, title and date are not updated
         self.assertTrue(not meeting.Title() == self.tool.format_date(meeting.date))
-        self.assertTrue(not meeting.getPlace() == 'Yet another place')
+        self.assertFalse(meeting.place == 'Yet another place')
         # at_post_edit_script takes care of updating title and place
         meeting._update_after_edit()
         self.assertTrue(meeting.Title() == self.tool.format_date(meeting.date))
-        self.assertTrue(meeting.getPlace() == 'Yet another place')
+        self.assertTrue(meeting.place == 'Yet another place')
 
     def test_pm_Get_items(self):
-        '''Test the Meeting.getItems method.'''
+        '''Test the Meeting.get_items method.'''
         self.changeUser('pmManager')
         meeting = self._createMeetingWithItems()
         itemsInOrder = meeting.get_items(ordered=True)
@@ -2468,8 +2467,8 @@ class testMeeting(PloneMeetingTestCase):
         # we removed 3 items
         self.assertTrue(len(meeting.get_items(uids=itemUids)) == 4)
         # we can specify the listType
-        self.assertTrue(len(meeting.get_items(listTypes=['normal'])) == 7)
-        self.assertTrue(len(meeting.get_items(listTypes=['late'])) == 0)
+        self.assertTrue(len(meeting.get_items(list_types=['normal'])) == 7)
+        self.assertTrue(len(meeting.get_items(list_types=['late'])) == 0)
 
         # can also use catalog
         brainsInOrder = meeting.get_items(ordered=True, the_objects=False)
@@ -2481,8 +2480,8 @@ class testMeeting(PloneMeetingTestCase):
                          [100, 200, 300, 400, 500, 600, 700])
         self.assertTrue(len(meeting.get_items(uids=itemUids, the_objects=False)) == 4)
         # we can specify the listType
-        self.assertTrue(len(meeting.get_items(listTypes=['normal'], the_objects=False)) == 7)
-        self.assertTrue(len(meeting.get_items(listTypes=['late'], the_objects=False)) == 0)
+        self.assertTrue(len(meeting.get_items(list_types=['normal'], the_objects=False)) == 7)
+        self.assertTrue(len(meeting.get_items(list_types=['late'], the_objects=False)) == 0)
 
     def test_pm_GetItemsWithTheObjectsTrue(self):
         '''User only receives items he may see.'''
@@ -2513,7 +2512,7 @@ class testMeeting(PloneMeetingTestCase):
             [self.developers_uid, self.developers_uid, self.developers_uid, self.developers_uid])
 
     def test_pm_GetItemByNumber(self):
-        '''Test the Meeting.getItemByNumber method.'''
+        '''Test the Meeting.get_item_by_number method.'''
         # make items inserted in a meeting inserted in this order
         self.meetingConfig.setInsertingMethodsOnAddItem(({'insertingMethod': 'at_the_end',
                                                           'reverse': '0'}, ))
@@ -2522,10 +2521,10 @@ class testMeeting(PloneMeetingTestCase):
         itemsInOrder = meeting.get_items(ordered=True)
         self.assertTrue(len(itemsInOrder) == 7)
         itemUids = [item.UID() for item in itemsInOrder]
-        self.assertTrue(meeting.getItemByNumber(200).UID() == itemUids[1])
-        self.assertTrue(meeting.getItemByNumber(100).UID() == itemUids[0])
-        self.assertTrue(meeting.getItemByNumber(500).UID() == itemUids[4])
-        self.assertTrue(not meeting.getItemByNumber(800))
+        self.assertTrue(meeting.get_item_by_number(200).UID() == itemUids[1])
+        self.assertTrue(meeting.get_item_by_number(100).UID() == itemUids[0])
+        self.assertTrue(meeting.get_item_by_number(500).UID() == itemUids[4])
+        self.assertTrue(not meeting.get_item_by_number(800))
         # it also take late items into account
         self.freezeMeeting(meeting)
         lateItem = self.create('MeetingItem')
@@ -2533,7 +2532,7 @@ class testMeeting(PloneMeetingTestCase):
         self.presentItem(lateItem)
         # if we ask 8th item, so the late item, it works
         self.assertTrue(lateItem.isLate())
-        self.assertTrue(meeting.getItemByNumber(800).UID() == lateItem.UID())
+        self.assertTrue(meeting.get_item_by_number(800).UID() == lateItem.UID())
 
     def test_pm_RemoveWholeMeeting(self):
         '''Test the 'remove whole meeting' functionnality, so removing a meeting
@@ -2645,7 +2644,7 @@ class testMeeting(PloneMeetingTestCase):
                               name='dummy',
                               action='',
                               icon_expr='',
-                              condition="python: context.date.strftime('%Y/%d/%m') == '2010/10/10'",
+                              condition="python: context.date.year == 2010",
                               permission=(View,),
                               visible=True,
                               category='object_buttons')
@@ -2664,7 +2663,7 @@ class testMeeting(PloneMeetingTestCase):
         self.assertFalse('dummy' in object_buttons)
         beforeEdit_rendered_actions_panel = actions_panel()
         # now edit the meeting
-        meeting.setDate(DateTime('2010/10/10'))
+        meeting.date = datetime(2010, 10, 10)
         meeting._update_after_edit()
         # action is available
         object_buttons = [k['id'] for k in pa.listFilteredActionsFor(meeting)['object_buttons']]
@@ -2749,42 +2748,42 @@ class testMeeting(PloneMeetingTestCase):
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
         # no next meeting for now
-        self.assertFalse(meeting.getNextMeeting())
+        self.assertFalse(meeting.get_next_meeting())
         # create meetings after
         meeting2 = self.create('Meeting', date=datetime(2015, 1, 20))
         meeting3 = self.create('Meeting', date=datetime(2015, 1, 25))
-        self.assertEqual(meeting.getNextMeeting(), meeting2)
-        self.assertEqual(meeting2.getNextMeeting(), meeting3)
-        self.assertFalse(meeting3.getNextMeeting())
+        self.assertEqual(meeting.get_next_meeting(), meeting2)
+        self.assertEqual(meeting2.get_next_meeting(), meeting3)
+        self.assertFalse(meeting3.get_next_meeting())
 
-        self.assertFalse(meeting.getNextMeeting(cfgId=cfg2Id))
+        self.assertFalse(meeting.get_next_meeting(cfgId=cfg2Id))
         self.setMeetingConfig(cfg2Id)
         otherMCMeeting = self.create('Meeting', date=datetime(2015, 1, 20))
         otherMCMeeting2 = self.create('Meeting', date=datetime(2015, 1, 25))
-        self.assertEqual(meeting.getNextMeeting(cfgId=cfg2Id), otherMCMeeting)
+        self.assertEqual(meeting.get_next_meeting(cfgId=cfg2Id), otherMCMeeting)
         # with the date gap, the meeting 5 days later is not taken into account.
-        self.assertNotEqual(meeting.getNextMeeting(cfgId=cfg2Id, dateGap=7), otherMCMeeting)
-        self.assertEqual(meeting.getNextMeeting(cfgId=cfg2Id, dateGap=7), otherMCMeeting2)
+        self.assertNotEqual(meeting.get_next_meeting(cfgId=cfg2Id, dateGap=7), otherMCMeeting)
+        self.assertEqual(meeting.get_next_meeting(cfgId=cfg2Id, dateGap=7), otherMCMeeting2)
 
     def test_pm_GetPreviousMeeting(self):
-        """Test the getPreviousMeeting method that will return the previous meeting
+        """Test the get_previous_meeting method that will return the previous meeting
            regarding the meeting date and within a given interval that is 60 days by default."""
         self.changeUser('pmManager')
         meeting = self.create('Meeting', date=datetime(2015, 1, 15))
         # no previous meeting for now
-        self.assertFalse(meeting.getPreviousMeeting())
+        self.assertFalse(meeting.get_previous_meeting())
         # create meetings after
         meeting2 = self.create('Meeting', date=datetime(2014, 12, 25))
         meeting3 = self.create('Meeting', date=datetime(2014, 12, 20))
-        self.assertEqual(meeting.getPreviousMeeting(), meeting2)
-        self.assertEqual(meeting2.getPreviousMeeting(), meeting3)
-        self.assertFalse(meeting3.getPreviousMeeting())
+        self.assertEqual(meeting.get_previous_meeting(), meeting2)
+        self.assertEqual(meeting2.get_previous_meeting(), meeting3)
+        self.assertFalse(meeting3.get_previous_meeting())
 
         # very old meeting, previous meeting is searched by default with max 60 days
         meeting4 = self.create('Meeting', date=meeting3.date - timedelta(days=61))
         # still no meeting
-        self.assertFalse(meeting3.getPreviousMeeting())
-        self.assertEqual(meeting3.getPreviousMeeting(searchMeetingsInterval=61), meeting4)
+        self.assertFalse(meeting3.get_previous_meeting())
+        self.assertEqual(meeting3.get_previous_meeting(interval=61), meeting4)
 
     def test_pm_MeetingStrikedAssembly(self):
         """Test use of utils.toHTMLStrikedContent for assembly."""
@@ -2813,8 +2812,8 @@ class testMeeting(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         itemBrain = self.catalog(UID=item.UID())[0]
         # by default, if no preferred/linked meeting, the date is '1950/01/01'
-        self.assertEqual(itemBrain.linkedMeetingDate, DateTime('1950/01/01'))
-        self.assertEqual(itemBrain.getPreferredMeetingDate, DateTime('1950/01/01'))
+        self.assertEqual(itemBrain.linkedMeetingDate, datetime(1950, 1, 1))
+        self.assertEqual(itemBrain.getPreferredMeetingDate, datetime(1950, 1, 1))
         item.setPreferredMeeting(meeting.UID())
         self.presentItem(item)
         itemBrain = self.catalog(UID=item.UID())[0]
@@ -2822,8 +2821,7 @@ class testMeeting(PloneMeetingTestCase):
         self.assertEqual(itemBrain.getPreferredMeetingDate, meeting.date)
 
         # right, change meeting's date and check again
-        newDate = DateTime('2015/05/05')
-        meeting.setDate(newDate)
+        meeting.date = datetime(2015, 5, 5)
         itemBrain = self.catalog(UID=item.UID())[0]
         self.assertEqual(itemBrain.linkedMeetingDate, meeting.date)
         self.assertEqual(itemBrain.getPreferredMeetingDate, meeting.date)
@@ -2832,7 +2830,7 @@ class testMeeting(PloneMeetingTestCase):
         self.do(item, 'backToValidated')
         self.assertEqual(item.query_state(), 'validated')
         itemBrain = self.catalog(UID=item.UID())[0]
-        self.assertEqual(itemBrain.linkedMeetingDate, DateTime('1950/01/01'))
+        self.assertEqual(itemBrain.linkedMeetingDate, datetime(1950, 1, 1))
         # preferredMeetingDate is still the meetingDate
         self.assertEqual(itemBrain.getPreferredMeetingDate, meeting.date)
 
@@ -2840,18 +2838,18 @@ class testMeeting(PloneMeetingTestCase):
         self.deleteAsManager(meeting.UID())
         self.assertEqual(item.getPreferredMeeting(), ITEM_NO_PREFERRED_MEETING_VALUE)
         itemBrain = self.catalog(UID=item.UID())[0]
-        self.assertEqual(itemBrain.linkedMeetingDate, DateTime('1950/01/01'))
-        self.assertEqual(itemBrain.getPreferredMeetingDate, DateTime('1950/01/01'))
+        self.assertEqual(itemBrain.linkedMeetingDate, datetime(1950, 1, 1))
+        self.assertEqual(itemBrain.getPreferredMeetingDate, datetime(1950, 1, 1))
 
     def test_pm_GetFirstItemNumberIgnoresSubnumbers(self):
         """When computing the firstItemNumber of a meeting,
            it will ignores subnumbers of previous meetings."""
         self.changeUser('pmManager')
-        meeting1 = self._createMeetingWithItems(meetingDate=DateTime('2012/05/05'))
+        meeting1 = self._createMeetingWithItems(meetingDate=datetime(2012, 5, 5))
         self.assertEqual(len(meeting1.get_items()), 7)
-        meeting2 = self._createMeetingWithItems(meetingDate=DateTime('2012/06/06'))
+        meeting2 = self._createMeetingWithItems(meetingDate=datetime(2012, 6, 6))
         self.assertEqual(len(meeting2.get_items()), 7)
-        meeting3 = self._createMeetingWithItems(meetingDate=DateTime('2012/07/07'))
+        meeting3 = self._createMeetingWithItems(meetingDate=datetime(2012, 7, 7))
         self.assertEqual(len(meeting3.get_items()), 7)
 
         # all normal numbered items
@@ -2913,19 +2911,18 @@ class testMeeting(PloneMeetingTestCase):
         # do not use self.create to be sure that it works correctly with invokeFactory
         meetingId = pmFolder.invokeFactory(cfg.getMeetingTypeName(),
                                            id='meeting',
-                                           date=DateTime('2015/05/05'),
+                                           date=datetime(2015, 5, 5),
                                            observations=text)
         meeting = getattr(pmFolder, meetingId)
-        meeting.processForm()
         self.assertTrue('1062-600x500.jpg' in meeting.objectIds())
         img = meeting.get('1062-600x500.jpg')
         # link to image uses resolveuid
         self.assertEqual(
-            meeting.getObservations(),
+            meeting.observations.output,
             '<p>Working external image <img src="{0}" alt="1062-600x500.jpg" '
             'title="1062-600x500.jpg" />.</p>'.format(img.absolute_url()))
         self.assertEqual(
-            meeting.getRawObservations(),
+            meeting.observations.raw,
             '<p>Working external image <img src="resolveuid/{0}">.</p>'.format(img.UID()))
 
         # test using the quickedit
@@ -2936,11 +2933,11 @@ class testMeeting(PloneMeetingTestCase):
 
         # link to image uses resolveuid
         self.assertEqual(
-            meeting.getObservations(),
+            meeting.observations.output,
             '<p>Working external image <img src="{0}" alt="1025-400x300.jpg" '
             'title="1025-400x300.jpg" />.</p>'.format(img2.absolute_url()))
         self.assertEqual(
-            meeting.getRawObservations(),
+            meeting.observations.raw,
             '<p>Working external image <img src="resolveuid/{0}">.</p>'.format(img2.UID()))
 
         # test using processForm, aka full edit form
@@ -2952,11 +2949,11 @@ class testMeeting(PloneMeetingTestCase):
 
         # link to image uses resolveuid
         self.assertEqual(
-            meeting.getObservations(),
+            meeting.observations.output,
             '<p>Working external image <img src="{0}" alt="22-400x400.jpg" '
             'title="22-400x400.jpg" />.</p>'.format(img3.absolute_url()))
         self.assertEqual(
-            meeting.getRawObservations(),
+            meeting.observations.raw,
             '<p>Working external image <img src="resolveuid/{0}">.</p>'.format(img3.UID()))
 
     def test_pm_MeetingLocalRolesUpdatedEvent(self):
@@ -3075,7 +3072,7 @@ class testMeeting(PloneMeetingTestCase):
             domain='plone',
             context=self.portal.REQUEST)
         self.assertEqual(
-            meeting.getPrettyLink(showContentIcon=True, prefixed=True),
+            meeting.get_pretty_link(showContentIcon=True, prefixed=True),
             u"<a class='pretty_link' title='Meeting of 05/05/2015 (12:35)' "
             "href='http://nohost/plone/Members/pmManager/mymeetings/{0}/o1' target='_self'>"
             "<span class='pretty_link_icons'>"
@@ -3124,24 +3121,24 @@ class testMeeting(PloneMeetingTestCase):
            - Meeting.signatures."""
         cfg = self.meetingConfig
         self.changeUser('pmManager')
-        cfg.setAssembly('Default assembly')
-        cfg.setAssemblyStaves('Default assembly staves')
-        cfg.setSignatures('Default signatures')
+        cfg.assembly = 'Default assembly'
+        cfg.assembly_staves = 'Default assembly staves'
+        cfg.signatures = 'Default signatures'
 
         # only done if used
         cfg.setUsedMeetingAttributes(('place', ))
         meeting = self.create('Meeting')
-        self.assertEqual(meeting.getAssembly(), '')
-        self.assertEqual(meeting.getAssemblyStaves(), '')
-        self.assertEqual(meeting.getSignatures(), '')
+        self.assertEqual(meeting.assembly, '')
+        self.assertEqual(meeting.assembly_staves, '')
+        self.assertEqual(meeting.signatures, '')
 
         # enable fields and test
         cfg.setUsedMeetingAttributes(('assembly', 'assemblyStaves', 'signatures'))
         meeting = self.create('Meeting')
         # assembly fields are turned to HTML as default_output_type is text/html
-        self.assertEqual(meeting.getAssembly(), '<p>Default assembly</p>')
-        self.assertEqual(meeting.getAssemblyStaves(), '<p>Default assembly staves</p>')
-        self.assertEqual(meeting.getSignatures(), 'Default signatures')
+        self.assertEqual(meeting.assembly, '<p>Default assembly</p>')
+        self.assertEqual(meeting.assembly_staves, '<p>Default assembly staves</p>')
+        self.assertEqual(meeting.signatures, 'Default signatures')
 
     def test_pm_ItemReferenceInMeetingUpdatedWhenNecessary(self):
         '''Items references in a meeting are updated only when relevant,
@@ -3486,5 +3483,5 @@ class testMeeting(PloneMeetingTestCase):
 def test_suite():
     from unittest import TestSuite, makeSuite
     suite = TestSuite()
-    suite.addTest(makeSuite(testMeeting, prefix='test_pm_'))
+    suite.addTest(makeSuite(testMeetingContent, prefix='test_pm_'))
     return suite

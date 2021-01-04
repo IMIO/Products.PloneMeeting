@@ -334,7 +334,7 @@ class ItemCheckBoxColumn(CheckBoxColumn):
            on the faceted we are on, available or presented items."""
         head = super(ItemCheckBoxColumn, self).renderHeadCell()
         if self.context.getTagName() == 'Meeting':
-            if self.context.adapted().showInsertOrRemoveSelectedItemsAction():
+            if self.context.adapted().show_insert_or_remove_selected_items_action():
                 if displaying_available_items(self.context):
                     present_msg = translate('present_several_items',
                                             domain='PloneMeeting',

@@ -229,32 +229,32 @@
       permission="zope2.View" />
 
     <browser:page
-      for="Products.PloneMeeting.interfaces.IMeeting"
+      for="Products.PloneMeeting.content.meeting.IMeeting"
       name="display-inserting-methods-helper-msg"
       template="templates/meeting_inserting_methods_help_msg.pt"
       class=".views.MeetingInsertingMethodsHelpMsgView"
       permission="zope2.View" />
 
     <browser:view
-      for="Products.PloneMeeting.interfaces.IMeeting"
+      for="Products.PloneMeeting.content.meeting.IMeeting"
       name="update-item-references"
       class=".views.MeetingUpdateItemReferences"
       permission="cmf.ModifyPortalContent" />
 
     <browser:view
-      for="Products.PloneMeeting.interfaces.IMeeting"
+      for="Products.PloneMeeting.content.meeting.IMeeting"
       name="reorder-items"
       class=".views.MeetingReorderItems"
       permission="cmf.ModifyPortalContent" />
 
     <browser:view
-      for="Products.PloneMeeting.interfaces.IMeeting"
+      for="Products.PloneMeeting.content.meeting.IMeeting"
       name="present-several-items"
       class=".views.PresentSeveralItemsView"
       permission="zope2.View" />
 
     <browser:view
-      for="Products.PloneMeeting.interfaces.IMeeting"
+      for="Products.PloneMeeting.content.meeting.IMeeting"
       name="remove-several-items"
       class=".views.RemoveSeveralItemsView"
       permission="zope2.View" />

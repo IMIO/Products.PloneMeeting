@@ -489,14 +489,14 @@ class MeetingReorderItems(BrowserView):
     """Reorder items on the meeting depending on itemInsertOrder."""
 
     def _recompute_items_order(self):
-        """Get every items and order it by getItemInsertOrder."""
+        """Get every items and order it by get_item_insert_order."""
         items = self.context.get_items(ordered=True)
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
         # sort items by insertOrder then by date it was presented
         # so items with same insert order will be sorted by WF transition 'present' time
         items = sorted([
-            (self.context.getItemInsertOrder(item, cfg), getLastWFAction(item, 'present')['time'], item)
+            (self.context.get_item_insert_order(item, cfg), getLastWFAction(item, 'present')['time'], item)
             for item in items]
         )
         # get items

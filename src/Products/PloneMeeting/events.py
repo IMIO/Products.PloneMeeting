@@ -665,7 +665,7 @@ def onItemModified(item, event):
                 'Products.PloneMeeting.Meeting.UID.{0}'.format(meeting.UID()), get_again=True)
             # update item references if necessary
             meeting.update_item_references(start_number=item.getItemNumber(), check_needed=True)
-            # invalidate Meeting.getItemInsertOrder caching
+            # invalidate Meeting.get_item_insert_order caching
             meeting._invalidate_insert_order_cache_for(item)
 
         # reactivate rename_after_creation as long as item is in it's initial_state
