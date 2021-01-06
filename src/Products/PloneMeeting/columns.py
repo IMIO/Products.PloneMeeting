@@ -17,7 +17,7 @@ from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.utils import _checkPermission
 from Products.PloneMeeting.config import AddAnnex
 from Products.PloneMeeting.config import AddAnnexDecision
-from Products.PloneMeeting.interfaces import IMeeting
+from Products.PloneMeeting.content.meeting import IMeeting
 from Products.PloneMeeting.utils import displaying_available_items
 from zope.i18n import translate
 

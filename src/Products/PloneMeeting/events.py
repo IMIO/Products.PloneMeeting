@@ -1027,10 +1027,10 @@ def onMeetingCreated(meeting, event):
 
 def onMeetingModified(meeting, event):
     """ """
-    need_reindex = meeting.updateTitle()
-    need_reindex = meeting.updatePlace() or need_reindex
+    need_reindex = meeting.update_title()
+    need_reindex = meeting.update_place() or need_reindex
     # Update contact-related info (attendees, signatories, replacements...)
-    meeting.updateContacts()
+    meeting.update_contacts()
     # Add a line in history if historized fields have changed
     addDataChange(meeting)
     # Apply potential transformations to richtext fields

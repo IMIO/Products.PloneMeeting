@@ -912,10 +912,10 @@ def getHistoryTexts(obj, event):
     return res
 
 
-def get_dx_schema(obj):
+def get_dx_schema(obj=None, portal_type=None):
     """ """
     portal_types = api.portal.get_tool('portal_types')
-    fti = portal_types[obj.portal_type]
+    fti = portal_types[portal_type or obj.portal_type]
     schema = fti.lookupSchema()
     return schema
 

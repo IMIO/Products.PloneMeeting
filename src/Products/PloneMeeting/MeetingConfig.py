@@ -97,7 +97,7 @@ from Products.PloneMeeting.interfaces import IMeetingItemWorkflowActions
 from Products.PloneMeeting.interfaces import IMeetingItemWorkflowConditions
 from Products.PloneMeeting.interfaces import IMeetingWorkflowActions
 from Products.PloneMeeting.interfaces import IMeetingWorkflowConditions
-from Products.PloneMeeting.Meeting import Meeting
+from Products.PloneMeeting.content.meeting import Meeting
 from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.model.adaptations import _getValidationReturnedStates
 from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
@@ -108,6 +108,7 @@ from Products.PloneMeeting.utils import createOrUpdatePloneGroup
 from Products.PloneMeeting.utils import duplicate_workflow
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
 from Products.PloneMeeting.utils import get_annexes
+from Products.PloneMeeting.utils import get_dx_schema
 from Products.PloneMeeting.utils import get_item_validation_wf_suffixes
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getCustomSchemaFields
@@ -3495,6 +3496,22 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             res = DisplayList(tuple(res))
         return res
 
+    def get_dx_attrs(self, field_infos, optional_only=False, as_display_list=True):
+        """ """
+        res = []
+        for field_name, field_info in field_infos.items():
+            if optional_only and not field_info['optional']:
+                continue
+            res.append((field_name,
+                        '%s (%s)' % (translate("title_{0}".format(field_name),
+                                               domain="PloneMeeting",
+                                               context=self.REQUEST),
+                                     field_name)
+                        ))
+        if as_display_list:
+            res = DisplayList(tuple(res))
+        return res
+
     security.declarePrivate('listUsedItemAttributes')
 
     def listUsedItemAttributes(self):
@@ -3508,7 +3525,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('listUsedMeetingAttributes')
 
     def listUsedMeetingAttributes(self):
-        optional_fields = self.listAttributes(Meeting.schema, optionalOnly=True, as_display_list=False)
+        optional_fields = self.get_dx_attrs(
+            Meeting.FIELD_INFOS, optional_only=True, as_display_list=False)
         contact_fields = ['attendees', 'excused', 'absents', 'nonAttendees',
                           'signatories', 'replacements']
         contact_fields.reverse()
@@ -3526,7 +3544,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('listMeetingAttributes')
 
     def listMeetingAttributes(self):
-        return self.listAttributes(Meeting.schema)
+        return self.get_dx_attrs(
+            Meeting.FIELD_INFOS, optional_only=False, as_display_list=False)
 
     security.declarePrivate('listDashboardItemsListingsFilters')
 
@@ -6081,7 +6100,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def listAllRichTextFields(self):
         '''Lists all rich-text fields belonging to classes MeetingItem and
            Meeting.'''
-        res = self._listRichTextFieldFor(MeetingItem) + self._listRichTextFieldFor(Meeting)
+        res = self._listRichTextFieldFor(MeetingItem)
         return DisplayList(tuple(res))
 
     security.declarePublic('listItemRichTextFields')
@@ -6817,12 +6836,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                         'row_id': customAdviserConfig['row_id']})
         return res
 
-    def _assembly_fields(self, field_name=True):
+    def _assembly_field_names(self):
         ''' '''
-        fields = [field for field in Meeting.schema.fields()
-                  if field.getName().startswith('assembly')]
-        if field_name:
-            fields = [field.getName() for field in fields]
+        meeting_schema = get_dx_schema(portal_type=self.getMeetingTypeName())
+        fields = [field_name for field_name in meeting_schema
+                  if field_name.startswith('assembly')]
         return fields
 
     def get_item_corresponding_state_to_assign_local_roles(self, item_state):

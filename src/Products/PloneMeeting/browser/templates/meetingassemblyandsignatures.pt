@@ -1,16 +1,16 @@
 <tal:comment replace="nothing">Attendees, excused, absents, replacements, signatories</tal:comment>
 <table id="meeting_users" class="listing discreet faceted-table-results" cellspacing="0" cellpadding="0"
-       tal:condition="context/showAttendeesFields"
+       tal:condition="context/show_attendees_fields"
        i18n:domain="PloneMeeting">
   <tal:defines define="allUsers context/get_all_used_held_positions;
                        attendees context/get_attendees;
-                       excused context/getExcused;
-                       absents context/getAbsents;
+                       excused context/get_excused;
+                       absents context/get_absents;
                        signers context/get_signatories;
                        applied_signers python: context.get_signatories(by_signature_number=True).values();
                        useUserReplacements python: 'replacements' in view.usedAttrs;
                        itemNonAttendees python: context.get_item_non_attendees(by_persons=True);
-                       userReplacements context/getUserReplacements;
+                       userReplacements context/get_user_replacements;
                        showExcused python: 'excused' in view.usedAttrs or excused;
                        showAbsents python: 'absents' in view.usedAttrs or absents;
                        showSignatories python: 'signatories' in view.usedAttrs or signers;
@@ -131,7 +131,7 @@
 
 <tal:comment replace="nothing">Assembly and signatures.  Backward compatibility for people that used the 'assembly' or 'signatures'
 field before and the 'attendees' now, if the field is not empty, we display it</tal:comment>
-<tal:assembly_fields define="shownAssemblyFields context/shownAssemblyFields;"
+<tal:assembly_fields define="shownAssemblyFields context/shown_assembly_fields;"
                      i18n:domain="PloneMeeting">
  <tal:assembly condition="python: 'assembly' in shownAssemblyFields">
    <span class="item_attribute_label"
@@ -165,9 +165,9 @@ field before and the 'attendees' now, if the field is not empty, we display it</
            i18n:translate="meeting_assemblyStaves">Staves</span>:&nbsp;&nbsp;
      <span tal:replace="structure python: context.getAssemblyStaves() or '<p>-</p>'"/>
    </tal:assemblyStaves>
-   <tal:assemblySignatures tal:condition="context/showSignatures">
+   <tal:assemblySignatures tal:condition="context/show_signatures">
      <span class="item_attribute_label"
            i18n:translate="meeting_signatures">Signatures</span>:&nbsp;&nbsp;
-     <span tal:replace="structure context/displaySignatures|string:<p>-</p>"/>
+     <span tal:replace="structure context/display_signatures|string:<p>-</p>"/>
    </tal:assemblySignatures>
 </tal:assembly_fields>

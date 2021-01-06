@@ -328,7 +328,7 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
                 # must show a deadline- or late-related icon.
                 if self.context.wfConditions().isLateFor(meeting):
                     # A late item, or worse: a late item not respecting the freeze deadline.
-                    if meeting.attributeIsUsed('deadlineFreeze') and \
+                    if meeting.attribute_is_used('deadlineFreeze') and \
                        not self.context.lastValidatedBefore(meeting.getDeadlineFreeze()):
                         res.append(('deadlineKo.png', translate('icon_help_publish_freeze_ko',
                                                                 domain="PloneMeeting",
@@ -338,7 +338,7 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
                                                           domain="PloneMeeting",
                                                           context=self.request)))
                 elif (meeting.query_state() == 'created') and \
-                        meeting.attributeIsUsed('deadlinePublish') and \
+                        meeting.attribute_is_used('deadlinePublish') and \
                         not self.context.lastValidatedBefore(meeting.getDeadlinePublish()):
                     res.append(('deadlineKo.png', translate('icon_help_publish_deadline_ko',
                                                             domain="PloneMeeting",

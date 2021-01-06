@@ -1072,7 +1072,7 @@
             for=".interfaces.IFacetedNavigable"
             name="facetednavigation_view"
             template="browser/template/view.pt"
-            class="Products.PloneMeeting.browser.overrides.PMFacetedContainerView"
+            class="Products.PloneMeeting.browser.overrides.PMFacetedDashboardView"
             permission="zope2.View"
             layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer "/>
     </configure>

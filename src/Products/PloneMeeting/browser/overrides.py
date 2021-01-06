@@ -63,7 +63,7 @@ from Products.PloneMeeting.config import ITEM_DEFAULT_TEMPLATE_ID
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.MeetingConfig import POWEROBSERVERPREFIX
-from Products.PloneMeeting.interfaces import IMeeting
+from Products.PloneMeeting.content.meeting import IMeeting
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import get_next_meeting
@@ -401,7 +401,7 @@ class PloneMeetingOverviewControlPanel(OverviewControlPanel):
         return versions
 
 
-class PMFacetedContainerView(FacetedDashboardView):
+class PMFacetedDashboardView(FacetedDashboardView):
     '''
       Override to disable border on the meetingFolder view and to redirect to correct pmFolder
       in case a user is sent to the pmFolder of another user.
@@ -409,7 +409,7 @@ class PMFacetedContainerView(FacetedDashboardView):
 
     def __init__(self, context, request):
         """Hide the green bar on the faceted if not in the configuration."""
-        super(PMFacetedContainerView, self).__init__(context, request)
+        super(PMFacetedDashboardView, self).__init__(context, request)
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
         self.check_redirect_next_meeting = False
@@ -470,7 +470,7 @@ class PMFacetedContainerView(FacetedDashboardView):
             next_meeting = get_next_meeting(meetingDate, cfg=self.cfg)
             if next_meeting:
                 self.request.RESPONSE.redirect(next_meeting.absolute_url())
-        res = super(PMFacetedContainerView, self).__call__()
+        res = super(PMFacetedDashboardView, self).__call__()
 
         if self.request.RESPONSE.status == 302 and \
            self.context != self._criteriaHolder and \

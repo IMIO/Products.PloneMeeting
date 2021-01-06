@@ -23,6 +23,7 @@ from plone.dexterity.schema import DexteritySchemaPolicy
 from plone.directives import form
 from plone.formwidget.datetime.z3cform.widget import DatetimeFieldWidget
 from plone.memoize import ram
+from plone.supermodel import model
 from Products.CMFCore.permissions import ManagePortal
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFPlone.utils import base_hasattr
@@ -150,6 +151,7 @@ class IMeeting(IDXMeetingContent):
     extraordinary_session = schema.Bool(
         title=_(u'title_extraordinary_session'),
         description=_("descr_extraordinary_session"),
+        default=False,
         required=False)
 
     form.widget('in_and_out_moves', PMRichTextFieldWidget)
@@ -238,6 +240,52 @@ class IMeeting(IDXMeetingContent):
         default=-1,
         required=False)
 
+    model.fieldset('dates_and_data',
+                   label=_(u"Dates and data"),
+                   fields=['date', 'start_date', 'mid_date', 'end_date',
+                           'approval_date', 'convocation_date', 'place',
+                           'pre_meeting_date', 'pre_meeting_place',
+                           'extraordinary_session'])
+
+    model.fieldset('assembly',
+                   label=_(u"Assembly and signatures"),
+                   fields=['assembly', 'assembly_excused', 'assembly_absents',
+                           'assembly_guests', 'assembly_proxies', 'assembly_staves',
+                           'signatures'])
+
+    model.fieldset('details',
+                   label=_(u"Details"),
+                   fields=['in_and_out_moves', 'notes', 'observations',
+                           'pre_observations', 'committee_observations',
+                           'votes_observations', 'public_meeting_observations',
+                           'secret_meeting_observations', 'authority_notice'])
+
+    model.fieldset('managers_parameters',
+                   label=_(u"Manager reserved parameters"),
+                   fields=['meeting_number', 'first_item_number'])
+
+########################################################################
+#                                                                      #
+#                    SAMPLE TO EXTEND SCHEMA                           #
+#                                                                      #
+########################################################################
+#
+# class IMeetingCustomSample(IMeeting):
+#     """ """
+#
+#     form.order_before(extra_field='end_date')
+#     extra_field = Int(
+#         title=_(u"Sample extra field"),
+#         default=0,
+#         required=False)
+#
+#     model.fieldset(
+#         'dates_and_data',
+#         label=_(u"Dates and data"),
+#         fields=['extra_field'])
+#
+########################################################################
+
 
 class Meeting(Container):
     """ """
@@ -248,92 +296,92 @@ class Meeting(Container):
 
     MEETINGCLOSEDSTATES = ['closed']
 
-    ORDERED_FIELD_INFOS = OrderedDict([
-        ('date',
-         {'optional': False,
-          'condition': ''}),
-        ('start_date',
-         {'optional': True,
-          'condition': ''}),
-        ('mid_date',
-         {'optional': True,
-          'condition': ''}),
-        ('end_date',
-         {'optional': True,
-          'condition': ''}),
-        ('approval_date',
-         {'optional': True,
-          'condition': ''}),
-        ('convocation_date',
-         {'optional': True,
-          'condition': ''}),
-        ('assembly',
-         {'optional': True,
-          'condition': "python:'assembly' in context.shown_assembly_fields()"}),
-        ('assembly_excused',
-         {'optional': True,
-          'condition': "python:'assembly_excused' in context.shown_assembly_fields()"}),
-        ('assembly_absents',
-         {'optional': True,
-          'condition': "python:'assembly_absents' in context.shown_assembly_fields()"}),
-        ('assembly_guests',
-         {'optional': True,
-          'condition': "python:'assembly_guests' in context.shown_assembly_fields()"}),
-        ('assembly_proxies',
-         {'optional': True,
-          'condition': "python:'assembly_proxies' in context.shown_assembly_fields()"}),
-        ('assembly_staves',
-         {'optional': True,
-          'condition': "python:'assembly_staves' in context.shown_assembly_fields()"}),
-        ('signatures',
-         {'optional': True,
-          'condition': "python:context.show_signatures()"}),
-        ('place',
-         {'optional': True,
-          'condition': ""}),
-        ('extraordinary_session',
-         {'optional': True,
-          'condition': "python:context.show_signatures()"}),
-        ('in_and_out_moves',
-         {'optional': True,
-          'condition': "python:context.show_meeting_manager_reserved_field('in_and_out_moves')"}),
-        ('notes',
-         {'optional': True,
-          'condition': "python:context.show_meeting_manager_reserved_field('notes')"}),
-        ('observations',
-         {'optional': True,
-          'condition': ""}),
-        ('pre_meeting_date',
-         {'optional': True,
-          'condition': ""}),
-        ('pre_meeting_place',
-         {'optional': True,
-          'condition': ""}),
-        ('pre_observations',
-         {'optional': True,
-          'condition': ""}),
-        ('committee_observations',
-         {'optional': True,
-          'condition': ""}),
-        ('votes_observations',
-         {'optional': True,
-          'condition': ""}),
-        ('public_meeting_observations',
-         {'optional': True,
-          'condition': ""}),
-        ('secret_meeting_observations',
-         {'optional': True,
-          'condition': ""}),
-        ('authority_notice',
-         {'optional': True,
-          'condition': ""}),
-        ('meeting_number',
-         {'optional': False,
-          'condition': ""}),
-        ('first_item_number',
-         {'optional': False,
-          'condition': ""}),
-    ])
+    FIELD_INFOS = {
+        'date':
+            {'optional': False,
+             'condition': ''},
+        'start_date':
+            {'optional': True,
+             'condition': ''},
+        'mid_date':
+            {'optional': True,
+             'condition': ''},
+        'end_date':
+            {'optional': True,
+             'condition': ''},
+        'approval_date':
+            {'optional': True,
+             'condition': ''},
+        'convocation_date':
+            {'optional': True,
+             'condition': ''},
+        'assembly':
+            {'optional': True,
+             'condition': "python:'assembly' in context.shown_assembly_fields()"},
+        'assembly_excused':
+            {'optional': True,
+             'condition': "python:'assembly_excused' in context.shown_assembly_fields()"},
+        'assembly_absents':
+            {'optional': True,
+             'condition': "python:'assembly_absents' in context.shown_assembly_fields()"},
+        'assembly_guests':
+            {'optional': True,
+             'condition': "python:'assembly_guests' in context.shown_assembly_fields()"},
+        'assembly_proxies':
+            {'optional': True,
+             'condition': "python:'assembly_proxies' in context.shown_assembly_fields()"},
+        'assembly_staves':
+            {'optional': True,
+             'condition': "python:'assembly_staves' in context.shown_assembly_fields()"},
+        'signatures':
+            {'optional': True,
+             'condition': "python:context.show_signatures()"},
+        'place':
+            {'optional': True,
+             'condition': ""},
+        'extraordinary_session':
+            {'optional': True,
+             'condition': "python:context.show_signatures()"},
+        'in_and_out_moves':
+            {'optional': True,
+             'condition': "python:context.show_meeting_manager_reserved_field('in_and_out_moves')"},
+        'notes':
+            {'optional': True,
+             'condition': "python:context.show_meeting_manager_reserved_field('notes')"},
+        'observations':
+            {'optional': True,
+             'condition': ""},
+        'pre_meeting_date':
+            {'optional': True,
+             'condition': ""},
+        'pre_meeting_place':
+            {'optional': True,
+             'condition': ""},
+        'pre_observations':
+            {'optional': True,
+             'condition': ""},
+        'committee_observations':
+            {'optional': True,
+             'condition': ""},
+        'votes_observations':
+            {'optional': True,
+             'condition': ""},
+        'public_meeting_observations':
+            {'optional': True,
+             'condition': ""},
+        'secret_meeting_observations':
+            {'optional': True,
+             'condition': ""},
+        'authority_notice':
+            {'optional': True,
+             'condition': ""},
+        'meeting_number':
+            {'optional': False,
+             'condition': ""},
+        'first_item_number':
+            {'optional': False,
+             'condition': ""},
+    }
 
     security.declarePublic('get_pretty_link')
 
@@ -394,15 +442,6 @@ class Meeting(Container):
                         'o': 'plone.app.querystring.operation.date.between',
                         'v': (datetime(2000, 1, 1), self.date)})
         return res
-
-    security.declarePublic('getSort_on')
-
-    def getSort_on(self, force_linked_items_query=False):
-        """ """
-        if displaying_available_items(self) and not force_linked_items_query:
-            return 'getProposingGroup'
-        else:
-            return 'getItemNumber'
 
     security.declarePublic('selectedViewFields')
 
@@ -466,7 +505,7 @@ class Meeting(Container):
                     context=REQUEST)
             else:
                 # removed voters
-                stored_voters = self.getVoters()
+                stored_voters = self.get_voters()
                 meeting_voters = [voter.split('_')[1] for voter
                                   in REQUEST.form.get('meeting_voters', [])]
                 removed_meeting_voters = set(stored_voters).difference(meeting_voters)
@@ -908,13 +947,12 @@ class Meeting(Container):
             self.REQUEST.set('need_Meeting_update_item_references', True)
         self.getField('meetingNumber').set(self, value, **kwargs)
 
-    security.declarePublic('showMeetingManagerReservedField')
+    security.declarePublic('show_meeting_manager_reserved_field')
 
-    def showMeetingManagerReservedField(self, name):
+    def show_meeting_manager_reserved_field(self, name):
         '''When must field named p_name be shown?'''
         tool = api.portal.get_tool('portal_plonemeeting')
-        res = not self.isTemporary() and \
-            tool.isManager(self) and \
+        res = tool.isManager(self) and \
             self.attribute_is_used(name)
         return res
 
@@ -969,10 +1007,12 @@ class Meeting(Container):
                                   'o': 'plone.app.querystring.operation.selection.is',
                                   'v': uids},)
         if ordered:
+            collection_behavior = ICollection(self)
             query = queryparser.parseFormquery(
                 self,
                 catalog_query,
-                sort_on=self.getSort_on(force_linked_items_query=force_linked_items_query))
+                sort_on=collection_behavior._get_sort_on(
+                    force_linked_items_query=force_linked_items_query))
         else:
             query = queryparser.parseFormquery(self, catalog_query)
 
@@ -1641,9 +1681,9 @@ class Meeting(Container):
         cfg = tool.getMeetingConfig(self)
         used_attrs = cfg.getUsedMeetingAttributes()
         # get assembly fields
-        fields = cfg._assembly_fields(field_name=False)
-        return [field.getName() for field in fields
-                if field.getName() in used_attrs or field.get(self)]
+        field_names = cfg._assembly_field_names()
+        return [field_name for field_name in field_names
+                if field_name in used_attrs or getattr(self, field_name, None)]
 
     security.declarePublic('show_signatures')
 
@@ -1746,11 +1786,23 @@ class MeetingSchemaPolicy(DexteritySchemaPolicy):
     """ """
 
     def bases(self, schemaName, tree):
+        # return (IMeetingCustomSample, )
         return (IMeeting, )
 
 
 class MeetingCollection(Collection):
     """ """
+
+    def _set_sort_on(self, value):
+        self.context.sort_on = value
+
+    def _get_sort_on(self, force_linked_items_query=False):
+        if displaying_available_items(self.context) and not force_linked_items_query:
+            return 'getProposingGroup'
+        else:
+            return 'getItemNumber'
+
+    sort_on = property(_get_sort_on, _set_sort_on)
 
     def _set_query(self, value):
         self.context.query = value

@@ -7,7 +7,7 @@ from plone.app.portlets.portlets import base
 from plone.portlets.interfaces import IPortletDataProvider
 from Products.CMFCore.utils import getToolByName
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
-from Products.PloneMeeting.interfaces import IMeeting
+from Products.PloneMeeting.content.meeting import IMeeting
 from zope.formlib import form
 from zope.i18nmessageid import MessageFactory
 from zope.interface import implements

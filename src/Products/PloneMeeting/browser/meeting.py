@@ -1,29 +1,32 @@
 # -*- coding: utf-8 -*-
 
 from collective.contact.plonegroup.utils import get_all_suffixes
+from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_plone_group_id
 from eea.facetednavigation.browser.app.view import FacetedContainerView
-from plone import api
-from plone.dexterity.browser.view import DefaultView
-from Products.CMFCore.permissions import ModifyPortalContent
-from Products.PloneMeeting.MeetingConfig import POWEROBSERVERPREFIX
-from collective.contact.plonegroup.utils import get_organizations
+from imio.helpers.content import uuidsToObjects
 from imio.history.utils import getLastWFAction
-from Products.PloneMeeting.config import ITEM_INSERT_METHODS
+from plone import api
+from plone.supermodel.interfaces import FIELDSETS_KEY
+from Products.CMFCore.permissions import ModifyPortalContent
+from Products.CMFCore.WorkflowCore import WorkflowException
+from Products.CMFPlone.utils import safe_unicode
 from Products.Five import BrowserView
 from Products.PloneMeeting.config import PMMessageFactory as _
-from imio.helpers.content import uuidsToObjects
-from Products.CMFCore.WorkflowCore import WorkflowException
+from Products.PloneMeeting.config import ITEM_INSERT_METHODS
+from Products.PloneMeeting.utils import get_dx_schema
+from Products.PloneMeeting.MeetingConfig import POWEROBSERVERPREFIX
 from zope.i18n import translate
-from Products.CMFPlone.utils import safe_unicode
 
 
-class MeetingView(DefaultView, FacetedContainerView):
+class MeetingView(FacetedContainerView):
     """ """
 
     section_widgets = {
-        'date': ['date', 'start_date', 'mid_date', 'end_date'],
-        'assembly': ['assembly', 'assembly_excused', 'assembly_absents', 'assembly_guests']
+        'dates_and_data': ['date', 'start_date', 'mid_date', 'end_date'],
+        'assembly': ['assembly', 'assembly_excused', 'assembly_absents', 'assembly_guests'],
+        'details': [],
+        'managers_parameters': []
     }
 
     def __init__(self, context, request):
@@ -38,26 +41,36 @@ class MeetingView(DefaultView, FacetedContainerView):
         # initialize member in call because it is Anonymous in __init__ of view...
         self.member = api.user.get_current()
         # initialize z3c form view widgets
-        #view = self.context.restrictedTraverse('content-core')
-        #view.update()
-        #self.fields = view.fields
-        #self.widgets = view.widgets
+        view = self.context.restrictedTraverse('content-core')
+        view.update()
+        self.view_data = view
 
     def __call__(self):
         """ """
         self._init()
         return super(MeetingView, self).__call__()
 
-    def get_section_widgets(self, section):
-        """ """
-        return [widget for widget in self.widgets.values()
-                if widget.__name__ in self.section_widgets[section]]
+    def get_fields_for_fieldset(self, fieldset):
+        """Return widgets of not optional fields and optional fields enabled in MeetingConfig."""
+        optional_fields = self.cfg.get_dx_attrs(self.context.FIELD_INFOS, optional_only=True)
+        used_meeting_attrs = self.cfg.getUsedMeetingAttributes()
+        schema = get_dx_schema(self.context)
+        base_class = schema.getBases()[0]
+        fieldset_fields = [fieldset_field for fieldset_field in base_class.queryTaggedValue(FIELDSETS_KEY)
+                           if fieldset_field.__name__ == fieldset][0].fields
+        enabled_field_names = [
+            field for field in fieldset_fields
+            if field not in optional_fields or field in used_meeting_attrs]
+        widgets = []
+        for field_name in enabled_field_names:
+            widgets.append(self.view_data.w[field_name])
+        return widgets
 
-    def showPage(self):
+    def show_page(self):
         """Display page to current user?"""
         return self.tool.showMeetingView()
 
-    def _displayAvailableItemsTo(self):
+    def _display_available_items_to(self):
         """Check if current user profile is selected in MeetingConfig.displayAvailableItemsTo."""
         displayAvailableItemsTo = self.cfg.getDisplayAvailableItemsTo()
         suffixes = []
@@ -75,7 +88,7 @@ class MeetingView(DefaultView, FacetedContainerView):
             res = bool(set(groups).intersection(self.tool.get_plone_groups_for_user()))
         return res
 
-    def showAvailableItems(self):
+    def show_available_items(self):
         """Show the available items part?"""
         return (
             self.member.has_permission(ModifyPortalContent, self.context) or

@@ -505,5 +505,5 @@ class AsyncLoadMeetingAssemblyAndSignatures(BrowserView):
         self.cfg = self.tool.getMeetingConfig(self.context)
         self.usedAttrs = self.cfg.getUsedMeetingAttributes()
         self.showVoters = self.cfg.getUseVotes()
-        self.voters = self.context.getVoters()
+        self.voters = self.context.get_voters()
         return self.index()

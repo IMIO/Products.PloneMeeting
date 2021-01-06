@@ -1478,6 +1478,14 @@ body.template-meeting_available_items_view div#faceted-form {
 body.template-meeting_available_items_view #portal-column-content.cell.width-full.position-0 {
    width: 100%;
 }
+body.template-meeting_available_items_view #portal-column-content {
+   padding-top: 0;
+}
+/* make sure ajax spinner is displayed in available items iframe */
+body.template-meeting_available_items_view div#ajax-spinner {
+   top: -35px;
+}
+
 /* temporary until collective.documentgenerator 0.6 is out */
 div#doc-generation-view ul.pod-template li {
     display: inline-block;
@@ -2040,11 +2048,6 @@ span#newTemplateItemCreationDisabledDuringEdit {
    padding-left: 0;
 }
 
-/* make sure ajax spinner is displayed in available items iframe */
-body.template-meeting_available_items_view div#ajax-spinner {
-   top: -35px;
-}
-
 p.otherMeetingConfigsClonableToDataUsed {
    margin-top: 1em;
 }
@@ -2065,6 +2068,7 @@ div.item-linkeditems div.collapsible-content {
 /* avoid textarea too large */
 #content textarea {
     width: 99%;
+    min-height: 175px;
 }
 
 /* global JS actions on item view */

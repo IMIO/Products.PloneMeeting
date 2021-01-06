@@ -334,27 +334,27 @@ document.location.reload(true);
  <div metal:use-macro="context/global_statusmessage/macros/portal_message">
    Portal status message
  </div>
-<table tal:define="allUsers meeting/get_all_used_held_positions;
-                   show_votes view/show_votes;
-                   excused meeting/getExcused;
-                   absents meeting/getAbsents;
-                   itemSignatories context/get_item_signatories;
-                   realItemSignatories python: context.get_item_signatories(real=True);
-                   meetingSignatories meeting/get_signatories;
-                   itemAttendees context/get_attendees;
-                   itemAbsents context/get_item_absents;
-                   itemExcused context/get_item_excused;
-                   itemNonAttendees context/get_item_non_attendees;
-                   itemVotes view/itemVotes;
+<table tal:define="allUsers python:meeting.get_all_used_held_positions();
+                   show_votes python:view.show_votes;
+                   excused python:meeting.get_excused();
+                   absents python:meeting.get_absents();
+                   itemSignatories python:context.get_item_signatories();
+                   realItemSignatories python:context.get_item_signatories(real=True);
+                   meetingSignatories python:meeting.get_signatories();
+                   itemAttendees python:context.get_attendees();
+                   itemAbsents python:context.get_item_absents();
+                   itemExcused python:context.get_item_excused();
+                   itemNonAttendees python:context.get_item_non_attendees();
+                   itemVotes python:view.itemVotes;
                    showExcused python: 'excused' in usedMeetingAttributes or excused;
                    showAbsents python: 'absents' in usedMeetingAttributes or absents or itemAbsents;
                    showSignatories python: 'signatories' in usedMeetingAttributes or itemSignatories;
                    showNonAttendees python: 'nonAttendees' in usedMeetingAttributes or itemNonAttendees;
-                   voters view/voters;
-                   voted_voters view/voted_voters;
+                   voters python:view.voters;
+                   voted_voters python:view.voted_voters;
                    mayChangeAttendees python: context._mayChangeAttendees();
-                   votesAreSecret view/votesAreSecret;
-                   pollType context/getPollType;"
+                   votesAreSecret python:view.votesAreSecret;
+                   pollType python:context.getPollType();"
        id="meeting_users"
        class="listing faceted-table-results"
        cellspacing="0"

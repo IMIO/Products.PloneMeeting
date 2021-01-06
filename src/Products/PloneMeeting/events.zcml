@@ -73,6 +73,10 @@
               handler=".events.onMeetingCreated" />
 
   <subscriber for=".content.meeting.IMeeting
+                   zope.lifecycleevent.IObjectModifiedEvent"
+              handler=".events.onMeetingModified" />
+
+  <subscriber for=".content.meeting.IMeeting
                    Products.DCWorkflow.interfaces.IAfterTransitionEvent"
               handler=".events.onMeetingTransition" />
 
