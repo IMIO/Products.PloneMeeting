@@ -18,7 +18,7 @@ from zope.i18n import translate
 from Products.CMFPlone.utils import safe_unicode
 
 
-class MeetingView(FacetedContainerView):
+class MeetingView(DefaultView, FacetedContainerView):
     """ """
 
     section_widgets = {
@@ -38,10 +38,10 @@ class MeetingView(FacetedContainerView):
         # initialize member in call because it is Anonymous in __init__ of view...
         self.member = api.user.get_current()
         # initialize z3c form view widgets
-        view = self.context.restrictedTraverse('content-core')
-        view.update()
-        self.fields = view.fields
-        self.widgets = view.widgets
+        #view = self.context.restrictedTraverse('content-core')
+        #view.update()
+        #self.fields = view.fields
+        #self.widgets = view.widgets
 
     def __call__(self):
         """ """

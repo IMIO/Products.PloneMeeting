@@ -915,14 +915,14 @@ class Meeting(Container):
         tool = api.portal.get_tool('portal_plonemeeting')
         res = not self.isTemporary() and \
             tool.isManager(self) and \
-            self.attributeIsUsed(name)
+            self.attribute_is_used(name)
         return res
 
     security.declarePrivate('validate_preMeetingDate')
 
     def validate_preMeetingDate(self, value):
         '''Checks that the preMeetingDate comes before the meeting date.'''
-        if not value or not self.attributeIsUsed('preMeetingDate'):
+        if not value or not self.attribute_is_used('preMeetingDate'):
             return
         # Get the meeting date from the request
         try:
@@ -1268,7 +1268,7 @@ class Meeting(Container):
     security.declarePrivate('getDefaultAssembly')
 
     def getDefaultAssembly(self):
-        if self.attributeIsUsed('assembly'):
+        if self.attribute_is_used('assembly'):
             tool = api.portal.get_tool('portal_plonemeeting')
             return tool.getMeetingConfig(self).getAssembly()
         return ''
@@ -1276,7 +1276,7 @@ class Meeting(Container):
     security.declarePrivate('getDefaultAssemblyStaves')
 
     def getDefaultAssemblyStaves(self):
-        if self.attributeIsUsed('assemblyStaves'):
+        if self.attribute_is_used('assemblyStaves'):
             tool = api.portal.get_tool('portal_plonemeeting')
             return tool.getMeetingConfig(self).getAssemblyStaves()
         return ''
@@ -1284,7 +1284,7 @@ class Meeting(Container):
     security.declarePrivate('getDefaultSignatures')
 
     def getDefaultSignatures(self):
-        if self.attributeIsUsed('signatures'):
+        if self.attribute_is_used('signatures'):
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(self)
             return cfg.getSignatures()
@@ -1509,9 +1509,9 @@ class Meeting(Container):
         '''See doc in utils.py.'''
         return hasHistory(self, fieldName)
 
-    security.declarePublic('attributeIsUsed')
+    security.declarePublic('attribute_is_used')
 
-    def attributeIsUsed(self, name):
+    def attribute_is_used(self, name):
         '''Is the attribute named p_name used in this meeting config ?'''
         tool = api.portal.get_tool('portal_plonemeeting')
         meetingConfig = tool.getMeetingConfig(self)

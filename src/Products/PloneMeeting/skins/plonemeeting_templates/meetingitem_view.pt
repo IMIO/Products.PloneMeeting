@@ -189,7 +189,7 @@
                 <span class="item_attribute_label" i18n:translate="PloneMeeting_label_preferredMeeting"></span>:&nbsp;&nbsp;
                 <span tal:define="preferred_meeting python:context.getPreferredMeeting(theObject=True)">
                 <span tal:condition="nocall:preferred_meeting">
-                      <tal:link tal:replace="structure preferred_meeting/getPrettyLink" />
+                      <tal:link tal:replace="structure python: preferred_meeting.get_pretty_link()" />
                 </span>
                 <span tal:condition="not: nocall:preferred_meeting">-
                 </span>
@@ -201,7 +201,7 @@
               <span class="item_attribute_label"
                     i18n:translate="presented_in_meeting">Presented in meeting</span>:&nbsp;&nbsp;
               <tal:hasMeeting condition="nocall:meeting">
-                  <tal:link tal:replace="structure meeting/getPrettyLink">
+                  <tal:link tal:replace="structure python: meeting.get_pretty_link()">
                   </tal:link>
               </tal:hasMeeting>
               <span tal:condition="not:nocall:meeting">-</span>
