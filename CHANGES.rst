@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2b8 (unreleased)
+4.2b8 (2021-01-06)
 ------------------
 
 - Fixed `MeetingItem.is_assembly_field_used`, only evaluate when item is linked
