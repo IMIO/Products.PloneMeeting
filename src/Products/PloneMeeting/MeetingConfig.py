@@ -108,6 +108,7 @@ from Products.PloneMeeting.utils import createOrUpdatePloneGroup
 from Products.PloneMeeting.utils import duplicate_workflow
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
 from Products.PloneMeeting.utils import get_annexes
+from Products.PloneMeeting.utils import get_dx_attrs
 from Products.PloneMeeting.utils import get_dx_schema
 from Products.PloneMeeting.utils import get_item_validation_wf_suffixes
 from Products.PloneMeeting.utils import getCustomAdapter
@@ -3496,22 +3497,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             res = DisplayList(tuple(res))
         return res
 
-    def get_dx_attrs(self, field_infos, optional_only=False, as_display_list=True):
-        """ """
-        res = []
-        for field_name, field_info in field_infos.items():
-            if optional_only and not field_info['optional']:
-                continue
-            res.append((field_name,
-                        '%s (%s)' % (translate("title_{0}".format(field_name),
-                                               domain="PloneMeeting",
-                                               context=self.REQUEST),
-                                     field_name)
-                        ))
-        if as_display_list:
-            res = DisplayList(tuple(res))
-        return res
-
     security.declarePrivate('listUsedItemAttributes')
 
     def listUsedItemAttributes(self):
@@ -3525,27 +3510,29 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('listUsedMeetingAttributes')
 
     def listUsedMeetingAttributes(self):
-        optional_fields = self.get_dx_attrs(
-            Meeting.FIELD_INFOS, optional_only=True, as_display_list=False)
+        optional_fields = get_dx_attrs(
+            self.getMeetingTypeName(), optional_only=True, as_display_list=False)
         contact_fields = ['attendees', 'excused', 'absents', 'nonAttendees',
                           'signatories', 'replacements']
         contact_fields.reverse()
-        index = [name for name, value in optional_fields].index('place')
+        index = optional_fields.index('place')
         for contact_field in contact_fields:
-            optional_fields.insert(
-                index,
-                (contact_field,
-                 '%s (%s)' % (translate('PloneMeeting_label_{0}'.format(contact_field),
+            optional_fields.insert(index, contact_field)
+        res = []
+        for field in optional_fields:
+            res.append(
+                (field,
+                 '%s (%s)' % (translate('title_{0}'.format(field),
                                         domain='PloneMeeting',
                                         context=self.REQUEST),
-                              contact_field)))
-        return DisplayList(tuple(optional_fields))
+                              field)))
+        return DisplayList(tuple(res))
 
     security.declarePrivate('listMeetingAttributes')
 
     def listMeetingAttributes(self):
-        return self.get_dx_attrs(
-            Meeting.FIELD_INFOS, optional_only=False, as_display_list=False)
+        return get_dx_attrs(
+            self.getMeetingTypeName(), optional_only=False, as_display_list=False)
 
     security.declarePrivate('listDashboardItemsListingsFilters')
 
@@ -4019,8 +4006,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         if (('excused' in newValue) or ('absents' in newValue)) and \
            ('attendees' not in newValue):
             return translate('attendees_required', domain=pm, context=self.REQUEST)
-        # Prevent use of "assemblyExcused" or "assemblyAbsents" without "assembly"
-        if (('assemblyExcused' in newValue) or ('assemblyAbsents' in newValue)) and \
+        # Prevent use of "assembly_excused" or "assembly_absents" without "assembly"
+        if (('assembly_excused' in newValue) or ('assembly_absents' in newValue)) and \
            ('assembly' not in newValue):
             return translate('assembly_required', domain=pm, context=self.REQUEST)
 
@@ -6882,5 +6869,17 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     error_msg)))
         return u'\n'.join(res)
 
+    security.declarePublic('show_meeting_manager_reserved_field')
+
+    def show_meeting_manager_reserved_field(self, name, meta_type='Meeting'):
+        '''When must field named p_name be shown?'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        # XXX check on optional field to be removed when item will be DX
+        if meta_type == 'Meeting':
+            used_attrs = self.getUsedMeetingAttributes()
+        else:
+            used_attrs = self.getUsedItemAttributes()
+        res = tool.isManager(self) and name in used_attrs
+        return res
 
 registerType(MeetingConfig, PROJECTNAME)

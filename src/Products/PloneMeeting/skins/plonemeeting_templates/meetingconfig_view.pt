@@ -222,13 +222,13 @@
         <p class="warningInMeetingConfig"><span i18n:translate="">Free text fields</span> :</p>
         <ul>
           <li tal:condition="python: 'assembly' in usedMeetingAttributes" i18n:translate="meeting_assembly">Assembly</li>
-          <li tal:condition="python: 'assemblyExcused' in usedMeetingAttributes" i18n:translate="meeting_assemblyExcused">Assembly excused</li>
-          <li tal:condition="python: 'assemblyAbsents' in usedMeetingAttributes" i18n:translate="meeting_assemblyAbsents">Assembly absents</li>
-          <li tal:condition="python: 'assemblyGuests' in usedMeetingAttributes" i18n:translate="meeting_assemblyGuests">Assembly guests</li>
-          <li tal:condition="python: 'assemblyProxies' in usedMeetingAttributes" i18n:translate="meeting_assemblyProxies">Assembly proxies</li>
-          <li tal:condition="python: 'assemblyStaves' in usedMeetingAttributes" i18n:translate="meeting_assemblyStaves">Assembly staves</li>
+          <li tal:condition="python: 'assembly_excused' in usedMeetingAttributes" i18n:translate="meeting_assembly_excused">Assembly excused</li>
+          <li tal:condition="python: 'assembly_absents' in usedMeetingAttributes" i18n:translate="meeting_assembly_absents">Assembly absents</li>
+          <li tal:condition="python: 'assembly_guests' in usedMeetingAttributes" i18n:translate="meeting_assembly_guests">Assembly guests</li>
+          <li tal:condition="python: 'assembly_proxies' in usedMeetingAttributes" i18n:translate="meeting_assembly_proxies">Assembly proxies</li>
+          <li tal:condition="python: 'assembly_staves' in usedMeetingAttributes" i18n:translate="meeting_assembly_staves">Assembly staves</li>
           <li tal:condition="python: 'signatures' in usedMeetingAttributes" i18n:translate="meeting_signatures">Assembly staves</li>
-          <li tal:condition="python: 'assembly' not in usedMeetingAttributes and 'assemblyExcused' not in usedMeetingAttributes and 'assemblyAbsents' not in usedMeetingAttributes and 'assemblyGuests' not in usedMeetingAttributes and 'assemblyProxies' not in usedMeetingAttributes and 'assemblyStaves' not in usedMeetingAttributes and 'signatures' not in usedMeetingAttributes" i18n:translate="None">None</li>
+          <li tal:condition="python: 'assembly' not in usedMeetingAttributes and 'assembly_excused' not in usedMeetingAttributes and 'assembly_absents' not in usedMeetingAttributes and 'assembly_guests' not in usedMeetingAttributes and 'assembly_proxies' not in usedMeetingAttributes and 'assembly_staves' not in usedMeetingAttributes and 'signatures' not in usedMeetingAttributes" i18n:translate="None">None</li>
         </ul>
         <p class="warningInMeetingConfig"><span i18n:translate="">Contacts fields</span> :</p>
         <ul>

@@ -207,7 +207,7 @@
   <adapter for="Products.PloneMeeting.content.advice.IMeetingAdvice"
            factory=".adapters.AdviceContentDeletableAdapter"
            provides="imio.actionspanel.interfaces.IContentDeletable" />
-  <adapter for="Products.PloneMeeting.Meeting.Meeting"
+  <adapter for="Products.PloneMeeting.content.meeting.IMeeting"
            factory=".adapters.MeetingContentDeletableAdapter"
            provides="imio.actionspanel.interfaces.IContentDeletable" />
   <adapter for="Products.PloneMeeting.interfaces.IMeetingItem"

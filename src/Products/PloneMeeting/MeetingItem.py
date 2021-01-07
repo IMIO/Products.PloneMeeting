@@ -2199,9 +2199,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def showMeetingManagerReservedField(self, name):
         '''When must field named p_name be shown?'''
         tool = api.portal.get_tool('portal_plonemeeting')
-        isMgr = tool.isManager(self)
-        res = isMgr and self.attributeIsUsed(name)
-        return res
+        cfg = tool.getMeetingConfig(self)
+        return cfg.show_meeting_manager_reserved_field(name, meta_type='MeetingItem')
 
     security.declarePublic('showToDiscuss')
 
@@ -3582,9 +3581,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if self.hasMeeting():
             meeting = self.getMeeting()
             attr_names_mapping = {"itemAssembly": "assembly",
-                                  "itemAssemblyExcused": "assemblyExcused",
-                                  "itemAssemblyAbsents": "assemblyAbsents",
-                                  "itemAssemblyGuests": "assemblyGuests",
+                                  "itemAssemblyExcused": "assembly_excused",
+                                  "itemAssemblyAbsents": "assembly_absents",
+                                  "itemAssemblyGuests": "assembly_guests",
                                   "itemSignatures": "signatures"}
             if meeting.attribute_is_used(attr_names_mapping[field_name]):
                 res = True
@@ -3608,11 +3607,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if self.getItemAssembly(real=True):
             res.append('assembly')
         if self.getItemAssemblyExcused(real=True):
-            res.append('assemblyExcused')
+            res.append('assembly_excused')
         if self.getItemAssemblyAbsents(real=True):
-            res.append('assemblyAbsents')
+            res.append('assembly_absents')
         if self.getItemAssemblyGuests(real=True):
-            res.append('assemblyGuests')
+            res.append('assembly_guests')
         # when using contacts
         if self.get_item_absents(the_objects=True):
             res.append('item_absents')
@@ -6636,7 +6635,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # manage_beforeDelete is called before the IObjectWillBeRemovedEvent
             # in IObjectWillBeRemovedEvent references are already broken, we need to remove
             # the item from a meeting if it is inserted in there...
-            if item.hasMeeting():
+            # do this only when not removing meeting including items
+            if not item.REQUEST.get('items_to_remove') and item.hasMeeting():
                 item.getMeeting().remove_item(item)
             # and to clean advice inheritance
             for adviceId in item.adviceIndex.keys():
@@ -6906,8 +6906,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         usedMeetingAttributes = cfg.getUsedMeetingAttributes()
-        if 'assemblyExcused' in usedMeetingAttributes or \
-           'assemblyAbsents' in usedMeetingAttributes:
+        if 'assembly_excused' in usedMeetingAttributes or \
+           'assembly_absents' in usedMeetingAttributes:
             msg = 'attendees_defined_on_meeting'
         else:
             msg = 'assembly_defined_on_meeting'
@@ -7032,8 +7032,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         usedMeetingAttributes = cfg.getUsedMeetingAttributes()
-        if 'assemblyExcused' in usedMeetingAttributes or \
-           'assemblyAbsents' in usedMeetingAttributes:
+        if 'assembly_excused' in usedMeetingAttributes or \
+           'assembly_absents' in usedMeetingAttributes:
             return _('attendees_for_item')
         else:
             return _('PloneMeeting_label_itemAssembly')

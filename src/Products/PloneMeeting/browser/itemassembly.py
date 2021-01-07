@@ -179,8 +179,8 @@ class DisplayAssemblyFromMeetingProvider(ContentProviderBase):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
         usedMeetingAttributes = cfg.getUsedMeetingAttributes()
-        if 'assemblyExcused' in usedMeetingAttributes or \
-           'assemblyAbsents' in usedMeetingAttributes:
+        if 'assembly_excused' in usedMeetingAttributes or \
+           'assembly_absents' in usedMeetingAttributes:
             return 'display_meeting_attendees_legend'
         else:
             return 'display_meeting_assembly_legend'
@@ -205,13 +205,14 @@ class DisplayExcusedFromMeetingProvider(ContentProviderBase):
 
     def getAssemblyExcused(self):
         """
-          Return Meeting.assemblyExcused
+          Return Meeting.assembly_excused
         """
         meeting = self.context.getMeeting()
         nothing_defined_msg = translate('nothing_defined_on_meeting',
                                         domain='PloneMeeting',
                                         context=self.request)
-        return meeting.getAssemblyExcused() or u'<p class="discreet">{0}</p>'.format(nothing_defined_msg)
+        return meeting.assembly_excused or u'<p class="discreet">{0}</p>'.format(
+            nothing_defined_msg)
 
     def render(self):
         if self.context.is_assembly_field_used('itemAssemblyExcused'):
@@ -229,20 +230,20 @@ class DisplayAbsentsFromMeetingProvider(ContentProviderBase):
         ViewPageTemplateFile('templates/display_absents_from_meeting.pt')
 
     def __init__(self, context, request, view):
-        super(DisplayAbsentsFromMeetingProvider, self).__init__(context,
-                                                                request,
-                                                                view)
+        super(DisplayAbsentsFromMeetingProvider, self).__init__(
+            context, request, view)
         self.__parent__ = view
 
     def getAssemblyAbsents(self):
         """
-          Return Meeting.assemblyAbsents
+          Return Meeting.assembly_absents
         """
         meeting = self.context.getMeeting()
         nothing_defined_msg = translate('nothing_defined_on_meeting',
                                         domain='PloneMeeting',
                                         context=self.request)
-        return meeting.getAssemblyAbsents() or u'<p class="discreet">{0}</p>'.format(nothing_defined_msg)
+        return meeting.assembly_absents or u'<p class="discreet">{0}</p>'.format(
+            nothing_defined_msg)
 
     def render(self):
         if self.context.is_assembly_field_used('itemAssemblyAbsents'):
@@ -351,15 +352,15 @@ class ManageItemAssemblyForm(form.Form):
         if 'assembly' in usedMeetingAttributes or \
                 self.context.getItemAssembly():
             self.fields['item_assembly'].mode = 'input'
-        if 'assemblyExcused' in usedMeetingAttributes or \
+        if 'assembly_excused' in usedMeetingAttributes or \
                 self.context.getItemAssemblyExcused():
             changeItemAssemblyTitleAndDescr = True
             self.fields['item_excused'].mode = 'input'
-        if 'assemblyAbsents' in usedMeetingAttributes or \
+        if 'assembly_absents' in usedMeetingAttributes or \
                 self.context.getItemAssemblyAbsents():
             changeItemAssemblyTitleAndDescr = True
             self.fields['item_absents'].mode = 'input'
-        if 'assemblyGuests' in usedMeetingAttributes or \
+        if 'assembly_guests' in usedMeetingAttributes or \
                 self.context.getItemAssemblyGuests():
             changeItemAssemblyTitleAndDescr = True
             self.fields['item_guests'].mode = 'input'

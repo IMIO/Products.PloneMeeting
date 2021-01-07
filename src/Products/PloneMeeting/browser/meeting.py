@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_plone_group_id
@@ -7,16 +8,115 @@ from eea.facetednavigation.browser.app.view import FacetedContainerView
 from imio.helpers.content import uuidsToObjects
 from imio.history.utils import getLastWFAction
 from plone import api
-from plone.supermodel.interfaces import FIELDSETS_KEY
+from plone.dexterity.browser.add import DefaultAddForm
+from plone.dexterity.browser.add import DefaultAddView
+from plone.dexterity.browser.edit import DefaultEditForm
+from plone.dexterity.browser.view import DefaultView
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFPlone.utils import safe_unicode
 from Products.Five import BrowserView
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import ITEM_INSERT_METHODS
-from Products.PloneMeeting.utils import get_dx_schema
+from Products.PloneMeeting.content.meeting import Meeting
 from Products.PloneMeeting.MeetingConfig import POWEROBSERVERPREFIX
+from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from zope.i18n import translate
+
+
+def manage_fields(the_form):
+    """
+        Wipeout not enabled optional fields and fields
+        for which condition is False
+    """
+    tool = api.portal.get_tool('portal_plonemeeting')
+    cfg = tool.getMeetingConfig(the_form.context)
+
+    to_remove = []
+
+    used_meeting_attrs = cfg.getUsedMeetingAttributes()
+
+    extra_expr_ctx = _base_extra_expr_ctx(the_form.context)
+    extra_expr_ctx.update({'view': the_form})
+
+    for field_name, field_info in Meeting.FIELD_INFOS.items():
+        if field_info['optional'] and \
+           field_name not in used_meeting_attrs and \
+           not field_info['force_eval_condition']:
+            to_remove.append(field_name)
+        elif field_info['condition'] and \
+                not _evaluateExpression(the_form.context,
+                                        expression=field_info['condition'],
+                                        extra_expr_ctx=extra_expr_ctx,
+                                        raise_on_error=True,
+                                        trusted=True):
+            to_remove.append(field_name)
+
+    # now remove fields
+    for group in [the_form] + the_form.groups:
+        for field_name in group.fields:
+            if field_name in to_remove:
+                group.fields = group.fields.omit(field_name)
+
+
+class MeetingConditions(object):
+    """ """
+
+    def shown_assembly_fields(self):
+        '''Return the list of shown assembly field :
+           - used assembly fields;
+           - not empty assembly fields.'''
+        cached_value = getattr(self, '_shown_assembly_fields', None)
+        if cached_value is None:
+            # get assembly fields
+            field_names = self.cfg._assembly_field_names()
+            return [field_name for field_name in field_names
+                    if self.show_field(field_name)]
+
+    def show_field(self, field_name):
+        '''Show the p_field_name field?
+           Must be enabled and or not empty.'''
+        return field_name in self.used_attrs or \
+            (self.context.__class__.__name__ == 'Meeting' and getattr(self, field_name, None))
+
+
+class MeetingDefaultView(DefaultView, MeetingConditions):
+    """ """
+
+    def updateFieldsFromSchemata(self):
+        super(MeetingDefaultView, self).updateFieldsFromSchemata()
+        self.tool = api.portal.get_tool('portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(self.context)
+        self.used_attrs = self.cfg.getUsedMeetingAttributes()
+        manage_fields(self)
+
+
+class MeetingEdit(DefaultEditForm, MeetingConditions):
+    """
+        Edit form redefinition to customize fields.
+    """
+
+    def updateFields(self):
+        super(MeetingEdit, self).updateFields()
+        self.tool = api.portal.get_tool('portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(self.context)
+        self.used_attrs = self.cfg.getUsedMeetingAttributes()
+        manage_fields(self)
+
+
+class MeetingAddForm(DefaultAddForm, MeetingConditions):
+
+    def updateFields(self):
+        super(MeetingAddForm, self).updateFields()
+        self.tool = api.portal.get_tool('portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(self.context)
+        self.used_attrs = self.cfg.getUsedMeetingAttributes()
+        manage_fields(self)
+
+
+class MeetingAdd(DefaultAddView):
+
+    form = MeetingAddForm
 
 
 class MeetingView(FacetedContainerView):
@@ -41,7 +141,7 @@ class MeetingView(FacetedContainerView):
         # initialize member in call because it is Anonymous in __init__ of view...
         self.member = api.user.get_current()
         # initialize z3c form view widgets
-        view = self.context.restrictedTraverse('content-core')
+        view = self.context.restrictedTraverse('view')
         view.update()
         self.view_data = view
 
@@ -49,22 +149,6 @@ class MeetingView(FacetedContainerView):
         """ """
         self._init()
         return super(MeetingView, self).__call__()
-
-    def get_fields_for_fieldset(self, fieldset):
-        """Return widgets of not optional fields and optional fields enabled in MeetingConfig."""
-        optional_fields = self.cfg.get_dx_attrs(self.context.FIELD_INFOS, optional_only=True)
-        used_meeting_attrs = self.cfg.getUsedMeetingAttributes()
-        schema = get_dx_schema(self.context)
-        base_class = schema.getBases()[0]
-        fieldset_fields = [fieldset_field for fieldset_field in base_class.queryTaggedValue(FIELDSETS_KEY)
-                           if fieldset_field.__name__ == fieldset][0].fields
-        enabled_field_names = [
-            field for field in fieldset_fields
-            if field not in optional_fields or field in used_meeting_attrs]
-        widgets = []
-        for field_name in enabled_field_names:
-            widgets.append(self.view_data.w[field_name])
-        return widgets
 
     def show_page(self):
         """Display page to current user?"""

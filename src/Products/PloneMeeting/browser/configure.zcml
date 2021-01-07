@@ -203,6 +203,31 @@
     <!-- Meeting -->
     <browser:page
       for="Products.PloneMeeting.content.meeting.IMeeting"
+      name="view"
+      class="Products.PloneMeeting.browser.meeting.MeetingDefaultView"
+      permission="zope2.View" />
+
+    <browser:page
+      for="Products.PloneMeeting.content.meeting.IMeeting"
+      name="edit"
+      class="Products.PloneMeeting.browser.meeting.MeetingEdit"
+      permission="cmf.ModifyPortalContent" />
+
+    <adapter
+        for="Products.CMFCore.interfaces.IFolderish
+             zope.publisher.interfaces.browser.IDefaultBrowserLayer
+             plone.dexterity.interfaces.IDexterityFTI"
+        provides="zope.publisher.interfaces.browser.IBrowserPage"
+        factory="Products.PloneMeeting.browser.meeting.MeetingAdd"
+        name="meeting" />
+    <class class="Products.PloneMeeting.browser.meeting.MeetingAdd">
+        <require
+            permission="cmf.AddPortalContent"
+            interface="zope.publisher.interfaces.browser.IBrowserPage" />
+    </class>
+
+    <browser:page
+      for="Products.PloneMeeting.content.meeting.IMeeting"
       name="meeting_view"
       class="Products.PloneMeeting.browser.meeting.MeetingView"
       template="templates/meeting_view.pt"

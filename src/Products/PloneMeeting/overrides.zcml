@@ -74,7 +74,7 @@
             layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
             permission="zope2.View" />
         <browser:page
-            for="Products.PloneMeeting.interfaces.IMeeting"
+            for="Products.PloneMeeting.content.meeting.IMeeting"
             name="actions_panel"
             class="Products.PloneMeeting.browser.overrides.MeetingActionsPanelView"
             template="browser/actions_panel.pt"

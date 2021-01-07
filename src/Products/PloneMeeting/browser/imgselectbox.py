@@ -122,7 +122,7 @@ class GoToMeetingImgSelectBoxView(BaseImgSelectBoxView):
 
     def selected_value_html(self):
         """ """
-        link = self.selected_value().getPrettyLink(
+        link = self.selected_value().get_pretty_link(
             isViewable=False,
             notViewableHelpMessage=u'',
             link_pattern=u"<span class='pretty_link'{0}>{1}<span class='pretty_link_content{2}'>{3}</span></span>")
@@ -142,7 +142,7 @@ class GoToMeetingImgSelectBoxView(BaseImgSelectBoxView):
 
     def selectable_value_html(self, num, selectable_value):
         """ """
-        return selectable_value.getPrettyLink()
+        return selectable_value.get_pretty_link()
 
     def getSelectableValues(self):
         """ """

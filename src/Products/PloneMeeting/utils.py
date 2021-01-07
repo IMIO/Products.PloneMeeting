@@ -33,9 +33,11 @@ from plone.app.textfield import RichText
 from plone.app.uuid.utils import uuidToObject
 from plone.autoform.interfaces import WRITE_PERMISSIONS_KEY
 from plone.dexterity.interfaces import IDexterityContent
+from plone.dexterity.utils import resolveDottedName
 from plone.i18n.normalizer.interfaces import IIDNormalizer
 from plone.locking.events import unlockAfterModification
 from plone.memoize import ram
+from Products.Archetypes.atapi import DisplayList
 from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.permissions import AccessContentsInformation
 from Products.CMFCore.permissions import AddPortalContent
@@ -90,6 +92,7 @@ from zope.interface import alsoProvides
 from zope.interface import implements
 from zope.location import locate
 from zope.security.interfaces import IPermission
+from zope.schema import getFieldsInOrder
 from plone.supermodel.utils import mergedTaggedValueDict
 from plone.autoform.interfaces import WIDGETS_KEY
 
@@ -912,6 +915,37 @@ def getHistoryTexts(obj, event):
     return res
 
 
+def get_dx_attrs(portal_type, optional_only=False, as_display_list=True):
+    """ """
+    res = []
+    request = getRequest()
+    # schema fields
+    schema = get_dx_schema(portal_type=portal_type)
+    schema_fields = getFieldsInOrder(schema)
+    # FIELD_INFOS
+    portal_types = api.portal.get_tool('portal_types')
+    fti = portal_types[portal_type]
+    field_infos = resolveDottedName(fti.klass).FIELD_INFOS
+    for field_name, field in schema_fields:
+        if optional_only and \
+           (field_name not in field_infos or not field_infos[field_name]['optional']):
+            continue
+        res.append(field_name)
+    if as_display_list:
+        display_list_tuples = []
+        for field_name in res:
+            display_list_tuples.append(
+                (field_name,
+                 '%s (%s)' % (translate("title_{0}".format(field_name),
+                                        domain="PloneMeeting",
+                                        context=request),
+                              field_name)
+                 ))
+
+        res = DisplayList(tuple(display_list_tuples))
+    return res
+
+
 def get_dx_schema(obj=None, portal_type=None):
     """ """
     portal_types = api.portal.get_tool('portal_types')
@@ -1248,6 +1282,7 @@ def toHTMLStrikedContent(plain_content):
 def display_as_html(plain_content, obj):
     """Display p_plain_content as HTML, especially ending lines
        that are not displayed if empty."""
+    plain_content = plain_content or ''
     html_content = plain_content.replace('\n', '<br />')
     if _checkPermission(ModifyPortalContent, obj):
         # replace ending <br /> by empty tags

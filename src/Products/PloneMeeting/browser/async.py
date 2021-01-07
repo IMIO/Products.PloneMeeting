@@ -9,6 +9,7 @@ from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.utils import _checkPermission
 from Products.Five import BrowserView
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
+from Products.PloneMeeting.browser.meeting import MeetingConditions
 from Products.PloneMeeting.config import NOT_VOTABLE_LINKED_TO_VALUE
 from Products.PloneMeeting.config import WriteBudgetInfos
 from Products.PloneMeeting.utils import sendMailIfRelevant
@@ -468,7 +469,7 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
         return self.index()
 
 
-class AsyncLoadMeetingAssemblyAndSignatures(BrowserView):
+class AsyncLoadMeetingAssemblyAndSignatures(BrowserView, MeetingConditions):
     """ """
 
     def __init__(self, context, request):
@@ -503,7 +504,7 @@ class AsyncLoadMeetingAssemblyAndSignatures(BrowserView):
         """ """
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
-        self.usedAttrs = self.cfg.getUsedMeetingAttributes()
+        self.used_attrs = self.cfg.getUsedMeetingAttributes()
         self.showVoters = self.cfg.getUseVotes()
         self.voters = self.context.get_voters()
         return self.index()

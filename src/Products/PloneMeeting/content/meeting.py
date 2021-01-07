@@ -296,90 +296,122 @@ class Meeting(Container):
 
     MEETINGCLOSEDSTATES = ['closed']
 
+    # 'optional': is field optional and  selectable in MeetingConfig?
+    # 'force_eval_condition': even when optional and not enabled,
+    # must we evaluate condition? this is useful for history when a field is disabled
+    # 'condition': a python expression
     FIELD_INFOS = {
         'date':
             {'optional': False,
+             'force_eval_condition': False,
              'condition': ''},
         'start_date':
             {'optional': True,
+             'force_eval_condition': False,
              'condition': ''},
         'mid_date':
             {'optional': True,
+             'force_eval_condition': False,
              'condition': ''},
         'end_date':
             {'optional': True,
+             'force_eval_condition': False,
              'condition': ''},
         'approval_date':
             {'optional': True,
+             'force_eval_condition': False,
              'condition': ''},
         'convocation_date':
             {'optional': True,
+             'force_eval_condition': False,
              'condition': ''},
         'assembly':
             {'optional': True,
-             'condition': "python:'assembly' in context.shown_assembly_fields()"},
+             'force_eval_condition': True,
+             'condition': "python:'assembly' in view.shown_assembly_fields()"},
         'assembly_excused':
             {'optional': True,
-             'condition': "python:'assembly_excused' in context.shown_assembly_fields()"},
+             'force_eval_condition': True,
+             'condition': "python:'assembly_excused' in view.shown_assembly_fields()"},
         'assembly_absents':
             {'optional': True,
-             'condition': "python:'assembly_absents' in context.shown_assembly_fields()"},
+             'force_eval_condition': True,
+             'condition': "python:'assembly_absents' in view.shown_assembly_fields()"},
         'assembly_guests':
             {'optional': True,
-             'condition': "python:'assembly_guests' in context.shown_assembly_fields()"},
+             'force_eval_condition': True,
+             'condition': "python:'assembly_guests' in view.shown_assembly_fields()"},
         'assembly_proxies':
             {'optional': True,
-             'condition': "python:'assembly_proxies' in context.shown_assembly_fields()"},
+             'force_eval_condition': True,
+             'condition': "python:'assembly_proxies' in view.shown_assembly_fields()"},
         'assembly_staves':
             {'optional': True,
-             'condition': "python:'assembly_staves' in context.shown_assembly_fields()"},
+             'force_eval_condition': True,
+             'condition': "python:'assembly_staves' in view.shown_assembly_fields()"},
         'signatures':
             {'optional': True,
-             'condition': "python:context.show_signatures()"},
+             'force_eval_condition': True,
+             'condition': "python:view.show_field('signatures')"},
         'place':
             {'optional': True,
+             'force_eval_condition': False,
              'condition': ""},
         'extraordinary_session':
             {'optional': True,
-             'condition': "python:context.show_signatures()"},
+             'force_eval_condition': False,
+             'condition': ""},
         'in_and_out_moves':
             {'optional': True,
-             'condition': "python:context.show_meeting_manager_reserved_field('in_and_out_moves')"},
+             'force_eval_condition': True,
+             'condition': "python:cfg.show_meeting_manager_reserved_field('in_and_out_moves')"},
         'notes':
             {'optional': True,
-             'condition': "python:context.show_meeting_manager_reserved_field('notes')"},
+             'force_eval_condition': True,
+             'condition': "python:cfg.show_meeting_manager_reserved_field('notes')"},
         'observations':
             {'optional': True,
+             'force_eval_condition': False,
              'condition': ""},
         'pre_meeting_date':
             {'optional': True,
+             'force_eval_condition': False,
              'condition': ""},
         'pre_meeting_place':
             {'optional': True,
+             'force_eval_condition': False,
              'condition': ""},
         'pre_observations':
             {'optional': True,
+             'force_eval_condition': False,
              'condition': ""},
         'committee_observations':
             {'optional': True,
+             'force_eval_condition': False,
              'condition': ""},
         'votes_observations':
             {'optional': True,
+             'force_eval_condition': False,
              'condition': ""},
         'public_meeting_observations':
             {'optional': True,
+             'force_eval_condition': False,
              'condition': ""},
         'secret_meeting_observations':
             {'optional': True,
-             'condition': ""},
+             'force_eval_condition': True,
+             'condition': "python:cfg.show_meeting_manager_reserved_field('secret_meeting_observations')"},
         'authority_notice':
             {'optional': True,
-             'condition': ""},
+             'force_eval_condition': True,
+             'condition': "python:cfg.show_meeting_manager_reserved_field('authority_notice')"},
         'meeting_number':
             {'optional': False,
+             'force_eval_condition': False,
              'condition': ""},
         'first_item_number':
             {'optional': False,
+             'force_eval_condition': False,
              'condition': ""},
     }
 
@@ -592,7 +624,7 @@ class Meeting(Container):
     def display_signatures(self):
         """Display signatures as HTML, make sure lines added at end
            of signatures are displayed on screen correctly."""
-        return display_as_html(self.getSignatures(), self)
+        return display_as_html(self.signatures, self)
 
     security.declarePublic('get_all_used_held_positions')
 
@@ -946,15 +978,6 @@ class Meeting(Container):
             # add a value in the REQUEST to specify that update_item_references is needed
             self.REQUEST.set('need_Meeting_update_item_references', True)
         self.getField('meetingNumber').set(self, value, **kwargs)
-
-    security.declarePublic('show_meeting_manager_reserved_field')
-
-    def show_meeting_manager_reserved_field(self, name):
-        '''When must field named p_name be shown?'''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        res = tool.isManager(self) and \
-            self.attribute_is_used(name)
-        return res
 
     security.declarePrivate('validate_preMeetingDate')
 
@@ -1662,34 +1685,6 @@ class Meeting(Container):
         '''Display attendee related fields in view/edit?'''
         return (self.attribute_is_used('attendees') or
                 self.get_attendees()) and not self.assembly
-
-    def shown_assembly_fields_cachekey(method, self):
-        '''cachekey method for self.shown_assembly_fields.'''
-        # do only re-compute if cfg changed or self.changed
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self)
-        return (cfg.getId(), cfg._p_mtime, self.modified())
-
-    security.declarePublic('shown_assembly_fields')
-
-    @ram.cache(shown_assembly_fields_cachekey)
-    def shown_assembly_fields(self):
-        '''Return the list of shown assembly field :
-           - used assembly fields;
-           - not empty assembly fields.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self)
-        used_attrs = cfg.getUsedMeetingAttributes()
-        # get assembly fields
-        field_names = cfg._assembly_field_names()
-        return [field_name for field_name in field_names
-                if field_name in used_attrs or getattr(self, field_name, None)]
-
-    security.declarePublic('show_signatures')
-
-    def show_signatures(self):
-        '''Show the 'signatures' field?'''
-        return self.attribute_is_used('signatures') or self.signatures
 
     security.declarePublic('show_votes_observations')
 

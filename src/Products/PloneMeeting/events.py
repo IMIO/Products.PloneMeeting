@@ -1010,7 +1010,7 @@ def onMeetingCreated(meeting, event):
        - added."""
     userId = api.user.get_current().getId()
     meeting.manage_addLocalRoles(userId, ('Owner',))
-
+    import ipdb; ipdb.set_trace()
     # place to store item absents
     meeting.item_absents = PersistentMapping()
     # place to store item excused
