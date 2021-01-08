@@ -12,7 +12,9 @@ from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from Products.PloneMeeting.browser.meeting import MeetingConditions
 from Products.PloneMeeting.config import NOT_VOTABLE_LINKED_TO_VALUE
 from Products.PloneMeeting.config import WriteBudgetInfos
+from Products.PloneMeeting.utils import display_as_html
 from Products.PloneMeeting.utils import sendMailIfRelevant
+from Products.PloneMeeting.utils import toHTMLStrikedContent
 from zope.i18n import translate
 
 
@@ -499,12 +501,28 @@ class AsyncLoadMeetingAssemblyAndSignatures(BrowserView, MeetingConditions):
                 context_uid,
                 cache_date)
 
-    @ram.cache(__call___cachekey)
-    def __call__(self):
+    def _update(self):
         """ """
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
         self.used_attrs = self.cfg.getUsedMeetingAttributes()
         self.showVoters = self.cfg.getUseVotes()
         self.voters = self.context.get_voters()
+        view = self.context.restrictedTraverse('view')
+        view.update()
+        self.view_data = view
+
+    def display_striked_assembly(self):
+        """ """
+        return toHTMLStrikedContent(self.context.assembly.output)
+
+    def display_signatures(self):
+        """Display signatures as HTML, make sure lines added at end
+           of signatures are displayed on screen correctly."""
+        return display_as_html(self.context.signatures.output, self.context)
+
+    #@ram.cache(__call___cachekey)
+    def __call__(self):
+        """ """
+        self._update()
         return self.index()

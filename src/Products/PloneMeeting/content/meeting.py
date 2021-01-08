@@ -39,7 +39,6 @@ from Products.PloneMeeting.config import READER_USECASES
 from Products.PloneMeeting.interfaces import IDXMeetingContent
 from Products.PloneMeeting.utils import _addManagedPermissions
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
-from Products.PloneMeeting.utils import display_as_html
 from Products.PloneMeeting.utils import displaying_available_items
 from Products.PloneMeeting.utils import fieldIsEmpty
 from Products.PloneMeeting.utils import get_next_meeting
@@ -51,10 +50,11 @@ from Products.PloneMeeting.utils import hasHistory
 from Products.PloneMeeting.utils import ItemDuplicatedFromConfigEvent
 from Products.PloneMeeting.utils import MeetingLocalRolesUpdatedEvent
 from Products.PloneMeeting.utils import notifyModifiedAndReindex
-from Products.PloneMeeting.utils import toHTMLStrikedContent
 from Products.PloneMeeting.utils import updateAnnexesAccess
 from Products.PloneMeeting.utils import validate_item_assembly_value
 from Products.PloneMeeting.widgets.pm_richtext import PMRichTextFieldWidget
+from Products.PloneMeeting.widgets.pm_textarea import PMTextAreaFieldWidget
+from Products.PloneMeeting.widgets.pm_textarea import render_textarea
 from z3c.form.browser.radio import RadioFieldWidget
 from zope import schema
 from zope.event import notify
@@ -62,7 +62,6 @@ from zope.i18n import translate
 from zope.interface import implements
 from zope.schema import Datetime
 from zope.schema import Int
-from zope.schema import Text
 from zope.schema import TextLine
 
 import copy
@@ -108,39 +107,67 @@ class IMeeting(IDXMeetingContent):
         title=_(u'title_convocation_date'),
         required=False)
 
-    assembly = Text(
+    form.widget('assembly', PMTextAreaFieldWidget)
+    assembly = RichText(
         title=_(u"title_assembly"),
         description=_("descr_meeting_assembly"),
+        default_mime_type='text/plain',
+        allowed_mime_types=('text/plain', ),
+        output_mime_type='text/plain',
         required=False)
 
-    assembly_excused = Text(
+    form.widget('assembly_excused', PMTextAreaFieldWidget)
+    assembly_excused = RichText(
         title=_(u"title_assembly_excused"),
         description=_("descr_meeting_assembly_excused"),
+        default_mime_type='text/plain',
+        allowed_mime_types=('text/plain', ),
+        output_mime_type='text/plain',
         required=False)
 
-    assembly_absents = Text(
+    form.widget('assembly_absents', PMTextAreaFieldWidget)
+    assembly_absents = RichText(
         title=_(u"title_assembly_absents"),
         description=_("descr_meeting_assembly_absents"),
+        default_mime_type='text/plain',
+        allowed_mime_types=('text/plain', ),
+        output_mime_type='text/plain',
         required=False)
 
-    assembly_guests = Text(
+    form.widget('assembly_guests', PMTextAreaFieldWidget)
+    assembly_guests = RichText(
         title=_(u"title_assembly_guests"),
         description=_("descr_assembly_guests"),
+        default_mime_type='text/plain',
+        allowed_mime_types=('text/plain', ),
+        output_mime_type='text/plain',
         required=False)
 
-    assembly_proxies = Text(
+    form.widget('assembly_proxies', PMTextAreaFieldWidget)
+    assembly_proxies = RichText(
         title=_(u"title_assembly_proxies"),
         description=_("descr_assembly_proxies"),
+        default_mime_type='text/plain',
+        allowed_mime_types=('text/plain', ),
+        output_mime_type='text/plain',
         required=False)
 
-    assembly_staves = Text(
+    form.widget('assembly_staves', PMTextAreaFieldWidget)
+    assembly_staves = RichText(
         title=_(u"title_assembly_staves"),
         description=_("descr_assembly_staves"),
+        default_mime_type='text/plain',
+        allowed_mime_types=('text/plain', ),
+        output_mime_type='text/plain',
         required=False)
 
-    signatures = Text(
+    form.widget('signatures', PMTextAreaFieldWidget)
+    signatures = RichText(
         title=_(u"title_signatures"),
         description=_("descr_signatures"),
+        default_mime_type='text/plain',
+        allowed_mime_types=("text/plain", ),
+        output_mime_type='text/plain',
         required=False)
 
     place = TextLine(
@@ -441,6 +468,69 @@ class Meeting(Container):
             adapted.link_pattern = link_pattern
         return adapted.getLink()
 
+    def get_assembly(self, for_display=False, striked=True, mark_empty_tags=False):
+        """ """
+        res = ''
+        if self.assembly is not None:
+            res = self.assembly.output
+        if res and for_display:
+            res = render_textarea(res, self, striked=striked, mark_empty_tags=mark_empty_tags)
+        return res
+
+    def get_assembly_excused(self, for_display=False, striked=True, mark_empty_tags=False):
+        """ """
+        res = ''
+        if self.assembly_excused is not None:
+            res = self.assembly_excused.output
+        if res and for_display:
+            res = render_textarea(res, self, striked=striked, mark_empty_tags=mark_empty_tags)
+        return res
+
+    def get_assembly_absents(self, for_display=False, striked=True, mark_empty_tags=False):
+        """ """
+        res = ''
+        if self.assembly_absents is not None:
+            res = self.assembly_absents.output
+        if res and for_display:
+            res = render_textarea(res, self, striked=striked, mark_empty_tags=mark_empty_tags)
+        return res
+
+    def get_assembly_guests(self, for_display=False, striked=True, mark_empty_tags=False):
+        """ """
+        res = ''
+        if self.assembly_guests is not None:
+            res = self.assembly_guests.output
+        if res and for_display:
+            res = render_textarea(res, self, striked=striked, mark_empty_tags=mark_empty_tags)
+        return res
+
+    def get_assembly_staves(self, for_display=False, striked=True, mark_empty_tags=False):
+        """ """
+        res = ''
+        if self.assembly_staves is not None:
+            res = self.assembly_staves.output
+        if res and for_display:
+            res = render_textarea(res, self, striked=striked, mark_empty_tags=mark_empty_tags)
+        return res
+
+    def get_assembly_proxies(self, for_display=False, striked=True, mark_empty_tags=False):
+        """ """
+        res = ''
+        if self.assembly_proxies is not None:
+            res = self.assembly_proxies.output
+        if res and for_display:
+            res = render_textarea(res, self, striked=striked, mark_empty_tags=mark_empty_tags)
+        return res
+
+    def get_signatures(self, for_display=False, striked=True, mark_empty_tags=False):
+        """ """
+        res = ''
+        if self.signatures is not None:
+            res = self.signatures.output
+        if res and for_display:
+            res = render_textarea(res, self, striked=striked, mark_empty_tags=mark_empty_tags)
+        return res
+
     def _available_items_query(self):
         '''Check docstring in IMeeting.'''
         tool = api.portal.get_tool('portal_plonemeeting')
@@ -612,19 +702,6 @@ class Meeting(Container):
             return translate('Please check that opening "[[" have corresponding closing "]]".',
                              domain='PloneMeeting',
                              context=self.REQUEST)
-
-    security.declarePublic('display_striked_assembly')
-
-    def display_striked_assembly(self):
-        """ """
-        return toHTMLStrikedContent(self.assembly.output)
-
-    security.declarePublic('display_signatures')
-
-    def display_signatures(self):
-        """Display signatures as HTML, make sure lines added at end
-           of signatures are displayed on screen correctly."""
-        return display_as_html(self.signatures, self)
 
     security.declarePublic('get_all_used_held_positions')
 

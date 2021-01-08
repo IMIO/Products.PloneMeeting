@@ -242,20 +242,6 @@
 
     <browser:page
       for="Products.PloneMeeting.content.meeting.IMeeting"
-      name="meeting-before-faceted-infos"
-      template="templates/meeting_before_faceted_infos.pt"
-      class=".meeting.MeetingBeforeFacetedInfosView"
-      permission="zope2.View" />
-
-    <browser:page
-      for="Products.PloneMeeting.content.meeting.IMeeting"
-      name="meeting-after-faceted-infos"
-      template="templates/meeting_after_faceted_infos.pt"
-      class=".meeting.MeetingAfterFacetedInfosView"
-      permission="zope2.View" />
-
-    <browser:page
-      for="Products.PloneMeeting.content.meeting.IMeeting"
       name="display-inserting-methods-helper-msg"
       template="templates/meeting_inserting_methods_help_msg.pt"
       class=".meeting.MeetingInsertingMethodsHelpMsgView"

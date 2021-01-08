@@ -45,7 +45,7 @@ def item_assembly_default():
       we have to get current context manually...
     """
     context = getSite().REQUEST['PUBLISHED'].context
-    itemAssembly = context.getItemAssembly(mimetype='text/plain')
+    itemAssembly = context.getItemAssembly(for_display=False, mimetype="text/plain")
     return safe_unicode(itemAssembly)
 
 
@@ -57,7 +57,7 @@ def item_excused_default():
       we have to get current context manually...
     """
     context = getSite().REQUEST['PUBLISHED'].context
-    itemAssemblyExcused = context.getItemAssemblyExcused(mimetype='text/plain')
+    itemAssemblyExcused = context.getItemAssemblyExcused(for_display=False, mimetype="text/plain")
     return safe_unicode(itemAssemblyExcused)
 
 
@@ -69,7 +69,7 @@ def item_absents_default():
       we have to get current context manually...
     """
     context = getSite().REQUEST['PUBLISHED'].context
-    itemAssemblyAbsents = context.getItemAssemblyAbsents(mimetype='text/plain')
+    itemAssemblyAbsents = context.getItemAssemblyAbsents(for_display=False, mimetype="text/plain")
     return safe_unicode(itemAssemblyAbsents)
 
 
@@ -81,7 +81,7 @@ def item_guests_default():
       we have to get current context manually...
     """
     context = getSite().REQUEST['PUBLISHED'].context
-    itemAssemblyGuests = context.getItemAssemblyGuests(mimetype='text/plain')
+    itemAssemblyGuests = context.getItemAssemblyGuests(for_display=False, mimetype="text/plain")
     return safe_unicode(itemAssemblyGuests)
 
 
@@ -169,7 +169,8 @@ class DisplayAssemblyFromMeetingProvider(ContentProviderBase):
         nothing_defined_msg = translate('nothing_defined_on_meeting',
                                         domain='PloneMeeting',
                                         context=self.request)
-        return meeting.getAssembly() or u'<p class="discreet">{0}</p>'.format(nothing_defined_msg)
+        return meeting.get_assembly(for_display=True, striked=False) or \
+            u'<p class="discreet">{0}</p>'.format(nothing_defined_msg)
 
     def get_msgid_assembly_or_attendees(self):
         """
@@ -211,8 +212,8 @@ class DisplayExcusedFromMeetingProvider(ContentProviderBase):
         nothing_defined_msg = translate('nothing_defined_on_meeting',
                                         domain='PloneMeeting',
                                         context=self.request)
-        return meeting.assembly_excused or u'<p class="discreet">{0}</p>'.format(
-            nothing_defined_msg)
+        return meeting.get_assembly_excused(for_display=True, striked=False) or \
+            u'<p class="discreet">{0}</p>'.format(nothing_defined_msg)
 
     def render(self):
         if self.context.is_assembly_field_used('itemAssemblyExcused'):
@@ -242,8 +243,8 @@ class DisplayAbsentsFromMeetingProvider(ContentProviderBase):
         nothing_defined_msg = translate('nothing_defined_on_meeting',
                                         domain='PloneMeeting',
                                         context=self.request)
-        return meeting.assembly_absents or u'<p class="discreet">{0}</p>'.format(
-            nothing_defined_msg)
+        return meeting.get_assembly_absents(for_display=True, striked=False) or \
+            u'<p class="discreet">{0}</p>'.format(nothing_defined_msg)
 
     def render(self):
         if self.context.is_assembly_field_used('itemAssemblyAbsents'):

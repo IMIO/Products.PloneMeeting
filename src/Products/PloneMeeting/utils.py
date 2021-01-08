@@ -1270,21 +1270,21 @@ def updateCollectionCriterion(collection, i, v):
             break
 
 
-def toHTMLStrikedContent(plain_content):
+def toHTMLStrikedContent(html_content):
     """
       p_content is HTML having elements to strike between [[]].
       We will replace these [[]] by <strike> tags.
     """
-    plain_content = plain_content.replace('[[', '<strike>').replace(']]', '</strike>')
-    return plain_content
+    html_content = html_content.replace('[[', '<strike>').replace(']]', '</strike>')
+    return html_content
 
 
-def display_as_html(plain_content, obj):
+def display_as_html(plain_content, obj, mark_empty_tags=False):
     """Display p_plain_content as HTML, especially ending lines
        that are not displayed if empty."""
     plain_content = plain_content or ''
     html_content = plain_content.replace('\n', '<br />')
-    if _checkPermission(ModifyPortalContent, obj):
+    if mark_empty_tags and _checkPermission(ModifyPortalContent, obj):
         # replace ending <br /> by empty tags
         splitted = html_content.split('<br />')
         res = []

@@ -140,7 +140,7 @@ class MeetingView(FacetedContainerView):
         """ """
         # initialize member in call because it is Anonymous in __init__ of view...
         self.member = api.user.get_current()
-        # initialize z3c form view widgets
+        # make the 'view' widget available on faceted view
         view = self.context.restrictedTraverse('view')
         view.update()
         self.view_data = view
@@ -178,34 +178,6 @@ class MeetingView(FacetedContainerView):
             self.member.has_permission(ModifyPortalContent, self.context) or
             self._display_available_items_to()) and \
             self.context.wfConditions().may_accept_items()
-
-
-class MeetingBeforeFacetedInfosView(BrowserView):
-    """Informations displayed before the faceted on the meeting_view."""
-
-    def __init__(self, context, request):
-        self.context = context
-        self.request = request
-        self.portal_url = api.portal.get().absolute_url()
-        self.tool = api.portal.get_tool('portal_plonemeeting')
-        self.cfg = self.tool.getMeetingConfig(self.context)
-
-
-class MeetingAfterFacetedInfosView(BrowserView):
-    """Informations displayed after the faceted on the meeting_view."""
-
-    def __init__(self, context, request):
-        self.context = context
-        self.request = request
-        self.portal_url = api.portal.get().absolute_url()
-        self.tool = api.portal.get_tool('portal_plonemeeting')
-        self.cfg = self.tool.getMeetingConfig(self.context)
-
-    def __call__(self):
-        """ """
-        # initialize in call because user is Anonymous in __init__ of view...
-        self.member = api.user.get_current()
-        return super(MeetingAfterFacetedInfosView, self).__call__()
 
 
 class MeetingInsertingMethodsHelpMsgView(BrowserView):

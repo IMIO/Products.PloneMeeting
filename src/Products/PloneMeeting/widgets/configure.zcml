@@ -43,7 +43,7 @@
         template="pm_richtext_edit.pt"
         permission="zope2.View" />
 
-  <!-- text -->
+  <!-- text number -->
   <z3c:widgetTemplate
     mode="input"
     widget=".pm_number.IPMNumberWidget"
@@ -56,6 +56,5 @@
     widget=".pm_selectreadonly.PMSelectReadonlyWidget"
     template="pm_selectreadonly_input.pt"
     layer="z3c.form.interfaces.IFormLayer" />
-
 
 </configure>

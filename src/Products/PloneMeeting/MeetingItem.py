@@ -97,7 +97,6 @@ from Products.PloneMeeting.utils import checkMayQuickEdit
 from Products.PloneMeeting.utils import cleanMemoize
 from Products.PloneMeeting.utils import compute_item_roles_to_assign_to_suffixes
 from Products.PloneMeeting.utils import decodeDelayAwareId
-from Products.PloneMeeting.utils import display_as_html
 from Products.PloneMeeting.utils import down_or_up_wf
 from Products.PloneMeeting.utils import fieldIsEmpty
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
@@ -123,6 +122,7 @@ from Products.PloneMeeting.utils import transformAllRichTextFields
 from Products.PloneMeeting.utils import updateAnnexesAccess
 from Products.PloneMeeting.utils import validate_item_assembly_value
 from Products.PloneMeeting.utils import workday
+from Products.PloneMeeting.widgets.pm_textarea import render_textarea
 from zope.annotation.interfaces import IAnnotations
 from zope.component import getMultiAdapter
 from zope.component import queryUtility
@@ -3531,20 +3531,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             self.reindexObject(idxs=['SearchableText'])
         return res
 
-    security.declarePublic('getItemSignatures')
-
-    def getItemSignatures(self, real=False, for_display=False, **kwargs):
-        '''Gets the signatures for this item. If no signature is defined,
-           meeting signatures are returned.'''
-        res = self.getField('itemSignatures').get(self, **kwargs)
-        if real:
-            return res
-        if not res and self.hasMeeting():
-            res = self.getMeeting().signatures
-        if for_display:
-            res = display_as_html(res, self)
-        return res
-
     security.declarePublic('hasItemSignatures')
 
     def hasItemSignatures(self):
@@ -3623,50 +3609,72 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getItemAssembly')
 
-    def getItemAssembly(self, real=False, **kwargs):
+    def getItemAssembly(self, real=False, for_display=False, **kwargs):
         '''Returns the assembly for this item.
            If no assembly is defined, meeting assembly is returned.'''
         res = self.getField('itemAssembly').get(self, **kwargs)
         if real:
             return res
         if not res and self.hasMeeting():
-            res = self.getMeeting().assembly
+            res = self.getMeeting().assembly.output
+        if for_display:
+            res = render_textarea(res, self)
         return res
 
     security.declarePublic('getItemAssemblyExcused')
 
-    def getItemAssemblyExcused(self, real=False, **kwargs):
+    def getItemAssemblyExcused(self, real=False, for_display=False, **kwargs):
         '''Returns the assembly excused for this item.
            If no excused are defined for item, meeting assembly excused are returned.'''
         res = self.getField('itemAssemblyExcused').get(self, **kwargs)
         if real:
             return res
         if not res and self.hasMeeting():
-            res = self.getMeeting().assembly_excused
+            res = self.getMeeting().assembly_excused.output
+        if for_display:
+            res = render_textarea(res, self)
         return res
 
     security.declarePublic('getItemAssemblyAbsents')
 
-    def getItemAssemblyAbsents(self, real=False, **kwargs):
+    def getItemAssemblyAbsents(self, real=False, for_display=False, **kwargs):
         '''Returns the assembly absents for this item.
            If no absents are defined for item, meeting assembly absents are returned.'''
         res = self.getField('itemAssemblyAbsents').get(self, **kwargs)
         if real:
             return res
         if not res and self.hasMeeting():
-            res = self.getMeeting().assembly_absents
+            res = self.getMeeting().assembly_absents.output
+        if for_display:
+            res = render_textarea(res, self)
         return res
 
     security.declarePublic('getItemAssemblyGuests')
 
-    def getItemAssemblyGuests(self, real=False, **kwargs):
+    def getItemAssemblyGuests(self, real=False, for_display=False, **kwargs):
         '''Returns the assembly guests for this item.
            If no guests are defined for item, meeting assembly guests are returned.'''
         res = self.getField('itemAssemblyGuests').get(self, **kwargs)
         if real:
             return res
         if not res and self.hasMeeting():
-            res = self.getMeeting().assembly_guests
+            res = self.getMeeting().assembly_guests.output
+        if for_display:
+            res = render_textarea(res, self)
+        return res
+
+    security.declarePublic('getItemSignatures')
+
+    def getItemSignatures(self, real=False, for_display=False, **kwargs):
+        '''Gets the signatures for this item. If no signature is defined,
+           meeting signatures are returned.'''
+        res = self.getField('itemSignatures').get(self, **kwargs)
+        if real:
+            return res
+        if not res and self.hasMeeting():
+            res = self.getMeeting().signatures.output
+        if for_display:
+            res = render_textarea(res, self)
         return res
 
     security.declarePublic('displayStrikedItemAssembly')

@@ -39,31 +39,38 @@
     <span class="meeting_attribute_label" i18n:translate='dates-and-data'>Dates and data</span>
   </div>
   <div id="collapsible-dates-and-data"
-       class="collapsible-inner-content"
+       class="collapsible-content"
        style="display: none;"
        tal:define="widgets python: view.view_data.fieldsets['dates_and_data'].widgets.values()">
-    <table class="no-style-table">
-      <tal:loop repeat="widget widgets">
-        <tr tal:attributes="id string:row-${widget/id}">
-            <td class="table_widget_label">
-              <label tal:content="widget/label">Label</label>
-            </td>
-            <td class="table_widget_value" tal:content="structure python:widget.value and widget.render() or '-'">Value</td>
-        </tr>
-      </tal:loop>
-    </table>
+    <div class="collapsible-inner-content">
+      <table class="no-style-table">
+        <tal:loop repeat="widget widgets">
+          <tr tal:attributes="id string:row-${widget/id}">
+              <td class="table_widget_label">
+                <label tal:content="widget/label">Label</label>
+              </td>
+              <td class="table_widget_value" tal:content="structure python:widget.value and widget.render() or '-'">Value</td>
+          </tr>
+        </tal:loop>
+      </table>
+    </div>
   </div>
   <div class="clear"></div>
 
+  <tal:comment replace="nothing">Assembly and signatures</tal:comment>
   <div id="assembly-and-signatures"
-      onclick="togglePersonsCookie();;toggleDetails('collapsible-assembly-and-signatures', toggle_parent_active=true, parent_tag=null, load_view='@@load_meeting_assembly_and_signatures');"
+      onclick="togglePersonsCookie();;toggleDetails('collapsible-assembly-and-signatures',
+                                                    toggle_parent_active=true,
+                                                    parent_tag=null,
+                                                    load_view='@@load_meeting_assembly_and_signatures');"
       class="collapsible discreet">
    <span class="meeting_attribute_label" i18n:translate="assembly_and_signatures">
      Meeting assembly and signatures
    </span>
   </div>
 
-  <div id="collapsible-assembly-and-signatures" class="collapsible-content" style="display: none;">
+  <div id="collapsible-assembly-and-signatures"
+       class="collapsible-content" style="display: none;">
     <div class="collapsible-inner-content">
       <img tal:attributes="src string:${portal_url}/spinner_small.gif" />
     </div>
@@ -118,9 +125,6 @@
     <div style="display: none" id="faceted-version"
       tal:content="here/@@faceted_version|string:" />
   </div>
-
-  <tal:comment replace="nothing">XXX changed for PM, infos displayed after the faceted table.</tal:comment>
-  <tal:meetingBeforeFacetedInfos replace="structure context/@@meeting-after-faceted-infos" />
 
 </div>
 
