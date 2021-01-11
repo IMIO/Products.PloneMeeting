@@ -184,21 +184,21 @@ class IMeeting(IDXMeetingContent):
     form.widget('in_and_out_moves', PMRichTextFieldWidget)
     in_and_out_moves = RichText(
         title=_(u"title_in_and_out_moves"),
-        description=_("field_reserved_to_meeting_managers_descr"),
+        description=_("descr_field_reserved_to_meeting_managers"),
         required=False,
         allowed_mime_types=(u"text/html", ))
 
     form.widget('notes', PMRichTextFieldWidget)
     notes = RichText(
         title=_(u"title_notes"),
-        description=_("field_reserved_to_meeting_managers_descr"),
+        description=_("descr_field_reserved_to_meeting_managers"),
         required=False,
         allowed_mime_types=(u"text/html", ))
 
     form.widget('observations', PMRichTextFieldWidget)
     observations = RichText(
         title=_(u"title_observations"),
-        description=_("field_vieawable_by_everyone_descr"),
+        description=_("descr_field_vieawable_by_everyone"),
         required=False,
         allowed_mime_types=(u"text/html", ))
 
@@ -214,56 +214,56 @@ class IMeeting(IDXMeetingContent):
     form.widget('pre_observations', PMRichTextFieldWidget)
     pre_observations = RichText(
         title=_(u"title_pre_observations"),
-        description=_("field_vieawable_by_everyone_descr"),
+        description=_("descr_field_vieawable_by_everyone"),
         required=False,
         allowed_mime_types=(u"text/html", ))
 
     form.widget('committee_observations', PMRichTextFieldWidget)
     committee_observations = RichText(
         title=_(u"title_committee_observations"),
-        description=_("field_vieawable_by_everyone_descr"),
+        description=_("descr_field_vieawable_by_everyone"),
         required=False,
         allowed_mime_types=(u"text/html", ))
 
     form.widget('votes_observations', PMRichTextFieldWidget)
     votes_observations = RichText(
         title=_(u"title_votes_observations"),
-        description=_("field_vieawable_by_everyone_once_meeting_decided_descr"),
+        description=_("descr_field_vieawable_by_everyone_once_meeting_decided"),
         required=False,
         allowed_mime_types=(u"text/html", ))
 
     form.widget('public_meeting_observations', PMRichTextFieldWidget)
     public_meeting_observations = RichText(
         title=_(u"title_public_meeting_observations"),
-        description=_("field_vieawable_by_everyone_descr"),
+        description=_("descr_field_vieawable_by_everyone"),
         required=False,
         allowed_mime_types=(u"text/html", ))
 
     form.widget('secret_meeting_observations', PMRichTextFieldWidget)
     secret_meeting_observations = RichText(
         title=_(u"title_secret_meeting_observations"),
-        description=_("field_reserved_to_meeting_managers_descr"),
+        description=_("descr_field_reserved_to_meeting_managers"),
         required=False,
         allowed_mime_types=(u"text/html", ))
 
     form.widget('authority_notice', PMRichTextFieldWidget)
     authority_notice = RichText(
         title=_(u"title_authority_notice"),
-        description=_("field_reserved_to_meeting_managers_descr"),
+        description=_("descr_field_reserved_to_meeting_managers"),
         required=False,
         allowed_mime_types=(u"text/html", ))
 
     form.write_permission(meeting_number=ManagePortal)
     meeting_number = Int(
         title=_(u"title_meeting_number"),
-        description=_("field_reserved_to_meeting_managers_descr"),
+        description=_("descr_field_reserved_to_meeting_managers"),
         default=-1,
         required=False)
 
     form.write_permission(first_item_number=ManagePortal)
     first_item_number = Int(
         title=_(u"title_first_item_number"),
-        description=_("field_reserved_to_meeting_managers_descr"),
+        description=_("descr_field_reserved_to_meeting_managers"),
         default=-1,
         required=False)
 
@@ -419,7 +419,7 @@ class Meeting(Container):
         'votes_observations':
             {'optional': True,
              'force_eval_condition': False,
-             'condition': ""},
+             'condition': "python:view.show_votes_observations()"},
         'public_meeting_observations':
             {'optional': True,
              'force_eval_condition': False,
@@ -1763,19 +1763,6 @@ class Meeting(Container):
         return (self.attribute_is_used('attendees') or
                 self.get_attendees()) and not self.assembly
 
-    security.declarePublic('show_votes_observations')
-
-    def show_votes_observations(self):
-        '''See doc in interfaces.py.'''
-        meeting = self.getSelf()
-        tool = api.portal.get_tool('portal_plonemeeting')
-        res = tool.isManager(meeting)
-        if not res:
-            cfg = tool.getMeetingConfig(meeting)
-            res = tool.isPowerObserverForCfg(cfg) or \
-                meeting.adapted().is_decided()
-        return res
-
     security.declarePublic('show_votes')
 
     def show_votes(self):
@@ -1835,23 +1822,6 @@ class Meeting(Container):
         member = api.user.get_current()
         return bool(member.has_permission(ModifyPortalContent, meeting) and
                     not meeting.query_state() in meeting.MEETINGCLOSEDSTATES)
-
-    security.declarePublic('getLabelAssembly')
-
-    def getLabelAssembly(self):
-        '''
-          Depending on the fact that we use 'assembly' alone or
-          'assembly, excused, absents', we will translate the 'assembly' label
-          a different way.
-        '''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self)
-        usedMeetingAttributes = cfg.getUsedMeetingAttributes()
-        if 'assemblyExcused' in usedMeetingAttributes or \
-           'assemblyAbsents' in usedMeetingAttributes:
-            return _('PloneMeeting_label_attendees')
-        else:
-            return _('meeting_assembly')
 
 
 class MeetingSchemaPolicy(DexteritySchemaPolicy):

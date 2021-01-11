@@ -59,6 +59,19 @@ def manage_fields(the_form):
                 group.fields = group.fields.omit(field_name)
 
 
+def manage_label_assembly(the_form):
+    '''
+      Depending on the fact that we use 'assembly' alone or
+      'assembly, excused, absents', we will translate the 'assembly' label
+      a different way.
+    '''
+    widgets = getattr(the_form, 'w', None) or the_form.widgets
+    if 'assembly' in widgets:
+        if 'assembly_excused' in widgets or \
+           'assembly_absents' in widgets:
+            widgets['assembly'].label = _('assembly_attendees_title')
+
+
 class MeetingConditions(object):
     """ """
 
@@ -73,11 +86,22 @@ class MeetingConditions(object):
             return [field_name for field_name in field_names
                     if self.show_field(field_name)]
 
+    def show_votes_observations(self):
+        '''Show the votes_observations field to
+           meeting managers and power observers.'''
+        res = self.tool.isManager(self.context)
+        if not res:
+            res = self.tool.isPowerObserverForCfg(self.cfg) or \
+                (self.context.__class__.__name__ == 'Meeting' and
+                 self.context.adapted().is_decided())
+        return res
+
     def show_field(self, field_name):
         '''Show the p_field_name field?
            Must be enabled and or not empty.'''
         return field_name in self.used_attrs or \
-            (self.context.__class__.__name__ == 'Meeting' and getattr(self, field_name, None))
+            (self.context.__class__.__name__ == 'Meeting' and
+             getattr(self.context, field_name, None))
 
 
 class MeetingDefaultView(DefaultView, MeetingConditions):
@@ -89,6 +113,10 @@ class MeetingDefaultView(DefaultView, MeetingConditions):
         self.cfg = self.tool.getMeetingConfig(self.context)
         self.used_attrs = self.cfg.getUsedMeetingAttributes()
         manage_fields(self)
+
+    def _update(self):
+        super(MeetingDefaultView, self)._update()
+        manage_label_assembly(self)
 
 
 class MeetingEdit(DefaultEditForm, MeetingConditions):
@@ -103,6 +131,16 @@ class MeetingEdit(DefaultEditForm, MeetingConditions):
         self.used_attrs = self.cfg.getUsedMeetingAttributes()
         manage_fields(self)
 
+    def update(self):
+        super(MeetingEdit, self).update()
+        # shortcut 'widget' dictionary for all fieldsets
+        # like in plone.autoform
+        self.w = {}
+        for group in self.groups:
+            for k, v in group.widgets.items():
+                self.w[k] = v
+        manage_label_assembly(self)
+
 
 class MeetingAddForm(DefaultAddForm, MeetingConditions):
 
@@ -112,6 +150,16 @@ class MeetingAddForm(DefaultAddForm, MeetingConditions):
         self.cfg = self.tool.getMeetingConfig(self.context)
         self.used_attrs = self.cfg.getUsedMeetingAttributes()
         manage_fields(self)
+
+    def update(self):
+        super(MeetingAddForm, self).update()
+        # shortcut 'widget' dictionary for all fieldsets
+        # like in plone.autoform
+        self.w = {}
+        for group in self.groups:
+            for k, v in group.widgets.items():
+                self.w[k] = v
+        manage_label_assembly(self)
 
 
 class MeetingAdd(DefaultAddView):
