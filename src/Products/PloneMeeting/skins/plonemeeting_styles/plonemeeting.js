@@ -611,6 +611,9 @@ function init_ckeditor(event) {
 }
 
 function exitCKeditor(field_name, base_url) {
+  // make sure ajxsave is not async so content is saved before being shown again
+  ajaxsave = CKEDITOR.instances[field_name].getCommand('ajaxsave');
+  ajaxsave.async = false;
   CKEDITOR.instances[field_name].execCommand('ajaxsave', 'saveCmd');
   CKEDITOR.instances[field_name].destroy();
   tag=$('div#hook_' + field_name)[0];
@@ -807,10 +810,12 @@ function onScrollMeetingView() {
     if ((iframe_top ) < 0) {
       table = $("iframe").contents().find('table');
       header = $("iframe").contents().find('table thead');
-      table_top = table.offset().top;
-      portal_header_height = $("#portal-header").height();
-      $("th", header).css("top",
-                          (table_top - iframe_top - (table_top - portal_header_height)).toString() + "px");
+      if (table.length && header.length) {
+        table_top = table.offset().top;
+        portal_header_height = $("#portal-header").height();
+        $("th", header).css("top",
+                            (table_top - iframe_top - (table_top - portal_header_height)).toString() + "px");
+      }
     }
   }
 }
