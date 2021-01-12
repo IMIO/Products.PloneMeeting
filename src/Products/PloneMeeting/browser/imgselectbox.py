@@ -59,55 +59,6 @@ class BaseImgSelectBoxView(BrowserView):
         return selectable_value.get('name')
 
 
-class AnnexTypeImgSelectBoxView(BaseImgSelectBoxView):
-    """ """
-
-    @property
-    def select_box_name(self):
-        """ """
-        return 'annex_type_img_select_box'
-
-    @property
-    def value_name(self):
-        """ """
-        return 'annex_type'
-
-    def selected_value_html(self):
-        """ """
-        selected_value = self.selected_value()
-        return """
-<img id="idImage1" src="{0}" alt="" class="ploneMeetingSelectImage" />
-<span id="idButtonText1" class="ploneMeetingRef">{1}</span>
-""".format(selected_value['img_url'], selected_value['label'])
-
-    @memoize
-    def selected_value(self):
-        """ """
-        annexType = self.request.get('annex_type')
-        uid_catalog = api.portal.get_tool('uid_catalog')
-        mft = uid_catalog(UID=annexType.split('__subtype__')[0])[0].getObject()
-        mftData = '__subtype__' in annexType and mft._dataFor(annexType.split('__subtype__')[1]) or mft._dataFor()
-        return {'img_url': mft.absolute_url() + '/theIcon',
-                'label': mftData['name']}
-
-    def selectable_value_html(self, num, selectable_value):
-        """ """
-        return """
-<img class="ploneMeetingSelectImage" src="{0}" id="idImage_{1}">
-<span>{2}</span>
-""".format(selectable_value['absolute_url'] + '/theIcon',
-           self.select_box_name + '1' + str(num),
-           selectable_value['name'])
-
-    def getSelectableValues(self):
-        """ """
-        return self.fileTypes
-
-    def selectable_value_class(self, selectable_value):
-        """ """
-        return '__subtype__' in selectable_value['id'] and 'ploneMeetingSelectItem subtype' or 'ploneMeetingSelectItem'
-
-
 class GoToMeetingImgSelectBoxView(BaseImgSelectBoxView):
     """ """
 

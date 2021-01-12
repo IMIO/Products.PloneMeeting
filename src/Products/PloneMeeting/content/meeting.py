@@ -1463,19 +1463,14 @@ class Meeting(Container):
         cfg = tool.getMeetingConfig(self)
         used_attrs = cfg.getUsedMeetingAttributes()
         # Initialize the effective start date with the meeting date
-        if 'start_date' in used_attrs:
-            self.start_date(self.date)
+        if 'start_date' in used_attrs and not self.start_date:
+            self.start_date = self.date
         # Set, by default, mid date to start date + 1 hour.
-        if 'mid_date' in used_attrs:
+        if 'mid_date' in used_attrs and not self.mid_date:
             self.mid_date = self.date + timedelta(hours=1)
         # Set, by default, end date to start date + 2 hours.
-        if 'end_date' in used_attrs:
+        if 'end_date' in used_attrs and not self.end_date:
             self.end_date = self.date + timedelta(hours=2)
-        if 'pre_meeting_date' in used_attrs and not self.pre_meeting_date:
-            # Compute the date for the pre-meeting
-            delta = cfg.getPreMeetingDateDefault()
-            if not delta.strip() in ('', '0',):
-                self.pre_meeting_date = self.date - timedelta(hours=int(delta))
 
     security.declarePublic('get_user_replacements')
 

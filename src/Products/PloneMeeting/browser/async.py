@@ -287,7 +287,7 @@ class AsyncRenderSearchTerm(BrowserView):
         date = get_cachekey_volatile('Products.PloneMeeting.Meeting.modified')
         # return meeting.UID if we are on a meeting or None if not
         # as portlet is highlighting the meeting we are on
-        meeting_uid = self.context.meta_type == 'Meeting' and self.context.UID() or None
+        meeting_uid = self.context.__class__.__name__ == 'Meeting' and self.context.UID() or None
         collection_uid = self.request.get('collection_uid')
         return (userGroups,
                 cfg_modified,
@@ -521,7 +521,7 @@ class AsyncLoadMeetingAssemblyAndSignatures(BrowserView, MeetingConditions):
            of signatures are displayed on screen correctly."""
         return display_as_html(self.context.signatures.output, self.context)
 
-    #@ram.cache(__call___cachekey)
+    @ram.cache(__call___cachekey)
     def __call__(self):
         """ """
         self._update()
