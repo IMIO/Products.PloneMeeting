@@ -2,6 +2,7 @@
 
 from AccessControl import ClassSecurityInfo
 from collections import OrderedDict
+from collective.dexteritytextindexer.directives import searchable
 from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.contact.plonegroup.config import get_registry_organizations
 from copy import deepcopy
@@ -170,6 +171,7 @@ class IMeeting(IDXMeetingContent):
         output_mime_type='text/plain',
         required=False)
 
+    searchable("place")
     place = TextLine(
         title=_(u"title_place"),
         required=False)
@@ -181,6 +183,7 @@ class IMeeting(IDXMeetingContent):
         default=False,
         required=False)
 
+    searchable("in_and_out_moves")
     form.widget('in_and_out_moves', PMRichTextFieldWidget)
     in_and_out_moves = RichText(
         title=_(u"title_in_and_out_moves"),
@@ -188,6 +191,7 @@ class IMeeting(IDXMeetingContent):
         required=False,
         allowed_mime_types=(u"text/html", ))
 
+    searchable("notes")
     form.widget('notes', PMRichTextFieldWidget)
     notes = RichText(
         title=_(u"title_notes"),
@@ -195,6 +199,7 @@ class IMeeting(IDXMeetingContent):
         required=False,
         allowed_mime_types=(u"text/html", ))
 
+    searchable("observations")
     form.widget('observations', PMRichTextFieldWidget)
     observations = RichText(
         title=_(u"title_observations"),
@@ -207,10 +212,12 @@ class IMeeting(IDXMeetingContent):
         title=_(u'title_pre_meeting_date'),
         required=False)
 
+    searchable("pre_meeting_place")
     pre_meeting_place = TextLine(
         title=_(u"title_pre_meeting_place"),
         required=False)
 
+    searchable("pre_observations")
     form.widget('pre_observations', PMRichTextFieldWidget)
     pre_observations = RichText(
         title=_(u"title_pre_observations"),
@@ -218,6 +225,7 @@ class IMeeting(IDXMeetingContent):
         required=False,
         allowed_mime_types=(u"text/html", ))
 
+    searchable("committee_observations")
     form.widget('committee_observations', PMRichTextFieldWidget)
     committee_observations = RichText(
         title=_(u"title_committee_observations"),
@@ -225,6 +233,7 @@ class IMeeting(IDXMeetingContent):
         required=False,
         allowed_mime_types=(u"text/html", ))
 
+    searchable("votes_observations")
     form.widget('votes_observations', PMRichTextFieldWidget)
     votes_observations = RichText(
         title=_(u"title_votes_observations"),
@@ -232,6 +241,7 @@ class IMeeting(IDXMeetingContent):
         required=False,
         allowed_mime_types=(u"text/html", ))
 
+    searchable("public_meeting_observations")
     form.widget('public_meeting_observations', PMRichTextFieldWidget)
     public_meeting_observations = RichText(
         title=_(u"title_public_meeting_observations"),
@@ -239,6 +249,7 @@ class IMeeting(IDXMeetingContent):
         required=False,
         allowed_mime_types=(u"text/html", ))
 
+    searchable("secret_meeting_observations")
     form.widget('secret_meeting_observations', PMRichTextFieldWidget)
     secret_meeting_observations = RichText(
         title=_(u"title_secret_meeting_observations"),
@@ -246,6 +257,7 @@ class IMeeting(IDXMeetingContent):
         required=False,
         allowed_mime_types=(u"text/html", ))
 
+    searchable("authority_notice")
     form.widget('authority_notice', PMRichTextFieldWidget)
     authority_notice = RichText(
         title=_(u"title_authority_notice"),
