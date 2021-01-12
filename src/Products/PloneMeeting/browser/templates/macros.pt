@@ -334,7 +334,8 @@ document.location.reload(true);
  <div metal:use-macro="context/global_statusmessage/macros/portal_message">
    Portal status message
  </div>
-<table tal:define="allUsers python:meeting.get_all_used_held_positions();
+<table tal:define="get_all_used_held_positions python: modules['Products.PloneMeeting.browser.meeting'].get_all_used_held_positions;
+                   allUsers python:get_all_used_held_positions(meeting);
                    show_votes python:view.show_votes;
                    excused python:meeting.get_excused();
                    absents python:meeting.get_absents();
@@ -345,7 +346,7 @@ document.location.reload(true);
                    itemAbsents python:context.get_item_absents();
                    itemExcused python:context.get_item_excused();
                    itemNonAttendees python:context.get_item_non_attendees();
-                   itemVotes python:view.itemVotes;
+                   itemVotes python:view.item_votes;
                    showExcused python: 'excused' in usedMeetingAttributes or excused;
                    showAbsents python: 'absents' in usedMeetingAttributes or absents or itemAbsents;
                    showSignatories python: 'signatories' in usedMeetingAttributes or itemSignatories;

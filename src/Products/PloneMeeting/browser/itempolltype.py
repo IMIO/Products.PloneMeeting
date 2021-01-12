@@ -49,7 +49,7 @@ class ChangeItemPollTypeView(BrowserView):
         '''Helper method that changes pollType value and check that :
            - new_value is among selectable pollType values;
            - user actually mayChangePollType;
-           - adapt Meeting.itemVotes values.'''
+           - adapt Meeting.item_votes values.'''
         # make sure new_value exists
         factory = queryUtility(IVocabularyFactory,
                                'Products.PloneMeeting.vocabularies.polltypesvocabulary')

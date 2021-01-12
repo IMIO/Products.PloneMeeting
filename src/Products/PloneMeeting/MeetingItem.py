@@ -3915,6 +3915,17 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         voters = meeting.get_voters(uids=attendee_uids, the_objects=theObjects)
         return voters
 
+    def _voteIsDeletable(self, vote_number):
+        """ """
+        res = False
+        item_votes = self.getMeeting().get_item_votes().get(self.UID())
+        if item_votes:
+            vote_infos = item_votes[vote_number]
+            if vote_infos['linked_to_previous'] or \
+               not next_vote_is_linked(item_votes, vote_number):
+                res = True
+        return res
+
     def get_in_and_out_attendees(self, ignore_before_first_item=True, the_objects=True):
         """Returns a dict with informations about assembly moves :
            - who left at the beginning of the item;
@@ -6820,7 +6831,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         res = 0
         itemVotes = self.get_item_votes(vote_number)
         item_voter_uids = self.get_item_voters()
-        # when initializing, so Meeting.itemVotes is empty
+        # when initializing, so Meeting.item_votes is empty
         # only return count for NOT_ENCODED_VOTE_VALUE
         if not itemVotes and vote_value == NOT_ENCODED_VOTE_VALUE:
             res = len(item_voter_uids)
@@ -6893,17 +6904,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            item_absents/item_excused/item_non_attendees/votes/..."""
         return self.hasMeeting() and checkMayQuickEdit(
             self, bypassWritePermissionCheck=True, onlyForManagers=True)
-
-    def _voteIsDeletable(self, vote_number):
-        """ """
-        res = False
-        item_votes = self.getMeeting().itemVotes.get(self.UID())
-        if item_votes:
-            vote_infos = item_votes[vote_number]
-            if vote_infos['linked_to_previous'] or \
-               not next_vote_is_linked(item_votes, vote_number):
-                res = True
-        return res
 
     def displayProposingGroupUsers(self):
         """ """

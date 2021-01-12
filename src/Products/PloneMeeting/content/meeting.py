@@ -715,71 +715,6 @@ class Meeting(Container):
                              domain='PloneMeeting',
                              context=self.REQUEST)
 
-    security.declarePublic('get_all_used_held_positions')
-
-    def get_all_used_held_positions(self, include_new=False, the_objects=True):
-        '''This will return every currently stored held_positions.
-           If include_new=True, extra held_positions newly selected in the
-           configuration are added.
-           If p_the_objects=True, we return held_position objects, UID otherwise.
-           '''
-        # used Persons are held_positions stored in orderedContacts
-        contacts = hasattr(self.aq_base, 'ordered_contacts') and list(self.ordered_contacts) or []
-        if include_new:
-            # now getOrderedContacts from MeetingConfig and append new contacts at the end
-            # this is the case while adding new contact and editing existing meeting
-            tool = api.portal.get_tool('portal_plonemeeting')
-            cfg = tool.getMeetingConfig(self)
-            selectable_contacts = cfg.getOrderedContacts()
-            new_selectable_contacts = [c for c in selectable_contacts if c not in contacts]
-            contacts = contacts + new_selectable_contacts
-
-        if the_objects:
-            # query held_positions
-            catalog = api.portal.get_tool('portal_catalog')
-            brains = catalog(UID=contacts)
-
-            # make sure we have correct order because query was not sorted
-            # we need to sort found brains according to uids
-            def get_key(item):
-                return contacts.index(item.UID)
-            brains = sorted(brains, key=get_key)
-            contacts = [brain.getObject() for brain in brains]
-        return tuple(contacts)
-
-    security.declarePublic('get_default_attendees')
-
-    def get_default_attendees(self):
-        '''The default attendees are the active held_positions
-           with 'present' in defaults.'''
-        res = []
-        used_held_positions = self.get_all_used_held_positions(include_new=True)
-        res = [held_pos.UID() for held_pos in used_held_positions
-               if held_pos.defaults and 'present' in held_pos.defaults]
-        return res
-
-    security.declarePublic('get_default_signatories')
-
-    def get_default_signatories(self):
-        '''The default signatories are the active held_positions
-           with a defined signature_number.'''
-        res = []
-        used_held_positions = self.get_all_used_held_positions(include_new=True)
-        res = [held_pos for held_pos in used_held_positions
-               if held_pos.defaults and 'present' in held_pos.defaults and held_pos.signature_number]
-        return {signer.UID(): signer.signature_number for signer in res}
-
-    security.declarePublic('get_default_voters')
-
-    def get_default_voters(self):
-        '''The default voters are the active held_positions
-           with 'voter' in defaults.'''
-        res = []
-        used_held_positions = self.get_all_used_held_positions(include_new=True)
-        res = [held_pos.UID() for held_pos in used_held_positions
-               if held_pos.defaults and 'voter' in held_pos.defaults]
-        return res
-
     def _get_contacts(self, contact_type=None, uids=None, the_objects=False):
         """ """
         res = []
@@ -941,10 +876,10 @@ class Meeting(Container):
         """ """
         data = deepcopy(data)
         item_uid = item.UID()
-        # set new itemVotes value on meeting
+        # set new item_votes value on meeting
         # first votes
         if item_uid not in self.item_votes:
-            self.itemVotes[item_uid] = PersistentList()
+            self.item_votes[item_uid] = PersistentList()
             # check if we are not adding a new vote on an item containing no votes at all
             if vote_number == 1:
                 # add an empty vote 0
@@ -954,7 +889,7 @@ class Meeting(Container):
                     include_unexisting=True)
                 # make sure we use persistent for 'voters'
                 data_item_vote_0['voters'] = PersistentMapping(data_item_vote_0['voters'])
-                self.itemVotes[item_uid].append(PersistentMapping(data_item_vote_0))
+                self.item_votes[item_uid].append(PersistentMapping(data_item_vote_0))
         new_voters = data.get('voters')
         # new vote_number
         if vote_number + 1 > len(self.item_votes[item_uid]):
@@ -1762,13 +1697,6 @@ class Meeting(Container):
         if not as_int:
             total = str(total)
         return total
-
-    security.declarePublic('show_attendees_fields')
-
-    def show_attendees_fields(self):
-        '''Display attendee related fields in view/edit?'''
-        return (self.attribute_is_used('attendees') or
-                self.get_attendees()) and not self.assembly
 
     security.declarePublic('show_votes')
 

@@ -113,3 +113,4 @@ def initialize(context):
 
     from AccessControl import allow_module
     allow_module('Products.PloneMeeting.utils')
+    allow_module('Products.PloneMeeting.browser.meeting')

@@ -21,9 +21,12 @@ from Products.PloneMeeting.config import ITEM_INSERT_METHODS
 from Products.PloneMeeting.content.meeting import Meeting
 from Products.PloneMeeting.MeetingConfig import POWEROBSERVERPREFIX
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
+from z3c.form.contentprovider import ContentProviders
+from z3c.form.interfaces import IFieldsAndContentProvidersForm
 from zope.browserpage.viewpagetemplatefile import ViewPageTemplateFile
 from zope.contentprovider.provider import ContentProviderBase
 from zope.i18n import translate
+from zope.interface import implements
 
 
 def manage_fields(the_form):
@@ -113,6 +116,12 @@ class MeetingConditions(object):
             (self.context.__class__.__name__ == 'Meeting' and
              getattr(self.context, field_name, None))
 
+    def show_attendees_fields(self):
+        '''Display attendee related fields in view/edit?'''
+        return ('attendees' in self.used_attrs or
+                (self.context.__class__.__name__ == 'Meeting' and
+                 self.context.get_attendees() and not self.context.get_assembly()))
+
 
 class MeetingDefaultView(DefaultView, MeetingConditions):
     """ """
@@ -129,7 +138,7 @@ class MeetingDefaultView(DefaultView, MeetingConditions):
         manage_label_assembly(self)
 
 
-class AttendeesEditProvider(ContentProviderBase):
+class AttendeesEditProvider(ContentProviderBase, MeetingConditions):
 
     template = \
         ViewPageTemplateFile('templates/meeting_attendees_edit.pt')
@@ -145,22 +154,132 @@ class AttendeesEditProvider(ContentProviderBase):
     def render(self):
         return self.template()
 
+    def get_all_users(self):
+        """ """
+        return get_all_used_held_positions(self.context, include_new=True)
+
+    def get_attendees(self):
+        """ """
+        is_meeting = self.context.__class__.__name__ == 'Meeting'
+        attendees = []
+        if is_meeting:
+            attendees = self.context.get_attendees()
+        else:
+            attendees = self._get_default_attendees()
+        return attendees
+
+    def get_excused(self):
+        """ """
+        is_meeting = self.context.__class__.__name__ == 'Meeting'
+        excused = []
+        if is_meeting:
+            excused = self.context.get_excused()
+        return excused
+
+    def get_absents(self):
+        """ """
+        is_meeting = self.context.__class__.__name__ == 'Meeting'
+        absents = []
+        if is_meeting:
+            absents = self.context.get_absents()
+        return absents
+
+    def get_signatories(self):
+        """ """
+        is_meeting = self.context.__class__.__name__ == 'Meeting'
+        signatories = []
+        if is_meeting:
+            signatories = self.context.get_signatories()
+        else:
+            signatories = self._get_default_signatories()
+        return signatories
+
+    def get_user_replacements(self):
+        """ """
+        is_meeting = self.context.__class__.__name__ == 'Meeting'
+        replacers = []
+        if is_meeting:
+            replacers = self.context.get_user_replacements()
+        return replacers
+
+    def get_voters(self):
+        """ """
+        is_meeting = self.context.__class__.__name__ == 'Meeting'
+        voters = []
+        if is_meeting:
+            voters = self.context.get_voters()
+        else:
+            voters = self._get_default_voters()
+        return voters
+
+    def _get_default_attendees(self):
+        '''The default attendees are the active held_positions
+           with 'present' in defaults.'''
+        res = []
+        used_held_positions = get_all_used_held_positions(self.context, include_new=True)
+        res = [held_pos.UID() for held_pos in used_held_positions
+               if held_pos.defaults and 'present' in held_pos.defaults]
+        return res
+
+    def _get_default_signatories(self):
+        '''The default signatories are the active held_positions
+           with a defined signature_number.'''
+        res = []
+        used_held_positions = get_all_used_held_positions(self.context, include_new=True)
+        res = [held_pos for held_pos in used_held_positions
+               if held_pos.defaults and 'present' in held_pos.defaults and held_pos.signature_number]
+        return {signer.UID(): signer.signature_number for signer in res}
+
+    def _get_default_voters(self):
+        '''The default voters are the active held_positions
+           with 'voter' in defaults.'''
+        res = []
+        used_held_positions = get_all_used_held_positions(self.context, include_new=True)
+        res = [held_pos.UID() for held_pos in used_held_positions
+               if held_pos.defaults and 'voter' in held_pos.defaults]
+        return res
+
+
+def get_all_used_held_positions(obj, include_new=False, the_objects=True):
+    '''This will return every currently stored held_positions.
+       If include_new=True, extra held_positions newly selected in the
+       configuration are added.
+       If p_the_objects=True, we return held_position objects, UID otherwise.
+       '''
+    # used Persons are held_positions stored in orderedContacts
+    contacts = hasattr(obj.aq_base, 'ordered_contacts') and list(obj.ordered_contacts) or []
+    if include_new:
+        # now getOrderedContacts from MeetingConfig and append new contacts at the end
+        # this is the case while adding new contact and editing existing meeting
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(obj)
+        selectable_contacts = cfg.getOrderedContacts()
+        new_selectable_contacts = [c for c in selectable_contacts if c not in contacts]
+        contacts = contacts + new_selectable_contacts
+
+    if the_objects:
+        # query held_positions
+        catalog = api.portal.get_tool('portal_catalog')
+        brains = catalog(UID=contacts)
+
+        # make sure we have correct order because query was not sorted
+        # we need to sort found brains according to uids
+        def get_key(item):
+            return contacts.index(item.UID)
+        brains = sorted(brains, key=get_key)
+        contacts = [brain.getObject() for brain in brains]
+    return tuple(contacts)
+
 
 class MeetingEdit(DefaultEditForm, MeetingConditions):
     """
         Edit form redefinition to customize fields.
     """
-    from z3c.form.interfaces import IFieldsAndContentProvidersForm
-    from zope.contentprovider.provider import ContentProviderBase
-    from zope.interface import implements
-    from z3c.form.contentprovider import ContentProviders
-
     implements(IFieldsAndContentProvidersForm)
     contentProviders = ContentProviders()
     contentProviders['attendees_edit_provider'] = AttendeesEditProvider
     # defining a contentProvider position is mandatory...
-    contentProviders['attendees_edit_provider'].position = 20
-    label = u""
+    contentProviders['attendees_edit_provider'].position = 0
 
     def updateFields(self):
         super(MeetingEdit, self).updateFields()
@@ -183,6 +302,12 @@ class MeetingEdit(DefaultEditForm, MeetingConditions):
 
 
 class MeetingAddForm(DefaultAddForm, MeetingConditions):
+
+    implements(IFieldsAndContentProvidersForm)
+    contentProviders = ContentProviders()
+    contentProviders['attendees_edit_provider'] = AttendeesEditProvider
+    # defining a contentProvider position is mandatory...
+    contentProviders['attendees_edit_provider'].position = 0
 
     def updateFields(self):
         super(MeetingAddForm, self).updateFields()

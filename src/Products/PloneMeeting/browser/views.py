@@ -32,6 +32,7 @@ from Products.CMFCore.utils import _checkPermission
 from Products.CMFPlone.utils import safe_unicode
 from Products.Five import BrowserView
 from Products.PloneMeeting import logger
+from Products.PloneMeeting.browser.meeting import get_all_used_held_positions
 from Products.PloneMeeting.browser.itemchangeorder import _is_integer
 from Products.PloneMeeting.browser.itemvotes import _get_linked_item_vote_numbers
 from Products.PloneMeeting.columns import render_item_annexes
@@ -775,7 +776,7 @@ class BaseDGHV(object):
         excused = []
         replaced = []
         if meeting:
-            contacts = meeting.get_all_used_held_positions()
+            contacts = get_all_used_held_positions(meeting)
             excused = meeting.get_excused()
             absents = meeting.get_absents()
             replaced = meeting.get_replacements()

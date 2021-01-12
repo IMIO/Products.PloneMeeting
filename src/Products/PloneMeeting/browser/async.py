@@ -9,6 +9,7 @@ from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.utils import _checkPermission
 from Products.Five import BrowserView
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
+from Products.PloneMeeting.browser.meeting import get_all_used_held_positions
 from Products.PloneMeeting.browser.meeting import MeetingConditions
 from Products.PloneMeeting.config import NOT_VOTABLE_LINKED_TO_VALUE
 from Products.PloneMeeting.config import WriteBudgetInfos
@@ -336,7 +337,7 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
         """Returns informations regarding votes count."""
         data = []
         counts = []
-        for vote_number in range(len(self.itemVotes)):
+        for vote_number in range(len(self.item_votes)):
             sub_counts = []
             total_votes = self.context.getVoteCount('any_votable', vote_number)
             number_of_votes_msg = translate(
@@ -374,7 +375,7 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
 
     def compute_next_vote_number(self):
         """Return next vote_number."""
-        return len(self.itemVotes)
+        return len(self.item_votes)
 
     def show_add_vote_linked_to_previous_icon(self, vote_number):
         """Show add linked_to_previous icon only on last element.
@@ -383,7 +384,7 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
            - not linked_to_previous element does not use forbidden vote_values,
              aka vote_values not in MeetingConfig.firstLinkedVoteUsedVoteValues."""
         res = False
-        vote_infos = self.itemVotes[vote_number]
+        vote_infos = self.item_votes[vote_number]
         if (vote_infos['vote_number'] + 1 == self.next_vote_number):
             if vote_infos['linked_to_previous']:
                 res = True
@@ -446,7 +447,7 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
         if self.show_votes:
             self.votesAreSecret = self.context.get_votes_are_secret()
             self.voters = self.context.get_item_voters() or []
-            self.itemVotes = self.context.get_item_votes(
+            self.item_votes = self.context.get_item_votes(
                 include_unexisting=True,
                 ignored_vote_values=[NOT_VOTABLE_LINKED_TO_VALUE]) or []
             self.voted_voters = ()
@@ -459,7 +460,7 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
         else:
             self.votesAreSecret = False
             self.voters = []
-            self.itemVotes = []
+            self.item_votes = []
             self.voted_voters = []
             self.next_vote_number = None
             self.counts = None
@@ -469,6 +470,10 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
         """ """
         self._update()
         return self.index()
+
+    def get_all_used_held_positions(self):
+        """ """
+        return get_all_used_held_positions(self.meeting)
 
 
 class AsyncLoadMeetingAssemblyAndSignatures(BrowserView, MeetingConditions):
@@ -500,6 +505,10 @@ class AsyncLoadMeetingAssemblyAndSignatures(BrowserView, MeetingConditions):
                 item_votes,
                 context_uid,
                 cache_date)
+
+    def get_all_used_held_positions(self):
+        """ """
+        return get_all_used_held_positions(self.context)
 
     def _update(self):
         """ """

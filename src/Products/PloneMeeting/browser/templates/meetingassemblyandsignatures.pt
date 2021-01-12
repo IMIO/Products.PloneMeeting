@@ -1,16 +1,17 @@
 <tal:comment replace="nothing">Attendees, excused, absents, replacements, signatories</tal:comment>
 <table id="meeting_users" class="listing discreet faceted-table-results" cellspacing="0" cellpadding="0"
-       tal:condition="context/show_attendees_fields"
+       tal:condition="python: view.show_attendees_fields()"
        i18n:domain="PloneMeeting">
-  <tal:defines define="allUsers context/get_all_used_held_positions;
+  <tal:defines define="get_all_used_held_positions python: modules['Products.PloneMeeting.browser.meeting'].get_all_used_held_positions;
+                       allUsers python: get_all_used_held_positions(context);
                        attendees context/get_attendees;
                        excused context/get_excused;
                        absents context/get_absents;
                        signers context/get_signatories;
                        applied_signers python: context.get_signatories(by_signature_number=True).values();
-                       useUserReplacements python: 'replacements' in view.used_attrs;
+                       use_user_replacements python: 'replacements' in view.used_attrs;
                        itemNonAttendees python: context.get_item_non_attendees(by_persons=True);
-                       userReplacements context/get_user_replacements;
+                       user_replacements python: context.get_user_replacements();
                        showExcused python: 'excused' in view.used_attrs or excused;
                        showAbsents python: 'absents' in view.used_attrs or absents;
                        showSignatories python: 'signatories' in view.used_attrs or signers;
@@ -34,7 +35,7 @@
       <th class="header-attendee-excused" class="nosort" tal:condition="showExcused" i18n:translate="is_excused">Excused?</th>
       <th class="header-attendee-absent" class="nosort" tal:condition="showAbsents" i18n:translate="is_absent">Absent?</th>
       <th class="header-attendee-signatory" class="nosort" tal:condition="showSignatories" i18n:translate="is_signer">Signer?</th>
-      <th class="header-attendee-replacement" class="nosort" tal:condition="useUserReplacements" i18n:translate="is_replaced">Replaced?</th>
+      <th class="header-attendee-replacement" class="nosort" tal:condition="use_user_replacements" i18n:translate="is_replaced">Replaced?</th>
       <th class="header-attendee-non-attendee" class="nosort" tal:condition="showNonAttendees" i18n:translate="is_non_attendee">Non attendee?</th>
       <th class="header-attendee-voter" class="nosort" tal:condition="showVoters">
        <span i18n:translate="is_voter">Voter?</span>
@@ -98,9 +99,9 @@
                                   data-signatory_uid string:${aUid};">
          </span>
         </td>
-        <td tal:condition="useUserReplacements">
-          <span tal:condition="python: aUid in userReplacements" tal:content="python: context.displayUserReplacement(userReplacements[aUid])"></span>
-          <span tal:condition="python: aUid in excused + absents and aUid not in userReplacements">-</span>
+        <td tal:condition="use_user_replacements">
+          <span tal:condition="python: aUid in user_replacements" tal:content="python: context.displayUserReplacement(user_replacements[aUid])"></span>
+          <span tal:condition="python: aUid in excused + absents and aUid not in user_replacements">-</span>
         </td>
         <td align="center" tal:condition="showNonAttendees">
           <span tal:condition="python: aUid in itemNonAttendees"
