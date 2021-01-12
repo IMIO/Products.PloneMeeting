@@ -21,6 +21,8 @@ from Products.PloneMeeting.config import ITEM_INSERT_METHODS
 from Products.PloneMeeting.content.meeting import Meeting
 from Products.PloneMeeting.MeetingConfig import POWEROBSERVERPREFIX
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
+from zope.browserpage.viewpagetemplatefile import ViewPageTemplateFile
+from zope.contentprovider.provider import ContentProviderBase
 from zope.i18n import translate
 
 
@@ -72,6 +74,14 @@ def manage_label_assembly(the_form):
             widgets['assembly'].label = _('assembly_attendees_title')
 
 
+def manage_field_attendees(the_form):
+    """Move ContentProvider from the_form.widgets to the 'assembly' group."""
+    the_form.groups[1].widgets._data_keys.append('attendees')
+    the_form.groups[1].widgets._data_values.append(the_form.widgets['attendees_edit_provider'])
+    the_form.widgets._data_keys = []
+    the_form.widgets._data_values = []
+
+
 class MeetingConditions(object):
     """ """
 
@@ -119,10 +129,38 @@ class MeetingDefaultView(DefaultView, MeetingConditions):
         manage_label_assembly(self)
 
 
+class AttendeesEditProvider(ContentProviderBase):
+
+    template = \
+        ViewPageTemplateFile('templates/meeting_attendees_edit.pt')
+
+    def __init__(self, context, request, view):
+        super(AttendeesEditProvider, self).__init__(context, request, view)
+        self.__parent__ = view
+        self.tool = api.portal.get_tool('portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(self.context)
+        self.used_attrs = self.cfg.getUsedMeetingAttributes()
+        self.portal_url = api.portal.get().absolute_url()
+
+    def render(self):
+        return self.template()
+
+
 class MeetingEdit(DefaultEditForm, MeetingConditions):
     """
         Edit form redefinition to customize fields.
     """
+    from z3c.form.interfaces import IFieldsAndContentProvidersForm
+    from zope.contentprovider.provider import ContentProviderBase
+    from zope.interface import implements
+    from z3c.form.contentprovider import ContentProviders
+
+    implements(IFieldsAndContentProvidersForm)
+    contentProviders = ContentProviders()
+    contentProviders['attendees_edit_provider'] = AttendeesEditProvider
+    # defining a contentProvider position is mandatory...
+    contentProviders['attendees_edit_provider'].position = 20
+    label = u""
 
     def updateFields(self):
         super(MeetingEdit, self).updateFields()
@@ -140,6 +178,8 @@ class MeetingEdit(DefaultEditForm, MeetingConditions):
             for k, v in group.widgets.items():
                 self.w[k] = v
         manage_label_assembly(self)
+        if 'attendees' in self.used_attrs:
+            manage_field_attendees(self)
 
 
 class MeetingAddForm(DefaultAddForm, MeetingConditions):
@@ -160,6 +200,8 @@ class MeetingAddForm(DefaultAddForm, MeetingConditions):
             for k, v in group.widgets.items():
                 self.w[k] = v
         manage_label_assembly(self)
+        if 'attendees' in self.used_attrs:
+            manage_field_attendees(self)
 
 
 class MeetingAdd(DefaultAddView):

@@ -1,0 +1,151 @@
+<tal:comment replace="nothing">User table: attendees, absents, signatories, replacements</tal:comment>
+<tal:users condition="python: context.show_attendees_fields()">
+<div class="field"
+     tal:define="errors python: request.get('errors', {});
+                 error_id python: errors.get('meeting_attendees')"
+     tal:attributes="class python: error_id and 'field error' or 'field';">
+    <div class="fieldErrorBox"
+         tal:content="error_id" i18n:translate="">Validation Error</div>
+    <div class="formQuestion label">
+        <span i18n:translate="assembly_and_signatures">Assembly and signatures</span>
+        <span class="formHelp" id="meeting_attendees_help"></span>
+    </div>
+    <table id="meeting_users" name="meeting_users" class="listing" i18n:domain="PloneMeeting"
+           tal:define="all_users python: context.get_all_used_held_positions(include_new=True);
+                       attendees python: context.get_attendees() or (not context.get_all_used_held_positions(include_new=False) and context.get_default_attendees()) or [];
+                       excused python: context.get_excused();
+                       absents python: context.get_absents();
+                       voters python: context.get_voters();
+                       signers python: context.get_signatories() or context.get_default_signatories();
+                       use_user_replacements python: 'replacements' in view.used_attrs;
+                       user_replacements python: context.get_user_replacements();
+                       use_votes python: view.cfg.getUseVotes();">
+      <tal:comment replace="nothing">Column captions</tal:comment>
+      <thead>
+        <tr>
+          <th class="nosort"></th>
+          <th class="nosort"></th>
+          <th class="nosort" i18n:translate="is_attendee"></th>
+          <th class="nosort" tal:condition="python: 'excused' in view.used_attrs"
+              i18n:translate="is_excused"></th>
+          <th class="nosort" tal:condition="python: 'absents' in view.used_attrs"
+              i18n:translate="is_absent"></th>
+          <th class="nosort" tal:condition="python: 'signatories' in view.used_attrs"
+              i18n:translate="is_signer"></th>
+          <th class="nosort" tal:condition="python: use_user_replacements"
+              i18n:translate="is_replaced"></th>
+          <th class="nosort" tal:condition="python: use_votes"
+              i18n:translate="is_voter"></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr tal:repeat="mUser all_users">
+              <td class="draggable">⣿</td>
+              <tal:defines define="muid mUser/UID;
+                                   attendee_id python: 'muser_%s_attendee' % muid;">
+                <td><img tal:attributes="src string:${mUser/getIconURL}" /> <b tal:content="mUser/get_short_title"></b></td>
+                <td align="center">
+                  <input type="checkbox" class="noborder"
+                         tal:define="cbid attendee_id"
+                         tal:attributes="id cbid;
+                                         name string:meeting_attendees:list;
+                                         value cbid;
+                                         checked python: errors and cbid in request.get('meeting_attendees', []) or muid in attendees;
+                                         onClick python: 'onClickBox(this, \'attendee\', \'%s\')' % muid"/>
+                </td>
+                <td align="center" tal:condition="python: 'excused' in view.used_attrs">
+                  <input type="checkbox" class="noborder"
+                         tal:define="cbid python: 'muser_%s_excused' % muid;"
+                         tal:attributes="id cbid;
+                                         name string:meeting_attendees:list;
+                                         value cbid;
+                                         checked python: errors and cbid in request.get('meeting_attendees', []) or muid in excused;
+                                         onClick python: 'onClickBox(this, \'excused\', \'%s\')' % muid"/>
+                </td>
+                <td align="center" tal:condition="python: 'absents' in view.used_attrs">
+                  <input type="checkbox" class="noborder"
+                         tal:define="cbid python: 'muser_%s_absent' % muid;"
+                         tal:attributes="id cbid;
+                                         name string:meeting_attendees:list;
+                                         value cbid;
+                                         checked python: errors and cbid in request.get('meeting_attendees', []) or muid in absents;
+                                         onClick python: 'onClickBox(this, \'absent\', \'%s\')' % muid"/>
+                </td>
+                <td align="center" tal:condition="python: 'signatories' in view.used_attrs">
+                  <select tal:define="sid python: 'muser_%s_signer' % muid;"
+                         tal:attributes="id sid;
+                                         name string:meeting_signatories:list;
+                                         value sid;
+                                         disabled python: errors and attendee_id not in request.get('meeting_attendees', []) or muid not in attendees;
+                                         onClick python: 'onClickBox(this, \'signer\', \'%s\')' % muid">
+                    <option value="">-</option>
+                    <tal:signature_number repeat="signature_number python: [str(i) for i in range(1, 21)]">
+                          <tal:defines define="value string:${muid}__signaturenumber__${signature_number};">
+                          <option
+                              tal:attributes="
+                              value value;
+                              selected python: errors and value in request.get('meeting_signatories', []) or (muid in signers and signers[muid]==signature_number)"
+                              tal:content="signature_number">1</option>
+                          </tal:defines>
+                          <span tal:content="muid" />
+                          <span tal:content="signers" />
+                          <span tal:content="signature_number" />
+                          <span tal:content="python: muid in signers and signers[muid]==signature_number" />
+                    </tal:signature_number>
+                  </select>
+                </td>
+                <td tal:condition="use_user_replacements">
+                  <select tal:define="mid mUser/getId;
+                                      sid python: 'muser_%s_replacement' % muid;
+                                      aid python: attendee_id;
+                                      eid python: 'muser_%s_excused' % muid;
+                                      abid python: 'muser_%s_absent' % muid;
+                                      show python: errors and (eid in request.get('meeting_attendees', []) or abid in request.get('meeting_attendees', [])) or muid in (excused + absents)"
+                          tal:attributes="id sid;
+                                          name string:meeting_replacements:list;
+                                          style python: not show and 'display:none' or ''">
+                    <option value="">-</option>
+                    <tal:other repeat="oUser python: all_users">
+                      <tal:defines define="value string:${muid}__replacedby__${oUser/UID};">
+                      <option tal:define="ouid oUser/UID;
+                                          show python: errors and 'muser_%s_attendee' % ouid in request.get('meeting_attendees', []) or ouid in attendees"
+                              tal:condition="python: ouid != muid"
+                              tal:content="oUser/get_short_title"
+                              tal:attributes="value value;
+                                              data-icon string:${view/portal_url}/held_position_icon.png;
+                                              style python: show and '' or 'display:none';
+                                              selected python: errors and value in request.get('meeting_replacements', []) or (muid in user_replacements and userReplacements[muid]==ouid)" >
+                      </option>
+                      </tal:defines>
+                    </tal:other>
+                  </select>
+                </td>
+                <td align="center" tal:condition="use_votes">
+
+                  <input type="checkbox" class="noborder"
+                         tal:define="cbid python: 'muser_%s_voter' % muid;"
+                         tal:attributes="id cbid;
+                                         name string:meeting_voters:list;
+                                         value cbid;
+                                         disabled python: errors and attendee_id not in request.get('meeting_attendees', []) or muid not in attendees;
+                                         checked python: errors and cbid in request.get('meeting_voters', []) or muid in voters;
+                                         onClick python: 'onClickBox(this, \'voter\', \'%s\')' % muid"/>
+                </td>
+              </tal:defines>
+        </tr>
+      </tbody>
+    </table>
+</div>
+<script type="text/javascript">
+    $(document).ready(function() {
+        // initialize drag and drop
+        $('#meeting_users').tableDnD({
+            onDrop: function(table, row) {
+               alert($.tableDnD.serialize());
+              },
+              dragHandle: ".draggable",
+              onDragClass: "dragindicator dragging"
+          });
+    });
+</script>
+</tal:users>
