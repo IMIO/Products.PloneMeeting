@@ -177,7 +177,7 @@
   <p i18n:translate="hide_meeting_view_page">This page is currently not accessible. Meeting managers will soon allow you to access it again. Sorry for the inconvenience.</p>
 </tal:notShow_page>
 
-<div class="item-global-actions">
+<div class="pm-global-actions">
   <a title="show_or_hide_details"
      i18n:attributes="title"
      class="show-hide-all-details"

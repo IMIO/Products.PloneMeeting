@@ -2074,8 +2074,8 @@ div.item-linkeditems div.collapsible-content {
 #content textarea#form-widgets-pre_meeting_place {
    min-height: 80px
 }
-/* global JS actions on item view */
-div.item-global-actions {
+/* global JS actions on item and meeting view */
+div.pm-global-actions {
    float: right;
    position: fixed;
    right: 20px;
@@ -2087,11 +2087,11 @@ div.item-global-actions {
    padding: 0.5em;
    border-radius: 3px;
 }
-div.item-global-actions span {
+div.pm-global-actions span {
    cursor: pointer;
 }
-div.item-global-actions a.show-hide-all-details:focus,
-div.item-global-actions a.show-hide-all-details:focus img {
+div.pm-global-actions a.show-hide-all-details:focus,
+div.pm-global-actions a.show-hide-all-details:focus img {
    outline: 0 !important;
 }
 
