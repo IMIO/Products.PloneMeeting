@@ -3,9 +3,10 @@
 from collective.contact.core.content.held_position import HeldPosition
 from collective.contact.core.content.held_position import IHeldPosition
 from collective.contact.core.utils import get_gender_and_number
+from collective.contact.core.utils import get_position_type_name
+from collective.contact.core.vocabulary import get_directory
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from imio.helpers.cache import invalidate_cachekey_volatile_for
-from imio.helpers.content import get_vocab
 from plone.autoform import directives as form
 from plone.dexterity.schema import DexteritySchemaPolicy
 from plone.supermodel import model
@@ -32,7 +33,7 @@ class IPMHeldPosition(IHeldPosition):
                       "depending on person gender and context. If you need to add new position types, "
                       "it is defined on the directory at the root of contacts configuration "
                       "(element <a href='../../contacts/edit' target='_blank'>\"edit contacts\"</a>)."),
-        vocabulary="PositionTypes",
+        vocabulary="PMPositionTypes",
         required=True,
     )
 
@@ -41,7 +42,7 @@ class IPMHeldPosition(IHeldPosition):
         title=_("Secondary position type"),
         description=_("Select a secondary position type if necessary. "
                       "Will work the same way as field \"Position type\" here above."),
-        vocabulary="PositionTypes",
+        vocabulary="PMPositionTypes",
         required=False,
     )
 
@@ -211,15 +212,12 @@ class PMHeldPosition(HeldPosition):
                                              fallback_position_type_attr='position_type',
                                              forced_position_type_value=None):
         """Split the position_type and generates a dict with gender and number possibilities."""
-        vocab = get_vocab(self, "PositionTypes")
         value = forced_position_type_value or \
             (position_type_attr and getattr(self, position_type_attr)) or \
             (fallback_position_type_attr and getattr(self, fallback_position_type_attr))
-        # sometimes, self does not have acqusition,
-        # this is the case when called from self.get_title
-        # in this case, the vocabulary is not correct
-        if value and value in vocab:
-            value = vocab.getTerm(value).title
+        if value:
+            directory = get_directory(self)
+            value = get_position_type_name(directory, value)
         return split_gender_and_number(value)
 
     def get_prefix_for_gender_and_number(self,

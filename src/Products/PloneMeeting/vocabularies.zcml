@@ -91,6 +91,8 @@
            name="Products.PloneMeeting.vocabularies.annex_restrict_shown_and_editable_attributes_vocabulary" />
   <utility component=".vocabularies.PMUsersFactory"
            name="Products.PloneMeeting.Users" />
+  <utility name="PMPositionTypes"
+           component=".vocabularies.PMPositionTypesVocabularyFactory" />
 
   <!-- PMHeldPosition vocabularies -->
   <utility component=".vocabularies.HeldPositionUsagesVocabularyFactory"
@@ -115,7 +117,5 @@
            name="Products.PloneMeeting.vocabularies.contained_annexes_vocabulary" />
   <utility component=".vocabularies.ContainedDecisionAnnexesVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.contained_decision_annexes_vocabulary" />
-
-  <include package="z3c.unconfigure" file="meta.zcml"/>
 
 </configure>

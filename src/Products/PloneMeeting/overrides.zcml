@@ -4,15 +4,6 @@
            xmlns:zcml="http://namespaces.zope.org/zcml"
            i18n_domain="PloneMeeting">
 
-    <!-- override PositionTypes vocabulary from collective.contact.plonegroup -->
-    <include package="z3c.unconfigure" file="meta.zcml"/>
-    <unconfigure package="collective.contact.plonegroup">
-        <utility name="PositionTypes"
-                 factory=".vocabularies.PositionTypesVocabulary" />
-    </unconfigure>
-    <utility name="PositionTypes"
-             component=".vocabularies.PMPositionTypesVocabularyFactory" />
-
     <browser:viewlet
         name="plone.contentactions"
         for="*"
