@@ -5,8 +5,13 @@ Changelog
 4.2b9 (unreleased)
 ------------------
 
-- Nothing changed yet.
-
+- Override `PositionTypes` vocabulary from `collective.contact.plonegroup`,
+  as our `Directory.position_types` include gender and number
+  (like `Director|Directors|Director|Directors` for example), we only display
+  the real relevant value (`Director`) depending on person gender.
+  Moreover, this fixes `RedefinedSignatoryForm` that was sometime broken if
+  dropdown `position_type` contained a very large value.
+  [gbastien]
 
 4.2b8 (2021-01-06)
 ------------------

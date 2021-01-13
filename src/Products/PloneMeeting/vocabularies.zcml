@@ -116,4 +116,6 @@
   <utility component=".vocabularies.ContainedDecisionAnnexesVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.contained_decision_annexes_vocabulary" />
 
+  <include package="z3c.unconfigure" file="meta.zcml"/>
+
 </configure>

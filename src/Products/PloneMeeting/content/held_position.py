@@ -87,6 +87,23 @@ class IPMHeldPosition(IHeldPosition):
                            'represented_organizations'])
 
 
+def split_gender_and_number(value):
+    """ """
+    res = {}
+    values = value and value.split('|') or [u'', u'', u'', u'']
+    if len(values) > 1:
+        res = {'MS': values[0],
+               'MP': values[1],
+               'FS': values[2],
+               'FP': values[3]}
+    else:
+        res = {'MS': values[0],
+               'MP': values[0],
+               'FS': values[0],
+               'FP': values[0]}
+    return res
+
+
 class PMHeldPosition(HeldPosition):
     """Override HeldPosition to add some fields and methods."""
 
@@ -203,18 +220,7 @@ class PMHeldPosition(HeldPosition):
         # in this case, the vocabulary is not correct
         if value and value in vocab:
             value = vocab.getTerm(value).title
-        values = value and value.split('|') or [u'', u'', u'', u'']
-        if len(values) > 1:
-            res = {'MS': values[0],
-                   'MP': values[1],
-                   'FS': values[2],
-                   'FP': values[3]}
-        else:
-            res = {'MS': values[0],
-                   'MP': values[0],
-                   'FS': values[0],
-                   'FP': values[0]}
-        return res
+        return split_gender_and_number(value)
 
     def get_prefix_for_gender_and_number(self,
                                          include_value=False,
