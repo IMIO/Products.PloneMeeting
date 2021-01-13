@@ -1227,12 +1227,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         '''See doc in interfaces.py.'''
         pass
 
-    security.declarePublic('getSpecificMailContext')
-
-    def getSpecificMailContext(self, event, translationMapping):
-        '''See doc in interfaces.py.'''
-        pass
-
     security.declarePublic('getMailRecipient')
 
     def getMailRecipient(self, userIdOrInfo, enc='utf-8'):

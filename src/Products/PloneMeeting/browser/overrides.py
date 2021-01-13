@@ -532,7 +532,7 @@ class PMRenderCategoryView(IDRenderCategoryView):
         return super(PMRenderCategoryView, self).__call__(widget)
 
     def _is_editing(self):
-        return is_editing()
+        return is_editing(self.cfg)
 
     def templateItems(self):
         '''Check if there are item templates defined or not.'''

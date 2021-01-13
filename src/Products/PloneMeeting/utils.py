@@ -443,55 +443,50 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
             translationMapping['meetingLongTitle'] = tool.format_date(meeting.date, prefixed=True)
             translationMapping['itemNumber'] = obj.getItemNumber(
                 relativeTo='meeting')
-    # Update the translationMapping with a sub-product-specific
-    # translationMapping, that may also define custom mail subject and body.
-    customRes = obj.adapted().getSpecificMailContext(event, translationMapping)
-    if customRes:
-        subject = safe_unicode(customRes[0])
-        body = safe_unicode(customRes[1])
-    else:
-        # some event end with "Owner", we use same event without the "Owner" suffix
-        subjectLabel = u'%s_mail_subject' % event.replace("Owner", "")
+
+    # some event end with "Owner", we use same event without the "Owner" suffix
+    subjectLabel = u'%s_mail_subject' % event.replace("Owner", "")
+    subject = translate(subjectLabel,
+                        domain=d,
+                        mapping=translationMapping,
+                        context=obj.REQUEST)
+    # special case for translations of event concerning state change
+    # if we can not translate the specific translation msgid, we use a default msgid
+    # so for example if meeting_state_changed_decide_mail_subject could not be translated
+    # we will translate meeting_state_changed_default_mail_subject
+    if subject is subjectLabel and (subjectLabel.startswith('meeting_state_changed_') or
+                                    subjectLabel.startswith('item_state_changed_')):
+        if subjectLabel.startswith('meeting_state_changed_'):
+            subjectLabel = u'meeting_state_changed_default_mail_subject'
+        else:
+            subjectLabel = u'item_state_changed_default_mail_subject'
         subject = translate(subjectLabel,
                             domain=d,
                             mapping=translationMapping,
                             context=obj.REQUEST)
-        # special case for translations of event concerning state change
-        # if we can not translate the specific translation msgid, we use a default msgid
-        # so for example if meeting_state_changed_decide_mail_subject could not be translated
-        # we will translate meeting_state_changed_default_mail_subject
-        if subject is subjectLabel and (subjectLabel.startswith('meeting_state_changed_') or
-                                        subjectLabel.startswith('item_state_changed_')):
-            if subjectLabel.startswith('meeting_state_changed_'):
-                subjectLabel = u'meeting_state_changed_default_mail_subject'
-            else:
-                subjectLabel = u'item_state_changed_default_mail_subject'
-            subject = translate(subjectLabel,
-                                domain=d,
-                                mapping=translationMapping,
-                                context=obj.REQUEST)
-        subject = safe_unicode(subject)
-        # some event end with "Owner", we use same event without the "Owner" suffix
-        bodyLabel = u'%s_mail_body' % event.replace("Owner", "")
+    subject = safe_unicode(subject)
+    # some event end with "Owner", we use same event without the "Owner" suffix
+    bodyLabel = u'%s_mail_body' % event.replace("Owner", "")
+    body = translate(bodyLabel,
+                     domain=d,
+                     mapping=translationMapping,
+                     context=obj.REQUEST)
+    # special case for translations of event concerning state change
+    # if we can not translate the specific translation msgid, we use a default msgid
+    # so for example if meeting_state_changed_decide_mail_body could not be translated
+    # we will translate meeting_state_changed_default_mail_body
+    if body is bodyLabel and (bodyLabel.startswith('meeting_state_changed_') or
+                              bodyLabel.startswith('item_state_changed_')):
+        if bodyLabel.startswith('meeting_state_changed_'):
+            bodyLabel = u'meeting_state_changed_default_mail_body'
+        else:
+            bodyLabel = u'item_state_changed_default_mail_body'
         body = translate(bodyLabel,
                          domain=d,
                          mapping=translationMapping,
                          context=obj.REQUEST)
-        # special case for translations of event concerning state change
-        # if we can not translate the specific translation msgid, we use a default msgid
-        # so for example if meeting_state_changed_decide_mail_body could not be translated
-        # we will translate meeting_state_changed_default_mail_body
-        if body is bodyLabel and (bodyLabel.startswith('meeting_state_changed_') or
-                                  bodyLabel.startswith('item_state_changed_')):
-            if bodyLabel.startswith('meeting_state_changed_'):
-                bodyLabel = u'meeting_state_changed_default_mail_body'
-            else:
-                bodyLabel = u'item_state_changed_default_mail_body'
-            body = translate(bodyLabel,
-                             domain=d,
-                             mapping=translationMapping,
-                             context=obj.REQUEST)
-        body = safe_unicode(body)
+    body = safe_unicode(body)
+
     adminFromAddress = _getEmailAddress(
         portal.getProperty('email_from_name'),
         safe_unicode(portal.getProperty('email_from_address')))
@@ -607,9 +602,6 @@ def sendMailIfRelevant(obj, event, permissionOrSuffixOrRoleOrGroupIds,
                 continue
 
         recipient = tool.getMailRecipient(user)
-        # Must we avoid sending mail to this recipient for some custom reason?
-        if not adap.includeMailRecipient(event, userId):
-            continue
         # After all, we will add this guy to the list of recipients.
         recipients.append(recipient)
     mail_subject = mail_body = None
@@ -2006,11 +1998,13 @@ def add_wf_history_action(obj, action_name, action_label, user_id=None, insert_i
     obj.workflow_history[wfName] = events
 
 
-def is_editing():
+def is_editing(cfg):
     """Return True if currently editing something."""
     request = getRequest()
     url = request.get('URL', '')
     edit_ends = ['/edit', '/base_edit', '/@@edit']
+    edit_ends.append('/++add++{0}'.format(cfg.getItemTypeName()))
+    edit_ends.append('/++add++{0}'.format(cfg.getMeetingTypeName()))
     res = False
     for edit_end in edit_ends:
         if url.endswith(edit_end):

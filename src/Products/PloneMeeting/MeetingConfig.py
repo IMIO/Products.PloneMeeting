@@ -97,7 +97,6 @@ from Products.PloneMeeting.interfaces import IMeetingItemWorkflowActions
 from Products.PloneMeeting.interfaces import IMeetingItemWorkflowConditions
 from Products.PloneMeeting.interfaces import IMeetingWorkflowActions
 from Products.PloneMeeting.interfaces import IMeetingWorkflowConditions
-from Products.PloneMeeting.content.meeting import Meeting
 from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.model.adaptations import _getValidationReturnedStates
 from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
@@ -476,41 +475,6 @@ schema = Schema((
         multiValued=1,
         vocabulary='listUsedMeetingAttributes',
         default=defValues.usedMeetingAttributes,
-        enforceVocabulary=True,
-        write_permission="PloneMeeting: Write risky config",
-    ),
-    LinesField(
-        name='historizedMeetingAttributes',
-        widget=MultiSelectionWidget(
-            description="HistorizedMeetingAttributes",
-            description_msgid="historized_meeting_attrs_descr",
-            size=10,
-            format="checkbox",
-            label='Historizedmeetingattributes',
-            label_msgid='PloneMeeting_label_historizedMeetingAttributes',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="data",
-        multiValued=1,
-        vocabulary='listMeetingAttributes',
-        default=defValues.historizedMeetingAttributes,
-        enforceVocabulary=True,
-        write_permission="PloneMeeting: Write risky config",
-    ),
-    LinesField(
-        name='recordMeetingHistoryStates',
-        widget=MultiSelectionWidget(
-            description="RecordMeetingHistoryStates",
-            description_msgid="record_meeting_history_states_descr",
-            format="checkbox",
-            label='Recordmeetinghistorystates',
-            label_msgid='PloneMeeting_label_recordMeetingHistoryStates',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="data",
-        multiValued=1,
-        vocabulary='listMeetingStates',
-        default=defValues.recordMeetingHistoryStates,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),

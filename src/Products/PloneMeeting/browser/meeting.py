@@ -79,10 +79,15 @@ def manage_label_assembly(the_form):
 
 def manage_field_attendees(the_form):
     """Move ContentProvider from the_form.widgets to the 'assembly' group."""
-    the_form.groups[1].widgets._data_keys.append('attendees')
-    the_form.groups[1].widgets._data_values.append(the_form.widgets['attendees_edit_provider'])
-    the_form.widgets._data_keys = []
-    the_form.widgets._data_values = []
+    if the_form.show_attendees_fields() or \
+       not the_form.show_field("assembly"):
+        the_form.groups[1].widgets._data_keys.append("attendees")
+        the_form.groups[1].widgets._data_values.append(the_form.widgets["attendees_edit_provider"])
+    # remove "attendees_edit_provider" from the_form.widgets
+    # as it was either moved just here above or is not used
+    the_form.widgets._data_keys.data.remove("attendees_edit_provider")
+    the_form.widgets._data_values = [v for v in the_form.widgets._data_values
+                                     if not v.__name__ == "attendees_edit_provider"]
 
 
 class MeetingConditions(object):
@@ -118,9 +123,10 @@ class MeetingConditions(object):
 
     def show_attendees_fields(self):
         '''Display attendee related fields in view/edit?'''
-        return ('attendees' in self.used_attrs or
-                (self.context.__class__.__name__ == 'Meeting' and
-                 self.context.get_attendees() and not self.context.get_assembly()))
+        # new meeting or existing meeting then manage history
+        return (self.context.__class__.__name__ != 'Meeting' and 'attendees' in self.used_attrs) or \
+               (self.context.__class__.__name__ == 'Meeting' and
+                (self.context.get_attendees() or not self.show_field("assembly")))
 
 
 class MeetingDefaultView(DefaultView, MeetingConditions):
@@ -297,8 +303,7 @@ class MeetingEdit(DefaultEditForm, MeetingConditions):
             for k, v in group.widgets.items():
                 self.w[k] = v
         manage_label_assembly(self)
-        if 'attendees' in self.used_attrs:
-            manage_field_attendees(self)
+        manage_field_attendees(self)
 
 
 class MeetingAddForm(DefaultAddForm, MeetingConditions):
@@ -325,8 +330,7 @@ class MeetingAddForm(DefaultAddForm, MeetingConditions):
             for k, v in group.widgets.items():
                 self.w[k] = v
         manage_label_assembly(self)
-        if 'attendees' in self.used_attrs:
-            manage_field_attendees(self)
+        manage_field_attendees(self)
 
 
 class MeetingAdd(DefaultAddView):

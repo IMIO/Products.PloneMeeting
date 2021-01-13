@@ -65,7 +65,7 @@
                                                     toggle_parent_active=true,
                                                     parent_tag=null,
                                                     load_view='@@load_meeting_assembly_and_signatures');"
-      class="collapsible discreet">
+      class="collapsible discreet not-auto-collapsible-activable">
    <span class="meeting_attribute_label" i18n:translate="assembly_and_signatures">
      Meeting assembly and signatures
    </span>
@@ -101,7 +101,7 @@
   </tal:availableItems>
 
   <div class="clear"></div>
-  <h2 class="collapsible active presented-items"
+  <h2 class="collapsible active presented-items not-auto-collapsible-deactivable"
        onclick="toggleDetails('faceted-form', toggle_parent_active=true, parent_tag=this)">
     <span i18n:translate="presented_items">Presented items</span> (<span class="meeting_number_of_items" tal:content="python: context.number_of_items()"/>)
   </h2>
@@ -176,6 +176,25 @@
 <tal:notShow_page condition="python:not show_page">
   <p i18n:translate="hide_meeting_view_page">This page is currently not accessible. Meeting managers will soon allow you to access it again. Sorry for the inconvenience.</p>
 </tal:notShow_page>
+
+<div class="item-global-actions">
+  <a title="show_or_hide_details"
+     i18n:attributes="title"
+     class="show-hide-all-details"
+     href="javascript:toggleAllDetails();">
+    <img tal:attributes="src string:${portal_url}/more_less_details.png" />
+  </a>
+  <span title="top_of_page"
+        i18n:attributes="title"
+        class="fa fa-arrow-up go-to-top-of-page"
+        onclick="event.preventDefault();$('html, body').animate({ scrollTop: 0 }, 'fast');">
+  </span>
+  <span title="bottom_of_page"
+        i18n:attributes="title"
+        class="fa fa-arrow-down go-to-bottom-of-page"
+        onclick="event.preventDefault();$('html, body').animate({ scrollTop: $(document).height()}, 'fast');">
+  </span>
+</div>
 
 </div>
 </body>

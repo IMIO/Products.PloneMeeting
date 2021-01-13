@@ -94,24 +94,27 @@
                            absents python: view.get_absents();
                            voters python: view.get_voters();
                            signers python: view.get_signatories();
-                           use_user_replacements python: 'replacements' in view.used_attrs;
+                           show_excused python: 'excused' in view.used_attrs or excused;
+                           show_absents python: 'absents' in view.used_attrs or absents;
+                           show_signatories python: 'signatories' in view.used_attrs or signers;
                            user_replacements python: view.get_user_replacements();
-                           use_votes python: view.cfg.getUseVotes();">
+                           use_user_replacements python: 'replacements' in view.used_attrs or user_replacements;
+                           use_votes python: view.cfg.getUseVotes() or voters;">
           <tal:comment replace="nothing">Column captions</tal:comment>
           <thead>
             <tr>
               <th class="nosort"></th>
               <th class="nosort"></th>
               <th class="nosort" i18n:translate="is_attendee"></th>
-              <th class="nosort" tal:condition="python: 'excused' in view.used_attrs"
+              <th class="nosort" tal:condition="show_excused"
                   i18n:translate="is_excused"></th>
-              <th class="nosort" tal:condition="python: 'absents' in view.used_attrs"
+              <th class="nosort" tal:condition="show_absents"
                   i18n:translate="is_absent"></th>
-              <th class="nosort" tal:condition="python: 'signatories' in view.used_attrs"
+              <th class="nosort" tal:condition="show_signatories"
                   i18n:translate="is_signer"></th>
-              <th class="nosort" tal:condition="python: use_user_replacements"
+              <th class="nosort" tal:condition="use_user_replacements"
                   i18n:translate="is_replaced"></th>
-              <th class="nosort" tal:condition="python: use_votes"
+              <th class="nosort" tal:condition="use_votes"
                   i18n:translate="is_voter"></th>
             </tr>
           </thead>
@@ -130,7 +133,7 @@
                                              checked python: errors and cbid in request.get('meeting_attendees', []) or muid in attendees;
                                              onClick python: 'onClickBox(this, \'attendee\', \'%s\')' % muid"/>
                     </td>
-                    <td align="center" tal:condition="python: 'excused' in view.used_attrs">
+                    <td align="center" tal:condition="show_excused">
                       <input type="checkbox" class="noborder"
                              tal:define="cbid python: 'muser_%s_excused' % muid;"
                              tal:attributes="id cbid;
@@ -139,7 +142,7 @@
                                              checked python: errors and cbid in request.get('meeting_attendees', []) or muid in excused;
                                              onClick python: 'onClickBox(this, \'excused\', \'%s\')' % muid"/>
                     </td>
-                    <td align="center" tal:condition="python: 'absents' in view.used_attrs">
+                    <td align="center" tal:condition="show_absents">
                       <input type="checkbox" class="noborder"
                              tal:define="cbid python: 'muser_%s_absent' % muid;"
                              tal:attributes="id cbid;
@@ -148,7 +151,7 @@
                                              checked python: errors and cbid in request.get('meeting_attendees', []) or muid in absents;
                                              onClick python: 'onClickBox(this, \'absent\', \'%s\')' % muid"/>
                     </td>
-                    <td align="center" tal:condition="python: 'signatories' in view.used_attrs">
+                    <td align="center" tal:condition="show_signatories">
                       <select tal:define="sid python: 'muser_%s_signer' % muid;"
                              tal:attributes="id sid;
                                              name string:meeting_signatories:list;

@@ -2070,7 +2070,10 @@ div.item-linkeditems div.collapsible-content {
     width: 99%;
     min-height: 175px;
 }
-
+#content textarea#form-widgets-place,
+#content textarea#form-widgets-pre_meeting_place {
+   min-height: 80px
+}
 /* global JS actions on item view */
 div.item-global-actions {
    float: right;

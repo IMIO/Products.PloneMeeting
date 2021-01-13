@@ -4008,18 +4008,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if item.hasMeeting() and (item.getMeeting().query_state() != 'created'):
             return True
 
-    security.declarePublic('getSpecificMailContext')
-
-    def getSpecificMailContext(self, event, translationMapping):
-        '''See doc in interfaces.py.'''
-        return None
-
-    security.declarePublic('includeMailRecipient')
-
-    def includeMailRecipient(self, event, userId):
-        '''See doc in interfaces.py.'''
-        return True
-
     security.declarePrivate('addRecurringItemToMeeting')
 
     def addRecurringItemToMeeting(self, meeting):

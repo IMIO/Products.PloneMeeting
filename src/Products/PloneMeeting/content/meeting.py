@@ -28,6 +28,7 @@ from plone.supermodel import model
 from Products.CMFCore.permissions import ManagePortal
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFPlone.utils import base_hasattr
+from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.browser.itemchangeorder import _compute_value_to_add
 from Products.PloneMeeting.browser.itemchangeorder import _is_integer
 from Products.PloneMeeting.browser.itemchangeorder import _to_integer
@@ -41,13 +42,10 @@ from Products.PloneMeeting.interfaces import IDXMeetingContent
 from Products.PloneMeeting.utils import _addManagedPermissions
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import displaying_available_items
-from Products.PloneMeeting.utils import fieldIsEmpty
 from Products.PloneMeeting.utils import get_next_meeting
 from Products.PloneMeeting.utils import get_states_before
 from Products.PloneMeeting.utils import getCustomAdapter
-from Products.PloneMeeting.utils import getFieldVersion
 from Products.PloneMeeting.utils import getWorkflowAdapter
-from Products.PloneMeeting.utils import hasHistory
 from Products.PloneMeeting.utils import ItemDuplicatedFromConfigEvent
 from Products.PloneMeeting.utils import MeetingLocalRolesUpdatedEvent
 from Products.PloneMeeting.utils import notifyModifiedAndReindex
@@ -63,7 +61,7 @@ from zope.i18n import translate
 from zope.interface import implements
 from zope.schema import Datetime
 from zope.schema import Int
-from zope.schema import TextLine
+from zope.schema import Text
 
 import copy
 import itertools
@@ -172,8 +170,9 @@ class IMeeting(IDXMeetingContent):
         required=False)
 
     searchable("place")
-    place = TextLine(
+    place = Text(
         title=_(u"title_place"),
+        description=_("descr_place"),
         required=False)
 
     form.widget('extraordinary_session', RadioFieldWidget)
@@ -213,8 +212,9 @@ class IMeeting(IDXMeetingContent):
         required=False)
 
     searchable("pre_meeting_place")
-    pre_meeting_place = TextLine(
+    pre_meeting_place = Text(
         title=_(u"title_pre_meeting_place"),
+        description=_("descr_place"),
         required=False)
 
     searchable("pre_observations")
@@ -302,6 +302,52 @@ class IMeeting(IDXMeetingContent):
     model.fieldset('managers_parameters',
                    label=_(u"Manager reserved parameters"),
                    fields=['meeting_number', 'first_item_number'])
+
+
+@form.default_value(field=IMeeting['assembly'])
+def default_assembly(data):
+    tool = api.portal.get_tool('portal_plonemeeting')
+    cfg = tool.getMeetingConfig(data.context)
+    if "assembly" in cfg.getUsedMeetingAttributes():
+        return safe_unicode(cfg.getAssembly())
+    return u""
+
+
+@form.default_value(field=IMeeting['assembly_staves'])
+def default_assembly_staves(data):
+    tool = api.portal.get_tool('portal_plonemeeting')
+    cfg = tool.getMeetingConfig(data.context)
+    if "assembly_staves" in cfg.getUsedMeetingAttributes():
+        return safe_unicode(cfg.getAssemblyStaves())
+    return u""
+
+
+@form.default_value(field=IMeeting['signatures'])
+def default_signatures(data):
+    tool = api.portal.get_tool('portal_plonemeeting')
+    cfg = tool.getMeetingConfig(data.context)
+    if "signatures" in cfg.getUsedMeetingAttributes():
+        return safe_unicode(cfg.getSignatures())
+    return u""
+
+
+@form.default_value(field=IMeeting['place'])
+def default_place(data):
+    tool = api.portal.get_tool('portal_plonemeeting')
+    cfg = tool.getMeetingConfig(data.context)
+    if "place" in cfg.getUsedMeetingAttributes():
+        return safe_unicode(cfg.getPlaces())
+    return u""
+
+
+@form.default_value(field=IMeeting['pre_meeting_place'])
+def default_pre_meeting_place(data):
+    tool = api.portal.get_tool('portal_plonemeeting')
+    cfg = tool.getMeetingConfig(data.context)
+    if "pre_meeting_place" in cfg.getUsedMeetingAttributes():
+        return safe_unicode(cfg.getPlaces())
+    return u""
+
 
 ########################################################################
 #                                                                      #
@@ -1099,7 +1145,7 @@ class Meeting(Container):
 
     def _check_insert_order_cache(self, cfg):
         '''See doc in interfaces.py.'''
-        meeting = self.getSelf()
+        meeting = self.get_self()
         invalidate = False
         invalidate = not base_hasattr(meeting, '_insert_order_cache') or \
             meeting._insert_order_cache['categories_modified'] != cfg.categories.modified() or \
@@ -1127,7 +1173,7 @@ class Meeting(Container):
 
     def _init_insert_order_cache(self, cfg):
         '''See doc in interfaces.py.'''
-        meeting = self.getSelf()
+        meeting = self.get_self()
         meeting._insert_order_cache = PersistentMapping()
         for cfg_attr in meeting.adapted()._insert_order_cache_cfg_attrs(cfg):
             key = 'cfg_{0}'.format(cfg_attr)
@@ -1352,31 +1398,6 @@ class Meeting(Container):
             item = brain._unrestrictedGetObject()
             item.update_item_reference()
 
-    security.declarePrivate('getDefaultAssembly')
-
-    def getDefaultAssembly(self):
-        if self.attribute_is_used('assembly'):
-            tool = api.portal.get_tool('portal_plonemeeting')
-            return tool.getMeetingConfig(self).getAssembly()
-        return ''
-
-    security.declarePrivate('getDefaultAssemblyStaves')
-
-    def getDefaultAssemblyStaves(self):
-        if self.attribute_is_used('assemblyStaves'):
-            tool = api.portal.get_tool('portal_plonemeeting')
-            return tool.getMeetingConfig(self).getAssemblyStaves()
-        return ''
-
-    security.declarePrivate('getDefaultSignatures')
-
-    def getDefaultSignatures(self):
-        if self.attribute_is_used('signatures'):
-            tool = api.portal.get_tool('portal_plonemeeting')
-            cfg = tool.getMeetingConfig(self)
-            return cfg.getSignatures()
-        return ''
-
     security.declarePrivate('update_title')
 
     def update_title(self):
@@ -1387,19 +1408,6 @@ class Meeting(Container):
         if title != formatted_date:
             self.setTitle(formatted_date)
             return True
-
-    security.declarePrivate('update_place')
-
-    def update_place(self):
-        '''Updates the place if it comes from special request field
-           "place_other".'''
-        rq = self.REQUEST
-        if ('place' not in rq) or (rq.get('place', '') == 'other'):
-            stored_place = self.place
-            new_place = rq.get('place_other', '')
-            if stored_place != new_place:
-                self.place = new_place
-                return True
 
     security.declarePrivate('compute_dates')
 
@@ -1585,12 +1593,6 @@ class Meeting(Container):
            this method returns me.'''
         return getCustomAdapter(self)
 
-    security.declarePublic('hasHistory')
-
-    def hasHistory(self, fieldName=None):
-        '''See doc in utils.py.'''
-        return hasHistory(self, fieldName)
-
     security.declarePublic('attribute_is_used')
 
     def attribute_is_used(self, name):
@@ -1611,39 +1613,21 @@ class Meeting(Container):
         wfTool = api.portal.get_tool('portal_workflow')
         return wfTool.getInfoFor(self, 'review_state')
 
-    security.declarePublic('getSelf')
+    security.declarePublic('get_self')
 
-    def getSelf(self):
-        '''Similar to MeetingItem.getSelf. Check MeetingItem.py for more
+    def get_self(self):
+        '''Similar to MeetingItem.get_self. Check MeetingItem.py for more
            info.'''
         res = self
         if self.getTagName() != 'Meeting':
             res = self.context
         return res
 
-    security.declarePublic('getFieldVersion')
-
-    def getFieldVersion(self, fieldName, changes=False):
-        '''See doc in utils.py.'''
-        return getFieldVersion(self, fieldName, changes)
-
     security.declarePublic('is_decided')
 
     def is_decided(self):
-        meeting = self.getSelf()
+        meeting = self.get_self()
         return meeting.query_state() in ('decided', 'closed', 'decisions_published', )
-
-    security.declarePublic('getSpecificMailContext')
-
-    def getSpecificMailContext(self, event, translationMapping):
-        '''See doc in interfaces.py.'''
-        return None
-
-    security.declarePublic('includeMailRecipient')
-
-    def includeMailRecipient(self, event, userId):
-        '''See doc in interfaces.py.'''
-        return True
 
     def add_recurring_items_if_relevant(self, transition):
         '''Sees in the meeting config linked to p_meeting if the triggering of
@@ -1683,12 +1667,6 @@ class Meeting(Container):
                 notify(ItemDuplicatedFromConfigEvent(new_item, 'as_recurring_item'))
                 new_item.reindexObject()
 
-    security.declarePublic('fieldIsEmpty')
-
-    def fieldIsEmpty(self, name):
-        '''Is field named p_name empty ?'''
-        return fieldIsEmpty(name, self)
-
     security.declarePublic('number_of_items')
 
     def number_of_items(self, as_int=False):
@@ -1703,7 +1681,7 @@ class Meeting(Container):
     def show_votes(self):
         '''See doc in interfaces.py.'''
         res = False
-        meeting = self.getSelf()
+        meeting = self.get_self()
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(meeting)
         if cfg.getUseVotes() or meeting.get_voters():
@@ -1753,7 +1731,7 @@ class Meeting(Container):
 
     def show_insert_or_remove_selected_items_action(self):
         '''See doc in interfaces.py.'''
-        meeting = self.getSelf()
+        meeting = self.get_self()
         member = api.user.get_current()
         return bool(member.has_permission(ModifyPortalContent, meeting) and
                     not meeting.query_state() in meeting.MEETINGCLOSEDSTATES)

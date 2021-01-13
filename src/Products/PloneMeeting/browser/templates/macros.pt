@@ -147,13 +147,14 @@ document.location.reload(true);
          i18n:attributes="title fastedit_edit"
          tal:attributes="src string:$portal_url/edit.png;
                          onClick jsEdit;
-                         onload python: needToRefreshPage and 'javascript:refreshPageIfNeeded()' or ''"/>    <tal:history define="hasHistory python: context.hasHistory(fieldName)" condition="hasHistory">
-    <img style="cursor:pointer" title="history_changes" i18n:attributes="title"
-         tal:condition="not: changes"
-         tal:attributes="src string:$portal_url/changes.gif; onClick jsChanges"/>
-    <img style="cursor:pointer" title="history_last" i18n:attributes="title"
-         tal:condition="changes"
-         tal:attributes="src string:$portal_url/view.gif; onClick jsView"/>
+                         onload python: needToRefreshPage and 'javascript:refreshPageIfNeeded()' or ''"/>
+    <tal:history define="hasHistory python: context.hasHistory(fieldName)" condition="hasHistory">
+        <img style="cursor:pointer" title="history_changes" i18n:attributes="title"
+             tal:condition="not: changes"
+             tal:attributes="src string:$portal_url/changes.gif; onClick jsChanges"/>
+        <img style="cursor:pointer" title="history_last" i18n:attributes="title"
+             tal:condition="changes"
+             tal:attributes="src string:$portal_url/view.gif; onClick jsView"/>
     </tal:history>
   </legend>
 

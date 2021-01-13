@@ -1027,7 +1027,6 @@ def onMeetingCreated(meeting, event):
 def onMeetingModified(meeting, event):
     """ """
     need_reindex = meeting.update_title()
-    need_reindex = meeting.update_place() or need_reindex
     # Update contact-related info (attendees, signatories, replacements...)
     meeting.update_contacts()
     # Add a line in history if historized fields have changed
