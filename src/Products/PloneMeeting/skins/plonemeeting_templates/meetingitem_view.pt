@@ -619,24 +619,7 @@
       <tal:itemNavigation replace="structure context/@@item-navigation-widget" />
     </tal:itemNavigation>
 
-    <div class="pm-global-actions">
-      <a title="show_or_hide_details"
-         i18n:attributes="title"
-         class="show-hide-all-details"
-         href="javascript:toggleAllDetails();">
-        <img tal:attributes="src string:${portal_url}/more_less_details.png" />
-      </a>
-      <span title="top_of_page"
-            i18n:attributes="title"
-            class="fa fa-arrow-up go-to-top-of-page"
-            onclick="event.preventDefault();$('html, body').animate({ scrollTop: 0 }, 'fast');">
-      </span>
-      <span title="bottom_of_page"
-            i18n:attributes="title"
-            class="fa fa-arrow-down go-to-bottom-of-page"
-            onclick="event.preventDefault();$('html, body').animate({ scrollTop: $(document).height()}, 'fast');">
-      </span>
-    </div>
+    <metal:global_actions use-macro="context/@@pm-macros/global_actions" />
 
     <tal:comment replace="nothing">Fields that appear only if the item is defined in a configuration</tal:comment>
     <tal:itemInConfig condition="context/isDefinedInTool">
