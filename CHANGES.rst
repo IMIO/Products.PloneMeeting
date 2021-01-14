@@ -12,6 +12,8 @@ Changelog
   Moreover, this fixes `RedefinedSignatoryForm` that was sometime broken if
   dropdown `position_type` contained a very large value.
   [gbastien]
+- Fixed JS errors in Console due to `onScrollMeetingView`.
+  [gbastien]
 
 4.2b8 (2021-01-06)
 ------------------
