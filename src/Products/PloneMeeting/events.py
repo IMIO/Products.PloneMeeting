@@ -13,6 +13,7 @@ from collective.eeafaceted.dashboard.utils import enableFacetedDashboardFor
 from collective.iconifiedcategory.utils import update_all_categorized_elements
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.helpers.cache import invalidate_cachekey_volatile_for
+from imio.helpers.content import get_modified_attrs
 from imio.helpers.content import richtextval
 from imio.helpers.security import fplog
 from imio.helpers.xhtml import storeImagesLocally
@@ -1034,7 +1035,27 @@ def onMeetingModified(meeting, event):
     # Apply potential transformations to richtext fields
     transformAllRichTextFields(meeting)
     # update every items itemReference if needed
-    meeting.update_item_references(check_needed=True)
+    mod_attrs = get_modified_attrs(event)
+    if set(mod_attrs).intersection(['date', 'first_item_number', 'meeting_number']):
+        meeting.update_item_references(check_needed=False)
+    # reindex every linked items if date value changed
+    if "date" in mod_attrs:
+        catalog = api.portal.get_tool('portal_catalog')
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(meeting)
+        # items linked to the meeting
+        brains = catalog(portal_type=cfg.getItemTypeName(),
+                         linkedMeetingUID=meeting.UID())
+        # items having the meeting as the preferredMeeting
+        brains = brains + catalog(portal_type=cfg.getItemTypeName(),
+                                  getPreferredMeeting=meeting.UID())
+        for brain in brains:
+            item = brain.getObject()
+            item.reindexObject(idxs=['linkedMeetingDate', 'getPreferredMeetingDate'])
+        # clean cache for "Products.PloneMeeting.vocabularies.meetingdatesvocabulary"
+        invalidate_cachekey_volatile_for(
+            "Products.PloneMeeting.vocabularies.meetingdatesvocabulary", get_again=True)
+
     # update local roles as power observers local roles may vary depending on meeting_access_on
     meeting.update_local_roles()
     # invalidate last meeting modified

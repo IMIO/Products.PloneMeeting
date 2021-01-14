@@ -9,7 +9,6 @@ from copy import deepcopy
 from datetime import datetime
 from datetime import timedelta
 from imio.helpers.cache import cleanRamCacheFor
-from imio.helpers.cache import invalidate_cachekey_volatile_for
 from imio.prettylink.interfaces import IPrettyLink
 from persistent.list import PersistentList
 from persistent.mapping import PersistentMapping
@@ -741,6 +740,24 @@ class Meeting(Container):
                                      domain='PloneMeeting',
                                      context=self.REQUEST)
 
+    security.declarePrivate('validate_preMeetingDate')
+
+    def validate_preMeetingDate(self, value):
+        '''Checks that the preMeetingDate comes before the meeting date.'''
+        if not value or not self.attribute_is_used('preMeetingDate'):
+            return
+        # Get the meeting date from the request
+        try:
+            meetingDate = DateTime(self.REQUEST['date'])
+        except DateTime.DateError:
+            meetingDate = None
+        except DateTime.SyntaxError:
+            meetingDate = None
+        # Compare meeting and pre-meeting dates
+        if meetingDate and (DateTime(value) >= meetingDate):
+            label = 'pre_date_after_meeting_date'
+            return translate(label, domain='PloneMeeting', context=self.REQUEST)
+
     security.declarePrivate('validate_place')
 
     def validate_place(self, value):
@@ -997,75 +1014,6 @@ class Meeting(Container):
         else:
             person = held_position.get_person()
             return person.get_title()
-
-    security.declarePrivate('setDate')
-
-    def setDate(self, value, **kwargs):
-        '''Overrides the field 'date' mutator so we reindex every linked
-           items if date value changed.  Moreover we manage update_item_references
-           if value changed.'''
-        current_date = self.getField('date').get(self, **kwargs)
-        if not value == current_date:
-            # add a value in the REQUEST to specify that update_item_references is needed
-            self.REQUEST.set('need_Meeting_update_item_references', True)
-            # store new date before updating items so items get
-            # right date when calling meeting.getDate
-            self.getField('date').set(self, value, **kwargs)
-            catalog = api.portal.get_tool('portal_catalog')
-            tool = api.portal.get_tool('portal_plonemeeting')
-            cfg = tool.getMeetingConfig(self)
-            # items linked to the meeting
-            brains = catalog(portal_type=cfg.getItemTypeName(),
-                             linkedMeetingUID=self.UID())
-            # items having the meeting as the preferredMeeting
-            brains = brains + catalog(portal_type=cfg.getItemTypeName(),
-                                      getPreferredMeeting=self.UID())
-            for brain in brains:
-                item = brain.getObject()
-                item.reindexObject(idxs=['linkedMeetingDate', 'getPreferredMeetingDate'])
-            # clean cache for "Products.PloneMeeting.vocabularies.meetingdatesvocabulary"
-            invalidate_cachekey_volatile_for(
-                "Products.PloneMeeting.vocabularies.meetingdatesvocabulary", get_again=True)
-
-    security.declarePrivate('setFirstItemNumber')
-
-    def setFirstItemNumber(self, value, **kwargs):
-        '''Overrides the field 'firstItemNumber' mutator to be able to
-           update_item_references if value changed.'''
-        current_first_item_number = self.getField('firstItemNumber').get(self, **kwargs)
-        if not value == current_first_item_number:
-            # add a value in the REQUEST to specify that update_item_references is needed
-            self.REQUEST.set('need_Meeting_update_item_references', True)
-        self.getField('firstItemNumber').set(self, value, **kwargs)
-
-    security.declarePrivate('setMeetingNumber')
-
-    def setMeetingNumber(self, value, **kwargs):
-        '''Overrides the field 'meetingNumber' mutator to be able to
-           update_item_references if value changed.'''
-        current_meetingNumber = self.getField('meetingNumber').get(self, **kwargs)
-        if not value == current_meetingNumber:
-            # add a value in the REQUEST to specify that update_item_references is needed
-            self.REQUEST.set('need_Meeting_update_item_references', True)
-        self.getField('meetingNumber').set(self, value, **kwargs)
-
-    security.declarePrivate('validate_preMeetingDate')
-
-    def validate_preMeetingDate(self, value):
-        '''Checks that the preMeetingDate comes before the meeting date.'''
-        if not value or not self.attribute_is_used('preMeetingDate'):
-            return
-        # Get the meeting date from the request
-        try:
-            meetingDate = DateTime(self.REQUEST['date'])
-        except DateTime.DateError:
-            meetingDate = None
-        except DateTime.SyntaxError:
-            meetingDate = None
-        # Compare meeting and pre-meeting dates
-        if meetingDate and (DateTime(value) >= meetingDate):
-            label = 'pre_date_after_meeting_date'
-            return translate(label, domain='PloneMeeting', context=self.REQUEST)
 
     def get_items(self,
                   uids=[],

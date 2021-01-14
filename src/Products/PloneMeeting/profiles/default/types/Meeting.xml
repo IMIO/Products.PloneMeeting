@@ -60,4 +60,24 @@
          visible="True">
   <permission value="View"/>
  </action>
+ <action title="Update item references"
+         i18n:attributes="title"
+         action_id="update_item_references"
+         category="object_buttons"
+         condition_expr=""
+         icon_expr=""
+         url_expr="string:${object_url}/@@update-item-references"
+         visible="True">
+  <permission value="Modify portal content"/>
+ </action>
+ <action title="Reorder items"
+         i18n:attributes="title"
+         action_id="reorder_items"
+         category="object_buttons"
+         condition_expr=""
+         icon_expr=""
+         url_expr="string:${object_url}/@@reorder-items"
+         visible="True">
+  <permission value="Modify portal content"/>
+ </action>
 </object>
