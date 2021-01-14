@@ -424,7 +424,7 @@ class IRedefinedSignatory(IBaseAttendee):
         description=_(u"Position type to use as label for the signature."),
         defaultFactory=position_type_default,
         required=True,
-        vocabulary="PositionTypes")
+        vocabulary="PMPositionTypes")
 
     signature_number = schema.Choice(
         title=_(u"Signature number"),

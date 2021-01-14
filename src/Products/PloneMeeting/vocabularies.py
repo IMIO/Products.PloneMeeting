@@ -6,6 +6,7 @@ from collective.contact.plonegroup.config import get_registry_organizations
 from collective.contact.plonegroup.utils import get_organization
 from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_own_organization
+from collective.contact.plonegroup.vocabularies import PositionTypesVocabulary
 from collective.documentgenerator.content.vocabulary import ExistingPODTemplateFactory
 from collective.documentgenerator.content.vocabulary import MergeTemplatesVocabularyFactory
 from collective.documentgenerator.content.vocabulary import PortalTypesVocabularyFactory
@@ -40,6 +41,7 @@ from Products.PloneMeeting.config import EMPTY_STRING
 from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
+from Products.PloneMeeting.content.held_position import split_gender_and_number
 from Products.PloneMeeting.indexes import DELAYAWARE_ROW_ID_PATTERN
 from Products.PloneMeeting.indexes import REAL_ORG_UID_PATTERN
 from Products.PloneMeeting.interfaces import IMeetingConfig
@@ -2084,3 +2086,39 @@ class PMUsers(UsersFactory):
         return SimpleVocabulary(terms)
 
 PMUsersFactory = PMUsers()
+
+
+class PMPositionTypesVocabulary(PositionTypesVocabulary):
+
+    def _get_person(self, context):
+        """ """
+        person = None
+        # adding a held_position
+        if context.portal_type == 'person':
+            person = context
+        # editing a held_position
+        elif context.portal_type == 'held_position':
+            person = context.get_person()
+        else:
+            # used in the RedefinedSignatoryForm
+            person_uid = context.REQUEST.get('person_uid', None)
+            if person_uid is not None:
+                catalog = api.portal.get_tool('portal_catalog')
+                hp = catalog(UID=person_uid)[0].getObject()
+                person = hp.get_person()
+        return person
+
+    def __call__(self, context):
+        res = super(PMPositionTypesVocabulary, self).__call__(context)
+        # patch term title if context is a held_position and so we know what to display
+        person = self._get_person(context)
+        if person is not None:
+            gender = person.gender or 'M'
+            terms = res._terms
+            for term in terms:
+                if term.token == 'default':
+                    continue
+                gender_and_numbers = split_gender_and_number(term.title)
+                term.title = gender_and_numbers['{0}S'.format(gender)]
+        return res
+PMPositionTypesVocabularyFactory = PMPositionTypesVocabulary()

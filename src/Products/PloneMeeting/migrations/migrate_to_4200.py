@@ -223,7 +223,6 @@ class Migrate_To_4200(Migrator):
 
         # apply correct batch actions marker on searches_* folders
         self._updateSearchedFolderBatchActionsMarkerInterface()
-        return
 
         # remove useless catalog indexes and columns, were renamed to snake case
         self.removeUnusedIndexes(indexes=['getItemIsSigned', 'sendToAuthority', 'toDiscuss'])

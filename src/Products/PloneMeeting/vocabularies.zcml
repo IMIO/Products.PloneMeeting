@@ -91,6 +91,8 @@
            name="Products.PloneMeeting.vocabularies.annex_restrict_shown_and_editable_attributes_vocabulary" />
   <utility component=".vocabularies.PMUsersFactory"
            name="Products.PloneMeeting.Users" />
+  <utility name="PMPositionTypes"
+           component=".vocabularies.PMPositionTypesVocabularyFactory" />
 
   <!-- PMHeldPosition vocabularies -->
   <utility component=".vocabularies.HeldPositionUsagesVocabularyFactory"
