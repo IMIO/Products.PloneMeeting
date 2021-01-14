@@ -252,4 +252,7 @@
         />
     </configure>
 
+    <adapter for="z3c.form.interfaces.IWidget"
+             factory=".widgets.pm_richtext.PMZ3CFormWidgetSettings" />
+
 </configure>

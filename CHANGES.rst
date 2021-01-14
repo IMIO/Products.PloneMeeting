@@ -5,8 +5,10 @@ Changelog
 4.2b10 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- Fixed `collective.ckeditor` `Z3CFormWidgetSettings` for `DX` to not use a
+  `restrictedTraverse` to check if `cke-save` view is available on context or
+  it disables `ajax_save` plugin for users that are not `Manager`.
+  [gbastien]
 
 4.2b9 (2021-01-14)
 ------------------
