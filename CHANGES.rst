@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2b9 (unreleased)
+4.2b9 (2021-01-14)
 ------------------
 
 - Override `PositionTypes` vocabulary from `collective.contact.plonegroup`,
