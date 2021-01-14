@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2b10 (unreleased)
+4.2b10 (2021-01-14)
 -------------------
 
 - Fixed `collective.ckeditor` `Z3CFormWidgetSettings` for `DX` to not use a
