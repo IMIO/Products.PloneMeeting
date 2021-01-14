@@ -2090,24 +2090,30 @@ PMUsersFactory = PMUsers()
 
 class PMPositionTypesVocabulary(PositionTypesVocabulary):
 
-    def _get_hp(self, context):
+    def _get_person(self, context):
         """ """
-        hp = None
-        if context.portal_type == 'held_position':
-            hp = context
+        person = None
+        # adding a held_position
+        if context.portal_type == 'person':
+            person = context
+        # editing a held_position
+        elif context.portal_type == 'held_position':
+            person = context.get_person()
         else:
+            # used in the RedefinedSignatoryForm
             person_uid = context.REQUEST.get('person_uid', None)
             if person_uid is not None:
                 catalog = api.portal.get_tool('portal_catalog')
                 hp = catalog(UID=person_uid)[0].getObject()
-        return hp
+                person = hp.get_person()
+        return person
 
     def __call__(self, context):
         res = super(PMPositionTypesVocabulary, self).__call__(context)
         # patch term title if context is a held_position and so we know what to display
-        hp = self._get_hp(context)
-        if hp is not None:
-            gender = hp.get_person().gender or 'M'
+        person = self._get_person(context)
+        if person is not None:
+            gender = person.gender or 'M'
             terms = res._terms
             for term in terms:
                 if term.token == 'default':

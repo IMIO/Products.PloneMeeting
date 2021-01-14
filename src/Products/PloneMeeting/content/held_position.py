@@ -5,6 +5,7 @@ from collective.contact.core.content.held_position import IHeldPosition
 from collective.contact.core.utils import get_gender_and_number
 from collective.contact.core.utils import get_position_type_name
 from collective.contact.core.vocabulary import get_directory
+from collective.contact.core.vocabulary import NoDirectoryFound
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from imio.helpers.cache import invalidate_cachekey_volatile_for
 from plone.autoform import directives as form
@@ -216,8 +217,13 @@ class PMHeldPosition(HeldPosition):
             (position_type_attr and getattr(self, position_type_attr)) or \
             (fallback_position_type_attr and getattr(self, fallback_position_type_attr))
         if value:
-            directory = get_directory(self)
-            value = get_position_type_name(directory, value)
+            try:
+                directory = get_directory(self)
+                value = get_position_type_name(directory, value)
+            except NoDirectoryFound:
+                pass
+                # in some case like element creation, self does not
+                # have acquisition, in this case, we pass
         return split_gender_and_number(value)
 
     def get_prefix_for_gender_and_number(self,
