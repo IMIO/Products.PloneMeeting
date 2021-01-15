@@ -1306,7 +1306,10 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         fmt = fmt.replace('%mt', month.lower())
         fmt = fmt.replace('%MT', month)
         # Resolve all other, standard, symbols
-        res = date.strftime(fmt)
+        # fmt can not be unicode
+        if isinstance(fmt, unicode):
+            fmt = fmt.encode('utf-8')
+        res = safe_unicode(date.strftime(fmt))
         # Finally, prefix the date with p_prefix when required
         if prefixed:
             res = u"{0} {1}".format(
