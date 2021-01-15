@@ -2,9 +2,9 @@
 
 from AccessControl import ClassSecurityInfo
 from collections import OrderedDict
-from collective.dexteritytextindexer.directives import searchable
 from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.contact.plonegroup.config import get_registry_organizations
+from collective.dexteritytextindexer.directives import searchable
 from copy import deepcopy
 from datetime import datetime
 from datetime import timedelta
@@ -56,8 +56,11 @@ from Products.PloneMeeting.widgets.pm_textarea import render_textarea
 from z3c.form.browser.radio import RadioFieldWidget
 from zope import schema
 from zope.event import notify
+from zope.globalrequest import getRequest
 from zope.i18n import translate
 from zope.interface import implements
+from zope.interface import Invalid
+from zope.interface import invariant
 from zope.schema import Datetime
 from zope.schema import Int
 from zope.schema import Text
@@ -68,6 +71,18 @@ import logging
 
 
 logger = logging.getLogger('PloneMeeting')
+
+
+def assembly_constraint(value):
+    """Check that opening [[ has it's closing ]]."""
+    value = value and value.output
+    if not validate_item_assembly_value(value):
+        request = getRequest()
+        msg = translate('Please check that opening "[[" have corresponding closing "]]".',
+                        domain='PloneMeeting',
+                        context=request)
+        raise Invalid(msg)
+    return True
 
 
 class IMeeting(IDXMeetingContent):
@@ -112,6 +127,7 @@ class IMeeting(IDXMeetingContent):
         default_mime_type='text/plain',
         allowed_mime_types=('text/plain', ),
         output_mime_type='text/plain',
+        constraint=assembly_constraint,
         required=False)
 
     form.widget('assembly_excused', PMTextAreaFieldWidget)
@@ -301,6 +317,48 @@ class IMeeting(IDXMeetingContent):
     model.fieldset('managers_parameters',
                    label=_(u"Manager reserved parameters"),
                    fields=['meeting_number', 'first_item_number'])
+
+    @invariant
+    def validate_dates(data):
+        """Validate dates :
+           - "date" must be unique (no other Meeting with same date);
+           - "pre_meeting_date" must be < "date";
+           - "start_date" must be <= "end_date"."""
+        context = data.__context__
+        is_meeting = context.__class__.__name__ == "Meeting"
+        # check date
+        catalog = api.portal.get_tool('portal_catalog')
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        brains = catalog(portal_type=cfg.getMeetingTypeName(), meeting_date=data.date)
+        if brains:
+            found = False
+            if not is_meeting:
+                found = True
+            else:
+                for brain in brains:
+                    # ignore current meeting
+                    if brain.UID != context.UID():
+                        found = True
+            if found:
+                msg = translate('meeting_with_same_date_exists',
+                                domain='PloneMeeting',
+                                context=context.REQUEST)
+                raise Invalid(msg)
+
+        # check pre_meeting_date
+        if data.pre_meeting_date and (data.pre_meeting_date > data.date):
+            msg = translate("pre_date_after_meeting_date",
+                            domain='PloneMeeting',
+                            context=context.REQUEST)
+            raise Invalid(msg)
+
+        # check start_date/end_date
+        if data.start_date and data.end_date and data.start_date > data.end_date:
+            msg = translate("start_date_after_end_date",
+                            domain='PloneMeeting',
+                            context=context.REQUEST)
+            raise Invalid(msg)
 
 
 @form.default_value(field=IMeeting['assembly'])
@@ -720,63 +778,6 @@ class Meeting(Container):
                         context=REQUEST)
 
         return errors
-
-    security.declarePrivate('validate_date')
-
-    def validate_date(self, value):
-        '''There can't be several meetings with the same date and hour.'''
-        catalog = api.portal.get_tool('portal_catalog')
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self)
-        # DateTime('2020-05-28 11:00') will result in DateTime('2020/05/28 11:00:00 GMT+0')
-        # DateTime('2020/05/28 11:00') will result in DateTime('2020/05/28 11:00:00 GMT+2')
-        # so make sure value uses "/" instead "-"
-        value = value.replace("-", "/")
-        otherMeetings = catalog(portal_type=cfg.getMeetingTypeName(), getDate=DateTime(value))
-        if otherMeetings:
-            for m in otherMeetings:
-                if m.getObject() != self:
-                    return translate('meeting_with_same_date_exists',
-                                     domain='PloneMeeting',
-                                     context=self.REQUEST)
-
-    security.declarePrivate('validate_preMeetingDate')
-
-    def validate_preMeetingDate(self, value):
-        '''Checks that the preMeetingDate comes before the meeting date.'''
-        if not value or not self.attribute_is_used('preMeetingDate'):
-            return
-        # Get the meeting date from the request
-        try:
-            meetingDate = DateTime(self.REQUEST['date'])
-        except DateTime.DateError:
-            meetingDate = None
-        except DateTime.SyntaxError:
-            meetingDate = None
-        # Compare meeting and pre-meeting dates
-        if meetingDate and (DateTime(value) >= meetingDate):
-            label = 'pre_date_after_meeting_date'
-            return translate(label, domain='PloneMeeting', context=self.REQUEST)
-
-    security.declarePrivate('validate_place')
-
-    def validate_place(self, value):
-        '''If "other" is selected, field "place_other" must contain
-           something.'''
-        rq = self.REQUEST
-        if (value == 'other') and not rq.get('place_other', None):
-            return translate('place_other_required',
-                             domain='PloneMeeting',
-                             context=rq)
-
-    security.declarePrivate('validate_assembly')
-
-    def validate_assembly(self, value):
-        '''Validate the assembly field.'''
-        if not validate_item_assembly_value(value):
-            return translate('Please check that opening "[[" have corresponding closing "]]".',
-                             domain='PloneMeeting',
-                             context=self.REQUEST)
 
     def _get_contacts(self, contact_type=None, uids=None, the_objects=False):
         """ """

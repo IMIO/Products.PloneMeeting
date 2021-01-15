@@ -41,7 +41,7 @@
   <div id="collapsible-dates-and-data"
        class="collapsible-content"
        style="display: none;"
-       tal:define="widgets python: view.view_data.fieldsets['dates_and_data'].widgets.values()">
+       tal:define="widgets python: view.meeting_view.fieldsets['dates_and_data'].widgets.values()">
     <div class="collapsible-inner-content">
       <table class="no-style-table">
         <tal:loop repeat="widget widgets">
@@ -49,9 +49,10 @@
               <td class="table_widget_label">
                 <label tal:content="widget/label">Label</label>
               </td>
-              <td class="table_widget_value"
-                  tal:content="structure python:widget.value and widget.render() or '-'">
-                Value
+              <td class="table_widget_value">
+                <tal:value content="structure python:view.meeting_view.view_widget(widget)">
+                  Value
+                </tal:value>
               </td>
           </tr>
         </tal:loop>
@@ -137,7 +138,7 @@
   </div>
   <div id="collapsible-details"
        class="collapsible-content"
-       tal:define="widgets python: view.view_data.fieldsets['details'].widgets.values()">
+       tal:define="widgets python: view.meeting_view.fieldsets['details'].widgets.values()">
     <div class="collapsible-inner-content">
       <tal:loop repeat="widget widgets">
         <tal:block tal:replace="structure python:widget.render()" />
@@ -153,7 +154,7 @@
   <div id="collapsible-managers-parameters"
        class="collapsible-content"
        style="display: none;"
-       tal:define="widgets python: view.view_data.fieldsets['managers_parameters'].widgets.values()">
+       tal:define="widgets python: view.meeting_view.fieldsets['managers_parameters'].widgets.values()">
     <div class="collapsible-inner-content">
       <table class="no-style-table">
         <tal:loop repeat="widget widgets">
@@ -162,7 +163,7 @@
                 <label tal:content="widget/label">Label</label>
               </td>
               <td class="table_widget_value"
-                  tal:content="structure python:widget.value and widget.render() or '-'">
+                  tal:content="structure python:view.meeting_view.view_widget(widget)">
                 Value
               </td>
           </tr>

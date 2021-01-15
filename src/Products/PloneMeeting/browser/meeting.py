@@ -90,7 +90,7 @@ def manage_field_attendees(the_form):
                                      if not v.__name__ == "attendees_edit_provider"]
 
 
-class MeetingConditions(object):
+class BaseMeetingView(object):
     """ """
 
     def shown_assembly_fields(self):
@@ -128,8 +128,17 @@ class MeetingConditions(object):
                (self.context.__class__.__name__ == 'Meeting' and
                 (self.context.get_attendees() or not self.show_field("assembly")))
 
+    def view_widget(self, widget, empty_value="-"):
+        """Render an empty_value instead nothing when field empty."""
+        value = getattr(self.context, widget.__name__, None)
+        if not value:
+            rendered = "-"
+        else:
+            rendered = widget.render()
+        return rendered
 
-class MeetingDefaultView(DefaultView, MeetingConditions):
+
+class MeetingDefaultView(DefaultView, BaseMeetingView):
     """ """
 
     def updateFieldsFromSchemata(self):
@@ -144,7 +153,7 @@ class MeetingDefaultView(DefaultView, MeetingConditions):
         manage_label_assembly(self)
 
 
-class AttendeesEditProvider(ContentProviderBase, MeetingConditions):
+class AttendeesEditProvider(ContentProviderBase, BaseMeetingView):
 
     template = \
         ViewPageTemplateFile('templates/meeting_attendees_edit.pt')
@@ -277,7 +286,7 @@ def get_all_used_held_positions(obj, include_new=False, the_objects=True):
     return tuple(contacts)
 
 
-class MeetingEdit(DefaultEditForm, MeetingConditions):
+class MeetingEdit(DefaultEditForm, BaseMeetingView):
     """
         Edit form redefinition to customize fields.
     """
@@ -306,7 +315,7 @@ class MeetingEdit(DefaultEditForm, MeetingConditions):
         manage_field_attendees(self)
 
 
-class MeetingAddForm(DefaultAddForm, MeetingConditions):
+class MeetingAddForm(DefaultAddForm, BaseMeetingView):
 
     implements(IFieldsAndContentProvidersForm)
     contentProviders = ContentProviders()
@@ -362,7 +371,7 @@ class MeetingView(FacetedContainerView):
         # make the 'view' widget available on faceted view
         view = self.context.restrictedTraverse('view')
         view.update()
-        self.view_data = view
+        self.meeting_view = view
 
     def __call__(self):
         """ """

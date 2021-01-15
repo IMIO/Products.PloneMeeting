@@ -2,14 +2,14 @@
 Also for backward compatibility for people that used the 'assembly' or 'signatures'
 field before and the 'attendees' now, if the field is not empty, we display it</tal:comment>
 <table class="no-style-table"
-       tal:define="widgets python: view.view_data.fieldsets['assembly'].widgets.values()">
+       tal:define="widgets python: view.meeting_view.fieldsets['assembly'].widgets.values()">
   <tal:loop repeat="widget widgets">
     <tr tal:attributes="id string:row-${widget/id}">
         <td class="table_widget_label">
           <label tal:content="widget/label">Label</label>
         </td>
         <td class="table_widget_value"
-            tal:content="structure python:widget.value and widget.render() or '-'">Value</td>
+            tal:content="structure python:view.view_widget(widget)">Value</td>
     </tr>
   </tal:loop>
 </table>

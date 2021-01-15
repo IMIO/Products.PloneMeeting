@@ -10,7 +10,7 @@ from Products.CMFCore.utils import _checkPermission
 from Products.Five import BrowserView
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from Products.PloneMeeting.browser.meeting import get_all_used_held_positions
-from Products.PloneMeeting.browser.meeting import MeetingConditions
+from Products.PloneMeeting.browser.meeting import BaseMeetingView
 from Products.PloneMeeting.config import NOT_VOTABLE_LINKED_TO_VALUE
 from Products.PloneMeeting.config import WriteBudgetInfos
 from Products.PloneMeeting.utils import display_as_html
@@ -476,7 +476,7 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
         return get_all_used_held_positions(self.meeting)
 
 
-class AsyncLoadMeetingAssemblyAndSignatures(BrowserView, MeetingConditions):
+class AsyncLoadMeetingAssemblyAndSignatures(BrowserView, BaseMeetingView):
     """ """
 
     def __init__(self, context, request):
@@ -519,7 +519,7 @@ class AsyncLoadMeetingAssemblyAndSignatures(BrowserView, MeetingConditions):
         self.voters = self.context.get_voters()
         view = self.context.restrictedTraverse('view')
         view.update()
-        self.view_data = view
+        self.meeting_view = view
 
     def display_striked_assembly(self):
         """ """
