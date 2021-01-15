@@ -19,6 +19,7 @@ from Products.Five import BrowserView
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import ITEM_INSERT_METHODS
 from Products.PloneMeeting.content.meeting import Meeting
+from Products.PloneMeeting.content.meeting import get_all_used_held_positions
 from Products.PloneMeeting.MeetingConfig import POWEROBSERVERPREFIX
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from z3c.form.contentprovider import ContentProviders
@@ -255,37 +256,6 @@ class AttendeesEditProvider(ContentProviderBase, BaseMeetingView):
         return res
 
 
-def get_all_used_held_positions(obj, include_new=False, the_objects=True):
-    '''This will return every currently stored held_positions.
-       If include_new=True, extra held_positions newly selected in the
-       configuration are added.
-       If p_the_objects=True, we return held_position objects, UID otherwise.
-       '''
-    # used Persons are held_positions stored in orderedContacts
-    contacts = hasattr(obj.aq_base, 'ordered_contacts') and list(obj.ordered_contacts) or []
-    if include_new:
-        # now getOrderedContacts from MeetingConfig and append new contacts at the end
-        # this is the case while adding new contact and editing existing meeting
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(obj)
-        selectable_contacts = cfg.getOrderedContacts()
-        new_selectable_contacts = [c for c in selectable_contacts if c not in contacts]
-        contacts = contacts + new_selectable_contacts
-
-    if the_objects:
-        # query held_positions
-        catalog = api.portal.get_tool('portal_catalog')
-        brains = catalog(UID=contacts)
-
-        # make sure we have correct order because query was not sorted
-        # we need to sort found brains according to uids
-        def get_key(item):
-            return contacts.index(item.UID)
-        brains = sorted(brains, key=get_key)
-        contacts = [brain.getObject() for brain in brains]
-    return tuple(contacts)
-
-
 class MeetingEdit(DefaultEditForm, BaseMeetingView):
     """
         Edit form redefinition to customize fields.
@@ -368,6 +338,7 @@ class MeetingView(FacetedContainerView):
         """ """
         # initialize member in call because it is Anonymous in __init__ of view...
         self.member = api.user.get_current()
+        self.is_manager = self.tool.isManager(self.context)
         # make the 'view' widget available on faceted view
         view = self.context.restrictedTraverse('view')
         view.update()

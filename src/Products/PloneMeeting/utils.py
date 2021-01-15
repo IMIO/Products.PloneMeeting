@@ -753,18 +753,24 @@ def getDateFromDelta(aDate, delta):
     return DateTime('%s %s' % ((aDate + int(days)).strftime('%Y/%m/%d'), hour))
 
 
+def mark_empty_tags(obj, value):
+    """ """
+    if _checkPermission(ModifyPortalContent, obj):
+        value = markEmptyTags(
+            value,
+            tagTitle=translate('blank_line',
+                               domain='PloneMeeting',
+                               context=obj.REQUEST),
+            onlyAtTheEnd=True)
+    return value
+
+
 def getFieldVersion(obj, name, changes):
     '''Returns the content of field p_name on p_obj. If p_changes is True,
        historical modifications of field content are highlighted.'''
     lastVersion = obj.getField(name).getAccessor(obj)()
     # highlight blank lines at the end of the text if current user may edit the obj
-    if _checkPermission(ModifyPortalContent, obj):
-        lastVersion = markEmptyTags(lastVersion,
-                                    tagTitle=translate('blank_line',
-                                                       domain='PloneMeeting',
-                                                       context=obj.REQUEST),
-                                    onlyAtTheEnd=True)
-
+    lastVersion = mark_empty_tags(obj, lastVersion)
     if not changes:
         return lastVersion
     # Return cumulative diff between successive versions of field

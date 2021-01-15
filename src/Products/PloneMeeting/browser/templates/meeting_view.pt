@@ -107,9 +107,12 @@
     <span i18n:translate="presented_items">Presented items</span> (<span class="meeting_number_of_items" tal:content="python: context.number_of_items()"/>)
   </h2>
 
-  <span class="fa show-help link-action tooltipster-inserting-methods-helper-msg"
-        tal:condition="python: view.tool.isManager(context)"
-        tal:attributes="data-base_url string:${context/absolute_url}">
+  <span title="meeting_inserting_methods_help_msg_descr"
+       i18n:attributes="title">
+    <span class="fa show-help link-action tooltipster-inserting-methods-helper-msg"
+          tal:condition="python: view.is_manager"
+          tal:attributes="data-base_url string:${context/absolute_url}">
+    </span>
   </span>
 
   <!-- Folder contents -->
@@ -146,8 +149,13 @@
     </div>
   </div>
 
+  <tal:comment replace="nothing">Annexes</tal:comment>
+  <tal:annexes replace="structure context/@@display-annexes" />
+  <br />
+
   <tal:comment replace="nothing">Manager reserved fields</tal:comment>
   <div class="collapsible discreet"
+       tal:condition="python: view.is_manager"
        onclick="toggleDetails('collapsible-managers-parameters', toggle_parent_active=true, parent_tag=this)">
     <span class="meeting_attribute_label" i18n:translate='managers_parameters'>Managers parameters</span>
   </div>

@@ -57,10 +57,14 @@ field before and the 'attendees' now, if the field is not empty, we display it</
        <span i18n:translate="is_voter">Voter?</span>
        <tal:show_voted_or_not_voted condition="isManager">
         <a class="link-overlay-pm"
+           title="Completed votes"
+           i18n:attributes="title"
            tal:attributes="href string:${context/absolute_url}/@@display-meeting-item-voters?show_voted_items:boolean=1">
          <span class="fa show-info green-colored link-action"></span>
         </a>
         <a class="link-overlay-pm"
+           title="Not completed votes"
+           i18n:attributes="title"
            tal:attributes="href string:${context/absolute_url}/@@display-meeting-item-voters">
          <span class="fa show-info red-colored link-action"></span>
         </a>
@@ -115,7 +119,7 @@ field before and the 'attendees' now, if the field is not empty, we display it</
                                   data-signatory_uid string:${aUid};">
          </span>
         </td>
-        <td tal:condition="use_user_replacements">
+        <td align="center" tal:condition="use_user_replacements">
           <span tal:condition="python: aUid in user_replacements" tal:content="python: context.displayUserReplacement(user_replacements[aUid])"></span>
           <span tal:condition="python: aUid in excused + absents and aUid not in user_replacements">-</span>
         </td>

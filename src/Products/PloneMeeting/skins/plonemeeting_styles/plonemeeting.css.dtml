@@ -2148,7 +2148,10 @@ table#form-widgets-votes th {
 div#formfield-form-widgets-linked_to_previous {
    display: none;
 }
-
+/* make at least 3 files appear horizontally */
+div.overlay div.qq-uploader li {
+    margin-left: 0.5em;
+}
 
 /* </dtml-with> */
 

@@ -9,6 +9,7 @@ from Products.CMFCore.permissions import ModifyPortalContent
 from Products.Five import BrowserView
 from Products.PloneMeeting.utils import checkMayQuickEdit
 from Products.PloneMeeting.utils import get_dx_widget
+from Products.PloneMeeting.utils import mark_empty_tags
 from z3c.form.interfaces import IFieldWidget
 from z3c.form.interfaces import INPUT_MODE
 from z3c.form.widget import FieldWidget
@@ -51,6 +52,11 @@ class PMRichTextWidget(RichTextWidget):
             "loadContent(tag, load_view='@@richtext-edit?field_name={0}', " \
             "async=true, base_url='{1}', event_name='ckeditor_prepare_ajax_success');".format(
                 self.__name__, self.context.absolute_url())
+
+    def display_value(self, value):
+        """ """
+        value = mark_empty_tags(self.context, value)
+        return value
 
 
 @implementer(IFieldWidget)

@@ -325,6 +325,10 @@ class IMeeting(IDXMeetingContent):
            - "pre_meeting_date" must be < "date";
            - "start_date" must be <= "end_date"."""
         context = data.__context__
+        # invariant are called several times...
+        if context.REQUEST.get("validate_dates_done", False):
+            return
+
         is_meeting = context.__class__.__name__ == "Meeting"
         # check date
         catalog = api.portal.get_tool('portal_catalog')
@@ -344,6 +348,8 @@ class IMeeting(IDXMeetingContent):
                 msg = translate('meeting_with_same_date_exists',
                                 domain='PloneMeeting',
                                 context=context.REQUEST)
+                # avoid multiple call to this invariant
+                context.REQUEST.set("validate_dates_done", True)
                 raise Invalid(msg)
 
         # check pre_meeting_date
@@ -351,6 +357,8 @@ class IMeeting(IDXMeetingContent):
             msg = translate("pre_date_after_meeting_date",
                             domain='PloneMeeting',
                             context=context.REQUEST)
+            # avoid multiple call to this invariant
+            context.REQUEST.set("validate_dates_done", True)
             raise Invalid(msg)
 
         # check start_date/end_date
@@ -358,7 +366,93 @@ class IMeeting(IDXMeetingContent):
             msg = translate("start_date_after_end_date",
                             domain='PloneMeeting',
                             context=context.REQUEST)
+            # avoid multiple call to this invariant
+            context.REQUEST.set("validate_dates_done", True)
             raise Invalid(msg)
+        # avoid multiple call to this invariant
+        context.REQUEST.set("validate_dates_done", True)
+
+    @invariant
+    def validate_attendees(data):
+        """Validate attendees, only if context is a Meeting,
+           when creating a new meeting, nothing is defined on item."""
+        context = data.__context__
+        # invariant are called several times...
+        request = context.REQUEST
+        if context.REQUEST.get("validate_attendees_done", False):
+            return
+
+        is_meeting = context.__class__.__name__ == "Meeting"
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+
+        if cfg.isUsingContacts() and is_meeting:
+            # removed attendees
+            # REQUEST.form['meeting_attendees'] is like
+            # ['muser_attendeeuid1_attendee', 'muser_attendeeuid2_excused']
+            stored_attendees = get_all_used_held_positions(context, the_objects=False)
+            meeting_attendees = [attendee.split('_')[1] for attendee
+                                 in request.form.get('meeting_attendees', [])]
+            removed_meeting_attendees = set(stored_attendees).difference(meeting_attendees)
+            # attendees redefined on items
+            redefined_item_attendees = context._get_all_redefined_attendees(by_persons=True)
+            conflict_attendees = removed_meeting_attendees.intersection(
+                redefined_item_attendees)
+            if conflict_attendees:
+                attendee_uid = tuple(removed_meeting_attendees)[0]
+                attendee_brain = uuidToCatalogBrain(attendee_uid)
+                msg = translate(
+                    'can_not_remove_attendee_redefined_on_items',
+                    mapping={'attendee_title': attendee_brain.get_full_title},
+                    domain='PloneMeeting',
+                    context=request)
+                # avoid multiple call to this invariant
+                context.REQUEST.set("validate_attendees_done", True)
+                raise Invalid(msg)
+            else:
+                # removed voters
+                stored_voters = context.get_voters()
+                meeting_voters = [voter.split('_')[1] for voter
+                                  in request.form.get('meeting_voters', [])]
+                removed_meeting_voters = set(stored_voters).difference(meeting_voters)
+                # public, voters are known
+                item_votes = context.get_item_votes()
+                voter_uids = []
+                highest_secret_votes = 0
+                for votes in item_votes.values():
+                    for vote in votes:
+                        if 'voters' in vote:
+                            # public
+                            voter_uids += [k for k, v in vote['voters'].items()
+                                           if v != NOT_ENCODED_VOTE_VALUE]
+                        else:
+                            secret_votes = sum([v for k, v in vote['votes'].items()])
+                            if secret_votes > highest_secret_votes:
+                                highest_secret_votes = secret_votes
+                voter_uids = list(set(voter_uids))
+                conflict_voters = removed_meeting_voters.intersection(
+                    voter_uids)
+                if conflict_voters:
+                    voter_uid = tuple(removed_meeting_voters)[0]
+                    voter_brain = uuidToCatalogBrain(voter_uid)
+                    msg = translate(
+                        'can_not_remove_public_voter_voted_on_items',
+                        mapping={'attendee_title': voter_brain.get_full_title},
+                        domain='PloneMeeting',
+                        context=request)
+                    # avoid multiple call to this invariant
+                    context.REQUEST.set("validate_attendees_done", True)
+                    raise Invalid(msg)
+                elif highest_secret_votes > len(meeting_voters):
+                    msg = translate(
+                        'can_not_remove_secret_voter_voted_on_items',
+                        domain='PloneMeeting',
+                        context=request)
+                    # avoid multiple call to this invariant
+                    context.REQUEST.set("validate_attendees_done", True)
+                    raise Invalid(msg)
+        # avoid multiple call to this invariant
+        context.REQUEST.set("validate_attendees_done", True)
 
 
 @form.default_value(field=IMeeting['assembly'])
@@ -405,6 +499,36 @@ def default_pre_meeting_place(data):
         return safe_unicode(cfg.getPlaces())
     return u""
 
+
+def get_all_used_held_positions(obj, include_new=False, the_objects=True):
+    '''This will return every currently stored held_positions.
+       If include_new=True, extra held_positions newly selected in the
+       configuration are added.
+       If p_the_objects=True, we return held_position objects, UID otherwise.
+       '''
+    # used Persons are held_positions stored in orderedContacts
+    contacts = hasattr(obj.aq_base, 'ordered_contacts') and list(obj.ordered_contacts) or []
+    if include_new:
+        # now getOrderedContacts from MeetingConfig and append new contacts at the end
+        # this is the case while adding new contact and editing existing meeting
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(obj)
+        selectable_contacts = cfg.getOrderedContacts()
+        new_selectable_contacts = [c for c in selectable_contacts if c not in contacts]
+        contacts = contacts + new_selectable_contacts
+
+    if the_objects:
+        # query held_positions
+        catalog = api.portal.get_tool('portal_catalog')
+        brains = catalog(UID=contacts)
+
+        # make sure we have correct order because query was not sorted
+        # we need to sort found brains according to uids
+        def get_key(item):
+            return contacts.index(item.UID)
+        brains = sorted(brains, key=get_key)
+        contacts = [brain.getObject() for brain in brains]
+    return tuple(contacts)
 
 ########################################################################
 #                                                                      #
@@ -713,71 +837,6 @@ class Meeting(Container):
             redefined_item_attendees = item_non_attendees, item_absents, \
                 item_excused, item_signatories
         return redefined_item_attendees
-
-    def post_validate(self, REQUEST=None, errors=None):
-        '''Validate attendees in post_validate as there is no field in schema for it.
-           - an attendee may not be unselected if something is redefined for it on an item.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self)
-
-        if cfg.isUsingContacts() and not self.isTemporary():
-            # removed attendees
-            # REQUEST.form['meeting_attendees'] is like
-            # ['muser_attendeeuid1_attendee', 'muser_attendeeuid2_excused']
-            stored_attendees = self.get_all_used_held_positions(the_objects=False)
-            meeting_attendees = [attendee.split('_')[1] for attendee
-                                 in REQUEST.form.get('meeting_attendees', [])]
-            removed_meeting_attendees = set(stored_attendees).difference(meeting_attendees)
-            # attendees redefined on items
-            redefined_item_attendees = self._get_all_redefined_attendees(by_persons=True)
-            conflict_attendees = removed_meeting_attendees.intersection(
-                redefined_item_attendees)
-            if conflict_attendees:
-                attendee_uid = tuple(removed_meeting_attendees)[0]
-                attendee_brain = uuidToCatalogBrain(attendee_uid)
-                errors['meeting_attendees'] = translate(
-                    'can_not_remove_attendee_redefined_on_items',
-                    mapping={'attendee_title': attendee_brain.get_full_title},
-                    domain='PloneMeeting',
-                    context=REQUEST)
-            else:
-                # removed voters
-                stored_voters = self.get_voters()
-                meeting_voters = [voter.split('_')[1] for voter
-                                  in REQUEST.form.get('meeting_voters', [])]
-                removed_meeting_voters = set(stored_voters).difference(meeting_voters)
-                # public, voters are known
-                item_votes = self.get_item_votes()
-                voter_uids = []
-                highest_secret_votes = 0
-                for votes in item_votes.values():
-                    for vote in votes:
-                        if 'voters' in vote:
-                            # public
-                            voter_uids += [k for k, v in vote['voters'].items()
-                                           if v != NOT_ENCODED_VOTE_VALUE]
-                        else:
-                            secret_votes = sum([v for k, v in vote['votes'].items()])
-                            if secret_votes > highest_secret_votes:
-                                highest_secret_votes = secret_votes
-                voter_uids = list(set(voter_uids))
-                conflict_voters = removed_meeting_voters.intersection(
-                    voter_uids)
-                if conflict_voters:
-                    voter_uid = tuple(removed_meeting_voters)[0]
-                    voter_brain = uuidToCatalogBrain(voter_uid)
-                    errors['meeting_attendees'] = translate(
-                        'can_not_remove_public_voter_voted_on_items',
-                        mapping={'attendee_title': voter_brain.get_full_title},
-                        domain='PloneMeeting',
-                        context=REQUEST)
-                elif highest_secret_votes > len(meeting_voters):
-                    errors['meeting_attendees'] = translate(
-                        'can_not_remove_secret_voter_voted_on_items',
-                        domain='PloneMeeting',
-                        context=REQUEST)
-
-        return errors
 
     def _get_contacts(self, contact_type=None, uids=None, the_objects=False):
         """ """
