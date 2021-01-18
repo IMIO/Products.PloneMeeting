@@ -7,28 +7,29 @@
            i18n_domain="PloneMeeting">
 
   <!-- load "imio.pm.locales" first so translations are overrided -->
-  <include package="imio.pm.locales"/>
-  <include package="imio.annex"/>
-  <include package="communesplone.layout"/>
+  <include package="imio.pm.locales" />
+  <include package="imio.annex" />
+  <include package="communesplone.layout" />
   <include package="Products.PasswordStrength" />
-  <include package="collective.ckeditor"/>
-  <include package="collective.contact.core"/>
-  <include package="collective.contact.plonegroup"/>
-  <include package="collective.documentviewer"/>
-  <include package="collective.datagridcolumns"/>
-  <include package="collective.eeafaceted.collectionwidget"/>
-  <include package="collective.eeafaceted.dashboard"/>
-  <include package="collective.iconifieddocumentactions"/>
-  <include package="collective.iconifiedcategory"/>
-  <include package="collective.js.tablednd"/>
-  <include package="collective.js.fancytree"/>
-  <include package="collective.js.jqueryui"/>
-  <include package="collective.messagesviewlet"/>
+  <include package="collective.ckeditor" />
+  <include package="collective.contact.core" />
+  <include package="collective.contact.plonegroup" />
+  <include package="collective.dexteritytextindexer" />
+  <include package="collective.documentviewer" />
+  <include package="collective.datagridcolumns" />
+  <include package="collective.eeafaceted.collectionwidget" />
+  <include package="collective.eeafaceted.dashboard" />
+  <include package="collective.iconifieddocumentactions" />
+  <include package="collective.iconifiedcategory" />
+  <include package="collective.js.tablednd" />
+  <include package="collective.js.fancytree" />
+  <include package="collective.js.jqueryui" />
+  <include package="collective.messagesviewlet" />
   <include zcml:condition="installed collective.solr" package="collective.solr" />
-  <include package="dexterity.localrolesfield"/>
-  <include package="ftw.labels"/>
-  <include package="imio.pm.ws"/>
-  <include package="imio.dashboard"/>
+  <include package="dexterity.localrolesfield" />
+  <include package="ftw.labels" />
+  <include package="imio.pm.ws" />
+  <include package="imio.dashboard" />
   <include zcml:condition="installed imio.zamqp.pm" package="imio.zamqp.pm" />
   <include package="plone.app.caching" />
   <include package="plone.app.contenttypes" />
@@ -55,17 +56,17 @@
   <includeOverrides file="ftw_labels/overrides.zcml" />
 
   <permission id="PloneMeeting.AddMeeting"
-              title="PloneMeeting: Add Meeting"/>
+              title="PloneMeeting: Add Meeting" />
   <permission id="PloneMeeting.AddAdvice"
-              title="PloneMeeting: Add advice"/>
+              title="PloneMeeting: Add advice" />
   <permission id="PloneMeeting.AddAnnex"
-              title="PloneMeeting: Add annex"/>
+              title="PloneMeeting: Add annex" />
   <permission id="PloneMeeting.AddAnnexDecision"
-              title="PloneMeeting: Add annexDecision"/>
+              title="PloneMeeting: Add annexDecision" />
   <permission id="PloneMeeting.manage_internal_organization_fields"
-              title="PloneMeeting: Manage internal organization fields"/>
+              title="PloneMeeting: Manage internal organization fields" />
   <permission id="PloneMeeting.write_userid_field"
-              title="PloneMeeting: Write userid field"/>
+              title="PloneMeeting: Write userid field" />
 
   <adapter for=".interfaces.IMeetingItem"
            factory=".MeetingItem.MeetingItemWorkflowConditions"
@@ -251,16 +252,14 @@
   <adapter
     for="imio.annex.content.annex.IAnnex"
     provides="collective.iconifiedcategory.interfaces.IIconifiedInfos"
-    factory=".adapters.PMCategorizedObjectInfoAdapter"
-    />
+    factory=".adapters.PMCategorizedObjectInfoAdapter" />
 
   <adapter
     for="Products.PloneMeeting.interfaces.IMeetingContent
          zope.publisher.interfaces.browser.IBrowserRequest
          collective.iconifiedcategory.behaviors.iconifiedcategorization.IIconifiedCategorizationMarker"
     provides="collective.iconifiedcategory.interfaces.IIconifiedContent"
-    factory=".adapters.PMCategorizedObjectAdapter"
-    />
+    factory=".adapters.PMCategorizedObjectAdapter" />
 
   <!-- IPrettyLink -->
   <adapter for="Products.PloneMeeting.content.advice.IMeetingAdvice"
@@ -424,7 +423,7 @@
   <adapter factory=".etags.MessagesViewlet"
            name="messagesviewlet" />
 
-  <include package="z3c.unconfigure" file="meta.zcml"/>
+  <include package="z3c.unconfigure" file="meta.zcml" />
 
   <!-- TAL condition behavior, unconfigure and re-configure for every content to add our extra expr context -->
   <unconfigure package="collective.behavior.talcondition">
@@ -434,8 +433,7 @@
         provides=".behavior.ITALCondition"
         for="plone.dexterity.interfaces.IDexterityContent"
         factory=".behavior.TALCondition"
-        marker=".interfaces.ITALConditionable"
-        />
+        marker=".interfaces.ITALConditionable" />
   </unconfigure>
   <plone:behavior
       title="TALCondition"

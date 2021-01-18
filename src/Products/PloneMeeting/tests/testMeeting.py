@@ -44,7 +44,7 @@ from zope.i18n import translate
 import transaction
 
 
-class testMeetingContent(PloneMeetingTestCase):
+class testMeetingType(PloneMeetingTestCase):
     '''Tests various aspects of Meetings management.'''
 
     def test_pm_InsertItem(self):
@@ -3483,5 +3483,5 @@ class testMeetingContent(PloneMeetingTestCase):
 def test_suite():
     from unittest import TestSuite, makeSuite
     suite = TestSuite()
-    suite.addTest(makeSuite(testMeetingContent, prefix='test_pm_'))
+    suite.addTest(makeSuite(testMeetingType, prefix='test_pm_'))
     return suite
