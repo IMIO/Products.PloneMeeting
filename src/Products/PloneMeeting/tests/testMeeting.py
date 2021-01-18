@@ -39,7 +39,11 @@ from Products.PloneMeeting.utils import getCurrentMeetingObject
 from Products.PloneMeeting.utils import get_states_before
 from Products.PloneMeeting.utils import set_field_from_ajax
 from Products.ZCatalog.Catalog import AbstractCatalogBrain
+from zope.event import notify
 from zope.i18n import translate
+from zope.lifecycleevent import Attributes
+from zope.lifecycleevent import ObjectModifiedEvent
+from zope.interface import Interface
 
 import transaction
 
@@ -2822,6 +2826,7 @@ class testMeetingType(PloneMeetingTestCase):
 
         # right, change meeting's date and check again
         meeting.date = datetime(2015, 5, 5)
+        notify(ObjectModifiedEvent(meeting, Attributes(Interface, 'date')))
         itemBrain = self.catalog(UID=item.UID())[0]
         self.assertEqual(itemBrain.linkedMeetingDate, meeting.date)
         self.assertEqual(itemBrain.getPreferredMeetingDate, meeting.date)
@@ -3121,24 +3126,29 @@ class testMeetingType(PloneMeetingTestCase):
            - Meeting.signatures."""
         cfg = self.meetingConfig
         self.changeUser('pmManager')
-        cfg.assembly = 'Default assembly'
-        cfg.assembly_staves = 'Default assembly staves'
-        cfg.signatures = 'Default signatures'
+        pm_folder = self.getMeetingFolder()
+        cfg.setAssembly('Default assembly')
+        cfg.setAssemblyStaves('Default assembly staves')
+        cfg.setSignatures('Default signatures')
 
         # only done if used
         cfg.setUsedMeetingAttributes(('place', ))
-        meeting = self.create('Meeting')
-        self.assertEqual(meeting.assembly, '')
-        self.assertEqual(meeting.assembly_staves, '')
-        self.assertEqual(meeting.signatures, '')
+        meeting_type_name = cfg.getMeetingTypeName()
+        add_form = pm_folder.restrictedTraverse('++add++{0}'.format(meeting_type_name))
+        add_form.update()
+        add_form_instance = add_form.form_instance
+        self.assertFalse('assembly' in add_form_instance.w)
+        self.assertFalse('assembly_staves' in add_form_instance.w)
+        self.assertFalse('signatures' in add_form_instance.w)
 
         # enable fields and test
-        cfg.setUsedMeetingAttributes(('assembly', 'assemblyStaves', 'signatures'))
-        meeting = self.create('Meeting')
-        # assembly fields are turned to HTML as default_output_type is text/html
-        self.assertEqual(meeting.assembly, '<p>Default assembly</p>')
-        self.assertEqual(meeting.assembly_staves, '<p>Default assembly staves</p>')
-        self.assertEqual(meeting.signatures, 'Default signatures')
+        cfg.setUsedMeetingAttributes(('assembly', 'assembly_staves', 'signatures'))
+        add_form = pm_folder.restrictedTraverse('++add++{0}'.format(meeting_type_name))
+        add_form.update()
+        add_form_instance = add_form.form_instance
+        self.assertEqual(add_form_instance.w['assembly'].value, u'Default assembly')
+        self.assertEqual(add_form_instance.w['assembly_staves'].value, u'Default assembly staves')
+        self.assertEqual(add_form_instance.w['signatures'].value, u'Default signatures')
 
     def test_pm_ItemReferenceInMeetingUpdatedWhenNecessary(self):
         '''Items references in a meeting are updated only when relevant,
