@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2b11 (unreleased)
+4.2b11 (2021-01-19)
 -------------------
 
 - Added `Annexes` to selectable values of
