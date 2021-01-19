@@ -1057,10 +1057,11 @@ def transformAllRichTextFields(obj, onlyField=None):
         else:
             schema = get_dx_schema(obj)
             write_permissions = schema.queryTaggedValue(WRITE_PERMISSIONS_KEY, {})
-            fields = {field.__name__: getattr(obj, field.__name__).raw for field in schema
+            fields = {field_name: getattr(obj, field_name, None) is not None and getattr(obj, field_name).raw
+                      for field_name, field in getFieldsInOrder(schema)
                       if field.__class__.__name__ == "RichText" and
                       (write_permissions.get(field.__name__) and
-                       member.has_permission(write_permissions[field.__name], obj) or True)}
+                       member.has_permission(write_permissions[field_name], obj) or True)}
     else:
         if onlyField:
             field = obj.schema[onlyField]
@@ -1071,6 +1072,8 @@ def transformAllRichTextFields(obj, onlyField=None):
                       member.has_permission(field.write_permission, obj)}
 
     for field_name, field_raw_value in fields.items():
+        if not field_raw_value:
+            continue
         # Apply mandatory transforms
         fieldContent = storeImagesLocally(obj, field_raw_value)
         # Apply standard transformations as defined in the config
@@ -1280,17 +1283,18 @@ def display_as_html(plain_content, obj, mark_empty_tags=False):
     """Display p_plain_content as HTML, especially ending lines
        that are not displayed if empty."""
     plain_content = plain_content or ''
-    html_content = plain_content.replace('\n', '<br />')
+    html_content = plain_content.replace('\n', '<br />').replace('\r', '')
+    # turn to HTML
+    splitted = html_content.split('<br />')
+    res = []
+    for elt in splitted:
+        if not elt.strip():
+            res.append('<p>&nbsp;</p>')
+        else:
+            res.append('<p>' + elt + '</p>')
+    html_content = ''.join(res)
     if mark_empty_tags and _checkPermission(ModifyPortalContent, obj):
-        # replace ending <br /> by empty tags
-        splitted = html_content.split('<br />')
-        res = []
-        for elt in splitted:
-            if not elt.strip():
-                res.append('<p>&nbsp;</p>')
-            else:
-                res.append('<p>' + elt + '</p>')
-        html_content = ''.join(res)
+        # replace ending <p> by empty tags
         html_content = markEmptyTags(
             html_content,
             tagTitle=translate('blank_line',

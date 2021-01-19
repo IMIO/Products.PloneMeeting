@@ -325,6 +325,11 @@ class IMeeting(IDXMeetingContent):
            - "pre_meeting_date" must be < "date";
            - "start_date" must be <= "end_date"."""
         context = data.__context__
+        if context is None:
+            # occurs when adding a new element
+            request = getRequest()
+            context = request.get('PUBLISHED').context
+
         # invariant are called several times...
         if context.REQUEST.get("validate_dates_done", False):
             return
@@ -377,6 +382,11 @@ class IMeeting(IDXMeetingContent):
         """Validate attendees, only if context is a Meeting,
            when creating a new meeting, nothing is defined on item."""
         context = data.__context__
+        if context is None:
+            # occurs when adding a new element
+            request = getRequest()
+            context = request.get('PUBLISHED').context
+
         # invariant are called several times...
         request = context.REQUEST
         if context.REQUEST.get("validate_attendees_done", False):
@@ -386,7 +396,7 @@ class IMeeting(IDXMeetingContent):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
 
-        if cfg.isUsingContacts() and is_meeting:
+        if is_meeting and cfg.isUsingContacts():
             # removed attendees
             # REQUEST.form['meeting_attendees'] is like
             # ['muser_attendeeuid1_attendee', 'muser_attendeeuid2_excused']

@@ -655,9 +655,8 @@ def onItemWillBeAdded(item, event):
 
 def onItemModified(item, event):
     '''Called when an item is modified.'''
-    # if called because content was changed, like annex/advice added/removed
+    # if called because content was changed, like annex/advice/image added/removed
     # we bypass, no need to update references or rename id
-
     if not isinstance(event, ContainerModifiedEvent):
         meeting = item.getMeeting()
         if meeting:
@@ -1027,49 +1026,52 @@ def onMeetingCreated(meeting, event):
 
 def onMeetingModified(meeting, event):
     """ """
-    need_reindex = meeting.update_title()
-    # Update contact-related info (attendees, signatories, replacements...)
-    meeting.update_contacts()
-    # Add a line in history if historized fields have changed
-    addDataChange(meeting)
-    # Apply potential transformations to richtext fields
-    transformAllRichTextFields(meeting)
-    # update every items itemReference if needed
-    mod_attrs = get_modified_attrs(event)
-    if set(mod_attrs).intersection(['date', 'first_item_number', 'meeting_number']):
-        meeting.update_item_references(check_needed=False)
-    # reindex every linked items if date value changed
-    if "date" in mod_attrs:
-        catalog = api.portal.get_tool('portal_catalog')
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(meeting)
-        # items linked to the meeting
-        brains = catalog(portal_type=cfg.getItemTypeName(),
-                         linkedMeetingUID=meeting.UID())
-        # items having the meeting as the preferredMeeting
-        brains = brains + catalog(portal_type=cfg.getItemTypeName(),
-                                  getPreferredMeeting=meeting.UID())
-        for brain in brains:
-            item = brain.getObject()
-            item.reindexObject(idxs=['linkedMeetingDate', 'getPreferredMeetingDate'])
-        # clean cache for "Products.PloneMeeting.vocabularies.meetingdatesvocabulary"
-        invalidate_cachekey_volatile_for(
-            "Products.PloneMeeting.vocabularies.meetingdatesvocabulary", get_again=True)
+    # if called because content was changed, like annex/image added/removed
+    # we bypass, no need to update
+    if not isinstance(event, ContainerModifiedEvent):
+        need_reindex = meeting.update_title()
+        # Update contact-related info (attendees, signatories, replacements...)
+        meeting.update_contacts()
+        # Add a line in history if historized fields have changed
+        addDataChange(meeting)
+        # Apply potential transformations to richtext fields
+        transformAllRichTextFields(meeting)
+        # update every items itemReference if needed
+        mod_attrs = get_modified_attrs(event)
+        if set(mod_attrs).intersection(['date', 'first_item_number', 'meeting_number']):
+            meeting.update_item_references(check_needed=False)
+        # reindex every linked items if date value changed
+        if "date" in mod_attrs:
+            catalog = api.portal.get_tool('portal_catalog')
+            tool = api.portal.get_tool('portal_plonemeeting')
+            cfg = tool.getMeetingConfig(meeting)
+            # items linked to the meeting
+            brains = catalog(portal_type=cfg.getItemTypeName(),
+                             linkedMeetingUID=meeting.UID())
+            # items having the meeting as the preferredMeeting
+            brains = brains + catalog(portal_type=cfg.getItemTypeName(),
+                                      getPreferredMeeting=meeting.UID())
+            for brain in brains:
+                item = brain.getObject()
+                item.reindexObject(idxs=['linkedMeetingDate', 'getPreferredMeetingDate'])
+            # clean cache for "Products.PloneMeeting.vocabularies.meetingdatesvocabulary"
+            invalidate_cachekey_volatile_for(
+                "Products.PloneMeeting.vocabularies.meetingdatesvocabulary", get_again=True)
 
-    # update local roles as power observers local roles may vary depending on meeting_access_on
-    meeting.update_local_roles()
-    # invalidate last meeting modified
-    invalidate_cachekey_volatile_for(
-        'Products.PloneMeeting.Meeting.modified', get_again=True)
-    # invalidate item voters vocabulary in case new voters (un)selected
-    invalidate_cachekey_volatile_for(
-        'Products.PloneMeeting.vocabularies.itemvotersvocabulary', get_again=True)
-    # invalidate assembly async load on meeting
-    invalidate_cachekey_volatile_for(
-        'Products.PloneMeeting.browser.async.AsyncLoadMeetingAssemblyAndSignatures',
-        get_again=True)
-    if need_reindex:
-        meeting.reindexObject()
+        # update local roles as power observers local roles may vary depending on meeting_access_on
+        meeting.update_local_roles()
+        # invalidate last meeting modified
+        invalidate_cachekey_volatile_for(
+            'Products.PloneMeeting.Meeting.modified', get_again=True)
+        # invalidate item voters vocabulary in case new voters (un)selected
+        invalidate_cachekey_volatile_for(
+            'Products.PloneMeeting.vocabularies.itemvotersvocabulary', get_again=True)
+        # invalidate assembly async load on meeting
+        invalidate_cachekey_volatile_for(
+            'Products.PloneMeeting.browser.async.AsyncLoadMeetingAssemblyAndSignatures',
+            get_again=True)
+        if need_reindex:
+            meeting.reindexObject()
 
 
 def onMeetingMoved(meeting, event):

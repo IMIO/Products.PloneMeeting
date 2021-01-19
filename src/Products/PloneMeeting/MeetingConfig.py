@@ -5327,6 +5327,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     getattr(portal_types, realMetaType).meta_type,
                     id=portalTypeName, typeinfo_name=typeInfoName)
 
+                # Set the human readable title explicitly
+                portalType = getattr(portal_types, portalTypeName)
+                portalType.title = portalTypeName
+                # base portal_types 'Meeting' and 'MeetingItem' are global_allow=False
+                portalType.global_allow = True
+
                 if metaTypeName in ('MeetingItemTemplate', 'MeetingItemRecurring'):
                     # Update the typesUseViewActionInListings property of site_properties
                     # so MeetingItem types are in it, this is usefull when managing item templates
@@ -5334,15 +5340,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     if portalTypeName not in site_properties.typesUseViewActionInListings:
                         site_properties.typesUseViewActionInListings = \
                             site_properties.typesUseViewActionInListings + (portalTypeName, )
-
-            # Set the human readable title explicitly
-            portalType = getattr(portal_types, portalTypeName)
-            portalType.title = translate("{0}_type_title".format(metaTypeName),
-                                         domain="PloneMeeting",
-                                         mapping={"config_title": safe_unicode(self.Title())},
-                                         context=self.REQUEST).encode('utf-8')
-            # base portal_types 'Meeting' and 'MeetingItem' are global_allow=False
-            portalType.global_allow = True
 
         # Copy actions from the base portal type
         self._updatePortalTypes()

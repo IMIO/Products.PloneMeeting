@@ -154,6 +154,36 @@ class MeetingDefaultView(DefaultView, BaseMeetingView):
         manage_label_assembly(self)
 
 
+def _get_default_attendees(context):
+    '''The default attendees are the active held_positions
+       with 'present' in defaults.'''
+    res = []
+    used_held_positions = get_all_used_held_positions(context, include_new=True)
+    res = [held_pos.UID() for held_pos in used_held_positions
+           if held_pos.defaults and 'present' in held_pos.defaults]
+    return res
+
+
+def _get_default_signatories(context):
+    '''The default signatories are the active held_positions
+       with a defined signature_number.'''
+    res = []
+    used_held_positions = get_all_used_held_positions(context, include_new=True)
+    res = [held_pos for held_pos in used_held_positions
+           if held_pos.defaults and 'present' in held_pos.defaults and held_pos.signature_number]
+    return {signer.UID(): signer.signature_number for signer in res}
+
+
+def _get_default_voters(context):
+    '''The default voters are the active held_positions
+       with 'voter' in defaults.'''
+    res = []
+    used_held_positions = get_all_used_held_positions(context, include_new=True)
+    res = [held_pos.UID() for held_pos in used_held_positions
+           if held_pos.defaults and 'voter' in held_pos.defaults]
+    return res
+
+
 class AttendeesEditProvider(ContentProviderBase, BaseMeetingView):
 
     template = \
@@ -181,7 +211,7 @@ class AttendeesEditProvider(ContentProviderBase, BaseMeetingView):
         if is_meeting:
             attendees = self.context.get_attendees()
         else:
-            attendees = self._get_default_attendees()
+            attendees = _get_default_attendees(self.context)
         return attendees
 
     def get_excused(self):
@@ -207,7 +237,7 @@ class AttendeesEditProvider(ContentProviderBase, BaseMeetingView):
         if is_meeting:
             signatories = self.context.get_signatories()
         else:
-            signatories = self._get_default_signatories()
+            signatories = _get_default_signatories(self.context)
         return signatories
 
     def get_user_replacements(self):
@@ -225,35 +255,8 @@ class AttendeesEditProvider(ContentProviderBase, BaseMeetingView):
         if is_meeting:
             voters = self.context.get_voters()
         else:
-            voters = self._get_default_voters()
+            voters = _get_default_voters(self.context)
         return voters
-
-    def _get_default_attendees(self):
-        '''The default attendees are the active held_positions
-           with 'present' in defaults.'''
-        res = []
-        used_held_positions = get_all_used_held_positions(self.context, include_new=True)
-        res = [held_pos.UID() for held_pos in used_held_positions
-               if held_pos.defaults and 'present' in held_pos.defaults]
-        return res
-
-    def _get_default_signatories(self):
-        '''The default signatories are the active held_positions
-           with a defined signature_number.'''
-        res = []
-        used_held_positions = get_all_used_held_positions(self.context, include_new=True)
-        res = [held_pos for held_pos in used_held_positions
-               if held_pos.defaults and 'present' in held_pos.defaults and held_pos.signature_number]
-        return {signer.UID(): signer.signature_number for signer in res}
-
-    def _get_default_voters(self):
-        '''The default voters are the active held_positions
-           with 'voter' in defaults.'''
-        res = []
-        used_held_positions = get_all_used_held_positions(self.context, include_new=True)
-        res = [held_pos.UID() for held_pos in used_held_positions
-               if held_pos.defaults and 'voter' in held_pos.defaults]
-        return res
 
 
 class MeetingEdit(DefaultEditForm, BaseMeetingView):

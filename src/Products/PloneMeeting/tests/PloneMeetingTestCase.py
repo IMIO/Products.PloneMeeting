@@ -1,23 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2015 by Imio.be
-#
 # GNU General Public License (GPL)
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
-# 02110-1301, USA.
 #
 
 from AccessControl.SecurityManagement import getSecurityManager
@@ -43,6 +26,9 @@ from plone.app.testing.helpers import setRoles
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
 from Products.Five.browser import BrowserView
+from Products.PloneMeeting.browser.meeting import _get_default_attendees
+from Products.PloneMeeting.browser.meeting import _get_default_signatories
+from Products.PloneMeeting.browser.meeting import _get_default_voters
 from Products.PloneMeeting.config import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.config import ITEM_DEFAULT_TEMPLATE_ID
 from Products.PloneMeeting.config import TOOL_FOLDER_ANNEX_TYPES
@@ -347,15 +333,15 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             # manage attendees if using it after processForm
             usedMeetingAttrs = cfg.getUsedMeetingAttributes()
             if 'attendees' in usedMeetingAttrs:
-                default_attendees = obj.get_default_attendees()
+                default_attendees = _get_default_attendees(obj)
                 default_attendees = OrderedDict((
                     (attendee, 'attendee') for attendee in default_attendees))
                 signatories = []
                 if 'signatories' in usedMeetingAttrs:
-                    signatories = obj.get_default_signatories()
+                    signatories = _get_default_signatories(obj)
                 voters = []
                 if cfg.getUseVotes():
-                    voters = obj.get_default_voters()
+                    voters = _get_default_voters(obj)
                 obj._at_creation_flag = False
                 obj._do_update_contacts(attendees=default_attendees,
                                         signatories=signatories,

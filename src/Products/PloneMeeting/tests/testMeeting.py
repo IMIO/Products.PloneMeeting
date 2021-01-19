@@ -28,6 +28,7 @@ from Products.PloneMeeting.config import DEFAULT_LIST_TYPES
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
+from Products.PloneMeeting.content.meeting import IMeeting
 from Products.PloneMeeting.MeetingConfig import POWEROBSERVERPREFIX
 from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
@@ -39,6 +40,7 @@ from Products.PloneMeeting.utils import getCurrentMeetingObject
 from Products.PloneMeeting.utils import get_states_before
 from Products.PloneMeeting.utils import set_field_from_ajax
 from Products.ZCatalog.Catalog import AbstractCatalogBrain
+from z3c.form import validator
 from zope.event import notify
 from zope.i18n import translate
 from zope.lifecycleevent import Attributes
@@ -133,15 +135,15 @@ class testMeetingType(PloneMeetingTestCase):
         # it should insert itself in this suite
         view = newItem2.restrictedTraverse('@@change-item-order')
         view('number', '3.2')
-        item400 = meeting.getItemByNumber(400)
+        item400 = meeting.get_item_by_number(400)
         view = item400.restrictedTraverse('@@change-item-order')
         view('number', '3.3')
         self.assertEqual([item.getItemNumber() for item in meeting.get_items(ordered=True)],
                          [100, 101, 200, 300, 301, 302, 303, 400, 500])
         # item 302 is 'developers' and 303 is 'vendors'
-        self.assertEqual(meeting.getItemByNumber(302).getProposingGroup(),
+        self.assertEqual(meeting.get_item_by_number(302).getProposingGroup(),
                          self.developers_uid)
-        self.assertEqual(meeting.getItemByNumber(303).getProposingGroup(),
+        self.assertEqual(meeting.get_item_by_number(303).getProposingGroup(),
                          self.vendors_uid)
         newItem3 = self.create('MeetingItem')
         self.presentItem(newItem3)
@@ -1846,19 +1848,20 @@ class testMeetingType(PloneMeetingTestCase):
     def test_pm_MeetingNumbers(self):
         '''Tests that meetings receive correctly their numbers from the config
            when they are published.'''
+        cfg = self.meetingConfig
         self.changeUser('pmManager')
         m1 = self._createMeetingWithItems()
-        self.assertEqual(self.meetingConfig.getLastMeetingNumber(), 0)
-        self.assertEqual(m1.getMeetingNumber(), -1)
+        self.assertEqual(cfg.getLastMeetingNumber(), 0)
+        self.assertEqual(m1.meeting_number, -1)
         self.publishMeeting(m1)
-        self.assertEqual(m1.getMeetingNumber(), 1)
-        self.assertEqual(self.meetingConfig.getLastMeetingNumber(), 1)
+        self.assertEqual(m1.meeting_number, 1)
+        self.assertEqual(cfg.getLastMeetingNumber(), 1)
         m2 = self._createMeetingWithItems()
         self.publishMeeting(m2)
-        self.assertEqual(m2.getMeetingNumber(), 2)
-        self.assertEqual(self.meetingConfig.getLastMeetingNumber(), 2)
+        self.assertEqual(m2.meeting_number, 2)
+        self.assertEqual(cfg.getLastMeetingNumber(), 2)
 
-    def test_pm_NumberOfItems(self):
+    def test_pm_Number_of_items(self):
         '''Tests that number of items returns number of normal and late items.'''
         self.changeUser('pmManager')
         meeting = self._createMeetingWithItems()
@@ -2803,12 +2806,15 @@ class testMeetingType(PloneMeetingTestCase):
         view()
         helper = view.get_generation_context_helper()
 
-        meeting.setAssembly('Simple assembly')
+        meeting.assembly = RichTextValue('Simple assembly')
         self.assertEqual(helper.printAssembly(),
                          '<p>Simple assembly</p>')
-        meeting.setAssembly('Assembly with [[striked]] part')
+        meeting.assembly = RichTextValue('Assembly with [[striked]] part')
         self.assertEqual(helper.printAssembly(),
                          '<p>Assembly with <strike>striked</strike> part</p>')
+        meeting.assembly = RichTextValue('Assembly with [[striked]] part1\r\nAssembly part2')
+        self.assertEqual(helper.printAssembly(),
+                         '<p>Assembly with <strike>striked</strike> part1</p><p>Assembly part2</p>')
 
     def test_pm_ChangingMeetingDateUpdateLinkedItemsMeetingDateMetadata(self):
         """When the date of a meeting is changed, the linked items are reindexed,
@@ -2919,7 +2925,7 @@ class testMeetingType(PloneMeetingTestCase):
         meetingId = pmFolder.invokeFactory(cfg.getMeetingTypeName(),
                                            id='meeting',
                                            date=datetime(2015, 5, 5),
-                                           observations=text)
+                                           observations=RichTextValue(text))
         meeting = getattr(pmFolder, meetingId)
         self.assertTrue('1062-600x500.jpg' in meeting.objectIds())
         img = meeting.get('1062-600x500.jpg')
@@ -2949,8 +2955,8 @@ class testMeetingType(PloneMeetingTestCase):
 
         # test using processForm, aka full edit form
         text = '<p>Working external image <img src="%s"/>.</p>' % self.external_image1
-        meeting.setObservations(text)
-        meeting.processForm()
+        meeting.observations = RichTextValue(text)
+        notify(ObjectModifiedEvent(meeting, Attributes(Interface, 'observations')))
         self.assertTrue('22-400x400.jpg' in meeting.objectIds())
         img3 = meeting.get('22-400x400.jpg')
 
@@ -3078,7 +3084,6 @@ class testMeetingType(PloneMeetingTestCase):
             self.portal.portal_types[meeting.portal_type].title,
             domain='plone',
             context=self.portal.REQUEST)
-        import ipdb; ipdb.set_trace()
         self.assertEqual(
             meeting.get_pretty_link(showContentIcon=True, prefixed=True),
             u"<a class='pretty_link' title='Meeting of 05/05/2015 (12:35)' "
@@ -3111,16 +3116,20 @@ class testMeetingType(PloneMeetingTestCase):
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
         self.freezeMeeting(meeting)
-        field_names = ['inAndOutMoves', 'notes', 'secretMeetingObservations', 'authorityNotice']
+        field_names = ['in_and_out_moves', 'notes', 'secret_meeting_observations', 'authority_notice']
+        view = meeting.restrictedTraverse('view')
         for field_name in field_names:
             self._enableField(field_name, related_to='Meeting')
-            widget = meeting.getField(field_name).widget
             # MeetingManager may see
-            self.assertTrue(widget.testCondition(meeting.aq_inner.aq_parent, self.portal, meeting))
+            self.changeUser('pmManager')
+            view.update()
+            self.assertTrue(field_name in view.w)
+            del view.w
             # other may not see
             self.changeUser('pmCreator1')
-            self.assertFalse(widget.testCondition(meeting.aq_inner.aq_parent, self.portal, meeting))
-            self.changeUser('pmManager')
+            view.update()
+            self.assertFalse(field_name in view.w)
+            del view.w
 
     def test_pm_DefaultTextValuesFromConfig(self):
         """Some values may be defined in the configuration and used when the meeting is created :
@@ -3169,7 +3178,7 @@ class testMeetingType(PloneMeetingTestCase):
         item2 = self.create('MeetingItem')
         item2.setDecision(self.decisionText)
         self.changeUser('pmManager')
-        meeting = self.create('Meeting')
+        meeting = self.create('Meeting', date=datetime(2017, 4, 18, 0, 0))
         self.presentItem(item1)
         self.presentItem(item2)
         self.assertEqual(
@@ -3211,7 +3220,7 @@ class testMeetingType(PloneMeetingTestCase):
         self.assertFalse(self.hasPermission(View, item2))
         # there are unaccessible items
         self.assertTrue(
-            len(meeting.get_items(ordered=True, the_objects=False)) < meeting.numberOfItems())
+            len(meeting.get_items(ordered=True, the_objects=False)) < meeting.number_of_items())
         # enable item references update
         self.request.set('need_Meeting_update_item_references', True)
         # make sure it will be changed
@@ -3335,29 +3344,44 @@ class testMeetingType(PloneMeetingTestCase):
         self.assertFalse('forceInsertNormal' in result)
         self.assertTrue(item_uid in result)
 
-    def test_pm_Post_validate_meeting_attendees(self):
-        """Meeting.post_validate is used to validate meeting_attendees
+    def test_pm_Validate_attendees_invariant(self):
+        """validate_attendees invariant is used to validate meeting_attendees
            as there is no field in the schema for this."""
         cfg = self.meetingConfig
         # does not break while not using contacts
         self.changeUser('pmManager')
-        meeting = self.create('Meeting')
+        pm_folder = self.getMeetingFolder()
         self.assertFalse(cfg.isUsingContacts())
-        self.assertEqual(meeting.validate(self.request), {})
+        invariants = validator.InvariantsValidator(None, None, None, IMeeting, None)
+        self.request.set('validate_dates_done', True)
+        # adding a new meeting, no validation done
+        meeting_type_name = cfg.getMeetingTypeName()
+        add_form = pm_folder.restrictedTraverse('++add++{0}'.format(meeting_type_name))
+        add_form.update()
+        self.request['PUBLISHED'] = add_form
+        data = {}
+        self.assertEqual(invariants.validate(data), ())
+        self.request.set('validate_attendees_done', False)
 
         # now with contacts
         self._setUpOrderedContacts()
+        add_form.update()
+        self.assertEqual(invariants.validate(data), ())
+        self.request.set('validate_attendees_done', False)
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
 
         # does not break post_validating without 'meeting_attendees'
         # this is the case when nobody has been selected on the meeting
-        self.assertEqual(meeting.validate(self.request), {})
+        edit_form = meeting.restrictedTraverse('@@edit')
+        self.request['PUBLISHED'] = edit_form
+        self.assertEqual(invariants.validate(data), ())
+        self.request.set('validate_attendees_done', False)
 
-        item = meeting.get_items()[0]
-        item_uid = item.UID()
         # configure the 4 assembly members
         # absent, excused, signatory, nonAttendee
+        item = meeting.get_items()[0]
+        item_uid = item.UID()
         attendee_uids = meeting.get_attendees()
         meeting.ordered_contacts[attendee_uids[0]]['signer'] = True
         meeting.ordered_contacts[attendee_uids[0]]['signature_number'] = '1'
@@ -3373,7 +3397,8 @@ class testMeetingType(PloneMeetingTestCase):
 
         # now test with meeting_attendees
         self.request.form['meeting_attendees'] = meeting_attendees
-        self.assertEqual(meeting.validate(self.request), {})
+        self.assertEqual(invariants.validate(data), ())
+        self.request.set('validate_attendees_done', False)
         # unselecting one would break validation
         error_msg = translate(
             u'can_not_remove_attendee_redefined_on_items',
@@ -3392,9 +3417,10 @@ class testMeetingType(PloneMeetingTestCase):
             # error msg contains attendee name, ... manipulate it
             tmp_error_msg = error_msg.replace(
                 '1', str(index)).replace('member 4', 'member 4 & 5')
-            self.assertEqual(
-                meeting.validate(self.request),
-                {'meeting_attendees': tmp_error_msg})
+            errors = invariants.validate(data)
+            self.request.set('validate_attendees_done', False)
+            self.assertEqual(len(errors), 1)
+            self.assertEqual(errors[0].message, tmp_error_msg)
             index += 1
         # do work unselect attendee by attendee
         # item_absents
@@ -3402,41 +3428,29 @@ class testMeetingType(PloneMeetingTestCase):
         self.request.form['meeting_attendees'] = [meeting_attendee for meeting_attendee in meeting_attendees
                                                   if not attendee_uids[0] in meeting_attendee]
         self.assertEqual(len(self.request.form['meeting_attendees']), 3)
-        self.assertEqual(meeting.validate(self.request), {})
+        self.assertEqual(invariants.validate(data), ())
+        self.request.set('validate_attendees_done', False)
         # itemExcused
         meeting.item_excused[item_uid] = []
         self.request.form['meeting_attendees'] = [meeting_attendee for meeting_attendee in meeting_attendees
                                                   if not attendee_uids[1] in meeting_attendee]
         self.assertEqual(len(self.request.form['meeting_attendees']), 3)
-        self.assertEqual(meeting.validate(self.request), {})
+        self.assertEqual(invariants.validate(data), ())
+        self.request.set('validate_attendees_done', False)
         # itemNonAttendees
         meeting.item_non_attendees[item_uid] = []
         self.request.form['meeting_attendees'] = [meeting_attendee for meeting_attendee in meeting_attendees
                                                   if not attendee_uids[2] in meeting_attendee]
         self.assertEqual(len(self.request.form['meeting_attendees']), 3)
-        self.assertEqual(meeting.validate(self.request), {})
+        self.assertEqual(invariants.validate(data), ())
+        self.request.set('validate_attendees_done', False)
         # itemSignatories
         meeting.item_signatories[item_uid] = {}
         self.request.form['meeting_attendees'] = [meeting_attendee for meeting_attendee in meeting_attendees
                                                   if not attendee_uids[3] in meeting_attendee]
         self.assertEqual(len(self.request.form['meeting_attendees']), 3)
-        self.assertEqual(meeting.validate(self.request), {})
-
-        # does not break while creating an new meeting aka
-        # persistent attributes like item_non_attendees or item_absents do not exist
-        # remove recurring items in self.meetingConfig
-        self._removeConfigObjectsFor(self.meetingConfig)
-        meeting2 = self.create('Meeting')
-        delattr(meeting2, 'ordered_contacts')
-        delattr(meeting2, 'item_absents')
-        delattr(meeting2, 'item_excused')
-        delattr(meeting2, 'item_signatories')
-        delattr(meeting2, 'item_non_attendees')
-        self.assertEqual(meeting.validate(self.request), {})
-        self.request.form['meeting_attendees'] = meeting_attendees
-        self.assertEqual(meeting.validate(self.request), {})
-        meeting2.at_post_create_script()
-        self.assertEqual(meeting.validate(self.request), {})
+        self.assertEqual(invariants.validate(data), ())
+        self.request.set('validate_attendees_done', False)
 
     def test_pm_VotesObservations(self):
         """Fields Meeting.votesObservations and MeetingItem.votesObservations

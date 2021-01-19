@@ -729,19 +729,18 @@ class BaseDGHV(object):
            If use_print_attendees_by_type is True, we use print_attendees_by_type method instead of
            print_attendees.'''
 
-        if self.context.getTagName() == 'MeetingItem' and not self.context.hasMeeting():
+        class_name = self.real_context.__class__.__name__
+        if class_name == 'MeetingItem' and not self.context.hasMeeting():
             # There is nothing to print in this case
             return ''
 
         assembly = None
-        if self.context.getTagName() == 'Meeting' and self.context.getAssembly():
-            assembly = self.context.getAssembly()
-        elif self.context.getTagName() == 'MeetingItem' and self.context.getItemAssembly():
-            assembly = self.context.getItemAssembly()
+        if class_name == 'Meeting' and self.context.get_assembly():
+            assembly = self.context.get_assembly(for_display=True, striked=striked)
+        elif class_name == 'MeetingItem' and self.context.getItemAssembly():
+            assembly = self.context.getItemAssembly(striked=striked)
 
         if assembly:
-            if striked:
-                return toHTMLStrikedContent(assembly)
             return assembly
 
         if use_print_attendees_by_type:
