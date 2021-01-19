@@ -921,6 +921,7 @@ class testViews(PloneMeetingTestCase):
         cfg = self.meetingConfig
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
+        annex = self.addAnnex(item)
         self.changeUser('pmCreator2')
         self.assertFalse(self.hasPermission(View, item))
         view = item.restrictedTraverse('@@item-more-infos')
@@ -931,6 +932,27 @@ class testViews(PloneMeetingTestCase):
         self.cleanMemoize()
         view()
         self.assertEqual(view.getVisibleFields().keys(), ['description'])
+        # view annexes
+        cfg.setItemsNotViewableVisibleFields(('MeetingItem.description', 'MeetingItem.annexes', ))
+        self.cleanMemoize()
+        view()
+        self.assertEqual(view.getVisibleFields().keys(), ['description', 'annexes'])
+        category_uid = item.categorized_elements.get(annex.UID())['category_uid']
+        # not viewable because there is no back referenced item to which user has View access
+        infos = view.context.restrictedTraverse('@@categorized-childs-infos')(category_uid).strip()
+        # now viewable
+        self.assertFalse(infos)
+        # not downloadable
+        download_view = annex.restrictedTraverse('@@download')
+        self.assertRaises(Unauthorized, download_view)
+        # link viewable item
+        item2 = self.create('MeetingItem')
+        item2.setManuallyLinkedItems([item.UID()])
+        infos = view.context.restrictedTraverse('@@categorized-childs-infos')(category_uid).strip()
+        # viewable
+        self.assertTrue(infos)
+        # downloadable
+        self.assertTrue(download_view())
 
     def test_pm_ItemMoreInfosNotViewableItemTALExpr(self, ):
         '''When displaying more infos on a not viewable item, configuration

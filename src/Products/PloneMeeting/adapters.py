@@ -1692,38 +1692,48 @@ class PMCategorizedObjectAdapter(CategorizedObjectAdapter):
         self.cfg = self.tool.getMeetingConfig(self.context)
 
     def can_view(self):
+        can_view = super(PMCategorizedObjectAdapter, self).can_view()
+        if not can_view:
+            # check if displaying annexes on a not viewable item
+            # if not viewable annexes are actually displayed,
+            # check that current user has actually access to a backReferences item
+            back_items = self.context.getBackReferences(
+                ('ManuallyLinkedItem', 'ItemPredecessor'))
+            for back_item in back_items:
+                if _checkPermission(View, back_item):
+                    return True
+        else:
+            # is the context a MeetingItem and privacy viewable?
+            if self.context.meta_type == 'MeetingItem' and \
+               self.cfg.getRestrictAccessToSecretItems() and \
+               not self.context.adapted().isPrivacyViewable():
+                return False
 
-        # is the context a MeetingItem and privacy viewable?
-        if self.context.getTagName() == 'MeetingItem' and \
-           self.cfg.getRestrictAccessToSecretItems() and \
-           not self.context.adapted().isPrivacyViewable():
-            return False
-
-        # bypass if not confidential
-        infos = self.context.categorized_elements[self.categorized_obj.UID()]
-        if not infos['confidential']:
-            return True
-
-        # bypass for MeetingManagers
-        if self.tool.isManager(self.context):
-            return True
-
-        # Meeting
-        if self.context.getTagName() == 'Meeting':
-            # if we have a SUFFIXPROFILEPREFIX prefixed group,
-            # check using "userIsAmong", this is only done for Meetings
-            if set(self.tool.get_plone_groups_for_user()).intersection(infos['visible_for_groups']):
+            # bypass if not confidential
+            infos = self.context.categorized_elements[self.categorized_obj.UID()]
+            if not infos['confidential']:
                 return True
-            # build suffixes to pass to tool.userIsAmong
-            suffixes = []
-            for group in infos['visible_for_groups']:
-                if group.startswith(SUFFIXPROFILEPREFIX):
-                    suffixes.append(group.replace(SUFFIXPROFILEPREFIX, ''))
-            if suffixes and self.tool.userIsAmong(suffixes, cfg=self.cfg):
-                return True
-            return False
 
-        return True
+            # bypass for MeetingManagers
+            if self.tool.isManager(self.context):
+                return True
+
+            # Meeting
+            if self.context.meta_type == 'Meeting':
+                # if we have a SUFFIXPROFILEPREFIX prefixed group,
+                # check using "userIsAmong", this is only done for Meetings
+                if set(self.tool.get_plone_groups_for_user()).intersection(infos['visible_for_groups']):
+                    return True
+                # build suffixes to pass to tool.userIsAmong
+                suffixes = []
+                for group in infos['visible_for_groups']:
+                    if group.startswith(SUFFIXPROFILEPREFIX):
+                        suffixes.append(group.replace(SUFFIXPROFILEPREFIX, ''))
+                if suffixes and self.tool.userIsAmong(suffixes, cfg=self.cfg):
+                    return True
+                return False
+
+            return True
 
 
 class IconifiedCategoryConfigAdapter(object):

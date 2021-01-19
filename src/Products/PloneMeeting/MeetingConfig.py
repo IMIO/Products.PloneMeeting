@@ -1419,7 +1419,7 @@ schema = Schema((
             size='10',
         ),
         schemata="gui",
-        vocabulary='listItemsListVisibleFields',
+        vocabulary='listItemsNotViewableVisibleFields',
         default=defValues.itemsNotViewableVisibleFields,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
@@ -4746,7 +4746,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 'otherMeetingConfigsClonableToEmergency', 'otherMeetingConfigsClonableToPrivacy']
 
     def listItemsVisibleFields(self):
-        '''Vocabulary for the 'itemsVisibleFields/itemsNotViewableVisibleFields' field.
+        '''Vocabulary for the 'itemsVisibleFields' field.
            Every fields available on the MeetingItem can be selectable.'''
         res = self._listFieldsFor(MeetingItem,
                                   ignored_field_ids=self.adapted()._ignoredVisibleFieldIds(),
@@ -4759,6 +4759,25 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                        translate('PloneMeeting_label_advices',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)))
+        return DisplayList(tuple(res))
+
+    def listItemsNotViewableVisibleFields(self):
+        '''Vocabulary for the 'itemsNotViewableVisibleFields' field.
+           Every fields available on the MeetingItem can be selectable.'''
+        res = self._listFieldsFor(MeetingItem,
+                                  ignored_field_ids=self.adapted()._ignoredVisibleFieldIds(),
+                                  hide_not_visible=True)
+        res.insert(0, ('MeetingItem.annexes',
+                       translate('existing_annexes',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)))
+        # not viewable advices can not be displayed for now
+        # this will be possible and easier (like for annexes)
+        # when ticket #MPMPHAI-11 will be fixed
+        # res.insert(0, ('MeetingItem.advices',
+        #               translate('PloneMeeting_label_advices',
+        #                         domain='PloneMeeting',
+        #                         context=self.REQUEST)))
         return DisplayList(tuple(res))
 
     def listItemsListVisibleFields(self):

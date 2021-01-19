@@ -2,11 +2,20 @@ Changelog
 =========
 
 
-4.2b11 (unreleased)
+4.2b12 (unreleased)
 -------------------
 
 - Nothing changed yet.
 
+
+4.2b11 (2021-01-19)
+-------------------
+
+- Added `Annexes` to selectable values of
+  `MeetingConfig.itemsNotViewableVisibleFields`. Not viewable annexes will be
+  downloadable. For now, `Advices` are still not showable thru this
+  functionnality.
+  [gbastien]
 
 4.2b10 (2021-01-14)
 -------------------

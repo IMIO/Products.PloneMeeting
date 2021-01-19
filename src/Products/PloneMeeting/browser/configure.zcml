@@ -828,7 +828,7 @@
         for="*"
         class=".advices.AdvicesIconsInfos"
         template="templates/advices-icons-infos.pt"
-        permission="zope2.View" />
+        permission="zope2.Public" />
     <browser:view
         name="pm-notify-event"
         class=".notify.NotifyEvent"
@@ -1018,7 +1018,7 @@
         <browser:page
             for="Products.PloneMeeting.interfaces.IMeetingContent"
             name="categorized-childs-infos"
-            permission="zope2.View"
+            permission="zope2.Public"
             class="Products.PloneMeeting.browser.overrides.PMCategorizedChildInfosView"
             layer="collective.iconifiedcategory.interfaces.ICollectiveIconifiedCategoryLayer"
             template="browser/templates/categorized-childs-infos.pt" />
