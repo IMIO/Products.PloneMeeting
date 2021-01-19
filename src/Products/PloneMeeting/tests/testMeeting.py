@@ -2745,29 +2745,31 @@ class testMeetingType(PloneMeetingTestCase):
         actions_panel._transitions = None
         self.assertNotEqual(meetingManager_rendered_actions_panel, actions_panel())
 
-    def test_pm_GetNextMeeting(self):
-        """Test the getNextMeeting method that will return the next meeting
+    def test_pm_Get_next_meeting(self):
+        """Test the get_next_meeting method that will return the next meeting
            regarding the meeting date."""
-        cfg2Id = self.meetingConfig2.getId()
+        self._removeConfigObjectsFor(self.meetingConfig)
         self.changeUser('pmManager')
-        meeting = self.create('Meeting')
+        meeting = self.create('Meeting', date=datetime(2015, 1, 15))
         # no next meeting for now
-        self.assertFalse(meeting.get_next_meeting())
+        self.assertIsNone(meeting.get_next_meeting())
         # create meetings after
         meeting2 = self.create('Meeting', date=datetime(2015, 1, 20))
         meeting3 = self.create('Meeting', date=datetime(2015, 1, 25))
         self.assertEqual(meeting.get_next_meeting(), meeting2)
         self.assertEqual(meeting2.get_next_meeting(), meeting3)
-        self.assertFalse(meeting3.get_next_meeting())
+        self.assertIsNone(meeting3.get_next_meeting())
 
-        self.assertFalse(meeting.get_next_meeting(cfgId=cfg2Id))
-        self.setMeetingConfig(cfg2Id)
-        otherMCMeeting = self.create('Meeting', date=datetime(2015, 1, 20))
-        otherMCMeeting2 = self.create('Meeting', date=datetime(2015, 1, 25))
-        self.assertEqual(meeting.get_next_meeting(cfgId=cfg2Id), otherMCMeeting)
+        # cfg_id (next meeting in another MeetingConfig)
+        cfg2_id = self.meetingConfig2.getId()
+        self.assertIsNone(meeting.get_next_meeting(cfg_id=cfg2_id))
+        self.setMeetingConfig(cfg2_id)
+        cfg2_meeting = self.create('Meeting', date=datetime(2015, 1, 20))
+        cfg2_meeting2 = self.create('Meeting', date=datetime(2015, 1, 25))
+        self.assertEqual(meeting.get_next_meeting(cfg_id=cfg2_id), cfg2_meeting)
         # with the date gap, the meeting 5 days later is not taken into account.
-        self.assertNotEqual(meeting.get_next_meeting(cfgId=cfg2Id, dateGap=7), otherMCMeeting)
-        self.assertEqual(meeting.get_next_meeting(cfgId=cfg2Id, dateGap=7), otherMCMeeting2)
+        self.assertNotEqual(meeting.get_next_meeting(cfg_id=cfg2_id, date_gap=7), cfg2_meeting)
+        self.assertEqual(meeting.get_next_meeting(cfg_id=cfg2_id, date_gap=7), cfg2_meeting2)
 
     def test_pm_GetPreviousMeeting(self):
         """Test the get_previous_meeting method that will return the previous meeting
@@ -3067,8 +3069,8 @@ class testMeetingType(PloneMeetingTestCase):
         self.assertEqual(sorted(get_states_before(meeting, 'frozen')),
                          ['closed', 'created', 'decided', 'published'])
 
-    def test_pm_GetPrettyLink(self):
-        """Test the Meeting.getPrettyLink method."""
+    def test_pm_Get_pretty_link(self):
+        """Test the Meeting.get_pretty_link method."""
         self.changeUser('pmManager')
         meeting = self.create('Meeting', date=datetime(2015, 5, 5, 12, 35))
         self.portal.portal_languages.setDefaultLanguage('en')
@@ -3076,6 +3078,7 @@ class testMeetingType(PloneMeetingTestCase):
             self.portal.portal_types[meeting.portal_type].title,
             domain='plone',
             context=self.portal.REQUEST)
+        import ipdb; ipdb.set_trace()
         self.assertEqual(
             meeting.get_pretty_link(showContentIcon=True, prefixed=True),
             u"<a class='pretty_link' title='Meeting of 05/05/2015 (12:35)' "

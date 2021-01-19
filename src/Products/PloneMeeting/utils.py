@@ -557,7 +557,6 @@ def sendMailIfRelevant(obj, event, permissionOrSuffixOrRoleOrGroupIds,
         return
     # Ok, send a mail. Who are the recipients ?
     recipients = []
-    adap = obj.adapted()
     userIds = []
     if isSuffix:
         org = obj.adapted()._getGroupManagingItem(obj.query_state())
@@ -2019,7 +2018,7 @@ def is_editing(cfg):
     return res
 
 
-def get_next_meeting(meetingDate, cfg, dateGap=0):
+def get_next_meeting(meeting_date, cfg, date_gap=0):
     '''Gets the next meeting based on meetingDate DateTime.
        p_cfg is used to know in which MeetingConfig to query next meeting.
        p_dateGap is the number of 'dead days' following the date of
@@ -2027,15 +2026,15 @@ def get_next_meeting(meetingDate, cfg, dateGap=0):
     meetingTypeName = cfg.getMeetingTypeName()
     catalog = api.portal.get_tool('portal_catalog')
     # find every meetings after meetingDate
-    meetingDate += timedelta(days=dateGap)
+    meeting_date += timedelta(days=date_gap)
     brains = catalog(portal_type=meetingTypeName,
-                     meeting_date={'query': meetingDate,
+                     meeting_date={'query': meeting_date,
                                    'range': 'min'},
                      sort_on='meeting_date')
     res = None
     for brain in brains:
         meeting = brain.getObject()
-        if meeting.date > meetingDate:
+        if meeting.date > meeting_date:
             res = meeting
             break
     return res
