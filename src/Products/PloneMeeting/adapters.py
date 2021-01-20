@@ -13,8 +13,8 @@ from collective.eeafaceted.dashboard.content.pod_template import IDashboardPODTe
 from collective.iconifiedcategory.adapter import CategorizedObjectAdapter
 from collective.iconifiedcategory.adapter import CategorizedObjectInfoAdapter
 from collective.iconifiedcategory.utils import get_categories
+from DateTime import DateTime
 from datetime import datetime
-from datetime import timedelta
 from eea.facetednavigation.criteria.handler import Criteria as eeaCriteria
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from eea.facetednavigation.widgets.resultsperpage.widget import Widget as ResultsPerPageWidget
@@ -923,7 +923,9 @@ class LastDecisionsAdapter(CompoundCriterionBaseAdapter):
         query = [term for term in self.context.query if term[u'i'] != u'CompoundCriterion']
         parsedQuery = parseFormquery(self.context, query)
         # change the second date of meeting_date query, aka the 'max' date
-        parsedQuery['meeting_date']['query'][1] = datetime.now() + timedelta(days=60)
+        # use DateTime because 'plone.app.querystring.operation.date.largerThanRelativeDate'
+        # will use a DateTime
+        parsedQuery['meeting_date']['query'][1] = DateTime() + 60
         return parsedQuery
 
     # we may not ram.cache methods in same file with same name...

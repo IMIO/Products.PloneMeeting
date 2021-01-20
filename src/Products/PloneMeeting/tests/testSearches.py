@@ -791,7 +791,7 @@ class testSearches(PloneMeetingTestCase):
 
         # it returns only items the current user is able to correct
         # create an item for developers and one for vendors and 'return' it to proposingGroup
-        self.create('Meeting', date=DateTime())
+        self.create('Meeting')
         developersItem = self.create('MeetingItem')
         self.assertEqual(developersItem.getProposingGroup(), self.developers_uid)
         self.presentItem(developersItem)
@@ -855,7 +855,7 @@ class testSearches(PloneMeetingTestCase):
 
         # it returns only items the current user is able to correct
         # create an item for developers and one for vendors and 'return' it to proposingGroup
-        self.create('Meeting', date=DateTime())
+        self.create('Meeting')
         developersItem = self.create('MeetingItem')
         self.assertEqual(developersItem.getProposingGroup(), self.developers_uid)
         self.presentItem(developersItem)
@@ -971,7 +971,7 @@ class testSearches(PloneMeetingTestCase):
 
         # it returns only items the current user is able to correct
         # create an item for developers and one for vendors and 'return' it to proposingGroup
-        self.create('Meeting', date=DateTime())
+        self.create('Meeting')
         developersItem = self.create('MeetingItem')
         self.assertEqual(developersItem.getProposingGroup(), self.developers_uid)
         self.changeUser('pmCreator2')
@@ -1153,15 +1153,16 @@ class testSearches(PloneMeetingTestCase):
         adapter = getAdapter(collection, ICompoundCriterionFilter, name='last-decisions')
         self.changeUser('siteadmin')
         # meeting_date minmax is correct, first date is 60 days before and second 60 days after now
-        self.assertTrue(adapter.query['meeting_date']['query'][0] < datetime.now() - timedelta(days=59))
-        self.assertTrue(adapter.query['meeting_date']['query'][1] > datetime.now() + timedelta(days=59))
+        self.assertTrue(adapter.query['meeting_date']['query'][0] < DateTime() - 59)
+        self.assertTrue(adapter.query['meeting_date']['query'][1] > DateTime() + 59)
         self.assertEqual(adapter.query['portal_type']['query'], [meetingTypeName])
 
         # decided meetings in the future and in the past are found
         self.changeUser('pmManager')
         self.failIf(collection.results())
-        past_meeting = self.create('Meeting', date=DateTime() - 45)
-        future_meeting = self.create('Meeting', date=DateTime() + 45)
+        now = datetime.now()
+        past_meeting = self.create('Meeting', date=now - timedelta(days=45))
+        future_meeting = self.create('Meeting', date=now + timedelta(days=45))
         self.failIf(collection.results())
         self.decideMeeting(past_meeting)
         self.decideMeeting(future_meeting)
