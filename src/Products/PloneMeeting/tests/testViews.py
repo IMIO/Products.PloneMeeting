@@ -1462,7 +1462,7 @@ class testViews(PloneMeetingTestCase):
 
         # store annex for 3 first items
         first_3_item_uids = [item.UID for item in meeting.get_items(ordered=True, the_objects=False)[0:3]]
-        self.request.form['form.widgets.uids'] = ','.join(first_3_item_uids)
+        self.request.form['form.widgets.uids'] = u','.join(first_3_item_uids)
         self.request.form['form.widgets.pod_template'] = 'itemTemplate__output_format__odt'
         form.update()
         form.handleApply(form, None)
@@ -1481,7 +1481,7 @@ class testViews(PloneMeetingTestCase):
         # call again with next 3 uids
         form = meeting.restrictedTraverse('@@store-items-template-as-annex-batch-action')
         next_3_item_uids = [item.UID for item in meeting.get_items(ordered=True, the_objects=False)[3:6]]
-        self.request.form['form.widgets.uids'] = ','.join(next_3_item_uids)
+        self.request.form['form.widgets.uids'] = u','.join(next_3_item_uids)
         form.brains = None
         form.update()
         form.handleApply(form, None)
