@@ -29,6 +29,7 @@ from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
 from Products.PloneMeeting.content.meeting import IMeeting
+from Products.PloneMeeting.content.meeting import assembly_constraint
 from Products.PloneMeeting.MeetingConfig import POWEROBSERVERPREFIX
 from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
@@ -46,6 +47,7 @@ from zope.i18n import translate
 from zope.lifecycleevent import Attributes
 from zope.lifecycleevent import ObjectModifiedEvent
 from zope.interface import Interface
+from zope.interface import Invalid
 
 import transaction
 
@@ -2154,7 +2156,7 @@ class testMeetingType(PloneMeetingTestCase):
         '''
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
-        meeting = self.create('Meeting')
+        meeting = self.create('Meeting', date=datetime(2014, 1, 1))
         # create Meeting here above set meeting as current meeting object
         self.assertTrue(getCurrentMeetingObject(item).UID() == meeting.UID())
         # if we present the item, it will be presented in the published meeting
@@ -2213,7 +2215,7 @@ class testMeetingType(PloneMeetingTestCase):
         cfg = self.meetingConfig
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
-        meeting = self.create('Meeting')
+        meeting = self.create('Meeting', date=datetime(2014, 1, 1))
         self.validateItem(item)
         # unset current meeting
         item.REQUEST['PUBLISHED'] = item
@@ -2350,109 +2352,129 @@ class testMeetingType(PloneMeetingTestCase):
         item.reindexObject()
         self.assertEqual(item.getMeetingToInsertIntoWhenNoCurrentMeetingObject(), meeting2)
 
-    def test_pm_Validate_date(self):
+    def test_pm_Validate_dates_invariant(self):
         """
-          Test the Meeting.date validator "validate_date" : validates that 2 meetings can
-          not occur the same day at the same hour.
+          Test the invariant managing dates.
         """
-        def _to_value(date):
-            return date.strftime('%Y-%m-%d %H:%M')
-
+        cfg = self.meetingConfig
         self.changeUser('pmManager')
+        pm_folder = self.getMeetingFolder()
+        invariants = validator.InvariantsValidator(None, None, None, IMeeting, None)
+        self.request.set('validate_attendees_done', True)
+        # adding a new meeting
+        meeting_type_name = cfg.getMeetingTypeName()
+        add_form = pm_folder.restrictedTraverse('++add++{0}'.format(meeting_type_name))
+        add_form.update()
+        self.request['PUBLISHED'] = add_form
+        data = {}
+        self.assertEqual(invariants.validate(data), ())
+        self.request.set('validate_dates_done', False)
+        # create a meeting and use different and same date
         m1 = self.create('Meeting', date=datetime(2020, 5, 29, 11, 0))
-        # for now it validates as only one meeting exists
-        self.assertIsNone(m1.validate_date(_to_value(m1.date)))
-        # create a second meeting with another date
-        m2 = self.create('Meeting', date=datetime(2020, 2, 4))
-        # validates also as it is another date than m1's one
-        self.assertIsNone(m2.validate_date(_to_value(m2.date)))
-        # now try to use m1 date for m2
-        # it does not validate but returns warning message
-        self.assertEqual(m2.validate_date(_to_value(m1.date)),
-                         translate('meeting_with_same_date_exists',
+        # different date
+        self.request['PUBLISHED'] = add_form
+        self.assertEqual(invariants.validate(data), ())
+        self.request.set('validate_dates_done', False)
+        data['date'] = datetime(2020, 1, 1, 10, 00)
+        self.assertEqual(invariants.validate(data), ())
+        self.request.set('validate_dates_done', False)
+        # same date
+        data['date'] = m1.date
+        date_error_msg = translate('meeting_with_same_date_exists',
                                    domain='PloneMeeting',
-                                   context=self.request))
-        # same if we use m2 date for m1
-        self.assertEqual(m1.validate_date(_to_value(m2.date)),
-                         translate('meeting_with_same_date_exists',
-                                   domain='PloneMeeting',
-                                   context=self.request))
-        # but everything is right for lambda dates
-        self.assertIsNone(m1.validate_date('2013-03-06 16:00'))
-        self.assertIsNone(m2.validate_date('2013-08-06 16:00'))
-        # still ok with one hour more or less
-        m1_before = '2020-05-29 10:00'
-        self.assertIsNone(m1.validate_date(m1_before))
-        m1_after = '2020-05-29 12:00'
-        self.assertIsNone(m1.validate_date(m1_after))
-        m2_before = '2020-02-03 23:00'
-        self.assertIsNone(m1.validate_date(m2_before))
-        m2_after = '2020-02-04 01:00'
-        self.assertIsNone(m1.validate_date(m2_after))
+                                   context=self.request)
+        errors = invariants.validate(data)
+        self.request.set('validate_dates_done', False)
+        self.assertEqual(len(errors), 1)
+        self.assertEqual(errors[0].message, date_error_msg)
+        data['date'] = datetime(2020, 1, 1, 10, 00)
+        # pre_meeting_date must be > date
+        data['pre_meeting_date'] = data['date'] + timedelta(days=1)
+        pre_meeting_date_error_msg = translate(
+            'pre_date_after_meeting_date',
+            domain='PloneMeeting',
+            context=self.request)
+        errors = invariants.validate(data)
+        self.request.set('validate_dates_done', False)
+        self.assertEqual(len(errors), 1)
+        self.assertEqual(errors[0].message, pre_meeting_date_error_msg)
+        data['pre_meeting_date'] = data['date'] - timedelta(days=1)
+        # start_date must be > date
+        data['start_date'] = data['date'] - timedelta(days=1)
+        start_date_date_error_msg = translate(
+            'start_date_before_meeting_date',
+            domain='PloneMeeting',
+            context=self.request)
+        errors = invariants.validate(data)
+        self.request.set('validate_dates_done', False)
+        self.assertEqual(len(errors), 1)
+        self.assertEqual(errors[0].message, start_date_date_error_msg)
+        data['start_date'] = data['date'] + timedelta(days=1)
+        # end_date must be > date
+        data['end_date'] = data['date'] - timedelta(days=1)
+        end_date_date_error_msg = translate(
+            'end_date_before_meeting_date',
+            domain='PloneMeeting',
+            context=self.request)
+        errors = invariants.validate(data)
+        self.request.set('validate_dates_done', False)
+        self.assertEqual(len(errors), 1)
+        self.assertEqual(errors[0].message, end_date_date_error_msg)
+        data['end_date'] = data['date'] + timedelta(days=1)
+        # end_date must be >= start_date
+        data['start_date'] = data['date'] + timedelta(days=2)
+        data['end_date'] = data['date'] + timedelta(days=1)
+        start_end_dates_error_msg = translate(
+            'start_date_after_end_date',
+            domain='PloneMeeting',
+            context=self.request)
+        errors = invariants.validate(data)
+        self.request.set('validate_dates_done', False)
+        self.assertEqual(len(errors), 1)
+        self.assertEqual(errors[0].message, start_end_dates_error_msg)
+        data['start_date'] = data['date'] + timedelta(days=1)
+        data['end_date'] = data['date'] + timedelta(days=2)
+        self.assertEqual(invariants.validate(data), ())
 
-    def test_pm_Validate_place(self):
-        """
-          Test the Meeting.place validator "validate_place" : if place is 'other',
-          a 'place_other' value must be found in the REQUEST.
-        """
-        self.changeUser('pmManager')
-        meeting = self.create('Meeting')
-        place_other_required = translate('place_other_required',
-                                         domain='PloneMeeting',
-                                         context=self.request)
-        self.assertTrue(meeting.validate_place('other') == place_other_required)
-        # if a 'place_other' is found in the request, it validates
-        self.request.set('place_other', 'Some other place')
-        # if the validation is ok, it returns nothing...
-        self.assertTrue(not meeting.validate_place('other'))
-
-    def test_pm_Validate_assembly(self):
-        """Test the Meeting.assembly validator.
+    def test_pm_Assembly_constraint(self):
+        """Test the Meeting.assembly constraint.
            The validator logic is tested in testUtils.test_pm_Validate_item_assembly_value,
            here we just test raised messages and so on."""
         self.changeUser('pmManager')
-        meeting = self.create('Meeting')
         validation_error_msg = translate(
             'Please check that opening "[[" have corresponding closing "]]".',
             domain='PloneMeeting',
             context=self.request)
-
+        # constraint used for "assembly" field
+        self.assertEqual(IMeeting['assembly'].constraint, assembly_constraint)
         # correct value
-        self.assertIsNone(meeting.validate_assembly(ASSEMBLY_CORRECT_VALUE))
-
+        self.assertTrue(assembly_constraint(RichTextValue(ASSEMBLY_CORRECT_VALUE)))
         # wrong value
-        self.assertEqual(
-            meeting.validate_assembly(ASSEMBLY_WRONG_VALUE),
-            validation_error_msg)
+        with self.assertRaises(Invalid) as cm:
+            assembly_constraint(RichTextValue(ASSEMBLY_WRONG_VALUE))
+        self.assertEqual(cm.exception.message, validation_error_msg)
 
         # we have a special case, if REQUEST contains 'initial_edit', then validation
         # is bypassed, this let's edit an old wrong value
         self.request.set('initial_edit', u'1')
-        self.assertIsNone(meeting.validate_assembly(ASSEMBLY_WRONG_VALUE))
+        self.assertTrue(assembly_constraint(RichTextValue(ASSEMBLY_WRONG_VALUE)))
 
-    def test_pm_TitleAndPlaceCorrectlyUpdatedOnEdit(self):
+    def test_pm_TitleUpdatedOnEdit(self):
         '''
-          Test the Meeting.at_post_edit_script method.
-          After edition, some elements are updated, for example :
-          - title (generated using defined Meeting.date);
-          - place (using 'place' found in REQUEST);
+          After edition the title is updated.
         '''
         self.changeUser('pmManager')
-        self.request.set('place', 'other')
-        self.request.set('place_other', 'Another place')
         meeting = self.create('Meeting')
-        self.assertTrue(meeting.Title() == self.tool.format_date(meeting.date))
-        self.assertTrue(meeting.place == 'Another place')
-        # now check that upon edition, title and place fields are correct
-        self.request.set('place_other', 'Yet another place')
+        self.assertEqual(meeting.Title(), self.tool.format_date(meeting.date))
+        # now check that upon edition, title is updated
         meeting.date = datetime(2014, 6, 6)
-        # for now, title and date are not updated
-        self.assertTrue(not meeting.Title() == self.tool.format_date(meeting.date))
-        self.assertFalse(meeting.place == 'Yet another place')
-        # at_post_edit_script takes care of updating title and place
-        meeting._update_after_edit()
-        self.assertTrue(meeting.Title() == self.tool.format_date(meeting.date))
-        self.assertTrue(meeting.place == 'Yet another place')
+        # for now, title is not updated
+        self.assertNotEqual(meeting.Title(), self.tool.format_date(meeting.date))
+        notify(ObjectModifiedEvent(meeting))
+        # only changed if date was edited
+        self.assertNotEqual(meeting.Title(), self.tool.format_date(meeting.date))
+        notify(ObjectModifiedEvent(meeting, Attributes(Interface, 'date')))
+        self.assertEqual(meeting.Title(), self.tool.format_date(meeting.date))
 
     def test_pm_Get_items(self):
         '''Test the Meeting.get_items method.'''
@@ -3095,22 +3117,6 @@ class testMeetingType(PloneMeetingTestCase):
             "Meeting of 05/05/2015 (12:35)</span></a>".format(
                 self.meetingConfig.getId(), translatedMeetingTypeTitle))
 
-    def test_pm_ShowMeetingManagerReservedField(self):
-        """This condition is protecting some fields that should only be
-           viewable by MeetingManagers."""
-        cfg = self.meetingConfig
-        self.changeUser('pmManager')
-        meeting = self.create('Meeting')
-        # a reserved field is shown if used
-        usedMeetingAttrs = cfg.getUsedMeetingAttributes()
-        self.assertFalse('a_meeting_field' in usedMeetingAttrs)
-        self.assertFalse(meeting.showMeetingManagerReservedField('a_meeting_field'))
-        cfg.setUsedMeetingAttributes(usedMeetingAttrs + ('a_meeting_field', ))
-        self.assertTrue(meeting.showMeetingManagerReservedField('a_meeting_field'))
-        # not viewable by non MeetingManagers
-        self.changeUser('pmCreator1')
-        self.assertFalse(meeting.showMeetingManagerReservedField('a_meeting_field'))
-
     def test_pm_MeetingManagerReservedFields(self):
         """Make sure a list of fields is not viewable on meeting except by MeetingManagers."""
         self.changeUser('pmManager')
@@ -3253,7 +3259,7 @@ class testMeetingType(PloneMeetingTestCase):
                              for inserting_method in inserting_methods]
         cfg.setInsertingMethodsOnAddItem(inserting_methods)
 
-    def test_pm_ShowAvailableItems(self):
+    def test_pm_Show_available_items(self):
         """Test when available items are displayed on the meeting_view."""
         cfg = self.meetingConfig
         # give access to powerobservers to meeting when it is created
@@ -3264,43 +3270,43 @@ class testMeetingType(PloneMeetingTestCase):
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
         view = meeting.restrictedTraverse('@@meeting_view')
-        view.update()
-        self.assertTrue(view.showAvailableItems())
+        view._init()
+        self.assertTrue(view.show_available_items())
         # for users and powerobservers
         self.assertEqual(cfg.getDisplayAvailableItemsTo(), ())
         self.changeUser('pmCreator1')
-        view.update()
-        self.assertFalse(view.showAvailableItems())
+        view._init()
+        self.assertFalse(view.show_available_items())
         self.changeUser('powerobserver1')
-        view.update()
-        self.assertFalse(view.showAvailableItems())
+        view._init()
+        self.assertFalse(view.show_available_items())
         # enable for users
         cfg.setDisplayAvailableItemsTo(('app_users', ))
         self.changeUser('pmCreator1')
-        view.update()
-        self.assertTrue(view.showAvailableItems())
+        view._init()
+        self.assertTrue(view.show_available_items())
         self.changeUser('powerobserver1')
-        view.update()
-        self.assertFalse(view.showAvailableItems())
+        view._init()
+        self.assertFalse(view.show_available_items())
         # enable for users and powerobservers
         cfg.setDisplayAvailableItemsTo(('app_users', POWEROBSERVERPREFIX + 'powerobservers'))
         self.changeUser('pmCreator1')
-        view.update()
-        self.assertTrue(view.showAvailableItems())
+        view._init()
+        self.assertTrue(view.show_available_items())
         self.changeUser('powerobserver1')
-        view.update()
-        self.assertTrue(view.showAvailableItems())
+        view._init()
+        self.assertTrue(view.show_available_items())
         # enable for powerobservers only
         cfg.setDisplayAvailableItemsTo((POWEROBSERVERPREFIX + 'powerobservers', ))
         self.changeUser('pmCreator1')
-        view.update()
-        self.assertFalse(view.showAvailableItems())
+        view._init()
+        self.assertFalse(view.show_available_items())
         self.changeUser('powerobserver1')
-        view.update()
-        self.assertTrue(view.showAvailableItems())
+        view._init()
+        self.assertTrue(view.show_available_items())
         self.changeUser('powerobserver2')
-        view.update()
-        self.assertFalse(view.showAvailableItems())
+        view._init()
+        self.assertFalse(view.show_available_items())
         # will not be the case for cfg2
         self.meetingConfig2.setDisplayAvailableItemsTo(
             (POWEROBSERVERPREFIX + 'powerobservers', ))
@@ -3308,14 +3314,14 @@ class testMeetingType(PloneMeetingTestCase):
         self.setMeetingConfig(self.meetingConfig2.getId())
         meeting = self.create('Meeting')
         view = meeting.restrictedTraverse('@@meeting_view')
-        view.update()
-        self.assertTrue(view.showAvailableItems())
+        view._init()
+        self.assertTrue(view.show_available_items())
         self.changeUser('powerobserver2')
-        view.update()
-        self.assertTrue(view.showAvailableItems())
+        view._init()
+        self.assertTrue(view.show_available_items())
         self.changeUser('powerobserver1')
-        view.update()
-        self.assertFalse(view.showAvailableItems())
+        view._init()
+        self.assertFalse(view.show_available_items())
 
     def test_pm_AvailableItemsShownInformations(self):
         """When available items shown to other users than MeetingManagers,
@@ -3452,10 +3458,10 @@ class testMeetingType(PloneMeetingTestCase):
         self.assertEqual(invariants.validate(data), ())
         self.request.set('validate_attendees_done', False)
 
-    def test_pm_VotesObservations(self):
-        """Fields Meeting.votesObservations and MeetingItem.votesObservations
+    def test_pm_Votes_observations(self):
+        """Fields Meeting.votes_observations and MeetingItem.votesObservations
            are only viewable to everybody when meeting/item is decided."""
-        def _check_access(field, obj, read=True, write=True):
+        def _check_item_access(field, obj, read=True, write=True):
             """ """
             parent = obj.aq_inner.aq_parent
             cond_res = field.widget.testCondition(parent, self.portal, obj)
@@ -3469,42 +3475,55 @@ class testMeetingType(PloneMeetingTestCase):
             else:
                 self.assertFalse(may_quick_edit)
 
+        def _check_meeting_access(view, read=True, write=True):
+            """ """
+            view.update()
+            if read:
+                self.assertTrue('votes_observations' in view.w)
+            else:
+                self.assertTrue('votes_observations' in view.w)
+            may_quick_edit = checkMayQuickEdit(view.context)
+            if write:
+                self.assertTrue(may_quick_edit)
+            else:
+                self.assertFalse(may_quick_edit)
+
         self._enableField('votesObservations')
-        self._enableField('votesObservations', related_to='Meeting')
+        self._enableField('votes_observations', related_to='Meeting')
         # viewable/editable as MeetingManager
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
-        m_field = meeting.getField('votesObservations')
+        view = meeting.restrictedTraverse('@@view')
         item = self.create('MeetingItem', decision=self.decisionText)
         i_field = item.getField('votesObservations')
-        _check_access(m_field, meeting)
-        _check_access(i_field, item)
+        _check_meeting_access(view)
+        _check_item_access(i_field, item)
         # not viewable/editable as creator
         self.changeUser('pmCreator1')
-        _check_access(m_field, meeting, read=False, write=False)
-        _check_access(i_field, item, read=False, write=False)
+        _check_meeting_access(view, read=False, write=False)
+        _check_item_access(i_field, item, read=False, write=False)
         # viewable but not editable by powerobservers
         self.changeUser('powerobserver1')
-        _check_access(m_field, meeting, read=True, write=False)
-        _check_access(i_field, item, read=True, write=False)
+        _check_meeting_access(view, read=True, write=False)
+        _check_item_access(i_field, item, read=True, write=False)
         # decide meeting and item
         self.changeUser('pmManager')
         self.presentItem(item)
-        _check_access(i_field, item)
+        _check_item_access(i_field, item)
         self.decideMeeting(meeting)
-        _check_access(m_field, meeting)
-        _check_access(i_field, item)
+        _check_meeting_access(view)
+        _check_item_access(i_field, item)
         self.closeMeeting(meeting)
-        _check_access(m_field, meeting, read=True, write=False)
-        _check_access(i_field, item, read=True, write=False)
+        _check_meeting_access(view, read=True, write=False)
+        _check_item_access(i_field, item, read=True, write=False)
         # viewable by creator
         self.changeUser('pmCreator1')
-        _check_access(m_field, meeting, read=True, write=False)
-        _check_access(i_field, item, read=True, write=False)
+        _check_meeting_access(view, read=True, write=False)
+        _check_item_access(i_field, item, read=True, write=False)
         # still viewable but not editable by powerobservers
         self.changeUser('powerobserver1')
-        _check_access(m_field, meeting, read=True, write=False)
-        _check_access(i_field, item, read=True, write=False)
+        _check_meeting_access(view, read=True, write=False)
+        _check_item_access(i_field, item, read=True, write=False)
 
 
 def test_suite():

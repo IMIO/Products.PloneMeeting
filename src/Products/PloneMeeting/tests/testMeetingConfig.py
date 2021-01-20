@@ -2129,6 +2129,21 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.do(cfg2, 'deactivate')
         self.assertEqual(api.content.get_state(cfg2), 'inactive')
 
+    def test_pm_Show_meeting_manager_reserved_field(self):
+        """This condition is protecting some fields that should only be
+           viewable by MeetingManagers."""
+        cfg = self.meetingConfig
+        self.changeUser('pmManager')
+        # a reserved field is shown if used
+        usedMeetingAttrs = cfg.getUsedMeetingAttributes()
+        self.assertFalse('a_meeting_field' in usedMeetingAttrs)
+        self.assertFalse(cfg.show_meeting_manager_reserved_field('a_meeting_field'))
+        cfg.setUsedMeetingAttributes(usedMeetingAttrs + ('a_meeting_field', ))
+        self.assertTrue(cfg.show_meeting_manager_reserved_field('a_meeting_field'))
+        # not viewable by non MeetingManagers
+        self.changeUser('pmCreator1')
+        self.assertFalse(cfg.show_meeting_manager_reserved_field('a_meeting_field'))
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

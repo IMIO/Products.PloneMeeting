@@ -1029,7 +1029,10 @@ def onMeetingModified(meeting, event):
     # if called because content was changed, like annex/image added/removed
     # we bypass, no need to update
     if not isinstance(event, ContainerModifiedEvent):
-        need_reindex = meeting.update_title()
+        mod_attrs = get_modified_attrs(event)
+        need_reindex = False
+        if 'date' in mod_attrs:
+            need_reindex = meeting.update_title()
         # Update contact-related info (attendees, signatories, replacements...)
         meeting.update_contacts()
         # Add a line in history if historized fields have changed
@@ -1037,7 +1040,6 @@ def onMeetingModified(meeting, event):
         # Apply potential transformations to richtext fields
         transformAllRichTextFields(meeting)
         # update every items itemReference if needed
-        mod_attrs = get_modified_attrs(event)
         if set(mod_attrs).intersection(['date', 'first_item_number', 'meeting_number']):
             meeting.update_item_references(check_needed=False)
         # reindex every linked items if date value changed

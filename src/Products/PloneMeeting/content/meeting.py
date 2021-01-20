@@ -367,6 +367,23 @@ class IMeeting(IDXMeetingContent):
             raise Invalid(msg)
 
         # check start_date/end_date
+        # start_date can not be before date
+        if data.start_date and (data.start_date < data.date):
+            msg = translate("start_date_before_meeting_date",
+                            domain='PloneMeeting',
+                            context=context.REQUEST)
+            # avoid multiple call to this invariant
+            context.REQUEST.set("validate_dates_done", True)
+            raise Invalid(msg)
+        # end_date can not be before date
+        if data.end_date and (data.end_date < data.date):
+            msg = translate("end_date_before_meeting_date",
+                            domain='PloneMeeting',
+                            context=context.REQUEST)
+            # avoid multiple call to this invariant
+            context.REQUEST.set("validate_dates_done", True)
+            raise Invalid(msg)
+        # start_date must be before end_date
         if data.start_date and data.end_date and data.start_date > data.end_date:
             msg = translate("start_date_after_end_date",
                             domain='PloneMeeting',
