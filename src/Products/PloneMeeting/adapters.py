@@ -1703,8 +1703,9 @@ class PMCategorizedObjectAdapter(CategorizedObjectAdapter):
                 if _checkPermission(View, back_item):
                     return True
         else:
+            class_name = self.context.__class__.__name__
             # is the context a MeetingItem and privacy viewable?
-            if self.context.meta_type == 'MeetingItem' and \
+            if class_name == 'MeetingItem' and \
                self.cfg.getRestrictAccessToSecretItems() and \
                not self.context.adapted().isPrivacyViewable():
                 return False
@@ -1719,7 +1720,7 @@ class PMCategorizedObjectAdapter(CategorizedObjectAdapter):
                 return True
 
             # Meeting
-            if self.context.meta_type == 'Meeting':
+            if class_name == 'Meeting':
                 # if we have a SUFFIXPROFILEPREFIX prefixed group,
                 # check using "userIsAmong", this is only done for Meetings
                 if set(self.tool.get_plone_groups_for_user()).intersection(infos['visible_for_groups']):

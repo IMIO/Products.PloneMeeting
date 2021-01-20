@@ -766,7 +766,8 @@ class testFaceted(PloneMeetingTestCase):
         self.changeUser('pmManager')
         pmFolder = self.getMeetingFolder()
         meeting = self.create('Meeting')
-        meeting.restrictedTraverse('view')()
+        view = meeting.restrictedTraverse('@@meeting_view')
+        view()
         self.assertEqual(self.request.RESPONSE.status, 200)
 
     def test_pm_DisabledCollectionsAreIgnored(self):

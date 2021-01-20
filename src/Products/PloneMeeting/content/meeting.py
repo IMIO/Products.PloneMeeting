@@ -489,45 +489,50 @@ class IMeeting(IDXMeetingContent):
 def default_assembly(data):
     tool = api.portal.get_tool('portal_plonemeeting')
     cfg = tool.getMeetingConfig(data.context)
+    res = u""
     if "assembly" in cfg.getUsedMeetingAttributes():
-        return safe_unicode(cfg.getAssembly())
-    return u""
+        res = safe_unicode(cfg.getAssembly())
+    return res
 
 
 @form.default_value(field=IMeeting['assembly_staves'])
 def default_assembly_staves(data):
     tool = api.portal.get_tool('portal_plonemeeting')
     cfg = tool.getMeetingConfig(data.context)
+    res = u""
     if "assembly_staves" in cfg.getUsedMeetingAttributes():
-        return safe_unicode(cfg.getAssemblyStaves())
-    return u""
+        res = safe_unicode(cfg.getAssemblyStaves())
+    return res
 
 
 @form.default_value(field=IMeeting['signatures'])
 def default_signatures(data):
     tool = api.portal.get_tool('portal_plonemeeting')
     cfg = tool.getMeetingConfig(data.context)
+    res = u""
     if "signatures" in cfg.getUsedMeetingAttributes():
-        return safe_unicode(cfg.getSignatures())
-    return u""
+        res = safe_unicode(cfg.getSignatures())
+    return res
 
 
 @form.default_value(field=IMeeting['place'])
 def default_place(data):
     tool = api.portal.get_tool('portal_plonemeeting')
     cfg = tool.getMeetingConfig(data.context)
+    res = u""
     if "place" in cfg.getUsedMeetingAttributes():
-        return safe_unicode(cfg.getPlaces())
-    return u""
+        res = safe_unicode(cfg.getPlaces())
+    return res
 
 
 @form.default_value(field=IMeeting['pre_meeting_place'])
 def default_pre_meeting_place(data):
     tool = api.portal.get_tool('portal_plonemeeting')
     cfg = tool.getMeetingConfig(data.context)
+    res = u""
     if "pre_meeting_place" in cfg.getUsedMeetingAttributes():
-        return safe_unicode(cfg.getPlaces())
-    return u""
+        res = safe_unicode(cfg.getPlaces())
+    return res
 
 
 def get_all_used_held_positions(obj, include_new=False, the_objects=True):
@@ -737,7 +742,7 @@ class Meeting(Container):
             adapted.link_pattern = link_pattern
         return adapted.getLink()
 
-    def get_assembly(self, for_display=False, striked=True, mark_empty_tags=False):
+    def get_assembly(self, for_display=True, striked=True, mark_empty_tags=False):
         """ """
         res = ''
         if self.assembly is not None:
@@ -746,7 +751,7 @@ class Meeting(Container):
             res = render_textarea(res, self, striked=striked, mark_empty_tags=mark_empty_tags)
         return res
 
-    def get_assembly_excused(self, for_display=False, striked=True, mark_empty_tags=False):
+    def get_assembly_excused(self, for_display=True, striked=True, mark_empty_tags=False):
         """ """
         res = ''
         if self.assembly_excused is not None:
@@ -755,7 +760,7 @@ class Meeting(Container):
             res = render_textarea(res, self, striked=striked, mark_empty_tags=mark_empty_tags)
         return res
 
-    def get_assembly_absents(self, for_display=False, striked=True, mark_empty_tags=False):
+    def get_assembly_absents(self, for_display=True, striked=True, mark_empty_tags=False):
         """ """
         res = ''
         if self.assembly_absents is not None:
@@ -764,7 +769,7 @@ class Meeting(Container):
             res = render_textarea(res, self, striked=striked, mark_empty_tags=mark_empty_tags)
         return res
 
-    def get_assembly_guests(self, for_display=False, striked=True, mark_empty_tags=False):
+    def get_assembly_guests(self, for_display=True, striked=True, mark_empty_tags=False):
         """ """
         res = ''
         if self.assembly_guests is not None:
@@ -773,7 +778,7 @@ class Meeting(Container):
             res = render_textarea(res, self, striked=striked, mark_empty_tags=mark_empty_tags)
         return res
 
-    def get_assembly_staves(self, for_display=False, striked=True, mark_empty_tags=False):
+    def get_assembly_staves(self, for_display=True, striked=True, mark_empty_tags=False):
         """ """
         res = ''
         if self.assembly_staves is not None:
@@ -782,7 +787,7 @@ class Meeting(Container):
             res = render_textarea(res, self, striked=striked, mark_empty_tags=mark_empty_tags)
         return res
 
-    def get_assembly_proxies(self, for_display=False, striked=True, mark_empty_tags=False):
+    def get_assembly_proxies(self, for_display=True, striked=True, mark_empty_tags=False):
         """ """
         res = ''
         if self.assembly_proxies is not None:

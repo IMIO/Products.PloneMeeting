@@ -8,13 +8,11 @@ from collective.contact.plonegroup.browser.tables import DisplayGroupUsersView
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_organization
-from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.documentgenerator.helper.archetypes import ATDocumentGenerationHelperView
 from collective.documentgenerator.helper.dexterity import DXDocumentGenerationHelperView
 from collective.eeafaceted.batchactions import _ as _CEBA
 from collective.eeafaceted.batchactions.browser.views import BaseBatchActionForm
 from collective.eeafaceted.batchactions.utils import listify_uids
-from eea.facetednavigation.browser.app.view import FacetedContainerView
 from eea.facetednavigation.interfaces import ICriteria
 from ftw.labels.interfaces import ILabeling
 from imio.helpers.xhtml import addClassToContent
@@ -42,7 +40,6 @@ from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.content.meeting import get_all_used_held_positions
 from Products.PloneMeeting.indexes import _to_coded_adviser_index
 from Products.PloneMeeting.content.meeting import IMeeting
-from Products.PloneMeeting.MeetingConfig import POWEROBSERVERPREFIX
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import _itemNumber_to_storedItemNumber
 from Products.PloneMeeting.utils import _storedItemNumber_to_itemNumber
@@ -50,7 +47,6 @@ from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import get_dx_widget
 from Products.PloneMeeting.utils import get_person_from_userid
 from Products.PloneMeeting.utils import signatureNotAlone
-from Products.PloneMeeting.utils import toHTMLStrikedContent
 from z3c.form.field import Fields
 from z3c.form.interfaces import DISPLAY_MODE
 from zope import schema
@@ -239,55 +235,6 @@ class ItemToDiscussView(BrowserView):
     def useToggleDiscuss(self):
         """ """
         return self.context.restrictedTraverse('@@toggle_to_discuss').isAsynchToggleEnabled()
-
-
-class MeetingView(FacetedContainerView):
-    """The meeting_view."""
-
-    def __init__(self, context, request):
-        """ """
-        super(MeetingView, self).__init__(context, request)
-        self.tool = api.portal.get_tool('portal_plonemeeting')
-        self.cfg = self.tool.getMeetingConfig(self.context)
-
-    def update(self):
-        """ """
-        # initialize member in call because it is Anonymous in __init__ of view...
-        self.member = api.user.get_current()
-
-    def __call__(self):
-        """ """
-        self.update()
-        return super(MeetingView, self).__call__()
-
-    def showPage(self):
-        """Display page to current user?"""
-        return self.tool.showMeetingView()
-
-    def _displayAvailableItemsTo(self):
-        """Check if current user profile is selected in MeetingConfig.displayAvailableItemsTo."""
-        displayAvailableItemsTo = self.cfg.getDisplayAvailableItemsTo()
-        suffixes = []
-        groups = []
-        res = False
-        cfgId = self.cfg.getId()
-        for value in displayAvailableItemsTo:
-            if value == 'app_users':
-                suffixes = get_all_suffixes()
-            elif value.startswith(POWEROBSERVERPREFIX):
-                groups.append(get_plone_group_id(cfgId, value.split(POWEROBSERVERPREFIX)[1]))
-        if suffixes:
-            res = self.tool.userIsAmong(suffixes)
-        if not res and groups:
-            res = bool(set(groups).intersection(self.tool.get_plone_groups_for_user()))
-        return res
-
-    def showAvailableItems(self):
-        """Show the available items part?"""
-        return (
-            self.member.has_permission(ModifyPortalContent, self.context) or
-            self._displayAvailableItemsTo()) and \
-            self.context.wfConditions().mayAcceptItems()
 
 
 class PloneMeetingRedirectToAppView(BrowserView):
@@ -737,8 +684,8 @@ class BaseDGHV(object):
         assembly = None
         if class_name == 'Meeting' and self.context.get_assembly():
             assembly = self.context.get_assembly(for_display=True, striked=striked)
-        elif class_name == 'MeetingItem' and self.context.getItemAssembly():
-            assembly = self.context.getItemAssembly(striked=striked)
+        elif class_name == 'MeetingItem' and self.context.getItemAssembly(for_display=False):
+            assembly = self.context.getItemAssembly(for_display=True, striked=striked)
 
         if assembly:
             return assembly

@@ -330,7 +330,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             if idInAttrs:
                 obj._at_rename_after_creation = True
         if objectType == 'Meeting':
-            # manage attendees if using it after processForm
+            # manage attendees if using it
             usedMeetingAttrs = cfg.getUsedMeetingAttributes()
             if 'attendees' in usedMeetingAttrs:
                 default_attendees = _get_default_attendees(obj)
@@ -342,10 +342,18 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                 voters = []
                 if cfg.getUseVotes():
                     voters = _get_default_voters(obj)
-                obj._at_creation_flag = False
                 obj._do_update_contacts(attendees=default_attendees,
                                         signatories=signatories,
                                         voters=voters)
+            # manage default values
+            add_form = folder.restrictedTraverse('++add++{0}'.format(obj.portal_type))
+            add_form.update()
+            for field_name, widget in add_form.form_instance.w.items():
+                if widget.value and \
+                   not getattr(obj, field_name) and \
+                   isinstance(widget.value, (str, unicode)):
+                    setattr(obj, field_name, widget.field.fromUnicode(widget.value))
+
         # make sure we do not have permission check cache problems...
         self.cleanMemoize()
         return obj

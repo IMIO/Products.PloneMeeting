@@ -1031,7 +1031,7 @@ def onMeetingModified(meeting, event):
     if not isinstance(event, ContainerModifiedEvent):
         mod_attrs = get_modified_attrs(event)
         need_reindex = False
-        if 'date' in mod_attrs:
+        if not mod_attrs or "date" in mod_attrs:
             need_reindex = meeting.update_title()
         # Update contact-related info (attendees, signatories, replacements...)
         meeting.update_contacts()
@@ -1043,7 +1043,7 @@ def onMeetingModified(meeting, event):
         if set(mod_attrs).intersection(['date', 'first_item_number', 'meeting_number']):
             meeting.update_item_references(check_needed=False)
         # reindex every linked items if date value changed
-        if "date" in mod_attrs:
+        if not mod_attrs or "date" in mod_attrs:
             catalog = api.portal.get_tool('portal_catalog')
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(meeting)

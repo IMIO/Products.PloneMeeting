@@ -19,6 +19,7 @@ from OFS.ObjectManager import BeforeDeleteException
 from plone import api
 from Products.CMFCore.permissions import View
 from Products.PloneMeeting.browser.itemattendee import set_meeting_item_signatory
+from Products.PloneMeeting.content.meeting import get_all_used_held_positions
 from Products.PloneMeeting.content.directory import IPMDirectory
 from Products.PloneMeeting.content.source import PMContactSourceBinder
 from Products.PloneMeeting.Extensions.imports import import_contacts
@@ -62,15 +63,18 @@ class testContacts(PloneMeetingTestCase):
         ''' '''
         cfg = self.meetingConfig
         self.changeUser('pmManager')
+        pm_folder = self.getMeetingFolder()
         meeting = self.create('Meeting')
-        # returns attendees, excused, absents, ...
+        # include_new=True will return default value selected in MeetingConfig
+        # if context is the meeting container, like when creating a new meeting
         self.assertEqual(
             meeting.ordered_contacts.keys(),
-            [hp.UID() for hp in meeting.get_all_used_held_positions()])
-        # for now, include_new=True does not change anything
+            [hp_uid for hp_uid
+             in get_all_used_held_positions(pm_folder, include_new=True, the_objects=False)])
+        # include_new=True if context is meeting return same thing as meeting as well
         self.assertEqual(
-            meeting.get_all_used_held_positions(),
-            meeting.get_all_used_held_positions(include_new=True))
+            get_all_used_held_positions(meeting, the_objects=False),
+            get_all_used_held_positions(meeting, include_new=True, the_objects=False))
         # add a new hp in configuration
         self.changeUser('siteadmin')
         person = self.portal.contacts.get('person1')
@@ -83,18 +87,18 @@ class testContacts(PloneMeetingTestCase):
         self.changeUser('pmManager')
         # still no new value as not selected in MeetingConfig.orderedContacts
         self.assertEqual(
-            meeting.get_all_used_held_positions(),
-            meeting.get_all_used_held_positions(include_new=True))
+            get_all_used_held_positions(meeting),
+            get_all_used_held_positions(meeting, include_new=True))
         # select new hp
         ordered_contacts = cfg.getField('orderedContacts').Vocabulary(cfg).keys()
         cfg.setOrderedContacts(ordered_contacts)
         self.assertEqual(
-            meeting.get_all_used_held_positions() + (new_hp, ),
-            meeting.get_all_used_held_positions(include_new=True))
+            get_all_used_held_positions(meeting, include_new=False) + (new_hp, ),
+            get_all_used_held_positions(meeting, include_new=True))
         # unselect everything on MeetingConfig, all values still available on meeting
         cfg.setOrderedContacts(())
         self.assertEqual(
-            meeting.get_all_used_held_positions(), meeting.get_attendees(the_objects=True))
+            get_all_used_held_positions(meeting), meeting.get_attendees(the_objects=True))
 
     def test_pm_CanNotRemoveUsedHeldPosition(self):
         ''' '''

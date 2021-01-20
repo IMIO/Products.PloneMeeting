@@ -1253,7 +1253,7 @@ class testMeetingConfig(PloneMeetingTestCase):
 
         # fails if a meeting exists
         self.changeUser('pmManager')
-        meeting = self.create('Meeting', date='2008/06/23 15:39:00')
+        meeting = self.create('Meeting')
         self.changeUser('siteadmin')
         with self.assertRaises(BeforeDeleteException) as cm:
             self.tool.manage_delObjects([cfgId, ])
@@ -1734,7 +1734,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         itemFromTemplate = view.createItemFromTemplate(item_template.UID())
         self.assertFalse(IConfigElement.providedBy(itemFromTemplate))
         # recurring item
-        meeting = self.create('Meeting', date=DateTime('2019/03/11'))
+        meeting = self.create('Meeting')
         recurring_item = meeting.get_items()[0]
         self.assertFalse(IConfigElement.providedBy(recurring_item))
 
@@ -2079,7 +2079,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         self._enableAutoConvert()
         cfg = self.meetingConfig
         self.changeUser('pmManager')
-        meeting = self.create('Meeting', date=DateTime('2020/03/31'))
+        meeting = self.create('Meeting')
         item = self.create('MeetingItem')
         annex = self.addAnnex(item)
         annex_decision = self.addAnnex(item, relatedTo='item_decision')

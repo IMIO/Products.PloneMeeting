@@ -45,7 +45,7 @@ def item_assembly_default():
       we have to get current context manually...
     """
     context = getSite().REQUEST['PUBLISHED'].context
-    itemAssembly = context.getItemAssembly(for_display=False, mimetype="text/plain")
+    itemAssembly = context.getItemAssembly(for_display=False)
     return safe_unicode(itemAssembly)
 
 
@@ -57,7 +57,7 @@ def item_excused_default():
       we have to get current context manually...
     """
     context = getSite().REQUEST['PUBLISHED'].context
-    itemAssemblyExcused = context.getItemAssemblyExcused(for_display=False, mimetype="text/plain")
+    itemAssemblyExcused = context.getItemAssemblyExcused(for_display=False)
     return safe_unicode(itemAssemblyExcused)
 
 
@@ -69,7 +69,7 @@ def item_absents_default():
       we have to get current context manually...
     """
     context = getSite().REQUEST['PUBLISHED'].context
-    itemAssemblyAbsents = context.getItemAssemblyAbsents(for_display=False, mimetype="text/plain")
+    itemAssemblyAbsents = context.getItemAssemblyAbsents(for_display=False)
     return safe_unicode(itemAssemblyAbsents)
 
 
@@ -81,7 +81,7 @@ def item_guests_default():
       we have to get current context manually...
     """
     context = getSite().REQUEST['PUBLISHED'].context
-    itemAssemblyGuests = context.getItemAssemblyGuests(for_display=False, mimetype="text/plain")
+    itemAssemblyGuests = context.getItemAssemblyGuests(for_display=False)
     return safe_unicode(itemAssemblyGuests)
 
 

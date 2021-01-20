@@ -3611,24 +3611,25 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def getItemAssembly(self,
                         real=False,
-                        for_display=False,
+                        for_display=True,
                         striked=True,
                         mark_empty_tags=False,
                         **kwargs):
         '''Returns the assembly for this item.
            If no assembly is defined, meeting assembly is returned.'''
-        res = self.getField('itemAssembly').get(self, **kwargs)
+        res = self.getField('itemAssembly').getRaw(self, **kwargs)
         if not real and not res and self.hasMeeting():
-            res = self.getMeeting().get_assembly()
+            res = self.getMeeting().get_assembly(for_display=False)
         if res and for_display:
-            res = render_textarea(res, self, striked=striked, mark_empty_tags=mark_empty_tags)
+            res = render_textarea(
+                res, self, striked=striked, mark_empty_tags=mark_empty_tags)
         return res
 
     security.declarePublic('getItemAssemblyExcused')
 
     def getItemAssemblyExcused(self,
                                real=False,
-                               for_display=False,
+                               for_display=True,
                                striked=True,
                                mark_empty_tags=False,
                                **kwargs):
@@ -3636,7 +3637,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            If no excused are defined for item, meeting assembly excused are returned.'''
         res = self.getField('itemAssemblyExcused').get(self, **kwargs)
         if not real and not res and self.hasMeeting():
-            res = self.getMeeting().get_assembly_excused()
+            res = self.getMeeting().get_assembly_excused(for_display=False)
         if res and for_display:
             res = render_textarea(res, self, striked=striked, mark_empty_tags=mark_empty_tags)
         return res
@@ -3645,7 +3646,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def getItemAssemblyAbsents(self,
                                real=False,
-                               for_display=False,
+                               for_display=True,
                                striked=True,
                                mark_empty_tags=False,
                                **kwargs):
@@ -3653,7 +3654,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            If no absents are defined for item, meeting assembly absents are returned.'''
         res = self.getField('itemAssemblyAbsents').get(self, **kwargs)
         if not real and not res and self.hasMeeting():
-            res = self.getMeeting().get_assembly_absents()
+            res = self.getMeeting().get_assembly_absents(for_display=False)
         if res and for_display:
             res = render_textarea(res, self, striked=striked, mark_empty_tags=mark_empty_tags)
         return res
@@ -3662,7 +3663,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def getItemAssemblyGuests(self,
                               real=False,
-                              for_display=False,
+                              for_display=True,
                               striked=True,
                               mark_empty_tags=False,
                               **kwargs):
@@ -3670,7 +3671,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            If no guests are defined for item, meeting assembly guests are returned.'''
         res = self.getField('itemAssemblyGuests').get(self, **kwargs)
         if not real and not res and self.hasMeeting():
-            res = self.getMeeting().get_assembly_guests()
+            res = self.getMeeting().get_assembly_guests(for_display=False)
         if res and for_display:
             res = render_textarea(res, self, striked=striked, mark_empty_tags=mark_empty_tags)
         return res
@@ -3687,7 +3688,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            meeting signatures are returned.'''
         res = self.getField('itemSignatures').get(self, **kwargs)
         if not real and not res and self.hasMeeting():
-            res = self.getMeeting().get_signatures()
+            res = self.getMeeting().get_signatures(for_display=False)
         if res and for_display:
             res = render_textarea(res, self, striked=striked, mark_empty_tags=mark_empty_tags)
         return res
@@ -6692,14 +6693,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # get really present attendees now
         attendees = meeting._get_contacts(uids=attendees, the_objects=the_objects)
         return attendees
-
-    security.declarePublic('getAssembly')
-
-    def getAssembly(self):
-        '''Returns the assembly for this item.'''
-        if self.hasMeeting():
-            return self.getMeeting().assembly
-        return ''
 
     def _appendLinkedItem(self, item, only_viewable):
         if not only_viewable or _checkPermission(View, item):
