@@ -3305,8 +3305,7 @@ class testMeetingType(PloneMeetingTestCase):
         view._init()
         self.assertTrue(view.show_available_items())
         self.changeUser('powerobserver2')
-        view._init()
-        self.assertFalse(view.show_available_items())
+        self.assertRaises(Unauthorized, view._init)
         # will not be the case for cfg2
         self.meetingConfig2.setDisplayAvailableItemsTo(
             (POWEROBSERVERPREFIX + 'powerobservers', ))
@@ -3317,11 +3316,9 @@ class testMeetingType(PloneMeetingTestCase):
         view._init()
         self.assertTrue(view.show_available_items())
         self.changeUser('powerobserver2')
-        view._init()
-        self.assertTrue(view.show_available_items())
+        self.assertRaises(Unauthorized, view._init)
         self.changeUser('powerobserver1')
-        view._init()
-        self.assertFalse(view.show_available_items())
+        self.assertRaises(Unauthorized, view._init)
 
     def test_pm_AvailableItemsShownInformations(self):
         """When available items shown to other users than MeetingManagers,

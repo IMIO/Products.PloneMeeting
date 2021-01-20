@@ -2,6 +2,7 @@
 
 from AccessControl import ClassSecurityInfo
 from collections import OrderedDict
+from collective.dexteritytextindexer.interfaces import IDynamicTextIndexExtender
 from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.contact.plonegroup.config import get_registry_organizations
 from collective.dexteritytextindexer.directives import searchable
@@ -41,6 +42,7 @@ from Products.PloneMeeting.interfaces import IDXMeetingContent
 from Products.PloneMeeting.utils import _addManagedPermissions
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import displaying_available_items
+from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import get_next_meeting
 from Products.PloneMeeting.utils import get_states_before
 from Products.PloneMeeting.utils import getCustomAdapter
@@ -55,6 +57,7 @@ from Products.PloneMeeting.widgets.pm_textarea import PMTextAreaFieldWidget
 from Products.PloneMeeting.widgets.pm_textarea import render_textarea
 from z3c.form.browser.radio import RadioFieldWidget
 from zope import schema
+from zope.component import adapts
 from zope.event import notify
 from zope.globalrequest import getRequest
 from zope.i18n import translate
@@ -1809,3 +1812,19 @@ class MeetingCollection(Collection):
         return res
 
     query = property(_get_query, _set_query)
+
+
+class MeetingSearchableTextExtender(object):
+    adapts(IMeeting)
+    implements(IDynamicTextIndexExtender)
+
+    def __init__(self, context):
+        self.context = context
+
+    def __call__(self):
+        """Include annexes title in SearchableText."""
+        res = []
+        for annex in get_annexes(self.context):
+            res.append(annex.Title())
+        res = ' '.join(res)
+        return res

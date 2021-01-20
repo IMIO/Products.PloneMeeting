@@ -235,7 +235,6 @@
   <adapter name="previous_review_state" factory=".indexes.previous_review_state" />
   <adapter name="reviewProcessInfo" factory=".indexes.reviewProcessInfo" />
   <adapter name="SearchableText" factory=".indexes.SearchableText_item" />
-  <adapter name="SearchableText" factory=".indexes.SearchableText_meeting" />
   <adapter name="SearchableText" factory=".indexes.SearchableText_annex" />
   <adapter name="send_to_authority" factory=".indexes.send_to_authority" />
   <adapter name="sentToInfos" factory=".indexes.sentToInfos" />

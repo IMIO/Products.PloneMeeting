@@ -43,4 +43,8 @@
              factory=".meeting.MeetingCollection"
              provides="plone.app.contenttypes.behaviors.collection.ICollection" />
 
+    <!-- collective.dexteritytextindexer extender -->
+    <adapter factory=".meeting.MeetingSearchableTextExtender"
+             name="MeetingSearchableTextExtender" />
+
 </configure>

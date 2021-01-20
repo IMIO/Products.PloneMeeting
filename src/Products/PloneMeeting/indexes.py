@@ -227,11 +227,6 @@ def SearchableText_item(obj):
     return SearchableText(obj)
 
 
-@indexer(IMeeting)
-def SearchableText_meeting(obj):
-    return SearchableText(obj)
-
-
 @indexer(IAnnex)
 def SearchableText_annex(obj):
     return _marker
