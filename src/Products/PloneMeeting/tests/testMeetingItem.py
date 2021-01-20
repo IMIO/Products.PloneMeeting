@@ -1030,7 +1030,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # the item will only be presented if a meeting in it's initial state
         # in the future is available.  Add a meeting with a date in the past
         self.setMeetingConfig(cfg2Id)
-        self.create('Meeting')
+        self.create('Meeting', date=datetime(2008, 6, 12, 8, 0, 0))
         self.deleteAsManager(newItem.UID())
         originalItem = data['originalItem']
         self.deleteAsManager(originalItem.UID())
@@ -2316,10 +2316,10 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertFalse(power_observer_group_id in meeting.__ac_local_roles__)
         # if the TAL expression is True, then the role is given
         self._setPowerObserverStates(states=('itemcreated', ),
-                                     access_on='python:item.meta_type == "MeetingItem" and cfg and tool')
+                                     access_on='python:cfg and tool')
         self._setPowerObserverStates(field_name='meeting_states',
                                      states=('created', ),
-                                     access_on='python:meeting.__class__.__name__ == "Meeting" and cfg and tool')
+                                     access_on='python:cfg and tool')
         item._update_after_edit()
         meeting._update_after_edit()
         self.assertTrue(power_observer_group_id in item.__ac_local_roles__)
@@ -2331,7 +2331,7 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg = self.meetingConfig
         self.changeUser('siteadmin')
         # enable Meeting fields that are often displayed on the item view
-        assembly_field_names = cfg._assembly_fields(field_name=True)
+        assembly_field_names = cfg._assembly_field_names()
         usedItemAttrs = cfg.getUsedItemAttributes()
         usedItemAttrs = set(assembly_field_names).union(usedItemAttrs)
         cfg.setUsedItemAttributes(usedItemAttrs)
@@ -5195,7 +5195,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # defined on the destination MeetingConfig
         self.meetingConfig.setToDiscussSetOnItemInsert(False)
         self.meetingConfig2.setToDiscussDefault(True)
-        meeting = self.create('Meeting', date='2015/01/01')
+        meeting = self.create('Meeting')
         item.setDecision('<p>My decision</p>', mimetype='text/html')
         cfg2Id = self.meetingConfig2.getId()
         item.setOtherMeetingConfigsClonableTo((cfg2Id,))
@@ -5729,7 +5729,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.presentItem(item)
         printed_assembly = helper.printAssembly(group_position_type=False)
         # Every attendee firstname and lastname must be in view.printAssembly()
-        for attendee in item.get_attendees(theObjects=True):
+        for attendee in item.get_attendees(the_objects=True):
             self.assertIn(attendee.get_person().firstname, printed_assembly)
             self.assertIn(attendee.get_person().lastname, printed_assembly)
 

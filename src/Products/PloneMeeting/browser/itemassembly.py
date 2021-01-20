@@ -169,7 +169,8 @@ class DisplayAssemblyFromMeetingProvider(ContentProviderBase):
         nothing_defined_msg = translate('nothing_defined_on_meeting',
                                         domain='PloneMeeting',
                                         context=self.request)
-        return meeting.get_assembly(for_display=True, striked=False) or \
+        return meeting.get_assembly(
+            for_display=True, striked=False, mark_empty_tags=True) or \
             u'<p class="discreet">{0}</p>'.format(nothing_defined_msg)
 
     def get_msgid_assembly_or_attendees(self):
@@ -212,7 +213,8 @@ class DisplayExcusedFromMeetingProvider(ContentProviderBase):
         nothing_defined_msg = translate('nothing_defined_on_meeting',
                                         domain='PloneMeeting',
                                         context=self.request)
-        return meeting.get_assembly_excused(for_display=True, striked=False) or \
+        return meeting.get_assembly_excused(
+            for_display=True, striked=False, mark_empty_tags=True) or \
             u'<p class="discreet">{0}</p>'.format(nothing_defined_msg)
 
     def render(self):
@@ -243,7 +245,8 @@ class DisplayAbsentsFromMeetingProvider(ContentProviderBase):
         nothing_defined_msg = translate('nothing_defined_on_meeting',
                                         domain='PloneMeeting',
                                         context=self.request)
-        return meeting.get_assembly_absents(for_display=True, striked=False) or \
+        return meeting.get_assembly_absents(
+            for_display=True, striked=False, mark_empty_tags=True) or \
             u'<p class="discreet">{0}</p>'.format(nothing_defined_msg)
 
     def render(self):
