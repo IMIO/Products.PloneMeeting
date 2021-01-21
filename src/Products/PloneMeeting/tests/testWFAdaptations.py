@@ -2,11 +2,15 @@
 #
 # File: testWFAdaptations.py
 #
+# GNU General Public License (GPL)
+#
 
 from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.contact.plonegroup.utils import select_org_for_function
-from DateTime.DateTime import DateTime
+from DateTime import DateTime
+from datetime import datetime
+from datetime import timedelta
 from plone import api
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
@@ -284,7 +288,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         # make sure we do not have recurring items
         self.changeUser('pmManager')
         # create a meeting with an item and publish it
-        meeting = self.create('Meeting', date='2016/01/15')
+        meeting = self.create('Meeting')
         item = self.create('MeetingItem')
         self.presentItem(item)
         self.publishMeeting(meeting)
@@ -331,7 +335,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.changeUser('pmManager')
         self._activate_wfas(('postpone_next_meeting', ))
 
-        meeting = self.create('Meeting', date=DateTime('2016/06/06'))
+        meeting = self.create('Meeting')
         item = self.create('MeetingItem')
         item.setDecision('<p>Decision</p>')
         self.presentItem(item)
@@ -362,7 +366,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.changeUser('pmManager')
         self._activate_wfas((wf_adaptation_name, ))
 
-        meeting = self.create('Meeting', date=DateTime('2016/06/06'))
+        meeting = self.create('Meeting')
         item = self.create('MeetingItem')
         item.setDecision('<p>Decision</p>')
         self.presentItem(item)
@@ -524,7 +528,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.changeUser('pmManager')
         self._activate_wfas(('return_to_proposing_group', ))
 
-        meeting = self.create('Meeting', date='2016/01/15')
+        meeting = self.create('Meeting')
         item = self.create('MeetingItem')
         self.presentItem(item)
         self.freezeMeeting(meeting)
@@ -559,7 +563,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.changeUser('pmManager')
         self._activate_wfas(('return_to_proposing_group_with_last_validation', ))
 
-        meeting = self.create('Meeting', date='2016/01/15')
+        meeting = self.create('Meeting')
         item = self.create('MeetingItem')
         self.presentItem(item)
         self.freezeMeeting(meeting)
@@ -601,7 +605,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.changeUser('pmManager')
         self._activate_wfas(('return_to_proposing_group_with_all_validations', ))
 
-        meeting = self.create('Meeting', date='2016/01/15')
+        meeting = self.create('Meeting')
         item = self.create('MeetingItem')
         self.presentItem(item)
         self.freezeMeeting(meeting)
@@ -646,7 +650,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.changeUser('pmManager')
         self._activate_wfas(('hide_decisions_when_under_writing', ))
 
-        meeting = self.create('Meeting', date='2016/01/15')
+        meeting = self.create('Meeting')
         self.decideMeeting(meeting)
         self.do(meeting, 'publish_decisions')
         self.failIf(cfg.validate_workflowAdaptations(('hide_decisions_when_under_writing', )))
@@ -872,7 +876,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.validateItem(item)
         # create a Meeting and add the item to it
         self.changeUser('pmManager')
-        meeting = self.create('Meeting', date=DateTime())
+        meeting = self.create('Meeting')
         self.presentItem(item)
         # now that it is presented, the pmCreator1/pmReviewer1 can not edit it anymore
         for userId in ('pmCreator1', 'pmReviewer1'):
@@ -941,7 +945,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.validateItem(item)
         # create a Meeting and add the item to it
         self.changeUser('pmManager')
-        meeting = self.create('Meeting', date=DateTime())
+        meeting = self.create('Meeting')
         self.presentItem(item)
         # now that it is presented, the pmCreator1/pmReviewer1 can not edit it anymore
         for userId in ('pmCreator1', 'pmReviewer1'):
@@ -1034,7 +1038,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         meetingWF = self.wfTool.getWorkflowsFor(self.meetingConfig.getMeetingTypeName())[0]
         self.failIf('decisions_published' in meetingWF.states)
         self.changeUser('pmManager')
-        meeting = self.create('Meeting', date=DateTime('2013/01/01 12:00'))
+        meeting = self.create('Meeting')
         item = self.create('MeetingItem')
         item.setMotivation('<p>testing motivation field</p>')
         item.setDecision('<p>testing decision field</p>')
@@ -1076,7 +1080,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         meetingWF = self.wfTool.getWorkflowsFor(self.meetingConfig.getMeetingTypeName())[0]
         self.failUnless('decisions_published' in meetingWF.states)
         self.changeUser('pmManager')
-        meeting = self.create('Meeting', date=DateTime('2013/01/01 12:00'))
+        meeting = self.create('Meeting')
         item = self.create('MeetingItem')
         item.setMotivation('<p>testing motivation field</p>')
         item.setDecision('<p>testing decision field</p>')
@@ -1183,7 +1187,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         # if one of the user of the proposingGroup may edit the decision, then
         # every members of the proposingGroup may see the decision, this way, if MeetingMember
         # may edit the decision, then a MeetingObserverLocal may see it also evern if he may not edit it
-        meeting = self.create('Meeting', date=DateTime('2016/01/01 12:00'))
+        meeting = self.create('Meeting')
         item = self.create('MeetingItem')
         item.setMotivation('<p>Motivation field</p>')
         item.setDecision('<p>Decision field</p>')
@@ -1241,7 +1245,7 @@ class testWFAdaptations(PloneMeetingTestCase):
              'decide_item_when_back_to_meeting_from_returned_to_proposing_group', ))
 
         self.changeUser('pmManager')
-        meeting = self.create('Meeting', date=DateTime('2016/01/01 12:00'))
+        meeting = self.create('Meeting')
         item = self.create('MeetingItem')
         item.setDecision('<p>Decision adapted by pmManager</p>')
         self.presentItem(item)
@@ -1855,7 +1859,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertTrue('postponed_next_meeting' in itemWF.states)
         # test it
         self.changeUser('pmManager')
-        meeting = self.create('Meeting', date=DateTime('2016/06/06'))
+        meeting = self.create('Meeting')
         item = self.create('MeetingItem')
         item.setDecision('<p>A decision</p>')
         self.presentItem(item)
@@ -1966,7 +1970,7 @@ class testWFAdaptations(PloneMeetingTestCase):
                                     'advice_comment': RichTextValue(u'My comment')})
 
         self.changeUser('pmManager')
-        meeting = self.create('Meeting', date=DateTime('2016/06/06'))
+        meeting = self.create('Meeting')
         self.presentItem(item)
         self.decideMeeting(meeting)
         self.do(item, 'postpone_next_meeting')
@@ -1995,7 +1999,7 @@ class testWFAdaptations(PloneMeetingTestCase):
 
         item = self.create('MeetingItem')
         item.setDecision('<p>Decision</p>')
-        meeting = self.create('Meeting', date=DateTime('2016/06/06'))
+        meeting = self.create('Meeting')
         self.presentItem(item)
         self.decideMeeting(meeting)
         self.do(item, 'postpone_next_meeting')
@@ -2041,7 +2045,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertTrue(item_state in itemWF.states)
         # test it
         self.changeUser('pmManager')
-        meeting = self.create('Meeting', date=DateTime('2016/06/06'))
+        meeting = self.create('Meeting')
         item = self.create('MeetingItem')
         item.setDecision('<p>A decision</p>')
         self.presentItem(item)
@@ -2127,7 +2131,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         '''Tests while 'reviewers_take_back_validated_item' wfAdaptation is active.'''
         # first create a meeting, we will check the MeetingReviewer may not present the item
         self.changeUser('pmManager')
-        self.create('Meeting', date=DateTime() + 1)
+        self.create('Meeting', date=datetime.now() + timedelta(days=1))
         # validate an item, the MeetingReviewer will be able to take it back
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
@@ -2156,7 +2160,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         # present an item, presented item can not be set back to proposed
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
-        self.create('Meeting', date=DateTime('2018/03/15'))
+        self.create('Meeting')
         self.presentItem(item)
         self.assertEqual(self.transitions(item), ['backToValidated'])
 
@@ -2165,7 +2169,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         # present an item, presented item can not be set back to proposed
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
-        self.create('Meeting', date=DateTime('2018/03/15'))
+        self.create('Meeting')
         self.presentItem(item)
         self.assertEqual(self.transitions(item), ['backToProposed', 'backToValidated'])
         self.do(item, 'backToProposed')
@@ -2188,7 +2192,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         # present an item, presented item can not be set back to itemcreated
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
-        self.create('Meeting', date=DateTime('2018/03/15'))
+        self.create('Meeting')
         self.presentItem(item)
         self.assertEqual(self.transitions(item), ['backToValidated'])
 
@@ -2197,7 +2201,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         # present an item, presented item can not be set back to itemcreated
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
-        self.create('Meeting', date=DateTime('2018/03/15'))
+        self.create('Meeting')
         self.presentItem(item)
         self.assertEqual(self.transitions(item), ['backToItemCreated', 'backToValidated'])
         self.do(item, 'backToItemCreated')
@@ -2214,7 +2218,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         # create meeting with item then remove it from meeting
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
-        meeting = self.create('Meeting', date=DateTime('2018/03/15'))
+        meeting = self.create('Meeting')
         self.presentItem(item)
         self.assertEqual(self.transitions(item), ['backToItemCreated', 'backToValidated'])
         removeView = meeting.restrictedTraverse('@@remove-several-items')
@@ -2241,7 +2245,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         # present an item, presented item can not be set back to itemcreated
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
-        self.create('Meeting', date=DateTime('2018/03/15'))
+        self.create('Meeting')
         self.presentItem(item)
         self.assertEqual(self.transitions(item), ['backToValidated'])
 
@@ -2250,7 +2254,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         # present an item, presented item can not be set back to itemcreated
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
-        self.create('Meeting', date=DateTime('2018/03/15'))
+        self.create('Meeting')
         self.presentItem(item)
         self.assertEqual(self.transitions(item), ['backToPrevalidated', 'backToValidated'])
         self.do(item, 'backToPrevalidated')
@@ -2403,7 +2407,7 @@ class testWFAdaptations(PloneMeetingTestCase):
     def _meetingmanager_correct_closed_meeting_inactive(self):
         '''Tests while 'meetingmanager_correct_closed_meeting' wfAdaptation is inactive.'''
         self.changeUser('pmManager')
-        meeting = self.create('Meeting', date=DateTime('2019/04/09'))
+        meeting = self.create('Meeting')
         self.closeMeeting(meeting)
         self.assertEqual(meeting.query_state(), 'closed')
         closed_meeting_msg = translate(u'closed_meeting_not_correctable_by_config',
@@ -2421,7 +2425,7 @@ class testWFAdaptations(PloneMeetingTestCase):
     def _meetingmanager_correct_closed_meeting_active(self):
         '''Tests while 'meetingmanager_correct_closed_meeting' wfAdaptation is active.'''
         self.changeUser('pmManager')
-        meeting = self.create('Meeting', date=DateTime('2019/04/09'))
+        meeting = self.create('Meeting')
         self.closeMeeting(meeting)
         self.assertTrue(meeting.wfConditions().mayCorrect())
         self.changeUser('siteadmin')

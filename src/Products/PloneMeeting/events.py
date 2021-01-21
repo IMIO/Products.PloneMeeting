@@ -217,7 +217,7 @@ def onMeetingBeforeTransition(meeting, event):
         if 'return_to_proposing_group' in cfg.getWorkflowAdaptations():
             # raise a WorkflowException in case there are items still in state 'returned_to_proposing_group'
             additional_catalog_query = {'review_state': 'returned_to_proposing_group'}
-            if meeting.get_items(theObjects=False, additional_catalog_query=additional_catalog_query):
+            if meeting.get_items(the_objects=False, additional_catalog_query=additional_catalog_query):
                 msg = _('Can not close a meeting containing items returned to proposing group!')
                 raise WorkflowException(msg)
 
@@ -1376,7 +1376,7 @@ def onMeetingWillBeRemoved(meeting, event):
         return
 
     # We can remove an meeting directly but not "through" his container.
-    if meeting.getTagName() != 'Meeting':
+    if event.object.getTagName() != 'Meeting':
         msg = translate(
             u"can_not_delete_meeting_container",
             domain='PloneMeeting',
