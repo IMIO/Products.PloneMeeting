@@ -1,4 +1,9 @@
 # -*- coding: utf-8 -*-
+#
+# File: testViews.py
+#
+# GNU General Public License (GPL)
+#
 
 from AccessControl import Unauthorized
 from collective.contact.plonegroup.utils import get_own_organization

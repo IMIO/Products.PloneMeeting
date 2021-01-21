@@ -3453,7 +3453,6 @@ class testMeetingType(PloneMeetingTestCase):
                                                   if not attendee_uids[3] in meeting_attendee]
         self.assertEqual(len(self.request.form['meeting_attendees']), 3)
         self.assertEqual(invariants.validate(data), ())
-        self.request.set('validate_attendees_done', False)
 
     def test_pm_Votes_observations(self):
         """Fields Meeting.votes_observations and MeetingItem.votesObservations
