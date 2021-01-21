@@ -140,8 +140,8 @@ class testWorkflows(PloneMeetingTestCase):
         self.assertRaises(BeforeDeleteException,
                           unrestrictedRemoveGivenObject,
                           pmManagerFolder)
-        self.failUnless(hasattr(pmManagerFolder, item.getId()))
-        self.failUnless(hasattr(pmManagerFolder, meeting.getId()))
+        self.assertTrue(item.getId() in pmManagerFolder.objectIds())
+        self.assertTrue(meeting.getId() in pmManagerFolder.objectIds())
         search_method = pmManagerFolder.listFolderContents
         item_type_name = cfg.getItemTypeName()
         meeting_type_name = cfg.getMeetingTypeName()
@@ -158,7 +158,7 @@ class testWorkflows(PloneMeetingTestCase):
                           unrestrictedRemoveGivenObject,
                           pmManagerFolder)
         # Remove the meeting
-        self.portal.restrictedTraverse('@@delete_givenuid')(meeting.UID())
+        unrestrictedRemoveGivenObject(meeting)
         self.assertEqual(len(search_method({'portal_type': item_type_name})), 0)
         self.assertEqual(len(search_method({'portal_type': meeting_type_name})), 0)
         # Check that now that the pmManagerFolder is empty, we can remove it.
