@@ -1074,7 +1074,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             for field in newItem.Schema().filterFields(isMetadata=False):
                 if field.getName() not in fieldsToKeep:
                     # Set the field to its default value
-                    field.set(newItem, field.getDefault(newItem))
+                    field.getMutator(newItem)(field.getDefault(newItem))
 
             # Set some default values that could not be initialized properly
             if 'toDiscuss' in copyFields and destMeetingConfig.getToDiscussSetOnItemInsert():

@@ -19,6 +19,7 @@ from DateTime import DateTime
 from datetime import datetime
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.helpers.content import get_vocab
+from imio.helpers.content import uuidToCatalogBrain
 from imio.helpers.content import uuidsToObjects
 from imio.helpers.security import fplog
 from imio.history.utils import get_all_history_attr
@@ -2616,6 +2617,17 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # make change in linkedItem.at_ordered_refs until it is fixed in Products.Archetypes
             self._p_changed = True
 
+    security.declareProtected(ModifyPortalContent, 'setPreferredMeeting')
+
+    def setPreferredMeeting(self, value, **kwargs):
+        '''Overrides the field 'preferredMeeting' mutator to be able to
+           update_preferred_meeting if value changed.'''
+        field = self.getField('preferredMeeting')
+        current_preferred_meeting = field.get(self, **kwargs)
+        if not value == current_preferred_meeting:
+            self._update_preferred_meeting(value)
+            field.set(self, value, **kwargs)
+
     security.declareProtected(ModifyPortalContent, 'setCategory')
 
     def setCategory(self, value, **kwargs):
@@ -2817,10 +2829,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         self.linked_meeting_uid = None
         self.linked_meeting_path = None
         if meeting_uid is not None:
-            catalog = api.portal.get_tool('portal_catalog')
             self.linked_meeting_uid = meeting_uid
-            meeting_brain = catalog(UID=meeting_uid)[0]
+            meeting_brain = uuidToCatalogBrain(meeting_uid, unrestricted=True)
             self.linked_meeting_path = meeting_brain.getPath()
+
+    def _update_preferred_meeting(self, preferred_meeting_uid):
+        """ """
+        self.preferred_meeting_path = None
+        if preferred_meeting_uid != ITEM_NO_PREFERRED_MEETING_VALUE:
+            meeting_brain = uuidToCatalogBrain(preferred_meeting_uid, unrestricted=True)
+            self.preferred_meeting_path = meeting_brain.getPath()
 
     def getMeeting(self, only_uid=False, caching=True):
         '''Returns the linked meeting if it exists.'''
@@ -3350,15 +3368,23 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             res = uuidToObject(res)
         return res
 
-    def getPreferredMeeting(self, theObject=False, **kwargs):
+    def getPreferredMeeting(self, theObject=False, caching=True, **kwargs):
         '''This redefined accessor may return the preferred meeting id or
            the real meeting if p_theObject is True.'''
-        res = self.getField('preferredMeeting').get(self, **kwargs)  # = group id
+        res = self.getField('preferredMeeting').get(self, **kwargs)
         if theObject:
-            if res and res != ITEM_NO_PREFERRED_MEETING_VALUE:
-                res = uuidToObject(res)
-            else:
-                res = None
+            meeting_uid = res
+            res = None
+            if meeting_uid and meeting_uid != ITEM_NO_PREFERRED_MEETING_VALUE:
+                preferred_meeting_path = getattr(self, 'preferred_meeting_path', None)
+                if preferred_meeting_path:
+                    if caching and hasattr(self, "REQUEST"):
+                        res = self.REQUEST.get('preferred_meeting__%s' % meeting_uid)
+                if not res:
+                    portal = api.portal.get()
+                    res = portal.unrestrictedTraverse(preferred_meeting_path)
+                    if caching and hasattr(self, "REQUEST"):
+                        self.REQUEST.set('preferred_meeting__%s' % meeting_uid, res)
         return res
 
     security.declarePublic('getGroupsInCharge')

@@ -7178,6 +7178,38 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(item.restrictedTraverse('base_edit')())
         self.assertTrue(item.restrictedTraverse('base_view')())
 
+    def test_pm_GetPreferredMeetingDateIndex(self):
+        """As getPreferredMeetingDate needs the meeting to be indexed
+           as it is queried in portal_catalog using it's UID
+           (stored in MeetingItem.preferredMeeting)."""
+        self._removeConfigObjectsFor(self.meetingConfig)
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting')
+        meeting_uid = meeting.UID()
+        item = self.create('MeetingItem', preferredMeeting=meeting_uid)
+        self.assertEqual(item.preferred_meeting_path, '/'.join(meeting.getPhysicalPath()))
+        item_uid = item.UID()
+        # both indexed, it works
+        self.assertEqual(self.catalog(getPreferredMeetingDate=meeting.date)[0].UID, item_uid)
+        # unindex meeting, this can be the case when full "clear and rebuild" catalog
+        meeting.unindexObject()
+        item.reindexObject(idxs=['getPreferredMeeting', 'getPreferredMeetingDate'])
+        self.assertEqual(self.catalog(getPreferredMeetingDate=meeting.date)[0].UID, item_uid)
+
+        # rename meeting id
+        meeting.aq_parent.manage_renameObject(meeting.getId(), 'my_new_id')
+        self.assertEqual(meeting.getId(), 'my_new_id')
+        # preferred_meeting_path especially is updated
+        meeting_new_path = "/".join(meeting.getPhysicalPath())
+        self.assertEqual(item.preferred_meeting_path, meeting_new_path)
+        self.assertEqual(item.getPreferredMeeting(theObject=True), meeting)
+
+        # clone a linked item
+        cloned = item.clone()
+        self.assertIsNone(cloned.preferred_meeting_path)
+        self.assertEqual(cloned.getPreferredMeeting(theObject=False), ITEM_NO_PREFERRED_MEETING_VALUE)
+        self.assertIsNone(cloned.getPreferredMeeting(theObject=True))
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

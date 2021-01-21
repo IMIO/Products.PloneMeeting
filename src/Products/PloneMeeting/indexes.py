@@ -168,13 +168,9 @@ def getPreferredMeetingDate(obj):
       Store the preferredMeeting date.
     """
     res = []
-    preferredMeetingUID = obj.getPreferredMeeting()
-    if preferredMeetingUID != ITEM_NO_PREFERRED_MEETING_VALUE:
-        # XXX Meeting is no more in uid_catalog, this could be a problem
-        # if we clear and rebuild the portal_catalog, preferredMeetingUID will not be found...
-        # need to fix this...
-        catalog = api.portal.get_tool('portal_catalog')
-        res = catalog(UID=preferredMeetingUID)[0].getObject().date
+    preferredMeeting = obj.getPreferredMeeting(theObject=True)
+    if preferredMeeting:
+        res = preferredMeeting.date
     else:
         res = datetime(1950, 1, 1)
     return res or _marker

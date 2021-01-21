@@ -1083,8 +1083,16 @@ def onMeetingMoved(meeting, event):
         return
 
     # update linked_meeting_path on every items because path changed
+    meeting_uid = meeting.UID()
     for item in meeting.get_items():
-        item._update_meeting_link(meeting.UID())
+        item._update_meeting_link(meeting_uid)
+
+    # update preferred_meeting_path
+    catalog = api.portal.get_tool('portal_catalog')
+    brains = catalog.unrestrictedSearchResults(getPreferredMeeting=meeting.UID())
+    for brain in brains:
+        item = brain._unrestrictedGetObject()
+        item._update_preferred_meeting(meeting_uid)
 
 
 def onMeetingRemoved(meeting, event):
@@ -1112,7 +1120,7 @@ def onMeetingRemoved(meeting, event):
     # we are reindexing the index we searched on and brains is a LazyMap
     items_to_reindex = []
     for brain in brains:
-        item = brain.getObject()
+        item = brain._unrestrictedGetObject()
         item.setPreferredMeeting(ITEM_NO_PREFERRED_MEETING_VALUE)
         items_to_reindex.append(item)
     for item_to_reindex in items_to_reindex:
