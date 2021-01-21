@@ -1071,10 +1071,12 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 if classifier and not classifier.is_selectable(userId=loggedUserId):
                     fieldsToKeep.remove('classifier')
 
+            newItem._at_creation_flag = True
             for field in newItem.Schema().filterFields(isMetadata=False):
                 if field.getName() not in fieldsToKeep:
                     # Set the field to its default value
                     field.getMutator(newItem)(field.getDefault(newItem))
+            newItem._at_creation_flag = False
 
             # Set some default values that could not be initialized properly
             if 'toDiscuss' in copyFields and destMeetingConfig.getToDiscussSetOnItemInsert():

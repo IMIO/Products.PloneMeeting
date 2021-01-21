@@ -1605,6 +1605,7 @@ schema = Schema((
     ReferenceField(
         name='manuallyLinkedItems',
         referencesSortable=True,
+        default=[],
         widget=ReferenceBrowserWidget(
             description="ManuallyLinkedItems",
             description_msgid="manually_linked_items_descr",
@@ -2523,6 +2524,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            because current member could update manually linked items in which some are not viewable.'''
         stored = self.getField('manuallyLinkedItems').getRaw(self, **kwargs)
         # value sometimes contains an empty string ''...
+        if value is None:
+            value = ()
         if '' in value:
             value.remove('')
 
