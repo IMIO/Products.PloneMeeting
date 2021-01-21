@@ -2470,7 +2470,7 @@ class testMeetingType(PloneMeetingTestCase):
         meeting.date = datetime(2014, 6, 6)
         # for now, title is not updated
         self.assertNotEqual(meeting.Title(), self.tool.format_date(meeting.date))
-        notify(ObjectModifiedEvent(meeting))
+        notify(ObjectModifiedEvent(meeting, Attributes(Interface, 'place')))
         # only changed if date was edited
         self.assertNotEqual(meeting.Title(), self.tool.format_date(meeting.date))
         notify(ObjectModifiedEvent(meeting, Attributes(Interface, 'date')))
