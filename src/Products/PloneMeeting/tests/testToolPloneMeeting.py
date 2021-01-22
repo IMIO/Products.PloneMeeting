@@ -27,7 +27,6 @@ from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.etags import _modified
 from Products.PloneMeeting.tests.PloneMeetingTestCase import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
-from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
 from Products.PloneMeeting.utils import get_annexes
 from zope.i18n import translate
 from zope.testing.testrunner.find import find_test_files
