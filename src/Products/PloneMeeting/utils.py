@@ -1285,6 +1285,7 @@ def display_as_html(plain_content, obj, mark_empty_tags=False, striked=False):
     plain_content = plain_content or ''
     portal_transforms = api.portal.get_tool('portal_transforms')
     html_content = portal_transforms.convertTo('text/html', plain_content).getData()
+    html_content = html_content.replace('\r', '')
     if striked:
         html_content = toHTMLStrikedContent(html_content)
     if mark_empty_tags and _checkPermission(ModifyPortalContent, obj):

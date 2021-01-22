@@ -2828,7 +2828,6 @@ class testMeetingType(PloneMeetingTestCase):
         view()
         helper = view.get_generation_context_helper()
 
-        import ipdb; ipdb.set_trace()
         meeting.assembly = RichTextValue('Simple assembly')
         self.assertEqual(helper.printAssembly(),
                          '<p>Simple assembly</p>')
@@ -2837,7 +2836,7 @@ class testMeetingType(PloneMeetingTestCase):
                          '<p>Assembly with <strike>striked</strike> part</p>')
         meeting.assembly = RichTextValue('Assembly with [[striked]] part1\r\nAssembly part2')
         self.assertEqual(helper.printAssembly(),
-                         '<p>Assembly with <strike>striked</strike> part1</p><p>Assembly part2</p>')
+                         '<p>Assembly with <strike>striked</strike> part1<br />Assembly part2</p>')
 
     def test_pm_ChangingMeetingDateUpdateLinkedItemsMeetingDateMetadata(self):
         """When the date of a meeting is changed, the linked items are reindexed,
