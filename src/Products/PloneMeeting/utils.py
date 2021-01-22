@@ -1279,12 +1279,14 @@ def toHTMLStrikedContent(html_content):
     return html_content
 
 
-def display_as_html(plain_content, obj, mark_empty_tags=False):
+def display_as_html(plain_content, obj, mark_empty_tags=False, striked=False):
     """Display p_plain_content as HTML, especially ending lines
        that are not displayed if empty."""
     plain_content = plain_content or ''
     portal_transforms = api.portal.get_tool('portal_transforms')
     html_content = portal_transforms.convertTo('text/html', plain_content).getData()
+    if striked:
+        html_content = toHTMLStrikedContent(html_content)
     if mark_empty_tags and _checkPermission(ModifyPortalContent, obj):
         # replace ending <p> by empty tags
         html_content = markEmptyTags(

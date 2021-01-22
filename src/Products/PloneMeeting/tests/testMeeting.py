@@ -2828,6 +2828,7 @@ class testMeetingType(PloneMeetingTestCase):
         view()
         helper = view.get_generation_context_helper()
 
+        import ipdb; ipdb.set_trace()
         meeting.assembly = RichTextValue('Simple assembly')
         self.assertEqual(helper.printAssembly(),
                          '<p>Simple assembly</p>')

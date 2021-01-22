@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from Products.PloneMeeting.utils import display_as_html
-from Products.PloneMeeting.utils import toHTMLStrikedContent
 from z3c.form.browser.textarea import TextAreaWidget
 from z3c.form.interfaces import DISPLAY_MODE
 from z3c.form.interfaces import IFieldWidget
@@ -17,10 +16,8 @@ class IPMTextAreaWidget(ITextAreaWidget):
 
 def render_textarea(value, obj, striked=True, mark_empty_tags=True):
     """ """
-    if striked:
-        value = toHTMLStrikedContent(value)
-    # turn to HTML and mark empty ending paragraphs
-    value = display_as_html(value, obj, mark_empty_tags=mark_empty_tags)
+    # turn to HTML, turn [[]] values to <strike></strike> and mark empty ending paragraphs
+    value = display_as_html(value, obj, mark_empty_tags=mark_empty_tags, striked=striked)
     return value
 
 

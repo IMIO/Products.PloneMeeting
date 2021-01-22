@@ -2626,8 +2626,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Overrides the field 'preferredMeeting' mutator to be able to
            update_preferred_meeting if value changed.'''
         field = self.getField('preferredMeeting')
-        current_preferred_meeting = field.get(self, **kwargs)
-        if not value == current_preferred_meeting:
+        current_value = field.get(self, **kwargs)
+        if value != current_value:
             self._update_preferred_meeting(value)
             field.set(self, value, **kwargs)
 
@@ -2636,46 +2636,52 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def setCategory(self, value, **kwargs):
         '''Overrides the field 'category' mutator to be able to
            update_item_references if value changed.'''
-        current_category = self.getField('category').get(self, **kwargs)
-        if not value == current_category:
+        field = self.getField('category')
+        current_value = field.get(self, **kwargs)
+        if value != current_value:
             # add a value in the REQUEST to specify that update_item_references is needed
             self.REQUEST.set('need_Meeting_update_item_references', True)
-        self.getField('category').set(self, value, **kwargs)
+            field.set(self, value, **kwargs)
 
     security.declareProtected(ModifyPortalContent, 'setClassifier')
 
     def setClassifier(self, value, **kwargs):
         '''Overrides the field 'classifier' mutator to be able to
            update_item_references if value changed.'''
-        current_classifier = self.getField('classifier').get(self, **kwargs)
-        if not value == current_classifier:
+        field = self.getField('classifier')
+        current_value = field.get(self, **kwargs)
+        if value != current_value:
             # add a value in the REQUEST to specify that update_item_references is needed
             self.REQUEST.set('need_Meeting_update_item_references', True)
-        self.getField('classifier').set(self, value, **kwargs)
+            field.set(self, value, **kwargs)
 
     security.declareProtected(ModifyPortalContent, 'setProposingGroup')
 
     def setProposingGroup(self, value, **kwargs):
         '''Overrides the field 'proposingGroup' mutator to be able to
            update_item_references if value changed.'''
-        current_proposingGroup = self.getField('proposingGroup').get(self, **kwargs)
-        if not value == current_proposingGroup:
+        field = self.getField('proposingGroup')
+        current_value = field.get(self, **kwargs)
+        if value != current_value:
             # add a value in the REQUEST to specify that update_item_references is needed
             self.REQUEST.set('need_Meeting_update_item_references', True)
-        self.getField('proposingGroup').set(self, value, **kwargs)
+            field.set(self, value, **kwargs)
 
     security.declareProtected(ModifyPortalContent, 'setProposingGroupWithGroupInCharge')
 
     def setProposingGroupWithGroupInCharge(self, value, **kwargs):
         '''Overrides the field 'proposingGroupWithGroupInCharge' mutator to be able to
            set a correct 'proposingGroup' and 'groupsInCharge' from received value.'''
-        # value may be empty if used on an itemTemplate
-        proposingGroup = groupInCharge = ''
-        if value:
-            proposingGroup, groupInCharge = value.split('__groupincharge__')
-        self.setProposingGroup(proposingGroup)
-        self.setGroupsInCharge([groupInCharge])
-        self.getField('proposingGroupWithGroupInCharge').set(self, value, **kwargs)
+        field = self.getField('proposingGroupWithGroupInCharge')
+        current_value = field.get(self, **kwargs)
+        if not value == current_value:
+            # value may be empty if used on an itemTemplate
+            proposingGroup = groupInCharge = ''
+            if value:
+                proposingGroup, groupInCharge = value.split('__groupincharge__')
+            self.setProposingGroup(proposingGroup)
+            self.setGroupsInCharge([groupInCharge])
+            field.set(self, value, **kwargs)
 
     def _adaptLinesValueToBeCompared(self, value):
         """'value' received from processForm does not correspond to what is stored
@@ -2692,11 +2698,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def setOtherMeetingConfigsClonableTo(self, value, **kwargs):
         '''Overrides the field 'otherMeetingConfigsClonableTo' mutator to be able to
            update_item_references if value changed.'''
-        current_otherMeetingConfigsClonableTo = self.getField('otherMeetingConfigsClonableTo').get(self, **kwargs)
-        if not self._adaptLinesValueToBeCompared(value) == current_otherMeetingConfigsClonableTo:
+        field = self.getField('otherMeetingConfigsClonableTo')
+        current_value = field.get(self, **kwargs)
+        if self._adaptLinesValueToBeCompared(value) != current_value:
             # add a value in the REQUEST to specify that update_item_references is needed
             self.REQUEST.set('need_Meeting_update_item_references', True)
-        self.getField('otherMeetingConfigsClonableTo').set(self, value, **kwargs)
+            field.set(self, value, **kwargs)
 
     security.declareProtected(View, 'getManuallyLinkedItems')
 
