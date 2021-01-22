@@ -1283,16 +1283,8 @@ def display_as_html(plain_content, obj, mark_empty_tags=False):
     """Display p_plain_content as HTML, especially ending lines
        that are not displayed if empty."""
     plain_content = plain_content or ''
-    html_content = plain_content.replace('\n', '<br />').replace('\r', '')
-    # turn to HTML
-    splitted = html_content.split('<br />')
-    res = []
-    for elt in splitted:
-        if not elt.strip():
-            res.append('<p>&nbsp;</p>')
-        else:
-            res.append('<p>' + elt + '</p>')
-    html_content = ''.join(res)
+    portal_transforms = api.portal.get_tool('portal_transforms')
+    html_content = portal_transforms.convertTo('text/html', plain_content).getData()
     if mark_empty_tags and _checkPermission(ModifyPortalContent, obj):
         # replace ending <p> by empty tags
         html_content = markEmptyTags(
