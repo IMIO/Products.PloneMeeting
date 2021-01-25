@@ -486,6 +486,8 @@ class BaseDGHV(object):
         for xhtmlContent in xhtmlContents:
             if isinstance(xhtmlContent, RichTextValue):
                 xhtmlContent = xhtmlContent.output
+            if xhtmlContent is None:
+                xhtmlContent = ''
             if xhtmlContent == 'separator':
                 hasSeparation = False
                 if checkNeedSeparator:
