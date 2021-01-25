@@ -118,7 +118,6 @@ from Products.PloneMeeting.utils import rememberPreviousData
 from Products.PloneMeeting.utils import sendMail
 from Products.PloneMeeting.utils import sendMailIfRelevant
 from Products.PloneMeeting.utils import set_field_from_ajax
-from Products.PloneMeeting.utils import toHTMLStrikedContent
 from Products.PloneMeeting.utils import transformAllRichTextFields
 from Products.PloneMeeting.utils import updateAnnexesAccess
 from Products.PloneMeeting.utils import validate_item_assembly_value
@@ -3728,12 +3727,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if res and for_display:
             res = render_textarea(res, self, striked=striked, mark_empty_tags=mark_empty_tags)
         return res
-
-    security.declarePublic('displayStrikedItemAssembly')
-
-    def displayStrikedItemAssembly(self):
-        """ """
-        return toHTMLStrikedContent(self.getItemAssembly())
 
     security.declarePublic('get_item_absents')
 

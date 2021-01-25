@@ -21,6 +21,7 @@ from imio.helpers.xhtml import imagesToPath
 from imio.helpers.xhtml import separate_images
 from plone import api
 from plone.app.caching.operations.utils import getContext
+from plone.app.textfield.value import RichTextValue
 from plone.memoize.view import memoize
 from plone.memoize.view import memoize_contextless
 from Products.CMFCore.permissions import ManagePortal
@@ -443,7 +444,18 @@ class BaseDGHV(object):
         if image.width > image.height:
             return '-rotate 90'
 
-    def printXhtml(self, context, xhtmlContents,
+    def is_not_empty(self, field_name):
+        """Check if given field_name is not empty."""
+        res = False
+        value = getattr(self.context, field_name, None)
+        if value is None or \
+           (isinstance(value, RichTextValue) and not value.raw):
+            res = True
+        return res
+
+    def printXhtml(self,
+                   context,
+                   xhtmlContents,
                    image_src_to_paths=True,
                    separatorValue='<p>&nbsp;</p>',
                    keepWithNext=False,
@@ -468,23 +480,24 @@ class BaseDGHV(object):
            view.printXHTML(self.getMotivation(), 'separator', '<p>DECIDE :</p>', 'separator', self.getDecision())
         """
         xhtmlFinal = ''
-        # list or tuple?
-        if hasattr(xhtmlContents, '__iter__'):
-            for xhtmlContent in xhtmlContents:
-                if xhtmlContent == 'separator':
-                    hasSeparation = False
-                    if checkNeedSeparator:
-                        preparedXhtmlContent = "<special_tag>%s</special_tag>" % xhtmlContent
-                        tree = lxml.html.fromstring(safe_unicode(preparedXhtmlContent))
-                        children = tree.getchildren()
-                        if children and not children[-1].text:
-                            hasSeparation = True
-                    if not hasSeparation:
-                        xhtmlFinal += separatorValue
-                else:
-                    xhtmlFinal += xhtmlContent
-        else:
-            xhtmlFinal = xhtmlContents
+        # xhtmlContents may be a single string value or a list
+        if not hasattr(xhtmlContents, '__iter__'):
+            xhtmlContents = [xhtmlContents]
+        for xhtmlContent in xhtmlContents:
+            if isinstance(xhtmlContent, RichTextValue):
+                xhtmlContent = xhtmlContent.output
+            if xhtmlContent == 'separator':
+                hasSeparation = False
+                if checkNeedSeparator:
+                    preparedXhtmlContent = "<special_tag>%s</special_tag>" % xhtmlContent
+                    tree = lxml.html.fromstring(safe_unicode(preparedXhtmlContent))
+                    children = tree.getchildren()
+                    if children and not children[-1].text:
+                        hasSeparation = True
+                if not hasSeparation:
+                    xhtmlFinal += separatorValue
+            else:
+                xhtmlFinal += xhtmlContent
 
         # manage image_src_to_paths
         # turning http link to image to blob path will avoid unauthorized by appy.pod
