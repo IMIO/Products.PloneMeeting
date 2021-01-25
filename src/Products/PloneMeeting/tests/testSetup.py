@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
+#
+# File: testSetup.py
+#
+# GNU General Public License (GPL)
+#
 
-import os
-
+from imio.helpers.content import object_values
 from plone import api
 from Products.GenericSetup.context import DirectoryImportContext
 from Products.PloneMeeting.config import HAS_SOLR
@@ -10,6 +14,7 @@ from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCas
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
 from Products.PloneMeeting.utils import cleanMemoize
 
+import os
 import random
 
 
@@ -49,8 +54,8 @@ class testSetup(PloneMeetingTestCase):
             mymeetings = user_folder.get('mymeetings')
             if mymeetings:
                 for cfg_folder in mymeetings.objectValues():
-                    meetings = meetings + list(cfg_folder.objectValues('Meeting'))
-                    items = items + list(cfg_folder.objectValues('MeetingItem'))
+                    meetings = meetings + list(object_values(cfg_folder, 'Meeting'))
+                    items = items + list(object_values(cfg_folder, 'MeetingItem'))
         # delete items first because deleting a meeting delete included items...
         for obj in items + meetings:
             parent = obj.aq_inner.aq_parent

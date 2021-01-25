@@ -1,4 +1,9 @@
 # -*- coding: utf-8 -*-
+#
+# File: columns.py
+#
+# GNU General Public License (GPL)
+#
 
 from collective.eeafaceted.z3ctable.columns import AbbrColumn
 from collective.eeafaceted.z3ctable.columns import ActionsColumn

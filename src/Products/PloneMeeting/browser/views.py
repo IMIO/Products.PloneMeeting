@@ -446,11 +446,11 @@ class BaseDGHV(object):
 
     def is_not_empty(self, field_name):
         """Check if given field_name is not empty."""
-        res = False
+        res = True
         value = getattr(self.context, field_name, None)
         if value is None or \
            (isinstance(value, RichTextValue) and not value.raw):
-            res = True
+            res = False
         return res
 
     def printXhtml(self,

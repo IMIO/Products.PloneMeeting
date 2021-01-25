@@ -1,4 +1,9 @@
-# encoding: utf-8
+# -*- coding: utf-8 -*-
+#
+# File: vocabularies.py
+#
+# GNU General Public License (GPL)
+#
 
 from collective.contact.plonegroup.browser.settings import EveryOrganizationsVocabulary
 from collective.contact.plonegroup.browser.settings import SortedSelectedOrganizationsElephantVocabulary
