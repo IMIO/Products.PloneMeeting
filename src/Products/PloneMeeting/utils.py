@@ -912,7 +912,11 @@ def getHistoryTexts(obj, event):
     return res
 
 
-def get_dx_attrs(portal_type, optional_only=False, as_display_list=True):
+def get_dx_attrs(portal_type,
+                 optional_only=False,
+                 richtext_only=False,
+                 prefixed_key=False,
+                 as_display_list=True):
     """ """
     res = []
     request = getRequest()
@@ -927,17 +931,32 @@ def get_dx_attrs(portal_type, optional_only=False, as_display_list=True):
         if optional_only and \
            (field_name not in field_infos or not field_infos[field_name]['optional']):
             continue
+        if richtext_only and \
+           (field.__class__.__name__ != "RichText" or field.default_mime_type != 'text/html'):
+            continue
         res.append(field_name)
     if as_display_list:
         display_list_tuples = []
         for field_name in res:
-            display_list_tuples.append(
-                (field_name,
-                 '%s (%s)' % (translate("title_{0}".format(field_name),
-                                        domain="PloneMeeting",
-                                        context=request),
-                              field_name)
-                 ))
+            key = field_name
+            if prefixed_key:
+                prefix = fti.klass.split(".")[-1]
+                key = "{0}.{1}".format(prefix, key)
+                display_list_tuples.append(
+                    (key,
+                     '%s -> %s' % (key,
+                                   translate("title_{0}".format(field_name),
+                                             domain="PloneMeeting",
+                                             context=request))
+                     ))
+            else:
+                display_list_tuples.append(
+                    (key,
+                     '%s (%s)' % (translate("title_{0}".format(field_name),
+                                            domain="PloneMeeting",
+                                            context=request),
+                                  field_name)
+                     ))
 
         res = DisplayList(tuple(display_list_tuples))
     return res
@@ -1078,8 +1097,7 @@ def transformAllRichTextFields(obj, onlyField=None):
         fieldContent = storeImagesLocally(obj, field_raw_value)
         # Apply standard transformations as defined in the config
         # fieldsToTransform is like ('MeetingItem.description', 'MeetingItem.budgetInfos', )
-        if ("%s.%s" % (obj.getTagName(), field_name) in fieldsToTransform) and \
-           not xhtmlContentIsEmpty(fieldContent):
+        if ("%s.%s" % (obj.getTagName(), field_name) in fieldsToTransform):
             if 'removeBlanks' in transformTypes:
                 fieldContent = removeBlanks(fieldContent)
         if IDexterityContent.providedBy(obj):

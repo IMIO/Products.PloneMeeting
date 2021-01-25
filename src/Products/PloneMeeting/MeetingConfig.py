@@ -6071,8 +6071,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def listAllRichTextFields(self):
         '''Lists all rich-text fields belonging to classes MeetingItem and
            Meeting.'''
-        res = self._listRichTextFieldFor(MeetingItem)
-        return DisplayList(tuple(res))
+        res = DisplayList(self._listRichTextFieldFor(MeetingItem)).sortedByValue() + get_dx_attrs(
+            portal_type=self.getMeetingTypeName(), richtext_only=True, prefixed_key=True).sortedByValue()
+        return res
 
     security.declarePublic('listItemRichTextFields')
 
