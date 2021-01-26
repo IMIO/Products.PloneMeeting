@@ -13,6 +13,10 @@ Changelog
   dashboard columns, so no matter selected values are in a configuration that
   changed accross time, values will always be in the vocabularies.
   [gbastien]
+- In `MeetingConfig` parameters related to columns displayed in various
+  dashboards, display the column name as now several columns may have same name
+  (`P.G`. is for `Proposing group` and `Proposing group acronym`).
+  [gbastien]
 
 4.2b11 (2021-01-19)
 -------------------
