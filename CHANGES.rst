@@ -5,8 +5,13 @@ Changelog
 4.1.28.18 (unreleased)
 ----------------------
 
-- Nothing changed yet.
+- Backport from 4.2.x:
 
+  - Use the `Products.PloneMeeting.vocabularies.everyorganizationsacronymsvocabulary`
+    and `Products.PloneMeeting.vocabularies.everyorganizationsvocabulary` for every
+    dashboard columns, so no matter selected values are in a configuration that
+    changed accross time, values will always be in the vocabularies.
+    [gbastien]
 
 4.1.28.17 (2020-12-22)
 ----------------------
