@@ -200,7 +200,7 @@ class PMOrganization(Organization):
 
     def get_item_advice_states(self, cfg=None):
         res = self.item_advice_states
-        if res and cfg:
+        if cfg:
             tmpres = []
             givenCfgId = cfg.getId()
             for elt in res:
@@ -214,7 +214,7 @@ class PMOrganization(Organization):
 
     def get_item_advice_edit_states(self, cfg=None):
         res = self.item_advice_edit_states
-        if res and cfg:
+        if cfg:
             tmpres = []
             givenCfgId = cfg.getId()
             for elt in res:
@@ -228,7 +228,7 @@ class PMOrganization(Organization):
 
     def get_item_advice_view_states(self, cfg=None):
         res = self.item_advice_view_states
-        if res and cfg:
+        if cfg:
             tmpres = []
             givenCfgId = cfg.getId()
             for elt in res:
