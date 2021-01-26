@@ -8,6 +8,11 @@ Changelog
 - Adapted code regarding fact that icons used in `collective.documentgenerator`
   are now `.svg` instead `.png`.
   [gbastien]
+- Use the `Products.PloneMeeting.vocabularies.everyorganizationsacronymsvocabulary`
+  and `Products.PloneMeeting.vocabularies.everyorganizationsvocabulary` for every
+  dashboard columns, so no matter selected values are in a configuration that
+  changed accross time, values will always be in the vocabularies.
+  [gbastien]
 
 4.2b11 (2021-01-19)
 -------------------

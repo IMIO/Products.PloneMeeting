@@ -40,7 +40,7 @@ class ItemClassifierColumn(VocabularyColumn):
 
 class ItemProposingGroupColumn(VocabularyColumn):
     """A column that display the MeetingItem.proposingGroup."""
-    vocabulary = u'Products.PloneMeeting.vocabularies.proposinggroupsvocabulary'
+    vocabulary = u'Products.PloneMeeting.vocabularies.everyorganizationsvocabulary'
     header_help = u'header_getProposingGroup_help'
 
 
@@ -48,14 +48,14 @@ class ItemProposingGroupAcronymColumn(AbbrColumn):
     """A column that display the MeetingItem.proposingGroup acronym."""
     attrName = 'getProposingGroup'
     vocabulary = u'Products.PloneMeeting.vocabularies.everyorganizationsacronymsvocabulary'
-    full_vocabulary = u'Products.PloneMeeting.vocabularies.proposinggroupsvocabulary'
+    full_vocabulary = u'Products.PloneMeeting.vocabularies.everyorganizationsvocabulary'
     header_help = u'header_proposing_group_acronym_help'
 
 
 class ItemGroupsInChargeColumn(VocabularyColumn):
     """A column that display the groupsInCharge."""
     attrName = 'getGroupsInCharge'
-    vocabulary = u'Products.PloneMeeting.vocabularies.groupsinchargevocabulary'
+    vocabulary = u'Products.PloneMeeting.vocabularies.everyorganizationsvocabulary'
     header_help = u"header_getGroupsInCharge_help"
 
 
@@ -63,7 +63,7 @@ class ItemGroupsInChargeAcronymColumn(AbbrColumn):
     """A column that display the groupsInCharge acronym."""
     attrName = 'getGroupsInCharge'
     vocabulary = u'Products.PloneMeeting.vocabularies.everyorganizationsacronymsvocabulary'
-    full_vocabulary = u'Products.PloneMeeting.vocabularies.proposinggroupsvocabulary'
+    full_vocabulary = u'Products.PloneMeeting.vocabularies.everyorganizationsvocabulary'
     header_help = u"header_groups_in_charge_acronym_help"
 
 
