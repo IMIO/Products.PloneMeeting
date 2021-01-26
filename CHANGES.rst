@@ -5,8 +5,9 @@ Changelog
 4.2b12 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- Adapted code regarding fact that icons used in `collective.documentgenerator`
+  are now `.svg` instead `.png`.
+  [gbastien]
 
 4.2b11 (2021-01-19)
 -------------------
