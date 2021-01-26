@@ -278,28 +278,17 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             folder = self.tool
         elif objectType == 'organization':
             folder = self.own_org
-            if 'groups_in_charge' not in attrs:
-                attrs['groups_in_charge'] = []
-            if 'item_advice_states' not in attrs:
-                attrs['item_advice_states'] = []
-            if 'item_advice_edit_states' not in attrs:
-                attrs['item_advice_edit_states'] = []
-            if 'item_advice_view_states' not in attrs:
-                attrs['item_advice_view_states'] = []
-            if 'certified_signatures' not in attrs:
-                attrs['certified_signatures'] = []
+        elif objectType == 'person':
+            folder = self.portal.contacts
+        elif objectType == 'held_position':
+            if folder is None:
+                raise Exception(
+                    'The "folder" parameter must be a person when creating a held_position!')
         elif objectType == 'meetingcategory':
             if is_classifier:
                 folder = cfg.classifiers
             else:
                 folder = cfg.categories
-
-            if 'groups_in_charge' not in attrs:
-                attrs['groups_in_charge'] = []
-            if 'using_groups' not in attrs:
-                attrs['using_groups'] = []
-            if 'category_mapping_when_cloning_to_other_mc' not in attrs:
-                attrs['category_mapping_when_cloning_to_other_mc'] = []
         elif objectType == 'ConfigurablePODTemplate':
             folder = cfg.podtemplates
         else:

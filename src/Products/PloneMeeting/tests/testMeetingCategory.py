@@ -203,6 +203,16 @@ class testMeetingCategory(PloneMeetingTestCase):
         categories_modified_delete = cfg.categories.modified()
         self.assertNotEqual(categories_modified_modify, categories_modified_delete)
 
+    def test_pm_Create_category(self):
+        """Creating a category from code initialize correctly list fields."""
+        self.changeUser("siteadmin")
+        category = self.create('meetingcategory')
+        self.assertEqual(category.groups_in_charge, [])
+        self.assertEqual(category.get_groups_in_charge(), [])
+        self.assertEqual(category.using_groups, [])
+        self.assertEqual(category.get_using_groups(), [])
+        self.assertEqual(category.category_mapping_when_cloning_to_other_mc, [])
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

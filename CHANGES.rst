@@ -17,6 +17,10 @@ Changelog
   dashboards, display the column name as now several columns may have same name
   (`P.G`. is for `Proposing group` and `Proposing group acronym`).
   [gbastien]
+- Define a default value of [] for every `schema.List` fields of contacts
+  (`organization`, `person`, `held_position`) and `meetingcategory` so we avoid
+  to have a `None` instead an iterable while creating a new element by code.
+  [gbastien]
 
 4.2b11 (2021-01-19)
 -------------------

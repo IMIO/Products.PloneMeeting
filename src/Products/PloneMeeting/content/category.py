@@ -40,6 +40,7 @@ class IMeetingCategory(IConfigElement):
             vocabulary="collective.contact.plonegroup.browser.settings."
             "SortedSelectedOrganizationsElephantVocabulary"),
         required=False,
+        default=[],
     )
 
     form.widget('category_mapping_when_cloning_to_other_mc', PMCheckBoxFieldWidget, multiple='multiple')
@@ -50,6 +51,7 @@ class IMeetingCategory(IConfigElement):
             vocabulary="Products.PloneMeeting.content.category."
             "category_mapping_when_cloning_to_other_mc_vocabulary"),
         required=False,
+        default=[],
     )
 
     form.widget('groups_in_charge', PMCheckBoxFieldWidget, multiple='multiple')
@@ -59,6 +61,7 @@ class IMeetingCategory(IConfigElement):
         value_type=schema.Choice(
             vocabulary="collective.contact.plonegroup.organization_services"),
         required=False,
+        default=[],
     )
 
     form.widget('enabled', RadioFieldWidget)
@@ -139,14 +142,14 @@ class MeetingCategory(Item):
     def get_groups_in_charge(self, the_objects=False):
         """ """
         res = self.groups_in_charge
-        if the_objects:
+        if res and the_objects:
             res = uuidsToObjects(res, ordered=True)
         return res
 
     def get_using_groups(self, the_objects=False):
         """ """
         res = self.using_groups
-        if the_objects:
+        if res and the_objects:
             res = uuidsToObjects(res, ordered=True)
         return res
 
