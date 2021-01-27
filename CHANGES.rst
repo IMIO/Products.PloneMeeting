@@ -5,8 +5,22 @@ Changelog
 4.2b12 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- Adapted code regarding fact that icons used in `collective.documentgenerator`
+  are now `.svg` instead `.png`.
+  [gbastien]
+- Use the `Products.PloneMeeting.vocabularies.everyorganizationsacronymsvocabulary`
+  and `Products.PloneMeeting.vocabularies.everyorganizationsvocabulary` for every
+  dashboard columns, so no matter selected values are in a configuration that
+  changed accross time, values will always be in the vocabularies.
+  [gbastien]
+- In `MeetingConfig` parameters related to columns displayed in various
+  dashboards, display the column name as now several columns may have same name
+  (`P.G`. is for `Proposing group` and `Proposing group acronym`).
+  [gbastien]
+- Define a default value of [] for every `schema.List` fields of contacts
+  (`organization`, `person`, `held_position`) and `meetingcategory` so we avoid
+  to have a `None` instead an iterable while creating a new element by code.
+  [gbastien]
 
 4.2b11 (2021-01-19)
 -------------------

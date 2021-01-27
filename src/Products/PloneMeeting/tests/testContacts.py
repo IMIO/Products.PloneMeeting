@@ -2035,6 +2035,25 @@ class testContacts(PloneMeetingTestCase):
         self.assertEqual(org1.get_representatives(at_date=datetime(2020, 6, 6)), [])
         self.assertEqual(org2.get_representatives(at_date=datetime(2020, 6, 6)), [])
 
+    def test_pm_Create_contacts(self):
+        """Check that creating contacts work and elements are correctly initialized."""
+        self.changeUser("siteadmin")
+        org = self.create('organization')
+        self.assertEqual(org.groups_in_charge, [])
+        self.assertEqual(org.get_groups_in_charge(), [])
+        self.assertEqual(org.item_advice_states, [])
+        self.assertEqual(org.get_item_advice_states(), [])
+        self.assertEqual(org.item_advice_edit_states, [])
+        self.assertEqual(org.get_item_advice_edit_states(), [])
+        self.assertEqual(org.item_advice_view_states, [])
+        self.assertEqual(org.get_item_advice_view_states(), [])
+        self.assertEqual(org.certified_signatures, [])
+        self.assertEqual(org.get_certified_signatures(), [])
+        person = self.create('person')
+        hp = self.create('held_position', folder=person)
+        self.assertEqual(hp.usages, [])
+        self.assertEqual(hp.defaults, [])
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

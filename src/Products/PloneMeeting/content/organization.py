@@ -92,6 +92,7 @@ class IPMOrganization(IOrganization):
         value_type=schema.Choice(
             vocabulary="Products.PloneMeeting.vocabularies.itemallstates"),
         required=False,
+        default=[],
     )
 
     form.read_permission(item_advice_edit_states='PloneMeeting.manage_internal_organization_fields')
@@ -103,6 +104,7 @@ class IPMOrganization(IOrganization):
         value_type=schema.Choice(
             vocabulary="Products.PloneMeeting.vocabularies.itemallstates"),
         required=False,
+        default=[],
     )
 
     form.read_permission(item_advice_view_states='PloneMeeting.manage_internal_organization_fields')
@@ -114,6 +116,7 @@ class IPMOrganization(IOrganization):
         value_type=schema.Choice(
             vocabulary="Products.PloneMeeting.vocabularies.itemallstates"),
         required=False,
+        default=[],
     )
 
     form.read_permission(keep_access_to_item_when_advice='PloneMeeting.manage_internal_organization_fields')
@@ -157,6 +160,7 @@ class IPMOrganization(IOrganization):
         value_type=schema.Choice(
             vocabulary="collective.contact.plonegroup.organization_services"),
         required=False,
+        default=[],
     )
 
     model.fieldset('app_parameters',
@@ -183,7 +187,7 @@ class PMOrganization(Organization):
     def get_groups_in_charge(self, the_objects=False):
         """Accessor so it can be called in a TAL expression."""
         res = self.groups_in_charge
-        if the_objects:
+        if res and the_objects:
             res = uuidsToObjects(res, ordered=True)
         return res
 
@@ -207,7 +211,7 @@ class PMOrganization(Organization):
             # if nothing redefined for given p_cfg in this organization,
             # use value defined on the cfg
             res = tmpres or cfg.getItemAdviceStates()
-        return tuple(res)
+        return res
 
     def get_item_advice_edit_states(self, cfg=None):
         res = self.item_advice_edit_states
@@ -221,7 +225,7 @@ class PMOrganization(Organization):
             # if nothing redefined for given p_cfg in this organization,
             # use value defined on the cfg
             res = tmpres or cfg.getItemAdviceEditStates()
-        return tuple(res)
+        return res
 
     def get_item_advice_view_states(self, cfg=None):
         res = self.item_advice_view_states
@@ -235,7 +239,7 @@ class PMOrganization(Organization):
             # if nothing redefined for given p_cfg in this organization,
             # use value defined on the cfg
             res = tmpres or cfg.getItemAdviceViewStates()
-        return tuple(res)
+        return res
 
     def get_keep_access_to_item_when_advice(self, cfg=None):
         """ """

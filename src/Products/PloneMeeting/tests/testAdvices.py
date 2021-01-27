@@ -1296,7 +1296,7 @@ class testAdvices(PloneMeetingTestCase):
             ("%s__state__%s" % (cfg.getId(), self._stateMappingFor('validated')), )
         # no more using values defined on the meetingConfig
         self.assertNotEqual(self.vendors.get_item_advice_states(cfg), cfg.getItemAdviceStates())
-        self.assertEqual(self.vendors.get_item_advice_states(cfg), (self._stateMappingFor('validated'), ))
+        self.assertEqual(self.vendors.get_item_advice_states(cfg), [self._stateMappingFor('validated')])
         item.at_post_create_script()
         self.changeUser('pmReviewer2')
         self.assertTrue(self.vendors_uid not in [key for key, value in item.getAdvicesGroupsInfosForUser()[0]])
@@ -1315,9 +1315,9 @@ class testAdvices(PloneMeetingTestCase):
         self.vendors.item_advice_view_states = \
             ("%s__state__%s" % (cfg.getId(), self._stateMappingFor('validated')), )
         self.assertNotEqual(self.vendors.get_item_advice_edit_states(cfg), cfg.getItemAdviceEditStates())
-        self.assertEqual(self.vendors.get_item_advice_edit_states(cfg), (self._stateMappingFor('validated'), ))
+        self.assertEqual(self.vendors.get_item_advice_edit_states(cfg), [self._stateMappingFor('validated')])
         self.assertNotEqual(self.vendors.get_item_advice_view_states(cfg), cfg.getItemAdviceViewStates())
-        self.assertEqual(self.vendors.get_item_advice_view_states(cfg), (self._stateMappingFor('validated'), ))
+        self.assertEqual(self.vendors.get_item_advice_view_states(cfg), [self._stateMappingFor('validated')])
 
     def test_pm_OrgDefinedItemAdviceStatesWorksTogetherWithMeetingConfigValues(self):
         '''Advices giveable/editable/viewable states defined for a MeetingConfig on an organization will

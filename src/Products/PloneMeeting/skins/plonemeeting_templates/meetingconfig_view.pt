@@ -1282,7 +1282,8 @@
              valign="top">
             <td align="center">
                 <img title="Format"
-                     tal:attributes="src string:$portal_url/++resource++collective.documentgenerator/style.png"/></td>
+                     class="svg-icon"
+                     tal:attributes="src string:$portal_url/++resource++collective.documentgenerator/style.svg"/></td>
             <td>
                 <h5>
                   <a tal:attributes="href obj/absolute_url;">
@@ -1324,8 +1325,9 @@
             <td align="center">
                 <img tal:repeat="fmt obj/pod_formats"
                      title="Format"
+                     class="svg-icon"
                      tal:attributes="title fmt;
-                                     src string:$portal_url/++resource++collective.documentgenerator/$fmt.png"/></td>
+                                     src string:$portal_url/++resource++collective.documentgenerator/$fmt.svg"/></td>
             <td>
                 <h5>
                   <a tal:attributes="href obj/absolute_url;">

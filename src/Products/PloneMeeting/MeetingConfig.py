@@ -4659,50 +4659,50 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         d = 'collective.eeafaceted.z3ctable'
         # keys beginning with static_ are taken into account by the @@static-infos view
         res = [
-            ("static_labels",
-                translate("labels_column", domain=d, context=self.REQUEST)),
-            ("static_item_reference",
-                translate("item_reference_column", domain=d, context=self.REQUEST)),
-            ("static_budget_infos",
-                translate("budget_infos_column", domain=d, context=self.REQUEST)),
-            ("Creator",
-                translate('header_Creator', domain=d, context=self.REQUEST)),
-            ("CreationDate",
-                translate('header_CreationDate', domain=d, context=self.REQUEST)),
-            ("ModificationDate",
-                translate('header_ModificationDate', domain=d, context=self.REQUEST)),
-            ("review_state",
-                translate('header_review_state', domain=d, context=self.REQUEST)),
-            ("review_state_title",
-                translate('header_review_state_title_descr', domain=d, context=self.REQUEST)),
-            ("getCategory",
-                translate("header_getCategory", domain=d, context=self.REQUEST)),
-            ("getRawClassifier",
-                translate("header_getRawClassifier", domain=d, context=self.REQUEST)),
-            ("getProposingGroup",
-                translate("header_getProposingGroup", domain=d, context=self.REQUEST)),
-            ("proposing_group_acronym",
-                translate("header_proposing_group_acronym", domain=d, context=self.REQUEST)),
-            ("getAssociatedGroups",
-                translate("header_getAssociatedGroups", domain=d, context=self.REQUEST)),
-            ("associated_groups_acronym",
-                translate("header_associated_groups_acronym", domain=d, context=self.REQUEST)),
-            ("getGroupsInCharge",
-                translate("header_getGroupsInCharge", domain=d, context=self.REQUEST)),
-            ("groups_in_charge_acronym",
-                translate("header_groups_in_charge_acronym", domain=d, context=self.REQUEST)),
-            ("privacy",
-                translate("header_privacy", domain=d, context=self.REQUEST)),
-            ("pollType",
-                translate("header_pollType", domain=d, context=self.REQUEST)),
-            ("advices",
-                translate("header_advices", domain=d, context=self.REQUEST)),
-            ("getItemIsSigned",
-                translate('header_getItemIsSigned', domain=d, context=self.REQUEST)),
-            ("toDiscuss",
-                translate('header_toDiscuss', domain=d, context=self.REQUEST)),
-            ("actions",
-                translate("header_actions", domain=d, context=self.REQUEST)),
+            ("static_labels", u"{0} (static_labels)".format(
+                translate("labels_column", domain=d, context=self.REQUEST))),
+            ("static_item_reference", u"{0} (static_item_reference)".format(
+                translate("item_reference_column", domain=d, context=self.REQUEST))),
+            ("static_budget_infos", u"{0} (static_budget_infos)".format(
+                translate("budget_infos_column", domain=d, context=self.REQUEST))),
+            ("Creator", u"{0} (Creator)".format(
+                translate('header_Creator', domain=d, context=self.REQUEST))),
+            ("CreationDate", u"{0} (CreationDate)".format(
+                translate('header_CreationDate', domain=d, context=self.REQUEST))),
+            ("ModificationDate", u"{0} (ModificationDate)".format(
+                translate('header_ModificationDate', domain=d, context=self.REQUEST))),
+            ("review_state", u"{0} (review_state)".format(
+                translate('header_review_state', domain=d, context=self.REQUEST))),
+            ("review_state_title", u"{0} (review_state_title)".format(
+                translate('header_review_state_title_descr', domain=d, context=self.REQUEST))),
+            ("getCategory", u"{0} (getCategory)".format(
+                translate("header_getCategory", domain=d, context=self.REQUEST))),
+            ("getRawClassifier", u"{0} (getRawClassifier)".format(
+                translate("header_getRawClassifier", domain=d, context=self.REQUEST))),
+            ("getProposingGroup", u"{0} (getProposingGroup)".format(
+                translate("header_getProposingGroup", domain=d, context=self.REQUEST))),
+            ("proposing_group_acronym", u"{0} (proposing_group_acronym)".format(
+                translate("header_proposing_group_acronym", domain=d, context=self.REQUEST))),
+            ("getAssociatedGroups", u"{0} (getAssociatedGroups)".format(
+                translate("header_getAssociatedGroups", domain=d, context=self.REQUEST))),
+            ("associated_groups_acronym", u"{0} (associated_groups_acronym)".format(
+                translate("header_associated_groups_acronym", domain=d, context=self.REQUEST))),
+            ("getGroupsInCharge", u"{0} (getGroupsInCharge)".format(
+                translate("header_getGroupsInCharge", domain=d, context=self.REQUEST))),
+            ("groups_in_charge_acronym", u"{0} (groups_in_charge_acronym)".format(
+                translate("header_groups_in_charge_acronym", domain=d, context=self.REQUEST))),
+            ("privacy", u"{0} (privacy)".format(
+                translate("header_privacy", domain=d, context=self.REQUEST))),
+            ("pollType", u"{0} (pollType)".format(
+                translate("header_pollType", domain=d, context=self.REQUEST))),
+            ("advices", u"{0} (advices)".format(
+                translate("header_advices", domain=d, context=self.REQUEST))),
+            ("getItemIsSigned", u"{0} (getItemIsSigned)".format(
+                translate('header_getItemIsSigned', domain=d, context=self.REQUEST))),
+            ("toDiscuss", u"{0} (toDiscuss)".format(
+                translate('header_toDiscuss', domain=d, context=self.REQUEST))),
+            ("actions", u"{0} (actions)".format(
+                translate("header_actions", domain=d, context=self.REQUEST))),
         ]
         res = res + self._extraItemRelatedColumns()
         return res
@@ -4716,11 +4716,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def listAvailableItemsListVisibleColumns(self):
         '''Vocabulary for the 'availableItemsListVisibleColumns' field.'''
         res = self.listItemRelatedColumns()
-        res.insert(-1, ('getPreferredMeetingDate', translate('header_getPreferredMeetingDate',
-                                                             domain='collective.eeafaceted.z3ctable',
-                                                             context=self.REQUEST)))
+        res.insert(-1, ('getPreferredMeetingDate', u"{0} (getPreferredMeetingDate)".format(
+            translate('header_getPreferredMeetingDate',
+                      domain='collective.eeafaceted.z3ctable',
+                      context=self.REQUEST))))
         # remove item_reference and review_state
-        res = [v for v in res if v[0] not in ('static_item_reference', 'review_state', 'review_state_title')]
+        res = [v for v in res if v[0] not in
+               ('static_item_reference', 'review_state', 'review_state_title')]
         return DisplayList(tuple(res))
 
     security.declarePrivate('listItemsListVisibleColumns')
@@ -4728,9 +4730,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def listItemsListVisibleColumns(self):
         '''Vocabulary for the 'itemsListVisibleColumns' field.'''
         res = self.listItemRelatedColumns()
-        res.insert(-1, ('getPreferredMeetingDate', translate('header_getPreferredMeetingDate',
-                                                             domain='collective.eeafaceted.z3ctable',
-                                                             context=self.REQUEST)))
+        res.insert(-1, ('getPreferredMeetingDate', u"{0} (getPreferredMeetingDate)".format(
+            translate('header_getPreferredMeetingDate',
+                      domain='collective.eeafaceted.z3ctable',
+                      context=self.REQUEST))))
         return DisplayList(tuple(res))
 
     def _ignoredVisibleFieldIds(self):
@@ -4792,12 +4795,14 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     def listItemColumns(self):
         res = self.listItemRelatedColumns()
-        res.insert(-1, ('linkedMeetingDate', translate('header_linkedMeetingDate',
-                                                       domain='collective.eeafaceted.z3ctable',
-                                                       context=self.REQUEST)))
-        res.insert(-1, ('getPreferredMeetingDate', translate('header_getPreferredMeetingDate',
-                                                             domain='collective.eeafaceted.z3ctable',
-                                                             context=self.REQUEST)))
+        res.insert(-1, ('linkedMeetingDate', u"{0} (linkedMeetingDate)".format(
+            translate('header_linkedMeetingDate',
+                      domain='collective.eeafaceted.z3ctable',
+                      context=self.REQUEST))))
+        res.insert(-1, ('getPreferredMeetingDate', u"{0} (getPreferredMeetingDate)".format(
+            translate('header_getPreferredMeetingDate',
+                      domain='collective.eeafaceted.z3ctable',
+                      context=self.REQUEST))))
         return DisplayList(tuple(res))
 
     security.declarePrivate('listMeetingColumns')
@@ -4806,13 +4811,27 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         d = 'collective.eeafaceted.z3ctable'
         # keys beginning with static_ are taken into account by the @@static-infos view
         res = [
-            ("static_startDate", translate('startDate_column', domain=d, context=self.REQUEST)),
-            ("static_endDate", translate('endDate_column', domain=d, context=self.REQUEST)),
-            ("static_place", translate('place_column', domain=d, context=self.REQUEST)),
-            ("Creator", translate('header_Creator', domain=d, context=self.REQUEST)),
-            ("CreationDate", translate('header_CreationDate', domain=d, context=self.REQUEST)),
-            ("review_state", translate('header_review_state', domain=d, context=self.REQUEST)),
-            ("actions", translate("header_actions", domain=d, context=self.REQUEST)),
+            ("static_startDate",
+                u"{0} (static_startDate)".format(
+                    translate('startDate_column', domain=d, context=self.REQUEST))),
+            ("static_endDate",
+                u"{0} (static_endDate)".format(
+                    translate('endDate_column', domain=d, context=self.REQUEST))),
+            ("static_place",
+                u"{0} (static_place)".format(
+                    translate('place_column', domain=d, context=self.REQUEST))),
+            ("Creator",
+                u"{0} (Creator)".format(
+                    translate('header_Creator', domain=d, context=self.REQUEST))),
+            ("CreationDate",
+                u"{0} (CreationDate)".format(
+                    translate('header_CreationDate', domain=d, context=self.REQUEST))),
+            ("review_state",
+                u"{0} (review_state)".format(
+                    translate('header_review_state', domain=d, context=self.REQUEST))),
+            ("actions",
+                u"{0} (actions)".format(
+                    translate("header_actions", domain=d, context=self.REQUEST))),
         ]
         res = res + self._extraMeetingRelatedColumns()
         return DisplayList(tuple(res))

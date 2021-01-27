@@ -53,6 +53,7 @@ class IPMHeldPosition(IHeldPosition):
         value_type=zope.schema.Choice(
             vocabulary="Products.PloneMeeting.vocabularies.pmheldposition_usagesvocabulary"),
         required=False,
+        default=[],
     )
 
     form.widget('defaults', PMCheckBoxFieldWidget, multiple='multiple')
@@ -61,6 +62,7 @@ class IPMHeldPosition(IHeldPosition):
         value_type=zope.schema.Choice(
             vocabulary="Products.PloneMeeting.vocabularies.pmheldposition_defaultsvocabulary"),
         required=False,
+        default=[],
     )
 
     signature_number = zope.schema.Choice(
@@ -185,10 +187,6 @@ class PMHeldPosition(HeldPosition):
                 translate("Signature number", domain="PloneMeeting", context=self.REQUEST),
                 plain_render(self, 'signature_number') or '-')
         return res
-
-    def get_position_usages(self):
-        """Shortcut to get usages defined on linked position."""
-        return self.get_position().usages
 
     def get_person_short_title(self,
                                include_person_title=False,
