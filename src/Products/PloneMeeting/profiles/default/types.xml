@@ -26,5 +26,5 @@
  <object name="held_position" meta_type="Dexterity FTI"/>
  <object name="organization" meta_type="Dexterity FTI"/>
  <object name="meetingcategory" meta_type="Dexterity FTI"/>
- <object name="Meeting" meta_type="Dexterity FTI"/>
+ <object name="Meeting" meta_type="Dexterity FTI" purge="True" />
 </object>

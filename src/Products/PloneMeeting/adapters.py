@@ -477,7 +477,7 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
             if clonedBrain.linkedMeetingUID != ITEM_NO_PREFERRED_MEETING_VALUE:
                 # avoid instantiating toLocalizedTime more than once
                 toLocalizedTime = toLocalizedTime or self.context.restrictedTraverse('@@plone').toLocalizedTime
-                long_format = clonedBrain.linkedMeetingDate.hour() and True or False
+                long_format = clonedBrain.linkedMeetingDate.hour and True or False
                 msg = msg + u' ({0})'.format(toLocalizedTime(clonedBrain.linkedMeetingDate, long_format=long_format))
             iconName = emergency and "clone_to_other_mc_emergency" or "clone_to_other_mc"
             # manage the otherMeetingConfigsClonableToPrivacy
@@ -539,7 +539,7 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
                                       default="Sent from ${meetingConfigTitle}, "
                                       "original item is \"${predecessorState}\".")))
             else:
-                if predecessor_state in predecessorCfg.adapted().getItemPositiveDecidedStates():
+                if predecessor_state in predecessorCfg.getItemPositiveDecidedStates():
                     res.append(('cloned_and_decided.png',
                                 translate(
                                     'icon_help_cloned_and_decided',

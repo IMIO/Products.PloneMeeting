@@ -193,6 +193,17 @@ class IMeeting(IDXMeetingContent):
         description=_("descr_place"),
         required=False)
 
+    form.widget('pre_meeting_date', DatetimeFieldWidget, show_today_link=True, show_time=True)
+    pre_meeting_date = Datetime(
+        title=_(u'title_pre_meeting_date'),
+        required=False)
+
+    searchable("pre_meeting_place")
+    pre_meeting_place = Text(
+        title=_(u"title_pre_meeting_place"),
+        description=_("descr_place"),
+        required=False)
+
     form.widget('extraordinary_session', RadioFieldWidget)
     extraordinary_session = schema.Bool(
         title=_(u'title_extraordinary_session'),
@@ -223,17 +234,6 @@ class IMeeting(IDXMeetingContent):
         description=_("descr_field_vieawable_by_everyone"),
         required=False,
         allowed_mime_types=(u"text/html", ))
-
-    form.widget('pre_meeting_date', DatetimeFieldWidget, show_today_link=True, show_time=True)
-    pre_meeting_date = Datetime(
-        title=_(u'title_pre_meeting_date'),
-        required=False)
-
-    searchable("pre_meeting_place")
-    pre_meeting_place = Text(
-        title=_(u"title_pre_meeting_place"),
-        description=_("descr_place"),
-        required=False)
 
     searchable("pre_observations")
     form.widget('pre_observations', PMRichTextFieldWidget)

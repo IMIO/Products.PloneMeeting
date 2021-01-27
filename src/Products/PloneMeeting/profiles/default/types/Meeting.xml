@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <object name="meeting" meta_type="MeetingAdvice" i18n:domain="PloneMeeting"
-   xmlns:i18n="http://xml.zope.org/namespaces/i18n">
+   xmlns:i18n="http://xml.zope.org/namespaces/i18n" purge="True">
  <property name="title" i18n:translate="">Meeting</property>
  <property name="description" i18n:translate=""></property>
  <property name="i18n_domain">plone</property>

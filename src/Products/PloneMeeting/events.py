@@ -978,22 +978,22 @@ def onItemRemoved(item, event):
 def onMeetingAdded(meeting, event):
     '''This method is called every time a Meeting is added to a folder,
        after the created and moved events.'''
-    meeting.update_title()
-    meeting.compute_dates()
-    # Update contact-related info (attendees, signatories, replacements...)
-    meeting.update_contacts()
-    meeting.add_recurring_items_if_relevant('_init_')
-    # Apply potential transformations to richtext fields
-    transformAllRichTextFields(meeting)
+    # while migrating to Meeting DX, we do not have a date
+    # while creating the new meeting
+    if meeting.date:
+        meeting.update_title()
+        meeting.compute_dates()
+        # Update contact-related info (attendees, signatories, replacements...)
+        meeting.update_contacts()
+        meeting.add_recurring_items_if_relevant('_init_')
+        # Apply potential transformations to richtext fields
+        transformAllRichTextFields(meeting)
     meeting.update_local_roles()
     # activate the faceted navigation
     enableFacetedDashboardFor(meeting,
                               xmlpath=os.path.dirname(__file__) +
                               '/faceted_conf/default_dashboard_widgets.xml')
     meeting.setLayout('meeting_view')
-    # update every items itemReference if needed
-    meeting.update_item_references(check_needed=True)
-
     # clean cache for "Products.PloneMeeting.vocabularies.meetingdatesvocabulary"
     # use get_again for async meetings term render
     invalidate_cachekey_volatile_for(

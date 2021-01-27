@@ -5,6 +5,9 @@ from collective.eeafaceted.batchactions.interfaces import IBatchActionsMarker
 from copy import deepcopy
 from imio.helpers.content import richtextval
 from persistent.mapping import PersistentMapping
+from plone.app.contenttypes.migration.dxmigration import ContentMigrator
+from plone.app.contenttypes.migration.migration import migrate as pac_migrate
+from plone.app.textfield.value import RichTextValue
 from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_NEW
 from Products.PloneMeeting.browser.itemattendee import position_type_default
 from Products.PloneMeeting.content.advice import IMeetingAdvice
@@ -18,7 +21,128 @@ from zope.interface import alsoProvides
 from zope.interface import noLongerProvides
 
 
+class MeetingMigrator(ContentMigrator):
+    """ """
+    src_portal_type = None
+    src_meta_type = 'Meeting'
+    dst_portal_type = None
+    dst_meta_type = None  # not used
+
+    def migrate_atctmetadata(self):
+        """Override to not migrate exclude_from_nav because it does not exist by default
+           and it takes parent's value that is an instancemethod and fails at transaction commit..."""
+        pass
+
+    def migrate_schema_fields(self):
+        # fields
+        date = self.old.getDate()
+        if date:
+            date._timezone_naive = True
+            self.new.date = date.asdatetime()
+        start_date = self.old.getStartDate()
+        if start_date:
+            start_date._timezone_naive = True
+            self.new.start_date = start_date.asdatetime()
+        mid_date = self.old.getMidDate()
+        if mid_date:
+            mid_date._timezone_naive = True
+            self.new.mid_date = mid_date.asdatetime()
+        end_date = self.old.getEndDate()
+        if end_date:
+            end_date._timezone_naive = True
+            self.new.end_date = end_date.asdatetime()
+        approval_date = self.old.getApprovalDate()
+        if approval_date:
+            approval_date._timezone_naive = True
+            self.new.approval_date = approval_date.asdatetime()
+        convocation_date = self.old.getConvocationDate()
+        if convocation_date:
+            convocation_date._timezone_naive = True
+            self.new.convocation_date = convocation_date.asdatetime()
+        self.new.assembly = self.old.getRawAssembly() and RichTextValue(self.old.getRawAssembly()) or None
+        self.new.assembly_excused = self.old.getRawAssemblyExcused() and \
+            RichTextValue(self.old.getRawAssemblyExcused()) or None
+        self.new.assembly_absents = self.old.getRawAssemblyAbsents() and \
+            RichTextValue(self.old.getRawAssemblyAbsents()) or None
+        self.new.assembly_guests = self.old.getRawAssemblyGuests() and \
+            RichTextValue(self.old.getRawAssemblyGuests()) or None
+        self.new.assembly_proxies = self.old.getRawAssemblyProxies() and \
+            RichTextValue(self.old.getRawAssemblyProxies()) or None
+        self.new.assembly_staves = self.old.getRawAssemblyStaves() and \
+            RichTextValue(self.old.getRawAssemblyStaves()) or None
+        self.new.signatures = self.old.getRawSignatures() and \
+            RichTextValue(self.old.getRawSignatures()) or None
+        self.new.place = self.old.getPlace()
+        self.new.pre_meeting_place = self.old.getPreMeetingPlace()
+        pre_meeting_date = self.old.getPreMeetingDate()
+        if pre_meeting_date:
+            pre_meeting_date._timezone_naive = True
+            self.new.pre_meeting_date = pre_meeting_date.asdatetime()
+        self.new.extraordinary_session = self.old.getExtraordinarySession()
+        self.new.in_and_out_moves = self.old.getRawInAndOutMoves() and \
+            RichTextValue(self.old.getRawInAndOutMoves()) or None
+        self.new.notes = self.old.getRawNotes() and RichTextValue(self.old.getRawNotes()) or None
+        self.new.observations = self.old.getRawObservations() and \
+            RichTextValue(self.old.getRawObservations()) or None
+        self.new.pre_observations = self.old.getRawPreObservations() and \
+            RichTextValue(self.old.getRawPreObservations()) or None
+        self.new.committee_observations = self.old.getRawCommitteeObservations() and \
+            RichTextValue(self.old.getRawCommitteeObservations()) or None
+        self.new.votes_observations = self.old.getRawVotesObservations() and \
+            RichTextValue(self.old.getRawVotesObservations()) or None
+        self.new.public_meeting_observations = self.old.getRawPublicMeetingObservations() and \
+            RichTextValue(self.old.getRawPublicMeetingObservations()) or None
+        self.new.secret_meeting_observations = self.old.getRawSecretMeetingObservations() and \
+            RichTextValue(self.old.getRawSecretMeetingObservations()) or None
+        self.new.authority_notice = self.old.getRawAuthorityNotice() and \
+            RichTextValue(self.old.getRawAuthorityNotice()) or None
+        self.new.meeting_number = self.old.getMeetingNumber()
+        self.new.first_item_number = self.old.getFirstItemNumber()
+        # custom attributes
+        self.new.item_absents = deepcopy(self.old.itemAbsents)
+        self.new.item_excused = deepcopy(self.old.itemExcused)
+        self.new.item_non_attendees = deepcopy(self.old.itemNonAttendees)
+        self.new.item_signatories = deepcopy(self.old.itemSignatories)
+        self.new.ordered_contacts = deepcopy(self.old.orderedContacts)
+
+    def migrate(self):
+        """ """
+        super(MeetingMigrator, self).migrate()
+        self.new.update_title()
+        self.new.reindexObject()
+
+
 class Migrate_To_4200(Migrator):
+
+    def _migrateMeetingToDX(self):
+        '''Migrate from AT MeetingCategory to DX meetingcategory.'''
+        logger.info('Migrating Meeting from AT to DX...')
+        # prepare migration to DX
+        # manage link between item and meeting manually
+        self._removeMeetingItemsReferenceField()
+        # update stored Meeting.itemSignatories
+        self._updateItemSignatories()
+
+        # main migrate meetings to DX
+        # make sure new portal_type Meeting is installed
+        self.removeUnusedPortalTypes(portal_types=['Meeting'])
+        self.ps.runImportStepFromProfile('profile-Products.PloneMeeting:default', 'typeinfo')
+        for cfg in self.tool.objectValues("MeetingConfig"):
+            meeting_type_name = cfg.getMeetingTypeName()
+            self.removeUnusedPortalTypes(portal_types=[meeting_type_name])
+            cfg.registerPortalTypes()
+            MeetingMigrator.src_portal_type = meeting_type_name
+            MeetingMigrator.dst_portal_type = meeting_type_name
+            pac_migrate(self.portal, MeetingMigrator)
+
+        # after migration to DX
+        # update preferred meeting path on items
+        self._updateItemPreferredMeetingLink()
+        # configure votes
+        self._configureVotes()
+        # fix DashboardCollections that use index getDate
+        self.changeCollectionIndex('getDate', 'meeting_date')
+        logger.info('Done.')
 
     def _configureItemWFValidationLevels(self):
         """Item WF validation levels (states itemcreated, proposed, pre-validated, ...)
@@ -177,6 +301,14 @@ class Migrate_To_4200(Migrator):
                     item._update_meeting_link(meeting_uid=meeting_uid)
         logger.info('Done.')
 
+    def _updateItemPreferredMeetingLink(self):
+        """Update MeetingItem.preferred_meeting_path for every items."""
+        logger.info("Updating MeetingItem.preferred_meeting_path for every items...")
+        for brain in self.catalog(meta_type='MeetingItem'):
+            item = brain.getObject()
+            item._update_preferred_meeting(item.getPreferredMeeting())
+        logger.info('Done.')
+
     def _fixRichTextValueMimeType(self):
         """Make sure RichTextValue stored on DX content (advices) have
            a correct mimeType and outputMimeType."""
@@ -225,14 +357,11 @@ class Migrate_To_4200(Migrator):
         self._updateSearchedFolderBatchActionsMarkerInterface()
 
         # remove useless catalog indexes and columns, were renamed to snake case
-        self.removeUnusedIndexes(indexes=['getItemIsSigned', 'sendToAuthority', 'toDiscuss'])
-        self.removeUnusedColumns(columns=['toDiscuss'])
+        self.removeUnusedIndexes(indexes=['getItemIsSigned', 'sendToAuthority', 'toDiscuss', 'getDate'])
+        self.removeUnusedColumns(columns=['toDiscuss', 'getDate'])
 
-        # manage link between item and meeting manually
-        self._removeMeetingItemsReferenceField()
-        self._configureVotes()
-        # update stored Meeting.itemSignatories
-        self._updateItemSignatories()
+        # MEETING TO DX
+        self._migrateMeetingToDX()
 
         # update RichTextValue stored on DX types (advices)
         self._fixRichTextValueMimeType()
@@ -259,7 +388,7 @@ class Migrate_To_4200(Migrator):
         self.cleanMeetingConfigs(field_names=['itemDecidedStates', 'itemPositiveDecidedStates'])
 
         # init otherMeetingConfigsClonableToFieldXXX and XXXSuite/XXXEnd new fields
-        self.initNewHTMLFields(query={'meta_type': ('Meeting', 'MeetingItem')})
+        self.initNewHTMLFields(query={'meta_type': ('MeetingItem')})
 
         # update faceted filters
         self.updateFacetedFilters(xml_filename='upgrade_step_4200_add_item_widgets.xml')

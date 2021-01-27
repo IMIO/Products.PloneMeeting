@@ -283,6 +283,31 @@ class Migrator(BaseMigrator):
                 criteria._update(humansorted(criteria.values(), key=attrgetter('__name__')))
         logger.info('Done.')
 
+    def changeCollectionIndex(self, old_index_name, new_index_name):
+        """Useful when an index name changed."""
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            for brain in api.content.find(context=cfg.searches, portal_type='DashboardCollection'):
+                dc = brain.getObject()
+                query = dc.query
+                found = False
+                adapted_query = []
+                for line in query:
+                    adapted_line = line.copy()
+                    if adapted_line['i'] == old_index_name:
+                        found = True
+                        adapted_line['i'] = new_index_name
+                        logger.info("Replaced \"{0}\" by \"{1}\" in query of \"{2}\"".format(
+                            old_index_name, new_index_name, brain.getPath()))
+                    adapted_query.append(adapted_line)
+                if dc.sort_on == old_index_name:
+                    dc.sort_on = new_index_name
+                    logger.info("Replaced \"{0}\" by \"{1}\" in sort_on of \"{2}\"".format(
+                        old_index_name, new_index_name, brain.getPath()))
+                if found:
+                    dc.query = adapted_query
+                    dc._p_changed = True
+        logger.info('Done.')
+
     def _already_migrated(self, done=True):
         """Called when a migration is executed several times..."""
         self.already_migrated = True
