@@ -3476,7 +3476,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def listUsedMeetingAttributes(self):
         optional_fields = get_dx_attrs(
             self.getMeetingTypeName(), optional_only=True, as_display_list=False)
-        contact_fields = ['attendees', 'excused', 'absents', 'nonAttendees',
+        contact_fields = ['attendees', 'excused', 'absents', 'non_attendees',
                           'signatories', 'replacements']
         contact_fields.reverse()
         index = optional_fields.index('place')
@@ -4811,12 +4811,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         d = 'collective.eeafaceted.z3ctable'
         # keys beginning with static_ are taken into account by the @@static-infos view
         res = [
-            ("static_startDate",
-                u"{0} (static_startDate)".format(
-                    translate('startDate_column', domain=d, context=self.REQUEST))),
+            ("static_start_date",
+                u"{0} (static_start_date)".format(
+                    translate('start_date_column', domain=d, context=self.REQUEST))),
             ("static_endDate",
-                u"{0} (static_endDate)".format(
-                    translate('endDate_column', domain=d, context=self.REQUEST))),
+                u"{0} (static_end_date)".format(
+                    translate('end_date_column', domain=d, context=self.REQUEST))),
             ("static_place",
                 u"{0} (static_place)".format(
                     translate('place_column', domain=d, context=self.REQUEST))),

@@ -4,6 +4,7 @@ from collective.contact.plonegroup.utils import get_organizations
 from collective.eeafaceted.batchactions.interfaces import IBatchActionsMarker
 from copy import deepcopy
 from imio.helpers.content import richtextval
+from imio.pyutils.utils import replace_in_list
 from persistent.mapping import PersistentMapping
 from plone.app.contenttypes.migration.dxmigration import ContentMigrator
 from plone.app.contenttypes.migration.migration import migrate as pac_migrate
@@ -128,6 +129,45 @@ class Migrate_To_4200(Migrator):
         self.removeUnusedPortalTypes(portal_types=['Meeting'])
         self.ps.runImportStepFromProfile('profile-Products.PloneMeeting:default', 'typeinfo')
         for cfg in self.tool.objectValues("MeetingConfig"):
+            # update MeetingConfig attributes
+            used_attrs = cfg.getUsedMeetingAttributes()
+            used_attrs = replace_in_list(used_attrs, "startDate", "start_date")
+            used_attrs = replace_in_list(used_attrs, "midDate", "mid_date")
+            used_attrs = replace_in_list(used_attrs, "endDate", "end_date")
+            used_attrs = replace_in_list(used_attrs, "approvalDate", "approval_date")
+            used_attrs = replace_in_list(used_attrs, "convocationDate", "convocation_date")
+            used_attrs = replace_in_list(used_attrs, "assemblyExcused", "assembly_excused")
+            used_attrs = replace_in_list(used_attrs, "assemblyAbsents", "assembly_absents")
+            used_attrs = replace_in_list(used_attrs, "assemblyGuests", "assembly_guests")
+            used_attrs = replace_in_list(used_attrs, "assemblyProxies", "assembly_proxies")
+            used_attrs = replace_in_list(used_attrs, "assemblyStaves", "assembly_staves")
+            used_attrs = replace_in_list(used_attrs, "extraordinarySession", "extraordinary_session")
+            used_attrs = replace_in_list(used_attrs, "inAndOutMoves", "in_and_out_moves")
+            used_attrs = replace_in_list(used_attrs, "preMeetingDate", "pre_meeting_date")
+            used_attrs = replace_in_list(used_attrs, "preMeetingPlace", "pre_meeting_place")
+            used_attrs = replace_in_list(used_attrs, "preObservations", "pre_observations")
+            used_attrs = replace_in_list(used_attrs, "committeeObservations", "committee_observations")
+            used_attrs = replace_in_list(used_attrs, "votesObservations", "votes_observations")
+            used_attrs = replace_in_list(used_attrs, "publicMeetingObservations", "public_meeting_observations")
+            used_attrs = replace_in_list(used_attrs, "secretMeetingObservations", "secret_meeting_observations")
+            used_attrs = replace_in_list(used_attrs, "authorityNotice", "authority_notice")
+            used_attrs = replace_in_list(used_attrs, "meetingNumber", "meeting_number")
+            used_attrs = replace_in_list(used_attrs, "firstItemNumber", "first_item_number")
+            used_attrs = replace_in_list(used_attrs, "nonAttendees", "non_attendees")
+            cfg.setUsedMeetingAttributes(used_attrs)
+            fields = cfg.getXhtmlTransformFields()
+            fields = replace_in_list(fields, "Meeting.authorityNotice", "Meeting.authority_notice")
+            fields = replace_in_list(fields, "Meeting.committeeObservations", "Meeting.committee_observations")
+            fields = replace_in_list(fields, "Meeting.inAndOutMoves", "Meeting.in_and_out_moves")
+            fields = replace_in_list(fields, "Meeting.preObservations", "Meeting.pre_observations")
+            fields = replace_in_list(fields, "Meeting.publicMeetingObservations", "Meeting.public_meeting_observations")
+            fields = replace_in_list(fields, "Meeting.secretMeetingObservations", "Meeting.secret_meeting_observations")
+            fields = replace_in_list(fields, "Meeting.votesObservations", "Meeting.votes_observations")
+            cfg.setXhtmlTransformFields(fields)
+            cols = cfg.getMeetingColumns()
+            cols = replace_in_list(cols, "static_startDate", "static_start_date")
+            cols = replace_in_list(cols, "static_endDate", "static_end_date")
+            cols = replace_in_list(cols, "static_startDate", "static_start_date")
             meeting_type_name = cfg.getMeetingTypeName()
             self.removeUnusedPortalTypes(portal_types=[meeting_type_name])
             cfg.registerPortalTypes()
@@ -392,6 +432,7 @@ class Migrate_To_4200(Migrator):
 
         # update faceted filters
         self.updateFacetedFilters(xml_filename='upgrade_step_4200_add_item_widgets.xml')
+        self.updateFacetedFilters(xml_filename='upgrade_step_4200_update_meeting_widgets.xml')
 
         # update holidays
         self.updateHolidays()

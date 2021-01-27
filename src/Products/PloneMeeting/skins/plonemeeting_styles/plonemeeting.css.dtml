@@ -1077,6 +1077,11 @@ table.faceted-table-results th {
    top: 45px;
    z-index: 45;
 }
+/* make sure date picker is hover faceted sticky header */
+div#ui-datepicker-div {
+   /* use !important because z-index is set as style on the <div> */
+   z-index: 45 !important;
+}
 
 table#faceted_table.listing tr[class][class] td.meeting_item_listType_late {
     background-color: red;

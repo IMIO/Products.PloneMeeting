@@ -74,7 +74,9 @@ class HeldPositionBackRefs(ViewletBase):
         res = OrderedDict()
         for cfg in tool.objectValues('MeetingConfig'):
             meeting_type_name = cfg.getMeetingTypeName()
-            brains = catalog(portal_type=meeting_type_name, sort_on='getDate')
+            brains = catalog(portal_type=meeting_type_name,
+                             sort_on='meeting_date',
+                             sort_order='reverse')
             for brain in brains:
                 meeting = brain.getObject()
                 if _is_held_pos_uid_used_by(hp_uid, meeting):

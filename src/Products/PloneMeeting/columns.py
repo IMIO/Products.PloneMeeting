@@ -252,9 +252,7 @@ class ItemLinkedMeetingColumn(BaseColumn):
             # in dashboard when current user may not see the meeting
             brains = catalog.unrestrictedSearchResults(UID=getattr(item, self.meeting_uid_attr))
             meeting = brains[0]._unrestrictedGetObject()
-            prettyLinker = IPrettyLink(meeting)
-            prettyLinker.target = '_parent'
-            res = prettyLinker.getLink()
+            res = meeting.get_pretty_link()
 
         if self.use_caching:
             self._store_cached_result(value, res)
