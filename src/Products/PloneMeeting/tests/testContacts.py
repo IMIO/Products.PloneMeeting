@@ -2054,6 +2054,25 @@ class testContacts(PloneMeetingTestCase):
         self.assertEqual(hp.usages, [])
         self.assertEqual(hp.defaults, [])
 
+    def test_pm_HeldPositionBackRefs(self):
+        """This will display back references on a held_position
+           to see where it is used."""
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting')
+        person = self.portal.contacts.get('person1')
+        hp = person.get_held_positions()[0]
+        hp_uid = hp.UID()
+        self.assertTrue(hp_uid in meeting.get_attendees())
+        viewlet = self._get_viewlet(
+            context=hp,
+            manager_name='plone.belowcontentbody',
+            viewlet_name='held_position_back_references')
+        rendered = viewlet.render()
+        # used in MeetingConfig
+        self.assertTrue(self.meetingConfig.absolute_url() in rendered)
+        # used in meeting
+        self.assertTrue(meeting.absolute_url() in rendered)
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

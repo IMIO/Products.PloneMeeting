@@ -378,11 +378,19 @@ class testViews(PloneMeetingTestCase):
         # only MeetingManager may change listType once item is in a meeting
         self.changeUser('pmManager')
         item = self.create('MeetingItem', title='Item title')
+        # @@change-item-listtype
         view = item.restrictedTraverse('@@change-item-listtype')
         self.assertFalse(item.adapted().mayChangeListType())
         self.assertRaises(Unauthorized, view, new_value='late')
         self.create('Meeting')
         self.presentItem(item)
+        # @@item-listtype
+        view = item.restrictedTraverse('@@item-listtype')
+        res = view()
+        self.assertTrue("item_listType_normal" in res)
+        self.assertTrue("item_listType_late" in res)
+        # @@change-item-listtype
+        view = item.restrictedTraverse('@@change-item-listtype')
         # now listType may be changed
         self.assertTrue(item.adapted().mayChangeListType())
         # new_value is verified
