@@ -2101,6 +2101,10 @@ class testMeetingConfig(PloneMeetingTestCase):
         infos = _categorized_elements(item)
         self.assertEqual(infos[annex.UID()]['preview_status'], 'not_converted')
         self.assertEqual(infos[annex_decision.UID()]['preview_status'], 'not_converted')
+        # close a Meeting without items, this was generating a bug
+        self._removeConfigObjectsFor(cfg)
+        meeting = self.create('Meeting', date=DateTime('2020/01/31'))
+        self.closeMeeting(meeting)
 
     def test_pm_CanNotDeactivateConfigUsedInAnotherConfig(self):
         """A MeetingConfig will not be deactivated if used in another

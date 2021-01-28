@@ -21,6 +21,10 @@ Changelog
   (`organization`, `person`, `held_position`) and `meetingcategory` so we avoid
   to have a `None` instead an iterable while creating a new element by code.
   [gbastien]
+- Fixed `MeetingWorkflowActions.doClose` when
+  `MeetingConfig.removeAnnexesPreviewsOnMeetingClosure` is enabled and there is
+  no item in the meeting.
+  [gbastien]
 
 4.2b11 (2021-01-19)
 -------------------
