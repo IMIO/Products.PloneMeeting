@@ -2158,6 +2158,9 @@ div.overlay div.qq-uploader li {
     margin-left: 0.5em;
 }
 
+div.static-infos {
+   margin-top: 0.5em;
+}
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */

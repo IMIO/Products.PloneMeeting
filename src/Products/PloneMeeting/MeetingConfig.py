@@ -4814,7 +4814,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             ("static_start_date",
                 u"{0} (static_start_date)".format(
                     translate('start_date_column', domain=d, context=self.REQUEST))),
-            ("static_endDate",
+            ("static_end_date",
                 u"{0} (static_end_date)".format(
                     translate('end_date_column', domain=d, context=self.REQUEST))),
             ("static_place",

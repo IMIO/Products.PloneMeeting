@@ -22,6 +22,7 @@ from imio.helpers.xhtml import separate_images
 from plone import api
 from plone.app.caching.operations.utils import getContext
 from plone.app.textfield.value import RichTextValue
+from plone.dexterity.interfaces import IDexterityContent
 from plone.memoize.view import memoize
 from plone.memoize.view import memoize_contextless
 from Products.CMFCore.permissions import ManagePortal
@@ -153,6 +154,11 @@ class BaseStaticInfosView(BrowserView):
     def __call__(self, visibleColumns):
         """ """
         self.visibleColumns = visibleColumns
+        if IDexterityContent.providedBy(self.context):
+            view = self.context.restrictedTraverse('view')
+            view.update()
+            self.dx_view = view
+
         return super(BaseStaticInfosView, self).__call__()
 
     def static_infos_field_names(self):

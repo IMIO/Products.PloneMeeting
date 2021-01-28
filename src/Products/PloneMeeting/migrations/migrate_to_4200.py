@@ -130,6 +130,7 @@ class Migrate_To_4200(Migrator):
         self.ps.runImportStepFromProfile('profile-Products.PloneMeeting:default', 'typeinfo')
         for cfg in self.tool.objectValues("MeetingConfig"):
             # update MeetingConfig attributes
+            # usedMeetingAttributes
             used_attrs = cfg.getUsedMeetingAttributes()
             used_attrs = replace_in_list(used_attrs, "startDate", "start_date")
             used_attrs = replace_in_list(used_attrs, "midDate", "mid_date")
@@ -154,7 +155,16 @@ class Migrate_To_4200(Migrator):
             used_attrs = replace_in_list(used_attrs, "meetingNumber", "meeting_number")
             used_attrs = replace_in_list(used_attrs, "firstItemNumber", "first_item_number")
             used_attrs = replace_in_list(used_attrs, "nonAttendees", "non_attendees")
+            try:
+                used_attrs.remove('deadlinePublish')
+            except ValueError:
+                pass
+            try:
+                used_attrs.remove('deadlineFreeze')
+            except ValueError:
+                pass
             cfg.setUsedMeetingAttributes(used_attrs)
+            # xhtmlTransformFields
             fields = cfg.getXhtmlTransformFields()
             fields = replace_in_list(fields, "Meeting.authorityNotice", "Meeting.authority_notice")
             fields = replace_in_list(fields, "Meeting.committeeObservations", "Meeting.committee_observations")
@@ -164,10 +174,14 @@ class Migrate_To_4200(Migrator):
             fields = replace_in_list(fields, "Meeting.secretMeetingObservations", "Meeting.secret_meeting_observations")
             fields = replace_in_list(fields, "Meeting.votesObservations", "Meeting.votes_observations")
             cfg.setXhtmlTransformFields(fields)
+            # meetingColumns
             cols = cfg.getMeetingColumns()
             cols = replace_in_list(cols, "static_startDate", "static_start_date")
             cols = replace_in_list(cols, "static_endDate", "static_end_date")
             cols = replace_in_list(cols, "static_startDate", "static_start_date")
+            cfg.setMeetingColumns(cols)
+
+            # remove portal_type so it is created by MeetingConfig.registerPortalTypes
             meeting_type_name = cfg.getMeetingTypeName()
             self.removeUnusedPortalTypes(portal_types=[meeting_type_name])
             cfg.registerPortalTypes()

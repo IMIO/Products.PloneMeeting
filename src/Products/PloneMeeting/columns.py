@@ -265,6 +265,7 @@ class ItemPreferredMeetingColumn(ItemLinkedMeetingColumn):
     """
     meeting_uid_attr = 'getPreferredMeeting'
     attrName = 'getPreferredMeetingDate'
+    header_help = u'header_getPreferredMeetingDate_help'
 
 
 class ItemListTypeColumn(VocabularyColumn, ColorColumn):

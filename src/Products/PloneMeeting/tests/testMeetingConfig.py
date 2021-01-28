@@ -31,6 +31,7 @@ from collective.eeafaceted.collectionwidget.utils import getCollectionLinkCriter
 from collective.iconifiedcategory.utils import _categorized_elements
 from collective.iconifiedcategory.utils import get_category_object
 from copy import deepcopy
+from datetime import datetime
 from DateTime import DateTime
 from eea.facetednavigation.widgets.resultsperpage.widget import Widget as ResultsPerPageWidget
 from ftw.labels.interfaces import ILabeling
@@ -2103,7 +2104,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.assertEqual(infos[annex_decision.UID()]['preview_status'], 'not_converted')
         # close a Meeting without items, this was generating a bug
         self._removeConfigObjectsFor(cfg)
-        meeting = self.create('Meeting', date=DateTime('2020/01/31'))
+        meeting = self.create('Meeting', date=datetime(2020, 1, 15))
         self.closeMeeting(meeting)
 
     def test_pm_CanNotDeactivateConfigUsedInAnotherConfig(self):
