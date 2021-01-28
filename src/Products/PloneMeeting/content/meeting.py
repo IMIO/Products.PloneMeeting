@@ -598,121 +598,93 @@ class Meeting(Container):
     MEETINGCLOSEDSTATES = ['closed']
 
     # 'optional': is field optional and  selectable in MeetingConfig?
-    # 'force_eval_condition': even when optional and not enabled,
-    # must we evaluate condition? this is useful for history when a field is disabled
+    # if field is not empty, it will be displayed even if optional and not in used_attrs
+    # this for history reasons (fields used before, disabled now, ...)
     # 'condition': a python expression
     FIELD_INFOS = {
         'date':
             {'optional': False,
-             'force_eval_condition': False,
              'condition': ''},
         'start_date':
             {'optional': True,
-             'force_eval_condition': False,
              'condition': ''},
         'mid_date':
             {'optional': True,
-             'force_eval_condition': False,
              'condition': ''},
         'end_date':
             {'optional': True,
-             'force_eval_condition': False,
              'condition': ''},
         'approval_date':
             {'optional': True,
-             'force_eval_condition': False,
              'condition': ''},
         'convocation_date':
             {'optional': True,
-             'force_eval_condition': False,
              'condition': ''},
         'assembly':
             {'optional': True,
-             'force_eval_condition': True,
              'condition': "python:'assembly' in view.shown_assembly_fields()"},
         'assembly_excused':
             {'optional': True,
-             'force_eval_condition': True,
              'condition': "python:'assembly_excused' in view.shown_assembly_fields()"},
         'assembly_absents':
             {'optional': True,
-             'force_eval_condition': True,
              'condition': "python:'assembly_absents' in view.shown_assembly_fields()"},
         'assembly_guests':
             {'optional': True,
-             'force_eval_condition': True,
              'condition': "python:'assembly_guests' in view.shown_assembly_fields()"},
         'assembly_proxies':
             {'optional': True,
-             'force_eval_condition': True,
              'condition': "python:'assembly_proxies' in view.shown_assembly_fields()"},
         'assembly_staves':
             {'optional': True,
-             'force_eval_condition': True,
              'condition': "python:'assembly_staves' in view.shown_assembly_fields()"},
         'signatures':
             {'optional': True,
-             'force_eval_condition': True,
-             'condition': "python:view.show_field('signatures')"},
+             'condition': ""},
         'place':
             {'optional': True,
-             'force_eval_condition': False,
              'condition': ""},
         'extraordinary_session':
             {'optional': True,
-             'force_eval_condition': False,
              'condition': ""},
         'in_and_out_moves':
             {'optional': True,
-             'force_eval_condition': True,
              'condition': "python:cfg.show_meeting_manager_reserved_field('in_and_out_moves')"},
         'notes':
             {'optional': True,
-             'force_eval_condition': True,
              'condition': "python:cfg.show_meeting_manager_reserved_field('notes')"},
         'observations':
             {'optional': True,
-             'force_eval_condition': False,
              'condition': ""},
         'pre_meeting_date':
             {'optional': True,
-             'force_eval_condition': False,
              'condition': ""},
         'pre_meeting_place':
             {'optional': True,
-             'force_eval_condition': False,
              'condition': ""},
         'pre_observations':
             {'optional': True,
-             'force_eval_condition': False,
              'condition': ""},
         'committee_observations':
             {'optional': True,
-             'force_eval_condition': False,
              'condition': ""},
         'votes_observations':
             {'optional': True,
-             'force_eval_condition': False,
              'condition': "python:view.show_votes_observations()"},
         'public_meeting_observations':
             {'optional': True,
-             'force_eval_condition': False,
              'condition': ""},
         'secret_meeting_observations':
             {'optional': True,
-             'force_eval_condition': True,
              'condition': "python:cfg.show_meeting_manager_reserved_field('secret_meeting_observations')"},
         'authority_notice':
             {'optional': True,
-             'force_eval_condition': True,
              'condition': "python:cfg.show_meeting_manager_reserved_field('authority_notice')"},
         'meeting_number':
             {'optional': False,
-             'force_eval_condition': False,
              'condition': ""},
         'first_item_number':
             {'optional': False,
-             'force_eval_condition': False,
              'condition': ""},
     }
 

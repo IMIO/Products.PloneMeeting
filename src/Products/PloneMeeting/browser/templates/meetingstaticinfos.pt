@@ -1,5 +1,7 @@
-<div class="static-infos static-infos-meeting">
-  <tal:loop repeat="field_name python: view.static_infos_field_names()">
+<div class="static-infos static-infos-meeting"
+     tal:define="field_names python: view.static_infos_field_names()"
+     tal:condition="field_names">
+  <tal:loop repeat="field_name field_names">
     <span tal:define="widget python: view.dx_view.w.get(field_name)">
       <div class="field">
         <label tal:content="widget/label">Label</label>

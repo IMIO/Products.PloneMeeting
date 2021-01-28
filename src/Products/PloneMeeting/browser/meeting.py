@@ -35,20 +35,14 @@ def manage_fields(the_form):
         Wipeout not enabled optional fields and fields
         for which condition is False
     """
-    tool = api.portal.get_tool('portal_plonemeeting')
-    cfg = tool.getMeetingConfig(the_form.context)
-
     to_remove = []
-
-    used_meeting_attrs = cfg.getUsedMeetingAttributes()
 
     extra_expr_ctx = _base_extra_expr_ctx(the_form.context)
     extra_expr_ctx.update({'view': the_form})
 
     for field_name, field_info in Meeting.FIELD_INFOS.items():
         if field_info['optional'] and \
-           field_name not in used_meeting_attrs and \
-           not field_info['force_eval_condition']:
+           not the_form.show_field(field_name):
             to_remove.append(field_name)
         elif field_info['condition'] and \
                 not _evaluateExpression(the_form.context,
