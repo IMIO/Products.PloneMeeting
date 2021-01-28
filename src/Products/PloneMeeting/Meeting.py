@@ -262,7 +262,7 @@ class MeetingWorkflowActions(object):
                 u"Preview of annexes were deleted upon meeting closure.",
                 domain='PloneMeeting',
                 context=self.context.REQUEST)
-            api.portal.show_message(msg, request=item.REQUEST)
+            api.portal.show_message(msg, request=self.context.REQUEST)
 
     security.declarePrivate('doPublish_decisions')
 
