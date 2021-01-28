@@ -37,7 +37,10 @@ from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.tests.PloneMeetingTestCase import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.utils import get_annexes
+from Products.PloneMeeting.utils import get_dx_widget
 from Products.statusmessages.interfaces import IStatusMessage
+from z3c.form.interfaces import DISPLAY_MODE
+from z3c.form.interfaces import INPUT_MODE
 from z3c.relationfield.relation import RelationValue
 from zope.component import getAdapter
 from zope.component import getMultiAdapter
@@ -2251,6 +2254,32 @@ class testViews(PloneMeetingTestCase):
         adapter2 = getAdapter(self.portal.contacts.get('persons-searches'), IDashboardGenerablePODTemplates)
         self.request.form['c1[]'] = adapter2.context.get('all_persons').UID()
         self.assertFalse(adapter2.get_generable_templates())
+
+    def test_pm_RichTextWidget(self):
+        """Test the PMRichTextWidget used on meeting for example."""
+        cfg = self.meetingConfig
+        self._enableField('observations', related_to='Meeting')
+        self.changeUser('pmManager')
+        self._removeConfigObjectsFor(cfg)
+        meeting = self.create('Meeting')
+        # editable by MeetingManager
+        # display mode
+        widget = get_dx_widget(meeting, field_name="observations")
+        self.assertEqual(widget.mode, DISPLAY_MODE)
+        editable_action = "@@richtext-edit?field_name=observations"
+        self.assertTrue(editable_action in widget.render())
+        # input mode
+        widget = get_dx_widget(meeting, field_name="observations", mode=INPUT_MODE)
+        self.assertTrue('class="ckeditor_plone"' in widget.render())
+
+        # only viewable for others
+        self.changeUser('pmCreator1')
+        # display mode, not able to switch to input mode
+        widget = get_dx_widget(meeting, field_name="observations")
+        self.assertFalse(editable_action in widget.render())
+        # input mode
+        widget = get_dx_widget(meeting, field_name="observations", mode=INPUT_MODE)
+        self.assertTrue('class="ckeditor_plone"' in widget.render())
 
 
 def test_suite():
