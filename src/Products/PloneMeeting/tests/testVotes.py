@@ -648,6 +648,51 @@ class testVotes(PloneMeetingTestCase):
         self.assertNotEqual(secret_item.getPollType(), original_poll_type)
         self.assertEqual(secret_item.getPollType(), "secret_separated")
 
+    def test_pm_AsyncLoadMeetingAssemblyAndSignatures(self):
+        """The @@load_meeting_assembly_and_signatures will load attendees
+           details on the meeting view."""
+        self.changeUser('pmManager')
+        meeting, public_item, yes_public_item, secret_item, yes_secret_item = \
+            self._createMeetingWithVotes()
+        view = meeting.restrictedTraverse('@@load_meeting_assembly_and_signatures')
+        rendered = view()
+        # MeetingManager see the attendees
+        self.assertTrue("Monsieur Person1FirstName Person1LastName, Assembly member 1" in rendered)
+        # and voters actions
+        self.assertTrue("@@display-meeting-item-voters" in rendered)
+        # only attendees for users, not voters actions
+        self.changeUser('pmCreator1')
+        rendered = view()
+        self.assertTrue("Monsieur Person1FirstName Person1LastName, Assembly member 1" in rendered)
+        self.assertFalse("@@display-meeting-item-voters" in rendered)
+
+    def test_pm_AsyncLoadItemAssemblyAndSignatures(self):
+        """The @@load_item_assembly_and_signatures will load attendees
+           details on the item view."""
+        self.changeUser('pmManager')
+        self.create('Meeting')
+        item = self.create('MeetingItem')
+        self.presentItem(item)
+        view = item.restrictedTraverse('@@load_item_assembly_and_signatures')
+        rendered = view()
+        # MeetingManager see and may manage
+        self.assertTrue("Monsieur Person1FirstName Person1LastName, Assembly member 1" in rendered)
+        manage_vote_action = "item_encode_votes_form?vote_number:int=0"
+        manage_attendee_action = "item_byebye_attendee_form?person_uid="
+        manage_signatory_action = "item_redefine_signatory_form?person_uid="
+        self.assertTrue(manage_vote_action in rendered)
+        self.assertTrue(manage_attendee_action in rendered)
+        self.assertTrue(manage_signatory_action in rendered)
+
+        # other users may see but not manage
+        self.changeUser('pmCreator1')
+        view = item.restrictedTraverse('@@load_item_assembly_and_signatures')
+        rendered = view()
+        self.assertTrue("Monsieur Person1FirstName Person1LastName, Assembly member 1" in rendered)
+        self.assertFalse(manage_vote_action in rendered)
+        self.assertFalse(manage_attendee_action in rendered)
+        self.assertFalse(manage_signatory_action in rendered)
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

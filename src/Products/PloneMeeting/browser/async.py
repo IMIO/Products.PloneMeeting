@@ -494,12 +494,14 @@ class AsyncLoadMeetingAssemblyAndSignatures(BrowserView, BaseMeetingView):
             'Products.PloneMeeting.browser.async.AsyncLoadMeetingAssemblyAndSignatures')
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
+        is_manager = tool.isManager(cfg)
         cfg_modified = cfg.modified()
         ordered_contacts = self.context.ordered_contacts.items()
         item_votes = self.context.get_item_votes()
         context_uid = self.context.UID()
         cache_date = self.request.get('cache_date', None)
         return (date,
+                is_manager,
                 cfg_modified,
                 ordered_contacts,
                 item_votes,
