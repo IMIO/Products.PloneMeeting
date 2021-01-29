@@ -268,7 +268,7 @@ class GroupsInChargeVocabulary(object):
         date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.groupsinchargevocabulary')
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        return date, cfg.getId(), only_selected, sort
+        return date, cfg.getId(), only_selected, sort, the_objects
 
     @ram.cache(__call___cachekey)
     def __call__(self, context, only_selected=True, sort=True, the_objects=False):
@@ -1842,7 +1842,7 @@ class AssociatedGroupsVocabulary(object):
         date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.associatedgroupsvocabulary')
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        return date, sort, cfg
+        return date, sort, cfg, the_objects
 
     @ram.cache(__call___cachekey)
     def __call__(self, context, sort=True, the_objects=False):

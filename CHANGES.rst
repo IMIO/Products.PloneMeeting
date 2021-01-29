@@ -25,6 +25,9 @@ Changelog
   `MeetingConfig.removeAnnexesPreviewsOnMeetingClosure` is enabled and there is
   no item in the meeting.
   [gbastien]
+- Fixed `AssociatedGroupsVocabulary` and `GroupsInChargeVocabulary` cachekey by
+  taking into account parameter `the_objects`.
+  [gbastien]
 
 4.2b11 (2021-01-19)
 -------------------
