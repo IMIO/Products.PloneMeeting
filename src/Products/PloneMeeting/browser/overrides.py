@@ -266,7 +266,7 @@ class PMConfigActionsPanelViewlet(ActionsPanelViewlet):
         parent = self.context.getParentNode()
         if self.context.portal_type == 'DashboardCollection':
             url = '{0}?pageName=gui#searches'.format(cfg_url)
-        elif parent.__class__.__name__ == 'ATBTreeFolder':
+        elif parent.portal_type == 'Folder':
             # p_context is a sub-object in a sub-folder within a config
             root_subfolder = self._findRootSubfolder(parent)
             folderName = root_subfolder.getId()

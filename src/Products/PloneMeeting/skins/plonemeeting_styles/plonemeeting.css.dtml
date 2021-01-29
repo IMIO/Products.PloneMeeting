@@ -766,9 +766,14 @@ acronym img {
    cursor: pointer;
 }
 
-table.listing th {
+/* make sure table header is displayed on one line except for :
+   - dashboard displaying organizations;
+   - ... */
+body:not([class*='subsection-orgs-searches']) table#faceted_table.listing th,
+table#meeting_users th {
     white-space: nowrap;
 }
+
 table.listing th td {
     vertical-align: inherit;
 }
