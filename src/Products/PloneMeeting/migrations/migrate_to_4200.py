@@ -123,11 +123,10 @@ class Migrate_To_4200(Migrator):
         self._removeMeetingItemsReferenceField()
         # update stored Meeting.itemSignatories
         self._updateItemSignatories()
+        # configure votes
+        self._configureVotes()
 
         # main migrate meetings to DX
-        # make sure new portal_type Meeting is installed
-        self.removeUnusedPortalTypes(portal_types=['Meeting'])
-        self.ps.runImportStepFromProfile('profile-Products.PloneMeeting:default', 'typeinfo')
         for cfg in self.tool.objectValues("MeetingConfig"):
             # update MeetingConfig attributes
             # usedMeetingAttributes
@@ -192,8 +191,6 @@ class Migrate_To_4200(Migrator):
         # after migration to DX
         # update preferred meeting path on items
         self._updateItemPreferredMeetingLink()
-        # configure votes
-        self._configureVotes()
         # fix DashboardCollections that use index getDate
         self.changeCollectionIndex('getDate', 'meeting_date')
         logger.info('Done.')
@@ -277,7 +274,8 @@ class Migrate_To_4200(Migrator):
             cfg.setFirstLinkedVoteUsedVoteValues(config_descr.firstLinkedVoteUsedVoteValues)
             cfg.setNextLinkedVotesUsedVoteValues(config_descr.nextLinkedVotesUsedVoteValues)
             cfg.setVoteCondition(config_descr.voteCondition)
-        # add itemVotes on every meetings
+        # add itemVotes on every meetings, looking for meta_type='Meeting'
+        # will only find AT Meeting
         brains = self.catalog(meta_type='Meeting')
         logger.info('Adding "itemVotes" to every meetings...')
         for brain in brains:
@@ -414,6 +412,21 @@ class Migrate_To_4200(Migrator):
         self.removeUnusedIndexes(indexes=['getItemIsSigned', 'sendToAuthority', 'toDiscuss', 'getDate'])
         self.removeUnusedColumns(columns=['toDiscuss', 'getDate'])
 
+        # update various TAL expressions
+        self.updateTALConditions("queryState", "query_state")
+        self.updateTALConditions("getDate()", "date")
+        self.updateTALConditions("getStartDate()", "start_date")
+        self.updateTALConditions("getEndDate()", "end_date")
+
+        # reinstall workflows before updating workflowAdaptations
+        self.runProfileSteps('Products.PloneMeeting', steps=['workflow'], profile='default')
+        # make sure new portal_type Meeting is installed
+        self.removeUnusedPortalTypes(portal_types=['Meeting'])
+        self.ps.runImportStepFromProfile('profile-Products.PloneMeeting:default', 'typeinfo')
+        # configure wfAdaptations before reinstall
+        self._configureItemWFValidationLevels()
+        self._migrateKeepAccessToItemWhenAdviceIsGiven()
+
         # MEETING TO DX
         self._migrateMeetingToDX()
 
@@ -422,12 +435,6 @@ class Migrate_To_4200(Migrator):
 
         self.upgradeAll(omit=['Products.PloneMeeting:default',
                               self.profile_name.replace('profile-', '')] + extra_omitted)
-
-        # reinstall workflows before updating workflowAdaptations
-        self.runProfileSteps('Products.PloneMeeting', steps=['workflow'], profile='default')
-        # configure wfAdaptations before reinstall
-        self._configureItemWFValidationLevels()
-        self._migrateKeepAccessToItemWhenAdviceIsGiven()
 
         # reinstall so versions are correctly shown in portal_quickinstaller
         self.reinstall(profiles=['profile-Products.PloneMeeting:default', ],
