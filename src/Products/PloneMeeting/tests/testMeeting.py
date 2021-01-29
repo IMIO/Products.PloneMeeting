@@ -2465,16 +2465,17 @@ class testMeetingType(PloneMeetingTestCase):
         '''
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
-        self.assertEqual(meeting.Title(), self.tool.format_date(meeting.date))
+        self.assertEqual(meeting.Title(), self.tool.format_date(meeting.date, with_hour=True))
         # now check that upon edition, title is updated
-        meeting.date = datetime(2014, 6, 6)
+        meeting.date = datetime(2014, 6, 6, 14, 30)
         # for now, title is not updated
-        self.assertNotEqual(meeting.Title(), self.tool.format_date(meeting.date))
+        self.assertNotEqual(meeting.Title(), self.tool.format_date(meeting.date, with_hour=True))
         notify(ObjectModifiedEvent(meeting, Attributes(Interface, 'place')))
         # only changed if date was edited
-        self.assertNotEqual(meeting.Title(), self.tool.format_date(meeting.date))
+        self.assertNotEqual(meeting.Title(), self.tool.format_date(meeting.date, with_hour=True))
         notify(ObjectModifiedEvent(meeting, Attributes(Interface, 'date')))
-        self.assertEqual(meeting.Title(), self.tool.format_date(meeting.date))
+        self.assertEqual(meeting.Title(), self.tool.format_date(meeting.date, with_hour=True))
+        self.assertEqual(meeting.Title(), '06 june 2014 (14:30)')
 
     def test_pm_Get_items(self):
         '''Test the Meeting.get_items method.'''
@@ -3109,7 +3110,7 @@ class testMeetingType(PloneMeetingTestCase):
         self.assertEqual(
             meeting.get_pretty_link(showContentIcon=True, prefixed=True),
             u"<a class='pretty_link' title='Meeting of 05/05/2015 (12:35)' "
-            "href='http://nohost/plone/Members/pmManager/mymeetings/{0}/o1' target='_self'>"
+            "href='http://nohost/plone/Members/pmManager/mymeetings/{0}/o1' target='_parent'>"
             "<span class='pretty_link_icons'>"
             "<img title='{1}' src='http://nohost/plone/Meeting.png' "
             "style=\"width: 16px; height: 16px;\" /></span>"
