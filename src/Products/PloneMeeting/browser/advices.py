@@ -141,7 +141,7 @@ class AdvicesIconsInfos(BrowserView):
         self.advice_id = advice_id
         self.memberIsAdviserForGroup = advice_id in self.userAdviserOrgUids
         self.adviceIsInherited = self.context.adviceIsInherited(advice_id)
-        isRealManager = self.tool.isManager(self.context, realManagers=True)
+        isRealManager = self.tool.isManager(self.cfg, realManagers=True)
         self.mayEdit = not self.adviceIsInherited and \
             ((self.advicesToEdit and advice_id in self.advicesToEdit) or
              (isRealManager and not self.adviceType == 'not_given'))
@@ -158,7 +158,7 @@ class AdvicesIconsInfos(BrowserView):
              in a itemAdviceEditStates review_state."""
         res = False
         if self.adviceIsInherited:
-            if self.tool.isManager(self.context) and \
+            if self.tool.isManager(self.cfg) and \
                self.context.queryState() not in self.cfg.getItemDecidedStates():
                 res = True
             else:

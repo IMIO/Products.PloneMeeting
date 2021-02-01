@@ -29,6 +29,10 @@ Changelog
   `GroupsInChargeVocabulary`, as these vocabularies are ram.cached, cached
   methods must avoid returning objects.
   [gbastien]
+- Optimized cached methods : avoid having objects in cachekeys, this make cache
+  size too big, when using `ToolPloneMeeting.isManager`, use `cfg` as `context`
+  if available.
+  [gbastien]
 
 4.2b11 (2021-01-19)
 -------------------

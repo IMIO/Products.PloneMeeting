@@ -739,8 +739,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     def isManager_cachekey(method, self, context, realManagers=False):
         '''cachekey method for self.isManager.'''
         return (self._users_groups_value(),
-                api.user.get_current(),
-                context, realManagers)
+                context.UID(),
+                realManagers)
 
     security.declarePublic('isManager')
 
@@ -759,7 +759,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         '''cachekey method for self.isPowerObserverForCfg.'''
         return (self._users_groups_value(),
                 api.user.get_current(),
-                cfg,
+                repr(cfg),
                 power_observer_type)
 
     security.declarePublic('isPowerObserverForCfg')
@@ -802,7 +802,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     def showPloneMeetingTab_cachekey(method, self, cfg):
         '''cachekey method for self.showPloneMeetingTab.'''
         # we only recompute if user groups changed or self changed
-        return (cfg._p_mtime, self.get_plone_groups_for_user(), cfg)
+        return (cfg._p_mtime, self.get_plone_groups_for_user(), repr(cfg))
 
     @ram.cache(showPloneMeetingTab_cachekey)
     def showPloneMeetingTab(self, cfg):
