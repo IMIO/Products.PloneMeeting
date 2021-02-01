@@ -263,19 +263,15 @@ ItemProposingGroupsForFacetedFilterVocabularyFactory = ItemProposingGroupsForFac
 class GroupsInChargeVocabulary(object):
     implements(IVocabularyFactory)
 
-    def __call___cachekey(method, self, context, only_selected=True, sort=True, the_objects=False):
+    def __call___cachekey(method, self, context, only_selected=True, sort=True):
         '''cachekey method for self.__call__.'''
         date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.groupsinchargevocabulary')
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        return date, cfg.getId(), only_selected, sort, the_objects
+        return date, cfg.getId(), only_selected, sort
 
-    @ram.cache(__call___cachekey)
-    def __call__(self, context, only_selected=True, sort=True, the_objects=False):
-        """List groups in charge :
-           - if groupsInCharge in MeetingConfig.usedItemAttributes,
-             list MeetingConfig.orderedGroupsInCharge;
-           - else, list groups_in_charge selected on organizations."""
+    def _get_organizations(self, context, only_selected=True):
+        """This centralize logic of gettting associated groups."""
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         res = []
@@ -308,12 +304,18 @@ class GroupsInChargeVocabulary(object):
             is_using_cfg_order = True
             kept_org_uids = cfg.getOrderedGroupsInCharge()
             res = get_organizations(only_selected=only_selected, kept_org_uids=kept_org_uids)
+        return is_using_cfg_order, res
 
+    @ram.cache(__call___cachekey)
+    def __call__(self, context, only_selected=True, sort=True):
+        """List groups in charge :
+           - if groupsInCharge in MeetingConfig.usedItemAttributes,
+             list MeetingConfig.orderedGroupsInCharge;
+           - else, list groups_in_charge selected on organizations."""
+        is_using_cfg_order, orgs = self._get_organizations(context, only_selected=only_selected)
         terms = []
-        for org in res:
-            term_value = org
-            if not the_objects:
-                term_value = org.UID()
+        for org in orgs:
+            term_value = org.UID()
             terms.append(
                 SimpleTerm(term_value,
                            term_value,
@@ -1837,32 +1839,34 @@ class AssociatedGroupsVocabulary(object):
     """ """
     implements(IVocabularyFactory)
 
-    def __call___cachekey(method, self, context, sort=True, the_objects=False):
+    def __call___cachekey(method, self, context, sort=True):
         '''cachekey method for self.__call__.'''
         date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.associatedgroupsvocabulary')
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        return date, sort, cfg, the_objects
+        return date, sort, cfg
 
-    @ram.cache(__call___cachekey)
-    def __call__(self, context, sort=True, the_objects=False):
-        """ """
+    def _get_organizations(self, context, the_objects=True):
+        """This centralize logic of gettting associated groups."""
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         # selectable associated groups defined in MeetingConfig?
         is_using_cfg_order = False
         if cfg.getOrderedAssociatedOrganizations():
             is_using_cfg_order = True
-            orgs = list(cfg.getOrderedAssociatedOrganizations(theObjects=True))
+            orgs = list(cfg.getOrderedAssociatedOrganizations(theObjects=the_objects))
         else:
             # if not then every selected organizations of plonegroup
-            orgs = get_organizations(only_selected=True)
+            orgs = get_organizations(only_selected=True, the_objects=the_objects)
+        return is_using_cfg_order, orgs
 
+    @ram.cache(__call___cachekey)
+    def __call__(self, context, sort=True):
+        """ """
+        is_using_cfg_order, orgs = self._get_organizations(context)
         terms = []
         for org in orgs:
-            term_value = org
-            if not the_objects:
-                term_value = org.UID()
+            term_value = org.UID()
             terms.append(SimpleTerm(term_value, term_value, org.get_full_title()))
 
         if sort or not is_using_cfg_order:
