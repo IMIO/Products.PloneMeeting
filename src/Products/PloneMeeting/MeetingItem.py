@@ -2845,7 +2845,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def getMeetingToInsertIntoWhenNoCurrentMeetingObject_cachekey(method, self):
         '''cachekey method for self.getMeetingToInsertIntoWhenNoCurrentMeetingObject.'''
         # do only recompute once by REQUEST
-        return (self, str(self.REQUEST._debug))
+        return (repr(self), str(self.REQUEST._debug))
 
     @ram.cache(getMeetingToInsertIntoWhenNoCurrentMeetingObject_cachekey)
     def getMeetingToInsertIntoWhenNoCurrentMeetingObject(self):
@@ -2898,7 +2898,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def isPrivacyViewable_cachekey(method, self):
         '''cachekey method for self.isPrivacyViewable.'''
         item = self.getSelf()
-        return (item, str(item.REQUEST._debug))
+        return (repr(item), str(item.REQUEST._debug))
 
     security.declarePublic('isPrivacyViewable')
 
@@ -6134,7 +6134,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def showDuplicateItemAction_cachekey(method, self, brain=False):
         '''cachekey method for self.showDuplicateItemAction.'''
-        return (self, str(self.REQUEST._debug))
+        return (repr(self), str(self.REQUEST._debug))
 
     security.declarePublic('showDuplicateItemAction')
 
@@ -6734,7 +6734,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def downOrUpWorkflowAgain_cachekey(method, self, brain=False):
         '''cachekey method for self.downOrUpWorkflowAgain.'''
-        return (self, self.modified())
+        return (repr(self), self.modified())
 
     security.declarePrivate('downOrUpWorkflowAgain')
 
