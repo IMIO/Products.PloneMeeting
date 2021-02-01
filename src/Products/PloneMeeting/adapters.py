@@ -143,7 +143,7 @@ class MeetingItemContentDeletableAdapter(APContentDeletableAdapter):
             # check itemWithGivenAdviceIsNotDeletable
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(self.context)
-            if cfg.getItemWithGivenAdviceIsNotDeletable() and not tool.isManager(self.context):
+            if cfg.getItemWithGivenAdviceIsNotDeletable() and not tool.isManager(cfg):
                 # do we have any given advice?
                 # do not consider advices that are inherited
                 given_advices = [advice for advice in self.context.adviceIndex.values() if
@@ -686,7 +686,7 @@ class PMWfHistoryAdapter(ImioWfHistoryAdapter):
         userMayAccessComment = True
         if self.context.meta_type == 'MeetingItem':
             if self.cfg.getHideItemHistoryCommentsToUsersOutsideProposingGroup() and \
-               not self.tool.isManager(self.context):
+               not self.tool.isManager(self.cfg):
                 userOrgUids = self.tool.get_orgs_for_user(the_objects=False)
                 group_managing_item_uid = \
                     self.context.adapted()._getGroupManagingItem(event['review_state']).UID()
@@ -791,7 +791,7 @@ class Criteria(eeaCriteria):
 
     def manage_criteria_cachekey(method, self, context):
         '''cachekey method for self.compute_criteria.'''
-        return context, str(context.REQUEST._debug)
+        return repr(context), str(context.REQUEST._debug)
 
     def __init__(self, context):
         """ """
@@ -1718,7 +1718,7 @@ class PMCategorizedObjectAdapter(CategorizedObjectAdapter):
                 return True
 
             # bypass for MeetingManagers
-            if self.tool.isManager(self.context):
+            if self.tool.isManager(self.cfg):
                 return True
 
             # Meeting

@@ -6735,7 +6735,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     def getMeetingsAcceptingItems_cachekey(method, self, review_states=('created', 'frozen'), inTheFuture=False):
         '''cachekey method for self.getMeetingsAcceptingItems.'''
-        return (self, str(self.REQUEST._debug), review_states, inTheFuture)
+        return (repr(self), str(self.REQUEST._debug), review_states, inTheFuture)
 
     def _getMeetingsAcceptingItemsQuery(self, review_states=('created', 'frozen'), inTheFuture=False):
         '''Compute the catalog query to get meeting accepting items.'''

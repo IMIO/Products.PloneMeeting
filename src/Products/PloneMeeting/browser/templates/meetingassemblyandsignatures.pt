@@ -20,7 +20,7 @@
                        itemAbsents python: context.getItemAbsents(by_persons=True);
                        itemExcused python: context.getItemExcused(by_persons=True);
                        itemSignatories python: context.getItemSignatories(by_signatories=True);
-                       isManager python:view.tool.isManager(context);">
+                       isManager python:view.tool.isManager(view.cfg);">
     <tal:comment replace="nothing">Column captions</tal:comment>
     <thead>
     <tr>
