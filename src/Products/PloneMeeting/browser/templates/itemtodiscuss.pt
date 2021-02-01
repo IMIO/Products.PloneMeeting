@@ -1,7 +1,7 @@
 <tal:defines i18n:domain="PloneMeeting"
              define="mayEdit view/mayEdit;
                      userIsReviewer view/userIsReviewer;
-                     isManager python: view.tool.isManager(context);
+                     isManager python: view.tool.isManager(view.cfg);
                      useToggleDiscuss view/useToggleDiscuss;
                      UID context/UID;
                      portal_url view/portal_url" >

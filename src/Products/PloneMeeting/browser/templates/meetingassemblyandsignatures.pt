@@ -37,7 +37,7 @@ field before and the 'attendees' now, if the field is not empty, we display it</
                        itemAbsents python: context.get_item_absents(by_persons=True);
                        itemExcused python: context.get_item_excused(by_persons=True);
                        itemSignatories python: context.get_item_signatories(by_signatories=True);
-                       isManager python:view.tool.isManager(context);">
+                       isManager python:view.tool.isManager(view.cfg);">
     <tal:comment replace="nothing">Column captions</tal:comment>
     <thead>
     <tr>

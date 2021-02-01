@@ -651,8 +651,8 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
         if useIcons:
             # hide 'duplicate' actions when showing icons if not in cfg.itemActionsColumnConfig
             itemActionsColumnConfig = self.cfg.getItemActionsColumnConfig()
-            isMeetingManager = self.tool.isManager(self.context)
-            isManager = self.tool.isManager(self.context, realManagers=True)
+            isMeetingManager = self.tool.isManager(self.cfg)
+            isManager = self.tool.isManager(self.cfg, realManagers=True)
             if not (
                 (isMeetingManager and 'meetingmanager_duplicate' in itemActionsColumnConfig) or
                 (isManager and 'manager_duplicate' in itemActionsColumnConfig) or
@@ -878,7 +878,7 @@ class ConfigActionsPanelView(ActionsPanelView):
         """
           Add a link to linked Plone groups for an organization.
         """
-        if self.tool.isManager(self.context, True) and self.context.getId() != PLONEGROUP_ORG:
+        if self.tool.isManager(self.cfg, True) and self.context.getId() != PLONEGROUP_ORG:
             return ViewPageTemplateFile("templates/actions_panel_config_linkedplonegroups.pt")(self)
         return ''
 
@@ -1223,7 +1223,7 @@ class CategorizedAnnexesView(CategorizedTabView):
         """Made to be overrided."""
         annex_attr_config = '{0}_display'.format(action_type)
         check = annex_attr_config in self.cfg.getAnnexRestrictShownAndEditableAttributes()
-        return not check or self.tool.isManager(self.context)
+        return not check or self.tool.isManager(self.cfg)
 
     def showAddAnnex(self):
         """ """
@@ -1321,7 +1321,7 @@ class PMCategorizedChildInfosView(CategorizedChildInfosView):
         """ """
         annex_attr_config = '{0}_display'.format(detail_type)
         check = annex_attr_config in self.cfg.getAnnexRestrictShownAndEditableAttributes()
-        return not check or self.tool.isManager(self.context)
+        return not check or self.tool.isManager(self.cfg)
 
 
 class PMBaseActionView(BaseActionView):
@@ -1349,7 +1349,7 @@ class PMBaseActionView(BaseActionView):
             cfg = tool.getMeetingConfig(self.context)
             annex_attr_config = cfg.getAnnexRestrictShownAndEditableAttributes()
             if config_attr_display in annex_attr_config or config_attr_edit in annex_attr_config:
-                res = tool.isManager(self.context)
+                res = tool.isManager(cfg)
         return res
 
 
@@ -1402,7 +1402,7 @@ class PMTransitionBatchActionForm(TransitionBatchActionForm):
         return (self.context.__class__.__name__ == 'Meeting' and
                 _checkPermission(ModifyPortalContent, self.context)) or \
                (not self.context.__class__.__name__ == 'Meeting' and
-                (tool.isManager(self.context) or
+                (tool.isManager(cfg) or
                  bool(tool.userIsAmong(suffixes=get_all_suffixes(None), cfg=cfg))))
 
 
@@ -1460,7 +1460,7 @@ class PMCatalogNavigationTabs(CatalogNavigationTabs):
                     'data-config_full_label': config_group[2]}
                 mc_tabs.append(data)
         # insert a tab for contacts directory for Managers
-        if tool.isManager(self.context, realManagers=True):
+        if tool.isManager(tool, realManagers=True):
             data = {
                 'name': 'Contacts',
                 'id': 'contacts',

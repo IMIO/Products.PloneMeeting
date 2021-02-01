@@ -115,7 +115,7 @@ class ItemCategoriesVocabulary(object):
         date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.categoriesvocabulary')
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        return date, cfg, classifiers
+        return date, repr(cfg), classifiers
 
     @ram.cache(__call___cachekey)
     def __call__(self, context, classifiers=False):
@@ -220,7 +220,7 @@ class ItemProposingGroupsForFacetedFilterVocabulary(object):
             'Products.PloneMeeting.vocabularies.proposinggroupsforfacetedfiltervocabulary')
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        return date, cfg
+        return date, repr(cfg)
 
     @ram.cache(__call___cachekey)
     def __call__(self, context):
@@ -268,19 +268,15 @@ ItemProposingGroupsForFacetedFilterVocabularyFactory = ItemProposingGroupsForFac
 class GroupsInChargeVocabulary(object):
     implements(IVocabularyFactory)
 
-    def __call___cachekey(method, self, context, only_selected=True, sort=True, the_objects=False):
+    def __call___cachekey(method, self, context, only_selected=True, sort=True):
         '''cachekey method for self.__call__.'''
         date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.groupsinchargevocabulary')
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        return date, cfg.getId(), only_selected, sort
+        return date, repr(cfg), only_selected, sort
 
-    @ram.cache(__call___cachekey)
-    def __call__(self, context, only_selected=True, sort=True, the_objects=False):
-        """List groups in charge :
-           - if groupsInCharge in MeetingConfig.usedItemAttributes,
-             list MeetingConfig.orderedGroupsInCharge;
-           - else, list groups_in_charge selected on organizations."""
+    def _get_organizations(self, context, only_selected=True):
+        """This centralize logic of gettting associated groups."""
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         res = []
@@ -313,12 +309,18 @@ class GroupsInChargeVocabulary(object):
             is_using_cfg_order = True
             kept_org_uids = cfg.getOrderedGroupsInCharge()
             res = get_organizations(only_selected=only_selected, kept_org_uids=kept_org_uids)
+        return is_using_cfg_order, res
 
+    @ram.cache(__call___cachekey)
+    def __call__(self, context, only_selected=True, sort=True):
+        """List groups in charge :
+           - if groupsInCharge in MeetingConfig.usedItemAttributes,
+             list MeetingConfig.orderedGroupsInCharge;
+           - else, list groups_in_charge selected on organizations."""
+        is_using_cfg_order, orgs = self._get_organizations(context, only_selected=only_selected)
         terms = []
-        for org in res:
-            term_value = org
-            if not the_objects:
-                term_value = org.UID()
+        for org in orgs:
+            term_value = org.UID()
             terms.append(
                 SimpleTerm(term_value,
                            term_value,
@@ -494,7 +496,7 @@ class CreatorsForFacetedFilterVocabulary(object):
         date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.creatorsforfacetedfiltervocabulary')
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        return date, cfg
+        return date, repr(cfg)
 
     @ram.cache(__call___cachekey)
     def __call__(self, context):
@@ -550,7 +552,7 @@ class MeetingDatesVocabulary(object):
         date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.meetingdatesvocabulary')
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        return date, cfg
+        return date, repr(cfg)
 
     @ram.cache(__call___cachekey)
     def __call__(self, context):
@@ -652,7 +654,7 @@ class AskedAdvicesVocabulary(object):
         # when creating new Plone Site, context may be the Zope Application...
         if hasattr(context, 'portal_type'):
             cfg = tool.getMeetingConfig(context)
-        return date, cfg
+        return date, repr(cfg)
 
     @ram.cache(__call___cachekey)
     def __call__(self, context):
@@ -830,7 +832,7 @@ class AdviceTypesVocabulary(object):
         date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.advicetypesvocabulary')
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        return date, cfg
+        return date, repr(cfg)
 
     @ram.cache(__call___cachekey)
     def __call__(self, context):
@@ -1403,8 +1405,8 @@ class PMCategoryVocabulary(CategoryVocabulary):
         annex_group = get_group(annex_config, context)
         # when a ContentCategory is added/edited/removed, the MeetingConfig is modified
         tool = api.portal.get_tool('portal_plonemeeting')
-        isManager = tool.isManager(context)
         cfg = tool.getMeetingConfig(context)
+        isManager = tool.isManager(cfg)
         # in case called from dexterity types configuration panel, no cfg
         cfg_modified = cfg and cfg.modified() or None
         # if context is an annex, cache on context.UID() + context.modified() to manage stored term
@@ -1685,7 +1687,7 @@ class SelectableHeldPositionsVocabulary(BaseHeldPositionsVocabulary):
     def __call___cachekey(method, self, context, usage=None, uids=[]):
         '''cachekey method for self.__call__.'''
         date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.selectableheldpositionsvocabulary')
-        return date, str(context), usage, uids
+        return date, repr(context), usage, uids
 
     @ram.cache(__call___cachekey)
     def __call__(self, context, usage=None, uids=[]):
@@ -1702,7 +1704,7 @@ class SelectableAssemblyMembersVocabulary(BaseHeldPositionsVocabulary):
     def __call___cachekey(method, self, context, usage=None, uids=[]):
         '''cachekey method for self.__call__.'''
         date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.selectableassemblymembersvocabulary')
-        return date, str(context), usage, uids
+        return date, repr(context), usage, uids
 
     @ram.cache(__call___cachekey)
     def __call__(self, context, usage=None, uids=[]):
@@ -1744,7 +1746,7 @@ class SelectableItemInitiatorsVocabulary(BaseHeldPositionsVocabulary):
     def __call___cachekey(method, self, context, usage=None, uids=[]):
         '''cachekey method for self.__call__.'''
         date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.selectableiteminitiatorsvocabulary')
-        return date, str(context), usage, uids
+        return date, repr(context), usage, uids
 
     @ram.cache(__call___cachekey)
     def __call__(self, context):
@@ -1785,7 +1787,7 @@ class ItemVotersVocabulary(BaseHeldPositionsVocabulary):
         date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.itemvotersvocabulary')
         # as used in a datagridfield, context may vary...
         context = get_context_with_request(context)
-        return date, context.UID()
+        return date, repr(context)
 
     @ram.cache(__call___cachekey)
     def __call__(self, context):
@@ -1842,32 +1844,34 @@ class AssociatedGroupsVocabulary(object):
     """ """
     implements(IVocabularyFactory)
 
-    def __call___cachekey(method, self, context, sort=True, the_objects=False):
+    def __call___cachekey(method, self, context, sort=True):
         '''cachekey method for self.__call__.'''
         date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.associatedgroupsvocabulary')
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        return date, sort, cfg
+        return date, sort, repr(cfg)
 
-    @ram.cache(__call___cachekey)
-    def __call__(self, context, sort=True, the_objects=False):
-        """ """
+    def _get_organizations(self, context, the_objects=True):
+        """This centralize logic of gettting associated groups."""
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         # selectable associated groups defined in MeetingConfig?
         is_using_cfg_order = False
         if cfg.getOrderedAssociatedOrganizations():
             is_using_cfg_order = True
-            orgs = list(cfg.getOrderedAssociatedOrganizations(theObjects=True))
+            orgs = list(cfg.getOrderedAssociatedOrganizations(theObjects=the_objects))
         else:
             # if not then every selected organizations of plonegroup
-            orgs = get_organizations(only_selected=True)
+            orgs = get_organizations(only_selected=True, the_objects=the_objects)
+        return is_using_cfg_order, orgs
 
+    @ram.cache(__call___cachekey)
+    def __call__(self, context, sort=True):
+        """ """
+        is_using_cfg_order, orgs = self._get_organizations(context)
         terms = []
         for org in orgs:
-            term_value = org
-            if not the_objects:
-                term_value = org.UID()
+            term_value = org.UID()
             terms.append(SimpleTerm(term_value, term_value, org.get_full_title()))
 
         if sort or not is_using_cfg_order:
@@ -1919,7 +1923,7 @@ class CopyGroupsVocabulary(object):
         date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.copygroupsvocabulary')
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        return date, cfg
+        return date, repr(cfg)
 
     @ram.cache(__call___cachekey)
     def __call__(self, context):

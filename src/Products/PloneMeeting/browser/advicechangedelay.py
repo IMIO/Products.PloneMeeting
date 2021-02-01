@@ -61,7 +61,7 @@ class AdviceDelaysView(BrowserView):
         else:
             # advice is automatic, only Managers and MeetingManagers can change an automatic advice delay
             # and only if the advice still could not be given or if it is currently editable
-            if not self.tool.isManager(self.context) or \
+            if not self.tool.isManager(self.cfg) or \
                not _checkPermission(ModifyPortalContent, self.context):
                 return False
 
@@ -108,7 +108,7 @@ class AdviceDelaysView(BrowserView):
         # MeetingManagers and advisers of the group
         # can access the delay changes history
         userAdviserOrgUids = self.tool.get_orgs_for_user(suffixes=['advisers'], the_objects=False)
-        if self.tool.isManager(self.context) or \
+        if self.tool.isManager(self.cfg) or \
            advice_uid in userAdviserOrgUids or \
            self.context.getProposingGroup() in self.tool.get_orgs_for_user(the_objects=False):
             return True

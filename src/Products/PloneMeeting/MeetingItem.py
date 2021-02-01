@@ -2942,7 +2942,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if not cfg.getRestrictAccessToSecretItems():
             return True
         # Bypass privacy check for (Meeting)Manager
-        if tool.isManager(item):
+        if tool.isManager(cfg):
             return True
 
         # now check if among local_roles, a role is giving view access to the item
@@ -3139,7 +3139,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         isDefinedInTool = self.isDefinedInTool()
         # bypass for Managers, pass idDefinedInTool to True so Managers
         # can select any available organizations
-        isManager = tool.isManager(self, realManagers=True)
+        isManager = tool.isManager(cfg, realManagers=True)
         # show every groups for Managers or when isDefinedInTool
         only_selectable = not bool(isDefinedInTool or isManager)
         orgs = tool.get_selectable_orgs(cfg, only_selectable=only_selectable)
@@ -6496,7 +6496,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # if transitions to trigger, trigger them!
         # this is only done when item is cloned automatically or current user isManager
         if not triggerUntil == NO_TRIGGER_WF_TRANSITION_UNTIL and \
-           (automatically or tool.isManager(self)):
+           (automatically or tool.isManager(cfg)):
             # triggerUntil is like meeting-config-xxx.validate, get the real transition
             triggerUntil = triggerUntil.split('.')[1]
             wf_comment = translate('transition_auto_triggered_item_sent_to_this_config',
@@ -6612,7 +6612,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 (not automatically and
                  (item_state in cfg.getItemManualSentToOtherMCStates() or
                   item_state in cfg.getItemAutoSentToOtherMCStates()) and
-                 (_checkPermission(ModifyPortalContent, item) or tool.isManager(item)))
+                 (_checkPermission(ModifyPortalContent, item) or tool.isManager(cfg)))
                 ):
             return False
 

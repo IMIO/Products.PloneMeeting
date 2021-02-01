@@ -25,7 +25,7 @@
                     </a>
                     <a style="display: inline;"
                        class="fa fa-cog"
-                       tal:condition="python: tool.isManager(view.context)"
+                       tal:condition="python: tool.isManager(cfg)"
                        href="#"
                        title="pm_configuration" i18n:attributes="title"
                        tal:attributes="href cfg/absolute_url">

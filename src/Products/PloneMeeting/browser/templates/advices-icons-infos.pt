@@ -10,7 +10,7 @@
                        displayedAddIcon python: False;
                        displayedReviewState python: False;
                        adviceStyle python: cfg.getAdviceStyle();
-                       displayAdviceConfidentiality python: cfg.getEnableAdviceConfidentiality() and view.tool.isManager(context);
+                       displayAdviceConfidentiality python: cfg.getEnableAdviceConfidentiality() and view.tool.isManager(cfg);
                        item_review_state context/query_state;">
 
           <tal:comment replace="nothing">List of group names</tal:comment>
