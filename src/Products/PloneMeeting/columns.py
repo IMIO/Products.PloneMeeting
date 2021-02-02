@@ -117,14 +117,14 @@ class ItemPollTypeColumn(VocabularyColumn):
 def render_item_annexes(item, tool, show_nothing=False):
     """ """
     annexes = ''
-    annexes += item.restrictedTraverse('categorized-childs')(
+    annexes += item.restrictedTraverse('@@categorized-childs')(
         portal_type='annex', show_nothing=show_nothing)
     if tool.hasAnnexes(item, portal_type='annexDecision'):
         decision_term = translate("AnnexesDecisionShort",
                                   domain='PloneMeeting',
                                   context=item.REQUEST)
         annexes += u"<span class='discreet'>{0}&nbsp;:&nbsp;</span>".format(decision_term)
-        annexes += item.restrictedTraverse('categorized-childs')(
+        annexes += item.restrictedTraverse('@@categorized-childs')(
             portal_type='annexDecision', show_nothing=show_nothing)
     return annexes
 
@@ -194,7 +194,7 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
         elif obj.getTagName() == 'Meeting':
             visibleColumns = cfg.getMeetingColumns()
             staticInfos = obj.restrictedTraverse('@@static-infos')(visibleColumns=visibleColumns)
-            annexes += obj.restrictedTraverse('categorized-childs')(portal_type='annex')
+            annexes += obj.restrictedTraverse('@@categorized-childs')(portal_type='annex')
         if annexes:
             annexes = u"<div class='dashboard_annexes'>{0}</div>".format(annexes)
 

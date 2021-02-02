@@ -270,7 +270,7 @@
                     align="right"
                     class="advice_annexes table_widget_value">
                     <tal:defines condition="adviceHolderIsViewable">
-                        <tal:annexes replace="structure python: obj.restrictedTraverse('categorized-childs')()" />
+                        <tal:annexes replace="structure python: obj.restrictedTraverse('@@categorized-childs')()" />
                     </tal:defines>
                 </td>
               </tr>

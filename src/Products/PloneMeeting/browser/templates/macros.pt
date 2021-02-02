@@ -814,7 +814,7 @@ This works for an AT and for a DX.</tal:comment>
 <tal:defines define="isDexterity python: obj.getTypeInfo().meta_type == 'Dexterity FTI';">
   <tal:dx condition="isDexterity">
     <tal:loop
-        define="view python: obj.restrictedTraverse('view');
+        define="view python: obj.restrictedTraverse('@@view');
                 dummy python: view.update();
                 groups view/groups;
                 widgets python: [group.widgets.values() for group in groups];

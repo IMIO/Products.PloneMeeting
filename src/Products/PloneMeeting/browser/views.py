@@ -155,7 +155,7 @@ class BaseStaticInfosView(BrowserView):
         """ """
         self.visibleColumns = visibleColumns
         if IDexterityContent.providedBy(self.context):
-            view = self.context.restrictedTraverse('view')
+            view = self.context.restrictedTraverse('@@view')
             view.update()
             self.dx_view = view
 
@@ -539,7 +539,7 @@ class BaseDGHV(object):
 
     def printHistory(self):
         """Return the history view for templates. """
-        historyView = self.context.restrictedTraverse('historyview')()
+        historyView = self.context.restrictedTraverse('@@historyview')()
         historyViewRendered = lxml.html.fromstring(historyView)
         return lxml.html.tostring(historyViewRendered.get_element_by_id('content-core'), method='xml')
 

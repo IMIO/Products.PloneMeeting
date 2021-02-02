@@ -337,7 +337,7 @@ class MeetingView(FacetedContainerView):
         self.member = api.user.get_current()
         self.is_manager = self.tool.isManager(self.context)
         # make the 'view' widget available on faceted view
-        view = self.context.restrictedTraverse('view')
+        view = self.context.restrictedTraverse('@@view')
         view.update()
         self.meeting_view = view
 

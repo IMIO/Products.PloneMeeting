@@ -519,7 +519,7 @@ class AsyncLoadMeetingAssemblyAndSignatures(BrowserView, BaseMeetingView):
         self.used_attrs = self.cfg.getUsedMeetingAttributes()
         self.showVoters = self.cfg.getUseVotes()
         self.voters = self.context.get_voters()
-        view = self.context.restrictedTraverse('view')
+        view = self.context.restrictedTraverse('@@view')
         view.update()
         self.meeting_view = view
 
