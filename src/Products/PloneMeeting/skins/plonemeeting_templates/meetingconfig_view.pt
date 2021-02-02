@@ -141,7 +141,7 @@
               Warning: take care that launching these proceedings may take time, depending on the number of existing elements!  Do not launch during period of hig use!
               </p>
               <form name="updateAllLocalRolesForm" action="updateAllLocalRoles"
-                    tal:attributes="action string:${tool/absolute_url}/updateAllLocalRoles">
+                    tal:attributes="action string:${tool/absolute_url}/update_all_local_roles">
                 <p class="discreet" style="color: red;" i18n:translate="mc_update_all_local_roles_warning">
                     Warning: this will update every items and meetings of this configuration, it is only relevant if the field of the configuration that you changed specifies that you need to use this action.  If you only made little changes like adding or removing a state in a field, as an administrator, it is possible to update items and meetings from the dashboards.  To do this, select elements that need to be updated and use the \"Update from configuration\" batch action.
                 </p>
