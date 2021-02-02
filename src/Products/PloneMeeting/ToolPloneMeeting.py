@@ -738,8 +738,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     def isManager_cachekey(method, self, context, realManagers=False):
         '''cachekey method for self.isManager.'''
-        return (self._users_groups_value(),
-                context.UID(),
+        return (self.get_plone_groups_for_user(),
+                repr(context),
                 realManagers)
 
     security.declarePublic('isManager')
@@ -757,8 +757,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     def isPowerObserverForCfg_cachekey(method, self, cfg, power_observer_type=None):
         '''cachekey method for self.isPowerObserverForCfg.'''
-        return (self._users_groups_value(),
-                api.user.get_current(),
+        return (self.get_plone_groups_for_user(),
                 repr(cfg),
                 power_observer_type)
 
