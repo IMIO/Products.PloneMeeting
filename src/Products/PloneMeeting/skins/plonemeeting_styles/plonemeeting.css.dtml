@@ -1495,13 +1495,8 @@ body.template-meeting_available_items_view #portal-column-content {
 body.template-meeting_available_items_view div#ajax-spinner {
    top: -35px;
 }
-
-/* temporary until collective.documentgenerator 0.6 is out */
-div#doc-generation-view ul.pod-template li {
-    display: inline-block;
-}
-
-div#doc-generation-view {
+/* docgen icons on the item view */
+body.template-meetingitem_view div#doc-generation-view {
    float: right;
 }
 
