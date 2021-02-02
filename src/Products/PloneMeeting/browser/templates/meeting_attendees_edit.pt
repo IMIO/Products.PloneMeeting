@@ -83,10 +83,6 @@
          tal:attributes="class python: error_id and 'field error' or 'field';">
         <div class="fieldErrorBox"
              tal:content="error_id" i18n:translate="">Validation Error</div>
-        <div class="formQuestion label">
-            <span i18n:translate="assembly_and_signatures">Assembly and signatures</span>
-            <span class="formHelp" id="meeting_attendees_help"></span>
-        </div>
         <table id="meeting_users" name="meeting_users" class="listing" i18n:domain="PloneMeeting"
                tal:define="all_users python: view.get_all_users();
                            attendees python: view.get_attendees();

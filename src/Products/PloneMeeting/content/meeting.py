@@ -126,7 +126,7 @@ class IMeeting(IDXMeetingContent):
     form.widget('assembly', PMTextAreaFieldWidget)
     assembly = RichText(
         title=_(u"title_assembly"),
-        description=_("descr_meeting_assembly"),
+        description=_("descr_assembly"),
         default_mime_type='text/plain',
         allowed_mime_types=('text/plain', ),
         output_mime_type='text/plain',
@@ -136,7 +136,6 @@ class IMeeting(IDXMeetingContent):
     form.widget('assembly_excused', PMTextAreaFieldWidget)
     assembly_excused = RichText(
         title=_(u"title_assembly_excused"),
-        description=_("descr_meeting_assembly_excused"),
         default_mime_type='text/plain',
         allowed_mime_types=('text/plain', ),
         output_mime_type='text/plain',
@@ -145,7 +144,6 @@ class IMeeting(IDXMeetingContent):
     form.widget('assembly_absents', PMTextAreaFieldWidget)
     assembly_absents = RichText(
         title=_(u"title_assembly_absents"),
-        description=_("descr_meeting_assembly_absents"),
         default_mime_type='text/plain',
         allowed_mime_types=('text/plain', ),
         output_mime_type='text/plain',
@@ -154,7 +152,6 @@ class IMeeting(IDXMeetingContent):
     form.widget('assembly_guests', PMTextAreaFieldWidget)
     assembly_guests = RichText(
         title=_(u"title_assembly_guests"),
-        description=_("descr_assembly_guests"),
         default_mime_type='text/plain',
         allowed_mime_types=('text/plain', ),
         output_mime_type='text/plain',
@@ -163,7 +160,6 @@ class IMeeting(IDXMeetingContent):
     form.widget('assembly_proxies', PMTextAreaFieldWidget)
     assembly_proxies = RichText(
         title=_(u"title_assembly_proxies"),
-        description=_("descr_assembly_proxies"),
         default_mime_type='text/plain',
         allowed_mime_types=('text/plain', ),
         output_mime_type='text/plain',
@@ -172,7 +168,6 @@ class IMeeting(IDXMeetingContent):
     form.widget('assembly_staves', PMTextAreaFieldWidget)
     assembly_staves = RichText(
         title=_(u"title_assembly_staves"),
-        description=_("descr_assembly_staves"),
         default_mime_type='text/plain',
         allowed_mime_types=('text/plain', ),
         output_mime_type='text/plain',
@@ -181,7 +176,6 @@ class IMeeting(IDXMeetingContent):
     form.widget('signatures', PMTextAreaFieldWidget)
     signatures = RichText(
         title=_(u"title_signatures"),
-        description=_("descr_signatures"),
         default_mime_type='text/plain',
         allowed_mime_types=("text/plain", ),
         output_mime_type='text/plain',
@@ -190,7 +184,6 @@ class IMeeting(IDXMeetingContent):
     searchable("place")
     place = Text(
         title=_(u"title_place"),
-        description=_("descr_place"),
         required=False)
 
     form.widget('pre_meeting_date', DatetimeFieldWidget, show_today_link=True, show_time=True)
@@ -201,13 +194,11 @@ class IMeeting(IDXMeetingContent):
     searchable("pre_meeting_place")
     pre_meeting_place = Text(
         title=_(u"title_pre_meeting_place"),
-        description=_("descr_place"),
         required=False)
 
     form.widget('extraordinary_session', RadioFieldWidget)
     extraordinary_session = schema.Bool(
         title=_(u'title_extraordinary_session'),
-        description=_("descr_extraordinary_session"),
         default=False,
         required=False)
 
@@ -283,14 +274,12 @@ class IMeeting(IDXMeetingContent):
         required=False,
         allowed_mime_types=(u"text/html", ))
 
-    form.write_permission(meeting_number=ManagePortal)
     meeting_number = Int(
         title=_(u"title_meeting_number"),
         description=_("descr_field_reserved_to_meeting_managers"),
         default=-1,
         required=False)
 
-    form.write_permission(first_item_number=ManagePortal)
     first_item_number = Int(
         title=_(u"title_first_item_number"),
         description=_("descr_field_reserved_to_meeting_managers"),
@@ -298,27 +287,27 @@ class IMeeting(IDXMeetingContent):
         required=False)
 
     model.fieldset('dates_and_data',
-                   label=_(u"Dates and data"),
+                   label=_(u"fieldset_dates_and_data"),
                    fields=['date', 'start_date', 'mid_date', 'end_date',
                            'approval_date', 'convocation_date', 'place',
                            'pre_meeting_date', 'pre_meeting_place',
                            'extraordinary_session'])
 
     model.fieldset('assembly',
-                   label=_(u"Assembly and signatures"),
+                   label=_(u"fieldset_assembly"),
                    fields=['assembly', 'assembly_excused', 'assembly_absents',
                            'assembly_guests', 'assembly_proxies', 'assembly_staves',
                            'signatures'])
 
     model.fieldset('details',
-                   label=_(u"Details"),
+                   label=_(u"fieldset_details"),
                    fields=['in_and_out_moves', 'notes', 'observations',
                            'pre_observations', 'committee_observations',
                            'votes_observations', 'public_meeting_observations',
                            'secret_meeting_observations', 'authority_notice'])
 
     model.fieldset('managers_parameters',
-                   label=_(u"Manager reserved parameters"),
+                   label=_(u"fieldset_managers_parameters"),
                    fields=['meeting_number', 'first_item_number'])
 
     @invariant
@@ -682,10 +671,10 @@ class Meeting(Container):
              'condition': "python:cfg.show_meeting_manager_reserved_field('authority_notice')"},
         'meeting_number':
             {'optional': False,
-             'condition': ""},
+             'condition': "python:tool.isManager(cfg)"},
         'first_item_number':
             {'optional': False,
-             'condition': ""},
+             'condition': "python:tool.isManager(cfg)"},
     }
 
     security.declarePublic('get_pretty_link')

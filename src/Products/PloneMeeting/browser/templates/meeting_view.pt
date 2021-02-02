@@ -36,7 +36,10 @@
   <tal:comment replace="nothing">Dates and data</tal:comment>
   <div class="collapsible discreet"
        onclick="toggleDetails('collapsible-dates-and-data', toggle_parent_active=true, parent_tag=this)">
-    <span class="meeting_attribute_label" i18n:translate='dates-and-data'>Dates and data</span>
+    <span class="meeting_attribute_label"
+          tal:content="python: view.meeting_view.fieldsets['dates_and_data'].label">
+      Dates and data
+    </span>
   </div>
   <div id="collapsible-dates-and-data"
        class="collapsible-content"
@@ -67,7 +70,8 @@
                                                     parent_tag=null,
                                                     load_view='@@load_meeting_assembly_and_signatures');"
       class="collapsible discreet not-auto-collapsible-activable">
-   <span class="meeting_attribute_label" i18n:translate="assembly_and_signatures">
+   <span class="meeting_attribute_label"
+         tal:content="python: view.meeting_view.fieldsets['assembly'].label">
      Meeting assembly and signatures
    </span>
   </div>
@@ -137,7 +141,10 @@
   <tal:comment replace="nothing">Details</tal:comment>
   <div class="collapsible active discreet"
        onclick="toggleDetails('collapsible-details', toggle_parent_active=true, parent_tag=this)">
-    <span class="meeting_attribute_label" i18n:translate='details'>Details</span>
+    <span class="meeting_attribute_label"
+          tal:content="python: view.meeting_view.fieldsets['details'].label">
+      Details
+    </span>
   </div>
   <div id="collapsible-details"
        class="collapsible-content"
@@ -157,7 +164,10 @@
   <div class="collapsible discreet"
        tal:condition="python: view.is_manager"
        onclick="toggleDetails('collapsible-managers-parameters', toggle_parent_active=true, parent_tag=this)">
-    <span class="meeting_attribute_label" i18n:translate='managers_parameters'>Managers parameters</span>
+    <span class="meeting_attribute_label"
+         tal:content="python: view.meeting_view.fieldsets['managers_parameters'].label">
+      Managers parameters
+    </span>
   </div>
   <div id="collapsible-managers-parameters"
        class="collapsible-content"
