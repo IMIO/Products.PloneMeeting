@@ -252,6 +252,28 @@ class AttendeesEditProvider(ContentProviderBase, BaseMeetingView):
             voters = _get_default_voters(self.context)
         return voters
 
+    def checked(self, cbid, muid, stored_value, req_key="meeting_attendees"):
+        """Helper to manage checked checkboxes, especially when an error
+           occured and the form is reloaded."""
+        # case reloaded, check if checked in request
+        if req_key in self.request:
+            is_checked = cbid in self.request.get(req_key, [])
+        # initial form load, nothing in request
+        else:
+            is_checked = muid in stored_value
+        return is_checked
+
+    def disabled(self, attendee_id, muid, stored_value, req_key="meeting_attendees"):
+        """Helper to manage checked checkboxes, especially when an error
+           occured and the form is reloaded."""
+        # case reloaded, check if checked in request
+        if req_key in self.request:
+            is_disabled = attendee_id not in self.request.get(req_key, [])
+        # initial form load, nothing in request
+        else:
+            is_disabled = muid not in stored_value
+        return is_disabled
+
 
 class MeetingEdit(DefaultEditForm, BaseMeetingView):
     """

@@ -25,7 +25,6 @@ from plone.directives import form
 from plone.formwidget.datetime.z3cform.widget import DatetimeFieldWidget
 from plone.memoize import ram
 from plone.supermodel import model
-from Products.CMFCore.permissions import ManagePortal
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFPlone.utils import base_hasattr
 from Products.CMFPlone.utils import safe_unicode
@@ -411,7 +410,8 @@ class IMeeting(IDXMeetingContent):
             # ['muser_attendeeuid1_attendee', 'muser_attendeeuid2_excused']
             stored_attendees = get_all_used_held_positions(context, the_objects=False)
             meeting_attendees = [attendee.split('_')[1] for attendee
-                                 in request.form.get('meeting_attendees', [])]
+                                 in request.form.get('meeting_attendees', [])
+                                 if attendee.split('_')[2] == 'attendee']
             removed_meeting_attendees = set(stored_attendees).difference(meeting_attendees)
             # attendees redefined on items
             redefined_item_attendees = context._get_all_redefined_attendees(by_persons=True)

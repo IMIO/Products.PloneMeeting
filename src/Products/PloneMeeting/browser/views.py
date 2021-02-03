@@ -873,7 +873,7 @@ class BaseDGHV(object):
                     if show_replaced_by:
                         res[org][contact] = attendee_value_format.format(
                             res[org][contact], replaced_by_format[contact_gender].format(
-                                meeting.displayUserReplacement(
+                                meeting.display_user_replacement(
                                     replaced[contact_uid],
                                     include_held_position_label=include_replace_by_held_position_label,
                                     include_sub_organizations=False)))
@@ -926,7 +926,7 @@ class BaseDGHV(object):
                 if contact_uid in replaced and show_replaced_by:
                     contact_value = replaced_by_format[contact.gender].format(
                         contact_value,
-                        meeting.displayUserReplacement(
+                        meeting.display_user_replacement(
                             replaced[contact_uid],
                             include_held_position_label=include_replace_by_held_position_label,
                             include_sub_organizations=False))

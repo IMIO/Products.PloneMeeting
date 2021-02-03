@@ -104,7 +104,7 @@
          </span>
         </td>
         <td align="center" tal:condition="use_user_replacements">
-          <span tal:condition="python: aUid in user_replacements" tal:content="python: context.displayUserReplacement(user_replacements[aUid])"></span>
+          <span tal:condition="python: aUid in user_replacements" tal:content="python: context.display_user_replacement(user_replacements[aUid])"></span>
           <span tal:condition="python: aUid in excused + absents and aUid not in user_replacements">-</span>
         </td>
         <td align="center" tal:condition="showNonAttendees">

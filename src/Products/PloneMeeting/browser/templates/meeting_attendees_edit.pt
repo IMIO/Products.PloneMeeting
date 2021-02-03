@@ -77,12 +77,7 @@
     }
     </script>
 
-    <div class="field"
-         tal:define="errors python: request.get('errors', {});
-                     error_id python: errors.get('meeting_attendees')"
-         tal:attributes="class python: error_id and 'field error' or 'field';">
-        <div class="fieldErrorBox"
-             tal:content="error_id" i18n:translate="">Validation Error</div>
+    <div class="field">
         <table id="meeting_users" name="meeting_users" class="listing" i18n:domain="PloneMeeting"
                tal:define="all_users python: view.get_all_users();
                            attendees python: view.get_attendees();
@@ -126,7 +121,7 @@
                              tal:attributes="id cbid;
                                              name string:meeting_attendees:list;
                                              value cbid;
-                                             checked python: errors and cbid in request.get('meeting_attendees', []) or muid in attendees;
+                                             checked python: view.checked(cbid, muid, attendees);
                                              onClick python: 'onClickBox(this, \'attendee\', \'%s\')' % muid"/>
                     </td>
                     <td align="center" tal:condition="show_excused">
@@ -135,7 +130,7 @@
                              tal:attributes="id cbid;
                                              name string:meeting_attendees:list;
                                              value cbid;
-                                             checked python: errors and cbid in request.get('meeting_attendees', []) or muid in excused;
+                                             checked python: view.checked(cbid, muid, excused);
                                              onClick python: 'onClickBox(this, \'excused\', \'%s\')' % muid"/>
                     </td>
                     <td align="center" tal:condition="show_absents">
@@ -144,7 +139,7 @@
                              tal:attributes="id cbid;
                                              name string:meeting_attendees:list;
                                              value cbid;
-                                             checked python: errors and cbid in request.get('meeting_attendees', []) or muid in absents;
+                                             checked python: view.checked(cbid, muid, absents);
                                              onClick python: 'onClickBox(this, \'absent\', \'%s\')' % muid"/>
                     </td>
                     <td align="center" tal:condition="show_signatories">
@@ -152,7 +147,7 @@
                              tal:attributes="id sid;
                                              name string:meeting_signatories:list;
                                              value sid;
-                                             disabled python: errors and attendee_id not in request.get('meeting_attendees', []) or muid not in attendees;
+                                             disabled python: view.disabled(attendee_id, muid, attendees);
                                              onClick python: 'onClickBox(this, \'signer\', \'%s\')' % muid">
                         <option value="">-</option>
                         <tal:signature_number repeat="signature_number python: [str(i) for i in range(1, 21)]">
@@ -160,13 +155,9 @@
                               <option
                                   tal:attributes="
                                   value value;
-                                  selected python: errors and value in request.get('meeting_signatories', []) or (muid in signers and signers[muid]==signature_number)"
+                                  selected python: ('meeting_signatories' in request and value in request.get('meeting_signatories', [])) or ('meeting_signatories' not in request and muid in signers and signers[muid]==signature_number)"
                                   tal:content="signature_number">1</option>
                               </tal:defines>
-                              <span tal:content="muid" />
-                              <span tal:content="signers" />
-                              <span tal:content="signature_number" />
-                              <span tal:content="python: muid in signers and signers[muid]==signature_number" />
                         </tal:signature_number>
                       </select>
                     </td>
@@ -176,7 +167,7 @@
                                           aid python: attendee_id;
                                           eid python: 'muser_%s_excused' % muid;
                                           abid python: 'muser_%s_absent' % muid;
-                                          show python: errors and (eid in request.get('meeting_attendees', []) or abid in request.get('meeting_attendees', [])) or muid in (excused + absents)"
+                                          show python: ('meeting_attendees' in request and (eid in request.get('meeting_attendees', []) or abid in request.get('meeting_attendees', []))) or ('meeting_attendees' not in request and muid in (excused + absents))"
                               tal:attributes="id sid;
                                               name string:meeting_replacements:list;
                                               style python: not show and 'display:none' or ''">
@@ -184,13 +175,13 @@
                         <tal:other repeat="oUser python: all_users">
                           <tal:defines define="value string:${muid}__replacedby__${oUser/UID};">
                           <option tal:define="ouid oUser/UID;
-                                              show python: errors and 'muser_%s_attendee' % ouid in request.get('meeting_attendees', []) or ouid in attendees"
+                                              show python: ('meeting_attendees' in request and 'muser_%s_attendee' % ouid in request.get('meeting_attendees', [])) or ('meeting_attendees' not in request and ouid in attendees)"
                                   tal:condition="python: ouid != muid"
                                   tal:content="oUser/get_short_title"
                                   tal:attributes="value value;
                                                   data-icon string:${view/portal_url}/held_position_icon.png;
-                                                  style python: show and '' or 'display:none';
-                                                  selected python: errors and value in request.get('meeting_replacements', []) or (muid in user_replacements and userReplacements[muid]==ouid)" >
+                                                  style python: not show and 'display:none' or '';
+                                                  selected python: ('meeting_replacements' in request and value in request.get('meeting_replacements', [])) or ('meeting_attendees' not in request and muid in user_replacements and user_replacements[muid]==ouid)" >
                           </option>
                           </tal:defines>
                         </tal:other>
@@ -203,8 +194,8 @@
                              tal:attributes="id cbid;
                                              name string:meeting_voters:list;
                                              value cbid;
-                                             disabled python: errors and attendee_id not in request.get('meeting_attendees', []) or muid not in attendees;
-                                             checked python: errors and cbid in request.get('meeting_voters', []) or muid in voters;
+                                             disabled python: view.disabled(attendee_id, muid, attendees);
+                                             checked python: ('meeting_voters' in request and cbid in request.get('meeting_voters', [])) or ('meeting_attendees' not in request and muid in voters);
                                              onClick python: 'onClickBox(this, \'voter\', \'%s\')' % muid"/>
                     </td>
                   </tal:defines>
