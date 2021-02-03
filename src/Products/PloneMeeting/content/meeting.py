@@ -418,7 +418,7 @@ class IMeeting(IDXMeetingContent):
             conflict_attendees = removed_meeting_attendees.intersection(
                 redefined_item_attendees)
             if conflict_attendees:
-                attendee_uid = tuple(removed_meeting_attendees)[0]
+                attendee_uid = tuple(conflict_attendees)[0]
                 attendee_brain = uuidToCatalogBrain(attendee_uid)
                 msg = translate(
                     'can_not_remove_attendee_redefined_on_items',
