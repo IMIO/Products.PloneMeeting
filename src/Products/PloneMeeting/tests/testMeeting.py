@@ -3545,6 +3545,8 @@ class testMeetingType(PloneMeetingTestCase):
             self.assertTrue(self.catalog(UID=meeting_uid, SearchableText=rich_field))
         # as well as title
         self.assertTrue(self.catalog(UID=meeting_uid, SearchableText="february"))
+        # make sure UID + wrong SearchableText returns nothing
+        self.assertFalse(self.catalog(UID=meeting_uid, SearchableText="wrong"))
 
 
 def test_suite():
