@@ -137,7 +137,7 @@
 <tal:comment replace="nothing">Assembly and signatures.
 Also for backward compatibility for people that used the 'assembly' or 'signatures'
 field before and the 'attendees' now, if the field is not empty, we display it</tal:comment>
-<table class="no-style-table"
+<table class="no-style-table table-view-widgets"
        tal:define="widgets python: view.meeting_view.fieldsets['assembly'].widgets.values()">
   <tal:loop repeat="widget widgets">
     <tr tal:attributes="id string:row-${widget/id}">

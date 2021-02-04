@@ -2097,6 +2097,17 @@ def down_or_up_wf(obj):
     return res
 
 
+def redirect(request, url):
+    """Manage when view is called by an ajax request and
+       must not return anything but reload the page or faceted (in JS)."""
+    # ajax request or overlay
+    if "_" in request or "ajax_load" in request:
+        request.RESPONSE.setStatus(204)
+        return ""
+    else:
+        return request.RESPONSE.redirect(url)
+
+
 class AdvicesUpdatedEvent(ObjectEvent):
     implements(IAdvicesUpdatedEvent)
 

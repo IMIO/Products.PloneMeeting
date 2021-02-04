@@ -22,6 +22,7 @@ from Products.PloneMeeting.content.meeting import Meeting
 from Products.PloneMeeting.content.meeting import get_all_used_held_positions
 from Products.PloneMeeting.MeetingConfig import POWEROBSERVERPREFIX
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
+from Products.PloneMeeting.utils import redirect
 from z3c.form.contentprovider import ContentProviders
 from z3c.form.interfaces import IFieldsAndContentProvidersForm
 from zope.browserpage.viewpagetemplatefile import ViewPageTemplateFile
@@ -123,10 +124,14 @@ class BaseMeetingView(object):
                (self.context.__class__.__name__ == 'Meeting' and
                 (self.context.get_attendees() or not self.show_field("assembly")))
 
+    def _is_rich(self, widget):
+        """Does given p_widget use a RichText field?"""
+        return bool(widget.field.__class__.__name__ == 'RichText')
+
     def view_widget(self, widget, empty_value="-"):
         """Render an empty_value instead nothing when field empty."""
         value = getattr(self.context, widget.__name__, None)
-        if not value:
+        if not value and not self._is_rich(widget):
             rendered = "-"
         else:
             rendered = widget.render()
@@ -469,7 +474,7 @@ class MeetingUpdateItemReferences(BrowserView):
         self.context.update_item_references()
         msg = _('References of contained items have been updated.')
         api.portal.show_message(msg, request=self.request)
-        return self.request.RESPONSE.redirect(self.context.absolute_url())
+        return redirect(self.request, self.context.absolute_url())
 
 
 class MeetingReorderItems(BrowserView):
@@ -500,7 +505,7 @@ class MeetingReorderItems(BrowserView):
         self._recompute_items_order()
         msg = _('Items have been reordered.')
         api.portal.show_message(msg, request=self.request)
-        return self.request.RESPONSE.redirect(self.context.absolute_url())
+        return redirect(self.request, self.context.absolute_url())
 
 
 class PresentSeveralItemsView(BrowserView):

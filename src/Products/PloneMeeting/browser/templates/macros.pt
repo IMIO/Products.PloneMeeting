@@ -899,10 +899,10 @@ The parameter "cFolder" is the folder containing categories.</tal:comment>
            <div class="collapsible"
                 tal:attributes="onclick string:toggleDetails('collapsible-text-linkeditem-${linkedItem_uid}', toggle_parent_active=true, parent_tag=this, load_view='@@item-more-infos?fieldsConfigAttr=itemsVisibleFields&currentCfgId=${view/cfg/getId}', base_url='${linkedItem_url}');">
            </div>
-           <div style="display: inline;" tal:content="structure python: context.displayLinkedItem(linkedItem)"></div>
-           <div style="clear: both;" />
+           <div class="collapsible-pretty-title" style="display: inline;" tal:content="structure python: context.displayLinkedItem(linkedItem)"></div>
+           <div style="clear: both;"></div>
            <div tal:attributes="id string:collapsible-text-linkeditem-${linkedItem_uid}"
-                class="collapsible-content" style="display: none;">
+                class="collapsible-content">
              <div class="collapsible-inner-content">
                  <img tal:attributes="src string:${view/portal_url}/spinner_small.gif" />
              </div>

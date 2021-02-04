@@ -222,6 +222,10 @@ div.change-item-order {
     background-color: transparent;
 }
 
+table.table-view-widgets {
+   width: 100%;
+}
+
 /* reduce space between sentence 'query result show only items you can see' and the navigation widget on items listings */
 #content-core > div#queryResult {
     margin-top: -1.1em;
@@ -1858,6 +1862,13 @@ p#download_vcard {
 }
 .collapsible-content.collapsed-on-load {
     max-height: inherit;
+}
+
+/* general and next sibling
+   when collapsible does not have the active class, it means it is closed */
+div.item-linkeditems div.collapsible:not([class*='active']) ~ div.collapsible-content,
+div.collapsible:not([class*='active']) + div.collapsible-content {
+   display: none;
 }
 
 .collapsible {

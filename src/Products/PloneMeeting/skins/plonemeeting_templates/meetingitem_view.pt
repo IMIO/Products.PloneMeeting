@@ -357,7 +357,7 @@
               <span i18n:name="signatures_edit" tal:condition="not:mayQuickEditItemSignatures" />
           </span>
       </div>
-      <div id="collapsible-assembly-and-signatures" class="collapsible-content discreet" style="display: none;">
+      <div id="collapsible-assembly-and-signatures" class="collapsible-content discreet">
         <div class="collapsible-inner-content">
          <img tal:attributes="src string:${portal_url}/spinner_small.gif" />
         </div>
@@ -383,7 +383,7 @@
               <span i18n:name="signatures_edit" />
           </span>
       </div>
-      <div id="collapsible-assembly-and-signatures" class="collapsible-content discreet" style="display: none;">
+      <div id="collapsible-assembly-and-signatures" class="collapsible-content discreet">
         <div class="collapsible-inner-content">
          <span i18n:translate="">Nothing to display when item is not presented into a meeting.</span>
         </div>
@@ -409,7 +409,7 @@
               Linked items (<span i18n:name="auto_linked_items" tal:content="python: len(predecessors)">4</span>)
           </span>
         </div>
-        <div id="collapsible-linked-items" class="collapsible-content discreet" style="display: none;">
+        <div id="collapsible-linked-items" class="collapsible-content discreet">
           <div class="collapsible-inner-content">
              <img tal:attributes="src string:${portal_url}/spinner_small.gif" />
           </div>
@@ -551,7 +551,7 @@
             Text check list
         </span>
       </div>
-      <div id="collapsible-text-checklist" class="collapsible-content discreet" style="display: none;"
+      <div id="collapsible-text-checklist" class="collapsible-content discreet"
            tal:define="textCheckList context/getTextCheckList">
         <div class="collapsible-inner-content">
           <span tal:condition="textCheckList" tal:replace="structure context/getTextCheckList">Text check list</span>

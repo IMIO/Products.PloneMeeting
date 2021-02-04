@@ -55,7 +55,7 @@
          i18n:attributes="title"
          action_id="annexes"
          category="object"
-         condition_expr="python: here.portal_plonemeeting.showAnnexesTab(here)"
+         condition_expr="python: portal.portal_plonemeeting.showAnnexesTab(here)"
          icon_expr=""
          url_expr="string:${object_url}/@@categorized-annexes"
          visible="True">
@@ -67,7 +67,7 @@
          category="object_buttons"
          condition_expr=""
          icon_expr=""
-         url_expr="string:${object_url}/@@update-item-references"
+         url_expr="string:javascript:callViewAndReload(base_url='${object_url}', view_name='@@update-item-references');"
          visible="True">
   <permission value="Modify portal content"/>
  </action>
@@ -77,7 +77,7 @@
          category="object_buttons"
          condition_expr=""
          icon_expr=""
-         url_expr="string:${object_url}/@@reorder-items"
+         url_expr="string:javascript:callViewAndReload(base_url='${object_url}', view_name='@@reorder-items');"
          visible="True">
   <permission value="Modify portal content"/>
  </action>

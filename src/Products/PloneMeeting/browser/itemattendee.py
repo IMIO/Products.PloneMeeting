@@ -13,6 +13,7 @@ from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
 from Products.PloneMeeting.interfaces import IRedirect
 from Products.PloneMeeting.utils import _itemNumber_to_storedItemNumber
 from Products.PloneMeeting.utils import notifyModifiedAndReindex
+from Products.PloneMeeting.utils import redirect
 from z3c.form import button
 from z3c.form import field
 from z3c.form import form
@@ -123,10 +124,7 @@ class BaseAttendeeForm(form.Form):
     def render(self):
         if self._finished:
             # make sure we return nothing, taken into account by ajax query
-            self.request.RESPONSE.setStatus(204)
-            if not self.request.form.get('ajax_load', ''):
-                IRedirect(self.request).redirect(self.context.absolute_url())
-            return ""
+            redirect(self.request, self.context.absolute_url())
         return super(BaseAttendeeForm, self).render()
 
 
