@@ -4,6 +4,7 @@ from collective.contact.plonegroup.utils import get_organizations
 from collective.eeafaceted.batchactions.interfaces import IBatchActionsMarker
 from copy import deepcopy
 from imio.helpers.content import richtextval
+from imio.helpers.content import safe_delattr
 from imio.pyutils.utils import replace_in_list
 from persistent.mapping import PersistentMapping
 from plone.app.contenttypes.migration.dxmigration import ContentMigrator
@@ -187,6 +188,11 @@ class Migrate_To_4200(Migrator):
             MeetingMigrator.src_portal_type = meeting_type_name
             MeetingMigrator.dst_portal_type = meeting_type_name
             pac_migrate(self.portal, MeetingMigrator)
+
+            # some attributes were removed from MeetingConfig
+            safe_delattr(cfg, "publishDeadlineDefault")
+            safe_delattr(cfg, "freezeDeadlineDefault")
+            safe_delattr(cfg, "preMeetingDateDefault")
 
         # after migration to DX
         # update preferred meeting path on items

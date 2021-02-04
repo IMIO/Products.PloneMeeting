@@ -6895,20 +6895,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''See doc in utils.py.'''
         return ['indexAdvisers']
 
-    security.declarePublic('lastValidatedBefore')
-
-    def lastValidatedBefore(self, deadline):
-        '''Returns True if this item has been (last) validated before
-           p_deadline, which is a DateTime.'''
-        wfTool = api.portal.get_tool('portal_workflow')
-        wf_name = wfTool.getWorkflowsFor(self)[0].getId()
-        lastValidationDate = None
-        for event in self.workflow_history[wf_name]:
-            if event['action'] == 'validate':
-                lastValidationDate = event['time']
-        if lastValidationDate and (lastValidationDate < deadline):
-            return True
-
     def _mayChangeAttendees(self):
         """Check that user may quickEdit
            item_absents/item_excused/item_non_attendees/votes/..."""

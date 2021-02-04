@@ -757,31 +757,6 @@ XXX WARNING this is no more use and will be totaly removed while removing the PM
     </div>
 </tal:global_actions>
 
-<tal:comment replace="nothing">Move up/down/top/bottom macro
-Needs moveUrl, firstId, lastId, obj</tal:comment>
-<metal:moveUpDown define-macro="moveUpDown" i18n:domain="PloneMeeting" tal:define="objId obj/getId">
-    <!-- Move the obj bottom -->
-    <a tal:condition="python: obj.id != lastId"
-       tal:attributes="href python: moveUrl % ('bottom', objId);">
-        <img src="arrowBottom.png" tal:attributes="src string:${portal_url}/arrowBottom.png;" title="title_move_item_bottom" i18n:attributes="title" />
-    </a>
-    <!-- Move the group down -->
-    <a tal:condition="python: obj.id != lastId"
-       tal:attributes="href python: moveUrl % ('down', objId);">
-      <img src="arrowDown.png" tal:attributes="src string:${portal_url}/arrowDown.png;" title="title_move_item_down" i18n:attributes="title" />
-    </a>
-    <!-- Move the group up -->
-    <a tal:condition="python: obj.id != firstId"
-       tal:attributes="href python: moveUrl % ('up', objId);">
-      <img src="arrowUp.png" tal:attributes="src string:${portal_url}/arrowUp.png;" title="title_move_item_up" i18n:attributes="title" />
-    </a>
-    <!-- Move the group top-->
-    <a tal:condition="python: obj.id != firstId"
-       tal:attributes="href python: moveUrl % ('top', objId);">
-        <img src="arrowTop.png" tal:attributes="src string:${portal_url}/arrowTop.png;" title="title_move_item_top" i18n:attributes="title" />
-    </a>
-</metal:moveUpDown>
-
 <tal:comment replace="nothing">In case we are using a popup, add a button 'Close' at the
 bottom so the user can use it to close current popup as well as the cross up right.
 The name is form.button.cancel because it correspond to the overlay close selector.</tal:comment>

@@ -319,27 +319,11 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
 
         if displaying_available_items(self.context):
             meeting = getCurrentMeetingObject(self.context)
-            # there could be no meeting if we opened an item from the available items view
-            if meeting:
-                # Item is in the list of available items, check if we
-                # must show a deadline- or late-related icon.
-                if self.context.wfConditions().isLateFor(meeting):
-                    # A late item, or worse: a late item not respecting the freeze deadline.
-                    if meeting.attribute_is_used('deadlineFreeze') and \
-                       not self.context.lastValidatedBefore(meeting.getDeadlineFreeze()):
-                        res.append(('deadlineKo.png', translate('icon_help_publish_freeze_ko',
-                                                                domain="PloneMeeting",
-                                                                context=self.request)))
-                    else:
-                        res.append(('late.png', translate('icon_help_late',
-                                                          domain="PloneMeeting",
-                                                          context=self.request)))
-                elif (meeting.query_state() == 'created') and \
-                        meeting.attribute_is_used('deadlinePublish') and \
-                        not self.context.lastValidatedBefore(meeting.getDeadlinePublish()):
-                    res.append(('deadlineKo.png', translate('icon_help_publish_deadline_ko',
-                                                            domain="PloneMeeting",
-                                                            context=self.request)))
+            # late?
+            if meeting and self.context.wfConditions().isLateFor(meeting):
+                res.append(('late.png', translate('icon_help_late',
+                                                  domain="PloneMeeting",
+                                                  context=self.request)))
 
         itemState = self.context.query_state()
         # specifically manage states without leading icons to speed up things

@@ -221,22 +221,22 @@
         <fieldset><legend class="warningInMeetingConfig" i18n:translate="">This meeting configuration uses following fields to manage assemblies and signatures</legend>
         <p class="warningInMeetingConfig"><span i18n:translate="">Free text fields</span> :</p>
         <ul>
-          <li tal:condition="python: 'assembly' in usedMeetingAttributes" i18n:translate="meeting_assembly">Assembly</li>
-          <li tal:condition="python: 'assembly_excused' in usedMeetingAttributes" i18n:translate="meeting_assembly_excused">Assembly excused</li>
-          <li tal:condition="python: 'assembly_absents' in usedMeetingAttributes" i18n:translate="meeting_assembly_absents">Assembly absents</li>
-          <li tal:condition="python: 'assembly_guests' in usedMeetingAttributes" i18n:translate="meeting_assembly_guests">Assembly guests</li>
-          <li tal:condition="python: 'assembly_proxies' in usedMeetingAttributes" i18n:translate="meeting_assembly_proxies">Assembly proxies</li>
-          <li tal:condition="python: 'assembly_staves' in usedMeetingAttributes" i18n:translate="meeting_assembly_staves">Assembly staves</li>
-          <li tal:condition="python: 'signatures' in usedMeetingAttributes" i18n:translate="meeting_signatures">Assembly staves</li>
+          <li tal:condition="python: 'assembly' in usedMeetingAttributes" i18n:translate="title_assembly">Assembly</li>
+          <li tal:condition="python: 'assembly_excused' in usedMeetingAttributes" i18n:translate="title_assembly_excused">Assembly excused</li>
+          <li tal:condition="python: 'assembly_absents' in usedMeetingAttributes" i18n:translate="title_assembly_absents">Assembly absents</li>
+          <li tal:condition="python: 'assembly_guests' in usedMeetingAttributes" i18n:translate="title_assembly_guests">Assembly guests</li>
+          <li tal:condition="python: 'assembly_proxies' in usedMeetingAttributes" i18n:translate="title_assembly_proxies">Assembly proxies</li>
+          <li tal:condition="python: 'assembly_staves' in usedMeetingAttributes" i18n:translate="title_assembly_staves">Assembly staves</li>
+          <li tal:condition="python: 'signatures' in usedMeetingAttributes" i18n:translate="title_signatures">Signatures</li>
           <li tal:condition="python: 'assembly' not in usedMeetingAttributes and 'assembly_excused' not in usedMeetingAttributes and 'assembly_absents' not in usedMeetingAttributes and 'assembly_guests' not in usedMeetingAttributes and 'assembly_proxies' not in usedMeetingAttributes and 'assembly_staves' not in usedMeetingAttributes and 'signatures' not in usedMeetingAttributes" i18n:translate="None">None</li>
         </ul>
         <p class="warningInMeetingConfig"><span i18n:translate="">Contacts fields</span> :</p>
         <ul>
-          <li tal:condition="python: 'attendees' in usedMeetingAttributes" i18n:translate="PloneMeeting_label_attendees">Attendees</li>
-          <li tal:condition="python: 'excused' in usedMeetingAttributes" i18n:translate="PloneMeeting_label_excused">Excused</li>
-          <li tal:condition="python: 'absents' in usedMeetingAttributes" i18n:translate="PloneMeeting_label_absents">Absents</li>
-          <li tal:condition="python: 'replacements' in usedMeetingAttributes" i18n:translate="PloneMeeting_label_replacements">Replacements</li>
-          <li tal:condition="python: 'signatories' in usedMeetingAttributes" i18n:translate="PloneMeeting_label_signatories">Signatories</li>
+          <li tal:condition="python: 'attendees' in usedMeetingAttributes" i18n:translate="title_attendees">Attendees</li>
+          <li tal:condition="python: 'excused' in usedMeetingAttributes" i18n:translate="title_excused">Excused</li>
+          <li tal:condition="python: 'absents' in usedMeetingAttributes" i18n:translate="title_absents">Absents</li>
+          <li tal:condition="python: 'replacements' in usedMeetingAttributes" i18n:translate="title_replacements">Replacements</li>
+          <li tal:condition="python: 'signatories' in usedMeetingAttributes" i18n:translate="title_signatories">Signatories</li>
           <li tal:condition="python: 'attendees' not in usedMeetingAttributes and 'excused' not in usedMeetingAttributes and 'absents' not in usedMeetingAttributes and 'replacements' not in usedMeetingAttributes and 'signatories' not in usedMeetingAttributes" i18n:translate="None">None</li>
         </ul>
         </fieldset>
@@ -248,19 +248,19 @@
         <tr valign="top">
           <td width="50%">
             <tal:comment replace="nothing">We do not use the widget macro to be able to render 'assembly' using mimetype='text/x-html-safe'</tal:comment>
-            <label class="formQuestion"><span i18n:translate="PloneMeeting_label_assembly"></span>:</label>
+            <label class="formQuestion"><span i18n:translate="title_default_assembly"></span>:</label>
             <div class="field" tal:content="structure python: context.getAssembly(mimetype='text/x-html-safe') or '-'">Assembly</div>
           </td>
           <td width="50%">
             <tal:comment replace="nothing">We do not use the widget macro to be able to render 'assemblyStaves' using mimetype='text/x-html-safe'</tal:comment>
-            <label class="formQuestion"><span i18n:translate="PloneMeeting_label_assemblyStaves"></span>:</label>
+            <label class="formQuestion"><span i18n:translate="title_default_assembly_staves"></span>:</label>
             <div class="field" tal:content="structure python: context.getAssemblyStaves(mimetype='text/x-html-safe') or '-'">Assembly staves</div>
           </td>
         </tr>
         <tr>
           <td width="50%">
             <tal:comment replace="nothing">We do not use the widget macro to be able to render 'signatures' using mimetype='text/x-html-safe'</tal:comment>
-            <label class="formQuestion"><span i18n:translate="PloneMeeting_label_signatures"></span>:</label>
+            <label class="formQuestion"><span i18n:translate="title_default_signatures"></span>:</label>
             <div class="field" tal:content="structure python: context.getSignatures(mimetype='text/x-html-safe') or '-'">Assembly staves</div>
           </td>
           <td width="50%" tal:define="field python:here.getField('certifiedSignatures')">
@@ -380,17 +380,6 @@
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
           <td tal:define="field python:here.getField('xhtmlTransformTypes')">
-            <span metal:use-macro="here/widgets/field/macros/view" />
-          </td>
-        </tr>
-        <tr valign="top">
-          <td tal:define="field python:here.getField('publishDeadlineDefault')">
-            <span metal:use-macro="here/widgets/field/macros/view" />
-          </td>
-          <td tal:define="field python:here.getField('freezeDeadlineDefault')">
-            <span metal:use-macro="here/widgets/field/macros/view" />
-          </td>
-          <td tal:define="field python:here.getField('preMeetingDateDefault')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
         </tr>

@@ -334,7 +334,7 @@
               <span i18n:name="assembly"
                     tal:define="class_to_use python: redefinedItemAssemblies and 'highlightValue' or ''"
                     tal:attributes="class class_to_use">
-                    <tal:block i18n:translate="meeting_assembly">Assembly</tal:block>
+                    <tal:block i18n:translate="title_assembly">Assembly</tal:block>
                     <tal:block condition="isUsingContacts"
                                content="python:'(' + str(len(context.get_attendees())) + '/' + str(len(meeting.get_attendees())) + ')'">Number of attendees</tal:block>
               </span>
@@ -346,7 +346,7 @@
               and
               <span i18n:name="signatures" tal:define="class_to_use python: redefinedItemSignatures and 'highlightValue' or ''"
                     tal:attributes="class class_to_use">
-                    <tal:block i18n:translate="meeting_signatures">signatures</tal:block>
+                    <tal:block i18n:translate="title_signatures">signatures</tal:block>
                     <tal:block condition="isUsingContacts"
                                content="python:'(' + str(len(context.get_item_signatories(by_signature_number=True))) + ')'">Number of attendees</tal:block>
               </span>
@@ -374,11 +374,11 @@
           class="collapsible discreet">
           <span class="meeting_attribute_label" i18n:translate="redefinable_assembly_and_signatures">
               <span i18n:name="assembly">
-                    <tal:block i18n:translate="meeting_assembly">Assembly</tal:block>
+                    <tal:block i18n:translate="title_assembly">Assembly</tal:block>
               </span>
               <span i18n:name="assembly_edit" />
               <span i18n:name="signatures">
-                    <tal:block i18n:translate="meeting_signatures">signatures</tal:block>
+                    <tal:block i18n:translate="title_signatures">signatures</tal:block>
               </span>
               <span i18n:name="signatures_edit" />
           </span>

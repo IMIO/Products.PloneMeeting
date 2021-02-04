@@ -550,17 +550,6 @@ class MeetingConfigDescriptor(Descriptor):
         self.xhtmlTransformFields = []
         # What kind(s) of transform(s) must be applied to these fields ?
         self.xhtmlTransformTypes = []
-        # The "publish" deadline, for a meeting, is the deadline for validating
-        # items that must be presented to this meeting. "5.9:30" means:
-        # "5 days before meeting date, at 9:30."
-        self.publishDeadlineDefault = '5.9:30'
-        # The "freeze" deadline, for a meeting, is the deadline for validating
-        # items that must be late-presented to this meeting.
-        self.freezeDeadlineDefault = '1.14:30'
-        # The date for the pre-meeting is computed from the meeting date to
-        # which a "delta" is applied as defined hereafter (same format as
-        # above fields).
-        self.preMeetingDateDefault = '4.08:30'
         # by default, annex attribute 'confidential' is restricted to MeetingManagers
         self.annexRestrictShownAndEditableAttributes = ('confidentiality_display', 'confidentiality_edit')
         # annex confidentiality, setting something in 3 attributes here

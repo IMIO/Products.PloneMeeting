@@ -289,7 +289,7 @@ schema = Schema((
             description="Assembly",
             description_msgid="assembly_descr",
             label='Assembly',
-            label_msgid='PloneMeeting_label_assembly',
+            label_msgid='title_default_assembly',
             i18n_domain='PloneMeeting',
         ),
         default_content_type='text/plain',
@@ -304,7 +304,7 @@ schema = Schema((
             description="AssemblyStaves",
             description_msgid="assembly_staves_descr",
             label='AssemblyStaves',
-            label_msgid='PloneMeeting_label_assemblyStaves',
+            label_msgid='title_default_assembly_staves',
             i18n_domain='PloneMeeting',
         ),
         default_content_type='text/plain',
@@ -319,7 +319,7 @@ schema = Schema((
             description="Signatures",
             description_msgid="signatures_descr",
             label='Signatures',
-            label_msgid='PloneMeeting_label_signatures',
+            label_msgid='title_default_signatures',
             i18n_domain='PloneMeeting',
         ),
         default_content_type='text/plain',
@@ -769,45 +769,6 @@ schema = Schema((
         vocabulary='listTransformTypes',
         default=defValues.xhtmlTransformTypes,
         enforceVocabulary=True,
-        write_permission="PloneMeeting: Write risky config",
-    ),
-    StringField(
-        name='publishDeadlineDefault',
-        default=defValues.publishDeadlineDefault,
-        widget=StringField._properties['widget'](
-            description="PublishDeadlineDefault",
-            description_msgid="publish_deadline_default_descr",
-            label='Publishdeadlinedefault',
-            label_msgid='PloneMeeting_label_publishDeadlineDefault',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="data",
-        write_permission="PloneMeeting: Write risky config",
-    ),
-    StringField(
-        name='freezeDeadlineDefault',
-        default=defValues.freezeDeadlineDefault,
-        widget=StringField._properties['widget'](
-            description="FreezeDeadlineDefault",
-            description_msgid="freeze_deadline_default_descr",
-            label='Freezedeadlinedefault',
-            label_msgid='PloneMeeting_label_freezeDeadlineDefault',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="data",
-        write_permission="PloneMeeting: Write risky config",
-    ),
-    StringField(
-        name='preMeetingDateDefault',
-        default=defValues.preMeetingDateDefault,
-        widget=StringField._properties['widget'](
-            description="PreMeetingDateDefault",
-            description_msgid="pre_meeting_date_default_descr",
-            label='Premeetingdatedefault',
-            label_msgid='PloneMeeting_label_preMeetingDateDefault',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="data",
         write_permission="PloneMeeting: Write risky config",
     ),
     DataGridField(
@@ -5261,15 +5222,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             extra_expr_ctx=extra_expr_ctx,
             empty_expr_is_true=True)
         return res
-
-    security.declarePublic('deadlinesAreEnabled')
-
-    def deadlinesAreEnabled(self):
-        '''Are deadlines enabled ?'''
-        for field in self.getUsedMeetingAttributes():
-            if field.startswith('deadline'):
-                return True
-        return False
 
     def getItemIconColorName(self):
         '''This will return the name of the icon used for MeetingItem portal_type.'''
