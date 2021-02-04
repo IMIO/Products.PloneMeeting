@@ -66,6 +66,7 @@ from zope.interface import invariant
 from zope.schema import Datetime
 from zope.schema import Int
 from zope.schema import Text
+from zope.schema import TextLine
 
 import copy
 import itertools
@@ -91,6 +92,13 @@ class IMeeting(IDXMeetingContent):
     """
         Meeting schema
     """
+
+    # manage title, hidden but indexed
+    searchable("title")
+    form.omitted('title')
+    title = TextLine(
+        title=_(u'title_title', default=u'Title'),
+        required=True)
 
     form.widget('date', DatetimeFieldWidget, show_today_link=True, show_time=True)
     date = Datetime(
@@ -179,6 +187,14 @@ class IMeeting(IDXMeetingContent):
         allowed_mime_types=("text/plain", ),
         output_mime_type='text/plain',
         required=False)
+
+    searchable("assembly_observations")
+    form.widget('assembly_observations', PMRichTextFieldWidget)
+    assembly_observations = RichText(
+        title=_(u"title_assembly_observations"),
+        description=_("descr_field_vieawable_by_everyone"),
+        required=False,
+        allowed_mime_types=(u"text/html", ))
 
     searchable("place")
     place = Text(
@@ -296,7 +312,7 @@ class IMeeting(IDXMeetingContent):
                    label=_(u"fieldset_assembly"),
                    fields=['assembly', 'assembly_excused', 'assembly_absents',
                            'assembly_guests', 'assembly_proxies', 'assembly_staves',
-                           'signatures'])
+                           'signatures', 'assembly_observations'])
 
     model.fieldset('details',
                    label=_(u"fieldset_details"),
@@ -628,6 +644,9 @@ class Meeting(Container):
             {'optional': True,
              'condition': "python:'assembly_staves' in view.shown_assembly_fields()"},
         'signatures':
+            {'optional': True,
+             'condition': ""},
+        'assembly_observations':
             {'optional': True,
              'condition': ""},
         'place':

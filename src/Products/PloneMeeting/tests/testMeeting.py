@@ -13,6 +13,7 @@ from datetime import datetime
 from datetime import timedelta
 from eea.facetednavigation.interfaces import IFacetedLayout
 from imio.helpers.cache import cleanRamCacheFor
+from imio.helpers.content import richtextval
 from os import path
 from plone.app.querystring.querybuilder import queryparser
 from plone.app.textfield.value import RichTextValue
@@ -38,6 +39,7 @@ from Products.PloneMeeting.tests.testUtils import ASSEMBLY_CORRECT_VALUE
 from Products.PloneMeeting.tests.testUtils import ASSEMBLY_WRONG_VALUE
 from Products.PloneMeeting.utils import checkMayQuickEdit
 from Products.PloneMeeting.utils import getCurrentMeetingObject
+from Products.PloneMeeting.utils import get_dx_attrs
 from Products.PloneMeeting.utils import get_states_before
 from Products.PloneMeeting.utils import set_field_from_ajax
 from Products.ZCatalog.Catalog import AbstractCatalogBrain
@@ -3521,6 +3523,28 @@ class testMeetingType(PloneMeetingTestCase):
         self.changeUser('powerobserver1')
         _check_meeting_access(view, read=True, write=False)
         _check_item_access(i_field, item, read=True, write=False)
+
+    def test_pm_MeetingSearchable(self):
+        """Every RichtText + title is searchable."""
+        self.changeUser('pmManager')
+        cfg = self.meetingConfig
+        meeting_type_name = cfg.getMeetingTypeName()
+        rich_fields = get_dx_attrs(
+            portal_type=meeting_type_name,
+            richtext_only=True,
+            as_display_list=False)
+        for rich_field in rich_fields:
+            self._enableField(rich_field, related_to='Meeting')
+        meeting = self.create('Meeting', datetime(2021, 2, 4))
+        for rich_field in rich_fields:
+            setattr(meeting, rich_field, richtextval("<p>{0}</p>".format(rich_field)))
+        meeting.reindexObject()
+        meeting_uid = meeting.UID()
+        # rich fields are indexed
+        for rich_field in rich_fields:
+            self.assertTrue(self.catalog(UID=meeting_uid, SearchableText=rich_field))
+        # as well as title
+        self.assertTrue(self.catalog(UID=meeting_uid, SearchableText="february"))
 
 
 def test_suite():
