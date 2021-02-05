@@ -1444,42 +1444,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         api.portal.show_message('Done.', request=self.REQUEST)
         return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
 
-    security.declareProtected(ModifyPortalContent, 'removeEveryPreviews')
-
-    def removeEveryPreviews(self, meta_type=('Meeting', 'MeetingItem'), portal_type=(), **kw):
-        '''Update local_roles on Meeting and MeetingItem,
-           this is used to reflect configuration changes regarding access.'''
-        startTime = time.time()
-        catalog = api.portal.get_tool('portal_catalog')
-        query = {}
-        if meta_type:
-            query['meta_type'] = meta_type
-        if portal_type:
-            query['portal_type'] = portal_type
-        query.update(kw)
-        brains = catalog(**query)
-        numberOfBrains = len(brains)
-        i = 1
-        for brain in brains:
-            itemOrMeeting = brain.getObject()
-            logger.info('%d/%d Updating local roles of %s at %s' %
-                        (i,
-                         numberOfBrains,
-                         brain.portal_type,
-                         '/'.join(itemOrMeeting.getPhysicalPath())))
-            i = i + 1
-            indexes_to_update = itemOrMeeting.update_local_roles(avoid_reindex=True)
-            # if auto rules regarding copyGroups or groupsInCharge changed
-            # we could have more or less copyGroups/groupsInCharge so reindex relevant indexes
-            if indexes_to_update:
-                itemOrMeeting.reindexObject(idxs=indexes_to_update)
-
-        seconds = time.time() - startTime
-        logger.info('updateAllLocalRoles finished in %.2f seconds(s) (about %d minute(s)), that is %d by second.' %
-                    (seconds, round(float(seconds) / 60.0), numberOfBrains / seconds))
-        api.portal.show_message('Done.', request=self.REQUEST)
-        return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
-
     security.declareProtected(ModifyPortalContent, 'invalidateAllCache')
 
     def invalidateAllCache(self):

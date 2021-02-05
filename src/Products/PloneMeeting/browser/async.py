@@ -172,7 +172,8 @@ class TakenOverBy(BrowserView):
 
         html = self.IMG_TEMPLATE % (css_class, title, name, taken_over_by)
         # do not notifyModifiedAndReindex because an item may be taken over
-        # when it is decided by members of the proposingGroup
+        # when it is decided, by members of the proposingGroup
+        # and in this case item must not be modified
         self.context.reindexObject(idxs=['getTakenOverBy'])
         return html
 

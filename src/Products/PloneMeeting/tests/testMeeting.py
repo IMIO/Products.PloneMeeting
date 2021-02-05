@@ -3548,6 +3548,19 @@ class testMeetingType(PloneMeetingTestCase):
         # make sure UID + wrong SearchableText returns nothing
         self.assertFalse(self.catalog(UID=meeting_uid, SearchableText="wrong"))
 
+    def test_pm_MeetingActionsPanelTransitionToConfirm(self):
+        """Actions panel transitions to confirm is overrided,
+           check that it does still work."""
+        cfg = self.meetingConfig
+        cfg.setTransitionsToConfirm(('Meeting.freeze', ))
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting')
+        actions_panel = meeting.restrictedTraverse('@@actions_panel')
+        transitions = actions_panel.getTransitions()
+        first_transition = transitions[0]
+        self.assertTrue(first_transition['id'] == 'freeze')
+        self.assertTrue(first_transition['confirm'])
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite
