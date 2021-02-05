@@ -30,6 +30,7 @@ from imio.helpers.xhtml import xhtmlContentIsEmpty
 from imio.history.utils import getLastWFAction
 from plone import api
 from plone.app.textfield import RichText
+from plone.app.textfield.value import RichTextValue
 from plone.app.uuid.utils import uuidToObject
 from plone.autoform.interfaces import WRITE_PERMISSIONS_KEY
 from plone.dexterity.interfaces import IDexterityContent
@@ -306,6 +307,20 @@ def fieldIsEmpty(name, obj, useParamValue=False, value=None):
         return value is None
     else:
         return not value
+
+
+def field_is_empty(widget):
+    """ """
+    if isinstance(widget.value, RichTextValue):
+        value = widget.value.raw
+    else:
+        value = widget.value
+    if isinstance(value, (str, unicode)):
+        value = value.strip()
+    is_empty = True
+    if value:
+        is_empty = False
+    return is_empty
 
 
 def cropHTML(html, length=400, ellipsis='...'):

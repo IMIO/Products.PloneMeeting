@@ -1446,12 +1446,13 @@ schema = Schema((
         allowable_content_types=('text/plain',),
         widget=TextAreaWidget(
             condition="python: here.is_assembly_field_used('itemAssembly')",
-            description="ItemAssemblyDescrMethod",
+            description="ItemAssembly",
             description_msgid="item_assembly_descr",
             label_method="getLabelItemAssembly",
             label='Itemassembly',
             label_msgid='PloneMeeting_label_itemAssembly',
             i18n_domain='PloneMeeting',
+            visible=False,
         ),
         default_output_type="text/x-html-safe",
         default_content_type="text/plain",
@@ -1461,11 +1462,12 @@ schema = Schema((
         allowable_content_types=('text/plain',),
         widget=TextAreaWidget(
             condition="python: here.is_assembly_field_used('itemAssemblyExcused')",
-            description="ItemAssemblyExcusedDescrMethod",
+            description="ItemAssemblyExcused",
             description_msgid="item_assembly_excused_descr",
             label='Itemassemblyexcused',
             label_msgid='PloneMeeting_label_itemAssemblyExcused',
             i18n_domain='PloneMeeting',
+            visible=False,
         ),
         default_output_type="text/x-html-safe",
         default_content_type="text/plain",
@@ -1475,11 +1477,12 @@ schema = Schema((
         allowable_content_types=('text/plain',),
         widget=TextAreaWidget(
             condition="python: here.is_assembly_field_used('itemAssemblyAbsents')",
-            description="ItemAssemblyAbsentsDescrMethod",
+            description="ItemAssemblyAbsents",
             description_msgid="item_assembly_absents_descr",
             label='Itemassemblyabsents',
             label_msgid='PloneMeeting_label_itemAssemblyAbsents',
             i18n_domain='PloneMeeting',
+            visible=False,
         ),
         default_output_type="text/x-html-safe",
         default_content_type="text/plain",
@@ -1489,11 +1492,12 @@ schema = Schema((
         allowable_content_types=('text/plain',),
         widget=TextAreaWidget(
             condition="python: here.is_assembly_field_used('itemAssemblyGuests')",
-            description="ItemAssemblyGuestsDescrMethod",
+            description="ItemAssemblyGuests",
             description_msgid="item_assembly_guests_descr",
             label='Itemassemblyguests',
             label_msgid='PloneMeeting_label_itemAssemblyGuests',
             i18n_domain='PloneMeeting',
+            visible=False,
         ),
         default_output_type="text/x-html-safe",
         default_content_type="text/plain",
@@ -1503,11 +1507,12 @@ schema = Schema((
         allowable_content_types=('text/plain',),
         widget=TextAreaWidget(
             condition="python: here.is_assembly_field_used('itemSignatures')",
-            description="ItemSignaturesDescrMethod",
+            description="ItemSignatures",
             description_msgid="item_signatures_descr",
             label='Itemsignatures',
             label_msgid='PloneMeeting_label_itemSignatures',
             i18n_domain='PloneMeeting',
+            visible=False,
         ),
         default_output_type='text/plain',
         default_content_type='text/plain',
@@ -6911,134 +6916,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            tool.isManager(self):
             res = True
         return res
-
-    security.declareProtected(ModifyPortalContent, 'ItemAssemblyDescrMethod')
-
-    def ItemAssemblyDescrMethod(self):
-        '''Special handling of itemAssembly field description where we display
-          the linked Meeting.assembly value so it is easily overridable.'''
-        portal_properties = api.portal.get_tool('portal_properties')
-        enc = portal_properties.site_properties.getProperty(
-            'default_charset')
-        # depending on the fact that we use 'excused' and 'absents', we will have
-        # a different translation for the assembly defined on the meeting (assembly or attendees)
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self)
-        usedMeetingAttributes = cfg.getUsedMeetingAttributes()
-        if 'assembly_excused' in usedMeetingAttributes or \
-           'assembly_absents' in usedMeetingAttributes:
-            msg = 'attendees_defined_on_meeting'
-        else:
-            msg = 'assembly_defined_on_meeting'
-        value = translate(self.Schema()['itemAssembly'].widget.description_msgid,
-                          domain='PloneMeeting',
-                          context=self.REQUEST).encode(enc) + '<br/>'
-        collapsibleMeetingAssembly = """<div class="collapsible"
- onclick="toggleDetails('collapsible-item-assembly');">&nbsp;%s</div>
-<div id="collapsible-item-assembly" class="collapsible-content" style="display: none;">
-<div class="collapsible-inner-content">
-%s
-</div>
-</div>""" % (translate(msg,
-                       domain='PloneMeeting',
-                       context=self.REQUEST).encode(enc),
-             self.getMeeting().assembly or '-')
-        return value + collapsibleMeetingAssembly
-
-    security.declareProtected(ModifyPortalContent, 'ItemAssemblyExcusedDescrMethod')
-
-    def ItemAssemblyExcusedDescrMethod(self):
-        '''Special handling of itemAssemblyExcused field description where we display
-          the linked Meeting.assemblyExcused value so it is easily overridable.'''
-        portal_properties = api.portal.get_tool('portal_properties')
-        enc = portal_properties.site_properties.getProperty(
-            'default_charset')
-        value = translate(self.Schema()['itemAssemblyExcused'].widget.description_msgid,
-                          domain='PloneMeeting',
-                          context=self.REQUEST).encode(enc) + '<br/>'
-        collapsibleMeetingAssemblyExcused = \
-            """<div class="collapsible"
- onclick="toggleDetails('collapsible-item-assembly-excused');">&nbsp;%s</div>
-<div id="collapsible-item-assembly-excused" class="collapsible-content" style="display: none;">
-<div class="collapsible-inner-content">
-%s
-</div>
-</div>""" % (translate('assembly_excused_defined_on_meeting',
-                       domain='PloneMeeting',
-                       context=self.REQUEST).encode(enc),
-             self.getMeeting().assembly_excused or '-')
-        return value + collapsibleMeetingAssemblyExcused
-
-    security.declareProtected(ModifyPortalContent, 'ItemAssemblyAbsentsDescrMethod')
-
-    def ItemAssemblyAbsentsDescrMethod(self):
-        '''Special handling of itemAssemblyAbsents field description where we display
-          the linked Meeting.assemblyAbsents value so it is easily overridable.'''
-        portal_properties = api.portal.get_tool('portal_properties')
-        enc = portal_properties.site_properties.getProperty(
-            'default_charset')
-        value = translate(self.Schema()['itemAssemblyAbsents'].widget.description_msgid,
-                          domain='PloneMeeting',
-                          context=self.REQUEST).encode(enc) + '<br/>'
-        collapsibleMeetingAssemblyAbsents = \
-            """<div class="collapsible"
- onclick="toggleDetails('collapsible-item-assembly-absents');">&nbsp;%s</div>
-<div id="collapsible-item-assembly-absents" class="collapsible-content" style="display: none;">
-<div class="collapsible-inner-content">
-%s
-</div>
-</div>""" % (translate('assembly_absents_defined_on_meeting',
-                       domain='PloneMeeting',
-                       context=self.REQUEST).encode(enc),
-             self.getMeeting().assembly_absents or '-')
-        return value + collapsibleMeetingAssemblyAbsents
-
-    security.declareProtected(ModifyPortalContent, 'ItemAssemblyGuestsDescrMethod')
-
-    def ItemAssemblyGuestsDescrMethod(self):
-        '''Special handling of itemAssemblyGuests field description where we display
-          the linked Meeting.assembly_guests value so it is easily overridable.'''
-        portal_properties = api.portal.get_tool('portal_properties')
-        enc = portal_properties.site_properties.getProperty(
-            'default_charset')
-        value = translate(self.Schema()['itemAssemblyGuests'].widget.description_msgid,
-                          domain='PloneMeeting',
-                          context=self.REQUEST).encode(enc) + '<br/>'
-        collapsibleMeetingAssemblyGuests = \
-            """<div class="collapsible"
- onclick="toggleDetails('collapsible-item-assembly-guests');">&nbsp;%s</div>
-<div id="collapsible-item-assembly-guests" class="collapsible-content" style="display: none;">
-<div class="collapsible-inner-content">
-%s
-</div>
-</div>""" % (translate('assembly_guests_defined_on_meeting',
-                       domain='PloneMeeting',
-                       context=self.REQUEST).encode(enc),
-             self.getMeeting().assembly_guests or '-')
-        return value + collapsibleMeetingAssemblyGuests
-
-    security.declareProtected(ModifyPortalContent, 'ItemSignaturesDescrMethod')
-
-    def ItemSignaturesDescrMethod(self):
-        '''Special handling of itemSignatures field description where we display
-          the linked Meeting.signatures value so it is easily overridable.'''
-        portal_properties = api.portal.get_tool('portal_properties')
-        enc = portal_properties.site_properties.getProperty(
-            'default_charset')
-        value = translate(self.Schema()['itemSignatures'].widget.description_msgid,
-                          domain='PloneMeeting',
-                          context=self.REQUEST).encode(enc) + '<br/>'
-        collapsibleMeetingSignatures = """<div class="collapsible"
- onclick="toggleDetails('collapsible-item-signatures');">&nbsp;%s</div>
-<div id="collapsible-item-signatures" class="collapsible-content" style="display: none;">
-<div class="collapsible-inner-content">
-%s
-</div>
-</div>""" % (translate('signatures_defined_on_meeting',
-                       domain='PloneMeeting',
-                       context=self.REQUEST).encode(enc),
-             self.getMeeting().signatures.replace('\n', '<br />'))
-        return value + collapsibleMeetingSignatures
 
     security.declarePublic('getLabelItemAssembly')
 

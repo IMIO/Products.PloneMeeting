@@ -141,6 +141,7 @@
   <div class="collapsible discreet"
        onclick="toggleDetails('collapsible-details', toggle_parent_active=true, parent_tag=this)">
     <span class="meeting_attribute_label"
+          tal:attributes="class python: view.meeting_view.is_fieldset_not_empty('details') and 'meeting_attribute_label highlightValue' or 'meeting_attribute_label'"
           tal:content="python: view.meeting_view.fieldsets['details'].label">
       Details
     </span>

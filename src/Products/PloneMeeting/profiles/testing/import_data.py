@@ -277,7 +277,8 @@ meetingPma.annexTypes = [financialAnalysis, budgetAnalysisCfg1, overheadAnalysis
                          itemAnnex, decisionAnnex, marketingAnalysis,
                          adviceAnnex, adviceLegalAnalysis, meetingAnnex]
 meetingPma.usedItemAttributes = ('description', 'toDiscuss', 'itemTags', 'itemIsSigned',)
-meetingPma.usedMeetingAttributes = ('place',)
+meetingPma.usedMeetingAttributes = ('assembly', 'assembly_excused', 'assembly_absents',
+                                    'assembly_guests', 'signatures', 'place',)
 meetingPma.maxShownListings = '100'
 meetingPma.workflowAdaptations = ['delayed']
 meetingPma.itemPositiveDecidedStates = ['accepted']

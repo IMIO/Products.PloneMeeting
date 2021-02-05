@@ -22,6 +22,7 @@ from Products.PloneMeeting.content.meeting import Meeting
 from Products.PloneMeeting.content.meeting import get_all_used_held_positions
 from Products.PloneMeeting.MeetingConfig import POWEROBSERVERPREFIX
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
+from Products.PloneMeeting.utils import field_is_empty
 from Products.PloneMeeting.utils import redirect
 from z3c.form.contentprovider import ContentProviders
 from z3c.form.interfaces import IFieldsAndContentProvidersForm
@@ -136,6 +137,16 @@ class BaseMeetingView(object):
         else:
             rendered = widget.render()
         return rendered
+
+    def is_fieldset_not_empty(self, fieldset):
+        """Is there a field of given p_fieldset that is not empty?"""
+        is_not_empty = False
+        for widget in self.fieldsets[fieldset].widgets.values():
+            is_empty = field_is_empty(widget)
+            if not is_empty:
+                is_not_empty = True
+                break
+        return is_not_empty
 
 
 class MeetingDefaultView(DefaultView, BaseMeetingView):

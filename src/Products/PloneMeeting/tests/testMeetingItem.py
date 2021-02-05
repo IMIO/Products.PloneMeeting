@@ -7177,6 +7177,11 @@ class testMeetingItem(PloneMeetingTestCase):
         item = self.create('MeetingItem', decision=self.decisionText)
         self.assertTrue(item.restrictedTraverse('base_edit')())
         self.assertTrue(item.restrictedTraverse('base_view')())
+        # when inserted into a meeting
+        self.create('Meeting')
+        self.presentItem(item)
+        self.assertTrue(item.restrictedTraverse('base_edit')())
+        self.assertTrue(item.restrictedTraverse('base_view')())
 
     def test_pm_GetPreferredMeetingDateIndex(self):
         """As getPreferredMeetingDate needs the meeting to be indexed
