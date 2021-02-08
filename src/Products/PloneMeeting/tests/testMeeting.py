@@ -2843,41 +2843,41 @@ class testMeetingType(PloneMeetingTestCase):
 
     def test_pm_ChangingMeetingDateUpdateLinkedItemsMeetingDateMetadata(self):
         """When the date of a meeting is changed, the linked items are reindexed,
-           regarding the preferredMeetingDate and linkedMeetingDate."""
+           regarding the preferred_meeting_date and meeting_date."""
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
         item = self.create('MeetingItem')
         itemBrain = self.catalog(UID=item.UID())[0]
         # by default, if no preferred/linked meeting, the date is '1950/01/01'
-        self.assertEqual(itemBrain.linkedMeetingDate, datetime(1950, 1, 1))
-        self.assertEqual(itemBrain.getPreferredMeetingDate, datetime(1950, 1, 1))
+        self.assertEqual(itemBrain.meeting_date, datetime(1950, 1, 1))
+        self.assertEqual(itemBrain.preferred_meeting_date, datetime(1950, 1, 1))
         item.setPreferredMeeting(meeting.UID())
         self.presentItem(item)
         itemBrain = self.catalog(UID=item.UID())[0]
-        self.assertEqual(itemBrain.linkedMeetingDate, meeting.date)
-        self.assertEqual(itemBrain.getPreferredMeetingDate, meeting.date)
+        self.assertEqual(itemBrain.meeting_date, meeting.date)
+        self.assertEqual(itemBrain.preferred_meeting_date, meeting.date)
 
         # right, change meeting's date and check again
         meeting.date = datetime(2015, 5, 5)
         notify(ObjectModifiedEvent(meeting, Attributes(Interface, 'date')))
         itemBrain = self.catalog(UID=item.UID())[0]
-        self.assertEqual(itemBrain.linkedMeetingDate, meeting.date)
-        self.assertEqual(itemBrain.getPreferredMeetingDate, meeting.date)
+        self.assertEqual(itemBrain.meeting_date, meeting.date)
+        self.assertEqual(itemBrain.preferred_meeting_date, meeting.date)
 
         # if item is removed from the meeting, it falls back to 1950
         self.do(item, 'backToValidated')
         self.assertEqual(item.query_state(), 'validated')
         itemBrain = self.catalog(UID=item.UID())[0]
-        self.assertEqual(itemBrain.linkedMeetingDate, datetime(1950, 1, 1))
-        # preferredMeetingDate is still the meetingDate
-        self.assertEqual(itemBrain.getPreferredMeetingDate, meeting.date)
+        self.assertEqual(itemBrain.meeting_date, datetime(1950, 1, 1))
+        # preferred_meeting_date is still the meeting.date
+        self.assertEqual(itemBrain.preferred_meeting_date, meeting.date)
 
-        # when a meeting is removed, preferredMeetingDate is updated on items
+        # when a meeting is removed, preferred_meeting_date is updated on items
         self.deleteAsManager(meeting.UID())
         self.assertEqual(item.getPreferredMeeting(), ITEM_NO_PREFERRED_MEETING_VALUE)
         itemBrain = self.catalog(UID=item.UID())[0]
-        self.assertEqual(itemBrain.linkedMeetingDate, datetime(1950, 1, 1))
-        self.assertEqual(itemBrain.getPreferredMeetingDate, datetime(1950, 1, 1))
+        self.assertEqual(itemBrain.meeting_date, datetime(1950, 1, 1))
+        self.assertEqual(itemBrain.preferred_meeting_date, datetime(1950, 1, 1))
 
     def test_pm_GetFirstItemNumberIgnoresSubnumbers(self):
         """When computing the firstItemNumber of a meeting,

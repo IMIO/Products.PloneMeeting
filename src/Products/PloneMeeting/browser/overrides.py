@@ -719,7 +719,7 @@ class MeetingActionsPanelView(BaseActionsPanelView):
         '''cachekey method for self.__call__ method.
            The cache is invalidated if :
            - meeting is modified (modified is also triggered when review_state changed);
-           - getRawItems changed;
+           - linked items changed;
            - cfg modified;
            - different item or user;
            - user groups changed.'''
@@ -728,7 +728,8 @@ class MeetingActionsPanelView(BaseActionsPanelView):
         date = get_cachekey_volatile(
             'Products.PloneMeeting.Meeting.UID.{0}'.format(self.context.UID()))
         # check also portal_url in case application is accessed thru different URI
-        return (self.context.UID(), self.context.modified(), self.context.get_raw_items(), cfg_modified,
+        return (self.context.UID(), self.context.modified(),
+                self.context.get_raw_items(), cfg_modified,
                 userGroups, date,
                 useIcons, showTransitions, appendTypeNameToTransitionLabel, showEdit,
                 showOwnDelete, showActions, showAddContent, showHistory, showHistoryLastEventHasComments,

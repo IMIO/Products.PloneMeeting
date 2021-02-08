@@ -456,13 +456,14 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
                             context=self.request)
 
             clonedBrain = self.context.getItemClonedToOtherMC(clonedToOtherMCId, theObject=False)
-            # do not check on linkedMeetingDate because it may contains '1950/01/01',
-            # see linkedMeetingDate indexer in indexes.py
-            if clonedBrain.linkedMeetingUID != ITEM_NO_PREFERRED_MEETING_VALUE:
+            # do not check on meeting_date because it may contains '1950/01/01',
+            # see meeting_date indexer in indexes.py
+            if clonedBrain.meeting_uid != ITEM_NO_PREFERRED_MEETING_VALUE:
                 # avoid instantiating toLocalizedTime more than once
                 toLocalizedTime = toLocalizedTime or self.context.restrictedTraverse('@@plone').toLocalizedTime
-                long_format = clonedBrain.linkedMeetingDate.hour and True or False
-                msg = msg + u' ({0})'.format(toLocalizedTime(clonedBrain.linkedMeetingDate, long_format=long_format))
+                long_format = clonedBrain.meeting_date.hour and True or False
+                msg = msg + u' ({0})'.format(toLocalizedTime(
+                    clonedBrain.meeting_date, long_format=long_format))
             iconName = emergency and "clone_to_other_mc_emergency" or "clone_to_other_mc"
             # manage the otherMeetingConfigsClonableToPrivacy
             if 'privacy' in clonedToOtherMC.getUsedItemAttributes():

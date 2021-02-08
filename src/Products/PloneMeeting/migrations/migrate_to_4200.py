@@ -3,6 +3,8 @@
 from collective.contact.plonegroup.utils import get_organizations
 from collective.eeafaceted.batchactions.interfaces import IBatchActionsMarker
 from copy import deepcopy
+from imio.helpers.catalog import addOrUpdateColumns
+from imio.helpers.catalog import addOrUpdateIndexes
 from imio.helpers.content import richtextval
 from imio.helpers.content import safe_delattr
 from imio.pyutils.utils import replace_in_list
@@ -10,6 +12,7 @@ from persistent.mapping import PersistentMapping
 from plone.app.contenttypes.migration.dxmigration import ContentMigrator
 from plone.app.contenttypes.migration.migration import migrate as pac_migrate
 from plone.app.textfield.value import RichTextValue
+from Products.CMFPlone.utils import base_hasattr
 from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_NEW
 from Products.PloneMeeting.browser.itemattendee import position_type_default
 from Products.PloneMeeting.content.advice import IMeetingAdvice
@@ -18,6 +21,8 @@ from Products.PloneMeeting.interfaces import IMeetingItemDashboardBatchActionsMa
 from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator
 from Products.PloneMeeting.profiles import MeetingConfigDescriptor
+from Products.PloneMeeting.setuphandlers import indexInfos
+from Products.PloneMeeting.setuphandlers import columnInfos
 from Products.ZCatalog.ProgressHandler import ZLogHandler
 from zope.interface import alsoProvides
 from zope.interface import noLongerProvides
@@ -111,7 +116,9 @@ class MeetingMigrator(ContentMigrator):
         """ """
         super(MeetingMigrator, self).migrate()
         self.new.update_title()
-        self.new.reindexObject()
+        # we use idxs=() because when passing nothing (so idxs=[])
+        # then notifyModified is called and the element is modified
+        self.new.reindexObject(idxs=())
 
 
 class Migrate_To_4200(Migrator):
@@ -190,16 +197,30 @@ class Migrate_To_4200(Migrator):
             pac_migrate(self.portal, MeetingMigrator)
 
             # some attributes were removed from MeetingConfig
+            safe_delattr(cfg, "historizedMeetingAttributes")
+            safe_delattr(cfg, "recordMeetingHistoryStates")
             safe_delattr(cfg, "publishDeadlineDefault")
             safe_delattr(cfg, "freezeDeadlineDefault")
             safe_delattr(cfg, "preMeetingDateDefault")
 
         # after migration to DX
-        # update preferred meeting path on items
-        self._updateItemPreferredMeetingLink()
-        # fix DashboardCollections that use index getDate
+        # fix DashboardCollections that use renamed indexes
         self.changeCollectionIndex('getDate', 'meeting_date')
+        self.changeCollectionIndex('linkedMeetingUID', 'meeting_uid')
+        self.changeCollectionIndex('linkedMeetingDate', 'meeting_date')
+        self.changeCollectionIndex('getPreferredMeeting', 'preferred_meeting_uid')
+        self.changeCollectionIndex('getPreferredMeetingDate', 'preferred_meeting_date')
         logger.info('Done.')
+
+    def _hook_before_meeting_to_dx(self):
+        """Hook for plugins that need to do things just
+           before Meeting is migrated to DX."""
+        pass
+
+    def _hook_after_meeting_to_dx(self):
+        """Hook for plugins that need to do things just
+           after Meeting is migrated to DX."""
+        pass
 
     def _configureItemWFValidationLevels(self):
         """Item WF validation levels (states itemcreated, proposed, pre-validated, ...)
@@ -408,21 +429,69 @@ class Migrate_To_4200(Migrator):
                     sub_folder.reindexObject(idxs=['object_provides'])
         logger.info('Done.')
 
+    def _fixCreatedModifiedFilters(self):
+        '''Filter modified(c13)/created(c14) is now created(c13)/modified(c14).'''
+        logger.info('Fixing created/modified filters...')
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            # make sure only done one time or relaunching migration would
+            # reapply and switch back to wrong configuration
+            if base_hasattr(cfg, 'historizedMeetingAttributes'):
+                # historizedMeetingAttributes is removed during migration of Meeting to DX
+                return self._already_migrated()
+            for field_name in ('dashboardItemsListingsFilters',
+                               'dashboardMeetingAvailableItemsFilters',
+                               'dashboardMeetingLinkedItemsFilters'):
+                field = cfg.getField(field_name)
+                keys = field.get(cfg)
+                if 'c13' in keys and 'c14' in keys:
+                    # nothing to do as both were already selected
+                    pass
+                elif 'c13' in keys:
+                    keys = replace_in_list(keys, 'c13', 'c14')
+                elif 'c14' in keys:
+                    keys = replace_in_list(keys, 'c14', 'c13')
+                field.set(cfg, keys)
+        logger.info('Done.')
+
     def run(self, extra_omitted=[]):
         logger.info('Migrating to PloneMeeting 4200...')
+
+        self._fixCreatedModifiedFilters()
 
         # apply correct batch actions marker on searches_* folders
         self._updateSearchedFolderBatchActionsMarkerInterface()
 
+        # update preferred meeting path on items
+        self._updateItemPreferredMeetingLink()
+
         # remove useless catalog indexes and columns, were renamed to snake case
-        self.removeUnusedIndexes(indexes=['getItemIsSigned', 'sendToAuthority', 'toDiscuss', 'getDate'])
-        self.removeUnusedColumns(columns=['toDiscuss', 'getDate'])
+        self.removeUnusedIndexes(
+            indexes=['getItemIsSigned',
+                     'sendToAuthority',
+                     'toDiscuss',
+                     'getDate',
+                     'linkedMeetingUID',
+                     'linkedMeetingDate'])
+        self.removeUnusedColumns(
+            columns=['toDiscuss',
+                     'getDate',
+                     'linkedMeetingUID',
+                     'linkedMeetingDate'])
+
+        # need to reindex new indexes before migrating Meeting to DX
+        addOrUpdateIndexes(self.portal, indexInfos)
+        addOrUpdateColumns(self.portal, columnInfos)
 
         # update various TAL expressions
         self.updateTALConditions("queryState", "query_state")
         self.updateTALConditions("getDate()", "date")
         self.updateTALConditions("getStartDate()", "start_date")
         self.updateTALConditions("getEndDate()", "end_date")
+
+        # replacements MeetingConfig item columns
+        self.cleanItemColumns(
+            to_replace={'getPreferredMeetingDate': 'preferred_meeting_date',
+                        'linkedMeetingDate': 'meeting_date'})
 
         # reinstall workflows before updating workflowAdaptations
         self.runProfileSteps('Products.PloneMeeting', steps=['workflow'], profile='default')
@@ -434,7 +503,9 @@ class Migrate_To_4200(Migrator):
         self._migrateKeepAccessToItemWhenAdviceIsGiven()
 
         # MEETING TO DX
+        self._hook_before_meeting_to_dx()
         self._migrateMeetingToDX()
+        self._hook_after_meeting_to_dx()
 
         # update RichTextValue stored on DX types (advices)
         self._fixRichTextValueMimeType()
@@ -459,7 +530,12 @@ class Migrate_To_4200(Migrator):
 
         # update faceted filters
         self.updateFacetedFilters(xml_filename='upgrade_step_4200_add_item_widgets.xml')
-        self.updateFacetedFilters(xml_filename='upgrade_step_4200_update_meeting_widgets.xml')
+        self.updateFacetedFilters(
+            xml_filename='upgrade_step_4200_update_meeting_widgets.xml',
+            related_to="meetings")
+        self.updateFacetedFilters(
+            xml_filename='upgrade_step_4200_update_meeting_widgets.xml',
+            related_to="decisions")
 
         # update holidays
         self.updateHolidays()

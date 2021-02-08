@@ -223,15 +223,16 @@
   <adapter name="getConfigId" factory=".indexes.getConfigId" />
   <adapter name="getCopyGroups" factory=".indexes.getCopyGroups" />
   <adapter name="getGroupsInCharge" factory=".indexes.getGroupsInCharge" />
-  <adapter name="getPreferredMeetingDate" factory=".indexes.getPreferredMeetingDate" />
+  <adapter name="preferred_meeting_date" factory=".indexes.preferred_meeting_date" />
+  <adapter name="preferred_meeting_uid" factory=".indexes.preferred_meeting_uid" />
   <adapter name="getTakenOverBy" factory=".indexes.getTakenOverBy" />
   <adapter name="hasAnnexesToPrint" factory=".indexes.hasAnnexesToPrint" />
   <adapter name="hasAnnexesToSign" factory=".indexes.hasAnnexesToSign" />
   <adapter name="indexAdvisers" factory=".indexes.indexAdvisers" />
   <adapter name="item_is_signed" factory=".indexes.item_is_signed" />
-  <adapter name="linkedMeetingDate" factory=".indexes.linkedMeetingDate" />
-  <adapter name="linkedMeetingUID" factory=".indexes.linkedMeetingUID" />
   <adapter name="meeting_date" factory=".indexes.meeting_date" />
+  <adapter name="meeting_date" factory=".indexes.item_meeting_date" />
+  <adapter name="meeting_uid" factory=".indexes.meeting_uid" />
   <adapter name="previous_review_state" factory=".indexes.previous_review_state" />
   <adapter name="reviewProcessInfo" factory=".indexes.reviewProcessInfo" />
   <adapter name="SearchableText" factory=".indexes.SearchableText_item" />

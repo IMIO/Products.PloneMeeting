@@ -807,8 +807,8 @@ table.listing th.th_header_getProposingGroup {
 }
 table.listing th.th_header_advices,
 table.listing th.th_header_review_state,
-table.listing th.th_header_linkedMeetingDate,
-table.listing th.th_header_getPreferredMeetingDate,
+table.listing th.th_header_meeting_date,
+table.listing th.th_header_preferred_meeting_date,
 table.listing th.th_header_getCategory,
 table.listing th.th_header_ModificationDate,
 table.listing th.th_header_CreationDate {
@@ -2171,6 +2171,10 @@ div.overlay div.qq-uploader li {
 
 div.static-infos {
    margin-top: 0.5em;
+}
+
+#content td.table_widget_label {
+    width: 200px;
 }
 /* </dtml-with> */
 

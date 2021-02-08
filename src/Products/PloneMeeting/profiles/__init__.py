@@ -409,7 +409,6 @@ class OrgDescriptor(Descriptor):
 class MeetingConfigDescriptor(Descriptor):
     multiSelectFields = ('certifiedSignatures', 'usedItemAttributes', 'historizedItemAttributes',
                          'recordItemHistoryStates', 'usedMeetingAttributes',
-                         'historizedMeetingAttributes', 'recordMeetingHistoryStates',
                          'availableItemsListVisibleColumns', 'itemsListVisibleColumns',
                          'itemsVisibleFields', 'itemsNotViewableVisibleFields', 'itemsListVisibleFields',
                          'itemColumns', 'itemActionsColumnConfig', 'meetingColumns',
@@ -506,11 +505,6 @@ class MeetingConfigDescriptor(Descriptor):
         # Item states into which item events will be stored in item's history.
         self.recordItemHistoryStates = ()
         self.usedMeetingAttributes = ['assembly', 'signatures']
-        # In the next field, you specify meeting fields for which you want to
-        # keep track of changes.
-        self.historizedMeetingAttributes = []
-        # Meeting states into which item events will be stored in item's history
-        self.recordMeetingHistoryStates = ()
         # Do you want to use Organizations as categories ? In this case, you
         # do not need to define categories anymore.
         self.useGroupsAsCategories = True
@@ -720,7 +714,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.itemsListVisibleFields = ['MeetingItem.description', 'MeetingItem.decision']
         # columns shown on items listings.  Order is important!
         self.itemColumns = ['Creator', 'CreationDate', 'review_state',
-                            'getProposingGroup', 'linkedMeetingDate', 'actions']
+                            'getProposingGroup', 'meeting_date', 'actions']
         self.itemActionsColumnConfig = ['delete', 'history']
         # columns shown on meetings listings.  Order is important!
         self.meetingColumns = ['Creator', 'CreationDate', 'review_state', 'actions']

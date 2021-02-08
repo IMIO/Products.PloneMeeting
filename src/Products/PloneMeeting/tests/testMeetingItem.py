@@ -7183,23 +7183,23 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(item.restrictedTraverse('base_edit')())
         self.assertTrue(item.restrictedTraverse('base_view')())
 
-    def test_pm_GetPreferredMeetingDateIndex(self):
-        """As getPreferredMeetingDate needs the meeting to be indexed
+    def test_pm_Preferred_meeting_dateIndex(self):
+        """As preferred_meeting_date needs the meeting to be indexed
            as it is queried in portal_catalog using it's UID
            (stored in MeetingItem.preferredMeeting)."""
         self._removeConfigObjectsFor(self.meetingConfig)
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
         meeting_uid = meeting.UID()
-        item = self.create('MeetingItem', preferredMeeting=meeting_uid)
+        item = self.create('MeetingItem', preferred_meeting_uid=meeting_uid)
         self.assertEqual(item.preferred_meeting_path, '/'.join(meeting.getPhysicalPath()))
         item_uid = item.UID()
         # both indexed, it works
-        self.assertEqual(self.catalog(getPreferredMeetingDate=meeting.date)[0].UID, item_uid)
+        self.assertEqual(self.catalog(preferred_meeting_date=meeting.date)[0].UID, item_uid)
         # unindex meeting, this can be the case when full "clear and rebuild" catalog
         meeting.unindexObject()
-        item.reindexObject(idxs=['getPreferredMeeting', 'getPreferredMeetingDate'])
-        self.assertEqual(self.catalog(getPreferredMeetingDate=meeting.date)[0].UID, item_uid)
+        item.reindexObject(idxs=['preferred_meeting_uid', 'preferred_meeting_date'])
+        self.assertEqual(self.catalog(preferred_meeting_date=meeting.date)[0].UID, item_uid)
 
         # rename meeting id
         meeting.aq_parent.manage_renameObject(meeting.getId(), 'my_new_id')

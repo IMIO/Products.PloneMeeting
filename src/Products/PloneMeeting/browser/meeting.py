@@ -71,7 +71,7 @@ def manage_label_assembly(the_form):
     if 'assembly' in widgets:
         if 'assembly_excused' in widgets or \
            'assembly_absents' in widgets:
-            widgets['assembly'].label = _('assembly_attendees_title')
+            widgets['assembly'].label = _('title_attendees')
 
 
 def manage_field_attendees(the_form):

@@ -265,7 +265,7 @@ def _itemsToUpdate(from_item_number, until_item_number, meeting):
     if not until_item_number:
         until_item_number = from_item_number
     brains = catalog(
-        linkedMeetingUID=meeting.UID(),
+        meeting_uid=meeting.UID(),
         getItemNumber={'query': (from_item_number,
                                  until_item_number),
                        'range': 'minmax'},

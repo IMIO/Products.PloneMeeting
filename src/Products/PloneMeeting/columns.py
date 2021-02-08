@@ -232,8 +232,8 @@ class ItemLinkedMeetingColumn(BaseColumn):
     """
       Display the formatted date and a link to the linked meeting if any.
     """
-    meeting_uid_attr = 'linkedMeetingUID'
-    attrName = 'linkedMeetingDate'
+    meeting_uid_attr = 'meeting_uid'
+    attrName = 'meeting_date'
     use_caching = True
 
     def renderCell(self, item):
@@ -263,9 +263,9 @@ class ItemPreferredMeetingColumn(ItemLinkedMeetingColumn):
     """
       Display the formatted date and a link to the preferred meeting if any.
     """
-    meeting_uid_attr = 'getPreferredMeeting'
-    attrName = 'getPreferredMeetingDate'
-    header_help = u'header_getPreferredMeetingDate_help'
+    meeting_uid_attr = 'preferred_meeting_uid'
+    attrName = 'preferred_meeting_date'
+    header_help = u'header_preferred_meeting_date_help'
 
 
 class ItemListTypeColumn(VocabularyColumn, ColorColumn):

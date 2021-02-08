@@ -22,6 +22,7 @@ from imio.helpers.catalog import addOrUpdateColumns
 from imio.helpers.catalog import addOrUpdateIndexes
 from imio.helpers.content import object_values
 from imio.migrator.migrator import Migrator as BaseMigrator
+from imio.pyutils.utils import replace_in_list
 from natsort import humansorted
 from operator import attrgetter
 from plone import api
@@ -244,10 +245,11 @@ class Migrator(BaseMigrator):
         pghandler.finish()
         logger.info('Done.')
 
-    def cleanItemColumns(self, to_remove=[]):
+    def cleanItemColumns(self, to_remove=[], to_replace={}):
         '''When a column is no more available.'''
-        logger.info('Cleaning MeetingConfig columns related fields, removing columns "%s"...'
-                    % ', '.join(to_remove))
+        logger.info('Cleaning MeetingConfig columns related fields, '
+                    'removing columns "%s" and replacing "%s"...'
+                    % (', '.join(to_remove), ', '.join(to_replace.keys())))
         for cfg in self.tool.objectValues('MeetingConfig'):
             for field_name in ('itemColumns',
                                'availableItemsListVisibleColumns',
@@ -255,6 +257,8 @@ class Migrator(BaseMigrator):
                 field = cfg.getField(field_name)
                 keys = field.get(cfg)
                 adapted_keys = [k for k in keys if k not in to_remove]
+                for orignal_value, new_value in to_replace.items():
+                    adapted_keys = replace_in_list(adapted_keys, orignal_value, new_value)
                 field.set(cfg, adapted_keys)
         logger.info('Done.')
 

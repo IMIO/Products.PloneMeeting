@@ -1049,13 +1049,13 @@ def onMeetingModified(meeting, event):
             cfg = tool.getMeetingConfig(meeting)
             # items linked to the meeting
             brains = catalog(portal_type=cfg.getItemTypeName(),
-                             linkedMeetingUID=meeting.UID())
+                             meeting_uid=meeting.UID())
             # items having the meeting as the preferredMeeting
             brains = brains + catalog(portal_type=cfg.getItemTypeName(),
-                                      getPreferredMeeting=meeting.UID())
+                                      preferred_meeting_uid=meeting.UID())
             for brain in brains:
                 item = brain.getObject()
-                item.reindexObject(idxs=['linkedMeetingDate', 'getPreferredMeetingDate'])
+                item.reindexObject(idxs=['meeting_date', 'preferred_meeting_date'])
             # clean cache for "Products.PloneMeeting.vocabularies.meetingdatesvocabulary"
             invalidate_cachekey_volatile_for(
                 "Products.PloneMeeting.vocabularies.meetingdatesvocabulary", get_again=True)
@@ -1089,7 +1089,7 @@ def onMeetingMoved(meeting, event):
 
     # update preferred_meeting_path
     catalog = api.portal.get_tool('portal_catalog')
-    brains = catalog.unrestrictedSearchResults(getPreferredMeeting=meeting.UID())
+    brains = catalog.unrestrictedSearchResults(preferred_meeting_uid=meeting.UID())
     for brain in brains:
         item = brain._unrestrictedGetObject()
         item._update_preferred_meeting(meeting_uid)
@@ -1115,7 +1115,7 @@ def onMeetingRemoved(meeting, event):
     # update items for which current meeting is selected as preferred meeting
     # do this unrestricted so we are sure that every items are updated
     catalog = api.portal.get_tool('portal_catalog')
-    brains = catalog.unrestrictedSearchResults(getPreferredMeeting=meeting.UID())
+    brains = catalog.unrestrictedSearchResults(preferred_meeting_uid=meeting.UID())
     # we do not reindex in the loop on brains or it mess things because
     # we are reindexing the index we searched on and brains is a LazyMap
     items_to_reindex = []
@@ -1125,7 +1125,7 @@ def onMeetingRemoved(meeting, event):
         items_to_reindex.append(item)
     for item_to_reindex in items_to_reindex:
         item_to_reindex.reindexObject(
-            idxs=['getPreferredMeeting', 'getPreferredMeetingDate'])
+            idxs=['preferred_meeting_uid', 'preferred_meeting_date'])
     # clean cache for "Products.PloneMeeting.vocabularies.meetingdatesvocabulary"
     # use get_again for async meetings term render
     invalidate_cachekey_volatile_for(

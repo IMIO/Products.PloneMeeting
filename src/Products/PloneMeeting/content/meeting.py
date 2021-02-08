@@ -810,15 +810,17 @@ class Meeting(Container):
         # before late state, accept items having any preferred meeting
         late_state = self.adapted().get_late_state()
         if meeting_state in get_states_before(self, late_state):
-            # get items for which the getPreferredMeetingDate is lower or
+            # get items for which the preferred_meeting_date is lower or
             # equal to the date of this meeting (self)
-            # a no preferred meeting item getPreferredMeetingDate is 1950/01/01
-            res.append({'i': 'getPreferredMeetingDate',
+            # a no preferred meeting item preferred_meeting_date is 1950/01/01
+            res.append({'i': 'preferred_meeting_date',
                         'o': 'plone.app.querystring.operation.date.lessThan',
                         'v': self.date})
         else:
             # after late state, only query items for which preferred meeting is self
-            res.append({'i': 'getPreferredMeetingDate',
+            # or a passed meeting, indeed an item that is late for a past meeting is
+            # also late for current meeting
+            res.append({'i': 'preferred_meeting_date',
                         'o': 'plone.app.querystring.operation.date.between',
                         'v': (datetime(2000, 1, 1), self.date)})
         return res
@@ -1161,7 +1163,7 @@ class Meeting(Container):
     def get_item_by_number(self, number):
         '''Gets the item thas has number p_number.'''
         catalog = api.portal.get_tool('portal_catalog')
-        brains = catalog(linkedMeetingUID=self.UID(), getItemNumber=number)
+        brains = catalog(meeting_uid=self.UID(), getItemNumber=number)
         if not brains:
             return None
         return brains[0].getObject()
@@ -1319,8 +1321,8 @@ class Meeting(Container):
                 lowest_item_number = item_number
             item.reindexObject(idxs=['getItemNumber',
                                      'listType',
-                                     'linkedMeetingUID',
-                                     'linkedMeetingDate'])
+                                     'meeting_uid',
+                                     'meeting_date'])
         # meeting is considered modified, do this before update_item_references
         self.notifyModified()
 
@@ -1387,7 +1389,7 @@ class Meeting(Container):
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeeting')
 
         # reindex relevant indexes now that item is removed
-        item.reindexObject(idxs=['listType', 'linkedMeetingUID', 'linkedMeetingDate'])
+        item.reindexObject(idxs=['listType', 'meeting_uid', 'meeting_date'])
 
         # meeting is considered modified, do this before update_item_references
         self.notifyModified()
@@ -1795,7 +1797,7 @@ class MeetingCollection(Collection):
         if displaying_available_items(self.context) and not force_linked_items_query:
             res = self.context._available_items_query()
         else:
-            res = [{'i': 'linkedMeetingUID',
+            res = [{'i': 'meeting_uid',
                     'o': 'plone.app.querystring.operation.selection.is',
                     'v': self.context.UID()}, ]
         return res

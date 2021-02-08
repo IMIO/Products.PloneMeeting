@@ -126,21 +126,21 @@ def reviewProcessInfo(obj):
 
 
 @indexer(IMeetingItem)
-def linkedMeetingUID(obj):
+def meeting_uid(obj):
     """
       Store the linked meeting UID.
     """
+    # we use same 'None' value as for getPreferredMeeting so we may use the same
+    # vocabulary in the meeting date/preferred meeting date faceted filters
     res = ITEM_NO_PREFERRED_MEETING_VALUE
     meeting = obj.getMeeting()
     if meeting:
         res = meeting.UID()
-    # we use same 'None' value as for getPreferredMeeting so we may use the same
-    # vocabulary in the meeting date/preferred meeting date faceted filters
     return res
 
 
 @indexer(IMeetingItem)
-def linkedMeetingDate(obj):
+def item_meeting_date(obj):
     """
       Store the linked meeting date.
     """
@@ -163,7 +163,16 @@ def getGroupsInCharge(obj):
 
 
 @indexer(IMeetingItem)
-def getPreferredMeetingDate(obj):
+def preferred_meeting_uid(obj):
+    """
+      Store the preferredMeeting.
+    """
+    preferredMeeting = obj.getPreferredMeeting()
+    return preferredMeeting
+
+
+@indexer(IMeetingItem)
+def preferred_meeting_date(obj):
     """
       Store the preferredMeeting date.
     """

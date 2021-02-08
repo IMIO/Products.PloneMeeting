@@ -26,7 +26,7 @@
     </records>
 
     <records interface="plone.app.querystring.interfaces.IQueryField"
-             prefix="plone.app.querystring.field.linkedMeetingDate">
+             prefix="plone.app.querystring.field.meeting_date">
        <value key="title" i18n:translate="">Linked meeting date</value>
        <value key="description" i18n:translate="">The date of the meeting the item is linked to</value>
        <value key="enabled">True</value>

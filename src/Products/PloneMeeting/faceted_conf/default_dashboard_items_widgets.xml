@@ -159,7 +159,7 @@
    <property name="count">False</property>
    <property name="sortcountable">False</property>
    <property name="hidezerocount">False</property>
-   <property name="index">linkedMeetingUID</property>
+   <property name="index">meeting_uid</property>
    <property name="operator">or</property>
    <property name="operator_visible">False</property>
    <property
@@ -178,7 +178,7 @@
    <property name="count">False</property>
    <property name="sortcountable">False</property>
    <property name="hidezerocount">False</property>
-   <property name="index">getPreferredMeeting</property>
+   <property name="index">preferred_meeting_uid</property>
    <property name="operator">or</property>
    <property name="operator_visible">False</property>
    <property
@@ -228,22 +228,22 @@
 
   <criterion name="c13" i18n:attributes="title">
    <property name="widget">daterange</property>
-   <property name="title">Modified</property>
+   <property name="title">Created</property>
    <property name="position">top</property>
    <property name="section">advanced</property>
    <property name="hidden">False</property>
-   <property name="index">Date</property>
+   <property name="index">created</property>
    <property name="default"></property>
    <property name="calYearRange">c-10:c+10</property>
   </criterion>
 
   <criterion name="c14" i18n:attributes="title">
    <property name="widget">daterange</property>
-   <property name="title">Created</property>
+   <property name="title">Modified</property>
    <property name="position">top</property>
    <property name="section">advanced</property>
    <property name="hidden">False</property>
-   <property name="index">created</property>
+   <property name="index">Date</property>
    <property name="default"></property>
    <property name="calYearRange">c-10:c+10</property>
   </criterion>
@@ -254,7 +254,7 @@
    <property name="position">top</property>
    <property name="section">advanced</property>
    <property name="hidden">False</property>
-   <property name="index">linkedMeetingDate</property>
+   <property name="index">meeting_date</property>
    <property name="default"></property>
    <property name="calYearRange">c-10:c+10</property>
   </criterion>

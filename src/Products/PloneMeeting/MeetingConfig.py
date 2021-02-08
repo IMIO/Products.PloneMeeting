@@ -3469,10 +3469,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         res = []
         for criterion in criteria:
             if criterion.section == u'advanced':
-                res.append((criterion.__name__,
-                            translate(criterion.title,
-                                      domain="eea",
-                                      context=self.REQUEST)))
+                res.append(
+                    (criterion.__name__,
+                     u"%s (%s)" % (translate(criterion.title,
+                                             domain="eea",
+                                             context=self.REQUEST),
+                                   criterion.__name__)))
         return DisplayList(tuple(res))
 
     security.declarePrivate('listResultsPerPage')
@@ -4677,8 +4679,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def listAvailableItemsListVisibleColumns(self):
         '''Vocabulary for the 'availableItemsListVisibleColumns' field.'''
         res = self.listItemRelatedColumns()
-        res.insert(-1, ('getPreferredMeetingDate', u"{0} (getPreferredMeetingDate)".format(
-            translate('header_getPreferredMeetingDate',
+        res.insert(-1, ('preferred_meeting_date', u"{0} (preferred_meeting_date)".format(
+            translate('header_preferred_meeting_date',
                       domain='collective.eeafaceted.z3ctable',
                       context=self.REQUEST))))
         # remove item_reference and review_state
@@ -4691,8 +4693,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def listItemsListVisibleColumns(self):
         '''Vocabulary for the 'itemsListVisibleColumns' field.'''
         res = self.listItemRelatedColumns()
-        res.insert(-1, ('getPreferredMeetingDate', u"{0} (getPreferredMeetingDate)".format(
-            translate('header_getPreferredMeetingDate',
+        res.insert(-1, ('preferred_meeting_date', u"{0} (preferred_meeting_date)".format(
+            translate('header_preferred_meeting_date',
                       domain='collective.eeafaceted.z3ctable',
                       context=self.REQUEST))))
         return DisplayList(tuple(res))
@@ -4756,12 +4758,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     def listItemColumns(self):
         res = self.listItemRelatedColumns()
-        res.insert(-1, ('linkedMeetingDate', u"{0} (linkedMeetingDate)".format(
-            translate('header_linkedMeetingDate',
+        res.insert(-1, ('meeting_date', u"{0} (meeting_date)".format(
+            translate('header_meeting_date',
                       domain='collective.eeafaceted.z3ctable',
                       context=self.REQUEST))))
-        res.insert(-1, ('getPreferredMeetingDate', u"{0} (getPreferredMeetingDate)".format(
-            translate('header_getPreferredMeetingDate',
+        res.insert(-1, ('preferred_meeting_date', u"{0} (preferred_meeting_date)".format(
+            translate('header_preferred_meeting_date',
                       domain='collective.eeafaceted.z3ctable',
                       context=self.REQUEST))))
         return DisplayList(tuple(res))

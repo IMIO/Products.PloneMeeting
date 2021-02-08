@@ -819,19 +819,11 @@ def rememberPreviousData(obj, name=None):
        value. Result is a dict ~{s_fieldName: previousFieldValue}~'''
     res = {}
     cfg = obj.portal_plonemeeting.getMeetingConfig(obj)
-    isItem = obj.getTagName() == 'MeetingItem'
     # Do nothing if the object is not in a state when historization is enabled.
-    if isItem:
-        meth = cfg.getRecordItemHistoryStates
-    else:
-        meth = cfg.getRecordMeetingHistoryStates
-    if obj.query_state() not in meth():
+    if obj.query_state() not in cfg.getRecordItemHistoryStates():
         return res
     # Store in res the values currently stored on p_obj.
-    if isItem:
-        historized = cfg.getHistorizedItemAttributes()
-    else:
-        historized = cfg.getHistorizedMeetingAttributes()
+    historized = cfg.getHistorizedItemAttributes()
     if name:
         if name in historized:
             res[name] = obj.getField(name).get(obj)
