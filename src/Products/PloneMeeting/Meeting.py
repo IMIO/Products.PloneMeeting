@@ -2151,6 +2151,8 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
     def manage_beforeDelete(self, item, container):
         '''This is a workaround to avoid a Plone design problem where it is
            possible to remove a folder containing objects you can not remove.'''
+        # bypassed for migration to DX
+        return
         # If we are here, everything has already been checked before.
         # Just check that the meeting is myself or a Plone Site.
         # We can remove an meeting directly but not "through" his container.

@@ -1580,7 +1580,9 @@ class Meeting(Container):
         updateAnnexesAccess(self)
         # reindex object security except if avoid_reindex=True and localroles are the same
         avoid_reindex = kwargs.get('avoid_reindex', False)
-        if not avoid_reindex or old_local_roles != self.__ac_local_roles__:
+        # XXX check on currently_migrating_meeting_dx to be removed after Meeting migrated to DX
+        if not self.REQUEST.get('currently_migrating_meeting_dx') and \
+           (not avoid_reindex or old_local_roles != self.__ac_local_roles__):
             self.reindexObjectSecurity()
 
     def _update_power_observers_local_roles(self):

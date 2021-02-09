@@ -133,9 +133,9 @@ def meeting_uid(obj):
     # we use same 'None' value as for getPreferredMeeting so we may use the same
     # vocabulary in the meeting date/preferred meeting date faceted filters
     res = ITEM_NO_PREFERRED_MEETING_VALUE
-    meeting = obj.getMeeting()
-    if meeting:
-        res = meeting.UID()
+    meeting_uid = obj.getMeeting(only_uid=True)
+    if meeting_uid:
+        res = meeting_uid
     return res
 
 

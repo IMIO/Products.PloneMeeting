@@ -9,9 +9,9 @@ from imio.helpers.content import richtextval
 from imio.helpers.content import safe_delattr
 from imio.pyutils.utils import replace_in_list
 from persistent.mapping import PersistentMapping
-from plone.app.contenttypes.migration.dxmigration import ContentMigrator
 from plone.app.contenttypes.migration.migration import migrate as pac_migrate
 from plone.app.textfield.value import RichTextValue
+from Products.contentmigration.basemigrator.migrator import CMFFolderMigrator
 from Products.CMFPlone.utils import base_hasattr
 from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_NEW
 from Products.PloneMeeting.browser.itemattendee import position_type_default
@@ -28,7 +28,7 @@ from zope.interface import alsoProvides
 from zope.interface import noLongerProvides
 
 
-class MeetingMigrator(ContentMigrator):
+class MeetingMigrator(CMFFolderMigrator):
     """ """
     src_portal_type = None
     src_meta_type = 'Meeting'
@@ -135,6 +135,7 @@ class Migrate_To_4200(Migrator):
         self._configureVotes()
 
         # main migrate meetings to DX
+        self.request.set('currently_migrating_meeting_dx', True)
         for cfg in self.tool.objectValues("MeetingConfig"):
             # update MeetingConfig attributes
             # usedMeetingAttributes
@@ -202,6 +203,8 @@ class Migrate_To_4200(Migrator):
             safe_delattr(cfg, "publishDeadlineDefault")
             safe_delattr(cfg, "freezeDeadlineDefault")
             safe_delattr(cfg, "preMeetingDateDefault")
+
+        self.request.set('currently_migrating_meeting_dx', False)
 
         # after migration to DX
         # fix DashboardCollections that use renamed indexes
@@ -540,7 +543,7 @@ class Migrate_To_4200(Migrator):
         # update holidays
         self.updateHolidays()
 
-        self.tool.update_all_local_roles(meta_type=('MeetingItem', ))
+        self.tool.update_all_local_roles()
         self.refreshDatabase(workflows=True, catalogsToUpdate=[])
 
 
