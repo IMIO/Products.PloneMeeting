@@ -2181,7 +2181,7 @@ class testMeetingType(PloneMeetingTestCase):
         self.assertTrue(item.wfConditions().mayPresent())
         # present the item as late item
         item.setPreferredMeeting(meeting.UID())
-        item.reindexObject(idxs=['getPreferredMeeting', ])
+        item._update_after_edit()
         self.assertTrue(item.wfConditions().mayPresent())
         self.presentItem(item)
         self.assertTrue(item.query_state() == 'itemfrozen')
@@ -2631,13 +2631,13 @@ class testMeetingType(PloneMeetingTestCase):
         # then when the meeting is removed, the item preferredMeeting is back to 'whatever'
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
-        meetingUID = meeting.UID()
+        meeting_uid = meeting.UID()
         # create item as 'pmCreator2' so it is not viewable by 'pmManager'
         self.changeUser('pmCreator2')
         item = self.create('MeetingItem')
-        item.setPreferredMeeting(meetingUID)
-        item.reindexObject(idxs=['getPreferredMeeting'])
-        items = self.catalog(getPreferredMeeting=meetingUID)
+        item.setPreferredMeeting(meeting_uid)
+        item._update_after_edit()
+        items = self.catalog(preferred_meeting_uid=meeting_uid)
         self.assertTrue(len(items) == 1)
         self.assertTrue(items[0].UID == item.UID())
 
@@ -2645,14 +2645,15 @@ class testMeetingType(PloneMeetingTestCase):
         self.changeUser('pmManager')
         # item is not viewable by MeetingManager
         self.assertFalse(self.hasPermission(View, item))
-        self.portal.restrictedTraverse('@@delete_givenuid')(meetingUID)
+        self.portal.restrictedTraverse('@@delete_givenuid')(meeting_uid)
 
         # no items found
         self.changeUser('pmCreator2')
-        items = self.catalog(getPreferredMeeting=meetingUID)
+        items = self.catalog(preferred_meeting_uid=meeting_uid)
         self.assertFalse(items)
         # the preferred meeting of the item is now 'whatever'
         self.assertTrue(item.getPreferredMeeting() == ITEM_NO_PREFERRED_MEETING_VALUE)
+        self.assertIsNone(item.getPreferredMeeting(theObject=True))
 
     def test_pm_MeetingActionsPanelCaching(self):
         '''For performance, actions panel is cached,

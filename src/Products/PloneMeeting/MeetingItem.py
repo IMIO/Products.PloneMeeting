@@ -3394,11 +3394,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 if preferred_meeting_path:
                     if caching and hasattr(self, "REQUEST"):
                         res = self.REQUEST.get('preferred_meeting__%s' % meeting_uid)
-                if not res:
-                    portal = api.portal.get()
-                    res = portal.unrestrictedTraverse(preferred_meeting_path)
-                    if caching and hasattr(self, "REQUEST"):
-                        self.REQUEST.set('preferred_meeting__%s' % meeting_uid, res)
+                    if not res:
+                        portal = api.portal.get()
+                        res = portal.unrestrictedTraverse(preferred_meeting_path)
+                        if caching and hasattr(self, "REQUEST"):
+                            self.REQUEST.set('preferred_meeting__%s' % meeting_uid, res)
         return res
 
     security.declarePublic('getGroupsInCharge')

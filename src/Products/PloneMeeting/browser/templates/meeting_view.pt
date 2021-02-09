@@ -37,13 +37,13 @@
   <div class="collapsible discreet"
        onclick="toggleDetails('collapsible-dates-and-data', toggle_parent_active=true, parent_tag=this)">
     <span class="meeting_attribute_label"
-          tal:content="python: view.meeting_view.fieldsets['dates_and_data'].label">
+          tal:content="python:view.meeting_view.fieldsets['dates_and_data'].label">
       Dates and data
     </span>
   </div>
   <div id="collapsible-dates-and-data"
        class="collapsible-content"
-       tal:define="widgets python: view.meeting_view.fieldsets['dates_and_data'].widgets.values()">
+       tal:define="widgets python:view.meeting_view.fieldsets['dates_and_data'].widgets.values()">
     <div class="collapsible-inner-content">
       <table class="no-style-table table-view-widgets">
         <tal:loop repeat="widget widgets">
@@ -70,7 +70,7 @@
                                                     load_view='@@load_meeting_assembly_and_signatures');"
       class="collapsible discreet not-auto-collapsible-activable">
    <span class="meeting_attribute_label"
-         tal:content="python: view.meeting_view.fieldsets['assembly'].label">
+         tal:content="python:view.meeting_view.fieldsets['assembly'].label">
      Meeting assembly and signatures
    </span>
   </div>
@@ -107,13 +107,13 @@
   <div class="clear"></div>
   <h2 class="collapsible active presented-items not-auto-collapsible-deactivable"
        onclick="toggleDetails('faceted-form', toggle_parent_active=true, parent_tag=this)">
-    <span i18n:translate="presented_items">Presented items</span> (<span class="meeting_number_of_items" tal:content="python: context.number_of_items()"/>)
+    <span i18n:translate="presented_items">Presented items</span> (<span class="meeting_number_of_items" tal:content="python:context.number_of_items()"/>)
   </h2>
 
   <span title="meeting_inserting_methods_help_msg_descr"
        i18n:attributes="title">
     <span class="fa show-help link-action tooltipster-inserting-methods-helper-msg"
-          tal:condition="python: view.is_manager"
+          tal:condition="python:view.is_manager"
           tal:attributes="data-base_url string:${context/absolute_url}">
     </span>
   </span>
@@ -141,17 +141,17 @@
   <div class="collapsible discreet"
        onclick="toggleDetails('collapsible-details', toggle_parent_active=true, parent_tag=this)">
     <span class="meeting_attribute_label"
-          tal:attributes="class python: view.meeting_view.is_fieldset_not_empty('details') and 'meeting_attribute_label highlightValue' or 'meeting_attribute_label'"
-          tal:content="python: view.meeting_view.fieldsets['details'].label">
+          tal:attributes="class python:view.meeting_view.is_fieldset_not_empty('details') and 'meeting_attribute_label highlightValue' or 'meeting_attribute_label'"
+          tal:content="python:view.meeting_view.fieldsets['details'].label">
       Details
     </span>
   </div>
   <div id="collapsible-details"
        class="collapsible-content"
-       tal:define="widgets python: view.meeting_view.fieldsets['details'].widgets.values()">
+       tal:define="widgets python:view.meeting_view.fieldsets['details'].widgets.values()">
     <div class="collapsible-inner-content">
       <tal:loop repeat="widget widgets">
-        <tal:block tal:replace="structure python:widget.render()" />
+        <tal:block tal:replace="structure python:view.meeting_view.view_widget(widget)" />
       </tal:loop>
     </div>
   </div>
@@ -162,16 +162,16 @@
 
   <tal:comment replace="nothing">Manager reserved fields</tal:comment>
   <div class="collapsible discreet"
-       tal:condition="python: view.is_manager"
+       tal:condition="python:view.is_manager"
        onclick="toggleDetails('collapsible-managers-parameters', toggle_parent_active=true, parent_tag=this)">
     <span class="meeting_attribute_label"
-         tal:content="python: view.meeting_view.fieldsets['managers_parameters'].label">
+         tal:content="python:view.meeting_view.fieldsets['managers_parameters'].label">
       Managers parameters
     </span>
   </div>
   <div id="collapsible-managers-parameters"
        class="collapsible-content"
-       tal:define="widgets python: view.meeting_view.fieldsets['managers_parameters'].widgets.values()">
+       tal:define="widgets python:view.meeting_view.fieldsets['managers_parameters'].widgets.values()">
     <div class="collapsible-inner-content">
       <table class="no-style-table table-view-widgets">
         <tal:loop repeat="widget widgets">

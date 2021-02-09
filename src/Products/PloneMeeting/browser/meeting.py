@@ -127,7 +127,8 @@ class BaseMeetingView(object):
 
     def _is_rich(self, widget):
         """Does given p_widget use a RichText field?"""
-        return bool(widget.field.__class__.__name__ == 'RichText')
+        return widget.field.__class__.__name__ == 'RichText' and \
+            widget.__class__.__name__ != 'PMTextAreaWidget'
 
     def view_widget(self, widget, empty_value="-"):
         """Render an empty_value instead nothing when field empty."""

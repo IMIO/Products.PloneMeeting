@@ -2887,6 +2887,8 @@ class testMeetingItem(PloneMeetingTestCase):
         '''
         cfg = self.meetingConfig
         self.changeUser('admin')
+        cfg.setUsedMeetingAttributes(('place', ))
+
         # make items inserted in a meeting inserted in this order
         cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'at_the_end',
                                            'reverse': '0'}, ))
@@ -7191,7 +7193,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
         meeting_uid = meeting.UID()
-        item = self.create('MeetingItem', preferred_meeting_uid=meeting_uid)
+        item = self.create('MeetingItem', preferredMeeting=meeting_uid)
         self.assertEqual(item.preferred_meeting_path, '/'.join(meeting.getPhysicalPath()))
         item_uid = item.UID()
         # both indexed, it works

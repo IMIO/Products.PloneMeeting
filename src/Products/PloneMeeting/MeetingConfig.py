@@ -4789,6 +4789,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             ("CreationDate",
                 u"{0} (CreationDate)".format(
                     translate('header_CreationDate', domain=d, context=self.REQUEST))),
+            ("ModificationDate",
+                u"{0} (ModificationDate)".format(
+                    translate('header_ModificationDate', domain=d, context=self.REQUEST))),
             ("review_state",
                 u"{0} (review_state)".format(
                     translate('header_review_state', domain=d, context=self.REQUEST))),
