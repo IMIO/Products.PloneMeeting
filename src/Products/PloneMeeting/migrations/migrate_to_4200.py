@@ -133,7 +133,12 @@ class Migrate_To_4200(Migrator):
         self._updateItemSignatories()
         # configure votes
         self._configureVotes()
-
+        # unregister Meeting portal_types from portal_factory
+        portal_factory = self.portal.portal_factory
+        registered_types = [portal_type for portal_type in portal_factory.getFactoryTypes().keys()
+                            if not portal_type.startswith('Meeting') or
+                            portal_type.startswith('MeetingItem')]
+        portal_factory.manage_setPortalFactoryTypes(listOfTypeIds=registered_types)
         # main migrate meetings to DX
         self.request.set('currently_migrating_meeting_dx', True)
         for cfg in self.tool.objectValues("MeetingConfig"):

@@ -5293,7 +5293,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # registered in portal_factory (in the model:
             # use_portal_factory=True), we must also register the new
             # portal_type we are currently creating.
-            if metaTypeName in registeredFactoryTypes:
+            if metaTypeName in registeredFactoryTypes and \
+               portalTypeName not in registeredFactoryTypes:
                 factoryTypesToRegister.append(portalTypeName)
             if not hasattr(self.portal_types, portalTypeName):
                 typeInfoName = "PloneMeeting: %s (%s)" % (metaTypeName,
