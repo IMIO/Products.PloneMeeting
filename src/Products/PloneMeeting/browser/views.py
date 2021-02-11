@@ -1612,7 +1612,10 @@ class FolderDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGH
             absents = list(meeting.get_absents(True))
             item_excused = meeting.get_item_excused(True)
             item_absents = meeting.get_item_absents(True)
-            meeting_data = {'title': meeting.Title()}
+            # as 'title' is used for generated file sheet name
+            # make sure it does not contain forbidden letters
+            # especially when meeting hours is displayed between ()
+            meeting_data = {'title': meeting.Title().replace(':', 'h')}
             attendances = OrderedDict({})
             _add_attendances_for_items(attendances,
                                        meeting.get_items(ordered=True),
