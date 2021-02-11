@@ -199,13 +199,13 @@ class testSetup(PloneMeetingTestCase):
                          set(expected))
 
     def test_pm_FactoryTypes(self):
-        """Every MeetingItem and Meeting portal_types are using portal_factory.
-           Every Meeting* portal_types should be registered."""
+        """Every MeetingItem portal_types are using portal_factory.
+           Every MeetingItem* portal_types should be registered."""
         portal_factory = api.portal.get_tool('portal_factory')
         factory_types = portal_factory.getFactoryTypes().keys()
         portal_types = api.portal.get_tool('portal_types')
-        # every portal_types starting with Meeting, MeetingConfig, MeetingItemRecurringXXX, ...
-        meeting_types = [pt for pt in portal_types if pt.startswith('Meeting')]
+        # every portal_types starting with MeetingItem/MeetingConfig
+        meeting_types = [pt for pt in portal_types if pt.startswith(('MeetingConfig', 'MeetingItem'))]
         for meeting_type in meeting_types:
             self.failIf(set(meeting_types).difference(factory_types))
 
