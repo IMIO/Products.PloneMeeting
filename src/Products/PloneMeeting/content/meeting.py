@@ -136,7 +136,7 @@ class IMeeting(IDXMeetingContent):
         description=_("descr_assembly"),
         default_mime_type='text/plain',
         allowed_mime_types=('text/plain', ),
-        output_mime_type='text/plain',
+        output_mime_type='text/x-html-safe',
         constraint=assembly_constraint,
         required=False)
 
@@ -145,7 +145,7 @@ class IMeeting(IDXMeetingContent):
         title=_(u"title_assembly_excused"),
         default_mime_type='text/plain',
         allowed_mime_types=('text/plain', ),
-        output_mime_type='text/plain',
+        output_mime_type='text/x-html-safe',
         required=False)
 
     form.widget('assembly_absents', PMTextAreaFieldWidget)
@@ -153,7 +153,7 @@ class IMeeting(IDXMeetingContent):
         title=_(u"title_assembly_absents"),
         default_mime_type='text/plain',
         allowed_mime_types=('text/plain', ),
-        output_mime_type='text/plain',
+        output_mime_type='text/x-html-safe',
         required=False)
 
     form.widget('assembly_guests', PMTextAreaFieldWidget)
@@ -161,7 +161,7 @@ class IMeeting(IDXMeetingContent):
         title=_(u"title_assembly_guests"),
         default_mime_type='text/plain',
         allowed_mime_types=('text/plain', ),
-        output_mime_type='text/plain',
+        output_mime_type='text/x-html-safe',
         required=False)
 
     form.widget('assembly_proxies', PMTextAreaFieldWidget)
@@ -169,7 +169,7 @@ class IMeeting(IDXMeetingContent):
         title=_(u"title_assembly_proxies"),
         default_mime_type='text/plain',
         allowed_mime_types=('text/plain', ),
-        output_mime_type='text/plain',
+        output_mime_type='text/x-html-safe',
         required=False)
 
     form.widget('assembly_staves', PMTextAreaFieldWidget)
@@ -177,7 +177,7 @@ class IMeeting(IDXMeetingContent):
         title=_(u"title_assembly_staves"),
         default_mime_type='text/plain',
         allowed_mime_types=('text/plain', ),
-        output_mime_type='text/plain',
+        output_mime_type='text/x-html-safe',
         required=False)
 
     form.widget('signatures', PMTextAreaFieldWidget)
@@ -185,7 +185,7 @@ class IMeeting(IDXMeetingContent):
         title=_(u"title_signatures"),
         default_mime_type='text/plain',
         allowed_mime_types=("text/plain", ),
-        output_mime_type='text/plain',
+        output_mime_type='text/x-html-safe',
         required=False)
 
     searchable("assembly_observations")

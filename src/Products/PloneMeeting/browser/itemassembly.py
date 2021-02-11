@@ -46,7 +46,8 @@ def item_assembly_default():
     """
     context = getSite().REQUEST['PUBLISHED'].context
     itemAssembly = context.getItemAssembly(for_display=False)
-    return safe_unicode(itemAssembly)
+    # need to strip because extractData strips
+    return safe_unicode(itemAssembly).strip()
 
 
 def item_excused_default():
@@ -58,7 +59,8 @@ def item_excused_default():
     """
     context = getSite().REQUEST['PUBLISHED'].context
     itemAssemblyExcused = context.getItemAssemblyExcused(for_display=False)
-    return safe_unicode(itemAssemblyExcused)
+    # need to strip because extractData strips
+    return safe_unicode(itemAssemblyExcused).strip()
 
 
 def item_absents_default():
@@ -70,7 +72,8 @@ def item_absents_default():
     """
     context = getSite().REQUEST['PUBLISHED'].context
     itemAssemblyAbsents = context.getItemAssemblyAbsents(for_display=False)
-    return safe_unicode(itemAssemblyAbsents)
+    # need to strip because extractData strips
+    return safe_unicode(itemAssemblyAbsents).strip()
 
 
 def item_guests_default():
@@ -82,7 +85,8 @@ def item_guests_default():
     """
     context = getSite().REQUEST['PUBLISHED'].context
     itemAssemblyGuests = context.getItemAssemblyGuests(for_display=False)
-    return safe_unicode(itemAssemblyGuests)
+    # need to strip because extractData strips
+    return safe_unicode(itemAssemblyGuests).strip()
 
 
 def validate_apply_until_item_number(value):

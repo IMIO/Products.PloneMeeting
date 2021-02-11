@@ -3676,7 +3676,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                **kwargs):
         '''Returns the assembly excused for this item.
            If no excused are defined for item, meeting assembly excused are returned.'''
-        res = self.getField('itemAssemblyExcused').get(self, **kwargs)
+        res = self.getField('itemAssemblyExcused').getRaw(self, **kwargs)
         if not real and not res and self.hasMeeting():
             res = self.getMeeting().get_assembly_excused(for_display=False)
         if res and for_display:
@@ -3693,7 +3693,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                **kwargs):
         '''Returns the assembly absents for this item.
            If no absents are defined for item, meeting assembly absents are returned.'''
-        res = self.getField('itemAssemblyAbsents').get(self, **kwargs)
+        res = self.getField('itemAssemblyAbsents').getRaw(self, **kwargs)
         if not real and not res and self.hasMeeting():
             res = self.getMeeting().get_assembly_absents(for_display=False)
         if res and for_display:
@@ -3710,7 +3710,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                               **kwargs):
         '''Returns the assembly guests for this item.
            If no guests are defined for item, meeting assembly guests are returned.'''
-        res = self.getField('itemAssemblyGuests').get(self, **kwargs)
+        res = self.getField('itemAssemblyGuests').getRaw(self, **kwargs)
         if not real and not res and self.hasMeeting():
             res = self.getMeeting().get_assembly_guests(for_display=False)
         if res and for_display:
@@ -3727,7 +3727,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                           **kwargs):
         '''Gets the signatures for this item. If no signature is defined,
            meeting signatures are returned.'''
-        res = self.getField('itemSignatures').get(self, **kwargs)
+        res = self.getField('itemSignatures').getRaw(self, **kwargs)
         if not real and not res and self.hasMeeting():
             res = self.getMeeting().get_signatures(for_display=False)
         if res and for_display:
