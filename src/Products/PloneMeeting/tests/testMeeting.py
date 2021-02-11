@@ -3457,6 +3457,25 @@ class testMeetingType(PloneMeetingTestCase):
                                                   if not attendee_uids[3] in meeting_attendee]
         self.assertEqual(len(self.request.form['meeting_attendees']), 3)
         self.assertEqual(invariants.validate(data), ())
+        self.request.set('validate_attendees_done', False)
+
+        # can not use several times same signature_number
+        error_msg = translate(
+            u'can_not_define_several_same_signature_number',
+            domain='PloneMeeting',
+            context=self.request)
+        meeting_signatories = ['{0}__signaturenumber__1'.format(attendee_uids[0]),
+                               '{0}__signaturenumber__1'.format(attendee_uids[1])]
+        self.request.form['meeting_signatories'] = meeting_signatories
+        errors = invariants.validate(data)
+        self.request.set('validate_attendees_done', False)
+        self.assertEqual(len(errors), 1)
+        self.assertEqual(errors[0].message, error_msg)
+        # now with correct values, 2 different signature numbers
+        meeting_signatories = ['{0}__signaturenumber__1'.format(attendee_uids[0]),
+                               '{0}__signaturenumber__2'.format(attendee_uids[1])]
+        self.request.form['meeting_signatories'] = meeting_signatories
+        self.assertEqual(invariants.validate(data), ())
 
     def test_pm_Votes_observations(self):
         """Fields Meeting.votes_observations and MeetingItem.votesObservations

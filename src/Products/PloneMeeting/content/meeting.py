@@ -421,7 +421,7 @@ class IMeeting(IDXMeetingContent):
         cfg = tool.getMeetingConfig(context)
 
         if is_meeting and cfg.isUsingContacts():
-            # removed attendees
+            # removed attendees?
             # REQUEST.form['meeting_attendees'] is like
             # ['muser_attendeeuid1_attendee', 'muser_attendeeuid2_excused']
             stored_attendees = get_all_used_held_positions(context, the_objects=False)
@@ -444,9 +444,11 @@ class IMeeting(IDXMeetingContent):
                 # avoid multiple call to this invariant
                 context.REQUEST.set("validate_attendees_done", True)
                 raise Invalid(msg)
-            else:
-                # removed voters
-                stored_voters = context.get_voters()
+
+            # removed voters?
+            stored_voters = context.get_voters()
+            # bypass when not using votes
+            if stored_voters:
                 meeting_voters = [voter.split('_')[1] for voter
                                   in request.form.get('meeting_voters', [])]
                 removed_meeting_voters = set(stored_voters).difference(meeting_voters)
@@ -486,6 +488,23 @@ class IMeeting(IDXMeetingContent):
                     # avoid multiple call to this invariant
                     context.REQUEST.set("validate_attendees_done", True)
                     raise Invalid(msg)
+
+            # there can not be 2 same signatories
+            signatories = [signatory for signatory in
+                           request.form.get('meeting_signatories', [])
+                           if signatory]
+            if signatories:
+                signature_numbers = [signatory.split('__signaturenumber__')[1]
+                                     for signatory in signatories]
+                if len(signature_numbers) != len(set(signature_numbers)):
+                    msg = translate(
+                        'can_not_define_several_same_signature_number',
+                        domain='PloneMeeting',
+                        context=request)
+                    # avoid multiple call to this invariant
+                    context.REQUEST.set("validate_attendees_done", True)
+                    raise Invalid(msg)
+
         # avoid multiple call to this invariant
         context.REQUEST.set("validate_attendees_done", True)
 
