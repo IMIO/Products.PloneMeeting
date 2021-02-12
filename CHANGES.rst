@@ -33,6 +33,12 @@ Changelog
   size too big, when using `ToolPloneMeeting.isManager`, use `cfg` as `context`
   if available.
   [gbastien]
+- Extended `Meeting.get_signature_infos_for` so it is possible to get signature
+  infos of every signatories of an item, not only the redefined ones, and added
+  parameters `render_position_type=False` and `prefix_position_type=False` so
+  it is possible to get the raw `position_type`, or rendered, or rendered and
+  prefixed.
+  [gbastien]
 
 4.2b11 (2021-01-19)
 -------------------

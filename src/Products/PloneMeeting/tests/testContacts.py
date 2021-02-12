@@ -577,6 +577,7 @@ class testContacts(PloneMeetingTestCase):
         self.changeUser("pmManager")
         meeting = self.create("Meeting", date=DateTime())
         item = self.create("MeetingItem")
+        item_uid = item.UID()
 
         # On MeetingItem
         view = item.restrictedTraverse("document-generation")
@@ -624,7 +625,7 @@ class testContacts(PloneMeetingTestCase):
         # when a position_type used for signatory, it overcomes
         # defined label if it is not u'default'
         # try with default
-        set_meeting_item_signatory(meeting, item.UID(), '2', signatory3_uid, u'default')
+        set_meeting_item_signatory(meeting, item_uid, '2', signatory3_uid, u'default')
         printed_signatories = helper.print_signatories_by_position(
             signature_format=(u'prefixed_position_type', u'person'))
         self.assertEqual(
@@ -637,7 +638,7 @@ class testContacts(PloneMeetingTestCase):
             }
         )
         # try with something else than default
-        set_meeting_item_signatory(meeting, item.UID(), '2', signatory3_uid, u'super')
+        set_meeting_item_signatory(meeting, item_uid, '2', signatory3_uid, u'super')
         printed_signatories = helper.print_signatories_by_position(
             signature_format=(u'prefixed_position_type', u'person'))
         self.assertEqual(
@@ -700,6 +701,28 @@ class testContacts(PloneMeetingTestCase):
                 3: u"Le Super-héro"
             }
         )
+        # print_signatories_by_position is using Meeting.get_signature_infos_for
+        # redefined on item
+        self.assertTrue(signatory3_uid in item.getItemSignatories(real=True))
+        self.assertEqual(meeting.get_signature_infos_for(item_uid, signatory3_uid),
+                         {'position_type': u'super', 'signature_number': '2'})
+        self.assertEqual(
+            meeting.get_signature_infos_for(item_uid,
+                                            signatory3_uid,
+                                            render_position_type=True,
+                                            prefix_position_type=True),
+            {'position_type': u'Le Super-h\xe9ro', 'signature_number': '2'})
+        # not redefined on item
+        meeting_signatory1_uid = meeting.getSignatories(by_signature_number=True)['1']
+        self.assertFalse(meeting_signatory1_uid in item.getItemSignatories(real=True))
+        self.assertEqual(meeting.get_signature_infos_for(item_uid, meeting_signatory1_uid),
+                         {'position_type': u'dg', 'signature_number': '1'})
+        self.assertEqual(
+            meeting.get_signature_infos_for(item_uid,
+                                            meeting_signatory1_uid,
+                                            render_position_type=True,
+                                            prefix_position_type=True),
+            {'position_type': u'La Directrice G\xe9n\xe9rale', 'signature_number': '1'})
 
     def _setupInAndOutAttendees(self):
         """Setup a meeting with items and in and out (non) attendees."""
