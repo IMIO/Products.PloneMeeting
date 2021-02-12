@@ -235,7 +235,7 @@ class Migrate_To_4200(Migrator):
            are now defined in MeetingConfig.itemWFValidationLevels."""
         logger.info("Configuring 'itemWFValidationLevels' for every MeetingConfigs...")
         for cfg in self.tool.objectValues('MeetingConfig'):
-            if base_hasattr(cfg, 'historizedMeetingAttributes'):
+            if not base_hasattr(cfg, 'historizedMeetingAttributes'):
                 # historizedMeetingAttributes is removed during migration of Meeting to DX
                 return self._already_migrated()
             stored_itemWFValidationLevels = getattr(cfg, 'itemWFValidationLevels', [])
@@ -305,7 +305,7 @@ class Migrate_To_4200(Migrator):
            this, re-apply default values from MeetingConfigDescriptor."""
         logger.info("Configuring 'votes' for every MeetingConfigs...")
         for cfg in self.tool.objectValues('MeetingConfig'):
-            if base_hasattr(cfg, 'historizedMeetingAttributes'):
+            if not base_hasattr(cfg, 'historizedMeetingAttributes'):
                 # historizedMeetingAttributes is removed during migration of Meeting to DX
                 return self._already_migrated()
             config_descr = MeetingConfigDescriptor(None, None, None)
@@ -449,7 +449,7 @@ class Migrate_To_4200(Migrator):
         for cfg in self.tool.objectValues('MeetingConfig'):
             # make sure only done one time or relaunching migration would
             # reapply and switch back to wrong configuration
-            if base_hasattr(cfg, 'historizedMeetingAttributes'):
+            if not base_hasattr(cfg, 'historizedMeetingAttributes'):
                 # historizedMeetingAttributes is removed during migration of Meeting to DX
                 return self._already_migrated()
             for field_name in ('dashboardItemsListingsFilters',
