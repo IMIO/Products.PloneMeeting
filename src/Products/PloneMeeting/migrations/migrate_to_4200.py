@@ -235,6 +235,9 @@ class Migrate_To_4200(Migrator):
            are now defined in MeetingConfig.itemWFValidationLevels."""
         logger.info("Configuring 'itemWFValidationLevels' for every MeetingConfigs...")
         for cfg in self.tool.objectValues('MeetingConfig'):
+            if base_hasattr(cfg, 'historizedMeetingAttributes'):
+                # historizedMeetingAttributes is removed during migration of Meeting to DX
+                return self._already_migrated()
             stored_itemWFValidationLevels = getattr(cfg, 'itemWFValidationLevels', [])
             stored_wfas = cfg.getWorkflowAdaptations()
             # necessary for profile inbetween (4.2beta...)
@@ -302,6 +305,9 @@ class Migrate_To_4200(Migrator):
            this, re-apply default values from MeetingConfigDescriptor."""
         logger.info("Configuring 'votes' for every MeetingConfigs...")
         for cfg in self.tool.objectValues('MeetingConfig'):
+            if base_hasattr(cfg, 'historizedMeetingAttributes'):
+                # historizedMeetingAttributes is removed during migration of Meeting to DX
+                return self._already_migrated()
             config_descr = MeetingConfigDescriptor(None, None, None)
             cfg.setUseVotes(config_descr.useVotes)
             cfg.setVotesEncoder(config_descr.votesEncoder)
