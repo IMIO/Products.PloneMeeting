@@ -1021,7 +1021,7 @@ class Meeting(Container):
            for given p_item_uid and p_signatory_uid."""
         # check if signatory_uid is redefined on the item
         data = self.get_item_signatories(by_signatories=False, include_position_type=True)
-        data = {k: v for k, v in data[item_uid].items()
+        data = {k: v['position_type'] for k, v in data[item_uid].items()
                 if v['hp_uid'] == signatory_uid}
         catalog = api.portal.get_tool('portal_catalog')
         hp = catalog(UID=signatory_uid)[0].getObject()
@@ -1029,7 +1029,7 @@ class Meeting(Container):
             signature_number, position_type = data.items()[0]
         else:
             # if not, then get it from meeting signatories
-            signature_number = self.getSignatories()[signatory_uid]
+            signature_number = self.get_signatories()[signatory_uid]
             # position type is the one of the signatory (signatory_uid)
             position_type = hp.position_type
         res = {}

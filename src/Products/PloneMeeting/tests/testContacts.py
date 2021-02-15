@@ -713,7 +713,7 @@ class testContacts(PloneMeetingTestCase):
         )
         # print_signatories_by_position is using Meeting.get_signature_infos_for
         # redefined on item
-        self.assertTrue(signatory3_uid in item.getItemSignatories(real=True))
+        self.assertTrue(signatory3_uid in item.get_item_signatories(real=True))
         self.assertEqual(meeting.get_signature_infos_for(item_uid, signatory3_uid),
                          {'position_type': u'super', 'signature_number': '2'})
         self.assertEqual(
@@ -724,7 +724,7 @@ class testContacts(PloneMeetingTestCase):
             {'position_type': u'Le Super-h\xe9ro', 'signature_number': '2'})
         # not redefined on item
         meeting_signatory1_uid = meeting.getSignatories(by_signature_number=True)['1']
-        self.assertFalse(meeting_signatory1_uid in item.getItemSignatories(real=True))
+        self.assertFalse(meeting_signatory1_uid in item.get_item_signatories(real=True))
         self.assertEqual(meeting.get_signature_infos_for(item_uid, meeting_signatory1_uid),
                          {'position_type': u'dg', 'signature_number': '1'})
         self.assertEqual(
