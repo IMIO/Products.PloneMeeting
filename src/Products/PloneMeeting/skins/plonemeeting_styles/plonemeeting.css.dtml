@@ -748,7 +748,8 @@ input[readonly=""] {
 
 /* center controls displayed on edit forms */
 body.template-edit div.formControls,
-body.template-base_edit div.formControls {
+body.template-edit div.formControls,
+div.overlay div.formControls {
     text-align: center;
     position: sticky;
     bottom: 10px;

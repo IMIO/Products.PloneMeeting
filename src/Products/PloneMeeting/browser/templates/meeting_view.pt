@@ -163,17 +163,17 @@
   <tal:annexes replace="structure context/@@display-annexes" />
   <br />
 
-  <tal:comment replace="nothing">Manager reserved fields</tal:comment>
-  <tal:managers_parameters define="widgets python:view.meeting_view.fieldsets['managers_parameters'].widgets.values()"
+  <tal:comment replace="nothing">Parameters</tal:comment>
+  <tal:managers_parameters define="widgets python:view.meeting_view.fieldsets['parameters'].widgets.values()"
                            condition="widgets">
     <div class="collapsible discreet"
-         onclick="toggleDetails('collapsible-managers-parameters', toggle_parent_active=true, parent_tag=this)">
+         onclick="toggleDetails('collapsible-parameters', toggle_parent_active=true, parent_tag=this)">
       <span class="meeting_attribute_label"
-           tal:content="python:view.meeting_view.fieldsets['managers_parameters'].label">
-        Managers parameters
+           tal:content="python:view.meeting_view.fieldsets['parameters'].label">
+        Parameters
       </span>
     </div>
-    <div id="collapsible-managers-parameters"
+    <div id="collapsible-parameters"
          class="collapsible-content">
       <div class="collapsible-inner-content">
         <table class="no-style-table table-view-widgets">

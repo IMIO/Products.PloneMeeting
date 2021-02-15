@@ -2,10 +2,10 @@
 
 from AccessControl import ClassSecurityInfo
 from collections import OrderedDict
-from collective.dexteritytextindexer.interfaces import IDynamicTextIndexExtender
 from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.contact.plonegroup.config import get_registry_organizations
 from collective.dexteritytextindexer.directives import searchable
+from collective.dexteritytextindexer.interfaces import IDynamicTextIndexExtender
 from copy import deepcopy
 from datetime import datetime
 from datetime import timedelta
@@ -23,6 +23,7 @@ from plone.dexterity.content import Container
 from plone.dexterity.schema import DexteritySchemaPolicy
 from plone.directives import form
 from plone.formwidget.datetime.z3cform.widget import DatetimeFieldWidget
+from plone.formwidget.masterselect import MasterSelectField
 from plone.memoize import ram
 from plone.supermodel import model
 from Products.CMFCore.permissions import ModifyPortalContent
@@ -67,6 +68,9 @@ from zope.schema import Datetime
 from zope.schema import Int
 from zope.schema import Text
 from zope.schema import TextLine
+from zope.schema.interfaces import IVocabularyFactory
+from zope.schema.vocabulary import SimpleTerm
+from zope.schema.vocabulary import SimpleVocabulary
 
 import copy
 import itertools
@@ -197,8 +201,34 @@ class IMeeting(IDXMeetingContent):
         allowed_mime_types=(u"text/html", ))
 
     searchable("place")
-    place = Text(
+    place = MasterSelectField(
         title=_(u"title_place"),
+        vocabulary="Products.PloneMeeting.content.meeting.places_vocabulary",
+        required=True,
+        slave_fields=(
+            {'name': 'place_other',
+             'slaveID': '#form-widgets-place_other',
+             'action': 'enable',
+             'hide_values': (u'other'),
+             'siblings': True,
+             },
+            {'name': 'place_other',
+             'slaveID': '#form-widgets-place_other',
+             'action': 'show',
+             'hide_values': (u'other'),
+             'siblings': True,
+             },
+        ),
+    )
+
+    searchable("place_other")
+    place_other = Text(
+        title=_(u"title_place"),
+        required=False)
+
+    searchable("place_other")
+    place_other = TextLine(
+        title=_(u"title_place_other"),
         required=False)
 
     form.widget('pre_meeting_date', DatetimeFieldWidget, show_today_link=True, show_time=True)
@@ -304,7 +334,7 @@ class IMeeting(IDXMeetingContent):
     model.fieldset('dates_and_data',
                    label=_(u"fieldset_dates_and_data"),
                    fields=['date', 'start_date', 'mid_date', 'end_date',
-                           'approval_date', 'convocation_date', 'place',
+                           'approval_date', 'convocation_date', 'place', 'place_other',
                            'pre_meeting_date', 'pre_meeting_place',
                            'extraordinary_session'])
 
@@ -321,8 +351,8 @@ class IMeeting(IDXMeetingContent):
                            'votes_observations', 'public_meeting_observations',
                            'secret_meeting_observations', 'authority_notice'])
 
-    model.fieldset('managers_parameters',
-                   label=_(u"fieldset_managers_parameters"),
+    model.fieldset('parameters',
+                   label=_(u"fieldset_parameters"),
                    fields=['meeting_number', 'first_item_number'])
 
     @invariant
@@ -671,6 +701,10 @@ class Meeting(Container):
         'place':
             {'optional': True,
              'condition': ""},
+        'place_other':
+            {'optional': False,
+             'condition': "python:'place' in view.used_attrs and "
+                "(view.mode != 'display' or context.place == 'other')"},
         'extraordinary_session':
             {'optional': True,
              'condition': ""},
@@ -807,6 +841,13 @@ class Meeting(Container):
         if res and for_display:
             res = render_textarea(res, self, striked=striked, mark_empty_tags=mark_empty_tags)
         return res
+
+    def get_place(self, real=False):
+        """ """
+        place = self.place
+        if not real and self.place == u'other':
+            place = self.place_other
+        return place
 
     def _available_items_query(self):
         '''Check docstring in IMeeting.'''
@@ -1860,3 +1901,26 @@ class MeetingSearchableTextExtender(object):
             res.append(annex.Title())
         res = ' '.join(res)
         return res
+
+
+class PlacesVocabulary(object):
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """ """
+        terms = []
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        places = [place for place in cfg.getPlaces().strip().split('\r\n') if place]
+        if context.place not in places and context.place and context.place != u'other':
+            places.append(context.place)
+
+        for place in places:
+            terms.append(SimpleTerm(place, place, place))
+        terms.append(SimpleTerm(u'other', u'other',
+                                translate('other_place',
+                                          domain='PloneMeeting',
+                                          context=context.REQUEST,
+                                          default=u"Other")))
+        return SimpleVocabulary(terms)
+PlacesVocabularyFactory = PlacesVocabulary()
