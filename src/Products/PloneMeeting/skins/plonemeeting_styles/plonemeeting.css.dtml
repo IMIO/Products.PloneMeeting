@@ -753,7 +753,7 @@ div.formControls {
     bottom: 10px;
     background-color: rgba(210,210,210,0.5);
     padding: 1em;
-    border-radius: 5px;
+    border-radius: 3px;
     margin: 0em;
 }
 
