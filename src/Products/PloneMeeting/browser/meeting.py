@@ -120,10 +120,17 @@ class BaseMeetingView(object):
 
     def show_attendees_fields(self):
         '''Display attendee related fields in view/edit?'''
+        # caching
+        show = getattr(self, "_show_attendees_fields_cache", None)
+        if show is not None:
+            return show
         # new meeting or existing meeting then manage history
-        return (self.context.__class__.__name__ != 'Meeting' and 'attendees' in self.used_attrs) or \
+        show = (self.context.__class__.__name__ != 'Meeting' and 'attendees' in self.used_attrs) or \
                (self.context.__class__.__name__ == 'Meeting' and
                 (self.context.get_attendees() or not self.show_field("assembly")))
+        show = bool(show)
+        setattr(self, "_show_attendees_fields_cache", show)
+        return show
 
     def _is_rich(self, widget):
         """Does given p_widget use a RichText field?"""
