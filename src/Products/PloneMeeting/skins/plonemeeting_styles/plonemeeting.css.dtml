@@ -746,8 +746,9 @@ input[readonly=""] {
     width: 665px;
 }
 
-/* center controls displayed on z3c.forms */
-div.formControls {
+/* center controls displayed on edit forms */
+body.template-edit div.formControls,
+body.template-base_edit div.formControls {
     text-align: center;
     position: sticky;
     bottom: 10px;
