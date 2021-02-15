@@ -33,6 +33,9 @@ Changelog
   size too big, when using `ToolPloneMeeting.isManager`, use `cfg` as `context`
   if available.
   [gbastien]
+- Migrate `Meeting` from AT to DX :
+
+  - ...
 
 4.2b11 (2021-01-19)
 -------------------

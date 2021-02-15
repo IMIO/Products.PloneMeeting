@@ -747,8 +747,14 @@ input[readonly=""] {
 }
 
 /* center controls displayed on z3c.forms */
-#form .formControls {
+div.formControls {
     text-align: center;
+    position: sticky;
+    bottom: 10px;
+    background-color: rgba(210,210,210,0.5);
+    padding: 1em;
+    border-radius: 5px;
+    margin: 0em;
 }
 
 .ToDiscuss {
@@ -2099,7 +2105,7 @@ div.pm-global-actions {
    z-index: 10000;
    font-size: 140%;
    color: #666666;
-   background-color: rgba(200,200,200,0.5);
+   background-color: rgba(210,210,210,0.5);
    padding: 0.5em;
    border-radius: 3px;
 }
