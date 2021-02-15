@@ -1173,18 +1173,38 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
 
         return signatories
 
-    def get_signature_infos_for(self, item_uid, signatory_uid):
+    def get_signature_infos_for(self,
+                                item_uid,
+                                signatory_uid,
+                                render_position_type=False,
+                                prefix_position_type=False):
         """Return the signature position_type to use as label and signature_number
            for given p_item_uid and p_signatory_uid."""
+        # check if signatory_uid is redefined on the item
         data = self.get_item_signatories(by_signatories=False, include_position_type=True)
         data = {k: v for k, v in data[item_uid].items()
                 if v['hp_uid'] == signatory_uid}
-        res = {}
         catalog = api.portal.get_tool('portal_catalog')
-        res['signature_number'] = data.keys()[0]
         hp = catalog(UID=signatory_uid)[0].getObject()
-        res['position_type'] = hp.get_label(
-            forced_position_type_value=data.values()[0]['position_type'])
+        if data:
+            signature_number, position_type = data.items()[0]
+        else:
+            # if not, then get it from meeting signatories
+            signature_number = self.getSignatories()[signatory_uid]
+            # position type is the one of the signatory (signatory_uid)
+            position_type = hp.position_type
+        res = {}
+        res['signature_number'] = signature_number
+        if render_position_type:
+            if prefix_position_type:
+                res['position_type'] = hp.get_prefix_for_gender_and_number(
+                    include_value=True,
+                    forced_position_type_value=position_type)
+            else:
+                res['position_type'] = hp.get_label(
+                    forced_position_type_value=position_type)
+        else:
+            res['position_type'] = position_type
         return res
 
     security.declarePublic('get_item_votes')

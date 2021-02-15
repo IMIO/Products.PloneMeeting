@@ -6,7 +6,7 @@
   <ul tal:repeat="item items">
     <li><span tal:content="python: item.getItemNumber(for_display=True)"></span>.
         <span tal:content="structure item/getPrettyLink"></span>
-        <tal:signature_infos define="signature_infos python: view.meeting.get_signature_infos_for(item.UID(), view.signatory_uid)">
+        <tal:signature_infos define="signature_infos python: view.meeting.get_signature_infos_for(item.UID(), view.signatory_uid, render_position_type=True)">
         [<strong i18n:translate="">Signature number</strong>:
          <span tal:content="signature_infos/signature_number"></span> -
          <strong i18n:translate="">Signature position type</strong>:
