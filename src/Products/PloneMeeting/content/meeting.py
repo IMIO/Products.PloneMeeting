@@ -203,7 +203,8 @@ class IMeeting(IDXMeetingContent):
     place = MasterSelectField(
         title=_(u"title_place"),
         vocabulary="Products.PloneMeeting.content.meeting.places_vocabulary",
-        required=False,
+        # avoid a "No value" entry
+        required=True,
         slave_fields=(
             {'name': 'place_other',
              'slaveID': '#form-widgets-place_other',
