@@ -66,7 +66,6 @@ from zope.interface import Invalid
 from zope.interface import invariant
 from zope.schema import Datetime
 from zope.schema import Int
-from zope.schema import Text
 from zope.schema import TextLine
 from zope.schema.interfaces import IVocabularyFactory
 from zope.schema.vocabulary import SimpleTerm
@@ -220,11 +219,6 @@ class IMeeting(IDXMeetingContent):
              },
         ),
     )
-
-    searchable("place_other")
-    place_other = Text(
-        title=_(u"title_place"),
-        required=False)
 
     searchable("place_other")
     place_other = TextLine(

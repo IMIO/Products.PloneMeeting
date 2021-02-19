@@ -5,6 +5,7 @@ from collective.eeafaceted.batchactions.interfaces import IBatchActionsMarker
 from copy import deepcopy
 from imio.helpers.catalog import addOrUpdateColumns
 from imio.helpers.catalog import addOrUpdateIndexes
+from imio.helpers.content import get_vocab
 from imio.helpers.content import richtextval
 from imio.helpers.content import safe_delattr
 from imio.pyutils.utils import replace_in_list
@@ -79,7 +80,15 @@ class MeetingMigrator(CMFFolderMigrator):
             RichTextValue(self.old.getRawAssemblyStaves()) or None
         self.new.signatures = self.old.getRawSignatures() and \
             RichTextValue(self.old.getRawSignatures()) or None
-        self.new.place = self.old.getPlace()
+        # place is moved to place/place_other
+        place = self.old.getPlace().strip()
+        vocab = get_vocab(self.new,
+                          "Products.PloneMeeting.content.meeting.places_vocabulary")
+        if not place or place not in vocab:
+            self.new.place = u'other'
+            self.new.place_other = place or None
+        else:
+            self.new.place = place
         self.new.pre_meeting_place = self.old.getPreMeetingPlace()
         pre_meeting_date = self.old.getPreMeetingDate()
         if pre_meeting_date:
