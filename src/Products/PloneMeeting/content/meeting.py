@@ -237,7 +237,7 @@ class IMeeting(IDXMeetingContent):
         required=False)
 
     searchable("pre_meeting_place")
-    pre_meeting_place = Text(
+    pre_meeting_place = TextLine(
         title=_(u"title_pre_meeting_place"),
         required=False)
 
@@ -575,16 +575,6 @@ def default_place(data):
     cfg = tool.getMeetingConfig(data.context)
     res = u""
     if "place" in cfg.getUsedMeetingAttributes():
-        res = safe_unicode(cfg.getPlaces())
-    return res
-
-
-@form.default_value(field=IMeeting['pre_meeting_place'])
-def default_pre_meeting_place(data):
-    tool = api.portal.get_tool('portal_plonemeeting')
-    cfg = tool.getMeetingConfig(data.context)
-    res = u""
-    if "pre_meeting_place" in cfg.getUsedMeetingAttributes():
         res = safe_unicode(cfg.getPlaces())
     return res
 
