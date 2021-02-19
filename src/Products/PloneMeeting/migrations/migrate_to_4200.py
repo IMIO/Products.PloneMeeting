@@ -81,14 +81,15 @@ class MeetingMigrator(CMFFolderMigrator):
         self.new.signatures = self.old.getRawSignatures() and \
             RichTextValue(self.old.getRawSignatures()) or None
         # place is moved to place/place_other
-        place = self.old.getPlace().strip()
-        vocab = get_vocab(self.new,
-                          "Products.PloneMeeting.content.meeting.places_vocabulary")
-        if not place or place not in vocab:
-            self.new.place = u'other'
-            self.new.place_other = place or None
-        else:
-            self.new.place = place
+        if 'place' in self.used_meeting_attrs:
+            place = self.old.getPlace().strip()
+            vocab = get_vocab(self.new,
+                              "Products.PloneMeeting.content.meeting.places_vocabulary")
+            if not place or place not in vocab:
+                self.new.place = u'other'
+                self.new.place_other = place or None
+            else:
+                self.new.place = place
         self.new.pre_meeting_place = self.old.getPreMeetingPlace()
         pre_meeting_date = self.old.getPreMeetingDate()
         if pre_meeting_date:
@@ -209,6 +210,7 @@ class Migrate_To_4200(Migrator):
             cfg.registerPortalTypes()
             MeetingMigrator.src_portal_type = meeting_type_name
             MeetingMigrator.dst_portal_type = meeting_type_name
+            MeetingMigrator.used_meeting_attrs = cfg.getUsedMeetingAttributes()
             pac_migrate(self.portal, MeetingMigrator)
 
             # some attributes were removed from MeetingConfig

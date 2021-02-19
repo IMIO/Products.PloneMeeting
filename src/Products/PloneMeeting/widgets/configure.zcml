@@ -40,7 +40,7 @@
         name="richtext-edit"
         class=".pm_richtext.RichTextEdit"
         for="*"
-        template="pm_richtext_edit.pt"
+        template="pm_richtext_fastedit.pt"
         permission="zope2.View" />
 
   <!-- text number -->

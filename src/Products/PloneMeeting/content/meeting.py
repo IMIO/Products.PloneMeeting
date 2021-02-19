@@ -203,7 +203,7 @@ class IMeeting(IDXMeetingContent):
     place = MasterSelectField(
         title=_(u"title_place"),
         vocabulary="Products.PloneMeeting.content.meeting.places_vocabulary",
-        required=True,
+        required=False,
         slave_fields=(
             {'name': 'place_other',
              'slaveID': '#form-widgets-place_other',
@@ -687,8 +687,8 @@ class Meeting(Container):
              'condition': ""},
         'place_other':
             {'optional': False,
-             'condition': "python:'place' in view.used_attrs and "
-                "(view.mode != 'display' or context.place == 'other')"},
+             'condition': "python:view.show_field('place') and "
+                "(view.mode != 'display' or context.place == u'other')"},
         'extraordinary_session':
             {'optional': True,
              'condition': ""},
@@ -1896,7 +1896,11 @@ class PlacesVocabulary(object):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         places = [place for place in cfg.getPlaces().strip().split('\r\n') if place]
-        if context.place not in places and context.place and context.place != u'other':
+        # history when context is a Meeting
+        if context.getTagName() == "Meeting" and \
+           context.place and \
+           context.place not in places and \
+           context.place != u'other':
             places.append(context.place)
 
         for place in places:
