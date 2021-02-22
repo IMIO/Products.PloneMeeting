@@ -512,6 +512,9 @@ class Migrate_To_4200(Migrator):
         self.updateTALConditions("getDate()", "date")
         self.updateTALConditions("getStartDate()", "start_date")
         self.updateTALConditions("getEndDate()", "end_date")
+        self.updateTALConditions("isManager(context", "isManager(cfg")
+        self.updateTALConditions("isManager(here", "isManager(cfg")
+        self.updateTALConditions("isManager(obj)", "isManager(cfg)")
 
         # replacements MeetingConfig item columns
         self.cleanItemColumns(
