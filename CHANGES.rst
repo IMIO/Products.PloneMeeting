@@ -4,9 +4,9 @@ Changelog
 
 4.1.28.19 (unreleased)
 ----------------------
-
-- Nothing changed yet.
-
+- Prevent to move the default item template to a subfolder
+  (removal was already managed, now moval is not possible neither).
+  [gbastien]
 
 4.1.28.18 (2021-02-12)
 ----------------------

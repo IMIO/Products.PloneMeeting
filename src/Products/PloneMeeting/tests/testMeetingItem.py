@@ -6953,6 +6953,23 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('templatemanager1')
         self.assertRaises(Redirect, api.content.delete, default_template)
 
+    def test_pm_DefaultItemTemplateNotMovable(self):
+        """The default item template may not be moved to a subfolder."""
+        cfg = self.meetingConfig
+        default_template = cfg.itemtemplates.get(ITEM_DEFAULT_TEMPLATE_ID)
+        # not movable as Manager...
+        self.changeUser('siteadmin')
+        folder = api.content.create(
+            container=cfg.itemtemplates, type='Folder', id='folder')
+        self.assertRaises(
+            Redirect, api.content.move, source=default_template, target=folder)
+        # ... nor as item templates manager
+        self.changeUser('templatemanager1')
+        self.assertRaises(
+            Redirect, api.content.move, source=default_template, target=folder)
+        # but we may copy it
+        api.content.copy(default_template, cfg.itemtemplates)
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite
