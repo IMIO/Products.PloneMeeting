@@ -944,7 +944,7 @@ def _redirect_if_default_item_template(item):
     if item.isDefinedInTool(item_type='itemtemplate') and \
        item.getId() == ITEM_DEFAULT_TEMPLATE_ID:
         msg = translate(
-            u"You cannot delete the default item template, "
+            u"You cannot delete or move the default item template, "
             u"but you can deactivate it if necessary!",
             domain='PloneMeeting',
             context=item.REQUEST)
