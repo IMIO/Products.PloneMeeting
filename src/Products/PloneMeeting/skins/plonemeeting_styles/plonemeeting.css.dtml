@@ -2184,6 +2184,10 @@ div.static-infos {
 #content td.table_widget_label {
     width: 200px;
 }
+/* highlight the default item template in the itemtemplates configuration */
+a[href*="itemtemplates/default-empty-item-template/"] {
+    font-weight: bold;
+}
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */

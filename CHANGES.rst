@@ -81,6 +81,10 @@ Changelog
     by overrided anymore, everything is done using the schema and fieldsets
     definition.
 
+    [gbastien]
+- Highlight (bold) the default item template in the itemtemplates folder.
+  [gbastien]
+
 4.2b11 (2021-01-19)
 -------------------
 
