@@ -332,8 +332,14 @@
                            redefinedItemSignatures python: context.getItemSignatures(real=True) or context.get_item_signatories(real=True);
                            isUsingContacts python: not context.is_assembly_field_used('itemAssembly') and meetingConfig.isUsingContacts()">
       <div id="assembly-and-signatures"
-          onclick="togglePersonsCookie();;toggleDetails('collapsible-assembly-and-signatures', toggle_parent_active=true, parent_tag=null, load_view='@@load_item_assembly_and_signatures');"
-          class="collapsible discreet not-auto-collapsible-activable">
+           tal:define="toggle_type python:isUsingContacts and 'fade' or 'slide';"
+           tal:attributes="onclick string:togglePersonsCookie();;toggleDetails('collapsible-assembly-and-signatures',
+                              toggle_parent_active=true,
+                              parent_tag=null,
+                              load_view='@@load_item_assembly_and_signatures',
+                              base_url=null,
+                              toggle_type='${toggle_type}');"
+           class="collapsible discreet not-auto-collapsible-activable">
           <span class="meeting_attribute_label" i18n:translate="redefinable_assembly_and_signatures">
               <span i18n:name="assembly"
                     tal:define="class_to_use python: redefinedItemAssemblies and 'highlightValue' or ''"
