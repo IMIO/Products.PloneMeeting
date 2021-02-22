@@ -12,6 +12,7 @@ from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_plone_groups
 from collective.datagridcolumns.MultiSelectColumn import MultiSelectColumn
 from collective.datagridcolumns.SelectColumn import SelectColumn
+from collective.datagridcolumns.TextAreaColumn import TextAreaColumn
 from collective.eeafaceted.collectionwidget.interfaces import IDashboardCollection
 from collective.eeafaceted.collectionwidget.utils import _get_criterion
 from collective.eeafaceted.collectionwidget.utils import _updateDefaultCollectionFor
@@ -25,6 +26,7 @@ from eea.facetednavigation.widgets.resultsperpage.widget import Widget as Result
 from ftw.labels.interfaces import ILabeling
 from imio.helpers.cache import cleanRamCache
 from imio.helpers.cache import cleanVocabularyCacheFor
+from imio.helpers.content import get_vocab
 from persistent.list import PersistentList
 from plone import api
 from plone.app.portlets.portlets import navigation
@@ -405,6 +407,23 @@ schema = Schema((
         multiValued=1,
         vocabulary_factory='Products.PloneMeeting.vocabularies.selectableiteminitiatorsvocabulary',
         default=defValues.orderedItemInitiators,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write harmless config",
+    ),
+    LinesField(
+        name='orderedCommitteeContacts',
+        widget=InAndOutWidget(
+            description="OrderedCommitteeContacts",
+            description_msgid="ordered_committee_contacts_descr",
+            label='Orderedcommitteecontacts',
+            label_msgid='PloneMeeting_label_orderedCommitteeContacts',
+            i18n_domain='PloneMeeting',
+            size='20',
+        ),
+        schemata="assembly_and_signatures",
+        multiValued=1,
+        vocabulary_factory='Products.PloneMeeting.vocabularies.selectableassemblymembersvocabulary',
+        default=defValues.orderedCommitteeContacts,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write harmless config",
     ),
@@ -2432,6 +2451,39 @@ schema = Schema((
         schemata="votes",
         write_permission="PloneMeeting: Write risky config",
     ),
+    DataGridField(
+        name='committees',
+        widget=DataGridField._properties['widget'](
+            description="Committees",
+            description_msgid="committees_descr",
+            columns={'row_id':
+                        Column("Committee row id",
+                               visible=False),
+                     'label':
+                        Column("Committee label"),
+                     'default_assembly':
+                        TextAreaColumn("Committee default assembly"),
+                     'default_attendees':
+                        MultiSelectColumn("Committe default attendees",
+                                          vocabulary="listSelectableAssemblyMembers"),
+                     'default_place':
+                        Column("Committee default place"),
+                     'enabled':
+                        SelectColumn("Committe enabled?",
+                                     vocabulary="listBooleanVocabulary",
+                                     default='1')},
+            label='Committees',
+            label_msgid='PloneMeeting_label_committees',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="votes",
+        default=defValues.committees,
+        allow_oddeven=True,
+        write_permission="PloneMeeting: Write risky config",
+        columns=('row_id', 'label', 'default_assembly', 'default_attendees',
+                 'default_place', 'enabled'),
+        allow_empty_rows=False,
+    ),
     LinesField(
         name='meetingItemTemplatesToStoreAsAnnex',
         widget=MultiSelectionWidget(
@@ -3368,6 +3420,15 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         vocab = vocab_factory(self)
         res = [(term.value, term.title) for term in vocab._terms]
         res.insert(0, ('_none_', _z3c_form('No value')))
+        return DisplayList(res)
+
+    security.declarePrivate('listSelectableAssemblyMembers')
+
+    def listSelectableAssemblyMembers(self):
+        """ """
+        vocab = get_vocab(
+            self, "Products.PloneMeeting.vocabularies.selectableassemblymembersvocabulary")
+        res = [(term.value, term.title) for term in vocab._terms]
         return DisplayList(res)
 
     security.declarePublic('getConfigGroup')
