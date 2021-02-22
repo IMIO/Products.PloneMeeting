@@ -114,6 +114,7 @@ from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getCustomSchemaFields
 from Products.PloneMeeting.utils import listifySignatures
 from Products.PloneMeeting.utils import reviewersFor
+from Products.PloneMeeting.utils import translate_list
 from Products.PloneMeeting.utils import updateAnnexesAccess
 from Products.PloneMeeting.validators import WorkflowInterfacesValidator
 from z3c.form.i18n import MessageFactory as _z3c_form
@@ -4336,16 +4337,15 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         if '' in itemAdvicesStatesFromRequest:
             itemAdvicesStatesFromRequest.remove('')
         itemAdviceStates_set = set(itemAdvicesStatesFromRequest) or set(self.getItemAdviceStates())
-        if itemAdviceStates_set.difference(v_set):
-            return translate('itemAdviceEditStates_validation_error',
-                             domain='PloneMeeting',
-                             mapping={'missingStates': ', '.join([translate(state,
-                                                                            domain='plone',
-                                                                            context=self.REQUEST) for state in
-                                                                 itemAdviceStates_set.difference(v_set)])},
-                             context=self.REQUEST,
-                             default='Values defined in the \'itemAdviceEditStates\' field must contains at least '
-                                     'every values selected in the \'itemAdvicesStates\' field!')
+        difference = itemAdviceStates_set.difference(v_set)
+        if difference:
+            return translate(
+                'itemAdviceEditStates_validation_error',
+                domain='PloneMeeting',
+                mapping={'missingStates': translate_list(difference)},
+                context=self.REQUEST,
+                default='Values defined in the \'itemAdviceEditStates\' field must contains at least '
+                        'every values selected in the \'itemAdvicesStates\' field!')
 
     security.declarePrivate('validate_insertingMethodsOnAddItem')
 
