@@ -42,6 +42,9 @@ Changelog
 - Prevent to move the default item template to a subfolder
   (removal was already managed, now moval is not possible neither).
   [gbastien]
+- Display a help message on the item view regarding copy groups to know in
+  which states copy groups will have access to the item.
+  [gbastien]
 
 4.2b11 (2021-01-19)
 -------------------
