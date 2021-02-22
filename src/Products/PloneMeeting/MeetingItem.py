@@ -119,6 +119,7 @@ from Products.PloneMeeting.utils import sendMail
 from Products.PloneMeeting.utils import sendMailIfRelevant
 from Products.PloneMeeting.utils import set_field_from_ajax
 from Products.PloneMeeting.utils import transformAllRichTextFields
+from Products.PloneMeeting.utils import translate_list
 from Products.PloneMeeting.utils import updateAnnexesAccess
 from Products.PloneMeeting.utils import validate_item_assembly_value
 from Products.PloneMeeting.utils import workday
@@ -5760,6 +5761,17 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         return data
 
+    security.declarePublic('getCopyGroupsHelpMsg')
+
+    def getCopyGroupsHelpMsg(self, cfg):
+        '''Help message regarding copy groups configuration.'''
+        translated_states = translate_list(cfg.getItemCopyGroupsStates())
+        msg = translate(msgid="copy_groups_help_msg",
+                        domain="PloneMeeting",
+                        mapping={"states": translated_states},
+                        context=self.REQUEST)
+        return msg
+
     security.declarePublic('getAdviceHelpMessageFor')
 
     def getAdviceHelpMessageFor(self, **adviceInfos):
@@ -5804,12 +5816,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         cfg = tool.getMeetingConfig(self)
         org = get_organization(adviceInfos['id'])
         item_advice_states = org.get_item_advice_states(cfg)
-        translated_item_advice_states = []
-        for state in item_advice_states:
-            translated_item_advice_states.append(
-                translate(state, domain='plone', context=self.REQUEST)
-            )
-        translated_item_advice_states = u', '.join(translated_item_advice_states)
+        translated_item_advice_states = translate_list(item_advice_states)
         advice_states_msg = translate(
             'This advice is addable in following states : ${item_advice_states}.',
             mapping={'item_advice_states': translated_item_advice_states},

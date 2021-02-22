@@ -39,6 +39,12 @@ Changelog
   it is possible to get the raw `position_type`, or rendered, or rendered and
   prefixed.
   [gbastien]
+- Prevent to move the default item template to a subfolder
+  (removal was already managed, now moval is not possible neither).
+  [gbastien]
+- Display a help message on the item view regarding copy groups to know in
+  which states copy groups will have access to the item.
+  [gbastien]
 - Migrate `Meeting` from AT to DX :
 
   - Rely on `collective.dexteritytextindexer` to manage `SearchableText`;
