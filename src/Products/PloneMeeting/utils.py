@@ -1160,6 +1160,19 @@ def toHTMLStrikedContent(plain_content):
     return plain_content
 
 
+def translate_list(elements, domain="plone", as_list=False, separator=u', '):
+    """Translate the received elements."""
+    translated = []
+    request = getRequest()
+    for elt in elements:
+        translated.append(
+            translate(elt, domain=domain, context=request)
+        )
+    if not as_list:
+        translated = u', '.join(translated)
+    return translated
+
+
 def display_as_html(plain_content, obj):
     """Display p_plain_content as HTML, especially ending lines
        that are not displayed if empty."""

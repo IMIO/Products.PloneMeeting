@@ -128,7 +128,11 @@
             <div class="discreet" tal:condition="context/isCopiesEnabled"
                                   tal:define="copyGroups context/getAllCopyGroups;">
                 <span class="item_attribute_label"
-                      i18n:translate="PloneMeeting_label_copyGroups"></span>:&nbsp;&nbsp;
+                      i18n:translate="PloneMeeting_label_copyGroups"></span>
+                <span class='fa fa-question-circle help-doc pmHelp'
+                      i18n:attributes="title"
+                      tal:attributes="title python: context.getCopyGroupsHelpMsg(meetingConfig)">
+                </span>:&nbsp;&nbsp;
                 <tal:displayCopyGroups condition="copyGroups">
                     <span tal:replace="structure context/displayCopyGroups">Copy groups</span>
                 </tal:displayCopyGroups>
