@@ -39,6 +39,9 @@ Changelog
   it is possible to get the raw `position_type`, or rendered, or rendered and
   prefixed.
   [gbastien]
+- Prevent to move the default item template to a subfolder
+  (removal was already managed, now moval is not possible neither).
+  [gbastien]
 
 4.2b11 (2021-01-19)
 -------------------

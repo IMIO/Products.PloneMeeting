@@ -939,13 +939,8 @@ def onItemEditCancelled(item, event):
         parent.manage_delObjects(ids=[item.getId()])
 
 
-def onItemWillBeRemoved(item, event):
-    '''Do not remove the ITEM_DEFAULT_TEMPLATE_ID.'''
-    # If we are trying to remove the whole Plone Site or a MeetingConfig, bypass this hook.
-    if event.object.meta_type in ['Plone Site', 'MeetingConfig']:
-        return
-
-    # can not remove the default item template
+def _redirect_if_default_item_template(item):
+    ''' '''
     if item.isDefinedInTool(item_type='itemtemplate') and \
        item.getId() == ITEM_DEFAULT_TEMPLATE_ID:
         msg = translate(
@@ -958,6 +953,24 @@ def onItemWillBeRemoved(item, event):
             request=item.REQUEST,
             type='error')
         raise Redirect(item.REQUEST.get('HTTP_REFERER'))
+
+
+def onItemWillBeMoved(item, event):
+    '''Do not move the ITEM_DEFAULT_TEMPLATE_ID.'''
+    # If we are trying to move the whole MeetingConfig, bypass this hook.
+    if event.object.meta_type in ['MeetingConfig']:
+        return
+
+    return _redirect_if_default_item_template(item)
+
+
+def onItemWillBeRemoved(item, event):
+    '''Do not remove the ITEM_DEFAULT_TEMPLATE_ID.'''
+    # If we are trying to remove the whole Plone Site or a MeetingConfig, bypass this hook.
+    if event.object.meta_type in ['Plone Site', 'MeetingConfig']:
+        return
+
+    return _redirect_if_default_item_template(item)
 
 
 def onItemRemoved(item, event):
