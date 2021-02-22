@@ -19,6 +19,7 @@ from collective.eeafaceted.dashboard.utils import enableFacetedDashboardFor
 from collective.iconifiedcategory.utils import get_category_object
 from copy import deepcopy
 from DateTime import DateTime
+from datetime import datetime
 from eea.facetednavigation.interfaces import ICriteria
 from eea.facetednavigation.widgets.resultsperpage.widget import Widget as ResultsPerPageWidget
 from ftw.labels.interfaces import ILabeling
@@ -83,9 +84,9 @@ from Products.PloneMeeting.config import TOOL_FOLDER_POD_TEMPLATES
 from Products.PloneMeeting.config import TOOL_FOLDER_RECURRING_ITEMS
 from Products.PloneMeeting.config import TOOL_FOLDER_SEARCHES
 from Products.PloneMeeting.config import WriteRiskyConfig
+from Products.PloneMeeting.content.meeting import IMeeting
 from Products.PloneMeeting.indexes import DELAYAWARE_ROW_ID_PATTERN
 from Products.PloneMeeting.indexes import REAL_ORG_UID_PATTERN
-from Products.PloneMeeting.interfaces import IMeeting
 from Products.PloneMeeting.interfaces import IMeetingAdviceWorkflowActions
 from Products.PloneMeeting.interfaces import IMeetingAdviceWorkflowConditions
 from Products.PloneMeeting.interfaces import IMeetingConfig
@@ -96,7 +97,6 @@ from Products.PloneMeeting.interfaces import IMeetingItemWorkflowActions
 from Products.PloneMeeting.interfaces import IMeetingItemWorkflowConditions
 from Products.PloneMeeting.interfaces import IMeetingWorkflowActions
 from Products.PloneMeeting.interfaces import IMeetingWorkflowConditions
-from Products.PloneMeeting.Meeting import Meeting
 from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.model.adaptations import _getValidationReturnedStates
 from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
@@ -107,11 +107,14 @@ from Products.PloneMeeting.utils import createOrUpdatePloneGroup
 from Products.PloneMeeting.utils import duplicate_workflow
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
 from Products.PloneMeeting.utils import get_annexes
+from Products.PloneMeeting.utils import get_dx_attrs
+from Products.PloneMeeting.utils import get_dx_schema
 from Products.PloneMeeting.utils import get_item_validation_wf_suffixes
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getCustomSchemaFields
 from Products.PloneMeeting.utils import listifySignatures
 from Products.PloneMeeting.utils import reviewersFor
+from Products.PloneMeeting.utils import translate_list
 from Products.PloneMeeting.utils import updateAnnexesAccess
 from Products.PloneMeeting.validators import WorkflowInterfacesValidator
 from z3c.form.i18n import MessageFactory as _z3c_form
@@ -287,7 +290,7 @@ schema = Schema((
             description="Assembly",
             description_msgid="assembly_descr",
             label='Assembly',
-            label_msgid='PloneMeeting_label_assembly',
+            label_msgid='title_default_assembly',
             i18n_domain='PloneMeeting',
         ),
         default_content_type='text/plain',
@@ -302,7 +305,7 @@ schema = Schema((
             description="AssemblyStaves",
             description_msgid="assembly_staves_descr",
             label='AssemblyStaves',
-            label_msgid='PloneMeeting_label_assemblyStaves',
+            label_msgid='title_default_assembly_staves',
             i18n_domain='PloneMeeting',
         ),
         default_content_type='text/plain',
@@ -317,7 +320,7 @@ schema = Schema((
             description="Signatures",
             description_msgid="signatures_descr",
             label='Signatures',
-            label_msgid='PloneMeeting_label_signatures',
+            label_msgid='title_default_signatures',
             i18n_domain='PloneMeeting',
         ),
         default_content_type='text/plain',
@@ -473,41 +476,6 @@ schema = Schema((
         multiValued=1,
         vocabulary='listUsedMeetingAttributes',
         default=defValues.usedMeetingAttributes,
-        enforceVocabulary=True,
-        write_permission="PloneMeeting: Write risky config",
-    ),
-    LinesField(
-        name='historizedMeetingAttributes',
-        widget=MultiSelectionWidget(
-            description="HistorizedMeetingAttributes",
-            description_msgid="historized_meeting_attrs_descr",
-            size=10,
-            format="checkbox",
-            label='Historizedmeetingattributes',
-            label_msgid='PloneMeeting_label_historizedMeetingAttributes',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="data",
-        multiValued=1,
-        vocabulary='listMeetingAttributes',
-        default=defValues.historizedMeetingAttributes,
-        enforceVocabulary=True,
-        write_permission="PloneMeeting: Write risky config",
-    ),
-    LinesField(
-        name='recordMeetingHistoryStates',
-        widget=MultiSelectionWidget(
-            description="RecordMeetingHistoryStates",
-            description_msgid="record_meeting_history_states_descr",
-            format="checkbox",
-            label='Recordmeetinghistorystates',
-            label_msgid='PloneMeeting_label_recordMeetingHistoryStates',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="data",
-        multiValued=1,
-        vocabulary='listMeetingStates',
-        default=defValues.recordMeetingHistoryStates,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
@@ -802,45 +770,6 @@ schema = Schema((
         vocabulary='listTransformTypes',
         default=defValues.xhtmlTransformTypes,
         enforceVocabulary=True,
-        write_permission="PloneMeeting: Write risky config",
-    ),
-    StringField(
-        name='publishDeadlineDefault',
-        default=defValues.publishDeadlineDefault,
-        widget=StringField._properties['widget'](
-            description="PublishDeadlineDefault",
-            description_msgid="publish_deadline_default_descr",
-            label='Publishdeadlinedefault',
-            label_msgid='PloneMeeting_label_publishDeadlineDefault',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="data",
-        write_permission="PloneMeeting: Write risky config",
-    ),
-    StringField(
-        name='freezeDeadlineDefault',
-        default=defValues.freezeDeadlineDefault,
-        widget=StringField._properties['widget'](
-            description="FreezeDeadlineDefault",
-            description_msgid="freeze_deadline_default_descr",
-            label='Freezedeadlinedefault',
-            label_msgid='PloneMeeting_label_freezeDeadlineDefault',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="data",
-        write_permission="PloneMeeting: Write risky config",
-    ),
-    StringField(
-        name='preMeetingDateDefault',
-        default=defValues.preMeetingDateDefault,
-        widget=StringField._properties['widget'](
-            description="PreMeetingDateDefault",
-            description_msgid="pre_meeting_date_default_descr",
-            label='Premeetingdatedefault',
-            label_msgid='PloneMeeting_label_preMeetingDateDefault',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="data",
         write_permission="PloneMeeting: Write risky config",
     ),
     DataGridField(
@@ -3102,7 +3031,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                         {'i': 'review_state',
                          'o': 'plone.app.querystring.operation.selection.is',
                          'v': ['decided', 'closed']},
-                        {'i': 'getDate',
+                        {'i': 'meeting_date',
                          'o': 'plone.app.querystring.operation.date.largerThanRelativeDate',
                          'v': '60'},
                         {'i': 'CompoundCriterion',
@@ -3507,25 +3436,29 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('listUsedMeetingAttributes')
 
     def listUsedMeetingAttributes(self):
-        optional_fields = self.listAttributes(Meeting.schema, optionalOnly=True, as_display_list=False)
-        contact_fields = ['attendees', 'excused', 'absents', 'nonAttendees',
+        optional_fields = get_dx_attrs(
+            self.getMeetingTypeName(), optional_only=True, as_display_list=False)
+        contact_fields = ['attendees', 'excused', 'absents', 'non_attendees',
                           'signatories', 'replacements']
         contact_fields.reverse()
-        index = [name for name, value in optional_fields].index('place')
+        index = optional_fields.index('place')
         for contact_field in contact_fields:
-            optional_fields.insert(
-                index,
-                (contact_field,
-                 '%s (%s)' % (translate('PloneMeeting_label_{0}'.format(contact_field),
+            optional_fields.insert(index, contact_field)
+        res = []
+        for field in optional_fields:
+            res.append(
+                (field,
+                 '%s (%s)' % (translate('title_{0}'.format(field),
                                         domain='PloneMeeting',
                                         context=self.REQUEST),
-                              contact_field)))
-        return DisplayList(tuple(optional_fields))
+                              field)))
+        return DisplayList(tuple(res))
 
     security.declarePrivate('listMeetingAttributes')
 
     def listMeetingAttributes(self):
-        return self.listAttributes(Meeting.schema)
+        return get_dx_attrs(
+            self.getMeetingTypeName(), optional_only=False, as_display_list=False)
 
     security.declarePrivate('listDashboardItemsListingsFilters')
 
@@ -3537,10 +3470,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         res = []
         for criterion in criteria:
             if criterion.section == u'advanced':
-                res.append((criterion.__name__,
-                            translate(criterion.title,
-                                      domain="eea",
-                                      context=self.REQUEST)))
+                res.append(
+                    (criterion.__name__,
+                     u"%s (%s)" % (translate(criterion.title,
+                                             domain="eea",
+                                             context=self.REQUEST),
+                                   criterion.__name__)))
         return DisplayList(tuple(res))
 
     security.declarePrivate('listResultsPerPage')
@@ -3999,8 +3934,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         if (('excused' in newValue) or ('absents' in newValue)) and \
            ('attendees' not in newValue):
             return translate('attendees_required', domain=pm, context=self.REQUEST)
-        # Prevent use of "assemblyExcused" or "assemblyAbsents" without "assembly"
-        if (('assemblyExcused' in newValue) or ('assemblyAbsents' in newValue)) and \
+        # Prevent use of "assembly_excused" or "assembly_absents" without "assembly"
+        if (('assembly_excused' in newValue) or ('assembly_absents' in newValue)) and \
            ('assembly' not in newValue):
             return translate('assembly_required', domain=pm, context=self.REQUEST)
 
@@ -4402,16 +4337,15 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         if '' in itemAdvicesStatesFromRequest:
             itemAdvicesStatesFromRequest.remove('')
         itemAdviceStates_set = set(itemAdvicesStatesFromRequest) or set(self.getItemAdviceStates())
-        if itemAdviceStates_set.difference(v_set):
-            return translate('itemAdviceEditStates_validation_error',
-                             domain='PloneMeeting',
-                             mapping={'missingStates': ', '.join([translate(state,
-                                                                            domain='plone',
-                                                                            context=self.REQUEST) for state in
-                                                                 itemAdviceStates_set.difference(v_set)])},
-                             context=self.REQUEST,
-                             default='Values defined in the \'itemAdviceEditStates\' field must contains at least '
-                                     'every values selected in the \'itemAdvicesStates\' field!')
+        difference = itemAdviceStates_set.difference(v_set)
+        if difference:
+            return translate(
+                'itemAdviceEditStates_validation_error',
+                domain='PloneMeeting',
+                mapping={'missingStates': translate_list(difference)},
+                context=self.REQUEST,
+                default='Values defined in the \'itemAdviceEditStates\' field must contains at least '
+                        'every values selected in the \'itemAdvicesStates\' field!')
 
     security.declarePrivate('validate_insertingMethodsOnAddItem')
 
@@ -4745,8 +4679,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def listAvailableItemsListVisibleColumns(self):
         '''Vocabulary for the 'availableItemsListVisibleColumns' field.'''
         res = self.listItemRelatedColumns()
-        res.insert(-1, ('getPreferredMeetingDate', u"{0} (getPreferredMeetingDate)".format(
-            translate('header_getPreferredMeetingDate',
+        res.insert(-1, ('preferred_meeting_date', u"{0} (preferred_meeting_date)".format(
+            translate('header_preferred_meeting_date',
                       domain='collective.eeafaceted.z3ctable',
                       context=self.REQUEST))))
         # remove item_reference and review_state
@@ -4759,8 +4693,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def listItemsListVisibleColumns(self):
         '''Vocabulary for the 'itemsListVisibleColumns' field.'''
         res = self.listItemRelatedColumns()
-        res.insert(-1, ('getPreferredMeetingDate', u"{0} (getPreferredMeetingDate)".format(
-            translate('header_getPreferredMeetingDate',
+        res.insert(-1, ('preferred_meeting_date', u"{0} (preferred_meeting_date)".format(
+            translate('header_preferred_meeting_date',
                       domain='collective.eeafaceted.z3ctable',
                       context=self.REQUEST))))
         return DisplayList(tuple(res))
@@ -4824,12 +4758,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     def listItemColumns(self):
         res = self.listItemRelatedColumns()
-        res.insert(-1, ('linkedMeetingDate', u"{0} (linkedMeetingDate)".format(
-            translate('header_linkedMeetingDate',
+        res.insert(-1, ('meeting_date', u"{0} (meeting_date)".format(
+            translate('header_meeting_date',
                       domain='collective.eeafaceted.z3ctable',
                       context=self.REQUEST))))
-        res.insert(-1, ('getPreferredMeetingDate', u"{0} (getPreferredMeetingDate)".format(
-            translate('header_getPreferredMeetingDate',
+        res.insert(-1, ('preferred_meeting_date', u"{0} (preferred_meeting_date)".format(
+            translate('header_preferred_meeting_date',
                       domain='collective.eeafaceted.z3ctable',
                       context=self.REQUEST))))
         return DisplayList(tuple(res))
@@ -4840,12 +4774,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         d = 'collective.eeafaceted.z3ctable'
         # keys beginning with static_ are taken into account by the @@static-infos view
         res = [
-            ("static_startDate",
-                u"{0} (static_startDate)".format(
-                    translate('startDate_column', domain=d, context=self.REQUEST))),
-            ("static_endDate",
-                u"{0} (static_endDate)".format(
-                    translate('endDate_column', domain=d, context=self.REQUEST))),
+            ("static_start_date",
+                u"{0} (static_start_date)".format(
+                    translate('start_date_column', domain=d, context=self.REQUEST))),
+            ("static_end_date",
+                u"{0} (static_end_date)".format(
+                    translate('end_date_column', domain=d, context=self.REQUEST))),
             ("static_place",
                 u"{0} (static_place)".format(
                     translate('place_column', domain=d, context=self.REQUEST))),
@@ -4855,6 +4789,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             ("CreationDate",
                 u"{0} (CreationDate)".format(
                     translate('header_CreationDate', domain=d, context=self.REQUEST))),
+            ("ModificationDate",
+                u"{0} (ModificationDate)".format(
+                    translate('header_ModificationDate', domain=d, context=self.REQUEST))),
             ("review_state",
                 u"{0} (review_state)".format(
                     translate('header_review_state', domain=d, context=self.REQUEST))),
@@ -5291,15 +5228,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             empty_expr_is_true=True)
         return res
 
-    security.declarePublic('deadlinesAreEnabled')
-
-    def deadlinesAreEnabled(self):
-        '''Are deadlines enabled ?'''
-        for field in self.getUsedMeetingAttributes():
-            if field.startswith('deadline'):
-                return True
-        return False
-
     def getItemIconColorName(self):
         '''This will return the name of the icon used for MeetingItem portal_type.'''
         iconName = "MeetingItem.png"
@@ -5365,7 +5293,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # registered in portal_factory (in the model:
             # use_portal_factory=True), we must also register the new
             # portal_type we are currently creating.
-            if metaTypeName in registeredFactoryTypes:
+            if metaTypeName in registeredFactoryTypes and \
+               portalTypeName not in registeredFactoryTypes:
                 factoryTypesToRegister.append(portalTypeName)
             if not hasattr(self.portal_types, portalTypeName):
                 typeInfoName = "PloneMeeting: %s (%s)" % (metaTypeName,
@@ -5374,6 +5303,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 portal_types.manage_addTypeInformation(
                     getattr(portal_types, realMetaType).meta_type,
                     id=portalTypeName, typeinfo_name=typeInfoName)
+
                 # Set the human readable title explicitly
                 portalType = getattr(portal_types, portalTypeName)
                 portalType.title = portalTypeName
@@ -5385,8 +5315,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     # so MeetingItem types are in it, this is usefull when managing item templates
                     # in the MeetingConfig because folders there have the 'folder_contents' layout
                     if portalTypeName not in site_properties.typesUseViewActionInListings:
-                        site_properties.typesUseViewActionInListings = site_properties.typesUseViewActionInListings + \
-                            (portalTypeName, )
+                        site_properties.typesUseViewActionInListings = \
+                            site_properties.typesUseViewActionInListings + (portalTypeName, )
 
         # Copy actions from the base portal type
         self._updatePortalTypes()
@@ -5452,6 +5382,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             else:
                 portalType.icon_expr = basePortalType.icon_expr
                 portalType.icon_expr_object = Expression(portalType.icon_expr)
+
+            # now copy common portal_type attributes
             portalType.content_meta_type = basePortalType.content_meta_type
             portalType.factory = basePortalType.factory
             portalType.immediate_view = basePortalType.immediate_view
@@ -5463,6 +5395,15 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 advice_portal_types = tool.getAdvicePortalTypes(as_ids=True)
                 allowed = tuple(set(portalType.allowed_content_types + tuple(advice_portal_types)))
                 portalType.allowed_content_types = allowed
+            # Meeting is DX
+            if basePortalType.id == 'Meeting':
+                portalType.add_permission = basePortalType.add_permission
+                portalType.klass = basePortalType.klass
+                portalType.behaviors = basePortalType.behaviors
+                portalType.schema = basePortalType.schema
+                portalType.model_source = basePortalType.model_source
+                portalType.model_file = basePortalType.model_file
+                portalType.schema_policy = basePortalType.schema_policy
             portalType.allow_discussion = basePortalType.allow_discussion
             portalType.default_view = basePortalType.default_view
             portalType.view_methods = basePortalType.view_methods
@@ -5782,7 +5723,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         """Return the default item template if it is active."""
         item_templates = self.get(TOOL_FOLDER_ITEM_TEMPLATES)
         default_template = item_templates.get(ITEM_DEFAULT_TEMPLATE_ID, None)
-        if default_template and ignore_inactive and default_template.queryState() == 'inactive':
+        if default_template and ignore_inactive and default_template.query_state() == 'inactive':
             default_template = None
         return default_template
 
@@ -6107,8 +6048,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def listAllRichTextFields(self):
         '''Lists all rich-text fields belonging to classes MeetingItem and
            Meeting.'''
-        res = self._listRichTextFieldFor(MeetingItem) + self._listRichTextFieldFor(Meeting)
-        return DisplayList(tuple(res))
+        res = DisplayList(self._listRichTextFieldFor(MeetingItem)).sortedByValue() + get_dx_attrs(
+            portal_type=self.getMeetingTypeName(), richtext_only=True, prefixed_key=True).sortedByValue()
+        return res
 
     security.declarePublic('listItemRichTextFields')
 
@@ -6377,7 +6319,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('getSelf')
 
     def getSelf(self):
-        if self.__class__.__name__ != 'MeetingConfig':
+        if self.getTagName() != 'MeetingConfig':
             return self.context
         return self
 
@@ -6454,7 +6396,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         else:
             res = []
             for item in itemsFolder.objectValues('MeetingItem'):
-                if item.queryState() == 'active':
+                if item.query_state() == 'active':
                     res.append(item)
         return res
 
@@ -6750,13 +6692,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
         query = {'portal_type': self.getMeetingTypeName(),
                  'review_state': review_states,
-                 'sort_on': 'getDate'}
+                 'sort_on': 'meeting_date'}
         # querying empty review_state will return nothing
         if not review_states:
             query.pop('review_state')
 
         if inTheFuture:
-            query['getDate'] = {'query': DateTime(), 'range': 'min'}
+            query['meeting_date'] = {'query': datetime.now(), 'range': 'min'}
 
         return query
 
@@ -6843,12 +6785,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                         'row_id': customAdviserConfig['row_id']})
         return res
 
-    def _assembly_fields(self, field_name=True):
+    def _assembly_field_names(self):
         ''' '''
-        fields = [field for field in Meeting.schema.fields()
-                  if field.getName().startswith('assembly')]
-        if field_name:
-            fields = [field.getName() for field in fields]
+        meeting_schema = get_dx_schema(portal_type=self.getMeetingTypeName())
+        fields = [field_name for field_name in meeting_schema
+                  if field_name.startswith('assembly')]
         return fields
 
     def get_item_corresponding_state_to_assign_local_roles(self, item_state):
@@ -6890,5 +6831,17 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     error_msg)))
         return u'\n'.join(res)
 
+    security.declarePublic('show_meeting_manager_reserved_field')
+
+    def show_meeting_manager_reserved_field(self, name, meta_type='Meeting'):
+        '''When must field named p_name be shown?'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        # XXX check on optional field to be removed when item will be DX
+        if meta_type == 'Meeting':
+            used_attrs = self.getUsedMeetingAttributes()
+        else:
+            used_attrs = self.getUsedItemAttributes()
+        res = tool.isManager(self) and name in used_attrs
+        return res
 
 registerType(MeetingConfig, PROJECTNAME)

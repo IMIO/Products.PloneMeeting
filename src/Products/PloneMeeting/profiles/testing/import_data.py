@@ -121,7 +121,7 @@ decisionsTemplate = PodTemplateDescriptor('decisionsTemplate',
                                           'Meeting decisions')
 decisionsTemplate.odt_file = 'Decisions.odt'
 decisionsTemplate.pod_portal_types = ['Meeting']
-decisionsTemplate.tal_condition = u'python:here.adapted().isDecided()'
+decisionsTemplate.tal_condition = u'python:here.adapted().is_decided()'
 decisionsTemplate.roles_bypassing_talcondition = set(['Manager'])
 decisionsTemplate.style_template = ['styles1']
 
@@ -277,7 +277,8 @@ meetingPma.annexTypes = [financialAnalysis, budgetAnalysisCfg1, overheadAnalysis
                          itemAnnex, decisionAnnex, marketingAnalysis,
                          adviceAnnex, adviceLegalAnalysis, meetingAnnex]
 meetingPma.usedItemAttributes = ('description', 'toDiscuss', 'itemTags', 'itemIsSigned',)
-meetingPma.usedMeetingAttributes = ('place',)
+meetingPma.usedMeetingAttributes = ('assembly', 'assembly_excused', 'assembly_absents',
+                                    'assembly_guests', 'signatures', 'place',)
 meetingPma.maxShownListings = '100'
 meetingPma.workflowAdaptations = ['delayed']
 meetingPma.itemPositiveDecidedStates = ['accepted']

@@ -31,6 +31,7 @@ from collective.eeafaceted.collectionwidget.utils import getCollectionLinkCriter
 from collective.iconifiedcategory.utils import _categorized_elements
 from collective.iconifiedcategory.utils import get_category_object
 from copy import deepcopy
+from datetime import datetime
 from DateTime import DateTime
 from eea.facetednavigation.widgets.resultsperpage.widget import Widget as ResultsPerPageWidget
 from ftw.labels.interfaces import ILabeling
@@ -1253,7 +1254,7 @@ class testMeetingConfig(PloneMeetingTestCase):
 
         # fails if a meeting exists
         self.changeUser('pmManager')
-        meeting = self.create('Meeting', date='2008/06/23 15:39:00')
+        meeting = self.create('Meeting')
         self.changeUser('siteadmin')
         with self.assertRaises(BeforeDeleteException) as cm:
             self.tool.manage_delObjects([cfgId, ])
@@ -1386,7 +1387,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         # disbable first recurring item
         recItem1 = cfg.getRecurringItems()[0]
         self.do(recItem1, 'deactivate')
-        self.assertTrue(recItem1.queryState() == 'inactive')
+        self.assertTrue(recItem1.query_state() == 'inactive')
         activeRecItems = cfg.recurringitems.objectIds('MeetingItem')
         activeRecItems.remove(recItem1.getId())
         self.assertTrue([item.getId() for item in cfg.getRecurringItems()] == activeRecItems)
@@ -1734,8 +1735,8 @@ class testMeetingConfig(PloneMeetingTestCase):
         itemFromTemplate = view.createItemFromTemplate(item_template.UID())
         self.assertFalse(IConfigElement.providedBy(itemFromTemplate))
         # recurring item
-        meeting = self.create('Meeting', date=DateTime('2019/03/11'))
-        recurring_item = meeting.getItems()[0]
+        meeting = self.create('Meeting')
+        recurring_item = meeting.get_items()[0]
         self.assertFalse(IConfigElement.providedBy(recurring_item))
 
     def test_pm_ConfigModifiedWhenConfigElementAddedModifiedRemoved(self):
@@ -1984,9 +1985,9 @@ class testMeetingConfig(PloneMeetingTestCase):
         # create an item that will be itemcreated
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
-        self.assertEqual(item.queryState(), 'itemcreated')
+        self.assertEqual(item.query_state(), 'itemcreated')
         self.do(item, 'propose')
-        self.assertEqual(item.queryState(), 'proposed')
+        self.assertEqual(item.query_state(), 'proposed')
         level_removed_error = \
             translate('item_wf_val_states_can_not_be_removed_in_use',
                       domain='PloneMeeting',
@@ -2079,7 +2080,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         self._enableAutoConvert()
         cfg = self.meetingConfig
         self.changeUser('pmManager')
-        meeting = self.create('Meeting', date=DateTime('2020/03/31'))
+        meeting = self.create('Meeting')
         item = self.create('MeetingItem')
         annex = self.addAnnex(item)
         annex_decision = self.addAnnex(item, relatedTo='item_decision')
@@ -2090,20 +2091,20 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.assertFalse(cfg.getRemoveAnnexesPreviewsOnMeetingClosure())
         self.presentItem(item)
         self.closeMeeting(meeting)
-        self.assertEqual(meeting.queryState(), 'closed')
+        self.assertEqual(meeting.query_state(), 'closed')
         self.assertEqual(infos[annex.UID()]['preview_status'], 'converted')
         self.assertEqual(infos[annex_decision.UID()]['preview_status'], 'converted')
         # removeAnnexesPreviewsOnMeetingClosure=True
         cfg.setRemoveAnnexesPreviewsOnMeetingClosure(True)
         self.backToState(meeting, 'created')
         self.closeMeeting(meeting)
-        self.assertEqual(meeting.queryState(), 'closed')
+        self.assertEqual(meeting.query_state(), 'closed')
         infos = _categorized_elements(item)
         self.assertEqual(infos[annex.UID()]['preview_status'], 'not_converted')
         self.assertEqual(infos[annex_decision.UID()]['preview_status'], 'not_converted')
         # close a Meeting without items, this was generating a bug
         self._removeConfigObjectsFor(cfg)
-        meeting = self.create('Meeting', date=DateTime('2020/01/31'))
+        meeting = self.create('Meeting', date=datetime(2020, 1, 15))
         self.closeMeeting(meeting)
 
     def test_pm_CanNotDeactivateConfigUsedInAnotherConfig(self):
@@ -2132,6 +2133,21 @@ class testMeetingConfig(PloneMeetingTestCase):
         cfg.setMeetingConfigsToCloneTo(())
         self.do(cfg2, 'deactivate')
         self.assertEqual(api.content.get_state(cfg2), 'inactive')
+
+    def test_pm_Show_meeting_manager_reserved_field(self):
+        """This condition is protecting some fields that should only be
+           viewable by MeetingManagers."""
+        cfg = self.meetingConfig
+        self.changeUser('pmManager')
+        # a reserved field is shown if used
+        usedMeetingAttrs = cfg.getUsedMeetingAttributes()
+        self.assertFalse('a_meeting_field' in usedMeetingAttrs)
+        self.assertFalse(cfg.show_meeting_manager_reserved_field('a_meeting_field'))
+        cfg.setUsedMeetingAttributes(usedMeetingAttrs + ('a_meeting_field', ))
+        self.assertTrue(cfg.show_meeting_manager_reserved_field('a_meeting_field'))
+        # not viewable by non MeetingManagers
+        self.changeUser('pmCreator1')
+        self.assertFalse(cfg.show_meeting_manager_reserved_field('a_meeting_field'))
 
 
 def test_suite():

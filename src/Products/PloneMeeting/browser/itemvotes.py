@@ -73,13 +73,13 @@ def votes_default(context):
        - or we do not have and we use the default value defined on MeetingConfig."""
     res = []
     vote_number = vote_number_default()
-    item_votes = context.getItemVotes(vote_number=vote_number,
-                                      ignored_vote_values=[NOT_VOTABLE_LINKED_TO_VALUE])
-    # keep order using getItemVoters
-    item_voter_uids = context.getItemVoters()
+    item_votes = context.get_item_votes(vote_number=vote_number,
+                                        ignored_vote_values=[NOT_VOTABLE_LINKED_TO_VALUE])
+    # keep order using get_item_voters
+    item_voter_uids = context.get_item_voters()
     # when adding a new vote linked_to_previous, only keep possible voters
     if item_votes['linked_to_previous']:
-        is_new_vote = not context.getItemVotes(
+        is_new_vote = not context.get_item_votes(
             vote_number=vote_number, include_unexisting=False)
         if is_new_vote:
             tool = api.portal.get_tool('portal_plonemeeting')
@@ -87,7 +87,7 @@ def votes_default(context):
             # only keep NOT_ENCODED_VOTE_VALUE
             ignored_vote_values = list(cfg.getUsedVoteValues())
             ignored_vote_values.append(NOT_VOTABLE_LINKED_TO_VALUE)
-            last_vote = context.getItemVotes(
+            last_vote = context.get_item_votes(
                 ignored_vote_values=ignored_vote_values)[-1]
             item_voter_uids = [item_voter_uid for item_voter_uid in item_voter_uids
                                if item_voter_uid in last_vote['voters']]
@@ -106,7 +106,7 @@ def votes_default(context):
 def label_default(context):
     """ """
     res = None
-    item_votes = context.getItemVotes(vote_number=vote_number_default())
+    item_votes = context.get_item_votes(vote_number=vote_number_default())
     if item_votes and item_votes['label']:
         res = item_votes['label']
     return res
@@ -118,7 +118,7 @@ def linked_to_previous_default(context):
     request = getSite().REQUEST
     res = request.get('form.widgets.linked_to_previous', None)
     if res is None:
-        item_votes = context.getItemVotes(vote_number=vote_number_default())
+        item_votes = context.get_item_votes(vote_number=vote_number_default())
         res = item_votes['linked_to_previous']
     return res or False
 
@@ -177,7 +177,7 @@ class IEncodeVotes(IBaseAttendee):
 def _get_linked_item_vote_numbers(context, meeting, vote_number=0):
     """Return every votes linked to given p_vote_number."""
     res = []
-    item_votes = meeting.itemVotes.get(context.UID())
+    item_votes = meeting.item_votes.get(context.UID())
     if item_votes:
         len_item_votes = len(item_votes)
         # while adding new secret vote, vote_number does still not exist
@@ -209,7 +209,7 @@ def clean_voters_linked_to(context, meeting, vote_number, new_voters):
     """ """
     linked_vote_numbers = _get_linked_item_vote_numbers(context, meeting, vote_number)
     if linked_vote_numbers:
-        item_votes = meeting.itemVotes[context.UID()]
+        item_votes = meeting.item_votes[context.UID()]
         # clean other vote numbers
         # get values edited just now that will no more be useable on linked votes
         kept_voters = [voter_uid for voter_uid, voter_value in new_voters.items()
@@ -272,7 +272,7 @@ class EncodeVotesForm(BaseAttendeeForm):
         if not self.mayChangeAttendees():
             raise Unauthorized
 
-        # prepare Meeting.itemVotes compatible data
+        # prepare Meeting.item_votes compatible data
         # while datagrid used in an overlay, some <NO_VALUE>
         # wipeout self.votes from these values
         self.votes = [vote for vote in self.votes if isinstance(vote, dict)]
@@ -284,7 +284,7 @@ class EncodeVotesForm(BaseAttendeeForm):
             data['voters'][vote['voter_uid']] = vote['vote_value']
 
         # set item public votes
-        self.meeting.setItemPublicVote(self.context, data, self.vote_number)
+        self.meeting.set_item_public_vote(self.context, data, self.vote_number)
 
         # finish
         voter_uids = [vote['voter_uid'] for vote in self.votes]
@@ -307,8 +307,8 @@ def secret_votes_default(context):
     """Default values for secret votes."""
     res = []
     vote_number = vote_number_default()
-    item_votes = context.getItemVotes(vote_number=vote_number,
-                                      ignored_vote_values=[NOT_VOTABLE_LINKED_TO_VALUE])
+    item_votes = context.get_item_votes(vote_number=vote_number,
+                                        ignored_vote_values=[NOT_VOTABLE_LINKED_TO_VALUE])
     used_vote_terms = get_vocab(
         context,
         "Products.PloneMeeting.vocabularies.usedvotevaluesvocabulary",
@@ -374,7 +374,7 @@ class IEncodeSecretVotes(IBaseAttendee):
     @invariant
     def validate_votes(data):
         ''' '''
-        # prepare Meeting.itemVotes compatible data
+        # prepare Meeting.item_votes compatible data
         # while datagrid used in an overlay, some <NO_VALUE>
         # wipeout self.votes from these values
         # data.__context__ does not contain the context...
@@ -384,13 +384,13 @@ class IEncodeSecretVotes(IBaseAttendee):
         data.votes = votes
         # check if max voters of every linked secret votes is not exceeded
         linked_vote_numbers = _get_linked_item_vote_numbers(context, meeting, data.vote_number)
-        max_voters = len(context.getItemVoters())
+        max_voters = len(context.get_item_voters())
         if linked_vote_numbers:
             # init at current value
             total = sum([vote['vote_count'] for vote in data.votes])
             for linked_vote_number in linked_vote_numbers:
                 if linked_vote_number != data.vote_number:
-                    linked_vote = context.getItemVotes(vote_number=linked_vote_number)
+                    linked_vote = context.get_item_votes(vote_number=linked_vote_number)
                     total += sum([vote_count for vote_value, vote_count
                                   in linked_vote['votes'].items()])
         else:
@@ -432,7 +432,7 @@ class EncodeSecretVotesForm(BaseAttendeeForm):
 
     def max(self, widget):
         """ """
-        return len(self.context.getItemVoters())
+        return len(self.context.get_item_voters())
 
     def min(self, widget):
         """ """
@@ -454,8 +454,8 @@ class EncodeSecretVotesForm(BaseAttendeeForm):
         for vote in self.votes:
             data['votes'][vote['vote_value_id']] = vote['vote_count']
 
-        # set item public votes
-        self.meeting.setItemSecretVote(self.context, data, self.vote_number)
+        # set item secret vote
+        self.meeting.set_item_secret_vote(self.context, data, self.vote_number)
 
         # finish
         vote_values = [vote['vote_value_id'] for vote in self.votes]
@@ -486,12 +486,12 @@ class ItemDeleteVoteView(BrowserView):
         vote_number = int(object_uid)
         item_uid = self.context.UID()
         meeting = self.context.getMeeting()
-        if item_uid in meeting.itemVotes:
-            itemVotes = meeting.itemVotes[item_uid]
+        if item_uid in meeting.item_votes:
+            item_votes = meeting.item_votes[item_uid]
             assert self.context._voteIsDeletable(vote_number)
 
-            vote_to_delete = itemVotes[vote_number]
-            if self.context.getVotesAreSecret():
+            vote_to_delete = item_votes[vote_number]
+            if self.context.get_votes_are_secret():
                 originnal_vote_keys = [str(vote_count) for vote_value, vote_count
                                        in vote_to_delete['votes'].items()]
                 originnal_vote_keys = "__".join(originnal_vote_keys)
@@ -514,10 +514,10 @@ class ItemDeleteVoteView(BrowserView):
                 clean_voters_linked_to(self.context, meeting, vote_number, new_voters)
 
             # delete from meeting itemVote
-            deleted_vote = meeting.itemVotes[item_uid].pop(vote_number)
+            deleted_vote = meeting.item_votes[item_uid].pop(vote_number)
             # if deleted last existing vote (vote_number 0) remove context UID from meeting itemVotes
-            if not meeting.itemVotes[item_uid]:
-                del meeting.itemVotes[item_uid]
+            if not meeting.item_votes[item_uid]:
+                del meeting.item_votes[item_uid]
             # finish deletion
             label = deleted_vote['label'] or ""
             extras = fp_extras_pattern.format(

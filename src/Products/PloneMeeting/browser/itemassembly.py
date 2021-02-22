@@ -45,8 +45,9 @@ def item_assembly_default():
       we have to get current context manually...
     """
     context = getSite().REQUEST['PUBLISHED'].context
-    itemAssembly = context.getItemAssembly(mimetype='text/plain')
-    return safe_unicode(itemAssembly)
+    itemAssembly = context.getItemAssembly(for_display=False)
+    # need to strip because extractData strips
+    return safe_unicode(itemAssembly).strip()
 
 
 def item_excused_default():
@@ -57,8 +58,9 @@ def item_excused_default():
       we have to get current context manually...
     """
     context = getSite().REQUEST['PUBLISHED'].context
-    itemAssemblyExcused = context.getItemAssemblyExcused(mimetype='text/plain')
-    return safe_unicode(itemAssemblyExcused)
+    itemAssemblyExcused = context.getItemAssemblyExcused(for_display=False)
+    # need to strip because extractData strips
+    return safe_unicode(itemAssemblyExcused).strip()
 
 
 def item_absents_default():
@@ -69,8 +71,9 @@ def item_absents_default():
       we have to get current context manually...
     """
     context = getSite().REQUEST['PUBLISHED'].context
-    itemAssemblyAbsents = context.getItemAssemblyAbsents(mimetype='text/plain')
-    return safe_unicode(itemAssemblyAbsents)
+    itemAssemblyAbsents = context.getItemAssemblyAbsents(for_display=False)
+    # need to strip because extractData strips
+    return safe_unicode(itemAssemblyAbsents).strip()
 
 
 def item_guests_default():
@@ -81,8 +84,9 @@ def item_guests_default():
       we have to get current context manually...
     """
     context = getSite().REQUEST['PUBLISHED'].context
-    itemAssemblyGuests = context.getItemAssemblyGuests(mimetype='text/plain')
-    return safe_unicode(itemAssemblyGuests)
+    itemAssemblyGuests = context.getItemAssemblyGuests(for_display=False)
+    # need to strip because extractData strips
+    return safe_unicode(itemAssemblyGuests).strip()
 
 
 def validate_apply_until_item_number(value):
@@ -169,7 +173,9 @@ class DisplayAssemblyFromMeetingProvider(ContentProviderBase):
         nothing_defined_msg = translate('nothing_defined_on_meeting',
                                         domain='PloneMeeting',
                                         context=self.request)
-        return meeting.getAssembly() or u'<p class="discreet">{0}</p>'.format(nothing_defined_msg)
+        return meeting.get_assembly(
+            for_display=True, striked=False, mark_empty_tags=True) or \
+            u'<p class="discreet">{0}</p>'.format(nothing_defined_msg)
 
     def get_msgid_assembly_or_attendees(self):
         """
@@ -179,8 +185,8 @@ class DisplayAssemblyFromMeetingProvider(ContentProviderBase):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
         usedMeetingAttributes = cfg.getUsedMeetingAttributes()
-        if 'assemblyExcused' in usedMeetingAttributes or \
-           'assemblyAbsents' in usedMeetingAttributes:
+        if 'assembly_excused' in usedMeetingAttributes or \
+           'assembly_absents' in usedMeetingAttributes:
             return 'display_meeting_attendees_legend'
         else:
             return 'display_meeting_assembly_legend'
@@ -205,13 +211,15 @@ class DisplayExcusedFromMeetingProvider(ContentProviderBase):
 
     def getAssemblyExcused(self):
         """
-          Return Meeting.assemblyExcused
+          Return Meeting.assembly_excused
         """
         meeting = self.context.getMeeting()
         nothing_defined_msg = translate('nothing_defined_on_meeting',
                                         domain='PloneMeeting',
                                         context=self.request)
-        return meeting.getAssemblyExcused() or u'<p class="discreet">{0}</p>'.format(nothing_defined_msg)
+        return meeting.get_assembly_excused(
+            for_display=True, striked=False, mark_empty_tags=True) or \
+            u'<p class="discreet">{0}</p>'.format(nothing_defined_msg)
 
     def render(self):
         if self.context.is_assembly_field_used('itemAssemblyExcused'):
@@ -229,20 +237,21 @@ class DisplayAbsentsFromMeetingProvider(ContentProviderBase):
         ViewPageTemplateFile('templates/display_absents_from_meeting.pt')
 
     def __init__(self, context, request, view):
-        super(DisplayAbsentsFromMeetingProvider, self).__init__(context,
-                                                                request,
-                                                                view)
+        super(DisplayAbsentsFromMeetingProvider, self).__init__(
+            context, request, view)
         self.__parent__ = view
 
     def getAssemblyAbsents(self):
         """
-          Return Meeting.assemblyAbsents
+          Return Meeting.assembly_absents
         """
         meeting = self.context.getMeeting()
         nothing_defined_msg = translate('nothing_defined_on_meeting',
                                         domain='PloneMeeting',
                                         context=self.request)
-        return meeting.getAssemblyAbsents() or u'<p class="discreet">{0}</p>'.format(nothing_defined_msg)
+        return meeting.get_assembly_absents(
+            for_display=True, striked=False, mark_empty_tags=True) or \
+            u'<p class="discreet">{0}</p>'.format(nothing_defined_msg)
 
     def render(self):
         if self.context.is_assembly_field_used('itemAssemblyAbsents'):
@@ -260,7 +269,7 @@ def _itemsToUpdate(from_item_number, until_item_number, meeting):
     if not until_item_number:
         until_item_number = from_item_number
     brains = catalog(
-        linkedMeetingUID=meeting.UID(),
+        meeting_uid=meeting.UID(),
         getItemNumber={'query': (from_item_number,
                                  until_item_number),
                        'range': 'minmax'},
@@ -351,15 +360,15 @@ class ManageItemAssemblyForm(form.Form):
         if 'assembly' in usedMeetingAttributes or \
                 self.context.getItemAssembly():
             self.fields['item_assembly'].mode = 'input'
-        if 'assemblyExcused' in usedMeetingAttributes or \
+        if 'assembly_excused' in usedMeetingAttributes or \
                 self.context.getItemAssemblyExcused():
             changeItemAssemblyTitleAndDescr = True
             self.fields['item_excused'].mode = 'input'
-        if 'assemblyAbsents' in usedMeetingAttributes or \
+        if 'assembly_absents' in usedMeetingAttributes or \
                 self.context.getItemAssemblyAbsents():
             changeItemAssemblyTitleAndDescr = True
             self.fields['item_absents'].mode = 'input'
-        if 'assemblyGuests' in usedMeetingAttributes or \
+        if 'assembly_guests' in usedMeetingAttributes or \
                 self.context.getItemAssemblyGuests():
             changeItemAssemblyTitleAndDescr = True
             self.fields['item_guests'].mode = 'input'

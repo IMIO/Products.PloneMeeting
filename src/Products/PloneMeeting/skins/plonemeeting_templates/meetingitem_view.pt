@@ -193,7 +193,7 @@
                 <span class="item_attribute_label" i18n:translate="PloneMeeting_label_preferredMeeting"></span>:&nbsp;&nbsp;
                 <span tal:define="preferred_meeting python:context.getPreferredMeeting(theObject=True)">
                 <span tal:condition="nocall:preferred_meeting">
-                      <tal:link tal:replace="structure preferred_meeting/getPrettyLink" />
+                      <tal:link tal:replace="structure python: preferred_meeting.get_pretty_link()" />
                 </span>
                 <span tal:condition="not: nocall:preferred_meeting">-
                 </span>
@@ -205,7 +205,7 @@
               <span class="item_attribute_label"
                     i18n:translate="presented_in_meeting">Presented in meeting</span>:&nbsp;&nbsp;
               <tal:hasMeeting condition="nocall:meeting">
-                  <tal:link tal:replace="structure meeting/getPrettyLink">
+                  <tal:link tal:replace="structure python: meeting.get_pretty_link()">
                   </tal:link>
               </tal:hasMeeting>
               <span tal:condition="not:nocall:meeting">-</span>
@@ -329,18 +329,24 @@
       <tal:defines define="mayQuickEditItemAssembly context/mayQuickEditItemAssembly;
                            mayQuickEditItemSignatures context/mayQuickEditItemSignatures;
                            redefinedItemAssemblies python: context.redefinedItemAssemblies();
-                           redefinedItemSignatures python: context.getItemSignatures(real=True) or context.getItemSignatories(real=True);
+                           redefinedItemSignatures python: context.getItemSignatures(real=True) or context.get_item_signatories(real=True);
                            isUsingContacts python: not context.is_assembly_field_used('itemAssembly') and meetingConfig.isUsingContacts()">
       <div id="assembly-and-signatures"
-          onclick="togglePersonsCookie();;toggleDetails('collapsible-assembly-and-signatures', toggle_parent_active=true, parent_tag=null, load_view='@@load_item_assembly_and_signatures');"
-          class="collapsible discreet">
+           tal:define="toggle_type python:isUsingContacts and 'fade' or 'slide';"
+           tal:attributes="onclick string:togglePersonsCookie();;toggleDetails('collapsible-assembly-and-signatures',
+                              toggle_parent_active=true,
+                              parent_tag=null,
+                              load_view='@@load_item_assembly_and_signatures',
+                              base_url=null,
+                              toggle_type='${toggle_type}');"
+           class="collapsible discreet not-auto-collapsible-activable">
           <span class="meeting_attribute_label" i18n:translate="redefinable_assembly_and_signatures">
               <span i18n:name="assembly"
                     tal:define="class_to_use python: redefinedItemAssemblies and 'highlightValue' or ''"
                     tal:attributes="class class_to_use">
-                    <tal:block i18n:translate="meeting_assembly">Assembly</tal:block>
+                    <tal:block i18n:translate="title_assembly">Assembly</tal:block>
                     <tal:block condition="isUsingContacts"
-                               content="python:'(' + str(len(context.getAttendees())) + '/' + str(len(meeting.getAttendees())) + ')'">Number of attendees</tal:block>
+                               content="python:'(' + str(len(context.get_attendees())) + '/' + str(len(meeting.get_attendees())) + ')'">Number of attendees</tal:block>
               </span>
 
               <a i18n:name="assembly_edit" tal:condition="mayQuickEditItemAssembly" href="manage_item_assembly_form?initial_edit=1" class="link-overlay-pm">
@@ -350,9 +356,9 @@
               and
               <span i18n:name="signatures" tal:define="class_to_use python: redefinedItemSignatures and 'highlightValue' or ''"
                     tal:attributes="class class_to_use">
-                    <tal:block i18n:translate="meeting_signatures">signatures</tal:block>
+                    <tal:block i18n:translate="title_signatures">signatures</tal:block>
                     <tal:block condition="isUsingContacts"
-                               content="python:'(' + str(len(context.getItemSignatories(by_signature_number=True))) + ')'">Number of attendees</tal:block>
+                               content="python:'(' + str(len(context.get_item_signatories(by_signature_number=True))) + ')'">Number of attendees</tal:block>
               </span>
 
               <a i18n:name="signatures_edit" tal:condition="mayQuickEditItemSignatures" href="manage_item_signatures_form" class="link-overlay-pm">
@@ -361,7 +367,7 @@
               <span i18n:name="signatures_edit" tal:condition="not:mayQuickEditItemSignatures" />
           </span>
       </div>
-      <div id="collapsible-assembly-and-signatures" class="collapsible-content discreet" style="display: none;">
+      <div id="collapsible-assembly-and-signatures" class="collapsible-content discreet">
         <div class="collapsible-inner-content">
          <img tal:attributes="src string:${portal_url}/spinner_small.gif" />
         </div>
@@ -378,16 +384,16 @@
           class="collapsible discreet">
           <span class="meeting_attribute_label" i18n:translate="redefinable_assembly_and_signatures">
               <span i18n:name="assembly">
-                    <tal:block i18n:translate="meeting_assembly">Assembly</tal:block>
+                    <tal:block i18n:translate="title_assembly">Assembly</tal:block>
               </span>
               <span i18n:name="assembly_edit" />
               <span i18n:name="signatures">
-                    <tal:block i18n:translate="meeting_signatures">signatures</tal:block>
+                    <tal:block i18n:translate="title_signatures">signatures</tal:block>
               </span>
               <span i18n:name="signatures_edit" />
           </span>
       </div>
-      <div id="collapsible-assembly-and-signatures" class="collapsible-content discreet" style="display: none;">
+      <div id="collapsible-assembly-and-signatures" class="collapsible-content discreet">
         <div class="collapsible-inner-content">
          <span i18n:translate="">Nothing to display when item is not presented into a meeting.</span>
         </div>
@@ -399,7 +405,7 @@
                          linkedItems python: context.getManuallyLinkedItems(only_viewable=True);
                          showManuallyLinkedItems python: 'manuallyLinkedItems' in usedAttrs or linkedItems;
                          class_to_use python: (predecessors or linkedItems) and 'item_attribute_label highlightValue' or 'item_attribute_label';">
-        <div id="linked-items" class="collapsible discreet" onclick="toggleDetails('collapsible-linked-items', toggle_parent_active=true, parent_tag=null, load_view='@@load_linked_items');">
+        <div id="linked-items" class="collapsible discreet not-auto-collapsible-activable" onclick="toggleDetails('collapsible-linked-items', toggle_parent_active=true, parent_tag=null, load_view='@@load_linked_items');">
           <span tal:condition="showManuallyLinkedItems"
                 class="item_attribute_label"
                 tal:attributes="class class_to_use"
@@ -413,7 +419,7 @@
               Linked items (<span i18n:name="auto_linked_items" tal:content="python: len(predecessors)">4</span>)
           </span>
         </div>
-        <div id="collapsible-linked-items" class="collapsible-content discreet" style="display: none;">
+        <div id="collapsible-linked-items" class="collapsible-content discreet">
           <div class="collapsible-inner-content">
              <img tal:attributes="src string:${portal_url}/spinner_small.gif" />
           </div>
@@ -555,7 +561,7 @@
             Text check list
         </span>
       </div>
-      <div id="collapsible-text-checklist" class="collapsible-content discreet" style="display: none;"
+      <div id="collapsible-text-checklist" class="collapsible-content discreet"
            tal:define="textCheckList context/getTextCheckList">
         <div class="collapsible-inner-content">
           <span tal:condition="textCheckList" tal:replace="structure context/getTextCheckList">Text check list</span>
@@ -623,24 +629,7 @@
       <tal:itemNavigation replace="structure context/@@item-navigation-widget" />
     </tal:itemNavigation>
 
-    <div class="item-global-actions">
-      <a title="show_or_hide_details"
-         i18n:attributes="title"
-         class="show-hide-all-details"
-         href="javascript:toggleAllDetails();">
-        <img tal:attributes="src string:${portal_url}/more_less_details.png" />
-      </a>
-      <span title="top_of_page"
-            i18n:attributes="title"
-            class="fa fa-arrow-up go-to-top-of-page"
-            onclick="event.preventDefault();$('html, body').animate({ scrollTop: 0 }, 'fast');">
-      </span>
-      <span title="bottom_of_page"
-            i18n:attributes="title"
-            class="fa fa-arrow-down go-to-bottom-of-page"
-            onclick="event.preventDefault();$('html, body').animate({ scrollTop: $(document).height()}, 'fast');">
-      </span>
-    </div>
+    <metal:global_actions use-macro="context/@@pm-macros/global_actions" />
 
     <tal:comment replace="nothing">Fields that appear only if the item is defined in a configuration</tal:comment>
     <tal:itemInConfig condition="context/isDefinedInTool">

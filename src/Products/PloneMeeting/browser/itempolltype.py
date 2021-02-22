@@ -49,7 +49,7 @@ class ChangeItemPollTypeView(BrowserView):
         '''Helper method that changes pollType value and check that :
            - new_value is among selectable pollType values;
            - user actually mayChangePollType;
-           - adapt Meeting.itemVotes values.'''
+           - adapt Meeting.item_votes values.'''
         # make sure new_value exists
         factory = queryUtility(IVocabularyFactory,
                                'Products.PloneMeeting.vocabularies.polltypesvocabulary')
@@ -68,7 +68,7 @@ class ChangeItemPollTypeView(BrowserView):
                                  (not old_pollType.startswith('secret') and
                                   new_value.startswith('secret'))
         if (new_value == 'no_vote' or is_switching_vote_mode) and \
-           self.context.getItemVotes(include_unexisting=False):
+           self.context.get_item_votes(include_unexisting=False):
             can_not_switch_polltype_msg = _('can_not_switch_polltype_votes_encoded')
             api.portal.show_message(
                 can_not_switch_polltype_msg, request=self.request, type='warning')

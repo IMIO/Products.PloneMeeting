@@ -2,10 +2,6 @@
 #
 # File: ToolPloneMeeting.py
 #
-# Copyright (c) 2018 by Imio.be
-# Generator: ArchGenXML Version 2.7
-#            http://plone.org/products/archgenxml
-#
 # GNU General Public License (GPL)
 #
 
@@ -74,6 +70,9 @@ from Products.PloneMeeting.config import PROJECTNAME
 from Products.PloneMeeting.config import PY_DATETIME_WEEKDAYS
 from Products.PloneMeeting.config import ROOT_FOLDER
 from Products.PloneMeeting.config import SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY
+from Products.PloneMeeting.content.meeting import IMeeting
+from Products.PloneMeeting.content.meeting import Meeting
+from Products.PloneMeeting.interfaces import IMeetingItem
 from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.profiles import PloneMeetingConfiguration
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
@@ -82,7 +81,6 @@ from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getCustomSchemaFields
 from Products.PloneMeeting.utils import monthsIds
-from Products.PloneMeeting.utils import weekdaysIds
 from Products.PloneMeeting.utils import workday
 from Products.ZCatalog.Catalog import AbstractCatalogBrain
 from ZODB.POSException import ConflictError
@@ -658,7 +656,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         # is linked to only one MeetingConfig, it is the case for Meeting and MeetingItem
         # portal_types, but if we have a 'Topic' or a 'Folder', we can not determinate
         # in wich MeetingConfig it is, we can not do caching...
-        if caching and context.meta_type in ('Meeting', 'MeetingItem', ):
+        if caching and context.getTagName() in ('Meeting', 'MeetingItem', ):
             key = "tool-getmeetingconfig-%s" % context.portal_type
             # async does not have a REQUEST
             if hasattr(self, 'REQUEST'):
@@ -728,7 +726,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
            the portal_catalog (not from the uid_catalog, because getObject()
            has been overridden in this tool and does an unrestrictedTraverse
            to the object.'''
-        klassName = value.__class__.__name__
+        klassName = value.getTagName()
         if klassName in ('MeetingItem', 'Meeting', 'MeetingConfig'):
             obj = value
         else:
@@ -820,7 +818,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         if context.meta_type == 'MeetingItem' and \
            (context.isTemporary() or context.isDefinedInTool()):
             return False
-        elif context.meta_type == 'Meeting' and context.isTemporary():
+        elif context.getTagName() == 'Meeting' and context.isTemporary():
             return False
         else:
             return True
@@ -898,9 +896,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     def listWeekDays(self):
         '''Method returning list of week days used in vocabularies.'''
         res = DisplayList()
-        # we do not use utils.weekdaysIds because it is related
-        # to Zope DateTime where sunday weekday number is 0
-        # and python datetime where sunday weekday number is 6...
         for day in PY_DATETIME_WEEKDAYS:
             res.add(day,
                     translate('weekday_%s' % day,
@@ -1075,10 +1070,12 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 if classifier and not classifier.is_selectable(userId=loggedUserId):
                     fieldsToKeep.remove('classifier')
 
+            newItem._at_creation_flag = True
             for field in newItem.Schema().filterFields(isMetadata=False):
                 if field.getName() not in fieldsToKeep:
                     # Set the field to its default value
-                    field.set(newItem, field.getDefault(newItem))
+                    field.getMutator(newItem)(field.getDefault(newItem))
+            newItem._at_creation_flag = False
 
             # Set some default values that could not be initialized properly
             if 'toDiscuss' in copyFields and destMeetingConfig.getToDiscussSetOnItemInsert():
@@ -1216,7 +1213,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('getSelf')
 
     def getSelf(self):
-        if self.__class__.__name__ != 'ToolPloneMeeting':
+        if self.getTagName() != 'ToolPloneMeeting':
             return self.context
         return self
 
@@ -1228,12 +1225,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     security.declareProtected(ModifyPortalContent, 'onEdit')
 
     def onEdit(self, isCreated):
-        '''See doc in interfaces.py.'''
-        pass
-
-    security.declarePublic('getSpecificMailContext')
-
-    def getSpecificMailContext(self, event, translationMapping):
         '''See doc in interfaces.py.'''
         pass
 
@@ -1277,36 +1268,32 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     return True
         return False
 
-    security.declarePublic('formatMeetingDate')
+    security.declarePublic('format_date')
 
-    def formatMeetingDate(self, meeting, lang=None, short=False,
-                          withHour=False, prefixed=False, withWeekDayName=False):
-        '''Returns p_meeting.getDate formatted.
+    def format_date(self, date, lang=None, short=False,
+                    with_hour=False, prefixed=False, prefix="meeting_of",
+                    with_week_day_name=False):
+        '''Returns p_meeting.date formatted.
            - If p_lang is specified, it translates translatable elements (if
              any), like day of week or month, in p_lang. Else, it translates it
              in the user language (see tool.getUserLanguage).
            - if p_short is True, is uses a special, shortened, format (ie, day
              of month is replaced with a number)
-           - If p_prefix is True, the translated prefix "Meeting of" is
+           - If p_prefix is True, the translated prefix is
              prepended to the result.'''
-        # Received meeting could be a brain or an object
-        if meeting.__class__.__name__ in ['mybrains', 'CatalogContentListingObject', 'PloneFlare']:
-            # It is a meeting brain, take the 'getDate' metadata
-            date = meeting.getDate
-        else:
-            # received meeting is a Meeting instance
-            date = meeting.getDate()
         # Get the format for the rendering of p_aDate
         if short:
             fmt = '%d/%m/%Y'
         else:
             fmt = '%d %mt %Y'
-        if withWeekDayName:
+        if with_week_day_name:
             fmt = fmt.replace('%d', '%A %d')
-            dow = translate(weekdaysIds[date.dow()], target_language=lang,
-                            domain='plonelocales', context=self.REQUEST)
-            fmt = fmt.replace('%A', dow)
-        if withHour and (date._hour or date._minute):
+            weekday = translate('weekday_%s' % PY_DATETIME_WEEKDAYS[date.weekday()],
+                                target_language=lang,
+                                domain='plonelocales',
+                                context=self.REQUEST)
+            fmt = fmt.replace('%A', weekday)
+        if with_hour and (date.hour or date.minute):
             fmt += ' (%H:%M)'
         # Apply p_fmt to p_aDate. Manage first special symbols corresponding to
         # translated names of days and months.
@@ -1315,15 +1302,22 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             lang = api.portal.get_tool('portal_languages').getDefaultLanguage()
 
         # Manage month
-        month = translate(monthsIds[date.month()], target_language=lang,
+        month = translate(monthsIds[date.month], target_language=lang,
                           domain='plonelocales', context=self.REQUEST)
         fmt = fmt.replace('%mt', month.lower())
         fmt = fmt.replace('%MT', month)
         # Resolve all other, standard, symbols
-        res = date.strftime(fmt)
-        # Finally, prefix the date with "Meeting of" when required.
+        # fmt can not be unicode
+        if isinstance(fmt, unicode):
+            fmt = fmt.encode('utf-8')
+        res = safe_unicode(date.strftime(fmt))
+        # Finally, prefix the date with p_prefix when required
         if prefixed:
-            res = translate('meeting_of', domain='PloneMeeting', context=self.REQUEST) + ' ' + res
+            res = u"{0} {1}".format(
+                translate(prefix,
+                          domain='PloneMeeting',
+                          context=self.REQUEST),
+                res)
         return res
 
     security.declareProtected(ModifyPortalContent, 'convertAnnexes')
@@ -1361,13 +1355,15 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declareProtected(ModifyPortalContent, 'removeAnnexesPreviews')
 
-    def removeAnnexesPreviews(self, query={'meta_type': 'Meeting',
-                                           'review_state': ('closed', ),
-                                           'sort_on': 'getDate'}):
+    def removeAnnexesPreviews(self, query={}):
         '''Remove every annexes previews of items presented to closed meetings.'''
         if not self.isManager(self, realManagers=True):
             raise Unauthorized
 
+        if not query:
+            query = {'object_provides': IMeeting.__identifier__,
+                     'review_state': Meeting.MEETINGCLOSEDSTATES,
+                     'sort_on': 'meeting_date'}
         catalog = api.portal.get_tool('portal_catalog')
         # remove annexes previews of items of closed Meetings
         brains = catalog(**query)
@@ -1381,7 +1377,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                          brain.portal_type,
                          '/'.join(meeting.getPhysicalPath())))
             i = i + 1
-            for item in meeting.getItems(ordered=True):
+            for item in meeting.get_items(ordered=True):
                 annexes = get_annexes(item)
                 for annex in annexes:
                     self._removeAnnexPreviewFor(item, annex)
@@ -1402,20 +1398,23 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         '''Does given p_context contains annexes of type p_portal_type?'''
         return bool(get_categorized_elements(context, portal_type=portal_type))
 
-    security.declareProtected(ModifyPortalContent, 'updateAllLocalRoles')
+    security.declareProtected(ModifyPortalContent, 'update_all_local_roles')
 
-    def updateAllLocalRoles(self,
-                            meta_type=('Meeting', 'MeetingItem'),
-                            portal_type=(),
-                            log=True,
-                            **kw):
+    def update_all_local_roles(self,
+                               meta_type=('Meeting', 'MeetingItem'),
+                               portal_type=(),
+                               log=True,
+                               **kw):
         '''Update local_roles on Meeting and MeetingItem,
            this is used to reflect configuration changes regarding access.'''
         startTime = time.time()
         catalog = api.portal.get_tool('portal_catalog')
-        query = {}
-        if meta_type:
-            query['meta_type'] = meta_type
+        # meta_type does not work in DX, use object_provides
+        query = {'object_provides': []}
+        if 'Meeting' in meta_type:
+            query['object_provides'].append(IMeeting.__identifier__)
+        if 'MeetingItem' in meta_type:
+            query['object_provides'].append(IMeetingItem.__identifier__)
         if portal_type:
             query['portal_type'] = portal_type
         query.update(kw)
@@ -1433,43 +1432,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                          brain.portal_type,
                          '/'.join(itemOrMeeting.getPhysicalPath())))
             i = i + 1
-            indexes_to_update = itemOrMeeting.updateLocalRoles(avoid_reindex=True)
-            # if auto rules regarding copyGroups or groupsInCharge changed
-            # we could have more or less copyGroups/groupsInCharge so reindex relevant indexes
-            if indexes_to_update:
-                itemOrMeeting.reindexObject(idxs=indexes_to_update)
-
-        seconds = time.time() - startTime
-        logger.info('updateAllLocalRoles finished in %.2f seconds(s) (about %d minute(s)), that is %d by second.' %
-                    (seconds, round(float(seconds) / 60.0), numberOfBrains / seconds))
-        api.portal.show_message('Done.', request=self.REQUEST)
-        return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
-
-    security.declareProtected(ModifyPortalContent, 'removeEveryPreviews')
-
-    def removeEveryPreviews(self, meta_type=('Meeting', 'MeetingItem'), portal_type=(), **kw):
-        '''Update local_roles on Meeting and MeetingItem,
-           this is used to reflect configuration changes regarding access.'''
-        startTime = time.time()
-        catalog = api.portal.get_tool('portal_catalog')
-        query = {}
-        if meta_type:
-            query['meta_type'] = meta_type
-        if portal_type:
-            query['portal_type'] = portal_type
-        query.update(kw)
-        brains = catalog(**query)
-        numberOfBrains = len(brains)
-        i = 1
-        for brain in brains:
-            itemOrMeeting = brain.getObject()
-            logger.info('%d/%d Updating local roles of %s at %s' %
-                        (i,
-                         numberOfBrains,
-                         brain.portal_type,
-                         '/'.join(itemOrMeeting.getPhysicalPath())))
-            i = i + 1
-            indexes_to_update = itemOrMeeting.updateLocalRoles(avoid_reindex=True)
+            indexes_to_update = itemOrMeeting.update_local_roles(avoid_reindex=True)
             # if auto rules regarding copyGroups or groupsInCharge changed
             # we could have more or less copyGroups/groupsInCharge so reindex relevant indexes
             if indexes_to_update:

@@ -30,12 +30,15 @@ from imio.helpers.xhtml import xhtmlContentIsEmpty
 from imio.history.utils import getLastWFAction
 from plone import api
 from plone.app.textfield import RichText
+from plone.app.textfield.value import RichTextValue
 from plone.app.uuid.utils import uuidToObject
 from plone.autoform.interfaces import WRITE_PERMISSIONS_KEY
 from plone.dexterity.interfaces import IDexterityContent
+from plone.dexterity.utils import resolveDottedName
 from plone.i18n.normalizer.interfaces import IIDNormalizer
 from plone.locking.events import unlockAfterModification
 from plone.memoize import ram
+from Products.Archetypes.atapi import DisplayList
 from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.permissions import AccessContentsInformation
 from Products.CMFCore.permissions import AddPortalContent
@@ -90,6 +93,7 @@ from zope.interface import alsoProvides
 from zope.interface import implements
 from zope.location import locate
 from zope.security.interfaces import IPermission
+from zope.schema import getFieldsInOrder
 from plone.supermodel.utils import mergedTaggedValueDict
 from plone.autoform.interfaces import WIDGETS_KEY
 
@@ -120,10 +124,6 @@ ITEM_EXECUTE_ACTION_ERROR = "There was an error in the TAL expression '{0}' " \
 monthsIds = {1: 'month_jan', 2: 'month_feb', 3: 'month_mar', 4: 'month_apr',
              5: 'month_may', 6: 'month_jun', 7: 'month_jul', 8: 'month_aug',
              9: 'month_sep', 10: 'month_oct', 11: 'month_nov', 12: 'month_dec'}
-
-weekdaysIds = {0: 'weekday_sun', 1: 'weekday_mon', 2: 'weekday_tue',
-               3: 'weekday_wed', 4: 'weekday_thu', 5: 'weekday_fri',
-               6: 'weekday_sat'}
 
 adaptables = {
     'MeetingItem': {'method': 'getItem', 'interface': IMeetingItemCustom},
@@ -167,7 +167,7 @@ def getWorkflowAdapter(obj, conditions):
        (if p_condition is False).'''
     tool = api.portal.get_tool(TOOL_ID)
     cfg = tool.getMeetingConfig(obj)
-    interfaceMethod = adaptables[obj.__class__.__name__]['method']
+    interfaceMethod = adaptables[obj.getTagName()]['method']
     if conditions:
         interfaceMethod += 'Conditions'
     else:
@@ -184,7 +184,7 @@ def getCustomAdapter(obj):
     '''Tries to get the custom adapter for a PloneMeeting object. If no adapter
        is defined, returns the object.'''
     res = obj
-    theInterface = adaptables[obj.meta_type]['interface']
+    theInterface = adaptables[obj.getTagName()]['interface']
     try:
         res = theInterface(obj)
     except TypeError:
@@ -203,8 +203,7 @@ def getCurrentMeetingObject(context):
         return obj.context
     elif obj and \
             hasattr(obj, 'context') and \
-            hasattr(obj.context, 'meta_type') and \
-            obj.context.meta_type == 'Meeting':
+            obj.context.getTagName() == 'Meeting':
         return obj.context
 
     if not (className in ('Meeting', 'MeetingItem')):
@@ -230,23 +229,24 @@ def getCurrentMeetingObject(context):
                     referer = referer[referer.index('/Members/'):]
                 # Then, add the real portal as URL prefix.
                 referer = portal_path + referer
-            # take care that the Meeting may contains annexes
+            # take care that the Meeting may contain annexes
             catalog = api.portal.get_tool('portal_catalog')
-            res = catalog(path=referer, meta_type='Meeting')
+            from Products.PloneMeeting.content.meeting import IMeeting
+            res = catalog(path=referer, object_provides=IMeeting.__identifier__)
             if res:
                 obj = res[0].getObject()
         else:
             # Check the parent (if it has sense)
             if hasattr(obj, 'getParentNode'):
                 obj = obj.getParentNode()
-                if not (obj.__class__.__name__ in ('Meeting', 'MeetingItem')):
+                if not (obj.getTagName() in ('Meeting', 'MeetingItem')):
                     obj = None
             else:
                 # It can be a method with attribute im_class
                 obj = None
 
     toReturn = None
-    if obj and hasattr(obj, 'meta_type') and obj.meta_type == 'Meeting':
+    if obj and obj.__class__.__name__ == 'Meeting':
         toReturn = obj
     return toReturn
 
@@ -307,6 +307,20 @@ def fieldIsEmpty(name, obj, useParamValue=False, value=None):
         return value is None
     else:
         return not value
+
+
+def field_is_empty(widget):
+    """ """
+    if isinstance(widget.value, RichTextValue):
+        value = widget.value.raw
+    else:
+        value = widget.value
+    if isinstance(value, (str, unicode)):
+        value = value.strip()
+    is_empty = True
+    if value:
+        is_empty = False
+    return is_empty
 
 
 def cropHTML(html, length=400, ellipsis='...'):
@@ -427,72 +441,67 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
         'meetingTitle': '', 'meetingLongTitle': '', 'itemTitle': '', 'user': userName,
         'groups': userGroups, 'meetingConfigTitle': safe_unicode(cfg.Title()),
     })
-    if obj.meta_type == 'Meeting':
+    if obj.getTagName() == 'Meeting':
         translationMapping['meetingTitle'] = safe_unicode(obj.Title())
-        translationMapping['meetingLongTitle'] = tool.formatMeetingDate(obj, prefixed=True)
-        translationMapping['meetingState'] = translate(obj.queryState(),
+        translationMapping['meetingLongTitle'] = tool.format_date(obj.date, prefixed=True)
+        translationMapping['meetingState'] = translate(obj.query_state(),
                                                        domain='plone',
                                                        context=obj.REQUEST)
-    elif obj.meta_type == 'MeetingItem':
+    elif obj.getTagName() == 'MeetingItem':
         translationMapping['itemTitle'] = safe_unicode(obj.Title())
-        translationMapping['itemState'] = translate(obj.queryState(),
+        translationMapping['itemState'] = translate(obj.query_state(),
                                                     domain='plone',
                                                     context=obj.REQUEST)
         meeting = obj.getMeeting()
         if meeting:
             translationMapping['meetingTitle'] = safe_unicode(meeting.Title())
-            translationMapping['meetingLongTitle'] = tool.formatMeetingDate(meeting, prefixed=True)
+            translationMapping['meetingLongTitle'] = tool.format_date(meeting.date, prefixed=True)
             translationMapping['itemNumber'] = obj.getItemNumber(
                 relativeTo='meeting')
-    # Update the translationMapping with a sub-product-specific
-    # translationMapping, that may also define custom mail subject and body.
-    customRes = obj.adapted().getSpecificMailContext(event, translationMapping)
-    if customRes:
-        subject = safe_unicode(customRes[0])
-        body = safe_unicode(customRes[1])
-    else:
-        # some event end with "Owner", we use same event without the "Owner" suffix
-        subjectLabel = u'%s_mail_subject' % event.replace("Owner", "")
+
+    # some event end with "Owner", we use same event without the "Owner" suffix
+    subjectLabel = u'%s_mail_subject' % event.replace("Owner", "")
+    subject = translate(subjectLabel,
+                        domain=d,
+                        mapping=translationMapping,
+                        context=obj.REQUEST)
+    # special case for translations of event concerning state change
+    # if we can not translate the specific translation msgid, we use a default msgid
+    # so for example if meeting_state_changed_decide_mail_subject could not be translated
+    # we will translate meeting_state_changed_default_mail_subject
+    if subject is subjectLabel and (subjectLabel.startswith('meeting_state_changed_') or
+                                    subjectLabel.startswith('item_state_changed_')):
+        if subjectLabel.startswith('meeting_state_changed_'):
+            subjectLabel = u'meeting_state_changed_default_mail_subject'
+        else:
+            subjectLabel = u'item_state_changed_default_mail_subject'
         subject = translate(subjectLabel,
                             domain=d,
                             mapping=translationMapping,
                             context=obj.REQUEST)
-        # special case for translations of event concerning state change
-        # if we can not translate the specific translation msgid, we use a default msgid
-        # so for example if meeting_state_changed_decide_mail_subject could not be translated
-        # we will translate meeting_state_changed_default_mail_subject
-        if subject is subjectLabel and (subjectLabel.startswith('meeting_state_changed_') or
-                                        subjectLabel.startswith('item_state_changed_')):
-            if subjectLabel.startswith('meeting_state_changed_'):
-                subjectLabel = u'meeting_state_changed_default_mail_subject'
-            else:
-                subjectLabel = u'item_state_changed_default_mail_subject'
-            subject = translate(subjectLabel,
-                                domain=d,
-                                mapping=translationMapping,
-                                context=obj.REQUEST)
-        subject = safe_unicode(subject)
-        # some event end with "Owner", we use same event without the "Owner" suffix
-        bodyLabel = u'%s_mail_body' % event.replace("Owner", "")
+    subject = safe_unicode(subject)
+    # some event end with "Owner", we use same event without the "Owner" suffix
+    bodyLabel = u'%s_mail_body' % event.replace("Owner", "")
+    body = translate(bodyLabel,
+                     domain=d,
+                     mapping=translationMapping,
+                     context=obj.REQUEST)
+    # special case for translations of event concerning state change
+    # if we can not translate the specific translation msgid, we use a default msgid
+    # so for example if meeting_state_changed_decide_mail_body could not be translated
+    # we will translate meeting_state_changed_default_mail_body
+    if body is bodyLabel and (bodyLabel.startswith('meeting_state_changed_') or
+                              bodyLabel.startswith('item_state_changed_')):
+        if bodyLabel.startswith('meeting_state_changed_'):
+            bodyLabel = u'meeting_state_changed_default_mail_body'
+        else:
+            bodyLabel = u'item_state_changed_default_mail_body'
         body = translate(bodyLabel,
                          domain=d,
                          mapping=translationMapping,
                          context=obj.REQUEST)
-        # special case for translations of event concerning state change
-        # if we can not translate the specific translation msgid, we use a default msgid
-        # so for example if meeting_state_changed_decide_mail_body could not be translated
-        # we will translate meeting_state_changed_default_mail_body
-        if body is bodyLabel and (bodyLabel.startswith('meeting_state_changed_') or
-                                  bodyLabel.startswith('item_state_changed_')):
-            if bodyLabel.startswith('meeting_state_changed_'):
-                bodyLabel = u'meeting_state_changed_default_mail_body'
-            else:
-                bodyLabel = u'item_state_changed_default_mail_body'
-            body = translate(bodyLabel,
-                             domain=d,
-                             mapping=translationMapping,
-                             context=obj.REQUEST)
-        body = safe_unicode(body)
+    body = safe_unicode(body)
+
     adminFromAddress = _getEmailAddress(
         portal.getProperty('email_from_name'),
         safe_unicode(portal.getProperty('email_from_address')))
@@ -563,10 +572,9 @@ def sendMailIfRelevant(obj, event, permissionOrSuffixOrRoleOrGroupIds,
         return
     # Ok, send a mail. Who are the recipients ?
     recipients = []
-    adap = obj.adapted()
     userIds = []
     if isSuffix:
-        org = obj.adapted()._getGroupManagingItem(obj.queryState())
+        org = obj.adapted()._getGroupManagingItem(obj.query_state())
         plone_group = get_plone_group(org.UID(), permissionOrSuffixOrRoleOrGroupIds)
         if not plone_group:
             # maybe the suffix is a MeetingConfig related suffix, like _meetingmanagers
@@ -608,9 +616,6 @@ def sendMailIfRelevant(obj, event, permissionOrSuffixOrRoleOrGroupIds,
                 continue
 
         recipient = tool.getMailRecipient(user)
-        # Must we avoid sending mail to this recipient for some custom reason?
-        if not adap.includeMailRecipient(event, userId):
-            continue
         # After all, we will add this guy to the list of recipients.
         recipients.append(recipient)
     mail_subject = mail_body = None
@@ -628,19 +633,6 @@ def sendMailIfRelevant(obj, event, permissionOrSuffixOrRoleOrGroupIds,
     if debug:
         return recipients, mail_subject, mail_body
     return True
-
-
-def addRecurringItemsIfRelevant(meeting, transition):
-    '''Sees in the meeting config linked to p_meeting if the triggering of
-       p_transition must lead to the insertion of some recurring items in
-       p_meeting.'''
-    recItems = []
-    meetingConfig = meeting.portal_plonemeeting.getMeetingConfig(meeting)
-    for item in meetingConfig.getRecurringItems():
-        if item.getMeetingTransitionInsertingMe() == transition:
-            recItems.append(item)
-    if recItems:
-        meeting.addRecurringItems(recItems)
 
 
 # I wanted to put permission "ReviewPortalContent" among defaultPermissions,
@@ -669,7 +661,7 @@ def clonePermissions(srcObj, destObj, permissions=(View,
         if permission in srcWorkflow.permissions:
             # Get the roles this permission is given to for srcObj in its
             # current state.
-            srcStateDef = getattr(srcWorkflow.states, srcObj.queryState())
+            srcStateDef = getattr(srcWorkflow.states, srcObj.query_state())
             permissionInfo = srcStateDef.getPermissionInfo(permission)
             destObj.manage_permission(permission,
                                       permissionInfo['roles'],
@@ -775,18 +767,24 @@ def getDateFromDelta(aDate, delta):
     return DateTime('%s %s' % ((aDate + int(days)).strftime('%Y/%m/%d'), hour))
 
 
+def mark_empty_tags(obj, value):
+    """ """
+    if _checkPermission(ModifyPortalContent, obj):
+        value = markEmptyTags(
+            value,
+            tagTitle=translate('blank_line',
+                               domain='PloneMeeting',
+                               context=obj.REQUEST),
+            onlyAtTheEnd=True)
+    return value
+
+
 def getFieldVersion(obj, name, changes):
     '''Returns the content of field p_name on p_obj. If p_changes is True,
        historical modifications of field content are highlighted.'''
     lastVersion = obj.getField(name).getAccessor(obj)()
     # highlight blank lines at the end of the text if current user may edit the obj
-    if _checkPermission(ModifyPortalContent, obj):
-        lastVersion = markEmptyTags(lastVersion,
-                                    tagTitle=translate('blank_line',
-                                                       domain='PloneMeeting',
-                                                       context=obj.REQUEST),
-                                    onlyAtTheEnd=True)
-
+    lastVersion = mark_empty_tags(obj, lastVersion)
     if not changes:
         return lastVersion
     # Return cumulative diff between successive versions of field
@@ -821,19 +819,11 @@ def rememberPreviousData(obj, name=None):
        value. Result is a dict ~{s_fieldName: previousFieldValue}~'''
     res = {}
     cfg = obj.portal_plonemeeting.getMeetingConfig(obj)
-    isItem = obj.meta_type == 'MeetingItem'
     # Do nothing if the object is not in a state when historization is enabled.
-    if isItem:
-        meth = cfg.getRecordItemHistoryStates
-    else:
-        meth = cfg.getRecordMeetingHistoryStates
-    if obj.queryState() not in meth():
+    if obj.query_state() not in cfg.getRecordItemHistoryStates():
         return res
     # Store in res the values currently stored on p_obj.
-    if isItem:
-        historized = cfg.getHistorizedItemAttributes()
-    else:
-        historized = cfg.getHistorizedMeetingAttributes()
+    historized = cfg.getHistorizedItemAttributes()
     if name:
         if name in historized:
             res[name] = obj.getField(name).get(obj)
@@ -867,7 +857,7 @@ def addDataChange(obj, previousData=None):
     # Add an event in the history
     userId = obj.portal_membership.getAuthenticatedMember().getId()
     event = {'action': '_datachange_', 'actor': userId, 'time': DateTime(),
-             'comments': '', 'review_state': obj.queryState(),
+             'comments': '', 'review_state': obj.query_state(),
              'changes': previousData}
     if hasattr(obj, '_v_previousData'):
         del obj._v_previousData
@@ -929,10 +919,60 @@ def getHistoryTexts(obj, event):
     return res
 
 
-def get_dx_schema(obj):
+def get_dx_attrs(portal_type,
+                 optional_only=False,
+                 richtext_only=False,
+                 prefixed_key=False,
+                 as_display_list=True):
+    """ """
+    res = []
+    request = getRequest()
+    # schema fields
+    schema = get_dx_schema(portal_type=portal_type)
+    schema_fields = getFieldsInOrder(schema)
+    # FIELD_INFOS
+    portal_types = api.portal.get_tool('portal_types')
+    fti = portal_types[portal_type]
+    field_infos = resolveDottedName(fti.klass).FIELD_INFOS
+    for field_name, field in schema_fields:
+        if optional_only and \
+           (field_name not in field_infos or not field_infos[field_name]['optional']):
+            continue
+        if richtext_only and \
+           (field.__class__.__name__ != "RichText" or field.default_mime_type != 'text/html'):
+            continue
+        res.append(field_name)
+    if as_display_list:
+        display_list_tuples = []
+        for field_name in res:
+            key = field_name
+            if prefixed_key:
+                prefix = fti.klass.split(".")[-1]
+                key = "{0}.{1}".format(prefix, key)
+                display_list_tuples.append(
+                    (key,
+                     '%s -> %s' % (key,
+                                   translate("title_{0}".format(field_name),
+                                             domain="PloneMeeting",
+                                             context=request))
+                     ))
+            else:
+                display_list_tuples.append(
+                    (key,
+                     '%s (%s)' % (translate("title_{0}".format(field_name),
+                                            domain="PloneMeeting",
+                                            context=request),
+                                  field_name)
+                     ))
+
+        res = DisplayList(tuple(display_list_tuples))
+    return res
+
+
+def get_dx_schema(obj=None, portal_type=None):
     """ """
     portal_types = api.portal.get_tool('portal_types')
-    fti = portal_types[obj.portal_type]
+    fti = portal_types[portal_type or obj.portal_type]
     schema = fti.lookupSchema()
     return schema
 
@@ -1043,10 +1083,11 @@ def transformAllRichTextFields(obj, onlyField=None):
         else:
             schema = get_dx_schema(obj)
             write_permissions = schema.queryTaggedValue(WRITE_PERMISSIONS_KEY, {})
-            fields = {field.__name__: getattr(obj, field.__name__).raw for field in schema
+            fields = {field_name: getattr(obj, field_name, None) is not None and getattr(obj, field_name).raw
+                      for field_name, field in getFieldsInOrder(schema)
                       if field.__class__.__name__ == "RichText" and
                       (write_permissions.get(field.__name__) and
-                       member.has_permission(write_permissions[field.__name], obj) or True)}
+                       member.has_permission(write_permissions[field_name], obj) or True)}
     else:
         if onlyField:
             field = obj.schema[onlyField]
@@ -1057,12 +1098,13 @@ def transformAllRichTextFields(obj, onlyField=None):
                       member.has_permission(field.write_permission, obj)}
 
     for field_name, field_raw_value in fields.items():
+        if not field_raw_value:
+            continue
         # Apply mandatory transforms
         fieldContent = storeImagesLocally(obj, field_raw_value)
         # Apply standard transformations as defined in the config
         # fieldsToTransform is like ('MeetingItem.description', 'MeetingItem.budgetInfos', )
-        if ("%s.%s" % (obj.__class__.__name__, field_name) in fieldsToTransform) and \
-           not xhtmlContentIsEmpty(fieldContent):
+        if ("%s.%s" % (obj.getTagName(), field_name) in fieldsToTransform):
             if 'removeBlanks' in transformTypes:
                 fieldContent = removeBlanks(fieldContent)
         if IDexterityContent.providedBy(obj):
@@ -1108,7 +1150,7 @@ def applyOnTransitionFieldTransform(obj, transitionId):
         tal_expr = transform['tal_expression'].strip()
         if tal_expr and \
            transform['transition'] == transitionId and \
-           transform['field_name'].split('.')[0] == obj.meta_type:
+           transform['field_name'].split('.')[0] == obj.getTagName():
             try:
                 extra_expr_ctx.update({'item': obj, })
                 res = _evaluateExpression(
@@ -1148,7 +1190,7 @@ def meetingExecuteActionOnLinkedItems(meeting, transitionId):
     for config in cfg.getOnMeetingTransitionItemActionToExecute():
         if config['meeting_transition'] == transitionId:
             is_transition = not config['tal_expression']
-            for item in meeting.getItems():
+            for item in meeting.get_items():
                 if is_transition:
                     # do not fail if a transition could not be triggered, just add an
                     # info message to the log so configuration can be adapted to avoid this
@@ -1253,13 +1295,13 @@ def updateCollectionCriterion(collection, i, v):
             break
 
 
-def toHTMLStrikedContent(plain_content):
+def toHTMLStrikedContent(html_content):
     """
       p_content is HTML having elements to strike between [[]].
       We will replace these [[]] by <strike> tags.
     """
-    plain_content = plain_content.replace('[[', '<strike>').replace(']]', '</strike>')
-    return plain_content
+    html_content = html_content.replace('[[', '<strike>').replace(']]', '</strike>')
+    return html_content
 
 
 def translate_list(elements, domain="plone", as_list=False, separator=u', '):
@@ -1275,20 +1317,17 @@ def translate_list(elements, domain="plone", as_list=False, separator=u', '):
     return translated
 
 
-def display_as_html(plain_content, obj):
+def display_as_html(plain_content, obj, mark_empty_tags=False, striked=False):
     """Display p_plain_content as HTML, especially ending lines
        that are not displayed if empty."""
-    html_content = plain_content.replace('\n', '<br />')
-    if _checkPermission(ModifyPortalContent, obj):
-        # replace ending <br /> by empty tags
-        splitted = html_content.split('<br />')
-        res = []
-        for elt in splitted:
-            if not elt.strip():
-                res.append('<p>&nbsp;</p>')
-            else:
-                res.append('<p>' + elt + '</p>')
-        html_content = ''.join(res)
+    plain_content = plain_content or ''
+    portal_transforms = api.portal.get_tool('portal_transforms')
+    html_content = portal_transforms.convertTo('text/html', plain_content).getData()
+    html_content = html_content.replace('\r', '')
+    if striked:
+        html_content = toHTMLStrikedContent(html_content)
+    if mark_empty_tags and _checkPermission(ModifyPortalContent, obj):
+        # replace ending <p> by empty tags
         html_content = markEmptyTags(
             html_content,
             tagTitle=translate('blank_line',
@@ -1686,15 +1725,15 @@ def checkMayQuickEdit(obj,
                       expression='',
                       onlyForManagers=False):
     """ """
-    from Products.PloneMeeting.Meeting import Meeting
+    from Products.PloneMeeting.content.meeting import Meeting
     tool = api.portal.get_tool('portal_plonemeeting')
     member = api.user.get_current()
     res = False
-    meeting = obj.meta_type == "Meeting" and obj or (obj.hasMeeting() and obj.getMeeting())
+    meeting = obj.getTagName() == "Meeting" and obj or (obj.hasMeeting() and obj.getMeeting())
     if (not onlyForManagers or (onlyForManagers and tool.isManager(obj))) and \
        (bypassWritePermissionCheck or member.has_permission(permission, obj)) and \
        (_evaluateExpression(obj, expression)) and \
-       (not (meeting and meeting.queryState() in Meeting.meetingClosedStates) or
+       (not (meeting and meeting.query_state() in Meeting.MEETINGCLOSEDSTATES) or
             tool.isManager(obj, realManagers=True)):
         res = True
     return res
@@ -1733,7 +1772,16 @@ def get_every_back_references(obj, relationship):
     return get_back_references(obj.getBRefs(relationship))
 
 
-def getStatesBefore(obj, review_state_id):
+def get_states_before_cachekey(method, obj, review_state):
+    '''cachekey method for get_states_before.'''
+    # do only re-compute if cfg changed or params changed
+    tool = api.portal.get_tool('portal_plonemeeting')
+    cfg = tool.getMeetingConfig(obj)
+    return (cfg.getId(), cfg._p_mtime, review_state)
+
+
+@ram.cache(get_states_before_cachekey)
+def get_states_before(obj, review_state_id):
     """
       Returns states before the p_review_state_id state.
     """
@@ -1992,11 +2040,13 @@ def add_wf_history_action(obj, action_name, action_label, user_id=None, insert_i
     obj.workflow_history[wfName] = events
 
 
-def is_editing():
+def is_editing(cfg):
     """Return True if currently editing something."""
     request = getRequest()
     url = request.get('URL', '')
     edit_ends = ['/edit', '/base_edit', '/@@edit']
+    edit_ends.append('/++add++{0}'.format(cfg.getItemTypeName()))
+    edit_ends.append('/++add++{0}'.format(cfg.getMeetingTypeName()))
     res = False
     for edit_end in edit_ends:
         if url.endswith(edit_end):
@@ -2005,25 +2055,25 @@ def is_editing():
     return res
 
 
-def get_next_meeting(meetingDate, cfg, dateGap=0):
+def get_next_meeting(meeting_date, cfg, date_gap=0):
     '''Gets the next meeting based on meetingDate DateTime.
        p_cfg is used to know in which MeetingConfig to query next meeting.
        p_dateGap is the number of 'dead days' following the date of
        the current meeting in which we do not look for next meeting'''
     meetingTypeName = cfg.getMeetingTypeName()
     catalog = api.portal.get_tool('portal_catalog')
-    # find every meetings after self.getDate
-    meetingDate += dateGap
+    # find every meetings after meetingDate
+    meeting_date += timedelta(days=date_gap)
     brains = catalog(portal_type=meetingTypeName,
-                     getDate={'query': meetingDate, 'range': 'min'},
-                     sort_on='getDate')
+                     meeting_date={'query': meeting_date,
+                                   'range': 'min'},
+                     sort_on='meeting_date')
     res = None
     for brain in brains:
-        if brain.getDate > meetingDate:
-            res = brain
+        meeting = brain.getObject()
+        if meeting.date > meeting_date:
+            res = meeting
             break
-    if res:
-        res = res.getObject()
     return res
 
 
@@ -2065,6 +2115,17 @@ def down_or_up_wf(obj):
                         res = "up"
                         break
     return res
+
+
+def redirect(request, url):
+    """Manage when view is called by an ajax request and
+       must not return anything but reload the page or faceted (in JS)."""
+    # ajax request or overlay
+    if "_" in request or "ajax_load" in request:
+        request.RESPONSE.setStatus(204)
+        return ""
+    else:
+        return request.RESPONSE.redirect(url)
 
 
 class AdvicesUpdatedEvent(ObjectEvent):

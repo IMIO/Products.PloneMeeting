@@ -2,38 +2,22 @@
 #
 # File: __init__.py
 #
-# Copyright (c) 2015 by Imio.be
-# Generator: ArchGenXML Version 2.7
-#            http://plone.org/products/archgenxml
-#
 # GNU General Public License (GPL)
 #
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
-# 02110-1301, USA.
-#
 
-from config import ADD_CONTENT_PERMISSIONS
-from config import DEFAULT_ADD_CONTENT_PERMISSION
-from config import product_globals
-from config import PROJECTNAME
+from AccessControl import allow_module
+from AccessControl import allow_type
+from datetime import datetime
 from plone.registry.field import DisallowedProperty
 from Products.Archetypes import listTypes
 from Products.Archetypes.atapi import process_types
 from Products.CMFCore import utils as cmfutils
 from Products.CMFCore import DirectoryView
 from Products.CMFPlone.utils import ToolInit
+from Products.PloneMeeting.config import ADD_CONTENT_PERMISSIONS
+from Products.PloneMeeting.config import DEFAULT_ADD_CONTENT_PERMISSION
+from Products.PloneMeeting.config import product_globals
+from Products.PloneMeeting.config import PROJECTNAME
 from Products.validation import validation
 from Products.validation.validators.BaseValidators import baseValidators
 from Products.validation.validators.BaseValidators import protocols
@@ -98,8 +82,7 @@ def initialize(context):
         content_types=all_content_types,
         permission=DEFAULT_ADD_CONTENT_PERMISSION,
         extra_constructors=all_constructors,
-        fti=all_ftis,
-        ).initialize(context)
+        fti=all_ftis).initialize(context)
 
     # Give it some extra permissions to control them on a per class limit
     for i in range(0, len(all_content_types)):
@@ -111,5 +94,6 @@ def initialize(context):
                               constructors=(all_constructors[i],),
                               permission=ADD_CONTENT_PERMISSIONS[klassname])
 
-    from AccessControl import allow_module
     allow_module('Products.PloneMeeting.utils')
+    allow_module('Products.PloneMeeting.browser.meeting')
+    allow_type(datetime)

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from AccessControl import Unauthorized
+from collections import OrderedDict
 from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_own_organization
@@ -8,9 +9,11 @@ from collective.contact.plonegroup.utils import get_plone_group
 from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.contact.plonegroup.utils import get_plone_groups
 from collective.documentviewer.async import queueJob
+from collective.eeafaceted.dashboard.utils import enableFacetedDashboardFor
 from collective.iconifiedcategory.utils import update_all_categorized_elements
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.helpers.cache import invalidate_cachekey_volatile_for
+from imio.helpers.content import get_modified_attrs
 from imio.helpers.content import richtextval
 from imio.helpers.security import fplog
 from imio.helpers.xhtml import storeImagesLocally
@@ -32,20 +35,23 @@ from Products.PloneMeeting.config import ITEMTEMPLATESMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import ROOT_FOLDER
 from Products.PloneMeeting.config import TOOL_FOLDER_SEARCHES
+from Products.PloneMeeting.content.meeting import IMeeting
 from Products.PloneMeeting.interfaces import IConfigElement
 from Products.PloneMeeting.interfaces import IMeetingContent
 from Products.PloneMeeting.utils import _addManagedPermissions
-from Products.PloneMeeting.utils import addRecurringItemsIfRelevant
+from Products.PloneMeeting.utils import addDataChange
 from Products.PloneMeeting.utils import AdviceAfterAddEvent
 from Products.PloneMeeting.utils import AdviceAfterModifyEvent
 from Products.PloneMeeting.utils import AdviceAfterTransitionEvent
 from Products.PloneMeeting.utils import applyOnTransitionFieldTransform
 from Products.PloneMeeting.utils import get_annexes
+from Products.PloneMeeting.utils import get_states_before
 from Products.PloneMeeting.utils import ItemAfterTransitionEvent
 from Products.PloneMeeting.utils import MeetingAfterTransitionEvent
 from Products.PloneMeeting.utils import meetingExecuteActionOnLinkedItems
 from Products.PloneMeeting.utils import notifyModifiedAndReindex
 from Products.PloneMeeting.utils import sendMailIfRelevant
+from Products.PloneMeeting.utils import transformAllRichTextFields
 from zExceptions import Redirect
 from zope.container.contained import ContainerModifiedEvent
 from zope.event import notify
@@ -56,6 +62,7 @@ from zope.interface import noLongerProvides
 from zope.lifecycleevent import IObjectRemovedEvent
 
 import logging
+import os
 
 
 __author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
@@ -70,14 +77,14 @@ podTransitionPrefixes = {'MeetingItem': 'pod_item', 'Meeting': 'pod_meeting'}
 # Code executed after a workflow transition has been triggered
 def do(action, event):
     '''What must I do when a transition is triggered on a meeting or item?'''
-    objectType = event.object.__class__.__name__
+    objectType = event.object.getTagName()
     actionsAdapter = event.object.wfActions()
     # Execute some actions defined in the corresponding adapter
     actionMethod = getattr(actionsAdapter, action)
     actionMethod(event)
     if objectType == 'MeetingItem':
         # Update every local roles : advices, copyGroups, powerObservers, budgetImpactEditors, ...
-        event.object.updateLocalRoles(triggered_by_transition=event.transition.id)
+        event.object.update_local_roles(triggered_by_transition=event.transition.id)
         # Send mail regarding advices to give if relevant
         event.object.sendStateDependingMailIfRelevant(event.old_state.id, event.new_state.id)
         # Send mail if relevant
@@ -89,9 +96,9 @@ def do(action, event):
         event.object.notifyModified()
     elif objectType == 'Meeting':
         # update every local roles
-        event.object.updateLocalRoles()
+        event.object.update_local_roles()
         # Add recurring items to the meeting if relevant
-        addRecurringItemsIfRelevant(event.object, event.transition.id)
+        event.object.add_recurring_items_if_relevant(event.transition.id)
         # Send mail if relevant
         event_id = "meeting_state_changed_%s" % event.transition.id
         sendMailIfRelevant(event.object, event_id, 'View', isPermission=True)
@@ -124,7 +131,7 @@ def onItemTransition(item, event):
     do(action, event)
 
     # check if we need to send the item to another meetingConfig
-    if item.queryState() in cfg.getItemAutoSentToOtherMCStates():
+    if item.query_state() in cfg.getItemAutoSentToOtherMCStates():
         otherMCs = item.getOtherMeetingConfigsClonableTo()
         for otherMC in otherMCs:
             # if already cloned to another MC, pass.  This could be the case
@@ -156,11 +163,11 @@ def onMeetingTransition(meeting, event):
     do(action, event)
     # update items references if meeting is going from before late state
     # to late state or the other way round
-    late_state = meeting.adapted().getLateState()
-    beforeLateStates = meeting.getStatesBefore(late_state)
+    late_state = meeting.adapted().get_late_state()
+    beforeLateStates = get_states_before(meeting, late_state)
     if (event.old_state.id in beforeLateStates and event.new_state.id not in beforeLateStates) or \
        (event.old_state.id not in beforeLateStates and event.new_state.id in beforeLateStates):
-        meeting.updateItemReferences()
+        meeting.update_item_references()
 
     # invalidate last meeting modified, use get_again for async meetings term render
     invalidate_cachekey_volatile_for('Products.PloneMeeting.Meeting.modified', get_again=True)
@@ -210,7 +217,7 @@ def onMeetingBeforeTransition(meeting, event):
         if 'return_to_proposing_group' in cfg.getWorkflowAdaptations():
             # raise a WorkflowException in case there are items still in state 'returned_to_proposing_group'
             additional_catalog_query = {'review_state': 'returned_to_proposing_group'}
-            if meeting.getItems(theObjects=False, additional_catalog_query=additional_catalog_query):
+            if meeting.get_items(the_objects=False, additional_catalog_query=additional_catalog_query):
                 msg = _('Can not close a meeting containing items returned to proposing group!')
                 raise WorkflowException(msg)
 
@@ -603,7 +610,7 @@ def item_added_or_initialized(item):
 
     # avoid multiple initialization
     # when using restapi for example, this empties adviceIndex
-    # because init/updateLocalRoles/init
+    # because init/update_local_roles/init
     if hasattr(item, '_v_already_initialized'):
         return
     item._v_already_initialized = True
@@ -648,9 +655,8 @@ def onItemWillBeAdded(item, event):
 
 def onItemModified(item, event):
     '''Called when an item is modified.'''
-    # if called because content was changed, like annex/advice added/removed
+    # if called because content was changed, like annex/advice/image added/removed
     # we bypass, no need to update references or rename id
-
     if not isinstance(event, ContainerModifiedEvent):
         meeting = item.getMeeting()
         if meeting:
@@ -658,8 +664,8 @@ def onItemModified(item, event):
             invalidate_cachekey_volatile_for(
                 'Products.PloneMeeting.Meeting.UID.{0}'.format(meeting.UID()), get_again=True)
             # update item references if necessary
-            meeting.updateItemReferences(startNumber=item.getItemNumber(), check_needed=True)
-            # invalidate Meeting.getItemInsertOrder caching
+            meeting.update_item_references(start_number=item.getItemNumber(), check_needed=True)
+            # invalidate Meeting.get_item_insert_order caching
             meeting._invalidate_insert_order_cache_for(item)
 
         # reactivate rename_after_creation as long as item is in it's initial_state
@@ -672,7 +678,7 @@ def onItemModified(item, event):
             itemWF = wfTool.getWorkflowsFor(item)[0]
             initial_state = itemWF.initial_state
             # only rename if this will effectively change the id
-            if initial_state == item.queryState() and item.getId() != item.generateNewId():
+            if initial_state == item.query_state() and item.getId() != item.generateNewId():
                 # in case a user of same group is editing the item of another user
                 # he does not have the 'Add portal content' permission that is necessary
                 # when renaming so do this as Manager
@@ -725,7 +731,7 @@ def onAdviceAdded(advice, event):
         advice._updateAdviceRowId()
 
     item = advice.getParentNode()
-    item.updateLocalRoles()
+    item.update_local_roles()
 
     _addManagedPermissions(advice)
 
@@ -758,7 +764,7 @@ def onAdviceModified(advice, event):
     advice._updateAdviceRowId()
 
     item = advice.getParentNode()
-    item.updateLocalRoles()
+    item.update_local_roles()
 
     # make sure external images used in RichText fields are stored locally
     storeImagesLocallyDexterity(advice)
@@ -797,7 +803,7 @@ def onAdviceRemoved(advice, event):
         return
 
     try:
-        item.updateLocalRoles()
+        item.update_local_roles()
     except TypeError:
         # while removing an advice, if it was not anymore in the advice index
         # it can raise a TypeError, this can be the case when using ToolPloneMeeting.pasteItems
@@ -822,7 +828,7 @@ def onAnnexAdded(annex, event):
                                  annex,
                                  decisionRelated=annex.portal_type == 'annexDecision' and True or False)
             if annex.portal_type == 'annex' and parent.willInvalidateAdvices():
-                parent.updateLocalRoles(invalidate=True)
+                parent.update_local_roles(invalidate=True)
 
             # Potentially I must notify MeetingManagers through email.
             sendMailIfRelevant(parent, 'annexAdded', 'meetingmanagers', isSuffix=True)
@@ -877,7 +883,7 @@ def onAnnexRemoved(annex, event):
                              annex,
                              decisionRelated=annex.portal_type == 'annexDecision' and True or False)
         if parent.willInvalidateAdvices():
-            parent.updateLocalRoles(invalidate=True)
+            parent.update_local_roles(invalidate=True)
 
     # update modification date and SearchableText
     notifyModifiedAndReindex(parent, extra_idxs=['SearchableText', 'hasAnnexesToPrint', 'hasAnnexesToSign'])
@@ -983,21 +989,104 @@ def onItemRemoved(item, event):
 
 
 def onMeetingAdded(meeting, event):
-    '''This method is called every time a Meeting is created, even in
-       portal_factory. Local roles defined on a meeting define who may view
-       or edit it. But at the time the meeting is created in portal_factory,
-       local roles are not defined yet. This can be a problem when some
-       workflow adaptations are enabled. So here
-       we grant role 'Owner' to the currently logged user that allows him,
-       in every case, to create the meeting.'''
-    userId = api.user.get_current().getId()
-    meeting.manage_addLocalRoles(userId, ('Owner',))
+    '''This method is called every time a Meeting is added to a folder,
+       after the created and moved events.'''
+    # while migrating to Meeting DX, we do not have a date
+    # while creating the new meeting
+    if meeting.date:
+        meeting.update_title()
+        meeting.compute_dates()
+        # Update contact-related info (attendees, signatories, replacements...)
+        meeting.update_contacts()
+        meeting.add_recurring_items_if_relevant('_init_')
+        # Apply potential transformations to richtext fields
+        transformAllRichTextFields(meeting)
+    meeting.update_local_roles()
+    # activate the faceted navigation
+    enableFacetedDashboardFor(meeting,
+                              xmlpath=os.path.dirname(__file__) +
+                              '/faceted_conf/default_dashboard_widgets.xml')
+    meeting.setLayout('meeting_view')
     # clean cache for "Products.PloneMeeting.vocabularies.meetingdatesvocabulary"
     # use get_again for async meetings term render
     invalidate_cachekey_volatile_for(
         'Products.PloneMeeting.vocabularies.meetingdatesvocabulary', get_again=True)
     invalidate_cachekey_volatile_for(
         'Products.PloneMeeting.Meeting.modified', get_again=True)
+
+
+def onMeetingCreated(meeting, event):
+    """First event triggerd when new meeting created.
+       Event order is :
+       - created;
+       - moved;
+       - added."""
+    userId = api.user.get_current().getId()
+    meeting.manage_addLocalRoles(userId, ('Owner',))
+    # place to store item absents
+    meeting.item_absents = PersistentMapping()
+    # place to store item excused
+    meeting.item_excused = PersistentMapping()
+    # place to store item non attendees
+    meeting.item_non_attendees = PersistentMapping()
+    # place to store item signatories
+    meeting.item_signatories = PersistentMapping()
+    # place to store item votes
+    meeting.item_votes = PersistentMapping()
+    # place to store attendees when using contacts
+    meeting.ordered_contacts = OrderedDict()
+
+
+def onMeetingModified(meeting, event):
+    """ """
+    # if called because content was changed, like annex/image added/removed
+    # we bypass, no need to update
+    if not isinstance(event, ContainerModifiedEvent):
+        mod_attrs = get_modified_attrs(event)
+        need_reindex = False
+        if not mod_attrs or "date" in mod_attrs:
+            need_reindex = meeting.update_title()
+        # Update contact-related info (attendees, signatories, replacements...)
+        meeting.update_contacts()
+        # Add a line in history if historized fields have changed
+        addDataChange(meeting)
+        # Apply potential transformations to richtext fields
+        transformAllRichTextFields(meeting)
+        # update every items itemReference if needed
+        if set(mod_attrs).intersection(['date', 'first_item_number', 'meeting_number']):
+            meeting.update_item_references(check_needed=False)
+        # reindex every linked items if date value changed
+        if not mod_attrs or "date" in mod_attrs:
+            catalog = api.portal.get_tool('portal_catalog')
+            tool = api.portal.get_tool('portal_plonemeeting')
+            cfg = tool.getMeetingConfig(meeting)
+            # items linked to the meeting
+            brains = catalog(portal_type=cfg.getItemTypeName(),
+                             meeting_uid=meeting.UID())
+            # items having the meeting as the preferredMeeting
+            brains = brains + catalog(portal_type=cfg.getItemTypeName(),
+                                      preferred_meeting_uid=meeting.UID())
+            for brain in brains:
+                item = brain.getObject()
+                item.reindexObject(idxs=['meeting_date', 'preferred_meeting_date'])
+            # clean cache for "Products.PloneMeeting.vocabularies.meetingdatesvocabulary"
+            invalidate_cachekey_volatile_for(
+                "Products.PloneMeeting.vocabularies.meetingdatesvocabulary", get_again=True)
+
+        # update local roles as power observers local roles may vary depending on meeting_access_on
+        meeting.update_local_roles()
+        # invalidate last meeting modified
+        invalidate_cachekey_volatile_for(
+            'Products.PloneMeeting.Meeting.modified', get_again=True)
+        # invalidate item voters vocabulary in case new voters (un)selected
+        invalidate_cachekey_volatile_for(
+            'Products.PloneMeeting.vocabularies.itemvotersvocabulary', get_again=True)
+        # invalidate assembly async load on meeting
+        invalidate_cachekey_volatile_for(
+            'Products.PloneMeeting.browser.async.AsyncLoadMeetingAssemblyAndSignatures',
+            get_again=True)
+        if need_reindex:
+            meeting.reindexObject()
 
 
 def onMeetingMoved(meeting, event):
@@ -1007,8 +1096,16 @@ def onMeetingMoved(meeting, event):
         return
 
     # update linked_meeting_path on every items because path changed
-    for item in meeting.getItems():
-        item._update_meeting_link(meeting.UID())
+    meeting_uid = meeting.UID()
+    for item in meeting.get_items():
+        item._update_meeting_link(meeting_uid)
+
+    # update preferred_meeting_path
+    catalog = api.portal.get_tool('portal_catalog')
+    brains = catalog.unrestrictedSearchResults(preferred_meeting_uid=meeting.UID())
+    for brain in brains:
+        item = brain._unrestrictedGetObject()
+        item._update_preferred_meeting(meeting_uid)
 
 
 def onMeetingRemoved(meeting, event):
@@ -1031,17 +1128,17 @@ def onMeetingRemoved(meeting, event):
     # update items for which current meeting is selected as preferred meeting
     # do this unrestricted so we are sure that every items are updated
     catalog = api.portal.get_tool('portal_catalog')
-    brains = catalog.unrestrictedSearchResults(getPreferredMeeting=meeting.UID())
+    brains = catalog.unrestrictedSearchResults(preferred_meeting_uid=meeting.UID())
     # we do not reindex in the loop on brains or it mess things because
     # we are reindexing the index we searched on and brains is a LazyMap
     items_to_reindex = []
     for brain in brains:
-        item = brain.getObject()
+        item = brain._unrestrictedGetObject()
         item.setPreferredMeeting(ITEM_NO_PREFERRED_MEETING_VALUE)
         items_to_reindex.append(item)
     for item_to_reindex in items_to_reindex:
         item_to_reindex.reindexObject(
-            idxs=['getPreferredMeeting', 'getPreferredMeetingDate'])
+            idxs=['preferred_meeting_uid', 'preferred_meeting_date'])
     # clean cache for "Products.PloneMeeting.vocabularies.meetingdatesvocabulary"
     # use get_again for async meetings term render
     invalidate_cachekey_volatile_for(
@@ -1135,15 +1232,15 @@ def onDashboardCollectionAdded(collection, event):
 def _is_held_pos_uid_used_by(held_pos_uid, obj):
     """ """
     res = False
-    if obj.meta_type == 'MeetingConfig':
+    if obj.getTagName() == 'MeetingConfig':
         if held_pos_uid in obj.getOrderedContacts() or \
            held_pos_uid in obj.getOrderedItemInitiators():
             res = True
-    elif obj.meta_type == 'Meeting':
-        orderedContacts = getattr(obj, 'orderedContacts', {})
-        if held_pos_uid in orderedContacts:
+    elif obj.getTagName() == 'Meeting':
+        ordered_contacts = getattr(obj, 'ordered_contacts', {})
+        if held_pos_uid in ordered_contacts:
             res = True
-    elif obj.meta_type == 'MeetingItem':
+    elif obj.getTagName() == 'MeetingItem':
         if held_pos_uid in obj.getItemInitiator():
             res = True
     return res
@@ -1167,7 +1264,7 @@ def onHeldPositionWillBeRemoved(held_pos, event):
     # check meetings
     if not using_obj:
         catalog = api.portal.get_tool('portal_catalog')
-        brains = catalog(meta_type='Meeting')
+        brains = catalog(object_provides=IMeeting.__identifier__)
         for brain in brains:
             meeting = brain.getObject()
             if _is_held_pos_uid_used_by(held_pos_uid, meeting):
@@ -1291,3 +1388,26 @@ def onCategoryWillBeRemoved(category, event):
                     mapping={'url': other_cat.absolute_url()},
                     context=category.REQUEST)
                 raise BeforeDeleteException(msg)
+
+
+def onMeetingWillBeRemoved(meeting, event):
+    """ """
+    # If we are trying to remove the whole Plone Site, bypass this hook.
+    if event.object.meta_type == 'Plone Site':
+        return
+
+    # We can remove an meeting directly but not "through" his container.
+    if event.object.getTagName() != 'Meeting':
+        msg = translate(
+            u"can_not_delete_meeting_container",
+            domain='PloneMeeting',
+            context=meeting.REQUEST)
+        api.portal.show_message(
+            message=msg,
+            request=meeting.REQUEST,
+            type='error')
+        raise Redirect(meeting.REQUEST.get('HTTP_REFERER'))
+    # we are removing the meeting
+    member = api.user.get_current()
+    if member.has_role('Manager'):
+        meeting.REQUEST.set('items_to_remove', meeting.get_items())

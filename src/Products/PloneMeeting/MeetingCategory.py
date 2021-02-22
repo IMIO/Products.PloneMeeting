@@ -215,7 +215,7 @@ class MeetingCategory(BaseContent, BrowserDefaultMixin):
     security.declarePublic('getSelf')
 
     def getSelf(self):
-        if self.__class__.__name__ != 'MeetingCategory':
+        if self.getTagName() != 'MeetingCategory':
             return self.context
         return self
 

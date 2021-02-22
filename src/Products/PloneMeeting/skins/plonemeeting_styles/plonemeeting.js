@@ -566,7 +566,7 @@ function updateNumberOfItems() {
   // get numberOfItems using an ajax call if on the meeting_view
   if (parent.$('.meeting_number_of_items').length) {
     response = $.ajax({
-      url: document.baseURI + '/numberOfItems',
+      url: document.baseURI + '/number_of_items',
       dataType: 'html',
       cache: false,
       async: true,
@@ -788,10 +788,10 @@ function toggleAllDetails() {
   state = localStorage.getItem("toggleAllDetails");
   if (!state || state == "1") {
     localStorage.setItem("toggleAllDetails", "0");
-    $('div.collapsible.active').each(function() {$(this).click();});
+    $('.collapsible.active:not(.not-auto-collapsible-deactivable)').each(function() {$(this).click();});
   } else {
     localStorage.setItem("toggleAllDetails", "1");
-    $('div.collapsible:not(.active):not(.discreet)').each(function() {$(this).click();});
+    $('.collapsible:not(.active):not(.not-auto-collapsible-activable)').each(function() {$(this).click();});
   }
 }
 

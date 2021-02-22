@@ -232,7 +232,7 @@ class ToolInitializer:
                                   list(data.meetingTopicStates))
         # apply the maxDaysDecisions to the 'searchlastdecisions' DashboardCollection
         updateCollectionCriterion(cfg.searches.searches_decisions.searchlastdecisions,
-                                  'getDate',
+                                  'meeting_date',
                                   unicode(data.maxDaysDecisions))
         # apply the decisionTopicStates to the 'searchlastdecisions'
         # and 'searchalldecision' DashboardCollections

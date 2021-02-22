@@ -45,7 +45,7 @@ from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import READER_USECASES
-from Products.PloneMeeting.interfaces import IMeeting
+from Products.PloneMeeting.content.meeting import IMeeting
 from Products.PloneMeeting.MeetingConfig import CONFIGGROUPPREFIX
 from Products.PloneMeeting.MeetingConfig import PROPOSINGGROUPPREFIX
 from Products.PloneMeeting.MeetingConfig import READERPREFIX
@@ -165,15 +165,12 @@ class MeetingContentDeletableAdapter(APContentDeletableAdapter):
 
     def mayDelete(self, **kwargs):
         '''See docstring in interfaces.py.'''
-        if not super(MeetingContentDeletableAdapter, self).mayDelete():
-            return False
-
-        if not self.context.getRawItems():
-            return True
-
-        member = api.user.get_current()
-        if member.has_role('Manager'):
-            return True
+        res = super(MeetingContentDeletableAdapter, self).mayDelete()
+        if res:
+            if self.context.get_raw_items() and \
+               not api.user.get_current().has_role('Manager'):
+                res = False
+        return res
 
 
 class OrgContentDeletableAdapter(APContentDeletableAdapter):
@@ -216,7 +213,7 @@ class AdvicePrettyLinkAdapter(PrettyLinkAdapter):
         """
         res = []
         item = self.context.aq_inner.aq_parent
-        item_state = item.queryState()
+        item_state = item.query_state()
         # display the waiting advices icon if relevant
         if item_state.endswith('_waiting_advices'):
             item_wf_conditions = item.wfConditions()
@@ -322,29 +319,13 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
 
         if displaying_available_items(self.context):
             meeting = getCurrentMeetingObject(self.context)
-            # there could be no meeting if we opened an item from the available items view
-            if meeting:
-                # Item is in the list of available items, check if we
-                # must show a deadline- or late-related icon.
-                if self.context.wfConditions().isLateFor(meeting):
-                    # A late item, or worse: a late item not respecting the freeze deadline.
-                    if meeting.attributeIsUsed('deadlineFreeze') and \
-                       not self.context.lastValidatedBefore(meeting.getDeadlineFreeze()):
-                        res.append(('deadlineKo.png', translate('icon_help_publish_freeze_ko',
-                                                                domain="PloneMeeting",
-                                                                context=self.request)))
-                    else:
-                        res.append(('late.png', translate('icon_help_late',
-                                                          domain="PloneMeeting",
-                                                          context=self.request)))
-                elif (meeting.queryState() == 'created') and \
-                        meeting.attributeIsUsed('deadlinePublish') and \
-                        not self.context.lastValidatedBefore(meeting.getDeadlinePublish()):
-                    res.append(('deadlineKo.png', translate('icon_help_publish_deadline_ko',
-                                                            domain="PloneMeeting",
-                                                            context=self.request)))
+            # late?
+            if meeting and self.context.wfConditions().isLateFor(meeting):
+                res.append(('late.png', translate('icon_help_late',
+                                                  domain="PloneMeeting",
+                                                  context=self.request)))
 
-        itemState = self.context.queryState()
+        itemState = self.context.query_state()
         # specifically manage states without leading icons to speed up things
         if itemState in ('itemcreated', 'proposed', 'validated'):
             pass
@@ -475,13 +456,14 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
                             context=self.request)
 
             clonedBrain = self.context.getItemClonedToOtherMC(clonedToOtherMCId, theObject=False)
-            # do not check on linkedMeetingDate because it may contains '1950/01/01',
-            # see linkedMeetingDate indexer in indexes.py
-            if clonedBrain.linkedMeetingUID != ITEM_NO_PREFERRED_MEETING_VALUE:
+            # do not check on meeting_date because it may contains '1950/01/01',
+            # see meeting_date indexer in indexes.py
+            if clonedBrain.meeting_uid != ITEM_NO_PREFERRED_MEETING_VALUE:
                 # avoid instantiating toLocalizedTime more than once
                 toLocalizedTime = toLocalizedTime or self.context.restrictedTraverse('@@plone').toLocalizedTime
-                long_format = clonedBrain.linkedMeetingDate.hour() and True or False
-                msg = msg + u' ({0})'.format(toLocalizedTime(clonedBrain.linkedMeetingDate, long_format=long_format))
+                long_format = clonedBrain.meeting_date.hour and True or False
+                msg = msg + u' ({0})'.format(toLocalizedTime(
+                    clonedBrain.meeting_date, long_format=long_format))
             iconName = emergency and "clone_to_other_mc_emergency" or "clone_to_other_mc"
             # manage the otherMeetingConfigsClonableToPrivacy
             if 'privacy' in clonedToOtherMC.getUsedItemAttributes():
@@ -530,7 +512,7 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
         if predecessor:
             predecessorCfg = tool.getMeetingConfig(predecessor)
             predecessorMeeting = predecessor.getMeeting()
-            predecessor_state = predecessor.queryState()
+            predecessor_state = predecessor.query_state()
             translated_state = translate(predecessor_state, domain='plone', context=self.request)
             if not predecessorMeeting:
                 res.append(('cloned_not_decided.png',
@@ -542,11 +524,11 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
                                       default="Sent from ${meetingConfigTitle}, "
                                       "original item is \"${predecessorState}\".")))
             else:
-                if predecessor_state in predecessorCfg.adapted().getItemPositiveDecidedStates():
+                if predecessor_state in predecessorCfg.getItemPositiveDecidedStates():
                     res.append(('cloned_and_decided.png',
                                 translate(
                                     'icon_help_cloned_and_decided',
-                                    mapping={'meetingDate': tool.formatMeetingDate(predecessorMeeting),
+                                    mapping={'meetingDate': tool.format_date(predecessorMeeting.date),
                                              'meetingConfigTitle': safe_unicode(predecessorCfg.Title()),
                                              'predecessorState': translated_state},
                                     domain="PloneMeeting",
@@ -556,7 +538,7 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
                 else:
                     res.append(('cloned_not_decided.png',
                                 translate('icon_help_cloned_not_decided',
-                                          mapping={'meetingDate': tool.formatMeetingDate(predecessorMeeting),
+                                          mapping={'meetingDate': tool.format_date(predecessorMeeting.date),
                                                    'meetingConfigTitle': safe_unicode(predecessorCfg.Title()),
                                                    'predecessorState': translated_state},
                                           domain="PloneMeeting",
@@ -627,9 +609,9 @@ class MeetingPrettyLinkAdapter(PrettyLinkAdapter):
           Manage icons to display before the icons managed by PrettyLink._icons.
         """
         res = []
-        if self.context.getExtraordinarySession():
+        if self.context.extraordinary_session:
             res.append(('extraordinarySession.png',
-                        translate('this_meeting_is_extraodrinary_session',
+                        translate('this_meeting_is_extraordinary_session',
                                   domain="PloneMeeting",
                                   context=self.request)))
         return res
@@ -684,7 +666,7 @@ class PMWfHistoryAdapter(ImioWfHistoryAdapter):
           history comment.
         """
         userMayAccessComment = True
-        if self.context.meta_type == 'MeetingItem':
+        if self.context.getTagName() == 'MeetingItem':
             if self.cfg.getHideItemHistoryCommentsToUsersOutsideProposingGroup() and \
                not self.tool.isManager(self.cfg):
                 userOrgUids = self.tool.get_orgs_for_user(the_objects=False)
@@ -917,7 +899,7 @@ class LastDecisionsAdapter(CompoundCriterionBaseAdapter):
 
     @property
     def query_last_decisions(self):
-        '''Patch the query 'getDate' to not limit the search
+        '''Patch the query 'meeting_date' to not limit the search
            to 'today' but 60 days in the future.'''
         if not self.cfg:
             return {}
@@ -925,8 +907,10 @@ class LastDecisionsAdapter(CompoundCriterionBaseAdapter):
         # or it will lead to a RuntimeError: maximum recursion depth exceeded
         query = [term for term in self.context.query if term[u'i'] != u'CompoundCriterion']
         parsedQuery = parseFormquery(self.context, query)
-        # change the second date of getDate query, aka the 'max' date
-        parsedQuery['getDate']['query'][1] = DateTime() + 60
+        # change the second date of meeting_date query, aka the 'max' date
+        # use DateTime because 'plone.app.querystring.operation.date.largerThanRelativeDate'
+        # will use a DateTime
+        parsedQuery['meeting_date']['query'][1] = DateTime() + 60
         return parsedQuery
 
     # we may not ram.cache methods in same file with same name...
@@ -1558,7 +1542,7 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
         """Compute 'View' permission if annex is confidential,
            apply local_roles and give 'View' to 'AnnexReader' either,
            remove every local_roles and acquire 'View'."""
-        if self.parent.meta_type == 'MeetingItem' or \
+        if self.parent.getTagName() == 'MeetingItem' or \
            self.parent.portal_type in self.tool.getAdvicePortalTypes(as_ids=True):
             # reinitialize permissions in case no more confidential
             # or confidentiality configuration changed
@@ -1600,10 +1584,10 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
     def _compute_visible_for_groups(self):
         """ """
         groups = []
-        parent_meta_type = self.parent.meta_type
-        if parent_meta_type == 'MeetingItem':
+        parent_classname = self.parent.getTagName()
+        if parent_classname == 'MeetingItem':
             groups = self._item_visible_for_groups()
-        elif parent_meta_type == 'Meeting':
+        elif parent_classname == 'Meeting':
             groups = self._meeting_visible_for_groups()
         else:
             # advice
@@ -1706,8 +1690,9 @@ class PMCategorizedObjectAdapter(CategorizedObjectAdapter):
                 if _checkPermission(View, back_item):
                     return True
         else:
+            class_name = self.context.__class__.__name__
             # is the context a MeetingItem and privacy viewable?
-            if self.context.meta_type == 'MeetingItem' and \
+            if class_name == 'MeetingItem' and \
                self.cfg.getRestrictAccessToSecretItems() and \
                not self.context.adapted().isPrivacyViewable():
                 return False
@@ -1722,7 +1707,7 @@ class PMCategorizedObjectAdapter(CategorizedObjectAdapter):
                 return True
 
             # Meeting
-            if self.context.meta_type == 'Meeting':
+            if class_name == 'Meeting':
                 # if we have a SUFFIXPROFILEPREFIX prefixed group,
                 # check using "userIsAmong", this is only done for Meetings
                 if set(self.tool.get_plone_groups_for_user()).intersection(infos['visible_for_groups']):
@@ -1778,10 +1763,11 @@ class IconifiedCategoryGroupAdapter(object):
         cfg = tool.getMeetingConfig(self.context)
         parent = self.context.getParentNode()
         # adding annex to an item
-        if self.context.meta_type == 'MeetingItem' or \
-           (self.context.portal_type in ('annex', 'annexDecision') and parent.meta_type == 'MeetingItem'):
+        if self.context.getTagName() == 'MeetingItem' or \
+           (self.context.portal_type in ('annex', 'annexDecision') and
+                parent.getTagName() == 'MeetingItem'):
             isItemDecisionAnnex = False
-            if self.context.meta_type == 'MeetingItem':
+            if self.context.getTagName() == 'MeetingItem':
                 # it is possible to force to use the item_decision_annexes group
                 # or when using quickupload, the typeupload contains the type of element to add
                 if self.request.get('force_use_item_decision_annexes_group', False) or \
@@ -1812,13 +1798,13 @@ class IconifiedCategoryGroupAdapter(object):
                 return cfg.annexes_types.item_decision_annexes
 
         # adding annex to an advice
-        advicePortalTypeIds = tool.getAdvicePortalTypes(as_ids=True)
-        if self.context.portal_type in advicePortalTypeIds \
-           or parent.portal_type in advicePortalTypeIds:
+        if self.context.getTagName() == "MeetingAdvice" or \
+           parent.getTagName() == "MeetingAdvice":
             return cfg.annexes_types.advice_annexes
 
         # adding annex to a meeting
-        if self.context.meta_type == 'Meeting' or parent.meta_type == 'Meeting':
+        if self.context.getTagName() == 'Meeting' or \
+           parent.getTagName() == 'Meeting':
             return cfg.annexes_types.meeting_annexes
 
     def get_every_categories(self, only_enabled=True):

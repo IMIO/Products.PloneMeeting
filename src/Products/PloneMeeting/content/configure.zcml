@@ -4,7 +4,8 @@
     i18n_domain="Products.PloneMeeting">
 
     <!-- We need to grok here for plone.directives to work...
-         We put this in this configure.zcml because it is removed from main configure.zcml by archgenxml... -->
+         We put this in this configure.zcml because it is removed
+         from main configure.zcml by archgenxml... -->
     <include package="five.grok" />
     <grok:grok package="." />
 
@@ -21,8 +22,12 @@
       provides="zope.schema.interfaces.IVocabularyFactory"
       factory=".category.CategoriesOfOtherMCsVocabulary"
       name="Products.PloneMeeting.content.category.category_mapping_when_cloning_to_other_mc_vocabulary" />
+    <utility name="Products.PloneMeeting.content.meeting.places_vocabulary"
+             component=".meeting.PlacesVocabularyFactory" />
 
     <!-- Schema policies -->
+    <utility factory=".meeting.MeetingSchemaPolicy"
+             name="schema_policy_meeting" />
     <utility factory=".advice.MeetingAdviceSchemaPolicy"
              name="schema_policy_meetingadvice" />
     <utility factory=".category.MeetingCategorySchemaPolicy"
@@ -35,5 +40,13 @@
              name="schema_policy_pm_organization" />
     <utility factory=".person.PMPersonSchemaPolicy"
              name="schema_policy_pm_person" />
+
+    <adapter for="Products.PloneMeeting.content.meeting.IMeeting"
+             factory=".meeting.MeetingCollection"
+             provides="plone.app.contenttypes.behaviors.collection.ICollection" />
+
+    <!-- collective.dexteritytextindexer extender -->
+    <adapter factory=".meeting.MeetingSearchableTextExtender"
+             name="MeetingSearchableTextExtender" />
 
 </configure>

@@ -110,7 +110,7 @@ class AdviceRemoveInheritanceForm(AutoExtensibleForm, form.EditForm):
                 self.request.RESPONSE.redirect(self.context.absolute_url())
                 return
         del self.context.adviceIndex[data['advice_uid']]
-        self.context.updateLocalRoles()
+        self.context.update_local_roles()
         if advice_asked_locally:
             api.portal.show_message(
                 message=_('remove_advice_inheritance_removed_and_asked_locally'),

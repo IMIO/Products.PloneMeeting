@@ -231,7 +231,7 @@ class AdviceChangeDelayForm(form.EditForm):
         else:
             # if it is an automatic advice, set the 'delay_for_automatic_adviser_changed_manually' to True
             self.context.adviceIndex[currentAdviceData['org']]['delay_for_automatic_adviser_changed_manually'] = True
-        self.context.updateLocalRoles()
+        self.context.update_local_roles()
         # add a line to the item's adviceIndex advice delay_changes_history
         member = api.user.get_current()
         history_data = {'action': (currentAdviceData['delay'], newAdviceData['delay']),
@@ -317,6 +317,6 @@ class AdviceReinitializeDelayView(BrowserView):
                         'comments': None}
         adviceInfos['delay_changes_history'].append(history_data)
         # update local roles that will update adviceIndex
-        self.context.updateLocalRoles()
+        self.context.update_local_roles()
         api.portal.show_message(_('Advice delay have been reinitialized for advice "${advice}"',
                                   mapping={'advice': adviceInfos['name']}), request=self.request)

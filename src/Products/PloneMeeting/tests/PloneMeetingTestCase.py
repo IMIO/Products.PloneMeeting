@@ -1,23 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2015 by Imio.be
-#
 # GNU General Public License (GPL)
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
-# 02110-1301, USA.
 #
 
 from AccessControl.SecurityManagement import getSecurityManager
@@ -31,6 +14,7 @@ from collective.documentviewer.settings import GlobalSettings
 from collective.iconifiedcategory.utils import calculate_category_id
 from collective.iconifiedcategory.utils import get_config_root
 from copy import deepcopy
+from datetime import datetime
 from imio.helpers.cache import cleanRamCacheFor
 from imio.helpers.testing import testing_logger
 from plone import api
@@ -42,6 +26,9 @@ from plone.app.testing.helpers import setRoles
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
 from Products.Five.browser import BrowserView
+from Products.PloneMeeting.browser.meeting import _get_default_attendees
+from Products.PloneMeeting.browser.meeting import _get_default_signatories
+from Products.PloneMeeting.browser.meeting import _get_default_voters
 from Products.PloneMeeting.config import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.config import ITEM_DEFAULT_TEMPLATE_ID
 from Products.PloneMeeting.config import TOOL_FOLDER_ANNEX_TYPES
@@ -247,11 +234,11 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                 i += 1
         return res
 
-    def getMeetingFolder(self, meetingConfig=None):
+    def getMeetingFolder(self, meetingConfig=None, userId=None):
         '''Get the meeting folder for the current meeting config.'''
         if not meetingConfig:
             meetingConfig = self.meetingConfig
-        return self.tool.getPloneMeetingFolder(meetingConfig.id)
+        return self.tool.getPloneMeetingFolder(meetingConfig.id, userId=userId)
 
     def create(self,
                objectType,
@@ -298,6 +285,8 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         idInAttrs = 'id' in attrs
         if not idInAttrs:
             attrs.update({'id': self._generateId(folder)})
+        if objectType == 'Meeting' and attrs.get('date', None) is None:
+            attrs.update({'date': datetime.now()})
         if objectType == 'MeetingItem':
             if 'proposingGroup' not in attrs.keys():
                 cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.get_orgs_for_user')
@@ -329,24 +318,31 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             obj.processForm()
             if idInAttrs:
                 obj._at_rename_after_creation = True
-            if objectType == 'Meeting':
-                # manage attendees if using it after processForm
-                usedMeetingAttrs = cfg.getUsedMeetingAttributes()
-                if 'attendees' in usedMeetingAttrs:
-                    obj._at_creation_flag = True
-                    default_attendees = obj.getDefaultAttendees()
-                    default_attendees = OrderedDict((
-                        (attendee, 'attendee') for attendee in default_attendees))
-                    signatories = []
-                    if 'signatories' in usedMeetingAttrs:
-                        signatories = obj.getDefaultSignatories()
-                    voters = []
-                    if cfg.getUseVotes():
-                        voters = obj.getDefaultVoters()
-                    obj._at_creation_flag = False
-                    obj._doUpdateContacts(attendees=default_attendees,
-                                          signatories=signatories,
-                                          voters=voters)
+        if objectType == 'Meeting':
+            # manage attendees if using it
+            usedMeetingAttrs = cfg.getUsedMeetingAttributes()
+            if 'attendees' in usedMeetingAttrs:
+                default_attendees = _get_default_attendees(obj)
+                default_attendees = OrderedDict((
+                    (attendee, 'attendee') for attendee in default_attendees))
+                signatories = []
+                if 'signatories' in usedMeetingAttrs:
+                    signatories = _get_default_signatories(obj)
+                voters = []
+                if cfg.getUseVotes():
+                    voters = _get_default_voters(obj)
+                obj._do_update_contacts(attendees=default_attendees,
+                                        signatories=signatories,
+                                        voters=voters)
+            # manage default values
+            add_form = folder.restrictedTraverse('++add++{0}'.format(obj.portal_type))
+            add_form.update()
+            for field_name, widget in add_form.form_instance.w.items():
+                if widget.value and \
+                   not getattr(obj, field_name) and \
+                   isinstance(widget.value, (str, unicode)):
+                    setattr(obj, field_name, widget.field.fromUnicode(widget.value))
+
         # make sure we do not have permission check cache problems...
         self.cleanMemoize()
         return obj
@@ -382,14 +378,14 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
            If no p_annexTitle is specified, the predefined title of the annex type is used.'''
 
         if annexType is None:
-            if context.meta_type == 'MeetingItem':
+            if context.getTagName() == 'MeetingItem':
                 if not relatedTo:
                     annexType = self.annexFileType
                 elif relatedTo == 'item_decision':
                     annexType = self.annexFileTypeDecision
             elif context.portal_type.startswith('meetingadvice'):
                 annexType = self.annexFileTypeAdvice
-            elif context.meta_type == 'Meeting':
+            elif context.getTagName() == 'Meeting':
                 annexType = self.annexFileTypeMeeting
 
         # get complete annexType id that is like
@@ -531,7 +527,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                 # can not remove the ITEM_DEFAULT_TEMPLATE_ID
                 if folderId == 'itemtemplates' and \
                    obj.getId() == ITEM_DEFAULT_TEMPLATE_ID:
-                    if obj.queryState() == 'active':
+                    if obj.query_state() == 'active':
                         # disable it instead removing it
                         api.content.transition(obj, 'deactivate')
                     continue

@@ -1,22 +1,7 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2015 by Imio.be
 #
 # GNU General Public License (GPL)
 #
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
-# 02110-1301, USA.
 
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from Products.PloneMeeting.config import DEFAULT_LIST_TYPES
@@ -424,7 +409,6 @@ class OrgDescriptor(Descriptor):
 class MeetingConfigDescriptor(Descriptor):
     multiSelectFields = ('certifiedSignatures', 'usedItemAttributes', 'historizedItemAttributes',
                          'recordItemHistoryStates', 'usedMeetingAttributes',
-                         'historizedMeetingAttributes', 'recordMeetingHistoryStates',
                          'availableItemsListVisibleColumns', 'itemsListVisibleColumns',
                          'itemsVisibleFields', 'itemsNotViewableVisibleFields', 'itemsListVisibleFields',
                          'itemColumns', 'itemActionsColumnConfig', 'meetingColumns',
@@ -521,11 +505,6 @@ class MeetingConfigDescriptor(Descriptor):
         # Item states into which item events will be stored in item's history.
         self.recordItemHistoryStates = ()
         self.usedMeetingAttributes = ['assembly', 'signatures']
-        # In the next field, you specify meeting fields for which you want to
-        # keep track of changes.
-        self.historizedMeetingAttributes = []
-        # Meeting states into which item events will be stored in item's history
-        self.recordMeetingHistoryStates = ()
         # Do you want to use Organizations as categories ? In this case, you
         # do not need to define categories anymore.
         self.useGroupsAsCategories = True
@@ -542,7 +521,7 @@ class MeetingConfigDescriptor(Descriptor):
         # What is the format of the item references ?
         # Default is Ref. MeetingDate/ItemNumberInMeeting
         self.itemReferenceFormat = "python: 'Ref. ' + (here.hasMeeting() and " \
-            "here.restrictedTraverse('pm_unrestricted_methods').getLinkedMeetingDate().strftime('%Y%m%d') or '') " \
+            "here.restrictedTraverse('@@pm_unrestricted_methods').getLinkedMeetingDate().strftime('%Y%m%d') or '') " \
             "+ '/' + str(here.getItemNumber(relativeTo='meeting', for_display=True))"
         self.enableLabels = False
         # labels are like :
@@ -565,17 +544,6 @@ class MeetingConfigDescriptor(Descriptor):
         self.xhtmlTransformFields = []
         # What kind(s) of transform(s) must be applied to these fields ?
         self.xhtmlTransformTypes = []
-        # The "publish" deadline, for a meeting, is the deadline for validating
-        # items that must be presented to this meeting. "5.9:30" means:
-        # "5 days before meeting date, at 9:30."
-        self.publishDeadlineDefault = '5.9:30'
-        # The "freeze" deadline, for a meeting, is the deadline for validating
-        # items that must be late-presented to this meeting.
-        self.freezeDeadlineDefault = '1.14:30'
-        # The date for the pre-meeting is computed from the meeting date to
-        # which a "delta" is applied as defined hereafter (same format as
-        # above fields).
-        self.preMeetingDateDefault = '4.08:30'
         # by default, annex attribute 'confidential' is restricted to MeetingManagers
         self.annexRestrictShownAndEditableAttributes = ('confidentiality_display', 'confidentiality_edit')
         # annex confidentiality, setting something in 3 attributes here
@@ -746,7 +714,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.itemsListVisibleFields = ['MeetingItem.description', 'MeetingItem.decision']
         # columns shown on items listings.  Order is important!
         self.itemColumns = ['Creator', 'CreationDate', 'review_state',
-                            'getProposingGroup', 'linkedMeetingDate', 'actions']
+                            'getProposingGroup', 'meeting_date', 'actions']
         self.itemActionsColumnConfig = ['delete', 'history']
         # columns shown on meetings listings.  Order is important!
         self.meetingColumns = ['Creator', 'CreationDate', 'review_state', 'actions']

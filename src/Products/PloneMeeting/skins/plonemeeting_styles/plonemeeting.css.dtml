@@ -222,6 +222,10 @@ div.change-item-order {
     background-color: transparent;
 }
 
+table.table-view-widgets {
+   width: 100%;
+}
+
 /* reduce space between sentence 'query result show only items you can see' and the navigation widget on items listings */
 #content-core > div#queryResult {
     margin-top: -1.1em;
@@ -742,9 +746,17 @@ input[readonly=""] {
     width: 665px;
 }
 
-/* center controls displayed on z3c.forms */
-#form .formControls {
+/* center controls displayed on edit forms */
+body.template-edit div.formControls,
+body.template-edit div.formControls,
+div.overlay div.formControls {
     text-align: center;
+    position: sticky;
+    bottom: 10px;
+    background-color: rgba(210,210,210,0.5);
+    padding: 1em;
+    border-radius: 3px;
+    margin: 0em;
 }
 
 .ToDiscuss {
@@ -766,9 +778,14 @@ acronym img {
    cursor: pointer;
 }
 
-table.listing th {
+/* make sure table header is displayed on one line except for :
+   - dashboard displaying organizations;
+   - ... */
+body:not([class*='subsection-orgs-searches']) table#faceted_table.listing th,
+table#meeting_users th {
     white-space: nowrap;
 }
+
 table.listing th td {
     vertical-align: inherit;
 }
@@ -798,8 +815,8 @@ table.listing th.th_header_getProposingGroup {
 }
 table.listing th.th_header_advices,
 table.listing th.th_header_review_state,
-table.listing th.th_header_linkedMeetingDate,
-table.listing th.th_header_getPreferredMeetingDate,
+table.listing th.th_header_meeting_date,
+table.listing th.th_header_preferred_meeting_date,
 table.listing th.th_header_getCategory,
 table.listing th.th_header_ModificationDate,
 table.listing th.th_header_CreationDate {
@@ -1076,6 +1093,11 @@ table.faceted-table-results th {
    position: sticky;
    top: 45px;
    z-index: 45;
+}
+/* make sure date picker is hover faceted sticky header */
+div#ui-datepicker-div {
+   /* use !important because z-index is set as style on the <div> */
+   z-index: 45 !important;
 }
 
 table#faceted_table.listing tr[class][class] td.meeting_item_listType_late {
@@ -1478,12 +1500,15 @@ body.template-meeting_available_items_view div#faceted-form {
 body.template-meeting_available_items_view #portal-column-content.cell.width-full.position-0 {
    width: 100%;
 }
-/* temporary until collective.documentgenerator 0.6 is out */
-div#doc-generation-view ul.pod-template li {
-    display: inline-block;
+body.template-meeting_available_items_view #portal-column-content {
+   padding-top: 0;
 }
-
-div#doc-generation-view {
+/* make sure ajax spinner is displayed in available items iframe */
+body.template-meeting_available_items_view div#ajax-spinner {
+   top: -35px;
+}
+/* docgen icons on the item view */
+body.template-meetingitem_view div#doc-generation-view {
    float: right;
 }
 
@@ -1847,6 +1872,13 @@ p#download_vcard {
     max-height: inherit;
 }
 
+/* general and next sibling
+   when collapsible does not have the active class, it means it is closed */
+div.item-linkeditems div.collapsible:not([class*='active']) ~ div.collapsible-content,
+div.collapsible:not([class*='active']) + div.collapsible-content {
+   display: none;
+}
+
 .collapsible {
     background-color: transparent;
     cursor: pointer;
@@ -2040,11 +2072,6 @@ span#newTemplateItemCreationDisabledDuringEdit {
    padding-left: 0;
 }
 
-/* make sure ajax spinner is displayed in available items iframe */
-body.template-meeting_available_items_view div#ajax-spinner {
-   top: -35px;
-}
-
 p.otherMeetingConfigsClonableToDataUsed {
    margin-top: 1em;
 }
@@ -2065,10 +2092,14 @@ div.item-linkeditems div.collapsible-content {
 /* avoid textarea too large */
 #content textarea {
     width: 99%;
+    min-height: 175px;
 }
-
-/* global JS actions on item view */
-div.item-global-actions {
+#content textarea#form-widgets-place,
+#content textarea#form-widgets-pre_meeting_place {
+   min-height: 80px
+}
+/* global JS actions on item and meeting view */
+div.pm-global-actions {
    float: right;
    position: fixed;
    right: 20px;
@@ -2076,15 +2107,15 @@ div.item-global-actions {
    z-index: 10000;
    font-size: 140%;
    color: #666666;
-   background-color: rgba(200,200,200,0.5);
+   background-color: rgba(210,210,210,0.5);
    padding: 0.5em;
    border-radius: 3px;
 }
-div.item-global-actions span {
+div.pm-global-actions span {
    cursor: pointer;
 }
-div.item-global-actions a.show-hide-all-details:focus,
-div.item-global-actions a.show-hide-all-details:focus img {
+div.pm-global-actions a.show-hide-all-details:focus,
+div.pm-global-actions a.show-hide-all-details:focus img {
    outline: 0 !important;
 }
 
@@ -2141,8 +2172,18 @@ table#form-widgets-votes th {
 div#formfield-form-widgets-linked_to_previous {
    display: none;
 }
+/* make at least 3 files appear horizontally */
+div.overlay div.qq-uploader li {
+    margin-left: 0.5em;
+}
 
+div.static-infos {
+   margin-top: 0.5em;
+}
 
+#content td.table_widget_label {
+    width: 200px;
+}
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */

@@ -147,13 +147,14 @@ document.location.reload(true);
          i18n:attributes="title fastedit_edit"
          tal:attributes="src string:$portal_url/edit.png;
                          onClick jsEdit;
-                         onload python: needToRefreshPage and 'javascript:refreshPageIfNeeded()' or ''"/>    <tal:history define="hasHistory python: context.hasHistory(fieldName)" condition="hasHistory">
-    <img style="cursor:pointer" title="history_changes" i18n:attributes="title"
-         tal:condition="not: changes"
-         tal:attributes="src string:$portal_url/changes.gif; onClick jsChanges"/>
-    <img style="cursor:pointer" title="history_last" i18n:attributes="title"
-         tal:condition="changes"
-         tal:attributes="src string:$portal_url/view.gif; onClick jsView"/>
+                         onload python: needToRefreshPage and 'javascript:refreshPageIfNeeded()' or ''"/>
+    <tal:history define="hasHistory python: context.hasHistory(fieldName)" condition="hasHistory">
+        <img style="cursor:pointer" title="history_changes" i18n:attributes="title"
+             tal:condition="not: changes"
+             tal:attributes="src string:$portal_url/changes.gif; onClick jsChanges"/>
+        <img style="cursor:pointer" title="history_last" i18n:attributes="title"
+             tal:condition="changes"
+             tal:attributes="src string:$portal_url/view.gif; onClick jsView"/>
     </tal:history>
   </legend>
 
@@ -334,27 +335,28 @@ document.location.reload(true);
  <div metal:use-macro="context/global_statusmessage/macros/portal_message">
    Portal status message
  </div>
-<table tal:define="allUsers meeting/getAllUsedHeldPositions;
-                   showVotes view/showVotes;
-                   excused meeting/getExcused;
-                   absents meeting/getAbsents;
-                   itemSignatories context/getItemSignatories;
-                   realItemSignatories python: context.getItemSignatories(real=True);
-                   meetingSignatories meeting/getSignatories;
-                   itemAttendees context/getAttendees;
-                   itemAbsents context/getItemAbsents;
-                   itemExcused context/getItemExcused;
-                   itemNonAttendees context/getItemNonAttendees;
-                   itemVotes view/itemVotes;
+<table tal:define="get_all_used_held_positions python: modules['Products.PloneMeeting.browser.meeting'].get_all_used_held_positions;
+                   allUsers python:get_all_used_held_positions(meeting);
+                   show_votes python:view.show_votes;
+                   excused python:meeting.get_excused();
+                   absents python:meeting.get_absents();
+                   itemSignatories python:context.get_item_signatories();
+                   realItemSignatories python:context.get_item_signatories(real=True);
+                   meetingSignatories python:meeting.get_signatories();
+                   itemAttendees python:context.get_attendees();
+                   itemAbsents python:context.get_item_absents();
+                   itemExcused python:context.get_item_excused();
+                   itemNonAttendees python:context.get_item_non_attendees();
+                   itemVotes python:view.item_votes;
                    showExcused python: 'excused' in usedMeetingAttributes or excused;
                    showAbsents python: 'absents' in usedMeetingAttributes or absents or itemAbsents;
                    showSignatories python: 'signatories' in usedMeetingAttributes or itemSignatories;
                    showNonAttendees python: 'nonAttendees' in usedMeetingAttributes or itemNonAttendees;
-                   voters view/voters;
-                   voted_voters view/voted_voters;
+                   voters python:view.voters;
+                   voted_voters python:view.voted_voters;
                    mayChangeAttendees python: context._mayChangeAttendees();
-                   votesAreSecret view/votesAreSecret;
-                   pollType context/getPollType;"
+                   votesAreSecret python:view.votesAreSecret;
+                   pollType python:context.getPollType();"
        id="meeting_users"
        class="listing faceted-table-results"
        cellspacing="0"
@@ -376,8 +378,8 @@ document.location.reload(true);
     <th class="header-attendee-absent" tal:condition="showAbsents" i18n:translate="is_absent">Absent?</th>
     <th class="header-attendee-signatory" tal:condition="showSignatories" i18n:translate="is_signer">Signer?</th>
     <th class="header-attendee-non-attendee" tal:condition="showNonAttendees" i18n:translate="is_non_attendee">Non attendee?</th>
-    <th class="header-attendee-voter" tal:condition="showVotes" i18n:translate="is_voter">Voter?</th>
-    <tal:vote repeat="vote_infos itemVotes" tal:condition="showVotes">
+    <th class="header-attendee-voter" tal:condition="show_votes" i18n:translate="is_voter">Voter?</th>
+    <tal:vote repeat="vote_infos itemVotes" tal:condition="show_votes">
      <th class="header-attendee-vote" class="nosort">
       <span tal:condition="vote_infos/linked_to_previous"
             title="This vote is linked to previous vote"
@@ -588,13 +590,13 @@ document.location.reload(true);
 
      <td align="center"
          class="attendee-value attendee-voter"
-         tal:condition="showVotes">
+         tal:condition="show_votes">
        <tal:comment replace="nothing">The user is voter</tal:comment>
        <span tal:condition="isVoter" class="fa people-checked"></span>
        <span tal:condition="not:isVoter">-</span>
      </td>
 
-     <tal:vote repeat="vote_infos itemVotes" condition="python: showVotes and not votesAreSecret">
+     <tal:vote repeat="vote_infos itemVotes" condition="python: show_votes and not votesAreSecret">
       <td align="center" class="attendee-value vote-value public-vote">
         <tal:comment replace="nothing">Show "vote" value the user voted for this item</tal:comment>
         <tal:voted condition="python: aUid in voters and aUid in vote_infos['voters']">
@@ -733,30 +735,27 @@ XXX WARNING this is no more use and will be totaly removed while removing the PM
   </span>
 </tal:history-->
 
-<tal:comment replace="nothing">Move up/down/top/bottom macro
-Needs moveUrl, firstId, lastId, obj</tal:comment>
-<metal:moveUpDown define-macro="moveUpDown" i18n:domain="PloneMeeting" tal:define="objId obj/getId">
-    <!-- Move the obj bottom -->
-    <a tal:condition="python: obj.id != lastId"
-       tal:attributes="href python: moveUrl % ('bottom', objId);">
-        <img src="arrowBottom.png" tal:attributes="src string:${portal_url}/arrowBottom.png;" title="title_move_item_bottom" i18n:attributes="title" />
-    </a>
-    <!-- Move the group down -->
-    <a tal:condition="python: obj.id != lastId"
-       tal:attributes="href python: moveUrl % ('down', objId);">
-      <img src="arrowDown.png" tal:attributes="src string:${portal_url}/arrowDown.png;" title="title_move_item_down" i18n:attributes="title" />
-    </a>
-    <!-- Move the group up -->
-    <a tal:condition="python: obj.id != firstId"
-       tal:attributes="href python: moveUrl % ('up', objId);">
-      <img src="arrowUp.png" tal:attributes="src string:${portal_url}/arrowUp.png;" title="title_move_item_up" i18n:attributes="title" />
-    </a>
-    <!-- Move the group top-->
-    <a tal:condition="python: obj.id != firstId"
-       tal:attributes="href python: moveUrl % ('top', objId);">
-        <img src="arrowTop.png" tal:attributes="src string:${portal_url}/arrowTop.png;" title="title_move_item_top" i18n:attributes="title" />
-    </a>
-</metal:moveUpDown>
+<tal:comment replace="nothing">Global actions</tal:comment>
+<tal:global_actions metal:define-macro="global_actions" i18n:domain="PloneMeeting">
+    <div class="pm-global-actions">
+      <a title="show_or_hide_details"
+         i18n:attributes="title"
+         class="show-hide-all-details"
+         href="javascript:toggleAllDetails();">
+        <img tal:attributes="src string:${portal_url}/more_less_details.png" />
+      </a>
+      <span title="top_of_page"
+            i18n:attributes="title"
+            class="fa fa-arrow-up go-to-top-of-page"
+            onclick="event.preventDefault();$('html, body').animate({ scrollTop: 0 }, 'fast');">
+      </span>
+      <span title="bottom_of_page"
+            i18n:attributes="title"
+            class="fa fa-arrow-down go-to-bottom-of-page"
+            onclick="event.preventDefault();$('html, body').animate({ scrollTop: $(document).height()}, 'fast');">
+      </span>
+    </div>
+</tal:global_actions>
 
 <tal:comment replace="nothing">In case we are using a popup, add a button 'Close' at the
 bottom so the user can use it to close current popup as well as the cross up right.
@@ -790,7 +789,7 @@ This works for an AT and for a DX.</tal:comment>
 <tal:defines define="isDexterity python: obj.getTypeInfo().meta_type == 'Dexterity FTI';">
   <tal:dx condition="isDexterity">
     <tal:loop
-        define="view python: obj.restrictedTraverse('view');
+        define="view python: obj.restrictedTraverse('@@view');
                 dummy python: view.update();
                 groups view/groups;
                 widgets python: [group.widgets.values() for group in groups];
@@ -898,12 +897,14 @@ The parameter "cFolder" is the folder containing categories.</tal:comment>
        <tal:defines define="linkedItem_uid linkedItem/UID;
                             linkedItem_url linkedItem/absolute_url;">
            <div class="collapsible"
-                tal:attributes="onclick string:toggleDetails('collapsible-text-linkeditem-${linkedItem_uid}', toggle_parent_active=true, parent_tag=this, load_view='@@item-more-infos?fieldsConfigAttr=itemsVisibleFields&currentCfgId=${view/cfg/getId}', base_url='${linkedItem_url}');">
+                tal:attributes="onclick string:toggleDetails('collapsible-text-linkeditem-${linkedItem_uid}',
+                                toggle_parent_active=true, parent_tag=this,
+                                load_view='@@item-more-infos?fieldsConfigAttr=itemsVisibleFields&currentCfgId=${view/cfg/getId}', base_url='${linkedItem_url}');">
            </div>
-           <div style="display: inline;" tal:content="structure python: context.displayLinkedItem(linkedItem)"></div>
-           <div style="clear: both;" />
+           <div class="collapsible-pretty-title" style="display: inline;" tal:content="structure python: context.displayLinkedItem(linkedItem)"></div>
+           <div style="clear: both;"></div>
            <div tal:attributes="id string:collapsible-text-linkeditem-${linkedItem_uid}"
-                class="collapsible-content" style="display: none;">
+                class="collapsible-content">
              <div class="collapsible-inner-content">
                  <img tal:attributes="src string:${view/portal_url}/spinner_small.gif" />
              </div>

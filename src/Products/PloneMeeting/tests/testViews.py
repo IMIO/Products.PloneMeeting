@@ -1,10 +1,14 @@
 # -*- coding: utf-8 -*-
+#
+# File: testViews.py
+#
+# GNU General Public License (GPL)
+#
 
 from AccessControl import Unauthorized
 from collective.contact.plonegroup.utils import get_own_organization
 from collective.documentgenerator.interfaces import IGenerablePODTemplates
 from collective.eeafaceted.dashboard.interfaces import IDashboardGenerablePODTemplates
-from DateTime import DateTime
 from datetime import datetime
 from ftw.labels.interfaces import ILabeling
 from ftw.labels.interfaces import ILabelJar
@@ -33,7 +37,10 @@ from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.tests.PloneMeetingTestCase import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.utils import get_annexes
+from Products.PloneMeeting.utils import get_dx_widget
 from Products.statusmessages.interfaces import IStatusMessage
+from z3c.form.interfaces import DISPLAY_MODE
+from z3c.form.interfaces import INPUT_MODE
 from z3c.relationfield.relation import RelationValue
 from zope.component import getAdapter
 from zope.component import getMultiAdapter
@@ -374,11 +381,19 @@ class testViews(PloneMeetingTestCase):
         # only MeetingManager may change listType once item is in a meeting
         self.changeUser('pmManager')
         item = self.create('MeetingItem', title='Item title')
+        # @@change-item-listtype
         view = item.restrictedTraverse('@@change-item-listtype')
         self.assertFalse(item.adapted().mayChangeListType())
         self.assertRaises(Unauthorized, view, new_value='late')
-        self.create('Meeting', date=DateTime())
+        self.create('Meeting')
         self.presentItem(item)
+        # @@item-listtype
+        view = item.restrictedTraverse('@@item-listtype')
+        res = view()
+        self.assertTrue("item_listType_normal" in res)
+        self.assertTrue("item_listType_late" in res)
+        # @@change-item-listtype
+        view = item.restrictedTraverse('@@change-item-listtype')
         # now listType may be changed
         self.assertTrue(item.adapted().mayChangeListType())
         # new_value is verified
@@ -486,7 +501,7 @@ class testViews(PloneMeetingTestCase):
         self.assertTrue(len(self.catalog(**query)) == 1)
         self.assertTrue(self.catalog(**query)[0].UID == itemWithDelayAwareAdvice.UID())
         # even once updated, it will still be found
-        itemWithDelayAwareAdvice.updateLocalRoles()
+        itemWithDelayAwareAdvice.update_local_roles()
         self.assertTrue(self.catalog(**query)[0].UID == itemWithDelayAwareAdvice.UID())
 
         # makes it no more editable
@@ -502,14 +517,14 @@ class testViews(PloneMeetingTestCase):
         itemWithDelayAwareAdvice.reindexObject()
         self.assertTrue(self.catalog(**query)[0].UID == itemWithDelayAwareAdvice.UID())
         # but once updated, it is not found anymore
-        itemWithDelayAwareAdvice.updateLocalRoles()
+        itemWithDelayAwareAdvice.update_local_roles()
         self.assertTrue(not self.catalog(**query))
 
         # try with an not_given timed_out advice as indexAdvisers behaves differently
-        # remove meetingadvice, back to not timed_out, updateLocalRoles then proceed
+        # remove meetingadvice, back to not timed_out,.update_local_roles then proceed
         self.deleteAsManager(itemWithDelayAwareAdvice.meetingadvice.UID())
         itemWithDelayAwareAdvice.adviceIndex[self.vendors_uid]['delay_started_on'] = datetime.now()
-        itemWithDelayAwareAdvice.updateLocalRoles()
+        itemWithDelayAwareAdvice.update_local_roles()
         # found for now
         itemWithDelayAwareAdvice.adviceIndex[self.vendors_uid]['delay_started_on'] = datetime(2016, 1, 1)
         self.assertTrue(self.catalog(**query)[0].UID == itemWithDelayAwareAdvice.UID())
@@ -517,7 +532,7 @@ class testViews(PloneMeetingTestCase):
         itemWithDelayAwareAdvice.reindexObject()
         self.assertTrue(self.catalog(**query)[0].UID == itemWithDelayAwareAdvice.UID())
         # but once updated, it is not found anymore
-        itemWithDelayAwareAdvice.updateLocalRoles()
+        itemWithDelayAwareAdvice.update_local_roles()
         self.assertTrue(not self.catalog(**query))
 
     def test_pm_UpdateDelayAwareAdvicesComputeQuery(self):
@@ -969,7 +984,7 @@ class testViews(PloneMeetingTestCase):
         view()
         self.assertEqual(view.getVisibleFields().keys(), ['description'])
         # define TAL expression
-        cfg.setItemsNotViewableVisibleFieldsTALExpr("python: item.queryState() != 'itemcreated'")
+        cfg.setItemsNotViewableVisibleFieldsTALExpr("python: item.query_state() != 'itemcreated'")
         self.cleanMemoize()
         view()
         self.assertEqual(view.getVisibleFields().keys(), [])
@@ -1173,7 +1188,7 @@ class testViews(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         self.changeUser('pmManager')
-        self.create('Meeting', date=DateTime('2019/01/01'))
+        meeting = self.create('Meeting', date=datetime(2019, 1, 1))
         view = item.restrictedTraverse('document-generation')
         helper = view.get_generation_context_helper()
 
@@ -1187,7 +1202,7 @@ class testViews(PloneMeetingTestCase):
         # standard case, item in a meeting, no access restriction
         self.assertListEqual(
             [helper.print_meeting_date(), helper.print_meeting_date(returnDateTime=True)],
-            ['01 january 2019', DateTime('2019/01/01')]
+            ['01 january 2019', meeting.date]
         )
         # powerobserver1 can't see the meeting so noMeetingMarker is expected when unrestricted=False
         self.assertListEqual(
@@ -1216,7 +1231,7 @@ class testViews(PloneMeetingTestCase):
 
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
-        meeting = self.create('Meeting', date=DateTime('2019/01/01'))
+        meeting = self.create('Meeting', date=datetime(2019, 1, 1))
         view = item.restrictedTraverse('document-generation')
         helper = view.get_generation_context_helper()
 
@@ -1228,7 +1243,7 @@ class testViews(PloneMeetingTestCase):
         item.setPreferredMeeting(meeting.UID())
         self.assertListEqual(  # standard case, a preferred meeting date is expected
             [helper.print_preferred_meeting_date(), helper.print_preferred_meeting_date(returnDateTime=True)],
-            ['01 january 2019', DateTime('2019/01/01')]
+            ['01 january 2019', meeting.date]
         )
 
         self.changeUser('powerobserver1')
@@ -1247,14 +1262,14 @@ class testViews(PloneMeetingTestCase):
         self._removeConfigObjectsFor(cfg)
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
-        meeting = self.create('Meeting', date=DateTime('2017/03/03'))
+        meeting = self.create('Meeting', date=datetime(2017, 3, 3))
         self.presentItem(item)
         self.freezeMeeting(meeting)
         self.assertEqual(item.getItemReference(), 'Ref. 20170303/1')
         # change itemReferenceFormat
         # change itemReferenceFormat to include an item data (Title)
         cfg.setItemReferenceFormat(
-            "python: here.getMeeting().getDate().strftime('%Y%m%d') + '/' + "
+            "python: here.getMeeting().date.strftime('%Y%m%d') + '/' + "
             "here.getItemNumber(for_display=True)")
         view = meeting.restrictedTraverse('@@update-item-references')
         view()
@@ -1285,7 +1300,7 @@ class testViews(PloneMeetingTestCase):
              'reverse': '0'},)
         )
         self.changeUser('pmManager')
-        meeting = self.create('Meeting', date=DateTime('2019/01/18'))
+        meeting = self.create('Meeting', date=datetime(2019, 1, 18))
         item1 = self.create('MeetingItem', proposingGroup=self.developers_uid, category='development')
         item2 = self.create('MeetingItem', proposingGroup=self.developers_uid, category='development')
         item3 = self.create('MeetingItem', proposingGroup=self.developers_uid, category='development')
@@ -1313,7 +1328,7 @@ class testViews(PloneMeetingTestCase):
             'Ref. 20190118/6', 'Ref. 20190118/7', 'Ref. 20190118/8', 'Ref. 20190118/9', 'Ref. 20190118/10']
         self.assertEqual(right_ordered_items,
                          [item1, item2, item3, item4, item5, item6, item7, item8, item9, item10])
-        self.assertEqual(meeting.getItems(ordered=True), right_ordered_items)
+        self.assertEqual(meeting.get_items(ordered=True), right_ordered_items)
         self.assertEqual([item.getItemReference() for item in right_ordered_items], right_item_references)
 
         # change some items order using the @@change-item-order
@@ -1327,7 +1342,7 @@ class testViews(PloneMeetingTestCase):
         view('number', '2')
         view = item10.restrictedTraverse('@@change-item-order')
         view('number', '7')
-        mixed_items = meeting.getItems(ordered=True)
+        mixed_items = meeting.get_items(ordered=True)
         self.assertEqual(mixed_items,
                          [item7, item8, item3, item4, item5, item2, item10, item6, item1, item9])
         # references are correct
@@ -1336,7 +1351,7 @@ class testViews(PloneMeetingTestCase):
         view = meeting.restrictedTraverse('@@reorder-items')
         view()
         # order and references are correct
-        self.assertEqual(meeting.getItems(ordered=True), right_ordered_items)
+        self.assertEqual(meeting.get_items(ordered=True), right_ordered_items)
         self.assertEqual([item.getItemReference() for item in right_ordered_items], right_item_references)
 
     def test_pm_DisplayGroupUsersView(self):
@@ -1421,7 +1436,7 @@ class testViews(PloneMeetingTestCase):
         cfg = self.meetingConfig
         self.assertFalse(cfg.getMeetingItemTemplatesToStoreAsAnnex())
         self.changeUser('pmManager')
-        meeting = self.create('Meeting', date=DateTime('2017/08/08'))
+        meeting = self.create('Meeting')
         form = meeting.restrictedTraverse('@@store-items-template-as-annex-batch-action')
         form.update()
         self.assertTrue(self.hasPermission(ModifyPortalContent, meeting))
@@ -1462,13 +1477,13 @@ class testViews(PloneMeetingTestCase):
         form = meeting.restrictedTraverse('@@store-items-template-as-annex-batch-action')
 
         # store annex for 3 first items
-        first_3_item_uids = [item.UID for item in meeting.getItems(ordered=True, theObjects=False)[0:3]]
-        self.request.form['form.widgets.uids'] = ','.join(first_3_item_uids)
+        first_3_item_uids = [item.UID for item in meeting.get_items(ordered=True, the_objects=False)[0:3]]
+        self.request.form['form.widgets.uids'] = u','.join(first_3_item_uids)
         self.request.form['form.widgets.pod_template'] = 'itemTemplate__output_format__odt'
         form.update()
         form.handleApply(form, None)
         itemTemplateId = cfg.podtemplates.itemTemplate.getId()
-        items = meeting.getItems(ordered=True)
+        items = meeting.get_items(ordered=True)
         # 3 first item have the stored annex
         for i in range(0, 3):
             annexes = get_annexes(items[i])
@@ -1481,8 +1496,8 @@ class testViews(PloneMeetingTestCase):
 
         # call again with next 3 uids
         form = meeting.restrictedTraverse('@@store-items-template-as-annex-batch-action')
-        next_3_item_uids = [item.UID for item in meeting.getItems(ordered=True, theObjects=False)[3:6]]
-        self.request.form['form.widgets.uids'] = ','.join(next_3_item_uids)
+        next_3_item_uids = [item.UID for item in meeting.get_items(ordered=True, the_objects=False)[3:6]]
+        self.request.form['form.widgets.uids'] = u','.join(next_3_item_uids)
         form.brains = None
         form.update()
         form.handleApply(form, None)
@@ -1496,7 +1511,7 @@ class testViews(PloneMeetingTestCase):
 
         # call again, last is stored and it does not fail when no items left
         form = meeting.restrictedTraverse('@@store-items-template-as-annex-batch-action')
-        last_item_uid = meeting.getItems(ordered=True, theObjects=False)[-1].UID
+        last_item_uid = meeting.get_items(ordered=True, the_objects=False)[-1].UID
         self.request.form['form.widgets.uids'] = last_item_uid
         form.brains = None
         form.update()
@@ -1508,7 +1523,7 @@ class testViews(PloneMeetingTestCase):
 
         # call a last time, when nothing to do, nothing is done
         form = meeting.restrictedTraverse('@@store-items-template-as-annex-batch-action')
-        item_uids = [item.UID for item in meeting.getItems(ordered=True, theObjects=False)]
+        item_uids = [item.UID for item in meeting.get_items(ordered=True, the_objects=False)]
         self.request.form['form.widgets.uids'] = item_uids
         form.update()
         form.handleApply(form, None)
@@ -1536,7 +1551,7 @@ class testViews(PloneMeetingTestCase):
         """The PMTransitionBatchActionForm is only available to MeetingManagers on
            dashoboards of the meeting_view."""
         self.changeUser('pmManager')
-        meeting = self.create('Meeting', date=DateTime('2018/03/14'))
+        meeting = self.create('Meeting')
         self.freezeMeeting(meeting)
         # freeze the meeting so it is viewable in most workflows to various groups
         form = getMultiAdapter((meeting, self.request), name=u'transition-batch-action')
@@ -1544,7 +1559,7 @@ class testViews(PloneMeetingTestCase):
         # not available to others
         self._setPowerObserverStates(field_name='meeting_states',
                                      states=(self._stateMappingFor('frozen', meta_type='Meeting'),))
-        meeting.updateLocalRoles()
+        meeting.update_local_roles()
         self.changeUser('powerobserver1')
         self.assertTrue(self.hasPermission(View, meeting))
         self.assertFalse(form.available())
@@ -1556,7 +1571,7 @@ class testViews(PloneMeetingTestCase):
         self.assertFalse(form.available())
 
     def test_pm_UpdateLocalRolesBatchActionForm(self):
-        """This will call updateLocalRoles on selected elements."""
+        """This will call.update_local_roles on selected elements."""
         cfg = self.meetingConfig
         self._setPowerObserverStates(states=())
         powerobservers = '{0}_powerobservers'.format(cfg.getId())
@@ -1590,7 +1605,7 @@ class testViews(PloneMeetingTestCase):
 
         # not available on meeting
         self.changeUser('pmManager')
-        meeting = self.create('Meeting', date=DateTime('2019/03/08'))
+        meeting = self.create('Meeting')
         self.changeUser('siteadmin')
         form = meeting.restrictedTraverse('@@update-local-roles-batch-action')
         self.assertFalse(form.available())
@@ -1908,14 +1923,14 @@ class testViews(PloneMeetingTestCase):
         secretItem3.setPrivacy('secret')
         secretItem3.reindexObject()
         # create meeting and present items
-        meeting = self.create('Meeting', date=DateTime('2018/07/31'))
+        meeting = self.create('Meeting')
         self.presentItem(secretItem1)
         self.presentItem(publicItem1)
         self.presentItem(secretItem2)
         self.presentItem(publicItem2)
         self.presentItem(secretItem3)
         self.assertEqual(
-            meeting.getItems(ordered=True),
+            meeting.get_items(ordered=True),
             [secretItem1, publicItem1, secretItem2, publicItem2, secretItem3])
 
         self.changeUser('restrictedpowerobserver1')
@@ -1960,7 +1975,7 @@ class testViews(PloneMeetingTestCase):
         cfg = self.meetingConfig
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
-        meeting = self.create('Meeting', date=DateTime('2019/02/28'))
+        meeting = self.create('Meeting')
         presented_item = self.create('MeetingItem')
         self.presentItem(presented_item)
         transaction.commit()
@@ -2033,7 +2048,7 @@ class testViews(PloneMeetingTestCase):
         labelingview.update()
         self.assertEqual(item_labeling.storage, {})
         # decide item so it is no more editable by MeetingManager
-        meeting = self.create('Meeting', date=DateTime('2019/03/14'))
+        meeting = self.create('Meeting')
         self.presentItem(item)
         self.closeMeeting(meeting)
         self.assertFalse(self.hasPermission(ModifyPortalContent, item))
@@ -2054,7 +2069,7 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(item_labeling.storage, {'label': [], 'personal-label': ['pmCreator1']})
         # powerobserver
         self.changeUser('siteadmin')
-        self._setPowerObserverStates(states=(item.queryState(),))
+        self._setPowerObserverStates(states=(item.query_state(),))
         item._update_after_edit()
         self.changeUser('powerobserver1')
         self.assertTrue(self.hasPermission(View, item))
@@ -2198,7 +2213,7 @@ class testViews(PloneMeetingTestCase):
         self.assertTrue(cfg.podtemplates.itemTemplate.UID() in rendered)
         self.assertTrue('store_as_annex' in rendered)
         # meeting, does not use DashboardPODTemplates
-        meeting = self.create('Meeting', date=DateTime('2019/11/26'))
+        meeting = self.create('Meeting')
         meeting_adapter = getAdapter(meeting, IGenerablePODTemplates)
         meeting_generable_ids = [template.getId() for template in meeting_adapter.get_generable_templates()]
         self.assertEqual(meeting_generable_ids, ['agendaTemplate', 'allItemTemplate'])
@@ -2239,6 +2254,32 @@ class testViews(PloneMeetingTestCase):
         adapter2 = getAdapter(self.portal.contacts.get('persons-searches'), IDashboardGenerablePODTemplates)
         self.request.form['c1[]'] = adapter2.context.get('all_persons').UID()
         self.assertFalse(adapter2.get_generable_templates())
+
+    def test_pm_RichTextWidget(self):
+        """Test the PMRichTextWidget used on meeting for example."""
+        cfg = self.meetingConfig
+        self._enableField('observations', related_to='Meeting')
+        self.changeUser('pmManager')
+        self._removeConfigObjectsFor(cfg)
+        meeting = self.create('Meeting')
+        # editable by MeetingManager
+        # display mode
+        widget = get_dx_widget(meeting, field_name="observations")
+        self.assertEqual(widget.mode, DISPLAY_MODE)
+        editable_action = "@@richtext-edit?field_name=observations"
+        self.assertTrue(editable_action in widget.render())
+        # input mode
+        widget = get_dx_widget(meeting, field_name="observations", mode=INPUT_MODE)
+        self.assertTrue('class="ckeditor_plone"' in widget.render())
+
+        # only viewable for others
+        self.changeUser('pmCreator1')
+        # display mode, not able to switch to input mode
+        widget = get_dx_widget(meeting, field_name="observations")
+        self.assertFalse(editable_action in widget.render())
+        # input mode
+        widget = get_dx_widget(meeting, field_name="observations", mode=INPUT_MODE)
+        self.assertTrue('class="ckeditor_plone"' in widget.render())
 
 
 def test_suite():

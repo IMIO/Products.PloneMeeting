@@ -2,15 +2,18 @@
 #
 # File: testVotes.py
 #
+# GNU General Public License (GPL)
+#
 
 from AccessControl import Unauthorized
-from DateTime import DateTime
+from Products.PloneMeeting.browser.itemvotes import IEncodeSecretVotes
 from Products.PloneMeeting.browser.itemvotes import secret_votes_default
 from Products.PloneMeeting.browser.itemvotes import votes_default
-from Products.PloneMeeting.browser.itemvotes import IEncodeSecretVotes
 from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
 from Products.PloneMeeting.config import NOT_VOTABLE_LINKED_TO_VALUE
+from Products.PloneMeeting.content.meeting import IMeeting
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
+from z3c.form import validator
 from zope.i18n import translate
 from zope.interface import Invalid
 
@@ -27,7 +30,7 @@ class testVotes(PloneMeetingTestCase):
     def _createMeetingWithVotes(self, include_yes=True):
         """ """
         self.changeUser('pmManager')
-        meeting = self.create('Meeting', date=DateTime('2020/11/09'))
+        meeting = self.create('Meeting')
         public_item = self.create('MeetingItem')
         secret_item = self.create('MeetingItem', pollType='secret')
         self.presentItem(public_item)
@@ -38,91 +41,91 @@ class testVotes(PloneMeetingTestCase):
         if include_yes:
             yes_secret_item = self.create('MeetingItem', pollType='secret')
             self.presentItem(yes_secret_item)
-        voters = meeting.getVoters()
+        voters = meeting.get_voters()
         # public votes
-        public_votes = public_item.getItemVotes()[0]
+        public_votes = public_item.get_item_votes()[0]
         public_votes['voters'][voters[0]] = "yes"
         public_votes['voters'][voters[1]] = "yes"
         public_votes['voters'][voters[2]] = "no"
         public_votes['voters'][voters[3]] = "abstain"
-        meeting.setItemPublicVote(public_item, public_votes, 0)
+        meeting.set_item_public_vote(public_item, public_votes, 0)
         # encode secret votes
-        secret_votes = secret_item.getItemVotes()[0]
+        secret_votes = secret_item.get_item_votes()[0]
         secret_votes['votes']['abstain'] = 2
         secret_votes['votes']['no'] = 1
         secret_votes['votes']['yes'] = 1
-        meeting.setItemSecretVote(secret_item, secret_votes, 0)
+        meeting.set_item_secret_vote(secret_item, secret_votes, 0)
         # all yes public votes
         if include_yes:
             public_votes['voters'][voters[2]] = "yes"
             public_votes['voters'][voters[3]] = "yes"
-            meeting.setItemPublicVote(yes_public_item, public_votes, 0)
+            meeting.set_item_public_vote(yes_public_item, public_votes, 0)
             # all yes secret votes
             secret_votes['votes']['abstain'] = 0
             secret_votes['votes']['no'] = 0
             secret_votes['votes']['yes'] = 4
-            meeting.setItemSecretVote(yes_secret_item, secret_votes, 0)
+            meeting.set_item_secret_vote(yes_secret_item, secret_votes, 0)
         res = meeting, public_item, secret_item
         if include_yes:
             res = meeting, public_item, yes_public_item, secret_item, yes_secret_item
         return res
 
-    def test_pm_ShowVotes(self):
+    def test_pm_Show_votes(self):
         """Votes are only shown on an item presented to a meeting,
            unless pollType is "no_vote"."""
         cfg = self.meetingConfig
         self.changeUser('pmManager')
         self.assertTrue(cfg.getUseVotes())
-        meeting = self.create('Meeting', date=DateTime('2020/11/17'))
-        self.assertTrue(meeting.getVoters())
+        meeting = self.create('Meeting')
+        self.assertTrue(meeting.get_voters())
         item = self.create('MeetingItem')
-        self.assertFalse(item.showVotes())
+        self.assertFalse(item.show_votes())
         self.presentItem(item)
         self.assertEqual(item.getPollType(), 'freehand')
-        self.assertTrue(item.showVotes())
+        self.assertTrue(item.show_votes())
         item.setPollType('secret')
-        self.assertTrue(item.showVotes())
+        self.assertTrue(item.show_votes())
         item.setPollType('no_vote')
-        self.assertFalse(item.showVotes())
+        self.assertFalse(item.show_votes())
         item.setPollType('secret')
-        self.assertTrue(item.showVotes())
+        self.assertTrue(item.show_votes())
         # disable votes
         cfg.setUseVotes(False)
         # still shown because voters
-        self.assertTrue(item.showVotes())
+        self.assertTrue(item.show_votes())
 
-        # do not showVotes if not voter
+        # do not show_votes if not voter
         # this will avoid showing votes on older
         # meeting where votes were not enabled
-        no_vote_meeting = self.create('Meeting', date=DateTime('2020/11/19'))
+        no_vote_meeting = self.create('Meeting')
         no_vote_item = self.create('MeetingItem')
         self.presentItem(no_vote_item)
-        self.assertFalse(no_vote_meeting.getVoters())
-        self.assertFalse(no_vote_item.getItemVoters())
-        self.assertFalse(no_vote_item.showVotes())
+        self.assertFalse(no_vote_meeting.get_voters())
+        self.assertFalse(no_vote_item.get_item_voters())
+        self.assertFalse(no_vote_item.show_votes())
         # even if enabled, if nothing to show, nothing shown
         cfg.setUseVotes(True)
-        self.assertFalse(no_vote_item.showVotes())
+        self.assertFalse(no_vote_item.show_votes())
 
     def test_pm_GetItemVotes(self):
         """Returns votes on an item."""
         self.changeUser('pmManager')
         public_item = self.create('MeetingItem')
         secret_item = self.create('MeetingItem', pollType='secret')
-        meeting = self.create('Meeting', date=DateTime('2020/11/10'))
+        meeting = self.create('Meeting')
         # return an empty list of not linked to a meeting
-        self.assertEqual(public_item.getItemVotes(), [])
-        self.assertEqual(secret_item.getItemVotes(), [])
+        self.assertEqual(public_item.get_item_votes(), [])
+        self.assertEqual(secret_item.get_item_votes(), [])
         self.presentItem(public_item)
         self.presentItem(secret_item)
         # return an empty vote when nothing encoded
         # when include_unexisting=True (default)
-        public_vote = public_item.getItemVotes()[0]
-        secret_vote = secret_item.getItemVotes()[0]
+        public_vote = public_item.get_item_votes()[0]
+        secret_vote = secret_item.get_item_votes()[0]
         self.assertEqual(public_vote['vote_number'], 0)
         self.assertEqual(secret_vote['vote_number'], 0)
         # voters are on public vote
-        voters = meeting.getVoters()
+        voters = meeting.get_voters()
         self.assertEqual(sorted(public_vote['voters'].keys()), sorted(voters))
         # not on secret
         self.assertFalse('voters' in secret_vote)
@@ -172,9 +175,9 @@ class testVotes(PloneMeetingTestCase):
         delete_view = public_item.restrictedTraverse('@@item_delete_vote')
         self.assertRaises(Unauthorized, delete_view, 0, redirect=False)
         self.changeUser('pmManager')
-        self.assertTrue(delete_view.context.getItemVotes(include_unexisting=False))
+        self.assertTrue(delete_view.context.get_item_votes(include_unexisting=False))
         delete_view(0, redirect=False)
-        self.assertFalse(delete_view.context.getItemVotes(include_unexisting=False))
+        self.assertFalse(delete_view.context.get_item_votes(include_unexisting=False))
 
     def test_pm_ItemDeleteVoteViewCanNotDeleteFirstLinkedVote(self):
         """When votes are linked, the first linked vote may not be deleted."""
@@ -184,11 +187,11 @@ class testVotes(PloneMeetingTestCase):
 
         # set linked votes
         self.changeUser('pmManager')
-        public_votes = public_item.getItemVotes()[0]
-        meeting.setItemPublicVote(public_item, public_votes, 0)
+        public_votes = public_item.get_item_votes()[0]
+        meeting.set_item_public_vote(public_item, public_votes, 0)
         public_votes['linked_to_previous'] = True
-        meeting.setItemPublicVote(public_item, public_votes, 1)
-        self.assertEqual(len(public_item.getItemVotes(include_unexisting=False)), 2)
+        meeting.set_item_public_vote(public_item, public_votes, 1)
+        self.assertEqual(len(public_item.get_item_votes(include_unexisting=False)), 2)
         # vote 0 is not deletable
         self.assertFalse(public_item._voteIsDeletable(0))
         self.assertTrue(public_item._voteIsDeletable(1))
@@ -198,7 +201,7 @@ class testVotes(PloneMeetingTestCase):
         delete_view(object_uid=1)
         self.assertTrue(public_item._voteIsDeletable(0))
         delete_view(object_uid=0)
-        self.assertFalse(public_item.getItemVotes(include_unexisting=False))
+        self.assertFalse(public_item.get_item_votes(include_unexisting=False))
 
     def test_pm_ItemDeleteVoteViewDeleteSeveralNotLinkedVotes(self):
         """When votes are not linked, any may be deleted."""
@@ -208,11 +211,11 @@ class testVotes(PloneMeetingTestCase):
 
         # add several votes
         self.changeUser('pmManager')
-        public_votes = public_item.getItemVotes()[0]
-        meeting.setItemPublicVote(public_item, public_votes, 0)
-        meeting.setItemPublicVote(public_item, public_votes, 1)
-        meeting.setItemPublicVote(public_item, public_votes, 2)
-        self.assertEqual(len(public_item.getItemVotes(include_unexisting=False)), 3)
+        public_votes = public_item.get_item_votes()[0]
+        meeting.set_item_public_vote(public_item, public_votes, 0)
+        meeting.set_item_public_vote(public_item, public_votes, 1)
+        meeting.set_item_public_vote(public_item, public_votes, 2)
+        self.assertEqual(len(public_item.get_item_votes(include_unexisting=False)), 3)
         self.assertTrue(public_item._voteIsDeletable(0))
         self.assertTrue(public_item._voteIsDeletable(1))
         self.assertTrue(public_item._voteIsDeletable(2))
@@ -232,7 +235,7 @@ class testVotes(PloneMeetingTestCase):
         meeting, public_item, yes_public_item, secret_item, yes_secret_item = \
             self._createMeetingWithVotes()
 
-        attendee_uids = meeting.getAttendees()
+        attendee_uids = meeting.get_attendees()
         # now while validating meeting_attendees, None may be unselected
         meeting_attendees = ['muser_{0}_attendee'.format(attendee_uid)
                              for attendee_uid in attendee_uids]
@@ -246,6 +249,8 @@ class testVotes(PloneMeetingTestCase):
 
         # unselecting one would break validation
         # public
+        invariants = validator.InvariantsValidator(None, None, None, IMeeting, None)
+        self.request.set('validate_dates_done', True)
         voter0 = meeting_voters.pop(0)
         self.request.form['meeting_voters'] = meeting_voters
         public_error_msg = translate(
@@ -256,31 +261,39 @@ class testVotes(PloneMeetingTestCase):
                     u'Monsieur Person1FirstName Person1LastName, '
                     u'Assembly member 1 (Mon organisation)'},
             context=self.request)
-        self.assertEqual(
-            meeting.validate(self.request),
-            {'meeting_attendees': public_error_msg})
+        data = {}
+        edit_form = meeting.restrictedTraverse('@@edit')
+        edit_form.update()
+        self.request['PUBLISHED'] = edit_form
+        errors = invariants.validate(data)
+        self.request.set('validate_attendees_done', False)
+        self.assertEqual(len(errors), 1)
+        self.assertEqual(errors[0].message, public_error_msg)
         meeting_voters.insert(0, voter0)
-        self.assertEqual(meeting.validate(self.request), {})
+        self.assertEqual(invariants.validate(data), ())
+        self.request.set('validate_attendees_done', False)
 
         # secret
         voter0 = meeting_voters.pop(0)
         # remove public votes
         delete_view = public_item.restrictedTraverse('@@item_delete_vote')
         delete_view(0, redirect=False)
-        self.assertEqual(public_item.getItemVotes(include_unexisting=False), [])
+        self.assertEqual(public_item.get_item_votes(include_unexisting=False), [])
         delete_view = yes_public_item.restrictedTraverse('@@item_delete_vote')
         delete_view(0, redirect=False)
-        self.assertEqual(yes_public_item.getItemVotes(include_unexisting=False), [])
+        self.assertEqual(yes_public_item.get_item_votes(include_unexisting=False), [])
         self.request.form['meeting_voters'] = meeting_voters
         secret_error_msg = translate(
             u'can_not_remove_secret_voter_voted_on_items',
             domain='PloneMeeting',
             context=self.request)
-        self.assertEqual(
-            meeting.validate(self.request),
-            {'meeting_attendees': secret_error_msg})
+        errors = invariants.validate(data)
+        self.request.set('validate_attendees_done', False)
+        self.assertEqual(len(errors), 1)
+        self.assertEqual(errors[0].message, secret_error_msg)
+        self.request.set('validate_attendees_done', False)
         meeting_voters.insert(0, voter0)
-        self.assertEqual(meeting.validate(self.request), {})
+        self.assertEqual(invariants.validate(data), ())
 
     def test_pm_CanNotSetAbsentAnAttendeeThatVoted(self):
         """ """
@@ -299,22 +312,22 @@ class testVotes(PloneMeetingTestCase):
         byebye_form.apply_until_item_number = '200'
         byebye_form._doApply()
         # was not set excused
-        self.assertFalse(meeting.getItemExcused(by_persons=True))
+        self.assertFalse(meeting.get_item_excused(by_persons=True))
 
         # now remove hp1 from public_item and secret_item
-        public_votes = public_item.getItemVotes()[0]
+        public_votes = public_item.get_item_votes()[0]
         public_votes['voters'][hp1_uid] = NOT_ENCODED_VOTE_VALUE
-        meeting.setItemPublicVote(public_item, public_votes, 0)
+        meeting.set_item_public_vote(public_item, public_votes, 0)
         # not done because could not be done on secret_item
         byebye_form._doApply()
-        self.assertFalse(meeting.getItemExcused(by_persons=True))
+        self.assertFalse(meeting.get_item_excused(by_persons=True))
         # encode secret votes
-        secret_votes = secret_item.getItemVotes()[0]
+        secret_votes = secret_item.get_item_votes()[0]
         secret_votes['votes']['yes'] = 0
-        meeting.setItemSecretVote(secret_item, secret_votes, 0)
+        meeting.set_item_secret_vote(secret_item, secret_votes, 0)
         byebye_form._doApply()
         self.assertEqual(
-            sorted(meeting.getItemExcused(by_persons=True)[hp1_uid]),
+            sorted(meeting.get_item_excused(by_persons=True)[hp1_uid]),
             sorted([public_item.UID(), secret_item.UID()]))
 
     def test_pm_EncodePublicVotesForm(self):
@@ -415,7 +428,7 @@ class testVotes(PloneMeetingTestCase):
                             {'voter_uid': hp4_uid, 'vote_value': NOT_ENCODED_VOTE_VALUE}]
         votes_form._doApply()
         # 2 encoded votes
-        item_votes = public_item.getItemVotes()
+        item_votes = public_item.get_item_votes()
         self.assertEqual(len(item_votes), 2)
         # votes not useable in vote_number 0 or 1 are marked NOT_VOTABLE_LINKED_TO_VALUE
         self.assertEqual(item_votes[0]['voters'][hp3_uid], NOT_VOTABLE_LINKED_TO_VALUE)
@@ -428,7 +441,7 @@ class testVotes(PloneMeetingTestCase):
         votes_form.votes = [{'voter_uid': hp3_uid, 'vote_value': 'yes'},
                             {'voter_uid': hp4_uid, 'vote_value': 'yes'}]
         votes_form._doApply()
-        item_votes = public_item.getItemVotes()
+        item_votes = public_item.get_item_votes()
         self.assertEqual(item_votes[0]['voters'][hp4_uid], NOT_VOTABLE_LINKED_TO_VALUE)
         self.assertEqual(item_votes[1]['voters'][hp4_uid], 'yes')
 
@@ -498,7 +511,7 @@ class testVotes(PloneMeetingTestCase):
         votes_form.votes = [{'vote_value': 'yes', 'vote_count': 1, 'vote_value_id': 'yes'}]
         votes_form._doApply()
         # 2 encoded votes
-        item_votes = secret_item.getItemVotes()
+        item_votes = secret_item.get_item_votes()
         self.assertEqual(len(item_votes), 2)
 
     def test_pm_EncodeSecretVotesFormInvariant(self):
@@ -551,19 +564,19 @@ class testVotes(PloneMeetingTestCase):
         self.assertEqual(cm.exception.message, error_msg)
 
     def test_pm_ItemVotesWhenItemRemovedFromMeeting(self):
-        """Ensure Meeting.itemVotes correctly wiped out when item removed from meeting."""
+        """Ensure Meeting.item_votes correctly wiped out when item removed from meeting."""
         self.changeUser('pmManager')
         meeting, public_item, yes_public_item, secret_item, yes_secret_item = \
             self._createMeetingWithVotes()
 
         public_item_uid = public_item.UID()
-        self.assertTrue(public_item_uid in meeting.itemVotes)
+        self.assertTrue(public_item_uid in meeting.item_votes)
         secret_item_uid = secret_item.UID()
-        self.assertTrue(secret_item_uid in meeting.itemVotes)
+        self.assertTrue(secret_item_uid in meeting.item_votes)
         self.backToState(public_item, 'validated')
-        self.assertFalse(public_item_uid in meeting.itemVotes)
+        self.assertFalse(public_item_uid in meeting.item_votes)
         self.backToState(secret_item, 'validated')
-        self.assertFalse(secret_item_uid in meeting.itemVotes)
+        self.assertFalse(secret_item_uid in meeting.item_votes)
 
     def test_pm_DisplayMeetingItemVoters(self):
         """The view that displays items for which votes are (not) completed."""
@@ -589,14 +602,14 @@ class testVotes(PloneMeetingTestCase):
 
         # remove one voter on public_item and secret_item
         # public vote
-        voters = meeting.getVoters()
-        public_votes = public_item.getItemVotes()[0]
+        voters = meeting.get_voters()
+        public_votes = public_item.get_item_votes()[0]
         public_votes['voters'][voters[0]] = NOT_ENCODED_VOTE_VALUE
-        meeting.setItemPublicVote(public_item, public_votes, 0)
+        meeting.set_item_public_vote(public_item, public_votes, 0)
         # secret vote
-        secret_votes = secret_item.getItemVotes()[0]
+        secret_votes = secret_item.get_item_votes()[0]
         secret_votes['votes']['yes'] = 0
-        meeting.setItemSecretVote(secret_item, secret_votes, 0)
+        meeting.set_item_secret_vote(secret_item, secret_votes, 0)
         # non voted
         non_voted_items = non_voted_view.getNonVotedItems()
         self.assertTrue(public_item in non_voted_items['public'])
@@ -607,6 +620,78 @@ class testVotes(PloneMeetingTestCase):
         self.assertFalse(public_item in voted_items['public'])
         self.assertFalse(secret_item in voted_items['secret'])
         voted_view()
+
+    def test_pm_ChangePollTypeView(self):
+        """The view that let's change MeetingItem.pollType on item view.
+           It manage changes, but also avoid to change from a "secret" mode
+           to a "public" mode if some votes are already encoded."""
+        self._enableField('pollType')
+        self.changeUser('pmManager')
+        meeting, public_item, yes_public_item, secret_item, yes_secret_item = \
+            self._createMeetingWithVotes()
+        pt_view = secret_item.restrictedTraverse('@@item-polltype')
+        self.assertTrue(pt_view.selectablePollTypes())
+        change_pt_view = secret_item.restrictedTraverse('@@change-item-polltype')
+        # try to change to an unexisting value
+        self.assertRaises(KeyError, change_pt_view, "unexisting")
+        # can not switch to no_vote if votes encoded
+        self.assertTrue(secret_item.get_item_votes())
+        original_poll_type = secret_item.getPollType()
+        self.assertEqual(original_poll_type, 'secret')
+        change_pt_view("no_vote")
+        self.assertEqual(secret_item.getPollType(), original_poll_type)
+        # can not switch to a "public" mode vote
+        change_pt_view("freehand")
+        self.assertEqual(secret_item.getPollType(), original_poll_type)
+        # but can change to a vote is same mode, "secret"
+        change_pt_view("secret_separated")
+        self.assertNotEqual(secret_item.getPollType(), original_poll_type)
+        self.assertEqual(secret_item.getPollType(), "secret_separated")
+
+    def test_pm_AsyncLoadMeetingAssemblyAndSignatures(self):
+        """The @@load_meeting_assembly_and_signatures will load attendees
+           details on the meeting view."""
+        self.changeUser('pmManager')
+        meeting, public_item, yes_public_item, secret_item, yes_secret_item = \
+            self._createMeetingWithVotes()
+        view = meeting.restrictedTraverse('@@load_meeting_assembly_and_signatures')
+        rendered = view()
+        # MeetingManager see the attendees
+        self.assertTrue("Monsieur Person1FirstName Person1LastName, Assembly member 1" in rendered)
+        # and voters actions
+        self.assertTrue("@@display-meeting-item-voters" in rendered)
+        # only attendees for users, not voters actions
+        self.changeUser('pmCreator1')
+        rendered = view()
+        self.assertTrue("Monsieur Person1FirstName Person1LastName, Assembly member 1" in rendered)
+        self.assertFalse("@@display-meeting-item-voters" in rendered)
+
+    def test_pm_AsyncLoadItemAssemblyAndSignatures(self):
+        """The @@load_item_assembly_and_signatures will load attendees
+           details on the item view."""
+        self.changeUser('pmManager')
+        self.create('Meeting')
+        item = self.create('MeetingItem')
+        self.presentItem(item)
+        view = item.restrictedTraverse('@@load_item_assembly_and_signatures')
+        rendered = view()
+        # MeetingManager see and may manage
+        self.assertTrue("Monsieur Person1FirstName Person1LastName, Assembly member 1" in rendered)
+        manage_vote_action = "item_encode_votes_form?vote_number:int=0"
+        manage_attendee_action = "item_byebye_attendee_form?person_uid="
+        manage_signatory_action = "item_redefine_signatory_form?person_uid="
+        self.assertTrue(manage_vote_action in rendered)
+        self.assertTrue(manage_attendee_action in rendered)
+        self.assertTrue(manage_signatory_action in rendered)
+
+        # other users may see but not manage
+        self.changeUser('pmCreator1')
+        view = item.restrictedTraverse('@@load_item_assembly_and_signatures')
+        rendered = view()
+        self.assertTrue("Monsieur Person1FirstName Person1LastName, Assembly member 1" in rendered)
+        self.assertFalse(manage_vote_action in rendered)
+        self.assertFalse(manage_attendee_action in rendered)
+        self.assertFalse(manage_signatory_action in rendered)
 
 
 def test_suite():

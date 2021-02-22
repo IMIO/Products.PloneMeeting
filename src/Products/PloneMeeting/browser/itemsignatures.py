@@ -4,6 +4,7 @@
 #
 
 from AccessControl import Unauthorized
+from imio.helpers.cache import invalidate_cachekey_volatile_for
 from imio.helpers.security import fplog
 from plone import api
 from plone.z3cform.layout import wrap_form
@@ -75,7 +76,7 @@ class DisplaySignaturesFromMeetingProvider(ContentProviderBase):
           Return Meeting.signatures
         """
         meeting = self.context.getMeeting()
-        return meeting.getSignatures().replace('\n', '<br />')
+        return meeting.get_signatures(for_display=True)
 
     def render(self):
         return self.template()
@@ -172,6 +173,12 @@ class ManageItemSignaturesForm(form.Form):
             extras = 'item={0} from_item_number={1} until_item_number={2}'.format(
                 repr(self.context), first_item_number, last_item_number)
             fplog('manage_item_signatures', extras=extras)
+
+        # invalidate assembly async load on item
+        invalidate_cachekey_volatile_for(
+            'Products.PloneMeeting.browser.async.AsyncLoadItemAssemblyAndSignatures',
+            get_again=True)
+
         api.portal.show_message(_("Item signatures have been updated."), request=self.request)
         self._finished = True
 

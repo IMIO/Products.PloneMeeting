@@ -1,4 +1,9 @@
-# encoding: utf-8
+# -*- coding: utf-8 -*-
+#
+# File: vocabularies.py
+#
+# GNU General Public License (GPL)
+#
 
 from collective.contact.plonegroup.browser.settings import EveryOrganizationsVocabulary
 from collective.contact.plonegroup.browser.settings import SortedSelectedOrganizationsElephantVocabulary
@@ -556,7 +561,7 @@ class MeetingDatesVocabulary(object):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         brains = catalog(portal_type=cfg.getMeetingTypeName(),
-                         sort_on='getDate',
+                         sort_on='meeting_date',
                          sort_order='reverse')
         res = [
             SimpleTerm(ITEM_NO_PREFERRED_MEETING_VALUE,
@@ -567,7 +572,7 @@ class MeetingDatesVocabulary(object):
         for brain in brains:
             res.append(SimpleTerm(brain.UID,
                                   brain.UID,
-                                  tool.formatMeetingDate(brain, withHour=True))
+                                  tool.format_date(brain.meeting_date, with_hour=True))
                        )
         return SimpleVocabulary(res)
 
@@ -1033,7 +1038,7 @@ class UsedVoteValuesVocabulary(object):
 
     def is_first_linked_vote(self, vote_number):
         """ """
-        itemVotes = self.context.getItemVotes()
+        itemVotes = self.context.get_item_votes()
         return next_vote_is_linked(itemVotes, vote_number)
 
     def is_linked_vote(self):
@@ -1060,7 +1065,7 @@ class UsedVoteValuesVocabulary(object):
             vote_number = int(self.context.REQUEST.form.get(
                 'vote_number',
                 self.context.REQUEST.form.get('form.widgets.vote_number')))
-        self.item_vote = self.context.getItemVotes(vote_number=vote_number)
+        self.item_vote = self.context.get_item_votes(vote_number=vote_number)
         used_values_attr = 'usedVoteValues'
         if self.is_linked_vote():
             used_values_attr = 'nextLinkedVotesUsedVoteValues'
@@ -1068,7 +1073,7 @@ class UsedVoteValuesVocabulary(object):
             used_values_attr = 'firstLinkedVoteUsedVoteValues'
         for usedVoteValue in cfg.getUsedVoteValues(
                 used_values_attr=used_values_attr,
-                include_not_encoded=not self.context.getVotesAreSecret()):
+                include_not_encoded=not self.context.get_votes_are_secret()):
             res.append(
                 SimpleTerm(
                     usedVoteValue,
@@ -1787,7 +1792,7 @@ class ItemVotersVocabulary(BaseHeldPositionsVocabulary):
     @ram.cache(__call___cachekey)
     def __call__(self, context):
         context = get_context_with_request(context)
-        item_voter_uids = context.getItemVoters()
+        item_voter_uids = context.get_item_voters()
         terms = super(ItemVotersVocabulary, self).__call__(
             context,
             uids=item_voter_uids,

@@ -6,7 +6,6 @@
 #
 
 from collective.contact.plonegroup.utils import get_plone_group
-from DateTime import DateTime
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.utils import sendMailIfRelevant
 from Products.PloneMeeting.utils import set_field_from_ajax
@@ -66,12 +65,12 @@ class testUtils(PloneMeetingTestCase):
 
         # meeting
         self.changeUser('pmManager')
-        meeting = self.create('Meeting', date=DateTime("2020/11/30"))
+        meeting = self.create('Meeting')
         new_value = "<p>My meeting notes.</p>"
-        self.assertEqual(meeting.getNotes(), "")
+        self.assertIsNone(meeting.notes)
         self.assertFalse(self.catalog(SearchableText="my meeting notes"))
         set_field_from_ajax(meeting, 'notes', new_value)
-        self.assertEqual(meeting.getNotes(), new_value)
+        self.assertEqual(meeting.notes.output, new_value)
         self.assertEqual(self.catalog(SearchableText="my meeting notes")[0].UID, meeting.UID())
 
         # advice
@@ -88,7 +87,7 @@ class testUtils(PloneMeetingTestCase):
         cfg = self.meetingConfig
         cfg.setMailMode("deactivated")
         self.changeUser('pmManager')
-        self.create("Meeting", date=DateTime("2020/11/25"))
+        self.create("Meeting")
         item = self.create("MeetingItem", title="My item")
         self.presentItem(item)
         params = {"obj": item,

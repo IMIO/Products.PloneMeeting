@@ -150,7 +150,7 @@ class WorkflowInterfacesValidator:
         if not issubclass(theInterface, self.baseWorkflowInterface):
             return WRONG_INTERFACE % (self._getPackageName(
                                       self.baseWorkflowInterface))
-        # Check that there exits an adapter that provides theInterface for
+        # Check that it exits an adapter that provides theInterface for
         # self.baseInterface.
         sm = getGlobalSiteManager()
         adapter = sm.adapters.lookup1(self.baseInterface, theInterface)

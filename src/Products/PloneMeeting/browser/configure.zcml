@@ -9,7 +9,7 @@
         name="plone.belowcontenttitle.workflowstate"
         manager="plone.app.layout.viewlets.interfaces.IBelowContentTitle"
         class="plonetheme.imioapps.browser.viewlets.WorkflowState"
-        for="Products.PloneMeeting.interfaces.IMeeting"
+        for="Products.PloneMeeting.content.meeting.IMeeting"
         permission="zope2.View" />
     <browser:viewlet
         name="plone.belowcontenttitle.workflowstate"
@@ -43,7 +43,7 @@
         permission="zope2.View" />
 
     <browser:viewlet
-        for="Products.PloneMeeting.interfaces.IMeeting"
+        for="Products.PloneMeeting.content.meeting.IMeeting"
         name="force-insert-normal"
         manager="collective.eeafaceted.z3ctable.interfaces.IBottomAboveNavManager"
         class=".viewlets.ForceInsertNormal"
@@ -200,63 +200,75 @@
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="zope2.View" />
 
+    <!-- Meeting -->
     <browser:page
-      for="Products.PloneMeeting.interfaces.IMeeting"
-      name="meeting_view"
-      template="templates/meeting_view.pt"
-      class=".views.MeetingView"
+      for="Products.PloneMeeting.content.meeting.IMeeting"
+      name="view"
+      class="Products.PloneMeeting.browser.meeting.MeetingDefaultView"
       permission="zope2.View" />
 
     <browser:page
-      for="Products.PloneMeeting.interfaces.IMeeting"
+      for="Products.PloneMeeting.content.meeting.IMeeting"
+      name="edit"
+      class="Products.PloneMeeting.browser.meeting.MeetingEdit"
+      permission="cmf.ModifyPortalContent" />
+
+    <adapter
+        for="Products.CMFCore.interfaces.IFolderish
+             zope.publisher.interfaces.browser.IDefaultBrowserLayer
+             plone.dexterity.interfaces.IDexterityFTI"
+        provides="zope.publisher.interfaces.browser.IBrowserPage"
+        factory="Products.PloneMeeting.browser.meeting.MeetingAdd"
+        name="meeting" />
+    <class class="Products.PloneMeeting.browser.meeting.MeetingAdd">
+        <require
+            permission="cmf.AddPortalContent"
+            interface="zope.publisher.interfaces.browser.IBrowserPage" />
+    </class>
+
+    <browser:page
+      for="Products.PloneMeeting.content.meeting.IMeeting"
+      name="meeting_view"
+      class="Products.PloneMeeting.browser.meeting.MeetingView"
+      template="templates/meeting_view.pt"
+      permission="zope2.View" />
+
+    <browser:page
+      for="Products.PloneMeeting.content.meeting.IMeeting"
       name="meeting_available_items_view"
       template="templates/meeting_available_items_view.pt"
-      class=".views.MeetingView"
+      class=".meeting.MeetingView"
       permission="zope2.View" />
 
     <browser:page
-      for="Products.PloneMeeting.interfaces.IMeeting"
-      name="meeting-before-faceted-infos"
-      template="templates/meeting_before_faceted_infos.pt"
-      class=".views.MeetingBeforeFacetedInfosView"
-      permission="zope2.View" />
-
-    <browser:page
-      for="Products.PloneMeeting.interfaces.IMeeting"
-      name="meeting-after-faceted-infos"
-      template="templates/meeting_after_faceted_infos.pt"
-      class=".views.MeetingAfterFacetedInfosView"
-      permission="zope2.View" />
-
-    <browser:page
-      for="Products.PloneMeeting.interfaces.IMeeting"
+      for="Products.PloneMeeting.content.meeting.IMeeting"
       name="display-inserting-methods-helper-msg"
       template="templates/meeting_inserting_methods_help_msg.pt"
-      class=".views.MeetingInsertingMethodsHelpMsgView"
+      class=".meeting.MeetingInsertingMethodsHelpMsgView"
       permission="zope2.View" />
 
     <browser:view
-      for="Products.PloneMeeting.interfaces.IMeeting"
+      for="Products.PloneMeeting.content.meeting.IMeeting"
       name="update-item-references"
-      class=".views.MeetingUpdateItemReferences"
+      class=".meeting.MeetingUpdateItemReferences"
       permission="cmf.ModifyPortalContent" />
 
     <browser:view
-      for="Products.PloneMeeting.interfaces.IMeeting"
+      for="Products.PloneMeeting.content.meeting.IMeeting"
       name="reorder-items"
-      class=".views.MeetingReorderItems"
+      class=".meeting.MeetingReorderItems"
       permission="cmf.ModifyPortalContent" />
 
     <browser:view
-      for="Products.PloneMeeting.interfaces.IMeeting"
+      for="Products.PloneMeeting.content.meeting.IMeeting"
       name="present-several-items"
-      class=".views.PresentSeveralItemsView"
+      class=".meeting.PresentSeveralItemsView"
       permission="zope2.View" />
 
     <browser:view
-      for="Products.PloneMeeting.interfaces.IMeeting"
+      for="Products.PloneMeeting.content.meeting.IMeeting"
       name="remove-several-items"
-      class=".views.RemoveSeveralItemsView"
+      class=".meeting.RemoveSeveralItemsView"
       permission="zope2.View" />
 
     <!-- Batch actions -->
@@ -322,7 +334,7 @@
       permission="zope2.View" />
 
     <browser:page
-      for="Products.PloneMeeting.interfaces.IMeeting"
+      for="Products.PloneMeeting.content.meeting.IMeeting"
       name="load_meeting_assembly_and_signatures"
       template="templates/meetingassemblyandsignatures.pt"
       class=".async.AsyncLoadMeetingAssemblyAndSignatures"
@@ -336,7 +348,7 @@
       permission="zope2.View" />
 
     <browser:page
-      for="Products.PloneMeeting.interfaces.IMeeting"
+      for="Products.PloneMeeting.content.meeting.IMeeting"
       name="header"
       template="templates/header_meeting.pt"
       class=".views.MeetingHeaderView"
@@ -507,7 +519,7 @@
         attribute="toggle"
         allowed_attributes="toggle"
         class=".views_unrestricted.ItemSign"
-        for="Products.PloneMeeting.interfaces.IMeeting"
+        for="Products.PloneMeeting.content.meeting.IMeeting"
         permission="zope2.View" />
     <browser:page
         name="async_render_search_term"
@@ -705,7 +717,7 @@
 
     <!-- the view that display staticInfos about meeting in the PrettyLink column -->
     <browser:page
-        for="Products.PloneMeeting.interfaces.IMeeting"
+        for="Products.PloneMeeting.content.meeting.IMeeting"
         name="static-infos"
         class=".views.MeetingStaticInfosView"
         template="templates/meetingstaticinfos.pt"
@@ -949,7 +961,7 @@
      />
     <!-- collective.documentgenerator helper view for Meeting -->
     <browser:page
-        for="Products.PloneMeeting.interfaces.IMeeting"
+        for="Products.PloneMeeting.content.meeting.IMeeting"
         class=".views.MeetingDocumentGenerationHelperView"
         permission="zope2.View"
         name="document_generation_helper_view"
@@ -972,17 +984,7 @@
     <!-- ckeditor browser, override for Meeting, MeetingItem and meetingadvice -->
     <browser:page
         name="plone_ckfinder"
-        for="Products.PloneMeeting.interfaces.IMeeting"
-        class=".overrides.PMCKFinder"
-        permission="zope2.View" />
-    <browser:page
-        name="plone_ckfinder"
-        for="Products.PloneMeeting.interfaces.IMeetingItem"
-        class=".overrides.PMCKFinder"
-        permission="zope2.View" />
-    <browser:page
-        name="plone_ckfinder"
-        for="Products.PloneMeeting.content.advice.IMeetingAdvice"
+        for="Products.PloneMeeting.interfaces.IMeetingContent"
         class=".overrides.PMCKFinder"
         permission="zope2.View" />
 
@@ -1061,7 +1063,7 @@
         layer="imio.history.interfaces.IImioHistoryLayer"
         permission="zope.Public" />
     <browser:view
-        for="Products.PloneMeeting.interfaces.IMeeting"
+        for="Products.PloneMeeting.content.meeting.IMeeting"
         name="contenthistory"
         class=".overrides.PMContentHistoryView"
         layer="imio.history.interfaces.IImioHistoryLayer"
@@ -1081,7 +1083,7 @@
             for=".interfaces.IFacetedNavigable"
             name="facetednavigation_view"
             template="browser/template/view.pt"
-            class="Products.PloneMeeting.browser.overrides.PMFacetedContainerView"
+            class="Products.PloneMeeting.browser.overrides.PMFacetedDashboardView"
             permission="zope2.View"
             layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer "/>
     </configure>

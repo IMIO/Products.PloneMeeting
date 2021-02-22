@@ -1,7 +1,7 @@
-<tal:defines define="mayChangeOrder view/mayChangeItemsOrder;
+<tal:defines define="may_change_order python: view.may_change_items_order;
                      itemNumber python: context.getItemNumber(for_display=True);"
              i18n:domain="PloneMeeting">
-  <div class="change-item-order" tal:condition="mayChangeOrder">
+  <div class="change-item-order" tal:condition="may_change_order">
     <input type="text" size="2" name="moveValue"
            tal:attributes="id string:value_moveAction_${itemNumber};
                            class python: view.is_integer(context.getItemNumber()) and 'number' or 'subnumber';
@@ -18,6 +18,6 @@
   <tal:comment replace="nothing">For the others</tal:comment>
   <span class="itemNumber"
         tal:attributes="class python: '.' in itemNumber and 'itemnumber subnumber' or 'itemnumber'"
-        tal:condition="not: mayChangeOrder"
+        tal:condition="not: may_change_order"
         tal:content="itemNumber"></span>
 </tal:defines>

@@ -9,9 +9,13 @@ from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.utils import _checkPermission
 from Products.Five import BrowserView
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
+from Products.PloneMeeting.browser.meeting import BaseMeetingView
 from Products.PloneMeeting.config import NOT_VOTABLE_LINKED_TO_VALUE
 from Products.PloneMeeting.config import WriteBudgetInfos
+from Products.PloneMeeting.content.meeting import get_all_used_held_positions
+from Products.PloneMeeting.utils import display_as_html
 from Products.PloneMeeting.utils import sendMailIfRelevant
+from Products.PloneMeeting.utils import toHTMLStrikedContent
 from zope.i18n import translate
 
 
@@ -168,7 +172,8 @@ class TakenOverBy(BrowserView):
 
         html = self.IMG_TEMPLATE % (css_class, title, name, taken_over_by)
         # do not notifyModifiedAndReindex because an item may be taken over
-        # when it is decided by members of the proposingGroup
+        # when it is decided, by members of the proposingGroup
+        # and in this case item must not be modified
         self.context.reindexObject(idxs=['getTakenOverBy'])
         return html
 
@@ -284,7 +289,7 @@ class AsyncRenderSearchTerm(BrowserView):
         date = get_cachekey_volatile('Products.PloneMeeting.Meeting.modified')
         # return meeting.UID if we are on a meeting or None if not
         # as portlet is highlighting the meeting we are on
-        meeting_uid = self.context.meta_type == 'Meeting' and self.context.UID() or None
+        meeting_uid = self.context.__class__.__name__ == 'Meeting' and self.context.UID() or None
         collection_uid = self.request.get('collection_uid')
         return (userGroups,
                 cfg_modified,
@@ -333,7 +338,7 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
         """Returns informations regarding votes count."""
         data = []
         counts = []
-        for vote_number in range(len(self.itemVotes)):
+        for vote_number in range(len(self.item_votes)):
             sub_counts = []
             total_votes = self.context.getVoteCount('any_votable', vote_number)
             number_of_votes_msg = translate(
@@ -371,7 +376,7 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
 
     def compute_next_vote_number(self):
         """Return next vote_number."""
-        return len(self.itemVotes)
+        return len(self.item_votes)
 
     def show_add_vote_linked_to_previous_icon(self, vote_number):
         """Show add linked_to_previous icon only on last element.
@@ -380,7 +385,7 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
            - not linked_to_previous element does not use forbidden vote_values,
              aka vote_values not in MeetingConfig.firstLinkedVoteUsedVoteValues."""
         res = False
-        vote_infos = self.itemVotes[vote_number]
+        vote_infos = self.item_votes[vote_number]
         if (vote_infos['vote_number'] + 1 == self.next_vote_number):
             if vote_infos['linked_to_previous']:
                 res = True
@@ -410,10 +415,10 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
         cfg = tool.getMeetingConfig(self.context)
         cfg_modified = cfg.modified()
         meeting = self.context.getMeeting()
-        ordered_contacts = meeting.orderedContacts.items()
+        ordered_contacts = meeting.ordered_contacts.items()
         redefined_item_attendees = meeting._get_all_redefined_attendees(only_keys=False)
-        show_votes = self.context.showVotes()
-        item_votes = self.context.getItemVotes(include_vote_number=False)
+        show_votes = self.context.show_votes()
+        item_votes = self.context.get_item_votes(include_vote_number=False)
         context_uid = self.context.UID()
         # if something redefined for context or not
         if context_uid not in str(redefined_item_attendees):
@@ -439,11 +444,11 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
         self.cfg = self.tool.getMeetingConfig(self.context)
         self.usedMeetingAttrs = self.cfg.getUsedMeetingAttributes()
         self.meeting = self.context.getMeeting()
-        self.showVotes = self.context.showVotes()
-        if self.showVotes:
-            self.votesAreSecret = self.context.getVotesAreSecret()
-            self.voters = self.context.getItemVoters() or []
-            self.itemVotes = self.context.getItemVotes(
+        self.show_votes = self.context.show_votes()
+        if self.show_votes:
+            self.votesAreSecret = self.context.get_votes_are_secret()
+            self.voters = self.context.get_item_voters() or []
+            self.item_votes = self.context.get_item_votes(
                 include_unexisting=True,
                 ignored_vote_values=[NOT_VOTABLE_LINKED_TO_VALUE]) or []
             self.voted_voters = ()
@@ -456,7 +461,7 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
         else:
             self.votesAreSecret = False
             self.voters = []
-            self.itemVotes = []
+            self.item_votes = []
             self.voted_voters = []
             self.next_vote_number = None
             self.counts = None
@@ -467,8 +472,12 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
         self._update()
         return self.index()
 
+    def get_all_used_held_positions(self):
+        """ """
+        return get_all_used_held_positions(self.meeting)
 
-class AsyncLoadMeetingAssemblyAndSignatures(BrowserView):
+
+class AsyncLoadMeetingAssemblyAndSignatures(BrowserView, BaseMeetingView):
     """ """
 
     def __init__(self, context, request):
@@ -486,24 +495,46 @@ class AsyncLoadMeetingAssemblyAndSignatures(BrowserView):
             'Products.PloneMeeting.browser.async.AsyncLoadMeetingAssemblyAndSignatures')
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
+        is_manager = tool.isManager(cfg)
         cfg_modified = cfg.modified()
-        ordered_contacts = self.context.orderedContacts.items()
-        item_votes = self.context.getItemVotes()
+        ordered_contacts = self.context.ordered_contacts.items()
+        item_votes = self.context.get_item_votes()
         context_uid = self.context.UID()
         cache_date = self.request.get('cache_date', None)
         return (date,
+                is_manager,
                 cfg_modified,
                 ordered_contacts,
                 item_votes,
                 context_uid,
                 cache_date)
 
-    @ram.cache(__call___cachekey)
-    def __call__(self):
+    def get_all_used_held_positions(self):
+        """ """
+        return get_all_used_held_positions(self.context)
+
+    def _update(self):
         """ """
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
-        self.usedAttrs = self.cfg.getUsedMeetingAttributes()
+        self.used_attrs = self.cfg.getUsedMeetingAttributes()
         self.showVoters = self.cfg.getUseVotes()
-        self.voters = self.context.getVoters()
+        self.voters = self.context.get_voters()
+        view = self.context.restrictedTraverse('@@view')
+        view.update()
+        self.meeting_view = view
+
+    def display_striked_assembly(self):
+        """ """
+        return toHTMLStrikedContent(self.context.assembly.output)
+
+    def display_signatures(self):
+        """Display signatures as HTML, make sure lines added at end
+           of signatures are displayed on screen correctly."""
+        return display_as_html(self.context.signatures.output, self.context)
+
+    @ram.cache(__call___cachekey)
+    def __call__(self):
+        """ """
+        self._update()
         return self.index()

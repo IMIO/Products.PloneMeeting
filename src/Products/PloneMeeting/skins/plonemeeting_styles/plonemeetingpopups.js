@@ -67,6 +67,8 @@ function manageAttendees() {
             config: {
                 onBeforeLoad : function (e) {
                   // odd even for datagridfield
+                  // need to add listing to table class
+                  $('table.datagridwidget-table-view').addClass('listing');
                   $('table tbody').each(setoddeven);
                   submitFormHelper(this.form, onsuccess=onsuccessManageAttendees);
                   return true;

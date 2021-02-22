@@ -45,6 +45,41 @@ Changelog
 - Display a help message on the item view regarding copy groups to know in
   which states copy groups will have access to the item.
   [gbastien]
+- Migrate `Meeting` from AT to DX :
+
+  - Rely on `collective.dexteritytextindexer` to manage `SearchableText`;
+  - Do not use `meta_type` anymore as it is always the same when using
+    `dexterity`, rely on `getTagName` from `OFS` that returns the
+    `__class__.__name__`;
+  - Renamed `Meeting.queryState` and `MeetingItem.queryState` to `query_state`;
+  - Moved every `Meeting` related methods from `camelCase` to `snake_case`,
+    including most of methods in `MeetingItem` having a direct link with
+    `Meeting` (`get_item_attendees`, `get_item_absents`, ...) but not methods
+    that are accessors (`MeetingItem.getItemAssembly`,
+    `MeetingItem.getItemAssemblyAbsents`, ...);
+  - Removed `MeetingItem.displayStrikedItemAssembly`, use
+    `MeetingItem.get_item_assembly(striked=True)`;
+  - Removed unused methods on MeetingItem (getSpecificMailContext,
+    includeMailRecipient, getAssembly, lastValidatedBefore);
+  - Do no more display the `assembly` fields on `MeetingItem` edit form
+    (`assembly`, `assemblyAbsents`, ...) this allows removal of description
+    methods (`ItemAssemblyDescrMethod`, `ItemAssemblyExcusedDescrMethod`, ...);
+  - Removed `MeetingConfig.deadlineFreeze` and `MeetingConfig.deadlinePublish`
+    related functionnality;
+  - Manage `MeetingItem.preferredMeeting` link manually by storing the path to
+    the meeting so it allows to reindex the `preferred_meeting_date` when full
+    reindexing the portal_catalog (in this case, the preferred meeting could
+    not be already indexed and findable in the catalog);
+  - Moved `ToolPloneMeeting.formatMeetingDate` to `ToolPloneMeeting.format_date`;
+  - Renamed some indexes : `linkedMeetingDate/meeting_date` and
+    `getDate/meeting_date` we have now one single index used by the `Meeting` or
+    the `MeetingItem`, `getPreferredMeetingDate/preferred_meeting_date`,
+    `getPreferredMeeting/preferred_meeting_uid`;
+  - Display global action on the meeting_view (collapse all/top/bottom);
+  - Removed to `@@meeting-before-faceted-infos` and `meeting-after-faceted-infos`
+    that are no more necessary now that the meeting view template should never
+    by overrided anymore, everything is done using the schema and fieldsets
+    definition.
 
 4.2b11 (2021-01-19)
 -------------------

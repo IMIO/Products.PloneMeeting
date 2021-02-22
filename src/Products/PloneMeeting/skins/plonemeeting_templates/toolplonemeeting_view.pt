@@ -207,7 +207,7 @@
                  value="pm_invalidate_all_cache" i18n:attributes="value"/>&nbsp;&nbsp;
         </form>
 
-        <form name="updateAllLocalRolesForm" action="updateAllLocalRoles">
+        <form name="updateAllLocalRolesForm" action="update_all_local_roles">
           <p class="discreet" style="color: red;" i18n:translate="pm_update_all_local_roles_warning">
               Warning: this will update every items and meetings of every configurations.  This action is also available per meeting configuration, if you only changed parameters in one meeting configuration, just execute the action on this meeting configuration!  Moreover, as an administrator, it is possible to update items and meetings from the dashboards.  To do this, select elements that need to be updated and use the \"Update from configuration\" batch action.
           </p>

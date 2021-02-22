@@ -2,14 +2,12 @@
 #
 # File: indexes.py
 #
-# Copyright (c) 2017 by Imio.be
-#
 # GNU General Public License (GPL)
 #
 
 from collective.contact.core.content.organization import IOrganization
 from collective.iconifiedcategory.indexes import content_category_uid
-from DateTime import DateTime
+from datetime import datetime
 from imio.annex.content.annex import IAnnex
 from imio.helpers.content import _contained_objects
 from imio.history.interfaces import IImioHistory
@@ -20,7 +18,7 @@ from Products.PloneMeeting.config import EMPTY_STRING
 from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
-from Products.PloneMeeting.interfaces import IMeeting
+from Products.PloneMeeting.content.meeting import IMeeting
 from Products.PloneMeeting.interfaces import IMeetingContent
 from Products.PloneMeeting.interfaces import IMeetingItem
 from Products.PloneMeeting.utils import get_annexes
@@ -59,7 +57,15 @@ def sortable_title(obj):
     """
       Indexes the sortable_title of meeting based on meeting.date
     """
-    return obj.getDate().strftime('%Y%m%d%H%M')
+    return obj.date.strftime('%Y%m%d%H%M')
+
+
+@indexer(IMeeting)
+def meeting_date(obj):
+    """
+      Indexes the meeting.date
+    """
+    return obj.date
 
 
 @indexer(IMeetingItem)
@@ -114,37 +120,37 @@ def reviewProcessInfo(obj):
       Compute a reviewProcessInfo, this concatenate the group managing item
       and the item review_state so it can be queryable in the catalog.
     """
-    item_state = obj.queryState()
+    item_state = obj.query_state()
     return '%s__reviewprocess__%s' % (
         obj.adapted()._getGroupManagingItem(item_state, theObject=False), item_state)
 
 
 @indexer(IMeetingItem)
-def linkedMeetingUID(obj):
+def meeting_uid(obj):
     """
       Store the linked meeting UID.
     """
-    res = ITEM_NO_PREFERRED_MEETING_VALUE
-    meeting = obj.getMeeting()
-    if meeting:
-        res = meeting.UID()
     # we use same 'None' value as for getPreferredMeeting so we may use the same
     # vocabulary in the meeting date/preferred meeting date faceted filters
+    res = ITEM_NO_PREFERRED_MEETING_VALUE
+    meeting_uid = obj.getMeeting(only_uid=True)
+    if meeting_uid:
+        res = meeting_uid
     return res
 
 
 @indexer(IMeetingItem)
-def linkedMeetingDate(obj):
+def item_meeting_date(obj):
     """
       Store the linked meeting date.
     """
     res = []
     meeting = obj.getMeeting()
     if meeting:
-        res = meeting.getDate()
+        res = meeting.date
     else:
         # for sorting it is necessary to have a date
-        res = DateTime('1950/01/01')
+        res = datetime(1950, 1, 1)
     return res
 
 
@@ -157,19 +163,25 @@ def getGroupsInCharge(obj):
 
 
 @indexer(IMeetingItem)
-def getPreferredMeetingDate(obj):
+def preferred_meeting_uid(obj):
+    """
+      Store the preferredMeeting.
+    """
+    preferredMeeting = obj.getPreferredMeeting()
+    return preferredMeeting
+
+
+@indexer(IMeetingItem)
+def preferred_meeting_date(obj):
     """
       Store the preferredMeeting date.
     """
     res = []
-    preferredMeetingUID = obj.getPreferredMeeting()
-    if preferredMeetingUID != ITEM_NO_PREFERRED_MEETING_VALUE:
-        # use uid_catalog because as getPreferredMeetingDate is in the portal_catalog
-        # if we clear and rebuild the portal_catalog, preferredMeetingUID will not be found...
-        uid_catalog = api.portal.get_tool('uid_catalog')
-        res = uid_catalog(UID=preferredMeetingUID)[0].getObject().getDate()
+    preferredMeeting = obj.getPreferredMeeting(theObject=True)
+    if preferredMeeting:
+        res = preferredMeeting.date
     else:
-        res = DateTime('1950/01/01')
+        res = datetime(1950, 1, 1)
     return res or _marker
 
 
@@ -217,11 +229,6 @@ def SearchableText(obj):
 
 @indexer(IMeetingItem)
 def SearchableText_item(obj):
-    return SearchableText(obj)
-
-
-@indexer(IMeeting)
-def SearchableText_meeting(obj):
     return SearchableText(obj)
 
 
@@ -345,7 +352,7 @@ def _to_coded_adviser_index(obj, org_uid, advice_infos):
             # by default, a still editable advice is 'advice_under_edit'
             # and a no more editable advice is 'advice_given'
             advice_obj = getattr(obj, advice_infos['advice_id'])
-            suffixes.append('_%s' % advice_obj.queryState())
+            suffixes.append('_%s' % advice_obj.query_state())
         return suffixes
 
     res = []
@@ -442,14 +449,6 @@ def contained_uids_meeting(obj):
 
 @indexer(IMeetingItem)
 def content_category_uid_item(obj):
-    """
-      Indexes the content_category of every contained elements.
-    """
-    return content_category_uid(obj)
-
-
-@indexer(IMeeting)
-def content_category_uid_meeting(obj):
     """
       Indexes the content_category of every contained elements.
     """

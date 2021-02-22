@@ -2,8 +2,9 @@
       i18n:domain="PloneMeeting"
       class="pmMoreInfo"
       tal:define="mode string:view;
-                  global displayed python:False;">
-    <tal:loop repeat="visibleFieldInfos python: view.getVisibleFields().items()">
+                  global displayed python:False;
+                  visibleFields python: view.getVisibleFields().items();">
+    <tal:loop repeat="visibleFieldInfos visibleFields">
         <span tal:define="visibleFieldName python: visibleFieldInfos[0];
                           visibleFieldRenderer python: visibleFieldInfos[1];
                           field python: context.getField(visibleFieldName);"
@@ -34,5 +35,6 @@
         </div>
     </tal:loop>
     <p class="discreet" tal:condition="not:displayed" i18n:translate="">Nothing to display.</p>
+    <p class="discreet" tal:condition="not:visibleFields" i18n:translate="">Nothing selected in the configuration to be displayed.</p>
     <script>categorizedChildsInfos();</script>
 </div>

@@ -8,31 +8,27 @@ from collective.contact.plonegroup.browser.tables import DisplayGroupUsersView
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_organization
-from collective.contact.plonegroup.utils import get_organizations
-from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.documentgenerator.helper.archetypes import ATDocumentGenerationHelperView
 from collective.documentgenerator.helper.dexterity import DXDocumentGenerationHelperView
 from collective.eeafaceted.batchactions import _ as _CEBA
 from collective.eeafaceted.batchactions.browser.views import BaseBatchActionForm
 from collective.eeafaceted.batchactions.utils import listify_uids
-from eea.facetednavigation.browser.app.view import FacetedContainerView
 from eea.facetednavigation.interfaces import ICriteria
 from ftw.labels.interfaces import ILabeling
-from imio.helpers.content import uuidsToObjects
 from imio.helpers.xhtml import addClassToContent
 from imio.helpers.xhtml import CLASS_TO_LAST_CHILDREN_NUMBER_OF_CHARS_DEFAULT
 from imio.helpers.xhtml import imagesToPath
 from imio.helpers.xhtml import separate_images
-from imio.history.utils import getLastWFAction
 from plone import api
 from plone.app.caching.operations.utils import getContext
+from plone.app.textfield.value import RichTextValue
+from plone.dexterity.interfaces import IDexterityContent
 from plone.memoize.view import memoize
 from plone.memoize.view import memoize_contextless
 from Products.CMFCore.permissions import ManagePortal
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.CMFCore.utils import _checkPermission
-from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFPlone.utils import safe_unicode
 from Products.Five import BrowserView
 from Products.PloneMeeting import logger
@@ -41,12 +37,11 @@ from Products.PloneMeeting.browser.itemvotes import _get_linked_item_vote_number
 from Products.PloneMeeting.columns import render_item_annexes
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import ADVICE_STATES_ALIVE
-from Products.PloneMeeting.config import ITEM_INSERT_METHODS
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
+from Products.PloneMeeting.content.meeting import get_all_used_held_positions
 from Products.PloneMeeting.indexes import _to_coded_adviser_index
-from Products.PloneMeeting.interfaces import IMeeting
-from Products.PloneMeeting.MeetingConfig import POWEROBSERVERPREFIX
+from Products.PloneMeeting.content.meeting import IMeeting
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import _itemNumber_to_storedItemNumber
 from Products.PloneMeeting.utils import _storedItemNumber_to_itemNumber
@@ -54,7 +49,6 @@ from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import get_dx_widget
 from Products.PloneMeeting.utils import get_person_from_userid
 from Products.PloneMeeting.utils import signatureNotAlone
-from Products.PloneMeeting.utils import toHTMLStrikedContent
 from z3c.form.field import Fields
 from z3c.form.interfaces import DISPLAY_MODE
 from zope import schema
@@ -160,6 +154,11 @@ class BaseStaticInfosView(BrowserView):
     def __call__(self, visibleColumns):
         """ """
         self.visibleColumns = visibleColumns
+        if IDexterityContent.providedBy(self.context):
+            view = self.context.restrictedTraverse('@@view')
+            view.update()
+            self.dx_view = view
+
         return super(BaseStaticInfosView, self).__call__()
 
     def static_infos_field_names(self):
@@ -167,6 +166,12 @@ class BaseStaticInfosView(BrowserView):
            These are selected values starting with 'static_'."""
         field_names = [field_name.replace('static_', '') for field_name in self.visibleColumns
                        if field_name.startswith('static_')]
+        if IDexterityContent.providedBy(self.context):
+            # if we ask to display a field that is not enabled, it could
+            # not be in dx_view.w, will only be shown if not None
+            # (check BaseMeetingView.show_field)
+            field_names = [field_name for field_name in field_names
+                           if field_name in self.dx_view.w]
         return field_names
 
 
@@ -198,95 +203,6 @@ class ItemIsSignedView(BrowserView):
         self.portal_url = api.portal.get().absolute_url()
 
 
-class PresentSeveralItemsView(BrowserView):
-    """
-      This manage the view that presents several items into a meeting
-    """
-    def __init__(self, context, request):
-        self.context = context
-        self.request = request
-
-    def __call__(self, uids):
-        """ """
-        wfTool = api.portal.get_tool('portal_workflow')
-        # defer call to Meeting.updateItemReferences
-        self.request.set('defer_Meeting_updateItemReferences', True)
-        lowest_itemNumber = 0
-        objs = uuidsToObjects(uids, ordered=True)
-        for obj in objs:
-            try:
-                wfTool.doActionFor(obj, 'present')
-            except WorkflowException:
-                # sometimes an item may not be presented,
-                # even if shown in presentable items
-                api.portal.show_message(
-                    _('Item \"${item_title}\" could not be presented!',
-                      mapping={'item_title': safe_unicode(obj.Title())}),
-                    request=self.request,
-                    type='warning')
-            if not lowest_itemNumber or obj.getItemNumber() < lowest_itemNumber:
-                lowest_itemNumber = obj.getItemNumber()
-        self.request.set('defer_Meeting_updateItemReferences', False)
-        # now we may call updateItemReferences
-        self.context.updateItemReferences(startNumber=lowest_itemNumber)
-        msg = translate('present_several_items_done',
-                        domain='PloneMeeting',
-                        context=self.request)
-        plone_utils = api.portal.get_tool('plone_utils')
-        plone_utils.addPortalMessage(msg)
-
-
-class RemoveSeveralItemsView(BrowserView):
-    """
-      This manage the view that removes several items from a meeting
-    """
-    def __init__(self, context, request):
-        self.context = context
-        self.request = request
-
-    def __call__(self, uids):
-        """ """
-        uid_catalog = api.portal.get_tool('uid_catalog')
-        wfTool = api.portal.get_tool('portal_workflow')
-        # make sure we have a list of uids, in some case, as it is called
-        # by jQuery, we receive only one uid, as a string...
-        if isinstance(uids, str):
-            uids = [uids]
-        # defer call to Meeting.updateItemReferences
-        self.request.set('defer_Meeting_updateItemReferences', True)
-        lowest_itemNumber = 0
-        for uid in uids:
-            obj = uid_catalog(UID=uid)[0].getObject()
-            # save lowest_itemNumber for call to Meeting.updateItemReferences here under
-            if not lowest_itemNumber or obj.getItemNumber() < lowest_itemNumber:
-                lowest_itemNumber = obj.getItemNumber()
-            # execute every 'back' transitions until item is in state 'validated'
-            changedState = True
-            while not obj.queryState() == 'validated':
-                availableTransitions = [tr['id'] for tr in wfTool.getTransitionsFor(obj)]
-                if not availableTransitions or not changedState:
-                    break
-                changedState = False
-                # if several back transitions (like when WFAdaptation 'presented_item_back_to_xxx'
-                # is selected), are available, give the priority to 'backToValidated'
-                if 'backToValidated' in availableTransitions:
-                    availableTransitions = ['backToValidated']
-                for tr in availableTransitions:
-                    if tr.startswith('back'):
-                        wfTool.doActionFor(obj, tr)
-                        changedState = True
-                        break
-
-        self.request.set('defer_Meeting_updateItemReferences', False)
-        # now we may call updateItemReferences
-        self.context.updateItemReferences(startNumber=lowest_itemNumber)
-        msg = translate('remove_several_items_done',
-                        domain='PloneMeeting',
-                        context=self.request)
-        plone_utils = api.portal.get_tool('plone_utils')
-        plone_utils.addPortalMessage(msg)
-
-
 class ItemNumberView(BrowserView):
     """
       This manage the view displaying the itemNumber on the meeting view
@@ -296,8 +212,8 @@ class ItemNumberView(BrowserView):
         self.request = request
         self.portal_url = api.portal.get().absolute_url()
 
-    def __call__(self, mayChangeItemsOrder):
-        self.mayChangeItemsOrder = mayChangeItemsOrder
+    def __call__(self, may_change_items_order):
+        self.may_change_items_order = may_change_items_order
         return super(ItemNumberView, self).__call__()
 
     def is_integer(self, number):
@@ -332,188 +248,6 @@ class ItemToDiscussView(BrowserView):
     def useToggleDiscuss(self):
         """ """
         return self.context.restrictedTraverse('@@toggle_to_discuss').isAsynchToggleEnabled()
-
-
-class MeetingView(FacetedContainerView):
-    """The meeting_view."""
-
-    def __init__(self, context, request):
-        """ """
-        super(MeetingView, self).__init__(context, request)
-        self.tool = api.portal.get_tool('portal_plonemeeting')
-        self.cfg = self.tool.getMeetingConfig(self.context)
-
-    def update(self):
-        """ """
-        # initialize member in call because it is Anonymous in __init__ of view...
-        self.member = api.user.get_current()
-
-    def __call__(self):
-        """ """
-        self.update()
-        return super(MeetingView, self).__call__()
-
-    def showPage(self):
-        """Display page to current user?"""
-        return self.tool.showMeetingView()
-
-    def _displayAvailableItemsTo(self):
-        """Check if current user profile is selected in MeetingConfig.displayAvailableItemsTo."""
-        displayAvailableItemsTo = self.cfg.getDisplayAvailableItemsTo()
-        suffixes = []
-        groups = []
-        res = False
-        cfgId = self.cfg.getId()
-        for value in displayAvailableItemsTo:
-            if value == 'app_users':
-                suffixes = get_all_suffixes()
-            elif value.startswith(POWEROBSERVERPREFIX):
-                groups.append(get_plone_group_id(cfgId, value.split(POWEROBSERVERPREFIX)[1]))
-        if suffixes:
-            res = self.tool.userIsAmong(suffixes)
-        if not res and groups:
-            res = bool(set(groups).intersection(self.tool.get_plone_groups_for_user()))
-        return res
-
-    def showAvailableItems(self):
-        """Show the available items part?"""
-        return (
-            self.member.has_permission(ModifyPortalContent, self.context) or
-            self._displayAvailableItemsTo()) and \
-            self.context.wfConditions().mayAcceptItems()
-
-
-class MeetingBeforeFacetedInfosView(BrowserView):
-    """Informations displayed before the faceted on the meeting_view."""
-
-    def __init__(self, context, request):
-        self.context = context
-        self.request = request
-        self.portal_url = api.portal.get().absolute_url()
-        self.tool = api.portal.get_tool('portal_plonemeeting')
-        self.cfg = self.tool.getMeetingConfig(self.context)
-
-
-class MeetingAfterFacetedInfosView(BrowserView):
-    """Informations displayed after the faceted on the meeting_view."""
-
-    def __init__(self, context, request):
-        self.context = context
-        self.request = request
-        self.portal_url = api.portal.get().absolute_url()
-        self.tool = api.portal.get_tool('portal_plonemeeting')
-        self.cfg = self.tool.getMeetingConfig(self.context)
-
-    def __call__(self):
-        """ """
-        # initialize in call because user is Anonymous in __init__ of view...
-        self.member = api.user.get_current()
-        return super(MeetingAfterFacetedInfosView, self).__call__()
-
-
-class MeetingInsertingMethodsHelpMsgView(BrowserView):
-    """ """
-
-    def __init__(self, context, request):
-        """Initialize relevant data in index instead __init__
-           because errors are hidden when occuring in __init__..."""
-        self.context = context
-        self.request = request
-        self.portal_url = api.portal.get().absolute_url()
-        self.tool = api.portal.get_tool('portal_plonemeeting')
-        self.cfg = self.tool.getMeetingConfig(self.context)
-
-    def __call__(self):
-        """Do business code in __call__ because errors are swallowed in __init__."""
-        self.inserting_methods_fields_mapping = ITEM_INSERT_METHODS.copy()
-        self.inserting_methods_fields_mapping.update(
-            self.cfg.adapted().extraInsertingMethods().copy())
-        return super(MeetingInsertingMethodsHelpMsgView, self).__call__()
-
-    def fieldsToDisplay(self):
-        """Depending on used inserting methods, display relevant fields."""
-        res = []
-        for method in self.cfg.getInsertingMethodsOnAddItem():
-            for mapping in self.inserting_methods_fields_mapping[method['insertingMethod']]:
-                if mapping.startswith('field_'):
-                    res.append(mapping[6:])
-        return res
-
-    def orderedOrgs(self):
-        """Display organizations if one of the selected inserting methods relies on organizations.
-           Returns a list of tuples, with organization title as first element and
-           goupsInCharge organizations titles as second element."""
-        res = []
-        orgs_inserting_methods = [
-            method['insertingMethod'] for method in self.cfg.getInsertingMethodsOnAddItem()
-            if 'organization' in self.inserting_methods_fields_mapping[method['insertingMethod']]]
-        if orgs_inserting_methods:
-            orgs = get_organizations(only_selected=True)
-            res = [(org.Title(), ', '.join([gic.Title() for gic in org.get_groups_in_charge(the_objects=True)] or ''))
-                   for org in orgs]
-        return res
-
-    def orderedCategories(self):
-        """Display categories if one of the selected inserting methods relies on it."""
-        categories = []
-        categories_inserting_methods = [
-            method['insertingMethod'] for method in self.cfg.getInsertingMethodsOnAddItem()
-            if 'category' in self.inserting_methods_fields_mapping[method['insertingMethod']]]
-        if categories_inserting_methods:
-            categories = self.cfg.getCategories()
-        return categories
-
-    def orderedClassifiers(self):
-        """Display classifiers if one of the selected inserting methods relies on it."""
-        classifiers = []
-        classifiers_inserting_methods = [
-            method['insertingMethod'] for method in self.cfg.getInsertingMethodsOnAddItem()
-            if 'classifier' in self.inserting_methods_fields_mapping[method['insertingMethod']]]
-        if classifiers_inserting_methods:
-            classifiers = self.cfg.getCategories(catType='classifiers')
-        return classifiers
-
-
-class MeetingUpdateItemReferences(BrowserView):
-    """Call Meeting.updateItemReferences from a meeting."""
-
-    def index(self):
-        """ """
-        self.context.updateItemReferences()
-        msg = _('References of contained items have been updated.')
-        api.portal.show_message(msg, request=self.request)
-        return self.request.RESPONSE.redirect(self.context.absolute_url())
-
-
-class MeetingReorderItems(BrowserView):
-    """Reorder items on the meeting depending on itemInsertOrder."""
-
-    def _recompute_items_order(self):
-        """Get every items and order it by getItemInsertOrder."""
-        items = self.context.getItems(ordered=True)
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self.context)
-        # sort items by insertOrder then by date it was presented
-        # so items with same insert order will be sorted by WF transition 'present' time
-        items = sorted([
-            (self.context.getItemInsertOrder(item, cfg), getLastWFAction(item, 'present')['time'], item)
-            for item in items]
-        )
-        # get items
-        items = [item[2] for item in items]
-        # set items itemNumber
-        itemNumber = 100
-        for item in items:
-            item.setItemNumber(itemNumber)
-            itemNumber = itemNumber + 100
-        self.context._finalize_item_insert(items_to_update=items)
-
-    def index(self):
-        """ """
-        self._recompute_items_order()
-        msg = _('Items have been reordered.')
-        api.portal.show_message(msg, request=self.request)
-        return self.request.RESPONSE.redirect(self.context.absolute_url())
 
 
 class PloneMeetingRedirectToAppView(BrowserView):
@@ -560,7 +294,7 @@ class ObjectGoToView(BrowserView):
         catalog = api.portal.get_tool('portal_catalog')
         meeting = self.context.getMeeting()
         itemNumber = _itemNumber_to_storedItemNumber(itemNumber)
-        brains = catalog(linkedMeetingUID=meeting.UID(), getItemNumber=itemNumber)
+        brains = catalog(meeting_uid=meeting.UID(), getItemNumber=itemNumber)
         if not brains:
             self.context.plone_utils.addPortalMessage(
                 translate(msgid='item_number_not_accessible',
@@ -655,7 +389,7 @@ class UpdateDelayAwareAdvicesView(BrowserView):
                 numberOfBrains,
                 '/'.join(item.getPhysicalPath())))
             i = i + 1
-            item.updateLocalRoles()
+            item.update_local_roles()
         logger.info('Done.')
 
 
@@ -722,7 +456,18 @@ class BaseDGHV(object):
         if image.width > image.height:
             return '-rotate 90'
 
-    def printXhtml(self, context, xhtmlContents,
+    def is_not_empty(self, field_name):
+        """Check if given field_name is not empty."""
+        res = True
+        value = getattr(self.context, field_name, None)
+        if value is None or \
+           (isinstance(value, RichTextValue) and not value.raw):
+            res = False
+        return res
+
+    def printXhtml(self,
+                   context,
+                   xhtmlContents,
                    image_src_to_paths=True,
                    separatorValue='<p>&nbsp;</p>',
                    keepWithNext=False,
@@ -747,23 +492,26 @@ class BaseDGHV(object):
            view.printXHTML(self.getMotivation(), 'separator', '<p>DECIDE :</p>', 'separator', self.getDecision())
         """
         xhtmlFinal = ''
-        # list or tuple?
-        if hasattr(xhtmlContents, '__iter__'):
-            for xhtmlContent in xhtmlContents:
-                if xhtmlContent == 'separator':
-                    hasSeparation = False
-                    if checkNeedSeparator:
-                        preparedXhtmlContent = "<special_tag>%s</special_tag>" % xhtmlContent
-                        tree = lxml.html.fromstring(safe_unicode(preparedXhtmlContent))
-                        children = tree.getchildren()
-                        if children and not children[-1].text:
-                            hasSeparation = True
-                    if not hasSeparation:
-                        xhtmlFinal += separatorValue
-                else:
-                    xhtmlFinal += xhtmlContent
-        else:
-            xhtmlFinal = xhtmlContents
+        # xhtmlContents may be a single string value or a list
+        if not hasattr(xhtmlContents, '__iter__'):
+            xhtmlContents = [xhtmlContents]
+        for xhtmlContent in xhtmlContents:
+            if isinstance(xhtmlContent, RichTextValue):
+                xhtmlContent = xhtmlContent.output
+            if xhtmlContent is None:
+                xhtmlContent = ''
+            if xhtmlContent == 'separator':
+                hasSeparation = False
+                if checkNeedSeparator:
+                    preparedXhtmlContent = "<special_tag>%s</special_tag>" % xhtmlContent
+                    tree = lxml.html.fromstring(safe_unicode(preparedXhtmlContent))
+                    children = tree.getchildren()
+                    if children and not children[-1].text:
+                        hasSeparation = True
+                if not hasSeparation:
+                    xhtmlFinal += separatorValue
+            else:
+                xhtmlFinal += xhtmlContent
 
         # manage image_src_to_paths
         # turning http link to image to blob path will avoid unauthorized by appy.pod
@@ -791,7 +539,7 @@ class BaseDGHV(object):
 
     def printHistory(self):
         """Return the history view for templates. """
-        historyView = self.context.restrictedTraverse('historyview')()
+        historyView = self.context.restrictedTraverse('@@historyview')()
         historyViewRendered = lxml.html.fromstring(historyView)
         return lxml.html.tostring(historyViewRendered.get_element_by_id('content-core'), method='xml')
 
@@ -955,19 +703,18 @@ class BaseDGHV(object):
            If use_print_attendees_by_type is True, we use print_attendees_by_type method instead of
            print_attendees.'''
 
-        if self.context.meta_type == 'MeetingItem' and not self.context.hasMeeting():
+        class_name = self.real_context.__class__.__name__
+        if class_name == 'MeetingItem' and not self.context.hasMeeting():
             # There is nothing to print in this case
             return ''
 
         assembly = None
-        if self.context.meta_type == 'Meeting' and self.context.getAssembly():
-            assembly = self.context.getAssembly()
-        elif self.context.meta_type == 'MeetingItem' and self.context.getItemAssembly():
-            assembly = self.context.getItemAssembly()
+        if class_name == 'Meeting' and self.context.get_assembly():
+            assembly = self.context.get_assembly(for_display=True, striked=striked)
+        elif class_name == 'MeetingItem' and self.context.getItemAssembly(for_display=False):
+            assembly = self.context.getItemAssembly(for_display=True, striked=striked)
 
         if assembly:
-            if striked:
-                return toHTMLStrikedContent(assembly)
             return assembly
 
         if use_print_attendees_by_type:
@@ -984,28 +731,28 @@ class BaseDGHV(object):
         item_absents = []
         item_excused = []
         item_non_attendees = []
-        if self.context.meta_type == 'Meeting':
+        if self.context.getTagName() == 'Meeting':
             meeting = self.context
-            attendees = meeting.getAttendees()
-            item_non_attendees = meeting.getItemNonAttendees()
+            attendees = meeting.get_attendees()
+            item_non_attendees = meeting.get_item_non_attendees()
         else:
             # MeetingItem
             meeting = self.context.getMeeting()
             if meeting:
-                attendees = self.context.getAttendees()
-                item_absents = self.context.getItemAbsents()
-                item_excused = self.context.getItemExcused()
-            item_non_attendees = self.context.getItemNonAttendees()
+                attendees = self.context.get_attendees()
+                item_absents = self.context.get_item_absents()
+                item_excused = self.context.get_item_excused()
+            item_non_attendees = self.context.get_item_non_attendees()
         # generate content then group by sub organization if necessary
         contacts = []
         absents = []
         excused = []
         replaced = []
         if meeting:
-            contacts = meeting.getAllUsedHeldPositions()
-            excused = meeting.getExcused()
-            absents = meeting.getAbsents()
-            replaced = meeting.getReplacements()
+            contacts = get_all_used_held_positions(meeting)
+            excused = meeting.get_excused()
+            absents = meeting.get_absents()
+            replaced = meeting.get_replacements()
         return meeting, attendees, item_absents, item_excused, item_non_attendees, \
             contacts, excused, absents, replaced
 
@@ -1126,7 +873,7 @@ class BaseDGHV(object):
                     if show_replaced_by:
                         res[org][contact] = attendee_value_format.format(
                             res[org][contact], replaced_by_format[contact_gender].format(
-                                meeting.displayUserReplacement(
+                                meeting.display_user_replacement(
                                     replaced[contact_uid],
                                     include_held_position_label=include_replace_by_held_position_label,
                                     include_sub_organizations=False)))
@@ -1179,7 +926,7 @@ class BaseDGHV(object):
                 if contact_uid in replaced and show_replaced_by:
                     contact_value = replaced_by_format[contact.gender].format(
                         contact_value,
-                        meeting.displayUserReplacement(
+                        meeting.display_user_replacement(
                             replaced[contact_uid],
                             include_held_position_label=include_replace_by_held_position_label,
                             include_sub_organizations=False))
@@ -1361,9 +1108,9 @@ class BaseDGHV(object):
         A dict is used to safely get a signature with the get method
         """
         signatures = None
-        if self.context.meta_type == 'Meeting' and self.context.getSignatures():
+        if self.context.getTagName() == 'Meeting' and self.context.getSignatures():
             signatures = self.context.getSignatures()
-        elif self.context.meta_type == 'MeetingItem' and self.context.getItemSignatures():
+        elif self.context.getTagName() == 'MeetingItem' and self.context.getItemSignatures():
             signatures = self.context.getItemSignatures()
 
         if signatures:
@@ -1404,15 +1151,15 @@ class BaseDGHV(object):
         """
         signature_lines = OrderedDict()
         forced_position_type_values = {}
-        if self.context.meta_type == 'Meeting':
-            signatories = self.context.getSignatories(theObjects=True, by_signature_number=True)
+        if self.context.getTagName() == 'Meeting':
+            signatories = self.context.get_signatories(the_objects=True, by_signature_number=True)
         else:
-            signatories = self.context.getItemSignatories(theObjects=True, by_signature_number=True)
+            signatories = self.context.get_item_signatories(the_objects=True, by_signature_number=True)
             if self.context.hasMeeting():
                 # if we have redefined signatories, use the selected position_type
                 meeting = self.context.getMeeting()
                 item_uid = self.context.UID()
-                item_signatories = meeting.getItemSignatories(include_position_type=True)
+                item_signatories = meeting.get_item_signatories(include_position_type=True)
                 if item_uid in item_signatories:
                     forced_position_type_values = {
                         k: v['position_type'] for k, v in
@@ -1463,7 +1210,7 @@ class BaseDGHV(object):
 
     def vote_infos(self, used_vote_values=[], include_null_vote_count_values=[], keep_vote_numbers=[]):
         """ """
-        item_votes = self.context.getItemVotes(include_unexisting=False)
+        item_votes = self.context.get_item_votes(include_unexisting=False)
         if not used_vote_values:
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(self.context)
@@ -1548,8 +1295,8 @@ class BaseDGHV(object):
             """ """
             voter_uids = [voter_uid for voter_uid, voter_vote_value in voters.items()
                           if voter_vote_value == vote_value]
-            # _getContacts return ordered contacts
-            voters = meeting._getContacts(uids=voter_uids, theObjects=True)
+            # _get_contacts return ordered contacts
+            voters = meeting._get_contacts(uids=voter_uids, the_objects=True)
             res = []
             for voter in voters:
                 if include_hp:
@@ -1593,7 +1340,7 @@ class BaseDGHV(object):
         patterns.update(custom_patterns)
         # get votes
         rendered = u""
-        secret = self.context.getVotesAreSecret()
+        secret = self.context.get_votes_are_secret()
         meeting = self.context.getMeeting()
         vote_infos = self.vote_infos(
             used_vote_values, include_null_vote_count_values, keep_vote_numbers)
@@ -1795,11 +1542,11 @@ class FolderDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGH
 
         for brain in brains:
             meeting = brain.getObject()
-            presents = meeting.getAttendees(True)
+            presents = meeting.get_attendees(True)
 
             if presents:  # if there is no attendee it's useless to continue
-                excused = meeting.getExcused(True)
-                absents = meeting.getAbsents(True)
+                excused = meeting.get_excused(True)
+                absents = meeting.get_absents(True)
                 _add_attendances_for_meeting(attendances, meeting, presents, excused, absents)
 
         res = attendances.values()
@@ -1812,7 +1559,13 @@ class FolderDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGH
         :return: A list of list of dict representing the attendance on a bunch of Meetings
                  organized by Meeting and by held position on every MeetingItems in each of the given Meetings.
         """
-        def _add_attendances_for_items(attendances, meetingItems, presents, excused, itemExcused, absents, itemAbsents):
+        def _add_attendances_for_items(attendances,
+                                       meeting_items,
+                                       presents,
+                                       excused,
+                                       item_excused,
+                                       absents,
+                                       item_absents):
             """
             Populates the statistics for a Meeting or a MeetingItem by held position in the assembly.
 
@@ -1840,38 +1593,41 @@ class FolderDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGH
                 attendances[attendance]['present'] -= 1
                 attendances[attendance][counter] += 1
 
-            _add_attendance(attendances, meetingItems, presents, 'present')
-            _add_attendance(attendances, meetingItems, excused, 'excused')
-            _add_attendance(attendances, meetingItems, absents, 'absent')
+            _add_attendance(attendances, meeting_items, presents, 'present')
+            _add_attendance(attendances, meeting_items, excused, 'excused')
+            _add_attendance(attendances, meeting_items, absents, 'absent')
 
             for attendance in attendances:
-                if attendance in itemExcused:
+                if attendance in item_excused:
                     _remove_attendances(attendance, 'excused')
-                if attendance in itemAbsents:
+                if attendance in item_absents:
                     _remove_attendances(attendance, 'absent')
 
         res = []
 
         for brain in brains:
             meeting = brain.getObject()
-            presents = list(meeting.getAttendees(True))
-            excused = list(meeting.getExcused(True))
-            absents = list(meeting.getAbsents(True))
-            itemExcused = meeting.getItemExcused(True)
-            itemAbsents = meeting.getItemAbsents(True)
-            meetingData = {'title': meeting.Title()}
+            presents = list(meeting.get_attendees(True))
+            excused = list(meeting.get_excused(True))
+            absents = list(meeting.get_absents(True))
+            item_excused = meeting.get_item_excused(True)
+            item_absents = meeting.get_item_absents(True)
+            # as 'title' is used for generated file sheet name
+            # make sure it does not contain forbidden letters
+            # especially when meeting hours is displayed between ()
+            meeting_data = {'title': meeting.Title().replace(':', 'h')}
             attendances = OrderedDict({})
             _add_attendances_for_items(attendances,
-                                       meeting.getItems(ordered=True),
+                                       meeting.get_items(ordered=True),
                                        presents,
                                        excused,
-                                       itemExcused,
+                                       item_excused,
                                        absents,
-                                       itemAbsents)
+                                       item_absents)
 
-            meetingData['attendances'] = attendances.values()
-            self._compute_attendances_proportion(meetingData['attendances'])
-            res.append(meetingData)
+            meeting_data['attendances'] = attendances.values()
+            self._compute_attendances_proportion(meeting_data['attendances'])
+            res.append(meeting_data)
 
         return res
 
@@ -1904,7 +1660,7 @@ class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV)
             return noMeetingMarker
 
         if returnDateTime:
-            return meeting.getDate()
+            return meeting.date
         return meeting.Title()
 
     def printMeetingDate(self, returnDateTime=False, noMeetingMarker='-', unrestricted=True):
@@ -1929,7 +1685,7 @@ class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV)
             return noMeetingMarker
 
         if returnDateTime:
-            return preferred_meeting.getDate()
+            return preferred_meeting.date
         return preferred_meeting.Title()
 
     def print_in_and_out_attendees(
@@ -1970,7 +1726,7 @@ class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV)
                     'attendee_again_after': u'{0} participe à la séance après la discussion du point.'}
         patterns.update(custom_patterns)
 
-        in_and_out = self.context.getInAndOutAttendees(
+        in_and_out = self.context.get_in_and_out_attendees(
             ignore_before_first_item=ignore_before_first_item)
         person_res = {in_and_out_type: [] for in_and_out_type in in_and_out.keys()
                       if (not in_and_out_types or in_and_out_type in in_and_out_types)}
@@ -2105,7 +1861,7 @@ class CheckPodTemplatesView(BrowserView):
                 continue
 
             for obj in objs:
-                if obj.meta_type == 'Meeting':
+                if obj.getTagName() == 'Meeting':
                     self.request.form['facetedQuery'] = []
                 elif 'facetedQuery' in self.request.form:
                     del self.request.form['facetedQuery']
@@ -2113,7 +1869,6 @@ class CheckPodTemplatesView(BrowserView):
                 self.request.set('template_uid', pod_template.UID())
                 output_format = pod_template.pod_formats[0]
                 self.request.set('output_format', pod_template.pod_formats[0])
-                view()
                 try:
                     view()
                     view._generate_doc(pod_template, output_format=output_format, raiseOnError=True)
@@ -2287,7 +2042,7 @@ class UpdateLocalRolesBatchActionForm(BaseBatchActionForm):
     def _apply(self, **data):
         """ """
         uids = listify_uids(data['uids'])
-        self.tool.updateAllLocalRoles(**{'UID': uids, 'log': False})
+        self.tool.update_all_local_roles(**{'UID': uids, 'log': False})
         msg = translate('update_selected_elements',
                         domain="PloneMeeting",
                         mapping={'number_of_elements': len(uids)},
@@ -2352,11 +2107,11 @@ class DisplayMeetingItemNotPresent(BrowserView):
         """Returns the list of items the not_present_uid is absent for."""
         item_uids = []
         if self.not_present_type == 'absent':
-            item_uids = self.meeting.getItemAbsents(by_persons=True).get(self.not_present_uid, [])
+            item_uids = self.meeting.get_item_absents(by_persons=True).get(self.not_present_uid, [])
         elif self.not_present_type == 'excused':
-            item_uids = self.meeting.getItemExcused(by_persons=True).get(self.not_present_uid, [])
+            item_uids = self.meeting.get_item_excused(by_persons=True).get(self.not_present_uid, [])
         elif self.not_present_type == 'non_attendee':
-            item_uids = self.meeting.getItemNonAttendees(by_persons=True).get(self.not_present_uid, [])
+            item_uids = self.meeting.get_item_non_attendees(by_persons=True).get(self.not_present_uid, [])
         catalog = api.portal.get_tool('portal_catalog')
         brains = catalog(UID=item_uids, sort_on='getItemNumber')
         objs = [brain.getObject() for brain in brains]
@@ -2380,7 +2135,7 @@ class DisplayMeetingItemSignatories(BrowserView):
 
     def get_items_for_signatory(self):
         """Returns the list of items the signatory_uid is signatory for."""
-        item_uids = self.meeting.getItemSignatories(by_signatories=True).get(self.signatory_uid, [])
+        item_uids = self.meeting.get_item_signatories(by_signatories=True).get(self.signatory_uid, [])
         catalog = api.portal.get_tool('portal_catalog')
         brains = catalog(UID=item_uids, sort_on='getItemNumber')
         objs = [brain.getObject() for brain in brains]
@@ -2401,17 +2156,17 @@ class DisplayMeetingItemVoters(BrowserView):
 
     def getNonVotedItems(self):
         """Returns the list of items the voter_uid did not vote for."""
-        items = self.context.getItems(ordered=True)
+        items = self.context.get_items(ordered=True)
         res = {'public': [],
                'secret': []}
         for item in items:
-            if not item.getVotesAreSecret():
-                if set(item.getItemVoters()).difference(item.get_voted_voters()):
+            if not item.get_votes_are_secret():
+                if set(item.get_item_voters()).difference(item.get_voted_voters()):
                     res['public'].append(item)
             else:
                 data = {}
                 total_voters = item.getVoteCount('any_votable')
-                for item_vote in item.getItemVotes():
+                for item_vote in item.get_item_votes():
                     vote_number = item_vote['vote_number']
                     i = vote_number
                     linked_numbers = _get_linked_item_vote_numbers(
@@ -2432,14 +2187,14 @@ class DisplayMeetingItemVoters(BrowserView):
     def getVotedItems(self):
         """ """
         non_voted_items = self.getNonVotedItems()
-        items = self.context.getItems(ordered=True)
+        items = self.context.get_items(ordered=True)
         res = {
             'public': [
                 item for item in items
-                if item not in non_voted_items['public'] and not item.getVotesAreSecret()],
+                if item not in non_voted_items['public'] and not item.get_votes_are_secret()],
             'secret': [
                 item for item in items
-                if item not in non_voted_items['secret'] and item.getVotesAreSecret()]}
+                if item not in non_voted_items['secret'] and item.get_votes_are_secret()]}
         return res
 
 

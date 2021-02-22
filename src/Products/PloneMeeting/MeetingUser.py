@@ -262,7 +262,7 @@ class MeetingUser(BaseContent, BrowserDefaultMixin):
     security.declarePublic('getSelf')
 
     def getSelf(self):
-        if self.__class__.__name__ != 'MeetingUser':
+        if self.getTagName() != 'MeetingUser':
             return self.context
         return self
 
@@ -277,7 +277,7 @@ class MeetingUser(BaseContent, BrowserDefaultMixin):
         '''See doc in interfaces.py.'''
         pass
 
-    def queryState(self):
+    def query_state(self):
         '''In what state am I ?'''
         wfTool = api.portal.get_tool('portal_workflow')
         return wfTool.getInfoFor(self, 'review_state')
@@ -357,7 +357,7 @@ class MeetingUser(BaseContent, BrowserDefaultMixin):
         if loggedUser.has_role('Manager'):
             return True
         meeting = item.getMeeting()
-        if item.getMeeting().queryState() in meeting.meetingClosedStates:
+        if item.getMeeting().query_state() in meeting.meetingClosedStates:
             return False
         else:
             cfg = tool.getMeetingConfig(item)
@@ -489,7 +489,7 @@ class MeetingUser(BaseContent, BrowserDefaultMixin):
     def isPresent(self, item, meeting):
         '''Is this user present at p_meeting when p_item is discussed?'''
         aId = self.getId()
-        if aId in item.getItemAbsents():
+        if aId in item.get_item_absents():
             return False
         if aId in meeting.getLateAttendees():
             entranceNumber = meeting.getEntranceItem(aId)

@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from collective.contact.plonegroup.utils import select_organization
-from DateTime import DateTime
 from imio.helpers.cache import cleanRamCacheFor
 from plone import api
 from plone.app.testing import logout
@@ -108,7 +107,7 @@ class PloneMeetingTestingHelpers:
             pattern = 'WF_MEETING_TRANSITION_NAME_MAPPINGS_%d'
         return getattr(self, (pattern % meetingConfigNumber)).get(transition_name, transition_name)
 
-    def _createMeetingWithItems(self, meetingDate=DateTime()):
+    def _createMeetingWithItems(self, meetingDate=None):
         '''Create a meeting with a bunch of items.'''
         def _set_proposing_group(item, org):
             """Take into account fact that configuration uses groupsInCharge."""
@@ -282,7 +281,7 @@ class PloneMeetingTestingHelpers:
             self.changeUser('admin')
         max_attempts = 20
         nb_attempts = 0
-        while not itemOrMeeting.queryState() == state and nb_attempts <= max_attempts:
+        while not itemOrMeeting.query_state() == state and nb_attempts <= max_attempts:
             nb_attempts += 1
             if not useDefinedWfPath:
                 transitions = self.transitions(itemOrMeeting)
@@ -418,7 +417,7 @@ class PloneMeetingTestingHelpers:
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         item.setOptionalAdvisers((self.vendors_uid, ))
-        item.updateLocalRoles()
+        item.update_local_roles()
         self.changeUser('pmReviewer2')
         advice = createContentInContainer(
             item,
@@ -433,7 +432,7 @@ class PloneMeetingTestingHelpers:
         if not groups:
             groups = [self.vendors_uid]
         item.setGroupsInCharge(groups)
-        item.updateLocalRoles()
+        item.update_local_roles()
 
     def _tearDownGroupsInCharge(self, item):
         """If group in charge is overrided, it may be setup differently."""

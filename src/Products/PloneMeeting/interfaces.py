@@ -3,6 +3,7 @@
 from collective.eeafaceted.batchactions.interfaces import IBatchActionsMarker
 from collective.eeafaceted.collectionwidget.interfaces import ICollectiveEeafacetedCollectionwidgetLayer
 from ftw.labels.interfaces import ILabelSupport
+from plone.dexterity.interfaces import IDexterityContent
 from zope.component.interfaces import IObjectEvent
 from zope.interface import Interface
 
@@ -109,6 +110,11 @@ class IATMeetingContent(IMeetingContent):
     """
 
 
+class IDXMeetingContent(IMeetingContent, IDexterityContent):
+    """Base marker interface for DX content related elements
+    """
+
+
 class IMeetingItem(IATMeetingContent, ILabelSupport):
     """Marker interface for .MeetingItem.MeetingItem
     """
@@ -171,36 +177,6 @@ class IMeetingItemDocumentation:
            the predecessors.  The dict will contains the 'title' to display,
            the 'url' to link to, the 'tagtitle' that will be used as title for the
            link HTML tag and a 'class' defining a css class name'''
-    def getSpecificMailContext(event, translationMapping):
-        '''When a given p_event occurs on this meeting item, PloneMeeting will
-           send mail. For defining the mail subject and body, PloneMeeting will
-           use i18n labels <event>_mail_subject and <event>_mail_body in i18n
-           domain 'PloneMeeting'. When writing translations for those labels in
-           your i18n .po files, PloneMeeting will give you the following
-           variables that you may insert with the syntax ${variableName}
-             - portalUrl          The full URL of your Plone site
-             - portalTitle        The title your Plone site
-             - itemTitle          The title of the meeting item
-             - meetingTitle       The title of the meeting to which this item
-                                  belongs (only when relevant)
-             - objectDavUrl       The WebDAV URL of the object
-           If you want to have other variables than those provided by default,
-           you can override this method: you will receive the default
-           p_translationMapping and you can add variables in it (the
-           p_translationMapping is a dict whose keys are variable names and
-           values are variable values). If you want to define yourself custom
-           mail subjects and bodies, simply return (mailSubject, mailBody). If
-           this method returns nothing, the mail body and subject will be
-           defined as described above.'''
-    def includeMailRecipient(event, userId):
-        '''This method is called when p_event occurs on this meeting item, and
-           when PloneMeeting should normally send a notification to user
-           p_userId (which has the necessary role or permission); user will
-           actually be added to the list of recipients only if this method
-           returns True. The default PloneMeeting behaviour for this method is
-           to return True in all cases. (Adapt it if you want to filter the
-           recipients of a notification belong other criteria than their role
-           or permission.)'''
     def addRecurringItemToMeeting(meeting):
         '''This meeting item was just created (by copy/pasting a recurring item)
            in the folder that also contains the p_meeting into which it must
@@ -340,7 +316,7 @@ class IMeetingItemDocumentation:
         """This controls if advices need to be shown on the item view."""
     def showObservations(self):
         """This controls if field MeetingItem.observations must be shown."""
-    def _mayUpdateItemReference(self):
+    def _may_update_item_reference(self):
         """Condition to update item reference.  By default the item reference
            will be updated if item is in a meeting and meeting review_state is
            not 'before frozen'."""
@@ -358,7 +334,7 @@ class IMeetingItemDocumentation:
     def getAdviceRelatedIndexes(self):
         '''Return item indexes related to advices, by default
            only the 'indexAdvisers' index is returned.'''
-    def showVotesObservations():
+    def show_votesObservations():
         '''Votes observations field is only viewable by MeetingManagers and
            power observers until item is decided, in this case everybody may see it.'''
 
@@ -460,38 +436,17 @@ class IMeetingDocumentation:
     '''Normally, the methods described here should be part of IMeeting.
        Because it is impossible to do so with an overengineered yet overrigid
        ArchGenXML 2, we document the provided methods in this absurd class.'''
-    def isDecided():
+    def is_decided():
         '''Am I in a state such that decisions have all been taken?'''
-    def getSpecificDocumentContext():
-        '''Similar to the method of the same name in IMeetingItem.'''
-    def getSpecificMailContext(event, translationMapping):
-        '''Similar to the method of the same name in IMeetingItem. There is one
-           diffence: for a meeting, the set of variables that one may use when
-           writing translations is the following:
-             - portalUrl          The full URL of your Plone site
-             - portalTitle        The title your Plone site
-             - meetingTitle       The title of this meeting
-             - objectDavUrl       The WebDAV URL of this meeting.'''
-    def includeMailRecipient(event, userId):
-        '''This method is called when p_event occurs on this meeting, and
-           when PloneMeeting should normally send a notification to user
-           p_userId (which has the necessary role or permission); user will
-           actually be added to the list of recipients only if this method
-           returns True. The default PloneMeeting behaviour for this method is
-           to return True in all cases. (Adapt it if you want to filter the
-           recipients of a notification belong other criteria than their role
-           or permission.)'''
-    def showVotes():
+    def show_votes():
         '''Under what circumstances must I show the tab "Votes" for every item
            of this meeting? The default implementation for this method
            returns True when the meeting has started (based on meeting.date or
            meeting.startDate if used).'''
-    def showVotesObservations():
+    def show_votesObservations():
         '''Votes observations field is only viewable by MeetingManagers and
            power observers until meeting is decided, in this case everybody may see it.'''
-    def onEdit(isCreated):
-        '''This method is called every time a meeting is created or updated.'''
-    def showInsertOrRemoveSelectedItemsAction():
+    def show_insert_or_remove_selected_items_action():
         '''Return True/False if the 'Remove selected items' or 'Present selected items'
            action must be displayed on the meeting view displaying presented items.'''
     def _check_insert_order_cache(cfg):
@@ -503,6 +458,9 @@ class IMeetingDocumentation:
         '''Returns the field names of the MeetingConfig to take into account for
            Meeting items insert order caching.  If one of these fields value changed
            the cache would be invalidated.'''
+    def get_late_state(self):
+        '''Returns the meeting first review state from which presented items
+           will be considered 'late'.'''
 
 
 class IMeetingWorkflowConditions(Interface):
@@ -531,10 +489,10 @@ class IMeetingWorkflowConditions(Interface):
 
     # The following conditions are not workflow conditions in the strict sense,
     # but are conditions that depend on the meeting state.
-    def mayAcceptItems():
+    def may_accept_items():
         '''May I accept new items to be integrated to me ? (am I in a relevant
            state, is my date still in the future, ...)'''
-    def mayChangeItemsOrder():
+    def may_change_items_order():
         '''May one change order of my list of items ?'''
 
 
@@ -603,8 +561,6 @@ class IMeetingConfigDocumentation:
     def extraAdviceTypes(self):
         '''Method for defining extra advice types, needs to return a list of
            ids that will be used for id and translated for title.'''
-    def getLateState(self):
-        '''Returns the meeting first review state from which presented items will be considered 'late'.'''
     def getMeetingStatesAcceptingItems(self):
         '''In those states, the meeting accept items, normal or late.
            Must return a tuple of meeting review_states.'''
@@ -653,8 +609,6 @@ class IMeetingGroupCustom(IMeetingGroup):
 class IToolPloneMeetingDocumentation:
     def onEdit(isCreated):
         '''Called when the tool p_isCreated or edited.'''
-    def getSpecificMailContext(event, translationMapping):
-        '''See doc in methods with similar names above.'''
     def performCustomWFAdaptations(meetingConfig, wfAdaptation, logger, itemWorkflow, meetingWorkflow):
         '''This let's a plugin define it's own WFAdaptations to apply.'''
     def get_extra_adviser_infos(self):

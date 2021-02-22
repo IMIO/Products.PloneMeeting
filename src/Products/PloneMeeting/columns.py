@@ -1,4 +1,9 @@
 # -*- coding: utf-8 -*-
+#
+# File: columns.py
+#
+# GNU General Public License (GPL)
+#
 
 from collective.eeafaceted.z3ctable.columns import AbbrColumn
 from collective.eeafaceted.z3ctable.columns import ActionsColumn
@@ -17,7 +22,7 @@ from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.utils import _checkPermission
 from Products.PloneMeeting.config import AddAnnex
 from Products.PloneMeeting.config import AddAnnexDecision
-from Products.PloneMeeting.interfaces import IMeeting
+from Products.PloneMeeting.content.meeting import IMeeting
 from Products.PloneMeeting.utils import displaying_available_items
 from zope.i18n import translate
 
@@ -112,14 +117,14 @@ class ItemPollTypeColumn(VocabularyColumn):
 def render_item_annexes(item, tool, show_nothing=False):
     """ """
     annexes = ''
-    annexes += item.restrictedTraverse('categorized-childs')(
+    annexes += item.restrictedTraverse('@@categorized-childs')(
         portal_type='annex', show_nothing=show_nothing)
     if tool.hasAnnexes(item, portal_type='annexDecision'):
         decision_term = translate("AnnexesDecisionShort",
                                   domain='PloneMeeting',
                                   context=item.REQUEST)
         annexes += u"<span class='discreet'>{0}&nbsp;:&nbsp;</span>".format(decision_term)
-        annexes += item.restrictedTraverse('categorized-childs')(
+        annexes += item.restrictedTraverse('@@categorized-childs')(
             portal_type='annexDecision', show_nothing=show_nothing)
     return annexes
 
@@ -186,10 +191,10 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
 
                 # display annexes
                 annexes = render_item_annexes(obj, tool)
-        elif obj.meta_type == 'Meeting':
+        elif obj.getTagName() == 'Meeting':
             visibleColumns = cfg.getMeetingColumns()
             staticInfos = obj.restrictedTraverse('@@static-infos')(visibleColumns=visibleColumns)
-            annexes += obj.restrictedTraverse('categorized-childs')(portal_type='annex')
+            annexes += obj.restrictedTraverse('@@categorized-childs')(portal_type='annex')
         if annexes:
             annexes = u"<div class='dashboard_annexes'>{0}</div>".format(annexes)
 
@@ -205,7 +210,7 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
         """Apply a particular class on the table row depending on the item's privacy
            if item is displayed in a meeting."""
         css_classes = super(PMPrettyLinkColumn, self).getCSSClasses(item)
-        if self.context.meta_type == 'Meeting':
+        if self.context.getTagName() == 'Meeting':
             # for TR
             trCSSClasses = []
             trCSSClasses.append('meeting_item_privacy_{0}'.format(item.privacy))
@@ -227,8 +232,8 @@ class ItemLinkedMeetingColumn(BaseColumn):
     """
       Display the formatted date and a link to the linked meeting if any.
     """
-    meeting_uid_attr = 'linkedMeetingUID'
-    attrName = 'linkedMeetingDate'
+    meeting_uid_attr = 'meeting_uid'
+    attrName = 'meeting_date'
     use_caching = True
 
     def renderCell(self, item):
@@ -239,14 +244,15 @@ class ItemLinkedMeetingColumn(BaseColumn):
             if res:
                 return res
 
-        if not value or value.year() <= 1950:
+        if not value or value.year <= 1950:
             res = u'-'
         else:
-            catalog = api.portal.get_tool('uid_catalog')
-            meeting = catalog(UID=getattr(item, self.meeting_uid_attr))[0].getObject()
-            prettyLinker = IPrettyLink(meeting)
-            prettyLinker.target = '_parent'
-            res = prettyLinker.getLink()
+            catalog = api.portal.get_tool('portal_catalog')
+            # done unrestricted because can be used to display meeting date
+            # in dashboard when current user may not see the meeting
+            brains = catalog.unrestrictedSearchResults(UID=getattr(item, self.meeting_uid_attr))
+            meeting = brains[0]._unrestrictedGetObject()
+            res = meeting.get_pretty_link()
 
         if self.use_caching:
             self._store_cached_result(value, res)
@@ -257,8 +263,9 @@ class ItemPreferredMeetingColumn(ItemLinkedMeetingColumn):
     """
       Display the formatted date and a link to the preferred meeting if any.
     """
-    meeting_uid_attr = 'getPreferredMeeting'
-    attrName = 'getPreferredMeetingDate'
+    meeting_uid_attr = 'preferred_meeting_uid'
+    attrName = 'preferred_meeting_date'
+    header_help = u'header_preferred_meeting_date_help'
 
 
 class ItemListTypeColumn(VocabularyColumn, ColorColumn):
@@ -293,31 +300,31 @@ class ItemNumberColumn(BrowserViewCallColumn):
     def cssClasses(self):
         """ """
         cssClasses = super(ItemNumberColumn, self).cssClasses
-        if self.mayChangeItemsOrder(self.context):
+        if self.may_change_items_order(self.context):
             cssClasses['th'] = 'th_header_draggable'
             cssClasses['td'] = 'draggable'
         return cssClasses
 
-    def mayChangeItemsOrder(self, meeting):
+    def may_change_items_order(self, meeting):
         """ """
-        _mayChangeItemsOrder = getattr(self.table, '_mayChangeItemsOrder', None)
-        if _mayChangeItemsOrder is None:
-            self.table._mayChangeItemsOrder = meeting.wfConditions().mayChangeItemsOrder()
-        return self.table._mayChangeItemsOrder
+        _may_change_items_order = getattr(self.table, '_may_change_items_order', None)
+        if _may_change_items_order is None:
+            self.table._may_change_items_order = meeting.wfConditions().may_change_items_order()
+        return self.table._may_change_items_order
 
     def renderHeadCell(self):
         """ """
         cell = super(ItemNumberColumn, self).renderHeadCell()
-        if self.mayChangeItemsOrder(self.context):
+        if self.may_change_items_order(self.context):
             cell = u'</th><th class="th_header_getItemNumber">' + cell
         return cell
 
     def renderCell(self, item):
         """ """
-        mayChangeItemsOrder = self.mayChangeItemsOrder(self.context)
-        self.params = {'mayChangeItemsOrder': mayChangeItemsOrder}
+        may_change_items_order = self.may_change_items_order(self.context)
+        self.params = {'may_change_items_order': may_change_items_order}
         cell = super(ItemNumberColumn, self).renderCell(item)
-        if mayChangeItemsOrder:
+        if may_change_items_order:
             cell = u"⣿</td><td td_cell_getItemNumber data-item_number='{0}'>".format(
                 item.getItemNumber) + cell
         return cell
@@ -330,8 +337,8 @@ class ItemCheckBoxColumn(CheckBoxColumn):
         """Display the '(un)present every selected items' action depending
            on the faceted we are on, available or presented items."""
         head = super(ItemCheckBoxColumn, self).renderHeadCell()
-        if self.context.meta_type == 'Meeting':
-            if self.context.adapted().showInsertOrRemoveSelectedItemsAction():
+        if self.context.getTagName() == 'Meeting':
+            if self.context.adapted().show_insert_or_remove_selected_items_action():
                 if displaying_available_items(self.context):
                     present_msg = translate('present_several_items',
                                             domain='PloneMeeting',
