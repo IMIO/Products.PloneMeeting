@@ -1224,6 +1224,16 @@
           <td></td>
           <td></td>
         </tr>
+        <tr valign="top">
+          <td colspan="3" tal:define="field python:here.getField('orderedCommitteeContacts')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+        </tr>
+        <tr valign="top">
+          <td colspan="3" tal:define="field python:here.getField('committees')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+        </tr>
       </table>
     </tal:votes>
 

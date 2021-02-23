@@ -60,6 +60,8 @@ from zope.schema.interfaces import IVocabularyFactory
 from zope.schema.vocabulary import SimpleTerm
 from zope.schema.vocabulary import SimpleVocabulary
 
+import itertools
+
 
 class PMConditionAwareCollectionVocabulary(CachedCollectionVocabulary):
     implements(IVocabularyFactory)
@@ -1993,6 +1995,44 @@ class ItemCopyGroupsVocabulary(CopyGroupsVocabulary):
 
 
 ItemCopyGroupsVocabularyFactory = ItemCopyGroupsVocabulary()
+
+
+class SelectableCommitteeAttendeesVocabulary(object):
+    """ """
+
+    implements(IVocabularyFactory)
+
+    def __call___cachekey(method, self, context):
+        '''cachekey method for self.__call__.'''
+        date = get_cachekey_volatile(
+            'Products.PloneMeeting.vocabularies.selectable_committee_attendees_vocabulary')
+        return date, repr(context)
+
+    @ram.cache(__call___cachekey)
+    def __call__(self, context):
+        terms = []
+        # as vocabulary is used in a DataGridField
+        # context is often NO_VALUE...
+        if not hasattr(context, "getTagName"):
+            context = get_context_with_request(context)
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        # add missing terms
+        stored_term_uids = [row['default_attendees'] for row in cfg.getCommittees()]
+        # merge lists and remove duplicates
+        stored_term_uids = set(list(itertools.chain.from_iterable(stored_term_uids)))
+        missing_term_uids = [uid for uid in stored_term_uids
+                             if uid not in cfg.getOrderedCommitteeContacts()]
+        missing_terms = uuidsToObjects(missing_term_uids)
+        selectable_hps = uuidsToObjects(cfg.getOrderedCommitteeContacts(), ordered=True)
+        for hp in selectable_hps + missing_terms:
+            hp_uid = hp.UID()
+            term = SimpleTerm(hp_uid, hp_uid, hp.get_short_title())
+            terms.append(term)
+        return SimpleVocabulary(terms)
+
+
+SelectableCommitteeAttendeesVocabularyFactory = SelectableCommitteeAttendeesVocabulary()
 
 
 class ContainedAnnexesVocabulary(object):

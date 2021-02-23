@@ -6,6 +6,8 @@ from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.contact.plonegroup.config import get_registry_organizations
 from collective.dexteritytextindexer.directives import searchable
 from collective.dexteritytextindexer.interfaces import IDynamicTextIndexExtender
+from collective.z3cform.datagridfield import BlockDataGridFieldFactory
+from collective.z3cform.datagridfield import DictRow
 from copy import deepcopy
 from datetime import datetime
 from datetime import timedelta
@@ -43,6 +45,8 @@ from Products.PloneMeeting.utils import _addManagedPermissions
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import displaying_available_items
 from Products.PloneMeeting.utils import get_annexes
+from Products.PloneMeeting.utils import get_context_with_request
+from Products.PloneMeeting.utils import get_datagridfield_column_value
 from Products.PloneMeeting.utils import get_next_meeting
 from Products.PloneMeeting.utils import get_states_before
 from Products.PloneMeeting.utils import getCustomAdapter
@@ -62,11 +66,9 @@ from zope.event import notify
 from zope.globalrequest import getRequest
 from zope.i18n import translate
 from zope.interface import implements
+from zope.interface import Interface
 from zope.interface import Invalid
 from zope.interface import invariant
-from zope.schema import Datetime
-from zope.schema import Int
-from zope.schema import TextLine
 from zope.schema.interfaces import IVocabularyFactory
 from zope.schema.vocabulary import SimpleTerm
 from zope.schema.vocabulary import SimpleVocabulary
@@ -91,6 +93,43 @@ def assembly_constraint(value):
     return True
 
 
+class ICommittesRowSchema(Interface):
+    """Schema for DataGridField widget's row of field 'committees'."""
+
+    label = schema.Choice(
+        title=_("Committee label"),
+        vocabulary='Products.PloneMeeting.content.meeting.selectable_committees_vocabulary',
+        required=True,
+    )
+
+    convocation_date = schema.Date(
+        title=_("Committee convocation date"),
+        required=False,
+    )
+
+    date = schema.Datetime(
+        title=_("Committee date and time"),
+        required=False,
+    )
+
+    place = schema.TextLine(
+        title=_("Committee place"),
+        required=False,
+    )
+
+    assembly = schema.Text(
+        title=_("Committee assembly"),
+        required=False,
+    )
+
+    attendees = schema.List(
+        title=_("Committee attendees"),
+        value_type=schema.Choice(
+            vocabulary="Products.PloneMeeting.vocabularies.selectable_committee_attendees_vocabulary"),
+        required=False,
+    )
+
+
 class IMeeting(IDXMeetingContent):
     """
         Meeting schema
@@ -99,38 +138,81 @@ class IMeeting(IDXMeetingContent):
     # manage title, hidden but indexed
     searchable("title")
     form.omitted('title')
-    title = TextLine(
+    title = schema.TextLine(
         title=_(u'title_title', default=u'Title'),
         required=True)
 
     form.widget('date', DatetimeFieldWidget, show_today_link=True, show_time=True)
-    date = Datetime(
+    date = schema.Datetime(
         title=_(u'title_date'),
         required=True)
 
     form.widget('start_date', DatetimeFieldWidget, show_today_link=True, show_time=True)
-    start_date = Datetime(
+    start_date = schema.Datetime(
         title=_(u'title_start_date'),
         required=False)
 
     form.widget('mid_date', DatetimeFieldWidget, show_today_link=True, show_time=True)
-    mid_date = Datetime(
+    mid_date = schema.Datetime(
         title=_(u'title_mid_date'),
         required=False)
 
     form.widget('end_date', DatetimeFieldWidget, show_today_link=True, show_time=True)
-    end_date = Datetime(
+    end_date = schema.Datetime(
         title=_(u'title_end_date'),
         required=False)
 
     form.widget('approval_date', DatetimeFieldWidget, show_today_link=True, show_time=True)
-    approval_date = Datetime(
+    approval_date = schema.Datetime(
         title=_(u'title_approval_date'),
         required=False)
 
     form.widget('convocation_date', DatetimeFieldWidget, show_today_link=True, show_time=True)
-    convocation_date = Datetime(
+    convocation_date = schema.Datetime(
         title=_(u'title_convocation_date'),
+        required=False)
+
+    searchable("place")
+    place = MasterSelectField(
+        title=_(u"title_place"),
+        vocabulary="Products.PloneMeeting.content.meeting.places_vocabulary",
+        # avoid a "No value" entry
+        required=True,
+        slave_fields=(
+            {'name': 'place_other',
+             'slaveID': '#form-widgets-place_other',
+             'action': 'enable',
+             'hide_values': (u'other'),
+             'siblings': True,
+             },
+            {'name': 'place_other',
+             'slaveID': '#form-widgets-place_other',
+             'action': 'show',
+             'hide_values': (u'other'),
+             'siblings': True,
+             },
+        ),
+    )
+
+    searchable("place_other")
+    place_other = schema.TextLine(
+        title=_(u"title_place_other"),
+        required=False)
+
+    form.widget('pre_meeting_date', DatetimeFieldWidget, show_today_link=True, show_time=True)
+    pre_meeting_date = schema.Datetime(
+        title=_(u'title_pre_meeting_date'),
+        required=False)
+
+    searchable("pre_meeting_place")
+    pre_meeting_place = schema.TextLine(
+        title=_(u"title_pre_meeting_place"),
+        required=False)
+
+    form.widget('extraordinary_session', RadioFieldWidget)
+    extraordinary_session = schema.Bool(
+        title=_(u'title_extraordinary_session'),
+        default=False,
         required=False)
 
     form.widget('assembly', PMTextAreaFieldWidget)
@@ -199,48 +281,28 @@ class IMeeting(IDXMeetingContent):
         required=False,
         allowed_mime_types=(u"text/html", ))
 
-    searchable("place")
-    place = MasterSelectField(
-        title=_(u"title_place"),
-        vocabulary="Products.PloneMeeting.content.meeting.places_vocabulary",
-        # avoid a "No value" entry
-        required=True,
-        slave_fields=(
-            {'name': 'place_other',
-             'slaveID': '#form-widgets-place_other',
-             'action': 'enable',
-             'hide_values': (u'other'),
-             'siblings': True,
-             },
-            {'name': 'place_other',
-             'slaveID': '#form-widgets-place_other',
-             'action': 'show',
-             'hide_values': (u'other'),
-             'siblings': True,
-             },
+    form.widget('committees',
+                BlockDataGridFieldFactory,
+                allow_reorder=True,
+                auto_append=False,
+                display_table_css_class="listing datagridwidget-table-view")
+    committees = schema.List(
+        title=_(u'title_committees'),
+        required=False,
+        value_type=DictRow(
+            schema=ICommittesRowSchema,
+            required=False
         ),
+        default=[],
     )
 
-    searchable("place_other")
-    place_other = TextLine(
-        title=_(u"title_place_other"),
-        required=False)
-
-    form.widget('pre_meeting_date', DatetimeFieldWidget, show_today_link=True, show_time=True)
-    pre_meeting_date = Datetime(
-        title=_(u'title_pre_meeting_date'),
-        required=False)
-
-    searchable("pre_meeting_place")
-    pre_meeting_place = TextLine(
-        title=_(u"title_pre_meeting_place"),
-        required=False)
-
-    form.widget('extraordinary_session', RadioFieldWidget)
-    extraordinary_session = schema.Bool(
-        title=_(u'title_extraordinary_session'),
-        default=False,
-        required=False)
+    searchable("committee_observations")
+    form.widget('committee_observations', PMRichTextFieldWidget)
+    committee_observations = RichText(
+        title=_(u"title_committee_observations"),
+        description=_("descr_field_vieawable_by_everyone"),
+        required=False,
+        allowed_mime_types=(u"text/html", ))
 
     searchable("in_and_out_moves")
     form.widget('in_and_out_moves', PMRichTextFieldWidget)
@@ -270,14 +332,6 @@ class IMeeting(IDXMeetingContent):
     form.widget('pre_observations', PMRichTextFieldWidget)
     pre_observations = RichText(
         title=_(u"title_pre_observations"),
-        description=_("descr_field_vieawable_by_everyone"),
-        required=False,
-        allowed_mime_types=(u"text/html", ))
-
-    searchable("committee_observations")
-    form.widget('committee_observations', PMRichTextFieldWidget)
-    committee_observations = RichText(
-        title=_(u"title_committee_observations"),
         description=_("descr_field_vieawable_by_everyone"),
         required=False,
         allowed_mime_types=(u"text/html", ))
@@ -314,13 +368,13 @@ class IMeeting(IDXMeetingContent):
         required=False,
         allowed_mime_types=(u"text/html", ))
 
-    meeting_number = Int(
+    meeting_number = schema.Int(
         title=_(u"title_meeting_number"),
         description=_("descr_field_reserved_to_meeting_managers"),
         default=-1,
         required=False)
 
-    first_item_number = Int(
+    first_item_number = schema.Int(
         title=_(u"title_first_item_number"),
         description=_("descr_field_reserved_to_meeting_managers"),
         default=-1,
@@ -339,10 +393,14 @@ class IMeeting(IDXMeetingContent):
                            'assembly_guests', 'assembly_proxies', 'assembly_staves',
                            'signatures', 'assembly_observations'])
 
+    model.fieldset('committees',
+                   label=_(u"fieldset_committees"),
+                   fields=['committees', 'committee_observations'])
+
     model.fieldset('details',
                    label=_(u"fieldset_details"),
                    fields=['in_and_out_moves', 'notes', 'observations',
-                           'pre_observations', 'committee_observations',
+                           'pre_observations',
                            'votes_observations', 'public_meeting_observations',
                            'secret_meeting_observations', 'authority_notice'])
 
@@ -659,6 +717,16 @@ class Meeting(Container):
         'convocation_date':
             {'optional': True,
              'condition': ''},
+        'place':
+            {'optional': True,
+             'condition': ""},
+        'place_other':
+            {'optional': False,
+             'condition': "python:view.show_field('place') and "
+                "(view.mode != 'display' or context.place == u'other')"},
+        'extraordinary_session':
+            {'optional': True,
+             'condition': ""},
         'assembly':
             {'optional': True,
              'condition': "python:'assembly' in view.shown_assembly_fields()"},
@@ -683,14 +751,10 @@ class Meeting(Container):
         'assembly_observations':
             {'optional': True,
              'condition': ""},
-        'place':
+        'committees':
             {'optional': True,
              'condition': ""},
-        'place_other':
-            {'optional': False,
-             'condition': "python:view.show_field('place') and "
-                "(view.mode != 'display' or context.place == u'other')"},
-        'extraordinary_session':
+        'committee_observations':
             {'optional': True,
              'condition': ""},
         'in_and_out_moves':
@@ -709,9 +773,6 @@ class Meeting(Container):
             {'optional': True,
              'condition': ""},
         'pre_observations':
-            {'optional': True,
-             'condition': ""},
-        'committee_observations':
             {'optional': True,
              'condition': ""},
         'votes_observations':
@@ -1913,3 +1974,28 @@ class PlacesVocabulary(object):
                                           default=u"Other")))
         return SimpleVocabulary(terms)
 PlacesVocabularyFactory = PlacesVocabulary()
+
+
+class SelectableCommitteesVocabulary(object):
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """ """
+        terms = []
+        # as vocabulary is used in a DataGridField
+        # context is often NO_VALUE or the dict...
+        if not hasattr(context, "getTagName"):
+            context = get_context_with_request(context)
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        # manage missing
+        stored_values = []
+        if IMeeting.providedBy(context):
+            stored_values = get_datagridfield_column_value(context.committees, "label")
+        for committee in cfg.getCommittees():
+            if committee['enabled'] == '1' or committee['row_id'] in stored_values:
+                terms.append(SimpleTerm(committee['row_id'],
+                                        committee['row_id'],
+                                        committee['label']))
+        return SimpleVocabulary(terms)
+SelectableCommitteesVocabularyFactory = SelectableCommitteesVocabulary()

@@ -57,4 +57,11 @@
     template="pm_selectreadonly_input.pt"
     layer="z3c.form.interfaces.IFormLayer" />
 
+  <!-- hidden for orderedselect -->
+  <z3c:widgetTemplate
+      mode="hidden"
+      widget="z3c.form.interfaces.IOrderedSelectWidget"
+      layer="z3c.form.interfaces.IFormLayer"
+      template="orderedselect_hidden.pt" />
+
 </configure>

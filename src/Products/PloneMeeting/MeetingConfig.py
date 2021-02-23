@@ -411,23 +411,6 @@ schema = Schema((
         write_permission="PloneMeeting: Write harmless config",
     ),
     LinesField(
-        name='orderedCommitteeContacts',
-        widget=InAndOutWidget(
-            description="OrderedCommitteeContacts",
-            description_msgid="ordered_committee_contacts_descr",
-            label='Orderedcommitteecontacts',
-            label_msgid='PloneMeeting_label_orderedCommitteeContacts',
-            i18n_domain='PloneMeeting',
-            size='20',
-        ),
-        schemata="assembly_and_signatures",
-        multiValued=1,
-        vocabulary_factory='Products.PloneMeeting.vocabularies.selectableassemblymembersvocabulary',
-        default=defValues.orderedCommitteeContacts,
-        enforceVocabulary=True,
-        write_permission="PloneMeeting: Write harmless config",
-    ),
-    LinesField(
         name='usedItemAttributes',
         widget=MultiSelectionWidget(
             description="UsedItemAttributes",
@@ -2451,6 +2434,23 @@ schema = Schema((
         schemata="votes",
         write_permission="PloneMeeting: Write risky config",
     ),
+    LinesField(
+        name='orderedCommitteeContacts',
+        widget=InAndOutWidget(
+            description="OrderedCommitteeContacts",
+            description_msgid="ordered_committee_contacts_descr",
+            label='Orderedcommitteecontacts',
+            label_msgid='PloneMeeting_label_orderedCommitteeContacts',
+            i18n_domain='PloneMeeting',
+            size='20',
+        ),
+        schemata="votes",
+        multiValued=1,
+        vocabulary_factory='Products.PloneMeeting.vocabularies.selectableassemblymembersvocabulary',
+        default=defValues.orderedCommitteeContacts,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write harmless config",
+    ),
     DataGridField(
         name='committees',
         widget=DataGridField._properties['widget'](
@@ -2465,7 +2465,7 @@ schema = Schema((
                         TextAreaColumn("Committee default assembly"),
                      'default_attendees':
                         MultiSelectColumn("Committe default attendees",
-                                          vocabulary="listSelectableAssemblyMembers"),
+                                          vocabulary="listSelectableCommitteeAttendees"),
                      'default_place':
                         Column("Committee default place"),
                      'enabled':
@@ -3185,6 +3185,23 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
         self.getField('powerObservers').set(self, value, **kwargs)
 
+    security.declareProtected(WriteRiskyConfig, 'setCommittees')
+
+    def setCommittees(self, value, **kwargs):
+        '''Overrides the field 'committees' mutator to manage
+           the 'row_id' column manually.  If empty, we need to add a
+           unique id into it.'''
+        # value contains a list of 'ZPublisher.HTTPRequest', to be compatible
+        # if we receive a 'dict' instead, we use v.get()
+        for v in value:
+            # don't process hidden template row as input data
+            if v.get('orderindex_', None) == "template_row_marker":
+                continue
+            if not v.get('row_id', None):
+                v['row_id'] = 'committee_{0}'.format(self.generateUniqueId())
+
+        self.getField('committees').set(self, value, **kwargs)
+
     security.declareProtected(WriteRiskyConfig, 'setMaxShownListings')
 
     def setMaxShownListings(self, value, **kwargs):
@@ -3422,12 +3439,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         res.insert(0, ('_none_', _z3c_form('No value')))
         return DisplayList(res)
 
-    security.declarePrivate('listSelectableAssemblyMembers')
+    security.declarePrivate('listSelectableCommitteeAttendees')
 
-    def listSelectableAssemblyMembers(self):
+    def listSelectableCommitteeAttendees(self):
         """ """
         vocab = get_vocab(
-            self, "Products.PloneMeeting.vocabularies.selectableassemblymembersvocabulary")
+            self, "Products.PloneMeeting.vocabularies.selectable_committee_attendees_vocabulary")
         res = [(term.value, term.title) for term in vocab._terms]
         return DisplayList(res)
 
@@ -3505,6 +3522,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         index = optional_fields.index('place')
         for contact_field in contact_fields:
             optional_fields.insert(index, contact_field)
+        index = optional_fields.index('committees') + 1
+        optional_fields.insert(index, 'committees_attendees')
         res = []
         for field in optional_fields:
             res.append(

@@ -746,15 +746,15 @@ input[readonly=""] {
     width: 665px;
 }
 
-/* center controls displayed on edit forms */
-body.template-edit div.formControls,
+/* controls displayed on edit forms */
+body.template-base_edit div.formControls,
 body.template-edit div.formControls,
 div.overlay div.formControls {
     text-align: center;
     position: sticky;
     bottom: 10px;
     background-color: rgba(210,210,210,0.5);
-    padding: 1em;
+    padding: 0.5em;
     border-radius: 3px;
     margin: 0em;
 }
@@ -2187,6 +2187,19 @@ div.static-infos {
 /* highlight the default item template in the itemtemplates configuration */
 a[href*="itemtemplates/default-empty-item-template/"] {
     font-weight: bold;
+}
+
+/* committees datagridfield edit on meeting */
+table.datagridwidget-table-view-block label {
+   vertical-align: super;
+}
+table.datagridwidget-table-view-block div.select-widget label,
+table.datagridwidget-table-view-block div.date-widget label,
+table.datagridwidget-table-view-block div.datetime-widget label {
+   vertical-align: sub;
+}
+.datagridwidget-table-view-block .datagridwidget-row {
+    border-bottom: 5px solid lightgrey;
 }
 /* </dtml-with> */
 

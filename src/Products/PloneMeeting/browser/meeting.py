@@ -25,6 +25,7 @@ from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import field_is_empty
 from Products.PloneMeeting.utils import redirect
 from z3c.form.contentprovider import ContentProviders
+from z3c.form.interfaces import HIDDEN_MODE
 from z3c.form.interfaces import IFieldsAndContentProvidersForm
 from zope.browserpage.viewpagetemplatefile import ViewPageTemplateFile
 from zope.contentprovider.provider import ContentProviderBase
@@ -72,6 +73,23 @@ def manage_label_assembly(the_form):
         if 'assembly_excused' in widgets or \
            'assembly_absents' in widgets:
             widgets['assembly'].label = _('title_attendees')
+
+
+def manage_committees(the_form):
+    """Depending on configuration, hide the assembly or attendees column."""
+    widget = the_form.w['committees']
+    # remove the "attendees" column unless used
+    column_index = 5
+    if 'committees_attendees' in the_form.used_attrs and \
+       field_is_empty(widget, "assembly"):
+        column_index = 4
+
+    hidden_column_name = widget.columns[column_index]['name']
+    widget.columns[column_index]['mode'] = HIDDEN_MODE
+    for row in widget.widgets:
+        for wdt in row.subform.widgets.values():
+            if wdt.__name__ == hidden_column_name:
+                wdt.mode = HIDDEN_MODE
 
 
 def manage_field_attendees(the_form):
@@ -170,6 +188,7 @@ class MeetingDefaultView(DefaultView, BaseMeetingView):
     def _update(self):
         super(MeetingDefaultView, self)._update()
         manage_label_assembly(self)
+        manage_committees(self)
 
 
 def _get_default_attendees(context):
@@ -326,6 +345,7 @@ class MeetingEdit(DefaultEditForm, BaseMeetingView):
                 self.w[k] = v
         manage_label_assembly(self)
         manage_field_attendees(self)
+        manage_committees(self)
 
 
 class MeetingAddForm(DefaultAddForm, BaseMeetingView):

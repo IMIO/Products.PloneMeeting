@@ -309,10 +309,22 @@ def fieldIsEmpty(name, obj, useParamValue=False, value=None):
         return not value
 
 
-def field_is_empty(widget):
+def get_datagridfield_column_value(value, column):
+    """Returns every values of a datagridfield column."""
+    value = [row[column] for row in value if row[column]]
+    # merge lists and remove duplicates
+    if value and hasattr(value[0], "__iter__"):
+        value = set(list(itertools.chain.from_iterable(value)))
+    return value
+
+
+def field_is_empty(widget, column=None):
     """ """
     if isinstance(widget.value, RichTextValue):
         value = widget.value.raw
+    elif hasattr(widget, "columns"):
+        # DataGridField
+        value = get_datagridfield_column_value(widget.value, column)
     else:
         value = widget.value
     if isinstance(value, (str, unicode)):
@@ -997,7 +1009,8 @@ def get_dx_widget(obj, field_name, mode=DISPLAY_MODE):
     alsoProvides(widget, IContextAware)
     widget.mode = mode
     widget.update()
-    widget.field.allowed_mime_types = ['text/html']
+    if hasattr(widget.field, "allowed_mime_types"):
+        widget.field.allowed_mime_types = ['text/html']
     # this will set widget.__name__
     locate(widget, None, field_name)
     return widget

@@ -20,7 +20,7 @@ to use <fieldset> in the edit form.
                    fieldset request/fieldset|options/fieldset|default_fieldset;
                    fields python: view.fields(fieldsets);
                    dummy python:context.at_isEditable(fields);
-                   portal_type python:context.meta_type in ['Meeting', 'MeetingItem',] and context.meta_type.lower() or context.getPortalTypeName().lower().replace(' ', '_');
+                   portal_type python:context.meta_type in ['MeetingItem',] and context.meta_type.lower() or context.getPortalTypeName().lower().replace(' ', '_');
                    portal_url nocall:context/portal_url;
                    portal portal_url/getPortalObject;
                    base_macros context/edit_macros/macros;
