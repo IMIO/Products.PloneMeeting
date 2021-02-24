@@ -76,20 +76,30 @@ def manage_label_assembly(the_form):
 
 
 def manage_committees(the_form):
-    """Depending on configuration, hide the assembly or attendees column."""
-    widget = the_form.w['committees']
+    """Depending on configuration, hide not used optional columns."""
+    column_indexes = []
+    widget = the_form.w.get('committees')
+    # not using committees?
+    if not widget:
+        return
     # remove the "attendees" column unless used
-    column_index = 5
     if 'committees_attendees' in the_form.used_attrs and \
        field_is_empty(widget, "assembly"):
-        column_index = 4
+        column_indexes.append(4)
+    else:
+        column_indexes.append(5)
+    # remove the "convocation_date" column unless used
+    if 'committees_convocation_date' in the_form.used_attrs and \
+       field_is_empty(widget, "convocation_date"):
+        column_indexes.append(1)
 
-    hidden_column_name = widget.columns[column_index]['name']
-    widget.columns[column_index]['mode'] = HIDDEN_MODE
-    for row in widget.widgets:
-        for wdt in row.subform.widgets.values():
-            if wdt.__name__ == hidden_column_name:
-                wdt.mode = HIDDEN_MODE
+    for column_index in column_indexes:
+        hidden_column_name = widget.columns[column_index]['name']
+        widget.columns[column_index]['mode'] = HIDDEN_MODE
+        for row in widget.widgets:
+            for wdt in row.subform.widgets.values():
+                if wdt.__name__ == hidden_column_name:
+                    wdt.mode = HIDDEN_MODE
 
 
 def manage_field_attendees(the_form):
@@ -373,6 +383,7 @@ class MeetingAddForm(DefaultAddForm, BaseMeetingView):
                 self.w[k] = v
         manage_label_assembly(self)
         manage_field_attendees(self)
+        manage_committees(self)
 
 
 class MeetingAdd(DefaultAddView):

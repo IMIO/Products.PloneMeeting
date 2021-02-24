@@ -1531,20 +1531,31 @@ class ItemNotPresentTypeVocabulary(object):
 ItemNotPresentTypeVocabularyFactory = ItemNotPresentTypeVocabulary()
 
 
-class SignatureNumberVocabulary(object):
+class NumbersVocabulary(object):
     """ """
     implements(IVocabularyFactory)
 
-    def __call__(self, context):
+    def __call__(self, context, start=1, end=21):
         res = []
-        for signature_number in range(1, 21):
-            # make signature_number a str
-            sign_num_str = str(signature_number)
-            res.append(SimpleTerm(sign_num_str, sign_num_str, sign_num_str))
+        for number in range(start, end):
+            # make number a str
+            num_str = str(number)
+            res.append(SimpleTerm(num_str, num_str, num_str))
         return SimpleVocabulary(res)
 
 
-SignatureNumberVocabularyFactory = SignatureNumberVocabulary()
+NumbersVocabularyFactory = NumbersVocabulary()
+
+
+class NumbersFromZeroVocabulary(NumbersVocabulary):
+    """ """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context, start=0, end=11):
+        return super(NumbersFromZeroVocabulary, self).__call__(
+            start, end)
+
+NumbersFromZeroVocabularyFactory = NumbersFromZeroVocabulary()
 
 
 class ItemAllStatesVocabulary(object):
@@ -2043,6 +2054,24 @@ class SelectableCommitteesVocabulary(object):
 
     def __call__(self, context, term_title_attr="label"):
         """ """
+        def _add_suppl(committee, enabled=True):
+            suppl_terms = []
+            for suppl in range(int(committee['supplements'])):
+                suppl_num = suppl + 1
+                term_id = u"{0}__suppl__{1}".format(committee['row_id'], suppl_num)
+                term_title = committee[term_title_attr]
+                if not enabled:
+                    term_title = translate(
+                        '${element_title} (Inactive)',
+                        domain='PloneMeeting',
+                        mapping={'element_title': safe_unicode(term_title)},
+                        context=context.REQUEST)
+                term_title = u"{0} (Suppl. {1})".format(term_title, suppl_num)
+                suppl_terms.append(SimpleTerm(term_id,
+                                              term_id,
+                                              term_title))
+            return suppl_terms
+
         terms = []
         # as vocabulary is used in a DataGridField
         # context is often NO_VALUE or the dict...
@@ -2064,17 +2093,22 @@ class SelectableCommitteesVocabulary(object):
                 terms.append(SimpleTerm(committee['row_id'],
                                         committee['row_id'],
                                         committee[term_title_attr]))
+                # manage supplements
+                terms += _add_suppl(committee)
         # when displayed in faceted, include disabled elements
         if not is_item and not is_meeting:
             for committee in cfg.getCommittees():
                 if committee['enabled'] == '0':
-                    label = translate('${element_title} (Inactive)',
-                                      domain='PloneMeeting',
-                                      mapping={'element_title': safe_unicode(committee[term_title_attr])},
-                                      context=context.REQUEST)
+                    label = translate(
+                        '${element_title} (Inactive)',
+                        domain='PloneMeeting',
+                        mapping={'element_title': safe_unicode(committee[term_title_attr])},
+                        context=context.REQUEST)
                     terms.append(SimpleTerm(committee['row_id'],
                                             committee['row_id'],
                                             label))
+                    # manage supplements
+                    terms += _add_suppl(committee, enabled=False)
         return SimpleVocabulary(terms)
 
 SelectableCommitteesVocabularyFactory = SelectableCommitteesVocabulary()

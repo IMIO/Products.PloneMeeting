@@ -804,7 +804,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.versionateAdviceIfGivenAndItemModified = True
         self.customAdvisers = []
 
-        # Votes parameters -----------------------------------------------------
+        # Votes and committees parameters --------------------------------------
         self.usedPollTypes = ('freehand',
                               'no_vote',
                               'secret',
@@ -816,14 +816,15 @@ class MeetingConfigDescriptor(Descriptor):
         self.firstLinkedVoteUsedVoteValues = ('no', 'abstain')
         self.nextLinkedVotesUsedVoteValues = ('yes', )
         self.voteCondition = ''
+        # Committees
+        self.orderedCommitteeContacts = []
         self.committees = []
 
-        # Contacts parameters -----------------------------------------------------
+        # Contacts parameters --------------------------------------------------
         # bulk import of contacts using CSV related files
         self.addContactsCSV = False
         self.orderedContacts = []
         self.orderedItemInitiators = []
-        self.orderedCommitteeContacts = []
 
         # Doc parameters -------------------------------------------------------
         self.meetingItemTemplatesToStoreAsAnnex = []

@@ -2466,14 +2466,18 @@ schema = Schema((
                      'default_assembly':
                         TextAreaColumn("Committee default assembly"),
                      'default_attendees':
-                        MultiSelectColumn("Committe default attendees",
+                        MultiSelectColumn("Committee default attendees",
                                           vocabulary="listSelectableCommitteeAttendees"),
                      'default_place':
                         Column("Committee default place"),
+                     'supplements':
+                        SelectColumn("Committee supplements",
+                                     vocabulary="listNumbersFromZero",
+                                     default='0'),
                      'enabled':
-                        SelectColumn("Committe enabled?",
+                        SelectColumn("Committee enabled?",
                                      vocabulary="listBooleanVocabulary",
-                                     default='1')},
+                                     default='1'), },
             label='Committees',
             label_msgid='PloneMeeting_label_committees',
             i18n_domain='PloneMeeting',
@@ -2484,7 +2488,7 @@ schema = Schema((
         write_permission="PloneMeeting: Write risky config",
         columns=('row_id', 'label', 'acronym',
                  'default_assembly', 'default_attendees',
-                 'default_place', 'enabled'),
+                 'default_place', 'supplements', 'enabled'),
         allow_empty_rows=False,
     ),
     LinesField(
@@ -4635,6 +4639,15 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         res = self.listNumbers()
         res.add('custom', _('Custom validation level'))
         return res
+
+    security.declarePrivate('listNumbersFromZero')
+
+    def listNumbersFromZero(self):
+        '''Vocabulary that returns a list of number from 0 to 10.'''
+        res = []
+        for number in range(0, 11):
+            res.append((str(number), str(number)))
+        return DisplayList(tuple(res))
 
     security.declarePrivate('listNumbers')
 

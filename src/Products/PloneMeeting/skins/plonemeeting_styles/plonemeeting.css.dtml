@@ -746,9 +746,10 @@ input[readonly=""] {
     width: 665px;
 }
 
-/* controls displayed on edit forms */
+/* controls displayed on add and edit forms */
 body.template-base_edit div.formControls,
 body.template-edit div.formControls,
+body.template-meeting div.formControls,
 div.overlay div.formControls {
     text-align: center;
     position: sticky;

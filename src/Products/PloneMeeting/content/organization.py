@@ -32,7 +32,7 @@ class ICertifiedSignaturesRowSchema(Interface):
     signature_number = schema.Choice(
         title=_("Certified signatures signature number"),
         description=_("Select the signature number, keep signatures ordered by number."),
-        vocabulary='Products.PloneMeeting.vocabularies.signaturenumbervocabulary',
+        vocabulary='Products.PloneMeeting.vocabularies.numbersvocabulary',
         required=True,
     )
 

@@ -4290,7 +4290,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # items having committee 1 and committee 3
         # items having committee 1 and committee 3 and committee 4
         # for order, rely on order defined in MeetingConfig.committees DataGridField
-        ordered_committees = [cfg_committee['row_id'] for cfg_committee in cfg.getCommittees()]
+        ordered_committees = self.getField('committees').Vocabulary(self).keys()
         # if order changed in config, we keep it, do not rely on order defined on item
         pre_orders = []
         for committee in committees:

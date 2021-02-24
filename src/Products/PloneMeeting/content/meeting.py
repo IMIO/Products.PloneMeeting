@@ -100,13 +100,13 @@ class ICommittesRowSchema(Interface):
         required=True,
     )
 
-    convocation_date = schema.Date(
-        title=_("Committee convocation date"),
+    date = schema.Datetime(
+        title=_("Committee date and time"),
         required=False,
     )
 
-    date = schema.Datetime(
-        title=_("Committee date and time"),
+    convocation_date = schema.Date(
+        title=_("Committee convocation date"),
         required=False,
     )
 

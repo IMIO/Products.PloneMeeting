@@ -105,8 +105,10 @@
            name="Products.PloneMeeting.vocabularies.pmheldposition_usagesvocabulary" />
   <utility component=".vocabularies.HeldPositionDefaultsVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.pmheldposition_defaultsvocabulary" />
-  <utility component=".vocabularies.SignatureNumberVocabularyFactory"
-           name="Products.PloneMeeting.vocabularies.signaturenumbervocabulary" />
+  <utility component=".vocabularies.NumbersVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.numbersvocabulary" />
+  <utility component=".vocabularies.NumbersFromZeroVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.numbersfromzerovocabulary" />
 
   <!-- PMOrganization vocabularies -->
   <utility component=".vocabularies.ItemAllStatesVocabularyFactory"
