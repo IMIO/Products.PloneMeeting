@@ -2,21 +2,8 @@
 #
 # File: config.py
 #
-# Copyright (c) 2015 by Imio.be
-# Generator: ArchGenXML Version 2.7
-#            http://plone.org/products/archgenxml
-#
 # GNU General Public License (GPL)
 #
-
-# Product configuration.
-#
-# The contents of this module will be imported into __init__.py, the
-# workflow configuration and every content type module.
-#
-# If you wish to perform custom configuration, you may put a file
-# AppConfig.py in your product's root directory. The items in there
-# will be included (by importing) in this file if found.
 
 from collections import OrderedDict
 from Products.CMFCore.permissions import setDefaultRoles
@@ -240,7 +227,7 @@ DEFAULT_COPIED_FIELDS = ['title', 'description', 'detailedDescription', 'motivat
                          'groupsInCharge', 'proposingGroupWithGroupInCharge', 'copyGroups']
 # extra fields kept when an item is cloned in the same meeting config,
 # so not the case when sent to another meeting config
-EXTRA_COPIED_FIELDS_SAME_MC = ['associatedGroups', 'category', 'classifier',
+EXTRA_COPIED_FIELDS_SAME_MC = ['associatedGroups', 'category', 'classifier', 'committees',
                                'optionalAdvisers', 'otherMeetingConfigsClonableTo',
                                'otherMeetingConfigsClonableToPrivacy', 'oralQuestion',
                                'toDiscuss', 'privacy', 'pollType', 'textCheckList',
@@ -353,6 +340,8 @@ ITEM_INSERT_METHODS = OrderedDict((
     # items having associated group 1 and associated group 3
     # items having associated group 1 and associated group 3 and associated group 4
     ('on_all_associated_groups', ['field_orderedAssociatedOrganizations', 'organization']),
+    # according to the committees
+    ('on_all_committees', ['field_committees']),
     # according to the item privacy;
     ('on_privacy', ['field_selectablePrivacies']),
     # according to the item toDiscuss;

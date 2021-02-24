@@ -2461,6 +2461,8 @@ schema = Schema((
                                visible=False),
                      'label':
                         Column("Committee label"),
+                     'acronym':
+                        Column("Committee acronym"),
                      'default_assembly':
                         TextAreaColumn("Committee default assembly"),
                      'default_attendees':
@@ -2480,7 +2482,8 @@ schema = Schema((
         default=defValues.committees,
         allow_oddeven=True,
         write_permission="PloneMeeting: Write risky config",
-        columns=('row_id', 'label', 'default_assembly', 'default_attendees',
+        columns=('row_id', 'label', 'acronym',
+                 'default_assembly', 'default_attendees',
                  'default_place', 'enabled'),
         allow_empty_rows=False,
     ),
@@ -4734,6 +4737,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 translate("header_getGroupsInCharge", domain=d, context=self.REQUEST))),
             ("groups_in_charge_acronym", u"{0} (groups_in_charge_acronym)".format(
                 translate("header_groups_in_charge_acronym", domain=d, context=self.REQUEST))),
+            ("committees_index", u"{0} (committees_index)".format(
+                translate("header_committees_index", domain=d, context=self.REQUEST))),
+            ("committees_index_acronym", u"{0} (committees_index_acronym)".format(
+                translate("header_committees_index_acronym", domain=d, context=self.REQUEST))),
             ("privacy", u"{0} (privacy)".format(
                 translate("header_privacy", domain=d, context=self.REQUEST))),
             ("pollType", u"{0} (pollType)".format(

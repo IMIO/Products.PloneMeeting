@@ -1012,33 +1012,6 @@ schema = Schema((
         write_permission="PloneMeeting: Write budget infos",
     ),
     StringField(
-        name='category',
-        widget=SelectionWidget(
-            condition="python: here.showCategory()",
-            format="select",
-            description="Category",
-            description_msgid="item_category_descr",
-            label='Category',
-            label_msgid='PloneMeeting_label_category',
-            i18n_domain='PloneMeeting',
-        ),
-        vocabulary='listCategories',
-    ),
-    StringField(
-        name='classifier',
-        widget=SelectionWidget(
-            condition="python: here.attributeIsUsed('classifier')",
-            format="select",
-            description="Classifier",
-            description_msgid="item_classifier_descr",
-            label='Classifier',
-            label_msgid='PloneMeeting_label_classifier',
-            i18n_domain='PloneMeeting',
-        ),
-        optional=True,
-        vocabulary='listClassifiers',
-    ),
-    StringField(
         name='proposingGroup',
         widget=SelectionWidget(
             condition="python: not here.attributeIsUsed('proposingGroupWithGroupInCharge')",
@@ -1095,6 +1068,50 @@ schema = Schema((
         optional=True,
         multiValued=1,
         vocabulary_factory='Products.PloneMeeting.vocabularies.itemassociatedgroupsvocabulary',
+        enforceVocabulary=True,
+    ),
+    StringField(
+        name='category',
+        widget=SelectionWidget(
+            condition="python: here.showCategory()",
+            format="select",
+            description="Category",
+            description_msgid="item_category_descr",
+            label='Category',
+            label_msgid='PloneMeeting_label_category',
+            i18n_domain='PloneMeeting',
+        ),
+        vocabulary='listCategories',
+    ),
+    StringField(
+        name='classifier',
+        widget=SelectionWidget(
+            condition="python: here.attributeIsUsed('classifier')",
+            format="select",
+            description="Classifier",
+            description_msgid="item_classifier_descr",
+            label='Classifier',
+            label_msgid='PloneMeeting_label_classifier',
+            i18n_domain='PloneMeeting',
+        ),
+        optional=True,
+        vocabulary='listClassifiers',
+    ),
+    LinesField(
+        name='committees',
+        widget=MultiSelectionWidget(
+            condition="python: here.attributeIsUsed('committees')",
+            size=10,
+            description="Committees",
+            description_msgid="committees_descr",
+            format="checkbox",
+            label='Committees',
+            label_msgid='PloneMeeting_label_committees',
+            i18n_domain='PloneMeeting',
+        ),
+        optional=True,
+        multiValued=1,
+        vocabulary_factory='Products.PloneMeeting.vocabularies.selectable_committees_vocabulary',
         enforceVocabulary=True,
     ),
     StringField(
@@ -4186,6 +4203,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             res = self._computeOrderOnGroupsInCharge(cfg)
         elif insertMethod == 'on_all_associated_groups':
             res = self._computeOrderOnAllAssociatedGroups(cfg)
+        elif insertMethod == 'on_all_committees':
+            res = self._computeOrderOnAllCommittees(cfg)
         elif insertMethod == 'on_privacy':
             privacy = self.getPrivacy()
             privacies = cfg.getSelectablePrivacies()
@@ -4249,6 +4268,37 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             else:
                 org = get_organization(associatedGroup)
                 pre_orders.append(org.get_order())
+        # now sort pre_orders and compute final index
+        pre_orders.sort()
+        res = float(0)
+        divisor = 1
+        for pre_order in pre_orders:
+            res += (float(pre_order) / divisor)
+            # we may manage up to 1000 different associated groups
+            divisor *= 1000
+        return res
+
+    def _computeOrderOnAllCommittees(self, cfg):
+        '''Helper method to compute inserting index when using insert method 'on_all_committees'.'''
+        committees = self.getCommittees()
+        # computing will generate following order :
+        # items having no committee
+        # items having committee 1 only
+        # items having committee 1 and committee 2
+        # items having committee 1 and committee 2 and committee 3
+        # items having committee 1 and committee 2 and committee 3 and committee 4
+        # items having committee 1 and committee 3
+        # items having committee 1 and committee 3 and committee 4
+        # for order, rely on order defined in MeetingConfig.committees DataGridField
+        ordered_committees = [cfg_committee['row_id'] for cfg_committee in cfg.getCommittees()]
+        # if order changed in config, we keep it, do not rely on order defined on item
+        pre_orders = []
+        for committee in committees:
+            try:
+                index = ordered_committees.index(committee)
+                pre_orders.append(index + 1)
+            except ValueError:
+                pre_orders.append(0)
         # now sort pre_orders and compute final index
         pre_orders.sort()
         res = float(0)

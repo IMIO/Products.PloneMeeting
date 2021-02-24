@@ -112,6 +112,17 @@
                 <span tal:condition="not:nocall:classifier">-</span>
             </div>
 
+            <tal:comment replace="nothing">Committees</tal:comment>
+            <div class="discreet" tal:condition="python: 'committees' in usedAttrs"
+                                  tal:define="committees context/getCommittees;">
+                <span class="item_attribute_label"
+                      i18n:translate="PloneMeeting_label_committees"></span>:&nbsp;&nbsp;
+                <tal:displayCommittees condition="committees">
+                    <span metal:use-macro="python: here.widget('committees', mode='view')" />
+                </tal:displayCommittees>
+                <span tal:condition="not: committees">-</span>
+            </div>
+
             <tal:comment replace="nothing">Advices</tal:comment>
             <div class="discreet" tal:condition="showAdvices"
                                   tal:define="advisers context/displayAdvisers;">
@@ -405,7 +416,9 @@
                          linkedItems python: context.getManuallyLinkedItems(only_viewable=True);
                          showManuallyLinkedItems python: 'manuallyLinkedItems' in usedAttrs or linkedItems;
                          class_to_use python: (predecessors or linkedItems) and 'item_attribute_label highlightValue' or 'item_attribute_label';">
-        <div id="linked-items" class="collapsible discreet not-auto-collapsible-activable" onclick="toggleDetails('collapsible-linked-items', toggle_parent_active=true, parent_tag=null, load_view='@@load_linked_items');">
+        <div id="linked-items"
+             class="collapsible discreet not-auto-collapsible-activable"
+             onclick="toggleDetails('collapsible-linked-items', toggle_parent_active=true, parent_tag=null, load_view='@@load_linked_items');">
           <span tal:condition="showManuallyLinkedItems"
                 class="item_attribute_label"
                 tal:attributes="class class_to_use"

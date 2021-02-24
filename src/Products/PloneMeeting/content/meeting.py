@@ -45,8 +45,6 @@ from Products.PloneMeeting.utils import _addManagedPermissions
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import displaying_available_items
 from Products.PloneMeeting.utils import get_annexes
-from Products.PloneMeeting.utils import get_context_with_request
-from Products.PloneMeeting.utils import get_datagridfield_column_value
 from Products.PloneMeeting.utils import get_next_meeting
 from Products.PloneMeeting.utils import get_states_before
 from Products.PloneMeeting.utils import getCustomAdapter
@@ -98,7 +96,7 @@ class ICommittesRowSchema(Interface):
 
     label = schema.Choice(
         title=_("Committee label"),
-        vocabulary='Products.PloneMeeting.content.meeting.selectable_committees_vocabulary',
+        vocabulary='Products.PloneMeeting.vocabularies.selectable_committees_vocabulary',
         required=True,
     )
 
@@ -1974,28 +1972,3 @@ class PlacesVocabulary(object):
                                           default=u"Other")))
         return SimpleVocabulary(terms)
 PlacesVocabularyFactory = PlacesVocabulary()
-
-
-class SelectableCommitteesVocabulary(object):
-    implements(IVocabularyFactory)
-
-    def __call__(self, context):
-        """ """
-        terms = []
-        # as vocabulary is used in a DataGridField
-        # context is often NO_VALUE or the dict...
-        if not hasattr(context, "getTagName"):
-            context = get_context_with_request(context)
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(context)
-        # manage missing
-        stored_values = []
-        if IMeeting.providedBy(context):
-            stored_values = get_datagridfield_column_value(context.committees, "label")
-        for committee in cfg.getCommittees():
-            if committee['enabled'] == '1' or committee['row_id'] in stored_values:
-                terms.append(SimpleTerm(committee['row_id'],
-                                        committee['row_id'],
-                                        committee['label']))
-        return SimpleVocabulary(terms)
-SelectableCommitteesVocabularyFactory = SelectableCommitteesVocabulary()

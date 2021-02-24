@@ -87,6 +87,20 @@ class ItemAssociatedGroupsAcronymColumn(AbbrColumn):
     header_help = u"header_associated_groups_acronym_help"
 
 
+class ItemCommitteesColumn(VocabularyColumn):
+    """A column that display the MeetingItem.committees."""
+    attrName = 'committees'
+    vocabulary = u'Products.PloneMeeting.vocabularies.selectable_committees_vocabulary'
+
+
+class ItemCommitteesAcronymColumn(VocabularyColumn):
+    """A column that display the MeetingItem.committees acronym."""
+    attrName = 'committees'
+    vocabulary = u'Products.PloneMeeting.vocabularies.selectable_committees_acronyms_vocabulary'
+    full_vocabulary = u'Products.PloneMeeting.vocabularies.selectable_committees_vocabulary'
+    header_help = u"header_committees_index_acronym_help"
+
+
 class ItemAdvicesColumn(BrowserViewCallColumn):
     """A column that display the MeetingItem advices."""
     view_name = 'advices-icons'

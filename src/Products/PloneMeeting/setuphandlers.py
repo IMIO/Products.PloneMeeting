@@ -60,6 +60,7 @@ indexInfos = {
     'preferred_meeting_date': ('DateIndex', {}),
     'getProposingGroup': ('FieldIndex', {}),
     'getRawClassifier': ('FieldIndex', {}),
+    'committees_index': ('KeywordIndex', {}),
     'getTakenOverBy': ('FieldIndex', {}),
     'indexAdvisers': ('KeywordIndex', {}),
     'item_boolean_indexes': ('KeywordIndex', {}),

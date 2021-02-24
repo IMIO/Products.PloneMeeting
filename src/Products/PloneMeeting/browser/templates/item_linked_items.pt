@@ -5,7 +5,6 @@
     <tal:predecessors define="linkedItems predecessors">
         <metal:linkedItems use-macro="here/@@pm-macros/linkedItems" />
     </tal:predecessors>
-    <span tal:condition="not: predecessors">-</span>
     <div style="clear: both;" />
     <tal:manuallyLinkedItems define="manuallyLinkedItems python: context.getManuallyLinkedItems(only_viewable=True);
                                      showManuallyLinkedItems python: 'manuallyLinkedItems' in usedAttrs or manuallyLinkedItems;"

@@ -24,8 +24,6 @@
       name="Products.PloneMeeting.content.category.category_mapping_when_cloning_to_other_mc_vocabulary" />
     <utility name="Products.PloneMeeting.content.meeting.places_vocabulary"
              component=".meeting.PlacesVocabularyFactory" />
-    <utility name="Products.PloneMeeting.content.meeting.selectable_committees_vocabulary"
-             component=".meeting.SelectableCommitteesVocabularyFactory" />
 
     <!-- Schema policies -->
     <utility factory=".meeting.MeetingSchemaPolicy"

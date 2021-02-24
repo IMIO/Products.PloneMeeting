@@ -246,6 +246,8 @@
   <adapter name="get_full_title" factory=".indexes.get_full_title" />
   <adapter name="contained_uids" factory=".indexes.contained_uids_item" />
   <adapter name="contained_uids" factory=".indexes.contained_uids_meeting" />
+  <adapter name="committees_index" factory=".indexes.committees_index_item" />
+  <adapter name="committees_index" factory=".indexes.committees_index_meeting" />
   <!-- content_category_uid for MeetingItem until it is DX -->
   <adapter name="content_category_uid" factory=".indexes.content_category_uid_item" />
 

@@ -717,53 +717,6 @@ def getCustomSchemaFields(baseSchema, completedSchema, cols):
     return res
 
 
-# ------------------------------------------------------------------------------
-def getDateFromRequest(day, month, year, start):
-    '''This method produces a DateTime instance from info coming from a request.
-       p_hour and p_month may be ommitted. p_start is a bool indicating if the
-       date will be used as start date or end date; this will allow us to know
-       how to fill p_hour and p_month if they are ommitted. If _year is
-       ommitted, we will return a date near the Big bang (if p_start is True)
-       or near the Apocalypse (if p_start is False). p_day, p_month and p_year
-       are required to be valid string representations of integers.'''
-    # Determine day
-    if not day.strip() or (day == '00'):
-        if start:
-            day = 1
-        else:
-            day = 30
-    else:
-        day = int(day)
-    # Determine month
-    if not month.strip() or (month == '00'):
-        if start:
-            month = 1
-        else:
-            month = 12
-    else:
-        month = int(month)
-    if (month == 2) and (day == 30):
-        day = 28
-    # Determine year
-    if not year.strip() or (year == '0000'):
-        if start:
-            year = 1980
-        else:
-            year = 3000
-    else:
-        year = int(year)
-    try:
-        res = DateTime('%d/%d/%d' % (month, day, year))
-    except DateTime.DateError:
-        # The date entered by the user is invalid. Take a default date.
-        if start:
-            res = DateTime('1980/01/01')
-        else:
-            res = DateTime('3000/12/31')
-    return res
-
-
-# ------------------------------------------------------------------------------
 def getDateFromDelta(aDate, delta):
     '''This function returns a DateTime instance, which is computed from a
        reference DateTime instance p_aDate to which a p_delta is applied.
