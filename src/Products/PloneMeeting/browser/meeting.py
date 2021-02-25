@@ -77,25 +77,34 @@ def manage_label_assembly(the_form):
 
 def manage_committees(the_form):
     """Depending on configuration, hide not used optional columns."""
-    column_indexes = []
+    hidden_columns = []
     widget = the_form.w.get('committees')
     # not using committees?
     if not widget:
         return
-    # remove the "attendees" column unless used
-    if 'committees_attendees' in the_form.used_attrs and \
-       field_is_empty(widget, "assembly"):
-        column_indexes.append(4)
-    else:
-        column_indexes.append(5)
-    # remove the "convocation_date" column unless used
-    if 'committees_convocation_date' in the_form.used_attrs and \
-       field_is_empty(widget, "convocation_date"):
-        column_indexes.append(1)
 
-    for column_index in column_indexes:
-        hidden_column_name = widget.columns[column_index]['name']
-        widget.columns[column_index]['mode'] = HIDDEN_MODE
+    # remove the "attendees" column unless used
+    if the_form.show_datagrid_column(widget, "committees", "attendees") and \
+       field_is_empty(widget, "assembly"):
+        hidden_columns.append("assembly")
+    else:
+        hidden_columns.append("attendees")
+
+    # remove the "signatures" column unless used
+    if not the_form.show_datagrid_column(widget, "committees", "signatures"):
+        hidden_columns.append("signatures")
+
+    # remove the "signatures" column unless used
+    if not the_form.show_datagrid_column(widget, "committees", "convocation_date"):
+        hidden_columns.append("convocation_date")
+
+    # hide columns
+    for column in widget.columns:
+        if column['name'] in hidden_columns:
+            column['mode'] = HIDDEN_MODE
+
+    # hide widgets in rows
+    for hidden_column_name in hidden_columns:
         for row in widget.widgets:
             for wdt in row.subform.widgets.values():
                 if wdt.__name__ == hidden_column_name:
@@ -113,6 +122,13 @@ def manage_field_attendees(the_form):
     the_form.widgets._data_keys.data.remove("attendees_edit_provider")
     the_form.widgets._data_values = [v for v in the_form.widgets._data_values
                                      if not v.__name__ == "attendees_edit_provider"]
+
+
+def manage_groups(the_form):
+    """Hide empty groups (fieldsets)."""
+    groups = the_form.groups
+    groups = [group for group in the_form.groups if group.fields]
+    the_form.groups = groups
 
 
 class BaseMeetingView(object):
@@ -141,10 +157,20 @@ class BaseMeetingView(object):
 
     def show_field(self, field_name):
         '''Show the p_field_name field?
-           Must be enabled and or not empty.'''
+           Must be enabled or not empty.'''
         return field_name in self.used_attrs or \
             (self.context.__class__.__name__ == 'Meeting' and
              getattr(self.context, field_name, None))
+
+    def show_datagrid_column(self, widget, field_name, column_name):
+        '''Show the p_column_name or p_field_name DataGridField?
+           Must be enabled or not empty.'''
+        res = True
+        used_attr_name = "{0}_{1}".format(field_name, column_name)
+        if used_attr_name not in self.used_attrs and \
+           field_is_empty(widget, column_name):
+            res = False
+        return res
 
     def show_attendees_fields(self):
         '''Display attendee related fields in view/edit?'''
@@ -356,6 +382,7 @@ class MeetingEdit(DefaultEditForm, BaseMeetingView):
         manage_label_assembly(self)
         manage_field_attendees(self)
         manage_committees(self)
+        manage_groups(self)
 
 
 class MeetingAddForm(DefaultAddForm, BaseMeetingView):
@@ -384,6 +411,7 @@ class MeetingAddForm(DefaultAddForm, BaseMeetingView):
         manage_label_assembly(self)
         manage_field_attendees(self)
         manage_committees(self)
+        manage_groups(self)
 
 
 class MeetingAdd(DefaultAddView):

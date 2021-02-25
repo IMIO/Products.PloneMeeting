@@ -3530,6 +3530,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         for contact_field in contact_fields:
             optional_fields.insert(index, contact_field)
         index = optional_fields.index('committees') + 1
+        # committees columns
+        optional_fields.insert(index, 'committees_signatures')
+        optional_fields.insert(index, 'committees_convocation_date')
         optional_fields.insert(index, 'committees_attendees')
         res = []
         for field in optional_fields:

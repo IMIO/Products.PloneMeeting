@@ -95,37 +95,43 @@ class ICommittesRowSchema(Interface):
     """Schema for DataGridField widget's row of field 'committees'."""
 
     label = schema.Choice(
-        title=_("Committee label"),
+        title=_("title_committee_label"),
         vocabulary='Products.PloneMeeting.vocabularies.selectable_committees_vocabulary',
-        required=True,
-    )
+        required=True)
 
     date = schema.Datetime(
-        title=_("Committee date and time"),
-        required=False,
-    )
+        title=_("title_committee_date"),
+        required=False)
 
     convocation_date = schema.Date(
-        title=_("Committee convocation date"),
-        required=False,
-    )
+        title=_("title_committee_convocation_date"),
+        required=False)
 
     place = schema.TextLine(
-        title=_("Committee place"),
-        required=False,
-    )
+        title=_("title_committee_place"),
+        required=False)
 
-    assembly = schema.Text(
-        title=_("Committee assembly"),
-        required=False,
-    )
+    form.widget('assembly', PMTextAreaFieldWidget)
+    assembly = RichText(
+        title=_(u"title_committee_assembly"),
+        default_mime_type='text/plain',
+        allowed_mime_types=("text/plain", ),
+        output_mime_type='text/x-html-safe',
+        required=False)
+
+    form.widget('signatures', PMTextAreaFieldWidget)
+    signatures = RichText(
+        title=_(u"title_committee_signatures"),
+        default_mime_type='text/plain',
+        allowed_mime_types=("text/plain", ),
+        output_mime_type='text/x-html-safe',
+        required=False)
 
     attendees = schema.List(
-        title=_("Committee attendees"),
+        title=_("title_committee_attendees"),
         value_type=schema.Choice(
             vocabulary="Products.PloneMeeting.vocabularies.selectable_committee_attendees_vocabulary"),
-        required=False,
-    )
+        required=False)
 
 
 class IMeeting(IDXMeetingContent):
@@ -137,7 +143,7 @@ class IMeeting(IDXMeetingContent):
     searchable("title")
     form.omitted('title')
     title = schema.TextLine(
-        title=_(u'title_title', default=u'Title'),
+        title=_(u'title_title'),
         required=True)
 
     form.widget('date', DatetimeFieldWidget, show_today_link=True, show_time=True)
@@ -628,6 +634,12 @@ def default_place(data):
     if "place" in cfg.getUsedMeetingAttributes():
         res = safe_unicode(cfg.getPlaces())
     return res
+
+
+@form.default_value(field=IMeeting['committees'])
+def default_committees(data):
+    import ipdb; ipdb.set_trace()
+    return []
 
 
 def get_all_used_held_positions(obj, include_new=False, the_objects=True):
