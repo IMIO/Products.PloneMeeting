@@ -3458,6 +3458,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         res = [(term.value, term.title) for term in vocab._terms]
         return DisplayList(res)
 
+    def get_committee(self, row_id):
+        """ """
+        for committee in self.getCommittees():
+            if committee['row_id'] == row_id:
+                return committee.copy()
+
     security.declarePublic('getConfigGroup')
 
     def getConfigGroup(self, full=False, **kwargs):

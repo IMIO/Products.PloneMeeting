@@ -2083,7 +2083,7 @@ class SelectableCommitteesVocabulary(object):
         stored_values = []
         is_item = is_meeting = False
         if IMeeting.providedBy(context):
-            stored_values = get_datagridfield_column_value(context.committees, "label")
+            stored_values = get_datagridfield_column_value(context.committees, "row_id")
             is_meeting = True
         elif IMeetingItem.providedBy(context):
             stored_values = context.getCommittees()

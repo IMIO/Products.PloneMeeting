@@ -469,4 +469,4 @@ def committees_index_meeting(obj):
     """
       Indexes the committees of a meeting into "committees_index" index.
     """
-    return get_datagridfield_column_value(obj.committees, "label")
+    return get_datagridfield_column_value(obj.committees, "row_id")

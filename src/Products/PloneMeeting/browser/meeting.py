@@ -77,11 +77,12 @@ def manage_label_assembly(the_form):
 
 def manage_committees(the_form):
     """Depending on configuration, hide not used optional columns."""
+    # not using committees?
+    if "committees" not in the_form.used_attrs:
+        return
+
     hidden_columns = []
     widget = the_form.w.get('committees')
-    # not using committees?
-    if not widget:
-        return
 
     # check what columns to hide
     for optional_column in Meeting.FIELD_INFOS['committees']['optional_columns']:

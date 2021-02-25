@@ -25,6 +25,7 @@ from plone.app.uuid.utils import uuidToCatalogBrain
 from plone.dexterity.content import Container
 from plone.dexterity.schema import DexteritySchemaPolicy
 from plone.directives import form
+from plone.formwidget.datetime.z3cform.widget import DateFieldWidget
 from plone.formwidget.datetime.z3cform.widget import DatetimeFieldWidget
 from plone.formwidget.masterselect import MasterSelectField
 from plone.memoize import ram
@@ -56,8 +57,8 @@ from Products.PloneMeeting.utils import notifyModifiedAndReindex
 from Products.PloneMeeting.utils import updateAnnexesAccess
 from Products.PloneMeeting.utils import validate_item_assembly_value
 from Products.PloneMeeting.widgets.pm_richtext import PMRichTextFieldWidget
+from Products.PloneMeeting.widgets.pm_textarea import get_textarea_value
 from Products.PloneMeeting.widgets.pm_textarea import PMTextAreaFieldWidget
-from Products.PloneMeeting.widgets.pm_textarea import render_textarea
 from z3c.form.browser.radio import RadioFieldWidget
 from zope import schema
 from zope.component import adapts
@@ -96,15 +97,17 @@ def assembly_constraint(value):
 class ICommittesRowSchema(Interface):
     """Schema for DataGridField widget's row of field 'committees'."""
 
-    label = schema.Choice(
-        title=_("title_committee_label"),
+    row_id = schema.Choice(
+        title=_("title_committee_row_id"),
         vocabulary='Products.PloneMeeting.vocabularies.selectable_committees_vocabulary',
         required=True)
 
+    form.widget('date', DatetimeFieldWidget, show_today_link=True, show_time=True)
     date = schema.Datetime(
         title=_("title_committee_date"),
         required=False)
 
+    form.widget('convocation_date', DateFieldWidget, show_today_link=True)
     convocation_date = schema.Date(
         title=_("title_committee_convocation_date"),
         required=False)
@@ -646,7 +649,7 @@ def default_committees(data):
             if committee['enabled'] == '0':
                 continue
             data = {}
-            data['label'] = committee['row_id']
+            data['row_id'] = committee['row_id']
             # manage default_values
             for field_id, field_value in committee.items():
                 if not field_id.startswith('default_'):
@@ -864,66 +867,65 @@ class Meeting(Container):
 
     def get_assembly(self, for_display=True, striked=True, mark_empty_tags=False):
         """ """
-        res = ''
-        if self.assembly is not None:
-            res = self.assembly.output
-        if res and for_display:
-            res = render_textarea(res, self, striked=striked, mark_empty_tags=mark_empty_tags)
-        return res
+        return get_textarea_value(
+            self.assembly,
+            self,
+            for_display=for_display,
+            striked=striked,
+            mark_empty_tags=mark_empty_tags)
 
     def get_assembly_excused(self, for_display=True, striked=True, mark_empty_tags=False):
         """ """
-        res = ''
-        if self.assembly_excused is not None:
-            res = self.assembly_excused.output
-        if res and for_display:
-            res = render_textarea(res, self, striked=striked, mark_empty_tags=mark_empty_tags)
-        return res
+        return get_textarea_value(
+            self.assembly_excused,
+            self,
+            for_display=for_display,
+            striked=striked,
+            mark_empty_tags=mark_empty_tags)
 
     def get_assembly_absents(self, for_display=True, striked=True, mark_empty_tags=False):
         """ """
-        res = ''
-        if self.assembly_absents is not None:
-            res = self.assembly_absents.output
-        if res and for_display:
-            res = render_textarea(res, self, striked=striked, mark_empty_tags=mark_empty_tags)
-        return res
+        return get_textarea_value(
+            self.assembly_absents,
+            self,
+            for_display=for_display,
+            striked=striked,
+            mark_empty_tags=mark_empty_tags)
 
     def get_assembly_guests(self, for_display=True, striked=True, mark_empty_tags=False):
         """ """
-        res = ''
-        if self.assembly_guests is not None:
-            res = self.assembly_guests.output
-        if res and for_display:
-            res = render_textarea(res, self, striked=striked, mark_empty_tags=mark_empty_tags)
-        return res
+        return get_textarea_value(
+            self.assembly_guests,
+            self,
+            for_display=for_display,
+            striked=striked,
+            mark_empty_tags=mark_empty_tags)
 
     def get_assembly_staves(self, for_display=True, striked=True, mark_empty_tags=False):
         """ """
-        res = ''
-        if self.assembly_staves is not None:
-            res = self.assembly_staves.output
-        if res and for_display:
-            res = render_textarea(res, self, striked=striked, mark_empty_tags=mark_empty_tags)
-        return res
+        return get_textarea_value(
+            self.assembly_staves,
+            self,
+            for_display=for_display,
+            striked=striked,
+            mark_empty_tags=mark_empty_tags)
 
     def get_assembly_proxies(self, for_display=True, striked=True, mark_empty_tags=False):
         """ """
-        res = ''
-        if self.assembly_proxies is not None:
-            res = self.assembly_proxies.output
-        if res and for_display:
-            res = render_textarea(res, self, striked=striked, mark_empty_tags=mark_empty_tags)
-        return res
+        return get_textarea_value(
+            self.assembly_proxies,
+            self,
+            for_display=for_display,
+            striked=striked,
+            mark_empty_tags=mark_empty_tags)
 
-    def get_signatures(self, for_display=False, striked=True, mark_empty_tags=False):
+    def get_signatures(self, for_display=False, mark_empty_tags=False):
         """ """
-        res = ''
-        if self.signatures is not None:
-            res = self.signatures.output
-        if res and for_display:
-            res = render_textarea(res, self, striked=striked, mark_empty_tags=mark_empty_tags)
-        return res
+        return get_textarea_value(
+            self.signatures,
+            self,
+            for_display=for_display,
+            mark_empty_tags=mark_empty_tags)
 
     def get_place(self, real=False):
         """ """
@@ -931,6 +933,37 @@ class Meeting(Container):
         if not real and self.place == u'other':
             place = self.place_other
         return place
+
+    def get_committee_info(self, row_id, column_name):
+        """ """
+        for committee in self.committees:
+            if committee['row_id'] == row_id:
+                return committee[column_name]
+
+    def get_committee_label(self, row_id):
+        """ """
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        committee = cfg.get_committee(row_id)
+        return committee and committee['label']
+
+    def get_committe_assembly(self, row_id, for_display=True, striked=True, mark_empty_tags=False):
+        """ """
+        value = self.get_committee_info(row_id, "assembly")
+        return get_textarea_value(
+            value,
+            self,
+            for_display=for_display,
+            mark_empty_tags=mark_empty_tags)
+
+    def get_committee_signatures(self, row_id, for_display=False, striked=True, mark_empty_tags=False):
+        """ """
+        value = self.get_committee_info(row_id, "signatures")
+        return get_textarea_value(
+            value,
+            self,
+            for_display=for_display,
+            mark_empty_tags=mark_empty_tags)
 
     def _available_items_query(self):
         '''Check docstring in IMeeting.'''

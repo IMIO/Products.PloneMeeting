@@ -14,6 +14,16 @@ class IPMTextAreaWidget(ITextAreaWidget):
     """Marker interface for PM textarea widget"""
 
 
+def get_textarea_value(value, obj, for_display=True, striked=True, mark_empty_tags=False):
+    """ """
+    res = ''
+    if value is not None:
+        res = value.output
+    if res and for_display:
+        res = render_textarea(res, obj, striked=striked, mark_empty_tags=mark_empty_tags)
+    return res
+
+
 def render_textarea(value, obj, striked=True, mark_empty_tags=True):
     """ """
     # turn to HTML, turn [[]] values to <strike></strike> and mark empty ending paragraphs

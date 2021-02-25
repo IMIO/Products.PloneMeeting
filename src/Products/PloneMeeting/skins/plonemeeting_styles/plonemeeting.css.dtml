@@ -2202,6 +2202,13 @@ table.datagridwidget-table-view-block div.datetime-widget label {
 .datagridwidget-table-view-block .datagridwidget-row {
     border-bottom: 5px solid lightgrey;
 }
+/* committees datagridfield edit/view on meeting,
+   when TextArea is empty, an error is displayed */
+div#formfield-form-widgets-committees div.error,
+table#form-widgets-committees div.error {
+   display: none;
+}
+
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */
