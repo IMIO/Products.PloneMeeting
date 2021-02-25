@@ -12,6 +12,7 @@ from copy import deepcopy
 from datetime import datetime
 from datetime import timedelta
 from imio.helpers.cache import cleanRamCacheFor
+from imio.helpers.content import richtextval
 from imio.prettylink.interfaces import IPrettyLink
 from persistent.list import PersistentList
 from persistent.mapping import PersistentMapping
@@ -67,6 +68,7 @@ from zope.interface import implements
 from zope.interface import Interface
 from zope.interface import Invalid
 from zope.interface import invariant
+from zope.schema import getFieldNamesInOrder
 from zope.schema.interfaces import IVocabularyFactory
 from zope.schema.vocabulary import SimpleTerm
 from zope.schema.vocabulary import SimpleVocabulary
@@ -119,18 +121,18 @@ class ICommittesRowSchema(Interface):
         output_mime_type='text/x-html-safe',
         required=False)
 
+    attendees = schema.List(
+        title=_("title_committee_attendees"),
+        value_type=schema.Choice(
+            vocabulary="Products.PloneMeeting.vocabularies.selectable_committee_attendees_vocabulary"),
+        required=False)
+
     form.widget('signatures', PMTextAreaFieldWidget)
     signatures = RichText(
         title=_(u"title_committee_signatures"),
         default_mime_type='text/plain',
         allowed_mime_types=("text/plain", ),
         output_mime_type='text/x-html-safe',
-        required=False)
-
-    attendees = schema.List(
-        title=_("title_committee_attendees"),
-        value_type=schema.Choice(
-            vocabulary="Products.PloneMeeting.vocabularies.selectable_committee_attendees_vocabulary"),
         required=False)
 
 
@@ -295,10 +297,7 @@ class IMeeting(IDXMeetingContent):
         required=False,
         value_type=DictRow(
             schema=ICommittesRowSchema,
-            required=False
-        ),
-        default=[],
-    )
+            required=False))
 
     searchable("committee_observations")
     form.widget('committee_observations', PMRichTextFieldWidget)
@@ -638,8 +637,35 @@ def default_place(data):
 
 @form.default_value(field=IMeeting['committees'])
 def default_committees(data):
-    import ipdb; ipdb.set_trace()
-    return []
+    tool = api.portal.get_tool('portal_plonemeeting')
+    cfg = tool.getMeetingConfig(data.context)
+    used_attrs = cfg.getUsedMeetingAttributes()
+    res = []
+    if "committees" in used_attrs:
+        for committee in cfg.getCommittees():
+            if committee['enabled'] == '0':
+                continue
+            data = {}
+            data['label'] = committee['row_id']
+            # manage default_values
+            for field_id, field_value in committee.items():
+                if not field_id.startswith('default_'):
+                    continue
+                real_field_id = field_id.replace('default_', '')
+                # do not set a default value for an optional field not enabled
+                if 'committees_{0}'.format(real_field_id) not in used_attrs:
+                    continue
+                # XXX workaround to remove when MeetingConfig will be DX
+                value = committee[field_id]
+                if real_field_id in ['assembly', 'signatures']:
+                    value = richtextval(value)
+                data[real_field_id] = value
+            # complete data
+            for field_name in getFieldNamesInOrder(ICommittesRowSchema):
+                if field_name not in data:
+                    data[field_name] = None
+            res.append(data)
+    return res
 
 
 def get_all_used_held_positions(obj, include_new=False, the_objects=True):
@@ -763,7 +789,8 @@ class Meeting(Container):
              'condition': ""},
         'committees':
             {'optional': True,
-             'condition': ""},
+             'condition': "",
+             'optional_columns': ['convocation_date', 'place', 'assembly', 'attendees', 'signatures']},
         'committee_observations':
             {'optional': True,
              'condition': ""},

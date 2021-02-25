@@ -311,6 +311,8 @@ def fieldIsEmpty(name, obj, useParamValue=False, value=None):
 
 def get_datagridfield_column_value(value, column):
     """Returns every values of a datagridfield column."""
+    if not value:
+        return []
     value = [row[column] for row in value if row[column]]
     # merge lists and remove duplicates
     if value and hasattr(value[0], "__iter__"):

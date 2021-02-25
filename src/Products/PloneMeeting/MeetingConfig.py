@@ -87,6 +87,7 @@ from Products.PloneMeeting.config import TOOL_FOLDER_RECURRING_ITEMS
 from Products.PloneMeeting.config import TOOL_FOLDER_SEARCHES
 from Products.PloneMeeting.config import WriteRiskyConfig
 from Products.PloneMeeting.content.meeting import IMeeting
+from Products.PloneMeeting.content.meeting import Meeting
 from Products.PloneMeeting.indexes import DELAYAWARE_ROW_ID_PATTERN
 from Products.PloneMeeting.indexes import REAL_ORG_UID_PATTERN
 from Products.PloneMeeting.interfaces import IMeetingAdviceWorkflowActions
@@ -2463,13 +2464,15 @@ schema = Schema((
                         Column("Committee label"),
                      'acronym':
                         Column("Committee acronym"),
+                     'default_place':
+                        Column("Committee default place"),
                      'default_assembly':
                         TextAreaColumn("Committee default assembly"),
                      'default_attendees':
                         MultiSelectColumn("Committee default attendees",
                                           vocabulary="listSelectableCommitteeAttendees"),
-                     'default_place':
-                        Column("Committee default place"),
+                     'default_signatures':
+                        TextAreaColumn("Committee default signatures"),
                      'supplements':
                         SelectColumn("Committee supplements",
                                      vocabulary="listNumbersFromZero",
@@ -2486,9 +2489,9 @@ schema = Schema((
         default=defValues.committees,
         allow_oddeven=True,
         write_permission="PloneMeeting: Write risky config",
-        columns=('row_id', 'label', 'acronym',
+        columns=('row_id', 'label', 'acronym', 'default_place',
                  'default_assembly', 'default_attendees',
-                 'default_place', 'supplements', 'enabled'),
+                 'default_signatures', 'supplements', 'enabled'),
         allow_empty_rows=False,
     ),
     LinesField(
@@ -3531,9 +3534,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             optional_fields.insert(index, contact_field)
         index = optional_fields.index('committees') + 1
         # committees columns
-        optional_fields.insert(index, 'committees_signatures')
-        optional_fields.insert(index, 'committees_convocation_date')
-        optional_fields.insert(index, 'committees_attendees')
+        committees_optional_columns = Meeting.FIELD_INFOS['committees']['optional_columns']
+        committees_optional_columns.reverse()
+        for column_name in committees_optional_columns:
+            optional_fields.insert(index, 'committees_{0}'.format(column_name))
         res = []
         for field in optional_fields:
             res.append(

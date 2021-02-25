@@ -83,20 +83,10 @@ def manage_committees(the_form):
     if not widget:
         return
 
-    # remove the "attendees" column unless used
-    if the_form.show_datagrid_column(widget, "committees", "attendees") and \
-       field_is_empty(widget, "assembly"):
-        hidden_columns.append("assembly")
-    else:
-        hidden_columns.append("attendees")
-
-    # remove the "signatures" column unless used
-    if not the_form.show_datagrid_column(widget, "committees", "signatures"):
-        hidden_columns.append("signatures")
-
-    # remove the "signatures" column unless used
-    if not the_form.show_datagrid_column(widget, "committees", "convocation_date"):
-        hidden_columns.append("convocation_date")
+    # check what columns to hide
+    for optional_column in Meeting.FIELD_INFOS['committees']['optional_columns']:
+        if not the_form.show_datagrid_column(widget, "committees", optional_column):
+            hidden_columns.append(optional_column)
 
     # hide columns
     for column in widget.columns:
