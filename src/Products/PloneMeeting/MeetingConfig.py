@@ -3458,11 +3458,29 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         res = [(term.value, term.title) for term in vocab._terms]
         return DisplayList(res)
 
+    # Committees related helpers -----------------------------------------------
     def get_committee(self, row_id):
         """ """
         for committee in self.getCommittees():
             if committee['row_id'] == row_id:
                 return committee.copy()
+
+    def get_committee_label(self, row_id):
+        """ """
+        committee = self.get_committee(row_id)
+        return committee and committee['label']
+
+    def get_supplements_for_committee(self, row_id=None, committee=None):
+        """Return supplements, may receive a p_row_id or a committee config,
+           this is used for validating changes between new and old committee config,
+           see validated_committees."""
+        res = []
+        committee = committee or self.get_committee(row_id)
+        for suppl in range(int(committee['supplements'])):
+            suppl_num = suppl + 1
+            suppl_id = u"{0}__suppl__{1}".format(committee['row_id'], suppl_num)
+            res.append(suppl_id)
+        return res
 
     security.declarePublic('getConfigGroup')
 
@@ -3654,6 +3672,27 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             brains = catalog(portal_type=self.getItemTypeName(), listType=removedIdentifier)
             if brains:
                 return _('error_list_types_identifier_removed_already_used',
+                         mapping={'url': brains[0].getURL()})
+
+    security.declarePrivate('validate_committees')
+
+    def validate_committees(self, value):
+        '''Validate the 'committees' field, already used may not be removed.'''
+        # use vocabulary managing committees to detect changes
+        vocab = get_vocab(
+            self,
+            "Products.PloneMeeting.vocabularies.selectable_committees_vocabulary",
+            only_factory=True)
+        stored_terms = vocab(self)
+        new_value = [v for v in value
+                     if v.get('orderindex_', None) != 'template_row_marker']
+        new_terms = vocab(self, cfg_committees=new_value)
+        removeds = [term.token for term in stored_terms if term.token not in new_terms]
+        catalog = api.portal.get_tool('portal_catalog')
+        for removed in removeds:
+            brains = catalog(portal_type=self.getItemTypeName(), committees_index=removed)
+            if brains:
+                return _('error_committee_row_id_removed_already_used',
                          mapping={'url': brains[0].getURL()})
 
     security.declarePrivate('validate_transitionsForPresentingAnItem')

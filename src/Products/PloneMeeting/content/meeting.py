@@ -99,7 +99,7 @@ class ICommittesRowSchema(Interface):
 
     row_id = schema.Choice(
         title=_("title_committee_row_id"),
-        vocabulary='Products.PloneMeeting.vocabularies.selectable_committees_vocabulary',
+        vocabulary='Products.PloneMeeting.vocabularies.meeting_selectable_committees_vocabulary',
         required=True)
 
     form.widget('date', DatetimeFieldWidget, show_today_link=True, show_time=True)
@@ -701,6 +701,7 @@ def get_all_used_held_positions(obj, include_new=False, the_objects=True):
         contacts = [brain.getObject() for brain in brains]
     return tuple(contacts)
 
+
 ########################################################################
 #                                                                      #
 #                    SAMPLE TO EXTEND SCHEMA                           #
@@ -934,22 +935,24 @@ class Meeting(Container):
             place = self.place_other
         return place
 
-    def get_committee_info(self, row_id, column_name):
-        """ """
-        for committee in self.committees:
-            if committee['row_id'] == row_id:
-                return committee[column_name]
+    def get_committee(self, row_id):
+        """Return infos about given p_row_id committee."""
+        if self.committees:
+            for committee in self.committees:
+                if committee['row_id'] == row_id:
+                    return committee.copy()
 
-    def get_committee_label(self, row_id):
-        """ """
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self)
-        committee = cfg.get_committee(row_id)
-        return committee and committee['label']
+    def get_committees(self):
+        """Return every defined committees row_id."""
+        row_ids = []
+        if self.committees:
+            for committee in self.committees or []:
+                row_ids.append(committee['row_id'])
+        return row_ids
 
     def get_committe_assembly(self, row_id, for_display=True, striked=True, mark_empty_tags=False):
         """ """
-        value = self.get_committee_info(row_id, "assembly")
+        value = self.get_committee(row_id)["assembly"]
         return get_textarea_value(
             value,
             self,
@@ -958,12 +961,41 @@ class Meeting(Container):
 
     def get_committee_signatures(self, row_id, for_display=False, striked=True, mark_empty_tags=False):
         """ """
-        value = self.get_committee_info(row_id, "signatures")
+        value = self.get_committee(row_id)["signatures"]
         return get_textarea_value(
             value,
             self,
             for_display=for_display,
             mark_empty_tags=mark_empty_tags)
+
+    def get_committee_items(self, row_id, supplement=-1, ordered=True, **kwargs):
+        """Return every items of a given committee p_row_id.
+           For p_supplement:
+           - -1 means only include normal, no supplement;
+           - 0 means normal + every supplements;
+           - 1, 2, 3, ... only items of supplement 1, 2, 3, ...
+           - 99 means every supplements only.
+           This is calling get_items under so every parameters of get_items may be given in kwargs."""
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        available_suppl_ids = cfg.get_supplements_for_committee(row_id)
+        committees_index = []
+        if supplement == -1:
+            committees_index.append(row_id)
+        elif supplement == 0:
+            committees_index.append(row_id)
+            committees_index += available_suppl_ids
+        elif supplement == 99:
+            committees_index = available_suppl_ids
+        else:
+            if len(available_suppl_ids) >= supplement:
+                committees_index = available_suppl_ids[supplement - 1]
+            else:
+                # asking for unexisting supplement
+                return []
+        additional_catalog_query = {'committees_index': committees_index}
+        return self.get_items(
+            ordered=ordered, additional_catalog_query=additional_catalog_query, **kwargs)
 
     def _available_items_query(self):
         '''Check docstring in IMeeting.'''

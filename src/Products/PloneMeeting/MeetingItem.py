@@ -1111,7 +1111,7 @@ schema = Schema((
         ),
         optional=True,
         multiValued=1,
-        vocabulary_factory='Products.PloneMeeting.vocabularies.selectable_committees_vocabulary',
+        vocabulary_factory='Products.PloneMeeting.vocabularies.item_selectable_committees_vocabulary',
         enforceVocabulary=True,
     ),
     StringField(

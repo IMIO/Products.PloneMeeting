@@ -83,6 +83,10 @@
            component=".vocabularies.SelectableCommitteesVocabularyFactory" />
   <utility name="Products.PloneMeeting.vocabularies.selectable_committees_acronyms_vocabulary"
            component=".vocabularies.SelectableCommitteesAcronymsVocabularyFactory" />
+  <utility name="Products.PloneMeeting.vocabularies.item_selectable_committees_vocabulary"
+           component=".vocabularies.ItemSelectableCommitteesVocabularyFactory" />
+  <utility name="Products.PloneMeeting.vocabularies.meeting_selectable_committees_vocabulary"
+           component=".vocabularies.MeetingSelectableCommitteesVocabularyFactory" />
   <utility component=".vocabularies.SelectableAssemblyMembersVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.selectableassemblymembersvocabulary" />
   <utility component=".vocabularies.SelectableItemInitiatorsVocabularyFactory"

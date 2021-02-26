@@ -2096,6 +2096,18 @@ def redirect(request, url):
         return request.RESPONSE.redirect(url)
 
 
+def number_word(number):
+    """ """
+    request = getRequest()
+    suppl_word_msgid = number == 1 and "num_part_st" or "num_part_th"
+    suppl_word = translate(msgid=suppl_word_msgid,
+                           domain="PloneMeeting",
+                           mapping={'number': number},
+                           context=request,
+                           default=u"${number}st/th")
+    return suppl_word
+
+
 class AdvicesUpdatedEvent(ObjectEvent):
     implements(IAdvicesUpdatedEvent)
 

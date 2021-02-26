@@ -47,14 +47,13 @@ from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.content.held_position import split_gender_and_number
-from Products.PloneMeeting.content.meeting import IMeeting
 from Products.PloneMeeting.indexes import DELAYAWARE_ROW_ID_PATTERN
 from Products.PloneMeeting.indexes import REAL_ORG_UID_PATTERN
 from Products.PloneMeeting.interfaces import IMeetingConfig
-from Products.PloneMeeting.interfaces import IMeetingItem
 from Products.PloneMeeting.utils import decodeDelayAwareId
 from Products.PloneMeeting.utils import get_context_with_request
 from Products.PloneMeeting.utils import get_datagridfield_column_value
+from Products.PloneMeeting.utils import number_word
 from z3c.form.interfaces import NO_VALUE
 from zope.globalrequest import getRequest
 from zope.i18n import translate
@@ -2052,63 +2051,87 @@ SelectableCommitteeAttendeesVocabularyFactory = SelectableCommitteeAttendeesVoca
 class SelectableCommitteesVocabulary(object):
     implements(IVocabularyFactory)
 
-    def __call__(self, context, term_title_attr="label"):
+    def _get_stored_values(self):
         """ """
+        return []
+
+    def _get_term_title(self, committee, term_title_attr):
+        """ """
+        term_title = committee[term_title_attr]
+        # manage when no term_title (no acronym defined)
+        term_title = term_title or translate("None", domain="PloneMeeting", context=self.context.REQUEST)
+        return term_title
+
+    def __call__(self,
+                 context,
+                 term_title_attr="label",
+                 include_suppl=True,
+                 include_all_disabled=True,
+                 cfg_committees=None):
+        """ """
+        terms = []
+        # as vocabulary is used in a DataGridField
+        # context is often NO_VALUE or the dict...
+        if not hasattr(context, "getTagName"):
+            context = get_context_with_request(context)
+        self.context = context
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        cfg_committees = cfg_committees or cfg.getCommittees()
+
         def _add_suppl(committee, enabled=True):
             suppl_terms = []
-            for suppl in range(int(committee['supplements'])):
-                suppl_num = suppl + 1
-                term_id = u"{0}__suppl__{1}".format(committee['row_id'], suppl_num)
-                term_title = committee[term_title_attr]
+            suppl_ids = cfg.get_supplements_for_committee(committee=committee)
+            i = 1
+            for suppl_id in suppl_ids:
+                term_title = self._get_term_title(committee, term_title_attr)
                 if not enabled:
                     term_title = translate(
                         '${element_title} (Inactive)',
                         domain='PloneMeeting',
                         mapping={'element_title': safe_unicode(term_title)},
                         context=context.REQUEST)
-                term_title = u"{0} (Suppl. {1})".format(term_title, suppl_num)
-                suppl_terms.append(SimpleTerm(term_id,
-                                              term_id,
+                suppl_msgid = term_title_attr == "label" and \
+                    'committee_title_with_suppl' or 'committee_title_with_abbr_suppl'
+                term_title = translate(
+                    suppl_msgid,
+                    domain="PloneMeeting",
+                    mapping={'title': term_title, 'number': number_word(i)},
+                    context=context.REQUEST,
+                    default=u"${title} (${number} supplement)")
+                i += 1
+                suppl_terms.append(SimpleTerm(suppl_id,
+                                              suppl_id,
                                               term_title))
             return suppl_terms
 
-        terms = []
-        # as vocabulary is used in a DataGridField
-        # context is often NO_VALUE or the dict...
-        if not hasattr(context, "getTagName"):
-            context = get_context_with_request(context)
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(context)
         # manage missing
-        stored_values = []
-        is_item = is_meeting = False
-        if IMeeting.providedBy(context):
-            stored_values = get_datagridfield_column_value(context.committees, "row_id")
-            is_meeting = True
-        elif IMeetingItem.providedBy(context):
-            stored_values = context.getCommittees()
-            is_item = True
-        for committee in cfg.getCommittees():
+        stored_values = self._get_stored_values()
+        for committee in cfg_committees:
             if committee['enabled'] == '1' or committee['row_id'] in stored_values:
+                term_title = self._get_term_title(committee, term_title_attr)
                 terms.append(SimpleTerm(committee['row_id'],
                                         committee['row_id'],
-                                        committee[term_title_attr]))
+                                        term_title))
                 # manage supplements
-                terms += _add_suppl(committee)
-        # when displayed in faceted, include disabled elements
-        if not is_item and not is_meeting:
-            for committee in cfg.getCommittees():
+                if include_suppl:
+                    terms += _add_suppl(committee)
+
+        if include_all_disabled:
+            for committee in cfg_committees:
                 if committee['enabled'] == '0':
+                    term_title = self._get_term_title(committee, term_title_attr)
                     label = translate(
                         '${element_title} (Inactive)',
                         domain='PloneMeeting',
-                        mapping={'element_title': safe_unicode(committee[term_title_attr])},
+                        mapping={'element_title': safe_unicode(term_title)},
                         context=context.REQUEST)
                     terms.append(SimpleTerm(committee['row_id'],
                                             committee['row_id'],
                                             label))
                     # manage supplements
-                    terms += _add_suppl(committee, enabled=False)
+                    if include_suppl:
+                        terms += _add_suppl(committee, enabled=False)
         return SimpleVocabulary(terms)
 
 SelectableCommitteesVocabularyFactory = SelectableCommitteesVocabulary()
@@ -2123,6 +2146,38 @@ class SelectableCommitteesAcronymsVocabulary(SelectableCommitteesVocabulary):
             context, term_title_attr)
 
 SelectableCommitteesAcronymsVocabularyFactory = SelectableCommitteesAcronymsVocabulary()
+
+
+class ItemSelectableCommitteesVocabulary(SelectableCommitteesVocabulary):
+    implements(IVocabularyFactory)
+
+    def _get_stored_values(self):
+        """ """
+        stored_values = self.context.getCommittees()
+        return stored_values
+
+    def __call__(self, context):
+        """ """
+        return super(ItemSelectableCommitteesVocabulary, self).__call__(
+            context, include_all_disabled=False)
+
+ItemSelectableCommitteesVocabularyFactory = ItemSelectableCommitteesVocabulary()
+
+
+class MeetingSelectableCommitteesVocabulary(SelectableCommitteesVocabulary):
+    implements(IVocabularyFactory)
+
+    def _get_stored_values(self):
+        """ """
+        stored_values = get_datagridfield_column_value(self.context.committees, "row_id")
+        return stored_values
+
+    def __call__(self, context):
+        """ """
+        return super(MeetingSelectableCommitteesVocabulary, self).__call__(
+            context, include_suppl=False, include_all_disabled=False)
+
+MeetingSelectableCommitteesVocabularyFactory = MeetingSelectableCommitteesVocabulary()
 
 
 class ContainedAnnexesVocabulary(object):
