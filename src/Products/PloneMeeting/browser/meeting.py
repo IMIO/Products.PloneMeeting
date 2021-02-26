@@ -89,6 +89,14 @@ def manage_committees(the_form):
         if not the_form.show_datagrid_column(widget, "committees", optional_column):
             hidden_columns.append(optional_column)
 
+    # special behavior for assembl/attendees in case config was switched
+    # if both fields are shown, we keep the one not in the config
+    if "assembly" not in hidden_columns and "attendees" not in hidden_columns:
+        if "assembly" in the_form.used_attrs:
+            hidden_columns.append("attendees")
+        else:
+            hidden_columns.append("assembly")
+
     # hide columns
     for column in widget.columns:
         if column['name'] in hidden_columns:

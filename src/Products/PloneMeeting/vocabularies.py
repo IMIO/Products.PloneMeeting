@@ -2169,7 +2169,9 @@ class MeetingSelectableCommitteesVocabulary(SelectableCommitteesVocabulary):
 
     def _get_stored_values(self):
         """ """
-        stored_values = get_datagridfield_column_value(self.context.committees, "row_id")
+        stored_values = []
+        if self.context.getTagName() == "Meeting":
+            stored_values = get_datagridfield_column_value(self.context.committees, "row_id")
         return stored_values
 
     def __call__(self, context):

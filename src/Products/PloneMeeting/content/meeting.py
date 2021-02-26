@@ -993,7 +993,9 @@ class Meeting(Container):
             else:
                 # asking for unexisting supplement
                 return []
-        additional_catalog_query = {'committees_index': committees_index}
+        # keep additional_catalog_query from kwargs if exist
+        additional_catalog_query = kwargs.get('additional_catalog_query', {})
+        additional_catalog_query.update({'committees_index': committees_index})
         return self.get_items(
             ordered=ordered, additional_catalog_query=additional_catalog_query, **kwargs)
 
