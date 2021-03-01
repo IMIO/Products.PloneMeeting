@@ -2468,11 +2468,20 @@ schema = Schema((
                         Column("Committee default place"),
                      'default_assembly':
                         TextAreaColumn("Committee default assembly"),
+                     'default_signatures':
+                        TextAreaColumn("Committee default signatures"),
                      'default_attendees':
                         MultiSelectColumn("Committee default attendees",
                                           vocabulary="listSelectableCommitteeAttendees"),
-                     'default_signatures':
-                        TextAreaColumn("Committee default signatures"),
+                     'default_signatories':
+                        MultiSelectColumn("Committee default signatories",
+                                          vocabulary="listSelectableCommitteeAttendees"),
+                     'auto_from':
+                        MultiSelectColumn("Committee auto from category",
+                                          vocabulary="listSelectableCommitteeAutoFrom"),
+                     'using_groups':
+                        MultiSelectColumn("Committee using groups",
+                                          vocabulary="listSelectableProposingGroups"),
                      'supplements':
                         SelectColumn("Committee supplements",
                                      vocabulary="listNumbersFromZero",
@@ -2490,8 +2499,10 @@ schema = Schema((
         allow_oddeven=True,
         write_permission="PloneMeeting: Write risky config",
         columns=('row_id', 'label', 'acronym', 'default_place',
-                 'default_assembly', 'default_attendees',
-                 'default_signatures', 'supplements', 'enabled'),
+                 'default_assembly', 'default_signatures',
+                 'default_attendees', 'default_signatories',
+                 'using_groups', 'auto_from',
+                 'supplements', 'enabled'),
         allow_empty_rows=False,
     ),
     LinesField(
@@ -3457,6 +3468,47 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             self, "Products.PloneMeeting.vocabularies.selectable_committee_attendees_vocabulary")
         res = [(term.value, term.title) for term in vocab._terms]
         return DisplayList(res)
+
+    security.declarePrivate('listSelectableProposingGroups')
+
+    def listSelectableProposingGroups(self):
+        """ """
+        vocab = get_vocab(
+            self, "Products.PloneMeeting.vocabularies.proposinggroupsvocabulary")
+        res = [(term.value, term.title) for term in vocab._terms]
+        return DisplayList(res)
+
+    security.declarePrivate('listSelectableCommitteeAutoFrom')
+
+    def listSelectableCommitteeAutoFrom(self):
+        """Elements on item that will auto determinate the committee to use.
+           The proposingGroup, category or classifier may determinate used committee."""
+        # proposing groups
+        proposing_groups_vocab = get_vocab(
+            self, "Products.PloneMeeting.vocabularies.proposinggroupsvocabulary")
+        res = [('proposing_group__' + term.value, 'P.G.: ' + term.title)
+               for term in proposing_groups_vocab._terms]
+        # categories
+        categories_vocab = get_vocab(
+            self, "Products.PloneMeeting.vocabularies.categoriesvocabulary")
+        res += [('category__' + term.value, 'Cat.: ' + term.title)
+                for term in categories_vocab._terms]
+        # classifiers
+        classifiers_vocab = get_vocab(
+            self, "Products.PloneMeeting.vocabularies.classifiersvocabulary")
+        res += [('classifier__' + term.value, 'Class.: ' + term.title)
+                for term in classifiers_vocab._terms]
+        return DisplayList(res)
+
+    def is_committees_using_auto_from(self):
+        """Return True if using committees "auto_from",
+           meaning that committee on item is determined automatically."""
+        res = False
+        for committee in self.getCommittees():
+            if committee['auto_from']:
+                res = True
+                break
+        return res
 
     # Committees related helpers -----------------------------------------------
     def get_committee(self, row_id):

@@ -1100,7 +1100,7 @@ schema = Schema((
     LinesField(
         name='committees',
         widget=MultiSelectionWidget(
-            condition="python: here.attributeIsUsed('committees')",
+            condition="python: here.show_committees()",
             size=10,
             description="Committees",
             description_msgid="committees_descr",
@@ -2155,6 +2155,21 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''See doc in interfaces.py.'''
         return True
 
+    security.declarePublic('show_committees')
+
+    def show_committees(self):
+        '''See doc in interfaces.py.'''
+        res = False
+        if self.attributeIsUsed('committees'):
+            res = True
+            # when using "auto_from" in MeetingConfig.committees
+            # field is only shown to MeetingManagers
+            tool = api.portal.get_tool('portal_plonemeeting')
+            cfg = tool.getMeetingConfig(self)
+            if cfg.is_committees_using_auto_from() and not tool.isManager(cfg):
+                res = False
+        return res
+
     security.declarePublic('show_votesObservations')
 
     def show_votesObservations(self):
@@ -2664,6 +2679,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if value != current_value:
             # add a value in the REQUEST to specify that update_item_references is needed
             self.REQUEST.set('need_Meeting_update_item_references', True)
+            # add a value in the REQUEST to specify that update_committees is needed
+            self.REQUEST.set('need_MeetingItem_update_committees', True)
             field.set(self, value, **kwargs)
 
     security.declareProtected(ModifyPortalContent, 'setClassifier')
@@ -2676,6 +2693,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if value != current_value:
             # add a value in the REQUEST to specify that update_item_references is needed
             self.REQUEST.set('need_Meeting_update_item_references', True)
+            # add a value in the REQUEST to specify that update_committees is needed
+            self.REQUEST.set('need_MeetingItem_update_committees', True)
             field.set(self, value, **kwargs)
 
     security.declareProtected(ModifyPortalContent, 'setProposingGroup')
@@ -2688,6 +2707,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if value != current_value:
             # add a value in the REQUEST to specify that update_item_references is needed
             self.REQUEST.set('need_Meeting_update_item_references', True)
+            # add a value in the REQUEST to specify that update_committees is needed
+            self.REQUEST.set('need_MeetingItem_update_committees', True)
             field.set(self, value, **kwargs)
 
     security.declareProtected(ModifyPortalContent, 'setProposingGroupWithGroupInCharge')
@@ -3589,6 +3610,24 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             self.setItemReference(res)
             self.reindexObject(idxs=['SearchableText'])
         return res
+
+    def update_committees(self):
+        """Update committees automatically?"""
+        if self.attributeIsUsed('committees') and \
+           (not self.getCommittees() or self.REQUEST.get('need_MeetingItem_update_committees')):
+            tool = api.portal.get_tool('portal_plonemeeting')
+            cfg = tool.getMeetingConfig(self)
+            if cfg.is_committees_using_auto_from():
+                committees = []
+                for committee in cfg.getCommittees():
+                    if not committee['enabled']:
+                        continue
+                    if "proposing_group__" + self.getProposingGroup() in committee["auto_from"] or \
+                       "category__" + self.getCategory() in committee["auto_from"] or \
+                       "classifier__" + self.getClassifier() in committee["auto_from"]:
+                        committees.append(committee['row_id'])
+                committees = committees or ["no_committee"]
+                self.setCommittees(committees)
 
     security.declarePublic('hasItemSignatures')
 
@@ -5895,6 +5934,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         transformAllRichTextFields(self)
         # Make sure we have 'text/html' for every Rich fields
         forceHTMLContentTypeForEmptyRichFields(self)
+        # update committees if necessary
+        self.update_committees()
         # Call sub-product-specific behaviour
         self.adapted().onEdit(isCreated=True)
         self.reindexObject()
@@ -5925,6 +5966,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         addDataChange(self)
         # Make sure we have 'text/html' for every Rich fields
         forceHTMLContentTypeForEmptyRichFields(self)
+        # update committees if necessary
+        self.update_committees()
         # Call sub-product-specific behaviour
         self.adapted().onEdit(isCreated=False)
 

@@ -2066,8 +2066,11 @@ class SelectableCommitteesVocabulary(object):
                  context,
                  term_title_attr="label",
                  include_suppl=True,
+                 check_is_manager_for_suppl=False,
                  include_all_disabled=True,
-                 cfg_committees=None):
+                 cfg_committees=None,
+                 add_no_committee_value=False,
+                 check_using_groups=False):
         """ """
         terms = []
         # as vocabulary is used in a DataGridField
@@ -2078,6 +2081,15 @@ class SelectableCommitteesVocabulary(object):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         cfg_committees = cfg_committees or cfg.getCommittees()
+
+        if add_no_committee_value:
+            term_id = u"no_committee"
+            term_title = translate(
+                "no_committee_term_title",
+                domain="PloneMeeting",
+                context=context.REQUEST,
+                default=u"No committee")
+            terms.append(SimpleTerm(term_id, term_id, term_title))
 
         def _add_suppl(committee, enabled=True):
             suppl_terms = []
@@ -2105,16 +2117,19 @@ class SelectableCommitteesVocabulary(object):
                                               term_title))
             return suppl_terms
 
-        # manage missing
         stored_values = self._get_stored_values()
         for committee in cfg_committees:
             if committee['enabled'] == '1' or committee['row_id'] in stored_values:
+                if check_using_groups and committee['using_groups']:
+                    org_uids = tool.get_selectable_orgs(cfg, only_selectable=True)
+                    if not set(org_uids).intersection(committee['using_groups']):
+                        continue
                 term_title = self._get_term_title(committee, term_title_attr)
                 terms.append(SimpleTerm(committee['row_id'],
                                         committee['row_id'],
                                         term_title))
                 # manage supplements
-                if include_suppl:
+                if include_suppl and (not check_is_manager_for_suppl or tool.isManager(cfg)):
                     terms += _add_suppl(committee)
 
         if include_all_disabled:
@@ -2159,7 +2174,11 @@ class ItemSelectableCommitteesVocabulary(SelectableCommitteesVocabulary):
     def __call__(self, context):
         """ """
         return super(ItemSelectableCommitteesVocabulary, self).__call__(
-            context, include_all_disabled=False)
+            context,
+            check_is_manager_for_suppl=True,
+            include_all_disabled=False,
+            add_no_committee_value=True,
+            check_using_groups=True)
 
 ItemSelectableCommitteesVocabularyFactory = ItemSelectableCommitteesVocabulary()
 

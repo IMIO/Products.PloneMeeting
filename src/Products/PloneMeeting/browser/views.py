@@ -725,13 +725,16 @@ class BaseDGHV(object):
             )
         return self.print_attendees(**kwargs)
 
-    def _get_attendees(self):
+    def _get_attendees(self, committee_id=None):
         """ """
         attendees = []
         item_absents = []
         item_excused = []
         item_non_attendees = []
-        if self.context.getTagName() == 'Meeting':
+        if committee_id:
+            meeting = self.context
+            attendees = self.context.get_committee_attendees(committee_id)
+        elif self.context.getTagName() == 'Meeting':
             meeting = self.context
             attendees = meeting.get_attendees()
             item_non_attendees = meeting.get_item_non_attendees()
@@ -749,7 +752,10 @@ class BaseDGHV(object):
         excused = []
         replaced = []
         if meeting:
-            contacts = get_all_used_held_positions(meeting)
+            if committee_id:
+                contacts = self.context.get_committee_attendees(committee_id, the_objects=True)
+            else:
+                contacts = get_all_used_held_positions(meeting)
             excused = meeting.get_excused()
             absents = meeting.get_absents()
             replaced = meeting.get_replacements()
@@ -757,7 +763,6 @@ class BaseDGHV(object):
             contacts, excused, absents, replaced
 
     def print_attendees(self,
-                        by_attendee_type=False,
                         by_parent_org=False,
                         render_as_html=True,
                         escape_for_html=True,
@@ -772,7 +777,8 @@ class BaseDGHV(object):
                         custom_grouped_attendee_type_patterns={},
                         replaced_by_format={'M': u'<strong>remplacé par {0}</strong>',
                                             'F': u'<strong>remplacée par {0}</strong>'},
-                        ignore_non_attendees=True):
+                        ignore_non_attendees=True,
+                        committee_id=None):
         """ """
 
         def _render_as_html(tree, by_parent_org=False):
@@ -809,7 +815,7 @@ class BaseDGHV(object):
 
         # initial values
         meeting, attendees, item_absents, item_excused, item_non_attendees, \
-            contacts, excused, absents, replaced = self._get_attendees()
+            contacts, excused, absents, replaced = self._get_attendees(committee_id)
 
         res = OrderedDict()
         for contact in contacts:
@@ -908,7 +914,8 @@ class BaseDGHV(object):
                                                          'item_excused', 'item_absent', 'item_non_attendee'],
                                 striked_attendee_types=[],
                                 striked_attendee_pattern=u'<strike>{0}</strike>',
-                                ignore_non_attendees=True):
+                                ignore_non_attendees=True,
+                                committee_id=None):
 
         def _buildContactsValue(meeting, contacts):
             """ """
@@ -1032,7 +1039,7 @@ class BaseDGHV(object):
 
         # initial values
         meeting, attendees, item_absents, item_excused, item_non_attendees, \
-            contacts, excused, absents, replaced = self._get_attendees()
+            contacts, excused, absents, replaced = self._get_attendees(committee_id)
 
         res = OrderedDict([(key, []) for key in grouped_attendee_type_patterns.keys()])
         striked_contact_uids = []
@@ -1100,7 +1107,7 @@ class BaseDGHV(object):
         generation_helper_view = helperView._get_generation_context(self.getDGHV(obj), sub_pod_template)
         return generation_helper_view
 
-    def print_signatures_by_position(self, **kwargs):
+    def print_signatures_by_position(self, committee_id=None, **kwargs):
         """
         Print signatures by position
         :return: a dict with position as key and signature as value
@@ -1108,7 +1115,9 @@ class BaseDGHV(object):
         A dict is used to safely get a signature with the get method
         """
         signatures = None
-        if self.context.getTagName() == 'Meeting' and self.context.getSignatures():
+        if committee_id:
+            signatures = self.context.get_committee_signatures(committee_id)
+        elif self.context.getTagName() == 'Meeting' and self.context.getSignatures():
             signatures = self.context.getSignatures()
         elif self.context.getTagName() == 'MeetingItem' and self.context.getItemSignatures():
             signatures = self.context.getItemSignatures()
@@ -1116,12 +1125,13 @@ class BaseDGHV(object):
         if signatures:
             return OrderedDict({i: signature for i, signature in enumerate(signatures.split('\n'))})
         else:
-            return self.print_signatories_by_position(**kwargs)
+            return self.print_signatories_by_position(committee_id, **kwargs)
 
     def print_signatories_by_position(self,
                                       signature_format=(u'prefixed_secondary_position_type', u'person'),
                                       separator=u',',
-                                      ender=u''):
+                                      ender=u'',
+                                      committee_id=None):
         """
         Print signatories by position
         :param signature_format: tuple representing a single signature format
@@ -1151,7 +1161,10 @@ class BaseDGHV(object):
         """
         signature_lines = OrderedDict()
         forced_position_type_values = {}
-        if self.context.getTagName() == 'Meeting':
+        if committee_id:
+            signatories = self.context.get_committee_signatories(
+                committee_id, the_objects=True, by_signature_number=True)
+        elif self.context.getTagName() == 'Meeting':
             signatories = self.context.get_signatories(the_objects=True, by_signature_number=True)
         else:
             signatories = self.context.get_item_signatories(the_objects=True, by_signature_number=True)

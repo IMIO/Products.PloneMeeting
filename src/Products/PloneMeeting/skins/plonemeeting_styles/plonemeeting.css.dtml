@@ -2202,11 +2202,26 @@ table.datagridwidget-table-view-block div.datetime-widget label {
 .datagridwidget-table-view-block .datagridwidget-row {
     border-bottom: 5px solid lightgrey;
 }
+/* hide row_id label when editing */
+div.datagridwidget-widget-row_id label {
+   display: none;
+}
+div.datagridwidget-widget-row_id select {
+   font-size: 130%;
+}
 /* committees datagridfield edit/view on meeting,
    when TextArea is empty, an error is displayed */
 div#formfield-form-widgets-committees div.error,
 table#form-widgets-committees div.error {
    display: none;
+}
+/* width of committees table datagridfield display */
+table#form-widgets-committees th.column-date,
+table#form-widgets-committees th.column-convocation_date {
+   width: 130px;
+}
+table#form-widgets-committees th.column-place {
+   width: 180px;
 }
 
 /* </dtml-with> */

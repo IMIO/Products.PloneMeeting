@@ -45,23 +45,37 @@
 
   <!-- text number -->
   <z3c:widgetTemplate
-    mode="input"
-    widget=".pm_number.IPMNumberWidget"
-    template="pm_number_input.pt"
-    layer="z3c.form.interfaces.IFormLayer" />
+      mode="input"
+      widget=".pm_number.IPMNumberWidget"
+      template="pm_number_input.pt"
+      layer="z3c.form.interfaces.IFormLayer" />
 
   <!-- readonly select -->
   <z3c:widgetTemplate
-    mode="input"
-    widget=".pm_selectreadonly.PMSelectReadonlyWidget"
-    template="pm_selectreadonly_input.pt"
-    layer="z3c.form.interfaces.IFormLayer" />
+      mode="input"
+      widget=".pm_selectreadonly.PMSelectReadonlyWidget"
+      template="pm_selectreadonly_input.pt"
+      layer="z3c.form.interfaces.IFormLayer" />
 
-  <!-- hidden for orderedselect -->
+  <!-- orderedselect hidden (not existing, used in DataGridField) -->
   <z3c:widgetTemplate
       mode="hidden"
       widget="z3c.form.interfaces.IOrderedSelectWidget"
       layer="z3c.form.interfaces.IFormLayer"
       template="orderedselect_hidden.pt" />
+
+  <!-- orderedselect display (overrided) -->
+  <z3c:widgetTemplate
+      mode="display"
+      widget=".pm_orderedselect.PMOrderedSelectWidget"
+      layer="z3c.form.interfaces.IFormLayer"
+      template="pm_orderedselect_display.pt" />
+
+  <!-- override DataGridField display to define a CSS class on every headers -->
+  <z3c:widgetTemplate
+      template="datagridfield_display.pt"
+      layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+      mode="display"
+      widget="collective.z3cform.datagridfield.datagridfield.DataGridField" />
 
 </configure>

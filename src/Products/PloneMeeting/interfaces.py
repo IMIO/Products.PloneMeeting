@@ -2,6 +2,7 @@
 
 from collective.eeafaceted.batchactions.interfaces import IBatchActionsMarker
 from collective.eeafaceted.collectionwidget.interfaces import ICollectiveEeafacetedCollectionwidgetLayer
+from collective.z3cform.datagridfield.interfaces import IDataGridFieldLayer
 from ftw.labels.interfaces import ILabelSupport
 from plone.dexterity.interfaces import IDexterityContent
 from zope.component.interfaces import IObjectEvent
@@ -82,7 +83,7 @@ class IRedirect(Interface):
         """
 
 
-class IPloneMeetingLayer(ICollectiveEeafacetedCollectionwidgetLayer):
+class IPloneMeetingLayer(ICollectiveEeafacetedCollectionwidgetLayer, IDataGridFieldLayer):
     """
       Define a layer so some elements are only added for it.
       We inherit from other packages layers we want to be able to override.
@@ -443,12 +444,6 @@ class IMeetingDocumentation:
            of this meeting? The default implementation for this method
            returns True when the meeting has started (based on meeting.date or
            meeting.startDate if used).'''
-    def show_votesObservations():
-        '''Votes observations field is only viewable by MeetingManagers and
-           power observers until meeting is decided, in this case everybody may see it.'''
-    def show_insert_or_remove_selected_items_action():
-        '''Return True/False if the 'Remove selected items' or 'Present selected items'
-           action must be displayed on the meeting view displaying presented items.'''
     def _check_insert_order_cache(cfg):
         '''This method is made to check if Meeting caching of items insert order
            is still valid.  Returns True if cache was invalidated, False otherwise.'''

@@ -56,6 +56,7 @@ from Products.PloneMeeting.utils import MeetingLocalRolesUpdatedEvent
 from Products.PloneMeeting.utils import notifyModifiedAndReindex
 from Products.PloneMeeting.utils import updateAnnexesAccess
 from Products.PloneMeeting.utils import validate_item_assembly_value
+from Products.PloneMeeting.widgets.pm_orderedselect import PMOrderedSelectFieldWidget
 from Products.PloneMeeting.widgets.pm_richtext import PMRichTextFieldWidget
 from Products.PloneMeeting.widgets.pm_textarea import get_textarea_value
 from Products.PloneMeeting.widgets.pm_textarea import PMTextAreaFieldWidget
@@ -124,18 +125,26 @@ class ICommittesRowSchema(Interface):
         output_mime_type='text/x-html-safe',
         required=False)
 
-    attendees = schema.List(
-        title=_("title_committee_attendees"),
-        value_type=schema.Choice(
-            vocabulary="Products.PloneMeeting.vocabularies.selectable_committee_attendees_vocabulary"),
-        required=False)
-
     form.widget('signatures', PMTextAreaFieldWidget)
     signatures = RichText(
         title=_(u"title_committee_signatures"),
         default_mime_type='text/plain',
         allowed_mime_types=("text/plain", ),
         output_mime_type='text/x-html-safe',
+        required=False)
+
+    form.widget('attendees', PMOrderedSelectFieldWidget)
+    attendees = schema.List(
+        title=_("title_committee_attendees"),
+        value_type=schema.Choice(
+            vocabulary="Products.PloneMeeting.vocabularies.selectable_committee_attendees_vocabulary"),
+        required=False)
+
+    form.widget('signatories', PMOrderedSelectFieldWidget)
+    signatories = schema.List(
+        title=_("title_committee_signatories"),
+        value_type=schema.Choice(
+            vocabulary="Products.PloneMeeting.vocabularies.selectable_committee_attendees_vocabulary"),
         required=False)
 
 
@@ -794,7 +803,9 @@ class Meeting(Container):
         'committees':
             {'optional': True,
              'condition': "",
-             'optional_columns': ['convocation_date', 'place', 'assembly', 'attendees', 'signatures']},
+             'optional_columns': ['convocation_date', 'place',
+                                  'assembly', 'signatures',
+                                  'attendees', 'signatories']},
         'committee_observations':
             {'optional': True,
              'condition': ""},
@@ -950,7 +961,7 @@ class Meeting(Container):
                 row_ids.append(committee['row_id'])
         return row_ids
 
-    def get_committe_assembly(self, row_id, for_display=True, striked=True, mark_empty_tags=False):
+    def get_committee_assembly(self, row_id, for_display=True, striked=True, mark_empty_tags=False):
         """ """
         value = self.get_committee(row_id)["assembly"]
         return get_textarea_value(
@@ -967,6 +978,26 @@ class Meeting(Container):
             self,
             for_display=for_display,
             mark_empty_tags=mark_empty_tags)
+
+    def get_committee_attendees(self, row_id, the_objects=False):
+        '''Returns the attendees for given p_row_id committee.'''
+        committee_attendees = self.get_committee(row_id).get("attendees", [])
+        return self._get_contacts(uids=committee_attendees, the_objects=the_objects)
+
+    def get_committee_signatories(self, row_id, the_objects=False, by_signature_number=False):
+        '''Returns the signatories for given p_row_id committee.'''
+        committee_signatories = self.get_committee(row_id).get("signatories", [])
+        signers = self._get_contacts(uids=committee_signatories, the_objects=the_objects)
+        # signature number depends on signatory order
+        i = 1
+        res = {}
+        for signer in signers:
+            res[signer] = str(i)
+            i += 1
+        if by_signature_number:
+            # keys are values, values are keys
+            res = {v: k for k, v in res.items()}
+        return res
 
     def get_committee_items(self, row_id, supplement=-1, ordered=True, **kwargs):
         """Return every items of a given committee p_row_id.
@@ -1070,24 +1101,25 @@ class Meeting(Container):
         return redefined_item_attendees
 
     def _get_contacts(self, contact_type=None, uids=None, the_objects=False):
-        """ """
-        res = []
+        """Return contacts.  Parameters p_contact_type and p_uids are mutually exclusive."""
+        contact_uids = []
         ordered_contacts = getattr(self, 'ordered_contacts', OrderedDict())
         if contact_type:
             for uid, infos in ordered_contacts.items():
                 if infos[contact_type] and (not uids or uid in uids):
-                    res.append(uid)
+                    contact_uids.append(uid)
         else:
-            res = uids
+            contact_uids = uids
 
+        res = contact_uids
         if the_objects:
             catalog = api.portal.get_tool('portal_catalog')
-            brains = catalog(UID=res)
+            brains = catalog(UID=contact_uids)
             res = [brain.getObject() for brain in brains]
 
             # keep correct order that was lost by catalog query
             def get_key(item):
-                return self.ordered_contacts.keys().index(item.UID())
+                return contact_uids.index(item.UID())
             res = sorted(res, key=get_key)
         return tuple(res)
 
@@ -1119,7 +1151,7 @@ class Meeting(Container):
     security.declarePublic('get_signatories')
 
     def get_signatories(self, the_objects=False, by_signature_number=False):
-        '''See docstring in previous method.'''
+        '''Returns the signatories in this meeting.'''
         signers = self._get_contacts('signer', the_objects=the_objects)
         # order is important in case we have several same signature_number, the first win
         if the_objects:
@@ -1140,7 +1172,7 @@ class Meeting(Container):
     security.declarePublic('get_replacements')
 
     def get_replacements(self, the_objects=False):
-        '''See docstring in previous method.'''
+        '''Returns the replacements in this meeting.'''
         replaced_uids = self._get_contacts('replacement', the_objects=the_objects)
         return {replaced_uid: self.ordered_contacts[replaced_uid]['replacement']
                 for replaced_uid in replaced_uids}
@@ -1428,7 +1460,8 @@ class Meeting(Container):
                 'selectablePrivacies',
                 'usedPollTypes',
                 'orderedAssociatedOrganizations',
-                'orderedGroupsInCharge']
+                'orderedGroupsInCharge',
+                'committees']
 
     def _init_insert_order_cache(self, cfg):
         '''See doc in interfaces.py.'''
@@ -1987,15 +2020,6 @@ class Meeting(Container):
         else:
             cfg = getattr(tool, cfg_id)
         return get_next_meeting(meeting_date=self.date, cfg=cfg, date_gap=date_gap)
-
-    security.declarePublic('show_insert_or_remove_selected_items_action')
-
-    def show_insert_or_remove_selected_items_action(self):
-        '''See doc in interfaces.py.'''
-        meeting = self.get_self()
-        member = api.user.get_current()
-        return bool(member.has_permission(ModifyPortalContent, meeting) and
-                    not meeting.query_state() in meeting.MEETINGCLOSEDSTATES)
 
 
 class MeetingSchemaPolicy(DexteritySchemaPolicy):
