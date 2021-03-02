@@ -662,7 +662,7 @@ class PMWfHistoryAdapter(ImioWfHistoryAdapter):
         """
           By default, every p_event comment is viewable except for MeetingItem, if
           'hideItemHistoryCommentsToUsersOutsideProposingGroup' is enabled in the MeetingConfig,
-          only members of the group manging item at event['review_state'] will be able to access
+          only members of the group managing item at event['review_state'] will be able to access
           history comment.
         """
         userMayAccessComment = True

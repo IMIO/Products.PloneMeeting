@@ -84,6 +84,9 @@ Changelog
     [gbastien]
 - Highlight (bold) the default item template in the itemtemplates folder.
   [gbastien]
+- Use `imio.history.utils.getLastWFAction` parameter `transition='before_last'`
+  to get the before last `review_state` in `indexes.previous_review_state`.
+  [gbastien]
 
 4.2b11 (2021-01-19)
 -------------------
