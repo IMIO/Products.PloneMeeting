@@ -524,7 +524,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('get_selectable_orgs')
 
-    def get_selectable_orgs(self, cfg, only_selectable=True, user_id=None):
+    def get_selectable_orgs(self, cfg, only_selectable=True, user_id=None, the_objects=True):
         """
           Returns the selectable organizations for given p_user_id or currently connected user.
           If p_only_selectable is True, we will only return orgs for which current user is creator.
@@ -534,9 +534,11 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         if only_selectable:
             using_groups = cfg.getUsingGroups()
             res = self.get_orgs_for_user(
-                user_id=user_id, suffixes=['creators', ], using_groups=using_groups)
+                user_id=user_id, suffixes=['creators', ],
+                using_groups=using_groups,
+                the_objects=the_objects)
         else:
-            res = cfg.getUsingGroups(theObjects=True)
+            res = cfg.getUsingGroups(theObjects=the_objects)
         return res
 
     def userIsAmong_cachekey(method, self, suffixes, cfg=None):

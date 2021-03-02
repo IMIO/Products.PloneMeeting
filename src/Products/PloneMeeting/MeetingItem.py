@@ -1109,7 +1109,7 @@ schema = Schema((
             label_msgid='PloneMeeting_label_committees',
             i18n_domain='PloneMeeting',
         ),
-        optional=True,
+        optional=False,
         multiValued=1,
         vocabulary_factory='Products.PloneMeeting.vocabularies.item_selectable_committees_vocabulary',
         enforceVocabulary=True,
@@ -2160,13 +2160,15 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def show_committees(self):
         '''See doc in interfaces.py.'''
         res = False
-        if self.attributeIsUsed('committees'):
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        if "committees" in cfg.getUsedMeetingAttributes():
             res = True
             # when using "auto_from" in MeetingConfig.committees
             # field is only shown to MeetingManagers
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(self)
-            if cfg.is_committees_using_auto_from() and not tool.isManager(cfg):
+            if cfg.is_committees_using("auto_from") and not tool.isManager(cfg):
                 res = False
         return res
 
@@ -3617,11 +3619,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            (not self.getCommittees() or self.REQUEST.get('need_MeetingItem_update_committees')):
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(self)
-            if cfg.is_committees_using_auto_from():
+            if cfg.is_committees_using("auto_from"):
                 committees = []
-                for committee in cfg.getCommittees():
-                    if not committee['enabled']:
-                        continue
+                for committee in cfg.getCommittees(only_enabled=True):
                     if "proposing_group__" + self.getProposingGroup() in committee["auto_from"] or \
                        "category__" + self.getCategory() in committee["auto_from"] or \
                        "classifier__" + self.getClassifier() in committee["auto_from"]:
@@ -4282,6 +4282,17 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             res = self.adapted()._findCustomOrderFor(insertMethod)
         return res
 
+    def _sort_pre_orders(self, pre_orders):
+        """Sort given pre_orders and compute final index."""
+        pre_orders.sort()
+        res = float(0)
+        divisor = 1
+        for pre_order in pre_orders:
+            res += (float(pre_order) / divisor)
+            # we may manage up to 1000 different values
+            divisor *= 1000
+        return res
+
     def _computeOrderOnAllAssociatedGroups(self, cfg):
         '''Helper method to compute inserting index when using insert method 'on_all_associated_groups'.'''
         associatedGroups = self.getAssociatedGroups()
@@ -4307,15 +4318,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             else:
                 org = get_organization(associatedGroup)
                 pre_orders.append(org.get_order())
-        # now sort pre_orders and compute final index
-        pre_orders.sort()
-        res = float(0)
-        divisor = 1
-        for pre_order in pre_orders:
-            res += (float(pre_order) / divisor)
-            # we may manage up to 1000 different associated groups
-            divisor *= 1000
-        return res
+        return self._sort_pre_orders(pre_orders)
 
     def _computeOrderOnAllCommittees(self, cfg):
         '''Helper method to compute inserting index when using insert method 'on_all_committees'.'''
@@ -4338,15 +4341,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 pre_orders.append(index + 1)
             except ValueError:
                 pre_orders.append(0)
-        # now sort pre_orders and compute final index
-        pre_orders.sort()
-        res = float(0)
-        divisor = 1
-        for pre_order in pre_orders:
-            res += (float(pre_order) / divisor)
-            # we may manage up to 1000 different associated groups
-            divisor *= 1000
-        return res
+        return self._sort_pre_orders(pre_orders)
 
     def _computeOrderOnGroupsInCharge(self, cfg):
         '''Helper method to compute inserting index when using insert method 'on_groups_in_charge'.'''
@@ -4373,15 +4368,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             else:
                 org = get_organization(group_in_charge)
                 pre_orders.append(org.get_order())
-        # now sort pre_orders and compute final index
-        pre_orders.sort()
-        res = float(0)
-        divisor = 1
-        for pre_order in pre_orders:
-            res += (float(pre_order) / divisor)
-            # we may manage up to 1000 different associated groups
-            divisor *= 1000
-        return res
+        return self._sort_pre_orders(pre_orders)
 
     def _findCustomOrderFor(self, insertMethod):
         '''

@@ -2308,6 +2308,84 @@ schema = Schema((
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
+    LinesField(
+        name='orderedCommitteeContacts',
+        widget=InAndOutWidget(
+            description="OrderedCommitteeContacts",
+            description_msgid="ordered_committee_contacts_descr",
+            label='Orderedcommitteecontacts',
+            label_msgid='PloneMeeting_label_orderedCommitteeContacts',
+            i18n_domain='PloneMeeting',
+            size='20',
+        ),
+        schemata="committees",
+        multiValued=1,
+        vocabulary_factory='Products.PloneMeeting.vocabularies.simplified_selectable_heldpositions_vocabulary',
+        default=defValues.orderedCommitteeContacts,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    DataGridField(
+        name='committees',
+        widget=DataGridField._properties['widget'](
+            description="Committees",
+            description_msgid="committees_descr",
+            columns={'row_id':
+                        Column("Committee row id",
+                               visible=False),
+                     'label':
+                        Column("Committee label", required=True),
+                     'acronym':
+                        Column("Committee acronym"),
+                     'default_place':
+                        Column("Committee default place",
+                               col_description="committees_default_place_col_description"),
+                     'default_assembly':
+                        TextAreaColumn("Committee default assembly",
+                                       col_description="committees_default_assembly_col_description"),
+                     'default_signatures':
+                        TextAreaColumn("Committee default signatures",
+                                       col_description="committees_default_signatures_col_description"),
+                     'default_attendees':
+                        MultiSelectColumn("Committee default attendees",
+                                          col_description="committees_default_attendees_col_description",
+                                          vocabulary="listSelectableCommitteeAttendees"),
+                     'default_signatories':
+                        MultiSelectColumn("Committee default signatories",
+                                          col_description="committees_default_signatories_col_description",
+                                          vocabulary="listSelectableCommitteeAttendees"),
+                     'using_groups':
+                        MultiSelectColumn("Committee using groups",
+                                          col_description="committees_using_groups_col_description",
+                                          vocabulary="listSelectableProposingGroups"),
+                     'auto_from':
+                        MultiSelectColumn("Committee auto from",
+                                          col_description="committees_auto_from_col_description",
+                                          vocabulary="listSelectableCommitteeAutoFrom"),
+                     'supplements':
+                        SelectColumn("Committee supplements",
+                                     col_description="committees_supplements_col_description",
+                                     vocabulary="listNumbersFromZero",
+                                     default='0'),
+                     'enabled':
+                        SelectColumn("Committee enabled?",
+                                     vocabulary="listBooleanVocabulary",
+                                     default='1'), },
+            label='Committees',
+            label_msgid='PloneMeeting_label_committees',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="committees",
+        default=defValues.committees,
+        allow_oddeven=True,
+        write_permission="PloneMeeting: Write risky config",
+        columns=('row_id', 'label', 'acronym', 'default_place',
+                 'default_assembly', 'default_signatures',
+                 'default_attendees', 'default_signatories',
+                 'using_groups', 'auto_from',
+                 'supplements', 'enabled'),
+        allow_empty_rows=False,
+    ),
     BooleanField(
         name='useVotes',
         default=defValues.useVotes,
@@ -2434,76 +2512,6 @@ schema = Schema((
         ),
         schemata="votes",
         write_permission="PloneMeeting: Write risky config",
-    ),
-    LinesField(
-        name='orderedCommitteeContacts',
-        widget=InAndOutWidget(
-            description="OrderedCommitteeContacts",
-            description_msgid="ordered_committee_contacts_descr",
-            label='Orderedcommitteecontacts',
-            label_msgid='PloneMeeting_label_orderedCommitteeContacts',
-            i18n_domain='PloneMeeting',
-            size='20',
-        ),
-        schemata="votes",
-        multiValued=1,
-        vocabulary_factory='Products.PloneMeeting.vocabularies.selectableassemblymembersvocabulary',
-        default=defValues.orderedCommitteeContacts,
-        enforceVocabulary=True,
-        write_permission="PloneMeeting: Write harmless config",
-    ),
-    DataGridField(
-        name='committees',
-        widget=DataGridField._properties['widget'](
-            description="Committees",
-            description_msgid="committees_descr",
-            columns={'row_id':
-                        Column("Committee row id",
-                               visible=False),
-                     'label':
-                        Column("Committee label"),
-                     'acronym':
-                        Column("Committee acronym"),
-                     'default_place':
-                        Column("Committee default place"),
-                     'default_assembly':
-                        TextAreaColumn("Committee default assembly"),
-                     'default_signatures':
-                        TextAreaColumn("Committee default signatures"),
-                     'default_attendees':
-                        MultiSelectColumn("Committee default attendees",
-                                          vocabulary="listSelectableCommitteeAttendees"),
-                     'default_signatories':
-                        MultiSelectColumn("Committee default signatories",
-                                          vocabulary="listSelectableCommitteeAttendees"),
-                     'auto_from':
-                        MultiSelectColumn("Committee auto from category",
-                                          vocabulary="listSelectableCommitteeAutoFrom"),
-                     'using_groups':
-                        MultiSelectColumn("Committee using groups",
-                                          vocabulary="listSelectableProposingGroups"),
-                     'supplements':
-                        SelectColumn("Committee supplements",
-                                     vocabulary="listNumbersFromZero",
-                                     default='0'),
-                     'enabled':
-                        SelectColumn("Committee enabled?",
-                                     vocabulary="listBooleanVocabulary",
-                                     default='1'), },
-            label='Committees',
-            label_msgid='PloneMeeting_label_committees',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="votes",
-        default=defValues.committees,
-        allow_oddeven=True,
-        write_permission="PloneMeeting: Write risky config",
-        columns=('row_id', 'label', 'acronym', 'default_place',
-                 'default_assembly', 'default_signatures',
-                 'default_attendees', 'default_signatories',
-                 'using_groups', 'auto_from',
-                 'supplements', 'enabled'),
-        allow_empty_rows=False,
     ),
     LinesField(
         name='meetingItemTemplatesToStoreAsAnnex',
@@ -3500,12 +3508,14 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 for term in classifiers_vocab._terms]
         return DisplayList(res)
 
-    def is_committees_using_auto_from(self):
-        """Return True if using committees "auto_from",
-           meaning that committee on item is determined automatically."""
+    def is_committees_using(self, column, value=[]):
+        """Return True if using committees given p_column :
+           - using "auto_from" column mean that committee on item is determined automatically;
+           - using "using_groups" column is exclusive from "auto_groups" and
+             restrict available committees to selected proposing groups."""
         res = False
-        for committee in self.getCommittees():
-            if committee['auto_from']:
+        for committee in value or self.getCommittees():
+            if committee[column]:
                 res = True
                 break
         return res
@@ -3745,7 +3755,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             brains = catalog(portal_type=self.getItemTypeName(), committees_index=removed)
             if brains:
                 return _('error_committee_row_id_removed_already_used',
-                         mapping={'url': brains[0].getURL()})
+                         mapping={'url': brains[0].getURL(),
+                                  'committee_label': safe_unicode(self.get_committee_label(removed))})
+
+        # columns using_groups and auto_from are exclusive
+        if self.is_committees_using("auto_from", new_value) and \
+           self.is_committees_using("using_groups", new_value):
+            return _('error_committees_mutually_exclusive_auto_from_and_using_groups')
 
     security.declarePrivate('validate_transitionsForPresentingAnItem')
 
@@ -6447,6 +6463,18 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             if listify:
                 signatures = listifySignatures(signatures)
         return signatures
+
+    security.declarePublic('getCommittees')
+
+    def getCommittees(self, only_enabled=False, **kwargs):
+        '''Overrides field 'committees' accessor to be able to pass
+           the p_only_enabled parameter that will return
+           committees for which enabled is '1'.'''
+        committees = self.getField('committees').get(self, **kwargs)
+        if only_enabled:
+            committees = [committee for committee in committees
+                          if committee['enabled'] == '1']
+        return committees
 
     security.declarePublic('getCategories')
 

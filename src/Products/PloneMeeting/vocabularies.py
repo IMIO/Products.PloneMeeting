@@ -1713,6 +1713,28 @@ class SelectableHeldPositionsVocabulary(BaseHeldPositionsVocabulary):
 SelectableHeldPositionsVocabularyFactory = SelectableHeldPositionsVocabulary()
 
 
+class SimplifiedSelectableHeldPositionsVocabulary(BaseHeldPositionsVocabulary):
+    """ """
+
+    def __call___cachekey(method, self, context, usage=None, uids=[]):
+        '''cachekey method for self.__call__.'''
+        date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.simplifiedselectableheldpositionsvocabulary')
+        return date, repr(context), usage, uids
+
+    @ram.cache(__call___cachekey)
+    def __call__(self, context, usage=None, uids=[]):
+        res = super(SimplifiedSelectableHeldPositionsVocabulary, self).__call__(
+            context,
+            usage=None,
+            include_usages=False,
+            include_defaults=False,
+            include_signature_number=False)
+        return res
+
+
+SimplifiedSelectableHeldPositionsVocabularyFactory = SimplifiedSelectableHeldPositionsVocabulary()
+
+
 class SelectableAssemblyMembersVocabulary(BaseHeldPositionsVocabulary):
     """ """
 
@@ -2060,7 +2082,7 @@ class SelectableCommitteesVocabulary(object):
         term_title = committee[term_title_attr]
         # manage when no term_title (no acronym defined)
         term_title = term_title or translate("None", domain="PloneMeeting", context=self.context.REQUEST)
-        return term_title
+        return safe_unicode(term_title)
 
     def __call__(self,
                  context,
@@ -2081,6 +2103,7 @@ class SelectableCommitteesVocabulary(object):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         cfg_committees = cfg_committees or cfg.getCommittees()
+        is_manager = tool.isManager(cfg)
 
         if add_no_committee_value:
             term_id = u"no_committee"
@@ -2101,7 +2124,7 @@ class SelectableCommitteesVocabulary(object):
                     term_title = translate(
                         '${element_title} (Inactive)',
                         domain='PloneMeeting',
-                        mapping={'element_title': safe_unicode(term_title)},
+                        mapping={'element_title': term_title},
                         context=context.REQUEST)
                 suppl_msgid = term_title_attr == "label" and \
                     'committee_title_with_suppl' or 'committee_title_with_abbr_suppl'
@@ -2120,8 +2143,9 @@ class SelectableCommitteesVocabulary(object):
         stored_values = self._get_stored_values()
         for committee in cfg_committees:
             if committee['enabled'] == '1' or committee['row_id'] in stored_values:
-                if check_using_groups and committee['using_groups']:
-                    org_uids = tool.get_selectable_orgs(cfg, only_selectable=True)
+                if check_using_groups and not is_manager and committee['using_groups']:
+                    org_uids = tool.get_selectable_orgs(
+                        cfg, only_selectable=True, the_objects=False)
                     if not set(org_uids).intersection(committee['using_groups']):
                         continue
                 term_title = self._get_term_title(committee, term_title_attr)
@@ -2129,7 +2153,7 @@ class SelectableCommitteesVocabulary(object):
                                         committee['row_id'],
                                         term_title))
                 # manage supplements
-                if include_suppl and (not check_is_manager_for_suppl or tool.isManager(cfg)):
+                if include_suppl and (not check_is_manager_for_suppl or is_manager):
                     terms += _add_suppl(committee)
 
         if include_all_disabled:
@@ -2139,7 +2163,7 @@ class SelectableCommitteesVocabulary(object):
                     label = translate(
                         '${element_title} (Inactive)',
                         domain='PloneMeeting',
-                        mapping={'element_title': safe_unicode(term_title)},
+                        mapping={'element_title': term_title},
                         context=context.REQUEST)
                     terms.append(SimpleTerm(committee['row_id'],
                                             committee['row_id'],
