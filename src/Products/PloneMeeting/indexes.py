@@ -10,7 +10,7 @@ from collective.iconifiedcategory.indexes import content_category_uid
 from datetime import datetime
 from imio.annex.content.annex import IAnnex
 from imio.helpers.content import _contained_objects
-from imio.history.interfaces import IImioHistory
+from imio.history.utils import getLastWFAction
 from OFS.interfaces import IItem
 from plone import api
 from plone.indexer import indexer
@@ -24,7 +24,6 @@ from Products.PloneMeeting.interfaces import IMeetingItem
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import get_datagridfield_column_value
 from Products.PluginIndexes.common.UnIndex import _marker
-from zope.component import getAdapter
 
 
 REAL_ORG_UID_PATTERN = 'real_org_uid__{0}'
@@ -82,20 +81,11 @@ def previous_review_state(obj):
     """
       Indexes the previous review_state, aka the review_state before current review_state
     """
-    try:
-        adapter = getAdapter(obj, IImioHistory, 'workflow')
-        wf_history = adapter.getHistory()
-    except KeyError:
-        return _marker
-
-    # check that there is more than one action triggered,
-    # or we are in the initial state and previous action is None...
-    if not wf_history or len(wf_history) == 1:
-        return _marker
-
-    # action [-1] is last triggered action, but we want the previous one...
-    previous_action = wf_history[-2]['review_state']
-    return previous_action
+    previous_action = None
+    event = getLastWFAction(obj, transition='before_last')
+    if event:
+        previous_action = event['review_state']
+    return previous_action or _marker
 
 
 @indexer(IMeetingItem)
