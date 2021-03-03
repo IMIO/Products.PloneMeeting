@@ -3555,7 +3555,7 @@ class testMeetingType(PloneMeetingTestCase):
             as_display_list=False)
         for rich_field in rich_fields:
             self._enableField(rich_field, related_to='Meeting')
-        meeting = self.create('Meeting', datetime(2021, 2, 4))
+        meeting = self.create('Meeting', date=datetime(2021, 2, 4))
         for rich_field in rich_fields:
             setattr(meeting, rich_field, richtextval("<p>{0}</p>".format(rich_field)))
         meeting.reindexObject()
