@@ -4150,6 +4150,22 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         if ('assembly' in newValue) and ('attendees' in newValue):
             return translate('no_assembly_and_attendees', domain=pm, context=self.REQUEST)
 
+        # Prevent combined use of "committees_assembly" and "committees_attendees"
+        if ('committees_assembly' in newValue) and ('committees_attendees' in newValue):
+            return translate('no_committees_assembly_and_committees_attendees',
+                             domain=pm,
+                             context=self.REQUEST)
+        # Prevent combined use of "committees_signatures" and "committees_signatories"
+        if ('committees_signatures' in newValue) and ('committees_signatories' in newValue):
+            return translate('no_committees_signatures_and_committees_signatories',
+                             domain=pm,
+                             context=self.REQUEST)
+
+        # if a committees_ field is selected, then committees must be selected as well
+        committees_attr = [v for v in newValue if v.startswith('committees_')]
+        if committees_attr and "committees" not in newValue:
+            return translate('committees_required', domain=pm, context=self.REQUEST)
+
     security.declarePrivate('validate_itemConditionsInterface')
 
     def validate_itemConditionsInterface(self, value):

@@ -95,31 +95,31 @@ def assembly_constraint(value):
     return True
 
 
-class ICommittesRowSchema(Interface):
+class ICommitteesRowSchema(Interface):
     """Schema for DataGridField widget's row of field 'committees'."""
 
     row_id = schema.Choice(
-        title=_("title_committee_row_id"),
+        title=_("title_committees_row_id"),
         vocabulary='Products.PloneMeeting.vocabularies.meeting_selectable_committees_vocabulary',
         required=True)
 
     form.widget('date', DatetimeFieldWidget, show_today_link=True, show_time=True)
     date = schema.Datetime(
-        title=_("title_committee_date"),
+        title=_("title_committees_date"),
         required=False)
 
     form.widget('convocation_date', DateFieldWidget, show_today_link=True)
     convocation_date = schema.Date(
-        title=_("title_committee_convocation_date"),
+        title=_("title_committees_convocation_date"),
         required=False)
 
     place = schema.TextLine(
-        title=_("title_committee_place"),
+        title=_("title_committees_place"),
         required=False)
 
     form.widget('assembly', PMTextAreaFieldWidget)
     assembly = RichText(
-        title=_(u"title_committee_assembly"),
+        title=_(u"title_committees_assembly"),
         default_mime_type='text/plain',
         allowed_mime_types=("text/plain", ),
         output_mime_type='text/x-html-safe',
@@ -127,7 +127,7 @@ class ICommittesRowSchema(Interface):
 
     form.widget('signatures', PMTextAreaFieldWidget)
     signatures = RichText(
-        title=_(u"title_committee_signatures"),
+        title=_(u"title_committees_signatures"),
         default_mime_type='text/plain',
         allowed_mime_types=("text/plain", ),
         output_mime_type='text/x-html-safe',
@@ -135,14 +135,14 @@ class ICommittesRowSchema(Interface):
 
     form.widget('attendees', PMOrderedSelectFieldWidget)
     attendees = schema.List(
-        title=_("title_committee_attendees"),
+        title=_("title_committees_attendees"),
         value_type=schema.Choice(
             vocabulary="Products.PloneMeeting.vocabularies.selectable_committee_attendees_vocabulary"),
         required=False)
 
     form.widget('signatories', PMOrderedSelectFieldWidget)
     signatories = schema.List(
-        title=_("title_committee_signatories"),
+        title=_("title_committees_signatories"),
         value_type=schema.Choice(
             vocabulary="Products.PloneMeeting.vocabularies.selectable_committee_attendees_vocabulary"),
         required=False)
@@ -308,13 +308,13 @@ class IMeeting(IDXMeetingContent):
         title=_(u'title_committees'),
         required=False,
         value_type=DictRow(
-            schema=ICommittesRowSchema,
+            schema=ICommitteesRowSchema,
             required=False))
 
-    searchable("committee_observations")
-    form.widget('committee_observations', PMRichTextFieldWidget)
-    committee_observations = RichText(
-        title=_(u"title_committee_observations"),
+    searchable("committees_observations")
+    form.widget('committees_observations', PMRichTextFieldWidget)
+    committees_observations = RichText(
+        title=_(u"title_committees_observations"),
         description=_("descr_field_vieawable_by_everyone"),
         required=False,
         allowed_mime_types=(u"text/html", ))
@@ -410,7 +410,7 @@ class IMeeting(IDXMeetingContent):
 
     model.fieldset('committees',
                    label=_(u"fieldset_committees"),
-                   fields=['committees', 'committee_observations'])
+                   fields=['committees', 'committees_observations'])
 
     model.fieldset('details',
                    label=_(u"fieldset_details"),
@@ -673,7 +673,7 @@ def default_committees(data):
                     value = richtextval(value)
                 data[real_field_id] = value
             # complete data
-            for field_name in getFieldNamesInOrder(ICommittesRowSchema):
+            for field_name in getFieldNamesInOrder(ICommitteesRowSchema):
                 if field_name not in data:
                     data[field_name] = None
             res.append(data)
@@ -806,7 +806,7 @@ class Meeting(Container):
              'optional_columns': ['convocation_date', 'place',
                                   'assembly', 'signatures',
                                   'attendees', 'signatories']},
-        'committee_observations':
+        'committees_observations':
             {'optional': True,
              'condition': ""},
         'in_and_out_moves':
