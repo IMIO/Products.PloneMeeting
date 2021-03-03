@@ -113,7 +113,7 @@
             </div>
 
             <tal:comment replace="nothing">Committees</tal:comment>
-            <div class="discreet" tal:condition="python: 'committees' in usedAttrs"
+            <div class="discreet" tal:condition="python: 'committees' in usedMeetingAttrs"
                                   tal:define="committees context/getCommittees;">
                 <span class="item_attribute_label"
                       i18n:translate="PloneMeeting_label_committees"></span>:&nbsp;&nbsp;

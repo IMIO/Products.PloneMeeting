@@ -2,24 +2,7 @@
 #
 # File: testMeetingConfig.py
 #
-# Copyright (c) 2018 by Imio.be
-#
 # GNU General Public License (GPL)
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
-# 02110-1301, USA.
 #
 
 from AccessControl import Unauthorized
@@ -2148,6 +2131,25 @@ class testMeetingConfig(PloneMeetingTestCase):
         # not viewable by non MeetingManagers
         self.changeUser('pmCreator1')
         self.assertFalse(cfg.show_meeting_manager_reserved_field('a_meeting_field'))
+
+    def test_pm_Validate_usedMeetingAttributes(self):
+        """Check the MeetingConfig.usedMeetingAttributes validate method."""
+        cfg = self.meetingConfig
+        self.changeUser('pmManager')
+        self.failIf(cfg.validate_usedMeetingAttributes([]))
+        incompatible_values = {"assembly": "attendees",
+                               "signatures": "signatories",
+                               "committees_assembly": "committees_attendees",
+                               "committees_signatures": "committees_signatories"}
+        for k, v in incompatible_values.items():
+            self.failUnless(cfg.validate_usedMeetingAttributes([k, v]))
+        required_values = {"assembly": ["assembly_excused", "assembly_absents"],
+                           "attendees": ["excused", "absents"],
+                           "committees": [v for v in cfg.Vocabulary('usedMeetingAttributes')[0]
+                                          if v.startswith("committees_")]}
+        for k, values in required_values.items():
+            for v in values:
+                self.failUnless(cfg.validate_usedMeetingAttributes([v]))
 
 
 def test_suite():

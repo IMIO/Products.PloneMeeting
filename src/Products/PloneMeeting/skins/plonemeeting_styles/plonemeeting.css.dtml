@@ -956,6 +956,16 @@ body[class*="itemtemplates"].template-manage-portlets a.link-parent {
     width: 33%;
 }
 
+/* width of MeetingConfig.committees datagridfield columns */
+/* label */
+#datagridwidget-table-committees .datagridwidget-column-2 {
+   width: 200px;
+}
+/* supplements */
+#datagridwidget-table-committees .datagridwidget-column-11 {
+   width: 1%;
+}
+
 /* display DX datagrid column in grey */
 .datagridwidget-table-view {
     border-color: #ddd;

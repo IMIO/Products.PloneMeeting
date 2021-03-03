@@ -540,7 +540,7 @@
 
   <criterion name="c31" i18n:attributes="title">
    <property name="widget">checkbox</property>
-   <property name="title">Committees</property>
+   <property name="title">Committee</property>
    <property name="position">top</property>
    <property name="section">advanced</property>
    <property name="hidden">False</property>

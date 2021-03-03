@@ -314,7 +314,7 @@ class MeetingItemWorkflowConditions(object):
         # permission is not enough as MeetingReviewer may have the 'Review portal content'
         # when using the 'reviewers_take_back_validated_item' wfAdaptation
         if not _checkPermission(ReviewPortalContent, self.context) or \
-           not self.tool.isManager(self.context):
+           not self.tool.isManager(self.cfg):
             return False
 
         # We may present the item if Plone currently publishes a meeting.
@@ -487,7 +487,7 @@ class MeetingItemWorkflowConditions(object):
            As we have only one guard_expr for potentially several transitions departing
            from the 'returned_to_proposing_group' state, we receive the p_transitionName."""
         if not _checkPermission(ReviewPortalContent, self.context) and not \
-           self.tool.isManager(self.context):
+           self.tool.isManager(self.cfg):
             return
         # get the linked meeting
         meeting = self.context.getMeeting()
@@ -630,7 +630,7 @@ class MeetingItemWorkflowConditions(object):
         """ """
         res = False
         if self.context.getIsAcceptableOutOfMeeting():
-            if _checkPermission(ReviewPortalContent, self.context) and self.tool.isManager(self.context):
+            if _checkPermission(ReviewPortalContent, self.context) and self.tool.isManager(self.cfg):
                 res = True
         return res
 
@@ -641,7 +641,7 @@ class MeetingItemWorkflowConditions(object):
         res = False
         emergency = self.context.getEmergency()
         if emergency == 'emergency_accepted':
-            if _checkPermission(ReviewPortalContent, self.context) and self.tool.isManager(self.context):
+            if _checkPermission(ReviewPortalContent, self.context) and self.tool.isManager(self.cfg):
                 res = True
         # if at least emergency is asked, then return a No message
         elif emergency != 'no_emergency':
@@ -2178,9 +2178,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''See doc in interfaces.py.'''
         item = self.getSelf()
         tool = api.portal.get_tool('portal_plonemeeting')
-        res = tool.isManager(item)
+        cfg = tool.getMeetingConfig(item)
+        res = tool.isManager(cfg)
         if not res:
-            cfg = tool.getMeetingConfig(item)
             res = tool.isPowerObserverForCfg(cfg) or \
                 item.query_state() in cfg.getItemDecidedStates()
         return res
@@ -2227,7 +2227,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         # bypass for Managers
         tool = api.portal.get_tool('portal_plonemeeting')
-        if tool.isManager(self, realManagers=True):
+        cfg = tool.getMeetingConfig(self)
+        if tool.isManager(cfg, realManagers=True):
             return True
 
         # user must be in one of the proposingGroup Plone groups
@@ -2275,7 +2276,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Condition for editing 'listType' field.'''
         item = self.getSelf()
         tool = api.portal.get_tool('portal_plonemeeting')
-        if item.hasMeeting() and tool.isManager(item):
+        cfg = tool.getMeetingConfig(item)
+        if item.hasMeeting() and tool.isManager(cfg):
             return True
         return False
 
@@ -2287,7 +2289,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         res = False
         if _checkPermission(ModifyPortalContent, item):
             tool = api.portal.get_tool('portal_plonemeeting')
-            if not item.hasMeeting() or tool.isManager(item):
+            cfg = tool.getMeetingConfig(item)
+            if not item.hasMeeting() or tool.isManager(cfg):
                 res = True
         return res
 
@@ -2300,14 +2303,15 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            this method.'''
         item = self.getSelf()
         tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(item)
 
         # bypass for the Manager role
-        if tool.isManager(item, realManagers=True):
+        if tool.isManager(cfg, realManagers=True):
             return True
 
         # Only MeetingManagers can sign an item if it is decided
         if not item.showItemIsSigned() or \
-           not tool.isManager(item):
+           not tool.isManager(cfg):
             return False
 
         # If the meeting is in a closed state, the item can only be signed but
@@ -2409,8 +2413,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # by default, only MeetingManagers can accept or refuse emergency
         item = self.getSelf()
         tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(item)
         member = api.user.get_current()
-        if tool.isManager(item) and member.has_permission(ModifyPortalContent, item):
+        if tool.isManager(cfg) and member.has_permission(ModifyPortalContent, item):
             return True
         return False
 
@@ -2425,10 +2430,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         res = False
         tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(item)
         member = api.user.get_current()
         # user must be an item completeness editor (one of corresponding role)
         if member.has_permission(ModifyPortalContent, item) and \
-           (tool.userIsAmong(ITEM_COMPLETENESS_EVALUATORS) or tool.isManager(item)):
+           (tool.userIsAmong(ITEM_COMPLETENESS_EVALUATORS) or tool.isManager(cfg)):
             res = True
         return res
 
@@ -2443,11 +2449,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         res = False
         tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(item)
         member = api.user.get_current()
         # user must be an item completeness editor (one of corresponding role)
         if item.getCompleteness() == 'completeness_incomplete' and \
            member.has_permission(ModifyPortalContent, item) and \
-           (tool.userIsAmong(ITEM_COMPLETENESS_ASKERS) or tool.isManager(item)):
+           (tool.userIsAmong(ITEM_COMPLETENESS_ASKERS) or tool.isManager(cfg)):
             res = True
         return res
 
@@ -2463,11 +2470,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Check doc in interfaces.py.'''
         item = self.getSelf()
         tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(item)
         member = api.user.get_current()
         # user must be able to edit the item and must be a Manager
         if item.adviceIsInherited(org_uid) or \
            not member.has_permission(ModifyPortalContent, item) or \
-           not tool.isManager(item):
+           not tool.isManager(cfg):
             return False
         return True
 
@@ -2522,11 +2530,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return False
 
         tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(item)
 
         # apart MeetingManagers, the advice can not be set back to previous
         # if editable by the adviser
         if item.adviceIndex[advice.advice_group]['advice_editable'] and \
-           not tool.isManager(item):
+           not tool.isManager(cfg):
             return False
 
         member = api.user.get_current()
@@ -3615,10 +3624,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def update_committees(self):
         """Update committees automatically?"""
-        if self.attributeIsUsed('committees') and \
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        if "committees" in cfg.getUsedMeetingAttributes() and \
            (not self.getCommittees() or self.REQUEST.get('need_MeetingItem_update_committees')):
-            tool = api.portal.get_tool('portal_plonemeeting')
-            cfg = tool.getMeetingConfig(self)
             if cfg.is_committees_using("auto_from"):
                 committees = []
                 for committee in cfg.getCommittees(only_enabled=True):
@@ -6999,9 +7008,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         res = False
         proposingGroup = self.getProposingGroup()
         tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
         if not proposingGroup or \
            self.getProposingGroup(theObject=False) in tool.get_orgs_for_user(the_objects=False) or \
-           tool.isManager(self):
+           tool.isManager(cfg):
             res = True
         return res
 
