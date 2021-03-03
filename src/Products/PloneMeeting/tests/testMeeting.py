@@ -346,9 +346,9 @@ class testMeetingType(PloneMeetingTestCase):
         self.assertEqual([item.getId() for item in orderedItems],
                          ['recItem1', 'recItem2', 'item-2', 'item-4', 'item-1', 'item-3', 'item-5'])
         # now disable the group used by 3 last items 'o2', 'o4' and 'o6', that is 'vendors'
-        self.assertTrue(orderedItems[-1].getProposingGroup() == self.vendors_uid)
-        self.assertTrue(orderedItems[-2].getProposingGroup() == self.vendors_uid)
-        self.assertTrue(orderedItems[-3].getProposingGroup() == self.vendors_uid)
+        self.assertEqual(orderedItems[-1].getProposingGroup(), self.vendors_uid)
+        self.assertEqual(orderedItems[-2].getProposingGroup(), self.vendors_uid)
+        self.assertEqual(orderedItems[-3].getProposingGroup(), self.vendors_uid)
         # and insert a new item
         self.changeUser('admin')
         self._select_organization(self.vendors_uid, remove=True)
@@ -1870,15 +1870,15 @@ class testMeetingType(PloneMeetingTestCase):
         self.changeUser('pmManager')
         meeting = self._createMeetingWithItems()
         # by default, 7 normal items and none late
-        self.assertTrue(meeting.number_of_items() == '7')
+        self.assertEqual(meeting.number_of_items(), '7')
         # add a late item
         self.freezeMeeting(meeting)
         item = self.create('MeetingItem')
         item.setPreferredMeeting(meeting.UID())
         self.presentItem(item)
         # now 8 items
-        self.assertTrue(meeting.number_of_items() == '8')
-        self.assertTrue(len(meeting.get_raw_items()) == 8)
+        self.assertEqual(meeting.number_of_items(), '8')
+        self.assertEqual(len(meeting.get_raw_items()), 8)
 
     def test_pm_AvailableItems(self):
         """
@@ -1981,7 +1981,7 @@ class testMeetingType(PloneMeetingTestCase):
             # i1 is a late item
             self.assertTrue(i2.wfConditions().isLateFor(m1))
             m1_query = queryparser.parseFormquery(m1, m1._available_items_query())
-            self.assertTrue([brain.UID for brain in self.catalog(m1_query)] == [i2.UID()])
+            self.assertEqual([brain.UID for brain in self.catalog(m1_query)], [i2.UID()])
 
         # if a meeting is not in a state accepting items, it does not accept items anymore
         self.closeMeeting(m1)
@@ -2111,7 +2111,7 @@ class testMeetingType(PloneMeetingTestCase):
         # every items are 'presented'
         items = meeting.get_items()
         for item in items:
-            self.assertTrue(item.query_state() == 'presented')
+            self.assertEqual(item.query_state(), 'presented')
         # numbering is correct
         self.assertEqual(
             [numberedItem.getItemNumber(for_display=True) for numberedItem in meeting.get_items(ordered=True)],
@@ -2128,7 +2128,7 @@ class testMeetingType(PloneMeetingTestCase):
         # every items are now 'validated'
         self.assertFalse(meeting.get_items())
         for item in items:
-            self.assertTrue(item.query_state() == 'validated')
+            self.assertEqual(item.query_state(), 'validated')
 
         # if we are not able to correct the items, it does not break
         meeting2 = self._createMeetingWithItems()
@@ -2139,7 +2139,7 @@ class testMeetingType(PloneMeetingTestCase):
             ['1', '2', '3', '4', '5', '6', '7'])
         # every items are in a final state
         for item in meeting2.get_items():
-            self.assertTrue(item.query_state() == self.ITEM_WF_STATE_AFTER_MEETING_TRANSITION['close'])
+            self.assertEqual(item.query_state(), self.ITEM_WF_STATE_AFTER_MEETING_TRANSITION['close'])
         # we can not correct the items
         self.assertTrue(not [tr for tr in self.transitions(meeting2.get_items()[0]) if tr.startswith('back')])
         removeView = meeting2.restrictedTraverse('@@remove-several-items')
@@ -2150,7 +2150,7 @@ class testMeetingType(PloneMeetingTestCase):
             ['1', '2', '3', '4', '5', '6', '7'])
         # items state was not changed
         for item in meeting2.get_items():
-            self.assertTrue(item.query_state() == self.ITEM_WF_STATE_AFTER_MEETING_TRANSITION['close'])
+            self.assertEqual(item.query_state(), self.ITEM_WF_STATE_AFTER_MEETING_TRANSITION['close'])
 
     def test_pm_PresentItemToPublishedMeeting(self):
         '''Test the functionnality to present an item.
@@ -2160,15 +2160,15 @@ class testMeetingType(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         meeting = self.create('Meeting', date=datetime(2014, 1, 1))
         # create Meeting here above set meeting as current meeting object
-        self.assertTrue(getCurrentMeetingObject(item).UID() == meeting.UID())
+        self.assertEqual(getCurrentMeetingObject(item).UID(), meeting.UID())
         # if we present the item, it will be presented in the published meeting
         self.presentItem(item)
-        self.assertTrue(item.query_state() == 'presented')
-        self.assertTrue(item.getMeeting().UID() == meeting.UID())
+        self.assertEqual(item.query_state(), 'presented')
+        self.assertEqual(item.getMeeting().UID(), meeting.UID())
         # remove item from meeting
         self.backToState(item, 'validated')
-        self.assertTrue(not item.hasMeeting())
-        self.assertTrue(item.query_state() == 'validated')
+        self.assertFalse(item.hasMeeting())
+        self.assertEqual(item.query_state(), 'validated')
         # now unset current meeting
         item.REQUEST['PUBLISHED'] = item
         # as no current meeting and no meeting in the future, the item
@@ -2184,9 +2184,9 @@ class testMeetingType(PloneMeetingTestCase):
         item._update_after_edit()
         self.assertTrue(item.wfConditions().mayPresent())
         self.presentItem(item)
-        self.assertTrue(item.query_state() == 'itemfrozen')
+        self.assertEqual(item.query_state(), 'itemfrozen')
         self.assertTrue(item.isLate())
-        self.assertTrue(item.getMeeting().UID() == meeting.UID())
+        self.assertEqual(item.getMeeting().UID(), meeting.UID())
 
     def test_pm_PresentItemToMeetingFromAvailableItems(self):
         """When no published meeting, getCurrentMeetingObject relies on a catalog query
@@ -2248,9 +2248,9 @@ class testMeetingType(PloneMeetingTestCase):
         self.assertEqual(item.getMeetingToInsertIntoWhenNoCurrentMeetingObject(), meeting)
         # present the item as normal item
         self.presentItem(item)
-        self.assertTrue(item.query_state() == 'presented')
+        self.assertEqual(item.query_state(), 'presented')
         self.assertFalse(item.isLate())
-        self.assertTrue(item.getMeeting().UID() == meeting.UID())
+        self.assertEqual(item.getMeeting().UID(), meeting.UID())
         # remove the item, we will now insert it as late
         self.do(item, 'backToValidated')
 
@@ -2484,7 +2484,7 @@ class testMeetingType(PloneMeetingTestCase):
         self.changeUser('pmManager')
         meeting = self._createMeetingWithItems()
         itemsInOrder = meeting.get_items(ordered=True)
-        self.assertTrue(len(itemsInOrder) == 7)
+        self.assertEqual(len(itemsInOrder), 7)
         # we have MeetingItems as the_objects=True by default
         self.assertTrue(isinstance(itemsInOrder[0], MeetingItem))
         # items are ordered
@@ -2497,23 +2497,23 @@ class testMeetingType(PloneMeetingTestCase):
         itemUids.pop(2)
         itemUids.pop(0)
         # we removed 3 items
-        self.assertTrue(len(meeting.get_items(uids=itemUids)) == 4)
+        self.assertEqual(len(meeting.get_items(uids=itemUids)), 4)
         # we can specify the listType
-        self.assertTrue(len(meeting.get_items(list_types=['normal'])) == 7)
-        self.assertTrue(len(meeting.get_items(list_types=['late'])) == 0)
+        self.assertEqual(len(meeting.get_items(list_types=['normal'])), 7)
+        self.assertEqual(len(meeting.get_items(list_types=['late'])), 0)
 
         # can also use catalog
         brainsInOrder = meeting.get_items(ordered=True, the_objects=False)
-        self.assertTrue(len(brainsInOrder) == 7)
+        self.assertEqual(len(brainsInOrder), 7)
         # we have brains
         self.assertTrue(isinstance(brainsInOrder[0], AbstractCatalogBrain))
         # items are ordered
         self.assertEqual([brain.getItemNumber for brain in brainsInOrder],
                          [100, 200, 300, 400, 500, 600, 700])
-        self.assertTrue(len(meeting.get_items(uids=itemUids, the_objects=False)) == 4)
+        self.assertEqual(len(meeting.get_items(uids=itemUids, the_objects=False)), 4)
         # we can specify the listType
-        self.assertTrue(len(meeting.get_items(list_types=['normal'], the_objects=False)) == 7)
-        self.assertTrue(len(meeting.get_items(list_types=['late'], the_objects=False)) == 0)
+        self.assertEqual(len(meeting.get_items(list_types=['normal'], the_objects=False)), 7)
+        self.assertEqual(len(meeting.get_items(list_types=['late'], the_objects=False)), 0)
 
     def test_pm_GetItemsWithTheObjectsTrue(self):
         '''User only receives items he may see.'''
@@ -2551,12 +2551,12 @@ class testMeetingType(PloneMeetingTestCase):
         self.changeUser('pmManager')
         meeting = self._createMeetingWithItems()
         itemsInOrder = meeting.get_items(ordered=True)
-        self.assertTrue(len(itemsInOrder) == 7)
+        self.assertEqual(len(itemsInOrder), 7)
         itemUids = [item.UID() for item in itemsInOrder]
-        self.assertTrue(meeting.get_item_by_number(200).UID() == itemUids[1])
-        self.assertTrue(meeting.get_item_by_number(100).UID() == itemUids[0])
-        self.assertTrue(meeting.get_item_by_number(500).UID() == itemUids[4])
-        self.assertTrue(not meeting.get_item_by_number(800))
+        self.assertEqual(meeting.get_item_by_number(200).UID(), itemUids[1])
+        self.assertEqual(meeting.get_item_by_number(100).UID(), itemUids[0])
+        self.assertEqual(meeting.get_item_by_number(500).UID(), itemUids[4])
+        self.assertFalse(meeting.get_item_by_number(800))
         # it also take late items into account
         self.freezeMeeting(meeting)
         lateItem = self.create('MeetingItem')
@@ -2564,7 +2564,7 @@ class testMeetingType(PloneMeetingTestCase):
         self.presentItem(lateItem)
         # if we ask 8th item, so the late item, it works
         self.assertTrue(lateItem.isLate())
-        self.assertTrue(meeting.get_item_by_number(800).UID() == lateItem.UID())
+        self.assertEqual(meeting.get_item_by_number(800).UID(), lateItem.UID())
 
     def test_pm_RemoveWholeMeeting(self):
         '''Test the 'remove whole meeting' functionnality, so removing a meeting
@@ -2597,7 +2597,7 @@ class testMeetingType(PloneMeetingTestCase):
                                     'advice_comment': RichTextValue(u'My comment')})
         self.changeUser('pmManager')
         meetingParentFolder = meeting.getParentNode()
-        self.assertTrue(set(meetingParentFolder.objectValues('MeetingItem')) == set(meeting.get_items()))
+        self.assertEqual(set(meetingParentFolder.objectValues('MeetingItem')), set(meeting.get_items()))
         # if trying to remove a meeting containing items as non Manager, it will raise Unauthorized
         self.assertRaises(Unauthorized, self.portal.restrictedTraverse('@@delete_givenuid'), meeting.UID())
         # as a Manager, the meeting including items will be removed
@@ -2638,8 +2638,8 @@ class testMeetingType(PloneMeetingTestCase):
         item.setPreferredMeeting(meeting_uid)
         item._update_after_edit()
         items = self.catalog(preferred_meeting_uid=meeting_uid)
-        self.assertTrue(len(items) == 1)
-        self.assertTrue(items[0].UID == item.UID())
+        self.assertEqual(len(items), 1)
+        self.assertEqual(items[0].UID, item.UID())
 
         # now remove the meeting and check
         self.changeUser('pmManager')
@@ -2652,7 +2652,7 @@ class testMeetingType(PloneMeetingTestCase):
         items = self.catalog(preferred_meeting_uid=meeting_uid)
         self.assertFalse(items)
         # the preferred meeting of the item is now 'whatever'
-        self.assertTrue(item.getPreferredMeeting() == ITEM_NO_PREFERRED_MEETING_VALUE)
+        self.assertEqual(item.getPreferredMeeting(), ITEM_NO_PREFERRED_MEETING_VALUE)
         self.assertIsNone(item.getPreferredMeeting(theObject=True))
 
     def test_pm_MeetingActionsPanelCaching(self):
@@ -3578,7 +3578,7 @@ class testMeetingType(PloneMeetingTestCase):
         actions_panel = meeting.restrictedTraverse('@@actions_panel')
         transitions = actions_panel.getTransitions()
         first_transition = transitions[0]
-        self.assertTrue(first_transition['id'] == 'freeze')
+        self.assertEqual(first_transition['id'], 'freeze')
         self.assertTrue(first_transition['confirm'])
 
 
