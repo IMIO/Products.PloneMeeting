@@ -777,27 +777,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     return True
         return False
 
-    security.declarePublic('isInPloneMeeting')
-
-    def isInPloneMeeting(self, context, inTool=False):
-        '''Is the user 'in' PloneMeeting (ie somewhere in PloneMeeting-related
-           folders that are created within member folders)? If p_inTool is True,
-           we consider that the user is in PloneMeeting even if he is in the
-           config.'''
-        try:
-            context.aq_acquire(MEETING_CONFIG)
-            # Don't show portlet_plonemeeting in the configuration
-            if not inTool and '/portal_plonemeeting' in context.absolute_url():
-                res = False
-            else:
-                res = True
-        except AttributeError:
-            if inTool:
-                res = '/portal_plonemeeting' in context.absolute_url()
-            else:
-                res = False
-        return res
-
     def showPloneMeetingTab_cachekey(method, self, cfg):
         '''cachekey method for self.showPloneMeetingTab.'''
         # we only recompute if user groups changed or self changed
@@ -819,8 +798,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         '''Must we show the "Annexes" on given p_context ?'''
         if context.meta_type == 'MeetingItem' and \
            (context.isTemporary() or context.isDefinedInTool()):
-            return False
-        elif context.getTagName() == 'Meeting' and context.isTemporary():
             return False
         else:
             return True
@@ -1249,26 +1226,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         name = fullname.decode(enc)
         res = name + u' <%s>' % userInfo.getProperty('email').decode(enc)
         return safe_unicode(res)
-
-    security.declarePublic('attributeIsUsed')
-
-    def attributeIsUsed(self, objectType, attrName):
-        '''Returns True if attribute named p_attrName is used for at least
-           one meeting config for p_objectType.'''
-        configAttr = None
-        if objectType == 'item':
-            configAttr = 'getUsedItemAttributes'
-        elif objectType == 'meeting':
-            configAttr = 'getUsedMeetingAttributes'
-        for meetingConfig in self.objectValues('MeetingConfig'):
-            if attrName == 'category':
-                if not meetingConfig.getUseGroupsAsCategories() and \
-                   meetingConfig.categories.objectIds():
-                    return True
-            else:
-                if attrName in getattr(meetingConfig, configAttr)():
-                    return True
-        return False
 
     security.declarePublic('format_date')
 
