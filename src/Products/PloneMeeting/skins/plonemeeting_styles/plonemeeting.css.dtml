@@ -2223,6 +2223,11 @@ table#form-widgets-committees th.column-convocation_date {
 table#form-widgets-committees th.column-place {
    width: 180px;
 }
+/* hide Meeting.committees label on edit and view */
+fieldset#fieldset-committees div#formfield-form-widgets-committees label,
+body.template-meeting_view label[for="form-widgets-committees"] {
+   display: none;
+}
 
 /* </dtml-with> */
 

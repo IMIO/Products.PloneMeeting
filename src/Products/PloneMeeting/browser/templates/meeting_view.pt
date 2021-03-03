@@ -50,7 +50,8 @@
           <tal:loop repeat="widget widgets">
             <tr tal:attributes="id string:row-${widget/id}">
                 <td class="table_widget_label">
-                  <label tal:content="widget/label">Label</label>
+                  <label tal:attributes="for python: 'form-widgets-' + widget.__name__"
+                         tal:content="widget/label">Label</label>
                 </td>
                 <td class="table_widget_value">
                   <tal:value content="structure python:view.meeting_view.view_widget(widget)">
@@ -113,7 +114,8 @@
          class="collapsible-content">
       <div class="collapsible-inner-content">
         <tal:loop repeat="widget widgets">
-          <label tal:condition="python: not view.meeting_view._is_rich(widget)"
+          <label tal:attributes="for python: 'form-widgets-' + widget.__name__"
+                 tal:condition="python: not view.meeting_view._is_rich(widget)"
                  tal:content="widget/label">Label</label>
           <tal:block tal:replace="structure python:view.meeting_view.view_widget(widget)">
             Value
@@ -217,7 +219,8 @@
           <tal:loop repeat="widget widgets">
             <tr tal:attributes="id string:row-${widget/id}">
                 <td class="table_widget_label">
-                  <label tal:content="widget/label">Label</label>
+                  <label tal:attributes="for python: 'form-widgets-' + widget.__name__"
+                         tal:content="widget/label">Label</label>
                 </td>
                 <td class="table_widget_value"
                     tal:content="structure python:view.meeting_view.view_widget(widget)">
