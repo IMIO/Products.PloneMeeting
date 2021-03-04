@@ -16,13 +16,13 @@ from zope.event import notify
 from zope.lifecycleevent import ObjectModifiedEvent
 
 
-def _delay_icon(memberIsAdviserForGroup, adviceInfo):
+def _delay_icon(memberIsAdviserForGroup, advice_info):
     """In case this is a delay aware advice, return a delay_icon
        if advice is not_given/hidden_during_redaction."""
     if not memberIsAdviserForGroup:
         return 'advice_with_delay_disabled_big.png'
     else:
-        delay_status = adviceInfo['delay_infos']['delay_status']
+        delay_status = advice_info['delay_infos']['delay_status']
         if delay_status == 'still_time':
             return 'advice_with_delay_big_green.png'
         elif delay_status == 'still_time_but_alert':
@@ -61,7 +61,7 @@ class AdvicesIcons(BrowserView):
         self.advisableGroups = self.context.getAdvicesGroupsInfosForUser(compute_to_edit=False)
         self.advicesByType = self.context.getAdvicesByType()
         self.userAdviserOrgUids = self.tool.get_orgs_for_user(suffixes=['advisers'], the_objects=False)
-
+        self.advice_infos = self.context.getAdviceDataFor(self.context, ordered=True)
         if not self.context.adapted().isPrivacyViewable():
             return '<div style="display: inline">&nbsp;-&nbsp;&nbsp;&nbsp;</div>'
         return super(AdvicesIcons, self).__call__()
@@ -77,26 +77,26 @@ class AdvicesIcons(BrowserView):
             smaller_delay = 999
             # if we did not found an advice to warn for current user, maybe there is an advice
             # with delay to be given by another group, we show it too
-            for org_uid, adviceInfo in self.context.adviceIndex.items():
+            for org_uid, advice_info in self.advice_infos.items():
                 # find smaller delay
-                if (adviceInfo['type'] == adviceType or
+                if (advice_info['type'] == adviceType or
                     (adviceType == 'hidden_during_redaction' and
-                     adviceInfo['hidden_during_redaction'] and adviceInfo['advice_editable']) or
+                     advice_info['hidden_during_redaction'] and advice_info['advice_editable']) or
                     (adviceType == 'considered_not_given_hidden_during_redaction' and
-                     adviceInfo['hidden_during_redaction'] and not adviceInfo['advice_editable'])) and \
-                   adviceInfo['delay'] and \
-                   adviceInfo['delay_infos']['left_delay'] < smaller_delay:
+                     advice_info['hidden_during_redaction'] and not advice_info['advice_editable'])) and \
+                   advice_info['delay'] and \
+                   advice_info['delay_infos']['left_delay'] < smaller_delay:
                     if org_uid in self.userAdviserOrgUids:
                         # determinate delay_icon to use
-                        advicesToWarn[adviceType] = adviceInfo, _delay_icon(True, adviceInfo)
+                        advicesToWarn[adviceType] = advice_info, _delay_icon(True, advice_info)
                     # check if we already have a adviceToWarn, if user was adviser
                     # for this group, it is prioritary
                     elif not advicesToWarn.get(adviceType) or \
                             (advicesToWarn.get(adviceType) and not advicesToWarn[adviceType][1] == 0):
-                        advicesToWarn[adviceType] = adviceInfo, _delay_icon(False, adviceInfo)
+                        advicesToWarn[adviceType] = advice_info, _delay_icon(False, advice_info)
                     else:
                         continue
-                    smaller_delay = adviceInfo['delay_infos']['left_delay']
+                    smaller_delay = advice_info['delay_infos']['left_delay']
 
         _updateAdvicesToWarn('not_given')
         _updateAdvicesToWarn('hidden_during_redaction')
@@ -189,9 +189,9 @@ class AdvicesIconsInfos(BrowserView):
                 view._mayAccessDelayChangesHistory() or view._mayReinitializeDelay()
         return res
 
-    def delay_icon(self, adviceInfo):
+    def delay_icon(self, advice_info):
         """Makes it callable in the template."""
-        return _delay_icon(self.memberIsAdviserForGroup, adviceInfo)
+        return _delay_icon(self.memberIsAdviserForGroup, advice_info)
 
     def authorname(self, advice):
         author = api.user.get(advice.Creator())
