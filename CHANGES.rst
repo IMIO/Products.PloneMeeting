@@ -87,6 +87,12 @@ Changelog
 - Use `imio.history.utils.getLastWFAction` parameter `transition='before_last'`
   to get the before last `review_state` in `indexes.previous_review_state`.
   [gbastien]
+- Fixed `ItemsToAdviceWithoutHiddenDuringRedactionAdapter` that was using the
+  same cached method as parent `ItemsToAdviceAdapter` because an alias for query
+  was not defined. In this case, the 2 queries return the same result...
+  Added a test that checks that a different alias is used for every
+  `CompoundCriterionBaseAdapter` query.
+  [gbastien]
 
 4.2b11 (2021-01-19)
 -------------------
