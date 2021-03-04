@@ -5,8 +5,12 @@ Changelog
 4.1.28.20 (unreleased)
 ----------------------
 
-- Nothing changed yet.
-
+- Fixed `ItemsToAdviceWithoutHiddenDuringRedactionAdapter` that was using the
+  same cached method as parent `ItemsToAdviceAdapter` because an alias for query
+  was not defined. In this case, the 2 queries return the same result...
+  Added a test that checks that a different alias is used for every
+  `CompoundCriterionBaseAdapter` query.
+  [gbastien]
 
 4.1.28.19 (2021-02-24)
 ----------------------
