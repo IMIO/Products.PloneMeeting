@@ -30,6 +30,7 @@ from imio.helpers.content import get_vocab
 from persistent.list import PersistentList
 from plone import api
 from plone.app.portlets.portlets import navigation
+from plone.app.uuid.utils import uuidToObject
 from plone.memoize import ram
 from plone.portlets.interfaces import IPortletAssignmentMapping
 from plone.portlets.interfaces import IPortletManager
@@ -110,6 +111,7 @@ from Products.PloneMeeting.utils import createOrUpdatePloneGroup
 from Products.PloneMeeting.utils import duplicate_workflow
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
 from Products.PloneMeeting.utils import get_annexes
+from Products.PloneMeeting.utils import get_datagridfield_column_value
 from Products.PloneMeeting.utils import get_dx_attrs
 from Products.PloneMeeting.utils import get_dx_schema
 from Products.PloneMeeting.utils import get_item_validation_wf_suffixes
@@ -3753,7 +3755,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         removeds = [term.token for term in stored_terms if term.token not in new_terms]
         catalog = api.portal.get_tool('portal_catalog')
         for removed in removeds:
-            brains = catalog(portal_type=self.getItemTypeName(), committees_index=removed)
+            # may be linked to an item or a meeting
+            brains = catalog(getConfigId=self.getId(), committees_index=removed)
             if brains:
                 return _('error_committee_row_id_removed_already_used',
                          mapping={'url': brains[0].getURL(),
@@ -3763,6 +3766,26 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         if self.is_committees_using("auto_from", new_value) and \
            self.is_committees_using("using_groups", new_value):
             return _('error_committees_mutually_exclusive_auto_from_and_using_groups')
+
+        # this part should be in a validator for orderedCommitteeContacts
+        # but then we do not get the entire datagridfield value from REQUEST
+        # and it is easier to do it here...
+        committee_contacts = self.REQUEST.get(
+            'orderedCommitteeContacts', self.getOrderedCommitteeContacts())
+        # remove empty values if any
+        committee_contacts = [contact for contact in committee_contacts if contact]
+
+        default_attendees = get_datagridfield_column_value(value, "default_attendees")
+        default_signatories = get_datagridfield_column_value(value, "default_signatories")
+        diff_attendees = set(default_attendees).difference(committee_contacts)
+        diff_signatories = set(default_signatories).difference(committee_contacts)
+        if diff_attendees or diff_signatories:
+            all_diffs = list(diff_attendees) + list(diff_signatories)
+            an_hp_uid = all_diffs[0]
+            hp = uuidToObject(an_hp_uid)
+            return _('error_value_removed_used_in_committees_field',
+                     mapping={'hp_title': hp.get_short_title()},
+                     default="Error used values is not selectable, check \"${hp_title}\"")
 
     security.declarePrivate('validate_transitionsForPresentingAnItem')
 

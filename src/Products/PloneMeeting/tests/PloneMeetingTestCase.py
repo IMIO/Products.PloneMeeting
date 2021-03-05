@@ -16,6 +16,7 @@ from collective.iconifiedcategory.utils import get_config_root
 from copy import deepcopy
 from datetime import datetime
 from imio.helpers.cache import cleanRamCacheFor
+from imio.helpers.content import object_values
 from imio.helpers.testing import testing_logger
 from plone import api
 from plone import namedfile
@@ -128,6 +129,16 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                 setattr(self,
                         '{0}_{1}'.format(org.getId(), suffix),
                         plone_group_id)
+        # make held_position easily available as well
+        i = 1
+        for person in object_values(self.portal.contacts, 'PMPerson'):
+            setattr(self,
+                    'hp{0}'.format(i),
+                    object_values(person, 'PMHeldPosition')[0])
+            setattr(self,
+                    'hp{0}_uid'.format(i),
+                    object_values(person, 'PMHeldPosition')[0].UID())
+            i += 1
 
         self.pmFolder = os.path.dirname(Products.PloneMeeting.__file__)
         # Disable notifications mechanism. This way, the test suite may be

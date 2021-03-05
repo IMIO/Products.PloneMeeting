@@ -656,6 +656,7 @@ class testFaceted(PloneMeetingTestCase):
         self.assertEqual(len(vocab(self.portal)), 0)
         self.assertEqual(len(vocab(self.portal.contacts)), 0)
         self.assertEqual(len(vocab(self.app)), 0)
+        self.request['PUBLISHED'] = None
         self.assertEqual(len(vocab(None)), 0)
 
     def test_pm_AskedAdvicesVocabularyMCAware(self):

@@ -657,8 +657,8 @@ def default_committees(data):
         for committee in cfg.getCommittees():
             if committee['enabled'] == '0':
                 continue
-            data = {}
-            data['row_id'] = committee['row_id']
+            mdata = {}
+            mdata['row_id'] = committee['row_id']
             # manage default_values
             for field_id, field_value in committee.items():
                 if not field_id.startswith('default_'):
@@ -671,12 +671,12 @@ def default_committees(data):
                 value = committee[field_id]
                 if real_field_id in ['assembly', 'signatures']:
                     value = richtextval(value)
-                data[real_field_id] = value
+                mdata[real_field_id] = value
             # complete data
             for field_name in getFieldNamesInOrder(ICommitteesRowSchema):
-                if field_name not in data:
-                    data[field_name] = None
-            res.append(data)
+                if field_name not in mdata:
+                    mdata[field_name] = None
+            res.append(mdata)
     return res
 
 

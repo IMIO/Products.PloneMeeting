@@ -436,7 +436,8 @@ class MeetingConfigDescriptor(Descriptor):
                          'enableAdviceConfidentiality', 'adviceConfidentialityDefault', 'adviceConfidentialFor',
                          'hideNotViewableLinkedItemsTo', 'inheritedAdviceRemoveableByAdviser', 'usingGroups',
                          'hideHistoryTo', 'orderedAssociatedOrganizations',
-                         'orderedGroupsInCharge', 'orderedItemInitiators', 'orderedCommitteeContacts')
+                         'orderedGroupsInCharge', 'orderedItemInitiators',
+                         'orderedCommitteeContacts', 'committees')
 
     excludedFields = ['addContactsCSV',
                       'defaultLabels',

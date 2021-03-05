@@ -40,6 +40,7 @@ from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
 from Products.PloneMeeting.config import READER_USECASES
 from Products.PloneMeeting.config import TOOL_FOLDER_SEARCHES
 from Products.PloneMeeting.config import WriteHarmlessConfig
+from Products.PloneMeeting.content.meeting import default_committees
 from Products.PloneMeeting.events import _itemAnnexTypes
 from Products.PloneMeeting.interfaces import IConfigElement
 from Products.PloneMeeting.MeetingConfig import DUPLICATE_SHORT_NAME
@@ -2150,6 +2151,66 @@ class testMeetingConfig(PloneMeetingTestCase):
         for k, values in required_values.items():
             for v in values:
                 self.failUnless(cfg.validate_usedMeetingAttributes([v]))
+
+    def test_pm_Validate_committees_not_removable_when_used(self):
+        """Check that when used on a meeting or on an item, a committee may not
+           be removed from the MeetingConfig.committees."""
+        class DummyData(object):
+            def __init__(self, context):
+                self.context = context
+
+        cfg = self.meetingConfig
+        self._enableField("committees", related_to='Meeting')
+        self.changeUser('pmManager')
+        # Meeting
+        meeting = self.create('Meeting', committees=default_committees(DummyData(cfg)))
+        cfg_committees = cfg.getCommittees()
+        self.failIf(cfg.validate_committees(cfg_committees))
+        self.failUnless(cfg.validate_committees([cfg_committees[1]]))
+        self.deleteAsManager(meeting.UID())
+
+        # MeetingItem
+        item = self.create('MeetingItem', committees=[cfg_committees[0]['row_id']])
+        self.failIf(cfg.validate_committees(cfg_committees))
+        self.failUnless(cfg.validate_committees([cfg_committees[1]]))
+        # supplement, second committee cfg has a supplement
+        item.setCommittees(["{0}__suppl__1".format(cfg_committees[1]['row_id'])])
+        item.reindexObject(idxs=["committees_index"])
+        self.failIf(cfg.validate_committees(cfg_committees))
+        self.failUnless(cfg.validate_committees([cfg_committees[0]]))
+
+    def test_pm_Validate_committees_values(self):
+        """Can not define values in column "auto_from" and in column "using_groups"."""
+        cfg = self.meetingConfig
+        self.changeUser('pmManager')
+        # "using_groups" alone
+        cfg_committees = cfg.getCommittees()
+        cfg_committees[0]['using_groups'] = [self.vendors_uid]
+        self.failIf(cfg.validate_committees([cfg_committees[0]]))
+        # "auto_from" alone
+        cfg_committees[1]['auto_from'] = ["proposing_group__" + self.vendors_uid]
+        self.failIf(cfg.validate_committees([cfg_committees[1]]))
+        # fails when used together
+        self.failUnless(cfg_committees)
+
+    def test_pm_Validate_committees_orderedCommitteeContacts(self):
+        """If a value in default_attendees/default_signatories is removed
+           from orderedCommitteeContacts it must be unselected."""
+        cfg = self.meetingConfig
+        cfg.setOrderedCommitteeContacts((self.hp1_uid, self.hp2_uid))
+        self.changeUser('pmManager')
+        cfg_committees = cfg.getCommittees()
+        cfg_committees[0]['default_attendees'] = [self.hp1_uid]
+        cfg_committees[0]['default_signatories'] = [self.hp2_uid]
+        self.failIf(cfg.validate_committees(cfg_committees))
+        # removing a value used for default_attendees or default_signatories fails
+        cfg.setOrderedCommitteeContacts((self.hp1_uid,))
+        self.failUnless(cfg_committees)
+        cfg.setOrderedCommitteeContacts((self.hp2_uid,))
+        self.failUnless(cfg_committees)
+        # except if no more used
+        cfg_committees[0]['default_attendees'] = []
+        self.failIf(cfg.validate_committees(cfg_committees))
 
     def test_pm_ConfigEditAndView(self):
         """Just call the edit and view to check it is displayed correctly."""

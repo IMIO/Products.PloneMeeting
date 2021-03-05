@@ -314,7 +314,8 @@ def get_datagridfield_column_value(value, column):
     """Returns every values of a datagridfield column."""
     if not value:
         return []
-    value = [row[column] for row in value if row[column]]
+    value = [row[column] for row in value
+             if row.get('orderindex_', None) != 'template_row_marker' and row[column]]
     # merge lists and remove duplicates
     if value and hasattr(value[0], "__iter__"):
         value = set(list(itertools.chain.from_iterable(value)))

@@ -339,6 +339,31 @@ meetingPma.defaultLabels = [
     {'color': 'yellow', 'by_user': True, 'title': 'Personal label'},
     {'color': 'green', 'by_user': True, 'title': 'Lu'},
     {'color': 'yellow', 'by_user': True, 'title': 'Suivi'}]
+meetingPma.committees = (
+    {'acronym': 'Comm1',
+     'auto_from': [],
+     'default_assembly': '',
+     'default_attendees': [],
+     'default_place': 'Place 1',
+     'default_signatories': [],
+     'default_signatures': 'Function 1\r\nSignature 1\r\nFunction 2\r\nSignature 2',
+     'enabled': '1',
+     'label': "Committee 1",
+     'row_id': 'committee_1',
+     'supplements': '0',
+     'using_groups': []},
+    {'acronym': 'Comm2',
+     'auto_from': [],
+     'default_assembly': '',
+     'default_attendees': [],
+     'default_place': 'Place 1',
+     'default_signatories': [],
+     'default_signatures': 'Function 1\r\nSignature 1\r\nFunction 2\r\nSignature 2',
+     'enabled': '1',
+     'label': "Committee 2",
+     'row_id': 'committee_2',
+     'supplements': '1',
+     'using_groups': []}, )
 meetingPma.useAdvices = True
 meetingPma.selectableAdvisers = ['developers', 'vendors']
 meetingPma.itemAdviceStates = ['proposed']
