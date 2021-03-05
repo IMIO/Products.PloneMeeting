@@ -7192,6 +7192,12 @@ class testMeetingItem(PloneMeetingTestCase):
 
     def test_pm_ItemEditAndView(self):
         """Just call the edit and view to check it is displayed correctly."""
+        cfg = self.meetingConfig
+        # enable as much field as possible
+        self.changeUser('siteadmin')
+        attrs = cfg.Vocabulary('usedItemAttributes')[0].keys()
+        attrs.remove('proposingGroupWithGroupInCharge')
+        cfg.setUsedItemAttributes(attrs)
         self.changeUser('pmManager')
         item = self.create('MeetingItem', decision=self.decisionText)
         self.assertTrue(item.restrictedTraverse('base_edit')())
@@ -7201,6 +7207,11 @@ class testMeetingItem(PloneMeetingTestCase):
         self.presentItem(item)
         self.assertTrue(item.restrictedTraverse('base_edit')())
         self.assertTrue(item.restrictedTraverse('base_view')())
+        # item template
+        self.changeUser('siteadmin')
+        item_template = cfg.itemtemplates.objectValues()[0]
+        self.assertTrue(item_template.restrictedTraverse('base_edit')())
+        self.assertTrue(item_template.restrictedTraverse('base_view')())
 
     def test_pm_Preferred_meeting_dateIndex(self):
         """As preferred_meeting_date needs the meeting to be indexed
