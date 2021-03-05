@@ -23,6 +23,7 @@ from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCas
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
 from Products.PloneMeeting.utils import reviewersFor
 from zope.component import getAdapter
+from zope.component import getAdapters
 
 
 class testSearches(PloneMeetingTestCase):
@@ -1169,6 +1170,35 @@ class testSearches(PloneMeetingTestCase):
         result_uids = [brain.UID for brain in collection.results()]
         self.assertTrue(past_meeting.UID() in result_uids)
         self.assertTrue(future_meeting.UID() in result_uids)
+
+    def test_pm_EverySearchesUseDifferentCachedMethod(self):
+        """Make sure a different method is used for caching because every adapters
+           use the "query" method but ram.cache would have one single cache entry
+           because it's key is module path + method name so
+           Products.PloneMeeting.adapters.query."""
+        cfg = self.meetingConfig
+        adapters = getAdapters([cfg], ICompoundCriterionFilter)
+        query_aliases = []
+        for adapter_name, adapter_instance in adapters:
+            query_methods = [method_name for method_name in dir(adapter_instance)
+                             if method_name.startswith('query_')]
+            # there must be at least one query_... method that is an alias for query
+            self.assertTrue(
+                query_methods,
+                "No query_methdods for {0}".format(adapter_name))
+            # make sure the query_... method is an alias for query
+            found_alias = False
+            for query_method in query_methods:
+                adapter_class = adapter_instance.__class__
+                if getattr(adapter_class, query_method) == adapter_class.query:
+                    found_alias = True
+                    break
+            self.assertTrue(found_alias,
+                            "Alias not found for {0}".format(adapter_name))
+            # keep the query_method alias
+            query_aliases.append(query_method)
+        # there may not be 2 same query aliases
+        self.assertEqual(sorted(query_aliases), sorted(set(query_aliases)))
 
 
 def test_suite():

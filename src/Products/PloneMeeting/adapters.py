@@ -1262,11 +1262,7 @@ class ItemsToCorrectAdapter(BaseItemsToCorrectAdapter):
 
 class ItemsToAdviceAdapter(CompoundCriterionBaseAdapter):
 
-    include_hidden_during_redaction = True
-
-    @property
-    @ram.cache(query_user_groups_cachekey)
-    def query_itemstoadvice(self):
+    def _query(self, include_hidden_during_redaction=True):
         '''Queries all items for which the current user must give an advice.'''
         if not self.cfg:
             return {}
@@ -1277,7 +1273,7 @@ class ItemsToAdviceAdapter(CompoundCriterionBaseAdapter):
             ['delay__' + org_uid + '_advice_not_given' for org_uid in org_uids] + \
             [org_uid + '_advice_asked_again' for org_uid in org_uids] + \
             ['delay__' + org_uid + '_advice_asked_again' for org_uid in org_uids]
-        if self.include_hidden_during_redaction:
+        if include_hidden_during_redaction:
             indexAdvisers += \
                 ['{0}_advice_{1}'.format(org_uid, HIDDEN_DURING_REDACTION_ADVICE_VALUE)
                  for org_uid in org_uids] + \
@@ -1288,13 +1284,24 @@ class ItemsToAdviceAdapter(CompoundCriterionBaseAdapter):
                 # KeywordIndex 'indexAdvisers' use 'OR' by default
                 'indexAdvisers': {'query': indexAdvisers}, }
 
+    @property
+    @ram.cache(query_user_groups_cachekey)
+    def query_itemstoadvice(self):
+        return self._query()
+
     # we may not ram.cache methods in same file with same name...
     query = query_itemstoadvice
 
 
 class ItemsToAdviceWithoutHiddenDuringRedactionAdapter(ItemsToAdviceAdapter):
 
-    include_hidden_during_redaction = False
+    @property
+    @ram.cache(query_user_groups_cachekey)
+    def query_itemstoadvicewithouthiddenduringredaction(self):
+        return self._query(include_hidden_during_redaction=False)
+
+    # we may not ram.cache methods in same file with same name...
+    query = query_itemstoadvicewithouthiddenduringredaction
 
 
 class ItemsToAdviceWithoutDelayAdapter(CompoundCriterionBaseAdapter):
