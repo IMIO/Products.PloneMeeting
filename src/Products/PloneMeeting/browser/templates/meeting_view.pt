@@ -125,6 +125,26 @@
     </div>
   </tal:committees>
 
+  <tal:comment replace="nothing">Informations</tal:comment>
+  <tal:informations define="widgets python:view.meeting_view.fieldsets['informations'].widgets.values()"
+               condition="widgets">
+    <div class="collapsible discreet"
+         onclick="toggleDetails('collapsible-informations', toggle_parent_active=true, parent_tag=this)">
+      <span class="meeting_attribute_label"
+            tal:attributes="class python:view.meeting_view.is_fieldset_not_empty('informations') and 'meeting_attribute_label highlightValue' or 'meeting_attribute_label'"
+            tal:content="python:view.meeting_view.fieldsets['informations'].label">
+        Informations
+      </span>
+    </div>
+    <div id="collapsible-informations"
+         class="collapsible-content">
+      <div class="collapsible-inner-content">
+        <tal:loop repeat="widget widgets">
+          <tal:block tal:replace="structure python:view.meeting_view.view_widget(widget)" />
+        </tal:loop>
+      </div>
+    </div>
+  </tal:informations>
   <br />
   <tal:availableItems condition="python:view.show_available_items()">
     <h2 class="collapsible active available-items"
@@ -176,27 +196,6 @@
       tal:content="here/@@faceted_version|string:" />
   </div>
   <br />
-
-  <tal:comment replace="nothing">Details</tal:comment>
-  <tal:details define="widgets python:view.meeting_view.fieldsets['details'].widgets.values()"
-               condition="widgets">
-    <div class="collapsible discreet"
-         onclick="toggleDetails('collapsible-details', toggle_parent_active=true, parent_tag=this)">
-      <span class="meeting_attribute_label"
-            tal:attributes="class python:view.meeting_view.is_fieldset_not_empty('details') and 'meeting_attribute_label highlightValue' or 'meeting_attribute_label'"
-            tal:content="python:view.meeting_view.fieldsets['details'].label">
-        Details
-      </span>
-    </div>
-    <div id="collapsible-details"
-         class="collapsible-content">
-      <div class="collapsible-inner-content">
-        <tal:loop repeat="widget widgets">
-          <tal:block tal:replace="structure python:view.meeting_view.view_widget(widget)" />
-        </tal:loop>
-      </div>
-    </div>
-  </tal:details>
 
   <tal:comment replace="nothing">Annexes</tal:comment>
   <tal:annexes replace="structure context/@@display-annexes" />

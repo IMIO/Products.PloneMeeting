@@ -427,13 +427,6 @@ class MeetingAdd(DefaultAddView):
 class MeetingView(FacetedContainerView):
     """ """
 
-    section_widgets = {
-        'dates_and_data': ['date', 'start_date', 'mid_date', 'end_date'],
-        'assembly': ['assembly', 'assembly_excused', 'assembly_absents', 'assembly_guests'],
-        'details': [],
-        'managers_parameters': []
-    }
-
     def __init__(self, context, request):
         """ """
         super(MeetingView, self).__init__(context, request)

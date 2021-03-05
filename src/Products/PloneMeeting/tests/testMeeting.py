@@ -3581,6 +3581,22 @@ class testMeetingType(PloneMeetingTestCase):
         self.assertEqual(first_transition['id'], 'freeze')
         self.assertTrue(first_transition['confirm'])
 
+    def test_pm_MeetingEditAndView(self):
+        """Just call the edit and view to check it is displayed correctly."""
+        cfg = self.meetingConfig
+        # enable as much field as possible
+        self.changeUser('siteadmin')
+        attrs = [attr for attr in cfg.Vocabulary('usedMeetingAttributes')[0].keys()
+                 if "assembly" not in attr and "signatures" not in attr]
+        cfg.setUsedMeetingAttributes(attrs)
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting')
+        edit = meeting.restrictedTraverse('@@edit')
+        edit.update()
+        self.assertTrue(edit())
+        view = meeting.restrictedTraverse('@@meeting_view')
+        self.assertTrue(view())
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

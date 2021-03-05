@@ -412,8 +412,8 @@ class IMeeting(IDXMeetingContent):
                    label=_(u"fieldset_committees"),
                    fields=['committees', 'committees_observations'])
 
-    model.fieldset('details',
-                   label=_(u"fieldset_details"),
+    model.fieldset('informations',
+                   label=_(u"fieldset_informations"),
                    fields=['in_and_out_moves', 'notes', 'observations',
                            'pre_observations',
                            'votes_observations', 'public_meeting_observations',

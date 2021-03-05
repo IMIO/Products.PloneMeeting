@@ -48,6 +48,7 @@ from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.CMFCore.utils import _checkPermission
 from Products.CMFCore.WorkflowCore import WorkflowException
+from Products.CMFPlone.utils import base_hasattr
 from Products.CMFPlone.utils import safe_unicode
 from Products.DCWorkflow.events import TransitionEvent
 from Products.MailHost.MailHost import MailHostError
@@ -647,41 +648,6 @@ def sendMailIfRelevant(obj, event, permissionOrSuffixOrRoleOrGroupIds,
     if debug:
         return recipients, mail_subject, mail_body
     return True
-
-
-# I wanted to put permission "ReviewPortalContent" among defaultPermissions,
-# but if I do this, it generates an error when calling "manage_permission" in
-# method "clonePermissions" (see below). I've noticed that in several
-# PloneMeeting standard workflows (meeting_workflow, meetingitem_workflow, etc),
-# although this permission is declared as a
-# managed permission, when you go in the ZMI to consult the actual
-# permissions that are set on objects governed by those workflows, the
-# permission "Review portal content" does not appear in the list at all.
-
-
-def clonePermissions(srcObj, destObj, permissions=(View,
-                                                   AccessContentsInformation,
-                                                   ModifyPortalContent,
-                                                   DeleteObjects)):
-    '''This method applies on p_destObj the same values for p_permissions
-       than those that apply for p_srcObj, according to workflow on
-       p_srcObj. p_srcObj may be an item or a meeting.'''
-    wfTool = api.portal.get_tool('portal_workflow')
-    srcWorkflows = wfTool.getWorkflowsFor(srcObj)
-    if not srcWorkflows:
-        return
-    srcWorkflow = srcWorkflows[0]
-    for permission in permissions:
-        if permission in srcWorkflow.permissions:
-            # Get the roles this permission is given to for srcObj in its
-            # current state.
-            srcStateDef = getattr(srcWorkflow.states, srcObj.query_state())
-            permissionInfo = srcStateDef.getPermissionInfo(permission)
-            destObj.manage_permission(permission,
-                                      permissionInfo['roles'],
-                                      acquire=permissionInfo['acquired'])
-    # Reindex object because permissions are catalogued.
-    destObj.reindexObject(idxs=['allowedRolesAndUsers'])
 
 
 def getCustomSchemaFields(baseSchema, completedSchema, cols):
@@ -1352,7 +1318,10 @@ def get_context_with_request(context):
         # sometimes, the DashboardCollection is the first parent in the REQUEST.PARENTS...
         portal = getSite()
         published = portal.REQUEST.get('PUBLISHED', None)
-        context = hasattr(published, 'context') and published.context or None
+        if base_hasattr(published, "getTagName"):
+            context = published
+        else:
+            context = base_hasattr(published, 'context') and published.context or None
         if not context or context == portal:
             # if not first parent, try to get it from HTTP_REFERER
             referer = portal.REQUEST['HTTP_REFERER'].replace(portal.absolute_url() + '/', '')
