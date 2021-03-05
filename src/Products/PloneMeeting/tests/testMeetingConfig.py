@@ -2151,6 +2151,18 @@ class testMeetingConfig(PloneMeetingTestCase):
             for v in values:
                 self.failUnless(cfg.validate_usedMeetingAttributes([v]))
 
+    def test_pm_ConfigEditAndView(self):
+        """Just call the edit and view to check it is displayed correctly."""
+        cfg = self.meetingConfig
+        self.changeUser('siteadmin')
+        fieldsets = cfg.Schemata().keys()
+        for fieldset in fieldsets:
+            self.request.set('pageName', fieldset)
+            self.assertTrue(cfg.restrictedTraverse('base_view')())
+        for fieldset in fieldsets:
+            self.request.set('fieldset', fieldset)
+            self.assertTrue(cfg.restrictedTraverse('base_edit')())
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

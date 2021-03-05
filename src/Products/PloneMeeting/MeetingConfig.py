@@ -3335,7 +3335,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         if state:
             res = res and res[0] or res
         # when displayed, append translated values to elements title
-        if self.REQUEST.get('translated_itemWFValidationLevels'):
+        if self.REQUEST.get('translated_itemWFValidationLevels') and not data:
             translated_res = deepcopy(res)
             translated_titles = ('state_title',
                                  'leading_transition_title',
@@ -3439,7 +3439,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('listToDoListSearches')
 
     def listToDoListSearches(self):
-        """ """
+        """Vocabulary for the MeetingConfig.toDoListSearches field."""
         searches = self.searches.searches_items.objectValues()
         res = []
         for search in searches:
@@ -3450,7 +3450,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('listAdvicePortalTypes')
 
     def listAdvicePortalTypes(self):
-        """ """
+        """Vocabulary for the MeetingConfig.defaultAdviceHiddenDuringRedaction field."""
         tool = api.portal.get_tool('portal_plonemeeting')
         advice_portal_types = tool.getAdvicePortalTypes()
         res = [(portal_type.id, portal_type.title) for portal_type in advice_portal_types]
@@ -3459,7 +3459,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('listSelectableContacts')
 
     def listSelectableContacts(self):
-        """ """
+        """Vocabulary for the MeetingConfig.certifiedSignatures datagridfield,
+           held_position column."""
         vocab_factory = getUtility(
             IVocabularyFactory,
             "Products.PloneMeeting.vocabularies.selectableheldpositionsvocabulary")
@@ -3471,7 +3472,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('listSelectableCommitteeAttendees')
 
     def listSelectableCommitteeAttendees(self):
-        """ """
+        """Vocabulary for the MeetingConfig.committees field."""
         vocab = get_vocab(
             self, "Products.PloneMeeting.vocabularies.selectable_committee_attendees_vocabulary")
         res = [(term.value, term.title) for term in vocab._terms]
@@ -3480,7 +3481,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('listSelectableProposingGroups')
 
     def listSelectableProposingGroups(self):
-        """ """
+        """Vocabulary for the MeetingConfig.committees field."""
         vocab = get_vocab(
             self, "Products.PloneMeeting.vocabularies.proposinggroupsvocabulary")
         res = [(term.value, term.title) for term in vocab._terms]
