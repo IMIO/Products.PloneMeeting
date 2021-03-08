@@ -362,14 +362,13 @@ function asyncToggleIcon(UID, baseUrl, viewName, baseSelector) {
     });
 }
 
-/* functions used to manage quick edit functionnality */
-function initRichTextField(rq, hook) {
+function reloadIfLocked() {
   /* Function that needs to be called when getting the edit view of a
      rich-text field through Ajax. */
   /* Check that we can actually edit the field, indeed the object
    * could have been locked in between (concurrent edit) */
   is_locked = $.ajax({
-     async: true,
+     async: false,
      type: 'GET',
      url: '@@plone_lock_info/is_locked_for_current_user',
      success: function(data) {
@@ -377,34 +376,44 @@ function initRichTextField(rq, hook) {
      }
     });
   if (is_locked.responseText === "True") {
-    window.location.href = window.location.href;
+    /* remove # part in URL (meeting view is a faceted) */
+    href = window.parent.location.href;
+    window.parent.location.href = href.split('#')[0];
+    return false;
   }
-  else {
-    // Javascripts inside this zone will not be executed. So find them
-    // and trigger their execution here.
-    var scripts = $('script', hook);
-    var fieldName = hook.id.substring(5);
-    for (var i=0; i<scripts.length; i++) {
-      var scriptContent = scripts[i].innerHTML;
-      if (scriptContent.search('addEventHandler') != -1) {
-        // This is a kupu field that will register an event onLoad on
-        // window but this event will never be triggered. So do it by
-        // hand.
-        currentFieldName = hook.id.substring(5);
-      }
-      else { eval(scriptContent); }
-    }
-    // Initialize CKeditor
-    jQuery(launchCKInstances([fieldName,]));
-    // Enable unload protection, avoid loosing unsaved changes if user click somewhere else
-    var tool = window.onbeforeunload && window.onbeforeunload.tool;
-    if (tool!==null) {
-      tool.addForms.apply(tool, $('form.enableUnloadProtection').get());
-    }
-    // enable UnlockHandler so element is correctly unlocked after edit
-    plone.UnlockHandler.init();
-  }
+  return true;
 }
+
+/* functions used to manage quick edit functionnality */
+function initRichTextField(rq, hook) {
+  reloadIfLocked();
+  // Javascripts inside this zone will not be executed. So find them
+  // and trigger their execution here.
+  var scripts = $('script', hook);
+  var fieldName = hook.id.substring(5);
+  for (var i=0; i<scripts.length; i++) {
+    var scriptContent = scripts[i].innerHTML;
+    if (scriptContent.search('addEventHandler') != -1) {
+      // This is a kupu field that will register an event onLoad on
+      // window but this event will never be triggered. So do it by
+      // hand.
+      currentFieldName = hook.id.substring(5);
+    }
+    else { eval(scriptContent); }
+  }
+  // Initialize CKeditor
+  jQuery(launchCKInstances([fieldName,]));
+  // Enable unload protection, avoid loosing unsaved changes if user click somewhere else
+  var tool = window.onbeforeunload && window.onbeforeunload.tool;
+  if (tool!==null) {
+    tool.addForms.apply(tool, $('form.enableUnloadProtection').get());
+    tool.submitting = false;
+  }
+  // enable UnlockHandler so element is correctly unlocked
+  // if user choose to lost the changes in formUnload
+  plone.UnlockHandler.init();
+}
+
 function getRichTextContent(rq, params) {
   /* Gets the content of a rich text field before sending it through an Ajax
      request. */
@@ -610,16 +619,41 @@ function init_ckeditor(event) {
   initRichTextField(rq=null, hook=event['tag']);
 }
 
-function exitCKeditor(field_name, base_url) {
-  // make sure ajxsave is not async so content is saved before being shown again
+function saveCKeditor(field_name, base_url, async=true) {
   ajaxsave = CKEDITOR.instances[field_name].getCommand('ajaxsave');
-  ajaxsave.async = false;
+  ajaxsave.async = async;
   CKEDITOR.instances[field_name].execCommand('ajaxsave', 'saveCmd');
-  CKEDITOR.instances[field_name].destroy();
-  tag=$('div#hook_' + field_name)[0];
-  loadContent(tag, load_view='@@render-single-widget?field_name=' + field_name, async=false, base_url=base_url, event_name=null);
 }
 
+function saveAndExitCKeditor(field_name, base_url) {
+  // make sure ajaxsave is not async so content is saved before being shown again
+  saveCKeditor(field_name, base_url);
+  exitCKeditor(field_name, base_url);
+}
+
+function exitCKeditor(field_name, base_url) {
+  CKEDITOR.instances[field_name].destroy();
+  tag=$('div#hook_' + field_name)[0];
+  loadContent(tag,
+              load_view='@@render-single-widget?field_name=' + field_name,
+              async=false,
+              base_url=base_url,
+              event_name=null);
+  // unlock context
+  plone.UnlockHandler.execute();
+  // destroy Unload handler
+  var tool = window.onbeforeunload && window.onbeforeunload.tool;
+  if (tool!==null) {
+    tool.removeForms.apply(tool, $(document).find('form').get());
+    tool.submitting = true;
+  }
+}
+
+function cancelCKeditor(field_name, base_url) {
+  if (confirm(sure_to_cancel_edit)) {
+    exitCKeditor(field_name, base_url);
+  }
+}
 
 // when clicking on the input#forceInsertNormal, update the 'pmForceInsertNormal' cookie
 function changeForceInsertNormalCookie(input) {

@@ -100,6 +100,11 @@ Changelog
   `MeetingItem.adviceIndex` directly as it manages `hidden_during_redaction`
   advice type correctly.
   [gbastien]
+- Completed the `DX quick edit RichText field` to manage :
+  - `locking` (not being able to edit if another user is editing);
+  - `formUnload` (not losing changes during edition and clicking leaving current page).
+
+  [gbastien]
 
 4.2b11 (2021-01-19)
 -------------------
