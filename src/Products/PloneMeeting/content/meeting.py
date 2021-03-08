@@ -961,8 +961,13 @@ class Meeting(Container):
                 row_ids.append(committee['row_id'])
         return row_ids
 
+    def get_committee_place(self, row_id):
+        """Return "place" for given p_row_id committee."""
+        value = self.get_committee(row_id)["place"]
+        return value
+
     def get_committee_assembly(self, row_id, for_display=True, striked=True, mark_empty_tags=False):
-        """ """
+        """Return "assembly" for given p_row_id committee."""
         value = self.get_committee(row_id)["assembly"]
         return get_textarea_value(
             value,
@@ -971,7 +976,7 @@ class Meeting(Container):
             mark_empty_tags=mark_empty_tags)
 
     def get_committee_signatures(self, row_id, for_display=False, striked=True, mark_empty_tags=False):
-        """ """
+        """Return "signatures" for given p_row_id committee."""
         value = self.get_committee(row_id)["signatures"]
         return get_textarea_value(
             value,

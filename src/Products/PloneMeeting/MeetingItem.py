@@ -1102,8 +1102,6 @@ schema = Schema((
         widget=MultiSelectionWidget(
             condition="python: here.show_committees()",
             size=10,
-            description="Committees",
-            description_msgid="committees_descr",
             format="checkbox",
             label='Committees',
             label_msgid='PloneMeeting_label_committees',
@@ -3623,11 +3621,17 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         return res
 
     def update_committees(self):
-        """Update committees automatically?"""
+        """Update committees automatically?
+           This will be the case if :
+           - "committees" field used;
+           - no commitees selected on item of a parameter on item changed;
+           - the item is not inserted into a meeting
+             (this avoid changing old if configuration changed)."""
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         if "committees" in cfg.getUsedMeetingAttributes() and \
-           (not self.getCommittees() or self.REQUEST.get('need_MeetingItem_update_committees')):
+           (not self.getCommittees() or self.REQUEST.get('need_MeetingItem_update_committees')) and \
+           not self.hasMeeting():
             if cfg.is_committees_using("auto_from"):
                 committees = []
                 for committee in cfg.getCommittees(only_enabled=True):

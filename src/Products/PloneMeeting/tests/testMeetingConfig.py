@@ -44,6 +44,7 @@ from Products.PloneMeeting.content.meeting import default_committees
 from Products.PloneMeeting.events import _itemAnnexTypes
 from Products.PloneMeeting.interfaces import IConfigElement
 from Products.PloneMeeting.MeetingConfig import DUPLICATE_SHORT_NAME
+from Products.PloneMeeting.tests.PloneMeetingTestCase import DefaultData
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
 from zope.event import notify
@@ -2155,15 +2156,11 @@ class testMeetingConfig(PloneMeetingTestCase):
     def test_pm_Validate_committees_not_removable_when_used(self):
         """Check that when used on a meeting or on an item, a committee may not
            be removed from the MeetingConfig.committees."""
-        class DummyData(object):
-            def __init__(self, context):
-                self.context = context
-
         cfg = self.meetingConfig
         self._enableField("committees", related_to='Meeting')
         self.changeUser('pmManager')
         # Meeting
-        meeting = self.create('Meeting', committees=default_committees(DummyData(cfg)))
+        meeting = self.create('Meeting', committees=default_committees(DefaultData(cfg)))
         cfg_committees = cfg.getCommittees()
         self.failIf(cfg.validate_committees(cfg_committees))
         self.failUnless(cfg.validate_committees([cfg_committees[1]]))

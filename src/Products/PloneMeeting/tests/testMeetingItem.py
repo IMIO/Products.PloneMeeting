@@ -7245,6 +7245,63 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(cloned.getPreferredMeeting(theObject=False), ITEM_NO_PREFERRED_MEETING_VALUE)
         self.assertIsNone(cloned.getPreferredMeeting(theObject=True))
 
+    def test_pm_CommitteesSelectedAutomatically(self):
+        """When using column "auto_from" of MeetingConfig.committees,
+           the "committees" widget is not displayed on the item edit form but
+           the values are selected automatically."""
+        cfg = self.meetingConfig
+        cfg.setUseGroupsAsCategories(False)
+        self._enableField("committees", related_to="Meeting")
+        cfg_committees = cfg.getCommittees()
+        # by default auto mode is not enabled
+        self.assertFalse(cfg.is_committees_using("auto_from"))
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.assertEqual(item.getCommittees(), ())
+        self.assertTrue(item.show_committees())
+        # enabled "auto_from"
+        cfg_committees[1]['auto_from'] = ["proposing_group__" + self.developers_uid]
+        # as item.committees is empty and item not in a meeting
+        # update_committee will update the committees
+        item.update_committees()
+        self.assertEqual(item.getCommittees(), ('committee_2',))
+        # if changing the configuration, existing items are not impacted
+        cfg_committees[0]['auto_from'] = ["category__development"]
+        self.request.set('need_MeetingItem_update_committees', False)
+        item.update_committees()
+        self.assertEqual(item.getCommittees(), ('committee_2',))
+        # except if something changed, in this case,
+        # value 'need_MeetingItem_update_committees' in REQUEST is True
+        self.request.set('need_MeetingItem_update_committees', True)
+        item.update_committees()
+        self.assertEqual(item.getCommittees(), ('committee_1', 'committee_2',))
+        # back to previous value
+        cfg_committees[0]['auto_from'] = ["category__research"]
+        item.update_committees()
+        self.assertEqual(item.getCommittees(), ('committee_2',))
+
+        # when item in meeting, committees are never changed anymore
+        cfg_committees[0]['auto_from'] = ["category__development"]
+        self.changeUser('pmManager')
+        self.create('Meeting')
+        self.presentItem(item)
+        item.update_committees()
+        self.assertEqual(item.getCommittees(), ('committee_2',))
+
+    def test_pm_CommitteesSupplements(self):
+        """When defined in MeetingConfig.committees, column "supplements"
+           will add additional values to the MeetingItem.committees vocabulary,
+           these values are only selectable by MeetingManagers."""
+        self._enableField("committees", related_to="Meeting")
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.assertEqual(item.Vocabulary('committees')[0].keys(),
+                         [u'no_committee', 'committee_1', 'committee_2'])
+        self.changeUser('pmManager')
+        self.assertEqual(item.Vocabulary('committees')[0].keys(),
+                         [u'no_committee', 'committee_1',
+                          'committee_2', u'committee_2__suppl__1'])
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

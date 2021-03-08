@@ -29,27 +29,29 @@ from Products.PloneMeeting.config import DEFAULT_LIST_TYPES
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
-from Products.PloneMeeting.content.meeting import IMeeting
 from Products.PloneMeeting.content.meeting import assembly_constraint
+from Products.PloneMeeting.content.meeting import default_committees
+from Products.PloneMeeting.content.meeting import IMeeting
 from Products.PloneMeeting.MeetingConfig import POWEROBSERVERPREFIX
 from Products.PloneMeeting.MeetingItem import MeetingItem
+from Products.PloneMeeting.tests.PloneMeetingTestCase import DefaultData
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
 from Products.PloneMeeting.tests.testUtils import ASSEMBLY_CORRECT_VALUE
 from Products.PloneMeeting.tests.testUtils import ASSEMBLY_WRONG_VALUE
 from Products.PloneMeeting.utils import checkMayQuickEdit
-from Products.PloneMeeting.utils import getCurrentMeetingObject
 from Products.PloneMeeting.utils import get_dx_attrs
 from Products.PloneMeeting.utils import get_states_before
+from Products.PloneMeeting.utils import getCurrentMeetingObject
 from Products.PloneMeeting.utils import set_field_from_ajax
 from Products.ZCatalog.Catalog import AbstractCatalogBrain
 from z3c.form import validator
 from zope.event import notify
 from zope.i18n import translate
-from zope.lifecycleevent import Attributes
-from zope.lifecycleevent import ObjectModifiedEvent
 from zope.interface import Interface
 from zope.interface import Invalid
+from zope.lifecycleevent import Attributes
+from zope.lifecycleevent import ObjectModifiedEvent
 
 import transaction
 
@@ -3553,8 +3555,7 @@ class testMeetingType(PloneMeetingTestCase):
             portal_type=meeting_type_name,
             richtext_only=True,
             as_display_list=False)
-        for rich_field in rich_fields:
-            self._enableField(rich_field, related_to='Meeting')
+        self._enableField(rich_fields, related_to='Meeting')
         meeting = self.create('Meeting', date=datetime(2021, 2, 4))
         for rich_field in rich_fields:
             setattr(meeting, rich_field, richtextval("<p>{0}</p>".format(rich_field)))
@@ -3596,6 +3597,69 @@ class testMeetingType(PloneMeetingTestCase):
         self.assertTrue(edit())
         view = meeting.restrictedTraverse('@@meeting_view')
         self.assertTrue(view())
+
+    def test_pm_MeetingCommitteesHelpers(self):
+        """Various helper methods will ease use of committees."""
+        cfg = self.meetingConfig
+        self._removeConfigObjectsFor(cfg)
+        # enable committees fields
+        field_names = ["committees", "committees_assembly", "committees_signatures",
+                       "committees_place", "committees_convocation_date"]
+        self._enableField(field_names, related_to="Meeting")
+        cfg_committees = cfg.getCommittees()
+        # when define in MeetingConfig.committees, default values
+        # are used when creating a new meeting
+        cfg_committees[0]['default_assembly'] = "Default assembly"
+        cfg_committees[0]['default_signatures'] = "Default signatures"
+        cfg_committees[0]['default_place'] = "Default place"
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting')
+        meeting = self.create('Meeting', committees=default_committees(DefaultData(cfg)))
+        # get_committees, return every committees row_ids
+        self.assertEqual(meeting.get_committees(), ['committee_1', 'committee_2'])
+        # get_committee, return a given committee stored data
+        self.assertEqual(sorted(meeting.get_committee('committee_1').keys()),
+                         ['assembly', 'attendees', 'convocation_date', 'date',
+                          'place', 'row_id', 'signatories', 'signatures'])
+        # get_committee_assembly, returns HTML by default
+        self.assertEqual(meeting.get_committee_assembly('committee_1'),
+                         u'<p>Default assembly</p>')
+        # get_committee_signatures, returns plain text by default
+        self.assertEqual(meeting.get_committee_signatures('committee_1'),
+                         u'Default signatures')
+        # get_committee_place
+        self.assertEqual(meeting.get_committee_place('committee_1'),
+                         'Default place')
+
+        # use attendees/signatories, instead assembly/signatures
+        self._enableField(
+            ["committees_assembly", "committees_signatures"],
+            related_to="Meeting",
+            enable=False)
+        self._enableField(
+            ["committees_attendees", "committees_signatories"],
+            related_to="Meeting")
+        cfg.setOrderedCommitteeContacts((self.hp1_uid, self.hp2_uid))
+        cfg_committees[0]['default_attendees'] = [self.hp1_uid, self.hp2_uid]
+        cfg_committees[0]['default_signatories'] = [self.hp2_uid]
+        cfg.setCommittees(cfg_committees)
+        meeting2 = self.create('Meeting', committees=default_committees(DefaultData(cfg)))
+        # get_committee_attendees
+        self.assertEqual(meeting2.get_committee_attendees('committee_1'),
+                         (self.hp1_uid, self.hp2_uid))
+        self.assertEqual(meeting2.get_committee_attendees('committee_1', the_objects=True),
+                         (self.hp1, self.hp2))
+        # get_committee_signatories
+        self.assertEqual(meeting2.get_committee_signatories('committee_1'),
+                         {self.hp2_uid: 1})
+        self.assertEqual(meeting2.get_committee_signatories('committee_1', the_objects=True),
+                         {self.hp2: 1})
+        self.assertEqual(meeting2.get_committee_signatories('committee_1', the_objects=True),
+                         {self.hp2: 1})
+        self.assertEqual(meeting2.get_committee_signatories('committee_1',
+                                                            the_objects=True,
+                                                            by_signature_number=True),
+                         {1: self.hp2})
 
 
 def test_suite():

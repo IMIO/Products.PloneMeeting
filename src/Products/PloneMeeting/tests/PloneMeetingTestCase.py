@@ -81,6 +81,12 @@ class TestFile:
         self.headers = None
 
 
+class DefaultData(object):
+    """Class used to be passed to a default method."""
+    def __init__(self, context):
+        self.context = context
+
+
 class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
     '''Base class for defining PloneMeeting test cases.'''
 
@@ -640,19 +646,26 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         gsettings.auto_layout_file_types = CONVERTABLE_TYPES.keys()
         return gsettings
 
-    def _enableField(self, field_name, cfg=None, related_to='MeetingItem'):
+    def _enableField(self, field_names, cfg=None, related_to='MeetingItem', enable=True):
         """ """
+        if not hasattr(field_names, "__iter__"):
+            field_names = [field_names]
         cfg = cfg or self.meetingConfig
-        if related_to == 'MeetingItem':
-            usedItemAttrs = cfg.getUsedItemAttributes()
-            if field_name not in usedItemAttrs:
-                usedItemAttrs += (field_name, )
+        for field_name in field_names:
+            if related_to == 'MeetingItem':
+                usedItemAttrs = list(cfg.getUsedItemAttributes())
+                if enable and field_name not in usedItemAttrs:
+                    usedItemAttrs.append(field_name)
+                elif not enable and field_name in usedItemAttrs:
+                    usedItemAttrs = usedItemAttrs.remove(field_name)
                 cfg.setUsedItemAttributes(usedItemAttrs)
-        elif related_to == 'Meeting':
-            usedMeetingAttrs = cfg.getUsedMeetingAttributes()
-            if field_name not in usedMeetingAttrs:
-                usedMeetingAttrs += (field_name, )
-                cfg.setUsedMeetingAttributes(usedMeetingAttrs)
+            elif related_to == 'Meeting':
+                usedMeetingAttrs = list(cfg.getUsedMeetingAttributes())
+                if enable and field_name not in usedMeetingAttrs:
+                    usedMeetingAttrs.append(field_name)
+                elif not enable and field_name in usedMeetingAttrs:
+                    usedMeetingAttrs.remove(field_name)
+                cfg.setUsedMeetingAttributes(tuple(usedMeetingAttrs))
 
     def _disableObj(self, obj, notify_event=True):
         """ """
