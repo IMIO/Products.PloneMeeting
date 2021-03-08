@@ -627,7 +627,7 @@ function saveCKeditor(field_name, base_url, async=true) {
 
 function saveAndExitCKeditor(field_name, base_url) {
   // make sure ajaxsave is not async so content is saved before being shown again
-  saveCKeditor(field_name, base_url);
+  saveCKeditor(field_name, base_url, async=false);
   exitCKeditor(field_name, base_url);
 }
 
