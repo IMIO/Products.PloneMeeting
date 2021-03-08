@@ -3639,9 +3639,9 @@ class testMeetingType(PloneMeetingTestCase):
         self._enableField(
             ["committees_attendees", "committees_signatories"],
             related_to="Meeting")
-        cfg.setOrderedCommitteeContacts((self.hp1_uid, self.hp2_uid))
+        cfg.setOrderedCommitteeContacts((self.hp1_uid, self.hp2_uid, self.hp3_uid))
         cfg_committees[0]['default_attendees'] = [self.hp1_uid, self.hp2_uid]
-        cfg_committees[0]['default_signatories'] = [self.hp2_uid]
+        cfg_committees[0]['default_signatories'] = [self.hp2_uid, self.hp3_uid]
         cfg.setCommittees(cfg_committees)
         meeting2 = self.create('Meeting', committees=default_committees(DefaultData(cfg)))
         # get_committee_attendees
@@ -3651,15 +3651,13 @@ class testMeetingType(PloneMeetingTestCase):
                          (self.hp1, self.hp2))
         # get_committee_signatories
         self.assertEqual(meeting2.get_committee_signatories('committee_1'),
-                         {self.hp2_uid: 1})
+                         {self.hp2_uid: '1', self.hp3_uid: '2'})
         self.assertEqual(meeting2.get_committee_signatories('committee_1', the_objects=True),
-                         {self.hp2: 1})
-        self.assertEqual(meeting2.get_committee_signatories('committee_1', the_objects=True),
-                         {self.hp2: 1})
+                         {self.hp2: '1', self.hp3: '2'})
         self.assertEqual(meeting2.get_committee_signatories('committee_1',
                                                             the_objects=True,
                                                             by_signature_number=True),
-                         {1: self.hp2})
+                         {'1': self.hp2, '2': self.hp3})
 
 
 def test_suite():
