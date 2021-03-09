@@ -145,7 +145,8 @@
       </div>
     </div>
   </tal:informations>
-  <br />
+  <div class="small-separator"></div>
+
   <tal:availableItems condition="python:view.show_available_items()">
     <h2 class="collapsible active available-items"
          onclick="toggleDetails('collapsible-available-items', toggle_parent_active=true, parent_tag=this)">
@@ -195,11 +196,10 @@
     <div style="display: none" id="faceted-version"
       tal:content="here/@@faceted_version|string:" />
   </div>
-  <br />
 
   <tal:comment replace="nothing">Annexes</tal:comment>
   <tal:annexes replace="structure context/@@display-annexes" />
-  <br />
+  <div class="separator"></div>
 
   <tal:comment replace="nothing">Parameters</tal:comment>
   <tal:parameters define="widgets python:view.meeting_view.fieldsets['parameters'].widgets.values()"

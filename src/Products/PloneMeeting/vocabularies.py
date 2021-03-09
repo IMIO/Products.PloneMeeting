@@ -2111,7 +2111,8 @@ class SelectableCommitteesVocabulary(object):
         committees = []
         if context.getTagName() == "MeetingItem":
             committees = context.getCommittees()
-        return date, repr(cfg), committees, \
+        user_plone_groups = tool.get_plone_groups_for_user()
+        return date, repr(cfg), committees, user_plone_groups, \
             term_title_attr, include_suppl, \
             check_is_manager_for_suppl, include_all_disabled, \
             cfg_committees, add_no_committee_value, check_using_groups

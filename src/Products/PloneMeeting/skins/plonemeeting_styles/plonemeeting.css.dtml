@@ -2239,6 +2239,16 @@ body.template-meeting_view label[for="form-widgets-committees"] {
    display: none;
 }
 
+div.small-separator {
+   height: 5px;
+}
+div.separator {
+   height: 10px;
+}
+div.large-separator {
+   height: 15px;
+}
+
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */

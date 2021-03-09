@@ -7339,6 +7339,30 @@ class testMeetingItem(PloneMeetingTestCase):
                               context=self.request)
         self.assertEqual(item.validate_committees((NO_COMMITTEE, "committee_1")), error_msg)
 
+    def test_pm_AutoCommitteeWhenItemSentToAnotherMC(self):
+        """When using "auto_from" in MeetingConfig.committees, it will
+           also be triggered when item sent to another MC."""
+        cfg = self.meetingConfig
+        cfg.setUseGroupsAsCategories(True)
+        cfg.setItemManualSentToOtherMCStates((self._stateMappingFor('itemcreated'), ))
+        cfg_committees = cfg.getCommittees()
+        # configure committees for cfg2
+        cfg2 = self.meetingConfig2
+        cfg2.setUseGroupsAsCategories(True)
+        cfg2.setCommittees(cfg_committees)
+        cfg2_committees = cfg2.getCommittees()
+        cfg2_committees[1]['auto_from'] = ["proposing_group__" + self.developers_uid]
+        cfg2_id = cfg2.getId()
+        self._enableField("committees", cfg=cfg2, related_to='Meeting')
+
+        # now send item to cfg2
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        item.setOtherMeetingConfigsClonableTo((cfg2_id,))
+        new_item = item.cloneToOtherMeetingConfig(cfg2_id)
+        self.assertEqual(item.getCommittees(), ())
+        self.assertEqual(new_item.getCommittees(), ('committee_2',))
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite
