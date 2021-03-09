@@ -2087,6 +2087,36 @@ class SelectableCommitteesVocabulary(object):
                                              context=self.context.REQUEST)
         return safe_unicode(term_title)
 
+    def __call___cachekey(method,
+                          self,
+                          context,
+                          term_title_attr="label",
+                          include_suppl=True,
+                          check_is_manager_for_suppl=False,
+                          include_all_disabled=True,
+                          cfg_committees=None,
+                          add_no_committee_value=True,
+                          check_using_groups=False):
+        '''cachekey method for self.__call__.'''
+        date = get_cachekey_volatile(
+            'Products.PloneMeeting.vocabularies.selectable_committees_vocabulary')
+        tool = api.portal.get_tool('portal_plonemeeting')
+        # as vocabulary is used in a DataGridField
+        # context is often NO_VALUE or the dict...
+        if not hasattr(context, "getTagName"):
+            context = get_context_with_request(context)
+        cfg = tool.getMeetingConfig(context)
+        # if current context is an item, cache by stored committees
+        # so we avoid cache by context
+        committees = []
+        if context.getTagName() == "MeetingItem":
+            committees = context.getCommittees()
+        return date, repr(cfg), committees, \
+            term_title_attr, include_suppl, \
+            check_is_manager_for_suppl, include_all_disabled, \
+            cfg_committees, add_no_committee_value, check_using_groups
+
+    @ram.cache(__call___cachekey)
     def __call__(self,
                  context,
                  term_title_attr="label",
@@ -2094,7 +2124,7 @@ class SelectableCommitteesVocabulary(object):
                  check_is_manager_for_suppl=False,
                  include_all_disabled=True,
                  cfg_committees=None,
-                 add_no_committee_value=False,
+                 add_no_committee_value=True,
                  check_using_groups=False):
         """ """
         terms = []
@@ -2109,8 +2139,9 @@ class SelectableCommitteesVocabulary(object):
         is_manager = tool.isManager(cfg)
 
         if add_no_committee_value:
+            no_committee_msgid = "no_committee_term_title_{0}".format(term_title_attr)
             term_title = translate(
-                "no_committee_term_title",
+                no_committee_msgid,
                 domain="PloneMeeting",
                 context=context.REQUEST,
                 default=u"No committee")
@@ -2199,12 +2230,15 @@ class ItemSelectableCommitteesVocabulary(SelectableCommitteesVocabulary):
 
     def __call__(self, context):
         """ """
-        return super(ItemSelectableCommitteesVocabulary, self).__call__(
+        res = super(ItemSelectableCommitteesVocabulary, self).__call__(
             context,
             check_is_manager_for_suppl=True,
             include_all_disabled=False,
-            add_no_committee_value=True,
             check_using_groups=True)
+        # characters &nbsp; are shown when editing an item...
+        for term in res._terms:
+            term.title = term.title.replace('&nbsp;', ' ')
+        return res
 
 ItemSelectableCommitteesVocabularyFactory = ItemSelectableCommitteesVocabulary()
 
@@ -2222,7 +2256,10 @@ class MeetingSelectableCommitteesVocabulary(SelectableCommitteesVocabulary):
     def __call__(self, context):
         """ """
         return super(MeetingSelectableCommitteesVocabulary, self).__call__(
-            context, include_suppl=False, include_all_disabled=False)
+            context,
+            include_suppl=False,
+            include_all_disabled=False,
+            add_no_committee_value=False)
 
 MeetingSelectableCommitteesVocabularyFactory = MeetingSelectableCommitteesVocabulary()
 
