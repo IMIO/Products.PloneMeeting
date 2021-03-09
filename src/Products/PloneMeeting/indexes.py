@@ -451,7 +451,7 @@ def committees_index_item(obj):
     """
       Indexes the committees of an item into "committees_index" index.
     """
-    return obj.getCommittees()
+    return obj.getCommittees() or EMPTY_STRING
 
 
 @indexer(IMeeting)
@@ -459,4 +459,4 @@ def committees_index_meeting(obj):
     """
       Indexes the committees of a meeting into "committees_index" index.
     """
-    return get_datagridfield_column_value(obj.committees, "row_id")
+    return get_datagridfield_column_value(obj.committees, "row_id") or EMPTY_STRING

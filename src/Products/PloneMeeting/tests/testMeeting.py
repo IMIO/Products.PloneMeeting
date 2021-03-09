@@ -812,6 +812,51 @@ class testMeetingType(PloneMeetingTestCase):
              (self.vendors_uid,), ]
         )
 
+    def test_pm_InsertItemOnAllCommittees(self):
+        '''Sort method tested here is "on_all_committees".
+           It takes into account every selected committees and will insert
+           in following order depending on selected committees:
+           - Items with no selected committees;
+           - Items with the NO_COMMITTEE value;
+           - Committee1;
+           - Committee1, Committee2;
+           - Committee1, Committee2, Committee3;
+           - Committee1, Committee2, Committee4;
+           - Committee1, Committee3;
+           - Committee2, Committee3;
+           - Committee2, Committee3, Committee4;
+           - Committee3;
+           - Committee3, Committee4;
+           - Committee4.'''
+        cfg = self.meetingConfig
+        self.changeUser('pmManager')
+        cfg.setInsertingMethodsOnAddItem(
+            ({'insertingMethod': 'on_all_committees', 'reverse': '0'}, ))
+        meeting = self.create('Meeting')
+        data = ({'committees': ("committee_1", )},
+                {'committees': ()},
+                {'committees': ("committee_1", "committee_2")},
+                {'committees': ("committee_1", "committee_2__suppl__1", )},
+                {'committees': ("committee_2", )},
+                {'committees': ("committee_2__suppl__2", )},
+                )
+        for itemData in data:
+            new_item = self.create('MeetingItem', **itemData)
+            self.presentItem(new_item)
+
+        orderedItems = meeting.get_items(ordered=True)
+        self.assertEqual(
+            [item.getCommittees() for item in orderedItems],
+            [(),
+             (),
+             (),
+             ('committee_1',),
+             ('committee_1', 'committee_2'),
+             ('committee_1', 'committee_2__suppl__1'),
+             ('committee_2',),
+             ('committee_2__suppl__2',)]
+        )
+
     def test_pm_InsertItemOnPrivacyThenProposingGroups(self):
         '''Sort method tested here is "on_privacy" then "on_proposing_groups".'''
         cfg = self.meetingConfig
