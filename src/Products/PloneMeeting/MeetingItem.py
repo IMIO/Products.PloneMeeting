@@ -74,6 +74,7 @@ from Products.PloneMeeting.config import ITEM_COMPLETENESS_ASKERS
 from Products.PloneMeeting.config import ITEM_COMPLETENESS_EVALUATORS
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
+from Products.PloneMeeting.config import NO_COMMITTEE
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
 from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
@@ -2000,6 +2001,17 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if not cfg.getUseGroupsAsCategories() and value not in cfg.categories.objectIds():
             return translate('category_required', domain='PloneMeeting', context=self.REQUEST)
 
+    security.declarePrivate('validate_committees')
+
+    def validate_committees(self, values):
+        '''Checks that the NO_COMMITTEE is the only value when selected.'''
+        # remove empty strings and Nones
+        values = [v for v in values if v]
+        if NO_COMMITTEE in values and len(values) > 1:
+            return translate('can_not_select_no_committee_and_committee',
+                             domain='PloneMeeting',
+                             context=self.REQUEST)
+
     security.declarePrivate('validate_classifier')
 
     def validate_classifier(self, value):
@@ -3639,7 +3651,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                        "category__" + self.getCategory() in committee["auto_from"] or \
                        "classifier__" + self.getClassifier() in committee["auto_from"]:
                         committees.append(committee['row_id'])
-                committees = committees or ["no_committee"]
+                committees = committees or [NO_COMMITTEE]
                 self.setCommittees(committees)
 
     security.declarePublic('hasItemSignatures')

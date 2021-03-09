@@ -366,6 +366,8 @@ EMPTY_STRING = '__empty_string__'
 
 EXECUTE_EXPR_VALUE = 'execute_tal_expression'
 
+NO_COMMITTEE = u"no_committee"
+
 
 def registerClasses():
     '''ArchGenXML generated code does not register Archetype classes at the

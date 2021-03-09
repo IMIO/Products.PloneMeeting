@@ -362,7 +362,7 @@ meetingPma.committees = (
      'enabled': '1',
      'label': "Committee 2",
      'row_id': 'committee_2',
-     'supplements': '1',
+     'supplements': '2',
      'using_groups': []}, )
 meetingPma.useAdvices = True
 meetingPma.selectableAdvisers = ['developers', 'vendors']

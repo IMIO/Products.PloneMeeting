@@ -51,6 +51,7 @@ from Products.PloneMeeting.config import EXTRA_COPIED_FIELDS_SAME_MC
 from Products.PloneMeeting.config import HISTORY_COMMENT_NOT_VIEWABLE
 from Products.PloneMeeting.config import ITEM_DEFAULT_TEMPLATE_ID
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
+from Products.PloneMeeting.config import NO_COMMITTEE
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
 from Products.PloneMeeting.config import READER_USECASES
 from Products.PloneMeeting.config import WriteBudgetInfos
@@ -7264,6 +7265,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # as item.committees is empty and item not in a meeting
         # update_committee will update the committees
         item.update_committees()
+        self.assertFalse(item.show_committees())
         self.assertEqual(item.getCommittees(), ('committee_2',))
         # if changing the configuration, existing items are not impacted
         cfg_committees[0]['auto_from'] = ["category__development"]
@@ -7288,6 +7290,12 @@ class testMeetingItem(PloneMeetingTestCase):
         item.update_committees()
         self.assertEqual(item.getCommittees(), ('committee_2',))
 
+        # when no auto_from can be determinated, the NO_COMMITTEE value is used
+        cfg_committees[0]['auto_from'] = []
+        cfg.setCommittees(cfg_committees)
+        item = self.create('MeetingItem', proposingGroup=self.vendors_uid)
+        self.assertEqual(item.getCommittees(), (NO_COMMITTEE, ))
+
     def test_pm_CommitteesSupplements(self):
         """When defined in MeetingConfig.committees, column "supplements"
            will add additional values to the MeetingItem.committees vocabulary,
@@ -7296,11 +7304,40 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         self.assertEqual(item.Vocabulary('committees')[0].keys(),
-                         [u'no_committee', 'committee_1', 'committee_2'])
+                         [NO_COMMITTEE, 'committee_1', 'committee_2'])
         self.changeUser('pmManager')
-        self.assertEqual(item.Vocabulary('committees')[0].keys(),
-                         [u'no_committee', 'committee_1',
-                          'committee_2', u'committee_2__suppl__1'])
+        self.assertEqual(
+            item.Vocabulary('committees')[0].keys(),
+            [NO_COMMITTEE, 'committee_1',
+             'committee_2', u'committee_2__suppl__1', u'committee_2__suppl__2'])
+
+    def test_pm_CommitteesUsingGroups(self):
+        """It is possible to restrict the selectable committees to some proposingGroup."""
+        cfg = self.meetingConfig
+        cfg.setUseGroupsAsCategories(False)
+        self._enableField("committees", related_to="Meeting")
+        cfg_committees = cfg.getCommittees()
+        cfg_committees[0]["using_groups"] = [self.developers_uid]
+        cfg_committees[1]["using_groups"] = [self.vendors_uid]
+        self.changeUser('pmCreator1')
+        dev_item = self.create('MeetingItem')
+        self.assertEqual(dev_item.Vocabulary('committees')[0].keys(),
+                         [NO_COMMITTEE, 'committee_1'])
+        self.changeUser('pmCreator2')
+        vendors_item = self.create('MeetingItem')
+        self.assertEqual(vendors_item.Vocabulary('committees')[0].keys(),
+                         [NO_COMMITTEE, 'committee_2'])
+
+    def test_pm_Validate_committees(self):
+        """Value NO_COMMITTEE can not be used together with another."""
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.failIf(item.validate_committees((NO_COMMITTEE, )))
+        self.failIf(item.validate_committees(("committee_1", "committee_2")))
+        error_msg = translate(u"can_not_select_no_committee_and_committee",
+                              domain="PloneMeeting",
+                              context=self.request)
+        self.assertEqual(item.validate_committees((NO_COMMITTEE, "committee_1")), error_msg)
 
 
 def test_suite():

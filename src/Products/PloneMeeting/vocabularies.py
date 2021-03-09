@@ -45,6 +45,7 @@ from Products.PloneMeeting.config import CONSIDERED_NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import EMPTY_STRING
 from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
+from Products.PloneMeeting.config import NO_COMMITTEE
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.content.held_position import split_gender_and_number
 from Products.PloneMeeting.indexes import DELAYAWARE_ROW_ID_PATTERN
@@ -2081,7 +2082,9 @@ class SelectableCommitteesVocabulary(object):
         """ """
         term_title = committee[term_title_attr]
         # manage when no term_title (no acronym defined)
-        term_title = term_title or translate("None", domain="PloneMeeting", context=self.context.REQUEST)
+        term_title = term_title or translate("None",
+                                             domain="PloneMeeting",
+                                             context=self.context.REQUEST)
         return safe_unicode(term_title)
 
     def __call__(self,
@@ -2106,13 +2109,12 @@ class SelectableCommitteesVocabulary(object):
         is_manager = tool.isManager(cfg)
 
         if add_no_committee_value:
-            term_id = u"no_committee"
             term_title = translate(
                 "no_committee_term_title",
                 domain="PloneMeeting",
                 context=context.REQUEST,
                 default=u"No committee")
-            terms.append(SimpleTerm(term_id, term_id, term_title))
+            terms.append(SimpleTerm(NO_COMMITTEE, NO_COMMITTEE, term_title))
 
         def _add_suppl(committee, enabled=True):
             suppl_terms = []

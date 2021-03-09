@@ -3659,6 +3659,57 @@ class testMeetingType(PloneMeetingTestCase):
                                                             by_signature_number=True),
                          {'1': self.hp2, '2': self.hp3})
 
+    def test_pm_Get_committee_items(self):
+        """Method that will return items of a given committee including
+           supplements.  More over it is possible to pass every parameters
+           to the underlying Meeting.get_items method."""
+        cfg = self.meetingConfig
+        # enable committees field
+        self._enableField("committees", related_to="Meeting")
+        cfg_committees = cfg.getCommittees()
+        # configure "auto_from" so created recurring items are correct
+        cfg_committees[0]['auto_from'] = ["proposing_group__" + self.developers_uid]
+        cfg_committees[1]['auto_from'] = ["proposing_group__" + self.vendors_uid]
+        cfg_committees[1]['auto_from'] = ["proposing_group__" + self.vendors_uid]
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting')
+        # 2 recurring items use "committee_1"
+        self.assertEqual(meeting.get_committee_items("committee_1"),
+                         meeting.get_items(ordered=True))
+        item = self.create('MeetingItem', proposingGroup=self.vendors_uid)
+        self.presentItem(item)
+        self.assertEqual(meeting.get_committee_items("committee_2"), [item])
+
+        # supplements
+        suppl_item1 = self.create('MeetingItem', proposingGroup=self.vendors_uid)
+        suppl_item1.setCommittees(("committee_2__suppl__1", ))
+        suppl_item2 = self.create('MeetingItem', proposingGroup=self.vendors_uid)
+        suppl_item2.setCommittees(("committee_2__suppl__2", ))
+        self.presentItem(suppl_item1)
+        self.presentItem(suppl_item2)
+        # by default only normal (not supplements) are returned for a committee
+        # parameter supplement=-1
+        self.assertEqual(meeting.get_committee_items("committee_2"), [item])
+        # we can get a single supplement
+        self.assertEqual(meeting.get_committee_items("committee_2", supplement=1),
+                         [suppl_item1])
+        self.assertEqual(meeting.get_committee_items("committee_2", supplement=2),
+                         [suppl_item2])
+        # we can also get every elements, normal and all supplements
+        self.assertEqual(meeting.get_committee_items("committee_2", supplement=0),
+                         [item, suppl_item1, suppl_item2])
+        # finally we can get only every supplements
+        self.assertEqual(meeting.get_committee_items("committee_2", supplement=99),
+                         [suppl_item1, suppl_item2])
+
+        # we can also pass every parameters that Meeting.get_items accepts
+        # especially additional_catalog_query that will give the possibility
+        # to restrict returned elements
+        self.assertEqual(meeting.get_committee_items("committee_2",
+                                                     supplement=99,
+                                                     additional_catalog_query={'id': "o3"}),
+                         [suppl_item1])
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite
