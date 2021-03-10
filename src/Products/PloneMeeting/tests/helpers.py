@@ -510,3 +510,28 @@ class PloneMeetingTestingHelpers:
     def _afterItemCreatedWaitingAdviceWithPrevalidation(self, item):
         """Made to be overrided..."""
         return
+
+    def _setUpCommittees(self, attendees=True):
+        """Setup use of committees with attendees/signatories or assembly/signatures."""
+        # avoid circular import problems
+        from Products.PloneMeeting.content.meeting import default_committees
+        from Products.PloneMeeting.tests.PloneMeetingTestCase import DefaultData
+        cfg = self.meetingConfig
+        if attendees:
+            to_enable = ["committees", "committees_attendees", "committees_signatories"]
+            to_disable = ["committees_assembly", "committees_signatures"]
+        else:
+            to_enable = ["committees", "committees_assembly", "committees_signatures"]
+            to_disable = ["committees_attendees", "committees_signatories"]
+        self._enableField(to_enable, related_to="Meeting")
+        self._enableField(to_disable, related_to="Meeting", enable=False)
+        cfg.setOrderedCommitteeContacts((self.hp1_uid, self.hp2_uid, self.hp3_uid))
+        cfg_committees = cfg.getCommittees()
+        cfg_committees[0]['default_assembly'] = "Default assembly"
+        cfg_committees[0]['default_signatures'] = "Line 1\r\nLine2\r\nLine 3\r\nLine4"
+        cfg_committees[0]['default_place'] = "Default place"
+        cfg_committees[0]['default_attendees'] = [self.hp1_uid, self.hp2_uid]
+        cfg_committees[0]['default_signatories'] = [self.hp2_uid, self.hp3_uid]
+        cfg.setCommittees(cfg_committees)
+        meeting = self.create('Meeting', committees=default_committees(DefaultData(cfg)))
+        return meeting

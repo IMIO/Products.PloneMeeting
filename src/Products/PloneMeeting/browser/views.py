@@ -709,6 +709,10 @@ class BaseDGHV(object):
             return ''
 
         assembly = None
+        committee_id = kwargs.get('committee_id', None)
+        if committee_id:
+            assembly = self.context.get_committee_assembly(
+                row_id=committee_id, for_display=True, striked=striked)
         if class_name == 'Meeting' and self.context.get_assembly():
             assembly = self.context.get_assembly(for_display=True, striked=striked)
         elif class_name == 'MeetingItem' and self.context.getItemAssembly(for_display=False):
@@ -1125,7 +1129,7 @@ class BaseDGHV(object):
         if signatures:
             return OrderedDict({i: signature for i, signature in enumerate(signatures.split('\n'))})
         else:
-            return self.print_signatories_by_position(committee_id, **kwargs)
+            return self.print_signatories_by_position(committee_id=committee_id, **kwargs)
 
     def print_signatories_by_position(self,
                                       signature_format=(u'prefixed_secondary_position_type', u'person'),

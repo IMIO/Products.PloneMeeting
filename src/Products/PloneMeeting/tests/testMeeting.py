@@ -3647,18 +3647,11 @@ class testMeetingType(PloneMeetingTestCase):
         """Various helper methods will ease use of committees."""
         cfg = self.meetingConfig
         self._removeConfigObjectsFor(cfg)
-        # enable committees fields
-        field_names = ["committees", "committees_assembly", "committees_signatures",
-                       "committees_place", "committees_convocation_date"]
-        self._enableField(field_names, related_to="Meeting")
-        cfg_committees = cfg.getCommittees()
-        # when define in MeetingConfig.committees, default values
-        # are used when creating a new meeting
-        cfg_committees[0]['default_assembly'] = "Default assembly"
-        cfg_committees[0]['default_signatures'] = "Default signatures"
-        cfg_committees[0]['default_place'] = "Default place"
+        # enable committees and use assembly/signatures
+        self._setUpCommittees(attendees=False)
+        self._enableField(
+            ["committees_place", "committees_convocation_date"], related_to="Meeting")
         self.changeUser('pmManager')
-        meeting = self.create('Meeting')
         meeting = self.create('Meeting', committees=default_committees(DefaultData(cfg)))
         # get_committees, return every committees row_ids
         self.assertEqual(meeting.get_committees(), ['committee_1', 'committee_2'])
@@ -3671,24 +3664,13 @@ class testMeetingType(PloneMeetingTestCase):
                          u'<p>Default assembly</p>')
         # get_committee_signatures, returns plain text by default
         self.assertEqual(meeting.get_committee_signatures('committee_1'),
-                         u'Default signatures')
+                         u'Line 1\r\nLine2\r\nLine 3\r\nLine4')
         # get_committee_place
         self.assertEqual(meeting.get_committee_place('committee_1'),
                          'Default place')
 
         # use attendees/signatories, instead assembly/signatures
-        self._enableField(
-            ["committees_assembly", "committees_signatures"],
-            related_to="Meeting",
-            enable=False)
-        self._enableField(
-            ["committees_attendees", "committees_signatories"],
-            related_to="Meeting")
-        cfg.setOrderedCommitteeContacts((self.hp1_uid, self.hp2_uid, self.hp3_uid))
-        cfg_committees[0]['default_attendees'] = [self.hp1_uid, self.hp2_uid]
-        cfg_committees[0]['default_signatories'] = [self.hp2_uid, self.hp3_uid]
-        cfg.setCommittees(cfg_committees)
-        meeting2 = self.create('Meeting', committees=default_committees(DefaultData(cfg)))
+        meeting2 = self._setUpCommittees()
         # get_committee_attendees
         self.assertEqual(meeting2.get_committee_attendees('committee_1'),
                          (self.hp1_uid, self.hp2_uid))
@@ -3754,6 +3736,28 @@ class testMeetingType(PloneMeetingTestCase):
                                                      supplement=99,
                                                      additional_catalog_query={'id': "o3"}),
                          [suppl_item1])
+
+    def test_pm_PrintAssembly_committee_id(self):
+        """Print Meeting committee assembly."""
+        self.changeUser('pmManager')
+        meeting = self._setUpCommittees(attendees=False)
+        view = meeting.restrictedTraverse('document-generation')
+        helper = view.get_generation_context_helper()
+        self.assertEqual(helper.printAssembly(committee_id="committee_1"),
+                         u'<p>Default assembly</p>')
+
+    def test_pm_print_signatures_by_position_committee_id(self):
+        """Print Meeting committee sigantures by position."""
+        self.changeUser('pmManager')
+        meeting = self._setUpCommittees(attendees=False)
+        view = meeting.restrictedTraverse('document-generation')
+        helper = view.get_generation_context_helper()
+        self.assertEqual(
+            helper.print_signatures_by_position(committee_id="committee_1"),
+            {0: u'Line 1',
+             1: u'Line 2',
+             2: u'Line 3',
+             3: u'Line 4'})
 
 
 def test_suite():
