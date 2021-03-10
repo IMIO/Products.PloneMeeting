@@ -19,8 +19,8 @@ from OFS.ObjectManager import BeforeDeleteException
 from plone import api
 from Products.CMFCore.permissions import View
 from Products.PloneMeeting.browser.itemattendee import set_meeting_item_signatory
-from Products.PloneMeeting.content.meeting import get_all_used_held_positions
 from Products.PloneMeeting.content.directory import IPMDirectory
+from Products.PloneMeeting.content.meeting import get_all_used_held_positions
 from Products.PloneMeeting.content.source import PMContactSourceBinder
 from Products.PloneMeeting.Extensions.imports import import_contacts
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase

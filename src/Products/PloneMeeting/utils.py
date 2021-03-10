@@ -32,12 +32,14 @@ from plone import api
 from plone.app.textfield import RichText
 from plone.app.textfield.value import RichTextValue
 from plone.app.uuid.utils import uuidToObject
+from plone.autoform.interfaces import WIDGETS_KEY
 from plone.autoform.interfaces import WRITE_PERMISSIONS_KEY
 from plone.dexterity.interfaces import IDexterityContent
 from plone.dexterity.utils import resolveDottedName
 from plone.i18n.normalizer.interfaces import IIDNormalizer
 from plone.locking.events import unlockAfterModification
 from plone.memoize import ram
+from plone.supermodel.utils import mergedTaggedValueDict
 from Products.Archetypes.atapi import DisplayList
 from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.permissions import AccessContentsInformation
@@ -93,10 +95,8 @@ from zope.i18n import translate
 from zope.interface import alsoProvides
 from zope.interface import implements
 from zope.location import locate
-from zope.security.interfaces import IPermission
 from zope.schema import getFieldsInOrder
-from plone.supermodel.utils import mergedTaggedValueDict
-from plone.autoform.interfaces import WIDGETS_KEY
+from zope.security.interfaces import IPermission
 
 import itertools
 import logging

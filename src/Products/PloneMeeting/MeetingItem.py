@@ -19,8 +19,8 @@ from DateTime import DateTime
 from datetime import datetime
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.helpers.content import get_vocab
-from imio.helpers.content import uuidToCatalogBrain
 from imio.helpers.content import uuidsToObjects
+from imio.helpers.content import uuidToCatalogBrain
 from imio.helpers.security import fplog
 from imio.history.utils import get_all_history_attr
 from imio.prettylink.interfaces import IPrettyLink
@@ -83,11 +83,11 @@ from Products.PloneMeeting.config import PROJECTNAME
 from Products.PloneMeeting.config import READER_USECASES
 from Products.PloneMeeting.config import SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY
 from Products.PloneMeeting.config import WriteMarginalNotes
+from Products.PloneMeeting.content.meeting import Meeting
 from Products.PloneMeeting.events import item_added_or_initialized
 from Products.PloneMeeting.interfaces import IMeetingItem
 from Products.PloneMeeting.interfaces import IMeetingItemWorkflowActions
 from Products.PloneMeeting.interfaces import IMeetingItemWorkflowConditions
-from Products.PloneMeeting.content.meeting import Meeting
 from Products.PloneMeeting.model.adaptations import RETURN_TO_PROPOSING_GROUP_MAPPINGS
 from Products.PloneMeeting.utils import _addManagedPermissions
 from Products.PloneMeeting.utils import _base_extra_expr_ctx

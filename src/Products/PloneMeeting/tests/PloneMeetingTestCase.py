@@ -4,7 +4,6 @@
 #
 
 from AccessControl.SecurityManagement import getSecurityManager
-from Products.CMFPlone.utils import base_hasattr
 from collections import OrderedDict
 from collective.contact.plonegroup.config import ORGANIZATIONS_REGISTRY
 from collective.contact.plonegroup.utils import get_own_organization
@@ -26,6 +25,7 @@ from plone.app.testing.bbb import _createMemberarea
 from plone.app.testing.helpers import setRoles
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
+from Products.CMFPlone.utils import base_hasattr
 from Products.Five.browser import BrowserView
 from Products.PloneMeeting.browser.meeting import _get_default_attendees
 from Products.PloneMeeting.browser.meeting import _get_default_signatories

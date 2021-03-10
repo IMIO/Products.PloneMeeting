@@ -14,8 +14,8 @@ from collective.eeafaceted.collectionwidget.utils import getCollectionLinkCriter
 from collective.iconifiedcategory.utils import _categorized_elements
 from collective.iconifiedcategory.utils import get_category_object
 from copy import deepcopy
-from datetime import datetime
 from DateTime import DateTime
+from datetime import datetime
 from eea.facetednavigation.widgets.resultsperpage.widget import Widget as ResultsPerPageWidget
 from ftw.labels.interfaces import ILabeling
 from ftw.labels.interfaces import ILabelJar

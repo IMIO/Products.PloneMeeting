@@ -18,8 +18,8 @@ from Products.CMFPlone.utils import safe_unicode
 from Products.Five import BrowserView
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import ITEM_INSERT_METHODS
-from Products.PloneMeeting.content.meeting import Meeting
 from Products.PloneMeeting.content.meeting import get_all_used_held_positions
+from Products.PloneMeeting.content.meeting import Meeting
 from Products.PloneMeeting.MeetingConfig import POWEROBSERVERPREFIX
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import field_is_empty

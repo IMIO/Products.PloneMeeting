@@ -12,8 +12,8 @@ from imio.pyutils.utils import replace_in_list
 from persistent.mapping import PersistentMapping
 from plone.app.contenttypes.migration.migration import migrate as pac_migrate
 from plone.app.textfield.value import RichTextValue
-from Products.contentmigration.basemigrator.migrator import CMFFolderMigrator
 from Products.CMFPlone.utils import base_hasattr
+from Products.contentmigration.basemigrator.migrator import CMFFolderMigrator
 from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_NEW
 from Products.PloneMeeting.browser.itemattendee import position_type_default
 from Products.PloneMeeting.content.advice import IMeetingAdvice
@@ -22,8 +22,8 @@ from Products.PloneMeeting.interfaces import IMeetingItemDashboardBatchActionsMa
 from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator
 from Products.PloneMeeting.profiles import MeetingConfigDescriptor
-from Products.PloneMeeting.setuphandlers import indexInfos
 from Products.PloneMeeting.setuphandlers import columnInfos
+from Products.PloneMeeting.setuphandlers import indexInfos
 from Products.ZCatalog.ProgressHandler import ZLogHandler
 from zope.interface import alsoProvides
 from zope.interface import noLongerProvides
