@@ -105,6 +105,20 @@ Changelog
   - `formUnload` (not losing changes during edition and clicking leaving current page).
 
   [gbastien]
+- Added `Meeting.committees` management:
+  - Committees are defined in `MeetingConfig.committees` datagridfield;
+  - When an new meeting is created, `Meeting.committees` is filled using the
+    `MeetingConfig.committees` defined values, it manages `date`, `convocation_date`,
+    `place`, `assembly/signatures` or `attendees/signatories`;
+  - A `MeetingItem.committees` field is added and vocabulary is generated
+    from values defined in `MeetingConfig.committees`;
+  - It is possible to select committees for an item manually using a multiselect
+    or automatically based on the `proposingGroup/category/classifier` of the item;
+  - Printing helpers (`printAssembly`, `print_attendees`,
+    `print_signatures_by_position`, and `print_signatories_by_position`) have a
+    new `committee_id` parameter.
+
+  [gbastien]
 
 4.2b11 (2021-01-19)
 -------------------
