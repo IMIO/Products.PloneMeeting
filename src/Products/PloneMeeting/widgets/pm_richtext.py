@@ -39,7 +39,12 @@ class PMRichTextWidget(RichTextWidget):
         schema = fti.lookupSchema()
         write_permissions = schema.queryTaggedValue(WRITE_PERMISSIONS_KEY, {})
         write_perm = write_permissions.get(self.__name__, ModifyPortalContent)
-        return checkMayQuickEdit(self.context, permission=write_perm)
+        res = False
+        if checkMayQuickEdit(self.context, permission=write_perm):
+            # check that context is not locked
+            res = not self.context.restrictedTraverse(
+                '@@plone_lock_info').is_locked_for_current_user()
+        return res
 
     def need_to_refresh_page(self):
         """ """

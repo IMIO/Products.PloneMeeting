@@ -3511,6 +3511,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 for term in classifiers_vocab._terms]
         return DisplayList(res)
 
+    # Committees related helpers -----------------------------------------------
     def is_committees_using(self, column, value=[]):
         """Return True if using committees given p_column :
            - using "auto_from" column mean that committee on item is determined automatically;
@@ -3523,7 +3524,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 break
         return res
 
-    # Committees related helpers -----------------------------------------------
     def get_committee(self, row_id):
         """ """
         for committee in self.getCommittees():

@@ -805,7 +805,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.versionateAdviceIfGivenAndItemModified = True
         self.customAdvisers = []
 
-        # Votes and committees parameters --------------------------------------
+        # Votes parameters ----------------------------------------------------
         self.usedPollTypes = ('freehand',
                               'no_vote',
                               'secret',
@@ -817,7 +817,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.firstLinkedVoteUsedVoteValues = ('no', 'abstain')
         self.nextLinkedVotesUsedVoteValues = ('yes', )
         self.voteCondition = ''
-        # Committees
+        # Committees parameters -----------------------------------------------
         self.orderedCommitteeContacts = []
         self.committees = []
 

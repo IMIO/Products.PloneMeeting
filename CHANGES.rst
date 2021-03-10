@@ -101,7 +101,9 @@ Changelog
   advice type correctly.
   [gbastien]
 - Completed the `DX quick edit RichText field` to manage :
-  - `locking` (not being able to edit if another user is editing);
+  - `locking` (not being able to edit if another user is editing), hide the edit
+    icon if context is locked, if user edit and content is locked in between,
+    the page is reloaded;
   - `formUnload` (not losing changes during edition and clicking leaving current page).
 
   [gbastien]

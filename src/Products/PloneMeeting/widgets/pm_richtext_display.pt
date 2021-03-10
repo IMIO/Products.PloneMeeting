@@ -4,8 +4,7 @@
       tal:omit-tag="">
 
   <div tal:define="hookId python: 'hook_%s' % view.__name__;
-                   may_edit view/may_edit;
-                   js_edit string:"
+                   may_edit view/may_edit"
        style="position: relative"
        tal:attributes="id hookId;">
 
@@ -22,7 +21,7 @@
         <span tal:content="view/label">Data</span>
       </div>
       <img style="cursor:pointer"
-           tal:condition="may_edit"
+           tal:condition="python: may_edit"
            title="Edit this field"
            i18n:attributes="title fastedit_edit"
            tal:attributes="src string:${view/portal_url}/edit.png;
