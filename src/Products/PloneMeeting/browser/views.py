@@ -713,7 +713,7 @@ class BaseDGHV(object):
         if committee_id:
             assembly = self.context.get_committee_assembly(
                 row_id=committee_id, for_display=True, striked=striked)
-        if class_name == 'Meeting' and self.context.get_assembly():
+        elif class_name == 'Meeting' and self.context.get_assembly():
             assembly = self.context.get_assembly(for_display=True, striked=striked)
         elif class_name == 'MeetingItem' and self.context.getItemAssembly(for_display=False):
             assembly = self.context.getItemAssembly(for_display=True, striked=striked)

@@ -3648,10 +3648,10 @@ class testMeetingType(PloneMeetingTestCase):
         cfg = self.meetingConfig
         self._removeConfigObjectsFor(cfg)
         # enable committees and use assembly/signatures
+        self.changeUser('pmManager')
         self._setUpCommittees(attendees=False)
         self._enableField(
             ["committees_place", "committees_convocation_date"], related_to="Meeting")
-        self.changeUser('pmManager')
         meeting = self.create('Meeting', committees=default_committees(DefaultData(cfg)))
         # get_committees, return every committees row_ids
         self.assertEqual(meeting.get_committees(), ['committee_1', 'committee_2'])
@@ -3664,7 +3664,7 @@ class testMeetingType(PloneMeetingTestCase):
                          u'<p>Default assembly</p>')
         # get_committee_signatures, returns plain text by default
         self.assertEqual(meeting.get_committee_signatures('committee_1'),
-                         u'Line 1\r\nLine2\r\nLine 3\r\nLine4')
+                         u'Line 1,\r\nLine 2\r\nLine 3,\r\nLine 4')
         # get_committee_place
         self.assertEqual(meeting.get_committee_place('committee_1'),
                          'Default place')
@@ -3754,10 +3754,7 @@ class testMeetingType(PloneMeetingTestCase):
         helper = view.get_generation_context_helper()
         self.assertEqual(
             helper.print_signatures_by_position(committee_id="committee_1"),
-            {0: u'Line 1',
-             1: u'Line 2',
-             2: u'Line 3',
-             3: u'Line 4'})
+            {0: u'Line 1,\r', 1: u'Line 2\r', 2: u'Line 3,\r', 3: u'Line 4'})
 
 
 def test_suite():

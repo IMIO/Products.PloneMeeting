@@ -528,7 +528,7 @@ class PloneMeetingTestingHelpers:
         cfg.setOrderedCommitteeContacts((self.hp1_uid, self.hp2_uid, self.hp3_uid))
         cfg_committees = cfg.getCommittees()
         cfg_committees[0]['default_assembly'] = "Default assembly"
-        cfg_committees[0]['default_signatures'] = "Line 1\r\nLine2\r\nLine 3\r\nLine4"
+        cfg_committees[0]['default_signatures'] = "Line 1,\r\nLine 2\r\nLine 3,\r\nLine 4"
         cfg_committees[0]['default_place'] = "Default place"
         cfg_committees[0]['default_attendees'] = [self.hp1_uid, self.hp2_uid]
         cfg_committees[0]['default_signatories'] = [self.hp2_uid, self.hp3_uid]
