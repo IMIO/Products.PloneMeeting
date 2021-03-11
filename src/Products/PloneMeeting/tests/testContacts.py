@@ -25,6 +25,7 @@ from Products.PloneMeeting.content.source import PMContactSourceBinder
 from Products.PloneMeeting.Extensions.imports import import_contacts
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.statusmessages.interfaces import IStatusMessage
+from plone.namedfile import NamedImage
 from z3c.relationfield.relation import RelationValue
 from zExceptions import Redirect
 from zope.component import getUtility
@@ -551,11 +552,17 @@ class testContacts(PloneMeetingTestCase):
              "name": u"Super-héro|Super-héros|"
                      u"Super-héroine|Super-héroines"},
         )
+
         person1 = self.portal.contacts.get("person1")
         person1.firstname = "Jane"
+        person1.firstname_abbreviated = "J."
         person1.lastname = "Doe"
         person1.gender = u"F"
         person1.person_title = u"Miss"
+
+        file_path = os.path.join(os.path.dirname(__file__), 'dot.gif')
+        data = open(file_path, 'r')
+        person1.signature = NamedImage(data=data)
 
         signatory1 = person1.get_held_positions()[0]
         signatory1.position_type = u"dg"
@@ -565,6 +572,7 @@ class testContacts(PloneMeetingTestCase):
         # No gender/person_title and no position_type, no secondary_position_type
         person4 = self.portal.contacts.get("person4")
         person4.firstname = "John"
+        person4.firstname_abbreviated = u""
         person4.lastname = "Doe"
         person4.gender = u""
         person4.person_title = u""
@@ -609,7 +617,13 @@ class testContacts(PloneMeetingTestCase):
             }
         )
         printed_signatories = helper.print_signatories_by_position(
-            signature_format=(u"prefixed_secondary_position_type", u"person_with_title", u"XXX", u"gender"),
+            signature_format=(
+                u"prefixed_secondary_position_type",
+                u"person_with_title",
+                u"abbreviated_person",
+                u"XXX",
+                u"gender"
+            ),
             separator=""
         )
         self.assertEqual(
@@ -617,14 +631,29 @@ class testContacts(PloneMeetingTestCase):
             {
                 0: u"La Super-héroine",
                 1: u"Miss Jane Doe",
-                2: u"XXX",
-                3: u"F",
-                4: u"Président",  # John Doe has no gender, no title and no secondary_position_type
-                5: u"John Doe",
-                6: u"XXX",
-                7: u""
+                2: u"J. Doe",
+                3: u"XXX",
+                4: u"F",
+                # John Doe has no gender, no title,
+                # no secondary_position_type and no abbreviated_firstname
+                5: u"Président",
+                6: u"John Doe",
+                7: u"John Doe",
+                8: u"XXX",
+                9: u""
             }
         )
+
+        # Test with scanned signature
+        printed_signatories = helper.print_signatories_by_position(
+            signature_format=(
+                u"prefixed_secondary_position_type",
+                u"person_signature",
+            ),
+            separator=""
+        )
+        self.assertTrue(isinstance(printed_signatories.get(1), NamedImage))
+        self.assertIsNone(printed_signatories.get(3))  # John Doe has no scanned signature
 
         # test when some signatories redefined on item
         # redefine signature_number "2"
