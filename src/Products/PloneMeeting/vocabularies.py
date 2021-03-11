@@ -914,58 +914,26 @@ class SentToInfosVocabulary(object):
 SentToInfosVocabularyFactory = SentToInfosVocabulary()
 
 
-class HasAnnexesToPrintVocabulary(object):
+class FacetedAnnexesVocabulary(object):
     implements(IVocabularyFactory)
 
     def __call__(self, context):
         """ """
+        values = ["to_print", "not_to_print",
+                  "confidential", "not_confidential",
+                  "publishable", "not_publishable",
+                  "to_sign", "not_to_sign", "signed"]
         res = []
-        res.append(SimpleTerm('1',
-                              '1',
-                              safe_unicode(translate('annexes_to_print_term',
-                                                     domain='PloneMeeting',
-                                                     context=context.REQUEST)))
-                   )
-        res.append(SimpleTerm('0',
-                              '0',
-                              safe_unicode(translate('no_annexes_to_print_term',
-                                                     domain='PloneMeeting',
-                                                     context=context.REQUEST)))
-                   )
+        for value in values:
+            res.append(SimpleTerm(value,
+                                  value,
+                                  translate('annex_term_{0}'.format(value),
+                                            domain='PloneMeeting',
+                                            context=context.REQUEST)))
         return SimpleVocabulary(res)
 
 
-HasAnnexesToPrintVocabularyFactory = HasAnnexesToPrintVocabulary()
-
-
-class HasAnnexesToSignVocabulary(object):
-    implements(IVocabularyFactory)
-
-    def __call__(self, context):
-        """ """
-        res = []
-        res.append(SimpleTerm('0',
-                              '0',
-                              safe_unicode(translate('annexes_to_sign_term',
-                                                     domain='PloneMeeting',
-                                                     context=context.REQUEST)))
-                   )
-        res.append(SimpleTerm('1',
-                              '1',
-                              safe_unicode(translate('annexes_signed_term',
-                                                     domain='PloneMeeting',
-                                                     context=context.REQUEST)))
-                   )
-        res.append(SimpleTerm('-1',
-                              '-1',
-                              safe_unicode(translate('no_annexes_to_sign_term',
-                                                     domain='PloneMeeting',
-                                                     context=context.REQUEST)))
-                   )
-        return SimpleVocabulary(res)
-
-
-HasAnnexesToSignVocabularyFactory = HasAnnexesToSignVocabulary()
+FacetedAnnexesVocabularyFactory = FacetedAnnexesVocabulary()
 
 
 class BooleanForFacetedVocabulary(object):

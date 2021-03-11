@@ -74,8 +74,7 @@ indexInfos = {
     'privacy': ('FieldIndex', {}),
     'pollType': ('FieldIndex', {}),
     'listType': ('FieldIndex', {}),
-    'hasAnnexesToPrint': ('FieldIndex', {}),
-    'hasAnnexesToSign': ('KeywordIndex', {}),
+    'annexes_index': ('KeywordIndex', {}),
     # Meeting-related indexes
     'meeting_date': ('DateIndex', {}),
     # Indexes used by every portal_types

@@ -53,10 +53,8 @@
            name="Products.PloneMeeting.vocabularies.senttoinfosvocabulary" />
   <utility component=".vocabularies.BooleanForFacetedVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.booleanforfacetedvocabulary" />
-  <utility component=".vocabularies.HasAnnexesToPrintVocabularyFactory"
-           name="Products.PloneMeeting.vocabularies.hasannexestoprintvocabulary" />
-  <utility component=".vocabularies.HasAnnexesToSignVocabularyFactory"
-           name="Products.PloneMeeting.vocabularies.hasannexestosignvocabulary" />
+  <utility component=".vocabularies.FacetedAnnexesVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.faceted_annexes_vocabulary" />
   <utility component=".vocabularies.DownOrUpWorkflowAgainVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.downorupworkflowagainvocabulary" />
   <utility component=".vocabularies.ListTypesVocabularyFactory"

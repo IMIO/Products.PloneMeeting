@@ -219,6 +219,7 @@
            provides="imio.actionspanel.interfaces.IContentDeletable" />
 
   <!-- Indexes -->
+  <adapter name="annexes_index" factory=".indexes.annexes_index" />
   <adapter name="Description" factory=".indexes.Description" />
   <adapter name="getConfigId" factory=".indexes.getConfigId" />
   <adapter name="getCopyGroups" factory=".indexes.getCopyGroups" />
@@ -226,8 +227,6 @@
   <adapter name="preferred_meeting_date" factory=".indexes.preferred_meeting_date" />
   <adapter name="preferred_meeting_uid" factory=".indexes.preferred_meeting_uid" />
   <adapter name="getTakenOverBy" factory=".indexes.getTakenOverBy" />
-  <adapter name="hasAnnexesToPrint" factory=".indexes.hasAnnexesToPrint" />
-  <adapter name="hasAnnexesToSign" factory=".indexes.hasAnnexesToSign" />
   <adapter name="indexAdvisers" factory=".indexes.indexAdvisers" />
   <adapter name="item_is_signed" factory=".indexes.item_is_signed" />
   <adapter name="meeting_date" factory=".indexes.meeting_date" />

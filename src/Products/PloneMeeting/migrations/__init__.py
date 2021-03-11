@@ -18,6 +18,7 @@
 from collective.behavior.talcondition.behavior import ITALCondition
 from DateTime import DateTime
 from eea.facetednavigation.interfaces import ICriteria
+from imio.helpers.cache import cleanRamCacheFor
 from imio.helpers.catalog import addOrUpdateColumns
 from imio.helpers.catalog import addOrUpdateIndexes
 from imio.helpers.content import object_values
@@ -297,14 +298,15 @@ class Migrator(BaseMigrator):
                 cfg.registerPortalTypes()
         logger.info('Done.')
 
-    def updateFacetedFilters(self, xml_filename, related_to="items", reorder=True):
+    def updateFacetedFilters(self, xml_filename=None, related_to="items", reorder=True, to_delete=[]):
         """ """
         logger.info("Updating faceted filters for every MeetingConfigs...")
 
-        xmlpath = os.path.join(
-            os.path.dirname(__file__),
-            '../faceted_conf/%s' % xml_filename)
-        logger.info("Applying faceted config at %s..." % xmlpath)
+        if xml_filename:
+            xmlpath = os.path.join(
+                os.path.dirname(__file__),
+                '../faceted_conf/%s' % xml_filename)
+            logger.info("Applying faceted config at %s..." % xmlpath)
 
         for cfg in self.tool.objectValues('MeetingConfig'):
             obj = None
@@ -314,12 +316,20 @@ class Migrator(BaseMigrator):
                 obj = cfg.searches.searches_meetings
             elif related_to == "decisions":
                 obj = cfg.searches.searches_decisions
-            # add new faceted filters
-            obj.unrestrictedTraverse('@@faceted_exportimport').import_xml(
-                import_file=open(xmlpath))
+            # add/update faceted filters if xml_filename
+            if xml_filename:
+                obj.unrestrictedTraverse('@@faceted_exportimport').import_xml(
+                    import_file=open(xmlpath))
+            # delete criteria id given in to_delete
+            cleanRamCacheFor('Products.PloneMeeting.adapters.compute_criteria')
+            criteria = ICriteria(obj)
+            for cid in to_delete:
+                if cid in criteria.keys():
+                    logger.info("Removed criterion {0} from {1}".format(
+                        cid, repr(obj)))
+                    criteria.delete(cid)
+            # when criteria have been imported, if some were purged, we need to reorder
             if reorder:
-                # when criteria have been imported, if some were purged, we need to reorder
-                criteria = ICriteria(obj)
                 # sort by criterion name, so c0, c1, c2, ...
                 criteria._update(humansorted(criteria.values(), key=attrgetter('__name__')))
         logger.info('Done.')

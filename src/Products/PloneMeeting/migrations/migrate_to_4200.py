@@ -454,8 +454,10 @@ class Migrate_To_4200(Migrator):
                     sub_folder.reindexObject(idxs=['object_provides'])
         logger.info('Done.')
 
-    def _fixCreatedModifiedFilters(self):
-        '''Filter modified(c13)/created(c14) is now created(c13)/modified(c14).'''
+    def _fixFacetedFilters(self):
+        '''Filter modified(c13)/created(c14) is now created(c13)/modified(c14).
+           Filter hasAnnexesToPrint(c20) and hasAnnexesToSign(c25) are merged to (c20)
+           and will use the annexes_index.'''
         logger.info('Fixing created/modified filters...')
         for cfg in self.tool.objectValues('MeetingConfig'):
             # make sure only done one time or relaunching migration would
@@ -468,6 +470,7 @@ class Migrate_To_4200(Migrator):
                                'dashboardMeetingLinkedItemsFilters'):
                 field = cfg.getField(field_name)
                 keys = field.get(cfg)
+                # created/modified
                 if 'c13' in keys and 'c14' in keys:
                     # nothing to do as both were already selected
                     pass
@@ -475,13 +478,18 @@ class Migrate_To_4200(Migrator):
                     keys = replace_in_list(keys, 'c13', 'c14')
                 elif 'c14' in keys:
                     keys = replace_in_list(keys, 'c14', 'c13')
-                field.set(cfg, keys)
+                # annexes_index 'c25' was removed and merged in 'c20'
+                if 'c25' in keys:
+                    keys.remove('c25')
+                    if 'c20' not in keys:
+                        keys.append('c20')
+                field.set(cfg, sorted(keys))
         logger.info('Done.')
 
     def run(self, extra_omitted=[]):
         logger.info('Migrating to PloneMeeting 4200...')
 
-        self._fixCreatedModifiedFilters()
+        self._fixFacetedFilters()
 
         # apply correct batch actions marker on searches_* folders
         self._updateSearchedFolderBatchActionsMarkerInterface()
@@ -496,7 +504,9 @@ class Migrate_To_4200(Migrator):
                      'toDiscuss',
                      'getDate',
                      'linkedMeetingUID',
-                     'linkedMeetingDate'])
+                     'linkedMeetingDate',
+                     'hasAnnexesToPrint',
+                     'hasAnnexesToSign'])
         self.removeUnusedColumns(
             columns=['toDiscuss',
                      'getDate',
@@ -564,6 +574,7 @@ class Migrate_To_4200(Migrator):
         self.updateFacetedFilters(
             xml_filename='upgrade_step_4200_update_meeting_widgets.xml',
             related_to="decisions")
+        self.updateFacetedFilters(reorder=False, to_delete=['c25'])
 
         # update holidays
         self.updateHolidays()
@@ -575,19 +586,20 @@ class Migrate_To_4200(Migrator):
 def migrate(context):
     '''This migration function will:
 
-       1) Update applied batch actions marker interface on every member folders;
-       2) Remove unused indexes and metadata;
-       3) Remove Meeting.items reference field;
-       4) Configure votes;
-       5) Update Meeting.itemSignatories to manage stored position_type;
-       6) Fix DX RichText mimetype;
-       7) Configure field MeetingConfig.itemWFValidationLevels depending on old wfAdaptations;
-       8) Migrate MeetingConfig.keepAccessToItemWhenAdviceIsGiven to
+       1) Fix faceted filters;
+       2) Update applied batch actions marker interface on every member folders;
+       3) Remove unused indexes and metadata;
+       4) Remove Meeting.items reference field;
+       5) Configure votes;
+       6) Update Meeting.itemSignatories to manage stored position_type;
+       7) Fix DX RichText mimetype;
+       8) Configure field MeetingConfig.itemWFValidationLevels depending on old wfAdaptations;
+       9) Migrate MeetingConfig.keepAccessToItemWhenAdviceIsGiven to
           MeetingConfig.keepAccessToItemWhenAdvice;
-       9) Init otherMeetingConfigsClonableToFieldXXX new fields;
-       10) Update faceted filters;
-       11) Update holidays;
-       12) Refresh items local roles and recatalog.
+       10) Init otherMeetingConfigsClonableToFieldXXX new fields;
+       11) Update faceted filters;
+       12) Update holidays;
+       13) Refresh items local roles and recatalog.
     '''
     migrator = Migrate_To_4200(context)
     migrator.run()
