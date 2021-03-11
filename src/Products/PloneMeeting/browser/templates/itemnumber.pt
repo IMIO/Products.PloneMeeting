@@ -11,7 +11,7 @@
     <img style="visibility: hidden;"
          title="move_item_to_given_position" i18n:attributes="title" name="moveImageButton"
          tal:attributes="id string:moveAction_${itemNumber};
-                         src string:${view/portal_url}/reorder.png;
+                         src string:${view/portal_url}/save.gif;
                          onClick string:moveItem(baseUrl='${context/absolute_url}', moveType='number', $('input#value_moveAction_${itemNumber}'));"/>
   </div>
 

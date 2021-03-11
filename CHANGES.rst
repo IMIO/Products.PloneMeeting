@@ -121,6 +121,10 @@ Changelog
     new `committee_id` parameter.
 
   [gbastien]
+- Use the classic `floppy disk save icon` to save item number value when
+  changing it on the meeting view instead the `reorder icon` (arrow up and down)
+  that was sometimes not clear enough for some users.
+  [gbastien]
 
 4.2b11 (2021-01-19)
 -------------------
