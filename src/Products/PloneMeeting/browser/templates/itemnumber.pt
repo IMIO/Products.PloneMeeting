@@ -1,6 +1,7 @@
 <tal:defines define="mayChangeOrder view/mayChangeItemsOrder;
                      itemNumber python: context.getItemNumber(for_display=True);"
              i18n:domain="PloneMeeting">
+<<<<<<< HEAD
   <table class="no-style-table" cellspacing="0" cellpadding="0"
          tal:condition="mayChangeOrder">
     <tr>
@@ -24,6 +25,22 @@
       </td>
     </tr>
   </table>
+=======
+  <div class="change-item-order" tal:condition="may_change_order">
+    <input type="text" size="2" name="moveValue"
+           tal:attributes="id string:value_moveAction_${itemNumber};
+                           class python: view.is_integer(context.getItemNumber()) and 'number' or 'subnumber';
+                           value itemNumber;
+                           onFocus string:onImageButtonFocus('${itemNumber}');
+                           onKeyPress string:if (event.keyCode==13) moveItem(baseUrl='${context/absolute_url}', moveType='number', $$(this));"/>
+    <img style="visibility: hidden;"
+         title="move_item_to_given_position" i18n:attributes="title" name="moveImageButton"
+         tal:attributes="id string:moveAction_${itemNumber};
+                         src string:${view/portal_url}/save.gif;
+                         onClick string:moveItem(baseUrl='${context/absolute_url}', moveType='number', $('input#value_moveAction_${itemNumber}'));"/>
+  </div>
+
+>>>>>>> b818084... Use the classic `floppy disk save icon` to save item number value when changing it on the meeting view instead the `reorder icon` (arrow up and down) that was sometimes not clear enough for some users.
   <tal:comment replace="nothing">For the others</tal:comment>
   <span class="itemNumber"
         tal:attributes="class python: '.' in itemNumber and 'itemnumber subnumber' or 'itemnumber'"
