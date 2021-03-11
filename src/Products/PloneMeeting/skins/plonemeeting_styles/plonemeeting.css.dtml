@@ -2234,7 +2234,7 @@ table#form-widgets-committees th.column-place {
    width: 180px;
 }
 /* hide Meeting.committees label on edit and view */
-fieldset#fieldset-committees div#formfield-form-widgets-committees label,
+div#formfield-form-widgets-committees label[for="form-widgets-committees"],
 body.template-meeting_view label[for="form-widgets-committees"] {
    display: none;
 }

@@ -3497,7 +3497,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # proposing groups
         proposing_groups_vocab = get_vocab(
             self, "Products.PloneMeeting.vocabularies.proposinggroupsvocabulary")
-        res = [('proposing_group__' + term.value, 'P.G.: ' + term.title)
+        res = [('proposing_group__' + term.value, 'GP.: ' + term.title)
                for term in proposing_groups_vocab._terms]
         # categories
         categories_vocab = get_vocab(
