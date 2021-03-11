@@ -19,8 +19,8 @@ from DateTime import DateTime
 from datetime import datetime
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.helpers.content import get_vocab
-from imio.helpers.content import uuidToCatalogBrain
 from imio.helpers.content import uuidsToObjects
+from imio.helpers.content import uuidToCatalogBrain
 from imio.helpers.security import fplog
 from imio.history.utils import get_all_history_attr
 from imio.prettylink.interfaces import IPrettyLink
@@ -74,6 +74,7 @@ from Products.PloneMeeting.config import ITEM_COMPLETENESS_ASKERS
 from Products.PloneMeeting.config import ITEM_COMPLETENESS_EVALUATORS
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
+from Products.PloneMeeting.config import NO_COMMITTEE
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
 from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
@@ -82,11 +83,11 @@ from Products.PloneMeeting.config import PROJECTNAME
 from Products.PloneMeeting.config import READER_USECASES
 from Products.PloneMeeting.config import SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY
 from Products.PloneMeeting.config import WriteMarginalNotes
+from Products.PloneMeeting.content.meeting import Meeting
 from Products.PloneMeeting.events import item_added_or_initialized
 from Products.PloneMeeting.interfaces import IMeetingItem
 from Products.PloneMeeting.interfaces import IMeetingItemWorkflowActions
 from Products.PloneMeeting.interfaces import IMeetingItemWorkflowConditions
-from Products.PloneMeeting.content.meeting import Meeting
 from Products.PloneMeeting.model.adaptations import RETURN_TO_PROPOSING_GROUP_MAPPINGS
 from Products.PloneMeeting.utils import _addManagedPermissions
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
@@ -314,7 +315,7 @@ class MeetingItemWorkflowConditions(object):
         # permission is not enough as MeetingReviewer may have the 'Review portal content'
         # when using the 'reviewers_take_back_validated_item' wfAdaptation
         if not _checkPermission(ReviewPortalContent, self.context) or \
-           not self.tool.isManager(self.context):
+           not self.tool.isManager(self.cfg):
             return False
 
         # We may present the item if Plone currently publishes a meeting.
@@ -487,7 +488,7 @@ class MeetingItemWorkflowConditions(object):
            As we have only one guard_expr for potentially several transitions departing
            from the 'returned_to_proposing_group' state, we receive the p_transitionName."""
         if not _checkPermission(ReviewPortalContent, self.context) and not \
-           self.tool.isManager(self.context):
+           self.tool.isManager(self.cfg):
             return
         # get the linked meeting
         meeting = self.context.getMeeting()
@@ -630,7 +631,7 @@ class MeetingItemWorkflowConditions(object):
         """ """
         res = False
         if self.context.getIsAcceptableOutOfMeeting():
-            if _checkPermission(ReviewPortalContent, self.context) and self.tool.isManager(self.context):
+            if _checkPermission(ReviewPortalContent, self.context) and self.tool.isManager(self.cfg):
                 res = True
         return res
 
@@ -641,7 +642,7 @@ class MeetingItemWorkflowConditions(object):
         res = False
         emergency = self.context.getEmergency()
         if emergency == 'emergency_accepted':
-            if _checkPermission(ReviewPortalContent, self.context) and self.tool.isManager(self.context):
+            if _checkPermission(ReviewPortalContent, self.context) and self.tool.isManager(self.cfg):
                 res = True
         # if at least emergency is asked, then return a No message
         elif emergency != 'no_emergency':
@@ -1012,33 +1013,6 @@ schema = Schema((
         write_permission="PloneMeeting: Write budget infos",
     ),
     StringField(
-        name='category',
-        widget=SelectionWidget(
-            condition="python: here.showCategory()",
-            format="select",
-            description="Category",
-            description_msgid="item_category_descr",
-            label='Category',
-            label_msgid='PloneMeeting_label_category',
-            i18n_domain='PloneMeeting',
-        ),
-        vocabulary='listCategories',
-    ),
-    StringField(
-        name='classifier',
-        widget=SelectionWidget(
-            condition="python: here.attributeIsUsed('classifier')",
-            format="select",
-            description="Classifier",
-            description_msgid="item_classifier_descr",
-            label='Classifier',
-            label_msgid='PloneMeeting_label_classifier',
-            i18n_domain='PloneMeeting',
-        ),
-        optional=True,
-        vocabulary='listClassifiers',
-    ),
-    StringField(
         name='proposingGroup',
         widget=SelectionWidget(
             condition="python: not here.attributeIsUsed('proposingGroupWithGroupInCharge')",
@@ -1095,6 +1069,48 @@ schema = Schema((
         optional=True,
         multiValued=1,
         vocabulary_factory='Products.PloneMeeting.vocabularies.itemassociatedgroupsvocabulary',
+        enforceVocabulary=True,
+    ),
+    StringField(
+        name='category',
+        widget=SelectionWidget(
+            condition="python: here.showCategory()",
+            format="select",
+            description="Category",
+            description_msgid="item_category_descr",
+            label='Category',
+            label_msgid='PloneMeeting_label_category',
+            i18n_domain='PloneMeeting',
+        ),
+        vocabulary='listCategories',
+    ),
+    StringField(
+        name='classifier',
+        widget=SelectionWidget(
+            condition="python: here.attributeIsUsed('classifier')",
+            format="select",
+            description="Classifier",
+            description_msgid="item_classifier_descr",
+            label='Classifier',
+            label_msgid='PloneMeeting_label_classifier',
+            i18n_domain='PloneMeeting',
+        ),
+        optional=True,
+        vocabulary='listClassifiers',
+    ),
+    LinesField(
+        name='committees',
+        widget=MultiSelectionWidget(
+            condition="python: here.show_committees()",
+            size=10,
+            format="checkbox",
+            label='Committees',
+            label_msgid='PloneMeeting_label_committees',
+            i18n_domain='PloneMeeting',
+        ),
+        optional=False,
+        multiValued=1,
+        vocabulary_factory='Products.PloneMeeting.vocabularies.item_selectable_committees_vocabulary',
         enforceVocabulary=True,
     ),
     StringField(
@@ -1985,6 +2001,17 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if not cfg.getUseGroupsAsCategories() and value not in cfg.categories.objectIds():
             return translate('category_required', domain='PloneMeeting', context=self.REQUEST)
 
+    security.declarePrivate('validate_committees')
+
+    def validate_committees(self, values):
+        '''Checks that the NO_COMMITTEE is the only value when selected.'''
+        # remove empty strings and Nones
+        values = [v for v in values if v]
+        if NO_COMMITTEE in values and len(values) > 1:
+            return translate('can_not_select_no_committee_and_committee',
+                             domain='PloneMeeting',
+                             context=self.REQUEST)
+
     security.declarePrivate('validate_classifier')
 
     def validate_classifier(self, value):
@@ -2138,15 +2165,32 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''See doc in interfaces.py.'''
         return True
 
+    security.declarePublic('show_committees')
+
+    def show_committees(self):
+        '''See doc in interfaces.py.'''
+        res = False
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        if "committees" in cfg.getUsedMeetingAttributes():
+            res = True
+            # when using "auto_from" in MeetingConfig.committees
+            # field is only shown to MeetingManagers
+            tool = api.portal.get_tool('portal_plonemeeting')
+            cfg = tool.getMeetingConfig(self)
+            if cfg.is_committees_using("auto_from") and not tool.isManager(cfg):
+                res = False
+        return res
+
     security.declarePublic('show_votesObservations')
 
     def show_votesObservations(self):
         '''See doc in interfaces.py.'''
         item = self.getSelf()
         tool = api.portal.get_tool('portal_plonemeeting')
-        res = tool.isManager(item)
+        cfg = tool.getMeetingConfig(item)
+        res = tool.isManager(cfg)
         if not res:
-            cfg = tool.getMeetingConfig(item)
             res = tool.isPowerObserverForCfg(cfg) or \
                 item.query_state() in cfg.getItemDecidedStates()
         return res
@@ -2193,7 +2237,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         # bypass for Managers
         tool = api.portal.get_tool('portal_plonemeeting')
-        if tool.isManager(self, realManagers=True):
+        cfg = tool.getMeetingConfig(self)
+        if tool.isManager(cfg, realManagers=True):
             return True
 
         # user must be in one of the proposingGroup Plone groups
@@ -2241,7 +2286,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Condition for editing 'listType' field.'''
         item = self.getSelf()
         tool = api.portal.get_tool('portal_plonemeeting')
-        if item.hasMeeting() and tool.isManager(item):
+        cfg = tool.getMeetingConfig(item)
+        if item.hasMeeting() and tool.isManager(cfg):
             return True
         return False
 
@@ -2253,7 +2299,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         res = False
         if _checkPermission(ModifyPortalContent, item):
             tool = api.portal.get_tool('portal_plonemeeting')
-            if not item.hasMeeting() or tool.isManager(item):
+            cfg = tool.getMeetingConfig(item)
+            if not item.hasMeeting() or tool.isManager(cfg):
                 res = True
         return res
 
@@ -2266,14 +2313,15 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            this method.'''
         item = self.getSelf()
         tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(item)
 
         # bypass for the Manager role
-        if tool.isManager(item, realManagers=True):
+        if tool.isManager(cfg, realManagers=True):
             return True
 
         # Only MeetingManagers can sign an item if it is decided
         if not item.showItemIsSigned() or \
-           not tool.isManager(item):
+           not tool.isManager(cfg):
             return False
 
         # If the meeting is in a closed state, the item can only be signed but
@@ -2375,8 +2423,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # by default, only MeetingManagers can accept or refuse emergency
         item = self.getSelf()
         tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(item)
         member = api.user.get_current()
-        if tool.isManager(item) and member.has_permission(ModifyPortalContent, item):
+        if tool.isManager(cfg) and member.has_permission(ModifyPortalContent, item):
             return True
         return False
 
@@ -2391,10 +2440,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         res = False
         tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(item)
         member = api.user.get_current()
         # user must be an item completeness editor (one of corresponding role)
         if member.has_permission(ModifyPortalContent, item) and \
-           (tool.userIsAmong(ITEM_COMPLETENESS_EVALUATORS) or tool.isManager(item)):
+           (tool.userIsAmong(ITEM_COMPLETENESS_EVALUATORS) or tool.isManager(cfg)):
             res = True
         return res
 
@@ -2409,11 +2459,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         res = False
         tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(item)
         member = api.user.get_current()
         # user must be an item completeness editor (one of corresponding role)
         if item.getCompleteness() == 'completeness_incomplete' and \
            member.has_permission(ModifyPortalContent, item) and \
-           (tool.userIsAmong(ITEM_COMPLETENESS_ASKERS) or tool.isManager(item)):
+           (tool.userIsAmong(ITEM_COMPLETENESS_ASKERS) or tool.isManager(cfg)):
             res = True
         return res
 
@@ -2429,11 +2480,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Check doc in interfaces.py.'''
         item = self.getSelf()
         tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(item)
         member = api.user.get_current()
         # user must be able to edit the item and must be a Manager
         if item.adviceIsInherited(org_uid) or \
            not member.has_permission(ModifyPortalContent, item) or \
-           not tool.isManager(item):
+           not tool.isManager(cfg):
             return False
         return True
 
@@ -2488,11 +2540,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return False
 
         tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(item)
 
         # apart MeetingManagers, the advice can not be set back to previous
         # if editable by the adviser
         if item.adviceIndex[advice.advice_group]['advice_editable'] and \
-           not tool.isManager(item):
+           not tool.isManager(cfg):
             return False
 
         member = api.user.get_current()
@@ -2647,6 +2700,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if value != current_value:
             # add a value in the REQUEST to specify that update_item_references is needed
             self.REQUEST.set('need_Meeting_update_item_references', True)
+            # add a value in the REQUEST to specify that update_committees is needed
+            self.REQUEST.set('need_MeetingItem_update_committees', True)
             field.set(self, value, **kwargs)
 
     security.declareProtected(ModifyPortalContent, 'setClassifier')
@@ -2659,6 +2714,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if value != current_value:
             # add a value in the REQUEST to specify that update_item_references is needed
             self.REQUEST.set('need_Meeting_update_item_references', True)
+            # add a value in the REQUEST to specify that update_committees is needed
+            self.REQUEST.set('need_MeetingItem_update_committees', True)
             field.set(self, value, **kwargs)
 
     security.declareProtected(ModifyPortalContent, 'setProposingGroup')
@@ -2671,6 +2728,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if value != current_value:
             # add a value in the REQUEST to specify that update_item_references is needed
             self.REQUEST.set('need_Meeting_update_item_references', True)
+            # add a value in the REQUEST to specify that update_committees is needed
+            self.REQUEST.set('need_MeetingItem_update_committees', True)
             field.set(self, value, **kwargs)
 
     security.declareProtected(ModifyPortalContent, 'setProposingGroupWithGroupInCharge')
@@ -3573,6 +3632,28 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             self.reindexObject(idxs=['SearchableText'])
         return res
 
+    def update_committees(self):
+        """Update committees automatically?
+           This will be the case if :
+           - "committees" field used;
+           - no commitees selected on item of a parameter on item changed;
+           - the item is not inserted into a meeting
+             (this avoid changing old if configuration changed)."""
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        if "committees" in cfg.getUsedMeetingAttributes() and \
+           (not self.getCommittees() or self.REQUEST.get('need_MeetingItem_update_committees')) and \
+           not self.hasMeeting():
+            if cfg.is_committees_using("auto_from"):
+                committees = []
+                for committee in cfg.getCommittees(only_enabled=True):
+                    if "proposing_group__" + self.getProposingGroup() in committee["auto_from"] or \
+                       "category__" + self.getCategory() in committee["auto_from"] or \
+                       "classifier__" + self.getClassifier() in committee["auto_from"]:
+                        committees.append(committee['row_id'])
+                committees = committees or [NO_COMMITTEE]
+                self.setCommittees(committees)
+
     security.declarePublic('hasItemSignatures')
 
     def hasItemSignatures(self):
@@ -4186,6 +4267,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             res = self._computeOrderOnGroupsInCharge(cfg)
         elif insertMethod == 'on_all_associated_groups':
             res = self._computeOrderOnAllAssociatedGroups(cfg)
+        elif insertMethod == 'on_all_committees':
+            res = self._computeOrderOnAllCommittees(cfg)
         elif insertMethod == 'on_privacy':
             privacy = self.getPrivacy()
             privacies = cfg.getSelectablePrivacies()
@@ -4224,6 +4307,17 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             res = self.adapted()._findCustomOrderFor(insertMethod)
         return res
 
+    def _sort_pre_orders(self, pre_orders):
+        """Sort given pre_orders and compute final index."""
+        pre_orders.sort()
+        res = float(0)
+        divisor = 1
+        for pre_order in pre_orders:
+            res += (float(pre_order) / divisor)
+            # we may manage up to 1000 different values
+            divisor *= 1000
+        return res
+
     def _computeOrderOnAllAssociatedGroups(self, cfg):
         '''Helper method to compute inserting index when using insert method 'on_all_associated_groups'.'''
         associatedGroups = self.getAssociatedGroups()
@@ -4249,15 +4343,30 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             else:
                 org = get_organization(associatedGroup)
                 pre_orders.append(org.get_order())
-        # now sort pre_orders and compute final index
-        pre_orders.sort()
-        res = float(0)
-        divisor = 1
-        for pre_order in pre_orders:
-            res += (float(pre_order) / divisor)
-            # we may manage up to 1000 different associated groups
-            divisor *= 1000
-        return res
+        return self._sort_pre_orders(pre_orders)
+
+    def _computeOrderOnAllCommittees(self, cfg):
+        '''Helper method to compute inserting index when using insert method 'on_all_committees'.'''
+        committees = self.getCommittees()
+        # computing will generate following order :
+        # items having no committee
+        # items having committee 1 only
+        # items having committee 1 and committee 2
+        # items having committee 1 and committee 2 and committee 3
+        # items having committee 1 and committee 2 and committee 3 and committee 4
+        # items having committee 1 and committee 3
+        # items having committee 1 and committee 3 and committee 4
+        # for order, rely on order defined in MeetingConfig.committees DataGridField
+        ordered_committees = self.getField('committees').Vocabulary(self).keys()
+        # if order changed in config, we keep it, do not rely on order defined on item
+        pre_orders = []
+        for committee in committees:
+            try:
+                index = ordered_committees.index(committee)
+                pre_orders.append(index + 1)
+            except ValueError:
+                pre_orders.append(0)
+        return self._sort_pre_orders(pre_orders)
 
     def _computeOrderOnGroupsInCharge(self, cfg):
         '''Helper method to compute inserting index when using insert method 'on_groups_in_charge'.'''
@@ -4284,15 +4393,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             else:
                 org = get_organization(group_in_charge)
                 pre_orders.append(org.get_order())
-        # now sort pre_orders and compute final index
-        pre_orders.sort()
-        res = float(0)
-        divisor = 1
-        for pre_order in pre_orders:
-            res += (float(pre_order) / divisor)
-            # we may manage up to 1000 different associated groups
-            divisor *= 1000
-        return res
+        return self._sort_pre_orders(pre_orders)
 
     def _findCustomOrderFor(self, insertMethod):
         '''
@@ -5845,6 +5946,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         transformAllRichTextFields(self)
         # Make sure we have 'text/html' for every Rich fields
         forceHTMLContentTypeForEmptyRichFields(self)
+        # update committees if necessary
+        self.update_committees()
         # Call sub-product-specific behaviour
         self.adapted().onEdit(isCreated=True)
         self.reindexObject()
@@ -5875,6 +5978,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         addDataChange(self)
         # Make sure we have 'text/html' for every Rich fields
         forceHTMLContentTypeForEmptyRichFields(self)
+        # update committees if necessary
+        self.update_committees()
         # Call sub-product-specific behaviour
         self.adapted().onEdit(isCreated=False)
 
@@ -6919,9 +7024,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         res = False
         proposingGroup = self.getProposingGroup()
         tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
         if not proposingGroup or \
            self.getProposingGroup(theObject=False) in tool.get_orgs_for_user(the_objects=False) or \
-           tool.isManager(self):
+           tool.isManager(cfg):
             res = True
         return res
 

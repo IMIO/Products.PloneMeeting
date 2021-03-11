@@ -51,6 +51,7 @@ from Products.PloneMeeting.config import EXTRA_COPIED_FIELDS_SAME_MC
 from Products.PloneMeeting.config import HISTORY_COMMENT_NOT_VIEWABLE
 from Products.PloneMeeting.config import ITEM_DEFAULT_TEMPLATE_ID
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
+from Products.PloneMeeting.config import NO_COMMITTEE
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
 from Products.PloneMeeting.config import READER_USECASES
 from Products.PloneMeeting.config import WriteBudgetInfos
@@ -7192,6 +7193,12 @@ class testMeetingItem(PloneMeetingTestCase):
 
     def test_pm_ItemEditAndView(self):
         """Just call the edit and view to check it is displayed correctly."""
+        cfg = self.meetingConfig
+        # enable as much field as possible
+        self.changeUser('siteadmin')
+        attrs = cfg.Vocabulary('usedItemAttributes')[0].keys()
+        attrs.remove('proposingGroupWithGroupInCharge')
+        cfg.setUsedItemAttributes(attrs)
         self.changeUser('pmManager')
         item = self.create('MeetingItem', decision=self.decisionText)
         self.assertTrue(item.restrictedTraverse('base_edit')())
@@ -7201,6 +7208,11 @@ class testMeetingItem(PloneMeetingTestCase):
         self.presentItem(item)
         self.assertTrue(item.restrictedTraverse('base_edit')())
         self.assertTrue(item.restrictedTraverse('base_view')())
+        # item template
+        self.changeUser('siteadmin')
+        item_template = cfg.itemtemplates.objectValues()[0]
+        self.assertTrue(item_template.restrictedTraverse('base_edit')())
+        self.assertTrue(item_template.restrictedTraverse('base_view')())
 
     def test_pm_Preferred_meeting_dateIndex(self):
         """As preferred_meeting_date needs the meeting to be indexed
@@ -7233,6 +7245,123 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertIsNone(cloned.preferred_meeting_path)
         self.assertEqual(cloned.getPreferredMeeting(theObject=False), ITEM_NO_PREFERRED_MEETING_VALUE)
         self.assertIsNone(cloned.getPreferredMeeting(theObject=True))
+
+    def test_pm_CommitteesSelectedAutomatically(self):
+        """When using column "auto_from" of MeetingConfig.committees,
+           the "committees" widget is not displayed on the item edit form but
+           the values are selected automatically."""
+        cfg = self.meetingConfig
+        cfg.setUseGroupsAsCategories(False)
+        self._enableField("committees", related_to="Meeting")
+        cfg_committees = cfg.getCommittees()
+        # by default auto mode is not enabled
+        self.assertFalse(cfg.is_committees_using("auto_from"))
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.assertEqual(item.getCommittees(), ())
+        self.assertTrue(item.show_committees())
+        # enabled "auto_from"
+        cfg_committees[1]['auto_from'] = ["proposing_group__" + self.developers_uid]
+        # as item.committees is empty and item not in a meeting
+        # update_committee will update the committees
+        item.update_committees()
+        self.assertFalse(item.show_committees())
+        self.assertEqual(item.getCommittees(), ('committee_2',))
+        # if changing the configuration, existing items are not impacted
+        cfg_committees[0]['auto_from'] = ["category__development"]
+        self.request.set('need_MeetingItem_update_committees', False)
+        item.update_committees()
+        self.assertEqual(item.getCommittees(), ('committee_2',))
+        # except if something changed, in this case,
+        # value 'need_MeetingItem_update_committees' in REQUEST is True
+        self.request.set('need_MeetingItem_update_committees', True)
+        item.update_committees()
+        self.assertEqual(item.getCommittees(), ('committee_1', 'committee_2',))
+        # back to previous value
+        cfg_committees[0]['auto_from'] = ["category__research"]
+        item.update_committees()
+        self.assertEqual(item.getCommittees(), ('committee_2',))
+
+        # when item in meeting, committees are never changed anymore
+        cfg_committees[0]['auto_from'] = ["category__development"]
+        self.changeUser('pmManager')
+        self.create('Meeting')
+        self.presentItem(item)
+        item.update_committees()
+        self.assertEqual(item.getCommittees(), ('committee_2',))
+
+        # when no auto_from can be determinated, the NO_COMMITTEE value is used
+        cfg_committees[0]['auto_from'] = []
+        cfg.setCommittees(cfg_committees)
+        item = self.create('MeetingItem', proposingGroup=self.vendors_uid)
+        self.assertEqual(item.getCommittees(), (NO_COMMITTEE, ))
+
+    def test_pm_CommitteesSupplements(self):
+        """When defined in MeetingConfig.committees, column "supplements"
+           will add additional values to the MeetingItem.committees vocabulary,
+           these values are only selectable by MeetingManagers."""
+        self._enableField("committees", related_to="Meeting")
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.assertEqual(item.Vocabulary('committees')[0].keys(),
+                         [NO_COMMITTEE, 'committee_1', 'committee_2'])
+        self.changeUser('pmManager')
+        self.assertEqual(
+            item.Vocabulary('committees')[0].keys(),
+            [NO_COMMITTEE, 'committee_1',
+             'committee_2', u'committee_2__suppl__1', u'committee_2__suppl__2'])
+
+    def test_pm_CommitteesUsingGroups(self):
+        """It is possible to restrict the selectable committees to some proposingGroup."""
+        cfg = self.meetingConfig
+        cfg.setUseGroupsAsCategories(False)
+        self._enableField("committees", related_to="Meeting")
+        cfg_committees = cfg.getCommittees()
+        cfg_committees[0]["using_groups"] = [self.developers_uid]
+        cfg_committees[1]["using_groups"] = [self.vendors_uid]
+        self.changeUser('pmCreator1')
+        dev_item = self.create('MeetingItem')
+        self.assertEqual(dev_item.Vocabulary('committees')[0].keys(),
+                         [NO_COMMITTEE, 'committee_1'])
+        self.changeUser('pmCreator2')
+        vendors_item = self.create('MeetingItem')
+        self.assertEqual(vendors_item.Vocabulary('committees')[0].keys(),
+                         [NO_COMMITTEE, 'committee_2'])
+
+    def test_pm_Validate_committees(self):
+        """Value NO_COMMITTEE can not be used together with another."""
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.failIf(item.validate_committees((NO_COMMITTEE, )))
+        self.failIf(item.validate_committees(("committee_1", "committee_2")))
+        error_msg = translate(u"can_not_select_no_committee_and_committee",
+                              domain="PloneMeeting",
+                              context=self.request)
+        self.assertEqual(item.validate_committees((NO_COMMITTEE, "committee_1")), error_msg)
+
+    def test_pm_AutoCommitteeWhenItemSentToAnotherMC(self):
+        """When using "auto_from" in MeetingConfig.committees, it will
+           also be triggered when item sent to another MC."""
+        cfg = self.meetingConfig
+        cfg.setUseGroupsAsCategories(True)
+        cfg.setItemManualSentToOtherMCStates((self._stateMappingFor('itemcreated'), ))
+        cfg_committees = cfg.getCommittees()
+        # configure committees for cfg2
+        cfg2 = self.meetingConfig2
+        cfg2.setUseGroupsAsCategories(True)
+        cfg2.setCommittees(cfg_committees)
+        cfg2_committees = cfg2.getCommittees()
+        cfg2_committees[1]['auto_from'] = ["proposing_group__" + self.developers_uid]
+        cfg2_id = cfg2.getId()
+        self._enableField("committees", cfg=cfg2, related_to='Meeting')
+
+        # now send item to cfg2
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        item.setOtherMeetingConfigsClonableTo((cfg2_id,))
+        new_item = item.cloneToOtherMeetingConfig(cfg2_id)
+        self.assertEqual(item.getCommittees(), ())
+        self.assertEqual(new_item.getCommittees(), ('committee_2',))
 
 
 def test_suite():

@@ -13,8 +13,8 @@ from datetime import timedelta
 from ftw.labels.interfaces import ILabeling
 from imio.helpers.cache import cleanRamCacheFor
 from plone import api
-from plone.app.textfield.value import RichTextValue
 from plone.app.querystring.querybuilder import queryparser
+from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View

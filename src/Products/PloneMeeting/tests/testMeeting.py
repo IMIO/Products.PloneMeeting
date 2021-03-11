@@ -29,27 +29,29 @@ from Products.PloneMeeting.config import DEFAULT_LIST_TYPES
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
-from Products.PloneMeeting.content.meeting import IMeeting
 from Products.PloneMeeting.content.meeting import assembly_constraint
+from Products.PloneMeeting.content.meeting import default_committees
+from Products.PloneMeeting.content.meeting import IMeeting
 from Products.PloneMeeting.MeetingConfig import POWEROBSERVERPREFIX
 from Products.PloneMeeting.MeetingItem import MeetingItem
+from Products.PloneMeeting.tests.PloneMeetingTestCase import DefaultData
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
 from Products.PloneMeeting.tests.testUtils import ASSEMBLY_CORRECT_VALUE
 from Products.PloneMeeting.tests.testUtils import ASSEMBLY_WRONG_VALUE
 from Products.PloneMeeting.utils import checkMayQuickEdit
-from Products.PloneMeeting.utils import getCurrentMeetingObject
 from Products.PloneMeeting.utils import get_dx_attrs
 from Products.PloneMeeting.utils import get_states_before
+from Products.PloneMeeting.utils import getCurrentMeetingObject
 from Products.PloneMeeting.utils import set_field_from_ajax
 from Products.ZCatalog.Catalog import AbstractCatalogBrain
 from z3c.form import validator
 from zope.event import notify
 from zope.i18n import translate
-from zope.lifecycleevent import Attributes
-from zope.lifecycleevent import ObjectModifiedEvent
 from zope.interface import Interface
 from zope.interface import Invalid
+from zope.lifecycleevent import Attributes
+from zope.lifecycleevent import ObjectModifiedEvent
 
 import transaction
 
@@ -808,6 +810,51 @@ class testMeetingType(PloneMeetingTestCase):
              (self.developers_uid, self.vendors_uid),
              (self.developers_uid, self.vendors_uid),
              (self.vendors_uid,), ]
+        )
+
+    def test_pm_InsertItemOnAllCommittees(self):
+        '''Sort method tested here is "on_all_committees".
+           It takes into account every selected committees and will insert
+           in following order depending on selected committees:
+           - Items with no selected committees;
+           - Items with the NO_COMMITTEE value;
+           - Committee1;
+           - Committee1, Committee2;
+           - Committee1, Committee2, Committee3;
+           - Committee1, Committee2, Committee4;
+           - Committee1, Committee3;
+           - Committee2, Committee3;
+           - Committee2, Committee3, Committee4;
+           - Committee3;
+           - Committee3, Committee4;
+           - Committee4.'''
+        cfg = self.meetingConfig
+        self.changeUser('pmManager')
+        cfg.setInsertingMethodsOnAddItem(
+            ({'insertingMethod': 'on_all_committees', 'reverse': '0'}, ))
+        meeting = self.create('Meeting')
+        data = ({'committees': ("committee_1", )},
+                {'committees': ()},
+                {'committees': ("committee_1", "committee_2")},
+                {'committees': ("committee_1", "committee_2__suppl__1", )},
+                {'committees': ("committee_2", )},
+                {'committees': ("committee_2__suppl__2", )},
+                )
+        for itemData in data:
+            new_item = self.create('MeetingItem', **itemData)
+            self.presentItem(new_item)
+
+        orderedItems = meeting.get_items(ordered=True)
+        self.assertEqual(
+            [item.getCommittees() for item in orderedItems],
+            [(),
+             (),
+             (),
+             ('committee_1',),
+             ('committee_1', 'committee_2'),
+             ('committee_1', 'committee_2__suppl__1'),
+             ('committee_2',),
+             ('committee_2__suppl__2',)]
         )
 
     def test_pm_InsertItemOnPrivacyThenProposingGroups(self):
@@ -3553,8 +3600,7 @@ class testMeetingType(PloneMeetingTestCase):
             portal_type=meeting_type_name,
             richtext_only=True,
             as_display_list=False)
-        for rich_field in rich_fields:
-            self._enableField(rich_field, related_to='Meeting')
+        self._enableField(rich_fields, related_to='Meeting')
         meeting = self.create('Meeting', date=datetime(2021, 2, 4))
         for rich_field in rich_fields:
             setattr(meeting, rich_field, richtextval("<p>{0}</p>".format(rich_field)))
@@ -3580,6 +3626,135 @@ class testMeetingType(PloneMeetingTestCase):
         first_transition = transitions[0]
         self.assertEqual(first_transition['id'], 'freeze')
         self.assertTrue(first_transition['confirm'])
+
+    def test_pm_MeetingEditAndView(self):
+        """Just call the edit and view to check it is displayed correctly."""
+        cfg = self.meetingConfig
+        # enable as much field as possible
+        self.changeUser('siteadmin')
+        attrs = [attr for attr in cfg.Vocabulary('usedMeetingAttributes')[0].keys()
+                 if "assembly" not in attr and "signatures" not in attr]
+        cfg.setUsedMeetingAttributes(attrs)
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting')
+        edit = meeting.restrictedTraverse('@@edit')
+        edit.update()
+        self.assertTrue(edit())
+        view = meeting.restrictedTraverse('@@meeting_view')
+        self.assertTrue(view())
+
+    def test_pm_MeetingCommitteesHelpers(self):
+        """Various helper methods will ease use of committees."""
+        cfg = self.meetingConfig
+        self._removeConfigObjectsFor(cfg)
+        # enable committees and use assembly/signatures
+        self.changeUser('pmManager')
+        self._setUpCommittees(attendees=False)
+        self._enableField(
+            ["committees_place", "committees_convocation_date"], related_to="Meeting")
+        meeting = self.create('Meeting', committees=default_committees(DefaultData(cfg)))
+        # get_committees, return every committees row_ids
+        self.assertEqual(meeting.get_committees(), ['committee_1', 'committee_2'])
+        # get_committee, return a given committee stored data
+        self.assertEqual(sorted(meeting.get_committee('committee_1').keys()),
+                         ['assembly', 'attendees', 'convocation_date', 'date',
+                          'place', 'row_id', 'signatories', 'signatures'])
+        # get_committee_assembly, returns HTML by default
+        self.assertEqual(meeting.get_committee_assembly('committee_1'),
+                         u'<p>Default assembly</p>')
+        # get_committee_signatures, returns plain text by default
+        self.assertEqual(meeting.get_committee_signatures('committee_1'),
+                         u'Line 1,\r\nLine 2\r\nLine 3,\r\nLine 4')
+        # get_committee_place
+        self.assertEqual(meeting.get_committee_place('committee_1'),
+                         'Default place')
+
+        # use attendees/signatories, instead assembly/signatures
+        meeting2 = self._setUpCommittees()
+        # get_committee_attendees
+        self.assertEqual(meeting2.get_committee_attendees('committee_1'),
+                         (self.hp1_uid, self.hp2_uid))
+        self.assertEqual(meeting2.get_committee_attendees('committee_1', the_objects=True),
+                         (self.hp1, self.hp2))
+        # get_committee_signatories
+        self.assertEqual(meeting2.get_committee_signatories('committee_1'),
+                         {self.hp2_uid: '1', self.hp3_uid: '2'})
+        self.assertEqual(meeting2.get_committee_signatories('committee_1', the_objects=True),
+                         {self.hp2: '1', self.hp3: '2'})
+        self.assertEqual(meeting2.get_committee_signatories('committee_1',
+                                                            the_objects=True,
+                                                            by_signature_number=True),
+                         {'1': self.hp2, '2': self.hp3})
+
+    def test_pm_Get_committee_items(self):
+        """Method that will return items of a given committee including
+           supplements.  More over it is possible to pass every parameters
+           to the underlying Meeting.get_items method."""
+        cfg = self.meetingConfig
+        # enable committees field
+        self._enableField("committees", related_to="Meeting")
+        cfg_committees = cfg.getCommittees()
+        # configure "auto_from" so created recurring items are correct
+        cfg_committees[0]['auto_from'] = ["proposing_group__" + self.developers_uid]
+        cfg_committees[1]['auto_from'] = ["proposing_group__" + self.vendors_uid]
+        cfg_committees[1]['auto_from'] = ["proposing_group__" + self.vendors_uid]
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting')
+        # 2 recurring items use "committee_1"
+        self.assertEqual(meeting.get_committee_items("committee_1"),
+                         meeting.get_items(ordered=True))
+        item = self.create('MeetingItem', proposingGroup=self.vendors_uid)
+        self.presentItem(item)
+        self.assertEqual(meeting.get_committee_items("committee_2"), [item])
+
+        # supplements
+        suppl_item1 = self.create('MeetingItem', proposingGroup=self.vendors_uid)
+        suppl_item1.setCommittees(("committee_2__suppl__1", ))
+        suppl_item2 = self.create('MeetingItem', proposingGroup=self.vendors_uid)
+        suppl_item2.setCommittees(("committee_2__suppl__2", ))
+        self.presentItem(suppl_item1)
+        self.presentItem(suppl_item2)
+        # by default only normal (not supplements) are returned for a committee
+        # parameter supplement=-1
+        self.assertEqual(meeting.get_committee_items("committee_2"), [item])
+        # we can get a single supplement
+        self.assertEqual(meeting.get_committee_items("committee_2", supplement=1),
+                         [suppl_item1])
+        self.assertEqual(meeting.get_committee_items("committee_2", supplement=2),
+                         [suppl_item2])
+        # we can also get every elements, normal and all supplements
+        self.assertEqual(meeting.get_committee_items("committee_2", supplement=0),
+                         [item, suppl_item1, suppl_item2])
+        # finally we can get only every supplements
+        self.assertEqual(meeting.get_committee_items("committee_2", supplement=99),
+                         [suppl_item1, suppl_item2])
+
+        # we can also pass every parameters that Meeting.get_items accepts
+        # especially additional_catalog_query that will give the possibility
+        # to restrict returned elements
+        self.assertEqual(meeting.get_committee_items("committee_2",
+                                                     supplement=99,
+                                                     additional_catalog_query={'id': "o3"}),
+                         [suppl_item1])
+
+    def test_pm_PrintAssembly_committee_id(self):
+        """Print Meeting committee assembly."""
+        self.changeUser('pmManager')
+        meeting = self._setUpCommittees(attendees=False)
+        view = meeting.restrictedTraverse('document-generation')
+        helper = view.get_generation_context_helper()
+        self.assertEqual(helper.printAssembly(committee_id="committee_1"),
+                         u'<p>Default assembly</p>')
+
+    def test_pm_print_signatures_by_position_committee_id(self):
+        """Print Meeting committee sigantures by position."""
+        self.changeUser('pmManager')
+        meeting = self._setUpCommittees(attendees=False)
+        view = meeting.restrictedTraverse('document-generation')
+        helper = view.get_generation_context_helper()
+        self.assertEqual(
+            helper.print_signatures_by_position(committee_id="committee_1"),
+            {0: u'Line 1,\r', 1: u'Line 2\r', 2: u'Line 3,\r', 3: u'Line 4'})
 
 
 def test_suite():

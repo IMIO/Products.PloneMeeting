@@ -746,15 +746,16 @@ input[readonly=""] {
     width: 665px;
 }
 
-/* center controls displayed on edit forms */
+/* controls displayed on add and edit forms */
+body.template-base_edit div.formControls,
 body.template-edit div.formControls,
-body.template-edit div.formControls,
+body.template-meeting div.formControls,
 div.overlay div.formControls {
     text-align: center;
     position: sticky;
     bottom: 10px;
     background-color: rgba(210,210,210,0.5);
-    padding: 1em;
+    padding: 0.5em;
     border-radius: 3px;
     margin: 0em;
 }
@@ -953,6 +954,16 @@ body[class*="itemtemplates"].template-manage-portlets a.link-parent {
 #datagridwidget-table-onMeetingTransitionItemActionToExecute .datagridwidget-column-2,
 #datagridwidget-table-onMeetingTransitionItemActionToExecute .datagridwidget-column-3 {
     width: 33%;
+}
+
+/* width of MeetingConfig.committees datagridfield columns */
+/* label */
+#datagridwidget-table-committees .datagridwidget-column-2 {
+   width: 200px;
+}
+/* supplements */
+#datagridwidget-table-committees .datagridwidget-column-11 {
+   width: 1%;
 }
 
 /* display DX datagrid column in grey */
@@ -2188,6 +2199,56 @@ div.static-infos {
 a[href*="itemtemplates/default-empty-item-template/"] {
     font-weight: bold;
 }
+
+/* committees datagridfield edit on meeting */
+table.datagridwidget-table-view-block label {
+   vertical-align: super;
+}
+table.datagridwidget-table-view-block div.select-widget label,
+table.datagridwidget-table-view-block div.date-widget label,
+table.datagridwidget-table-view-block div.datetime-widget label {
+   vertical-align: sub;
+}
+.datagridwidget-table-view-block .datagridwidget-row {
+    border-bottom: 5px solid lightgrey;
+}
+/* hide row_id label when editing */
+div.datagridwidget-widget-row_id label {
+   display: none;
+}
+div.datagridwidget-widget-row_id select {
+   font-size: 130%;
+}
+/* committees datagridfield edit/view on meeting,
+   when TextArea is empty, an error is displayed */
+div#formfield-form-widgets-committees div.error,
+table#form-widgets-committees div.error {
+   display: none;
+}
+/* width of committees table datagridfield display */
+table#form-widgets-committees th.column-date,
+table#form-widgets-committees th.column-convocation_date {
+   width: 130px;
+}
+table#form-widgets-committees th.column-place {
+   width: 180px;
+}
+/* hide Meeting.committees label on edit and view */
+div#formfield-form-widgets-committees label[for="form-widgets-committees"],
+body.template-meeting_view label[for="form-widgets-committees"] {
+   display: none;
+}
+
+div.small-separator {
+   height: 5px;
+}
+div.separator {
+   height: 10px;
+}
+div.large-separator {
+   height: 15px;
+}
+
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */

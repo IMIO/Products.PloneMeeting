@@ -19,8 +19,8 @@ from OFS.ObjectManager import BeforeDeleteException
 from plone import api
 from Products.CMFCore.permissions import View
 from Products.PloneMeeting.browser.itemattendee import set_meeting_item_signatory
-from Products.PloneMeeting.content.meeting import get_all_used_held_positions
 from Products.PloneMeeting.content.directory import IPMDirectory
+from Products.PloneMeeting.content.meeting import get_all_used_held_positions
 from Products.PloneMeeting.content.source import PMContactSourceBinder
 from Products.PloneMeeting.Extensions.imports import import_contacts
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
@@ -734,6 +734,26 @@ class testContacts(PloneMeetingTestCase):
                                             prefix_position_type=True),
             {'position_type': u'La Directrice G\xe9n\xe9rale', 'signature_number': '1'})
 
+    def test_pm_print_signatories_by_position_committee_id(self):
+        """Test print_signatories_by_position for meeting committee."""
+        self.changeUser('pmManager')
+        meeting = self._setUpCommittees()
+        view = meeting.restrictedTraverse('document-generation')
+        helper = view.get_generation_context_helper()
+        self.assertEqual(
+            helper.print_signatories_by_position(committee_id="committee_1"),
+            {0: u'Assembly member 2,',
+             1: u'Person2FirstName Person2LastName',
+             2: u'Assembly member 3,',
+             3: u'Person3FirstName Person3LastName'})
+        # same result when called from print_signatures_by_position
+        self.assertEqual(
+            helper.print_signatures_by_position(committee_id="committee_1"),
+            {0: u'Assembly member 2,',
+             1: u'Person2FirstName Person2LastName',
+             2: u'Assembly member 3,',
+             3: u'Person3FirstName Person3LastName'})
+
     def _setupInAndOutAttendees(self):
         """Setup a meeting with items and in and out (non) attendees."""
         cfg = self.meetingConfig
@@ -1116,6 +1136,19 @@ class testContacts(PloneMeetingTestCase):
             u'Monsieur Person4FirstName Person4LastName, Assembly member 4 &amp; 5, '
             u'<strong>pr\xe9sent</strong>')
 
+    def test_pm_Print_attendees_committee_id(self):
+        """Print Meeting committee attendees."""
+        self.changeUser('pmManager')
+        meeting = self._setUpCommittees()
+        view = meeting.restrictedTraverse('document-generation')
+        helper = view.get_generation_context_helper()
+        self.assertEqual(
+            helper.print_attendees(committee_id="committee_1"),
+            u'Monsieur Person1FirstName Person1LastName, Assembly member 1, '
+            u'<strong>pr\xe9sent</strong><br />'
+            u'Monsieur Person2FirstName Person2LastName, Assembly member 2, '
+            u'<strong>pr\xe9sent</strong>')
+
     def test_pm_Print_attendees_by_type(self):
         """Basic test for the print_attendees method."""
         meeting, meeting_attendees, item1, item2, item3 = self._setupInAndOutAttendees()
@@ -1140,6 +1173,24 @@ class testContacts(PloneMeetingTestCase):
             u'Monsieur Person2FirstName Person2LastName, Assembly member 2, '
             u'Monsieur Person3FirstName Person3LastName, Assembly member 3, '
             u'Monsieur Person4FirstName Person4LastName, Assembly member 4 &amp; 5;')
+
+    def test_pm_Print_attendees_by_type_committee_id(self):
+        """Print Meeting committee attendees by type."""
+        self.changeUser('pmManager')
+        meeting = self._setUpCommittees()
+        view = meeting.restrictedTraverse('document-generation')
+        helper = view.get_generation_context_helper()
+        self.assertEqual(
+            helper.print_attendees_by_type(committee_id="committee_1"),
+            u'<strong><u>Pr\xe9sents&nbsp;:</u></strong><br />'
+            u'Monsieur Person1FirstName Person1LastName, Assembly member 1, '
+            u'Monsieur Person2FirstName Person2LastName, Assembly member 2;')
+        # same result when called from printAssembly
+        self.assertEqual(
+            helper.printAssembly(committee_id="committee_1", group_position_type=False),
+            u'<strong><u>Pr\xe9sents&nbsp;:</u></strong><br />'
+            u'Monsieur Person1FirstName Person1LastName, Assembly member 1, '
+            u'Monsieur Person2FirstName Person2LastName, Assembly member 2;')
 
     def test_pm_ItemContactsWhenItemRemovedFromMeeting(self):
         '''When an item is removed from a meeting, redefined informations

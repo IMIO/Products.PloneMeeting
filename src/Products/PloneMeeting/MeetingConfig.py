@@ -12,6 +12,7 @@ from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_plone_groups
 from collective.datagridcolumns.MultiSelectColumn import MultiSelectColumn
 from collective.datagridcolumns.SelectColumn import SelectColumn
+from collective.datagridcolumns.TextAreaColumn import TextAreaColumn
 from collective.eeafaceted.collectionwidget.interfaces import IDashboardCollection
 from collective.eeafaceted.collectionwidget.utils import _get_criterion
 from collective.eeafaceted.collectionwidget.utils import _updateDefaultCollectionFor
@@ -25,9 +26,11 @@ from eea.facetednavigation.widgets.resultsperpage.widget import Widget as Result
 from ftw.labels.interfaces import ILabeling
 from imio.helpers.cache import cleanRamCache
 from imio.helpers.cache import cleanVocabularyCacheFor
+from imio.helpers.content import get_vocab
 from persistent.list import PersistentList
 from plone import api
 from plone.app.portlets.portlets import navigation
+from plone.app.uuid.utils import uuidToObject
 from plone.memoize import ram
 from plone.portlets.interfaces import IPortletAssignmentMapping
 from plone.portlets.interfaces import IPortletManager
@@ -85,6 +88,7 @@ from Products.PloneMeeting.config import TOOL_FOLDER_RECURRING_ITEMS
 from Products.PloneMeeting.config import TOOL_FOLDER_SEARCHES
 from Products.PloneMeeting.config import WriteRiskyConfig
 from Products.PloneMeeting.content.meeting import IMeeting
+from Products.PloneMeeting.content.meeting import Meeting
 from Products.PloneMeeting.indexes import DELAYAWARE_ROW_ID_PATTERN
 from Products.PloneMeeting.indexes import REAL_ORG_UID_PATTERN
 from Products.PloneMeeting.interfaces import IMeetingAdviceWorkflowActions
@@ -107,6 +111,7 @@ from Products.PloneMeeting.utils import createOrUpdatePloneGroup
 from Products.PloneMeeting.utils import duplicate_workflow
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
 from Products.PloneMeeting.utils import get_annexes
+from Products.PloneMeeting.utils import get_datagridfield_column_value
 from Products.PloneMeeting.utils import get_dx_attrs
 from Products.PloneMeeting.utils import get_dx_schema
 from Products.PloneMeeting.utils import get_item_validation_wf_suffixes
@@ -2305,6 +2310,84 @@ schema = Schema((
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
+    LinesField(
+        name='orderedCommitteeContacts',
+        widget=InAndOutWidget(
+            description="OrderedCommitteeContacts",
+            description_msgid="ordered_committee_contacts_descr",
+            label='Orderedcommitteecontacts',
+            label_msgid='PloneMeeting_label_orderedCommitteeContacts',
+            i18n_domain='PloneMeeting',
+            size='20',
+        ),
+        schemata="committees",
+        multiValued=1,
+        vocabulary_factory='Products.PloneMeeting.vocabularies.simplified_selectable_heldpositions_vocabulary',
+        default=defValues.orderedCommitteeContacts,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    DataGridField(
+        name='committees',
+        widget=DataGridField._properties['widget'](
+            description="Committees",
+            description_msgid="committees_descr",
+            columns={'row_id':
+                        Column("Committee row id",
+                               visible=False),
+                     'label':
+                        Column("Committee label", required=True),
+                     'acronym':
+                        Column("Committee acronym"),
+                     'default_place':
+                        Column("Committee default place",
+                               col_description="committees_default_place_col_description"),
+                     'default_assembly':
+                        TextAreaColumn("Committee default assembly",
+                                       col_description="committees_default_assembly_col_description"),
+                     'default_signatures':
+                        TextAreaColumn("Committee default signatures",
+                                       col_description="committees_default_signatures_col_description"),
+                     'default_attendees':
+                        MultiSelectColumn("Committee default attendees",
+                                          col_description="committees_default_attendees_col_description",
+                                          vocabulary="listSelectableCommitteeAttendees"),
+                     'default_signatories':
+                        MultiSelectColumn("Committee default signatories",
+                                          col_description="committees_default_signatories_col_description",
+                                          vocabulary="listSelectableCommitteeAttendees"),
+                     'using_groups':
+                        MultiSelectColumn("Committee using groups",
+                                          col_description="committees_using_groups_col_description",
+                                          vocabulary="listSelectableProposingGroups"),
+                     'auto_from':
+                        MultiSelectColumn("Committee auto from",
+                                          col_description="committees_auto_from_col_description",
+                                          vocabulary="listSelectableCommitteeAutoFrom"),
+                     'supplements':
+                        SelectColumn("Committee supplements",
+                                     col_description="committees_supplements_col_description",
+                                     vocabulary="listNumbersFromZero",
+                                     default='0'),
+                     'enabled':
+                        SelectColumn("Committee enabled?",
+                                     vocabulary="listBooleanVocabulary",
+                                     default='1'), },
+            label='Committees',
+            label_msgid='PloneMeeting_label_committees',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="committees",
+        default=defValues.committees,
+        allow_oddeven=True,
+        write_permission="PloneMeeting: Write risky config",
+        columns=('row_id', 'label', 'acronym', 'default_place',
+                 'default_assembly', 'default_signatures',
+                 'default_attendees', 'default_signatories',
+                 'using_groups', 'auto_from',
+                 'supplements', 'enabled'),
+        allow_empty_rows=False,
+    ),
     BooleanField(
         name='useVotes',
         default=defValues.useVotes,
@@ -3133,6 +3216,23 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
         self.getField('powerObservers').set(self, value, **kwargs)
 
+    security.declareProtected(WriteRiskyConfig, 'setCommittees')
+
+    def setCommittees(self, value, **kwargs):
+        '''Overrides the field 'committees' mutator to manage
+           the 'row_id' column manually.  If empty, we need to add a
+           unique id into it.'''
+        # value contains a list of 'ZPublisher.HTTPRequest', to be compatible
+        # if we receive a 'dict' instead, we use v.get()
+        for v in value:
+            # don't process hidden template row as input data
+            if v.get('orderindex_', None) == "template_row_marker":
+                continue
+            if not v.get('row_id', None):
+                v['row_id'] = 'committee_{0}'.format(self.generateUniqueId())
+
+        self.getField('committees').set(self, value, **kwargs)
+
     security.declareProtected(WriteRiskyConfig, 'setMaxShownListings')
 
     def setMaxShownListings(self, value, **kwargs):
@@ -3237,7 +3337,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         if state:
             res = res and res[0] or res
         # when displayed, append translated values to elements title
-        if self.REQUEST.get('translated_itemWFValidationLevels'):
+        if self.REQUEST.get('translated_itemWFValidationLevels') and not data:
             translated_res = deepcopy(res)
             translated_titles = ('state_title',
                                  'leading_transition_title',
@@ -3341,7 +3441,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('listToDoListSearches')
 
     def listToDoListSearches(self):
-        """ """
+        """Vocabulary for the MeetingConfig.toDoListSearches field."""
         searches = self.searches.searches_items.objectValues()
         res = []
         for search in searches:
@@ -3352,7 +3452,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('listAdvicePortalTypes')
 
     def listAdvicePortalTypes(self):
-        """ """
+        """Vocabulary for the MeetingConfig.defaultAdviceHiddenDuringRedaction field."""
         tool = api.portal.get_tool('portal_plonemeeting')
         advice_portal_types = tool.getAdvicePortalTypes()
         res = [(portal_type.id, portal_type.title) for portal_type in advice_portal_types]
@@ -3361,7 +3461,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('listSelectableContacts')
 
     def listSelectableContacts(self):
-        """ """
+        """Vocabulary for the MeetingConfig.certifiedSignatures datagridfield,
+           held_position column."""
         vocab_factory = getUtility(
             IVocabularyFactory,
             "Products.PloneMeeting.vocabularies.selectableheldpositionsvocabulary")
@@ -3369,6 +3470,82 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         res = [(term.value, term.title) for term in vocab._terms]
         res.insert(0, ('_none_', _z3c_form('No value')))
         return DisplayList(res)
+
+    security.declarePrivate('listSelectableCommitteeAttendees')
+
+    def listSelectableCommitteeAttendees(self):
+        """Vocabulary for the MeetingConfig.committees field."""
+        vocab = get_vocab(
+            self, "Products.PloneMeeting.vocabularies.selectable_committee_attendees_vocabulary")
+        res = [(term.value, term.title) for term in vocab._terms]
+        return DisplayList(res)
+
+    security.declarePrivate('listSelectableProposingGroups')
+
+    def listSelectableProposingGroups(self):
+        """Vocabulary for the MeetingConfig.committees field."""
+        vocab = get_vocab(
+            self, "Products.PloneMeeting.vocabularies.proposinggroupsvocabulary")
+        res = [(term.value, term.title) for term in vocab._terms]
+        return DisplayList(res)
+
+    security.declarePrivate('listSelectableCommitteeAutoFrom')
+
+    def listSelectableCommitteeAutoFrom(self):
+        """Elements on item that will auto determinate the committee to use.
+           The proposingGroup, category or classifier may determinate used committee."""
+        # proposing groups
+        proposing_groups_vocab = get_vocab(
+            self, "Products.PloneMeeting.vocabularies.proposinggroupsvocabulary")
+        res = [('proposing_group__' + term.value, 'GP.: ' + term.title)
+               for term in proposing_groups_vocab._terms]
+        # categories
+        categories_vocab = get_vocab(
+            self, "Products.PloneMeeting.vocabularies.categoriesvocabulary")
+        res += [('category__' + term.value, 'Cat.: ' + term.title)
+                for term in categories_vocab._terms]
+        # classifiers
+        classifiers_vocab = get_vocab(
+            self, "Products.PloneMeeting.vocabularies.classifiersvocabulary")
+        res += [('classifier__' + term.value, 'Class.: ' + term.title)
+                for term in classifiers_vocab._terms]
+        return DisplayList(res)
+
+    # Committees related helpers -----------------------------------------------
+    def is_committees_using(self, column, value=[]):
+        """Return True if using committees given p_column :
+           - using "auto_from" column mean that committee on item is determined automatically;
+           - using "using_groups" column is exclusive from "auto_groups" and
+             restrict available committees to selected proposing groups."""
+        res = False
+        for committee in value or self.getCommittees():
+            if committee[column]:
+                res = True
+                break
+        return res
+
+    def get_committee(self, row_id):
+        """ """
+        for committee in self.getCommittees():
+            if committee['row_id'] == row_id:
+                return committee.copy()
+
+    def get_committee_label(self, row_id):
+        """ """
+        committee = self.get_committee(row_id)
+        return committee and committee['label']
+
+    def get_supplements_for_committee(self, row_id=None, committee=None):
+        """Return supplements, may receive a p_row_id or a committee config,
+           this is used for validating changes between new and old committee config,
+           see validated_committees."""
+        res = []
+        committee = committee or self.get_committee(row_id)
+        for suppl in range(int(committee['supplements'])):
+            suppl_num = suppl + 1
+            suppl_id = u"{0}__suppl__{1}".format(committee['row_id'], suppl_num)
+            res.append(suppl_id)
+        return res
 
     security.declarePublic('getConfigGroup')
 
@@ -3444,6 +3621,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         index = optional_fields.index('place')
         for contact_field in contact_fields:
             optional_fields.insert(index, contact_field)
+        index = optional_fields.index('committees') + 1
+        # committees columns
+        committees_optional_columns = Meeting.FIELD_INFOS['committees']['optional_columns']
+        committees_optional_columns.reverse()
+        for column_name in committees_optional_columns:
+            optional_fields.insert(index, 'committees_{0}'.format(column_name))
         res = []
         for field in optional_fields:
             res.append(
@@ -3555,6 +3738,54 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             if brains:
                 return _('error_list_types_identifier_removed_already_used',
                          mapping={'url': brains[0].getURL()})
+
+    security.declarePrivate('validate_committees')
+
+    def validate_committees(self, value):
+        '''Validate the 'committees' field, already used may not be removed.'''
+        # use vocabulary managing committees to detect changes
+        vocab = get_vocab(
+            self,
+            "Products.PloneMeeting.vocabularies.selectable_committees_vocabulary",
+            only_factory=True)
+        stored_terms = vocab(self)
+        new_value = [v for v in value
+                     if v.get('orderindex_', None) != 'template_row_marker']
+        new_terms = vocab(self, cfg_committees=new_value)
+        removeds = [term.token for term in stored_terms if term.token not in new_terms]
+        catalog = api.portal.get_tool('portal_catalog')
+        for removed in removeds:
+            # may be linked to an item or a meeting
+            brains = catalog(getConfigId=self.getId(), committees_index=removed)
+            if brains:
+                return _('error_committee_row_id_removed_already_used',
+                         mapping={'url': brains[0].getURL(),
+                                  'committee_label': safe_unicode(self.get_committee_label(removed))})
+
+        # columns using_groups and auto_from are exclusive
+        if self.is_committees_using("auto_from", new_value) and \
+           self.is_committees_using("using_groups", new_value):
+            return _('error_committees_mutually_exclusive_auto_from_and_using_groups')
+
+        # this part should be in a validator for orderedCommitteeContacts
+        # but then we do not get the entire datagridfield value from REQUEST
+        # and it is easier to do it here...
+        committee_contacts = self.REQUEST.get(
+            'orderedCommitteeContacts', self.getOrderedCommitteeContacts())
+        # remove empty values if any
+        committee_contacts = [contact for contact in committee_contacts if contact]
+
+        default_attendees = get_datagridfield_column_value(value, "default_attendees")
+        default_signatories = get_datagridfield_column_value(value, "default_signatories")
+        diff_attendees = set(default_attendees).difference(committee_contacts)
+        diff_signatories = set(default_signatories).difference(committee_contacts)
+        if diff_attendees or diff_signatories:
+            all_diffs = list(diff_attendees) + list(diff_signatories)
+            an_hp_uid = all_diffs[0]
+            hp = uuidToObject(an_hp_uid)
+            return _('error_value_removed_used_in_committees_field',
+                     mapping={'hp_title': hp.get_short_title()},
+                     default="Error used values is not selectable, check \"${hp_title}\"")
 
     security.declarePrivate('validate_transitionsForPresentingAnItem')
 
@@ -3942,6 +4173,22 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # Prevent combined use of "assembly" and "attendees"
         if ('assembly' in newValue) and ('attendees' in newValue):
             return translate('no_assembly_and_attendees', domain=pm, context=self.REQUEST)
+
+        # Prevent combined use of "committees_assembly" and "committees_attendees"
+        if ('committees_assembly' in newValue) and ('committees_attendees' in newValue):
+            return translate('no_committees_assembly_and_committees_attendees',
+                             domain=pm,
+                             context=self.REQUEST)
+        # Prevent combined use of "committees_signatures" and "committees_signatories"
+        if ('committees_signatures' in newValue) and ('committees_signatories' in newValue):
+            return translate('no_committees_signatures_and_committees_signatories',
+                             domain=pm,
+                             context=self.REQUEST)
+
+        # if a committees_ field is selected, then committees must be selected as well
+        committees_attr = [v for v in newValue if v.startswith('committees_')]
+        if committees_attr and "committees" not in newValue:
+            return translate('committees_required', domain=pm, context=self.REQUEST)
 
     security.declarePrivate('validate_itemConditionsInterface')
 
@@ -4553,6 +4800,15 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         res.add('custom', _('Custom validation level'))
         return res
 
+    security.declarePrivate('listNumbersFromZero')
+
+    def listNumbersFromZero(self):
+        '''Vocabulary that returns a list of number from 0 to 10.'''
+        res = []
+        for number in range(0, 11):
+            res.append((str(number), str(number)))
+        return DisplayList(tuple(res))
+
     security.declarePrivate('listNumbers')
 
     def listNumbers(self):
@@ -4654,6 +4910,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 translate("header_getGroupsInCharge", domain=d, context=self.REQUEST))),
             ("groups_in_charge_acronym", u"{0} (groups_in_charge_acronym)".format(
                 translate("header_groups_in_charge_acronym", domain=d, context=self.REQUEST))),
+            ("committees_index", u"{0} (committees_index)".format(
+                translate("header_committees_index", domain=d, context=self.REQUEST))),
+            ("committees_index_acronym", u"{0} (committees_index_acronym)".format(
+                translate("header_committees_index_acronym", domain=d, context=self.REQUEST))),
             ("privacy", u"{0} (privacy)".format(
                 translate("header_privacy", domain=d, context=self.REQUEST))),
             ("pollType", u"{0} (pollType)".format(
@@ -6243,6 +6503,18 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             if listify:
                 signatures = listifySignatures(signatures)
         return signatures
+
+    security.declarePublic('getCommittees')
+
+    def getCommittees(self, only_enabled=False, **kwargs):
+        '''Overrides field 'committees' accessor to be able to pass
+           the p_only_enabled parameter that will return
+           committees for which enabled is '1'.'''
+        committees = self.getField('committees').get(self, **kwargs)
+        if only_enabled:
+            committees = [committee for committee in committees
+                          if committee['enabled'] == '1']
+        return committees
 
     security.declarePublic('getCategories')
 

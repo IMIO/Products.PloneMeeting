@@ -32,12 +32,14 @@ from plone import api
 from plone.app.textfield import RichText
 from plone.app.textfield.value import RichTextValue
 from plone.app.uuid.utils import uuidToObject
+from plone.autoform.interfaces import WIDGETS_KEY
 from plone.autoform.interfaces import WRITE_PERMISSIONS_KEY
 from plone.dexterity.interfaces import IDexterityContent
 from plone.dexterity.utils import resolveDottedName
 from plone.i18n.normalizer.interfaces import IIDNormalizer
 from plone.locking.events import unlockAfterModification
 from plone.memoize import ram
+from plone.supermodel.utils import mergedTaggedValueDict
 from Products.Archetypes.atapi import DisplayList
 from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.permissions import AccessContentsInformation
@@ -48,6 +50,7 @@ from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.CMFCore.utils import _checkPermission
 from Products.CMFCore.WorkflowCore import WorkflowException
+from Products.CMFPlone.utils import base_hasattr
 from Products.CMFPlone.utils import safe_unicode
 from Products.DCWorkflow.events import TransitionEvent
 from Products.MailHost.MailHost import MailHostError
@@ -92,10 +95,8 @@ from zope.i18n import translate
 from zope.interface import alsoProvides
 from zope.interface import implements
 from zope.location import locate
-from zope.security.interfaces import IPermission
 from zope.schema import getFieldsInOrder
-from plone.supermodel.utils import mergedTaggedValueDict
-from plone.autoform.interfaces import WIDGETS_KEY
+from zope.security.interfaces import IPermission
 
 import itertools
 import logging
@@ -309,10 +310,25 @@ def fieldIsEmpty(name, obj, useParamValue=False, value=None):
         return not value
 
 
-def field_is_empty(widget):
+def get_datagridfield_column_value(value, column):
+    """Returns every values of a datagridfield column."""
+    if not value:
+        return []
+    value = [row[column] for row in value
+             if row.get('orderindex_', None) != 'template_row_marker' and row[column]]
+    # merge lists and remove duplicates
+    if value and hasattr(value[0], "__iter__"):
+        value = set(list(itertools.chain.from_iterable(value)))
+    return value
+
+
+def field_is_empty(widget, column=None):
     """ """
     if isinstance(widget.value, RichTextValue):
         value = widget.value.raw
+    elif hasattr(widget, "columns"):
+        # DataGridField
+        value = get_datagridfield_column_value(widget.value, column)
     else:
         value = widget.value
     if isinstance(value, (str, unicode)):
@@ -635,41 +651,6 @@ def sendMailIfRelevant(obj, event, permissionOrSuffixOrRoleOrGroupIds,
     return True
 
 
-# I wanted to put permission "ReviewPortalContent" among defaultPermissions,
-# but if I do this, it generates an error when calling "manage_permission" in
-# method "clonePermissions" (see below). I've noticed that in several
-# PloneMeeting standard workflows (meeting_workflow, meetingitem_workflow, etc),
-# although this permission is declared as a
-# managed permission, when you go in the ZMI to consult the actual
-# permissions that are set on objects governed by those workflows, the
-# permission "Review portal content" does not appear in the list at all.
-
-
-def clonePermissions(srcObj, destObj, permissions=(View,
-                                                   AccessContentsInformation,
-                                                   ModifyPortalContent,
-                                                   DeleteObjects)):
-    '''This method applies on p_destObj the same values for p_permissions
-       than those that apply for p_srcObj, according to workflow on
-       p_srcObj. p_srcObj may be an item or a meeting.'''
-    wfTool = api.portal.get_tool('portal_workflow')
-    srcWorkflows = wfTool.getWorkflowsFor(srcObj)
-    if not srcWorkflows:
-        return
-    srcWorkflow = srcWorkflows[0]
-    for permission in permissions:
-        if permission in srcWorkflow.permissions:
-            # Get the roles this permission is given to for srcObj in its
-            # current state.
-            srcStateDef = getattr(srcWorkflow.states, srcObj.query_state())
-            permissionInfo = srcStateDef.getPermissionInfo(permission)
-            destObj.manage_permission(permission,
-                                      permissionInfo['roles'],
-                                      acquire=permissionInfo['acquired'])
-    # Reindex object because permissions are catalogued.
-    destObj.reindexObject(idxs=['allowedRolesAndUsers'])
-
-
 def getCustomSchemaFields(baseSchema, completedSchema, cols):
     '''The Archetypes schema of any PloneMeeting content type can be extended
        through the "pm_updates.py mechanism". This function returns the list of
@@ -705,53 +686,6 @@ def getCustomSchemaFields(baseSchema, completedSchema, cols):
     return res
 
 
-# ------------------------------------------------------------------------------
-def getDateFromRequest(day, month, year, start):
-    '''This method produces a DateTime instance from info coming from a request.
-       p_hour and p_month may be ommitted. p_start is a bool indicating if the
-       date will be used as start date or end date; this will allow us to know
-       how to fill p_hour and p_month if they are ommitted. If _year is
-       ommitted, we will return a date near the Big bang (if p_start is True)
-       or near the Apocalypse (if p_start is False). p_day, p_month and p_year
-       are required to be valid string representations of integers.'''
-    # Determine day
-    if not day.strip() or (day == '00'):
-        if start:
-            day = 1
-        else:
-            day = 30
-    else:
-        day = int(day)
-    # Determine month
-    if not month.strip() or (month == '00'):
-        if start:
-            month = 1
-        else:
-            month = 12
-    else:
-        month = int(month)
-    if (month == 2) and (day == 30):
-        day = 28
-    # Determine year
-    if not year.strip() or (year == '0000'):
-        if start:
-            year = 1980
-        else:
-            year = 3000
-    else:
-        year = int(year)
-    try:
-        res = DateTime('%d/%d/%d' % (month, day, year))
-    except DateTime.DateError:
-        # The date entered by the user is invalid. Take a default date.
-        if start:
-            res = DateTime('1980/01/01')
-        else:
-            res = DateTime('3000/12/31')
-    return res
-
-
-# ------------------------------------------------------------------------------
 def getDateFromDelta(aDate, delta):
     '''This function returns a DateTime instance, which is computed from a
        reference DateTime instance p_aDate to which a p_delta is applied.
@@ -997,7 +931,8 @@ def get_dx_widget(obj, field_name, mode=DISPLAY_MODE):
     alsoProvides(widget, IContextAware)
     widget.mode = mode
     widget.update()
-    widget.field.allowed_mime_types = ['text/html']
+    if hasattr(widget.field, "allowed_mime_types"):
+        widget.field.allowed_mime_types = ['text/html']
     # this will set widget.__name__
     locate(widget, None, field_name)
     return widget
@@ -1384,7 +1319,10 @@ def get_context_with_request(context):
         # sometimes, the DashboardCollection is the first parent in the REQUEST.PARENTS...
         portal = getSite()
         published = portal.REQUEST.get('PUBLISHED', None)
-        context = hasattr(published, 'context') and published.context or None
+        if base_hasattr(published, "getTagName"):
+            context = published
+        else:
+            context = base_hasattr(published, 'context') and published.context or None
         if not context or context == portal:
             # if not first parent, try to get it from HTTP_REFERER
             referer = portal.REQUEST['HTTP_REFERER'].replace(portal.absolute_url() + '/', '')
@@ -2126,6 +2064,18 @@ def redirect(request, url):
         return ""
     else:
         return request.RESPONSE.redirect(url)
+
+
+def number_word(number):
+    """ """
+    request = getRequest()
+    suppl_word_msgid = number == 1 and "num_part_st" or "num_part_th"
+    suppl_word = translate(msgid=suppl_word_msgid,
+                           domain="PloneMeeting",
+                           mapping={'number': number},
+                           context=request,
+                           default=u"${number}st/th")
+    return suppl_word
 
 
 class AdvicesUpdatedEvent(ObjectEvent):

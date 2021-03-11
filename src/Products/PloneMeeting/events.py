@@ -486,7 +486,7 @@ def onConfigWillBeRemoved(config, event):
         other_cfg_annex_type_correspondence_uids = []
         for annex_type in other_cfg_annex_types:
             other_cfg_annex_type_correspondence_uids = other_cfg_annex_type_correspondence_uids + \
-                list(annex_type.other_mc_correspondences)
+                list(annex_type.other_mc_correspondences or [])
         if set(current_cfg_annex_type_uids).intersection(other_cfg_annex_type_correspondence_uids):
             can_not_delete_meetingconfig_annex_types = \
                 translate('can_not_delete_meetingconfig_annex_types',

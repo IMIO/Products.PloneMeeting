@@ -77,6 +77,18 @@
            name="Products.PloneMeeting.vocabularies.itemtemplatesstorableasannexvocabulary" />
   <utility component=".vocabularies.SelectableHeldPositionsVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.selectableheldpositionsvocabulary" />
+  <utility component=".vocabularies.SimplifiedSelectableHeldPositionsVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.simplified_selectable_heldpositions_vocabulary" />
+  <utility component=".vocabularies.SelectableCommitteeAttendeesVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.selectable_committee_attendees_vocabulary" />
+  <utility name="Products.PloneMeeting.vocabularies.selectable_committees_vocabulary"
+           component=".vocabularies.SelectableCommitteesVocabularyFactory" />
+  <utility name="Products.PloneMeeting.vocabularies.selectable_committees_acronyms_vocabulary"
+           component=".vocabularies.SelectableCommitteesAcronymsVocabularyFactory" />
+  <utility name="Products.PloneMeeting.vocabularies.item_selectable_committees_vocabulary"
+           component=".vocabularies.ItemSelectableCommitteesVocabularyFactory" />
+  <utility name="Products.PloneMeeting.vocabularies.meeting_selectable_committees_vocabulary"
+           component=".vocabularies.MeetingSelectableCommitteesVocabularyFactory" />
   <utility component=".vocabularies.SelectableAssemblyMembersVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.selectableassemblymembersvocabulary" />
   <utility component=".vocabularies.SelectableItemInitiatorsVocabularyFactory"
@@ -99,8 +111,10 @@
            name="Products.PloneMeeting.vocabularies.pmheldposition_usagesvocabulary" />
   <utility component=".vocabularies.HeldPositionDefaultsVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.pmheldposition_defaultsvocabulary" />
-  <utility component=".vocabularies.SignatureNumberVocabularyFactory"
-           name="Products.PloneMeeting.vocabularies.signaturenumbervocabulary" />
+  <utility component=".vocabularies.NumbersVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.numbersvocabulary" />
+  <utility component=".vocabularies.NumbersFromZeroVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.numbersfromzerovocabulary" />
 
   <!-- PMOrganization vocabularies -->
   <utility component=".vocabularies.ItemAllStatesVocabularyFactory"

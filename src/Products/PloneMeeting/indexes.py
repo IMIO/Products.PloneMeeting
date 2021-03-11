@@ -22,6 +22,7 @@ from Products.PloneMeeting.content.meeting import IMeeting
 from Products.PloneMeeting.interfaces import IMeetingContent
 from Products.PloneMeeting.interfaces import IMeetingItem
 from Products.PloneMeeting.utils import get_annexes
+from Products.PloneMeeting.utils import get_datagridfield_column_value
 from Products.PluginIndexes.common.UnIndex import _marker
 
 
@@ -443,3 +444,19 @@ def content_category_uid_item(obj):
       Indexes the content_category of every contained elements.
     """
     return content_category_uid(obj)
+
+
+@indexer(IMeetingItem)
+def committees_index_item(obj):
+    """
+      Indexes the committees of an item into "committees_index" index.
+    """
+    return obj.getCommittees() or EMPTY_STRING
+
+
+@indexer(IMeeting)
+def committees_index_meeting(obj):
+    """
+      Indexes the committees of a meeting into "committees_index" index.
+    """
+    return get_datagridfield_column_value(obj.committees, "row_id") or EMPTY_STRING

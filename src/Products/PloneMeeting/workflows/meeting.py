@@ -13,9 +13,9 @@ from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import ReviewPortalContent
 from Products.CMFCore.utils import _checkPermission
 from Products.PloneMeeting.config import PMMessageFactory as _
+from Products.PloneMeeting.content.meeting import Meeting
 from Products.PloneMeeting.interfaces import IMeetingWorkflowActions
 from Products.PloneMeeting.interfaces import IMeetingWorkflowConditions
-from Products.PloneMeeting.content.meeting import Meeting
 from Products.PloneMeeting.utils import fplog
 from Products.PloneMeeting.utils import get_annexes
 from zope.component import getMultiAdapter

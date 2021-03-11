@@ -445,7 +445,8 @@
          <span i18n:translate="">Annex types</span>
         </legend>
         <p class="discreet" i18n:translate="annex_types_descr"></p><br />
-        <tal:annexesCategories repeat="cat_group context/annexes_types/objectValues">
+        <tal:annexesCategories repeat="cat_group context/annexes_types/objectValues"
+                               define="show_annexes_types python: 'show_annexes_types' in context.REQUEST;">
             <a name="#"
                tal:attributes="name cat_group/getId"></a>
             <table class="listing nosort" style="text-align: right;" width="100%"
@@ -487,7 +488,12 @@
               <tr tal:condition="not: cat_group/objectValues">
                 <td colspan="5" align="center" i18n:translate="">No annex types.</td>
               </tr>
-              <tal:loop repeat="cat python:cat_group.objectValues()">
+              <tr tal:condition="not: show_annexes_types">
+                <td colspan="5" align="center" i18n:translate="annexes_types_force_display_descr">
+                  Annexes types are hidden by default, you can <a i18n:name="force_display" i18n:translate="force_display" href=".?pageName=data&show_annexes_types=1#annexes_types">force display</a>.
+                </td>
+              </tr>
+              <tal:loop repeat="cat python:cat_group.objectValues()" condition="show_annexes_types">
               <tr tal:define="isActive cat/enabled;
                               oddrow repeat/cat/odd;
                               classOddEven python: oddrow and 'even' or 'odd';"
@@ -1193,6 +1199,22 @@
         </tr>
       </table>
     </tal:advices>
+
+    <tal:votes condition="python: pageName=='committees'">
+      <p i18n:translate="meetingconfig_committees_descr" class='pageNameDescr'></p><br />
+      <table width="100%" class="discreet">
+        <tr valign="top">
+          <td colspan="3" tal:define="field python:here.getField('orderedCommitteeContacts')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+        </tr>
+        <tr valign="top">
+          <td colspan="3" tal:define="field python:here.getField('committees')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+        </tr>
+      </table>
+    </tal:votes>
 
     <tal:votes condition="python: pageName=='votes'">
       <p i18n:translate="meetingconfig_votes_descr" class='pageNameDescr'></p><br />

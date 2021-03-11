@@ -4,7 +4,6 @@
 #
 
 from AccessControl.SecurityManagement import getSecurityManager
-from Products.CMFPlone.utils import base_hasattr
 from collections import OrderedDict
 from collective.contact.plonegroup.config import ORGANIZATIONS_REGISTRY
 from collective.contact.plonegroup.utils import get_own_organization
@@ -16,6 +15,7 @@ from collective.iconifiedcategory.utils import get_config_root
 from copy import deepcopy
 from datetime import datetime
 from imio.helpers.cache import cleanRamCacheFor
+from imio.helpers.content import object_values
 from imio.helpers.testing import testing_logger
 from plone import api
 from plone import namedfile
@@ -25,6 +25,7 @@ from plone.app.testing.bbb import _createMemberarea
 from plone.app.testing.helpers import setRoles
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
+from Products.CMFPlone.utils import base_hasattr
 from Products.Five.browser import BrowserView
 from Products.PloneMeeting.browser.meeting import _get_default_attendees
 from Products.PloneMeeting.browser.meeting import _get_default_signatories
@@ -80,6 +81,12 @@ class TestFile:
         self.headers = None
 
 
+class DefaultData(object):
+    """Class used to be passed to a default method."""
+    def __init__(self, context):
+        self.context = context
+
+
 class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
     '''Base class for defining PloneMeeting test cases.'''
 
@@ -128,6 +135,16 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                 setattr(self,
                         '{0}_{1}'.format(org.getId(), suffix),
                         plone_group_id)
+        # make held_position easily available as well
+        i = 1
+        for person in object_values(self.portal.contacts, 'PMPerson'):
+            setattr(self,
+                    'hp{0}'.format(i),
+                    object_values(person, 'PMHeldPosition')[0])
+            setattr(self,
+                    'hp{0}_uid'.format(i),
+                    object_values(person, 'PMHeldPosition')[0].UID())
+            i += 1
 
         self.pmFolder = os.path.dirname(Products.PloneMeeting.__file__)
         # Disable notifications mechanism. This way, the test suite may be
@@ -629,19 +646,26 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         gsettings.auto_layout_file_types = CONVERTABLE_TYPES.keys()
         return gsettings
 
-    def _enableField(self, field_name, cfg=None, related_to='MeetingItem'):
+    def _enableField(self, field_names, cfg=None, related_to='MeetingItem', enable=True):
         """ """
+        if not hasattr(field_names, "__iter__"):
+            field_names = [field_names]
         cfg = cfg or self.meetingConfig
-        if related_to == 'MeetingItem':
-            usedItemAttrs = cfg.getUsedItemAttributes()
-            if field_name not in usedItemAttrs:
-                usedItemAttrs += (field_name, )
+        for field_name in field_names:
+            if related_to == 'MeetingItem':
+                usedItemAttrs = list(cfg.getUsedItemAttributes())
+                if enable and field_name not in usedItemAttrs:
+                    usedItemAttrs.append(field_name)
+                elif not enable and field_name in usedItemAttrs:
+                    usedItemAttrs = usedItemAttrs.remove(field_name)
                 cfg.setUsedItemAttributes(usedItemAttrs)
-        elif related_to == 'Meeting':
-            usedMeetingAttrs = cfg.getUsedMeetingAttributes()
-            if field_name not in usedMeetingAttrs:
-                usedMeetingAttrs += (field_name, )
-                cfg.setUsedMeetingAttributes(usedMeetingAttrs)
+            elif related_to == 'Meeting':
+                usedMeetingAttrs = list(cfg.getUsedMeetingAttributes())
+                if enable and field_name not in usedMeetingAttrs:
+                    usedMeetingAttrs.append(field_name)
+                elif not enable and field_name in usedMeetingAttrs:
+                    usedMeetingAttrs.remove(field_name)
+                cfg.setUsedMeetingAttributes(tuple(usedMeetingAttrs))
 
     def _disableObj(self, obj, notify_event=True):
         """ """

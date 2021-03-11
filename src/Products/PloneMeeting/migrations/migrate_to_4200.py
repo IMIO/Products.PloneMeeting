@@ -12,8 +12,8 @@ from imio.pyutils.utils import replace_in_list
 from persistent.mapping import PersistentMapping
 from plone.app.contenttypes.migration.migration import migrate as pac_migrate
 from plone.app.textfield.value import RichTextValue
-from Products.contentmigration.basemigrator.migrator import CMFFolderMigrator
 from Products.CMFPlone.utils import base_hasattr
+from Products.contentmigration.basemigrator.migrator import CMFFolderMigrator
 from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_NEW
 from Products.PloneMeeting.browser.itemattendee import position_type_default
 from Products.PloneMeeting.content.advice import IMeetingAdvice
@@ -22,8 +22,8 @@ from Products.PloneMeeting.interfaces import IMeetingItemDashboardBatchActionsMa
 from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator
 from Products.PloneMeeting.profiles import MeetingConfigDescriptor
-from Products.PloneMeeting.setuphandlers import indexInfos
 from Products.PloneMeeting.setuphandlers import columnInfos
+from Products.PloneMeeting.setuphandlers import indexInfos
 from Products.ZCatalog.ProgressHandler import ZLogHandler
 from zope.interface import alsoProvides
 from zope.interface import noLongerProvides
@@ -103,7 +103,7 @@ class MeetingMigrator(CMFFolderMigrator):
             RichTextValue(self.old.getRawObservations()) or None
         self.new.pre_observations = self.old.getRawPreObservations() and \
             RichTextValue(self.old.getRawPreObservations()) or None
-        self.new.committee_observations = self.old.getRawCommitteeObservations() and \
+        self.new.committees_observations = self.old.getRawCommitteeObservations() and \
             RichTextValue(self.old.getRawCommitteeObservations()) or None
         self.new.votes_observations = self.old.getRawVotesObservations() and \
             RichTextValue(self.old.getRawVotesObservations()) or None
@@ -170,7 +170,7 @@ class Migrate_To_4200(Migrator):
             used_attrs = replace_in_list(used_attrs, "preMeetingDate", "pre_meeting_date")
             used_attrs = replace_in_list(used_attrs, "preMeetingPlace", "pre_meeting_place")
             used_attrs = replace_in_list(used_attrs, "preObservations", "pre_observations")
-            used_attrs = replace_in_list(used_attrs, "committeeObservations", "committee_observations")
+            used_attrs = replace_in_list(used_attrs, "committeeObservations", "committees_observations")
             used_attrs = replace_in_list(used_attrs, "votesObservations", "votes_observations")
             used_attrs = replace_in_list(used_attrs, "publicMeetingObservations", "public_meeting_observations")
             used_attrs = replace_in_list(used_attrs, "secretMeetingObservations", "secret_meeting_observations")
@@ -190,7 +190,7 @@ class Migrate_To_4200(Migrator):
             # xhtmlTransformFields
             fields = cfg.getXhtmlTransformFields()
             fields = replace_in_list(fields, "Meeting.authorityNotice", "Meeting.authority_notice")
-            fields = replace_in_list(fields, "Meeting.committeeObservations", "Meeting.committee_observations")
+            fields = replace_in_list(fields, "Meeting.committeeObservations", "Meeting.committees_observations")
             fields = replace_in_list(fields, "Meeting.inAndOutMoves", "Meeting.in_and_out_moves")
             fields = replace_in_list(fields, "Meeting.preObservations", "Meeting.pre_observations")
             fields = replace_in_list(fields, "Meeting.publicMeetingObservations", "Meeting.public_meeting_observations")

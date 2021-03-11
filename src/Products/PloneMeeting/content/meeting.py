@@ -6,10 +6,13 @@ from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.contact.plonegroup.config import get_registry_organizations
 from collective.dexteritytextindexer.directives import searchable
 from collective.dexteritytextindexer.interfaces import IDynamicTextIndexExtender
+from collective.z3cform.datagridfield import BlockDataGridFieldFactory
+from collective.z3cform.datagridfield import DictRow
 from copy import deepcopy
 from datetime import datetime
 from datetime import timedelta
 from imio.helpers.cache import cleanRamCacheFor
+from imio.helpers.content import richtextval
 from imio.prettylink.interfaces import IPrettyLink
 from persistent.list import PersistentList
 from persistent.mapping import PersistentMapping
@@ -22,6 +25,7 @@ from plone.app.uuid.utils import uuidToCatalogBrain
 from plone.dexterity.content import Container
 from plone.dexterity.schema import DexteritySchemaPolicy
 from plone.directives import form
+from plone.formwidget.datetime.z3cform.widget import DateFieldWidget
 from plone.formwidget.datetime.z3cform.widget import DatetimeFieldWidget
 from plone.formwidget.masterselect import MasterSelectField
 from plone.memoize import ram
@@ -52,9 +56,10 @@ from Products.PloneMeeting.utils import MeetingLocalRolesUpdatedEvent
 from Products.PloneMeeting.utils import notifyModifiedAndReindex
 from Products.PloneMeeting.utils import updateAnnexesAccess
 from Products.PloneMeeting.utils import validate_item_assembly_value
+from Products.PloneMeeting.widgets.pm_orderedselect import PMOrderedSelectFieldWidget
 from Products.PloneMeeting.widgets.pm_richtext import PMRichTextFieldWidget
+from Products.PloneMeeting.widgets.pm_textarea import get_textarea_value
 from Products.PloneMeeting.widgets.pm_textarea import PMTextAreaFieldWidget
-from Products.PloneMeeting.widgets.pm_textarea import render_textarea
 from z3c.form.browser.radio import RadioFieldWidget
 from zope import schema
 from zope.component import adapts
@@ -62,11 +67,10 @@ from zope.event import notify
 from zope.globalrequest import getRequest
 from zope.i18n import translate
 from zope.interface import implements
+from zope.interface import Interface
 from zope.interface import Invalid
 from zope.interface import invariant
-from zope.schema import Datetime
-from zope.schema import Int
-from zope.schema import TextLine
+from zope.schema import getFieldNamesInOrder
 from zope.schema.interfaces import IVocabularyFactory
 from zope.schema.vocabulary import SimpleTerm
 from zope.schema.vocabulary import SimpleVocabulary
@@ -91,6 +95,59 @@ def assembly_constraint(value):
     return True
 
 
+class ICommitteesRowSchema(Interface):
+    """Schema for DataGridField widget's row of field 'committees'."""
+
+    row_id = schema.Choice(
+        title=_("title_committees_row_id"),
+        vocabulary='Products.PloneMeeting.vocabularies.meeting_selectable_committees_vocabulary',
+        required=True)
+
+    form.widget('date', DatetimeFieldWidget, show_today_link=True, show_time=True)
+    date = schema.Datetime(
+        title=_("title_committees_date"),
+        required=False)
+
+    form.widget('convocation_date', DateFieldWidget, show_today_link=True)
+    convocation_date = schema.Date(
+        title=_("title_committees_convocation_date"),
+        required=False)
+
+    place = schema.TextLine(
+        title=_("title_committees_place"),
+        required=False)
+
+    form.widget('assembly', PMTextAreaFieldWidget)
+    assembly = RichText(
+        title=_(u"title_committees_assembly"),
+        default_mime_type='text/plain',
+        allowed_mime_types=("text/plain", ),
+        output_mime_type='text/x-html-safe',
+        required=False)
+
+    form.widget('signatures', PMTextAreaFieldWidget)
+    signatures = RichText(
+        title=_(u"title_committees_signatures"),
+        default_mime_type='text/plain',
+        allowed_mime_types=("text/plain", ),
+        output_mime_type='text/x-html-safe',
+        required=False)
+
+    form.widget('attendees', PMOrderedSelectFieldWidget)
+    attendees = schema.List(
+        title=_("title_committees_attendees"),
+        value_type=schema.Choice(
+            vocabulary="Products.PloneMeeting.vocabularies.selectable_committee_attendees_vocabulary"),
+        required=False)
+
+    form.widget('signatories', PMOrderedSelectFieldWidget)
+    signatories = schema.List(
+        title=_("title_committees_signatories"),
+        value_type=schema.Choice(
+            vocabulary="Products.PloneMeeting.vocabularies.selectable_committee_attendees_vocabulary"),
+        required=False)
+
+
 class IMeeting(IDXMeetingContent):
     """
         Meeting schema
@@ -99,38 +156,81 @@ class IMeeting(IDXMeetingContent):
     # manage title, hidden but indexed
     searchable("title")
     form.omitted('title')
-    title = TextLine(
-        title=_(u'title_title', default=u'Title'),
+    title = schema.TextLine(
+        title=_(u'title_title'),
         required=True)
 
     form.widget('date', DatetimeFieldWidget, show_today_link=True, show_time=True)
-    date = Datetime(
+    date = schema.Datetime(
         title=_(u'title_date'),
         required=True)
 
     form.widget('start_date', DatetimeFieldWidget, show_today_link=True, show_time=True)
-    start_date = Datetime(
+    start_date = schema.Datetime(
         title=_(u'title_start_date'),
         required=False)
 
     form.widget('mid_date', DatetimeFieldWidget, show_today_link=True, show_time=True)
-    mid_date = Datetime(
+    mid_date = schema.Datetime(
         title=_(u'title_mid_date'),
         required=False)
 
     form.widget('end_date', DatetimeFieldWidget, show_today_link=True, show_time=True)
-    end_date = Datetime(
+    end_date = schema.Datetime(
         title=_(u'title_end_date'),
         required=False)
 
     form.widget('approval_date', DatetimeFieldWidget, show_today_link=True, show_time=True)
-    approval_date = Datetime(
+    approval_date = schema.Datetime(
         title=_(u'title_approval_date'),
         required=False)
 
     form.widget('convocation_date', DatetimeFieldWidget, show_today_link=True, show_time=True)
-    convocation_date = Datetime(
+    convocation_date = schema.Datetime(
         title=_(u'title_convocation_date'),
+        required=False)
+
+    searchable("place")
+    place = MasterSelectField(
+        title=_(u"title_place"),
+        vocabulary="Products.PloneMeeting.content.meeting.places_vocabulary",
+        # avoid a "No value" entry
+        required=True,
+        slave_fields=(
+            {'name': 'place_other',
+             'slaveID': '#form-widgets-place_other',
+             'action': 'enable',
+             'hide_values': (u'other'),
+             'siblings': True,
+             },
+            {'name': 'place_other',
+             'slaveID': '#form-widgets-place_other',
+             'action': 'show',
+             'hide_values': (u'other'),
+             'siblings': True,
+             },
+        ),
+    )
+
+    searchable("place_other")
+    place_other = schema.TextLine(
+        title=_(u"title_place_other"),
+        required=False)
+
+    form.widget('pre_meeting_date', DatetimeFieldWidget, show_today_link=True, show_time=True)
+    pre_meeting_date = schema.Datetime(
+        title=_(u'title_pre_meeting_date'),
+        required=False)
+
+    searchable("pre_meeting_place")
+    pre_meeting_place = schema.TextLine(
+        title=_(u"title_pre_meeting_place"),
+        required=False)
+
+    form.widget('extraordinary_session', RadioFieldWidget)
+    extraordinary_session = schema.Bool(
+        title=_(u'title_extraordinary_session'),
+        default=False,
         required=False)
 
     form.widget('assembly', PMTextAreaFieldWidget)
@@ -199,48 +299,25 @@ class IMeeting(IDXMeetingContent):
         required=False,
         allowed_mime_types=(u"text/html", ))
 
-    searchable("place")
-    place = MasterSelectField(
-        title=_(u"title_place"),
-        vocabulary="Products.PloneMeeting.content.meeting.places_vocabulary",
-        # avoid a "No value" entry
-        required=True,
-        slave_fields=(
-            {'name': 'place_other',
-             'slaveID': '#form-widgets-place_other',
-             'action': 'enable',
-             'hide_values': (u'other'),
-             'siblings': True,
-             },
-            {'name': 'place_other',
-             'slaveID': '#form-widgets-place_other',
-             'action': 'show',
-             'hide_values': (u'other'),
-             'siblings': True,
-             },
-        ),
-    )
+    form.widget('committees',
+                BlockDataGridFieldFactory,
+                allow_reorder=True,
+                auto_append=False,
+                display_table_css_class="listing datagridwidget-table-view")
+    committees = schema.List(
+        title=_(u'title_committees'),
+        required=False,
+        value_type=DictRow(
+            schema=ICommitteesRowSchema,
+            required=False))
 
-    searchable("place_other")
-    place_other = TextLine(
-        title=_(u"title_place_other"),
-        required=False)
-
-    form.widget('pre_meeting_date', DatetimeFieldWidget, show_today_link=True, show_time=True)
-    pre_meeting_date = Datetime(
-        title=_(u'title_pre_meeting_date'),
-        required=False)
-
-    searchable("pre_meeting_place")
-    pre_meeting_place = TextLine(
-        title=_(u"title_pre_meeting_place"),
-        required=False)
-
-    form.widget('extraordinary_session', RadioFieldWidget)
-    extraordinary_session = schema.Bool(
-        title=_(u'title_extraordinary_session'),
-        default=False,
-        required=False)
+    searchable("committees_observations")
+    form.widget('committees_observations', PMRichTextFieldWidget)
+    committees_observations = RichText(
+        title=_(u"title_committees_observations"),
+        description=_("descr_field_vieawable_by_everyone"),
+        required=False,
+        allowed_mime_types=(u"text/html", ))
 
     searchable("in_and_out_moves")
     form.widget('in_and_out_moves', PMRichTextFieldWidget)
@@ -270,14 +347,6 @@ class IMeeting(IDXMeetingContent):
     form.widget('pre_observations', PMRichTextFieldWidget)
     pre_observations = RichText(
         title=_(u"title_pre_observations"),
-        description=_("descr_field_vieawable_by_everyone"),
-        required=False,
-        allowed_mime_types=(u"text/html", ))
-
-    searchable("committee_observations")
-    form.widget('committee_observations', PMRichTextFieldWidget)
-    committee_observations = RichText(
-        title=_(u"title_committee_observations"),
         description=_("descr_field_vieawable_by_everyone"),
         required=False,
         allowed_mime_types=(u"text/html", ))
@@ -314,13 +383,13 @@ class IMeeting(IDXMeetingContent):
         required=False,
         allowed_mime_types=(u"text/html", ))
 
-    meeting_number = Int(
+    meeting_number = schema.Int(
         title=_(u"title_meeting_number"),
         description=_("descr_field_reserved_to_meeting_managers"),
         default=-1,
         required=False)
 
-    first_item_number = Int(
+    first_item_number = schema.Int(
         title=_(u"title_first_item_number"),
         description=_("descr_field_reserved_to_meeting_managers"),
         default=-1,
@@ -339,10 +408,14 @@ class IMeeting(IDXMeetingContent):
                            'assembly_guests', 'assembly_proxies', 'assembly_staves',
                            'signatures', 'assembly_observations'])
 
-    model.fieldset('details',
-                   label=_(u"fieldset_details"),
+    model.fieldset('committees',
+                   label=_(u"fieldset_committees"),
+                   fields=['committees', 'committees_observations'])
+
+    model.fieldset('informations',
+                   label=_(u"fieldset_informations"),
                    fields=['in_and_out_moves', 'notes', 'observations',
-                           'pre_observations', 'committee_observations',
+                           'pre_observations',
                            'votes_observations', 'public_meeting_observations',
                            'secret_meeting_observations', 'authority_notice'])
 
@@ -574,6 +647,39 @@ def default_place(data):
     return res
 
 
+@form.default_value(field=IMeeting['committees'])
+def default_committees(data):
+    tool = api.portal.get_tool('portal_plonemeeting')
+    cfg = tool.getMeetingConfig(data.context)
+    used_attrs = cfg.getUsedMeetingAttributes()
+    res = []
+    if "committees" in used_attrs:
+        for committee in cfg.getCommittees():
+            if committee['enabled'] == '0':
+                continue
+            mdata = {}
+            mdata['row_id'] = committee['row_id']
+            # manage default_values
+            for field_id, field_value in committee.items():
+                if not field_id.startswith('default_'):
+                    continue
+                real_field_id = field_id.replace('default_', '')
+                # do not set a default value for an optional field not enabled
+                if 'committees_{0}'.format(real_field_id) not in used_attrs:
+                    continue
+                # XXX workaround to remove when MeetingConfig will be DX
+                value = committee[field_id]
+                if real_field_id in ['assembly', 'signatures']:
+                    value = richtextval(value)
+                mdata[real_field_id] = value
+            # complete data
+            for field_name in getFieldNamesInOrder(ICommitteesRowSchema):
+                if field_name not in mdata:
+                    mdata[field_name] = None
+            res.append(mdata)
+    return res
+
+
 def get_all_used_held_positions(obj, include_new=False, the_objects=True):
     '''This will return every currently stored held_positions.
        If include_new=True, extra held_positions newly selected in the
@@ -603,6 +709,7 @@ def get_all_used_held_positions(obj, include_new=False, the_objects=True):
         brains = sorted(brains, key=get_key)
         contacts = [brain.getObject() for brain in brains]
     return tuple(contacts)
+
 
 ########################################################################
 #                                                                      #
@@ -659,6 +766,16 @@ class Meeting(Container):
         'convocation_date':
             {'optional': True,
              'condition': ''},
+        'place':
+            {'optional': True,
+             'condition': ""},
+        'place_other':
+            {'optional': False,
+             'condition': "python:view.show_field('place') and "
+                "(view.mode != 'display' or context.place == u'other')"},
+        'extraordinary_session':
+            {'optional': True,
+             'condition': ""},
         'assembly':
             {'optional': True,
              'condition': "python:'assembly' in view.shown_assembly_fields()"},
@@ -683,14 +800,13 @@ class Meeting(Container):
         'assembly_observations':
             {'optional': True,
              'condition': ""},
-        'place':
+        'committees':
             {'optional': True,
-             'condition': ""},
-        'place_other':
-            {'optional': False,
-             'condition': "python:view.show_field('place') and "
-                "(view.mode != 'display' or context.place == u'other')"},
-        'extraordinary_session':
+             'condition': "",
+             'optional_columns': ['convocation_date', 'place',
+                                  'assembly', 'signatures',
+                                  'attendees', 'signatories']},
+        'committees_observations':
             {'optional': True,
              'condition': ""},
         'in_and_out_moves':
@@ -709,9 +825,6 @@ class Meeting(Container):
             {'optional': True,
              'condition': ""},
         'pre_observations':
-            {'optional': True,
-             'condition': ""},
-        'committee_observations':
             {'optional': True,
              'condition': ""},
         'votes_observations':
@@ -766,66 +879,65 @@ class Meeting(Container):
 
     def get_assembly(self, for_display=True, striked=True, mark_empty_tags=False):
         """ """
-        res = ''
-        if self.assembly is not None:
-            res = self.assembly.output
-        if res and for_display:
-            res = render_textarea(res, self, striked=striked, mark_empty_tags=mark_empty_tags)
-        return res
+        return get_textarea_value(
+            self.assembly,
+            self,
+            for_display=for_display,
+            striked=striked,
+            mark_empty_tags=mark_empty_tags)
 
     def get_assembly_excused(self, for_display=True, striked=True, mark_empty_tags=False):
         """ """
-        res = ''
-        if self.assembly_excused is not None:
-            res = self.assembly_excused.output
-        if res and for_display:
-            res = render_textarea(res, self, striked=striked, mark_empty_tags=mark_empty_tags)
-        return res
+        return get_textarea_value(
+            self.assembly_excused,
+            self,
+            for_display=for_display,
+            striked=striked,
+            mark_empty_tags=mark_empty_tags)
 
     def get_assembly_absents(self, for_display=True, striked=True, mark_empty_tags=False):
         """ """
-        res = ''
-        if self.assembly_absents is not None:
-            res = self.assembly_absents.output
-        if res and for_display:
-            res = render_textarea(res, self, striked=striked, mark_empty_tags=mark_empty_tags)
-        return res
+        return get_textarea_value(
+            self.assembly_absents,
+            self,
+            for_display=for_display,
+            striked=striked,
+            mark_empty_tags=mark_empty_tags)
 
     def get_assembly_guests(self, for_display=True, striked=True, mark_empty_tags=False):
         """ """
-        res = ''
-        if self.assembly_guests is not None:
-            res = self.assembly_guests.output
-        if res and for_display:
-            res = render_textarea(res, self, striked=striked, mark_empty_tags=mark_empty_tags)
-        return res
+        return get_textarea_value(
+            self.assembly_guests,
+            self,
+            for_display=for_display,
+            striked=striked,
+            mark_empty_tags=mark_empty_tags)
 
     def get_assembly_staves(self, for_display=True, striked=True, mark_empty_tags=False):
         """ """
-        res = ''
-        if self.assembly_staves is not None:
-            res = self.assembly_staves.output
-        if res and for_display:
-            res = render_textarea(res, self, striked=striked, mark_empty_tags=mark_empty_tags)
-        return res
+        return get_textarea_value(
+            self.assembly_staves,
+            self,
+            for_display=for_display,
+            striked=striked,
+            mark_empty_tags=mark_empty_tags)
 
     def get_assembly_proxies(self, for_display=True, striked=True, mark_empty_tags=False):
         """ """
-        res = ''
-        if self.assembly_proxies is not None:
-            res = self.assembly_proxies.output
-        if res and for_display:
-            res = render_textarea(res, self, striked=striked, mark_empty_tags=mark_empty_tags)
-        return res
+        return get_textarea_value(
+            self.assembly_proxies,
+            self,
+            for_display=for_display,
+            striked=striked,
+            mark_empty_tags=mark_empty_tags)
 
-    def get_signatures(self, for_display=False, striked=True, mark_empty_tags=False):
+    def get_signatures(self, for_display=False, mark_empty_tags=False):
         """ """
-        res = ''
-        if self.signatures is not None:
-            res = self.signatures.output
-        if res and for_display:
-            res = render_textarea(res, self, striked=striked, mark_empty_tags=mark_empty_tags)
-        return res
+        return get_textarea_value(
+            self.signatures,
+            self,
+            for_display=for_display,
+            mark_empty_tags=mark_empty_tags)
 
     def get_place(self, real=False):
         """ """
@@ -833,6 +945,96 @@ class Meeting(Container):
         if not real and self.place == u'other':
             place = self.place_other
         return place
+
+    def get_committee(self, row_id):
+        """Return infos about given p_row_id committee."""
+        if self.committees:
+            for committee in self.committees:
+                if committee['row_id'] == row_id:
+                    return committee.copy()
+
+    def get_committees(self):
+        """Return every defined committees row_id."""
+        row_ids = []
+        if self.committees:
+            for committee in self.committees or []:
+                row_ids.append(committee['row_id'])
+        return row_ids
+
+    def get_committee_place(self, row_id):
+        """Return "place" for given p_row_id committee."""
+        value = self.get_committee(row_id)["place"]
+        return value
+
+    def get_committee_assembly(self, row_id, for_display=True, striked=True, mark_empty_tags=False):
+        """Return "assembly" for given p_row_id committee."""
+        value = self.get_committee(row_id)["assembly"]
+        return get_textarea_value(
+            value,
+            self,
+            for_display=for_display,
+            mark_empty_tags=mark_empty_tags)
+
+    def get_committee_signatures(self, row_id, for_display=False, striked=True, mark_empty_tags=False):
+        """Return "signatures" for given p_row_id committee."""
+        value = self.get_committee(row_id)["signatures"]
+        return get_textarea_value(
+            value,
+            self,
+            for_display=for_display,
+            mark_empty_tags=mark_empty_tags)
+
+    def get_committee_attendees(self, row_id, the_objects=False):
+        '''Returns the attendees for given p_row_id committee.'''
+        committee_attendees = self.get_committee(row_id).get("attendees", [])
+        return self._get_contacts(uids=committee_attendees, the_objects=the_objects)
+
+    def get_committee_signatories(self, row_id, the_objects=False, by_signature_number=False):
+        '''Returns the signatories for given p_row_id committee.'''
+        committee_signatories = self.get_committee(row_id).get("signatories", [])
+        signers = self._get_contacts(uids=committee_signatories, the_objects=the_objects)
+        # signature number depends on signatory order
+        i = 1
+        res = {}
+        for signer in signers:
+            res[signer] = str(i)
+            i += 1
+        if by_signature_number:
+            # keys are values, values are keys
+            res = {v: k for k, v in res.items()}
+        return res
+
+    def get_committee_items(self, row_id, supplement=-1, ordered=True, **kwargs):
+        """Return every items of a given committee p_row_id.
+           For p_supplement:
+           - -1 means only include normal, no supplement;
+           - 0 means normal + every supplements;
+           - 1, 2, 3, ... only items of supplement 1, 2, 3, ...
+           - 99 means every supplements only.
+           This is calling get_items under so every parameters of get_items may be given in kwargs."""
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        available_suppl_ids = cfg.get_supplements_for_committee(row_id)
+        committees_index = []
+        if supplement == -1:
+            committees_index.append(row_id)
+        elif supplement == 0:
+            committees_index.append(row_id)
+            committees_index += available_suppl_ids
+        elif supplement == 99:
+            committees_index = available_suppl_ids
+        else:
+            if len(available_suppl_ids) >= supplement:
+                committees_index = available_suppl_ids[supplement - 1]
+            else:
+                # asking for unexisting supplement
+                return []
+        # we use additional_catalog_query to pass the committees_index to keep
+        # keep additional_catalog_query from kwargs if exist
+        additional_catalog_query = kwargs.get('additional_catalog_query', {})
+        additional_catalog_query.update({'committees_index': committees_index})
+        kwargs["additional_catalog_query"] = additional_catalog_query
+        return self.get_items(ordered=ordered, **kwargs)
 
     def _available_items_query(self):
         '''Check docstring in IMeeting.'''
@@ -905,24 +1107,25 @@ class Meeting(Container):
         return redefined_item_attendees
 
     def _get_contacts(self, contact_type=None, uids=None, the_objects=False):
-        """ """
-        res = []
+        """Return contacts.  Parameters p_contact_type and p_uids are mutually exclusive."""
+        contact_uids = []
         ordered_contacts = getattr(self, 'ordered_contacts', OrderedDict())
         if contact_type:
             for uid, infos in ordered_contacts.items():
                 if infos[contact_type] and (not uids or uid in uids):
-                    res.append(uid)
+                    contact_uids.append(uid)
         else:
-            res = uids
+            contact_uids = uids
 
+        res = contact_uids
         if the_objects:
             catalog = api.portal.get_tool('portal_catalog')
-            brains = catalog(UID=res)
+            brains = catalog(UID=contact_uids)
             res = [brain.getObject() for brain in brains]
 
             # keep correct order that was lost by catalog query
             def get_key(item):
-                return self.ordered_contacts.keys().index(item.UID())
+                return contact_uids.index(item.UID())
             res = sorted(res, key=get_key)
         return tuple(res)
 
@@ -954,7 +1157,7 @@ class Meeting(Container):
     security.declarePublic('get_signatories')
 
     def get_signatories(self, the_objects=False, by_signature_number=False):
-        '''See docstring in previous method.'''
+        '''Returns the signatories in this meeting.'''
         signers = self._get_contacts('signer', the_objects=the_objects)
         # order is important in case we have several same signature_number, the first win
         if the_objects:
@@ -975,7 +1178,7 @@ class Meeting(Container):
     security.declarePublic('get_replacements')
 
     def get_replacements(self, the_objects=False):
-        '''See docstring in previous method.'''
+        '''Returns the replacements in this meeting.'''
         replaced_uids = self._get_contacts('replacement', the_objects=the_objects)
         return {replaced_uid: self.ordered_contacts[replaced_uid]['replacement']
                 for replaced_uid in replaced_uids}
@@ -1263,7 +1466,8 @@ class Meeting(Container):
                 'selectablePrivacies',
                 'usedPollTypes',
                 'orderedAssociatedOrganizations',
-                'orderedGroupsInCharge']
+                'orderedGroupsInCharge',
+                'committees']
 
     def _init_insert_order_cache(self, cfg):
         '''See doc in interfaces.py.'''
@@ -1822,15 +2026,6 @@ class Meeting(Container):
         else:
             cfg = getattr(tool, cfg_id)
         return get_next_meeting(meeting_date=self.date, cfg=cfg, date_gap=date_gap)
-
-    security.declarePublic('show_insert_or_remove_selected_items_action')
-
-    def show_insert_or_remove_selected_items_action(self):
-        '''See doc in interfaces.py.'''
-        meeting = self.get_self()
-        member = api.user.get_current()
-        return bool(member.has_permission(ModifyPortalContent, meeting) and
-                    not meeting.query_state() in meeting.MEETINGCLOSEDSTATES)
 
 
 class MeetingSchemaPolicy(DexteritySchemaPolicy):

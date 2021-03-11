@@ -2,24 +2,7 @@
 #
 # File: testMeetingConfig.py
 #
-# Copyright (c) 2018 by Imio.be
-#
 # GNU General Public License (GPL)
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
-# 02110-1301, USA.
 #
 
 from AccessControl import Unauthorized
@@ -31,8 +14,8 @@ from collective.eeafaceted.collectionwidget.utils import getCollectionLinkCriter
 from collective.iconifiedcategory.utils import _categorized_elements
 from collective.iconifiedcategory.utils import get_category_object
 from copy import deepcopy
-from datetime import datetime
 from DateTime import DateTime
+from datetime import datetime
 from eea.facetednavigation.widgets.resultsperpage.widget import Widget as ResultsPerPageWidget
 from ftw.labels.interfaces import ILabeling
 from ftw.labels.interfaces import ILabelJar
@@ -57,9 +40,11 @@ from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
 from Products.PloneMeeting.config import READER_USECASES
 from Products.PloneMeeting.config import TOOL_FOLDER_SEARCHES
 from Products.PloneMeeting.config import WriteHarmlessConfig
+from Products.PloneMeeting.content.meeting import default_committees
 from Products.PloneMeeting.events import _itemAnnexTypes
 from Products.PloneMeeting.interfaces import IConfigElement
 from Products.PloneMeeting.MeetingConfig import DUPLICATE_SHORT_NAME
+from Products.PloneMeeting.tests.PloneMeetingTestCase import DefaultData
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
 from zope.event import notify
@@ -2148,6 +2133,93 @@ class testMeetingConfig(PloneMeetingTestCase):
         # not viewable by non MeetingManagers
         self.changeUser('pmCreator1')
         self.assertFalse(cfg.show_meeting_manager_reserved_field('a_meeting_field'))
+
+    def test_pm_Validate_usedMeetingAttributes(self):
+        """Check the MeetingConfig.usedMeetingAttributes validate method."""
+        cfg = self.meetingConfig
+        self.changeUser('pmManager')
+        self.failIf(cfg.validate_usedMeetingAttributes([]))
+        incompatible_values = {"assembly": "attendees",
+                               "signatures": "signatories",
+                               "committees_assembly": "committees_attendees",
+                               "committees_signatures": "committees_signatories"}
+        for k, v in incompatible_values.items():
+            self.failUnless(cfg.validate_usedMeetingAttributes([k, v]))
+        required_values = {"assembly": ["assembly_excused", "assembly_absents"],
+                           "attendees": ["excused", "absents"],
+                           "committees": [v for v in cfg.Vocabulary('usedMeetingAttributes')[0]
+                                          if v.startswith("committees_")]}
+        for k, values in required_values.items():
+            for v in values:
+                self.failUnless(cfg.validate_usedMeetingAttributes([v]))
+
+    def test_pm_Validate_committees_not_removable_when_used(self):
+        """Check that when used on a meeting or on an item, a committee may not
+           be removed from the MeetingConfig.committees."""
+        cfg = self.meetingConfig
+        self._enableField("committees", related_to='Meeting')
+        self.changeUser('pmManager')
+        # Meeting
+        meeting = self.create('Meeting', committees=default_committees(DefaultData(cfg)))
+        cfg_committees = cfg.getCommittees()
+        self.failIf(cfg.validate_committees(cfg_committees))
+        self.failUnless(cfg.validate_committees([cfg_committees[1]]))
+        self.deleteAsManager(meeting.UID())
+
+        # MeetingItem
+        item = self.create('MeetingItem', committees=[cfg_committees[0]['row_id']])
+        self.failIf(cfg.validate_committees(cfg_committees))
+        self.failUnless(cfg.validate_committees([cfg_committees[1]]))
+        # supplement, second committee cfg has a supplement
+        item.setCommittees(["{0}__suppl__1".format(cfg_committees[1]['row_id'])])
+        item.reindexObject(idxs=["committees_index"])
+        self.failIf(cfg.validate_committees(cfg_committees))
+        self.failUnless(cfg.validate_committees([cfg_committees[0]]))
+
+    def test_pm_Validate_committees_values(self):
+        """Can not define values in column "auto_from" and in column "using_groups"."""
+        cfg = self.meetingConfig
+        self.changeUser('pmManager')
+        # "using_groups" alone
+        cfg_committees = cfg.getCommittees()
+        cfg_committees[0]['using_groups'] = [self.vendors_uid]
+        self.failIf(cfg.validate_committees([cfg_committees[0]]))
+        # "auto_from" alone
+        cfg_committees[1]['auto_from'] = ["proposing_group__" + self.vendors_uid]
+        self.failIf(cfg.validate_committees([cfg_committees[1]]))
+        # fails when used together
+        self.failUnless(cfg_committees)
+
+    def test_pm_Validate_committees_orderedCommitteeContacts(self):
+        """If a value in default_attendees/default_signatories is removed
+           from orderedCommitteeContacts it must be unselected."""
+        cfg = self.meetingConfig
+        cfg.setOrderedCommitteeContacts((self.hp1_uid, self.hp2_uid))
+        self.changeUser('pmManager')
+        cfg_committees = cfg.getCommittees()
+        cfg_committees[0]['default_attendees'] = [self.hp1_uid]
+        cfg_committees[0]['default_signatories'] = [self.hp2_uid]
+        self.failIf(cfg.validate_committees(cfg_committees))
+        # removing a value used for default_attendees or default_signatories fails
+        cfg.setOrderedCommitteeContacts((self.hp1_uid,))
+        self.failUnless(cfg_committees)
+        cfg.setOrderedCommitteeContacts((self.hp2_uid,))
+        self.failUnless(cfg_committees)
+        # except if no more used
+        cfg_committees[0]['default_attendees'] = []
+        self.failIf(cfg.validate_committees(cfg_committees))
+
+    def test_pm_ConfigEditAndView(self):
+        """Just call the edit and view to check it is displayed correctly."""
+        cfg = self.meetingConfig
+        self.changeUser('siteadmin')
+        fieldsets = cfg.Schemata().keys()
+        for fieldset in fieldsets:
+            self.request.set('pageName', fieldset)
+            self.assertTrue(cfg.restrictedTraverse('base_view')())
+        for fieldset in fieldsets:
+            self.request.set('fieldset', fieldset)
+            self.assertTrue(cfg.restrictedTraverse('base_edit')())
 
 
 def test_suite():

@@ -428,7 +428,7 @@ class IRedefinedSignatory(IBaseAttendee):
         title=_(u"Signature number"),
         description=_(u""),
         required=True,
-        vocabulary=u"Products.PloneMeeting.vocabularies.signaturenumbervocabulary")
+        vocabulary=u"Products.PloneMeeting.vocabularies.numbersvocabulary")
 
 
 def set_meeting_item_signatory(meeting, item_uid, signature_number, hp_uid, position_type):

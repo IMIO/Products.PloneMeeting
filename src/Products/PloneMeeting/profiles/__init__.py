@@ -436,7 +436,8 @@ class MeetingConfigDescriptor(Descriptor):
                          'enableAdviceConfidentiality', 'adviceConfidentialityDefault', 'adviceConfidentialFor',
                          'hideNotViewableLinkedItemsTo', 'inheritedAdviceRemoveableByAdviser', 'usingGroups',
                          'hideHistoryTo', 'orderedAssociatedOrganizations',
-                         'orderedGroupsInCharge', 'orderedItemInitiators')
+                         'orderedGroupsInCharge', 'orderedItemInitiators',
+                         'orderedCommitteeContacts', 'committees')
 
     excludedFields = ['addContactsCSV',
                       'defaultLabels',
@@ -804,7 +805,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.versionateAdviceIfGivenAndItemModified = True
         self.customAdvisers = []
 
-        # Votes parameters -----------------------------------------------------
+        # Votes parameters ----------------------------------------------------
         self.usedPollTypes = ('freehand',
                               'no_vote',
                               'secret',
@@ -816,8 +817,11 @@ class MeetingConfigDescriptor(Descriptor):
         self.firstLinkedVoteUsedVoteValues = ('no', 'abstain')
         self.nextLinkedVotesUsedVoteValues = ('yes', )
         self.voteCondition = ''
+        # Committees parameters -----------------------------------------------
+        self.orderedCommitteeContacts = []
+        self.committees = []
 
-        # Contacts parameters -----------------------------------------------------
+        # Contacts parameters --------------------------------------------------
         # bulk import of contacts using CSV related files
         self.addContactsCSV = False
         self.orderedContacts = []

@@ -20,6 +20,7 @@ from plone import api
 from plone.app.testing import logout
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
+from plone.locking.interfaces import ILockable
 from plone.testing.z2 import Browser
 from Products import PloneMeeting as products_plonemeeting
 from Products.CMFCore.ActionInformation import Action
@@ -2277,9 +2278,23 @@ class testViews(PloneMeetingTestCase):
         # display mode, not able to switch to input mode
         widget = get_dx_widget(meeting, field_name="observations")
         self.assertFalse(editable_action in widget.render())
+        self.assertFalse(widget.may_edit())
         # input mode
         widget = get_dx_widget(meeting, field_name="observations", mode=INPUT_MODE)
         self.assertTrue('class="ckeditor_plone"' in widget.render())
+
+        # not editable when content is locked
+        self.changeUser('siteadmin')
+        self.assertTrue(widget.may_edit())
+        lockable = ILockable(meeting)
+        lockable.lock()
+        self.assertTrue(widget.may_edit())
+        self.changeUser('pmManager')
+        # not editable as locked
+        self.assertFalse(widget.may_edit())
+        # unlock then editable
+        lockable.unlock()
+        self.assertTrue(widget.may_edit())
 
 
 def test_suite():

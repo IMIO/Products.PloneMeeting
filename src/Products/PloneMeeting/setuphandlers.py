@@ -2,14 +2,13 @@
 #
 # File: setuphandlers.py
 #
-# Copyright (c) 2015 by Imio.be
-# Generator: ArchGenXML Version 2.7
-#            http://plone.org/products/archgenxml
-#
 # GNU General Public License (GPL)
 #
+
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
-from collective.documentgenerator.config import set_raiseOnError_for_non_managers, set_oo_server, set_column_modifier
+from collective.documentgenerator.config import set_column_modifier
+from collective.documentgenerator.config import set_oo_server
+from collective.documentgenerator.config import set_raiseOnError_for_non_managers
 from collective.documentgenerator.config import set_use_stream
 from collective.messagesviewlet.utils import add_message
 from dexterity.localroles.utils import add_fti_configuration
@@ -60,6 +59,7 @@ indexInfos = {
     'preferred_meeting_date': ('DateIndex', {}),
     'getProposingGroup': ('FieldIndex', {}),
     'getRawClassifier': ('FieldIndex', {}),
+    'committees_index': ('KeywordIndex', {}),
     'getTakenOverBy': ('FieldIndex', {}),
     'indexAdvisers': ('KeywordIndex', {}),
     'item_boolean_indexes': ('KeywordIndex', {}),
@@ -84,6 +84,7 @@ indexInfos = {
 columnInfos = ('getAssociatedGroups',
                'getCategory',
                'meeting_date',
+               'committees_index',
                'getGroupsInCharge',
                'getItemNumber',
                'preferred_meeting_uid',
@@ -141,11 +142,6 @@ def setupCatalogMultiplex(context):
     for meta_type in catalogmap:
         submap = catalogmap[meta_type]
         current_catalogs = set([c.id for c in atool.getCatalogsByType(meta_type)])
-        if 'white' in submap:
-            for catalog in submap['white']:
-                if api.portal.get_tool(catalog) is None:
-                    raise AttributeError('Catalog "%s" does not exist!' % catalog)
-                current_catalogs.update([catalog])
         if 'black' in submap:
             for catalog in submap['black']:
                 if catalog in current_catalogs:

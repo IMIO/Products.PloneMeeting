@@ -18,13 +18,14 @@ from Products.CMFPlone.utils import safe_unicode
 from Products.Five import BrowserView
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import ITEM_INSERT_METHODS
-from Products.PloneMeeting.content.meeting import Meeting
 from Products.PloneMeeting.content.meeting import get_all_used_held_positions
+from Products.PloneMeeting.content.meeting import Meeting
 from Products.PloneMeeting.MeetingConfig import POWEROBSERVERPREFIX
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import field_is_empty
 from Products.PloneMeeting.utils import redirect
 from z3c.form.contentprovider import ContentProviders
+from z3c.form.interfaces import HIDDEN_MODE
 from z3c.form.interfaces import IFieldsAndContentProvidersForm
 from zope.browserpage.viewpagetemplatefile import ViewPageTemplateFile
 from zope.contentprovider.provider import ContentProviderBase
@@ -74,6 +75,47 @@ def manage_label_assembly(the_form):
             widgets['assembly'].label = _('title_attendees')
 
 
+def manage_committees(the_form):
+    """Depending on configuration, hide not used optional columns."""
+    # not using committees?
+    if "committees" not in the_form.used_attrs:
+        return
+
+    hidden_columns = []
+    widget = the_form.w.get('committees')
+
+    # check what columns to hide
+    for optional_column in Meeting.FIELD_INFOS['committees']['optional_columns']:
+        if not the_form.show_datagrid_column(widget, "committees", optional_column):
+            hidden_columns.append(optional_column)
+
+    # special behavior for assembl/attendees and signatures/signatories
+    # in case config was switched if both fields are shown,
+    # we keep the one not in the config
+    if "assembly" not in hidden_columns and "attendees" not in hidden_columns:
+        if "assembly" in the_form.used_attrs:
+            hidden_columns.append("attendees")
+        else:
+            hidden_columns.append("assembly")
+    if "signatures" not in hidden_columns and "signatories" not in hidden_columns:
+        if "signatures" in the_form.used_attrs:
+            hidden_columns.append("signatories")
+        else:
+            hidden_columns.append("signatures")
+
+    # hide columns
+    for column in widget.columns:
+        if column['name'] in hidden_columns:
+            column['mode'] = HIDDEN_MODE
+
+    # hide widgets in rows
+    for hidden_column_name in hidden_columns:
+        for row in widget.widgets:
+            for wdt in row.subform.widgets.values():
+                if wdt.__name__ == hidden_column_name:
+                    wdt.mode = HIDDEN_MODE
+
+
 def manage_field_attendees(the_form):
     """Move ContentProvider from the_form.widgets to the 'assembly' group."""
     if the_form.show_attendees_fields() or \
@@ -85,6 +127,13 @@ def manage_field_attendees(the_form):
     the_form.widgets._data_keys.data.remove("attendees_edit_provider")
     the_form.widgets._data_values = [v for v in the_form.widgets._data_values
                                      if not v.__name__ == "attendees_edit_provider"]
+
+
+def manage_groups(the_form):
+    """Hide empty groups (fieldsets)."""
+    groups = the_form.groups
+    groups = [group for group in the_form.groups if group.fields]
+    the_form.groups = groups
 
 
 class BaseMeetingView(object):
@@ -113,10 +162,20 @@ class BaseMeetingView(object):
 
     def show_field(self, field_name):
         '''Show the p_field_name field?
-           Must be enabled and or not empty.'''
+           Must be enabled or not empty.'''
         return field_name in self.used_attrs or \
             (self.context.__class__.__name__ == 'Meeting' and
              getattr(self.context, field_name, None))
+
+    def show_datagrid_column(self, widget, field_name, column_name):
+        '''Show the p_column_name or p_field_name DataGridField?
+           Must be enabled or not empty.'''
+        res = True
+        used_attr_name = "{0}_{1}".format(field_name, column_name)
+        if used_attr_name not in self.used_attrs and \
+           field_is_empty(widget, column_name):
+            res = False
+        return res
 
     def show_attendees_fields(self):
         '''Display attendee related fields in view/edit?'''
@@ -170,6 +229,7 @@ class MeetingDefaultView(DefaultView, BaseMeetingView):
     def _update(self):
         super(MeetingDefaultView, self)._update()
         manage_label_assembly(self)
+        manage_committees(self)
 
 
 def _get_default_attendees(context):
@@ -326,6 +386,8 @@ class MeetingEdit(DefaultEditForm, BaseMeetingView):
                 self.w[k] = v
         manage_label_assembly(self)
         manage_field_attendees(self)
+        manage_committees(self)
+        manage_groups(self)
 
 
 class MeetingAddForm(DefaultAddForm, BaseMeetingView):
@@ -353,6 +415,8 @@ class MeetingAddForm(DefaultAddForm, BaseMeetingView):
                 self.w[k] = v
         manage_label_assembly(self)
         manage_field_attendees(self)
+        manage_committees(self)
+        manage_groups(self)
 
 
 class MeetingAdd(DefaultAddView):
@@ -362,13 +426,6 @@ class MeetingAdd(DefaultAddView):
 
 class MeetingView(FacetedContainerView):
     """ """
-
-    section_widgets = {
-        'dates_and_data': ['date', 'start_date', 'mid_date', 'end_date'],
-        'assembly': ['assembly', 'assembly_excused', 'assembly_absents', 'assembly_guests'],
-        'details': [],
-        'managers_parameters': []
-    }
 
     def __init__(self, context, request):
         """ """
