@@ -125,6 +125,9 @@ Changelog
   changing it on the meeting view instead the `reorder icon` (arrow up and down)
   that was sometimes not clear enough for some users.
   [gbastien]
+- Improved `print_signatories_by_position` to be able to use a scanned signature
+  and an abbreviated person firstname.
+  [aduchene]
 
 4.2b11 (2021-01-19)
 -------------------

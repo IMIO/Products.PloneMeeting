@@ -1143,9 +1143,12 @@ class BaseDGHV(object):
             - 'position_type' -> 'Mayor'
             - 'prefixed_position_type' -> 'The Mayor'
             - 'person' -> 'John Doe'
+            - 'abbreviated_person' -> 'J. Doe'
             - 'person_with_title' -> 'Mister John Doe'
+            - 'abbreviated_person_with_title' -> 'Mister J. Doe'
             - 'secondary_position_type' -> 'President'
             - 'prefixed_secondary_position_type' -> 'The President'
+            - 'person_signature' -> Person signature's [NamedImage]
             - [PMHeldPosition attribute] e.g. 'gender' -> 'M'
             - [str] e.g. 'My String' -> 'My String' (in this case it just print the str)
         When using 'prefixed_secondary_position_type' (default), if no 'secondary_position_type'
@@ -1208,17 +1211,27 @@ class BaseDGHV(object):
                         forced_position_type_value=forced_position_type_value)
                 elif attr == u'person':
                     signature_lines[line] = signatory.get_person_title(include_person_title=False)
+                elif attr == u'abbreviated_person':
+                    signature_lines[line] = signatory.get_person_short_title(abbreviate_firstname=True)
                 elif attr == u'person_with_title':
                     signature_lines[line] = signatory.get_person_title(include_person_title=True)
+                elif attr == u'abbreviated_person_with_title':
+                    signature_lines[line] = signatory.get_person_short_title(
+                        abbreviate_firstname=True, include_person_title=True
+                    )
+                elif attr == u'person_signature':
+                    signature_lines[line] = signatory.get_person().signature
                 elif hasattr(signatory, attr):
                     signature_lines[line] = getattr(signatory, attr)
                 else:  # Just put the attr if it doesn't match anything above
                     signature_lines[line] = attr
 
-                if attr != signature_format[-1] and separator is not None:
+                if attr != signature_format[-1] \
+                        and separator is not None \
+                        and isinstance(signature_lines[line], unicode):
                     # if not last line of signatory
                     signature_lines[line] += separator
-                elif ender is not None:  # it is the last line
+                elif ender is not None and isinstance(signature_lines[line], unicode):  # it is the last line
                     signature_lines[line] += ender
 
                 line += 1
