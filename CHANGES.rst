@@ -17,6 +17,14 @@ Changelog
     changing it on the meeting view instead the `reorder icon` (arrow up and down)
     that was sometimes not clear enough for some users.
     [gbastien]
+  - Added parameter `insert_index` to `utils.add_wf_history_action`,
+    this gives the possibility to insert a `workflow_history` event at arbitrary
+    position, and is used for example when creating an item from `REST WS` and
+    WF transitions are triggered, we add event after WF transitions.
+    [gbastien]
+  - Make sure `events.item_added_or_initialized` is only called one time when a
+    new item is created or it may break things done in-between.
+    [gbastien]
 
 4.1.28.19 (2021-02-24)
 ----------------------

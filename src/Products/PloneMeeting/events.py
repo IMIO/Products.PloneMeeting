@@ -591,6 +591,13 @@ def item_added_or_initialized(item):
        To manage every cases, we need to do this in both Initialized and Added event
        because some are triggered in some cases and not others...
        Especially for plone.restapi that calls Initialized then do the validation.'''
+    # avoid multiple initialization
+    # when using restapi for example, this empties adviceIndex
+    # because init/update_local_roles/init
+    if hasattr(item, '_v_already_initialized'):
+        return
+    item._v_already_initialized = True
+
     # make sure workflow mapping is applied, plone.restapi needs it...
     user = api.user.get_current()
     item.manage_addLocalRoles(user.getId(), ('MeetingMember',))
