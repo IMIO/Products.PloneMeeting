@@ -42,12 +42,9 @@ from plone.memoize import ram
 from plone.supermodel.utils import mergedTaggedValueDict
 from Products.Archetypes.atapi import DisplayList
 from Products.Archetypes.event import ObjectEditedEvent
-from Products.CMFCore.permissions import AccessContentsInformation
 from Products.CMFCore.permissions import AddPortalContent
-from Products.CMFCore.permissions import DeleteObjects
 from Products.CMFCore.permissions import ManageProperties
 from Products.CMFCore.permissions import ModifyPortalContent
-from Products.CMFCore.permissions import View
 from Products.CMFCore.utils import _checkPermission
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFPlone.utils import base_hasattr
