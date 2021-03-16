@@ -1271,10 +1271,10 @@ class PMCKFinder(CKFinder):
         self.openuploadwidgetdefault = True
 
 
-def _get_boolean_filters(request):
+def _get_filters(request):
     """ """
     # caching
-    res = request.get("cached_annexes_boolean_filters", None)
+    res = request.get("cached_annexes_filters", None)
     if res is None:
         res = {}
         # in request.form, faceted criterion is like 'c20[]'
@@ -1287,7 +1287,7 @@ def _get_boolean_filters(request):
                     res[value.replace('not_', '')] = False
                 else:
                     res[value] = True
-        request["cached_annexes_boolean_filters"] = res
+        request["cached_annexes_filters"] = res
     return res
 
 
@@ -1305,7 +1305,7 @@ class PMCategorizedChildView(CategorizedChildView):
         context_modified = self.context.modified()
         cfg_modified = cfg.modified()
         # value of the annexes faceted filter
-        boolean_filters = self._boolean_filters
+        filters = self._filters
         return (self.context.UID(),
                 context_modified,
                 cfg_modified,
@@ -1313,12 +1313,12 @@ class PMCategorizedChildView(CategorizedChildView):
                 tool.get_plone_groups_for_user(),
                 portal_type,
                 show_nothing,
-                boolean_filters)
+                filters)
 
     @property
-    def _boolean_filters(self):
+    def _filters(self):
         """ """
-        return _get_boolean_filters(self.request)
+        return _get_filters(self.request)
 
     @ram.cache(__call___cachekey)
     def __call__(self, portal_type=None, show_nothing=False):
@@ -1336,9 +1336,9 @@ class PMCategorizedChildInfosView(CategorizedChildInfosView):
         self.cfg = self.tool.getMeetingConfig(self.context)
 
     @property
-    def _boolean_filters(self):
+    def _filters(self):
         """ """
-        return _get_boolean_filters(self.request)
+        return _get_filters(self.request)
 
     def show_preview_link(self):
         """Show link if preview is enabled, aka the auto_convert in collective.documentviewer."""

@@ -346,7 +346,7 @@
    <property name="hidezerocount">False</property>
    <property name="index">annexes_index</property>
    <property name="operator">and</property>
-   <property name="operator_visible">True</property>
+   <property name="operator_visible">False</property>
    <property
       name="vocabulary">Products.PloneMeeting.vocabularies.faceted_annexes_vocabulary</property>
    <property name="catalog"></property>
