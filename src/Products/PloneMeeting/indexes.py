@@ -298,9 +298,10 @@ def annexes_index(obj):
             res.append('not_publishable')
         # to_sign/signed
         if annex.to_sign:
-            res.append('to_sign')
             if annex.signed:
                 res.append('signed')
+            else:
+                res.append('to_sign')
         else:
             res.append('not_to_sign')
     # remove duplicates
