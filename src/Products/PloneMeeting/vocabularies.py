@@ -919,17 +919,23 @@ class FacetedAnnexesVocabulary(object):
 
     def __call__(self, context):
         """ """
-        values = ["to_print", "not_to_print",
-                  "confidential", "not_confidential",
-                  "publishable", "not_publishable",
-                  "to_sign", "not_to_sign", "signed"]
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        annexes_config = cfg.annexes_types.item_annexes
+        config = {'to_be_printed_activated': ["to_print", "not_to_print"],
+                  'confidentiality_activated': ["confidential", "not_confidential"],
+                  'publishable_activated': ["publishable", "not_publishable"],
+                  'signed_activated': ["to_sign", "not_to_sign", "signed"]}
         res = []
-        for value in values:
-            res.append(SimpleTerm(value,
-                                  value,
-                                  translate('annex_term_{0}'.format(value),
-                                            domain='PloneMeeting',
-                                            context=context.REQUEST)))
+        for k, values in config.items():
+            if getattr(annexes_config, k, False) is True:
+                for value in values:
+                    res.append(SimpleTerm(
+                        value,
+                        value,
+                        translate('annex_term_{0}'.format(value),
+                                  domain='PloneMeeting',
+                                  context=context.REQUEST)))
         return SimpleVocabulary(res)
 
 
