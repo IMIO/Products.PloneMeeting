@@ -7,6 +7,8 @@
 
 from collective.contact.plonegroup.utils import get_plone_group
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
+from Products.PloneMeeting.utils import duplicate_portal_type
+from Products.PloneMeeting.utils import org_id_to_uid
 from Products.PloneMeeting.utils import sendMailIfRelevant
 from Products.PloneMeeting.utils import set_field_from_ajax
 from Products.PloneMeeting.utils import validate_item_assembly_value
@@ -120,6 +122,34 @@ class testUtils(PloneMeetingTestCase):
             u"This meeting may still be under construction and is potentially inaccessible.  "
             u"The item is entitled \"My item\". You can access this item here: {0}.".format(
                 item.absolute_url()))
+
+    def test_pm_org_id_to_uid(self):
+        """Test the utils.org_id_to_uid function."""
+        self.changeUser('pmManager')
+        # org UID
+        self.assertEqual(org_id_to_uid(''), self.own_org.UID())
+        self.assertEqual(org_id_to_uid(self.developers.getId()), self.developers_uid)
+        self.assertEqual(org_id_to_uid(self.vendors.getId()), self.vendors_uid)
+        # org UID with suffix
+        dev_id_creators = "{0}_creators".format(self.developers.getId())
+        dev_uid_creators = "{0}_creators".format(self.developers.UID())
+        self.assertEqual(org_id_to_uid(dev_id_creators), dev_uid_creators)
+        ven_id_creators = "{0}_creators".format(self.vendors.getId())
+        ven_uid_creators = "{0}_creators".format(self.vendors.UID())
+        self.assertEqual(org_id_to_uid(ven_id_creators), ven_uid_creators)
+        # raise_on_error
+        self.assertRaises(KeyError, org_id_to_uid, "wrong/path")
+        self.assertIsNone(org_id_to_uid("wrong/path", raise_on_error=False))
+
+    def test_pm_duplicate_portal_type(self):
+        """Test the utils.duplicate_portal_type function."""
+        self.changeUser('siteadmin')
+        new_portal_type = duplicate_portal_type("MeetingItem", "MeetingItemDummy")
+        self.assertEqual(new_portal_type.id, "MeetingItemDummy")
+        self.assertEqual(new_portal_type.title, "MeetingItemDummy")
+        # there was a bug, categorized_elements from collective.iconifiedcategory
+        # was computed on every IItem, and a portal_type is a IItem...
+        self.assertFalse('categorized_elements' in new_portal_type.__dict__)
 
 
 def test_suite():
