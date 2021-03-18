@@ -411,15 +411,17 @@ EveryOrganizationsAcronymsVocabularyFactory = EveryOrganizationsAcronymsVocabula
 
 
 class PMSortedSelectedOrganizationsElephantVocabulary(SortedSelectedOrganizationsElephantVocabulary):
-    """ """
+    """Vocabulary returning org objects, to be used with RelationList fields."""
 
     def _term_value(self, orga):
-        """ """
+        """RelationList vocabulary must be objects."""
         return orga
 
     def __call__(self, context):
-        """Dos not work with ElephantVocabulary so unwrap it."""
-        wrapped_vocab = super(PMSortedSelectedOrganizationsElephantVocabulary, self).__call__(context)
+        """Does not work with ElephantVocabulary when used as vocabulary
+           for a RelationList field, so unwrap it."""
+        wrapped_vocab = super(PMSortedSelectedOrganizationsElephantVocabulary, self).__call__(
+            context)
         return wrapped_vocab.vocab
 
 PMSortedSelectedOrganizationsElephantVocabularyFactory = PMSortedSelectedOrganizationsElephantVocabulary()
