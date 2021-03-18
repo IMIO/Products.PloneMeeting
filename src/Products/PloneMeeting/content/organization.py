@@ -152,7 +152,8 @@ class IPMOrganization(IOrganization):
         title=_("PloneMeeting_label_groupsInCharge"),
         description=_("groups_in_charge_descr"),
         value_type=schema.Choice(
-            vocabulary="collective.contact.plonegroup.organization_services"),
+            vocabulary="collective.contact.plonegroup.browser.settings."
+            "SortedSelectedOrganizationsElephantVocabulary"),
         required=False,
     )
 

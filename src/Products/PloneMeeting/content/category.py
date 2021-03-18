@@ -42,7 +42,9 @@ class IMeetingCategory(IConfigElement):
         required=False,
     )
 
-    form.widget('category_mapping_when_cloning_to_other_mc', PMCheckBoxFieldWidget, multiple='multiple')
+    form.widget('category_mapping_when_cloning_to_other_mc',
+                PMCheckBoxFieldWidget,
+                multiple='multiple')
     category_mapping_when_cloning_to_other_mc = schema.List(
         title=_("PloneMeeting_label_category_mapping_when_cloning_to_other_mc"),
         description=_("category_mapping_when_cloning_to_other_mc_descr"),
@@ -57,7 +59,8 @@ class IMeetingCategory(IConfigElement):
         title=_("PloneMeeting_label_groupsInCharge"),
         description=_("groups_in_charge_descr"),
         value_type=schema.Choice(
-            vocabulary="collective.contact.plonegroup.organization_services"),
+            vocabulary="collective.contact.plonegroup.browser.settings."
+            "SortedSelectedOrganizationsElephantVocabulary"),
         required=False,
     )
 

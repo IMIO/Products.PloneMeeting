@@ -25,6 +25,12 @@ Changelog
   - Make sure `events.item_added_or_initialized` is only called one time when a
     new item is created or it may break things done in-between.
     [gbastien]
+  - Use `SortedSelectedOrganizationsElephantVocabulary` vocabulary instead
+    `organization_services` vocabulary from `collective.contact.plonegroup` for
+    `category.groups_in_charge` and `organization.groups_in_charge` so elements
+    are sorted alphabetically to ease management.
+    Vocabulary `organization_services` is no more used in PloneMeeting.
+    [gbastien]
 
 4.1.28.19 (2021-02-24)
 ----------------------
