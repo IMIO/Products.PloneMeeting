@@ -91,6 +91,7 @@ class testAnnexes(PloneMeetingTestCase):
         categorized_child = item.restrictedTraverse('@@categorized-childs-infos')
         annex_category = cfg.annexes_types.item_annexes.get('financial-analysis')
         categorized_child.category_uid = annex_category.UID()
+        categorized_child.filters = {}
 
         annexNotConfidential = self.addAnnex(item, annexTitle='Annex not confidential')
         annexConfidential = self.addAnnex(item, annexTitle='Annex confidential')
@@ -341,6 +342,7 @@ class testAnnexes(PloneMeetingTestCase):
         annex_category = cfg.annexes_types.advice_annexes.get('advice-annex')
         categorized_child = advice.restrictedTraverse('@@categorized-childs-infos')
         categorized_child.category_uid = annex_category.UID()
+        categorized_child.filters = {}
 
         annexNotConfidential = self.addAnnex(advice, annexTitle='Annex not confidential')
         annexConfidential = self.addAnnex(advice, annexTitle='Annex confidential')
@@ -509,6 +511,7 @@ class testAnnexes(PloneMeetingTestCase):
         categorized_child = meeting.restrictedTraverse('@@categorized-childs-infos')
         annex_category = cfg.annexes_types.meeting_annexes.get('meeting-annex')
         categorized_child.category_uid = annex_category.UID()
+        categorized_child.filters = {}
 
         annexNotConfidential = self.addAnnex(meeting, annexTitle='Annex not confidential')
         annexConfidential = self.addAnnex(meeting, annexTitle='Annex confidential')

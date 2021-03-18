@@ -896,7 +896,7 @@ class testViews(PloneMeetingTestCase):
             messages[0].message,
             store_podtemplate_as_annex_wrong_annex_type_on_pod_template)
 
-    def test_pm_ItemMoreInfos(self, ):
+    def test_pm_ItemMoreInfos(self):
         '''Test the @@item-more-infos view, especially getItemsListVisibleFields
            for which order of fields may be defined and displayed data may not
            respect MeetingItem schema order.'''
@@ -911,7 +911,7 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(view.getVisibleFields().keys(),
                          ['description', 'decision', 'motivation'])
 
-    def test_pm_ItemMoreInfosItemsVisibleFields(self, ):
+    def test_pm_ItemMoreInfosItemsVisibleFields(self):
         '''Test the @@item-more-infos view when using MeetingConfig.ItemsVisibleFields
            instead MeetingConfig.itemsListVisibleFields.'''
         cfg = self.meetingConfig
@@ -931,7 +931,7 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(view.getVisibleFields().keys(),
                          ['annexes', 'advices', 'description', 'motivation', 'decision', 'privacy'])
 
-    def test_pm_ItemMoreInfosNotViewableItem(self, ):
+    def test_pm_ItemMoreInfosNotViewableItem(self):
         '''When displaying more infos on a not viewable item, configuration
            defined in MeetingConfig.itemsNotViewableVisibleFields will be used.'''
         cfg = self.meetingConfig
@@ -955,8 +955,9 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(view.getVisibleFields().keys(), ['description', 'annexes'])
         category_uid = item.categorized_elements.get(annex.UID())['category_uid']
         # not viewable because there is no back referenced item to which user has View access
-        infos = view.context.restrictedTraverse('@@categorized-childs-infos')(category_uid).strip()
-        # now viewable
+        infos = item.restrictedTraverse('@@categorized-childs-infos')(
+            category_uid=category_uid, filters={}).strip()
+        # not viewable
         self.assertFalse(infos)
         # not downloadable
         download_view = annex.restrictedTraverse('@@download')
@@ -964,13 +965,14 @@ class testViews(PloneMeetingTestCase):
         # link viewable item
         item2 = self.create('MeetingItem')
         item2.setManuallyLinkedItems([item.UID()])
-        infos = view.context.restrictedTraverse('@@categorized-childs-infos')(category_uid).strip()
+        infos = item.restrictedTraverse('@@categorized-childs-infos')(
+            category_uid=category_uid, filters={}).strip()
         # viewable
         self.assertTrue(infos)
         # downloadable
         self.assertTrue(download_view())
 
-    def test_pm_ItemMoreInfosNotViewableItemTALExpr(self, ):
+    def test_pm_ItemMoreInfosNotViewableItemTALExpr(self):
         '''When displaying more infos on a not viewable item, configuration
            defined in MeetingConfig.itemsNotViewableVisibleFields will be used,
            it is possible to complete access with a TAL expression so for example

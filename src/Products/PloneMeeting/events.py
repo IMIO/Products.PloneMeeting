@@ -837,7 +837,7 @@ def onAnnexAdded(annex, event):
         # and reindex parent relevant indexes
         notifyModifiedAndReindex(
             parent,
-            extra_idxs=['SearchableText', 'hasAnnexesToSign', 'hasAnnexesToPrint'])
+            extra_idxs=['SearchableText', 'annexes_index'])
 
 
 def onAnnexEditFinished(annex, event):
@@ -886,24 +886,18 @@ def onAnnexRemoved(annex, event):
             parent.update_local_roles(invalidate=True)
 
     # update modification date and SearchableText
-    notifyModifiedAndReindex(parent, extra_idxs=['SearchableText', 'hasAnnexesToPrint', 'hasAnnexesToSign'])
+    notifyModifiedAndReindex(parent, extra_idxs=['SearchableText', 'annexes_index'])
 
 
 def onAnnexAttrChanged(annex, event):
-    """ """
-    idxs = []
+    """Called when an attribute on an annex is changed (using the quick action view)."""
     if event.attr_name == 'to_print':
         _annexToPrintChanged(annex, event)
 
     if not event.is_created:
-        if event.attr_name == 'to_print':
-            idxs.append('hasAnnexesToPrint')
-        elif event.attr_name == 'to_sign':
-            idxs.append('hasAnnexesToSign')
-
         # update relevant indexes if not event.is_created
         parent = annex.aq_inner.aq_parent
-        notifyModifiedAndReindex(parent, extra_idxs=idxs)
+        notifyModifiedAndReindex(parent, extra_idxs=["annexes_index"])
 
         extras = 'object={0} values={1}'.format(
             repr(annex),
@@ -912,7 +906,7 @@ def onAnnexAttrChanged(annex, event):
 
 
 def _annexToPrintChanged(annex, event):
-    """ """
+    """Called when the "to_print" attribute is changed on an annex."""
     annex = event.object
 
     # if not set to True, we return

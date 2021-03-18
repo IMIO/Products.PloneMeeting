@@ -5,6 +5,7 @@
 # GNU General Public License (GPL)
 #
 
+from collections import OrderedDict
 from collective.contact.plonegroup.browser.settings import EveryOrganizationsVocabulary
 from collective.contact.plonegroup.browser.settings import SortedSelectedOrganizationsElephantVocabulary
 from collective.contact.plonegroup.config import get_registry_organizations
@@ -914,58 +915,33 @@ class SentToInfosVocabulary(object):
 SentToInfosVocabularyFactory = SentToInfosVocabulary()
 
 
-class HasAnnexesToPrintVocabulary(object):
+class FacetedAnnexesVocabulary(object):
     implements(IVocabularyFactory)
 
     def __call__(self, context):
         """ """
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        annexes_config = cfg.annexes_types.item_annexes
+        config = OrderedDict([
+            ('to_be_printed_activated', ("to_print", "not_to_print")),
+            ('confidentiality_activated', ("confidential", "not_confidential")),
+            ('publishable_activated', ("publishable", "not_publishable")),
+            ('signed_activated', ("to_sign", "not_to_sign", "signed"))])
         res = []
-        res.append(SimpleTerm('1',
-                              '1',
-                              safe_unicode(translate('annexes_to_print_term',
-                                                     domain='PloneMeeting',
-                                                     context=context.REQUEST)))
-                   )
-        res.append(SimpleTerm('0',
-                              '0',
-                              safe_unicode(translate('no_annexes_to_print_term',
-                                                     domain='PloneMeeting',
-                                                     context=context.REQUEST)))
-                   )
+        for k, values in config.items():
+            if getattr(annexes_config, k, False) is True:
+                for value in values:
+                    res.append(SimpleTerm(
+                        value,
+                        value,
+                        translate('annex_term_{0}'.format(value),
+                                  domain='PloneMeeting',
+                                  context=context.REQUEST)))
         return SimpleVocabulary(res)
 
 
-HasAnnexesToPrintVocabularyFactory = HasAnnexesToPrintVocabulary()
-
-
-class HasAnnexesToSignVocabulary(object):
-    implements(IVocabularyFactory)
-
-    def __call__(self, context):
-        """ """
-        res = []
-        res.append(SimpleTerm('0',
-                              '0',
-                              safe_unicode(translate('annexes_to_sign_term',
-                                                     domain='PloneMeeting',
-                                                     context=context.REQUEST)))
-                   )
-        res.append(SimpleTerm('1',
-                              '1',
-                              safe_unicode(translate('annexes_signed_term',
-                                                     domain='PloneMeeting',
-                                                     context=context.REQUEST)))
-                   )
-        res.append(SimpleTerm('-1',
-                              '-1',
-                              safe_unicode(translate('no_annexes_to_sign_term',
-                                                     domain='PloneMeeting',
-                                                     context=context.REQUEST)))
-                   )
-        return SimpleVocabulary(res)
-
-
-HasAnnexesToSignVocabularyFactory = HasAnnexesToSignVocabulary()
+FacetedAnnexesVocabularyFactory = FacetedAnnexesVocabulary()
 
 
 class BooleanForFacetedVocabulary(object):

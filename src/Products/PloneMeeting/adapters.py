@@ -771,7 +771,7 @@ class Criteria(eeaCriteria):
       - for listing of meetings : filter out criteria no in MeetingConfig.getDashboardMeetingsFilters.
     """
 
-    def manage_criteria_cachekey(method, self, context):
+    def compute_criteria_cachekey(method, self, context):
         '''cachekey method for self.compute_criteria.'''
         return repr(context), str(context.REQUEST._debug)
 
@@ -779,7 +779,7 @@ class Criteria(eeaCriteria):
         """ """
         self.context, self.criteria = self.compute_criteria(context)
 
-    @ram.cache(manage_criteria_cachekey)
+    @ram.cache(compute_criteria_cachekey)
     def compute_criteria(self, context):
         """ """
         req = context.REQUEST

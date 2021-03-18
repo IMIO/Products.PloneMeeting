@@ -368,6 +368,9 @@ EXECUTE_EXPR_VALUE = 'execute_tal_expression'
 
 NO_COMMITTEE = u"no_committee"
 
+# for performance reason we do not dynamically get the annexes criterion id
+FACETED_ANNEXES_CRITERION_ID = 'c20'
+
 
 def registerClasses():
     '''ArchGenXML generated code does not register Archetype classes at the

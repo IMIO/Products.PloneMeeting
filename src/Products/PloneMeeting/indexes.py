@@ -260,38 +260,52 @@ def to_discuss(obj):
 
 
 @indexer(IMeetingItem)
-def hasAnnexesToPrint(obj):
+def annexes_index(obj):
     """
-      Index the fact that an item has annexes to_print.
+      Unique index with data relative to stored annexes :
+      - to_print :
+        - 'not_to_print' if contains annexes not to print;
+        - 'to_print' otherwise;
+      - confidential :
+        - 'not_confidential' if contains not confidential annexes;
+        - 'confidential' otherwise;
+      - publishable :
+        - 'not_publishable' if contains not publishable annexes;
+        - 'publishable' otherwise;
+      - to_sign/signed :
+        - 'not_to_sign' if contains not to sign annexes;
+        - 'to_sign' if contains to_sign but not signed annexes;
+        - 'signed' if contains signed annexes.
     """
-    # use objectValues because with events order, an annex
-    # could be added but still not registered in the categorized_elements dict
-    for annex in get_annexes(obj):
-        if annex.to_print:
-            return '1'
-    return '0'
-
-
-@indexer(IMeetingItem)
-def hasAnnexesToSign(obj):
-    """
-      Index the fact that an item has annexes to_sign/signed.
-      - '-1' is not to_sign;
-      - '0' is to_sign but not signed;
-      - '1' is signed.
-    """
-    # use objectValues because with events order, an annex
-    # could be added but still not registered in the categorized_elements dict
     res = []
+    # use objectValues because with events order, an annex
+    # could be added but still not registered in the categorized_elements dict
     for annex in get_annexes(obj):
+        # to_print
+        if annex.to_print:
+            res.append('to_print')
+        else:
+            res.append('not_to_print')
+        # confidential
+        if annex.confidential:
+            res.append('confidential')
+        else:
+            res.append('not_confidential')
+        # publishable
+        if annex.publishable:
+            res.append('publishable')
+        else:
+            res.append('not_publishable')
+        # to_sign/signed
         if annex.to_sign:
             if annex.signed:
-                res.append('1')
+                res.append('signed')
             else:
-                res.append('0')
+                res.append('to_sign')
         else:
-            res.append('-1')
-    return res
+            res.append('not_to_sign')
+    # remove duplicates
+    return list(set(res))
 
 
 @indexer(IItem)

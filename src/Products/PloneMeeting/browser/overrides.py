@@ -59,6 +59,7 @@ from Products.CMFPlone.utils import safe_unicode
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from Products.PloneMeeting import utils as pm_utils
 from Products.PloneMeeting.config import BARCODE_INSERTED_ATTR_ID
+from Products.PloneMeeting.config import FACETED_ANNEXES_CRITERION_ID
 from Products.PloneMeeting.config import ITEM_DEFAULT_TEMPLATE_ID
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
@@ -1270,6 +1271,26 @@ class PMCKFinder(CKFinder):
         self.openuploadwidgetdefault = True
 
 
+def _get_filters(request):
+    """ """
+    # caching
+    res = request.get("cached_annexes_filters", None)
+    if res is None:
+        res = {}
+        # in request.form, faceted criterion is like 'c20[]'
+        faceted_filter = request.form.get(FACETED_ANNEXES_CRITERION_ID + '[]', None)
+        if faceted_filter is not None:
+            if not hasattr(faceted_filter, '__iter__'):
+                faceted_filter = [faceted_filter]
+            for value in faceted_filter:
+                if value.startswith('not_'):
+                    res[value.replace('not_', '')] = False
+                else:
+                    res[value] = True
+        request["cached_annexes_filters"] = res
+    return res
+
+
 class PMCategorizedChildView(CategorizedChildView):
     """Add caching."""
 
@@ -1283,13 +1304,21 @@ class PMCategorizedChildView(CategorizedChildView):
         # any change on annex (added, removed, edited, attribute changed)
         context_modified = self.context.modified()
         cfg_modified = cfg.modified()
+        # value of the annexes faceted filter
+        filters = self._filters
         return (self.context.UID(),
                 context_modified,
                 cfg_modified,
                 server_url,
                 tool.get_plone_groups_for_user(),
                 portal_type,
-                show_nothing)
+                show_nothing,
+                filters)
+
+    @property
+    def _filters(self):
+        """ """
+        return _get_filters(self.request)
 
     @ram.cache(__call___cachekey)
     def __call__(self, portal_type=None, show_nothing=False):
@@ -1305,6 +1334,11 @@ class PMCategorizedChildInfosView(CategorizedChildInfosView):
         super(PMCategorizedChildInfosView, self).__init__(context, request)
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
+
+    @property
+    def _filters(self):
+        """ """
+        return _get_filters(self.request)
 
     def show_preview_link(self):
         """Show link if preview is enabled, aka the auto_convert in collective.documentviewer."""
