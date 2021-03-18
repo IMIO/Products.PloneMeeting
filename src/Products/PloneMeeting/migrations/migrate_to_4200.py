@@ -506,7 +506,8 @@ class Migrate_To_4200(Migrator):
                      'linkedMeetingUID',
                      'linkedMeetingDate',
                      'hasAnnexesToPrint',
-                     'hasAnnexesToSign'])
+                     'hasAnnexesToSign',
+                     'item_boolean_indexes'])
         self.removeUnusedColumns(
             columns=['toDiscuss',
                      'getDate',

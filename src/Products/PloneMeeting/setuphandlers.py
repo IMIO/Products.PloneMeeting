@@ -62,7 +62,6 @@ indexInfos = {
     'committees_index': ('KeywordIndex', {}),
     'getTakenOverBy': ('FieldIndex', {}),
     'indexAdvisers': ('KeywordIndex', {}),
-    'item_boolean_indexes': ('KeywordIndex', {}),
     'meeting_uid': ('FieldIndex', {}),
     'meeting_date': ('DateIndex', {}),
     'previous_review_state': ('FieldIndex', {}),
