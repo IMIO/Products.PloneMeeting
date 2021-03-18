@@ -458,7 +458,7 @@ class Migrate_To_4200(Migrator):
         '''Filter modified(c13)/created(c14) is now created(c13)/modified(c14).
            Filter hasAnnexesToPrint(c20) and hasAnnexesToSign(c25) are merged to (c20)
            and will use the annexes_index.'''
-        logger.info('Fixing created/modified filters...')
+        logger.info('Fixing created/modified and hasAnnexesToPrint/hasAnnexesToSign filters...')
         for cfg in self.tool.objectValues('MeetingConfig'):
             # make sure only done one time or relaunching migration would
             # reapply and switch back to wrong configuration
