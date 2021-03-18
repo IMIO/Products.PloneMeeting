@@ -128,6 +128,10 @@ Changelog
 - Improved `print_signatories_by_position` to be able to use a scanned signature
   and an abbreviated person firstname.
   [aduchene]
+- Factorize annexes boolean indexes (`to_print`, `publishable`, `confidential`,
+  ...) in `annexes_indexes`, removed `hasAnnexesToPrint/hasAnnexesToSign` index
+  and related faceted filter, added a single `Annexes` faceted filter.
+  [gbastien]
 
 4.2b11 (2021-01-19)
 -------------------
