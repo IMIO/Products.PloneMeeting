@@ -132,6 +132,12 @@ Changelog
   ...) in `annexes_indexes`, removed `hasAnnexesToPrint/hasAnnexesToSign` index
   and related faceted filter, added a single `Annexes` faceted filter.
   [gbastien]
+- Use `SortedSelectedOrganizationsElephantVocabulary` vocabulary instead
+  `organization_services` vocabulary from `collective.contact.plonegroup` for
+  `category.groups_in_charge` and `organization.groups_in_charge` so elements
+  are sorted alphabetically to ease management.
+  Vocabulary `organization_services` is no more used in PloneMeeting.
+  [gbastien]
 
 4.2b11 (2021-01-19)
 -------------------
