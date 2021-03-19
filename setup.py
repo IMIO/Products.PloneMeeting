@@ -44,7 +44,7 @@ setup(name='Products.PloneMeeting',
                           # temp backward compat
                           amqp=[]),
       install_requires=[
-          'appy > 0.8.0',
+          'appy>1.0.5',
           'beautifulsoup4',
           'natsort',
           'setuptools',
