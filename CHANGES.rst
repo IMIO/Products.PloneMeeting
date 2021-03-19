@@ -31,6 +31,11 @@ Changelog
     are sorted alphabetically to ease management.
     Vocabulary `organization_services` is no more used in PloneMeeting.
     [gbastien]
+- Overrided `collective.documentgenerator` call to `_render_document` to pass
+  `rotateImages=True` so images are rotated if `exif` data specifies it and
+  `pdfOptions="ExportNotes=True,IsSkipEmptyPages=False"` so white pages are
+  displayed.
+  [gbastien]
 
 4.1.28.19 (2021-02-24)
 ----------------------

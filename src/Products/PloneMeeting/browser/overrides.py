@@ -1073,6 +1073,23 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
         else:
             return super(PMDocumentGenerationView, self)._get_filename()
 
+    def _render_document(self,
+                         pod_template,
+                         output_format,
+                         sub_documents,
+                         raiseOnError=False,
+                         **kwargs):
+        """Override to pass parameters rotateImages=True and
+           pdfOptions="ExportNotes=True,IsSkipEmptyPages=False"."""
+        kwargs['rotateImages'] = True
+        kwargs['pdfOptions'] = "ExportNotes=True"
+        return super(PMDocumentGenerationView, self)._render_document(
+            pod_template,
+            output_format,
+            sub_documents,
+            raiseOnError=False,
+            **kwargs)
+
     def _store_pod_template_as_annex(self,
                                      pod_template,
                                      output_format,
