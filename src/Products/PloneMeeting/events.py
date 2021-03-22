@@ -956,14 +956,6 @@ def _redirect_if_default_item_template(item):
             type='error')
         raise Redirect(item.REQUEST.get('HTTP_REFERER'))
 
-    # update item predecessor and successors
-    predecessor = item.get_predecessor()
-    if predecessor:
-        predecessor.linked_successor_uids.remove(item.UID())
-    successors = item.get_successors()
-    for successor in successors:
-        successor.linked_predecessor_uid = None
-
 
 def onItemWillBeMoved(item, event):
     '''Do not move the ITEM_DEFAULT_TEMPLATE_ID.'''
@@ -979,6 +971,14 @@ def onItemWillBeRemoved(item, event):
     # If we are trying to remove the whole Plone Site or a MeetingConfig, bypass this hook.
     if event.object.meta_type in ['Plone Site', 'MeetingConfig']:
         return
+
+    # update item predecessor and successors
+    predecessor = item.get_predecessor()
+    if predecessor:
+        predecessor.linked_successor_uids.remove(item.UID())
+    successors = item.get_successors()
+    for successor in successors:
+        successor.linked_predecessor_uid = None
 
     return _redirect_if_default_item_template(item)
 

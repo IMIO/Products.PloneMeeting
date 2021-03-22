@@ -8,7 +8,6 @@
 from AccessControl import Unauthorized
 from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.contact.plonegroup.utils import get_plone_groups
-from collective.iconifiedcategory.event import IconifiedAttrChangedEvent
 from collective.iconifiedcategory.utils import calculate_category_id
 from collective.iconifiedcategory.utils import get_categories
 from collective.iconifiedcategory.utils import get_categorized_elements
