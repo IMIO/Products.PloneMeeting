@@ -601,9 +601,6 @@ Changelog
 - Added `collective.fingerpointing` log message when managing item `assembly/signatures/attendees/signatories`
 - Fixed bug in `itemPeople` macro displayed on `meetingitem_view`, when field Meeting `itemNonAttendees` is enabled,
   the column header was correctly hidden but the column cells were displayed
-<<<<<<< HEAD
-- Removed `MeetingItem.predecessor` `ReferenceField`, manage `predecessor/successors` manually, this will help migrating to DX
-=======
 - Moved JS function `toggleDoc` to `imio.helpers` under name `toggleDetails`
 - Cleaned `plonemeeting.css`, removed useless styles definition
 - In `contacts` management, show clearly that icons in portlet will add new `organization/held_position` by using icons with a `+`
@@ -645,7 +642,6 @@ Changelog
 - Fixed `@@check-pod-templates` that was no more raising an error when a POD template was wrong, hidding broken templates...
 - Reworked email notifications to always have relevant information at the beginning of the subject in case item title is very long
 - Make sure field `Meeting.secretMeetingObservations` is only editable/viewable by `MeetingManagers`
->>>>>>> origin/master
 
 4.1.27.2 (2020-06-25)
 ---------------------
