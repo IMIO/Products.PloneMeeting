@@ -2,24 +2,7 @@
 #
 # File: testMeetingConfig.py
 #
-# Copyright (c) 2018 by Imio.be
-#
 # GNU General Public License (GPL)
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
-# 02110-1301, USA.
 #
 
 from AccessControl import Unauthorized
@@ -30,7 +13,9 @@ from collective.eeafaceted.collectionwidget.utils import _updateDefaultCollectio
 from collective.eeafaceted.collectionwidget.utils import getCollectionLinkCriterion
 from collective.iconifiedcategory.utils import _categorized_elements
 from collective.iconifiedcategory.utils import get_category_object
+from copy import deepcopy
 from DateTime import DateTime
+from datetime import datetime
 from eea.facetednavigation.widgets.resultsperpage.widget import Widget as ResultsPerPageWidget
 from ftw.labels.interfaces import ILabeling
 from ftw.labels.interfaces import ILabelJar
@@ -55,9 +40,11 @@ from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
 from Products.PloneMeeting.config import READER_USECASES
 from Products.PloneMeeting.config import TOOL_FOLDER_SEARCHES
 from Products.PloneMeeting.config import WriteHarmlessConfig
+from Products.PloneMeeting.content.meeting import default_committees
 from Products.PloneMeeting.events import _itemAnnexTypes
 from Products.PloneMeeting.interfaces import IConfigElement
 from Products.PloneMeeting.MeetingConfig import DUPLICATE_SHORT_NAME
+from Products.PloneMeeting.tests.PloneMeetingTestCase import DefaultData
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
 from zope.event import notify
@@ -1252,7 +1239,7 @@ class testMeetingConfig(PloneMeetingTestCase):
 
         # fails if a meeting exists
         self.changeUser('pmManager')
-        meeting = self.create('Meeting', date='2008/06/23 15:39:00')
+        meeting = self.create('Meeting')
         self.changeUser('siteadmin')
         with self.assertRaises(BeforeDeleteException) as cm:
             self.tool.manage_delObjects([cfgId, ])
@@ -1385,7 +1372,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         # disbable first recurring item
         recItem1 = cfg.getRecurringItems()[0]
         self.do(recItem1, 'deactivate')
-        self.assertTrue(recItem1.queryState() == 'inactive')
+        self.assertTrue(recItem1.query_state() == 'inactive')
         activeRecItems = cfg.recurringitems.objectIds('MeetingItem')
         activeRecItems.remove(recItem1.getId())
         self.assertTrue([item.getId() for item in cfg.getRecurringItems()] == activeRecItems)
@@ -1477,8 +1464,8 @@ class testMeetingConfig(PloneMeetingTestCase):
         # custom cleanup for profiles having extra roles
         self._removeUsersFromEveryGroups(self._usersToRemoveFromGroupsForUpdatePersonalLabels())
         # do not consider observers group as it changes too often from one WF to another...
-        self._removePrincipalFromGroup('pmReviewer1', self.developers_observers)
-        self._removePrincipalFromGroup('pmObserver1', self.developers_observers)
+        self._removePrincipalFromGroups('pmReviewer1', [self.developers_observers])
+        self._removePrincipalFromGroups('pmObserver1', [self.developers_observers])
         self.changeUser('pmManager')
         item1 = self.create('MeetingItem')
         item2 = self.create('MeetingItem')
@@ -1641,7 +1628,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         cfg2 = self.meetingConfig2
         cfg2.setWorkflowAdaptations(())
         cfg2.at_post_edit_script()
-        cfg3 = self.create('MeetingConfig')
+        cfg3 = self.create('MeetingConfig', workflowAdaptations=[])
 
         # test with normal value
         self.assertEqual(cfg2.getPlaces(), '')
@@ -1733,8 +1720,8 @@ class testMeetingConfig(PloneMeetingTestCase):
         itemFromTemplate = view.createItemFromTemplate(item_template.UID())
         self.assertFalse(IConfigElement.providedBy(itemFromTemplate))
         # recurring item
-        meeting = self.create('Meeting', date=DateTime('2019/03/11'))
-        recurring_item = meeting.getItems()[0]
+        meeting = self.create('Meeting')
+        recurring_item = meeting.get_items()[0]
         self.assertFalse(IConfigElement.providedBy(recurring_item))
 
     def test_pm_ConfigModifiedWhenConfigElementAddedModifiedRemoved(self):
@@ -1764,7 +1751,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         content_category_cfg_modified = cfg.modified()
         self.assertNotEqual(style_template_cfg_modified, content_category_cfg_modified)
 
-        # edit a MeetingCategory
+        # edit a meetingcategory
         category = cfg.categories.objectValues()[0]
         notify(ObjectModifiedEvent(category))
         category_cfg_modified = cfg.modified()
@@ -1944,12 +1931,133 @@ class testMeetingConfig(PloneMeetingTestCase):
             domain='PloneMeeting',
             context=self.portal.REQUEST)
         self.assertEqual(cfg.validate_powerObservers(values), plone_group_not_empty_error_msg)
-        self._removePrincipalFromGroup('restrictedpowerobserver1', plone_group_id)
+        self._removePrincipalFromGroups('restrictedpowerobserver1', [plone_group_id])
         # validates with removed power observer
         self.assertFalse(cfg.validate_powerObservers(values))
         cfg.setPowerObservers(values)
         # the linked Plone group was removed
         self.assertFalse(api.group.get(plone_group_id))
+
+    def test_pm_Validate_itemWFValidationLevels_removed_used_state_item(self):
+        """Test MeetingConfig.validate_itemWFValidationLevels, if we remove a validation
+           level state that is used by an item."""
+        cfg = self.meetingConfig
+        # make sure not used in config
+        cfg.setItemAdviceStates(())
+        cfg.setItemAdviceEditStates(())
+
+        # itemcreated level is mandatory
+        level_itemcreated_error = \
+            translate('item_wf_val_states_itemcreated_mandatory',
+                      domain='PloneMeeting',
+                      context=self.request)
+        # values_disabled_item_created
+        self._disableItemValidationLevel(cfg, level='itemcreated')
+        values_disabled_item_created = deepcopy(cfg.getItemWFValidationLevels())
+        self._enableItemValidationLevel(cfg, level='itemcreated')
+        self.assertEqual(cfg.validate_itemWFValidationLevels(values_disabled_item_created),
+                         level_itemcreated_error)
+
+        # remove a state that is not in use
+        self.assertEqual(cfg.getItemWFValidationLevels(data='state', only_enabled=True),
+                         ['itemcreated', 'proposed'])
+        # values_disabled_proposed
+        self._disableItemValidationLevel(cfg, level='proposed')
+        values_disabled_proposed = deepcopy(cfg.getItemWFValidationLevels())
+        self._enableItemValidationLevel(cfg, level='proposed')
+        self.failIf(cfg.validate_itemWFValidationLevels(values_disabled_proposed))
+
+        # create an item that will be itemcreated
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        self.assertEqual(item.query_state(), 'itemcreated')
+        self.do(item, 'propose')
+        self.assertEqual(item.query_state(), 'proposed')
+        level_removed_error = \
+            translate('item_wf_val_states_can_not_be_removed_in_use',
+                      domain='PloneMeeting',
+                      mapping={'item_state': "Proposed",
+                               'item_url': item.absolute_url()},
+                      context=self.request)
+        self.assertEqual(cfg.validate_itemWFValidationLevels(values_disabled_proposed),
+                         level_removed_error)
+
+        # delete item then validation is correct
+        self.deleteAsManager(item.UID())
+        self.failIf(cfg.validate_itemWFValidationLevels(values_disabled_proposed))
+
+    def test_pm_Validate_itemWFValidationLevels_removed_depending_used_state_item(self):
+        """Test MeetingConfig.validate_itemWFValidationLevels, if we remove a validation
+           level state that is used by an item, not directly but by a workflowAdaptation
+           that is using it, like for example the "prevalidated_waiting_advices" states."""
+        # ease override by subproducts
+        cfg = self.meetingConfig
+        if not self._check_wfa_available(['waiting_advices']):
+            return
+
+        # config
+        cfg = self.meetingConfig
+        waiting_advices_proposed_state = '{0}_waiting_advices'.format(
+            self._stateMappingFor('proposed'))
+        cfg.setItemAdviceStates((waiting_advices_proposed_state, ))
+        cfg.setItemAdviceEditStates((waiting_advices_proposed_state, ))
+        cfg.setItemAdviceViewStates((waiting_advices_proposed_state, ))
+
+        # add item and set it in waiting_advices_proposed_state
+        self.changeUser('pmManager')
+        self._activate_wfas(('waiting_advices', ))
+        item = self.create('MeetingItem')
+        item.setOptionalAdvisers((self.vendors_uid, ))
+        self.proposeItem(item)
+        self._setItemToWaitingAdvices(item, 'wait_advices_from_proposed')
+        # values_disabled_proposed
+        self._disableItemValidationLevel(cfg, level='proposed')
+        values_disabled_proposed = deepcopy(cfg.getItemWFValidationLevels())
+        self._enableItemValidationLevel(cfg, level='proposed')
+        level_removed_error = \
+            translate('item_wf_val_states_can_not_be_removed_in_use',
+                      domain='PloneMeeting',
+                      mapping={'item_state': "Waiting advices (proposed)",
+                               'item_url': item.absolute_url()},
+                      context=self.request)
+        self.assertEqual(cfg.validate_itemWFValidationLevels(values_disabled_proposed),
+                         level_removed_error)
+
+    def test_pm_Validate_itemWFValidationLevels_removed_used_state_in_config(self):
+        """Test MeetingConfig.validate_itemWFValidationLevels, if we remove a validation
+           level state that is used by the MeetingConfig."""
+        cfg = self.meetingConfig
+        cfg.setItemAdviceEditStates(())
+
+        # itemcreated level is mandatory
+        level_removed_config_error = \
+            translate('item_wf_val_states_can_not_be_removed_in_use_config',
+                      mapping={'state_or_transition': 'Proposed',
+                               'cfg_field_name': 'Item states allowing to define advices', },
+                      domain='PloneMeeting',
+                      context=self.request)
+        # values_disabled_proposed
+        self._disableItemValidationLevel(cfg, level='proposed')
+        values_disabled_proposed = deepcopy(cfg.getItemWFValidationLevels())
+        self._enableItemValidationLevel(cfg, level='proposed')
+        # used in itemAdviceStates, as state
+        self.assertEqual(cfg.validate_itemWFValidationLevels(values_disabled_proposed),
+                         level_removed_config_error)
+        cfg.setItemAdviceStates(())
+        # used in transitionsToConfirm, as transition
+        cfg.setTransitionsToConfirm(('MeetingItem.propose', 'MeetingItem.validate'))
+        level_removed_config_error = \
+            translate('item_wf_val_states_can_not_be_removed_in_use_config',
+                      mapping={'state_or_transition': 'Propose',
+                               'cfg_field_name': 'Transitions to confirm', },
+                      domain='PloneMeeting',
+                      context=self.request)
+        self.assertEqual(cfg.validate_itemWFValidationLevels(values_disabled_proposed),
+                         level_removed_config_error)
+        # make no more used
+        cfg.setItemAdviceEditStates(())
+        cfg.setTransitionsToConfirm(())
+        self.failIf(cfg.validate_itemWFValidationLevels(values_disabled_proposed))
 
     def test_pm_RemoveAnnexesPreviewsOnMeetingClosure(self):
         """When MeetingConfig.removeAnnexesPreviewsOnMeetingClosure is True,
@@ -1957,7 +2065,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         self._enableAutoConvert()
         cfg = self.meetingConfig
         self.changeUser('pmManager')
-        meeting = self.create('Meeting', date=DateTime('2020/03/31'))
+        meeting = self.create('Meeting')
         item = self.create('MeetingItem')
         annex = self.addAnnex(item)
         annex_decision = self.addAnnex(item, relatedTo='item_decision')
@@ -1968,17 +2076,21 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.assertFalse(cfg.getRemoveAnnexesPreviewsOnMeetingClosure())
         self.presentItem(item)
         self.closeMeeting(meeting)
-        self.assertEqual(meeting.queryState(), 'closed')
+        self.assertEqual(meeting.query_state(), 'closed')
         self.assertEqual(infos[annex.UID()]['preview_status'], 'converted')
         self.assertEqual(infos[annex_decision.UID()]['preview_status'], 'converted')
         # removeAnnexesPreviewsOnMeetingClosure=True
         cfg.setRemoveAnnexesPreviewsOnMeetingClosure(True)
         self.backToState(meeting, 'created')
         self.closeMeeting(meeting)
-        self.assertEqual(meeting.queryState(), 'closed')
+        self.assertEqual(meeting.query_state(), 'closed')
         infos = _categorized_elements(item)
         self.assertEqual(infos[annex.UID()]['preview_status'], 'not_converted')
         self.assertEqual(infos[annex_decision.UID()]['preview_status'], 'not_converted')
+        # close a Meeting without items, this was generating a bug
+        self._removeConfigObjectsFor(cfg)
+        meeting = self.create('Meeting', date=datetime(2020, 1, 15))
+        self.closeMeeting(meeting)
 
     def test_pm_CanNotDeactivateConfigUsedInAnotherConfig(self):
         """A MeetingConfig will not be deactivated if used in another
@@ -2006,6 +2118,108 @@ class testMeetingConfig(PloneMeetingTestCase):
         cfg.setMeetingConfigsToCloneTo(())
         self.do(cfg2, 'deactivate')
         self.assertEqual(api.content.get_state(cfg2), 'inactive')
+
+    def test_pm_Show_meeting_manager_reserved_field(self):
+        """This condition is protecting some fields that should only be
+           viewable by MeetingManagers."""
+        cfg = self.meetingConfig
+        self.changeUser('pmManager')
+        # a reserved field is shown if used
+        usedMeetingAttrs = cfg.getUsedMeetingAttributes()
+        self.assertFalse('a_meeting_field' in usedMeetingAttrs)
+        self.assertFalse(cfg.show_meeting_manager_reserved_field('a_meeting_field'))
+        cfg.setUsedMeetingAttributes(usedMeetingAttrs + ('a_meeting_field', ))
+        self.assertTrue(cfg.show_meeting_manager_reserved_field('a_meeting_field'))
+        # not viewable by non MeetingManagers
+        self.changeUser('pmCreator1')
+        self.assertFalse(cfg.show_meeting_manager_reserved_field('a_meeting_field'))
+
+    def test_pm_Validate_usedMeetingAttributes(self):
+        """Check the MeetingConfig.usedMeetingAttributes validate method."""
+        cfg = self.meetingConfig
+        self.changeUser('pmManager')
+        self.failIf(cfg.validate_usedMeetingAttributes([]))
+        incompatible_values = {"assembly": "attendees",
+                               "signatures": "signatories",
+                               "committees_assembly": "committees_attendees",
+                               "committees_signatures": "committees_signatories"}
+        for k, v in incompatible_values.items():
+            self.failUnless(cfg.validate_usedMeetingAttributes([k, v]))
+        required_values = {"assembly": ["assembly_excused", "assembly_absents"],
+                           "attendees": ["excused", "absents"],
+                           "committees": [v for v in cfg.Vocabulary('usedMeetingAttributes')[0]
+                                          if v.startswith("committees_")]}
+        for k, values in required_values.items():
+            for v in values:
+                self.failUnless(cfg.validate_usedMeetingAttributes([v]))
+
+    def test_pm_Validate_committees_not_removable_when_used(self):
+        """Check that when used on a meeting or on an item, a committee may not
+           be removed from the MeetingConfig.committees."""
+        cfg = self.meetingConfig
+        self._enableField("committees", related_to='Meeting')
+        self.changeUser('pmManager')
+        # Meeting
+        meeting = self.create('Meeting', committees=default_committees(DefaultData(cfg)))
+        cfg_committees = cfg.getCommittees()
+        self.failIf(cfg.validate_committees(cfg_committees))
+        self.failUnless(cfg.validate_committees([cfg_committees[1]]))
+        self.deleteAsManager(meeting.UID())
+
+        # MeetingItem
+        item = self.create('MeetingItem', committees=[cfg_committees[0]['row_id']])
+        self.failIf(cfg.validate_committees(cfg_committees))
+        self.failUnless(cfg.validate_committees([cfg_committees[1]]))
+        # supplement, second committee cfg has a supplement
+        item.setCommittees(["{0}__suppl__1".format(cfg_committees[1]['row_id'])])
+        item.reindexObject(idxs=["committees_index"])
+        self.failIf(cfg.validate_committees(cfg_committees))
+        self.failUnless(cfg.validate_committees([cfg_committees[0]]))
+
+    def test_pm_Validate_committees_values(self):
+        """Can not define values in column "auto_from" and in column "using_groups"."""
+        cfg = self.meetingConfig
+        self.changeUser('pmManager')
+        # "using_groups" alone
+        cfg_committees = cfg.getCommittees()
+        cfg_committees[0]['using_groups'] = [self.vendors_uid]
+        self.failIf(cfg.validate_committees([cfg_committees[0]]))
+        # "auto_from" alone
+        cfg_committees[1]['auto_from'] = ["proposing_group__" + self.vendors_uid]
+        self.failIf(cfg.validate_committees([cfg_committees[1]]))
+        # fails when used together
+        self.failUnless(cfg_committees)
+
+    def test_pm_Validate_committees_orderedCommitteeContacts(self):
+        """If a value in default_attendees/default_signatories is removed
+           from orderedCommitteeContacts it must be unselected."""
+        cfg = self.meetingConfig
+        cfg.setOrderedCommitteeContacts((self.hp1_uid, self.hp2_uid))
+        self.changeUser('pmManager')
+        cfg_committees = cfg.getCommittees()
+        cfg_committees[0]['default_attendees'] = [self.hp1_uid]
+        cfg_committees[0]['default_signatories'] = [self.hp2_uid]
+        self.failIf(cfg.validate_committees(cfg_committees))
+        # removing a value used for default_attendees or default_signatories fails
+        cfg.setOrderedCommitteeContacts((self.hp1_uid,))
+        self.failUnless(cfg_committees)
+        cfg.setOrderedCommitteeContacts((self.hp2_uid,))
+        self.failUnless(cfg_committees)
+        # except if no more used
+        cfg_committees[0]['default_attendees'] = []
+        self.failIf(cfg.validate_committees(cfg_committees))
+
+    def test_pm_ConfigEditAndView(self):
+        """Just call the edit and view to check it is displayed correctly."""
+        cfg = self.meetingConfig
+        self.changeUser('siteadmin')
+        fieldsets = cfg.Schemata().keys()
+        for fieldset in fieldsets:
+            self.request.set('pageName', fieldset)
+            self.assertTrue(cfg.restrictedTraverse('base_view')())
+        for fieldset in fieldsets:
+            self.request.set('fieldset', fieldset)
+            self.assertTrue(cfg.restrictedTraverse('base_edit')())
 
 
 def test_suite():

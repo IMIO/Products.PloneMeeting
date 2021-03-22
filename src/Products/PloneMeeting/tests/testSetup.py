@@ -2,27 +2,10 @@
 #
 # File: testSetup.py
 #
-# Copyright (c) 2016 by Imio.be
-#
 # GNU General Public License (GPL)
 #
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
-# 02110-1301, USA.
-#
-import os
 
+from imio.helpers.content import object_values
 from plone import api
 from Products.GenericSetup.context import DirectoryImportContext
 from Products.PloneMeeting.config import HAS_SOLR
@@ -31,6 +14,7 @@ from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCas
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
 from Products.PloneMeeting.utils import cleanMemoize
 
+import os
 import random
 
 
@@ -70,8 +54,8 @@ class testSetup(PloneMeetingTestCase):
             mymeetings = user_folder.get('mymeetings')
             if mymeetings:
                 for cfg_folder in mymeetings.objectValues():
-                    meetings = meetings + list(cfg_folder.objectValues('Meeting'))
-                    items = items + list(cfg_folder.objectValues('MeetingItem'))
+                    meetings = meetings + list(object_values(cfg_folder, 'Meeting'))
+                    items = items + list(object_values(cfg_folder, 'MeetingItem'))
         # delete items first because deleting a meeting delete included items...
         for obj in items + meetings:
             parent = obj.aq_inner.aq_parent
@@ -105,7 +89,7 @@ class testSetup(PloneMeetingTestCase):
 
             self.portal.portal_setup.runAllImportStepsFromProfile(u'profile-' + profile_name)
             # check that configured Pod templates are correctly rendered
-            # there should be no message of type
+            # there should be no message of type 'error' or 'no_pod_portal_types'
             tool = api.portal.get_tool('portal_plonemeeting')
             for cfg in tool.objectValues('MeetingConfig'):
                 view = cfg.restrictedTraverse('@@check-pod-templates')
@@ -215,14 +199,13 @@ class testSetup(PloneMeetingTestCase):
                          set(expected))
 
     def test_pm_FactoryTypes(self):
-        """Every MeetingItem and Meeting portal_types are using portal_factory.
-           Every Meeting* portal_types should be registered."""
+        """Every MeetingItem portal_types are using portal_factory.
+           Every MeetingItem* portal_types should be registered."""
         portal_factory = api.portal.get_tool('portal_factory')
         factory_types = portal_factory.getFactoryTypes().keys()
         portal_types = api.portal.get_tool('portal_types')
-        # every portal_types starting with Meeting, MeetingCategory,
-        # MeetingConfig, MeetingItemRecurringXXX, ...
-        meeting_types = [pt for pt in portal_types if pt.startswith('Meeting')]
+        # every portal_types starting with MeetingItem/MeetingConfig
+        meeting_types = [pt for pt in portal_types if pt.startswith(('MeetingConfig', 'MeetingItem'))]
         for meeting_type in meeting_types:
             self.failIf(set(meeting_types).difference(factory_types))
 

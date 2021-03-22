@@ -53,7 +53,7 @@ def changeProposingGroupFor(old_proposing_group_id, new_proposing_group_id, ):
     for brain in brains:
         obj = brain.getObject()
         obj.setProposingGroup(new_proposing_group_id)
-        obj.updateLocalRoles()
+        obj.update_local_roles()
         obj.reindexObject(idxs=catalog_indexes)
         logger.info('Obj at {0} proposingGroup is now {1}'.format('/'.join(obj.getPhysicalPath()),
                                                                   new_proposing_group_id))

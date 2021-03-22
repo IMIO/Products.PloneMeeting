@@ -6,6 +6,7 @@
 
  <property name="title" i18n:translate="">MeetingItem</property>
  <property name="description" i18n:translate=""></property>
+ <property name="i18n_domain">plone</property>
  <property name="icon_expr">string:${portal_url}/MeetingItem.png</property>
  <property name="content_meta_type">MeetingItem</property>
  <property name="product">PloneMeeting</property>
@@ -56,7 +57,7 @@
          i18n:attributes="title"
          action_id="annexes"
          category="object"
-         condition_expr="python: here.portal_plonemeeting.showAnnexesTab(here)"
+         condition_expr="python: portal.portal_plonemeeting.showAnnexesTab(here)"
          icon_expr=""
          url_expr="string:${object_url}/@@categorized-annexes"
          visible="True">
@@ -68,7 +69,7 @@
          category="object_buttons"
          condition_expr="python:object.showDuplicateItemAction()"
          icon_expr="string:${portal_url}/copy_icon.gif"
-         url_expr="string:${object_url}/item_duplicate_form"
+         url_expr="string:${object_url}/@@item_duplicate_form"
          visible="True">
   <permission value="Copy or Move"/>
  </action>

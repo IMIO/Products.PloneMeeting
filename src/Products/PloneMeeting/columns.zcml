@@ -72,9 +72,25 @@
      for="zope.interface.Interface
           zope.publisher.interfaces.browser.IBrowserRequest
           collective.eeafaceted.z3ctable.interfaces.IFacetedTable"
+     factory=".columns.ItemCommitteesColumn"
+     provides="collective.eeafaceted.z3ctable.interfaces.IFacetedColumn"
+     name="committees_index" />
+
+  <adapter
+     for="zope.interface.Interface
+          zope.publisher.interfaces.browser.IBrowserRequest
+          collective.eeafaceted.z3ctable.interfaces.IFacetedTable"
+     factory=".columns.ItemCommitteesAcronymColumn"
+     provides="collective.eeafaceted.z3ctable.interfaces.IFacetedColumn"
+     name="committees_index_acronym" />
+
+  <adapter
+     for="zope.interface.Interface
+          zope.publisher.interfaces.browser.IBrowserRequest
+          collective.eeafaceted.z3ctable.interfaces.IFacetedTable"
      factory=".columns.ItemLinkedMeetingColumn"
      provides="collective.eeafaceted.z3ctable.interfaces.IFacetedColumn"
-     name="linkedMeetingDate" />
+     name="meeting_date" />
 
   <adapter
      for="zope.interface.Interface
@@ -82,7 +98,7 @@
           collective.eeafaceted.z3ctable.interfaces.IFacetedTable"
      factory=".columns.ItemPreferredMeetingColumn"
      provides="collective.eeafaceted.z3ctable.interfaces.IFacetedColumn"
-     name="getPreferredMeetingDate" />
+     name="preferred_meeting_date" />
 
   <adapter
      for="zope.interface.Interface

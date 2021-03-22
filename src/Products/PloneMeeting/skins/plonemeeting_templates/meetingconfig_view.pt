@@ -27,7 +27,7 @@
                                   pageName request/pageName|string:default;
                                   member context/@@plone_portal_state/member;
                                   schematas here/Schemata;
-                                  fieldsets python:[key for key in schematas.keys() if (key not in ('metadata', 'votes', 'settings'))];
+                                  fieldsets python:[key for key in schematas.keys() if (key not in ('metadata', 'settings'))];
                                   displayable_fieldsets python: list(fieldsets);">
 
     <tal:hideToNonManagers condition="nocall:isManager">
@@ -45,7 +45,7 @@
       <a title="Edit"
          i18n:attributes="title"
          tal:attributes="href string:${context_url}/base_edit?fieldset=${fieldset}">
-        <img tal:attributes="src string:$portal_url/edit.png;" />
+        <img tal:attributes="src string:$portal_url/edit.png" />
       </a>
     </tal:edit>]
     </span><br/><br/>
@@ -58,9 +58,13 @@
           </td>
           <!-- I cannot use the standard macro for displaying this field because the
                widget condition prevents the widget from being displayed. -->
-          <td width="25%" tal:define="field python:here.getField('shortName')">
-            <b i18n:translate="PloneMeeting_label_shortName"></b>:
+          <td width="25%">
+            <div class="field ArchetypesField-BooleanField">
+            <label class="formQuestion">
+              <span i18n:translate="PloneMeeting_label_shortName">Shortname</span>:
+            </label>
             <span tal:content="context/getShortName"/>
+            </div>
           </td>
           <td width="25%" tal:define="field python:here.getField('isDefault')">
             <span metal:use-macro="here/widgets/field/macros/view" />
@@ -83,6 +87,8 @@
           </td>
           <td tal:define="field python:here.getField('yearlyInitMeetingNumber')">
             <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td>
           </td>
         </tr>
         <tr valign="top">
@@ -117,95 +123,95 @@
     </fieldset>
     </tal:customFields>
 
-    <fieldset tal:condition="isRealManager">
-      <legend i18n:translate="heading_actions"></legend>
-      <p class="discreet" style="color: red;" i18n:translate="pm_tool_updates_warning">
-      Warning: take care that launching these proceedings may take time, depending on the number of existing elements!  Do not launch during period of hig use!
-      </p>
-      <table class="configActions">
+    <div class="configActions">
+      <table tal:condition="isManager">
         <tr valign="top">
-          <td width=20%>
-            <form name="updateAnnexConfidentialityForm" action="updateAnnexConfidentiality">
-            <input class="context"
-                   type="submit" name="updateAnnexConfidentiality"
-                   value="pm_update_annex_confidentiality"
-                   onclick="event.preventDefault(); if (confirm(window.eval('are_you_sure'))) {this.form.submit();}"
-                   i18n:attributes="value"/>&nbsp;&nbsp;
-            </form>
-            <p class="discreet" style="color: red;" i18n:translate="pm_update_annex_confidentiality_warning">
-                Warning: the action 'Initialize existing annexes confidentiality' will initialize every existing annex confidentiality to what is defined as default value in this meeting configuration (check the 'Advices and access' tab).
-            </p>
+          <td>
+            <tal:comment replace="nothing">Display groups and users linked to this MeetingConfig</tal:comment>
+            <fieldset>
+              <legend i18n:translate="" i18n:domain="collective.contact.plonegroup">Groups and users</legend>
+              <p i18n:translate="meetingconfig_display_groups_and_users_descr" class='pageNameDescr'></p>
+              <tal:groupsAndUsers tal:replace="structure context/displayGroupsAndUsers" />
+            </fieldset>
           </td>
-          <td width=20%>
-            <form name="updateAdviceConfidentialityForm" action="updateAdviceConfidentiality">
-            <input class="context"
-                   type="submit"
-                   name="updateAdviceConfidentiality"
-                   value="pm_update_advice_confidentiality"
-                   onclick="event.preventDefault(); if (confirm(window.eval('are_you_sure'))) {this.form.submit();}"
-                   i18n:attributes="value"/>&nbsp;&nbsp;
-            </form>
-            <p class="discreet" style="color: red;" i18n:translate="pm_update_advice_confidentiality_warning">
-                Warning: the action 'Initialize existing advices confidentiality' will initialize every existing advice confidentiality to what is defined as default value in this meeting configuration (check the 'Advices and access' tab).
-            </p>
-          </td>
-          <td width=20%>
-            <form name="updatePersonalLabelsForm" action="updatePersonalLabels">
-            <select name="personal_labels:list">
-              <option value="" i18n:translate="">Select a label</option>
-              <option tal:repeat="term context/get_labels_vocab"
-                      tal:attributes="value term/value"
-                      tal:content="term/title">Label title</option>
-            </select>
-            <br />
-            <select name="modified_since_days:int">
-              <option value="30" i18n:translate="">Modified since (in days, default to 30 days)</option>
-              <option tal:repeat="value python: range(0, 100, 5)"
-                      tal:attributes="value value"
-                      tal:content="value">0</option>
-            </select>
-            <br />
-            <input class="context"
-                   type="submit"
-                   name="updatePersonalLabels"
-                   value="pm_update_personal_labels"
-                   onclick="event.preventDefault(); if (confirm(window.eval('are_you_sure'))) {this.form.submit();}"
-                   i18n:attributes="value"/>&nbsp;&nbsp;
-            </form>
-            <p class="discreet" style="color: red;" i18n:translate="pm_update_personal_labels_warning">
-                Warning: the action 'Initialize personal labels' will activate selected labels on every existing items that were last modified before given number of days for every users able to see these items.
-            </p>
-          </td>
-
-          <td width=20%>
-            <form name="checkPodTemplatesForm" action="checkPodTemplates">
-            <input class="context"
-                   type="submit" name="checkPodTemplates"
-                   value="pm_check_pod_templates"
-                   onclick="event.preventDefault(); if (confirm(window.eval('are_you_sure'))) {this.form.submit();}"
-                   i18n:attributes="value"/>&nbsp;&nbsp;
-            </form>
-            <p class="discreet" style="color: red;" i18n:translate="pm_check_pod_templates_warning">
-                Warning: the action 'Check Pod templates' will check that every Pod templates defined in the configuration are working correctly.
-            </p>
-          </td>
-          <td width=20%>
-            <form name="updateAllLocalRolesForm" action="updateAllLocalRoles"
-                  tal:attributes="action string:${tool/absolute_url}/updateAllLocalRoles">
-            <input type="hidden" tal:attributes="value context/getMeetingTypeName" name="portal_type:list" />
-            <input type="hidden" tal:attributes="value context/getItemTypeName" name="portal_type:list" />
-            <input class="context" type="submit" name="updateAllLocalRoles"
-                   onclick="event.preventDefault(); if (confirm(window.eval('are_you_sure'))) {this.form.submit();}"
-                   value="mc_update_all_local_roles" i18n:attributes="value"/>&nbsp;&nbsp;
-            </form>
-            <p class="discreet" style="color: red;" i18n:translate="mc_update_all_local_roles_warning">
-                Warning: this will update every items and meetings of this configuration, it is only relevant if the field of the configuration that you changed specifies that you need to use this action.  If you only made little changes like adding or removing a state in a field, as an administrator, it is possible to update items and meetings from the dashboards.  To do this, select elements that need to be updated and use the \"Update from configuration\" batch action.
-            </p>
+          <td tal:condition="isRealManager" style="padding-left: 0.75em;">
+            <fieldset>
+              <legend i18n:translate="heading_actions">Actions</legend>
+              <p class="discreet" style="color: red; font-weight: bold;" i18n:translate="pm_tool_updates_warning">
+              Warning: take care that launching these proceedings may take time, depending on the number of existing elements!  Do not launch during period of hig use!
+              </p>
+              <form name="updateAllLocalRolesForm" action="updateAllLocalRoles"
+                    tal:attributes="action string:${tool/absolute_url}/update_all_local_roles">
+                <p class="discreet" style="color: red;" i18n:translate="mc_update_all_local_roles_warning">
+                    Warning: this will update every items and meetings of this configuration, it is only relevant if the field of the configuration that you changed specifies that you need to use this action.  If you only made little changes like adding or removing a state in a field, as an administrator, it is possible to update items and meetings from the dashboards.  To do this, select elements that need to be updated and use the \"Update from configuration\" batch action.
+                </p>
+                <input type="hidden" tal:attributes="value context/getMeetingTypeName" name="portal_type:list" />
+                <input type="hidden" tal:attributes="value context/getItemTypeName" name="portal_type:list" />
+                <input class="context" type="submit" name="updateAllLocalRoles"
+                       onclick="event.preventDefault(); if (confirm(window.eval('are_you_sure'))) {this.form.submit();}"
+                       value="mc_update_all_local_roles" i18n:attributes="value"/>
+              </form>
+              <form name="updateAnnexConfidentialityForm" action="updateAnnexConfidentiality">
+                <p class="discreet" style="color: red;" i18n:translate="pm_update_annex_confidentiality_warning">
+                    Warning: the action 'Initialize existing annexes confidentiality' will initialize every existing annex confidentiality to what is defined as default value in this meeting configuration (check the 'Advices and access' tab).
+                </p>
+                <input class="context"
+                       type="submit" name="updateAnnexConfidentiality"
+                       value="pm_update_annex_confidentiality"
+                       onclick="event.preventDefault(); if (confirm(window.eval('are_you_sure'))) {this.form.submit();}"
+                       i18n:attributes="value"/>
+              </form>
+              <form name="updateAdviceConfidentialityForm" action="updateAdviceConfidentiality">
+                <p class="discreet" style="color: red;" i18n:translate="pm_update_advice_confidentiality_warning">
+                    Warning: the action 'Initialize existing advices confidentiality' will initialize every existing advice confidentiality to what is defined as default value in this meeting configuration (check the 'Advices and access' tab).
+                </p>
+                <input class="context"
+                       type="submit"
+                       name="updateAdviceConfidentiality"
+                       value="pm_update_advice_confidentiality"
+                       onclick="event.preventDefault(); if (confirm(window.eval('are_you_sure'))) {this.form.submit();}"
+                       i18n:attributes="value"/>
+              </form>
+              <form name="updatePersonalLabelsForm" action="updatePersonalLabels">
+                <p class="discreet" style="color: red;" i18n:translate="pm_update_personal_labels_warning">
+                    Warning: the action 'Initialize personal labels' will activate selected labels on every existing items that were last modified before given number of days for every users able to see these items.
+                </p>
+                <select name="personal_labels:list">
+                  <option value="" i18n:translate="">Select a label</option>
+                  <option tal:repeat="term context/get_labels_vocab"
+                          tal:attributes="value term/value"
+                          tal:content="term/title">Label title</option>
+                </select>
+                <br />
+                <select name="modified_since_days:int">
+                  <option value="30" i18n:translate="">Modified since (in days, default to 30 days)</option>
+                  <option tal:repeat="value python: range(0, 100, 5)"
+                          tal:attributes="value value"
+                          tal:content="value">0</option>
+                </select>
+                <br />
+                <input class="context"
+                       type="submit"
+                       name="updatePersonalLabels"
+                       value="pm_update_personal_labels"
+                       onclick="event.preventDefault(); if (confirm(window.eval('are_you_sure'))) {this.form.submit();}"
+                       i18n:attributes="value"/>
+              </form>
+              <form name="checkPodTemplatesForm" action="checkPodTemplates">
+                <p class="discreet" style="color: red;" i18n:translate="pm_check_pod_templates_warning">
+                    Warning: the action 'Check Pod templates' will check that every Pod templates defined in the configuration are working correctly.
+                </p>
+                <input class="context"
+                       type="submit" name="checkPodTemplates"
+                       value="pm_check_pod_templates"
+                       onclick="event.preventDefault(); if (confirm(window.eval('are_you_sure'))) {this.form.submit();}"
+                       i18n:attributes="value"/>
+              </form>
+            </fieldset>
           </td>
         </tr>
       </table>
-    </fieldset>
-
+    </div>
     </tal:mainConfig>
 
     <tal:assembly_and_signatures condition="python: pageName=='assembly_and_signatures'">
@@ -215,44 +221,46 @@
         <fieldset><legend class="warningInMeetingConfig" i18n:translate="">This meeting configuration uses following fields to manage assemblies and signatures</legend>
         <p class="warningInMeetingConfig"><span i18n:translate="">Free text fields</span> :</p>
         <ul>
-          <li tal:condition="python: 'assembly' in usedMeetingAttributes" i18n:translate="meeting_assembly">Assembly</li>
-          <li tal:condition="python: 'assemblyExcused' in usedMeetingAttributes" i18n:translate="meeting_assemblyExcused">Assembly excused</li>
-          <li tal:condition="python: 'assemblyAbsents' in usedMeetingAttributes" i18n:translate="meeting_assemblyAbsents">Assembly absents</li>
-          <li tal:condition="python: 'assemblyGuests' in usedMeetingAttributes" i18n:translate="meeting_assemblyGuests">Assembly guests</li>
-          <li tal:condition="python: 'assemblyProxies' in usedMeetingAttributes" i18n:translate="meeting_assemblyProxies">Assembly proxies</li>
-          <li tal:condition="python: 'assemblyStaves' in usedMeetingAttributes" i18n:translate="meeting_assemblyStaves">Assembly staves</li>
-          <li tal:condition="python: 'signatures' in usedMeetingAttributes" i18n:translate="meeting_signatures">Assembly staves</li>
-          <li tal:condition="python: 'assembly' not in usedMeetingAttributes and 'assemblyExcused' not in usedMeetingAttributes and 'assemblyAbsents' not in usedMeetingAttributes and 'assemblyGuests' not in usedMeetingAttributes and 'assemblyProxies' not in usedMeetingAttributes and 'assemblyStaves' not in usedMeetingAttributes and 'signatures' not in usedMeetingAttributes" i18n:translate="None">None</li>
+          <li tal:condition="python: 'assembly' in usedMeetingAttributes" i18n:translate="title_assembly">Assembly</li>
+          <li tal:condition="python: 'assembly_excused' in usedMeetingAttributes" i18n:translate="title_assembly_excused">Assembly excused</li>
+          <li tal:condition="python: 'assembly_absents' in usedMeetingAttributes" i18n:translate="title_assembly_absents">Assembly absents</li>
+          <li tal:condition="python: 'assembly_guests' in usedMeetingAttributes" i18n:translate="title_assembly_guests">Assembly guests</li>
+          <li tal:condition="python: 'assembly_proxies' in usedMeetingAttributes" i18n:translate="title_assembly_proxies">Assembly proxies</li>
+          <li tal:condition="python: 'assembly_staves' in usedMeetingAttributes" i18n:translate="title_assembly_staves">Assembly staves</li>
+          <li tal:condition="python: 'signatures' in usedMeetingAttributes" i18n:translate="title_signatures">Signatures</li>
+          <li tal:condition="python: 'assembly' not in usedMeetingAttributes and 'assembly_excused' not in usedMeetingAttributes and 'assembly_absents' not in usedMeetingAttributes and 'assembly_guests' not in usedMeetingAttributes and 'assembly_proxies' not in usedMeetingAttributes and 'assembly_staves' not in usedMeetingAttributes and 'signatures' not in usedMeetingAttributes" i18n:translate="None">None</li>
         </ul>
         <p class="warningInMeetingConfig"><span i18n:translate="">Contacts fields</span> :</p>
         <ul>
-          <li tal:condition="python: 'attendees' in usedMeetingAttributes" i18n:translate="PloneMeeting_label_attendees">Attendees</li>
-          <li tal:condition="python: 'excused' in usedMeetingAttributes" i18n:translate="PloneMeeting_label_excused">Excused</li>
-          <li tal:condition="python: 'absents' in usedMeetingAttributes" i18n:translate="PloneMeeting_label_absents">Absents</li>
-          <li tal:condition="python: 'replacements' in usedMeetingAttributes" i18n:translate="PloneMeeting_label_replacements">Replacements</li>
-          <li tal:condition="python: 'signatories' in usedMeetingAttributes" i18n:translate="PloneMeeting_label_signatories">Signatories</li>
+          <li tal:condition="python: 'attendees' in usedMeetingAttributes" i18n:translate="title_attendees">Attendees</li>
+          <li tal:condition="python: 'excused' in usedMeetingAttributes" i18n:translate="title_excused">Excused</li>
+          <li tal:condition="python: 'absents' in usedMeetingAttributes" i18n:translate="title_absents">Absents</li>
+          <li tal:condition="python: 'replacements' in usedMeetingAttributes" i18n:translate="title_replacements">Replacements</li>
+          <li tal:condition="python: 'signatories' in usedMeetingAttributes" i18n:translate="title_signatories">Signatories</li>
           <li tal:condition="python: 'attendees' not in usedMeetingAttributes and 'excused' not in usedMeetingAttributes and 'absents' not in usedMeetingAttributes and 'replacements' not in usedMeetingAttributes and 'signatories' not in usedMeetingAttributes" i18n:translate="None">None</li>
         </ul>
         </fieldset>
       </tal:defines>
 
+      <br />
+
       <table width="100%" class="discreet">
         <tr valign="top">
           <td width="50%">
             <tal:comment replace="nothing">We do not use the widget macro to be able to render 'assembly' using mimetype='text/x-html-safe'</tal:comment>
-            <label class="formQuestion"><span i18n:translate="PloneMeeting_label_assembly"></span>:</label>
+            <label class="formQuestion"><span i18n:translate="title_default_assembly"></span>:</label>
             <div class="field" tal:content="structure python: context.getAssembly(mimetype='text/x-html-safe') or '-'">Assembly</div>
           </td>
           <td width="50%">
             <tal:comment replace="nothing">We do not use the widget macro to be able to render 'assemblyStaves' using mimetype='text/x-html-safe'</tal:comment>
-            <label class="formQuestion"><span i18n:translate="PloneMeeting_label_assemblyStaves"></span>:</label>
+            <label class="formQuestion"><span i18n:translate="title_default_assembly_staves"></span>:</label>
             <div class="field" tal:content="structure python: context.getAssemblyStaves(mimetype='text/x-html-safe') or '-'">Assembly staves</div>
           </td>
         </tr>
         <tr>
           <td width="50%">
             <tal:comment replace="nothing">We do not use the widget macro to be able to render 'signatures' using mimetype='text/x-html-safe'</tal:comment>
-            <label class="formQuestion"><span i18n:translate="PloneMeeting_label_signatures"></span>:</label>
+            <label class="formQuestion"><span i18n:translate="title_default_signatures"></span>:</label>
             <div class="field" tal:content="structure python: context.getSignatures(mimetype='text/x-html-safe') or '-'">Assembly staves</div>
           </td>
           <td width="50%" tal:define="field python:here.getField('certifiedSignatures')">
@@ -300,12 +308,8 @@
           <td tal:define="field python:here.getField('usedMeetingAttributes')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td tal:define="field python:here.getField('historizedMeetingAttributes')">
-            <span metal:use-macro="here/widgets/field/macros/view" />
-          </td>
-          <td tal:define="field python:here.getField('recordMeetingHistoryStates')">
-            <span metal:use-macro="here/widgets/field/macros/view" />
-          </td>
+          <td></td>
+          <td></td>
         </tr>
         <tr valign="top">
           <td tal:define="field python:here.getField('useGroupsAsCategories')">
@@ -380,17 +384,6 @@
           </td>
         </tr>
         <tr valign="top">
-          <td tal:define="field python:here.getField('publishDeadlineDefault')">
-            <span metal:use-macro="here/widgets/field/macros/view" />
-          </td>
-          <td tal:define="field python:here.getField('freezeDeadlineDefault')">
-            <span metal:use-macro="here/widgets/field/macros/view" />
-          </td>
-          <td tal:define="field python:here.getField('preMeetingDateDefault')">
-            <span metal:use-macro="here/widgets/field/macros/view" />
-          </td>
-        </tr>
-        <tr valign="top">
           <td tal:define="field python:here.getField('meetingConfigsToCloneTo')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
@@ -452,7 +445,8 @@
          <span i18n:translate="">Annex types</span>
         </legend>
         <p class="discreet" i18n:translate="annex_types_descr"></p><br />
-        <tal:annexesCategories repeat="cat_group context/annexes_types/objectValues">
+        <tal:annexesCategories repeat="cat_group context/annexes_types/objectValues"
+                               define="show_annexes_types python: 'show_annexes_types' in context.REQUEST;">
             <a name="#"
                tal:attributes="name cat_group/getId"></a>
             <table class="listing nosort" style="text-align: right;" width="100%"
@@ -494,7 +488,12 @@
               <tr tal:condition="not: cat_group/objectValues">
                 <td colspan="5" align="center" i18n:translate="">No annex types.</td>
               </tr>
-              <tal:loop repeat="cat python:cat_group.objectValues()">
+              <tr tal:condition="not: show_annexes_types">
+                <td colspan="5" align="center" i18n:translate="annexes_types_force_display_descr">
+                  Annexes types are hidden by default, you can <a i18n:name="force_display" i18n:translate="force_display" href=".?pageName=data&show_annexes_types=1#annexes_types">force display</a>.
+                </td>
+              </tr>
+              <tal:loop repeat="cat python:cat_group.objectValues()" condition="show_annexes_types">
               <tr tal:define="isActive cat/enabled;
                               oddrow repeat/cat/odd;
                               classOddEven python: oddrow and 'even' or 'odd';"
@@ -588,10 +587,11 @@
         <legend>
          <span i18n:translate="Categories"></span>
           <a href="#"
+             class="link-overlay-pm"
              title="add_object"
              i18n:attributes="title"
              tal:condition="isRealManager"
-             tal:attributes="href string:${context_url}/categories/createObject?type_name=MeetingCategory">
+             tal:attributes="href string:${context_url}/categories/++add++meetingcategory">
             <img src="#" tal:attributes="src string:$portal_url/new.png" />
           </a>
         </legend>
@@ -607,10 +607,11 @@
         <legend>
          <span i18n:translate="Classifiers"></span>
           <a href="#"
+             class="link-overlay-pm"
              title="add_object"
              i18n:attributes="title"
              tal:condition="isRealManager"
-             tal:attributes="href string:${context_url}/classifiers/createObject?type_name=MeetingCategory">
+             tal:attributes="href string:${context_url}/classifiers/++add++meetingcategory">
             <img src="#" tal:attributes="src string:$portal_url/new.png" />
           </a>
         </legend>
@@ -676,7 +677,7 @@
           <a href="itemtemplates" i18n:translate="">Manage item templates</a>
         </h4>
         <p tal:define="default_template python:context.get_default_item_template(ignore_inactive=False);
-                       default_template_review_state default_template/queryState"
+                       default_template_review_state default_template/query_state"
            i18n:translate="">The default item template <span i18n:name="default_template_title"><img tal:attributes="src default_template/getIconURL" />
           <a tal:attributes="href default_template/absolute_url;
                              class string:contenttype-${default_template/portal_type} state-${default_template_review_state}"
@@ -723,10 +724,12 @@
           <td tal:define="field python:here.getField('workflowAdaptations')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td tal:define="field python:here.getField('itemDecidedStates')">
-            <span metal:use-macro="here/widgets/field/macros/view" />
-          </td>
-          <td tal:define="field python:here.getField('itemPositiveDecidedStates')">
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td colspan="3" tal:define="field python:here.getField('itemWFValidationLevels');
+                                      dummy python:here.REQUEST.set('translated_itemWFValidationLevels', True);">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
         </tr>
@@ -790,23 +793,35 @@
           </td>
         </tr>
         <tr valign="top">
+          <td tal:define="field python:here.getField('itemsVisibleFields')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td tal:define="field python:here.getField('itemsNotViewableVisibleFields')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td tal:define="field python:here.getField('itemsNotViewableVisibleFieldsTALExpr')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+        </tr>
+        <tr valign="top">
           <td tal:define="field python:here.getField('itemsListVisibleFields')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td tal:define="field python:here.getField('displayAvailableItemsTo')">
+          <td tal:define="field python:here.getField('redirectToNextMeeting')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
           <td>
           </td>
         </tr>
         <tr valign="top">
+          <td tal:define="field python:here.getField('displayAvailableItemsTo')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
           <td tal:define="field python:here.getField('maxShownMeetings')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
           <td tal:define="field python:here.getField('toDoListSearches')">
             <span metal:use-macro="here/widgets/field/macros/view" />
-          </td>
-          <td>
           </td>
         </tr>
         <tr valign="top">
@@ -1058,7 +1073,7 @@
           <td tal:define="field python:here.getField('historizeItemDataWhenAdviceIsGiven')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td tal:define="field python:here.getField('keepAccessToItemWhenAdviceIsGiven')">
+          <td tal:define="field python:here.getField('keepAccessToItemWhenAdvice')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
           <td tal:define="field python:here.getField('versionateAdviceIfGivenAndItemModified')">
@@ -1079,7 +1094,7 @@
             <fieldset tal:define="field python:here.getField('customAdvisers')">
               <legend>
                 <span i18n:translate="PloneMeeting_label_customAdvisers"></span>
-                <span class="fa fa-question-circle help-doc" onClick="toggleDoc('customAdvisersDoc', toggle_parent_active=false);"></span>
+                <span class="fa fa-question-circle help-doc" onClick="toggleDetails('customAdvisersDoc', toggle_parent_active=false);"></span>
               </legend>
                   <div id="customAdvisersDoc" style="display:none">
                         <p class="discreet" i18n:translate="custom_advisers_full_descr" />
@@ -1185,7 +1200,23 @@
       </table>
     </tal:advices>
 
-    <!--tal:votes condition="python: pageName=='votes'">
+    <tal:votes condition="python: pageName=='committees'">
+      <p i18n:translate="meetingconfig_committees_descr" class='pageNameDescr'></p><br />
+      <table width="100%" class="discreet">
+        <tr valign="top">
+          <td colspan="3" tal:define="field python:here.getField('orderedCommitteeContacts')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+        </tr>
+        <tr valign="top">
+          <td colspan="3" tal:define="field python:here.getField('committees')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+        </tr>
+      </table>
+    </tal:votes>
+
+    <tal:votes condition="python: pageName=='votes'">
       <p i18n:translate="meetingconfig_votes_descr" class='pageNameDescr'></p><br />
       <table width="100%" class="discreet">
         <tr valign="top">
@@ -1195,28 +1226,35 @@
           <td width="34%" tal:define="field python:here.getField('votesEncoder')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td width="33%" tal:define="field python:here.getField('usedVoteValues')">
+          <td></td>
+        </tr>
+        <tr valign="top">
+          <td tal:define="field python:here.getField('usedVoteValues')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td tal:define="field python:here.getField('firstLinkedVoteUsedVoteValues')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td tal:define="field python:here.getField('nextLinkedVotesUsedVoteValues')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
         </tr>
         <tr valign="top">
-          <td tal:define="field python:here.getField('defaultVoteValue')">
-            <span metal:use-macro="here/widgets/field/macros/view" />
-          </td>
           <td tal:define="field python:here.getField('voteCondition')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
           <td></td>
+          <td></td>
         </tr>
       </table>
-    </tal:votes-->
+    </tal:votes>
 
     <tal:doc condition="python: pageName=='doc'">
     <p i18n:translate="meetingconfig_doc_descr" class='pageNameDescr'></p><br />
 
       <table width="100%" class="discreet">
         <tr valign="top">
-          <td tal:define="field python:here.getField('meetingItemTemplateToStoreAsAnnex')">
+          <td tal:define="field python:here.getField('meetingItemTemplatesToStoreAsAnnex')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
         </tr>
@@ -1255,7 +1293,8 @@
              valign="top">
             <td align="center">
                 <img title="Format"
-                     tal:attributes="src string:$portal_url/++resource++collective.documentgenerator/style.png"/></td>
+                     class="svg-icon"
+                     tal:attributes="src string:$portal_url/++resource++collective.documentgenerator/style.svg"/></td>
             <td>
                 <h5>
                   <a tal:attributes="href obj/absolute_url;">
@@ -1297,8 +1336,9 @@
             <td align="center">
                 <img tal:repeat="fmt obj/pod_formats"
                      title="Format"
+                     class="svg-icon"
                      tal:attributes="title fmt;
-                                     src string:$portal_url/++resource++collective.documentgenerator/$fmt.png"/></td>
+                                     src string:$portal_url/++resource++collective.documentgenerator/$fmt.svg"/></td>
             <td>
                 <h5>
                   <a tal:attributes="href obj/absolute_url;">

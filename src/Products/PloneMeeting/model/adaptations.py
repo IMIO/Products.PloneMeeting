@@ -4,54 +4,14 @@
    PloneMeeting data structures and workflows.'''
 
 from plone import api
-from Products.CMFCore.permissions import AccessContentsInformation
 from Products.CMFCore.permissions import DeleteObjects
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import ReviewPortalContent
-from Products.CMFCore.permissions import View
 from Products.PloneMeeting import logger
-from Products.PloneMeeting.config import ReadDecision
-from Products.PloneMeeting.config import WriteDecision
 from Products.PloneMeeting.utils import updateCollectionCriterion
 
-import string
 
-
-# Stuff for performing workflow adaptations ------------------------------------
-noGlobalObsStates = ('itempublished', 'itemfrozen', 'accepted', 'refused',
-                     'delayed', 'confirmed', 'itemarchived',
-                     'removed', 'removed_and_duplicated', 'marked_not_applicable')
-groupDecisionReadStates = ('proposed', 'prevalidated', 'validated', 'presented',
-                           'itempublished', 'itemfrozen')
-
-# for the 'return_to_proposing_group' wfAdaptation, RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE
-# is the state to clone regarding permissions that will have the state 'returned_to_proposing_group',
-# the state must exist in used workflow. If none of the state existing in item workflows
-# fit our need, you can still add an arbitrary workflowState to the workflow called for example
-# 'state_for_return_to_proposing_group' where you will define custom permissions for this wfAdaptation...
-# values can be different by workflow, moreover me may also take a state from another item workflow,
-# so it could be {'meetingitem_workflow': 'anothermeetingitem_workflow.itemcreated', }
-RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE = {'meetingitem_workflow': 'meetingitem_workflow.itemcreated', }
-# if a state to clone defined here above in RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE is not enough
-# to manage permissions of the new state 'returned_to_proposing_group', we can define a full or partial
-# custom permissions dict that will update permissions that will be set.  This can be use together
-# with a RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE, the permissions defined here under in
-# RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS will override and be applied after cloned permissions
-# a valid value is something like :
-# {'my_item_workflow': {'Modify portal content': ('Manager', 'MeetingManager', 'MeetingMember', 'MeetingReviewer', ),
-#                       'Review portal content': ('Manager', 'MeetingManager', 'MeetingReviewer', ),},
-# }
-# values are defined "by item workflow" so different values may be used for different item workflows
-# this way, MeetingMembers can edit the item but only MeetingReviewer can send it back to the
-# meeting managers and the other permissions are kept from the state to clone permissions defined
-# in RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE
-# XXX take care that info about the fact that a permission is acquired is a bit weird :
-# if roles for a permission is a tuple, it means that it is not acquired and if it is a list,
-# it means that is is acquired... so most of times, use tuples to define roles
-# For example :
-# {'my_item_workflow': {WriteMeetingManagerItemFields: ('Manager', 'MeetingManager', 'MeetingMember', )}, }
-RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS = {}
-# states of the meeting from wich an item can be 'returned_to_proposing_group'
+# states of the meeting from which an item can be 'returned_to_proposing_group'
 RETURN_TO_PROPOSING_GROUP_FROM_ITEM_STATES = ('presented', 'itemfrozen', 'itempublished', )
 # mapping definintions regarding the 'return_to_proposing_group' wfAdaptation
 # this is used in MeetingItem.mayBackToMeeting and may vary upon used workflow
@@ -68,31 +28,29 @@ RETURN_TO_PROPOSING_GROUP_MAPPINGS = {'backTo_presented_from_returned_to_proposi
                                       ['frozen', 'decided', 'decisions_published', ],
                                       'NO_MORE_RETURNABLE_STATES': ['closed', 'archived', ]
                                       }
-RETURN_TO_PROPOSING_GROUP_VALIDATION_STATES = ('proposed', )
 
-viewPermissions = (View, AccessContentsInformation)
 WF_APPLIED = 'Workflow adaptation "%s" applied for meetingConfig "%s".'
 WF_APPLIED_CUSTOM = 'Custom Workflow adaptation "%s" applied for meetingConfig "%s".'
+ADVICE_WF_APPLIED_CUSTOM = 'Custom advice Workflow adaptation "%s" applied on WF "%s" for meetingConfig "%s".'
 WF_DOES_NOT_EXIST_WARNING = "Could not apply workflow adaptations because the workflow '%s' does not exist."
-
-# list of states the creator can no more edit the item even while using the 'creator_edits_unless_closed' wfAdaptation
-# this is made to be overrided if necessary
-WF_NOT_CREATOR_EDITS_UNLESS_CLOSED = ('delayed', 'refused', 'confirmed', 'itemarchived')
+WF_ITEM_VALIDATION_LEVELS_DISABLED = 'No enabled item validation levels found for meetingConfig "%s".'
 
 # list of dict containing infos about 'waiting_advices' state(s) to add
 # a state will be added by "dict", 'from_states' are list of states leading to the new state
 # 'back_states' are states to come back from the new state and 'perm_cloned_states' are states
-# to use to define permissions of the new state minus every 'edit' permissions.  We may define
-# several 'perm_cloned_states' because it will try to find first, if not found, try to use following, ...
+# to use to define permissions of the new state minus every 'edit' permissions.
 WAITING_ADVICES_FROM_STATES = (
     {'from_states': ('itemcreated', ),
      'back_states': ('itemcreated', ),
-     'perm_cloned_states': ('itemcreated',),
-     'remove_modify_access': True},
+     },
     {'from_states': ('proposed', 'prevalidated'),
      'back_states': ('proposed', 'prevalidated'),
-     'perm_cloned_states': ('prevalidated', 'proposed'),
-     'remove_modify_access': True},)
+     },
+)
+WAITING_ADVICES_REMOVE_MODIFY_ACCESS = True
+WAITING_ADVICES_USE_CUSTOM_ICON = True
+WAITING_ADVICES_USE_CUSTOM_BACK_TR_TITLE_FOR = ()
+WAITING_ADVICES_USE_CUSTOM_STATE_TITLE = True
 
 
 def grantPermission(state, perm, role):
@@ -125,14 +83,18 @@ def change_transition_new_state_id(wf_id, transition_id, new_state_id):
 
 def addState(wf_id,
              new_state_id,
+             new_state_title,
              permissions_cloned_state_id,
              leading_transition_id=None,
-             back_transitions={},
+             leading_transition_title=None,
+             back_transitions=[],
              leaving_transition_id=None,
              leaving_to_state_id=None,
              existing_leaving_transition_ids=[],
              existing_back_transition_ids=[],
-             new_initial_state=False):
+             new_initial_state=False,
+             old_origin_state_id=None,
+             guard_name=None):
     """ """
     wfTool = api.portal.get_tool('portal_workflow')
     wf = wfTool.getWorkflowById(wf_id)
@@ -142,7 +104,7 @@ def addState(wf_id,
     # ADD NEW STATE
     wf.states.addState(new_state_id)
     new_state = wf.states[new_state_id]
-    new_state.setProperties(title=new_state_id, description='')
+    new_state.setProperties(title=new_state_title, description='')
     # clone permissions
     clone_permissions(wf_id, permissions_cloned_state_id, new_state_id)
     # initial_state
@@ -154,22 +116,36 @@ def addState(wf_id,
     if leading_transition_id:
         wf.transitions.addTransition(leading_transition_id)
         transition = wf.transitions.get(leading_transition_id)
-        guard_name = 'may{0}{1}'.format(leading_transition_id[0].upper(), leading_transition_id[1:])
+        if not guard_name:
+            guard_name = 'may{0}{1}()'.format(leading_transition_id[0].upper(),
+                                              leading_transition_id[1:])
         transition.setProperties(
-            title=leading_transition_id,
-            new_state_id=new_state_id, trigger_type=1, script_name='',
-            actbox_name=leading_transition_id, actbox_url='',
-            actbox_icon='%(portal_url)s/{0}.png'.format(leading_transition_id), actbox_category='workflow',
-            props={'guard_expr': 'python:here.wfConditions().{0}()'.format(guard_name)})
+            title=leading_transition_title,
+            new_state_id=new_state_id,
+            trigger_type=1,
+            script_name='',
+            actbox_name=leading_transition_id,
+            actbox_url='',
+            actbox_icon='%(portal_url)s/{0}.png'.format(leading_transition_id),
+            actbox_category='workflow',
+            props={'guard_expr': 'python:here.wfConditions().{0}'.format(guard_name)})
     # back_transition_id
-    for back_transition_id, back_from_state_id in back_transitions.items():
-        wf.transitions.addTransition(back_transition_id)
+    for back_transition_infos in back_transitions:
+        back_transition_id = back_transition_infos['back_transition_id']
+        back_transition_title = back_transition_infos['back_transition_title']
+        back_from_state_id = back_transition_infos['back_from_state_id']
+        if back_transition_id not in wf.transitions:
+            wf.transitions.addTransition(back_transition_id)
         back_transition = wf.transitions.get(back_transition_id)
         back_transition.setProperties(
-            title=back_transition_id,
-            new_state_id=new_state_id, trigger_type=1, script_name='',
-            actbox_name=back_transition_id, actbox_url='',
-            actbox_icon='%(portal_url)s/{0}.png'.format(back_transition_id), actbox_category='workflow',
+            title=back_transition_title,
+            new_state_id=new_state_id,
+            trigger_type=1,
+            script_name='',
+            actbox_name=back_transition_id,
+            actbox_url='',
+            actbox_icon='%(portal_url)s/{0}.png'.format(back_transition_id),
+            actbox_category='workflow',
             props={'guard_expr': 'python:here.wfConditions().mayCorrect("{0}")'.format(new_state_id)})
         # add back_transition to back_from_state
         back_from_state = wf.states[back_from_state_id]
@@ -182,16 +158,34 @@ def addState(wf_id,
         guard_name = 'may{0}{1}'.format(leaving_transition_id[0].upper(), leaving_transition_id[1:])
         transition.setProperties(
             title=leaving_transition_id,
-            new_state_id=leaving_to_state_id, trigger_type=1, script_name='',
-            actbox_name=leaving_transition_id, actbox_url='',
-            actbox_icon='%(portal_url)s/{0}.png'.format(leaving_transition_id), actbox_category='workflow',
+            new_state_id=leaving_to_state_id,
+            trigger_type=1,
+            script_name='',
+            actbox_name=leaving_transition_id,
+            actbox_url='',
+            actbox_icon='%(portal_url)s/{0}.png'.format(leaving_transition_id),
+            actbox_category='workflow',
             props={'guard_expr': 'python:here.wfConditions().{0}()'.format(guard_name)})
 
     # CONNECT STATES AND TRANSITIONS
-    # new_state_id
     new_state.transitions = tuple([transition_id for transition_id in
                                   [leaving_transition_id] + existing_leaving_transition_ids
                                   if transition_id])
+
+    # UPDATE connection between old origin state and new state
+    # update also back transition between leaving_to_state_id
+    if old_origin_state_id:
+        old_origin_state = wf.states[old_origin_state_id]
+        old_origin_state.transitions = [leading_transition_id]
+        # remove transition to old_origin_state
+        # and add this transition on the new created state
+        leaving_to_state = wf.states[leaving_to_state_id]
+        for transition_id in leaving_to_state.transitions:
+            transition = wf.transitions[transition_id]
+            if transition.new_state_id == old_origin_state_id:
+                leaving_to_state_transition_ids = list(leaving_to_state.transitions)
+                leaving_to_state_transition_ids.remove(transition_id)
+                leaving_to_state.transitions = tuple(leaving_to_state_transition_ids)
 
     # existing_back_transitions
     for existing_back_transition_id in existing_back_transition_ids:
@@ -199,9 +193,16 @@ def addState(wf_id,
         existing_back_transition.new_state_id = new_state_id
 
 
-def removeState(wf_id, state_id, remove_leading_transitions=True, new_initial_state=None):
+def removeState(wf_id,
+                state_id,
+                old_leaving_transitions={},
+                old_leading_transitions={},
+                transitions_to_remove=[],
+                new_initial_state=None):
     '''Remove given p_state, if p_remove_arriving_transitions=True (default),
-       we remove every transitions leading to p_state.'''
+       we remove every transitions leading to p_state.
+       - old_leaving_transitions : list of dicts, key: leaving_transition, value: leaving_from_state_id.
+       - old_leading_transitions : list of dicts, key: leading_transition, value: leading_to_state_id.'''
     wfTool = api.portal.get_tool('portal_workflow')
     wf = wfTool.getWorkflowById(wf_id)
     # state does not exist?
@@ -214,18 +215,21 @@ def removeState(wf_id, state_id, remove_leading_transitions=True, new_initial_st
                      'please provide a correct new_initial_state!'.format(state_id, wf_id))
         return
 
-    if remove_leading_transitions:
-        leading_transitions = [tr.id for tr in wf.transitions.values()
-                               if tr.new_state_id == state_id]
-        wf.transitions.deleteTransitions(leading_transitions)
+    if transitions_to_remove:
+        wf.transitions.deleteTransitions(transitions_to_remove)
+
+    for leaving_transition, leaving_from_state_id in old_leaving_transitions.items():
+        leaving_from_state = wf.states[leaving_from_state_id]
+        leaving_from_state.transitions = leaving_from_state.transitions + ('leaving_transition', )
+
+    for leading_transition_id, leading_to_state_id in old_leading_transitions.items():
+        leading_transition = wf.states[leading_transition_id]
+        leading_transition.new_state_id = leading_to_state_id
+
     if wf.initial_state == state_id:
         wf.initial_state = new_initial_state
+
     wf.states.deleteStates([state_id])
-    if remove_leading_transitions:
-        logger.info('State "{0}" and leading transitions "{1}" were removed from WF "{2}"'.format(
-            state_id, ', '.join(leading_transitions), wf_id))
-    else:
-        logger.info('Transitions "{0}" was removed from WF "{1}"'.format(state_id, wf_id))
 
 
 def clone_permissions(wf_id, base_state_id, new_state_id):
@@ -254,8 +258,7 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
     # make sure given wfAdaptations are in the right order
     # import MeetingConfig only here so we are sure that the 'wfAdaptations' attr
     # has been updated by subplugins if any
-    from Products.PloneMeeting.MeetingConfig import MeetingConfig
-    ordered_wfAdaptations = MeetingConfig.wfAdaptations
+    ordered_wfAdaptations = meetingConfig.listWorkflowAdaptations(sorted=False).keys()
     wfAdaptations = list(wfAdaptations)
     wfAdaptations.sort(key=lambda x: ordered_wfAdaptations.index(x))
     wfTool = api.portal.get_tool('portal_workflow')
@@ -281,7 +284,7 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
 
     def _addDecidedState(new_state_id,
                          transition_id,
-                         base_state_id='delayed'):
+                         base_state_id='accepted'):
         """Helper method for adding a decided state, base work will be done using the
            p_base_state (cloning permission, transition start/end points)."""
         wf = itemWorkflow
@@ -328,7 +331,7 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                           origin_transition_id,
                           origin_transition_guard_expr_name,
                           back_transition_id,
-                          back_transition_guard_expr_name='mayCorrect',
+                          back_transition_guard_expr_name='mayCorrect()',
                           base_state_id='accepted'):
         """Add an isolated state with transitions go and back from/to another state."""
         wf = itemWorkflow
@@ -344,15 +347,16 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
         for transition_id, destination_state_id, guard_expr_name in (
                 (origin_transition_id, new_state_id, origin_transition_guard_expr_name),
                 (back_transition_id, origin_state_id, back_transition_guard_expr_name)):
-            wf.transitions.addTransition(transition_id)
-            transition = wf.transitions[transition_id]
-            transition.setProperties(
-                title=transition_id,
-                new_state_id=destination_state_id, trigger_type=1, script_name='',
-                actbox_name=transition_id, actbox_url='',
-                actbox_icon='%(portal_url)s/{0}.png'.format(transition_id),
-                actbox_category='workflow',
-                props={'guard_expr': 'python:here.wfConditions().{0}()'.format(guard_expr_name)})
+            if transition_id not in wf.transitions:
+                wf.transitions.addTransition(transition_id)
+                transition = wf.transitions[transition_id]
+                transition.setProperties(
+                    title=transition_id,
+                    new_state_id=destination_state_id, trigger_type=1, script_name='',
+                    actbox_name=transition_id, actbox_url='',
+                    actbox_icon='%(portal_url)s/{0}.png'.format(transition_id),
+                    actbox_category='workflow',
+                    props={'guard_expr': 'python:here.wfConditions().{0}'.format(guard_expr_name)})
 
         # link states and transitions
         # new_state
@@ -364,102 +368,7 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
         origin_state.setProperties(
             title=origin_state.title, description=origin_state.description,
             transitions=origin_state.transitions + (origin_transition_id, ))
-
-    def _apply_pre_validation(keepReviewerPermissions=False):
-        """Helper method to apply the 'pre_validation' or 'pre_validation_keep_reviewer_permissions' wfAdaptation,
-           but keep MeetingReviewer permissions for state 'proposed'.
-        """
-        # Add role 'MeetingPreReviewer'
-        portal = api.portal.get()
-        roleManager = portal.acl_users.portal_role_manager
-        if 'MeetingPreReviewer' not in roleManager.listRoleIds():
-            allRoles = list(portal.__ac_roles__)
-            roleManager.addRole('MeetingPreReviewer', 'MeetingPreReviewer', '')
-            allRoles.append('MeetingPreReviewer')
-            portal.__ac_roles__ = tuple(allRoles)
-        # Create state "prevalidated"
-        wf = itemWorkflow
-        if 'prevalidated' not in wf.states:
-            wf.states.addState('prevalidated')
-        # Create new transitions linking the new state to existing ones
-        # ('proposed' and 'validated').
-        for tr in ('prevalidate', 'backToPrevalidated'):
-            if tr not in wf.transitions:
-                wf.transitions.addTransition(tr)
-        transition = wf.transitions['prevalidate']
-        transition.setProperties(
-            title='prevalidate',
-            new_state_id='prevalidated', trigger_type=1, script_name='',
-            actbox_name='prevalidate', actbox_url='',
-            actbox_icon='%(portal_url)s/prevalidate.png', actbox_category='workflow',
-            props={'guard_expr': 'python:here.wfConditions().mayPrevalidate()'})
-        transition = wf.transitions['backToPrevalidated']
-        transition.setProperties(
-            title='backToPrevalidated',
-            new_state_id='prevalidated', trigger_type=1, script_name='',
-            actbox_name='backToPrevalidated', actbox_url='',
-            actbox_icon='%(portal_url)s/backToPrevalidated.png', actbox_category='workflow',
-            props={'guard_expr': 'python:here.wfConditions().mayCorrect("prevalidated")'})
-        # Update connections between states and transitions
-        wf.states['proposed'].setProperties(
-            title='proposed', description='',
-            transitions=['backToItemCreated', 'prevalidate'])
-        wf.states['prevalidated'].setProperties(
-            title='prevalidated', description='',
-            transitions=['backToProposed', 'validate'])
-        wf.states['validated'].setProperties(
-            title='validated', description='',
-            transitions=['backToPrevalidated', 'present'])
-        # Initialize permission->roles mapping for new state "prevalidated",
-        # which is the same as state "proposed" in the previous setting.
-        proposed = wf.states['proposed']
-        prevalidated = wf.states['prevalidated']
-        for permission, roles in proposed.permission_roles.iteritems():
-            prevalidated.setPermission(permission, 0, roles)
-        # Update permission->roles mappings for states 'proposed' and
-        # 'prevalidated': 'proposed' is 'mainly managed' by
-        # 'MeetingPreReviewer', while 'prevalidated' is "mainly managed" by
-        # 'MeetingReviewer'.
-        for permission in proposed.permission_roles.iterkeys():
-            roles = list(proposed.permission_roles[permission])
-            if 'MeetingReviewer' not in roles:
-                continue
-            if not keepReviewerPermissions:
-                roles.remove('MeetingReviewer')
-            roles.append('MeetingPreReviewer')
-            proposed.setPermission(permission, 0, roles)
-        for permission in prevalidated.permission_roles.iterkeys():
-            roles = list(prevalidated.permission_roles[permission])
-            if 'MeetingPreReviewer' not in roles:
-                continue
-            roles.remove('MeetingPreReviewer')
-            roles.append('MeetingReviewer')
-            prevalidated.setPermission(permission, 0, roles)
-        # The previous update on state 'prevalidated' was a bit too restrictive:
-        # it prevents the PreReviewer from consulting the item once it has been
-        # prevalidated. So here we grant him back this right.
-        for viewPerm in viewPermissions:
-            grantPermission(prevalidated, viewPerm, 'MeetingPreReviewer')
-        # Update permission->role mappings for every other state, taking into
-        # account new role 'MeetingPreReviewer'. The idea is: later in the
-        # workflow, MeetingReviewer and MeetingPreReviewer are granted exactly
-        # the same rights.
-        for stateName in wf.states.keys():
-            if stateName in ('itemcreated', 'proposed', 'prevalidated'):
-                continue
-            state = wf.states[stateName]
-            for permission in state.permission_roles.iterkeys():
-                roles = state.permission_roles[permission]
-                if ('MeetingReviewer' in roles) and \
-                   ('MeetingPreReviewer' not in roles):
-                    grantPermission(state, permission, 'MeetingPreReviewer')
-        # Transition "backToPrevalidated" must be protected by a popup, like
-        # any other "correct"-like transition.
-        toConfirm = meetingConfig.getTransitionsToConfirm()
-        if 'MeetingItem.backToPrevalidated' not in toConfirm:
-            toConfirm = list(toConfirm)
-            toConfirm.append('MeetingItem.backToPrevalidated')
-            meetingConfig.setTransitionsToConfirm(toConfirm)
+        return new_state
 
     def _doWichValidationWithReturnedToProposingGroup(new_state_id,
                                                       base_state_id,
@@ -482,7 +391,7 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
             new_state_id=last_returned_state_id, trigger_type=1, script_name='',
             actbox_name=transition_id, actbox_url='',
             actbox_icon=image_url, actbox_category='workflow',
-            props={'guard_expr': 'python:here.wfConditions().mayCorrect()'})
+            props={'guard_expr': 'python:here.wfConditions().mayCorrect("%s")' % new_state_id})
 
         # use same transitions as state last_returned_state_id and add transition between
         # new state and last_returned_state_id except transitions start with backTo_returned_...
@@ -505,7 +414,10 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
             new_state_id=new_state_id, trigger_type=1, script_name='',
             actbox_name=transition_id, actbox_url='',
             actbox_icon=image_url, actbox_category='workflow',
-            props={'guard_expr': 'python:here.wfConditions().mayCorrect()'})
+            props={
+                'guard_expr': 'python:here.wfConditions()'
+                '.mayProposeToNextValidationLevel(destinationState="{0}")'.format(
+                    transition_id.replace('goTo_returned_to_proposing_group_', ''))})
 
         # link state and transition (keep backTo_returned_... if not firstLevel)
         transition_ids = ()
@@ -522,97 +434,23 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
         base_state = wf.states[base_state_id]
         new_state = wf.states[new_state_id]
         cloned_permissions = dict(base_state.permission_roles)
-        cloned_permissions_with_meetingmanager = {}
-        customPermissions = RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS.get(
-            meetingConfig.getItemWorkflow(), {})
+        new_state.permission_roles = cloned_permissions
 
-        # we need to use an intermediate dict because roles are stored as a tuple and we need a list...
-        for permission in cloned_permissions:
-            # the acquisition is defined like this : if permissions is a tuple, it is not acquired
-            # if it is a list, it is acquired...  WTF???  So make sure we store the correct type...
-            acquired = isinstance(cloned_permissions[permission], list) and True or False
-            cloned_permissions_with_meetingmanager[permission] = list(cloned_permissions[permission])
-            if 'MeetingManager' not in cloned_permissions[permission]:
-                cloned_permissions_with_meetingmanager[permission].append('MeetingManager')
-            if not acquired:
-                cloned_permissions_with_meetingmanager[permission] = \
-                    tuple(cloned_permissions_with_meetingmanager[permission])
-
-        # now apply custom permissions defined in customPermissions
-        cloned_permissions_with_meetingmanager.update(customPermissions)
-
-        # if we are cloning an existing state permissions, make sure DeleteObjects
-        # is only be availble to ['Manager', 'MeetingManager']
-        # if custom permissions are defined, keep what is defined in it
-
-        if DeleteObjects not in customPermissions:
-            del_obj_perm = base_state.getPermissionInfo(DeleteObjects)
-            if del_obj_perm['acquired']:
-                cloned_permissions_with_meetingmanager[DeleteObjects] = ['Manager', ]
-            else:
-                cloned_permissions_with_meetingmanager[DeleteObjects] = ('Manager',)
-
-        # finally, apply computed permissions, aka cloned
-        new_state.permission_roles = cloned_permissions_with_meetingmanager
-
-    def _apply_return_to_proposing_group(wichValidation=None):
+    def _apply_return_to_proposing_group(whichValidation=None):
         """Helper method to apply the 'return_to_proposing_group' or
            'return_to_proposing_group_with_last_validation' or
            'return_to_proposing_group_with_all_validations' wfAdaptation.
-           wichValidation must in ('None', 'last', 'all')
+           whichValidation must in ('None', 'last', 'all')
         """
         if 'returned_to_proposing_group' not in itemWorkflow.states:
-            # add the 'returned_to_proposing_group' state and clone the
-            # permissions from RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE
-            # and apply permissions defined in RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS
-            # RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS contains custom permissions by workflow
-            customPermissions = RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS. \
-                get(meetingConfig.getItemWorkflow(), {})
             itemWorkflow.states.addState('returned_to_proposing_group')
             newState = getattr(itemWorkflow.states, 'returned_to_proposing_group')
-            # clone the permissions of the given RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE if it exists
-            cloned_permissions_with_meetingmanager = {}
-            # state to clone contains the state to clone and the workflow_id where this state is
-            stateToCloneInfos = RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE.get(meetingConfig.getItemWorkflow(), {})
-            stateToCloneWFId = ''
-            stateToCloneStateId = ''
-            if stateToCloneInfos:
-                # stateToCloneInfos is like 'meetingitem_workflow.itemcreated'
-                stateToCloneWFId, stateToCloneStateId = stateToCloneInfos.split('.')
-            stateToCloneWF = getattr(wfTool, stateToCloneWFId, None)
-            stateToClone = None
-            if stateToCloneWF and hasattr(stateToCloneWF.states, stateToCloneStateId):
-                stateToClone = getattr(stateToCloneWF.states, stateToCloneStateId)
-                # we must make sure the MeetingManagers still may access this item
-                # so add MeetingManager role to every cloned permissions
-                cloned_permissions = dict(stateToClone.permission_roles)
-                # we need to use an intermediate dict because roles are stored as a tuple and we need a list...
-                for permission in cloned_permissions:
-                    # the acquisition is defined like this : if permissions is a tuple, it is not acquired
-                    # if it is a list, it is acquired...  WTF???  So make sure we store the correct type...
-                    acquired = isinstance(cloned_permissions[permission], list) and True or False
-                    cloned_permissions_with_meetingmanager[permission] = list(cloned_permissions[permission])
-                    if 'MeetingManager' not in cloned_permissions[permission]:
-                        cloned_permissions_with_meetingmanager[permission].append('MeetingManager')
-                    if not acquired:
-                        cloned_permissions_with_meetingmanager[permission] = \
-                            tuple(cloned_permissions_with_meetingmanager[permission])
-
-            # now apply custom permissions defined in customPermissions
-            cloned_permissions_with_meetingmanager.update(customPermissions)
-
-            # if we are cloning an existing state permissions, make sure DeleteObjects
-            # is only be availble to ['Manager', 'MeetingManager']
-            # if custom permissions are defined, keep what is defined in it
-            if DeleteObjects not in customPermissions and stateToClone:
-                del_obj_perm = stateToClone.getPermissionInfo(DeleteObjects)
-                if del_obj_perm['acquired']:
-                    cloned_permissions_with_meetingmanager[DeleteObjects] = ['Manager', ]
-                else:
-                    cloned_permissions_with_meetingmanager[DeleteObjects] = ('Manager',)
-
-            # finally, apply computed permissions, aka cloned + custom
-            newState.permission_roles = cloned_permissions_with_meetingmanager
+            # stateToCloneInfos is like 'meetingitem_workflow.itemcreated'
+            stateToClone = itemWorkflow.states['validated']
+            # remove DeleteObjects permission
+            cloned_permissions = dict(stateToClone.permission_roles)
+            cloned_permissions[DeleteObjects] = ('Manager')
+            newState.permission_roles = cloned_permissions
 
             # now create the necessary transitions : one to go to 'returned_to_proposing_group' state
             # and x to go back to relevant state depending on current meeting state
@@ -653,10 +491,10 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                 transitions=newTransitionNames)
 
         # keep validation returned states
-        validation_returned_states = getValidationReturnedStates(meetingConfig)
-        if wichValidation == 'last':
+        validation_returned_states = _getValidationReturnedStates(meetingConfig)
+        if whichValidation == 'last':
             validation_returned_states = (validation_returned_states[-1],)
-        elif wichValidation is None:
+        elif whichValidation is None:
             validation_returned_states = ()
         last_returned_state_id = 'returned_to_proposing_group'
 
@@ -667,10 +505,72 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                                                           last_returned_state_id=last_returned_state_id)
             last_returned_state_id = validation_state
 
+    def _apply_item_validation_levels(meetingConfig, itemWorkflow):
+        """ """
+        # build item validation levels based on MeetingConfig.itemWFValidationLevels values
+        # build a list of dict with relevant informations so
+        # we will be able to call addState.  Indeed we need "back transitions" ids
+        # for example and we need to get this on the next validation level
+        levels = []
+        previous = None
+        first = True
+        item_validation_levels = list(meetingConfig.getItemWFValidationLevels(only_enabled=True))
+        if not item_validation_levels:
+            logger.info(WF_ITEM_VALIDATION_LEVELS_DISABLED % (meetingConfig.getId()))
+            return
+
+        # build thing reversed as workflows work with leading transitions
+        # so we need to create transitions leading to a new state
+        item_validation_levels.reverse()
+        for level in item_validation_levels:
+            data = {}
+            data['new_state_id'] = level['state']
+            data['new_state_title'] = level['state_title']
+            data['permissions_cloned_state_id'] = 'validated'
+            data['leading_transition_id'] = level['leading_transition']
+            data['leading_transition_title'] = level['leading_transition_title']
+            data['back_transition'] = level['back_transition']
+            data['back_transition_title'] = level['back_transition_title']
+            data['guard_name'] = \
+                'mayProposeToNextValidationLevel(destinationState="{0}")'.format(level['state'])
+            # add transition from validated to every validation levels
+            data['back_transitions'] = [{'back_transition_id': data['back_transition'],
+                                         'back_transition_title': data['back_transition_title'],
+                                         'back_from_state_id': 'validated'}]
+            if first:
+                first = False
+                data['leaving_to_state_id'] = 'validated'
+                data['leaving_transition_id'] = 'validate'
+            if previous:
+                data['back_transitions'].append(
+                    {'back_transition_id': data['back_transition'],
+                     'back_transition_title': data['back_transition_title'],
+                     'back_from_state_id': previous['new_state_id']})
+                data['existing_leaving_transition_ids'] = ['validate', previous['leading_transition_id']]
+                data['leaving_to_state_id'] = previous['new_state_id']
+            previous = data
+            levels.append(data)
+
+        # make sure we have no leading transition for initial_state, it is the case
+        # by default there is something because datagrid column is required...
+        levels[-1]['leading_transition_id'] = ''
+        levels[-1]['leading_transition_title'] = ''
+
+        # last added level is the new initial state
+        data['new_initial_state'] = True
+        for level in levels:
+            # remove unneeded 'back_transition/back_transition_title' keys, not used by addState
+            level.pop('back_transition')
+            level.pop('back_transition_title')
+            addState(itemWorkflow.id, **level)
+
+    tool = api.portal.get_tool('portal_plonemeeting')
+    # first of all, manage MeetingConfig.itemWFValidationLevels
+    _apply_item_validation_levels(meetingConfig, itemWorkflow)
+
     for wfAdaptation in wfAdaptations:
         # first try to call a performCustomWFAdaptations to see if it manages wfAdaptation
         # it could be a separated one or an overrided one
-        tool = api.portal.get_tool('portal_plonemeeting')
         applied = tool.adapted().performCustomWFAdaptations(meetingConfig, wfAdaptation, logger,
                                                             itemWorkflow, meetingWorkflow)
         # double check if applied is True or False, we need that boolean
@@ -692,19 +592,18 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
             # First, update the meeting workflow
             wf = meetingWorkflow
             # Delete transitions 'publish' and 'backToPublished'
-            for tr in ('publish', 'backToPublished', 'republish'):
+            for tr in ('publish', 'backToPublished'):
                 if tr in wf.transitions:
                     wf.transitions.deleteTransitions([tr])
             # Update connections between states and transitions
-            wf.states['created'].setProperties(
-                title='created', description='', transitions=['freeze'])
             wf.states['frozen'].setProperties(
                 title='frozen', description='',
                 transitions=['backToCreated', 'decide'])
+            wf.states['decided'].setProperties(
+                title='decided', description='', transitions=['backToFrozen', 'close'])
             # Delete state 'published'
             if 'published' in wf.states:
                 wf.states.deleteStates(['published'])
-
             # Then, update the item workflow.
             wf = itemWorkflow
             # Delete transitions 'itempublish' and 'backToItemPublished'
@@ -712,12 +611,22 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                 if tr in wf.transitions:
                     wf.transitions.deleteTransitions([tr])
             # Update connections between states and transitions
-            wf.states['presented'].setProperties(
-                title='presented', description='',
-                transitions=['itemfreeze', 'backToValidated'])
+            tr_leaving_itempublished = list(wf.states['itempublished'].transitions)
+            tr_leaving_itempublished.remove('backToItemFrozen')
+            tr_leaving_itempublished.append('backToPresented')
             wf.states['itemfrozen'].setProperties(
                 title='itemfrozen', description='',
-                transitions=['accept', 'refuse', 'delay', 'backToPresented'])
+                transitions=tr_leaving_itempublished)
+            for tr_leaving_itempublished in wf.states['itempublished'].transitions:
+                if tr_leaving_itempublished.startswith('back'):
+                    continue
+                leading_to_state = wf.transitions[tr_leaving_itempublished].new_state_id
+                patched_transitions = list(wf.states[leading_to_state].transitions)
+                patched_transitions.remove('backToItemPublished')
+                patched_transitions.append('backToItemFrozen')
+                wf.states[leading_to_state].setProperties(
+                    title=leading_to_state, description='',
+                    transitions=patched_transitions)
             # Delete state 'published'
             if 'itempublished' in wf.states:
                 wf.states.deleteStates(['itempublished'])
@@ -725,6 +634,7 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
         # "no_proposal" removes state 'proposed' in the item workflow: this way,
         # people can directly validate items after they have been created.
         elif wfAdaptation == 'no_proposal':
+            continue
             wf = itemWorkflow
             # Delete transitions 'propose' and 'backToProposed'
             for tr in ('propose', 'backToProposed'):
@@ -740,186 +650,44 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
             if 'proposed' in wf.states:
                 wf.states.deleteStates(['proposed'])
 
-        # "pre_validation" adds an additional state in the item validation chain:
-        # itemcreated -> proposed -> *prevalidated* -> validated.
-        # It implies the creation of a new role "MeetingPreReviewer", and use of
-        # MeetingGroup-related Plone groups suffixed with "_prereviewers".
-        elif wfAdaptation == 'pre_validation':
-            _apply_pre_validation(keepReviewerPermissions=False)
-
-        # same as the "pre_validation" here above but will make it possible for a
-        # user that is reviewer to validate items proposed to the prereviewer
-        # even if that reviewer is not in the Plone _prereviewers group
-        elif wfAdaptation == 'pre_validation_keep_reviewer_permissions':
-            _apply_pre_validation(keepReviewerPermissions=True)
-
-        # "creator_initiated_decisions" means that decisions (field item.decision)
-        # are already pre-encoded (as propositions) by the proposing group.
-        # (De-)activation of adaptation "pre_validation"/"pre_validation_keep_reviewer_permissions" impacts this one.
-        elif wfAdaptation == 'creator_initiated_decisions':
-            wf = itemWorkflow
-            # Creator can read and write the "decision" field on item creation.
-            grantPermission(wf.states['itemcreated'], WriteDecision, 'MeetingMember')
-            grantPermission(wf.states['itemcreated'], ReadDecision, 'MeetingMember')
-            # (Pre)reviewer can write the "decision" field once proposed.
-            writer = 'MeetingReviewer'
-            if 'pre_validation' in wfAdaptations or \
-               'pre_validation_keep_reviewer_permissions' in wfAdaptations:
-                writer = 'MeetingPreReviewer'
-            if 'proposed' in wf.states:
-                grantPermission(wf.states['proposed'], WriteDecision, writer)
-            # Reviewer can write the "decision" field once prevalidated
-            if 'pre_validation' in wfAdaptations or \
-               'pre_validation_keep_reviewer_permissions' in wfAdaptations:
-                grantPermission(wf.states['prevalidated'], WriteDecision,
-                                'MeetingReviewer')
-            # Group-related roles can read the decision during the whole process.
-            groupRoles = ['MeetingMember', 'MeetingReviewer', 'MeetingObserverLocal']
-            if 'pre_validation' in wfAdaptations or \
-               'pre_validation_keep_reviewer_permissions' in wfAdaptations:
-                groupRoles.append('MeetingPreReviewer')
-            for stateName in groupDecisionReadStates:
-                if stateName not in wf.states:
-                    continue
-                for role in groupRoles:
-                    try:
-                        grantPermission(wf.states[stateName], ReadDecision, role)
-                    except KeyError:
-                        pass  # State 'prevalidated' may not exist.
-
-        # "items_come_validated" removes the early steps of the item workflow: the
-        # initial state becomes "validated". This can be used, for example, when
-        # an item comes from another MeetingConfig.
-        elif wfAdaptation == 'items_come_validated':
-            wf = itemWorkflow
-            # State 'validated' becomes the initial state
-            wf.initial_state = 'validated'
-            # Remove early transitions
-            for tr in ('propose', 'validate', 'backToProposed', 'backToItemCreated'):
-                if tr in wf.transitions:
-                    wf.transitions.deleteTransitions([tr])
-            # Remove early states
-            for st in ('itemcreated', 'proposed'):
-                if st in wf.states:
-                    wf.states.deleteStates([st])
-
         # "reviewers_take_back_validated_item" give the ability to reviewers to
-        # take back an item that is validated.  To do so, this wfAdaptation will
-        # extend roles having the 'Review portal content' permission in state 'validated'
-        # to add the 'MeetingReviewer' role
+        # take back an item that is validated.
+        # This is managed in MeetingItem.MeetingItemWorkflowConditions.mayCorrect
         elif wfAdaptation == 'reviewers_take_back_validated_item':
-            wf = itemWorkflow
-            state = wf.states.validated
-            revPortalContentRoles = state.permission_roles[ReviewPortalContent]
-            if 'MeetingReviewer' not in revPortalContentRoles:
-                state.setPermission(ReviewPortalContent, 0, list(revPortalContentRoles) + ['MeetingReviewer'])
+            pass
 
-        # "archiving" transforms item and meeting workflow into simple, one-state
-        # workflows for setting up an archive site.
-        elif wfAdaptation == 'archiving':
-            # Keep only final state (itemarchived) in item workflow
-            wf = itemWorkflow
-            # State 'itemarchived' becomes the initial state
-            wf.initial_state = 'itemarchived'
-            # Remove all transitions
-            names = wf.transitions.keys()
-            if names:
-                wf.transitions.deleteTransitions(names)
-            # Remove all states but "itemarchived"
-            names = wf.states.keys()
-            if 'itemarchived' in names:
-                names.remove('itemarchived')
-            if names:
-                wf.states.deleteStates(names)
-            # Keep only final state (archived) in meeting workflow
-            wf = meetingWorkflow
-            # State 'archived' becomes the initial state
-            wf.initial_state = 'archived'
-            # Remove all transitions
-            names = wf.transitions.keys()
-            if names:
-                wf.transitions.deleteTransitions(names)
-            # Remove all states but "archived"
-            names = wf.states.keys()
-            if 'archived' in names:
-                names.remove('archived')
-            if names:
-                wf.states.deleteStates(names)
+        # "decide_item_when_back_to_meeting_from_returned_to_proposing_group" will
+        # trigger some transitions defined in
+        # config.ITEM_TRANSITION_WHEN_RETURNED_FROM_PROPOSING_GROUP_AFTER_CORRECTION
+        # when an item that was returned_to_proposing_group
+        # is send back to meeting if meeting is in a "decided" state
+        elif wfAdaptation == 'decide_item_when_back_to_meeting_from_returned_to_proposing_group':
+            pass
 
         # "only_creator_may_delete" grants the permission to delete items to
         # creators only (=role MeetingMember)(and also to God=Manager).
-        # (De-)activation of adaptation "pre_validation" impacts this one.
-        # We will check states in wich MeetingMember could delete and let only him
+        # We will check states in which MeetingMember could delete and let only him
         # have the delete permission.  In states where MeetingMember could not delete,
         # nobody will be able to delete at all (except God Itself obviously)
         elif wfAdaptation == 'only_creator_may_delete':
             wf = itemWorkflow
             for state in wf.states.values():
-                if 'MeetingMember' in state.permission_roles[DeleteObjects]:
-                    state.setPermission(DeleteObjects, 0, ['MeetingMember', 'Manager'])
-                else:
-                    state.setPermission(DeleteObjects, 0, ['Manager', ])
-
-        # "no_global_observation" means that during the whole decision process,
-        # every proposing group will only be able to consult items and decisions
-        # related to their group, never those from other groups. So there is no
-        # "global" observation of items and decisions.
-        elif wfAdaptation == 'no_global_observation':
-            # Modify the meetingitem workflow: once a meeting has been published,
-            # remove any permission for role "MeetingObserverGlobal".
-            wf = itemWorkflow
-            for stateName in noGlobalObsStates:
-                if stateName not in wf.states:
-                    continue
-                state = wf.states[stateName]
-                for permission, roles in state.permission_roles.iteritems():
-                    if 'MeetingObserverGlobal' not in roles:
-                        continue
-                    # Remove it from the roles for which this permission is granted.
-                    newRoles = list(roles)
-                    newRoles.remove('MeetingObserverGlobal')
-                    state.setPermission(permission, 0, newRoles)
-
-        # "everyone_reads_all" grants, in meeting and item workflows, view access
-        # to MeetingObserverGlobal in any state.
-        if wfAdaptation == 'everyone_reads_all':
-            wfs = (itemWorkflow, meetingWorkflow)
-            for wf in wfs:
-                for stateName in wf.states:
-                    state = wf.states[stateName]
-                    for permission, roles in state.permission_roles.iteritems():
-                        if permission not in viewPermissions:
-                            continue
-                        grantPermission(state, permission, 'MeetingObserverGlobal')
-
-        # "creator_edits_unless_closed" allows the creator of an item to edit it
-        # (decision included) unless the meeting is closed. To be more precise,
-        # the creator will not be able to edit the item if it is delayed, refused,
-        # confirmed or archived. In the standard workflow, as soon as the item is
-        # proposed, its creator looses his ability to modify it.
-        elif wfAdaptation == 'creator_edits_unless_closed':
-            wf = itemWorkflow
-            for stateName in wf.states:
-                if stateName in WF_NOT_CREATOR_EDITS_UNLESS_CLOSED:
-                    continue
-                # Grant write access to item creator
-                state = wf.states[stateName]
-                grantPermission(state, ModifyPortalContent, 'MeetingMember')
-                grantPermission(state, WriteDecision, 'MeetingMember')
+                if state.id != wf.initial_state:
+                    state.setPermission(DeleteObjects, 0, ['Manager'])
 
         # when an item is linked to a meeting, most of times, creators lose modify rights on it
         # with this, the item can be 'returned_to_proposing_group' when in a meeting then the creators
         # can modify it if necessary and send it back to the MeetingManagers when done
         elif wfAdaptation == 'return_to_proposing_group':
-            _apply_return_to_proposing_group(wichValidation=None)
+            _apply_return_to_proposing_group(whichValidation=None)
 
         # same as the "return_to_proposing_group" here above but the reviewer must validate item
         elif wfAdaptation == 'return_to_proposing_group_with_last_validation':
-            _apply_return_to_proposing_group(wichValidation='last')
+            _apply_return_to_proposing_group(whichValidation='last')
 
         # same as the "return_to_proposing_group" here above but the item must be validate by all hierarchical level
         elif wfAdaptation == 'return_to_proposing_group_with_all_validations':
-            _apply_return_to_proposing_group(wichValidation='all')
+            _apply_return_to_proposing_group(whichValidation='all')
 
         # "hide_decisions_when_under_writing" add state 'decisions_published' in the meeting workflow
         # between the 'decided' and the 'closed' states.  The idea is to hide the decisions to non
@@ -985,7 +753,8 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                                 updateCollectionCriterion(collection, criterion['i'],
                                                           tuple(criterion['v']) + ('decisions_published', ))
 
-        # "waiting_advices" add state 'xxx_waiting_advices' in the item workflow
+        # "waiting_advices/waiting_advices_from_last_validation_level"
+        # add state 'xxx_waiting_advices' in the item workflow
         # it is a go/back state from the WAITING_ADVICES_FROM_STATES item list of states.
         # It is made to isolate an item in a state where it is no more editable but some advices may be given
         # if we have several 'xxx_waiting_advices' states added,
@@ -1002,9 +771,26 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
             # for transition to 'xxx_waiting_advices', we need to know where we are coming from
             FROM_TRANSITION_ID_PATTERN = 'wait_advices_from_{0}'
             for infos in WAITING_ADVICES_FROM_STATES:
+                # while using WFAs 'waiting_advices_from_before_last_val_level'
+                # or 'waiting_advices_from_last_val_level', infos['from_states']/infos['back_states']
+                # are ignored ad we use validation states
+                from_states = []
+                back_states = []
+                if 'waiting_advices_from_every_val_levels' in wfAdaptations or \
+                   'waiting_advices_from_before_last_val_level' in wfAdaptations or \
+                   'waiting_advices_from_last_val_level' in wfAdaptations:
+                    item_validation_states = meetingConfig.getItemWFValidationLevels(data='state', only_enabled=True)
+                    from_states = list(item_validation_states)
+                    back_states = list(item_validation_states)
+                else:
+                    from_states = list(infos['from_states'])
+                    back_states = list(infos['back_states'])
+                if 'waiting_advices_adviser_may_validate' in wfAdaptations:
+                    back_states.append('validated')
+
                 # wipeout 'from_states' and 'back_states' to remove unexisting ones
-                from_state_ids = [state for state in infos['from_states'] if state in wf.states]
-                back_state_ids = [state for state in infos['back_states'] if state in wf.states]
+                from_state_ids = [state for state in from_states if state in wf.states]
+                back_state_ids = [state for state in back_states if state in wf.states]
                 # if nothing left, continue
                 if not from_state_ids or not back_state_ids:
                     continue
@@ -1018,21 +804,30 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                         from_transition_id = FROM_TRANSITION_ID_PATTERN.format(from_state_id)
                         wf.transitions.addTransition(from_transition_id)
                         transition = wf.transitions[from_transition_id]
+                        icon_name = 'wait_advices_from'
+                        if WAITING_ADVICES_USE_CUSTOM_ICON:
+                            icon_name = from_transition_id
                         transition.setProperties(
-                            title=from_transition_id,
+                            title='wait_advices_from',
                             new_state_id=new_state_id, trigger_type=1, script_name='',
                             actbox_name=from_transition_id, actbox_url='',
-                            actbox_icon='%(portal_url)s/{0}.png'.format(from_transition_id),
+                            actbox_icon='%(portal_url)s/{0}.png'.format(icon_name),
                             actbox_category='workflow',
-                            props={'guard_expr': 'python:here.wfConditions().may{0}()'.format(
-                                string.capwords(from_transition_id))})
+                            props={'guard_expr': 'python:here.wfConditions().mayWait_advices_from("{0}")'.format(
+                                from_state_id)})
                     for back_state_id in back_state_ids:
                         back_transition_id = 'backTo_{0}_from_waiting_advices'.format(back_state_id)
                         back_transition_ids.append(back_transition_id)
                         wf.transitions.addTransition(back_transition_id)
                         transition = wf.transitions[back_transition_id]
+                        back_transition_title = back_transition_id
+                        if back_state_id not in WAITING_ADVICES_USE_CUSTOM_BACK_TR_TITLE_FOR:
+                            # reuse the existing back transition for title
+                            existing_back_transition_id = 'backTo%s%s' % (back_state_id[0].upper(), back_state_id[1:])
+                            if existing_back_transition_id in wf.transitions:
+                                back_transition_title = wf.transitions[existing_back_transition_id].title
                         transition.setProperties(
-                            title=back_transition_id,
+                            title=back_transition_title,
                             new_state_id=back_state_id, trigger_type=1, script_name='',
                             actbox_name=back_transition_id, actbox_url='',
                             actbox_icon='%(portal_url)s/{0}.png'.format(back_transition_id),
@@ -1040,7 +835,11 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                             props={'guard_expr': 'python:here.wfConditions().mayCorrect("%s")' % back_state_id})
 
                     # Update connections between states and transitions
-                    new_state.setProperties(title=new_state_id, description='',
+                    new_state_title = new_state_id
+                    if not WAITING_ADVICES_USE_CUSTOM_STATE_TITLE:
+                        new_state_title = 'waiting_advices'
+                    new_state.setProperties(title=new_state_title,
+                                            description='',
                                             transitions=back_transition_ids)
                     # store roles having the 'Review portal content' permission
                     # from states going to 'xxx_waiting_advices' so it will be used
@@ -1058,12 +857,10 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                                                  transitions=existing_transitions + (from_transition_id, ))
 
                     # Initialize permission->roles mapping for new state "to_transition",
-                    # which is the same as state infos['perm_cloned_state']
-                    for perm_cloned_state_id in infos['perm_cloned_states']:
-                        if perm_cloned_state_id in wf.states:
-                            perm_cloned_state = wf.states[perm_cloned_state_id]
+                    # which is the same as state 'validated'
+                    perm_cloned_state = wf.states['validated']
                     for permission, roles in perm_cloned_state.permission_roles.iteritems():
-                        if infos['remove_modify_access'] and permission in edit_permissions:
+                        if WAITING_ADVICES_REMOVE_MODIFY_ACCESS and permission in edit_permissions:
                             # remove every roles but 'Manager', 'MeetingManager' and 'MeetingBudgetImpactEditor'
                             edit_roles = set(roles).intersection(
                                 set(('Manager', 'MeetingManager', 'MeetingBudgetImpactEditor')))
@@ -1085,6 +882,11 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
             _addDecidedState(new_state_id='marked_not_applicable',
                              transition_id='mark_not_applicable')
 
+        # "delayed" add state 'delayed' in the item workflow
+        elif wfAdaptation == 'delayed':
+            _addDecidedState(new_state_id='delayed',
+                             transition_id='delay')
+
         # "removed" and "removed_and_duplicated" add state 'removed' in the item workflow
         elif wfAdaptation in ('removed', 'removed_and_duplicated'):
             _addDecidedState(new_state_id='removed',
@@ -1095,6 +897,28 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
             _addDecidedState(new_state_id='refused',
                              transition_id='refuse')
 
+        # "accepted_but_modified" add state 'accepted_but_modified' in the item workflow
+        elif wfAdaptation == 'accepted_but_modified':
+            _addDecidedState(new_state_id='accepted_but_modified',
+                             transition_id='accept_but_modify')
+
+        # "pre_accepted" add state 'pre_accepted'
+        # from 'itemfrozen' in the item WF
+        elif wfAdaptation == 'pre_accepted':
+            # add state from itemfrozen ...
+            new_state = _addIsolatedState(
+                new_state_id='pre_accepted',
+                origin_state_id='itempublished',
+                origin_transition_id='pre_accept',
+                origin_transition_guard_expr_name='mayDecide()',
+                back_transition_guard_expr_name="mayCorrect('itempublished')",
+                back_transition_id='backToItemPublished')
+            # ... then add output transitions to 'accepted' and 'accepted_but_modified'
+            out_transitions = ['backToItemPublished', 'accept']
+            if 'accepted_but_modified' in wfAdaptations:
+                out_transitions.append('accept_but_modify')
+            new_state.transitions = out_transitions
+
         # "accepted_out_of_meeting" add state 'accepted_out_of_meeting'
         # from 'validated' in the item WF
         elif wfAdaptation in ['accepted_out_of_meeting',
@@ -1103,7 +927,8 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                 new_state_id='accepted_out_of_meeting',
                 origin_state_id='validated',
                 origin_transition_id='accept_out_of_meeting',
-                origin_transition_guard_expr_name='mayAccept_out_of_meeting',
+                origin_transition_guard_expr_name='mayAccept_out_of_meeting()',
+                back_transition_guard_expr_name="mayCorrect('validated')",
                 back_transition_id='backToValidatedFromAcceptedOutOfMeeting')
 
         # "accepted_out_of_meeting_emergency" add state 'accepted_out_of_meeting_emergency'
@@ -1114,17 +939,20 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                 new_state_id='accepted_out_of_meeting_emergency',
                 origin_state_id='validated',
                 origin_transition_id='accept_out_of_meeting_emergency',
-                origin_transition_guard_expr_name='mayAccept_out_of_meeting_emergency',
+                origin_transition_guard_expr_name='mayAccept_out_of_meeting_emergency()',
+                back_transition_guard_expr_name="mayCorrect('validated')",
                 back_transition_id='backToValidatedFromAcceptedOutOfMeetingEmergency')
 
-        # "presented_item_back_to_itemcreated" allows the MeetingManagers to send a presented
-        # item directly back to "itemcreated" in addition to back to "validated"
-        elif wfAdaptation == 'presented_item_back_to_itemcreated':
+        # "presented_item_back_to_XXX" allows the MeetingManagers to send a presented
+        # item directly back to "XXX" item validation state in addition to back to "validated"
+        elif wfAdaptation.startswith('presented_item_back_to_'):
             wf = itemWorkflow
-            if 'itemcreated' in wf.states:
-                presented = wf.states.presented
-                if 'backToItemCreated' not in presented.transitions:
-                    presented.transitions = presented.transitions + ('backToItemCreated', )
+            presented = wf.states.presented
+            item_validation_state = wfAdaptation.replace('presented_item_back_to_', '')
+            # find back transition that leads to item_validation_state
+            validation_state_infos = meetingConfig.getItemWFValidationLevels(state=item_validation_state)
+            back_transition = validation_state_infos['back_transition']
+            presented.transitions = presented.transitions + (back_transition, )
 
         # "presented_item_back_to_prevalidated" allows the MeetingManagers to send a presented
         # item directly back to "prevalidated" in addition to back to "validated"
@@ -1143,24 +971,38 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                 presented = wf.states.presented
                 if 'backToProposed' not in presented.transitions:
                     presented.transitions = presented.transitions + ('backToProposed', )
+
         logger.info(WF_APPLIED % (wfAdaptation, meetingConfig.getId()))
 
+    # manage meetingadvice related workflow adaptations
+    for org_uid, extra_adviser_infos in tool.adapted().get_extra_adviser_infos().items():
+        # first try to call a performCustomAdviceWFAdaptations
+        portal_type = extra_adviser_infos['portal_type']
+        base_wf = extra_adviser_infos['base_wf']
+        advice_wf_id = '{0}__{1}'.format(portal_type, base_wf)
+        wfAdaptations = extra_adviser_infos['wf_adaptations']
+        for wfAdaptation in wfAdaptations:
+            applied = tool.adapted().performCustomAdviceWFAdaptations(
+                meetingConfig, wfAdaptation, logger, advice_wf_id)
+            # double check if applied is True or False, we need that boolean
+            if not isinstance(applied, bool):
+                raise Exception('ToolPloneMeeting.performCustomAdviceWFAdaptations must return a boolean value!')
+            # if performCustomWFAdaptations managed wfAdaptation, continue with next one
+            if applied:
+                logger.info(ADVICE_WF_APPLIED_CUSTOM % (wfAdaptation,
+                                                        advice_wf_id,
+                                                        meetingConfig.getId()))
+                continue
+            else:
+                # nothing done by default for now
+                raise Exception('ToolPloneMeeting.performCustomAdviceWFAdaptations '
+                                'did not hangle WFAdaptation %s!' % wfAdaptation)
 
-def getValidationReturnedStates(cfg):
-    '''used for check compatibility in config '''
-    states = RETURN_TO_PROPOSING_GROUP_VALIDATION_STATES
-    # if workflowAdaptation 'pre_validation' is used, append 'prevalidated'
-    # either we are setting workflowAdaptations, or it is stored in MeetingConfig
-    use_prevalidation = False
-    if hasattr(cfg.REQUEST, 'useGroupsAsCategories'):
-        use_prevalidation = [wfa for wfa in cfg.REQUEST.get('workflowAdaptations', [])
-                             if wfa.startswith('pre_validation')]
-    else:
-        use_prevalidation = [wfa for wfa in cfg.getWorkflowAdaptations()
-                             if wfa.startswith('pre_validation')]
-    if use_prevalidation:
-        states += ('prevalidated', )
+
+def _getValidationReturnedStates(cfg):
+    ''' '''
     res = []
+    states = cfg.getItemWFValidationLevels(data='state', only_enabled=True)[1:]
     for state in states:
         res.append("returned_to_proposing_group_%s" % state)
     return res

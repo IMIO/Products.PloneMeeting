@@ -1,6 +1,13 @@
-<tal:loop repeat="field_name view/static_infos_field_names">
-  <span tal:define="field python: context.getField(field_name);
-                    mode string:view;">
-    <span metal:use-macro="context/widgets/field/macros/view" />
-  </span>
-</tal:loop>
+<div class="static-infos static-infos-meeting"
+     tal:define="field_names python: view.static_infos_field_names()"
+     tal:condition="field_names">
+  <tal:loop repeat="field_name field_names">
+    <span tal:define="widget python: view.dx_view.w.get(field_name)">
+      <div class="field">
+        <label tal:content="widget/label">Label</label>
+        <br />
+        <span tal:replace="structure python: widget.render()" />
+      </div>
+    </span>
+  </tal:loop>
+</div>

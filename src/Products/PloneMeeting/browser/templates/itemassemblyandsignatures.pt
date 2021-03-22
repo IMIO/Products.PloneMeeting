@@ -1,0 +1,71 @@
+<tal:comment replace="nothing">Assembly and signatures</tal:comment>
+<tal:assembly_and_signatures condition="view/show" i18n:domain="PloneMeeting">
+  <tal:defines
+    define="redefinedItemAssemblies python: context.redefinedItemAssemblies();
+            redefinedItemSignatures python: context.getItemSignatures(real=True) or context.get_item_signatories(real=True);
+            mayQuickEditItemSignatures context/mayQuickEditItemSignatures;
+            tool nocall:view/tool;
+            meetingConfig nocall:view/cfg;
+            meeting nocall:view/meeting;
+            usedMeetingAttrs view/usedMeetingAttrs;">
+      <tal:item_assembly tal:condition="python: ('assembly' in usedMeetingAttrs or meeting.assembly) and not meeting.get_attendees()">
+          <tal:defines define="mayQuickEdit python: context.mayQuickEdit('itemAssembly', bypassWritePermissionCheck=True);
+                               class_if_highlighted python: redefinedItemAssemblies and 'highlightValue' or '';
+                               class_to_use python: mayQuickEdit and (class_if_highlighted and class_if_highlighted + ' item_attribute_label' or ' item_attribute_label') or class_if_highlighted + ' item_attribute_label'">
+            <div>
+                <tal:comment replace="nothing">Display a label 'Attendees' if we use item excused and absents,
+                                               if only using 'assembly', the entire information is in this single field
+                                               where absents are striked.</tal:comment>
+                <tal:displayAssemblyLabel condition="python: ('assembly_excused' in usedMeetingAttrs or 'assembly_excused' in redefinedItemAssemblies) or
+                                                             ('assembly_absents' in usedMeetingAttrs or 'assembly_absents' in redefinedItemAssemblies) or
+                                                             ('assembly_guests' in usedMeetingAttrs or 'assembly_guests' in redefinedItemAssemblies)">
+                    <span class="item_attribute_label"
+                          tal:attributes="class python: 'assembly' in redefinedItemAssemblies and 'item_attribute_label highlightValue' or 'item_attribute_label'"
+                          i18n:translate="attendees_for_item"></span>:&nbsp;&nbsp;
+                </tal:displayAssemblyLabel>
+                <span tal:replace="structure python: context.getItemAssembly(for_display=True) or '-'">Assembly</span>
+            </div>
+            <div tal:condition="python: 'assembly_excused' in usedMeetingAttrs or 'assembly_excused' in redefinedItemAssemblies">
+                <span class="item_attribute_label"
+                      tal:attributes="class python: 'assembly_excused' in redefinedItemAssemblies and 'item_attribute_label highlightValue' or 'item_attribute_label'"
+                      i18n:translate="PloneMeeting_label_itemAssemblyExcused"></span>:&nbsp;&nbsp;
+                <span tal:replace="structure python: context.getItemAssemblyExcused() or '-'">Assembly excused</span>
+            </div>
+            <div tal:condition="python: 'assembly_absents' in usedMeetingAttrs or 'assembly_absents' in redefinedItemAssemblies">
+                <span class="item_attribute_label"
+                      tal:attributes="class python: 'assembly_absents' in redefinedItemAssemblies and 'item_attribute_label highlightValue' or 'item_attribute_label'"
+                      i18n:translate="PloneMeeting_label_itemAssemblyAbsents"></span>:&nbsp;&nbsp;
+                <span tal:replace="structure python: context.getItemAssemblyAbsents() or '-'">Assembly absents</span>
+            </div>
+          </tal:defines>
+      </tal:item_assembly>
+
+      <tal:block condition="python: ('attendees' in usedMeetingAttrs or meeting.get_attendees()) and not meeting.assembly">
+        <tal:comment replace="nothing">People (item attendees, signers and votes)</tal:comment>
+        <metal:people use-macro="here/@@pm-macros/itemPeople"/>
+      </tal:block>
+
+      <tal:item_assembly_common_fields>
+        <div tal:condition="python: 'assembly_guests' in usedMeetingAttrs or 'assembly_guests' in redefinedItemAssemblies">
+            <span class="item_attribute_label"
+                  tal:attributes="class python: 'assembly_guests' in redefinedItemAssemblies and 'item_attribute_label highlightValue' or 'item_attribute_label'"
+                  i18n:translate="PloneMeeting_label_itemAssemblyGuests"></span>:&nbsp;&nbsp;
+            <span tal:replace="structure python: context.getItemAssemblyGuests() or '-'">Assembly guests</span>
+        </div>
+      </tal:item_assembly_common_fields>
+
+      <tal:comment replace="nothing">Item signatures</tal:comment>
+      <tal:item_signatures tal:condition="python: ('signatures' in usedMeetingAttrs or context.getItemSignatures()) and not meeting.get_signatories()">
+          <tal:defines define="class_if_highlighted python: redefinedItemSignatures and 'highlightValue' or '';
+                               class_to_use python: mayQuickEditItemSignatures and (class_if_highlighted and class_if_highlighted + ' item_attribute_label' or ' item_attribute_label') or class_if_highlighted + ' item_attribute_label'">
+            <div class="item_signatures">
+                <span class="item_attribute_label"
+                      tal:attributes="class string:${class_to_use}"
+                      i18n:translate="PloneMeeting_label_itemSignatures"></span>:&nbsp;&nbsp;
+                <span tal:replace="structure python: context.getItemSignatures(for_display=True) or '-'">Signatures</span>
+            </div>
+          </tal:defines>
+      </tal:item_signatures>
+  </tal:defines>
+
+</tal:assembly_and_signatures>

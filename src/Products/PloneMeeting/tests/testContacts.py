@@ -1,4 +1,9 @@
 # -*- coding: utf-8 -*-
+#
+# File: testContacts.py
+#
+# GNU General Public License (GPL)
+#
 
 from AccessControl import Unauthorized
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
@@ -6,22 +11,29 @@ from collective.contact.plonegroup.utils import get_own_organization
 from collective.contact.plonegroup.utils import get_plone_groups
 from DateTime import DateTime
 from datetime import date
+from datetime import datetime
+from imio.helpers.content import disable_link_integrity_checks
 from imio.helpers.content import get_vocab
 from imio.helpers.content import validate_fields
 from OFS.ObjectManager import BeforeDeleteException
 from plone import api
 from Products.CMFCore.permissions import View
+from Products.PloneMeeting.browser.itemattendee import set_meeting_item_signatory
 from Products.PloneMeeting.content.directory import IPMDirectory
+from Products.PloneMeeting.content.meeting import get_all_used_held_positions
 from Products.PloneMeeting.content.source import PMContactSourceBinder
 from Products.PloneMeeting.Extensions.imports import import_contacts
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.statusmessages.interfaces import IStatusMessage
+from plone.namedfile import NamedImage
 from z3c.relationfield.relation import RelationValue
 from zExceptions import Redirect
 from zope.component import getUtility
+from zope.event import notify
 from zope.i18n import translate
 from zope.interface import Invalid
 from zope.intid.interfaces import IIntIds
+from zope.lifecycleevent import ObjectModifiedEvent
 
 import os
 import Products.PloneMeeting
@@ -34,15 +46,8 @@ class testContacts(PloneMeetingTestCase):
     def setUp(self):
         ''' '''
         super(testContacts, self).setUp()
-        self.changeUser('siteadmin')
         # enable attendees and signatories fields for Meeting
-        cfg = self.meetingConfig
-        cfg.setUsedMeetingAttributes(('attendees', 'excused', 'absents', 'signatories', ))
-        # enable itemInitiator fields for MeetingItem
-        cfg.setUsedItemAttributes(('attendees', 'excused', 'absents', 'signatories', 'itemInitiator'))
-        # select orderedContacts
-        ordered_contacts = cfg.getField('orderedContacts').Vocabulary(cfg).keys()
-        cfg.setOrderedContacts(ordered_contacts)
+        self._setUpOrderedContacts()
 
     def test_pm_OrderedContacts(self):
         ''' '''
@@ -51,23 +56,26 @@ class testContacts(PloneMeetingTestCase):
         # we have selectable contacts
         self.assertTrue(cfg.getOrderedContacts())
         # create meeting and select attendees on it
-        meeting = self.create('Meeting', date=DateTime())
+        meeting = self.create('Meeting')
         # contacts are still in correct order
-        self.assertEqual(cfg.getOrderedContacts(), meeting.getAttendees())
+        self.assertEqual(cfg.getOrderedContacts(), meeting.get_attendees())
 
-    def test_pm_MeetingGetAllUsedHeldPositions(self):
+    def test_pm_Get_all_used_held_positions(self):
         ''' '''
         cfg = self.meetingConfig
         self.changeUser('pmManager')
-        meeting = self.create('Meeting', date=DateTime())
-        # returns attendees, excused, absents, ...
+        pm_folder = self.getMeetingFolder()
+        meeting = self.create('Meeting')
+        # include_new=True will return default value selected in MeetingConfig
+        # if context is the meeting container, like when creating a new meeting
         self.assertEqual(
-            meeting.orderedContacts.keys(),
-            [hp.UID() for hp in meeting.getAllUsedHeldPositions()])
-        # for now, include_new=True does not change anything
+            meeting.ordered_contacts.keys(),
+            [hp_uid for hp_uid
+             in get_all_used_held_positions(pm_folder, include_new=True, the_objects=False)])
+        # include_new=True if context is meeting return same thing as meeting as well
         self.assertEqual(
-            meeting.getAllUsedHeldPositions(),
-            meeting.getAllUsedHeldPositions(include_new=True))
+            get_all_used_held_positions(meeting, the_objects=False),
+            get_all_used_held_positions(meeting, include_new=True, the_objects=False))
         # add a new hp in configuration
         self.changeUser('siteadmin')
         person = self.portal.contacts.get('person1')
@@ -80,29 +88,29 @@ class testContacts(PloneMeetingTestCase):
         self.changeUser('pmManager')
         # still no new value as not selected in MeetingConfig.orderedContacts
         self.assertEqual(
-            meeting.getAllUsedHeldPositions(),
-            meeting.getAllUsedHeldPositions(include_new=True))
+            get_all_used_held_positions(meeting),
+            get_all_used_held_positions(meeting, include_new=True))
         # select new hp
         ordered_contacts = cfg.getField('orderedContacts').Vocabulary(cfg).keys()
         cfg.setOrderedContacts(ordered_contacts)
         self.assertEqual(
-            meeting.getAllUsedHeldPositions() + (new_hp, ),
-            meeting.getAllUsedHeldPositions(include_new=True))
+            get_all_used_held_positions(meeting, include_new=False) + (new_hp, ),
+            get_all_used_held_positions(meeting, include_new=True))
         # unselect everything on MeetingConfig, all values still available on meeting
         cfg.setOrderedContacts(())
         self.assertEqual(
-            meeting.getAllUsedHeldPositions(), meeting.getAttendees(theObjects=True))
+            get_all_used_held_positions(meeting), meeting.get_attendees(the_objects=True))
 
     def test_pm_CanNotRemoveUsedHeldPosition(self):
         ''' '''
         cfg = self.meetingConfig
         self.changeUser('pmManager')
         # test that held positition cannot be delete if used for assembly
-        meeting = self.create('Meeting', date=DateTime())
+        meeting = self.create('Meeting')
         person = self.portal.contacts.get('person1')
         hp = person.get_held_positions()[0]
         hp_uid = hp.UID()
-        self.assertTrue(hp_uid in meeting.getAttendees())
+        self.assertTrue(hp_uid in meeting.get_attendees())
         # hp not deletable because used in MC and meeting
         self.changeUser('siteadmin')
         self.assertRaises(Redirect, api.content.delete, hp)
@@ -115,12 +123,12 @@ class testContacts(PloneMeetingTestCase):
         self.assertRaises(Redirect, api.content.delete, hp)
 
         # unselect hp from meeting, now it is deletable
-        del meeting.orderedContacts[hp.UID()]
-        self.assertFalse(hp_uid in meeting.getAttendees())
+        del meeting.ordered_contacts[hp.UID()]
+        self.assertFalse(hp_uid in meeting.get_attendees())
 
         # test that held positition cannot be delete if used for itemInitiator
         cfg.setOrderedItemInitiators((hp_uid,))
-        item = self.create('MeetingItem', date=DateTime())
+        item = self.create('MeetingItem')
         self.presentItem(item)
         item.setItemInitiator((hp_uid,))
 
@@ -148,21 +156,21 @@ class testContacts(PloneMeetingTestCase):
         # remove recurring items
         self._removeConfigObjectsFor(cfg)
         self.changeUser('pmCreator1')
-        item = self.create('MeetingItem')
+        item = self.create('MeetingItem', decision=self.decisionText)
         self.changeUser('pmManager')
-        meeting = self.create('Meeting', date=DateTime())
+        meeting = self.create('Meeting')
         # attendees not signatories
-        meeting_attendees = [hp for hp in meeting.getAttendees()
-                             if hp not in meeting.getSignatories()]
+        meeting_attendees = [hp for hp in meeting.get_attendees()
+                             if hp not in meeting.get_signatories()]
         self.assertTrue(meeting_attendees)
-        byebye_form = item.restrictedTraverse('@@item_byebye_attendee_form').form_instance
-        byebye_nonattendee_form = item.restrictedTraverse('@@item_byebye_nonattendee_form').form_instance
-        signatory_form = item.restrictedTraverse('@@item_redefine_signatory_form').form_instance
+        byebye_form = item.restrictedTraverse('@@item_byebye_attendee_form')
+        byebye_nonattendee_form = item.restrictedTraverse('@@item_byebye_nonattendee_form')
+        signatory_form = item.restrictedTraverse('@@item_redefine_signatory_form')
         signatory_form.person_uid = meeting_attendees[0]
         signatory_form.meeting = meeting
-        welcome_form = item.restrictedTraverse('@@item_welcome_attendee_form').form_instance
-        welcome_nonattendee_form = item.restrictedTraverse('@@item_welcome_nonattendee_form').form_instance
-        remove_signatory_form = item.restrictedTraverse('@@item_remove_redefined_signatory_form').form_instance
+        welcome_form = item.restrictedTraverse('@@item_welcome_attendee_form')
+        welcome_nonattendee_form = item.restrictedTraverse('@@item_welcome_nonattendee_form')
+        remove_signatory_form = item.restrictedTraverse('@@item_remove_redefined_signatory_form')
 
         def _check(username, should=True):
             ''' '''
@@ -177,24 +185,30 @@ class testContacts(PloneMeetingTestCase):
         # False for everybody when item not in a meeting
         _check('pmManager', should=False)
         _check('pmCreator1', should=False)
-        self.presentItem(item)
         # MeetingManagers may when item in a meeting
+        self.presentItem(item)
         _check('pmManager')
         _check('pmCreator1', should=False)
-        self.closeMeeting(meeting)
+        # MeetingManagers may when item decided and meeting not closed
+        self.changeUser('pmManager')
+        self.decideMeeting(meeting)
+        self.do(item, 'accept')
+        _check('pmManager')
+        _check('pmCreator1', should=False)
         # False for everybody when meeting is closed
+        self.closeMeeting(meeting)
         _check('pmManager', should=False)
         _check('pmCreator1', should=False)
 
     def test_pm_ItemAbsentsAndExcusedAndNonAttendees(self):
-        '''Item absents management (itemAbsents, itemExcused, nonAttendees),
+        '''Item absents management (item_absents, item_excused, non_attendees),
            byebye and welcome forms.'''
         cfg = self.meetingConfig
         # remove recurring items
         self._removeConfigObjectsFor(cfg)
         self.changeUser('pmManager')
-        meeting = self.create('Meeting', date=DateTime())
-        meeting_attendees = meeting.getAttendees()
+        meeting = self.create('Meeting')
+        meeting_attendees = meeting.get_attendees()
         self.assertTrue(meeting_attendees)
         item1 = self.create('MeetingItem')
         item2 = self.create('MeetingItem')
@@ -204,18 +218,18 @@ class testContacts(PloneMeetingTestCase):
         self.presentItem(item2)
 
         # for now attendees are the same on meeting and items
-        self.assertEqual(meeting_attendees, item1.getAttendees())
-        self.assertEqual(meeting_attendees, item2.getAttendees())
-        self.assertFalse(meeting.getItemAbsents())
-        self.assertFalse(meeting.getItemAbsents(by_persons=True))
-        self.assertFalse(meeting.getItemExcused())
-        self.assertFalse(meeting.getItemExcused(by_persons=True))
+        self.assertEqual(meeting_attendees, item1.get_attendees())
+        self.assertEqual(meeting_attendees, item2.get_attendees())
+        self.assertFalse(meeting.get_item_absents())
+        self.assertFalse(meeting.get_item_absents(by_persons=True))
+        self.assertFalse(meeting.get_item_excused())
+        self.assertFalse(meeting.get_item_excused(by_persons=True))
 
         # byebye person on item1 and item2
         hp1_uid = meeting_attendees[0]
         hp2_uid = meeting_attendees[1]
-        byebye_form = item1.restrictedTraverse('@@item_byebye_attendee_form').form_instance
-        byebye_nonattendee_form = item1.restrictedTraverse('@@item_byebye_nonattendee_form').form_instance
+        byebye_form = item1.restrictedTraverse('@@item_byebye_attendee_form')
+        byebye_nonattendee_form = item1.restrictedTraverse('@@item_byebye_nonattendee_form')
         byebye_form.meeting = meeting
         byebye_nonattendee_form.meeting = meeting
         byebye_form.person_uid = hp1_uid
@@ -223,29 +237,29 @@ class testContacts(PloneMeetingTestCase):
         byebye_form.not_present_type = 'absent'
         byebye_form.apply_until_item_number = 200
         byebye_nonattendee_form.apply_until_item_number = 200
-        self.assertFalse(item1.getItemAbsents())
-        self.assertFalse(item2.getItemAbsents())
+        self.assertFalse(item1.get_item_absents())
+        self.assertFalse(item2.get_item_absents())
         # set hp1 absent
         byebye_form._doApply()
-        self.assertEqual(item1.getItemAbsents(), (hp1_uid, ))
-        self.assertEqual(item2.getItemAbsents(), (hp1_uid, ))
+        self.assertEqual(item1.get_item_absents(), (hp1_uid, ))
+        self.assertEqual(item2.get_item_absents(), (hp1_uid, ))
         self.assertEqual(
-            sorted(meeting.getItemAbsents().keys()),
+            sorted(meeting.get_item_absents().keys()),
             sorted([item1_uid, item2_uid]))
-        self.assertEqual(meeting.getItemAbsents(by_persons=True).keys(), [hp1_uid])
+        self.assertEqual(meeting.get_item_absents(by_persons=True).keys(), [hp1_uid])
         self.assertEqual(
-            sorted(meeting.getItemAbsents(by_persons=True)[hp1_uid]),
+            sorted(meeting.get_item_absents(by_persons=True)[hp1_uid]),
             sorted([item1_uid, item2_uid]))
         # set hp1 non attendee
         byebye_nonattendee_form._doApply()
-        self.assertEqual(item1.getItemNonAttendees(), (hp1_uid, ))
-        self.assertEqual(item2.getItemNonAttendees(), (hp1_uid, ))
+        self.assertEqual(item1.get_item_non_attendees(), (hp1_uid, ))
+        self.assertEqual(item2.get_item_non_attendees(), (hp1_uid, ))
         self.assertEqual(
-            sorted(meeting.getItemNonAttendees().keys()),
+            sorted(meeting.get_item_non_attendees().keys()),
             sorted([item1_uid, item2_uid]))
-        self.assertEqual(meeting.getItemNonAttendees(by_persons=True).keys(), [hp1_uid])
+        self.assertEqual(meeting.get_item_non_attendees(by_persons=True).keys(), [hp1_uid])
         self.assertEqual(
-            sorted(meeting.getItemNonAttendees(by_persons=True)[hp1_uid]),
+            sorted(meeting.get_item_non_attendees(by_persons=True)[hp1_uid]),
             sorted([item1_uid, item2_uid]))
         # set hp2 excused
         byebye_form.person_uid = hp2_uid
@@ -253,75 +267,75 @@ class testContacts(PloneMeetingTestCase):
         byebye_form.apply_until_item_number = 100
         byebye_form._doApply()
         # absent
-        self.assertEqual(item1.getItemAbsents(), (hp1_uid, ))
-        self.assertEqual(item2.getItemAbsents(), (hp1_uid, ))
+        self.assertEqual(item1.get_item_absents(), (hp1_uid, ))
+        self.assertEqual(item2.get_item_absents(), (hp1_uid, ))
         self.assertEqual(
-            sorted(meeting.getItemAbsents().keys()),
+            sorted(meeting.get_item_absents().keys()),
             sorted([item1_uid, item2_uid]))
-        self.assertEqual(meeting.getItemAbsents(by_persons=True).keys(), [hp1_uid])
+        self.assertEqual(meeting.get_item_absents(by_persons=True).keys(), [hp1_uid])
         self.assertEqual(
-            sorted(meeting.getItemAbsents(by_persons=True)[hp1_uid]),
+            sorted(meeting.get_item_absents(by_persons=True)[hp1_uid]),
             sorted([item1_uid, item2_uid]))
         # excused
-        self.assertEqual(item1.getItemExcused(), (hp2_uid, ))
-        self.assertEqual(item2.getItemExcused(), ())
+        self.assertEqual(item1.get_item_excused(), (hp2_uid, ))
+        self.assertEqual(item2.get_item_excused(), ())
         self.assertEqual(
-            sorted(meeting.getItemExcused().keys()),
+            sorted(meeting.get_item_excused().keys()),
             sorted([item1_uid]))
-        self.assertEqual(meeting.getItemExcused(by_persons=True).keys(), [hp2_uid])
+        self.assertEqual(meeting.get_item_excused(by_persons=True).keys(), [hp2_uid])
         self.assertEqual(
-            sorted(meeting.getItemExcused(by_persons=True)[hp2_uid]),
+            sorted(meeting.get_item_excused(by_persons=True)[hp2_uid]),
             sorted([item1_uid]))
         # non attendees
-        self.assertEqual(item1.getItemNonAttendees(), (hp1_uid, ))
-        self.assertEqual(item2.getItemNonAttendees(), (hp1_uid, ))
+        self.assertEqual(item1.get_item_non_attendees(), (hp1_uid, ))
+        self.assertEqual(item2.get_item_non_attendees(), (hp1_uid, ))
         self.assertEqual(
-            sorted(meeting.getItemNonAttendees().keys()),
+            sorted(meeting.get_item_non_attendees().keys()),
             sorted([item1_uid, item2_uid]))
-        self.assertEqual(meeting.getItemNonAttendees(by_persons=True).keys(), [hp1_uid])
+        self.assertEqual(meeting.get_item_non_attendees(by_persons=True).keys(), [hp1_uid])
         self.assertEqual(
-            sorted(meeting.getItemNonAttendees(by_persons=True)[hp1_uid]),
+            sorted(meeting.get_item_non_attendees(by_persons=True)[hp1_uid]),
             sorted([item1_uid, item2_uid]))
 
         # welcome hp1 on item2
-        welcome_form = item2.restrictedTraverse('@@item_welcome_attendee_form').form_instance
+        welcome_form = item2.restrictedTraverse('@@item_welcome_attendee_form')
         welcome_form.meeting = meeting
         welcome_form.person_uid = hp1_uid
         welcome_form.apply_until_item_number = u''
         welcome_form._doApply()
-        self.assertEqual(item1.getItemAbsents(), (hp1_uid, ))
-        self.assertEqual(item1.getItemNonAttendees(), (hp1_uid, ))
-        self.assertFalse(item2.getItemAbsents())
+        self.assertEqual(item1.get_item_absents(), (hp1_uid, ))
+        self.assertEqual(item1.get_item_non_attendees(), (hp1_uid, ))
+        self.assertFalse(item2.get_item_absents())
         # welcome hp1 on item1
-        welcome_form = item1.restrictedTraverse('@@item_welcome_attendee_form').form_instance
+        welcome_form = item1.restrictedTraverse('@@item_welcome_attendee_form')
         welcome_form.meeting = meeting
         welcome_form.person_uid = hp1_uid
         welcome_form.apply_until_item_number = u''
         welcome_form._doApply()
-        self.assertFalse(item1.getItemAbsents())
-        self.assertEqual(item1.getItemNonAttendees(), (hp1_uid, ))
-        self.assertFalse(item2.getItemAbsents())
+        self.assertFalse(item1.get_item_absents())
+        self.assertEqual(item1.get_item_non_attendees(), (hp1_uid, ))
+        self.assertFalse(item2.get_item_absents())
         # welcome hp2 on item1
-        welcome_form = item1.restrictedTraverse('@@item_welcome_attendee_form').form_instance
+        welcome_form = item1.restrictedTraverse('@@item_welcome_attendee_form')
         welcome_form.meeting = meeting
         welcome_form.person_uid = hp2_uid
         welcome_form.apply_until_item_number = u''
         welcome_form._doApply()
-        self.assertFalse(item1.getItemExcused())
-        self.assertFalse(item2.getItemExcused())
-        self.assertEqual(item1.getItemNonAttendees(), (hp1_uid, ))
+        self.assertFalse(item1.get_item_excused())
+        self.assertFalse(item2.get_item_excused())
+        self.assertEqual(item1.get_item_non_attendees(), (hp1_uid, ))
         # welcome non attendee hp1 on item1 and item2
-        welcome_nonattendee_form = item1.restrictedTraverse('@@item_welcome_nonattendee_form').form_instance
+        welcome_nonattendee_form = item1.restrictedTraverse('@@item_welcome_nonattendee_form')
         welcome_nonattendee_form.meeting = meeting
         welcome_nonattendee_form.person_uid = hp1_uid
         welcome_nonattendee_form.apply_until_item_number = u'200'
         welcome_nonattendee_form._doApply()
-        self.assertFalse(item1.getItemExcused())
-        self.assertFalse(item2.getItemExcused())
-        self.assertFalse(item1.getItemAbsents())
-        self.assertFalse(item2.getItemAbsents())
-        self.assertFalse(item1.getItemNonAttendees())
-        self.assertFalse(item2.getItemNonAttendees())
+        self.assertFalse(item1.get_item_excused())
+        self.assertFalse(item2.get_item_excused())
+        self.assertFalse(item1.get_item_absents())
+        self.assertFalse(item2.get_item_absents())
+        self.assertFalse(item1.get_item_non_attendees())
+        self.assertFalse(item2.get_item_non_attendees())
 
     def test_pm_CanNotSetItemAbsentAndExcusedSamePerson(self):
         """ """
@@ -329,8 +343,8 @@ class testContacts(PloneMeetingTestCase):
         # remove recurring items
         self._removeConfigObjectsFor(cfg)
         self.changeUser('pmManager')
-        meeting = self.create('Meeting', date=DateTime())
-        meeting_attendees = meeting.getAttendees()
+        meeting = self.create('Meeting')
+        meeting_attendees = meeting.get_attendees()
         self.assertTrue(meeting_attendees)
         item1 = self.create('MeetingItem')
         item2 = self.create('MeetingItem')
@@ -344,24 +358,24 @@ class testContacts(PloneMeetingTestCase):
         hp1 = person1.get_held_positions()[0]
         hp1_uid = hp1.UID()
         # set hp1 absent for item1 and item2
-        byebye_form = item1.restrictedTraverse('@@item_byebye_attendee_form').form_instance
+        byebye_form = item1.restrictedTraverse('@@item_byebye_attendee_form')
         byebye_form.meeting = meeting
         byebye_form.person_uid = hp1_uid
         byebye_form.not_present_type = 'absent'
         byebye_form.apply_until_item_number = 200
         byebye_form._doApply()
         self.assertEqual(
-            sorted(meeting.getItemAbsents(by_persons=True)[hp1_uid]),
+            sorted(meeting.get_item_absents(by_persons=True)[hp1_uid]),
             sorted([item1_uid, item2_uid]))
         # then set hp1 excused for item2
         # nothing is done
-        byebye_form = item2.restrictedTraverse('@@item_byebye_attendee_form').form_instance
+        byebye_form = item2.restrictedTraverse('@@item_byebye_attendee_form')
         byebye_form.meeting = meeting
         byebye_form.person_uid = hp1_uid
         byebye_form.not_present_type = 'excused'
         byebye_form.apply_until_item_number = ''
         byebye_form._doApply()
-        self.assertFalse(meeting.getItemExcused(by_persons=True))
+        self.assertFalse(meeting.get_item_excused(by_persons=True))
 
     def test_pm_ItemSignatories(self):
         '''Item signatories management, define item signatory and remove item signatory.'''
@@ -369,8 +383,8 @@ class testContacts(PloneMeetingTestCase):
         # remove recurring items
         self._removeConfigObjectsFor(cfg)
         self.changeUser('pmManager')
-        meeting = self.create('Meeting', date=DateTime())
-        meeting_signatories = meeting.getSignatories()
+        meeting = self.create('Meeting')
+        meeting_signatories = meeting.get_signatories()
         self.assertTrue(meeting_signatories)
         item1 = self.create('MeetingItem')
         item2 = self.create('MeetingItem')
@@ -380,66 +394,120 @@ class testContacts(PloneMeetingTestCase):
         self.presentItem(item2)
 
         # for now signatories are the same on meeting and items
-        self.assertEqual(meeting_signatories, item1.getItemSignatories())
-        self.assertEqual(meeting_signatories, item2.getItemSignatories())
-        self.assertFalse(meeting.getItemSignatories())
-        self.assertFalse(item1.getItemSignatories(real=True))
-        self.assertFalse(item2.getItemSignatories(real=True))
+        self.assertEqual(meeting_signatories, item1.get_item_signatories())
+        self.assertEqual(meeting_signatories, item2.get_item_signatories())
+        self.assertFalse(meeting.get_item_signatories())
+        self.assertFalse(item1.get_item_signatories(real=True))
+        self.assertFalse(item2.get_item_signatories(real=True))
 
         # redefine signatory person on item1 and item2
         person = self.portal.contacts.get('person3')
         hp = person.get_held_positions()[0]
         hp_uid = hp.UID()
-        signatory_form = item1.restrictedTraverse('@@item_redefine_signatory_form').form_instance
+        signatory_form = item1.restrictedTraverse('@@item_redefine_signatory_form')
         signatory_form.meeting = meeting
         signatory_form.person_uid = hp_uid
         signatory_form.apply_until_item_number = 200
         signatory_form.signature_number = '1'
+        signatory_form.position_type = u'default'
         signatory_form._doApply()
 
-        self.assertEqual(item1.getItemSignatories(real=True), {hp_uid: '1'})
-        self.assertEqual(item2.getItemSignatories(real=True), {hp_uid: '1'})
-        self.assertTrue(hp_uid in item1.getItemSignatories())
-        self.assertTrue(hp_uid in item2.getItemSignatories())
-        meeting_item_signatories = meeting.getItemSignatories()
+        self.assertEqual(item1.get_item_signatories(real=True), {hp_uid: '1'})
+        self.assertEqual(item2.get_item_signatories(real=True), {hp_uid: '1'})
+        self.assertTrue(hp_uid in item1.get_item_signatories())
+        self.assertTrue(hp_uid in item2.get_item_signatories())
+        meeting_item_signatories = meeting.get_item_signatories()
         self.assertTrue(item1_uid in meeting_item_signatories)
         self.assertTrue(item2_uid in meeting_item_signatories)
 
         # remove redefined signatory on item2
-        remove_signatory_form = item2.restrictedTraverse('@@item_remove_redefined_signatory_form').form_instance
+        remove_signatory_form = item2.restrictedTraverse('@@item_remove_redefined_signatory_form')
         remove_signatory_form.meeting = meeting
         remove_signatory_form.person_uid = hp_uid
         remove_signatory_form.apply_until_item_number = u''
         remove_signatory_form._doApply()
-        self.assertTrue(hp_uid in item1.getItemSignatories())
-        self.assertFalse(hp_uid in item2.getItemSignatories())
-        meeting_item_signatories = meeting.getItemSignatories()
+        self.assertTrue(hp_uid in item1.get_item_signatories())
+        self.assertFalse(hp_uid in item2.get_item_signatories())
+        meeting_item_signatories = meeting.get_item_signatories()
         self.assertTrue(item1_uid in meeting_item_signatories)
         self.assertFalse(item2_uid in meeting_item_signatories)
 
         # trying to define a forbidden signatory (already signatory on meeting or not present)
         # will raise Unauthorized
         # 1) already signatory, try to define meeting signatory 2 as item signatory 2
-        meeting_signatory_2_uid = meeting.getSignatories(by_signature_number=True)['2']
+        meeting_signatory_2_uid = meeting.get_signatories(by_signature_number=True)['2']
         signatory_form.person_uid = meeting_signatory_2_uid
         self.assertRaises(Unauthorized, signatory_form._doApply)
 
         # set an attendee absent on item and try to select him as signatory on item1
         absent = self.portal.contacts.get('person2').get_held_positions()[0]
         absent_uid = absent.UID()
-        meeting.orderedContacts[absent_uid]['attendee'] = False
-        meeting.orderedContacts[absent_uid]['excused'] = True
-        self.assertTrue(absent_uid in meeting.getExcused())
+        meeting.ordered_contacts[absent_uid]['attendee'] = False
+        meeting.ordered_contacts[absent_uid]['excused'] = True
+        self.assertTrue(absent_uid in meeting.get_excused())
         signatory_form.person_uid = absent_uid
 
-    def test_pm_MeetingGetItemAbsents(self):
-        '''Test the Meeting.getItemAbsents method.'''
+    def test_pm_ItemSignatoriesSameSignatureNumberOnMeeting(self):
+        '''Check how signatories are considered when several same signature_number on meeting.
+           This is the case if we want :
+           - a present that is signatory 2 and another present that that has also signature 2,
+             and that will be signatory when signatory 2 is absent on item, by default order of
+             attendees is important on meeting, if both are present, the first win;
+           - an attendee that is non participant on most items and just added to be able to
+             replace a signatory on some items.'''
         cfg = self.meetingConfig
         # remove recurring items
         self._removeConfigObjectsFor(cfg)
         self.changeUser('pmManager')
-        meeting = self.create('Meeting', date=DateTime())
-        meeting_attendees = meeting.getAttendees()
+        meeting = self.create('Meeting')
+        # by default hp4 is signatory 2
+        hp2 = self.portal.contacts.person2.held_pos2
+        hp2_uid = hp2.UID()
+        hp3 = self.portal.contacts.person3.held_pos3
+        hp3_uid = hp3.UID()
+        hp4 = self.portal.contacts.person4.held_pos4
+        hp4_uid = hp4.UID()
+        self.assertEqual(meeting.ordered_contacts[hp4_uid]['signature_number'], '2')
+        # set hp3 signatory 2
+        self.assertIsNone(meeting.ordered_contacts[hp3_uid]['signature_number'])
+        meeting.ordered_contacts[hp3_uid]['signer'] = True
+        meeting.ordered_contacts[hp3_uid]['signature_number'] = '2'
+        meeting_signatories = meeting.get_signatories()
+        self.assertEqual(len(meeting_signatories), 3)
+        # when by_signature_number=True, the first is kept
+        meeting_signatories = meeting.get_signatories(by_signature_number=True)
+        self.assertEqual(len(meeting_signatories), 2)
+        self.assertEqual(meeting_signatories['2'], hp3_uid)
+        # set hp2 signatory 2
+        self.assertIsNone(meeting.ordered_contacts[hp2_uid]['signature_number'])
+        meeting.ordered_contacts[hp2_uid]['signer'] = True
+        meeting.ordered_contacts[hp2_uid]['signature_number'] = '2'
+        meeting_signatories = meeting.get_signatories(by_signature_number=True)
+        self.assertEqual(len(meeting_signatories), 2)
+        # the first win
+        self.assertEqual(meeting_signatories['2'], hp2_uid)
+
+        # on item, by default still first win
+        item = self.create('MeetingItem')
+        self.presentItem(item)
+        self.assertEqual(item.get_item_signatories(by_signature_number=True)['2'], hp2_uid)
+        # set hp2 absent on meeting
+        meeting.ordered_contacts[hp2_uid]['attendee'] = False
+        meeting.ordered_contacts[hp2_uid]['absent'] = True
+        # then hp3 is the first signature_number 2
+        self.assertEqual(item.get_item_signatories(by_signature_number=True)['2'], hp3_uid)
+        # set hp3 absent on item
+        meeting.item_excused[item.UID()] = [hp3_uid]
+        self.assertEqual(item.get_item_signatories(by_signature_number=True)['2'], hp4_uid)
+
+    def test_pm_Meeting_Get_item_absents(self):
+        '''Test the Meeting.get_item_absents method.'''
+        cfg = self.meetingConfig
+        # remove recurring items
+        self._removeConfigObjectsFor(cfg)
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting')
+        meeting_attendees = meeting.get_attendees()
         self.assertTrue(meeting_attendees)
         item1 = self.create('MeetingItem')
         item2 = self.create('MeetingItem')
@@ -447,32 +515,273 @@ class testContacts(PloneMeetingTestCase):
         self.presentItem(item2)
 
         # for now attendees are the same on meeting and items
-        self.assertEqual(meeting_attendees, item1.getAttendees())
-        self.assertEqual(meeting_attendees, item2.getAttendees())
+        self.assertEqual(meeting_attendees, item1.get_attendees())
+        self.assertEqual(meeting_attendees, item2.get_attendees())
 
         # byebye person on item1 and item2
         person = self.portal.contacts.get('person1')
         hp = person.get_held_positions()[0]
         hp_uid = hp.UID()
-        byebye_form = item1.restrictedTraverse('@@item_byebye_attendee_form').form_instance
+        byebye_form = item1.restrictedTraverse('@@item_byebye_attendee_form')
         byebye_form.meeting = meeting
         byebye_form.person_uid = hp_uid
         byebye_form.not_present_type = 'absent'
         byebye_form.apply_until_item_number = 200
-        self.assertFalse(item1.getItemAbsents())
-        self.assertFalse(item2.getItemAbsents())
+        self.assertFalse(item1.get_item_absents())
+        self.assertFalse(item2.get_item_absents())
         byebye_form._doApply()
-        self.assertEqual(item1.getItemAbsents(), (hp_uid, ))
-        self.assertEqual(item2.getItemAbsents(), (hp_uid, ))
+        self.assertEqual(item1.get_item_absents(), (hp_uid, ))
+        self.assertEqual(item2.get_item_absents(), (hp_uid, ))
 
         # welcome person on item2
-        welcome_form = item2.restrictedTraverse('@@item_welcome_attendee_form').form_instance
+        welcome_form = item2.restrictedTraverse('@@item_welcome_attendee_form')
         welcome_form.meeting = meeting
         welcome_form.person_uid = hp_uid
         welcome_form.apply_until_item_number = u''
         welcome_form._doApply()
-        self.assertEqual(item1.getItemAbsents(), (hp_uid, ))
-        self.assertFalse(item2.getItemAbsents())
+        self.assertEqual(item1.get_item_absents(), (hp_uid, ))
+        self.assertFalse(item2.get_item_absents())
+
+    def _setup_print_signatories_by_position(self):
+        # Add a position_type
+        self.portal.contacts.position_types += (
+            {"token": u"dg",
+             "name": u"Directeur Général|Directeurs Généraux|"
+                     u"Directrice Générale|Directrices Générales"},
+            {"token": u"super",
+             "name": u"Super-héro|Super-héros|"
+                     u"Super-héroine|Super-héroines"},
+        )
+
+        person1 = self.portal.contacts.get("person1")
+        person1.firstname = "Jane"
+        person1.firstname_abbreviated = "J."
+        person1.lastname = "Doe"
+        person1.gender = u"F"
+        person1.person_title = u"Miss"
+
+        file_path = os.path.join(os.path.dirname(__file__), 'dot.gif')
+        data = open(file_path, 'r')
+        person1.signature = NamedImage(data=data)
+
+        signatory1 = person1.get_held_positions()[0]
+        signatory1.position_type = u"dg"
+        signatory1.secondary_position_type = u"super"
+        signatory1.label = u""
+
+        # No gender/person_title and no position_type, no secondary_position_type
+        person4 = self.portal.contacts.get("person4")
+        person4.firstname = "John"
+        person4.firstname_abbreviated = u""
+        person4.lastname = "Doe"
+        person4.gender = u""
+        person4.person_title = u""
+
+        signatory2 = person4.get_held_positions()[0]
+        signatory2.label = u"Président"
+
+        # prepare 2 more signatories (but not setted as such, yet)
+        person2 = self.portal.contacts.get("person2")
+        signatory3 = person2.get_held_positions()[0]
+        signatory3.label = u"Signatory3"
+
+        person3 = self.portal.contacts.get("person3")
+        signatory4 = person3.get_held_positions()[0]
+        signatory4.label = u"Signatory4"
+
+    def test_pm_print_signatories_by_position(self):
+        self._setup_print_signatories_by_position()
+
+        self.changeUser("pmManager")
+        meeting = self.create("Meeting")
+        item = self.create("MeetingItem")
+        item_uid = item.UID()
+
+        # On MeetingItem
+        view = item.restrictedTraverse("document-generation")
+        helper = view.get_generation_context_helper()
+        # print_signatories_by_position shouldn"t fail if the item is not in a meeting
+        self.assertEqual(len(helper.print_signatories_by_position()), 0)
+        self.presentItem(item)
+
+        printed_signatories = helper.print_signatories_by_position(
+            signature_format=(u'prefixed_position_type', u'person'),
+            ender=".")
+        self.assertEqual(
+            printed_signatories,
+            {
+                0: u"La Directrice Générale,",
+                1: u"Jane Doe.",
+                2: u"Président,",  # No position_type, so no prefix
+                3: u"John Doe.",
+            }
+        )
+        printed_signatories = helper.print_signatories_by_position(
+            signature_format=(
+                u"prefixed_secondary_position_type",
+                u"person_with_title",
+                u"abbreviated_person",
+                u"XXX",
+                u"gender"
+            ),
+            separator=""
+        )
+        self.assertEqual(
+            printed_signatories,
+            {
+                0: u"La Super-héroine",
+                1: u"Miss Jane Doe",
+                2: u"J. Doe",
+                3: u"XXX",
+                4: u"F",
+                # John Doe has no gender, no title,
+                # no secondary_position_type and no abbreviated_firstname
+                5: u"Président",
+                6: u"John Doe",
+                7: u"John Doe",
+                8: u"XXX",
+                9: u""
+            }
+        )
+
+        # Test with scanned signature
+        printed_signatories = helper.print_signatories_by_position(
+            signature_format=(
+                u"prefixed_secondary_position_type",
+                u"person_signature",
+            ),
+            separator=""
+        )
+        self.assertTrue(isinstance(printed_signatories.get(1), NamedImage))
+        self.assertIsNone(printed_signatories.get(3))  # John Doe has no scanned signature
+
+        # test when some signatories redefined on item
+        # redefine signature_number "2"
+        contacts = meeting.ordered_contacts.items()
+        signatory3 = contacts[1]
+        signatory3_uid = signatory3[0]
+        self.assertFalse(signatory3[1]['signer'])
+        # when a position_type used for signatory, it overcomes
+        # defined label if it is not u'default'
+        # try with default
+        set_meeting_item_signatory(meeting, item_uid, '2', signatory3_uid, u'default')
+        printed_signatories = helper.print_signatories_by_position(
+            signature_format=(u'prefixed_position_type', u'person'))
+        self.assertEqual(
+            printed_signatories,
+            {
+                0: u"La Directrice Générale,",
+                1: u"Jane Doe",
+                2: u"Signatory3,",
+                3: u"Person2FirstName Person2LastName",
+            }
+        )
+        # try with something else than default
+        set_meeting_item_signatory(meeting, item_uid, '2', signatory3_uid, u'super')
+        printed_signatories = helper.print_signatories_by_position(
+            signature_format=(u'prefixed_position_type', u'person'))
+        self.assertEqual(
+            printed_signatories,
+            {
+                0: u"La Directrice Générale,",
+                1: u"Jane Doe",
+                2: u"Le Super-héro,",
+                3: u"Person2FirstName Person2LastName",
+            }
+        )
+
+        # On Meeting, with 4 signatories
+        view = meeting.restrictedTraverse("document-generation")
+        helper = view.get_generation_context_helper()
+        # Add two more signatories
+        # Set an absurd value to see if it will be correctly sorted
+        signatory3 = contacts[1][1]
+        signatory3["signature_number"] = "10"
+        signatory3["signer"] = True
+        signatory4 = contacts[2][1]
+        signatory4["signer"] = True
+        signatory4["signature_number"] = "22"  # Same here
+
+        printed_signatories = helper.print_signatories_by_position(
+            signature_format=(u"position_type",),
+            ender=None
+        )
+        self.assertEqual(
+            printed_signatories,
+            {
+                0: u"Directrice Générale",
+                1: u"Président",
+                2: u"Signatory3",
+                3: u"Signatory4"
+            }
+        )
+        # When asking for secondary_position_type, if not available,
+        # it falls back to position_type automatically
+        person3 = self.portal.contacts.get("person3")
+        signatory4 = person3.get_held_positions()[0]
+        signatory4.label = None
+        signatory4.position_type = u'super'
+        signatory4.secondary_position_type = None
+
+        printed_signatories = helper.print_signatories_by_position(
+            signature_format=(u"prefixed_secondary_position_type",),
+            ender=None
+        )
+        self.assertEqual(
+            printed_signatories,
+            {
+                # secondary_position_type
+                0: u"La Super-héroine",
+                # label
+                1: u"Président",
+                # label
+                2: u"Signatory3",
+                # position_type fallback from secondary_position_type
+                3: u"Le Super-héro"
+            }
+        )
+        # print_signatories_by_position is using Meeting.get_signature_infos_for
+        # redefined on item
+        self.assertTrue(signatory3_uid in item.get_item_signatories(real=True))
+        self.assertEqual(meeting.get_signature_infos_for(item_uid, signatory3_uid),
+                         {'position_type': u'super', 'signature_number': '2'})
+        self.assertEqual(
+            meeting.get_signature_infos_for(item_uid,
+                                            signatory3_uid,
+                                            render_position_type=True,
+                                            prefix_position_type=True),
+            {'position_type': u'Le Super-h\xe9ro', 'signature_number': '2'})
+        # not redefined on item
+        meeting_signatory1_uid = meeting.get_signatories(by_signature_number=True)['1']
+        self.assertFalse(meeting_signatory1_uid in item.get_item_signatories(real=True))
+        self.assertEqual(meeting.get_signature_infos_for(item_uid, meeting_signatory1_uid),
+                         {'position_type': u'dg', 'signature_number': '1'})
+        self.assertEqual(
+            meeting.get_signature_infos_for(item_uid,
+                                            meeting_signatory1_uid,
+                                            render_position_type=True,
+                                            prefix_position_type=True),
+            {'position_type': u'La Directrice G\xe9n\xe9rale', 'signature_number': '1'})
+
+    def test_pm_print_signatories_by_position_committee_id(self):
+        """Test print_signatories_by_position for meeting committee."""
+        self.changeUser('pmManager')
+        meeting = self._setUpCommittees()
+        view = meeting.restrictedTraverse('document-generation')
+        helper = view.get_generation_context_helper()
+        self.assertEqual(
+            helper.print_signatories_by_position(committee_id="committee_1"),
+            {0: u'Assembly member 2,',
+             1: u'Person2FirstName Person2LastName',
+             2: u'Assembly member 3,',
+             3: u'Person3FirstName Person3LastName'})
+        # same result when called from print_signatures_by_position
+        self.assertEqual(
+            helper.print_signatures_by_position(committee_id="committee_1"),
+            {0: u'Assembly member 2,',
+             1: u'Person2FirstName Person2LastName',
+             2: u'Assembly member 3,',
+             3: u'Person3FirstName Person3LastName'})
 
     def _setupInAndOutAttendees(self):
         """Setup a meeting with items and in and out (non) attendees."""
@@ -480,8 +789,8 @@ class testContacts(PloneMeetingTestCase):
         # remove recurring items
         self._removeConfigObjectsFor(cfg)
         self.changeUser('pmManager')
-        meeting = self.create('Meeting', date=DateTime())
-        meeting_attendees = meeting.getAttendees()
+        meeting = self.create('Meeting')
+        meeting_attendees = meeting.get_attendees()
         self.assertTrue(meeting_attendees)
         item1 = self.create('MeetingItem')
         item1_uid = item1.UID()
@@ -492,11 +801,18 @@ class testContacts(PloneMeetingTestCase):
         self.presentItem(item1)
         self.presentItem(item2)
         self.presentItem(item3)
-        self.assertEqual(meeting.getItems(ordered=True), [item1, item2, item3])
-        meeting.itemAbsents[item1_uid] = [meeting_attendees[0]]
-        meeting.itemExcused[item2_uid] = [meeting_attendees[0], meeting_attendees[1]]
-        meeting.itemNonAttendees[item2_uid] = [meeting_attendees[0]]
-        meeting.itemAbsents[item3_uid] = [meeting_attendees[1], meeting_attendees[2]]
+        self.assertEqual(meeting.get_items(ordered=True), [item1, item2, item3])
+        # item1
+        meeting.item_absents[item1_uid] = [meeting_attendees[0]]
+        meeting.item_excused[item1_uid] = [meeting_attendees[2]]
+        meeting.item_non_attendees[item1_uid] = [meeting_attendees[1]]
+        # item2
+        # was already absent on item1
+        meeting.item_non_attendees[item2_uid] = [meeting_attendees[0]]
+        meeting.item_excused[item2_uid] = [meeting_attendees[3]]
+        # item3
+        meeting.item_excused[item3_uid] = [meeting_attendees[2]]
+        meeting.item_non_attendees[item3_uid] = [meeting_attendees[0]]
         return meeting, meeting_attendees, item1, item2, item3
 
     def test_pm_ItemInAndOutAttendees(self):
@@ -504,35 +820,51 @@ class testContacts(PloneMeetingTestCase):
            that entered/left the meeting before/after current item.'''
         meeting, meeting_attendees, item1, item2, item3 = self._setupInAndOutAttendees()
         self.assertEqual(
-            item1.getInAndOutAttendees(theObjects=False),
-            {'attendee_again_after': (),
+            item1.get_in_and_out_attendees(ignore_before_first_item=False, the_objects=False),
+            {'attendee_again_after': (meeting_attendees[1],),
              'attendee_again_before': (),
-             'entered_after': (),
+             'entered_after': (meeting_attendees[2],),
              'entered_before': (),
-             'left_after': (meeting_attendees[1],),
-             'left_before': (meeting_attendees[0],),
-             'non_attendee_before': (),
-             'non_attendee_after': (meeting_attendees[0],)})
+             'left_after': (meeting_attendees[3],),
+             'left_before': (meeting_attendees[0], meeting_attendees[2]),
+             'non_attendee_after': (),
+             'non_attendee_before': (meeting_attendees[1],)})
         self.assertEqual(
-            item2.getInAndOutAttendees(theObjects=False),
-            {'attendee_again_after': (meeting_attendees[0],),
+            item1.get_in_and_out_attendees(ignore_before_first_item=True, the_objects=False),
+            {'attendee_again_after': (meeting_attendees[1],),
              'attendee_again_before': (),
-             'entered_after': (meeting_attendees[0],),
+             'entered_after': (meeting_attendees[2],),
              'entered_before': (),
+             'left_after': (meeting_attendees[3],),
+             'left_before': (),
+             'non_attendee_after': (),
+             'non_attendee_before': ()})
+        self.assertEqual(
+            item2.get_in_and_out_attendees(ignore_before_first_item=False, the_objects=False),
+            {'attendee_again_after': (),
+             'attendee_again_before': (meeting_attendees[1],),
+             'entered_after': (meeting_attendees[3],),
+             'entered_before': (meeting_attendees[2],),
              'left_after': (meeting_attendees[2],),
-             'left_before': (meeting_attendees[1],),
-             'non_attendee_before': (meeting_attendees[0],),
-             'non_attendee_after': ()})
+             'left_before': (meeting_attendees[3],),
+             'non_attendee_after': (),
+             'non_attendee_before': ()})
         self.assertEqual(
-            item3.getInAndOutAttendees(theObjects=False),
+            item2.get_in_and_out_attendees(ignore_before_first_item=False, the_objects=False),
+            item2.get_in_and_out_attendees(ignore_before_first_item=True, the_objects=False))
+        self.assertEqual(
+            item3.get_in_and_out_attendees(ignore_before_first_item=False, the_objects=False),
             {'attendee_again_after': (),
-             'attendee_again_before': (meeting_attendees[0],),
+             'attendee_again_before': (),
              'entered_after': (),
-             'entered_before': (meeting_attendees[0],),
+             'entered_before': (meeting_attendees[3],),
              'left_after': (),
              'left_before': (meeting_attendees[2],),
-             'non_attendee_before': (),
-             'non_attendee_after': ()})
+             'non_attendee_after': (),
+             'non_attendee_before': ()})
+        self.assertEqual(
+            item3.get_in_and_out_attendees(ignore_before_first_item=False, the_objects=False),
+            item3.get_in_and_out_attendees(ignore_before_first_item=True, the_objects=False))
 
     def test_pm_Print_in_and_out_attendees(self):
         """Test the print_in_and_out_attendees method."""
@@ -541,42 +873,48 @@ class testContacts(PloneMeetingTestCase):
         helper = view.get_generation_context_helper()
         # merge_in_and_out_types=False
         self.assertEqual(
-            helper.print_in_and_out_attendees(merge_in_and_out_types=False),
-            {'attendee_again_after': '',
-             'attendee_again_before': '',
-             'entered_after': '',
-             'entered_before': '',
-             'left_after': u'<p>Monsieur Person2FirstName Person2LastName quitte la '
+            helper.print_in_and_out_attendees(
+                ignore_before_first_item=False, merge_in_and_out_types=False),
+            {'attendee_again_after': u'<p>Monsieur Person2FirstName Person2LastName participe \xe0 la '
                 u's\xe9ance apr\xe8s la discussion du point.</p>',
-             'left_before': u'<p>Monsieur Person1FirstName Person1LastName quitte la '
-                u's\xe9ance avant la discussion du point.</p>',
-             'non_attendee_after': u'<p>Monsieur Person1FirstName Person1LastName ne '
-                u'participe plus \xe0 la s\xe9ance apr\xe8s la discussion du point.</p>',
-             'non_attendee_before': ''})
+             'attendee_again_before': '',
+             'entered_after': u'<p>Monsieur Person3FirstName Person3LastName entre en s\xe9ance '
+                u'apr\xe8s la discussion du point.</p>',
+             'entered_before': '',
+             'left_after': u'<p>Monsieur Person4FirstName Person4LastName quitte la '
+                u's\xe9ance apr\xe8s la discussion du point.</p>',
+             'left_before': u'<p>Monsieur Person1FirstName Person1LastName quitte la s\xe9ance avant '
+                u'la discussion du point.</p>\n'
+                u'<p>Monsieur Person3FirstName Person3LastName quitte la s\xe9ance avant la '
+                u'discussion du point.</p>',
+             'non_attendee_after': '',
+             'non_attendee_before': u'<p>Monsieur Person2FirstName Person2LastName ne participe plus '
+                u'\xe0 la s\xe9ance avant la discussion du point.</p>'})
         helper.context = item2
         self.assertEqual(
-            helper.print_in_and_out_attendees(merge_in_and_out_types=False),
-            {'attendee_again_after': u'<p>Monsieur Person1FirstName Person1LastName participe '
-                u'\xe0 nouveau \xe0 la s\xe9ance apr\xe8s la discussion du point.</p>',
-             'attendee_again_before': '',
-             'entered_after': u'<p>Monsieur Person1FirstName Person1LastName entre en '
+            helper.print_in_and_out_attendees(
+                ignore_before_first_item=False, merge_in_and_out_types=False),
+            {'attendee_again_after': '',
+             'attendee_again_before': u'<p>Monsieur Person2FirstName Person2LastName participe '
+                u'\xe0 la s\xe9ance avant la discussion du point.</p>',
+             'entered_after': u'<p>Monsieur Person4FirstName Person4LastName entre en '
                 u's\xe9ance apr\xe8s la discussion du point.</p>',
-             'entered_before': '',
+             'entered_before': u'<p>Monsieur Person3FirstName Person3LastName entre en '
+                u's\xe9ance avant la discussion du point.</p>',
              'left_after': u'<p>Monsieur Person3FirstName Person3LastName quitte la '
                 u's\xe9ance apr\xe8s la discussion du point.</p>',
-             'left_before': u'<p>Monsieur Person2FirstName Person2LastName quitte la '
+             'left_before': u'<p>Monsieur Person4FirstName Person4LastName quitte la '
                 u's\xe9ance avant la discussion du point.</p>',
              'non_attendee_after': '',
-             'non_attendee_before': u'<p>Monsieur Person1FirstName Person1LastName ne '
-                u'participe plus \xe0 la s\xe9ance avant la discussion du point.</p>'})
+             'non_attendee_before': ''})
         helper.context = item3
         self.assertEqual(
-            helper.print_in_and_out_attendees(merge_in_and_out_types=False),
+            helper.print_in_and_out_attendees(
+                ignore_before_first_item=False, merge_in_and_out_types=False),
             {'attendee_again_after': '',
-             'attendee_again_before': u'<p>Monsieur Person1FirstName Person1LastName participe '
-                u'\xe0 nouveau \xe0 la s\xe9ance avant la discussion du point.</p>',
+             'attendee_again_before': '',
              'entered_after': '',
-             'entered_before': u'<p>Monsieur Person1FirstName Person1LastName rentre en '
+             'entered_before': u'<p>Monsieur Person4FirstName Person4LastName entre en '
                 u's\xe9ance avant la discussion du point.</p>',
              'left_after': '',
              'left_before': u'<p>Monsieur Person3FirstName Person3LastName quitte la '
@@ -586,40 +924,76 @@ class testContacts(PloneMeetingTestCase):
         # merge_in_and_out_types=False
         helper.context = item1
         self.assertEqual(
-            helper.print_in_and_out_attendees(merge_in_and_out_types=True),
-            {'entered_after': '',
-             'entered_before': '',
-             'left_after': u'<p>Monsieur Person2FirstName Person2LastName quitte la '
+            helper.print_in_and_out_attendees(
+                ignore_before_first_item=False, merge_in_and_out_types=True),
+            {'entered_after': u'<p>Monsieur Person3FirstName Person3LastName entre en '
                 u's\xe9ance apr\xe8s la discussion du point.</p>'
-                u'<p>Monsieur Person1FirstName Person1LastName ne participe plus \xe0 la '
+                u'<p>Monsieur Person2FirstName Person2LastName participe \xe0 la '
                 u's\xe9ance apr\xe8s la discussion du point.</p>',
+             'entered_before': '',
+             'left_after': u'<p>Monsieur Person4FirstName Person4LastName quitte la s\xe9ance '
+                u'apr\xe8s la discussion du point.</p>',
              'left_before': u'<p>Monsieur Person1FirstName Person1LastName quitte la '
-                u's\xe9ance avant la discussion du point.</p>'})
+                u's\xe9ance avant la discussion du point.</p>\n'
+                u'<p>Monsieur Person3FirstName Person3LastName quitte la '
+                u's\xe9ance avant la discussion du point.</p>'
+                u'<p>Monsieur Person2FirstName Person2LastName ne participe plus '
+                u'\xe0 la s\xe9ance avant la discussion du point.</p>'})
         helper.context = item2
         self.assertEqual(
-            helper.print_in_and_out_attendees(merge_in_and_out_types=True),
-            {'entered_after': u'<p>Monsieur Person1FirstName Person1LastName entre en '
-                u's\xe9ance apr\xe8s la discussion du point.</p>'
-                u'<p>Monsieur Person1FirstName Person1LastName participe \xe0 nouveau \xe0 la '
+            helper.print_in_and_out_attendees(
+                ignore_before_first_item=False, merge_in_and_out_types=True),
+            {'entered_after': u'<p>Monsieur Person4FirstName Person4LastName entre en '
                 u's\xe9ance apr\xe8s la discussion du point.</p>',
-             'entered_before': '',
+             'entered_before': u'<p>Monsieur Person3FirstName Person3LastName entre en '
+                u's\xe9ance avant la discussion du point.</p>'
+                u'<p>Monsieur Person2FirstName Person2LastName participe \xe0 la '
+                u's\xe9ance avant la discussion du point.</p>',
              'left_after': u'<p>Monsieur Person3FirstName Person3LastName quitte la '
                 u's\xe9ance apr\xe8s la discussion du point.</p>',
-             'left_before': u'<p>Monsieur Person2FirstName Person2LastName quitte la '
-                u's\xe9ance avant la discussion du point.</p>'
-                u'<p>Monsieur Person1FirstName Person1LastName ne participe plus \xe0 la '
+             'left_before': u'<p>Monsieur Person4FirstName Person4LastName quitte la '
                 u's\xe9ance avant la discussion du point.</p>'})
         helper.context = item3
         self.assertEqual(
-            helper.print_in_and_out_attendees(merge_in_and_out_types=True),
+            helper.print_in_and_out_attendees(
+                ignore_before_first_item=False, merge_in_and_out_types=True),
             {'entered_after': '',
-             'entered_before': u'<p>Monsieur Person1FirstName Person1LastName rentre en '
-                u's\xe9ance avant la discussion du point.</p>'
-                u'<p>Monsieur Person1FirstName Person1LastName participe \xe0 nouveau \xe0 la '
+             'entered_before': u'<p>Monsieur Person4FirstName Person4LastName entre en '
                 u's\xe9ance avant la discussion du point.</p>',
              'left_after': '',
              'left_before': u'<p>Monsieur Person3FirstName Person3LastName quitte la '
                 u's\xe9ance avant la discussion du point.</p>'})
+
+    def test_pm_Print_in_and_out_attendees_include_hp(self):
+        """Test the print_in_and_out_attendees method include_hp parameter."""
+        meeting, meeting_attendees, item1, item2, item3 = self._setupInAndOutAttendees()
+        view = item1.restrictedTraverse('document-generation')
+        helper = view.get_generation_context_helper()
+        # include_hp=True
+        self.assertEqual(
+            helper.print_in_and_out_attendees(
+                include_hp=True),
+            {'entered_after': u'<p>Monsieur Person3FirstName Person3LastName, '
+                u'Assembly member 3 entre en s\xe9ance apr\xe8s la discussion du point.</p>'
+                u'<p>Monsieur Person2FirstName Person2LastName, Assembly member 2 participe \xe0 '
+                u'la s\xe9ance apr\xe8s la discussion du point.</p>',
+             'entered_before': '',
+             'left_after': u'<p>Monsieur Person4FirstName Person4LastName, '
+                u'Assembly member 4 & 5 quitte la s\xe9ance apr\xe8s la discussion du point.</p>',
+             'left_before': ''})
+        # abbreviate_firstname
+        self.assertEqual(
+            helper.print_in_and_out_attendees(
+                include_hp=True,
+                abbreviate_firstname=True),
+            {'entered_after': u'<p>Monsieur P3 Person3LastName, '
+                u'Assembly member 3 entre en s\xe9ance apr\xe8s la discussion du point.</p>'
+                u'<p>Monsieur P2 Person2LastName, Assembly member 2 participe \xe0 '
+                u'la s\xe9ance apr\xe8s la discussion du point.</p>',
+             'entered_before': '',
+             'left_after': u'<p>Monsieur P4 Person4LastName, '
+                u'Assembly member 4 & 5 quitte la s\xe9ance apr\xe8s la discussion du point.</p>',
+             'left_before': ''})
 
     def test_pm_Print_in_and_out_attendees_custom_patterns(self):
         """Test the print_in_and_out_attendees method."""
@@ -628,57 +1002,140 @@ class testContacts(PloneMeetingTestCase):
         helper = view.get_generation_context_helper()
         # no custom_patterns
         self.assertEqual(
-            helper.print_in_and_out_attendees(),
-            {'entered_after': '',
-             'entered_before': '',
-             'left_after': u'<p>Monsieur Person2FirstName Person2LastName quitte la '
+            helper.print_in_and_out_attendees(ignore_before_first_item=False),
+            {'entered_after': u'<p>Monsieur Person3FirstName Person3LastName entre en '
                 u's\xe9ance apr\xe8s la discussion du point.</p>'
-                u'<p>Monsieur Person1FirstName Person1LastName ne participe plus \xe0 la '
+                u'<p>Monsieur Person2FirstName Person2LastName participe \xe0 la '
+                u's\xe9ance apr\xe8s la discussion du point.</p>',
+             'entered_before': '',
+             'left_after': u'<p>Monsieur Person4FirstName Person4LastName quitte la '
                 u's\xe9ance apr\xe8s la discussion du point.</p>',
              'left_before': u'<p>Monsieur Person1FirstName Person1LastName quitte la '
-                u's\xe9ance avant la discussion du point.</p>'})
+                u's\xe9ance avant la discussion du point.</p>\n'
+                u'<p>Monsieur Person3FirstName Person3LastName quitte la s\xe9ance avant la '
+                u'discussion du point.</p><p>Monsieur Person2FirstName Person2LastName ne '
+                u'participe plus \xe0 la s\xe9ance avant la discussion du point.</p>'})
         # custom_patterns, merge_in_and_out_types=True
         self.assertEqual(
             helper.print_in_and_out_attendees(
+                ignore_before_first_item=False,
                 custom_patterns={'left_after': 'Custom pattern left_after',
                                  'non_attendee_after': 'Custom pattern non_attendee_after',
                                  'left_before': 'Custom pattern left_before'}),
-            {'entered_after': '',
+            {'entered_after': u'<p>Monsieur Person3FirstName Person3LastName entre en '
+                u's\xe9ance apr\xe8s la discussion du point.</p>'
+                u'<p>Monsieur Person2FirstName Person2LastName participe \xe0 la '
+                u's\xe9ance apr\xe8s la discussion du point.</p>',
              'entered_before': '',
-             'left_after': u'<p>Custom pattern left_after</p>'
-                u'<p>Custom pattern non_attendee_after</p>',
-             'left_before': u'<p>Custom pattern left_before</p>'})
+             'left_after': u'<p>Custom pattern left_after</p>',
+             'left_before': u'<p>Custom pattern left_before</p>\n<p>Custom pattern left_before</p>'
+                u'<p>Monsieur Person2FirstName Person2LastName ne participe plus \xe0 la '
+                u's\xe9ance avant la discussion du point.</p>'})
         # custom_patterns, merge_in_and_out_types=False
         self.assertEqual(
             helper.print_in_and_out_attendees(
+                ignore_before_first_item=False,
                 custom_patterns={'left_after': 'Custom pattern left_after',
                                  'non_attendee_after': 'Custom pattern non_attendee_after',
                                  'left_before': 'Custom pattern left_before'},
                 merge_in_and_out_types=False),
-            {'attendee_again_after': '',
+            {'attendee_again_after': u'<p>Monsieur Person2FirstName Person2LastName participe '
+                u'\xe0 la s\xe9ance apr\xe8s la discussion du point.</p>',
              'attendee_again_before': '',
-             'entered_after': '',
+             'entered_after': u'<p>Monsieur Person3FirstName Person3LastName entre en s\xe9ance '
+                u'apr\xe8s la discussion du point.</p>',
              'entered_before': '',
              'left_after': u'<p>Custom pattern left_after</p>',
-             'left_before': u'<p>Custom pattern left_before</p>',
-             'non_attendee_after': u'<p>Custom pattern non_attendee_after</p>',
-             'non_attendee_before': ''})
+             'left_before': u'<p>Custom pattern left_before</p>\n<p>Custom pattern left_before</p>',
+             'non_attendee_after': '',
+             'non_attendee_before': u'<p>Monsieur Person2FirstName Person2LastName ne participe '
+                u'plus \xe0 la s\xe9ance avant la discussion du point.</p>'})
 
         # partial custom_patterns, merge_in_and_out_types=False
         self.assertEqual(
             helper.print_in_and_out_attendees(
-                custom_patterns={'left_after': 'Custom pattern left_after',
-                                 'non_attendee_after': 'Custom pattern non_attendee_after'},
+                ignore_before_first_item=False,
+                custom_patterns={'left_before': 'Custom pattern left_before',
+                                 'non_attendee_before': 'Custom pattern non_attendee_before'},
                 merge_in_and_out_types=False),
-            {'attendee_again_after': '',
+            {'attendee_again_after': u'<p>Monsieur Person2FirstName Person2LastName participe '
+                u'\xe0 la s\xe9ance apr\xe8s la discussion du point.</p>',
              'attendee_again_before': '',
-             'entered_after': '',
+             'entered_after': u'<p>Monsieur Person3FirstName Person3LastName entre en '
+                u's\xe9ance apr\xe8s la discussion du point.</p>',
              'entered_before': '',
-             'left_after': u'<p>Custom pattern left_after</p>',
-             'left_before': u'<p>Monsieur Person1FirstName Person1LastName quitte la '
-                u's\xe9ance avant la discussion du point.</p>',
-             'non_attendee_after': u'<p>Custom pattern non_attendee_after</p>',
+             'left_after': u'<p>Monsieur Person4FirstName Person4LastName quitte la '
+                u's\xe9ance apr\xe8s la discussion du point.</p>',
+             'left_before': u'<p>Custom pattern left_before</p>\n<p>Custom pattern left_before</p>',
+             'non_attendee_after': '',
+             'non_attendee_before': u'<p>Custom pattern non_attendee_before</p>'})
+
+    def test_pm_Print_in_and_out_attendees_ignore_before_first_item(self):
+        """Test the print_in_and_out_attendees ignore_before_first_item=True parameter."""
+        meeting, meeting_attendees, item1, item2, item3 = self._setupInAndOutAttendees()
+        view = item1.restrictedTraverse('document-generation')
+        helper = view.get_generation_context_helper()
+        # ignore_before_first_item=True (default), nominal case
+        self.assertEqual(
+            helper.print_in_and_out_attendees(),
+            {'entered_after': u'<p>Monsieur Person3FirstName Person3LastName entre en '
+                u's\xe9ance apr\xe8s la discussion du point.</p>'
+                u'<p>Monsieur Person2FirstName Person2LastName participe \xe0 la '
+                u's\xe9ance apr\xe8s la discussion du point.</p>',
+             'entered_before': '',
+             'left_after': u'<p>Monsieur Person4FirstName Person4LastName quitte la '
+                u's\xe9ance apr\xe8s la discussion du point.</p>',
+             'left_before': ''})
+        # ignore_before_first_item=True (default), merge_in_and_out_types=False
+        self.assertEqual(
+            helper.print_in_and_out_attendees(merge_in_and_out_types=False),
+            {'attendee_again_after': u'<p>Monsieur Person2FirstName Person2LastName participe '
+                u'\xe0 la s\xe9ance apr\xe8s la discussion du point.</p>',
+             'attendee_again_before': '',
+             'entered_after': u'<p>Monsieur Person3FirstName Person3LastName entre en '
+                u's\xe9ance apr\xe8s la discussion du point.</p>',
+             'entered_before': '',
+             'left_after': u'<p>Monsieur Person4FirstName Person4LastName quitte la '
+                u's\xe9ance apr\xe8s la discussion du point.</p>',
+             'left_before': '',
+             'non_attendee_after': '',
              'non_attendee_before': ''})
+
+        # ignore_before_first_item=False
+        self.assertEqual(
+            helper.print_in_and_out_attendees(ignore_before_first_item=False),
+            {'entered_after': u'<p>Monsieur Person3FirstName Person3LastName entre en '
+                u's\xe9ance apr\xe8s la discussion du point.</p>'
+                u'<p>Monsieur Person2FirstName Person2LastName participe \xe0 la '
+                u's\xe9ance apr\xe8s la discussion du point.</p>',
+             'entered_before': '',
+             'left_after': u'<p>Monsieur Person4FirstName Person4LastName quitte la '
+                u's\xe9ance apr\xe8s la discussion du point.</p>',
+             'left_before': u'<p>Monsieur Person1FirstName Person1LastName quitte la '
+                u's\xe9ance avant la discussion du point.</p>\n'
+                u'<p>Monsieur Person3FirstName Person3LastName quitte la '
+                u's\xe9ance avant la discussion du point.</p>'
+                u'<p>Monsieur Person2FirstName Person2LastName ne participe plus '
+                u'\xe0 la s\xe9ance avant la discussion du point.</p>'})
+        # ignore_before_first_item=False, merge_in_and_out_types=False
+        self.assertEqual(
+            helper.print_in_and_out_attendees(
+                ignore_before_first_item=False, merge_in_and_out_types=False),
+            {'attendee_again_after': u'<p>Monsieur Person2FirstName Person2LastName participe '
+                u'\xe0 la s\xe9ance apr\xe8s la discussion du point.</p>',
+             'attendee_again_before': '',
+             'entered_after': u'<p>Monsieur Person3FirstName Person3LastName entre en '
+                u's\xe9ance apr\xe8s la discussion du point.</p>',
+             'entered_before': '',
+             'left_after': u'<p>Monsieur Person4FirstName Person4LastName quitte la '
+                u's\xe9ance apr\xe8s la discussion du point.</p>',
+             'left_before': u'<p>Monsieur Person1FirstName Person1LastName quitte la '
+                u's\xe9ance avant la discussion du point.</p>\n'
+                u'<p>Monsieur Person3FirstName Person3LastName quitte la '
+                u's\xe9ance avant la discussion du point.</p>',
+             'non_attendee_after': '',
+             'non_attendee_before': u'<p>Monsieur Person2FirstName Person2LastName ne participe plus '
+                u'\xe0 la s\xe9ance avant la discussion du point.</p>'})
 
     def test_pm_Print_attendees(self):
         """Basic test for the print_attendees method."""
@@ -690,10 +1147,8 @@ class testContacts(PloneMeetingTestCase):
             helper.print_attendees(),
             u'Monsieur Person1FirstName Person1LastName, '
             u'Assembly member 1, <strong>absent pour ce point</strong><br />'
-            u'Monsieur Person2FirstName Person2LastName, '
-            u'Assembly member 2, <strong>pr\xe9sent</strong><br />'
             u'Monsieur Person3FirstName Person3LastName, '
-            u'Assembly member 3, <strong>pr\xe9sent</strong><br />'
+            u'Assembly member 3, <strong>excus\xe9 pour ce point</strong><br />'
             u'Monsieur Person4FirstName Person4LastName, '
             u'Assembly member 4 &amp; 5, <strong>pr\xe9sent</strong>')
         # meeting
@@ -710,6 +1165,19 @@ class testContacts(PloneMeetingTestCase):
             u'Monsieur Person4FirstName Person4LastName, Assembly member 4 &amp; 5, '
             u'<strong>pr\xe9sent</strong>')
 
+    def test_pm_Print_attendees_committee_id(self):
+        """Print Meeting committee attendees."""
+        self.changeUser('pmManager')
+        meeting = self._setUpCommittees()
+        view = meeting.restrictedTraverse('document-generation')
+        helper = view.get_generation_context_helper()
+        self.assertEqual(
+            helper.print_attendees(committee_id="committee_1"),
+            u'Monsieur Person1FirstName Person1LastName, Assembly member 1, '
+            u'<strong>pr\xe9sent</strong><br />'
+            u'Monsieur Person2FirstName Person2LastName, Assembly member 2, '
+            u'<strong>pr\xe9sent</strong>')
+
     def test_pm_Print_attendees_by_type(self):
         """Basic test for the print_attendees method."""
         meeting, meeting_attendees, item1, item2, item3 = self._setupInAndOutAttendees()
@@ -718,10 +1186,10 @@ class testContacts(PloneMeetingTestCase):
         helper = view.get_generation_context_helper()
         self.assertEqual(
             helper.print_attendees_by_type(),
-            u'<strong><u>Pr\xe9sents&nbsp;:</u></strong><br />'
-            u'Monsieur Person2FirstName Person2LastName, Assembly member 2, '
-            u'Monsieur Person3FirstName Person3LastName, Assembly member 3, '
+            u'<strong><u>Pr\xe9sent&nbsp;:</u></strong><br />'
             u'Monsieur Person4FirstName Person4LastName, Assembly member 4 &amp; 5;<br />'
+            u'<strong><u>Excus\xe9 pour ce point&nbsp;:</u></strong><br />'
+            u'Monsieur Person3FirstName Person3LastName, Assembly member 3;<br />'
             u'<strong><u>Absent pour ce point&nbsp;:</u></strong><br />'
             u'Monsieur Person1FirstName Person1LastName, Assembly member 1;')
         # meeting
@@ -735,6 +1203,24 @@ class testContacts(PloneMeetingTestCase):
             u'Monsieur Person3FirstName Person3LastName, Assembly member 3, '
             u'Monsieur Person4FirstName Person4LastName, Assembly member 4 &amp; 5;')
 
+    def test_pm_Print_attendees_by_type_committee_id(self):
+        """Print Meeting committee attendees by type."""
+        self.changeUser('pmManager')
+        meeting = self._setUpCommittees()
+        view = meeting.restrictedTraverse('document-generation')
+        helper = view.get_generation_context_helper()
+        self.assertEqual(
+            helper.print_attendees_by_type(committee_id="committee_1"),
+            u'<strong><u>Pr\xe9sents&nbsp;:</u></strong><br />'
+            u'Monsieur Person1FirstName Person1LastName, Assembly member 1, '
+            u'Monsieur Person2FirstName Person2LastName, Assembly member 2;')
+        # same result when called from printAssembly
+        self.assertEqual(
+            helper.printAssembly(committee_id="committee_1", group_position_type=False),
+            u'<strong><u>Pr\xe9sents&nbsp;:</u></strong><br />'
+            u'Monsieur Person1FirstName Person1LastName, Assembly member 1, '
+            u'Monsieur Person2FirstName Person2LastName, Assembly member 2;')
+
     def test_pm_ItemContactsWhenItemRemovedFromMeeting(self):
         '''When an item is removed from a meeting, redefined informations
            regarding item absents/excused and signatories are reinitialized.'''
@@ -742,7 +1228,7 @@ class testContacts(PloneMeetingTestCase):
         # remove recurring items
         self._removeConfigObjectsFor(cfg)
         self.changeUser('pmManager')
-        meeting = self.create('Meeting', date=DateTime())
+        meeting = self.create('Meeting')
         item_with_absent = self.create('MeetingItem')
         self.presentItem(item_with_absent)
         item_with_excused = self.create('MeetingItem')
@@ -752,38 +1238,41 @@ class testContacts(PloneMeetingTestCase):
         absent = self.portal.contacts.get('person1')
         absent_hp = absent.get_held_positions()[0]
         absent_hp_uid = absent_hp.UID()
-        meeting.itemAbsents[item_with_absent.UID()] = [absent_hp_uid]
-        self.assertTrue(absent_hp_uid in meeting.getItemAbsents(by_persons=True))
+        meeting.item_absents[item_with_absent.UID()] = [absent_hp_uid]
+        self.assertTrue(absent_hp_uid in meeting.get_item_absents(by_persons=True))
 
         # add an item excused
         excused = self.portal.contacts.get('person1')
         excused_hp = excused.get_held_positions()[0]
         excused_hp_uid = excused_hp.UID()
-        meeting.itemExcused[item_with_excused.UID()] = [excused_hp_uid]
-        self.assertTrue(excused_hp_uid in meeting.getItemExcused(by_persons=True))
+        meeting.item_excused[item_with_excused.UID()] = [excused_hp_uid]
+        self.assertTrue(excused_hp_uid in meeting.get_item_excused(by_persons=True))
 
         # redefine signatories on item
         signer = self.portal.contacts.get('person2')
         signer_hp = signer.get_held_positions()[0]
         signer_hp_uid = signer_hp.UID()
-        meeting.itemSignatories[item_with_absent.UID()] = {'1': signer_hp_uid}
-        self.assertTrue(signer_hp_uid in item_with_absent.getItemSignatories())
+        meeting.item_signatories[item_with_absent.UID()] = {
+            '1': {'hp_uid': signer_hp_uid,
+                  'position_type': u'default'}}
+        self.assertTrue(signer_hp_uid in item_with_absent.get_item_signatories())
 
         # remove items from meeting, everything is reinitialized
         # absent
         self.backToState(item_with_absent, 'validated')
-        self.assertFalse(absent_hp_uid in meeting.getItemAbsents(by_persons=True))
-        self.assertFalse(signer_hp_uid in item_with_absent.getItemSignatories())
-        self.assertFalse(item_with_absent.getItemAbsents())
+        self.assertFalse(absent_hp_uid in meeting.get_item_absents(by_persons=True))
+        self.assertFalse(signer_hp_uid in item_with_absent.get_item_signatories())
+        self.assertFalse(item_with_absent.get_item_absents())
         self.assertFalse(item_with_absent.redefinedItemAssemblies())
-        self.assertFalse(item_with_absent.getItemSignatories())
+        self.assertFalse(item_with_absent.get_item_signatories())
         # excused
         self.backToState(item_with_excused, 'validated')
-        self.assertFalse(excused_hp_uid in meeting.getItemExcused(by_persons=True))
-        self.assertFalse(signer_hp_uid in item_with_excused.getItemSignatories())
-        self.assertFalse(item_with_excused.getItemExcused())
+        self.assertFalse(excused_hp_uid in meeting.get_item_excused(by_persons=True))
+        self.assertFalse(excused_hp_uid in meeting.item_excused)
+        self.assertFalse(signer_hp_uid in item_with_excused.get_item_signatories())
+        self.assertFalse(item_with_excused.get_item_excused())
         self.assertFalse(item_with_excused.redefinedItemAssemblies())
-        self.assertFalse(item_with_excused.getItemSignatories())
+        self.assertFalse(item_with_excused.get_item_signatories())
 
     def test_pm_HeldPositionPositionsSourceDoNotShowOrgsInsidePlonegroup(self):
         """The source for field held_position.position will display
@@ -806,9 +1295,12 @@ class testContacts(PloneMeetingTestCase):
     def test_pm_CanNotRemoveUsedOrganization(self):
         '''While removing an organization from own organization,
            it should raise if it is used somewhere...'''
+        disable_link_integrity_checks()
         cfg = self.meetingConfig
         cfg.setSelectableAdvisers(())
+        cfg.setOrderedGroupsInCharge(())
         cfg2 = self.meetingConfig2
+        cfg2.setOrderedGroupsInCharge(())
         self.changeUser('pmManager')
         # delete recurring items, just keep item templates
         self._removeConfigObjectsFor(cfg, folders=['recurringitems', ])
@@ -817,7 +1309,7 @@ class testContacts(PloneMeetingTestCase):
         # create an item
         item = self.create('MeetingItem')
         # default used proposingGroup is 'developers'
-        self.assertEquals(item.getProposingGroup(), self.developers_uid)
+        self.assertEqual(item.getProposingGroup(), self.developers_uid)
 
         # now try to remove corresponding organization
         self.changeUser('admin')
@@ -839,7 +1331,7 @@ class testContacts(PloneMeetingTestCase):
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(
                 self.developers_uid, catch_before_delete_exception=False)
-        self.assertEquals(cm.exception.message, can_not_delete_organization_meetingconfig)
+        self.assertEqual(cm.exception.message, can_not_delete_organization_meetingconfig)
         # so remove selectableCopyGroups from the meetingConfigs
         cfg.setSelectableCopyGroups(())
         cfg2.setSelectableCopyGroups(())
@@ -850,7 +1342,7 @@ class testContacts(PloneMeetingTestCase):
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(
                 self.developers_uid, catch_before_delete_exception=False)
-        self.assertEquals(cm.exception.message, can_not_delete_organization_meetingconfig)
+        self.assertEqual(cm.exception.message, can_not_delete_organization_meetingconfig)
         # so remove selectableAdvisers
         cfg.setSelectableAdvisers(())
 
@@ -863,7 +1355,7 @@ class testContacts(PloneMeetingTestCase):
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(
                 self.developers_uid, catch_before_delete_exception=False)
-        self.assertEquals(cm.exception.message, can_not_delete_organization_meetingconfig)
+        self.assertEqual(cm.exception.message, can_not_delete_organization_meetingconfig)
         # so remove customAdvisers
         cfg.setCustomAdvisers([])
 
@@ -873,7 +1365,7 @@ class testContacts(PloneMeetingTestCase):
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(
                 self.developers_uid, catch_before_delete_exception=False)
-        self.assertEquals(cm.exception.message, can_not_delete_organization_meetingconfig)
+        self.assertEqual(cm.exception.message, can_not_delete_organization_meetingconfig)
         # so remove powerAdvisersGroups
         cfg.setPowerAdvisersGroups([])
 
@@ -883,7 +1375,7 @@ class testContacts(PloneMeetingTestCase):
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(
                 self.developers_uid, catch_before_delete_exception=False)
-        self.assertEquals(cm.exception.message, can_not_delete_organization_meetingconfig)
+        self.assertEqual(cm.exception.message, can_not_delete_organization_meetingconfig)
         # so remove usingGroups
         cfg.setUsingGroups([])
 
@@ -893,7 +1385,7 @@ class testContacts(PloneMeetingTestCase):
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(
                 self.developers_uid, catch_before_delete_exception=False)
-        self.assertEquals(cm.exception.message, can_not_delete_organization_meetingconfig)
+        self.assertEqual(cm.exception.message, can_not_delete_organization_meetingconfig)
         # so remove orderedAssociatedOrganizations
         cfg.setOrderedAssociatedOrganizations([])
 
@@ -903,7 +1395,7 @@ class testContacts(PloneMeetingTestCase):
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(
                 self.developers_uid, catch_before_delete_exception=False)
-        self.assertEquals(cm.exception.message, can_not_delete_organization_meetingconfig)
+        self.assertEqual(cm.exception.message, can_not_delete_organization_meetingconfig)
         # so remove orderedGroupsInCharge
         cfg.setOrderedGroupsInCharge([])
 
@@ -917,7 +1409,7 @@ class testContacts(PloneMeetingTestCase):
                       mapping={'member_id': 'pmAdviser1'},
                       domain="plone",
                       context=self.request)
-        self.assertEquals(cm.exception.message, can_not_delete_organization_plonegroup)
+        self.assertEqual(cm.exception.message, can_not_delete_organization_plonegroup)
         # so remove every users of these groups
         for ploneGroup in get_plone_groups(self.developers_uid):
             for memberId in ploneGroup.getGroupMemberIds():
@@ -940,7 +1432,7 @@ class testContacts(PloneMeetingTestCase):
                       mapping={'item_url': item.absolute_url()},
                       domain="plone",
                       context=self.request)
-        self.assertEquals(cm.exception.message, can_not_delete_organization_meetingitem)
+        self.assertEqual(cm.exception.message, can_not_delete_organization_meetingitem)
 
         # 3) complains about a linked meetingitem
         # checks on the item are made around :
@@ -965,7 +1457,7 @@ class testContacts(PloneMeetingTestCase):
             self.portal.restrictedTraverse('@@delete_givenuid')(
                 self.developers_uid, catch_before_delete_exception=False)
 
-        self.assertEquals(cm.exception.message, can_not_delete_organization_meetingitem)
+        self.assertEqual(cm.exception.message, can_not_delete_organization_meetingitem)
 
         # now check with item having associatedGroups
         item.setProposingGroup(self.vendors_uid)
@@ -978,7 +1470,7 @@ class testContacts(PloneMeetingTestCase):
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(
                 self.developers_uid, catch_before_delete_exception=False)
-        self.assertEquals(cm.exception.message, can_not_delete_organization_meetingitem)
+        self.assertEqual(cm.exception.message, can_not_delete_organization_meetingitem)
 
         # now check with item having optionalAdvisers
         item.setProposingGroup(self.vendors_uid)
@@ -991,7 +1483,7 @@ class testContacts(PloneMeetingTestCase):
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(
                 self.developers_uid, catch_before_delete_exception=False)
-        self.assertEquals(cm.exception.message, can_not_delete_organization_meetingitem)
+        self.assertEqual(cm.exception.message, can_not_delete_organization_meetingitem)
 
         # check with groupsInCharge
         item.setProposingGroup(self.vendors_uid)
@@ -1003,7 +1495,7 @@ class testContacts(PloneMeetingTestCase):
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(
                 self.developers_uid, catch_before_delete_exception=False)
-        self.assertEquals(cm.exception.message, can_not_delete_organization_meetingitem)
+        self.assertEqual(cm.exception.message, can_not_delete_organization_meetingitem)
 
         # check with item having itemInitiator
         self._tearDownGroupsInCharge(item)
@@ -1013,7 +1505,7 @@ class testContacts(PloneMeetingTestCase):
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(
                 self.developers_uid, catch_before_delete_exception=False)
-        self.assertEquals(cm.exception.message, can_not_delete_organization_meetingitem)
+        self.assertEqual(cm.exception.message, can_not_delete_organization_meetingitem)
 
         # check with item having copyGroups
         item.setItemInitiator(())
@@ -1024,7 +1516,7 @@ class testContacts(PloneMeetingTestCase):
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(
                 self.developers_uid, catch_before_delete_exception=False)
-        self.assertEquals(cm.exception.message, can_not_delete_organization_meetingitem)
+        self.assertEqual(cm.exception.message, can_not_delete_organization_meetingitem)
 
         # remove copyGroups
         item.setCopyGroups(())
@@ -1036,36 +1528,36 @@ class testContacts(PloneMeetingTestCase):
         # the group is actually removed
         self.failIf(self.developers in self.own_org)
 
-        # 4) fails when used in a MeetingCategory.usingGroups or MeetingCategory.groupsInCharge
+        # 4) fails when used in a meetingcategory.using_groups or meetingcategory.groups_in_charge
         # usingGroups
         cat = cfg2.categories.subproducts
-        self.assertTrue(self.vendors_uid in cat.getUsingGroups())
+        self.assertTrue(self.vendors_uid in cat.using_groups)
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(
                 self.vendors_uid, catch_before_delete_exception=False)
-        self.assertEquals(cm.exception.message,
-                          translate('can_not_delete_organization_meetingcategory',
-                                    domain='plone',
-                                    mapping={'url': cat.absolute_url()},
-                                    context=self.portal.REQUEST))
-        cat.setUsingGroups([])
+        self.assertEqual(cm.exception.message,
+                         translate('can_not_delete_organization_meetingcategory',
+                                   domain='plone',
+                                   mapping={'url': cat.absolute_url()},
+                                   context=self.portal.REQUEST))
+        cat.using_groups = ()
         # groupsInCharge
-        cat.setGroupsInCharge([self.vendors_uid])
+        cat.groups_in_charge = [self.vendors_uid]
         transaction.commit()
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(
                 self.vendors_uid, catch_before_delete_exception=False)
-        self.assertEquals(cm.exception.message,
-                          translate('can_not_delete_organization_meetingcategory',
-                                    domain='plone',
-                                    mapping={'url': cat.absolute_url()},
-                                    context=self.portal.REQUEST))
-        cat.setGroupsInCharge([])
+        self.assertEqual(cm.exception.message,
+                         translate('can_not_delete_organization_meetingcategory',
+                                   domain='plone',
+                                   mapping={'url': cat.absolute_url()},
+                                   context=self.portal.REQUEST))
+        cat.groups_in_charge = []
 
         # 5) removing a used group in the configuration fails too
         # remove item because it uses 'vendors'
-        item.aq_inner.aq_parent.manage_delObjects([item.getId(), ])
-        self.assertEquals(cfg.itemtemplates.template2.getProposingGroup(), self.vendors_uid)
+        item.aq_inner.aq_parent.manage_delObjects([item.getId()])
+        self.assertEqual(cfg.itemtemplates.template2.getProposingGroup(), self.vendors_uid)
         # then fails because corresponding Plone groups are not empty...
         transaction.commit()
         with self.assertRaises(BeforeDeleteException) as cm:
@@ -1077,7 +1569,7 @@ class testContacts(PloneMeetingTestCase):
                       mapping={'member_id': 'pmManager'},
                       domain="plone",
                       context=self.request)
-        self.assertEquals(cm.exception.message, can_not_delete_organization_plonegroup)
+        self.assertEqual(cm.exception.message, can_not_delete_organization_plonegroup)
         # so remove them...
         for ploneGroup in get_plone_groups(self.vendors_uid):
             for memberId in ploneGroup.getGroupMemberIds():
@@ -1088,12 +1580,11 @@ class testContacts(PloneMeetingTestCase):
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(
                 self.vendors_uid, catch_before_delete_exception=False)
-        self.maxDiff = None
-        self.assertEquals(cm.exception.message,
-                          translate('can_not_delete_organization_config_meetingitem',
-                                    domain='plone',
-                                    mapping={'item_url': cfg.itemtemplates.template2.absolute_url()},
-                                    context=self.portal.REQUEST))
+        self.assertEqual(cm.exception.message,
+                         translate('can_not_delete_organization_config_meetingitem',
+                                   domain='plone',
+                                   mapping={'item_url': cfg.itemtemplates.template2.absolute_url()},
+                                   context=self.portal.REQUEST))
         # change proposingGroup but use org in templateUsingGroups
         cfg.itemtemplates.template2.setProposingGroup(self.developers_uid)
         cfg.itemtemplates.template2.setTemplateUsingGroups((self.vendors_uid, ))
@@ -1101,12 +1592,11 @@ class testContacts(PloneMeetingTestCase):
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(
                 self.vendors_uid, catch_before_delete_exception=False)
-        self.assertEquals(cm.exception.message,
-                          translate('can_not_delete_organization_config_meetingitem',
-                                    domain='plone',
-                                    mapping={'item_url': cfg.itemtemplates.template2.absolute_url()},
-                                    context=self.portal.REQUEST))
-
+        self.assertEqual(cm.exception.message,
+                         translate('can_not_delete_organization_config_meetingitem',
+                                   domain='plone',
+                                   mapping={'item_url': cfg.itemtemplates.template2.absolute_url()},
+                                   context=self.portal.REQUEST))
         # unselect organizations from plonegroup configuration so it works...
         cfg.itemtemplates.template2.setTemplateUsingGroups(())
         self._select_organization(self.vendors_uid, remove=True)
@@ -1127,11 +1617,11 @@ class testContacts(PloneMeetingTestCase):
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(
                 org2_uid, catch_before_delete_exception=False)
-        self.assertEquals(cm.exception.message,
-                          translate('can_not_delete_organization_groupsincharge',
-                                    domain='plone',
-                                    mapping={'org_url': org1.absolute_url()},
-                                    context=self.portal.REQUEST))
+        self.assertEqual(cm.exception.message,
+                         translate('can_not_delete_organization_groupsincharge',
+                                   domain='plone',
+                                   mapping={'org_url': org1.absolute_url()},
+                                   context=self.portal.REQUEST))
 
     def test_pm_DeactivatedOrgCanNoMoreBeUsed(self):
         """
@@ -1149,9 +1639,10 @@ class testContacts(PloneMeetingTestCase):
         # and remove 'vendors_reviewers' from every MeetingConfig.selectableCopyGroups
         # and 'vendors' from every MeetingConfig.selectableAdvisers
         cfg.setSelectableCopyGroups((self.developers_reviewers, ))
+        cfg.setOrderedGroupsInCharge(())
+        cfg2.setOrderedGroupsInCharge(())
         cfg2.setSelectableAdvisers((self.developers_uid, ))
         cfg2.setSelectableCopyGroups((self.developers_reviewers, ))
-        cfg2.setSelectableAdvisers((self.developers_uid, ))
         # and remove users from vendors Plone groups
         for ploneGroup in get_plone_groups(self.vendors_uid):
             for memberId in ploneGroup.getGroupMemberIds():
@@ -1159,7 +1650,7 @@ class testContacts(PloneMeetingTestCase):
         # unselect it
         self._select_organization(self.vendors_uid, remove=True)
         # remove it from subproducts category usingGroups
-        cfg2.categories.subproducts.setUsingGroups(())
+        cfg2.categories.subproducts.using_groups = ()
         # now we can delete it...
         self.portal.restrictedTraverse('@@delete_givenuid')(
             self.vendors_uid, catch_before_delete_exception=False)
@@ -1209,10 +1700,10 @@ class testContacts(PloneMeetingTestCase):
         ]
         cfg.setCertifiedSignatures(certified)
         # called without computed=True, the actual values defined on the MeetingGroup is returned
-        self.assertEquals(self.vendors.get_certified_signatures(), [])
+        self.assertEqual(self.vendors.get_certified_signatures(), [])
         # with a cfg, cfg values are returned if not overrided
-        self.assertEquals(self.vendors.get_certified_signatures(computed=True, cfg=cfg),
-                          ['Function1', 'Name1', 'Function2', 'Name2'])
+        self.assertEqual(self.vendors.get_certified_signatures(computed=True, cfg=cfg),
+                         ['Function1', 'Name1', 'Function2', 'Name2'])
 
         # redefine one signature
         group_certified = [
@@ -1226,8 +1717,8 @@ class testContacts(PloneMeetingTestCase):
         # it validates
         self.vendors.certified_signatures = group_certified
         self.assertFalse(validate_fields(self.vendors))
-        self.assertEquals(self.vendors.get_certified_signatures(computed=True, cfg=cfg),
-                          ['Function1', 'Name1', 'Redefined function2', 'Redefined name2'])
+        self.assertEqual(self.vendors.get_certified_signatures(computed=True, cfg=cfg),
+                         ['Function1', 'Name1', 'Redefined function2', 'Redefined name2'])
 
         # redefine every signatures
         group_certified = [
@@ -1246,9 +1737,9 @@ class testContacts(PloneMeetingTestCase):
         ]
         self.vendors.certified_signatures = group_certified
         self.assertFalse(validate_fields(self.vendors))
-        self.assertEquals(self.vendors.get_certified_signatures(computed=True, cfg=cfg),
-                          ['Redefined function1', 'Redefined name1',
-                           'Redefined function2', 'Redefined name2'])
+        self.assertEqual(self.vendors.get_certified_signatures(computed=True, cfg=cfg),
+                         ['Redefined function1', 'Redefined name1',
+                          'Redefined function2', 'Redefined name2'])
 
         # redefine a third signature
         group_certified = [
@@ -1273,10 +1764,10 @@ class testContacts(PloneMeetingTestCase):
         ]
         self.vendors.certified_signatures = group_certified
         self.assertFalse(validate_fields(self.vendors))
-        self.assertEquals(self.vendors.get_certified_signatures(computed=True, cfg=cfg),
-                          ['Redefined function1', 'Redefined name1',
-                           'Redefined function2', 'Redefined name2',
-                           'Redefined function3', 'Redefined name3'])
+        self.assertEqual(self.vendors.get_certified_signatures(computed=True, cfg=cfg),
+                         ['Redefined function1', 'Redefined name1',
+                          'Redefined function2', 'Redefined name2',
+                          'Redefined function3', 'Redefined name3'])
 
         # redefine a third signature but not the second
         group_certified = [
@@ -1295,10 +1786,10 @@ class testContacts(PloneMeetingTestCase):
         ]
         self.vendors.certified_signatures = group_certified
         self.assertFalse(validate_fields(self.vendors))
-        self.assertEquals(self.vendors.get_certified_signatures(computed=True, cfg=cfg),
-                          ['Redefined function1', 'Redefined name1',
-                           'Function2', 'Name2',
-                           'Redefined function3', 'Redefined name3'])
+        self.assertEqual(self.vendors.get_certified_signatures(computed=True, cfg=cfg),
+                         ['Redefined function1', 'Redefined name1',
+                          'Function2', 'Name2',
+                          'Redefined function3', 'Redefined name3'])
 
         # period validity is taken into account
         # redefine a third signature but not the second
@@ -1318,10 +1809,10 @@ class testContacts(PloneMeetingTestCase):
         ]
         self.vendors.certified_signatures = group_certified
         self.assertFalse(validate_fields(self.vendors))
-        self.assertEquals(self.vendors.get_certified_signatures(computed=True, cfg=cfg),
-                          ['Function1', 'Name1',
-                           'Function2', 'Name2',
-                           'Redefined function3', 'Redefined name3'])
+        self.assertEqual(self.vendors.get_certified_signatures(computed=True, cfg=cfg),
+                         ['Function1', 'Name1',
+                          'Function2', 'Name2',
+                          'Redefined function3', 'Redefined name3'])
 
     def test_pm_OwnOrgNotDeletable(self):
         """The own_org element is not deletable using delete_uid."""
@@ -1346,6 +1837,7 @@ class testContacts(PloneMeetingTestCase):
 
     def test_pm_WarnUserWhenAddingNewOrgOutiseOwnOrg(self):
         """ """
+        self.changeUser('siteadmin')
         # when added in directory or organization ouside own_org, a message is displayed
         for location in (self.portal.contacts, self.developers):
             add_view = location.restrictedTraverse('++add++organization')
@@ -1370,6 +1862,7 @@ class testContacts(PloneMeetingTestCase):
 
     def test_pm_ImportContactsCSV(self):
         """ """
+        self.changeUser('pmManager')
         contacts = self.portal.contacts
         # initialy, we have 4 persons and 4 held_positions
         own_org = get_own_organization()
@@ -1495,8 +1988,15 @@ class testContacts(PloneMeetingTestCase):
 
         # we may give a position_type_attr, this is usefull when using field secondary_position_type
         self.assertIsNone(hp.secondary_position_type)
+        # when position_type_attr value is None, fallback to 'position_type' by default
         self.assertEqual(hp.get_prefix_for_gender_and_number(
-            include_value=True, position_type_attr='secondary_position_type'),
+            include_value=True,
+            position_type_attr='secondary_position_type'),
+            u'La Directrice')
+        self.assertEqual(hp.get_prefix_for_gender_and_number(
+            include_value=True,
+            position_type_attr='secondary_position_type',
+            fallback_position_type_attr=None),
             u'')
         hp.secondary_position_type = u'admin'
         # include_value and include_person_title
@@ -1530,8 +2030,8 @@ class testContacts(PloneMeetingTestCase):
             states=(self._stateMappingFor('created', meta_type='Meeting'),))
         self._removeConfigObjectsFor(cfg)
         self.changeUser('pmManager')
-        meeting = self.create('Meeting', date=DateTime())
-        meeting_attendees = meeting.getAttendees(theObjects=True)
+        meeting = self.create('Meeting')
+        meeting_attendees = meeting.get_attendees(the_objects=True)
         self.assertEqual(len(meeting_attendees), 4)
         hp = meeting_attendees[0]
         # deactivate an held_position
@@ -1539,23 +2039,24 @@ class testContacts(PloneMeetingTestCase):
         self.do(hp, 'deactivate')
         # still viewable by MeetingManagers
         self.changeUser('pmManager')
-        meeting_attendees = meeting.getAttendees(theObjects=True)
+        meeting_attendees = meeting.get_attendees(the_objects=True)
         self.assertEqual(len(meeting_attendees), 4)
         # and other users
         self.changeUser('pmCreator1')
-        meeting_attendees = meeting.getAttendees(theObjects=True)
+        meeting_attendees = meeting.get_attendees(the_objects=True)
         self.assertEqual(len(meeting_attendees), 4)
         self.changeUser('powerobserver1')
         self.assertTrue(self.hasPermission(View, meeting))
-        meeting_attendees = meeting.getAttendees(theObjects=True)
+        meeting_attendees = meeting.get_attendees(the_objects=True)
         self.assertEqual(len(meeting_attendees), 4)
 
-    def test_pm_directory_position_types_invariant(self):
+    def test_pm_Directory_position_types_invariant(self):
         class DummyData(object):
             def __init__(self, context, position_types):
                 self.__context__ = context
                 self.position_types = position_types
 
+        self.changeUser('siteadmin')
         position_types = self.portal.contacts.position_types
         self.assertEqual(position_types, [{'token': 'default', 'name': u'D\xe9faut'}])
         hp = self.portal.contacts.person1.held_pos1
@@ -1581,6 +2082,99 @@ class testContacts(PloneMeetingTestCase):
         self.assertIsNone(invariant(data))
         data = DummyData(self.portal.contacts, position_types)
         self.assertIsNone(invariant(data))
+
+    def test_pm_Get_representatives(self):
+        """Various held_positions may be representative for different organizations."""
+        org1 = self.developers
+        org2 = self.vendors
+        hp1 = self.portal.contacts.person1.held_pos1
+        hp2 = self.portal.contacts.person2.held_pos2
+        self.assertEqual(hp1.represented_organizations, [])
+        self.assertEqual(hp2.represented_organizations, [])
+        self.assertIsNone(hp1.end_date)
+        self.assertIsNone(hp2.end_date)
+        self.assertEqual(org1.get_representatives(), [])
+        self.assertEqual(org2.get_representatives(), [])
+        intids = getUtility(IIntIds)
+        # hp1 is representative for one org1
+        hp1.represented_organizations = [RelationValue(intids.getId(org1))]
+        # hp2 is representative for two org1 and org2
+        hp2.represented_organizations = [RelationValue(intids.getId(org1)),
+                                         RelationValue(intids.getId(org2))]
+        # update relations
+        notify(ObjectModifiedEvent(hp1))
+        notify(ObjectModifiedEvent(hp2))
+        self.assertEqual(org1.get_representatives(), [hp1, hp2])
+        self.assertEqual(org2.get_representatives(), [hp2])
+        # when using parameter at_date
+        self.assertEqual(org1.get_representatives(at_date=DateTime('2020/01/01')), [hp1, hp2])
+        self.assertEqual(org2.get_representatives(at_date=DateTime('2020/01/01')), [hp2])
+        hp1.end_date = date(2020, 5, 5)
+        self.assertEqual(org1.get_representatives(at_date=DateTime('2020/01/01')), [hp1, hp2])
+        self.assertEqual(org2.get_representatives(at_date=DateTime('2020/01/01')), [hp2])
+        self.assertEqual(org1.get_representatives(at_date=DateTime('2020/05/05')), [hp1, hp2])
+        self.assertEqual(org2.get_representatives(at_date=DateTime('2020/05/05')), [hp2])
+        self.assertEqual(org1.get_representatives(at_date=DateTime('2020/06/06')), [hp2])
+        self.assertEqual(org2.get_representatives(at_date=DateTime('2020/06/06')), [hp2])
+        self.assertEqual(org1.get_representatives(at_date=datetime(2020, 1, 1)), [hp1, hp2])
+        self.assertEqual(org2.get_representatives(at_date=datetime(2020, 1, 1)), [hp2])
+        self.assertEqual(org1.get_representatives(at_date=datetime(2020, 5, 5)), [hp1, hp2])
+        self.assertEqual(org2.get_representatives(at_date=datetime(2020, 5, 5)), [hp2])
+        self.assertEqual(org1.get_representatives(at_date=datetime(2020, 6, 6)), [hp2])
+        self.assertEqual(org1.get_representatives(at_date=datetime(2020, 6, 6)), [hp2])
+        self.assertEqual(org2.get_representatives(at_date=datetime(2020, 6, 6)), [hp2])
+        hp2.end_date = date(2020, 5, 5)
+        self.assertEqual(org1.get_representatives(at_date=DateTime('2020/01/01')), [hp1, hp2])
+        self.assertEqual(org2.get_representatives(at_date=DateTime('2020/01/01')), [hp2])
+        self.assertEqual(org1.get_representatives(at_date=DateTime('2020/05/05')), [hp1, hp2])
+        self.assertEqual(org2.get_representatives(at_date=DateTime('2020/05/05')), [hp2])
+        self.assertEqual(org1.get_representatives(at_date=DateTime('2020/06/06')), [])
+        self.assertEqual(org2.get_representatives(at_date=DateTime('2020/06/06')), [])
+        self.assertEqual(org1.get_representatives(at_date=datetime(2020, 1, 1)), [hp1, hp2])
+        self.assertEqual(org2.get_representatives(at_date=datetime(2020, 1, 1)), [hp2])
+        self.assertEqual(org1.get_representatives(at_date=datetime(2020, 5, 5)), [hp1, hp2])
+        self.assertEqual(org2.get_representatives(at_date=datetime(2020, 5, 5)), [hp2])
+        self.assertEqual(org1.get_representatives(at_date=datetime(2020, 6, 6)), [])
+        self.assertEqual(org1.get_representatives(at_date=datetime(2020, 6, 6)), [])
+        self.assertEqual(org2.get_representatives(at_date=datetime(2020, 6, 6)), [])
+
+    def test_pm_Create_contacts(self):
+        """Check that creating contacts work and elements are correctly initialized."""
+        self.changeUser("siteadmin")
+        org = self.create('organization')
+        self.assertEqual(org.groups_in_charge, [])
+        self.assertEqual(org.get_groups_in_charge(), [])
+        self.assertEqual(org.item_advice_states, [])
+        self.assertEqual(org.get_item_advice_states(), [])
+        self.assertEqual(org.item_advice_edit_states, [])
+        self.assertEqual(org.get_item_advice_edit_states(), [])
+        self.assertEqual(org.item_advice_view_states, [])
+        self.assertEqual(org.get_item_advice_view_states(), [])
+        self.assertEqual(org.certified_signatures, [])
+        self.assertEqual(org.get_certified_signatures(), [])
+        person = self.create('person')
+        hp = self.create('held_position', folder=person)
+        self.assertEqual(hp.usages, [])
+        self.assertEqual(hp.defaults, [])
+
+    def test_pm_HeldPositionBackRefs(self):
+        """This will display back references on a held_position
+           to see where it is used."""
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting')
+        person = self.portal.contacts.get('person1')
+        hp = person.get_held_positions()[0]
+        hp_uid = hp.UID()
+        self.assertTrue(hp_uid in meeting.get_attendees())
+        viewlet = self._get_viewlet(
+            context=hp,
+            manager_name='plone.belowcontentbody',
+            viewlet_name='held_position_back_references')
+        rendered = viewlet.render()
+        # used in MeetingConfig
+        self.assertTrue(self.meetingConfig.absolute_url() in rendered)
+        # used in meeting
+        self.assertTrue(meeting.absolute_url() in rendered)
 
 
 def test_suite():

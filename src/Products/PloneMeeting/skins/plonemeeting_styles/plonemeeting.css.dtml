@@ -39,9 +39,9 @@ table.listing tr[class][class] td[class^='meeting_item_listType_'] {
     height: 100%;
 }
 
-/* only for Chrome, the hack :not(*:root) */
-table.listing:not(*:root) tr[class][class] td[class^='meeting_item_listType_'] {
-    height: inherit;
+/* only for Chrome */
+body.using-chrome table.listing tr[class][class] td[class^='meeting_item_listType_'] {
+   height: inherit;
 }
 
 /* grey the items with a subnumber itemnumber input */
@@ -72,55 +72,18 @@ td[class^='meeting_item_listType_'] > div {
 dl.portlet .ploneMeetingSelectContainer p {
     margin-right: 1em;
 }
-/* make sure if both select boxes are displayed, first is displayed above second */
-dl.portlet div#go_to_meeting_img_select_box_searchnotdecidedmeetings {
-    z-index: 2;
-}
-
-dl.portlet div.ploneMeetingSelectContainer.go_to_meeting_img_select_box_searchnotdecidedmeetings div.ploneMeetingSelectDropdownIcon,
-dl.portlet div.ploneMeetingSelectContainer.go_to_meeting_img_select_box_searchlastdecisions div.ploneMeetingSelectDropdownIcon {
-    width: 80%;
-    min-width: 150px;
-}
-dl.portlet div.ploneMeetingSelectContainer.go_to_meeting_img_select_box_searchnotdecidedmeetings div.ploneMeetingSelectBox,
-dl.portlet div.ploneMeetingSelectContainer.go_to_meeting_img_select_box_searchlastdecisions div.ploneMeetingSelectBox {
-    width: 80%;
-    min-width: 150px;
-    padding-right: 9px;
-}
-dl.portlet div.ploneMeetingSelectContainer span#idButtonText_go_to_meeting_img_select_box_searchnotdecidedmeetings,
-dl.portlet div.ploneMeetingSelectContainer span#idButtonText_go_to_meeting_img_select_box_searchlastdecisions {
-    display: inline-block;
-}
-/* add some top padding for --- choose --- */
-dl.portlet div.ploneMeetingSelectContainer span#idButtonText_go_to_meeting_img_select_box_searchnotdecidedmeetings span.select_choice {
-    display: block;
-    padding-top: 2px;
-}
-
-/* cancel additional padding given by faceted to the meeting list */
-dl.portlet div.faceted-tagscloud-collection-widget div.ploneMeetingSelectContainer.go_to_meeting_img_select_box_searchnotdecidedmeetings a.pretty_link,
-dl.portlet div.faceted-tagscloud-collection-widget div.ploneMeetingSelectContainer.go_to_meeting_img_select_box_searchlastdecisions a.pretty_link {
-    margin-left: 0em;
-}
-
-dl.portlet div.ploneMeetingSelectContainer.go_to_meeting_img_select_box_searchnotdecidedmeetings p,
-dl.portlet div.ploneMeetingSelectContainer.go_to_meeting_img_select_box_searchlastdecisions p {
-    margin-bottom: 0em;
-}
 
 dl.portlet .ploneMeetingSelectButton {
     cursor: pointer;
     border: 1px solid &dtml-globalBorderColor;;
     background-color: white;
-    padding: 0px;
     color: &dtml-fontColor;;
     text-align: left;
     width: auto;
     height: 18px !important;
     padding-right: 24px;
-    padding-top: 2px;
-    margin-top: 5px;
+    padding-top: 3px;
+    margin-top: 4px;
     border-style: outset;
 }
 /* selected element */
@@ -134,10 +97,10 @@ dl.portlet div.ploneMeetingSelectBox {
     border-width: 1px;
     border-color: &dtml-globalBorderColor;;
     background-color: white;
-    padding: 0px;
     color: &dtml-fontColor;;
     display: none;
     position: absolute;
+    padding-top: 0px;
     border-style: inset;
     height: auto;
     overflow: auto;
@@ -146,11 +109,17 @@ dl.portlet div.ploneMeetingSelectBox {
     z-index: 1;
     overflow: hidden;
 }
+dl.portlet div.ploneMeetingSelectBox p span.select_choice {
+    margin-top: 3px;
+    display: inline-block;
+    margin-bottom: 4px;
+}
 dl.portlet p.ploneMeetingSelectItem {
     margin: 0px;
     vertical-align: top !important;
     min-height: 18px;
     padding-left: 5px;
+    padding-top: 2px;
 }
 dl.portlet p.ploneMeetingSelectItem a {
     min-height: 18px;
@@ -158,8 +127,7 @@ dl.portlet p.ploneMeetingSelectItem a {
 }
 dl.portlet p.ploneMeetingSelectItem:hover,
 dl.portlet p.ploneMeetingSelectItem:hover span {
-    background-color: &dtml-globalBackgroundColor;;
-    color: white;
+    background-color: &dtml-tableHeaderBackgroundColor;;
     font-weight: bold;
 }
 
@@ -238,13 +206,24 @@ div[id^='hook_'] > img {
    margin-top: 0.5em;
 }
 
+div.change-item-order {
+   width: 65px;
+}
+
 #content table.no-style-table.advices {
     margin-bottom: 0;
 }
 
+#content table.no-style-table.advices tr {
+    border-left: 0px transparent;
+}
 /* avoid background of parent table (list of items) being used for advices popup table */
 #content table.no-style-table.advices tr td {
     background-color: transparent;
+}
+
+table.table-view-widgets {
+   width: 100%;
 }
 
 /* reduce space between sentence 'query result show only items you can see' and the navigation widget on items listings */
@@ -256,8 +235,6 @@ div.pm_search_no_result_info {
     margin-top: 2em;
 }
 
-.itemsNavigation {margin-bottom: 0.3em; margin-top: 0.3em; }
-#archetypes-fieldname-title2 input { font-size: 160%; width:99%;}
 /* display input for entering TAL expression as large as possible */
 input#form-widgets-as_copy_group_on {
     width: 99%;
@@ -288,7 +265,10 @@ div.pm_workflowstate {
 }
 
 /* Colors on states */
-body:not([class*='section-contacts']) .state-active, .label-state-active {color: green !important;}
+body:not([class*='section-contacts']) .state-active,
+.label-state-active {
+   color: green !important;
+}
 .state-inactive,
 .state-inactive a,
 .label-state-inactive,
@@ -310,39 +290,37 @@ div.viewlet_workflowstate span.state-advice_under_edit {
 .state-created,
 .state-itemcreated,
 .state-itemcreated_waiting_advices,
-.state-advice_under_edit {color: red;}
+.state-advice_under_edit {color: red !important;}
 /* DarkOrange */
 div.viewlet_workflowstate span[class^='state-proposed'],
-div.viewlet_workflowstate span.state-proposed_waiting_advices,
+div.viewlet_workflowstate span[class^='state-returned_to_proposing_group_proposed'],
+div.viewlet_workflowstate span[class$='waiting_advices'],
 div.viewlet_workflowstate span.state-prevalidated,
-div.viewlet_workflowstate span.state-prevalidated_waiting_advices,
-div.viewlet_workflowstate span.state-proposed__or__prevalidated_waiting_advices,
-div.viewlet_workflowstate span.state-waiting_advices,
-div.viewlet_workflowstate span.state-returned_to_proposing_group_proposed,
 div.viewlet_workflowstate span.state-returned_to_proposing_group_prevalidated {
     background-color: DarkOrange;
     border-color: DarkOrange;
 }
-.state-proposed,
-.state-proposed_waiting_advices,
+[class*='state-proposed'],
+[class*='state-returned_to_proposing_group_proposed'],
+[class*='state-'][class$='waiting_advices'],
 .state-prevalidated,
-.state-prevalidated_waiting_advices,
-.state-proposed__or__prevalidated_waiting_advices,
-.state-waiting_advices,
-.state-returned_to_proposing_group_proposed,
-.state-returned_to_proposing_group_prevalidated {color: DarkOrange;}
-/* blue */
+.state-returned_to_proposing_group_prevalidated {
+   color: DarkOrange !important;
+}
 div.viewlet_workflowstate span.state-validated {
     background-color: blue;
     border-color: blue;
 }
-.state-validated {color: blue;}
-/* brown */
+.state-validated {
+   color: blue !important;
+}
 div.viewlet_workflowstate span.state-presented {
     background-color: brown;
     border-color: brown;
 }
-.state-presented {color: brown;}
+.state-presented {
+   color: brown !important;
+}
 /* cornflowerBlue */
 div.viewlet_workflowstate span.state-itemfrozen,
 div.viewlet_workflowstate span.state-frozen {
@@ -350,7 +328,9 @@ div.viewlet_workflowstate span.state-frozen {
     border-color: cornflowerBlue;
 }
 .state-itemfrozen,
-.state-frozen {color: cornflowerBlue;}
+.state-frozen {
+   color: cornflowerBlue !important;
+}
 /* grey */
 div.viewlet_workflowstate span.state-returned_to_proposing_group,
 div.viewlet_workflowstate span.state-closed,
@@ -368,7 +348,7 @@ div.viewlet_workflowstate span.state-advice_given {
 .state-marked_not_applicable,
 .state-postponed_next_meeting,
 .state-removed,
-.state-advice_given {color: grey;}
+.state-advice_given {color: grey !important;}
 /* darkgoldenrod */
 div.viewlet_workflowstate span.state-itempublished,
 div.viewlet_workflowstate span.state-published {
@@ -376,7 +356,7 @@ div.viewlet_workflowstate span.state-published {
     border-color: darkgoldenrod;
 }
 .state-itempublished,
-.state-published {color: darkgoldenrod;}
+.state-published {color: darkgoldenrod !important;}
 /* black */
 div.viewlet_workflowstate span.state-decided,
 div.viewlet_workflowstate span.state-decisions_published {
@@ -384,15 +364,15 @@ div.viewlet_workflowstate span.state-decisions_published {
     border-color: black;
 }
 .state-decided,
-.state-decisions_published {color: black;}
-/* green */
+.state-decisions_published {
+   color: black !important;
+}
 div.viewlet_workflowstate span.state-active,
 div.viewlet_workflowstate span.state-accepted,
 div.viewlet_workflowstate span.state-accepted_but_modified,
 div.viewlet_workflowstate span.state-accepted_out_of_meeting,
 div.viewlet_workflowstate span.state-accepted_out_of_meeting_emergency,
-div.viewlet_workflowstate span.state-pre_accepted,
-div.viewlet_workflowstate span.state-confirmed {
+div.viewlet_workflowstate span.state-pre_accepted {
     background-color: green;
     border-color: green;
 }
@@ -400,14 +380,16 @@ div.viewlet_workflowstate span.state-confirmed {
 .state-accepted_but_modified,
 .state-accepted_out_of_meeting,
 .state-accepted_out_of_meeting_emergency,
-.state-pre_accepted,
-.state-confirmed {color: green;}
-/* Violet */
+.state-pre_accepted {
+   color: green !important;
+}
 div.viewlet_workflowstate span.state-refused {
     background-color: violet;
     border-color: violet;
 }
-.state-refused {color: violet;}
+.state-refused {
+   color: violet !important;
+}
 
 /* Colors on transitions, used in the item wf history */
 /* this correspond to the element creation */
@@ -429,9 +411,6 @@ div.viewlet_workflowstate span.state-refused {
 .transition-close { color: black !important; }
 
 .somethingtodo { color: red !important; }
-.selectRow { }
-.itemTitle { font-size: 100%; font-weight: bold; margin: 0.2em 0.1em 0 0.1em; }
-.itemDescription { margin: 0 0.1em; }
 .portlet a:hover {text-decoration: underline; }
 .portletHeader { padding: 1px 0.5em; text-transform: none; font-weight: bold; }
 .portletSection {
@@ -443,7 +422,9 @@ div.viewlet_workflowstate span.state-refused {
 .portletCell { padding: 0.1em 0.5em 0.2em 1em; font-weight: normal; font-style: italic; }
 .portletSelected { font-weight: bold; }
 /* avoid title input too large */
-.field input[type="text"][name$=".title"], input#title {
+.field input[type="text"][name$=".title"],
+input#title,
+input#otherMeetingConfigsClonableToFieldTitle {
     width: 99%;
 }
 /* add right margin when field displayed in table so table cells are not sticked togheter */
@@ -510,21 +491,6 @@ div.tooltipster-content div#content {
     padding-right: 0.5em;
 }
 
-/* place an icon before the annex title if there was an error during conversion */
-.erroredConversion,
-dd li span.erroredConversion,
-dd ul a.erroredConversion {
-    background-image: url(<dtml-var portal_url>/errored_conversion.png);
-    background-repeat: no-repeat;
-    background-position: 0px 0px;
-    padding-left: 16px !important;
-}
-
-/* small fixes with position of icon displayed before annex title depending on following tag */
-dd li a.erroredConversion, tr span.erroredConversion {
-    background-position: 0px 1px;
-}
-
 /* highlight error message when an error occured on an edit form */
 .fieldErrorBox {
     color: red;
@@ -559,23 +525,21 @@ td.noPadding a {
     padding: 0 !important;
 }
 
-.hsCancel { background-color: white; }
-
-#meeting_users td { padding: 0 0.4em 0 0.4em; }
-.image-right { border:0px solid Black; clear:both; float:right; margin:0.5em; }
-
-/* Styles for showing content (item, annexes) differently depending on the fact
-   that the user already consulted the last modifications on content or not. */
-#pmNewContent { color: Red; }
-#pmNoNewContent { color: &dtml-linkColor; !important; }
-#content td.pmLinks a,
-#content dt.pmLinks a,
-.portletCell.pmLink.odd a,
-.portletCell.pmLink.even a,
-#content li.pmLinks a,
-#content span.pmLinks a {
-    text-decoration:none;
+#content table#meeting_users.listing {
+   width: inherit;
 }
+table#meeting_users.listing tbody tr td {
+   vertical-align: inherit;
+}
+table#meeting_users th {
+   text-align: center;
+}
+/* increase size of FontAwesome in meeting_users */
+table#meeting_users tbody span.fa {
+   font-size: 110%;
+}
+
+.image-right { border:0px solid Black; clear:both; float:right; margin:0.5em; }
 
 dd.portletCell.pmLink {
     margin-left: -1em;
@@ -591,19 +555,6 @@ dd.portletCell.pmLink.even {
 .documentContent { padding: 1em 0.5em 2.5em 1em !important; }
 .documentContent p a { border-bottom: 0px solid #CCCCCC; }
 .documentEditable { margin: 0; padding: 0 !important; }
-.searchItem { font-weight: normal; font-style: italic; }
-
-div.hsDialog {
-    display: none;
-    position: absolute;
-    top: 30%;
-    left: 35%;
-    width: 350px;
-    z-index : 100;
-    background: white;
-    padding: 8px;
-    border: 1px solid gray;
-}
 
 div.hsGrey {
     display: none;
@@ -614,32 +565,6 @@ div.hsGrey {
     height:100%;
     background:gray;
     opacity:0.5;
-}
-
-.hsActions {position: relative; top: 1.7em; right: 1.3em; z-index:10;}
-.hsCatId {font-style: italic; }
-.pmLanguage {position: absolute; right: 15px; font-style: italic; font-size: 95%;}
-legend .pmLanguage {top: -0.3em; right: 5px;}
-
-.pmDropdown {
-    display:none;
-    border: 1px solid gray;
-    position: absolute;
-    background-color: white;
-    padding: 0.3em;
-    z-index: 5;
-    cursor: auto;
-}
-.pmDropdown a {
-    display: block;
-    cursor: pointer;
-}
-.pmDropdown a:hover {
-    text-decoration: underline;
-}
-
-.pmDropdown.podTemplateSendmail > div {
-    padding-right: 50px;
 }
 
 /* CSS for data changes in object histories. */
@@ -724,15 +649,19 @@ p.indent-firstline {text-indent: 40px;}
 #portal-columns dl.portletTodo a {
     display: inline;
 }
-.portletPloneMeetingHeaderIcons {
+div#portal-columns dt.portletHeader a.portletPloneMeetingHeaderHome {
+    display: inline;
+}
+div.portletPloneMeetingHeaderIcons {
     float:right;
     display: inline;
     padding-right: 5px;
     font-size: 120%;
 }
 
-.input_disabled {
-    color: grey !important;
+.input_disabled,
+input[readonly=""] {
+    color: lightgrey !important;
     border-color: lightgrey !important;
     cursor: not-allowed !important;
 }
@@ -817,9 +746,18 @@ p.indent-firstline {text-indent: 40px;}
     width: 665px;
 }
 
-/* center controls displayed on z3c.forms */
-#form .formControls {
+/* controls displayed on add and edit forms */
+body.template-base_edit div.formControls,
+body.template-edit div.formControls,
+body.template-meeting div.formControls,
+div.overlay div.formControls {
     text-align: center;
+    position: sticky;
+    bottom: 10px;
+    background-color: rgba(210,210,210,0.5);
+    padding: 0.5em;
+    border-radius: 3px;
+    margin: 0em;
 }
 
 .ToDiscuss {
@@ -839,6 +777,18 @@ acronym a {
 
 acronym img {
    cursor: pointer;
+}
+
+/* make sure table header is displayed on one line except for :
+   - dashboard displaying organizations;
+   - ... */
+body:not([class*='subsection-orgs-searches']) table#faceted_table.listing th,
+table#meeting_users th {
+    white-space: nowrap;
+}
+
+table.listing th td {
+    vertical-align: inherit;
 }
 
 /* TH of the table listing items are stylable th by th */
@@ -866,8 +816,8 @@ table.listing th.th_header_getProposingGroup {
 }
 table.listing th.th_header_advices,
 table.listing th.th_header_review_state,
-table.listing th.th_header_linkedMeetingDate,
-table.listing th.th_header_getPreferredMeetingDate,
+table.listing th.th_header_meeting_date,
+table.listing th.th_header_preferred_meeting_date,
 table.listing th.th_header_getCategory,
 table.listing th.th_header_ModificationDate,
 table.listing th.th_header_CreationDate {
@@ -1006,6 +956,16 @@ body[class*="itemtemplates"].template-manage-portlets a.link-parent {
     width: 33%;
 }
 
+/* width of MeetingConfig.committees datagridfield columns */
+/* label */
+#datagridwidget-table-committees .datagridwidget-column-2 {
+   width: 200px;
+}
+/* supplements */
+#datagridwidget-table-committees .datagridwidget-column-11 {
+   width: 1%;
+}
+
 /* display DX datagrid column in grey */
 .datagridwidget-table-view {
     border-color: #ddd;
@@ -1033,7 +993,7 @@ div#archetypes-fieldname-powerAdvisersGroups,
 div#archetypes-fieldname-selectableCopyGroups,
 div#archetypes-fieldname-templateUsingGroups,
 div#archetypes-fieldname-usingGroups {
-    max-height: 300px;
+    max-height: 500px;
     max-width: 500px;
     overflow-x: auto;
     padding-bottom: 1em;
@@ -1060,6 +1020,7 @@ div.discreet.advice_additional_infos {
     margin-right: -6px;
     font-weight: bold;
     display: inline-block;
+    z-index: 40;
 }
 
 .advice_delay_never_giveable,
@@ -1084,35 +1045,46 @@ span.advices_of_type {
     font-size: 90%;
     vertical-align: sub;
 }
-
-#vote-abstain {
-    color: orange;
-    font-weight: bold;
+/* vote_value "yes" + vote edit form public/secret */
+span.vote_value_yes,
+input[value="yes"] + span.label,
+span.select-widget.yes span {
+   color: green;
 }
-
-#vote-yes {
-    color: green;
-    font-weight: bold;
+span.vote_value_no,
+input[value="no"] + span.label,
+span.select-widget.no span {
+   color: red;
 }
-
-#vote-no {
-    color: red;
-    font-weight: bold;
+span.vote_value_abstain,
+input[value="abstain"] + span.label,
+span.select-widget.abstain span {
+   color: orange;
 }
-
-#vote-not_yet {
-    color: grey;
-    font-weight: bold;
+span.vote_value_not_yet,
+input[value="not_yet"] + span.label,
+span.select-widget.not_yet span {
+   color: grey;
 }
-
-#vote-does_not_vote {
-    color: blue;
-    font-weight: bold;
+span.vote_value_does_not_vote,
+input[value="does_not_vote"] + span.label,
+span.select-widget.does_not_vote span {
+   color: blue;
 }
-
-#vote-not_consultable {
-    color: black;
-    font-weight: bold;
+span.vote_value_not_consultable,
+input[value="not_consultable"] + span.label,
+span.select-widget.not_consultable span {
+   color: black;
+}
+span.secret_vote_value {
+   font-weight: bold;
+}
+span.vote_value_number_of_voters {
+    display: inline-block;
+    padding-bottom: 1.5em;
+}
+table#meeting_users td.secret-vote {
+   padding-top: 2em;
 }
 
 table.listing tr[class][class] td.meeting_item_listType_normal {
@@ -1124,13 +1096,41 @@ div.tooltipster-content a.item_listType_normal:visited {
     color: &dtml-discreetColor;;
 }
 
-table.listing tr[class][class] td.meeting_item_listType_late {
+/* faceted table header sticky */
+#content table.faceted-table-results {
+   position: relative;
+}
+table.faceted-table-results th {
+   position: sticky;
+   top: 45px;
+   z-index: 45;
+}
+/* make sure date picker is hover faceted sticky header */
+div#ui-datepicker-div {
+   /* use !important because z-index is set as style on the <div> */
+   z-index: 45 !important;
+}
+
+table#faceted_table.listing tr[class][class] td.meeting_item_listType_late {
     background-color: red;
 }
 span.item_listType_late,
 div.tooltipster-content a.item_listType_late:link,
 div.tooltipster-content a.item_listType_late:visited {
     color: red;
+}
+
+.item_polltype_secret,
+.item_polltype_secret_separated {
+   color: red !important;
+}
+.item_polltype_no_vote {
+   color: grey !important;
+}
+
+a[class*="item_polltype_"]:not([class*='item_polltype_secret']):not([class*='item_polltype_no_vote']),
+span[class*="item_polltype_"]:not([class*='item_polltype_secret']):not([class*='item_polltype_no_vote']) {
+   color: green;
 }
 
 .item_completeness_incomplete,
@@ -1223,6 +1223,7 @@ a:link.item_emergency_refused {
 .item_emergency_accepted.Editable,
 .item_emergency_refused.Editable,
 .item_listType.Editable,
+.item_polltype.Editable,
 .advice_change_delay.Editable {
     border-bottom: 1px dotted;
     cursor: pointer;
@@ -1287,9 +1288,24 @@ div.decisionAnnexDescription {
 }
 p.highlightBlankRow:before,
 div.highlightBlankRow:before {
+    font-weight: bold;
     content: attr(title);
     padding-left: 0.5em;
 }
+p.page-break {
+    border: 1px dotted grey;
+    page-break-after: always;
+}
+
+body.cke_editable p.page-break:after,
+div[id^='hook_'] p.page-break:after,
+div.pmMoreInfo p.page-break:after {
+    font-weight: bold;
+    content: 'Saut de page';
+    padding-left: 0.5em;
+    color: red;
+}
+
 /* on the meetingconfig view, move itemIconColor value to let place for the icon */
 span[id^="parent-fieldname-itemIconColor"] {
     padding-left: 20px;
@@ -1358,13 +1374,16 @@ p.item-before-budget-related {
     padding-bottom: 0.2em;
 }
 
-#content table.configActions {
+#content div.configActions table {
     margin: 0;
+    width: 100%;
 }
-table.configActions td {
-    padding-right: 1em;
+#content div.configActions table td:first-of-type {
+    min-width: 40%;
 }
-.configActions form {
+#content div.configActions form {
+    border: 1px solid lightgrey;
+    padding: 0.5em;
     margin-bottom: 0.5em;
     margin-top: 0.5em;
 }
@@ -1425,12 +1444,21 @@ div.item-send-to-other-mc div.field {
 }
 div.item-send-to-other-mc-multiple-fields {
    border: 1px solid lightgrey;
-   min-width: 600px;
+   width: 100%;
 }
 
 #archetypes-fieldname-otherMeetingConfigsClonableTo {
     display: inline;
     float: left;
+    margin-right: 3em;
+}
+
+div#otherMeetingConfigsClonableTo div.label {
+   visibility: hidden;
+}
+
+div.other-mc-clonable-to-base-fields {
+   margin-top: -1em;
 }
 
 #archetypes-fieldname-otherMeetingConfigsClonableToEmergency,
@@ -1450,22 +1478,48 @@ div.item-send-to-other-mc-multiple-fields {
     color: &dtml-discreetColor;;
 }
 
-ul.item-predecessors span.pretty_link_content {
-    vertical-align: text-top;
+div.item-predecessors div.collapsible,
+div.item-linkeditems div.collapsible,
+div.item-predecessors span:first-of-type,
+div.item-linkeditems span:first-of-type {
+   display: inline-block;
 }
+
+div.item-predecessors div.collapsible,
+div.item-linkeditems div.collapsible,
+div.item-predecessors div.collapsible-content,
+div.item-linkeditems div.collapsible-content {
+    margin-left: 0.5em;
+    line-height: 1.5em;
+}
+div.item-predecessors div.collapsible-content,
+div.item-linkeditems div.collapsible-content {
+   display: block;
+}
+div.item-predecessors div.collapsible:before,
+div.item-linkeditems div.collapsible:before {
+   font-size: 110%;
+   padding-right: 0.5em;
+}
+
 /* limit left space on the faceted form of items to present,
    define width so we do not have the width scrollbar */
 body.template-meeting_available_items_view div#faceted-form {
     margin-left: -0.5em;
     width: 99.5%;
 }
-
-/* temporary until collective.documentgenerator 0.6 is out */
-div#doc-generation-view ul.pod-template li {
-    display: inline-block;
+body.template-meeting_available_items_view #portal-column-content.cell.width-full.position-0 {
+   width: 100%;
 }
-
-div#doc-generation-view {
+body.template-meeting_available_items_view #portal-column-content {
+   padding-top: 0;
+}
+/* make sure ajax spinner is displayed in available items iframe */
+body.template-meeting_available_items_view div#ajax-spinner {
+   top: -35px;
+}
+/* docgen icons on the item view */
+body.template-meetingitem_view div#doc-generation-view {
    float: right;
 }
 
@@ -1489,26 +1543,12 @@ h2.check_pod_template_clean {
     color: green;
 }
 
-iframe#iFrameResizer0 {
-    overflow-x: auto;
-    overflow-y: hidden;
-}
-
 div.customAdviceMessage {
     color: red;
 }
 
 #content-core p.tool_pm_descr,
 #content-core p.backToItem {
-    margin-bottom: 0.5em;
-}
-
-span.no_users {
-    font-style: italic;
-}
-span.no_users,
-span.users {
-    display: block;
     margin-bottom: 0.5em;
 }
 
@@ -1521,6 +1561,9 @@ div.dashboard_annexes {
     width: 100%;
     text-align: right;
 }
+div.item_annexes {
+    margin-bottom: 0.5em;
+}
 
 /* use important! so it is correctly displayed in the advice popup */
 #content div.categorized-elements a:link,
@@ -1531,7 +1574,8 @@ div.dashboard_annexes {
 
 /* avoid screen size change when editing element as CKeditor takes some seconds to load */
 div.field.ArchetypesRichWidget {
-   height: 650px;
+   /* min-height: 650px; removed in PloneMeeting 4.2+ as RichText fields are not
+      viewable on first page while editing (these fields are at the bottom) */
    background-image: url(&dtml-portal_url;/spinner_small.gif);
    background-repeat: no-repeat;
    background-position: center;
@@ -1617,21 +1661,21 @@ div.grouped-configs {
     padding-right: 1em;
     padding-left: 1em;
 }
+div.grouped-configs span.fa.selected::before {
+    content: "\f00c";
+    font-size: 75%;
+    position: relative;
+    bottom: 2px;
+}
 
 /* arrow position when tooltipster displayed to top (annexes at bottom of the screen) */
 .tooltipster-sidetip.tooltipster-top .tooltipster-arrow {
     height: 6px;
 }
 
-#content span.help-doc {
-   border-bottom: 1px dotted;
-   padding-bottom: 2px;
-   cursor: pointer;
-}
-
 /* meeting_users table on meeting_edit */
 table#meeting_users td {
-   padding: 0.5em;
+   padding: 0.35em;
 }
 table#meeting_users td.draggable,
 table#faceted_table td.draggable {
@@ -1640,6 +1684,33 @@ table#faceted_table td.draggable {
 table#meeting_users select[id$="_replacement"] {
    width: 500px;
 }
+
+#content table#meeting_users.listing tbody tr.even,
+#content table#meeting_users.listing tbody tr.odd,
+#content table#faceted_table.listing tbody tr.even,
+#content table#faceted_table.listing tbody tr.odd,
+#content table.datagridwidget-table-view.listing tbody tr.even,
+#content table.datagridwidget-table-view.listing tbody tr.odd {
+   border-left: 2px solid &dtml-tableHeaderBackgroundColor;;
+}
+#content table#meeting_users.listing tbody tr.even:hover,
+#content table#meeting_users.listing tbody tr.odd:hover,
+#content table#faceted_table.listing tbody tr.even:hover,
+#content table#faceted_table.listing tbody tr.odd:hover,
+#content table.datagridwidget-table-view.listing tbody tr.even:hover,
+#content table.datagridwidget-table-view.listing tbody tr.odd:hover {
+   border-left: 2px solid grey;
+}
+/* special handling for table border left highlight for faceted on meeting_view */
+body.template-meeting_view #content table#faceted_table.listing tbody tr.even,
+body.template-meeting_view #content table#faceted_table.listing tbody tr.odd {
+   border-left: 3px solid &dtml-tableHeaderBackgroundColor;;
+}
+body.template-meeting_view #content table#faceted_table.listing tbody tr.even:hover,
+body.template-meeting_view #content table#faceted_table.listing tbody tr.odd:hover {
+   border-left: 3px solid grey;
+}
+
 table#meeting_users tr.item-non-attendee {
     color: gray;
 }
@@ -1650,26 +1721,52 @@ table.listing tbody tr.even.dragging td {
     background-color: #ffa;
 }
 
+/* refresh attendees */
+#content span.refresh-attendees:before {
+    content: "\f2f9";
+    color: &dtml-linkColor;;
+}
+#content div.refresh-attendees-container {
+    display: inline;
+    padding-left: 2em;
+    cursor: pointer;
+}
+
 /* check in item people tables */
 #content span.people-checked:before,
 #content span.people-signatory-checked:before {
     content: "\f00c";
+    color: #333333;
 }
 #content span.people-edit-itemabsent:before,
 #content span.people-left:before {
     content: "\f2f5";
     font-size: 120%;
 }
-#content span.people-left:before {
+#content span.people-left {
     color: red;
     cursor: help;
 }
-#content span.people-edit-itemabsent:before,
-#content span.people-edit-signatory:before {
-    color: orange;
+#content span.people-edit-itemabsent,
+#content span.people-edit-signatory {
+    color: &dtml-linkColor;;
+    opacity: 0.3;
 }
-#content span.people-action {
+#content span.people-edit-itemabsent:hover,
+#content span.people-edit-signatory:hover {
+    opacity: 1;
+}
+#content span.link-action {
     border-bottom: 1px dotted;
+    padding-bottom: 2px;
+    cursor: pointer;
+    color: &dtml-linkColor;;
+}
+
+#content span.link-help {
+    border-bottom: 1px dotted;
+    padding-bottom: 2px;
+    cursor: help;
 }
 
 #content span.people-edit-signatory:before {
@@ -1681,7 +1778,6 @@ table.listing tbody tr.even.dragging td {
     content: "\f00c";
     font-size: 120%;
     color: green;
-    cursor: help;
 }
 .item-signatory-replacer-signature-number {
     font-family: &dtml-fontFamily;;
@@ -1692,6 +1788,55 @@ table.listing tbody tr.even.dragging td {
    color: green;
 }
 
+/* edit icon */
+#content span.edit-element:before {
+   content: "\f304";
+}
+#content legend span.edit-element {
+   font-size: 90%;
+   color: &dtml-linkColor;;
+}
+
+/* linked-to-previous icon */
+#content span.vote-linked-to-previous:before {
+   content: "\f12e";
+}
+/* add icon */
+#content span.add-element:before {
+   content: "\f067";
+}
+#content span.add-element {
+   color: &dtml-linkColor;;
+}
+/* delete icon */
+#content span.delete-element:before {
+   content: "\f2ed";
+}
+#content span.delete-element {
+   color: red;
+}
+#content span.show-info:before {
+   content: "\f05a";
+}
+#content span.show-help:before {
+   content: "\f059";
+}
+
+/* icon colors */
+#content span.fa.leading-icon {
+   color: &dtml-discreetColor;;
+   cursor: help;
+}
+#content span.fa.disabled {
+   color: lightgrey;
+   cursor: help;
+}
+#content span.fa.green-colored {
+   color: green;
+}
+#content span.fa.red-colored {
+   color: red;
+}
 #content span.pmHelp {
    cursor: help;
 }
@@ -1725,7 +1870,7 @@ p#download_vcard {
 
 .collapsible-content {
     /*max-height: 0;*/
-    overflow: hidden;
+    /*overflow: hidden;*/
     transition: max-height 0.2s ease-out;
     margin-bottom: 0.5em;
 }
@@ -1736,6 +1881,13 @@ p#download_vcard {
 }
 .collapsible-content.collapsed-on-load {
     max-height: inherit;
+}
+
+/* general and next sibling
+   when collapsible does not have the active class, it means it is closed */
+div.item-linkeditems div.collapsible:not([class*='active']) ~ div.collapsible-content,
+div.collapsible:not([class*='active']) + div.collapsible-content {
+   display: none;
 }
 
 .collapsible {
@@ -1794,11 +1946,6 @@ div.config_sub_categories table {
     color: red;
 }
 
-/* increase FontAwesome base size when parent is using discreet */
-.discreet .fa, .fas {
-    font-size: 110%;
-}
-
 h2.available-items,
 h2.presented-items,
 h2.pm-inserting-methods-helper-msg {
@@ -1820,8 +1967,9 @@ a.portlet_pm_dashboard_link {
    line-height: 2em;
 }
 
-/* add some margin under fieldsets displayed in base_edit forms */
-body.template-base_edit #content fieldset {
+/* add some margin under fieldsets displayed in forms */
+body.template-base_edit #content fieldset,
+form#form fieldset {
    margin-bottom: 0.5em;
 }
 
@@ -1834,11 +1982,13 @@ ul.change_delay_actions li a span {
 }
 
 .fa-angle-double-right {
-   color: &dtml-linkColor;;
+   color: grey;
 }
 
+/* manage custom behaviors in annexes/advices fieldsets */
 fieldset.section_annex, fieldset.section_annexDecision, fieldset.section_advices {
-   height: 50px;
+   min-height: 50px;
+   height: auto;
 }
 
 div#held_position_back_refs {
@@ -1848,6 +1998,11 @@ div#held_position_back_refs {
 /* hide link 'Add contact' on organization view */
 #content a.addnewcontactfromorganization.link-overlay {
    display: none !important;
+}
+
+/* manually linked items overlay */
+#atrb_manuallyLinkedItems {
+    width: 80%;
 }
 
 div.itemtemplate-infos, div.recurringitem-infos {
@@ -1882,7 +2037,9 @@ div.pm_checkbox_widget div.checkbox_widget_select_all {
 div.pm_checkbox_widget input.checkbox-widget {
    margin-left: 0.25em;
 }
-div.pm_checkbox_widget span.option {
+/* space between checkboxes in item duplicate form popup */
+div.pm_checkbox_widget span#form-widgets-annex_decision_ids span.option,
+div.pm_checkbox_widget span#form-widgets-annex_ids span.option {
    margin-top: 0.5em;
    margin-bottom: 0.5em;
 }
@@ -1926,9 +2083,170 @@ span#newTemplateItemCreationDisabledDuringEdit {
    padding-left: 0;
 }
 
-/* make sure ajax spinner is diaplayed in available items iframe */
-body.template-meeting_available_items_view div#ajax-spinner {
-   top: -35px;
+p.otherMeetingConfigsClonableToDataUsed {
+   margin-top: 1em;
+}
+
+/* hide the "Add group" button in Plone users and groups management
+ * this is never done and it will avoid new users to create Plone groups instead organizatons ... */
+body.template-usergroup-groupprefs input[name="form.button.AddGroup"] {
+   display: none;
+}
+/* space between add user button and table */
+body.template-usergroup-userprefs input[name="form.button.AddUser"] {
+   margin-bottom: 1em;
+}
+div.item-linkeditems div.collapsible-content {
+   margin-top: 0.25em;
+}
+
+/* avoid textarea too large */
+#content textarea {
+    width: 99%;
+    min-height: 175px;
+}
+#content textarea#form-widgets-place,
+#content textarea#form-widgets-pre_meeting_place {
+   min-height: 80px
+}
+/* global JS actions on item and meeting view */
+div.pm-global-actions {
+   float: right;
+   position: fixed;
+   right: 20px;
+   bottom: 20px;
+   z-index: 10000;
+   font-size: 140%;
+   color: #666666;
+   background-color: rgba(210,210,210,0.5);
+   padding: 0.5em;
+   border-radius: 3px;
+}
+div.pm-global-actions span {
+   cursor: pointer;
+}
+div.pm-global-actions a.show-hide-all-details:focus,
+div.pm-global-actions a.show-hide-all-details:focus img {
+   outline: 0 !important;
+}
+
+/* padding-right on item view for workflow state, pod template, item infos */
+div.viewlet_workflowstate,
+table.item-infos,
+div#doc-generation-view {
+   padding-right: 0.5em;
+}
+
+/* back to font-size 100% */
+#portal-columns #content .discreet,
+#content .discreet {
+   font-size: 100%;
+}
+
+span.vote-number span,
+span.item-not-voter {
+   cursor: help;
+}
+
+/* datagrid field for encoding votes */
+table#form-widgets-votes span.option {
+   display: inline;
+}
+
+table#meeting_users th.header-attendee-present,
+table#meeting_users th.header-attendee-excused,
+table#meeting_users th.header-attendee-absent,
+table#meeting_users th.header-attendee-non-attendee,
+table#meeting_users th.header-attendee-signatory {
+   width: 60px;
+}
+
+div.select-all-vote-values {
+   position: absolute;
+   right: 14px;
+   padding-top: 25px;
+   font-weight: normal;
+   display: inline;
+}
+div.select-all-vote-values span.option {
+   display: inline;
+}
+/* make sure radio button is displayed on one line */
+div#formfield-form-widgets-votes td.cell-3 {
+   text-align: right;
+   white-space: nowrap;
+}
+table#form-widgets-votes td,
+table#form-widgets-votes th {
+   padding: 0.5em;
+}
+div#formfield-form-widgets-linked_to_previous {
+   display: none;
+}
+/* make at least 3 files appear horizontally */
+div.overlay div.qq-uploader li {
+    margin-left: 0.5em;
+}
+
+div.static-infos {
+   margin-top: 0.5em;
+}
+
+#content td.table_widget_label {
+    width: 200px;
+}
+/* highlight the default item template in the itemtemplates configuration */
+a[href*="itemtemplates/default-empty-item-template/"] {
+    font-weight: bold;
+}
+
+/* committees datagridfield edit on meeting */
+table.datagridwidget-table-view-block label {
+   vertical-align: super;
+}
+table.datagridwidget-table-view-block div.select-widget label,
+table.datagridwidget-table-view-block div.date-widget label,
+table.datagridwidget-table-view-block div.datetime-widget label {
+   vertical-align: sub;
+}
+.datagridwidget-table-view-block .datagridwidget-row {
+    border-bottom: 5px solid lightgrey;
+}
+/* hide row_id label when editing */
+div.datagridwidget-widget-row_id label {
+   display: none;
+}
+div.datagridwidget-widget-row_id select {
+   font-size: 130%;
+}
+/* committees datagridfield edit/view on meeting,
+   when TextArea is empty, an error is displayed */
+div#formfield-form-widgets-committees div.error,
+table#form-widgets-committees div.error {
+   display: none;
+}
+/* width of committees table datagridfield display */
+table#form-widgets-committees th.column-date,
+table#form-widgets-committees th.column-convocation_date {
+   width: 130px;
+}
+table#form-widgets-committees th.column-place {
+   width: 180px;
+}
+/* hide Meeting.committees label on edit and view */
+div#formfield-form-widgets-committees label[for="form-widgets-committees"],
+body.template-meeting_view label[for="form-widgets-committees"] {
+   display: none;
+}
+
+div.small-separator {
+   height: 5px;
+}
+div.separator {
+   height: 10px;
+}
+div.large-separator {
+   height: 15px;
 }
 
 /* </dtml-with> */

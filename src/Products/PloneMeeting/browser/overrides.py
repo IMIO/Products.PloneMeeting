@@ -10,7 +10,9 @@ from collective.contact.core import utils as contact_core_utils
 from collective.contact.plonegroup import utils as contact_plonegroup_utils
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from collective.contact.plonegroup.utils import get_all_suffixes
+from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.documentgenerator.viewlets.generationlinks import DocumentGeneratorLinksViewlet
+from collective.eeafaceted.batchactions.browser.views import LabelsBatchActionForm
 from collective.eeafaceted.batchactions.browser.views import TransitionBatchActionForm
 from collective.eeafaceted.collectionwidget.browser.views import FacetedDashboardView
 from collective.eeafaceted.dashboard.browser.overrides import DashboardDocumentGenerationView
@@ -25,14 +27,15 @@ from collective.iconifiedcategory.browser.actionview import ToPrintChangeView
 from collective.iconifiedcategory.browser.tabview import CategorizedTabView
 from collective.iconifiedcategory.browser.views import CategorizedChildInfosView
 from collective.iconifiedcategory.browser.views import CategorizedChildView
+from datetime import datetime
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from imio.actionspanel.browser.viewlets import ActionsPanelViewlet
 from imio.actionspanel.browser.views import ActionsPanelView
 from imio.annex import utils as imio_annex_utils
 from imio.dashboard.browser.overrides import IDRenderCategoryView
 from imio.dashboard.interfaces import IContactsDashboard
-from imio.helpers.content import get_vocab
 from imio.helpers.cache import get_cachekey_volatile
+from imio.helpers.content import get_vocab
 from imio.history import utils as imio_history_utils
 from imio.history.browser.views import IHContentHistoryView
 from imio.history.browser.views import IHDocumentBylineViewlet
@@ -56,15 +59,19 @@ from Products.CMFPlone.utils import safe_unicode
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from Products.PloneMeeting import utils as pm_utils
 from Products.PloneMeeting.config import BARCODE_INSERTED_ATTR_ID
+from Products.PloneMeeting.config import FACETED_ANNEXES_CRITERION_ID
 from Products.PloneMeeting.config import ITEM_DEFAULT_TEMPLATE_ID
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
-from Products.PloneMeeting.interfaces import IMeeting
+from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
+from Products.PloneMeeting.content.meeting import IMeeting
+from Products.PloneMeeting.MeetingConfig import POWEROBSERVERPREFIX
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import get_annexes
+from Products.PloneMeeting.utils import get_next_meeting
 from Products.PloneMeeting.utils import is_editing
 from Products.PloneMeeting.utils import normalize_id
 from Products.PloneMeeting.utils import sendMail
-from Products.PloneMeeting.utils import setFieldFromAjax
+from Products.PloneMeeting.utils import set_field_from_ajax
 from zope.annotation import IAnnotations
 from zope.container.interfaces import INameChooser
 from zope.i18n import translate
@@ -134,8 +141,10 @@ class PMGlobalSectionsViewlet(GlobalSectionsViewlet):
                                                 action['name'],
                                                 action['data-config_full_label'])]]
                     for cfg_id in cfg_ids:
-                        # select groupedConfig tab in the application and when on the MC in the configuration
-                        if "/mymeetings/%s" % cfg_id in path or "/portal_plonemeeting/%s" % cfg_id in path:
+                        # select groupedConfig tab in the application and
+                        # when on the MC in the configuration
+                        if "/mymeetings/%s/" % cfg_id in path or \
+                           "/portal_plonemeeting/%s/" % cfg_id in path:
                             return {'portal': action['id'], }
             # XXX end of change by PM
 
@@ -171,13 +180,14 @@ class PMContentActionsViewlet(ContentActionsViewlet):
     '''
 
     def render(self):
-        if self.context.meta_type in (
-            'ATTopic', 'Meeting', 'MeetingItem', 'MeetingCategory',
+        if self.context.__class__.__name__ in (
+            'ATTopic', 'Meeting', 'MeetingItem',
             'MeetingConfig', 'ToolPloneMeeting',) or \
            self.context.portal_type in (
             'ContentCategoryConfiguration', 'ContentCategoryGroup',
             'ConfigurablePODTemplate', 'DashboardPODTemplate',
-            'organization', 'person', 'held_position') or \
+            'organization', 'person', 'held_position',
+            'meetingcategory') or \
            self.context.portal_type.startswith(('meetingadvice',)) or \
            self.context.portal_type.endswith(('ContentCategory', 'ContentSubcategory',)) or \
            IContactsDashboard.providedBy(self.context) or \
@@ -257,7 +267,7 @@ class PMConfigActionsPanelViewlet(ActionsPanelViewlet):
         parent = self.context.getParentNode()
         if self.context.portal_type == 'DashboardCollection':
             url = '{0}?pageName=gui#searches'.format(cfg_url)
-        elif parent.meta_type == 'ATFolder':
+        elif parent.portal_type == 'Folder':
             # p_context is a sub-object in a sub-folder within a config
             root_subfolder = self._findRootSubfolder(parent)
             folderName = root_subfolder.getId()
@@ -392,7 +402,7 @@ class PloneMeetingOverviewControlPanel(OverviewControlPanel):
         return versions
 
 
-class PMFacetedContainerView(FacetedDashboardView):
+class PMFacetedDashboardView(FacetedDashboardView):
     '''
       Override to disable border on the meetingFolder view and to redirect to correct pmFolder
       in case a user is sent to the pmFolder of another user.
@@ -400,13 +410,15 @@ class PMFacetedContainerView(FacetedDashboardView):
 
     def __init__(self, context, request):
         """Hide the green bar on the faceted if not in the configuration."""
-        super(PMFacetedContainerView, self).__init__(context, request)
+        super(PMFacetedDashboardView, self).__init__(context, request)
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
+        self.check_redirect_next_meeting = False
         # disable border for faceted dashboards of PM except on Meeting
         if 'portal_plonemeeting' not in self.context.absolute_url() and \
            not IMeeting.providedBy(self.context) and self.cfg:
             self.request.set('disable_border', 1)
+            self.check_redirect_next_meeting = True
 
     def getPloneMeetingFolder(self):
         '''Returns the current PM folder.'''
@@ -429,10 +441,37 @@ class PMFacetedContainerView(FacetedDashboardView):
         else:
             return self.cfg.searches
 
+    def _redirectToNextMeeting(self):
+        """Check if current user profile is selected in MeetingConfig.redirectToNextMeeting."""
+        res = False
+        if self.check_redirect_next_meeting:
+            redirectToNextMeeting = self.cfg.getRedirectToNextMeeting()
+            suffixes = []
+            groups = []
+            cfg_id = self.cfg.getId()
+            for value in redirectToNextMeeting:
+                if value == 'app_users':
+                    suffixes = get_all_suffixes()
+                elif value == 'meeting_managers':
+                    groups.append(get_plone_group_id(cfg_id, MEETINGMANAGERS_GROUP_SUFFIX))
+                elif value.startswith(POWEROBSERVERPREFIX):
+                    po_grp_id = value.replace(POWEROBSERVERPREFIX, '')
+                    groups.append(get_plone_group_id(cfg_id, po_grp_id))
+            if suffixes:
+                res = self.tool.userIsAmong(suffixes)
+            if not res and groups:
+                res = bool(set(groups).intersection(self.tool.get_plone_groups_for_user()))
+        return res
+
     def __call__(self):
         """Make sure a user, even a Manager that is not the Zope Manager is redirected
            to it's own pmFolder if it is on the pmFolder of another user."""
-        res = super(PMFacetedContainerView, self).__call__()
+        if not self.request.get('no_redirect') and self._redirectToNextMeeting():
+            meetingDate = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+            next_meeting = get_next_meeting(meetingDate, cfg=self.cfg)
+            if next_meeting:
+                self.request.RESPONSE.redirect(next_meeting.absolute_url())
+        res = super(PMFacetedDashboardView, self).__call__()
 
         if self.request.RESPONSE.status == 302 and \
            self.context != self._criteriaHolder and \
@@ -468,6 +507,9 @@ class PMRenderCategoryView(IDRenderCategoryView):
         contact_infos.pop('hps-searches')
         # by default, add organization to plonegroup-organization
         contact_infos['orgs-searches']['add'] = 'plonegroup-organization/++add++organization'
+        # use default add icon to add organization or person
+        contact_infos['orgs-searches']['img'] = 'create_organization.png'
+        contact_infos['persons-searches']['img'] = 'create_contact.png'
         return contact_infos
 
     def _get_category_template(self):
@@ -491,7 +533,7 @@ class PMRenderCategoryView(IDRenderCategoryView):
         return super(PMRenderCategoryView, self).__call__(widget)
 
     def _is_editing(self):
-        return is_editing()
+        return is_editing(self.cfg)
 
     def templateItems(self):
         '''Check if there are item templates defined or not.'''
@@ -580,7 +622,7 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
         # if item is validated, the 'present' action could appear if a meeting
         # is now available for the item to be inserted into
         isPresentable = False
-        if self.context.queryState() == 'validated':
+        if self.context.query_state() == 'validated':
             isPresentable = self.context.wfConditions().mayPresent()
 
         # check also portal_url in case application is accessed thru different URI
@@ -610,8 +652,8 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
         if useIcons:
             # hide 'duplicate' actions when showing icons if not in cfg.itemActionsColumnConfig
             itemActionsColumnConfig = self.cfg.getItemActionsColumnConfig()
-            isMeetingManager = self.tool.isManager(self.context)
-            isManager = self.tool.isManager(self.context, realManagers=True)
+            isMeetingManager = self.tool.isManager(self.cfg)
+            isManager = self.tool.isManager(self.cfg, realManagers=True)
             if not (
                 (isMeetingManager and 'meetingmanager_duplicate' in itemActionsColumnConfig) or
                 (isManager and 'manager_duplicate' in itemActionsColumnConfig) or
@@ -678,7 +720,7 @@ class MeetingActionsPanelView(BaseActionsPanelView):
         '''cachekey method for self.__call__ method.
            The cache is invalidated if :
            - meeting is modified (modified is also triggered when review_state changed);
-           - getRawItems changed;
+           - linked items changed;
            - cfg modified;
            - different item or user;
            - user groups changed.'''
@@ -687,7 +729,8 @@ class MeetingActionsPanelView(BaseActionsPanelView):
         date = get_cachekey_volatile(
             'Products.PloneMeeting.Meeting.UID.{0}'.format(self.context.UID()))
         # check also portal_url in case application is accessed thru different URI
-        return (self.context.UID(), self.context.modified(), self.context.getRawItems(), cfg_modified,
+        return (self.context.UID(), self.context.modified(),
+                self.context.get_raw_items(), cfg_modified,
                 userGroups, date,
                 useIcons, showTransitions, appendTypeNameToTransitionLabel, showEdit,
                 showOwnDelete, showActions, showAddContent, showHistory, showHistoryLastEventHasComments,
@@ -776,7 +819,7 @@ class AnnexActionsPanelView(BaseActionsPanelView):
         # check isManager on parent (item) so caching is used as context is a key
         # used in the caching invalidation
         parent = self.context.aq_inner.aq_parent
-        while parent.meta_type not in ('MeetingItem', 'Meeting'):
+        while parent.__class__.__name__ not in ('MeetingItem', 'Meeting'):
             parent = parent.aq_inner.aq_parent
         return self.tool.isManager(parent, realManagers=True)
 
@@ -815,7 +858,7 @@ class ConfigActionsPanelView(ActionsPanelView):
             return "../../?pageName=gui#searches"
         if folderId == 'podtemplates':
             return "../?pageName=doc#podtemplates"
-        if self.context.meta_type == "MeetingConfig":
+        if self.context.__class__.__name__ == "MeetingConfig":
             return "#MeetingConfig"
         if self.context.portal_type == "organization":
             return "#organization"
@@ -837,7 +880,7 @@ class ConfigActionsPanelView(ActionsPanelView):
         """
           Add a link to linked Plone groups for an organization.
         """
-        if self.tool.isManager(self.context, True) and self.context.getId() != PLONEGROUP_ORG:
+        if self.tool.isManager(self.cfg, True) and self.context.getId() != PLONEGROUP_ORG:
             return ViewPageTemplateFile("templates/actions_panel_config_linkedplonegroups.pt")(self)
         return ''
 
@@ -887,11 +930,25 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
         return generation_context
 
     def generate_and_download_doc(self, pod_template, output_format, **kwargs):
-        """ """
-        generated_template = super(
-            PMDocumentGenerationView, self).generate_and_download_doc(
-                pod_template,
-                output_format)
+        """When generating a template :
+           - check if need to generate in case store as annex and store_as_annex_empty_file is True;
+           - send to mailing list if relevant;
+           - or just generate the template."""
+
+        if self.request.get('store_as_annex', '0') == '1' and \
+           pod_template.store_as_annex_empty_file is True:
+            generated_template = translate('empty_annex_file_content',
+                                           domain='PloneMeeting',
+                                           context=self.request)
+            # make sure scan_id is generated and available in the REQUEST
+            # so it is applied on stored annex
+            helper_view = self.get_generation_context_helper()
+            helper_view.get_scan_id()
+        else:
+            generated_template = super(
+                PMDocumentGenerationView, self).generate_and_download_doc(
+                    pod_template,
+                    output_format)
 
         # check if we have to send this generated POD template or to render it
         if self.request.get('mailinglist_name'):
@@ -1005,8 +1062,19 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
             annex_portal_type)
 
         if not return_portal_msg_code:
-            return self.request.RESPONSE.redirect(
-                self.context.absolute_url() + '/@@categorized-annexes')
+            msg = translate('stored_single_item_template_as_annex',
+                            domain="PloneMeeting",
+                            context=self.request)
+            api.portal.show_message(msg, request=self.request)
+            return self.request.RESPONSE.redirect(self.request['HTTP_REFERER'])
+
+    def _get_filename(self):
+        """Override to take into account store_as_annex_empty_file."""
+        if self.request.get('store_as_annex', '0') == '1' and \
+           self.pod_template.store_as_annex_empty_file is True:
+            return "empty_file.txt"
+        else:
+            return super(PMDocumentGenerationView, self)._get_filename()
 
     def _store_pod_template_as_annex(self,
                                      pod_template,
@@ -1118,7 +1186,7 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
         # Send the mail with the document as attachment
         docName = self._get_filename()
         # generate event name depending on obj type
-        eventName = self.context.meta_type == 'Meeting' and 'podMeetingByMail' or 'podItemByMail'
+        eventName = self.context.__class__.__name__ == 'Meeting' and 'podMeetingByMail' or 'podItemByMail'
         sendMail(recipients,
                  self.context,
                  eventName,
@@ -1157,7 +1225,7 @@ class CategorizedAnnexesView(CategorizedTabView):
         """Made to be overrided."""
         annex_attr_config = '{0}_display'.format(action_type)
         check = annex_attr_config in self.cfg.getAnnexRestrictShownAndEditableAttributes()
-        return not check or self.tool.isManager(self.context)
+        return not check or self.tool.isManager(self.cfg)
 
     def showAddAnnex(self):
         """ """
@@ -1183,7 +1251,7 @@ class CategorizedAnnexesView(CategorizedTabView):
         """ """
         # check if context contains decisionAnnexes or if there
         # are some decisionAnnex annex types available in the configuration
-        if self.context.meta_type == 'MeetingItem' and \
+        if self.context.__class__.__name__ == 'MeetingItem' and \
             (get_annexes(self.context, portal_types=['annexDecision']) or
              self.showAddAnnexDecision()):
             return True
@@ -1203,6 +1271,26 @@ class PMCKFinder(CKFinder):
         self.openuploadwidgetdefault = True
 
 
+def _get_filters(request):
+    """ """
+    # caching
+    res = request.get("cached_annexes_filters", None)
+    if res is None:
+        res = {}
+        # in request.form, faceted criterion is like 'c20[]'
+        faceted_filter = request.form.get(FACETED_ANNEXES_CRITERION_ID + '[]', None)
+        if faceted_filter is not None:
+            if not hasattr(faceted_filter, '__iter__'):
+                faceted_filter = [faceted_filter]
+            for value in faceted_filter:
+                if value.startswith('not_'):
+                    res[value.replace('not_', '')] = False
+                else:
+                    res[value] = True
+        request["cached_annexes_filters"] = res
+    return res
+
+
 class PMCategorizedChildView(CategorizedChildView):
     """Add caching."""
 
@@ -1216,13 +1304,21 @@ class PMCategorizedChildView(CategorizedChildView):
         # any change on annex (added, removed, edited, attribute changed)
         context_modified = self.context.modified()
         cfg_modified = cfg.modified()
+        # value of the annexes faceted filter
+        filters = self._filters
         return (self.context.UID(),
                 context_modified,
                 cfg_modified,
                 server_url,
                 tool.get_plone_groups_for_user(),
                 portal_type,
-                show_nothing)
+                show_nothing,
+                filters)
+
+    @property
+    def _filters(self):
+        """ """
+        return _get_filters(self.request)
 
     @ram.cache(__call___cachekey)
     def __call__(self, portal_type=None, show_nothing=False):
@@ -1238,6 +1334,11 @@ class PMCategorizedChildInfosView(CategorizedChildInfosView):
         super(PMCategorizedChildInfosView, self).__init__(context, request)
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
+
+    @property
+    def _filters(self):
+        """ """
+        return _get_filters(self.request)
 
     def show_preview_link(self):
         """Show link if preview is enabled, aka the auto_convert in collective.documentviewer."""
@@ -1255,7 +1356,7 @@ class PMCategorizedChildInfosView(CategorizedChildInfosView):
         """ """
         annex_attr_config = '{0}_display'.format(detail_type)
         check = annex_attr_config in self.cfg.getAnnexRestrictShownAndEditableAttributes()
-        return not check or self.tool.isManager(self.context)
+        return not check or self.tool.isManager(self.cfg)
 
 
 class PMBaseActionView(BaseActionView):
@@ -1283,7 +1384,7 @@ class PMBaseActionView(BaseActionView):
             cfg = tool.getMeetingConfig(self.context)
             annex_attr_config = cfg.getAnnexRestrictShownAndEditableAttributes()
             if config_attr_display in annex_attr_config or config_attr_edit in annex_attr_config:
-                res = tool.isManager(self.context)
+                res = tool.isManager(cfg)
         return res
 
 
@@ -1314,6 +1415,16 @@ class PMReferenceBrowserPopup(ReferenceBrowserPopup):
             getattr(item, 'getId', '')
 
 
+class PMLabelsBatchActionForm(LabelsBatchActionForm):
+    """ """
+
+    def available(self):
+        """Only available when labels are enabled."""
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
+        return cfg.getEnableLabels()
+
+
 class PMTransitionBatchActionForm(TransitionBatchActionForm):
     """ """
 
@@ -1323,10 +1434,10 @@ class PMTransitionBatchActionForm(TransitionBatchActionForm):
            and to non MeetingManagers on the meeting_view."""
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
-        return (self.context.meta_type == 'Meeting' and
+        return (self.context.__class__.__name__ == 'Meeting' and
                 _checkPermission(ModifyPortalContent, self.context)) or \
-               (not self.context.meta_type == 'Meeting' and
-                (tool.isManager(self.context) or
+               (not self.context.__class__.__name__ == 'Meeting' and
+                (tool.isManager(cfg) or
                  bool(tool.userIsAmong(suffixes=get_all_suffixes(None), cfg=cfg))))
 
 
@@ -1384,7 +1495,7 @@ class PMCatalogNavigationTabs(CatalogNavigationTabs):
                     'data-config_full_label': config_group[2]}
                 mc_tabs.append(data)
         # insert a tab for contacts directory for Managers
-        if tool.isManager(self.context, realManagers=True):
+        if tool.isManager(tool, realManagers=True):
             data = {
                 'name': 'Contacts',
                 'id': 'contacts',
@@ -1477,8 +1588,11 @@ class PMBaseOverviewControlPanel(UsersGroupsControlPanelView):
         adapted_results = []
         for item in results:
             adapted_item = item.copy()
+            # only keep some relevant roles
             for role in self.portal_roles:
                 adapted_item['roles'][role]['canAssign'] = False
+            # remove possibility to remove user from UI
+            adapted_item['can_delete'] = False
             adapted_results.append(adapted_item)
         return adapted_results
 
@@ -1492,13 +1606,24 @@ class PMGroupsOverviewControlPanel(PMBaseOverviewControlPanel, GroupsOverviewCon
 
 
 class PMAjaxSave(AjaxSave):
-    """Override collective.ckeditor ajaxsave to use setFieldFromAjax."""
+    """Override collective.ckeditor ajaxsave to use utils.set_field_from_ajax."""
 
     def AT_save(self, fieldname, text):
-        setFieldFromAjax(self.context,
-                         fieldname,
-                         text,
-                         remember=False,
-                         tranform=True,
-                         reindex=True,
-                         unlock=False)
+        set_field_from_ajax(
+            self.context,
+            fieldname,
+            text,
+            remember=False,
+            tranform=True,
+            reindex=True,
+            unlock=False)
+
+    def dexterity_save(self, fieldname, text):
+        set_field_from_ajax(
+            self.context,
+            fieldname,
+            text,
+            remember=False,
+            tranform=True,
+            reindex=True,
+            unlock=False)

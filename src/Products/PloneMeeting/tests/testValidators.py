@@ -1,30 +1,17 @@
 # -*- coding: utf-8 -*-
-#
-# File: testMeetingConfig.py
-#
-# Copyright (c) 2015 by Imio.be
-#
-# GNU General Public License (GPL)
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
-# 02110-1301, USA.
-#
 
+from collective.contact.plonegroup.browser.settings import IContactPlonegroupConfig
+from collective.contact.plonegroup.config import get_registry_functions
+from collective.contact.plonegroup.config import set_registry_functions
+from collective.contact.plonegroup.utils import get_plone_group
+from copy import deepcopy
+from plone import api
+from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
+from Products.PloneMeeting.validators import PloneGroupSettingsValidator
 from Products.validation import validation
 from zope.i18n import translate
+from zope.interface import Invalid
 
 
 class testValidators(PloneMeetingTestCase):
@@ -275,6 +262,85 @@ class testValidators(PloneMeetingTestCase):
                                                   context=self.portal.REQUEST)
         self.assertEquals(v(certified),
                           duplicated_entries_error_msg2)
+
+    def test_pm_PloneGroupSettingsValidator(self):
+        """Completed plonegroup settings validation with our use cases :
+           - can not remove a suffix if used in MeetingConfig.selectableCopyGroups;
+           - can not remove a suffix if used in MeetingItem.copyGroups;
+           - can not remove a suffix if used as composed value, so like
+             'suffix_proposing_group_level1reviewers',
+             in MeetingConfig.itemAnnexConfidentialVisibleFor for example;
+           - can not remove a suffix used by MeetingConfig.itemWFValidationLevels."""
+        def _check(validation_error_msg, checks=['without', 'disabled', 'fct_orgs']):
+            """ """
+            values = []
+            if 'without' in checks:
+                values.append(functions_without_samplers)
+            if 'disabled' in checks:
+                values.append(functions_with_disabled_samplers)
+            if 'fct_orgs' in checks:
+                values.append(functions_with_fct_orgs_samplers)
+            for value in values:
+                with self.assertRaises(Invalid) as cm:
+                    validator.validate(value)
+                self.assertEqual(cm.exception.message, validation_error_msg)
+
+        self.changeUser('siteadmin')
+        # add a new suffix and play with it
+        cfg = self.meetingConfig
+        functions = get_registry_functions()
+        functions_without_samplers = deepcopy(functions)
+        functions.append({'enabled': True,
+                          'fct_management': False,
+                          'fct_id': u'samplers',
+                          'fct_orgs': [],
+                          'fct_title': u'Samplers'})
+        functions_with_disabled_samplers = deepcopy(functions)
+        functions_with_disabled_samplers[-1]['enabled'] = False
+        functions_with_fct_orgs_samplers = deepcopy(functions)
+        functions_with_fct_orgs_samplers[-1]['fct_orgs'] = [self.vendors_uid]
+
+        validator = PloneGroupSettingsValidator(self.portal,
+                                                self.request,
+                                                None,
+                                                IContactPlonegroupConfig['functions'],
+                                                None)
+        self.assertIsNone(validator.validate(functions))
+        set_registry_functions(functions)
+        # use samplers suffix
+        self._enableItemValidationLevel(cfg, level='prevalidated', suffix='samplers')
+
+        # developers_samplers was created
+        dev_samplers = get_plone_group(self.developers_uid, 'samplers')
+        dev_samplers_id = dev_samplers.getId()
+        self.assertTrue(dev_samplers in api.group.get_groups())
+        # use samplers in MeetingConfig
+        cfg.setSelectableCopyGroups(cfg.getSelectableCopyGroups() + (dev_samplers_id, ))
+        validation_error_msg = _('can_not_delete_plone_group_meetingconfig',
+                                 mapping={'cfg_url': cfg.absolute_url()})
+        _check(validation_error_msg)
+        # also check composed values like 'suffix_proposing_group_level1reviewers'
+        cfg.setSelectableCopyGroups(())
+        cfg.setItemAnnexConfidentialVisibleFor(('suffix_proposing_group_samplers', ))
+        _check(validation_error_msg, checks=['without', 'disabled'])
+        cfg.setItemAnnexConfidentialVisibleFor(())
+        # use samplers on item, remove it from MeetingConfig
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        item.setCopyGroups((dev_samplers_id, ))
+        item.reindexObject()
+        # still complaining about config because used in itemWFValidationLevels
+        _check(validation_error_msg, checks=['without', 'disabled'])
+        self._disableItemValidationLevel(cfg, level='prevalidated', suffix='prereviewers')
+        validation_error_msg = _('can_not_delete_plone_group_meetingitem',
+                                 mapping={'item_url': item.absolute_url()})
+        _check(validation_error_msg)
+        # remove it on item, then everything is correct
+        item.setCopyGroups(())
+        item.reindexObject()
+        self.assertIsNone(validator.validate(functions))
+        set_registry_functions(functions_without_samplers)
+        self.assertFalse(dev_samplers in api.group.get_groups())
 
 
 def test_suite():

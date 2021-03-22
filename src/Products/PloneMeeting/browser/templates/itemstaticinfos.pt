@@ -1,42 +1,43 @@
-<tal:loop repeat="field_name view/static_infos_field_names">
-
-  <tal:labels condition="python: field_name == 'labels'">
-    <div id="labeling-viewlet" tal:define="active_labels view/active_labels" tal:condition="active_labels">
-      <ul class="activeLabels">
-        <li tal:repeat="personal_label python: active_labels[0]">
-          <span tal:attributes="class string:labelItem labelColor labelcolor-${personal_label/color}"
-                tal:content="personal_label/title" />
-        </li>
-        <li id="label-type-separator" tal:condition="python:active_labels[0]"><span class="labelItem"></span></li>
-        <li tal:repeat="label python: active_labels[1]">
-          <span tal:attributes="class string:labelItem labelColor labelcolor-${label/color}"
-                tal:content="label/title" />
-        </li>
-      </ul>
-    </div>
-  </tal:labels>
-  
-  <tal:reference condition="python: field_name == 'item_reference'">
-      <p class="discreet"
-         tal:define="itemReference context/getItemReference"
-         tal:condition="itemReference"
-         tal:content="itemReference" />
-  </tal:reference>
-  
-  <tal:budget condition="python: field_name == 'budget_infos'">
-    <tal:display condition="python: context.getBudgetRelated() and not context.fieldIsEmpty('budgetInfos')">
-      <span tal:define="field python: context.getField('budgetInfos');
+<div class="static-infos static-infos-item">
+  <tal:loop repeat="field_name view/static_infos_field_names">
+    <tal:labels condition="python: field_name == 'labels'">
+      <div id="labeling-viewlet"
+           tal:define="active_labels python: view.active_labels"
+           tal:condition="python: active_labels != ([], [])">
+        <ul class="activeLabels">
+          <li tal:repeat="personal_label python: active_labels[0]">
+            <span tal:attributes="class string:labelItem labelColor labelcolor-${personal_label/color}"
+                  tal:content="python: personal_label['title']" />
+          </li>
+          <li id="label-type-separator" tal:condition="python:active_labels[0]">
+            <span class="labelItem"></span>
+          </li>
+          <li tal:repeat="label python: active_labels[1]">
+            <span tal:attributes="class string:labelItem labelColor labelcolor-${label/color}"
+                  tal:content="python: label['title']" />
+          </li>
+        </ul>
+      </div>
+    </tal:labels>
+    <tal:reference condition="python: field_name == 'item_reference'">
+        <p class="discreet"
+           tal:define="itemReference context/getItemReference"
+           tal:condition="itemReference"
+           tal:content="itemReference" />
+    </tal:reference>
+    <tal:budget condition="python: field_name == 'budget_infos'">
+      <tal:display condition="python: context.getBudgetRelated() and not context.fieldIsEmpty('budgetInfos')">
+        <span tal:define="field python: context.getField('budgetInfos');
+                          mode string:view;">
+          <span metal:use-macro="context/widgets/field/macros/view" />
+        </span>
+      </tal:display>
+    </tal:budget>
+    <tal:other condition="python: field_name not in ('labels', 'item_reference', 'budget_infos')">
+      <span tal:define="field python: context.getField(field_name);
                         mode string:view;">
         <span metal:use-macro="context/widgets/field/macros/view" />
       </span>
-    </tal:display>
-  </tal:budget>
-
-  <tal:other condition="python: field_name not in ('labels', 'item_reference', 'budget_infos')">
-    <span tal:define="field python: context.getField(field_name);
-                      mode string:view;">
-      <span metal:use-macro="context/widgets/field/macros/view" />
-    </span>
-  </tal:other>
-
-</tal:loop>
+    </tal:other>
+  </tal:loop>
+</div>

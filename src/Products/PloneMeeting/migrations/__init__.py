@@ -17,9 +17,15 @@
 
 from collective.behavior.talcondition.behavior import ITALCondition
 from DateTime import DateTime
+from eea.facetednavigation.interfaces import ICriteria
+from imio.helpers.cache import cleanRamCacheFor
 from imio.helpers.catalog import addOrUpdateColumns
 from imio.helpers.catalog import addOrUpdateIndexes
+from imio.helpers.content import object_values
 from imio.migrator.migrator import Migrator as BaseMigrator
+from imio.pyutils.utils import replace_in_list
+from natsort import humansorted
+from operator import attrgetter
 from plone import api
 from Products.CMFPlone.utils import base_hasattr
 from Products.PloneMeeting.setuphandlers import columnInfos
@@ -28,6 +34,7 @@ from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
 from Products.ZCatalog.ProgressHandler import ZLogHandler
 
 import logging
+import os
 
 
 logger = logging.getLogger('PloneMeeting')
@@ -126,6 +133,7 @@ class Migrator(BaseMigrator):
     def updateTALConditions(self, old_word, new_word):
         """Update every elements having a tal_condition, replace given old_word by new_word."""
         logger.info('Updating TAL conditions, replacing "{0}" by "{1}"'.format(old_word, new_word))
+        # ITALConditionable : DashboardCollection, PODTemplates
         for brain in api.content.find(
                 object_provides='collective.behavior.talcondition.interfaces.ITALConditionable'):
             obj = brain.getObject()
@@ -136,6 +144,41 @@ class Migrator(BaseMigrator):
                 adapted.set_tal_condition(tal_condition)
                 logger.info('Word "{0}" was replaced by "{1}" for element "{2}"'.format(
                     old_word, new_word, repr(obj)))
+        # MeetingConfig
+        for cfg in object_values(self.tool, 'MeetingConfig'):
+            # datagrid fields
+            # column names holding TAL expressions
+            datagrid_tal_fields = ['tal_expression',
+                                   'gives_auto_advice_on',
+                                   'available_on',
+                                   'item_access_on',
+                                   'meeting_access_on']
+            # datagrid fields holding TAL expressions
+            datagrid_fields = ["onTransitionFieldTransforms",
+                               "onMeetingTransitionItemActionToExecute",
+                               "customAdvisers",
+                               "powerObservers"]
+            for datagrid_fieldname in datagrid_fields:
+                adapted_value = getattr(cfg, datagrid_fieldname)
+                for row in adapted_value:
+                    for datagrid_tal_field in datagrid_tal_fields:
+                        if datagrid_tal_field in row:
+                            row[datagrid_tal_field] = \
+                                row[datagrid_tal_field].replace(old_word, new_word)
+                setattr(cfg, datagrid_fieldname, adapted_value)
+            # other fields
+            for field_name in ["itemReferenceFormat", "voteCondition"]:
+                field = cfg.getField(field_name)
+                value = field.get(cfg)
+                value = value.replace(old_word, new_word)
+                field.set(cfg, value)
+        # organizations
+        for brain in self.catalog(portal_type="organization"):
+            org = brain.getObject()
+            as_copy_group_on = getattr(org, "as_copy_group_on", None)
+            if as_copy_group_on is not None:
+                as_copy_group_on = as_copy_group_on.replace(old_word, new_word)
+                org.as_copy_group_on = as_copy_group_on
         logger.info('Done.')
 
     def updateHolidays(self):
@@ -188,11 +231,11 @@ class Migrator(BaseMigrator):
                 delattr(self.tool, field_name)
         logger.info('Done.')
 
-    def initNewHTMLFields(self, query):
+    def initNewHTMLFields(self, query={'meta_type': 'MeetingItem'}):
         '''Make sure the content_type is correctly set to 'text/html' for new xhtml fields.'''
         logger.info('Initializing new HTML fields...')
         brains = self.portal.portal_catalog(**query)
-        pghandler = ZLogHandler(steps=100)
+        pghandler = ZLogHandler(steps=1000)
         pghandler.init('Initializing new HTML fields', len(brains))
         i = 0
         for brain in brains:
@@ -201,6 +244,47 @@ class Migrator(BaseMigrator):
             itemOrMeeting = brain.getObject()
             forceHTMLContentTypeForEmptyRichFields(itemOrMeeting)
         pghandler.finish()
+        logger.info('Done.')
+
+    def cleanItemColumns(self, to_remove=[], to_replace={}):
+        '''When a column is no more available.'''
+        logger.info('Cleaning MeetingConfig columns related fields, '
+                    'removing columns "%s" and replacing "%s"...'
+                    % (', '.join(to_remove), ', '.join(to_replace.keys())))
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            for field_name in ('itemColumns',
+                               'availableItemsListVisibleColumns',
+                               'itemsListVisibleColumns'):
+                field = cfg.getField(field_name)
+                keys = field.get(cfg)
+                adapted_keys = [k for k in keys if k not in to_remove]
+                for orignal_value, new_value in to_replace.items():
+                    adapted_keys = replace_in_list(adapted_keys, orignal_value, new_value)
+                field.set(cfg, adapted_keys)
+        logger.info('Done.')
+
+    def cleanItemFilters(self, to_remove=[], to_add=[]):
+        '''When a faceted filter is no more available or has been renamed.'''
+        logger.info('Cleaning MeetingConfig faceted filter related fields, removing columns "%s"...'
+                    % ', '.join(to_remove))
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            for field_name in ('dashboardItemsListingsFilters',
+                               'dashboardMeetingAvailableItemsFilters',
+                               'dashboardMeetingLinkedItemsFilters'):
+                field = cfg.getField(field_name)
+                keys = field.get(cfg)
+                adapted_keys = [k for k in keys if k not in to_remove]
+                field.set(cfg, adapted_keys)
+        logger.info('Done.')
+
+    def cleanUsedItemAttributes(self, to_remove=[]):
+        '''When an item attribute is no more available or has been renamed.'''
+        logger.info('Cleaning MeetingConfig used item attributes, removing columns "%s"...'
+                    % ', '.join(to_remove))
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            usedItemAttrs = list(cfg.getUsedItemAttributes())
+            adapted_usedItemAttrs = [k for k in usedItemAttrs if k not in to_remove]
+            cfg.setUsedItemAttributes(adapted_usedItemAttrs)
         logger.info('Done.')
 
     def reloadMeetingConfigs(self, full=False):
@@ -212,6 +296,67 @@ class Migrator(BaseMigrator):
                 cfg.at_post_edit_script()
             else:
                 cfg.registerPortalTypes()
+        logger.info('Done.')
+
+    def updateFacetedFilters(self, xml_filename=None, related_to="items", reorder=True, to_delete=[]):
+        """ """
+        logger.info("Updating faceted filters for every MeetingConfigs...")
+
+        if xml_filename:
+            xmlpath = os.path.join(
+                os.path.dirname(__file__),
+                '../faceted_conf/%s' % xml_filename)
+            logger.info("Applying faceted config at %s..." % xmlpath)
+
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            obj = None
+            if related_to == "items":
+                obj = cfg.searches.searches_items
+            elif related_to == "meetings":
+                obj = cfg.searches.searches_meetings
+            elif related_to == "decisions":
+                obj = cfg.searches.searches_decisions
+            # add/update faceted filters if xml_filename
+            if xml_filename:
+                obj.unrestrictedTraverse('@@faceted_exportimport').import_xml(
+                    import_file=open(xmlpath))
+            # delete criteria id given in to_delete
+            cleanRamCacheFor('Products.PloneMeeting.adapters.compute_criteria')
+            criteria = ICriteria(obj)
+            for cid in to_delete:
+                if cid in criteria.keys():
+                    logger.info("Removed criterion {0} from {1}".format(
+                        cid, repr(obj)))
+                    criteria.delete(cid)
+            # when criteria have been imported, if some were purged, we need to reorder
+            if reorder:
+                # sort by criterion name, so c0, c1, c2, ...
+                criteria._update(humansorted(criteria.values(), key=attrgetter('__name__')))
+        logger.info('Done.')
+
+    def changeCollectionIndex(self, old_index_name, new_index_name):
+        """Useful when an index name changed."""
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            for brain in api.content.find(context=cfg.searches, portal_type='DashboardCollection'):
+                dc = brain.getObject()
+                query = dc.query
+                found = False
+                adapted_query = []
+                for line in query:
+                    adapted_line = line.copy()
+                    if adapted_line['i'] == old_index_name:
+                        found = True
+                        adapted_line['i'] = new_index_name
+                        logger.info("Replaced \"{0}\" by \"{1}\" in query of \"{2}\"".format(
+                            old_index_name, new_index_name, brain.getPath()))
+                    adapted_query.append(adapted_line)
+                if dc.sort_on == old_index_name:
+                    dc.sort_on = new_index_name
+                    logger.info("Replaced \"{0}\" by \"{1}\" in sort_on of \"{2}\"".format(
+                        old_index_name, new_index_name, brain.getPath()))
+                if found:
+                    dc.query = adapted_query
+                    dc._p_changed = True
         logger.info('Done.')
 
     def _already_migrated(self, done=True):
@@ -236,6 +381,7 @@ class Migrator(BaseMigrator):
         for cfgId in self.cfgsAdvicesInvalidation:
             cfg = getattr(self.tool, cfgId)
             cfg.setEnableAdviceInvalidation(self.cfgsAdvicesInvalidation[cfgId])
+        self.cleanRegistries()
         self.tool.invalidateAllCache()
         BaseMigrator.finish(self)
         logger.info('======================================================================')

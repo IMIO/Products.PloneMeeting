@@ -9,6 +9,8 @@
         <br />
       </tal:back_to_item>
 
+      <p class="discreet" i18n:translate="annexes_descr">Annexes description</p>
+
       <fieldset tal:condition="view/showAnnexesSection">
         <legend>
           <a name="annexes"><span i18n:translate="">Annexes</span></a>
@@ -36,7 +38,7 @@
         <div id="preview_annexes" tal:condition="python: view.tool.hasAnnexes(context, portal_type='annex')">
           <br />
           <p class="discreet" style="float: left; padding-right: 0.5em;"><span i18n:translate="preview_grouped_annexes">Preview of decision annexes grouped by type</span> :</p>
-          <tal:annexes replace="structure python: context.restrictedTraverse('categorized-childs')(portal_type='annex')" />
+          <tal:annexes replace="structure python: context.restrictedTraverse('@@categorized-childs')(portal_type='annex')" />
         </div>
       </fieldset>
 
@@ -66,7 +68,7 @@
         <div id="preview_annexes" tal:condition="python: view.tool.hasAnnexes(context, portal_type='annexDecision')">
           <br />
           <p class="discreet" style="float: left; padding-right: 0.5em;"><span i18n:translate="preview_grouped_annexes">Preview of decision annexes grouped by type</span> :</p>
-          <tal:annexes replace="structure python: context.restrictedTraverse('categorized-childs')(portal_type='annexDecision')" />
+          <tal:annexes replace="structure python: context.restrictedTraverse('@@categorized-childs')(portal_type='annexDecision')" />
         </div>
       </fieldset>
       <script>

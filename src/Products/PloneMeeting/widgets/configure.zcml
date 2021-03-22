@@ -1,15 +1,81 @@
 <configure
+    i18n_domain="PloneMeeting"
     xmlns="http://namespaces.zope.org/zope"
+    xmlns:browser="http://namespaces.zope.org/browser"
     xmlns:i18n="http://namespaces.zope.org/i18n"
     xmlns:z3c="http://namespaces.zope.org/z3c"
-    i18n_domain="PloneMeeting">
+    xmlns:zcml="http://namespaces.zope.org/zcml">
 
-  <include package="z3c.form" file="meta.zcml" />
+    <include package="z3c.form" file="meta.zcml" />
 
+    <!-- checkbox -->
+    <z3c:widgetTemplate
+        mode="input"
+        widget=".pm_checkbox.IPMCheckBoxWidget"
+        template="pm_checkbox_input.pt"
+        layer="z3c.form.interfaces.IFormLayer" />
+
+    <z3c:widgetTemplate
+        mode="display"
+        widget=".pm_checkbox.IPMCheckBoxWidget"
+        template="pm_checkbox_display.pt"
+        layer="z3c.form.interfaces.IFormLayer" />
+
+    <!-- richtext -->
+    <z3c:widgetTemplate
+        mode="display"
+        widget=".pm_richtext.IPMRichTextWidget"
+        template="pm_richtext_display.pt"
+        layer="z3c.form.interfaces.IFormLayer" />
+
+    <configure zcml:condition="installed plone.app.z3cform">
+        <z3c:widgetTemplate
+            layer="plone.app.z3cform.interfaces.IPloneFormLayer"
+            mode="display"
+            template="pm_richtext_display.pt"
+            widget=".pm_richtext.IPMRichTextWidget" />
+    </configure>
+
+    <browser:page
+        name="richtext-edit"
+        class=".pm_richtext.RichTextEdit"
+        for="*"
+        template="pm_richtext_fastedit.pt"
+        permission="zope2.View" />
+
+  <!-- text number -->
   <z3c:widgetTemplate
-    mode="input"
-    widget=".pm_checkbox.IPMCheckBoxWidget"
-    template="pm_checkbox_input.pt"
-    layer="z3c.form.interfaces.IFormLayer" />
+      mode="input"
+      widget=".pm_number.IPMNumberWidget"
+      template="pm_number_input.pt"
+      layer="z3c.form.interfaces.IFormLayer" />
+
+  <!-- readonly select -->
+  <z3c:widgetTemplate
+      mode="input"
+      widget=".pm_selectreadonly.PMSelectReadonlyWidget"
+      template="pm_selectreadonly_input.pt"
+      layer="z3c.form.interfaces.IFormLayer" />
+
+  <!-- orderedselect hidden (not existing, used in DataGridField) -->
+  <z3c:widgetTemplate
+      mode="hidden"
+      widget="z3c.form.interfaces.IOrderedSelectWidget"
+      layer="z3c.form.interfaces.IFormLayer"
+      template="orderedselect_hidden.pt" />
+
+  <!-- orderedselect display (overrided) -->
+  <z3c:widgetTemplate
+      mode="display"
+      widget=".pm_orderedselect.PMOrderedSelectWidget"
+      layer="z3c.form.interfaces.IFormLayer"
+      template="pm_orderedselect_display.pt" />
+
+  <!-- override DataGridField display to define a CSS class on every headers -->
+  <z3c:widgetTemplate
+      template="datagridfield_display.pt"
+      layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+      mode="display"
+      widget="collective.z3cform.datagridfield.datagridfield.DataGridField" />
 
 </configure>

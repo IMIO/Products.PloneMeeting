@@ -2,28 +2,12 @@
 #
 # File: testAdvices.py
 #
-# Copyright (c) 2015 by Imio.be
-#
 # GNU General Public License (GPL)
 #
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
-# 02110-1301, USA.
-#
 
+from collective.iconifiedcategory.browser.tabview import CategorizedContent
 from collective.iconifiedcategory.interfaces import IIconifiedCategorySettings
-from DateTime import DateTime
+from collective.iconifiedcategory.utils import get_categorized_elements
 from imio.helpers.cache import cleanRamCacheFor
 from plone import api
 from Products.PloneMeeting.columns import ItemLinkedMeetingColumn
@@ -54,6 +38,7 @@ class testColumns(PloneMeetingTestCase):
                                  title='Public item title',
                                  description='Public item description')
         self.addAnnex(publicItem)
+        self.addAnnex(publicItem, relatedTo='item_decision')
         publicItem.setPrivacy('public')
         publicItem._update_after_edit()
         publicBrain = self.catalog(UID=publicItem.UID())[0]
@@ -116,13 +101,16 @@ class testColumns(PloneMeetingTestCase):
         annex1 = self.addAnnex(item)
         annex2 = self.addAnnex(item)
 
-        annex1_brain = self.catalog(UID=annex1.UID())[0]
-        annex2_brain = self.catalog(UID=annex2.UID())[0]
+        annex1_infos = get_categorized_elements(item, uids=[annex1.UID()])
+        annex1_content = CategorizedContent(item, annex1_infos[0])
+        annex2_infos = get_categorized_elements(item, uids=[annex2.UID()])
+        annex2_content = CategorizedContent(item, annex2_infos[0])
+
         meetingFolder = self.getMeetingFolder()
         faceted_table = meetingFolder.restrictedTraverse('faceted-table-view')
         column = PMAnnexActionsColumn(meetingFolder, self.portal.REQUEST, faceted_table)
-        renderedColumnAnnex1 = column.renderCell(annex1_brain)
-        renderedColumnAnnex2 = column.renderCell(annex2_brain)
+        renderedColumnAnnex1 = column.renderCell(annex1_content)
+        renderedColumnAnnex2 = column.renderCell(annex2_content)
         self.assertTrue(self.hasPermission(AddAnnex, item))
         # sort_categorized_tab must be False to show arrows
         sort_categorized_tab = api.portal.get_registry_record(
@@ -135,8 +123,8 @@ class testColumns(PloneMeetingTestCase):
         api.portal.set_registry_record('sort_categorized_tab',
                                        False,
                                        interface=IIconifiedCategorySettings)
-        renderedColumnAnnex1 = column.renderCell(annex1_brain)
-        renderedColumnAnnex2 = column.renderCell(annex2_brain)
+        renderedColumnAnnex1 = column.renderCell(annex1_content)
+        renderedColumnAnnex2 = column.renderCell(annex2_content)
         self.assertTrue('folder_position_typeaware?position=down' in renderedColumnAnnex1)
         self.assertTrue('folder_position_typeaware?position=up' in renderedColumnAnnex2)
 
@@ -146,12 +134,15 @@ class testColumns(PloneMeetingTestCase):
         self.assertTrue(self.hasPermission(AddAnnexDecision, item))
         annexDecision1 = self.addAnnex(item, relatedTo='item_decision')
         annexDecision2 = self.addAnnex(item, relatedTo='item_decision')
-        annexDecision1_brain = self.catalog(UID=annexDecision1.UID())[0]
-        annexDecision2_brain = self.catalog(UID=annexDecision2.UID())[0]
-        renderedColumnAnnex1 = column.renderCell(annex1_brain)
-        renderedColumnAnnex2 = column.renderCell(annex2_brain)
-        renderedColumnDecisionAnnex1 = column.renderCell(annexDecision1_brain)
-        renderedColumnDecisionAnnex2 = column.renderCell(annexDecision2_brain)
+        annexDecision1_infos = get_categorized_elements(item, uids=[annexDecision1.UID()])
+        annexDecision1_content = CategorizedContent(item, annexDecision1_infos[0])
+        annexDecision2_infos = get_categorized_elements(item, uids=[annexDecision2.UID()])
+        annexDecision2_content = CategorizedContent(item, annexDecision2_infos[0])
+
+        renderedColumnAnnex1 = column.renderCell(annex1_content)
+        renderedColumnAnnex2 = column.renderCell(annex2_content)
+        renderedColumnDecisionAnnex1 = column.renderCell(annexDecision1_content)
+        renderedColumnDecisionAnnex2 = column.renderCell(annexDecision2_content)
         self.assertTrue('folder_position_typeaware?position=down' in renderedColumnAnnex1)
         self.assertTrue('folder_position_typeaware?position=up' in renderedColumnAnnex2)
         self.assertTrue('folder_position_typeaware?position=down' in renderedColumnDecisionAnnex1)
@@ -163,15 +154,15 @@ class testColumns(PloneMeetingTestCase):
         item.folder_position_typeaware(position='up', id=annexDecision2.getId())
 
         # now when only annexDecision are addable
-        meeting = self.create('Meeting', date=DateTime('2016/06/06'))
+        meeting = self.create('Meeting')
         self.presentItem(item)
         self.closeMeeting(meeting)
         self.assertFalse(self.hasPermission(AddAnnex, item))
         self.assertTrue(self.hasPermission(AddAnnexDecision, item))
-        renderedColumnAnnex1 = column.renderCell(annex1_brain)
-        renderedColumnAnnex2 = column.renderCell(annex2_brain)
-        renderedColumnDecisionAnnex1 = column.renderCell(annexDecision1_brain)
-        renderedColumnDecisionAnnex2 = column.renderCell(annexDecision2_brain)
+        renderedColumnAnnex1 = column.renderCell(annex1_content)
+        renderedColumnAnnex2 = column.renderCell(annex2_content)
+        renderedColumnDecisionAnnex1 = column.renderCell(annexDecision1_content)
+        renderedColumnDecisionAnnex2 = column.renderCell(annexDecision2_content)
         self.assertFalse('folder_position_typeaware?position=down' in renderedColumnAnnex1)
         self.assertFalse('folder_position_typeaware?position=up' in renderedColumnAnnex2)
         self.assertTrue('folder_position_typeaware?position=up' in renderedColumnDecisionAnnex1)
@@ -186,8 +177,7 @@ class testColumns(PloneMeetingTestCase):
         self._setPowerObserverStates(field_name='meeting_states', states=())
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
-        self.create('Meeting', date=DateTime('2018/03/21'))
-
+        self.create('Meeting')
         meetingFolder = self.getMeetingFolder()
         faceted_table = meetingFolder.restrictedTraverse('faceted-table-view')
         column = ItemLinkedMeetingColumn(meetingFolder, self.portal.REQUEST, faceted_table)
@@ -204,6 +194,80 @@ class testColumns(PloneMeetingTestCase):
         # column have use_caching=True
         column = ItemLinkedMeetingColumn(meetingFolder, self.portal.REQUEST, faceted_table)
         self.assertTrue(u"<span class='pretty_link_content state-created'>" in column.renderCell(item_brain))
+
+    def test_pm_ItemCategoryColumn(self):
+        """Test the column displaying category of MeetingItem."""
+        cfg = self.meetingConfig
+        cfg.setUseGroupsAsCategories(False)
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        meetingFolder = self.getMeetingFolder()
+        faceted_table = meetingFolder.restrictedTraverse('faceted-table-view')
+        faceted_table.initColumns()
+        column = faceted_table.columnByName['getCategory']
+        item_brain = self.catalog(UID=item.UID())[0]
+        self.assertEqual(column.renderCell(item_brain), u'Development topics')
+        item.setCategory('')
+        item.reindexObject(idxs=['getCategory'])
+        item_brain = self.catalog(UID=item.UID())[0]
+        self.assertEqual(column.renderCell(item_brain), u'-')
+
+    def test_pm_MeetingPrettyLinkColumnWithStaticInfos(self):
+        """Test the PMPrettyLinkColumn for Meeting, especially when displaying static infos."""
+        cfg = self.meetingConfig
+        cfg.setUseGroupsAsCategories(False)
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting')
+        meetingFolder = self.getMeetingFolder()
+        faceted_table = meetingFolder.restrictedTraverse('faceted-table-view')
+        faceted_table.initColumns()
+        column = faceted_table.columnByName['pretty_link']
+        meeting_brain = self.catalog(UID=meeting.UID())[0]
+        # header
+        faceted_table.batch = []
+        self.assertTrue("c0=sortable_title" in column.renderHeadCell())
+        self.assertFalse('static-infos' in column.renderCell(meeting_brain))
+        # enable static_end_date without enabled in used_attrs
+        cfg.setMeetingColumns(('static_end_date', ))
+        self.assertFalse('static-infos' in column.renderCell(meeting_brain))
+        # now if end_date contains something, it will be displayed
+        meeting.end_date = meeting.date
+        self.assertTrue('static-infos' in column.renderCell(meeting_brain))
+
+    def test_pm_ReviewStateTitleColumn(self):
+        """Will display review_state title by getting the title used
+           in the workflow object."""
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        meetingFolder = self.getMeetingFolder()
+        faceted_table = meetingFolder.restrictedTraverse('faceted-table-view')
+        faceted_table.initColumns()
+        column = faceted_table.columnByName['review_state_title']
+        item_brain = self.catalog(UID=item.UID())[0]
+        self.assertEqual(column.renderCell(item_brain), u'Created')
+        item_wf = self.meetingConfig.getItemWorkflow(True)
+        item_wf.states['itemcreated'].title = 'proposed'
+        self.assertEqual(column.renderCell(item_brain), u'Proposed')
+
+    def test_pm_ItemNumberColumn(self):
+        """Will display the item number on the meeting_view."""
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting')
+        item = meeting.get_items(ordered=True)[0]
+        faceted_table = meeting.restrictedTraverse('faceted-table-view')
+        faceted_table.initColumns()
+        column = faceted_table.columnByName['getItemNumber']
+        item_brain = self.catalog(UID=item.UID())[0]
+        # moveable for MeetingManagers
+        self.assertTrue(u"\u28ff" in column.renderCell(item_brain))
+        self.assertTrue(u"data-item_number='100'" in column.renderCell(item_brain))
+        self.assertTrue('onclick="moveItem(baseUrl' in column.renderCell(item_brain))
+        self.changeUser('pmCreator1')
+        faceted_table = meeting.restrictedTraverse('faceted-table-view')
+        faceted_table.initColumns()
+        column = faceted_table.columnByName['getItemNumber']
+        self.assertEqual(column.renderCell(item_brain).strip(),
+                         u'<span class="itemnumber">1</span>')
 
 
 def test_suite():

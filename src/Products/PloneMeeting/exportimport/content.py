@@ -1,23 +1,4 @@
 # -*- coding: utf-8 -*-
-# ------------------------------------------------------------------------------
-# Copyright (c) 2007 PloneGov
-# GNU General Public License (GPL)
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
-# 02110-1301, USA.
-#
 
 from collective.contact.plonegroup.config import get_registry_functions
 from collective.contact.plonegroup.config import get_registry_organizations
@@ -251,7 +232,7 @@ class ToolInitializer:
                                   list(data.meetingTopicStates))
         # apply the maxDaysDecisions to the 'searchlastdecisions' DashboardCollection
         updateCollectionCriterion(cfg.searches.searches_decisions.searchlastdecisions,
-                                  'getDate',
+                                  'meeting_date',
                                   unicode(data.maxDaysDecisions))
         # apply the decisionTopicStates to the 'searchlastdecisions'
         # and 'searchalldecision' DashboardCollections
@@ -283,10 +264,7 @@ class ToolInitializer:
             cfg.setOrderedContacts(selectableOrderedContacts)
 
         # turn contact path to uid
-        for org_storing_field in ('orderedContacts',
-                                  'orderedItemInitiators',
-                                  'orderedAssociatedOrganizations',
-                                  'orderedGroupsInCharge'):
+        for org_storing_field in ('orderedContacts', ):
             org_storing_data = getattr(data, org_storing_field, [])
             if org_storing_data:
                 contact_uids = []
@@ -349,7 +327,13 @@ class ToolInitializer:
            sub-objects of the meeting config will be searched there.'''
         cData = configData.getData()
         # turn org ids into org uids
-        for field_name in ['selectableCopyGroups', 'selectableAdvisers', 'powerAdvisersGroups', 'usingGroups']:
+        for field_name in ['selectableCopyGroups',
+                           'selectableAdvisers',
+                           'powerAdvisersGroups',
+                           'usingGroups',
+                           'orderedItemInitiators',
+                           'orderedAssociatedOrganizations',
+                           'orderedGroupsInCharge']:
             data = cData.get(field_name)
             try:
                 data = [org_id_to_uid(suffixed_group_id) for suffixed_group_id in data
@@ -384,7 +368,6 @@ class ToolInitializer:
                 field.set(cfg, cData[fieldName], mimetype='text/html')
         # call processForm passing dummy values so existing values are not touched
         cfg.processForm(values={'dummy': None})
-
         # Validates meeting config (validation seems not to be triggered
         # automatically when an object is created from code).
         errors = []
@@ -397,11 +380,11 @@ class ToolInitializer:
 
         if not configData.active:
             self.portal.portal_wokflow.doActionFor(cfg, 'deactivate')
-        # Adds the sub-objects within the config: categories, classifiers,...
+        # Adds the sub-objects within the config: categories, classifiers, items in config, ...
         for descr in configData.categories:
-            self.addCategory(cfg, descr, False)
+            self.addCategory(cfg, descr)
         for descr in configData.classifiers:
-            self.addCategory(cfg, descr, True)
+            self.addCategory(cfg, descr, classifier=True)
         for descr in configData.recurringItems:
             self.addItemToConfig(cfg, descr)
         for descr in configData.itemTemplates:
@@ -445,16 +428,16 @@ class ToolInitializer:
             folder = getattr(cfg, TOOL_FOLDER_CLASSIFIERS)
         else:
             folder = getattr(cfg, TOOL_FOLDER_CATEGORIES)
+
         data = descr.getData()
-        folder.invokeFactory('MeetingCategory', **data)
-        cat = getattr(folder, descr.id)
+        cat = api.content.create(container=folder,
+                                 type='meetingcategory',
+                                 **data)
         # adapt org related values as we have org id on descriptor and we need to set org UID
-        if cat.usingGroups:
-            cat.setUsingGroups([org_id_to_uid(usingGroup) for usingGroup in cat.usingGroups])
-        if not descr.active:
-            self.portal.portal_workflow.doActionFor(cat, 'deactivate')
-        # call processForm passing dummy values so existing values are not touched
-        cat.processForm(values={'dummy': None})
+        if cat.using_groups:
+            cat.using_groups = ([org_id_to_uid(using_group) for using_group in cat.using_groups])
+        if cat.groups_in_charge:
+            cat.groups_in_charge = ([org_id_to_uid(gic) for gic in cat.groups_in_charge])
         return cat
 
     def addItemToConfig(self, cfg, descr, isRecurring=True):

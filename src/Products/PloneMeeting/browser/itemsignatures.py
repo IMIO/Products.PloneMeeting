@@ -1,26 +1,11 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2013 by Imio.be
-#
 # GNU General Public License (GPL)
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
-# 02110-1301, USA.
 #
 
 from AccessControl import Unauthorized
+from imio.helpers.cache import invalidate_cachekey_volatile_for
+from imio.helpers.security import fplog
 from plone import api
 from plone.z3cform.layout import wrap_form
 from Products.CMFPlone.utils import safe_unicode
@@ -29,7 +14,6 @@ from Products.PloneMeeting.browser.itemassembly import validate_apply_until_item
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import IRedirect
 from Products.PloneMeeting.utils import _itemNumber_to_storedItemNumber
-from Products.PloneMeeting.utils import fplog
 from z3c.form import button
 from z3c.form import field
 from z3c.form import form
@@ -92,7 +76,7 @@ class DisplaySignaturesFromMeetingProvider(ContentProviderBase):
           Return Meeting.signatures
         """
         meeting = self.context.getMeeting()
-        return meeting.getSignatures().replace('\n', '<br />')
+        return meeting.get_signatures(for_display=True)
 
     def render(self):
         return self.template()
@@ -189,6 +173,12 @@ class ManageItemSignaturesForm(form.Form):
             extras = 'item={0} from_item_number={1} until_item_number={2}'.format(
                 repr(self.context), first_item_number, last_item_number)
             fplog('manage_item_signatures', extras=extras)
+
+        # invalidate assembly async load on item
+        invalidate_cachekey_volatile_for(
+            'Products.PloneMeeting.browser.async.AsyncLoadItemAssemblyAndSignatures',
+            get_again=True)
+
         api.portal.show_message(_("Item signatures have been updated."), request=self.request)
         self._finished = True
 

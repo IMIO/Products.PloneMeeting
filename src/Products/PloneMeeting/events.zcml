@@ -25,6 +25,10 @@
               handler=".events.onItemWillBeRemoved" />
 
   <subscriber for=".interfaces.IMeetingItem
+                   OFS.interfaces.IObjectWillBeMovedEvent"
+              handler=".events.onItemWillBeMoved" />
+
+  <subscriber for=".interfaces.IMeetingItem
                    zope.container.interfaces.IObjectRemovedEvent"
               handler=".events.onItemRemoved" />
 
@@ -48,7 +52,7 @@
                    Products.DCWorkflow.interfaces.IBeforeTransitionEvent"
               handler=".events.onItemBeforeTransition" />
 
-  <subscriber for=".interfaces.IMeeting
+  <subscriber for=".content.meeting.IMeeting
                    Products.DCWorkflow.interfaces.IBeforeTransitionEvent"
               handler=".events.onMeetingBeforeTransition" />
 
@@ -64,21 +68,41 @@
                    Products.Archetypes.interfaces.IEditCancelledEvent"
               handler=".events.onItemEditCancelled" />
 
-  <subscriber for=".interfaces.IMeeting
+  <subscriber for=".content.meeting.IMeeting
                    zope.lifecycleevent.interfaces.IObjectAddedEvent"
               handler=".events.onMeetingAdded" />
 
-  <subscriber for=".interfaces.IMeeting
+  <subscriber for=".content.meeting.IMeeting
+                   zope.lifecycleevent.interfaces.IObjectCreatedEvent"
+              handler=".events.onMeetingCreated" />
+
+  <subscriber for=".content.meeting.IMeeting
+                   zope.lifecycleevent.IObjectModifiedEvent"
+              handler=".events.onMeetingModified" />
+
+  <subscriber for=".content.meeting.IMeeting
                    Products.DCWorkflow.interfaces.IAfterTransitionEvent"
               handler=".events.onMeetingTransition" />
 
-  <subscriber for=".interfaces.IMeeting
+  <subscriber for=".content.meeting.IMeeting
+                   zope.lifecycleevent.ObjectMovedEvent"
+              handler=".events.onMeetingMoved" />
+
+  <subscriber for=".content.meeting.IMeeting
+                   OFS.interfaces.IObjectWillBeRemovedEvent"
+              handler=".events.onMeetingWillBeRemoved" />
+
+  <subscriber for=".content.meeting.IMeeting
                    zope.container.interfaces.IObjectRemovedEvent"
               handler=".events.onMeetingRemoved" />
 
   <subscriber for=".interfaces.IMeetingConfig
                    OFS.interfaces.IObjectWillBeRemovedEvent"
               handler=".events.onConfigWillBeRemoved" />
+
+  <subscriber for=".content.category.IMeetingCategory
+                   OFS.interfaces.IObjectWillBeRemovedEvent"
+              handler=".events.onCategoryWillBeRemoved" />
 
   <subscriber for=".content.organization.IPMOrganization
                    OFS.interfaces.IObjectWillBeRemovedEvent"
@@ -200,6 +224,6 @@
   <!-- eea.facetednavigation settings changed event -->
   <subscriber for="eea.facetednavigation.interfaces.IFacetedNavigable
                    eea.facetednavigation.interfaces.IFacetedGlobalSettingsChangedEvent"
-   handler=".events.onFacetedGlobalSettingsChanged" />
+              handler=".events.onFacetedGlobalSettingsChanged" />
 
 </configure>

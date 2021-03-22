@@ -1,0 +1,151 @@
+<tal:comment replace="nothing">Attendees, excused, absents, replacements, signatories</tal:comment>
+<table id="meeting_users" class="listing discreet faceted-table-results" cellspacing="0" cellpadding="0"
+       tal:condition="python: view.show_attendees_fields()"
+       i18n:domain="PloneMeeting">
+  <tal:defines define="get_all_used_held_positions python: modules['Products.PloneMeeting.browser.meeting'].get_all_used_held_positions;
+                       allUsers python: get_all_used_held_positions(context);
+                       attendees context/get_attendees;
+                       excused context/get_excused;
+                       absents context/get_absents;
+                       signers context/get_signatories;
+                       applied_signers python: context.get_signatories(by_signature_number=True).values();
+                       use_user_replacements python: 'replacements' in view.used_attrs;
+                       itemNonAttendees python: context.get_item_non_attendees(by_persons=True);
+                       user_replacements python: context.get_user_replacements();
+                       showExcused python: 'excused' in view.used_attrs or excused;
+                       showAbsents python: 'absents' in view.used_attrs or absents;
+                       showSignatories python: 'signatories' in view.used_attrs or signers;
+                       showNonAttendees python: 'nonAttendees' in view.used_attrs or itemNonAttendees;
+                       showVoters view/showVoters;
+                       voters view/voters;
+                       itemAbsents python: context.get_item_absents(by_persons=True);
+                       itemExcused python: context.get_item_excused(by_persons=True);
+                       itemSignatories python: context.get_item_signatories(by_signatories=True);
+                       isManager python:view.tool.isManager(view.cfg);">
+    <tal:comment replace="nothing">Column captions</tal:comment>
+    <thead>
+    <tr>
+      <th class="nosort">
+        <span i18n:translate="default_for_all_items">For all items</span>
+        <div class="refresh-attendees-container" onclick="refresh_meeting_attendees();">
+         <span class="fa refresh-attendees link-action"></span>
+        </div>
+      </th>
+      <th class="header-attendee-present" class="nosort" i18n:translate="is_attendee"></th>
+      <th class="header-attendee-excused" class="nosort" tal:condition="showExcused" i18n:translate="is_excused">Excused?</th>
+      <th class="header-attendee-absent" class="nosort" tal:condition="showAbsents" i18n:translate="is_absent">Absent?</th>
+      <th class="header-attendee-signatory" class="nosort" tal:condition="showSignatories" i18n:translate="is_signer">Signer?</th>
+      <th class="header-attendee-replacement" class="nosort" tal:condition="use_user_replacements" i18n:translate="is_replaced">Replaced?</th>
+      <th class="header-attendee-non-attendee" class="nosort" tal:condition="showNonAttendees" i18n:translate="is_non_attendee">Non attendee?</th>
+      <th class="header-attendee-voter" class="nosort" tal:condition="showVoters">
+       <span i18n:translate="is_voter">Voter?</span>
+       <tal:show_voted_or_not_voted condition="isManager">
+        <a class="link-overlay-pm"
+           title="Completed votes"
+           i18n:attributes="title"
+           tal:attributes="href string:${context/absolute_url}/@@display-meeting-item-voters?show_voted_items:boolean=1">
+         <span class="fa show-info green-colored link-action"></span>
+        </a>
+        <a class="link-overlay-pm"
+           title="Not completed votes"
+           i18n:attributes="title"
+           tal:attributes="href string:${context/absolute_url}/@@display-meeting-item-voters">
+         <span class="fa show-info red-colored link-action"></span>
+        </a>
+       </tal:show_voted_or_not_voted>
+      </th>
+    </tr>
+    </thead>
+    <tbody>
+    <tal:loop repeat="mUser allUsers">
+      <tr tal:define="aUid mUser/UID;
+                      oddrow repeat/mUser/odd;
+                      classOddEven python: oddrow and 'even' or 'odd';"
+          tal:attributes="class classOddEven">
+        <td><b tal:content="mUser/get_short_title"></b></td>
+        <td align="center">
+          <span tal:condition="python: aUid in attendees" class="fa people-checked"></span>
+        </td>
+        <td align="center" tal:condition="showExcused">
+          <span tal:condition="python: aUid in excused" class="fa people-checked"></span>
+          <span tal:condition="python: aUid in itemExcused"
+                   class="tooltipster-meeting-item-not-present fa people-left link-help"
+                   tal:attributes="data-base_url string:${context/absolute_url};
+                                   data-not_present_uid string:${aUid};
+                                   data-not_present_type string:excused;">
+          </span>
+        </td>
+        <td align="center" tal:condition="showAbsents">
+          <span tal:condition="python: aUid in absents" class="fa people-checked"></span>
+          <span tal:condition="python: aUid in itemAbsents"
+                   class="tooltipster-meeting-item-not-present fa people-left link-help"
+                   tal:attributes="data-base_url string:${context/absolute_url};
+                                   data-not_present_uid string:${aUid};
+                                   data-not_present_type string:absent;">
+          </span>
+        </td>
+        <td align="center" tal:condition="showSignatories">
+         <tal:is_applied_signer condition="python: aUid in signers and aUid in applied_signers">
+          <span class="fa people-checked"></span>
+          <span tal:content="python: signers[aUid]" />
+         </tal:is_applied_signer>
+         <tal:not_applied_signer condition="python: aUid in signers and aUid not in applied_signers">
+          (<span class="signatory-checked"
+                 title="Meeting signatory not used, another signatory with same signature number is used"
+                 i18n:attributes="title">
+           <span class="fa people-checked"></span>
+           <span tal:content="python: signers[aUid]" />
+          </span>)
+         </tal:not_applied_signer>
+         <span tal:condition="python: aUid in itemSignatories"
+                  class="tooltipster-meeting-item-signatories fa people-signatory-replacer link-help"
+                  tal:attributes="data-base_url string:${context/absolute_url};
+                                  data-signatory_uid string:${aUid};">
+         </span>
+        </td>
+        <td align="center" tal:condition="use_user_replacements">
+          <span tal:condition="python: aUid in user_replacements" tal:content="python: context.display_user_replacement(user_replacements[aUid])"></span>
+          <span tal:condition="python: aUid in excused + absents and aUid not in user_replacements">-</span>
+        </td>
+        <td align="center" tal:condition="showNonAttendees">
+          <span tal:condition="python: aUid in itemNonAttendees"
+                   class="tooltipster-meeting-item-not-present fa people-left link-help"
+                   tal:attributes="data-base_url string:${context/absolute_url};
+                                   data-not_present_uid string:${aUid};
+                                   data-not_present_type string:non_attendee;">
+          </span>
+        </td>
+        <td align="center" tal:condition="showVoters">
+          <span tal:condition="python: aUid in voters"
+                class="tooltipster-meeting-item-voters fa people-checked"
+                tal:attributes="data-base_url string:${context/absolute_url};
+                                data-voter_uid string:${aUid};">
+          </span>
+          <span tal:condition="python: aUid not in voters">-</span>
+        </td>
+      </tr>
+    </tal:loop>
+    <tr tal:condition="not:allUsers">
+     <td colspan="9">
+       <span class="discreet no-attendees" i18n:translate="">Nothing to display.</span>
+     </td>
+    </tr>
+    </tbody>
+  </tal:defines>
+</table>
+
+<tal:comment replace="nothing">Assembly and signatures.
+Also for backward compatibility for people that used the 'assembly' or 'signatures'
+field before and the 'attendees' now, if the field is not empty, we display it</tal:comment>
+<table class="no-style-table table-view-widgets"
+       tal:define="widgets python: view.meeting_view.fieldsets['assembly'].widgets.values()">
+  <tal:loop repeat="widget widgets">
+    <tr tal:attributes="id string:row-${widget/id}">
+        <td class="table_widget_label">
+          <label tal:content="widget/label">Label</label>
+        </td>
+        <td class="table_widget_value"
+            tal:content="structure python:view.view_widget(widget)">Value</td>
+    </tr>
+  </tal:loop>
+</table>

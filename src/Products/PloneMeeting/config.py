@@ -2,21 +2,8 @@
 #
 # File: config.py
 #
-# Copyright (c) 2015 by Imio.be
-# Generator: ArchGenXML Version 2.7
-#            http://plone.org/products/archgenxml
-#
 # GNU General Public License (GPL)
 #
-
-# Product configuration.
-#
-# The contents of this module will be imported into __init__.py, the
-# workflow configuration and every content type module.
-#
-# If you wish to perform custom configuration, you may put a file
-# AppConfig.py in your product's root directory. The items in there
-# will be included (by importing) in this file if found.
 
 from collections import OrderedDict
 from Products.CMFCore.permissions import setDefaultRoles
@@ -79,7 +66,6 @@ setDefaultRoles(DEFAULT_ADD_CONTENT_PERMISSION, ('Manager', 'Owner', 'Contributo
 ADD_CONTENT_PERMISSIONS = {
     'MeetingItem': AddItem,
     'Meeting': AddMeeting,
-    'MeetingCategory': 'PloneMeeting: Manage configuration',
     'MeetingConfig': 'PloneMeeting: Manage configuration',
     'MeetingGroup': 'PloneMeeting: Manage configuration',
 }
@@ -105,19 +91,59 @@ ADD_SUBCONTENT_PERMISSIONS = [
     AddAnnexDecision,
     'ATContentTypes: Add Image']
 
-MEETINGROLES = {'creators': 'MeetingMember',
-                'prereviewers': 'MeetingPreReviewer',
-                'reviewers': 'MeetingReviewer',
-                'observers': 'MeetingObserverLocal',
-                'advisers': None}
 # base suffixes, THIS IS NOT INTENDED TO BE OVERRIDED or monkeypatched,
 # if necessary, use EXTRA_GROUP_SUFFIXES to extend it
 MEETING_GROUP_SUFFIXES = [
-    {'fct_title': u'advisers', 'fct_id': u'advisers', 'fct_orgs': [], 'enabled': True},
-    {'fct_title': u'creators', 'fct_id': u'creators', 'fct_orgs': [], 'enabled': True},
-    {'fct_title': u'observers', 'fct_id': u'observers', 'fct_orgs': [], 'enabled': True},
-    {'fct_title': u'prereviewers', 'fct_id': u'prereviewers', 'fct_orgs': [], 'enabled': True},
-    {'fct_title': u'reviewers', 'fct_id': u'reviewers', 'fct_orgs': [], 'enabled': True},
+    {'fct_title': u'advisers',
+     'fct_id': u'advisers',
+     'fct_orgs': [],
+     'fct_management': False,
+     'enabled': True},
+    {'fct_title': u'creators',
+     'fct_id': u'creators',
+     'fct_orgs': [],
+     'fct_management': False,
+     'enabled': True},
+    {'fct_title': u'observers',
+     'fct_id': u'observers',
+     'fct_orgs': [],
+     'fct_management': False,
+     'enabled': True},
+    {'fct_title': u'prereviewers',
+     'fct_id': u'prereviewers',
+     'fct_orgs': [],
+     'fct_management': False,
+     'enabled': True},
+    {'fct_title': u'reviewers',
+     'fct_id': u'reviewers',
+     'fct_orgs': [],
+     'fct_management': False,
+     'enabled': True},
+    {'fct_title': u'level1reviewers',
+     'fct_id': u'level1reviewers',
+     'fct_orgs': [],
+     'fct_management': False,
+     'enabled': True},
+    {'fct_title': u'level2reviewers',
+     'fct_id': u'level2reviewers',
+     'fct_orgs': [],
+     'fct_management': False,
+     'enabled': True},
+    {'fct_title': u'level3reviewers',
+     'fct_id': u'level3reviewers',
+     'fct_orgs': [],
+     'fct_management': False,
+     'enabled': True},
+    {'fct_title': u'level4reviewers',
+     'fct_id': u'level4reviewers',
+     'fct_orgs': [],
+     'fct_management': False,
+     'enabled': True},
+    {'fct_title': u'level5reviewers',
+     'fct_id': u'level5reviewers',
+     'fct_orgs': [],
+     'fct_management': False,
+     'enabled': True},
 ]
 
 # this is made to manage specific suffixes for a particular profile
@@ -127,18 +153,6 @@ MEETING_GROUP_SUFFIXES = [
 #   'fct_orgs': ['path_to_group_id_1', 'path_to_group_id_2']},
 # ]
 EXTRA_GROUP_SUFFIXES = []
-
-# additonal advice types that will be available for MeetingConfig.usedAdviceTypes
-# format is just a tuple containing keys, it will be translated using same key
-# ('extra_type_1', 'extra_type_2', 'extra_type_3', )
-EXTRA_ADVICE_TYPES = ()
-
-# list of reviewer roles, this needs to be defined in logical order because
-# we will also look for 'higher' reviewer level
-# the key is the group suffix and the value is a list of states of the items to review
-# highest levels to lowest levels
-MEETINGREVIEWERS = {'*': OrderedDict([('reviewers', ['proposed']),
-                                      ('prereviewers', ['proposed']), ]), }
 
 # This is the group created for each MeetingConfig where we store
 # users that will be able to edit the budgetInfos field for items in state
@@ -183,10 +197,10 @@ ploneMeetingRoles = (
     'MeetingObserverGlobal',
 )
 
-# Roles that can evaluate MeetingItem.completeness
-ITEM_COMPLETENESS_EVALUATORS = ('MeetingManager', 'Manager', 'MeetingReviewer', 'MeetingPreReviewer', )
-# Roles that can ask new evaluation of  MeetingItem.completeness if set to 'incomplete'
-ITEM_COMPLETENESS_ASKERS = ('MeetingManager', 'Manager', 'MeetingReviewer', 'MeetingPreReviewer', 'MeetingMember', )
+# Suffixes that may evaluate MeetingItem.completeness
+ITEM_COMPLETENESS_EVALUATORS = ('reviewers', 'prereviewers', )
+# Suffixes that can ask new evaluation of MeetingItem.completeness if set to 'incomplete'
+ITEM_COMPLETENESS_ASKERS = ('reviewers', 'prereviewers', 'creators', )
 
 # The id used for the root folder added to the member personal area that
 # will contain every meetingConfigs available to the member
@@ -208,25 +222,33 @@ ITEM_DEFAULT_TEMPLATE_ID = "default-empty-item-template"
 
 # default fields kept when an item is cloned
 DEFAULT_COPIED_FIELDS = ['title', 'description', 'detailedDescription', 'motivation',
-                         'decision', 'decisionSuite', 'budgetInfos', 'budgetRelated', 'sendToAuthority',
+                         'decision', 'decisionSuite', 'decisionEnd',
+                         'budgetInfos', 'budgetRelated', 'sendToAuthority',
                          'groupsInCharge', 'proposingGroupWithGroupInCharge', 'copyGroups']
 # extra fields kept when an item is cloned in the same meeting config,
 # so not the case when sent to another meeting config
-EXTRA_COPIED_FIELDS_SAME_MC = ['associatedGroups', 'classifier', 'category',
+EXTRA_COPIED_FIELDS_SAME_MC = ['associatedGroups', 'category', 'classifier', 'committees',
                                'optionalAdvisers', 'otherMeetingConfigsClonableTo',
                                'otherMeetingConfigsClonableToPrivacy', 'oralQuestion',
-                               'toDiscuss', 'privacy', 'pollType', 'textCheckList']
+                               'toDiscuss', 'privacy', 'pollType', 'textCheckList',
+                               'otherMeetingConfigsClonableToFieldTitle',
+                               'otherMeetingConfigsClonableToFieldDescription',
+                               'otherMeetingConfigsClonableToFieldMotivation',
+                               'otherMeetingConfigsClonableToFieldDecision',
+                               'otherMeetingConfigsClonableToFieldDecisionSuite',
+                               'otherMeetingConfigsClonableToFieldDecisionEnd']
 
 EXTRA_COPIED_FIELDS_FROM_ITEM_TEMPLATE = ['observations', 'inAndOutMoves', 'notes',
-                                          'internalNotes', 'isAcceptableOutOfMeeting']
+                                          'internalNotes', 'isAcceptableOutOfMeeting',
+                                          'committeeObservations', 'votesObservations']
 
 # to differenciate items of different meeting configs,
 # use a different icon color (MeetingConfig.itemIconColor)
 ITEM_ICON_COLORS = ("azur", "black", "green", "grey", "orange",
                     "pink", "purple", "red", "yellow")
 
-NOT_ENCODED_VOTE_VALUE = 'not_yet'
-NOT_CONSULTABLE_VOTE_VALUE = 'not_consultable'
+NOT_ENCODED_VOTE_VALUE = u'not_yet'
+NOT_VOTABLE_LINKED_TO_VALUE = u'not_votable_linked_to'
 NOT_GIVEN_ADVICE_VALUE = 'not_given'
 HIDDEN_DURING_REDACTION_ADVICE_VALUE = 'hidden_during_redaction'
 CONSIDERED_NOT_GIVEN_ADVICE_VALUE = 'considered_not_given_hidden_during_redaction'
@@ -240,12 +262,6 @@ HISTORY_COMMENT_NOT_VIEWABLE = "<span class='discreet'>Access to this comment is
 # this can change if the wf used for advice is different
 ADVICE_STATES_ALIVE = ('advice_under_edit', )
 ADVICE_STATES_ENDED = ('advice_given', )
-
-# In those states, an item is not linked to a meeting
-ITEM_STATES_NOT_LINKED_TO_MEETING = (
-    'itemcreated', 'proposed', 'prevalidated', 'validated',
-    'itemcreated_waiting_advices', 'proposed_waiting_advices',
-    'prevalidated_waiting_advices', 'validated_waiting_advices', )
 
 # name of the variable added to the REQUEST when getting the scan_id
 ITEM_SCAN_ID_NAME = 'item_scan_id'
@@ -263,7 +279,9 @@ CKEDITOR_MENUSTYLES_CUSTOMIZED_MSG = '/* Styles have been customized, do not rem
 # if a delay for giving an item is on saturday, we extends the delay to next avaialble day
 # so here, we define that weekday 5 (as weekday starts from 0) is unavailble
 DELAY_UNAVAILABLE_WEEKDAY_NUMBER = 5
-# Define the weekday mnemonics to match the date.weekday function
+# define the weekday mnemonics to match the date.weekday function
+# take care that Zope DateTime sunday is weekday number is 0
+# and python datetime sunday weekday number is 6...
 PY_DATETIME_WEEKDAYS = ('mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun')
 
 # default user password used when sample users are added to a PloneMeeting during install
@@ -301,6 +319,8 @@ ITEM_INSERT_METHODS = OrderedDict((
     ('on_list_type', ['field_listTypes']),
     # according to category order;
     ('on_categories', ['category']),
+    # according to classifier order;
+    ('on_classifiers', ['classifier']),
     # according to proposing group order;
     ('on_proposing_groups', ['organization']),
     # according to all groups (among proposing group AND
@@ -320,6 +340,8 @@ ITEM_INSERT_METHODS = OrderedDict((
     # items having associated group 1 and associated group 3
     # items having associated group 1 and associated group 3 and associated group 4
     ('on_all_associated_groups', ['field_orderedAssociatedOrganizations', 'organization']),
+    # according to the committees
+    ('on_all_committees', ['field_committees']),
     # according to the item privacy;
     ('on_privacy', ['field_selectablePrivacies']),
     # according to the item toDiscuss;
@@ -338,11 +360,16 @@ ITEM_INSERT_METHODS = OrderedDict((
 
 INSERTING_ON_ITEM_DECISION_FIRST_WORDS_NB = 5
 
-ITEM_TRANSITION_WHEN_RETURNED_FROM_PROPOSING_GROUP_AFTER_CORRECTION = 'accept'
+ITEM_TRANSITION_WHEN_RETURNED_FROM_PROPOSING_GROUP_AFTER_CORRECTION = 'accept_but_modify'
 
 EMPTY_STRING = '__empty_string__'
 
 EXECUTE_EXPR_VALUE = 'execute_tal_expression'
+
+NO_COMMITTEE = u"no_committee"
+
+# for performance reason we do not dynamically get the annexes criterion id
+FACETED_ANNEXES_CRITERION_ID = 'c20'
 
 
 def registerClasses():

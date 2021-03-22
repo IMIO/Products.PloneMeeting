@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
 from collective.contact.plonegroup.utils import select_organization
-from DateTime import DateTime
 from imio.helpers.cache import cleanRamCacheFor
 from plone import api
+from plone.app.testing import logout
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
 from Products.CMFCore.permissions import ModifyPortalContent
@@ -21,25 +21,28 @@ class PloneMeetingTestingHelpers:
     TRANSITIONS_FOR_PRESENTING_ITEM_1 = TRANSITIONS_FOR_PRESENTING_ITEM_2 = (
         'propose', 'prevalidate', 'validate', 'present', )
 
-    TRANSITIONS_FOR_PUBLISHING_MEETING_1 = TRANSITIONS_FOR_PUBLISHING_MEETING_2 = ('publish', )
-    TRANSITIONS_FOR_FREEZING_MEETING_1 = TRANSITIONS_FOR_FREEZING_MEETING_2 = ('publish', 'freeze', )
-    TRANSITIONS_FOR_DECIDING_MEETING_1 = TRANSITIONS_FOR_DECIDING_MEETING_2 = ('publish', 'freeze', 'decide', )
-    TRANSITIONS_FOR_CLOSING_MEETING_1 = TRANSITIONS_FOR_CLOSING_MEETING_2 = ('publish',
-                                                                             'freeze',
+    TRANSITIONS_FOR_PUBLISHING_MEETING_1 = TRANSITIONS_FOR_PUBLISHING_MEETING_2 = ('freeze', 'publish', )
+    TRANSITIONS_FOR_FREEZING_MEETING_1 = TRANSITIONS_FOR_FREEZING_MEETING_2 = ('freeze', )
+    TRANSITIONS_FOR_DECIDING_MEETING_1 = TRANSITIONS_FOR_DECIDING_MEETING_2 = ('freeze', 'publish', 'decide')
+    TRANSITIONS_FOR_CLOSING_MEETING_1 = TRANSITIONS_FOR_CLOSING_MEETING_2 = ('freeze',
+                                                                             'publish',
                                                                              'decide',
                                                                              'close', )
-    TRANSITIONS_FOR_ACCEPTING_ITEMS_MEETING_1 = TRANSITIONS_FOR_ACCEPTING_ITEMS_MEETING_2 = ('publish', 'freeze', )
+    TRANSITIONS_FOR_ACCEPTING_ITEMS_MEETING_1 = ('freeze', 'publish', 'decide')
+    TRANSITIONS_FOR_ACCEPTING_ITEMS_MEETING_2 = ('freeze', 'publish', 'decide')
     BACK_TO_WF_PATH_1 = BACK_TO_WF_PATH_2 = {
         # Meeting
-        'created': ('backToDecided',
-                    'backToFrozen',
+        'created': ('backToDecisionsPublished',
+                    'backToDecided',
                     'backToPublished',
+                    'backToFrozen',
                     'backToCreated',),
         # MeetingItem
         'itemcreated': ('backToItemPublished',
                         'backToItemFrozen',
                         'backToPresented',
                         'backToValidated',
+                        'backToPreValidated',
                         'backToProposed',
                         'backToItemCreated', ),
         'proposed': ('backToItemPublished',
@@ -81,8 +84,8 @@ class PloneMeetingTestingHelpers:
     WF_MEETING_TRANSITION_NAME_MAPPINGS_2 = {}
 
     # in which state an item must be after a particular meeting transition?
-    ITEM_WF_STATE_AFTER_MEETING_TRANSITION = {'publish_decisions': 'confirmed',
-                                              'close': 'confirmed', }
+    ITEM_WF_STATE_AFTER_MEETING_TRANSITION = {'publish_decisions': 'accepted',
+                                              'close': 'accepted', }
 
     def _stateMappingFor(self, state_name, meta_type='MeetingItem'):
         """ """
@@ -104,7 +107,7 @@ class PloneMeetingTestingHelpers:
             pattern = 'WF_MEETING_TRANSITION_NAME_MAPPINGS_%d'
         return getattr(self, (pattern % meetingConfigNumber)).get(transition_name, transition_name)
 
-    def _createMeetingWithItems(self, meetingDate=DateTime()):
+    def _createMeetingWithItems(self, meetingDate=None):
         '''Create a meeting with a bunch of items.'''
         def _set_proposing_group(item, org):
             """Take into account fact that configuration uses groupsInCharge."""
@@ -118,32 +121,42 @@ class PloneMeetingTestingHelpers:
         meeting = self.create('Meeting', date=meetingDate)
         # a meeting could be created with items if it has
         # recurring items...  But we can also add some more...
-        item1 = self.create('MeetingItem', title='Item 1')  # id=item-1
+        # id=item-1
+        item1 = self.create('MeetingItem', title='Item 1')
         _set_proposing_group(item1, self.vendors)
         item1.setAssociatedGroups((self.developers_uid,))
         item1.setPrivacy('public')
         item1.setPollType('secret_separated')
         item1.setCategory('research')
-        item2 = self.create('MeetingItem', title='Item 2')  # id=item-2
+        item1.setClassifier('classifier3')
+        # id=item-2
+        item2 = self.create('MeetingItem', title='Item 2')
         _set_proposing_group(item2, self.developers)
         item2.setPrivacy('public')
         item2.setPollType('no_vote')
         item2.setCategory('development')
-        item3 = self.create('MeetingItem', title='Item 3')  # id=item-3
+        item2.setClassifier('classifier2')
+        # id=item-3
+        item3 = self.create('MeetingItem', title='Item 3')
         _set_proposing_group(item3, self.vendors)
         item3.setPrivacy('secret')
         item3.setPollType('freehand')
         item3.setCategory('development')
-        item4 = self.create('MeetingItem', title='Item 4')  # id=item-4
+        item3.setClassifier('classifier2')
+        # id=item-4
+        item4 = self.create('MeetingItem', title='Item 4')
         _set_proposing_group(item4, self.developers)
         item4.setPrivacy('secret')
         item4.setPollType('freehand')
         item4.setCategory('events')
-        item5 = self.create('MeetingItem', title='Item 5')  # id=item-5
+        item4.setClassifier('classifier1')
+        # id=item-5
+        item5 = self.create('MeetingItem', title='Item 5')
         _set_proposing_group(item5, self.vendors)
         item5.setPrivacy('public')
         item5.setPollType('secret')
         item5.setCategory('events')
+        item5.setClassifier('classifier1')
         for item in (item1, item2, item3, item4, item5):
             item.setDecision('<p>A decision</p>')
             self.presentItem(item)
@@ -268,7 +281,7 @@ class PloneMeetingTestingHelpers:
             self.changeUser('admin')
         max_attempts = 20
         nb_attempts = 0
-        while not itemOrMeeting.queryState() == state and nb_attempts <= max_attempts:
+        while not itemOrMeeting.query_state() == state and nb_attempts <= max_attempts:
             nb_attempts += 1
             if not useDefinedWfPath:
                 transitions = self.transitions(itemOrMeeting)
@@ -404,7 +417,7 @@ class PloneMeetingTestingHelpers:
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         item.setOptionalAdvisers((self.vendors_uid, ))
-        item.updateLocalRoles()
+        item.update_local_roles()
         self.changeUser('pmReviewer2')
         advice = createContentInContainer(
             item,
@@ -419,7 +432,7 @@ class PloneMeetingTestingHelpers:
         if not groups:
             groups = [self.vendors_uid]
         item.setGroupsInCharge(groups)
-        item.updateLocalRoles()
+        item.update_local_roles()
 
     def _tearDownGroupsInCharge(self, item):
         """If group in charge is overrided, it may be setup differently."""
@@ -429,3 +442,96 @@ class PloneMeetingTestingHelpers:
         """Select organization in ORGANIZATIONS_REGISTRY."""
         select_organization(org_uid, remove=remove)
         self.cleanMemoize()
+
+    def _enablePrevalidation(self, cfg, enable_extra_suffixes=False):
+        """Enable the 'prevalidated' state in MeetingConfig.itemWFValidationLevels."""
+        currentUser = self.member.getId()
+        self.changeUser('admin')
+        itemWFValidationLevels = cfg.getItemWFValidationLevels()
+        itemWFValidationLevels[1]['suffix'] = 'prereviewers'
+        itemWFValidationLevels[2]['enabled'] = '1'
+        if enable_extra_suffixes:
+            itemWFValidationLevels[2]['extra_suffixes'] = ['reviewers']
+        cfg.setItemWFValidationLevels(itemWFValidationLevels)
+        cfg.at_post_edit_script()
+        self.changeUser(currentUser)
+
+    def _enableItemValidationLevel(self, cfg, level=None, suffix=None):
+        """Enable one or every item validation levels."""
+        currentUser = self.member.getId()
+        self.changeUser('admin')
+        itemValLevels = cfg.getItemWFValidationLevels()
+        for itemValLevel in itemValLevels:
+            if not level or itemValLevel['state'] == level:
+                itemValLevel['enabled'] = '1'
+                if suffix:
+                    itemValLevel['suffix'] = suffix
+        cfg.setItemWFValidationLevels(itemValLevels)
+        cfg.at_post_edit_script()
+        self.changeUser(currentUser)
+
+    def _disableItemValidationLevel(self, cfg, level=None, suffix=None):
+        """Disable one or every item validation levels."""
+        currentUser = self.member.getId()
+        self.changeUser('admin')
+        itemValLevels = cfg.getItemWFValidationLevels()
+        for itemValLevel in itemValLevels:
+            if not level or itemValLevel['state'] == level:
+                itemValLevel['enabled'] = '0'
+                if suffix:
+                    itemValLevel['suffix'] = suffix
+        cfg.setItemWFValidationLevels(itemValLevels)
+        cfg.at_post_edit_script()
+        self.changeUser(currentUser)
+
+    def _setUpOrderedContacts(self):
+        """ """
+        # login to be able to query held_positions for orderedContacts vocabulary
+        self.changeUser('siteadmin')
+        cfg = self.meetingConfig
+        cfg.setUsedMeetingAttributes(('attendees', 'excused', 'absents', 'signatories', ))
+        cfg.setUsedItemAttributes(('attendees', 'excused', 'absents', 'signatories', 'itemInitiator'))
+        ordered_contacts = cfg.getField('orderedContacts').Vocabulary(cfg).keys()
+        cfg.setOrderedContacts(ordered_contacts)
+        logout()
+
+    def _setItemToWaitingAdvices(self, item, transition):
+        """Done to be overrided, sometimes it is necessary to do something more to be able
+           to set item to 'waiting_advices'."""
+        self.do(item, transition)
+
+    def _userAbleToBackFromWaitingAdvices(self, currentState):
+        """Return username able to back from waiting advices."""
+        if currentState == 'itemcreated_waiting_advices':
+            return 'pmCreator1'
+        else:
+            return 'pmReviewer1'
+
+    def _afterItemCreatedWaitingAdviceWithPrevalidation(self, item):
+        """Made to be overrided..."""
+        return
+
+    def _setUpCommittees(self, attendees=True):
+        """Setup use of committees with attendees/signatories or assembly/signatures."""
+        # avoid circular import problems
+        from Products.PloneMeeting.content.meeting import default_committees
+        from Products.PloneMeeting.tests.PloneMeetingTestCase import DefaultData
+        cfg = self.meetingConfig
+        if attendees:
+            to_enable = ["committees", "committees_attendees", "committees_signatories"]
+            to_disable = ["committees_assembly", "committees_signatures"]
+        else:
+            to_enable = ["committees", "committees_assembly", "committees_signatures"]
+            to_disable = ["committees_attendees", "committees_signatories"]
+        self._enableField(to_enable, related_to="Meeting")
+        self._enableField(to_disable, related_to="Meeting", enable=False)
+        cfg.setOrderedCommitteeContacts((self.hp1_uid, self.hp2_uid, self.hp3_uid))
+        cfg_committees = cfg.getCommittees()
+        cfg_committees[0]['default_assembly'] = "Default assembly"
+        cfg_committees[0]['default_signatures'] = "Line 1,\r\nLine 2\r\nLine 3,\r\nLine 4"
+        cfg_committees[0]['default_place'] = "Default place"
+        cfg_committees[0]['default_attendees'] = [self.hp1_uid, self.hp2_uid]
+        cfg_committees[0]['default_signatories'] = [self.hp2_uid, self.hp3_uid]
+        cfg.setCommittees(cfg_committees)
+        meeting = self.create('Meeting', committees=default_committees(DefaultData(cfg)))
+        return meeting

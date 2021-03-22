@@ -7,6 +7,10 @@ from collective.contact.plonegroup.interfaces import IPloneGroupContact
 from collective.contact.plonegroup.utils import get_organizations
 from collective.z3cform.datagridfield import DataGridFieldFactory
 from collective.z3cform.datagridfield import DictRow
+from DateTime import DateTime
+from datetime import date
+from datetime import datetime
+from imio.helpers.content import get_back_relations
 from imio.helpers.content import uuidsToObjects
 from plone.autoform import directives as form
 from plone.dexterity.schema import DexteritySchemaPolicy
@@ -16,8 +20,8 @@ from Products.PloneMeeting.events import _invalidateOrgRelatedCachedVocabularies
 from Products.PloneMeeting.utils import computeCertifiedSignatures
 from Products.PloneMeeting.utils import listifySignatures
 from Products.PloneMeeting.validators import DXCertifiedSignaturesValidator
+from Products.PloneMeeting.widgets.pm_checkbox import PMCheckBoxFieldWidget
 from z3c.form import validator
-from z3c.form.browser.checkbox import CheckBoxFieldWidget
 from zope import schema
 from zope.interface import Interface
 
@@ -28,7 +32,7 @@ class ICertifiedSignaturesRowSchema(Interface):
     signature_number = schema.Choice(
         title=_("Certified signatures signature number"),
         description=_("Select the signature number, keep signatures ordered by number."),
-        vocabulary='Products.PloneMeeting.vocabularies.signaturenumbervocabulary',
+        vocabulary='Products.PloneMeeting.vocabularies.numbersvocabulary',
         required=True,
     )
 
@@ -74,8 +78,6 @@ class IPMOrganization(IOrganization):
        We protect these fields with read/write permission so it is only
        shown on organization added to 'plonegroup-organization'."""
 
-    form.read_permission(acronym='PloneMeeting.manage_internal_organization_fields')
-    form.write_permission(acronym='PloneMeeting.manage_internal_organization_fields')
     acronym = schema.TextLine(
         title=_("PloneMeeting_label_acronym"),
         required=False,
@@ -83,43 +85,47 @@ class IPMOrganization(IOrganization):
 
     form.read_permission(item_advice_states='PloneMeeting.manage_internal_organization_fields')
     form.write_permission(item_advice_states='PloneMeeting.manage_internal_organization_fields')
-    form.widget('item_advice_states', CheckBoxFieldWidget, multiple='multiple')
+    form.widget('item_advice_states', PMCheckBoxFieldWidget, multiple='multiple')
     item_advice_states = schema.List(
         title=_("PloneMeeting_label_itemAdviceStates"),
         description=_("group_item_advice_states_descr"),
         value_type=schema.Choice(
             vocabulary="Products.PloneMeeting.vocabularies.itemallstates"),
         required=False,
+        default=[],
     )
 
     form.read_permission(item_advice_edit_states='PloneMeeting.manage_internal_organization_fields')
     form.write_permission(item_advice_edit_states='PloneMeeting.manage_internal_organization_fields')
-    form.widget('item_advice_edit_states', CheckBoxFieldWidget, multiple='multiple')
+    form.widget('item_advice_edit_states', PMCheckBoxFieldWidget, multiple='multiple')
     item_advice_edit_states = schema.List(
         title=_("PloneMeeting_label_itemAdviceEditStates"),
         description=_("group_item_advice_edit_states_descr"),
         value_type=schema.Choice(
             vocabulary="Products.PloneMeeting.vocabularies.itemallstates"),
         required=False,
+        default=[],
     )
 
     form.read_permission(item_advice_view_states='PloneMeeting.manage_internal_organization_fields')
     form.write_permission(item_advice_view_states='PloneMeeting.manage_internal_organization_fields')
-    form.widget('item_advice_view_states', CheckBoxFieldWidget, multiple='multiple')
+    form.widget('item_advice_view_states', PMCheckBoxFieldWidget, multiple='multiple')
     item_advice_view_states = schema.List(
         title=_("PloneMeeting_label_itemAdviceViewStates"),
         description=_("group_item_advice_view_states_descr"),
         value_type=schema.Choice(
             vocabulary="Products.PloneMeeting.vocabularies.itemallstates"),
         required=False,
+        default=[],
     )
 
-    form.read_permission(keep_access_to_item_when_advice_is_given='PloneMeeting.manage_internal_organization_fields')
-    form.write_permission(keep_access_to_item_when_advice_is_given='PloneMeeting.manage_internal_organization_fields')
-    keep_access_to_item_when_advice_is_given = schema.Choice(
-        title=_(u'PloneMeeting_label_keepAccessToItemWhenAdviceIsGiven'),
-        description=_("group_keep_access_to_item_when_advice_is_given_descr"),
-        vocabulary=u'Products.PloneMeeting.content.organization.keep_access_to_item_when_advice_is_given_vocabulary',
+    form.read_permission(keep_access_to_item_when_advice='PloneMeeting.manage_internal_organization_fields')
+    form.write_permission(keep_access_to_item_when_advice='PloneMeeting.manage_internal_organization_fields')
+    keep_access_to_item_when_advice = schema.Choice(
+        title=_(u'PloneMeeting_label_keepAccessToItemWhenAdvice'),
+        description=_("keep_access_to_item_when_advice_descr"),
+        vocabulary=u'Products.PloneMeeting.vocabularies.keep_access_to_item_when_advice_vocabulary',
+        default='use_meetingconfig_value',
         required=True,
     )
 
@@ -147,20 +153,22 @@ class IPMOrganization(IOrganization):
 
     form.read_permission(groups_in_charge='PloneMeeting.manage_internal_organization_fields')
     form.write_permission(groups_in_charge='PloneMeeting.manage_internal_organization_fields')
-    form.widget('groups_in_charge', CheckBoxFieldWidget, multiple='multiple')
+    form.widget('groups_in_charge', PMCheckBoxFieldWidget, multiple='multiple')
     groups_in_charge = schema.List(
         title=_("PloneMeeting_label_groupsInCharge"),
         description=_("groups_in_charge_descr"),
         value_type=schema.Choice(
-            vocabulary="collective.contact.plonegroup.organization_services"),
+            vocabulary="collective.contact.plonegroup.browser.settings."
+            "SortedSelectedOrganizationsElephantVocabulary"),
         required=False,
+        default=[],
     )
 
     model.fieldset('app_parameters',
                    label=_(u"Application parameters"),
                    fields=['acronym', 'item_advice_states',
                            'item_advice_edit_states', 'item_advice_view_states',
-                           'keep_access_to_item_when_advice_is_given', 'as_copy_group_on',
+                           'keep_access_to_item_when_advice', 'as_copy_group_on',
                            'certified_signatures', 'groups_in_charge'])
 
 
@@ -180,7 +188,7 @@ class PMOrganization(Organization):
     def get_groups_in_charge(self, the_objects=False):
         """Accessor so it can be called in a TAL expression."""
         res = self.groups_in_charge
-        if the_objects:
+        if res and the_objects:
             res = uuidsToObjects(res, ordered=True)
         return res
 
@@ -204,7 +212,7 @@ class PMOrganization(Organization):
             # if nothing redefined for given p_cfg in this organization,
             # use value defined on the cfg
             res = tmpres or cfg.getItemAdviceStates()
-        return tuple(res)
+        return res
 
     def get_item_advice_edit_states(self, cfg=None):
         res = self.item_advice_edit_states
@@ -218,7 +226,7 @@ class PMOrganization(Organization):
             # if nothing redefined for given p_cfg in this organization,
             # use value defined on the cfg
             res = tmpres or cfg.getItemAdviceEditStates()
-        return tuple(res)
+        return res
 
     def get_item_advice_view_states(self, cfg=None):
         res = self.item_advice_view_states
@@ -232,18 +240,13 @@ class PMOrganization(Organization):
             # if nothing redefined for given p_cfg in this organization,
             # use value defined on the cfg
             res = tmpres or cfg.getItemAdviceViewStates()
-        return tuple(res)
+        return res
 
-    def get_keep_access_to_item_when_advice_is_given(self, cfg=None):
+    def get_keep_access_to_item_when_advice(self, cfg=None):
         """ """
-        res = self.keep_access_to_item_when_advice_is_given
-        if cfg:
-            if not res:
-                res = cfg.getKeepAccessToItemWhenAdviceIsGiven()
-            elif res == '0':
-                res = False
-            else:
-                res = True
+        res = self.keep_access_to_item_when_advice
+        if cfg and res == 'use_meetingconfig_value':
+            res = cfg.getKeepAccessToItemWhenAdvice()
         return res
 
     def get_certified_signatures(self, computed=False, cfg=None, group_in_charge=None, listify=True, **kwargs):
@@ -304,6 +307,22 @@ class PMOrganization(Organization):
                         i = associated_org_index
                     break
         return i
+
+    def get_representatives(self, at_date=None):
+        '''Get the representative held positions.
+           When a date is given, it will get the held position that were active at given date.
+           Else, date will be set to "now" to only get the currently active held positions.'''
+        if not at_date:
+            at_date = date.today()
+        elif isinstance(at_date, DateTime):
+            at_date = at_date.asdatetime().date()
+        elif isinstance(at_date, datetime):
+            at_date = at_date.date()
+        res = []
+        for hp in get_back_relations(self, 'represented_organizations'):
+            if not hp.end_date or hp.end_date >= at_date:
+                res.append(hp)
+        return res
 
     def _invalidateCachedVocabularies(self):
         '''Clean cache for vocabularies using organizations.'''

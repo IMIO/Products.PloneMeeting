@@ -1,6 +1,8 @@
-from setuptools import setup, find_packages
+from setuptools import find_packages
+from setuptools import setup
 
-version = '4.1.28.dev0'
+
+version = '4.2b12.dev0'
 
 setup(name='Products.PloneMeeting',
       version=version,
@@ -34,7 +36,8 @@ setup(name='Products.PloneMeeting',
       namespace_packages=['Products'],
       include_package_data=True,
       zip_safe=False,
-      extras_require=dict(test=['ipdb',
+      extras_require=dict(test=['imio.helpers[test]',
+                                'ipdb',
                                 'plone.app.testing',
                                 'profilehooks',
                                 'plone.app.robotframework',
@@ -52,6 +55,7 @@ setup(name='Products.PloneMeeting',
           'collective.ckeditor',
           'collective.contact.plonegroup',
           'collective.datagridcolumns',
+          'collective.dexteritytextindexer',
           'collective.js.fancytree',
           'collective.js.jqueryui',
           'collective.js.tablednd',
@@ -73,6 +77,7 @@ setup(name='Products.PloneMeeting',
           'plone.app.lockingbehavior',
           'plone.app.versioningbehavior',
           'plone.directives.form',
+          'plonemeeting.restapi',
           'plonetheme.imioapps',
           'Products.CPUtils',
           'Products.DataGridField',

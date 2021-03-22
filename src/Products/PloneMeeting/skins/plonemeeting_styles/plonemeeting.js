@@ -9,13 +9,6 @@ function confirmReinitializeDelay(base_url, advice, tag, msgName){
     }
 }
 
-// function that show/hide icons to manage attendees (absents, signatories, ...)
-function setHiddenButton(userId, visibility, prefix='byebye_') {
-  var button = document.getElementById(prefix + userId);
-  if (!button) return;
-  button.style.visibility = visibility;
-}
-
 // Dropdown for selecting an annex type
 var ploneMeetingSelectBoxes = new Object();
 
@@ -58,39 +51,6 @@ function findParent(node, className) {
         nextParent = nextParent.parentNode;
     }
     return null;
-}
-
-/* used in configuration to show/hide documentation */
-function toggleDoc(id, toggle_parent_active=true, parent_elem=null, load_view=null) {
-  elem = $('#' + id);
-  elem.slideToggle(200);
-  if (toggle_parent_active) {
-    if (!parent_elem) {
-      parent_elem = elem.prev()[0];
-    }
-    parent_elem.classList.toggle("active");
-  }
-
-  inner_content_tag = $('div.collapsible-inner-content', elem)[0];
-  if (load_view && !inner_content_tag.dataset.loaded) {
-    // load content in the collapsible-inner-content div
-    var url = $("link[rel='canonical']").attr('href') + '/' + load_view;
-    $.ajax({
-      url: url,
-      dataType: 'html',
-      data: {},
-      cache: false,
-      async: true,
-      success: function(data) {
-        inner_content_tag.innerHTML = data;
-        inner_content_tag.dataset.loaded = true;
-      },
-      error: function(jqXHR, textStatus, errorThrown) {
-        /*console.log(textStatus);*/
-        window.location.href = window.location.href;
-        }
-    });
-  }
 }
 
 function toggleMenu(menuId){
@@ -166,8 +126,10 @@ function initializePersonsCookie() {
   label_tag = $('div#assembly-and-signatures')[0];
   tag = $('div#collapsible-assembly-and-signatures')[0];
   if (show == 'true') {
-    label_tag.classList.add('active');
-    tag.style.display = 'block';
+    label_tag.click();
+    createCookie('showPersons', 'true');
+    //label_tag.classList.add('active');
+    //tag.style.display = 'block';
   }
 }
 
@@ -343,31 +305,6 @@ function askAjaxChunk(hook, mode, url, page, macro, params, beforeSend, onGet) {
   }
 }
 
-// Triggers recording of item-people-related info like votes, questioners, answerers.
-function saveItemPeopleInfos(itemUrl, allVotesYes) {
-  // If "allVotesYes" is true, all vote values must be set to "yes".
-  theForm = document.forms.itemPeopleForm;
-  params = {'action': 'SaveItemPeopleInfos', 'allYes': allVotesYes};
-  // Collect params to send via the AJAX request.
-  for (var i=0; i<theForm.elements.length; i++) {
-    widget = theForm.elements[i];
-    if ((widget.type == "text") || widget.checked) {
-      params[widget.name] = widget.value;
-    }
-  }
-  askAjaxChunk('meeting_users_', 'POST', itemUrl, '@@pm-macros', 'itemPeople', params);
-}
-
-// Refresh the vote values
-function refreshVotes(itemUrl) {
-  askAjaxChunk('meeting_users_', 'POST', itemUrl, '@@pm-macros', 'itemPeople');
-}
-// Switch votes mode (secret / not secret)
-function switchVotes(itemUrl, secret) {
-  var params = {'action': 'SwitchVotes', 'secret': secret};
-  askAjaxChunk('meeting_users_', 'POST', itemUrl, '@@pm-macros', 'itemPeople', params);
-}
-
 function askObjectHistory(hookId, objectUrl, maxPerPage, startNumber) {
   // Sends an Ajax request for getting the history of an object
   var params = {'maxPerPage': maxPerPage, 'startNumber': startNumber};
@@ -425,14 +362,13 @@ function asyncToggleIcon(UID, baseUrl, viewName, baseSelector) {
     });
 }
 
-/* functions used to manage quick edit functionnality */
-function initRichTextField(rq, hook) {
+function reloadIfLocked() {
   /* Function that needs to be called when getting the edit view of a
      rich-text field through Ajax. */
   /* Check that we can actually edit the field, indeed the object
    * could have been locked in between (concurrent edit) */
   is_locked = $.ajax({
-     async: true,
+     async: false,
      type: 'GET',
      url: '@@plone_lock_info/is_locked_for_current_user',
      success: function(data) {
@@ -440,34 +376,44 @@ function initRichTextField(rq, hook) {
      }
     });
   if (is_locked.responseText === "True") {
-    window.location.href = window.location.href;
+    /* remove # part in URL (meeting view is a faceted) */
+    href = window.parent.location.href;
+    window.parent.location.href = href.split('#')[0];
+    return false;
   }
-  else {
-    // Javascripts inside this zone will not be executed. So find them
-    // and trigger their execution here.
-    var scripts = $('script', hook);
-    var fieldName = rq.hook.substring(5);
-    for (var i=0; i<scripts.length; i++) {
-      var scriptContent = scripts[i].innerHTML;
-      if (scriptContent.search('addEventHandler') != -1) {
-        // This is a kupu field that will register an event onLoad on
-        // window but this event will never be triggered. So do it by
-        // hand.
-        currentFieldName = hook.id.substring(5);
-      }
-      else { eval(scriptContent); }
-    }
-    // Initialize CKeditor if it is the used editor
-    if (ploneEditor == 'CKeditor') { jQuery(launchCKInstances([fieldName,])); }
-    // Enable unload protection, avoid loosing unsaved changes if user click somewhere else
-    var tool = window.onbeforeunload && window.onbeforeunload.tool;
-    if (tool!==null) {
-      tool.addForms.apply(tool, $('form.enableUnloadProtection').get());
-    }
-    // enable UnlockHandler so element is correctly unlocked after edit
-    plone.UnlockHandler.init();
-  }
+  return true;
 }
+
+/* functions used to manage quick edit functionnality */
+function initRichTextField(rq, hook) {
+  reloadIfLocked();
+  // Javascripts inside this zone will not be executed. So find them
+  // and trigger their execution here.
+  var scripts = $('script', hook);
+  var fieldName = hook.id.substring(5);
+  for (var i=0; i<scripts.length; i++) {
+    var scriptContent = scripts[i].innerHTML;
+    if (scriptContent.search('addEventHandler') != -1) {
+      // This is a kupu field that will register an event onLoad on
+      // window but this event will never be triggered. So do it by
+      // hand.
+      currentFieldName = hook.id.substring(5);
+    }
+    else { eval(scriptContent); }
+  }
+  // Initialize CKeditor
+  jQuery(launchCKInstances([fieldName,]));
+  // Enable unload protection, avoid loosing unsaved changes if user click somewhere else
+  var tool = window.onbeforeunload && window.onbeforeunload.tool;
+  if (tool!==null) {
+    tool.addForms.apply(tool, $('form.enableUnloadProtection').get());
+    tool.submitting = false;
+  }
+  // enable UnlockHandler so element is correctly unlocked
+  // if user choose to lost the changes in formUnload
+  plone.UnlockHandler.init();
+}
+
 function getRichTextContent(rq, params) {
   /* Gets the content of a rich text field before sending it through an Ajax
      request. */
@@ -475,11 +421,9 @@ function getRichTextContent(rq, params) {
   var formId = 'ajax_edit_' + fieldName;
   var theForm = document.getElementById(formId);
   var theWidget = theForm[fieldName];
-  if (ploneEditor == 'CKeditor'){
-     /* with CKeditor the value is not stored in the widget so get the data from the real CKeditor instance */
-     theWidget.value = CKEDITOR.instances[fieldName].getData();
-     CKEDITOR.instances[fieldName].destroy();
-  }
+  /* with CKeditor the value is not stored in the widget so get the data from the real CKeditor instance */
+  theWidget.value = CKEDITOR.instances[fieldName].getData();
+  CKEDITOR.instances[fieldName].destroy();
   /* Disable the Plone automatic detection of changes to the form. Indeed,
      Plone is not aware that we have sent the form, so he will try to display
      a message, saying that changes will be lost because an unsubmitted form
@@ -607,6 +551,7 @@ function moveItem(baseUrl, moveType, tag) {
 
 // event subscriber when a transition is triggered
 $(document).on('ap_transition_triggered', synchronizeMeetingFaceteds);
+
 // synchronize faceted displayed on the meeting_view, available items and presented items
 function synchronizeMeetingFaceteds(infos) {
     // refresh iframe 'available items' while removing an item
@@ -622,14 +567,15 @@ function synchronizeMeetingFaceteds(infos) {
 }
 
 // event subscriber when a element is delete in a dashboard, refresh numberOfItems if we are on a meeting
-$(document).on('ap_delete_givenuid', updateNumberOfItems);
+$(document).on('ap_delete_givenuid', refreshAfterDelete);
 
-// update the number of items displayed on the meeting_view when items have been presented/removed of the meeting
 function updateNumberOfItems() {
+  // update the number of items displayed on the meeting_view when
+  // items have been presented/removed of the meeting
   // get numberOfItems using an ajax call if on the meeting_view
   if (parent.$('.meeting_number_of_items').length) {
     response = $.ajax({
-      url: document.baseURI + '/numberOfItems',
+      url: document.baseURI + '/number_of_items',
       dataType: 'html',
       cache: false,
       async: true,
@@ -639,6 +585,73 @@ function updateNumberOfItems() {
         });
       },
     });
+  }
+}
+
+function refreshAfterDelete(event) {
+  // refresh number of items if relevant
+  updateNumberOfItems();
+  // refresh attendees if we removed a vote
+  css_id = event.tag.id;
+  if (css_id == 'delete-vote-action') {
+    refresh_attendees(highlight='.vote-value');
+  }
+}
+
+$(document).on('toggle_details_ajax_success', init_tooltipsters);
+
+function init_tooltipsters(event) {
+    css_id = event.tag.parentElement.id;
+    if (css_id == 'collapsible-assembly-and-signatures') {
+      pmCommonOverlays(selector_prefix='table#meeting_users ');
+      attendeesInfos();
+      manageAttendees();
+    }
+    if (css_id.startsWith('collapsible-text-linkeditem-')) {
+      categorizedChildsInfos({selector: 'div.item-linkeditems .tooltipster-childs-infos', });
+      advicesInfos();
+    }
+}
+
+$(document).on('ckeditor_prepare_ajax_success', init_ckeditor);
+
+function init_ckeditor(event) {
+  initRichTextField(rq=null, hook=event['tag']);
+}
+
+function saveCKeditor(field_name, base_url, async=true) {
+  ajaxsave = CKEDITOR.instances[field_name].getCommand('ajaxsave');
+  ajaxsave.async = async;
+  CKEDITOR.instances[field_name].execCommand('ajaxsave', 'saveCmd');
+}
+
+function saveAndExitCKeditor(field_name, base_url) {
+  // make sure ajaxsave is not async so content is saved before being shown again
+  saveCKeditor(field_name, base_url, async=false);
+  exitCKeditor(field_name, base_url);
+}
+
+function exitCKeditor(field_name, base_url) {
+  CKEDITOR.instances[field_name].destroy();
+  tag=$('div#hook_' + field_name)[0];
+  loadContent(tag,
+              load_view='@@render-single-widget?field_name=' + field_name,
+              async=false,
+              base_url=base_url,
+              event_name=null);
+  // unlock context
+  plone.UnlockHandler.execute();
+  // destroy Unload handler
+  var tool = window.onbeforeunload && window.onbeforeunload.tool;
+  if (tool!==null) {
+    tool.removeForms.apply(tool, $(document).find('form').get());
+    tool.submitting = true;
+  }
+}
+
+function cancelCKeditor(field_name, base_url) {
+  if (confirm(sure_to_cancel_edit)) {
+    exitCKeditor(field_name, base_url);
   }
 }
 
@@ -684,7 +697,7 @@ function updatePortletTodo() {
   $.ajax({
     url: url,
     cache: false,
-    async: false,
+    async: true,
     success: function(data) {
         tag[0].parentNode.innerHTML = data;
     },
@@ -716,9 +729,16 @@ if (/msie/.test(navigator.userAgent.toLowerCase())) {
 $(document).ready(function () {
     $("input[value^='not_selectable_value_'").each(function() {
         this.disabled = true;
-    });
+    }); 
 });
 
+/* make sure first line of MeetingConfig.itemWFValidationLevels can not be edited */
+$(document).ready(function () {
+    $("input[id$='_itemWFValidationLevels_1'").each(function() {
+        this.readOnly = true;
+    });
+    
+});
 
 function update_search_term(tag){
   var url = $("link[rel='canonical']").attr('href') + '/@@async_render_search_term';
@@ -727,8 +747,8 @@ function update_search_term(tag){
     dataType: 'html',
     data: {collection_uid: tag.dataset.collection_uid},
     cache: false,
-    // async: true provokes ConflictErrors when freezing a meeting
-    async: false,
+    // async: true provokes ConflictErrors when freezing a meeting???
+    async: true,
     success: function(data) {
       $(tag).replaceWith(data);
       $(tag).find("script").each(function(i) {
@@ -791,4 +811,45 @@ $('table.faceted-table-results').tableDnD({
    onDragClass: "dragindicator dragging",
 
 });
+}
+
+// do not redefine window.onbeforeunload or it breaks form unload protection
+$(document).ready(function () {
+    localStorage.removeItem("toggleAllDetails");
+});
+
+function toggleAllDetails() {
+  state = localStorage.getItem("toggleAllDetails");
+  if (!state || state == "1") {
+    localStorage.setItem("toggleAllDetails", "0");
+    $('.collapsible.active:not(.not-auto-collapsible-deactivable)').each(function() {$(this).click();});
+  } else {
+    localStorage.setItem("toggleAllDetails", "1");
+    $('.collapsible:not(.active):not(.not-auto-collapsible-activable)').each(function() {$(this).click();});
+  }
+}
+
+function selectAllVoteValues(tag) {
+  $('input[value='+tag.value+']').each(function() {
+    this.checked = true;
+    }
+  );
+}
+
+/* while scrolling on meeting manage available items sticky table header */
+function onScrollMeetingView() {
+  var iframe = $("iframe");
+  if (iframe.length) {
+    iframe_top = $("iframe")[0].getBoundingClientRect().top;
+    if ((iframe_top ) < 0) {
+      table = $("iframe").contents().find('table');
+      header = $("iframe").contents().find('table thead');
+      if (table.length && header.length) {
+        table_top = table.offset().top;
+        portal_header_height = $("#portal-header").height();
+        $("th", header).css("top",
+                            (table_top - iframe_top - (table_top - portal_header_height)).toString() + "px");
+      }
+    }
+  }
 }

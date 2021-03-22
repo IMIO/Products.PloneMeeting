@@ -2,15 +2,15 @@
 #
 # File: indexes.py
 #
-# Copyright (c) 2017 by Imio.be
-#
 # GNU General Public License (GPL)
 #
 
 from collective.contact.core.content.organization import IOrganization
-from DateTime import DateTime
+from collective.iconifiedcategory.indexes import content_category_uid
+from datetime import datetime
 from imio.annex.content.annex import IAnnex
-from imio.history.interfaces import IImioHistory
+from imio.helpers.content import _contained_objects
+from imio.history.utils import getLastWFAction
 from OFS.interfaces import IItem
 from plone import api
 from plone.indexer import indexer
@@ -18,12 +18,12 @@ from Products.PloneMeeting.config import EMPTY_STRING
 from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
-from Products.PloneMeeting.interfaces import IMeeting
+from Products.PloneMeeting.content.meeting import IMeeting
 from Products.PloneMeeting.interfaces import IMeetingContent
 from Products.PloneMeeting.interfaces import IMeetingItem
 from Products.PloneMeeting.utils import get_annexes
+from Products.PloneMeeting.utils import get_datagridfield_column_value
 from Products.PluginIndexes.common.UnIndex import _marker
-from zope.component import getAdapter
 
 
 REAL_ORG_UID_PATTERN = 'real_org_uid__{0}'
@@ -57,7 +57,15 @@ def sortable_title(obj):
     """
       Indexes the sortable_title of meeting based on meeting.date
     """
-    return obj.getDate().strftime('%Y%m%d%H%M')
+    return obj.date.strftime('%Y%m%d%H%M')
+
+
+@indexer(IMeeting)
+def meeting_date(obj):
+    """
+      Indexes the meeting.date
+    """
+    return obj.date
 
 
 @indexer(IMeetingItem)
@@ -73,20 +81,11 @@ def previous_review_state(obj):
     """
       Indexes the previous review_state, aka the review_state before current review_state
     """
-    try:
-        adapter = getAdapter(obj, IImioHistory, 'workflow')
-        wf_history = adapter.getHistory()
-    except KeyError:
-        return _marker
-
-    # check that there is more than one action triggered,
-    # or we are in the initial state and previous action is None...
-    if not wf_history or len(wf_history) == 1:
-        return _marker
-
-    # action [-1] is last triggered action, but we want the previous one...
-    previous_action = wf_history[-2]['review_state']
-    return previous_action
+    previous_action = None
+    event = getLastWFAction(obj, transition='before_last')
+    if event:
+        previous_action = event['review_state']
+    return previous_action or _marker
 
 
 @indexer(IMeetingItem)
@@ -96,18 +95,6 @@ def Description(obj):
       a TextField and that we store HTML data into it for MeetingItem
     """
     return obj.Description(mimetype='text/plain')
-
-
-@indexer(IItem)
-def getRawClassifier(obj):
-    """
-      Make sure this returns not 'None' because ZCatalog 3
-      does not want to index a 'None'...
-    """
-    classifier = obj.getRawClassifier()
-    if classifier is None:
-        return _marker
-    return classifier
 
 
 @indexer(IMeetingItem)
@@ -124,37 +111,37 @@ def reviewProcessInfo(obj):
       Compute a reviewProcessInfo, this concatenate the group managing item
       and the item review_state so it can be queryable in the catalog.
     """
-    item_state = obj.queryState()
+    item_state = obj.query_state()
     return '%s__reviewprocess__%s' % (
         obj.adapted()._getGroupManagingItem(item_state, theObject=False), item_state)
 
 
 @indexer(IMeetingItem)
-def linkedMeetingUID(obj):
+def meeting_uid(obj):
     """
       Store the linked meeting UID.
     """
-    res = ITEM_NO_PREFERRED_MEETING_VALUE
-    meeting = obj.getMeeting()
-    if meeting:
-        res = meeting.UID()
     # we use same 'None' value as for getPreferredMeeting so we may use the same
     # vocabulary in the meeting date/preferred meeting date faceted filters
+    res = ITEM_NO_PREFERRED_MEETING_VALUE
+    meeting_uid = obj.getMeeting(only_uid=True)
+    if meeting_uid:
+        res = meeting_uid
     return res
 
 
 @indexer(IMeetingItem)
-def linkedMeetingDate(obj):
+def item_meeting_date(obj):
     """
       Store the linked meeting date.
     """
     res = []
     meeting = obj.getMeeting()
     if meeting:
-        res = meeting.getDate()
+        res = meeting.date
     else:
         # for sorting it is necessary to have a date
-        res = DateTime('1950/01/01')
+        res = datetime(1950, 1, 1)
     return res
 
 
@@ -167,19 +154,25 @@ def getGroupsInCharge(obj):
 
 
 @indexer(IMeetingItem)
-def getPreferredMeetingDate(obj):
+def preferred_meeting_uid(obj):
+    """
+      Store the preferredMeeting.
+    """
+    preferredMeeting = obj.getPreferredMeeting()
+    return preferredMeeting
+
+
+@indexer(IMeetingItem)
+def preferred_meeting_date(obj):
     """
       Store the preferredMeeting date.
     """
     res = []
-    preferredMeetingUID = obj.getPreferredMeeting()
-    if preferredMeetingUID != ITEM_NO_PREFERRED_MEETING_VALUE:
-        # use uid_catalog because as getPreferredMeetingDate is in the portal_catalog
-        # if we clear and rebuild the portal_catalog, preferredMeetingUID will not be found...
-        uid_catalog = api.portal.get_tool('uid_catalog')
-        res = uid_catalog(UID=preferredMeetingUID)[0].getObject().getDate()
+    preferredMeeting = obj.getPreferredMeeting(theObject=True)
+    if preferredMeeting:
+        res = preferredMeeting.date
     else:
-        res = DateTime('1950/01/01')
+        res = datetime(1950, 1, 1)
     return res or _marker
 
 
@@ -230,18 +223,13 @@ def SearchableText_item(obj):
     return SearchableText(obj)
 
 
-@indexer(IMeeting)
-def SearchableText_meeting(obj):
-    return SearchableText(obj)
-
-
 @indexer(IAnnex)
 def SearchableText_annex(obj):
     return _marker
 
 
 @indexer(IMeetingItem)
-def sendToAuthority(obj):
+def send_to_authority(obj):
     """
       Index the MeetingItem.sendToAuthority to be searchable in a faceted navigation.
     """
@@ -252,20 +240,7 @@ def sendToAuthority(obj):
 
 
 @indexer(IMeetingItem)
-def hasAnnexesToPrint(obj):
-    """
-      Index the fact that an item has annexes to_print.
-    """
-    # use objectValues because with events order, an annex
-    # could be added but still not registered in the categorized_elements dict
-    for annex in get_annexes(obj):
-        if annex.to_print:
-            return '1'
-    return '0'
-
-
-@indexer(IMeetingItem)
-def getItemIsSigned(obj):
+def item_is_signed(obj):
     """
       Index the getItemIsSigned but in a faceted boolean compatible way.
     """
@@ -275,25 +250,62 @@ def getItemIsSigned(obj):
 
 
 @indexer(IMeetingItem)
-def hasAnnexesToSign(obj):
+def to_discuss(obj):
     """
-      Index the fact that an item has annexes to_sign/signed.
-      - '-1' is not to_sign;
-      - '0' is to_sign but not signed;
-      - '1' is signed.
+      Index the getToDiscuss but in a faceted boolean compatible way.
     """
+    if obj.getToDiscuss():
+        return '1'
+    return '0'
+
+
+@indexer(IMeetingItem)
+def annexes_index(obj):
+    """
+      Unique index with data relative to stored annexes :
+      - to_print :
+        - 'not_to_print' if contains annexes not to print;
+        - 'to_print' otherwise;
+      - confidential :
+        - 'not_confidential' if contains not confidential annexes;
+        - 'confidential' otherwise;
+      - publishable :
+        - 'not_publishable' if contains not publishable annexes;
+        - 'publishable' otherwise;
+      - to_sign/signed :
+        - 'not_to_sign' if contains not to sign annexes;
+        - 'to_sign' if contains to_sign but not signed annexes;
+        - 'signed' if contains signed annexes.
+    """
+    res = []
     # use objectValues because with events order, an annex
     # could be added but still not registered in the categorized_elements dict
-    res = []
     for annex in get_annexes(obj):
+        # to_print
+        if annex.to_print:
+            res.append('to_print')
+        else:
+            res.append('not_to_print')
+        # confidential
+        if annex.confidential:
+            res.append('confidential')
+        else:
+            res.append('not_confidential')
+        # publishable
+        if annex.publishable:
+            res.append('publishable')
+        else:
+            res.append('not_publishable')
+        # to_sign/signed
         if annex.to_sign:
             if annex.signed:
-                res.append('1')
+                res.append('signed')
             else:
-                res.append('0')
+                res.append('to_sign')
         else:
-            res.append('-1')
-    return res
+            res.append('not_to_sign')
+    # remove duplicates
+    return list(set(res))
 
 
 @indexer(IItem)
@@ -345,7 +357,7 @@ def _to_coded_adviser_index(obj, org_uid, advice_infos):
             # by default, a still editable advice is 'advice_under_edit'
             # and a no more editable advice is 'advice_given'
             advice_obj = getattr(obj, advice_infos['advice_id'])
-            suffixes.append('_%s' % advice_obj.queryState())
+            suffixes.append('_%s' % advice_obj.query_state())
         return suffixes
 
     res = []
@@ -411,6 +423,9 @@ def indexAdvisers(obj):
     # remove double entry, it could be the case for the 'advice_type' alone
     res = list(set(res))
     res.sort()
+    # store something when no advices. Query with 'not' in ZCatalog>=3 will retrieve it.
+    if not res:
+        res.append('_')
     return res
 
 
@@ -419,3 +434,43 @@ def get_full_title(obj):
     '''By default we hide the "My organization" level, but not in the indexed
        value as it is used in the contact widget.'''
     return obj.get_full_title(force_separator=True)
+
+
+@indexer(IMeetingItem)
+def contained_uids_item(obj):
+    """
+      Indexes the UID of every contained elements.
+    """
+    return [contained.UID() for contained in _contained_objects(obj)] or _marker
+
+
+@indexer(IMeeting)
+def contained_uids_meeting(obj):
+    """
+      Indexes the UID of every contained elements.
+    """
+    return [contained.UID() for contained in _contained_objects(obj)] or _marker
+
+
+@indexer(IMeetingItem)
+def content_category_uid_item(obj):
+    """
+      Indexes the content_category of every contained elements.
+    """
+    return content_category_uid(obj)
+
+
+@indexer(IMeetingItem)
+def committees_index_item(obj):
+    """
+      Indexes the committees of an item into "committees_index" index.
+    """
+    return obj.getCommittees() or EMPTY_STRING
+
+
+@indexer(IMeeting)
+def committees_index_meeting(obj):
+    """
+      Indexes the committees of a meeting into "committees_index" index.
+    """
+    return get_datagridfield_column_value(obj.committees, "row_id") or EMPTY_STRING

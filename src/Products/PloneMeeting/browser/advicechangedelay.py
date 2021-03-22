@@ -61,7 +61,7 @@ class AdviceDelaysView(BrowserView):
         else:
             # advice is automatic, only Managers and MeetingManagers can change an automatic advice delay
             # and only if the advice still could not be given or if it is currently editable
-            if not self.tool.isManager(self.context) or \
+            if not self.tool.isManager(self.cfg) or \
                not _checkPermission(ModifyPortalContent, self.context):
                 return False
 
@@ -108,7 +108,7 @@ class AdviceDelaysView(BrowserView):
         # MeetingManagers and advisers of the group
         # can access the delay changes history
         userAdviserOrgUids = self.tool.get_orgs_for_user(suffixes=['advisers'], the_objects=False)
-        if self.tool.isManager(self.context) or \
+        if self.tool.isManager(self.cfg) or \
            advice_uid in userAdviserOrgUids or \
            self.context.getProposingGroup() in self.tool.get_orgs_for_user(the_objects=False):
             return True
@@ -231,7 +231,7 @@ class AdviceChangeDelayForm(form.EditForm):
         else:
             # if it is an automatic advice, set the 'delay_for_automatic_adviser_changed_manually' to True
             self.context.adviceIndex[currentAdviceData['org']]['delay_for_automatic_adviser_changed_manually'] = True
-        self.context.updateLocalRoles()
+        self.context.update_local_roles()
         # add a line to the item's adviceIndex advice delay_changes_history
         member = api.user.get_current()
         history_data = {'action': (currentAdviceData['delay'], newAdviceData['delay']),
@@ -317,6 +317,6 @@ class AdviceReinitializeDelayView(BrowserView):
                         'comments': None}
         adviceInfos['delay_changes_history'].append(history_data)
         # update local roles that will update adviceIndex
-        self.context.updateLocalRoles()
+        self.context.update_local_roles()
         api.portal.show_message(_('Advice delay have been reinitialized for advice "${advice}"',
                                   mapping={'advice': adviceInfos['name']}), request=self.request)

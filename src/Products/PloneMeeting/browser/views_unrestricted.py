@@ -19,7 +19,7 @@ class UnrestrictedMethodsView(BrowserView):
         meeting = self.context.getMeeting()
         if meeting:
             tool = api.portal.get_tool('portal_plonemeeting')
-            return tool.formatMeetingDate(meeting, prefixed=True)
+            return tool.format_date(meeting.date, prefixed=True)
 
     def getLinkedMeetingDate(self):
         """
@@ -27,7 +27,7 @@ class UnrestrictedMethodsView(BrowserView):
         """
         meeting = self.context.getMeeting()
         if meeting:
-            return meeting.getDate()
+            return meeting.date
 
     @memoize
     def findFirstItemNumberForMeeting(self, meeting):
@@ -46,9 +46,9 @@ class UnrestrictedMethodsView(BrowserView):
         # could be unaccessible to the current user, for example by default a
         # meeting in state 'created' is not viewable by items creators
         brains = catalog.unrestrictedSearchResults(portal_type=cfg.getMeetingTypeName(),
-                                                   getDate={'query': meeting.getDate(),
-                                                            'range': 'max'},
-                                                   sort_on='getDate',
+                                                   meeting_date={'query': meeting.date,
+                                                                 'range': 'max'},
+                                                   sort_on='meeting_date',
                                                    sort_order='reverse')
         # while looking for previous meetings, the current meeting is
         # also returned so removes it from the brains
@@ -60,17 +60,17 @@ class UnrestrictedMethodsView(BrowserView):
         for brain in brains:
             # as we did an unrestrictedSearchResults in the portal_catalog
             # we need to do a _unrestrictedGetObject to get the object from the brain
-            meetingObj = brain._unrestrictedGetObject()
+            meeting = brain._unrestrictedGetObject()
             # either we have a firstItemNumber defined on the meeting
             # or -1, in this last case, we save number of items of the meeting
             # and we continue to the previous meeting
             # divide lastItem itemNumber by 100 so we are sure to ignore subnumbers
             # 308 will become 3 or 1400 will become 14
-            items = meetingObj.getItems(theObjects=False, ordered=True, unrestricted=True)
+            items = meeting.get_items(the_objects=False, ordered=True, unrestricted=True)
             lastItemNumber = items and items[-1].getItemNumber / 100 or 0
             numberOfItemsBefore += lastItemNumber
-            if not meetingObj.getFirstItemNumber() == -1:
-                previousFirstItemNumber = meetingObj.getFirstItemNumber()
+            if not meeting.first_item_number == -1:
+                previousFirstItemNumber = meeting.first_item_number
                 break
         # we return a number that would be the given p_meeting firstItemNumber
         return (previousFirstItemNumber + numberOfItemsBefore)
@@ -97,7 +97,7 @@ class ItemSign(BrowserView):
         with api.env.adopt_roles(['Manager', ]):
             itemIsSigned = not self.context.getItemIsSigned()
             self.context.setItemIsSigned(itemIsSigned)
-            notifyModifiedAndReindex(self.context, extra_idxs=['getItemIsSigned'])
+            notifyModifiedAndReindex(self.context, extra_idxs=['item_is_signed'])
 
         # check again if member can signItem now that it has been signed
         # by default, when an item is signed, it can not be unsigned

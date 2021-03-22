@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 
 from AccessControl import Unauthorized
+from imio.helpers.security import fplog
 from plone import api
 from Products.Five import BrowserView
 from Products.PloneMeeting.utils import _itemNumber_to_storedItemNumber
 from Products.PloneMeeting.utils import _storedItemNumber_to_itemNumber
-from Products.PloneMeeting.utils import fplog
 from zope.i18n import translate
 
 
@@ -54,13 +54,13 @@ class ChangeItemOrderView(BrowserView):
           This is an unrestricted method so a MeetingManager can change items
           order even if some items are no more movable because decided
           (and so no more 'Modify portal content' on it).
-          We double check that current user can actually mayChangeItemsOrder.
+          We double check that current user can actually may_change_items_order.
           Anyway, this method move an item, one level up/down or at a given position.
         """
-        # we do this unrestrictively but anyway respect the Meeting.mayChangeItemsOrder
+        # we do this unrestrictively but anyway respect the Meeting.may_change_items_order
         meeting = self.context.getMeeting()
 
-        if not meeting.wfConditions().mayChangeItemsOrder():
+        if not meeting.wfConditions().may_change_items_order():
             raise Unauthorized
 
         oldIndex = self.context.getItemNumber()
@@ -80,8 +80,8 @@ class ChangeItemOrderView(BrowserView):
                     type='warning')
                 return False
 
-        nbOfItems = len(meeting.getRawItems())
-        items = meeting.getItems(ordered=True)
+        nbOfItems = len(meeting.get_raw_items())
+        items = meeting.get_items(ordered=True)
 
         # Calibrate and validate moveValue
         if moveType == 'number':
@@ -107,7 +107,7 @@ class ChangeItemOrderView(BrowserView):
                (moveNumber > _to_integer(last_item_number + 100)) or \
                (not moveNumberIsInteger and len(wishedNumber.split('.')[1]) > 2) or \
                (not moveNumberIsInteger and
-                (not meeting.getItemByNumber(moveNumber - 1) or
+                (not meeting.get_item_by_number(moveNumber - 1) or
                  moveNumber - 1 == oldIndex)):
                 plone_utils.addPortalMessage(
                     translate(msgid='item_illegal_move',
@@ -159,16 +159,16 @@ class ChangeItemOrderView(BrowserView):
                 else:
                     # moveType == 'down'
                     otherNumber = self.context.getSiblingItem('next')
-                otherItem = meeting.getItemByNumber(otherNumber)
+                otherItem = meeting.get_item_by_number(otherNumber)
                 self.context.setItemNumber(otherItem.getItemNumber())
                 otherItem.setItemNumber(oldIndex)
             else:
                 # Move the item to an absolute position
                 self.context.setItemNumber(moveNumber)
                 # get items again now that context number was updated
-                items = meeting.getItems(ordered=True)
+                items = meeting.get_items(ordered=True)
                 oldIndexIsInteger = _is_integer(oldIndex)
-                oldIndexHasSubnumbers = meeting.getItemByNumber(oldIndex + 1)
+                oldIndexHasSubnumbers = meeting.get_item_by_number(oldIndex + 1)
                 if moveNumber < oldIndex:
                     # We moved the item up
                     for item in items:
@@ -327,7 +327,7 @@ class ChangeItemOrderView(BrowserView):
                                         item.setItemNumber(itemNumber - 1)
 
         # when items order on meeting changed, it is considered modified,
-        # do this before updateItemReferences
+        # do this before update_item_references
         meeting.notifyModified()
 
         # add logging message to fingerpointing log
@@ -339,5 +339,5 @@ class ChangeItemOrderView(BrowserView):
         fplog('change_item_order', extras=extras)
 
         # update item references starting from minus between oldIndex and new itemNumber
-        meeting.updateItemReferences(startNumber=min(oldIndex, self.context.getItemNumber()))
+        meeting.update_item_references(start_number=min(oldIndex, self.context.getItemNumber()))
         return True

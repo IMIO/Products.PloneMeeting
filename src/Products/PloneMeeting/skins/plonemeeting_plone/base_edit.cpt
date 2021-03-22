@@ -20,7 +20,7 @@ to use <fieldset> in the edit form.
                    fieldset request/fieldset|options/fieldset|default_fieldset;
                    fields python: view.fields(fieldsets);
                    dummy python:context.at_isEditable(fields);
-                   portal_type python:context.meta_type in ['Meeting', 'MeetingItem',] and context.meta_type.lower() or context.getPortalTypeName().lower().replace(' ', '_');
+                   portal_type python:context.meta_type in ['MeetingItem',] and context.meta_type.lower() or context.getPortalTypeName().lower().replace(' ', '_');
                    portal_url nocall:context/portal_url;
                    portal portal_url/getPortalObject;
                    base_macros context/edit_macros/macros;
@@ -88,6 +88,9 @@ to use <fieldset> in the edit form.
 
     <metal:fill fill-slot="main">
       <metal:main define-macro="main">
+        <span tal:condition="python: errors and context.portal_type=='MeetingConfig'">
+          <tal:block replace="structure python: context.render_editform_errors(errors)" />
+        </span>
         <metal:use_header use-macro="header_macro" />
         <metal:use_typedescription use-macro="typedescription_macro" />
         <metal:use_body use-macro="body_macro" />

@@ -1,23 +1,18 @@
 # -*- coding: utf-8 -*-
 #
-# File: MeetingConfig.py
-#
-# Copyright (c) 2019 by Imio.be
-# Generator: ArchGenXML Version 2.7
-#            http://plone.org/products/archgenxml
-#
 # GNU General Public License (GPL)
 #
 
 from AccessControl import ClassSecurityInfo
 from AccessControl import Unauthorized
 from collections import OrderedDict
-from collective.contact.plonegroup.utils import get_all_suffixes
+from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.contact.plonegroup.utils import get_organization
 from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_plone_groups
 from collective.datagridcolumns.MultiSelectColumn import MultiSelectColumn
-from collective.eeafaceted.batchactions.interfaces import IBatchActionsMarker
+from collective.datagridcolumns.SelectColumn import SelectColumn
+from collective.datagridcolumns.TextAreaColumn import TextAreaColumn
 from collective.eeafaceted.collectionwidget.interfaces import IDashboardCollection
 from collective.eeafaceted.collectionwidget.utils import _get_criterion
 from collective.eeafaceted.collectionwidget.utils import _updateDefaultCollectionFor
@@ -25,14 +20,17 @@ from collective.eeafaceted.dashboard.utils import enableFacetedDashboardFor
 from collective.iconifiedcategory.utils import get_category_object
 from copy import deepcopy
 from DateTime import DateTime
+from datetime import datetime
 from eea.facetednavigation.interfaces import ICriteria
 from eea.facetednavigation.widgets.resultsperpage.widget import Widget as ResultsPerPageWidget
 from ftw.labels.interfaces import ILabeling
 from imio.helpers.cache import cleanRamCache
 from imio.helpers.cache import cleanVocabularyCacheFor
+from imio.helpers.content import get_vocab
 from persistent.list import PersistentList
 from plone import api
 from plone.app.portlets.portlets import navigation
+from plone.app.uuid.utils import uuidToObject
 from plone.memoize import ram
 from plone.portlets.interfaces import IPortletAssignmentMapping
 from plone.portlets.interfaces import IPortletManager
@@ -63,7 +61,6 @@ from Products.CMFPlone.utils import safe_unicode
 from Products.DataGridField import DataGridField
 from Products.DataGridField.CheckboxColumn import CheckboxColumn
 from Products.DataGridField.Column import Column
-from Products.DataGridField.SelectColumn import SelectColumn
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
 from Products.PloneMeeting.config import CLONE_TO_OTHER_MC_ACTION_SUFFIX
@@ -78,8 +75,8 @@ from Products.PloneMeeting.config import ITEM_INSERT_METHODS
 from Products.PloneMeeting.config import ITEMTEMPLATESMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import MEETING_CONFIG
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
-from Products.PloneMeeting.config import MEETINGROLES
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
+from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
 from Products.PloneMeeting.config import PROJECTNAME
 from Products.PloneMeeting.config import READER_USECASES
 from Products.PloneMeeting.config import TOOL_FOLDER_ANNEX_TYPES
@@ -90,31 +87,39 @@ from Products.PloneMeeting.config import TOOL_FOLDER_POD_TEMPLATES
 from Products.PloneMeeting.config import TOOL_FOLDER_RECURRING_ITEMS
 from Products.PloneMeeting.config import TOOL_FOLDER_SEARCHES
 from Products.PloneMeeting.config import WriteRiskyConfig
+from Products.PloneMeeting.content.meeting import IMeeting
+from Products.PloneMeeting.content.meeting import Meeting
 from Products.PloneMeeting.indexes import DELAYAWARE_ROW_ID_PATTERN
 from Products.PloneMeeting.indexes import REAL_ORG_UID_PATTERN
-from Products.PloneMeeting.interfaces import IMeeting
 from Products.PloneMeeting.interfaces import IMeetingAdviceWorkflowActions
 from Products.PloneMeeting.interfaces import IMeetingAdviceWorkflowConditions
 from Products.PloneMeeting.interfaces import IMeetingConfig
+from Products.PloneMeeting.interfaces import IMeetingDashboardBatchActionsMarker
 from Products.PloneMeeting.interfaces import IMeetingItem
+from Products.PloneMeeting.interfaces import IMeetingItemDashboardBatchActionsMarker
 from Products.PloneMeeting.interfaces import IMeetingItemWorkflowActions
 from Products.PloneMeeting.interfaces import IMeetingItemWorkflowConditions
 from Products.PloneMeeting.interfaces import IMeetingWorkflowActions
 from Products.PloneMeeting.interfaces import IMeetingWorkflowConditions
-from Products.PloneMeeting.Meeting import Meeting
 from Products.PloneMeeting.MeetingItem import MeetingItem
-from Products.PloneMeeting.model.adaptations import getValidationReturnedStates
+from Products.PloneMeeting.model.adaptations import _getValidationReturnedStates
 from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
 from Products.PloneMeeting.profiles import MeetingConfigDescriptor
+from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import computeCertifiedSignatures
 from Products.PloneMeeting.utils import createOrUpdatePloneGroup
 from Products.PloneMeeting.utils import duplicate_workflow
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
 from Products.PloneMeeting.utils import get_annexes
+from Products.PloneMeeting.utils import get_datagridfield_column_value
+from Products.PloneMeeting.utils import get_dx_attrs
+from Products.PloneMeeting.utils import get_dx_schema
+from Products.PloneMeeting.utils import get_item_validation_wf_suffixes
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getCustomSchemaFields
 from Products.PloneMeeting.utils import listifySignatures
 from Products.PloneMeeting.utils import reviewersFor
+from Products.PloneMeeting.utils import translate_list
 from Products.PloneMeeting.utils import updateAnnexesAccess
 from Products.PloneMeeting.validators import WorkflowInterfacesValidator
 from z3c.form.i18n import MessageFactory as _z3c_form
@@ -290,7 +295,7 @@ schema = Schema((
             description="Assembly",
             description_msgid="assembly_descr",
             label='Assembly',
-            label_msgid='PloneMeeting_label_assembly',
+            label_msgid='title_default_assembly',
             i18n_domain='PloneMeeting',
         ),
         default_content_type='text/plain',
@@ -305,7 +310,7 @@ schema = Schema((
             description="AssemblyStaves",
             description_msgid="assembly_staves_descr",
             label='AssemblyStaves',
-            label_msgid='PloneMeeting_label_assemblyStaves',
+            label_msgid='title_default_assembly_staves',
             i18n_domain='PloneMeeting',
         ),
         default_content_type='text/plain',
@@ -320,7 +325,7 @@ schema = Schema((
             description="Signatures",
             description_msgid="signatures_descr",
             label='Signatures',
-            label_msgid='PloneMeeting_label_signatures',
+            label_msgid='title_default_signatures',
             i18n_domain='PloneMeeting',
         ),
         default_content_type='text/plain',
@@ -336,7 +341,7 @@ schema = Schema((
             columns={'signatureNumber':
                         SelectColumn(
                             _("Certified signatures signature number"),
-                            vocabulary="listSignatureNumbers",
+                            vocabulary="listNumbers",
                             col_description=_("Select the signature number, keep signatures ordered by number."), ),
                      'name':
                         Column(_("Certified signatures signatory name"),
@@ -476,41 +481,6 @@ schema = Schema((
         multiValued=1,
         vocabulary='listUsedMeetingAttributes',
         default=defValues.usedMeetingAttributes,
-        enforceVocabulary=True,
-        write_permission="PloneMeeting: Write risky config",
-    ),
-    LinesField(
-        name='historizedMeetingAttributes',
-        widget=MultiSelectionWidget(
-            description="HistorizedMeetingAttributes",
-            description_msgid="historized_meeting_attrs_descr",
-            size=10,
-            format="checkbox",
-            label='Historizedmeetingattributes',
-            label_msgid='PloneMeeting_label_historizedMeetingAttributes',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="data",
-        multiValued=1,
-        vocabulary='listMeetingAttributes',
-        default=defValues.historizedMeetingAttributes,
-        enforceVocabulary=True,
-        write_permission="PloneMeeting: Write risky config",
-    ),
-    LinesField(
-        name='recordMeetingHistoryStates',
-        widget=MultiSelectionWidget(
-            description="RecordMeetingHistoryStates",
-            description_msgid="record_meeting_history_states_descr",
-            format="checkbox",
-            label='Recordmeetinghistorystates',
-            label_msgid='PloneMeeting_label_recordMeetingHistoryStates',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="data",
-        multiValued=1,
-        vocabulary='listMeetingStates',
-        default=defValues.recordMeetingHistoryStates,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
@@ -807,45 +777,6 @@ schema = Schema((
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
-    StringField(
-        name='publishDeadlineDefault',
-        default=defValues.publishDeadlineDefault,
-        widget=StringField._properties['widget'](
-            description="PublishDeadlineDefault",
-            description_msgid="publish_deadline_default_descr",
-            label='Publishdeadlinedefault',
-            label_msgid='PloneMeeting_label_publishDeadlineDefault',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="data",
-        write_permission="PloneMeeting: Write risky config",
-    ),
-    StringField(
-        name='freezeDeadlineDefault',
-        default=defValues.freezeDeadlineDefault,
-        widget=StringField._properties['widget'](
-            description="FreezeDeadlineDefault",
-            description_msgid="freeze_deadline_default_descr",
-            label='Freezedeadlinedefault',
-            label_msgid='PloneMeeting_label_freezeDeadlineDefault',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="data",
-        write_permission="PloneMeeting: Write risky config",
-    ),
-    StringField(
-        name='preMeetingDateDefault',
-        default=defValues.preMeetingDateDefault,
-        widget=StringField._properties['widget'](
-            description="PreMeetingDateDefault",
-            description_msgid="pre_meeting_date_default_descr",
-            label='Premeetingdatedefault',
-            label_msgid='PloneMeeting_label_preMeetingDateDefault',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="data",
-        write_permission="PloneMeeting: Write risky config",
-    ),
     DataGridField(
         name='meetingConfigsToCloneTo',
         widget=DataGridField._properties['widget'](
@@ -1031,38 +962,6 @@ schema = Schema((
         schemata="data",
         write_permission="PloneMeeting: Write risky config",
     ),
-    LinesField(
-        name='usedPollTypes',
-        widget=InAndOutWidget(
-            description="UsedPollTypes",
-            description_msgid="used_poll_types_descr",
-            label='Usedpolltypes',
-            label_msgid='PloneMeeting_label_usedPollTypes',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="data",
-        multiValued=1,
-        vocabulary='listPollTypes',
-        default=defValues.usedPollTypes,
-        enforceVocabulary=True,
-        write_permission="PloneMeeting: Write risky config",
-    ),
-    StringField(
-        name='defaultPollType',
-        widget=SelectionWidget(
-            description="DefaultPollType",
-            description_msgid="default_poll_type_descr",
-            format="select",
-            label='Defaultpolltype',
-            label_msgid='PloneMeeting_label_defaultPollType',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="data",
-        vocabulary='listPollTypes',
-        default=defValues.defaultPollType,
-        enforceVocabulary=True,
-        write_permission="PloneMeeting: Write risky config",
-    ),
     StringField(
         name='itemWorkflow',
         widget=SelectionWidget(
@@ -1155,40 +1054,6 @@ schema = Schema((
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
-        name='itemDecidedStates',
-        widget=MultiSelectionWidget(
-            description="ItemDecidedStates",
-            description_msgid="item_decided_states_descr",
-            format="checkbox",
-            label='Itemdecidedstates',
-            label_msgid='PloneMeeting_label_itemDecidedStates',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="workflow",
-        multiValued=1,
-        vocabulary='listItemStates',
-        default=defValues.itemDecidedStates,
-        enforceVocabulary=True,
-        write_permission="PloneMeeting: Write risky config",
-    ),
-    LinesField(
-        name='itemPositiveDecidedStates',
-        widget=MultiSelectionWidget(
-            description="ItemPositiveDecidedStates",
-            description_msgid="item_positive_decided_states_descr",
-            format="checkbox",
-            label='Itempositivedecidedstates',
-            label_msgid='PloneMeeting_label_itemPositiveDecidedStates',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="workflow",
-        multiValued=1,
-        vocabulary='listItemStates',
-        default=defValues.itemPositiveDecidedStates,
-        enforceVocabulary=True,
-        write_permission="PloneMeeting: Write risky config",
-    ),
-    LinesField(
         name='workflowAdaptations',
         widget=MultiSelectionWidget(
             description="WorkflowAdaptations",
@@ -1204,6 +1069,70 @@ schema = Schema((
         default=defValues.workflowAdaptations,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
+    ),
+    DataGridField(
+        name='itemWFValidationLevels',
+        widget=DataGridField._properties['widget'](
+            description="ItemWFValidationLevels",
+            description_msgid="item_wf_validation_levels_descr",
+            columns={'state':
+                        Column("Item WF validation levels state",
+                               col_description="Item WF validation levels state description.",
+                               required=True),
+                     'state_title':
+                        Column("Item WF validation levels state title",
+                               col_description="Item WF validation levels state title description.",
+                               required=True),
+                     'leading_transition':
+                        Column("Item WF validation levels leading transition",
+                               col_description="Item WF validation levels leading transition description.",
+                               required=True),
+                     'leading_transition_title':
+                        Column("Item WF validation levels leading transition title",
+                               col_description="Item WF validation levels leading transition title description.",
+                               required=True),
+                     'back_transition':
+                        Column("Item WF validation levels back transition",
+                               col_description="Item WF validation levels back transition description.",
+                               required=True),
+                     'back_transition_title':
+                        Column("Item WF validation levels back transition title",
+                               col_description="Item WF validation levels back transition title description.",
+                               required=True),
+                     'suffix':
+                        SelectColumn("Item WF validation levels suffix",
+                                     vocabulary_factory=u'collective.contact.plonegroup.functions',
+                                     col_description="Item WF validation levels suffix description.",
+                                     default='1'),
+                     'extra_suffixes':
+                        MultiSelectColumn(
+                            "Item WF validation levels extra suffixes",
+                            vocabulary_factory=u'collective.contact.plonegroup.functions',
+                            col_description="Item WF validation levels extra suffixes description."),
+                     'enabled':
+                        SelectColumn("Item WF validation levels enabled",
+                                     vocabulary="listBooleanVocabulary",
+                                     col_description="Item WF validation levels enabled description.",
+                                     default='1'),
+                     },
+            label='Itemwfvalidationlevels',
+            label_msgid='PloneMeeting_label_itemWFValidationLevels',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="workflow",
+        default=defValues.itemWFValidationLevels,
+        allow_oddeven=True,
+        write_permission="PloneMeeting: Write risky config",
+        columns=('state',
+                 'state_title',
+                 'leading_transition',
+                 'leading_transition_title',
+                 'back_transition',
+                 'back_transition_title',
+                 'suffix',
+                 'extra_suffixes',
+                 'enabled'),
+        allow_empty_rows=False,
     ),
     LinesField(
         name='transitionsToConfirm',
@@ -1411,6 +1340,70 @@ schema = Schema((
         vocabulary='listDisplayAvailableItemsTo',
         default=defValues.displayAvailableItemsTo,
         enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    LinesField(
+        name='redirectToNextMeeting',
+        widget=MultiSelectionWidget(
+            description="RedirectToNextMeeting",
+            description_msgid="redirect_to_next_meeting_descr",
+            format="checkbox",
+            label='Redirecttonextmeeting',
+            label_msgid='PloneMeeting_label_redirectToNextMeeting',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="gui",
+        multiValued=1,
+        vocabulary='listRedirectToNextMeeting',
+        default=defValues.redirectToNextMeeting,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    LinesField(
+        name='itemsVisibleFields',
+        widget=InAndOutWidget(
+            description="ItemsVisibleFields",
+            description_msgid="items_visible_fields_descr",
+            label='Itemsvisiblefields',
+            label_msgid='PloneMeeting_label_itemsVisibleFields',
+            i18n_domain='PloneMeeting',
+            size='10',
+        ),
+        schemata="gui",
+        vocabulary='listItemsVisibleFields',
+        default=defValues.itemsVisibleFields,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    LinesField(
+        name='itemsNotViewableVisibleFields',
+        widget=InAndOutWidget(
+            description="ItemsNotViewableVisibleFields",
+            description_msgid="items_not_viewable_visible_fields_descr",
+            label='Itemsnotviewablevisiblefields',
+            label_msgid='PloneMeeting_label_itemsNotViewableVisibleFields',
+            i18n_domain='PloneMeeting',
+            size='10',
+        ),
+        schemata="gui",
+        vocabulary='listItemsNotViewableVisibleFields',
+        default=defValues.itemsNotViewableVisibleFields,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    TextField(
+        name='itemsNotViewableVisibleFieldsTALExpr',
+        allowable_content_types=('text/plain',),
+        widget=TextAreaWidget(
+            description="ItemsNotViewableVisibleFieldsTALExpr",
+            description_msgid="items_not_viewable_visible_fields_tal_expr_descr",
+            label='Itemsnotviewablevisiblefieldstalexpr',
+            label_msgid='PloneMeeting_label_itemsNotViewableVisibleFieldsTALExpr',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="gui",
+        default=defValues.itemsNotViewableVisibleFieldsTALExpr,
+        default_content_type='text/plain',
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
@@ -1853,17 +1846,19 @@ schema = Schema((
         schemata="advices",
         write_permission="PloneMeeting: Write risky config",
     ),
-    BooleanField(
-        name='keepAccessToItemWhenAdviceIsGiven',
-        default=defValues.keepAccessToItemWhenAdviceIsGiven,
-        widget=BooleanField._properties['widget'](
-            description="KeepAccessToItemWhenAdviceIsGiven",
-            description_msgid="keep_access_to_item_when_advice_is_given_descr",
-            label='Keepaccesstoitemwhenadviceisgiven',
-            label_msgid='PloneMeeting_label_keepAccessToItemWhenAdviceIsGiven',
+    StringField(
+        name='keepAccessToItemWhenAdvice',
+        default=defValues.keepAccessToItemWhenAdvice,
+        widget=SelectionWidget(
+            description="KeepAccessToItemWhenAdvice",
+            description_msgid="keep_access_to_item_when_advice_descr",
+            label='Keepaccesstoitemwhenadvice',
+            label_msgid='PloneMeeting_label_keepAccessToItemWhenAdvice',
             i18n_domain='PloneMeeting',
         ),
         schemata="advices",
+        vocabulary_factory='Products.PloneMeeting.vocabularies.keep_access_to_item_when_advice_vocabulary',
+        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
     BooleanField(
@@ -2315,6 +2310,84 @@ schema = Schema((
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
+    LinesField(
+        name='orderedCommitteeContacts',
+        widget=InAndOutWidget(
+            description="OrderedCommitteeContacts",
+            description_msgid="ordered_committee_contacts_descr",
+            label='Orderedcommitteecontacts',
+            label_msgid='PloneMeeting_label_orderedCommitteeContacts',
+            i18n_domain='PloneMeeting',
+            size='20',
+        ),
+        schemata="committees",
+        multiValued=1,
+        vocabulary_factory='Products.PloneMeeting.vocabularies.simplified_selectable_heldpositions_vocabulary',
+        default=defValues.orderedCommitteeContacts,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    DataGridField(
+        name='committees',
+        widget=DataGridField._properties['widget'](
+            description="Committees",
+            description_msgid="committees_descr",
+            columns={'row_id':
+                        Column("Committee row id",
+                               visible=False),
+                     'label':
+                        Column("Committee label", required=True),
+                     'acronym':
+                        Column("Committee acronym"),
+                     'default_place':
+                        Column("Committee default place",
+                               col_description="committees_default_place_col_description"),
+                     'default_assembly':
+                        TextAreaColumn("Committee default assembly",
+                                       col_description="committees_default_assembly_col_description"),
+                     'default_signatures':
+                        TextAreaColumn("Committee default signatures",
+                                       col_description="committees_default_signatures_col_description"),
+                     'default_attendees':
+                        MultiSelectColumn("Committee default attendees",
+                                          col_description="committees_default_attendees_col_description",
+                                          vocabulary="listSelectableCommitteeAttendees"),
+                     'default_signatories':
+                        MultiSelectColumn("Committee default signatories",
+                                          col_description="committees_default_signatories_col_description",
+                                          vocabulary="listSelectableCommitteeAttendees"),
+                     'using_groups':
+                        MultiSelectColumn("Committee using groups",
+                                          col_description="committees_using_groups_col_description",
+                                          vocabulary="listSelectableProposingGroups"),
+                     'auto_from':
+                        MultiSelectColumn("Committee auto from",
+                                          col_description="committees_auto_from_col_description",
+                                          vocabulary="listSelectableCommitteeAutoFrom"),
+                     'supplements':
+                        SelectColumn("Committee supplements",
+                                     col_description="committees_supplements_col_description",
+                                     vocabulary="listNumbersFromZero",
+                                     default='0'),
+                     'enabled':
+                        SelectColumn("Committee enabled?",
+                                     vocabulary="listBooleanVocabulary",
+                                     default='1'), },
+            label='Committees',
+            label_msgid='PloneMeeting_label_committees',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="committees",
+        default=defValues.committees,
+        allow_oddeven=True,
+        write_permission="PloneMeeting: Write risky config",
+        columns=('row_id', 'label', 'acronym', 'default_place',
+                 'default_assembly', 'default_signatures',
+                 'default_attendees', 'default_signatories',
+                 'using_groups', 'auto_from',
+                 'supplements', 'enabled'),
+        allow_empty_rows=False,
+    ),
     BooleanField(
         name='useVotes',
         default=defValues.useVotes,
@@ -2324,7 +2397,6 @@ schema = Schema((
             label='Usevotes',
             label_msgid='PloneMeeting_label_useVotes',
             i18n_domain='PloneMeeting',
-            visible=False,
         ),
         schemata="votes",
         write_permission="PloneMeeting: Write risky config",
@@ -2338,12 +2410,43 @@ schema = Schema((
             label='Votesencoder',
             label_msgid='PloneMeeting_label_votesEncoder',
             i18n_domain='PloneMeeting',
-            visible=False,
         ),
         schemata="votes",
         multiValued=1,
         vocabulary='listVotesEncoders',
         default=defValues.votesEncoder,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    LinesField(
+        name='usedPollTypes',
+        widget=InAndOutWidget(
+            description="UsedPollTypes",
+            description_msgid="used_poll_types_descr",
+            label='Usedpolltypes',
+            label_msgid='PloneMeeting_label_usedPollTypes',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="votes",
+        multiValued=1,
+        vocabulary='listPollTypes',
+        default=defValues.usedPollTypes,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    StringField(
+        name='defaultPollType',
+        widget=SelectionWidget(
+            description="DefaultPollType",
+            description_msgid="default_poll_type_descr",
+            format="select",
+            label='Defaultpolltype',
+            label_msgid='PloneMeeting_label_defaultPollType',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="votes",
+        vocabulary='listPollTypes',
+        default=defValues.defaultPollType,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
@@ -2356,7 +2459,6 @@ schema = Schema((
             label='Usedvotevalues',
             label_msgid='PloneMeeting_label_usedVoteValues',
             i18n_domain='PloneMeeting',
-            visible=False,
         ),
         schemata="votes",
         multiValued=1,
@@ -2365,19 +2467,37 @@ schema = Schema((
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
-    StringField(
-        name='defaultVoteValue',
-        widget=SelectionWidget(
-            description="DefaultVoteValue",
-            description_msgid="default_vote_value_descr",
-            label='Defaultvotevalue',
-            label_msgid='PloneMeeting_label_defaultVoteValue',
+    LinesField(
+        name='firstLinkedVoteUsedVoteValues',
+        widget=MultiSelectionWidget(
+            description="FirstLinkedVoteUsedVoteValues",
+            description_msgid="first_linked_vote_used_vote_values_descr",
+            format="checkbox",
+            label='Firstlinkedvoteusedvotevalues',
+            label_msgid='PloneMeeting_label_firstLinkedVoteUsedVoteValues',
             i18n_domain='PloneMeeting',
-            visible=False,
         ),
         schemata="votes",
+        multiValued=1,
         vocabulary='listAllVoteValues',
-        default=defValues.defaultVoteValue,
+        default=defValues.firstLinkedVoteUsedVoteValues,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    LinesField(
+        name='nextLinkedVotesUsedVoteValues',
+        widget=MultiSelectionWidget(
+            description="NextLinkedVotesUsedVoteValues",
+            description_msgid="next_linked_votes_used_vote_values_descr",
+            format="checkbox",
+            label='nextlinkedvotesusedvotevalues',
+            label_msgid='PloneMeeting_label_nextLinkedVotesUsedVoteValues',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="votes",
+        multiValued=1,
+        vocabulary='listAllVoteValues',
+        default=defValues.nextLinkedVotesUsedVoteValues,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
@@ -2391,24 +2511,25 @@ schema = Schema((
             label='Votecondition',
             label_msgid='PloneMeeting_label_voteCondition',
             i18n_domain='PloneMeeting',
-            visible=False,
         ),
         schemata="votes",
         write_permission="PloneMeeting: Write risky config",
     ),
-    StringField(
-        name='meetingItemTemplateToStoreAsAnnex',
-        widget=SelectionWidget(
-            description="MeetingItemTemplateToStoreAsAnnex",
-            description_msgid="meeting_item_template_to_store_as_annex_descr",
-            format="select",
-            label='Meetingitemtemplatetostoreasannex',
-            label_msgid='PloneMeeting_label_meetingItemTemplateToStoreAsAnnex',
+    LinesField(
+        name='meetingItemTemplatesToStoreAsAnnex',
+        widget=MultiSelectionWidget(
+            description="MeetingItemTemplatesToStoreAsAnnex",
+            description_msgid="meeting_item_templates_to_store_as_annex_descr",
+            format="checkbox",
+            label='Meetingitemtemplatestostoreasannex',
+            label_msgid='PloneMeeting_label_meetingItemTemplatesToStoreAsAnnex',
             i18n_domain='PloneMeeting',
+            visible=True,
         ),
         schemata="doc",
+        multiValued=1,
         vocabulary_factory='Products.PloneMeeting.vocabularies.itemtemplatesstorableasannexvocabulary',
-        default=defValues.meetingItemTemplateToStoreAsAnnex,
+        default=defValues.meetingItemTemplatesToStoreAsAnnex,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
@@ -2442,13 +2563,15 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     # Information about each sub-folder that will be created within a meeting config.
     subFoldersInfo = {
         TOOL_FOLDER_CATEGORIES: (('Categories', 'Folder'),
-                                 ('MeetingCategory', ),
+                                 ('meetingcategory', ),
                                  ()
                                  ),
+
         TOOL_FOLDER_CLASSIFIERS: (('Classifiers', 'Folder'),
-                                  ('MeetingCategory', ),
+                                  ('meetingcategory', ),
                                   ()
                                   ),
+
         TOOL_FOLDER_SEARCHES: (('Searches', 'Folder'),
                                ('Folder', ),
                                # 'items' is a reserved word
@@ -2486,21 +2609,36 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     defaultWorkflows = ('meetingitem_workflow', 'meeting_workflow')
 
     # Names of workflow adaptations, ORDER IS IMPORTANT!
-    wfAdaptations = ('no_global_observation', 'creator_initiated_decisions',
-                     'only_creator_may_delete', 'pre_validation',
-                     'pre_validation_keep_reviewer_permissions', 'items_come_validated',
-                     'archiving', 'no_publication', 'no_proposal', 'everyone_reads_all',
-                     'reviewers_take_back_validated_item', 'creator_edits_unless_closed',
-                     'presented_item_back_to_itemcreated', 'presented_item_back_to_proposed',
-                     'presented_item_back_to_prevalidated',
-                     'return_to_proposing_group', 'return_to_proposing_group_with_last_validation',
+    wfAdaptations = ('only_creator_may_delete',
+                     'accepted_but_modified',
+                     'postpone_next_meeting',
+                     'mark_not_applicable',
+                     'removed',
+                     'removed_and_duplicated',
+                     'refused',
+                     'delayed',
+                     'pre_accepted',
+                     'no_publication',
+                     'reviewers_take_back_validated_item',
+                     'presented_item_back_to_validation_state',
+                     'return_to_proposing_group',
+                     'return_to_proposing_group_with_last_validation',
                      'return_to_proposing_group_with_all_validations',
                      'decide_item_when_back_to_meeting_from_returned_to_proposing_group',
-                     'hide_decisions_when_under_writing', 'waiting_advices',
-                     'accepted_out_of_meeting', 'accepted_out_of_meeting_and_duplicated',
-                     'accepted_out_of_meeting_emergency', 'accepted_out_of_meeting_emergency_and_duplicated',
-                     'postpone_next_meeting', 'mark_not_applicable',
-                     'removed', 'removed_and_duplicated', 'refused', 'meetingmanager_correct_closed_meeting')
+                     'hide_decisions_when_under_writing',
+                     'waiting_advices',
+                     'waiting_advices_from_every_val_levels',
+                     'waiting_advices_from_before_last_val_level',
+                     'waiting_advices_from_last_val_level',
+                     'waiting_advices_adviser_send_back',
+                     'waiting_advices_proposing_group_send_back',
+                     'waiting_advices_adviser_may_validate',
+                     'waiting_advices_given_advices_required_to_validate',
+                     'accepted_out_of_meeting',
+                     'accepted_out_of_meeting_and_duplicated',
+                     'accepted_out_of_meeting_emergency',
+                     'accepted_out_of_meeting_emergency_and_duplicated',
+                     'meetingmanager_correct_closed_meeting')
 
     def _searchesInfo(self):
         """Informations used to create DashboardCollections in the searches."""
@@ -2959,7 +3097,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                          'v': ['created', 'frozen', 'published']},
                     ],
                     'sort_on': u'sortable_title',
-                    'sort_reversed': True,
+                    'sort_reversed': False,
                     'showNumberOfItems': False,
                     'tal_condition': '',
                     'roles_bypassing_talcondition': ['Manager', ]
@@ -2976,7 +3114,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                         {'i': 'review_state',
                          'o': 'plone.app.querystring.operation.selection.is',
                          'v': ['decided', 'closed']},
-                        {'i': 'getDate',
+                        {'i': 'meeting_date',
                          'o': 'plone.app.querystring.operation.date.largerThanRelativeDate',
                          'v': '60'},
                         {'i': 'CompoundCriterion',
@@ -2984,7 +3122,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                          'v': 'last-decisions'},
                     ],
                     'sort_on': u'sortable_title',
-                    'sort_reversed': True,
+                    'sort_reversed': False,
                     'showNumberOfItems': False,
                     'tal_condition': '',
                     'roles_bypassing_talcondition': ['Manager', ]
@@ -3078,6 +3216,23 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
         self.getField('powerObservers').set(self, value, **kwargs)
 
+    security.declareProtected(WriteRiskyConfig, 'setCommittees')
+
+    def setCommittees(self, value, **kwargs):
+        '''Overrides the field 'committees' mutator to manage
+           the 'row_id' column manually.  If empty, we need to add a
+           unique id into it.'''
+        # value contains a list of 'ZPublisher.HTTPRequest', to be compatible
+        # if we receive a 'dict' instead, we use v.get()
+        for v in value:
+            # don't process hidden template row as input data
+            if v.get('orderindex_', None) == "template_row_marker":
+                continue
+            if not v.get('row_id', None):
+                v['row_id'] = 'committee_{0}'.format(self.generateUniqueId())
+
+        self.getField('committees').set(self, value, **kwargs)
+
     security.declareProtected(WriteRiskyConfig, 'setMaxShownListings')
 
     def setMaxShownListings(self, value, **kwargs):
@@ -3096,6 +3251,57 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 criteria.edit(criterion.__name__, **{'default': value})
         self.getField('maxShownListings').set(self, value, **kwargs)
 
+    security.declarePublic('getUsedVoteValues')
+
+    def getUsedVoteValues(self,
+                          used_values_attr='usedVoteValues',
+                          include_not_encoded=False,
+                          **kwargs):
+        '''Overridde 'usedVoteValues' field accessor.
+           Manage in p_used_values_attr from which attr we get the value,
+           'usedVoteValues' by default but may be
+           'firstLinkedVoteUsedVoteValues' or 'nextLinkedVotesUsedVoteValues'.
+           Manage also the 'include_not_encoded' technical vote value.'''
+        res = self.getField(used_values_attr).get(self, **kwargs)
+        # include special value NOT_ENCODED_VOTE_VALUE
+        if include_not_encoded:
+            res = (NOT_ENCODED_VOTE_VALUE, ) + res
+        return res
+
+    def getItemDecidedStates(self):
+        '''Return list of item decided states.'''
+        item_decided_states = [
+            'accepted',
+            'accepted_but_modified',
+            'accepted_out_of_meeting',
+            'accepted_out_of_meeting_emergency',
+            'delayed',
+            'delayed',
+            'marked_not_applicable',
+            'postponed_next_meeting',
+            'refused',
+            'removed']
+        item_decided_states += self.adapted().extra_item_decided_states()
+        return item_decided_states
+
+    def extra_item_decided_states(self):
+        '''See doc in interfaces.py.'''
+        return []
+
+    def getItemPositiveDecidedStates(self):
+        '''Return list of item positive decided states.'''
+        item_positive_decided_states = [
+            'accepted',
+            'accepted_but_modified',
+            'accepted_out_of_meeting',
+            'accepted_out_of_meeting_emergency']
+        item_positive_decided_states += self.adapted().extra_item_positive_decided_states()
+        return item_positive_decided_states
+
+    def extra_item_positive_decided_states(self):
+        '''See doc in interfaces.py.'''
+        return []
+
     security.declarePublic('getUsingGroups')
 
     def getUsingGroups(self, theObjects=False, **kwargs):
@@ -3103,6 +3309,47 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         res = self.getField('usingGroups').get(self, **kwargs)
         if theObjects:
             res = get_organizations(kept_org_uids=res)
+        return res
+
+    security.declarePublic('getItemWFValidationLevels')
+
+    def getItemWFValidationLevels(self,
+                                  state=None,
+                                  data=None,
+                                  only_enabled=False,
+                                  value=None,
+                                  **kwargs):
+        '''Override the field 'itemWFValidationLevels' accessor to be able to handle some paramters :
+           - state : return row relative to given p_state;
+           - data : return every values defined for a given datagrid column name;
+           - only_enabled : make sure to return rows having enabled '1'.'''
+        res = value or self.getField('itemWFValidationLevels').get(self, **kwargs)
+        enabled = ['0', '1']
+        if only_enabled:
+            enabled = ['1']
+        if only_enabled:
+            res = [level for level in res if level['enabled'] in enabled]
+
+        if state:
+            res = [level for level in res if level['state'] == state]
+        if data:
+            res = [level[data] for level in res]
+        if state:
+            res = res and res[0] or res
+        # when displayed, append translated values to elements title
+        if self.REQUEST.get('translated_itemWFValidationLevels') and not data:
+            translated_res = deepcopy(res)
+            translated_titles = ('state_title',
+                                 'leading_transition_title',
+                                 'back_transition_title')
+            for line in translated_res:
+                for translated_title in translated_titles:
+                    translated_value = translate(line[translated_title],
+                                                 domain='plone',
+                                                 context=self.REQUEST)
+                    line[translated_title] = u"{0} ({1})".format(
+                        line[translated_title], translated_value)
+            res = translated_res
         return res
 
     security.declarePublic('getOrderedItemInitiators')
@@ -3140,7 +3387,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             res = [brain.getObject() for brain in brains]
         return res
 
-    security.declarePublic('getOrderedAssociatedOrganizations')
+    security.declarePublic('getOrderedGroupsInCharge')
 
     def getOrderedGroupsInCharge(self, theObjects=False, **kwargs):
         '''Overrides the field 'orderedGroupsInCharge' acessor to manage theObjects.'''
@@ -3194,7 +3441,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('listToDoListSearches')
 
     def listToDoListSearches(self):
-        """ """
+        """Vocabulary for the MeetingConfig.toDoListSearches field."""
         searches = self.searches.searches_items.objectValues()
         res = []
         for search in searches:
@@ -3205,7 +3452,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('listAdvicePortalTypes')
 
     def listAdvicePortalTypes(self):
-        """ """
+        """Vocabulary for the MeetingConfig.defaultAdviceHiddenDuringRedaction field."""
         tool = api.portal.get_tool('portal_plonemeeting')
         advice_portal_types = tool.getAdvicePortalTypes()
         res = [(portal_type.id, portal_type.title) for portal_type in advice_portal_types]
@@ -3214,7 +3461,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('listSelectableContacts')
 
     def listSelectableContacts(self):
-        """ """
+        """Vocabulary for the MeetingConfig.certifiedSignatures datagridfield,
+           held_position column."""
         vocab_factory = getUtility(
             IVocabularyFactory,
             "Products.PloneMeeting.vocabularies.selectableheldpositionsvocabulary")
@@ -3222,6 +3470,82 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         res = [(term.value, term.title) for term in vocab._terms]
         res.insert(0, ('_none_', _z3c_form('No value')))
         return DisplayList(res)
+
+    security.declarePrivate('listSelectableCommitteeAttendees')
+
+    def listSelectableCommitteeAttendees(self):
+        """Vocabulary for the MeetingConfig.committees field."""
+        vocab = get_vocab(
+            self, "Products.PloneMeeting.vocabularies.selectable_committee_attendees_vocabulary")
+        res = [(term.value, term.title) for term in vocab._terms]
+        return DisplayList(res)
+
+    security.declarePrivate('listSelectableProposingGroups')
+
+    def listSelectableProposingGroups(self):
+        """Vocabulary for the MeetingConfig.committees field."""
+        vocab = get_vocab(
+            self, "Products.PloneMeeting.vocabularies.proposinggroupsvocabulary")
+        res = [(term.value, term.title) for term in vocab._terms]
+        return DisplayList(res)
+
+    security.declarePrivate('listSelectableCommitteeAutoFrom')
+
+    def listSelectableCommitteeAutoFrom(self):
+        """Elements on item that will auto determinate the committee to use.
+           The proposingGroup, category or classifier may determinate used committee."""
+        # proposing groups
+        proposing_groups_vocab = get_vocab(
+            self, "Products.PloneMeeting.vocabularies.proposinggroupsvocabulary")
+        res = [('proposing_group__' + term.value, 'GP.: ' + term.title)
+               for term in proposing_groups_vocab._terms]
+        # categories
+        categories_vocab = get_vocab(
+            self, "Products.PloneMeeting.vocabularies.categoriesvocabulary")
+        res += [('category__' + term.value, 'Cat.: ' + term.title)
+                for term in categories_vocab._terms]
+        # classifiers
+        classifiers_vocab = get_vocab(
+            self, "Products.PloneMeeting.vocabularies.classifiersvocabulary")
+        res += [('classifier__' + term.value, 'Class.: ' + term.title)
+                for term in classifiers_vocab._terms]
+        return DisplayList(res)
+
+    # Committees related helpers -----------------------------------------------
+    def is_committees_using(self, column, value=[]):
+        """Return True if using committees given p_column :
+           - using "auto_from" column mean that committee on item is determined automatically;
+           - using "using_groups" column is exclusive from "auto_groups" and
+             restrict available committees to selected proposing groups."""
+        res = False
+        for committee in value or self.getCommittees():
+            if committee[column]:
+                res = True
+                break
+        return res
+
+    def get_committee(self, row_id):
+        """ """
+        for committee in self.getCommittees():
+            if committee['row_id'] == row_id:
+                return committee.copy()
+
+    def get_committee_label(self, row_id):
+        """ """
+        committee = self.get_committee(row_id)
+        return committee and committee['label']
+
+    def get_supplements_for_committee(self, row_id=None, committee=None):
+        """Return supplements, may receive a p_row_id or a committee config,
+           this is used for validating changes between new and old committee config,
+           see validated_committees."""
+        res = []
+        committee = committee or self.get_committee(row_id)
+        for suppl in range(int(committee['supplements'])):
+            suppl_num = suppl + 1
+            suppl_id = u"{0}__suppl__{1}".format(committee['row_id'], suppl_num)
+            res.append(suppl_id)
+        return res
 
     security.declarePublic('getConfigGroup')
 
@@ -3289,25 +3613,35 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('listUsedMeetingAttributes')
 
     def listUsedMeetingAttributes(self):
-        optional_fields = self.listAttributes(Meeting.schema, optionalOnly=True, as_display_list=False)
-        contact_fields = ['attendees', 'excused', 'absents', 'nonAttendees',
+        optional_fields = get_dx_attrs(
+            self.getMeetingTypeName(), optional_only=True, as_display_list=False)
+        contact_fields = ['attendees', 'excused', 'absents', 'non_attendees',
                           'signatories', 'replacements']
         contact_fields.reverse()
-        index = [name for name, value in optional_fields].index('place')
+        index = optional_fields.index('place')
         for contact_field in contact_fields:
-            optional_fields.insert(
-                index,
-                (contact_field,
-                 '%s (%s)' % (translate('PloneMeeting_label_{0}'.format(contact_field),
+            optional_fields.insert(index, contact_field)
+        index = optional_fields.index('committees') + 1
+        # committees columns
+        committees_optional_columns = Meeting.FIELD_INFOS['committees']['optional_columns']
+        committees_optional_columns.reverse()
+        for column_name in committees_optional_columns:
+            optional_fields.insert(index, 'committees_{0}'.format(column_name))
+        res = []
+        for field in optional_fields:
+            res.append(
+                (field,
+                 '%s (%s)' % (translate('title_{0}'.format(field),
                                         domain='PloneMeeting',
                                         context=self.REQUEST),
-                              contact_field)))
-        return DisplayList(tuple(optional_fields))
+                              field)))
+        return DisplayList(tuple(res))
 
     security.declarePrivate('listMeetingAttributes')
 
     def listMeetingAttributes(self):
-        return self.listAttributes(Meeting.schema)
+        return get_dx_attrs(
+            self.getMeetingTypeName(), optional_only=False, as_display_list=False)
 
     security.declarePrivate('listDashboardItemsListingsFilters')
 
@@ -3319,10 +3653,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         res = []
         for criterion in criteria:
             if criterion.section == u'advanced':
-                res.append((criterion.__name__,
-                            translate(criterion.title,
-                                      domain="eea",
-                                      context=self.REQUEST)))
+                res.append(
+                    (criterion.__name__,
+                     u"%s (%s)" % (translate(criterion.title,
+                                             domain="eea",
+                                             context=self.REQUEST),
+                                   criterion.__name__)))
         return DisplayList(tuple(res))
 
     security.declarePrivate('listResultsPerPage')
@@ -3402,6 +3738,54 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             if brains:
                 return _('error_list_types_identifier_removed_already_used',
                          mapping={'url': brains[0].getURL()})
+
+    security.declarePrivate('validate_committees')
+
+    def validate_committees(self, value):
+        '''Validate the 'committees' field, already used may not be removed.'''
+        # use vocabulary managing committees to detect changes
+        vocab = get_vocab(
+            self,
+            "Products.PloneMeeting.vocabularies.selectable_committees_vocabulary",
+            only_factory=True)
+        stored_terms = vocab(self)
+        new_value = [v for v in value
+                     if v.get('orderindex_', None) != 'template_row_marker']
+        new_terms = vocab(self, cfg_committees=new_value)
+        removeds = [term.token for term in stored_terms if term.token not in new_terms]
+        catalog = api.portal.get_tool('portal_catalog')
+        for removed in removeds:
+            # may be linked to an item or a meeting
+            brains = catalog(getConfigId=self.getId(), committees_index=removed)
+            if brains:
+                return _('error_committee_row_id_removed_already_used',
+                         mapping={'url': brains[0].getURL(),
+                                  'committee_label': safe_unicode(self.get_committee_label(removed))})
+
+        # columns using_groups and auto_from are exclusive
+        if self.is_committees_using("auto_from", new_value) and \
+           self.is_committees_using("using_groups", new_value):
+            return _('error_committees_mutually_exclusive_auto_from_and_using_groups')
+
+        # this part should be in a validator for orderedCommitteeContacts
+        # but then we do not get the entire datagridfield value from REQUEST
+        # and it is easier to do it here...
+        committee_contacts = self.REQUEST.get(
+            'orderedCommitteeContacts', self.getOrderedCommitteeContacts())
+        # remove empty values if any
+        committee_contacts = [contact for contact in committee_contacts if contact]
+
+        default_attendees = get_datagridfield_column_value(value, "default_attendees")
+        default_signatories = get_datagridfield_column_value(value, "default_signatories")
+        diff_attendees = set(default_attendees).difference(committee_contacts)
+        diff_signatories = set(default_signatories).difference(committee_contacts)
+        if diff_attendees or diff_signatories:
+            all_diffs = list(diff_attendees) + list(diff_signatories)
+            an_hp_uid = all_diffs[0]
+            hp = uuidToObject(an_hp_uid)
+            return _('error_value_removed_used_in_committees_field',
+                     mapping={'hp_title': hp.get_short_title()},
+                     default="Error used values is not selectable, check \"${hp_title}\"")
 
     security.declarePrivate('validate_transitionsForPresentingAnItem')
 
@@ -3781,14 +4165,30 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         if (('excused' in newValue) or ('absents' in newValue)) and \
            ('attendees' not in newValue):
             return translate('attendees_required', domain=pm, context=self.REQUEST)
-        # Prevent use of "assemblyExcused" or "assemblyAbsents" without "assembly"
-        if (('assemblyExcused' in newValue) or ('assemblyAbsents' in newValue)) and \
+        # Prevent use of "assembly_excused" or "assembly_absents" without "assembly"
+        if (('assembly_excused' in newValue) or ('assembly_absents' in newValue)) and \
            ('assembly' not in newValue):
             return translate('assembly_required', domain=pm, context=self.REQUEST)
 
         # Prevent combined use of "assembly" and "attendees"
         if ('assembly' in newValue) and ('attendees' in newValue):
             return translate('no_assembly_and_attendees', domain=pm, context=self.REQUEST)
+
+        # Prevent combined use of "committees_assembly" and "committees_attendees"
+        if ('committees_assembly' in newValue) and ('committees_attendees' in newValue):
+            return translate('no_committees_assembly_and_committees_attendees',
+                             domain=pm,
+                             context=self.REQUEST)
+        # Prevent combined use of "committees_signatures" and "committees_signatories"
+        if ('committees_signatures' in newValue) and ('committees_signatories' in newValue):
+            return translate('no_committees_signatures_and_committees_signatories',
+                             domain=pm,
+                             context=self.REQUEST)
+
+        # if a committees_ field is selected, then committees must be selected as well
+        committees_attr = [v for v in newValue if v.startswith('committees_')]
+        if committees_attr and "committees" not in newValue:
+            return translate('committees_required', domain=pm, context=self.REQUEST)
 
     security.declarePrivate('validate_itemConditionsInterface')
 
@@ -3852,8 +4252,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('validate_workflowAdaptations')
 
     def validate_workflowAdaptations(self, values):
-        '''This method ensures that the combination of used workflow
-           adaptations is valid.'''
+        '''Validates field workflowAdaptaations.'''
+
         # inline validation sends a string instead of a tuple... bypass it!
         if not hasattr(values, '__iter__'):
             return
@@ -3863,25 +4263,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
         # conflicts
         msg = translate('wa_conflicts', domain='PloneMeeting', context=self.REQUEST)
-        if 'items_come_validated' in values and \
-            ('creator_initiated_decisions' in values or
-             'pre_validation' in values or
-             'pre_validation_keep_reviewer_permissions' in values or
-             'reviewers_take_back_validated_item' in values or
-             'presented_item_back_to_itemcreated' in values or
-             'presented_item_back_to_prevalidated' in values or
-             'presented_item_back_to_proposed' in values):
-            return msg
-        if ('archiving' in values) and (len(values) > 1):
-            # Archiving is incompatible with any other workflow adaptation
-            return msg
-        if 'no_proposal' in values and \
-            ('pre_validation' in values or
-             'pre_validation_keep_reviewer_permissions' in values or
-             'presented_item_back_to_proposed' in values):
-            return msg
-        if 'pre_validation' in values and 'pre_validation_keep_reviewer_permissions' in values:
-            return msg
         if 'removed' in values and 'removed_and_duplicated' in values:
             return msg
         if 'accepted_out_of_meeting' in values and \
@@ -3890,18 +4271,44 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         if 'accepted_out_of_meeting_emergency' in values and \
            'accepted_out_of_meeting_emergency_and_duplicated' in values:
             return msg
-
-        # 'presented_item_back_to_prevalidated' needs 'pre_validation'
-        if 'presented_item_back_to_prevalidated' in values and \
-           ('pre_validation' not in values and 'pre_validation_keep_reviewer_permissions' not in values):
-            return translate('wa_presented_item_back_to_prevalidated_needs_pre_validation_error',
-                             domain='PloneMeeting',
-                             context=self.REQUEST)
-
         # several 'return_to_proposing_group' values may not be selected together
-        return_to_prop_group_wf_adaptations = [v for v in values if v.startswith('return_to_proposing_group')]
+        return_to_prop_group_wf_adaptations = [
+            v for v in values if v.startswith('return_to_proposing_group')]
         if len(return_to_prop_group_wf_adaptations) > 1:
             return msg
+
+        # dependency on 'MeetingConfig.itemWFValidationLevels'
+        msg = translate('wa_item_validation_levels_dependency',
+                        domain='PloneMeeting',
+                        context=self.REQUEST)
+
+        # item validation levels
+        itemWFValidationLevels = self.REQUEST.get(
+            'itemWFValidationLevels', self.getItemWFValidationLevels())
+        item_validation_states = self.getItemWFValidationLevels(
+            data='state',
+            value=itemWFValidationLevels,
+            only_enabled=True)
+
+        back_from_presented = [v for v in values
+                               if v.startswith('presented_item_back_to_')]
+        if not item_validation_states:
+            if 'reviewers_take_back_validated_item' in values or \
+               'return_to_proposing_group_with_last_validation' in values or \
+               'return_to_proposing_group_with_all_validations' in values or \
+               back_from_presented:
+                return msg
+
+        # check that selected back_from_presented transitions
+        # exists in MeetingConfig.itemWFValidationLevels
+        if back_from_presented:
+            msg = translate('wa_presented_back_to_wrong_itemWFValidationLevels',
+                            domain='PloneMeeting',
+                            context=self.REQUEST)
+            for back_from in back_from_presented:
+                presented_state = back_from.replace('presented_item_back_to_', '')
+                if presented_state not in item_validation_states:
+                    return msg
 
         catalog = api.portal.get_tool('portal_catalog')
         wfTool = api.portal.get_tool('portal_workflow')
@@ -3916,45 +4323,18 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 return translate('wa_added_no_publication_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
-        if 'no_proposal' in added:
-            # this will remove the 'proposed' state for MeetingItem
-            # check that no more items are in this state
-            if catalog(portal_type=self.getItemTypeName(), review_state='proposed'):
-                return translate('wa_added_no_proposal_error',
-                                 domain='PloneMeeting',
-                                 context=self.REQUEST)
-        if 'items_come_validated' in added:
-            # this will remove states 'itemcreated' and 'proposed' for MeetingItem
-            # check that no more items are in these states
-            if catalog(portal_type=self.getItemTypeName(), review_state=('itemcreated', 'proposed')):
-                return translate('wa_added_items_come_validated_error',
-                                 domain='PloneMeeting',
-                                 context=self.REQUEST)
 
         # validate removed workflowAdaptations, in case we removed a wfAdaptation that added
         # a state for example, double check that no more element (item or meeting) is in that state...
         removed = set(self.getWorkflowAdaptations()).difference(set(values))
-        if 'archiving' in removed:
-            # it is not possible to go back from an archived site
-            return translate('wa_removed_archiving_error',
-                             domain='PloneMeeting',
-                             context=self.REQUEST)
-        # check if pre_validation is removed only if the other pre_validation is not added
-        # at the same time (switch from one to other)
-        if ('pre_validation' in removed and 'pre_validation_keep_reviewer_permissions' not in added) or \
-           ('pre_validation_keep_reviewer_permissions' in removed and 'pre_validation' not in added):
-            # this will remove the 'prevalidated' state for MeetingItem
-            # check that no more items are in this state
-            if catalog(portal_type=self.getItemTypeName(),
-                       review_state=('prevalidated', 'returned_to_proposing_group_prevalidated')):
-                return translate('wa_removed_pre_validation_error',
-                                 domain='PloneMeeting',
-                                 context=self.REQUEST)
-        if 'waiting_advices' in removed:
+        # any 'waiting_advices' WFAdaptation may not be removed when there are items in waiting_advices states
+        removed_waiting_advices = bool([r for r in removed if 'waiting_advices' in r])
+        if removed_waiting_advices:
             # this will remove the 'waiting_advices' state for MeetingItem
             # check that no more items are in this state
-            # get every 'waiting_advices'-like states, we could have 'itemcreated_waiting_advices'
-            # and 'proposed_waiting_advices' for example
+            # get every 'waiting_advices'-like states, we could have 'itemcreated_waiting_advices',
+            # 'proposed_waiting_advices' or
+            # 'itemcreated__or__proposedToValidationLevel1__or__..._waiting_advices' for example
             itemWF = wfTool.getWorkflowsFor(self.getItemTypeName())[0]
             waiting_advices_states = [state for state in itemWF.states if 'waiting_advices' in state]
             if catalog(portal_type=self.getItemTypeName(), review_state=waiting_advices_states):
@@ -3970,7 +4350,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 return translate('wa_removed_return_to_proposing_group_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
-        validation_returned_states = getValidationReturnedStates(self)
+        validation_returned_states = _getValidationReturnedStates(self)
         if ('return_to_proposing_group_with_last_validation' in removed) and \
            not ('return_to_proposing_group_with_all_validations' in added):
             # this will remove the 'returned_to_proposing_group with last validation state'
@@ -3997,14 +4377,16 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 return translate('wa_removed_hide_decisions_when_under_writing_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
-        if 'accepted_out_of_meeting' in removed:
+        if 'accepted_out_of_meeting' in removed or \
+           'accepted_out_of_meeting_and_duplicated' in removed:
             # this will remove the 'accepted_out_of_meeting' state for Item
             # check that no more items are in this state
             if catalog(portal_type=self.getItemTypeName(), review_state='accepted_out_of_meeting'):
                 return translate('wa_removed_accepted_out_of_meeting_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
-        if 'accepted_out_of_meeting_emergency' in removed:
+        if 'accepted_out_of_meeting_emergency' in removed or \
+           'accepted_out_of_meeting_emergency_and_duplicated' in removed:
             # this will remove the 'accepted_out_of_meeting_emergency' state for Item
             # check that no more items are in this state
             if catalog(portal_type=self.getItemTypeName(), review_state='accepted_out_of_meeting_emergency'):
@@ -4032,7 +4414,27 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 return translate('wa_removed_refused_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
-
+        if 'delayed' in removed:
+            # this will remove the 'delayed' state for Item
+            # check that no more items are in this state
+            if catalog(portal_type=self.getItemTypeName(), review_state='delayed'):
+                return translate('wa_removed_delayed_error',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
+        if 'accepted_but_modified' in removed:
+            # this will remove the 'accepted_but_modified' state for Item
+            # check that no more items are in this state
+            if catalog(portal_type=self.getItemTypeName(), review_state='accepted_but_modified'):
+                return translate('wa_removed_accepted_but_modified_error',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
+        if 'pre_accepted' in removed:
+            # this will remove the 'pre_accepted' state for Item
+            # check that no more items are in this state
+            if catalog(portal_type=self.getItemTypeName(), review_state='pre_accepted'):
+                return translate('wa_removed_pre_accepted_error',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
         # check if 'removed' is removed only if the other 'removed_and_duplicated' is not added
         # at the same time (switch from one to other)
         if ('removed' in removed and 'removed_and_duplicated' not in added) or \
@@ -4043,12 +4445,129 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 return translate('wa_removed_removed_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
-
         return self.adapted().custom_validate_workflowAdaptations(values, added, removed)
 
     def custom_validate_workflowAdaptations(self, values, added, removed):
         '''See doc in interfaces.py.'''
         pass
+
+    security.declarePrivate('validate_itemWFValidationLevels')
+
+    def validate_itemWFValidationLevels(self, values):
+        '''Validates field itemWFValidationLevels.'''
+        # inline validation sends a string instead of a tuple... bypass it!
+        if not hasattr(values, '__iter__'):
+            return
+
+        res = []
+        for value in values:
+            # pass 'template_row_marker'
+            if value.get('orderindex_', None) == 'template_row_marker':
+                continue
+            res.append(value)
+        values = res
+
+        enabled_stored_states = self.getItemWFValidationLevels(
+            data='state',
+            only_enabled=True)
+        enabled_values_states = self.getItemWFValidationLevels(
+            data='state',
+            value=values,
+            only_enabled=True)
+        removed_or_disabled_states = tuple(set(enabled_stored_states).difference(
+            set(enabled_values_states)))
+
+        # if some states are enabled, then first state 'itemcreated' is mandatory
+        if enabled_values_states and 'itemcreated' not in enabled_values_states:
+            return translate('item_wf_val_states_itemcreated_mandatory',
+                             domain='PloneMeeting',
+                             context=self.REQUEST)
+
+        # make sure no item is using a state using a removed or disabled state
+        # either directly the state or a state depending on it
+        # for example removing prevalidated and having item in state
+        # returned_to_proposing_group_prevalidated or prevalidated_waiting_advices
+        # so get from the item workflow, every states starting with a removed state
+        # or containing "_" + a removed state
+        item_states = self.getItemWorkflow(True).states
+        item_contained_states = []
+        for removed_or_disabled_state in removed_or_disabled_states:
+            for item_state in item_states:
+                if item_state.startswith(removed_or_disabled_state) or \
+                   "_%s" % removed_or_disabled_state in item_state:
+                    item_contained_states.append(item_state)
+        item_contained_states += list(removed_or_disabled_states)
+        if item_contained_states:
+            catalog = api.portal.get_tool('portal_catalog')
+            brains = catalog(portal_type=self.getItemTypeName(), review_state=item_contained_states)
+            if brains:
+                aBrain = brains[0]
+                return translate('item_wf_val_states_can_not_be_removed_in_use',
+                                 domain='PloneMeeting',
+                                 mapping={'item_state': translate(aBrain.review_state,
+                                                                  domain="plone",
+                                                                  context=self.REQUEST),
+                                          'item_url': aBrain.getURL()},
+                                 context=self.REQUEST)
+
+        # make sure the MeetingConfig does not use a state that was removed or disabled
+        # either using state or transition
+        # states
+        cfg_item_wf_attributes = [
+            # states
+            'recordItemHistoryStates',
+            'itemAutoSentToOtherMCStates',
+            'itemManualSentToOtherMCStates',
+            'itemAdviceStates',
+            'itemAdviceEditStates',
+            'itemAdviceViewStates',
+            'itemAdviceInvalidateStates',
+            'itemBudgetInfosStates',
+            'itemGroupsInChargeStates',
+            'itemCopyGroupsStates',
+            # transitions
+            'transitionsReinitializingDelays',
+            'transitionsToConfirm',
+            'mailItemEvents', ]
+        # transitions
+        enabled_stored_transitions = self.getItemWFValidationLevels(
+            data='leading_transition',
+            only_enabled=True)
+        enabled_values_transitions = self.getItemWFValidationLevels(
+            data='leading_transition',
+            value=values,
+            only_enabled=True)
+        removed_or_disabled_transitions = tuple(set(enabled_stored_transitions).difference(
+            set(enabled_values_transitions)))
+
+        for attr in cfg_item_wf_attributes:
+            field = self.getField(attr)
+            # manage case where item state direclty equal value
+            # of value contains item state, like 'suffix_profile_prereviewers'
+            crossed_states = [v for v in field.getAccessor(self)()
+                              for r in removed_or_disabled_states if r in v]
+            crossed_transitions = [v for v in field.getAccessor(self)()
+                                   for r in removed_or_disabled_transitions if r in v]
+            if crossed_states or crossed_transitions:
+                every_crossed = crossed_states + crossed_transitions
+                return translate(
+                    'item_wf_val_states_can_not_be_removed_in_use_config',
+                    domain='PloneMeeting',
+                    mapping={
+                        'state_or_transition': translate(
+                            # manage values like MeetingItem.proposed
+                            every_crossed[0].split('.')[-1],
+                            domain="plone",
+                            context=self.REQUEST),
+                        'cfg_field_name': translate(
+                            msgid='PloneMeeting_label_{0}'.format(field.getName()),
+                            domain='PloneMeeting',
+                            context=self.REQUEST)},
+                    context=self.REQUEST)
+
+        # XXX to be managed when moving MeetingConfig to DX
+        # some datagridfield attributes
+        # powerObservers, meetingConfigsToCloneTo
 
     security.declarePrivate('validate_itemAdviceEditStates')
 
@@ -4065,16 +4584,15 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         if '' in itemAdvicesStatesFromRequest:
             itemAdvicesStatesFromRequest.remove('')
         itemAdviceStates_set = set(itemAdvicesStatesFromRequest) or set(self.getItemAdviceStates())
-        if itemAdviceStates_set.difference(v_set):
-            return translate('itemAdviceEditStates_validation_error',
-                             domain='PloneMeeting',
-                             mapping={'missingStates': ', '.join([translate(state,
-                                                                            domain='plone',
-                                                                            context=self.REQUEST) for state in
-                                                                 itemAdviceStates_set.difference(v_set)])},
-                             context=self.REQUEST,
-                             default='Values defined in the \'itemAdviceEditStates\' field must contains at least '
-                                     'every values selected in the \'itemAdvicesStates\' field!')
+        difference = itemAdviceStates_set.difference(v_set)
+        if difference:
+            return translate(
+                'itemAdviceEditStates_validation_error',
+                domain='PloneMeeting',
+                mapping={'missingStates': translate_list(difference)},
+                context=self.REQUEST,
+                default='Values defined in the \'itemAdviceEditStates\' field must contains at least '
+                        'every values selected in the \'itemAdvicesStates\' field!')
 
     security.declarePrivate('validate_insertingMethodsOnAddItem')
 
@@ -4242,18 +4760,59 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePrivate('listWorkflowAdaptations')
 
-    def listWorkflowAdaptations(self):
+    def listWorkflowAdaptations(self, sorted=True):
         '''Lists the available workflow changes.'''
         res = []
         for adaptation in self.wfAdaptations:
-            title = translate('wa_%s' % adaptation, domain='PloneMeeting', context=self.REQUEST)
-            res.append((adaptation, title))
+            # back transitions from presented to every available item validation
+            # states defined in MeetingConfig.itemWFValidationLevels
+            if adaptation == 'presented_item_back_to_validation_state':
+                for item_validation_level in self.getItemWFValidationLevels(only_enabled=True):
+                    adaptation_id = 'presented_item_back_to_{0}'.format(item_validation_level['state'])
+                    translated_item_validation_state = translate(
+                        item_validation_level['state_title'],
+                        domain='plone',
+                        context=self.REQUEST)
+                    title = translate(
+                        'wa_presented_item_back_to_validation_state',
+                        domain='PloneMeeting',
+                        mapping={'item_state': translated_item_validation_state},
+                        context=self.REQUEST,
+                        default=u'Item back to presented from validation state "{0}"'.format(
+                            translated_item_validation_state))
+                    title = title + " ({0})".format(adaptation_id)
+                    res.append((adaptation_id, title))
+            else:
+                title = translate('wa_%s' % adaptation, domain='PloneMeeting', context=self.REQUEST)
+                title = title + " ({0})".format(adaptation)
+                res.append((adaptation, title))
+        res = DisplayList(tuple(res))
+        if sorted:
+            res = res.sortedByValue()
+        return res
+
+    security.declarePrivate('listValidationLevelsNumbers')
+
+    def listValidationLevelsNumbers(self):
+        '''Vocabulary for the itemWFValidationLevels.listValidationLevelsNumbers column.'''
+        # insert a "custom" option at the end of numbers 1 to 10
+        res = self.listNumbers()
+        res.add('custom', _('Custom validation level'))
+        return res
+
+    security.declarePrivate('listNumbersFromZero')
+
+    def listNumbersFromZero(self):
+        '''Vocabulary that returns a list of number from 0 to 10.'''
+        res = []
+        for number in range(0, 11):
+            res.append((str(number), str(number)))
         return DisplayList(tuple(res))
 
-    security.declarePrivate('listSignatureNumbers')
+    security.declarePrivate('listNumbers')
 
-    def listSignatureNumbers(self):
-        '''Vocabulary for column 'signatureNumber' of MeetingConfig.certifiedSignatures.'''
+    def listNumbers(self):
+        '''Vocabulary that returns a list of number from 1 to 10.'''
         res = []
         for number in range(1, 11):
             res.append((str(number), str(number)))
@@ -4319,50 +4878,54 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         d = 'collective.eeafaceted.z3ctable'
         # keys beginning with static_ are taken into account by the @@static-infos view
         res = [
-            ("static_labels",
-                translate("labels_column", domain=d, context=self.REQUEST)),
-            ("static_item_reference",
-                translate("item_reference_column", domain=d, context=self.REQUEST)),
-            ("static_budget_infos",
-                translate("budget_infos_column", domain=d, context=self.REQUEST)),
-            ("Creator",
-                translate('header_Creator', domain=d, context=self.REQUEST)),
-            ("CreationDate",
-                translate('header_CreationDate', domain=d, context=self.REQUEST)),
-            ("ModificationDate",
-                translate('header_ModificationDate', domain=d, context=self.REQUEST)),
-            ("review_state",
-                translate('header_review_state', domain=d, context=self.REQUEST)),
-            ("review_state_title",
-                translate('header_review_state_title_descr', domain=d, context=self.REQUEST)),
-            ("getCategory",
-                translate("header_getCategory", domain=d, context=self.REQUEST)),
-            ("getRawClassifier",
-                translate("header_getRawClassifier", domain=d, context=self.REQUEST)),
-            ("getProposingGroup",
-                translate("header_getProposingGroup", domain=d, context=self.REQUEST)),
-            ("proposing_group_acronym",
-                translate("header_proposing_group_acronym", domain=d, context=self.REQUEST)),
-            ("getAssociatedGroups",
-                translate("header_getAssociatedGroups", domain=d, context=self.REQUEST)),
-            ("associated_groups_acronym",
-                translate("header_associated_groups_acronym", domain=d, context=self.REQUEST)),
-            ("getGroupsInCharge",
-                translate("header_getGroupsInCharge", domain=d, context=self.REQUEST)),
-            ("groups_in_charge_acronym",
-                translate("header_groups_in_charge_acronym", domain=d, context=self.REQUEST)),
-            ("privacy",
-                translate("header_privacy", domain=d, context=self.REQUEST)),
-            ("pollType",
-                translate("header_pollType", domain=d, context=self.REQUEST)),
-            ("advices",
-                translate("header_advices", domain=d, context=self.REQUEST)),
-            ("getItemIsSigned",
-                translate('header_getItemIsSigned', domain=d, context=self.REQUEST)),
-            ("toDiscuss",
-                translate('header_toDiscuss', domain=d, context=self.REQUEST)),
-            ("actions",
-                translate("header_actions", domain=d, context=self.REQUEST)),
+            ("static_labels", u"{0} (static_labels)".format(
+                translate("labels_column", domain=d, context=self.REQUEST))),
+            ("static_item_reference", u"{0} (static_item_reference)".format(
+                translate("item_reference_column", domain=d, context=self.REQUEST))),
+            ("static_budget_infos", u"{0} (static_budget_infos)".format(
+                translate("budget_infos_column", domain=d, context=self.REQUEST))),
+            ("Creator", u"{0} (Creator)".format(
+                translate('header_Creator', domain=d, context=self.REQUEST))),
+            ("CreationDate", u"{0} (CreationDate)".format(
+                translate('header_CreationDate', domain=d, context=self.REQUEST))),
+            ("ModificationDate", u"{0} (ModificationDate)".format(
+                translate('header_ModificationDate', domain=d, context=self.REQUEST))),
+            ("review_state", u"{0} (review_state)".format(
+                translate('header_review_state', domain=d, context=self.REQUEST))),
+            ("review_state_title", u"{0} (review_state_title)".format(
+                translate('header_review_state_title_descr', domain=d, context=self.REQUEST))),
+            ("getCategory", u"{0} (getCategory)".format(
+                translate("header_getCategory", domain=d, context=self.REQUEST))),
+            ("getRawClassifier", u"{0} (getRawClassifier)".format(
+                translate("header_getRawClassifier", domain=d, context=self.REQUEST))),
+            ("getProposingGroup", u"{0} (getProposingGroup)".format(
+                translate("header_getProposingGroup", domain=d, context=self.REQUEST))),
+            ("proposing_group_acronym", u"{0} (proposing_group_acronym)".format(
+                translate("header_proposing_group_acronym", domain=d, context=self.REQUEST))),
+            ("getAssociatedGroups", u"{0} (getAssociatedGroups)".format(
+                translate("header_getAssociatedGroups", domain=d, context=self.REQUEST))),
+            ("associated_groups_acronym", u"{0} (associated_groups_acronym)".format(
+                translate("header_associated_groups_acronym", domain=d, context=self.REQUEST))),
+            ("getGroupsInCharge", u"{0} (getGroupsInCharge)".format(
+                translate("header_getGroupsInCharge", domain=d, context=self.REQUEST))),
+            ("groups_in_charge_acronym", u"{0} (groups_in_charge_acronym)".format(
+                translate("header_groups_in_charge_acronym", domain=d, context=self.REQUEST))),
+            ("committees_index", u"{0} (committees_index)".format(
+                translate("header_committees_index", domain=d, context=self.REQUEST))),
+            ("committees_index_acronym", u"{0} (committees_index_acronym)".format(
+                translate("header_committees_index_acronym", domain=d, context=self.REQUEST))),
+            ("privacy", u"{0} (privacy)".format(
+                translate("header_privacy", domain=d, context=self.REQUEST))),
+            ("pollType", u"{0} (pollType)".format(
+                translate("header_pollType", domain=d, context=self.REQUEST))),
+            ("advices", u"{0} (advices)".format(
+                translate("header_advices", domain=d, context=self.REQUEST))),
+            ("getItemIsSigned", u"{0} (getItemIsSigned)".format(
+                translate('header_getItemIsSigned', domain=d, context=self.REQUEST))),
+            ("toDiscuss", u"{0} (toDiscuss)".format(
+                translate('header_toDiscuss', domain=d, context=self.REQUEST))),
+            ("actions", u"{0} (actions)".format(
+                translate("header_actions", domain=d, context=self.REQUEST))),
         ]
         res = res + self._extraItemRelatedColumns()
         return res
@@ -4376,11 +4939,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def listAvailableItemsListVisibleColumns(self):
         '''Vocabulary for the 'availableItemsListVisibleColumns' field.'''
         res = self.listItemRelatedColumns()
-        res.insert(-1, ('getPreferredMeetingDate', translate('header_getPreferredMeetingDate',
-                                                             domain='collective.eeafaceted.z3ctable',
-                                                             context=self.REQUEST)))
+        res.insert(-1, ('preferred_meeting_date', u"{0} (preferred_meeting_date)".format(
+            translate('header_preferred_meeting_date',
+                      domain='collective.eeafaceted.z3ctable',
+                      context=self.REQUEST))))
         # remove item_reference and review_state
-        res = [v for v in res if v[0] not in ('static_item_reference', 'review_state', 'review_state_title')]
+        res = [v for v in res if v[0] not in
+               ('static_item_reference', 'review_state', 'review_state_title')]
         return DisplayList(tuple(res))
 
     security.declarePrivate('listItemsListVisibleColumns')
@@ -4388,9 +4953,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def listItemsListVisibleColumns(self):
         '''Vocabulary for the 'itemsListVisibleColumns' field.'''
         res = self.listItemRelatedColumns()
-        res.insert(-1, ('getPreferredMeetingDate', translate('header_getPreferredMeetingDate',
-                                                             domain='collective.eeafaceted.z3ctable',
-                                                             context=self.REQUEST)))
+        res.insert(-1, ('preferred_meeting_date', u"{0} (preferred_meeting_date)".format(
+            translate('header_preferred_meeting_date',
+                      domain='collective.eeafaceted.z3ctable',
+                      context=self.REQUEST))))
         return DisplayList(tuple(res))
 
     def _ignoredVisibleFieldIds(self):
@@ -4405,9 +4971,44 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 'manuallyLinkedItems',
                 'otherMeetingConfigsClonableToEmergency', 'otherMeetingConfigsClonableToPrivacy']
 
+    def listItemsVisibleFields(self):
+        '''Vocabulary for the 'itemsVisibleFields' field.
+           Every fields available on the MeetingItem can be selectable.'''
+        res = self._listFieldsFor(MeetingItem,
+                                  ignored_field_ids=self.adapted()._ignoredVisibleFieldIds(),
+                                  hide_not_visible=True)
+        res.insert(0, ('MeetingItem.annexes',
+                       translate('existing_annexes',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)))
+        res.insert(0, ('MeetingItem.advices',
+                       translate('PloneMeeting_label_advices',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)))
+        return DisplayList(tuple(res))
+
+    def listItemsNotViewableVisibleFields(self):
+        '''Vocabulary for the 'itemsNotViewableVisibleFields' field.
+           Every fields available on the MeetingItem can be selectable.'''
+        res = self._listFieldsFor(MeetingItem,
+                                  ignored_field_ids=self.adapted()._ignoredVisibleFieldIds(),
+                                  hide_not_visible=True)
+        res.insert(0, ('MeetingItem.annexes',
+                       translate('existing_annexes',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)))
+        # not viewable advices can not be displayed for now
+        # this will be possible and easier (like for annexes)
+        # when ticket #MPMPHAI-11 will be fixed
+        # res.insert(0, ('MeetingItem.advices',
+        #               translate('PloneMeeting_label_advices',
+        #                         domain='PloneMeeting',
+        #                         context=self.REQUEST)))
+        return DisplayList(tuple(res))
+
     def listItemsListVisibleFields(self):
-        '''Vocabulary for the 'itemsListVisibleFields' field.
-           Every RichText field available on the MeetingItem can be selectable.'''
+        '''Vocabulary for the 'itemsListVisibleFields/itemsNotViewableVisibleFields' fields.
+           Every fields available on the MeetingItem can be selectable.'''
         res = self._listFieldsFor(MeetingItem,
                                   ignored_field_ids=self.adapted()._ignoredVisibleFieldIds(),
                                   hide_not_visible=True)
@@ -4417,12 +5018,14 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     def listItemColumns(self):
         res = self.listItemRelatedColumns()
-        res.insert(-1, ('linkedMeetingDate', translate('header_linkedMeetingDate',
-                                                       domain='collective.eeafaceted.z3ctable',
-                                                       context=self.REQUEST)))
-        res.insert(-1, ('getPreferredMeetingDate', translate('header_getPreferredMeetingDate',
-                                                             domain='collective.eeafaceted.z3ctable',
-                                                             context=self.REQUEST)))
+        res.insert(-1, ('meeting_date', u"{0} (meeting_date)".format(
+            translate('header_meeting_date',
+                      domain='collective.eeafaceted.z3ctable',
+                      context=self.REQUEST))))
+        res.insert(-1, ('preferred_meeting_date', u"{0} (preferred_meeting_date)".format(
+            translate('header_preferred_meeting_date',
+                      domain='collective.eeafaceted.z3ctable',
+                      context=self.REQUEST))))
         return DisplayList(tuple(res))
 
     security.declarePrivate('listMeetingColumns')
@@ -4431,13 +5034,30 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         d = 'collective.eeafaceted.z3ctable'
         # keys beginning with static_ are taken into account by the @@static-infos view
         res = [
-            ("static_startDate", translate('startDate_column', domain=d, context=self.REQUEST)),
-            ("static_endDate", translate('endDate_column', domain=d, context=self.REQUEST)),
-            ("static_place", translate('place_column', domain=d, context=self.REQUEST)),
-            ("Creator", translate('header_Creator', domain=d, context=self.REQUEST)),
-            ("CreationDate", translate('header_CreationDate', domain=d, context=self.REQUEST)),
-            ("review_state", translate('header_review_state', domain=d, context=self.REQUEST)),
-            ("actions", translate("header_actions", domain=d, context=self.REQUEST)),
+            ("static_start_date",
+                u"{0} (static_start_date)".format(
+                    translate('start_date_column', domain=d, context=self.REQUEST))),
+            ("static_end_date",
+                u"{0} (static_end_date)".format(
+                    translate('end_date_column', domain=d, context=self.REQUEST))),
+            ("static_place",
+                u"{0} (static_place)".format(
+                    translate('place_column', domain=d, context=self.REQUEST))),
+            ("Creator",
+                u"{0} (Creator)".format(
+                    translate('header_Creator', domain=d, context=self.REQUEST))),
+            ("CreationDate",
+                u"{0} (CreationDate)".format(
+                    translate('header_CreationDate', domain=d, context=self.REQUEST))),
+            ("ModificationDate",
+                u"{0} (ModificationDate)".format(
+                    translate('header_ModificationDate', domain=d, context=self.REQUEST))),
+            ("review_state",
+                u"{0} (review_state)".format(
+                    translate('header_review_state', domain=d, context=self.REQUEST))),
+            ("actions",
+                u"{0} (actions)".format(
+                    translate("header_actions", domain=d, context=self.REQUEST))),
         ]
         res = res + self._extraMeetingRelatedColumns()
         return DisplayList(tuple(res))
@@ -4452,6 +5072,19 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         d = "PloneMeeting"
         res = DisplayList((
             ("app_users", translate('app_users', domain=d, context=self.REQUEST)),
+        ))
+        for po_infos in self.getPowerObservers():
+            res.add('{0}{1}'.format(POWEROBSERVERPREFIX, po_infos['row_id']),
+                    po_infos['label'])
+        return res
+
+    security.declarePrivate('listRedirectToNextMeeting')
+
+    def listRedirectToNextMeeting(self):
+        d = "PloneMeeting"
+        res = DisplayList((
+            ("app_users", translate('app_users', domain=d, context=self.REQUEST)),
+            ("meeting_managers", translate('meetingmanagers', domain=d, context=self.REQUEST)),
         ))
         for po_infos in self.getPowerObservers():
             res.add('{0}{1}'.format(POWEROBSERVERPREFIX, po_infos['row_id']),
@@ -4480,7 +5113,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         d = "PloneMeeting"
         res = DisplayList((
             ("aMeetingManager", translate('a_meeting_manager', domain=d, context=self.REQUEST)),
-            ("theVoterHimself", translate('the_voter_himself', domain=d, context=self.REQUEST)),
+            # ("theVoterHimself", translate('the_voter_himself', domain=d, context=self.REQUEST)),
         ))
         return res
 
@@ -4523,12 +5156,16 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     def listPollTypes(self):
         res = [
+            ("out_loud",
+             translate('polltype_out_loud',
+                       domain='PloneMeeting',
+                       context=self.REQUEST)),
             ("freehand",
              translate('polltype_freehand',
                        domain='PloneMeeting',
                        context=self.REQUEST)),
-            ("no_vote",
-             translate('polltype_no_vote',
+            ("mechanical",
+             translate('polltype_mechanical',
                        domain='PloneMeeting',
                        context=self.REQUEST)),
             ("secret",
@@ -4537,6 +5174,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                        context=self.REQUEST)),
             ("secret_separated",
              translate('polltype_secret_separated',
+                       domain='PloneMeeting',
+                       context=self.REQUEST)),
+            ("no_vote",
+             translate('polltype_no_vote',
                        domain='PloneMeeting',
                        context=self.REQUEST)),
         ]
@@ -4615,6 +5256,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             ('category', translate('PloneMeeting_label_category',
                                    domain=d,
                                    context=self.REQUEST)),
+            ('classifier', translate('PloneMeeting_label_classifier',
+                                     domain=d,
+                                     context=self.REQUEST)),
             ('associatedGroups', translate('PloneMeeting_label_associatedGroups',
                                            domain=d,
                                            context=self.REQUEST)),
@@ -4641,7 +5285,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def listAllVoteValues(self):
         d = "PloneMeeting"
         res = DisplayList((
-            ("not_yet", translate('vote_value_not_yet', domain=d, context=self.REQUEST)),
             ("yes", translate('vote_value_yes', domain=d, context=self.REQUEST)),
             ("no", translate('vote_value_no', domain=d, context=self.REQUEST)),
             ("abstain", translate('vote_value_abstain', domain=d, context=self.REQUEST)),
@@ -4653,8 +5296,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             ("not_found", translate('vote_value_not_found',
                                     domain=d,
                                     context=self.REQUEST)),
-            # 'invalid' represents, when the vote is done manually, an invalid
-            # ballot.
+            # 'invalid' represents, when the vote is done manually, an invalid ballot.
             ("invalid", translate('vote_value_invalid',
                                   domain=d,
                                   context=self.REQUEST)),
@@ -4680,11 +5322,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     confidential_profiles.append('{0}{1}'.format(CONFIGGROUPPREFIX, po_infos['row_id']))
             else:
                 confidential_profiles.append('{0}{1}'.format(READERPREFIX, suffix))
-        for suffix in get_all_suffixes():
-            # bypass suffixes that do not give a role, like it is the case for groupSuffix 'advisers'
-            # ignore also extra suffixes that are not giving an extra role
-            if not MEETINGROLES.get(suffix):
-                continue
+        for suffix in get_item_validation_wf_suffixes(self):
             confidential_profiles.append('{0}{1}'.format(PROPOSINGGROUPPREFIX, suffix))
 
         res = []
@@ -4741,10 +5379,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     confidential_profiles.append('{0}{1}'.format(CONFIGGROUPPREFIX, po_infos['row_id']))
             else:
                 confidential_profiles.append('{0}{1}'.format(READERPREFIX, suffix))
-        for suffix in get_all_suffixes():
-            # bypass suffixes that do not give a role, like it is the case for groupSuffix 'advisers'
-            if not MEETINGROLES.get(suffix):
-                continue
+        for suffix in get_item_validation_wf_suffixes(self):
             confidential_profiles.append('{0}{1}'.format(PROPOSINGGROUPPREFIX, suffix))
 
         res = []
@@ -4792,10 +5427,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''
         confidential_profiles = ['{0}{1}'.format(CONFIGGROUPPREFIX, po_infos['row_id'])
                                  for po_infos in self.getPowerObservers()]
-        for suffix in get_all_suffixes():
-            # bypass suffixes that do not give a role, like it is the case for groupSuffix 'advisers'
-            if not MEETINGROLES.get(suffix):
-                continue
+        for suffix in get_item_validation_wf_suffixes(self):
             confidential_profiles.append('{0}{1}'.format(SUFFIXPROFILEPREFIX, suffix))
 
         res = []
@@ -4846,17 +5478,15 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('isVotable')
 
     def isVotable(self, item):
-        # exec 'condition = %s' % self.getVoteCondition()
-        return True
-
-    security.declarePublic('deadlinesAreEnabled')
-
-    def deadlinesAreEnabled(self):
-        '''Are deadlines enabled ?'''
-        for field in self.getUsedMeetingAttributes():
-            if field.startswith('deadline'):
-                return True
-        return False
+        extra_expr_ctx = _base_extra_expr_ctx(item)
+        extra_expr_ctx.update({'item': item})
+        res = _evaluateExpression(
+            item,
+            expression=self.getVoteCondition(),
+            roles_bypassing_expression=[],
+            extra_expr_ctx=extra_expr_ctx,
+            empty_expr_is_true=True)
+        return res
 
     def getItemIconColorName(self):
         '''This will return the name of the icon used for MeetingItem portal_type.'''
@@ -4923,7 +5553,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # registered in portal_factory (in the model:
             # use_portal_factory=True), we must also register the new
             # portal_type we are currently creating.
-            if metaTypeName in registeredFactoryTypes:
+            if metaTypeName in registeredFactoryTypes and \
+               portalTypeName not in registeredFactoryTypes:
                 factoryTypesToRegister.append(portalTypeName)
             if not hasattr(self.portal_types, portalTypeName):
                 typeInfoName = "PloneMeeting: %s (%s)" % (metaTypeName,
@@ -4932,6 +5563,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 portal_types.manage_addTypeInformation(
                     getattr(portal_types, realMetaType).meta_type,
                     id=portalTypeName, typeinfo_name=typeInfoName)
+
                 # Set the human readable title explicitly
                 portalType = getattr(portal_types, portalTypeName)
                 portalType.title = portalTypeName
@@ -4943,8 +5575,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     # so MeetingItem types are in it, this is usefull when managing item templates
                     # in the MeetingConfig because folders there have the 'folder_contents' layout
                     if portalTypeName not in site_properties.typesUseViewActionInListings:
-                        site_properties.typesUseViewActionInListings = site_properties.typesUseViewActionInListings + \
-                            (portalTypeName, )
+                        site_properties.typesUseViewActionInListings = \
+                            site_properties.typesUseViewActionInListings + (portalTypeName, )
 
         # Copy actions from the base portal type
         self._updatePortalTypes()
@@ -5010,6 +5642,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             else:
                 portalType.icon_expr = basePortalType.icon_expr
                 portalType.icon_expr_object = Expression(portalType.icon_expr)
+
+            # now copy common portal_type attributes
             portalType.content_meta_type = basePortalType.content_meta_type
             portalType.factory = basePortalType.factory
             portalType.immediate_view = basePortalType.immediate_view
@@ -5021,19 +5655,35 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 advice_portal_types = tool.getAdvicePortalTypes(as_ids=True)
                 allowed = tuple(set(portalType.allowed_content_types + tuple(advice_portal_types)))
                 portalType.allowed_content_types = allowed
+            # Meeting is DX
+            if basePortalType.id == 'Meeting':
+                portalType.add_permission = basePortalType.add_permission
+                portalType.klass = basePortalType.klass
+                portalType.behaviors = basePortalType.behaviors
+                portalType.schema = basePortalType.schema
+                portalType.model_source = basePortalType.model_source
+                portalType.model_file = basePortalType.model_file
+                portalType.schema_policy = basePortalType.schema_policy
             portalType.allow_discussion = basePortalType.allow_discussion
             portalType.default_view = basePortalType.default_view
             portalType.view_methods = basePortalType.view_methods
             portalType._aliases = basePortalType._aliases
             portalType._actions = tuple(basePortalType._cloneActions())
         # Update MeetingAdvice portal_types if necessary
-        self.adapted()._updateMeetingAdvicePortalTypes()
+        self._updateMeetingAdvicePortalTypes()
         # Update the cloneToOtherMeetingConfig actions visibility
         self._updateCloneToOtherMCActions()
 
     def _updateMeetingAdvicePortalTypes(self):
         '''See doc in interfaces.py.'''
-        return
+        # create a copy of each 'base_wf', we preprend the portal_type to create a new workflow
+        tool = api.portal.get_tool('portal_plonemeeting')
+        extra_adviser_infos = tool.adapted().get_extra_adviser_infos()
+        for org_uid, adviser_infos in extra_adviser_infos.items():
+            portal_type = adviser_infos['portal_type']
+            base_wf = adviser_infos['base_wf']
+            advice_wf_id = '{0}__{1}'.format(portal_type, base_wf)
+            duplicate_workflow(base_wf, advice_wf_id, portalTypeNames=[portal_type])
 
     security.declarePrivate('createSearches')
 
@@ -5138,10 +5788,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                 context=self.REQUEST)
                 self.plone_utils.addPortalMessage(msg)
 
-    def _createOrUpdatePloneGroup(self, groupSuffix, groupTitleSuffix=None):
+    def _createOrUpdatePloneGroup(self, groupSuffix, groupTitleSuffix=None, only_group_ids=False):
         '''Create a group for this MeetingConfig using given p_groupSuffix to manage group id and group title.
            This will return groupId and True if group was added, False otherwise.'''
         groupId = "{0}_{1}".format(self.getId(), groupSuffix)
+        if only_group_ids:
+            return groupId, False
         groupTitle = self.Title(include_config_group=True)
         if groupTitleSuffix:
             groupSuffix = safe_unicode(groupTitleSuffix)
@@ -5150,12 +5802,16 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePrivate('createPowerObserversGroups')
 
-    def createPowerObserversGroups(self, force_update_access=False):
+    def createPowerObserversGroups(self, force_update_access=False, only_group_ids=False):
         '''Creates Plone groups to manage power observers.'''
+        groupIds = []
         tool = api.portal.get_tool('portal_plonemeeting')
         for po_infos in self.getPowerObservers():
             groupSuffix = po_infos['row_id']
-            groupId, wasCreated = self._createOrUpdatePloneGroup(groupSuffix, groupTitleSuffix=po_infos['label'])
+            groupId, wasCreated = self._createOrUpdatePloneGroup(groupSuffix,
+                                                                 groupTitleSuffix=po_infos['label'],
+                                                                 only_group_ids=only_group_ids)
+            groupIds.append(groupId)
             if wasCreated or force_update_access:
                 # now define local_roles on the tool so it is accessible by this group
                 tool.manage_addLocalRoles(groupId, (READER_USECASES['powerobservers'],))
@@ -5168,21 +5824,29 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 self.__ac_local_roles_block__ = True
                 self.manage_addLocalRoles(groupId, (READER_USECASES['powerobservers'],))
                 self.reindexObjectSecurity()
+        return groupIds
 
     security.declarePrivate('createBudgetImpactEditorsGroup')
 
-    def createBudgetImpactEditorsGroup(self):
+    def createBudgetImpactEditorsGroup(self, only_group_ids=False):
         '''Creates a Plone group that will be used to apply the 'MeetingBudgetImpactEditor'
            local role on every items of this MeetingConfig regarding self.itemBudgetInfosStates.'''
-        self._createOrUpdatePloneGroup(groupSuffix=BUDGETIMPACTEDITORS_GROUP_SUFFIX)
+        groupIds = []
+        groupId, wasCreated = self._createOrUpdatePloneGroup(groupSuffix=BUDGETIMPACTEDITORS_GROUP_SUFFIX,
+                                                             only_group_ids=only_group_ids)
+        groupIds.append(groupId)
+        return groupIds
 
     security.declarePrivate('createMeetingManagersGroup')
 
-    def createMeetingManagersGroup(self, force_update_access=False):
+    def createMeetingManagersGroup(self, force_update_access=False, only_group_ids=False):
         '''Creates a Plone group that will be used to apply the 'MeetingManager'
            local role on every plonemeeting folders of this MeetingConfig and on this MeetingConfig.'''
-        groupId, wasCreated = self._createOrUpdatePloneGroup(groupSuffix=MEETINGMANAGERS_GROUP_SUFFIX)
-        if wasCreated or force_update_access:
+        groupIds = []
+        groupId, wasCreated = self._createOrUpdatePloneGroup(groupSuffix=MEETINGMANAGERS_GROUP_SUFFIX,
+                                                             only_group_ids=only_group_ids)
+        groupIds.append(groupId)
+        if not only_group_ids and wasCreated or force_update_access:
             # now define local_roles on the tool so it is accessible by this group
             tool = api.portal.get_tool('portal_plonemeeting')
             tool.manage_addLocalRoles(groupId, ('MeetingManager',))
@@ -5194,14 +5858,17 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # remove inheritance on self and define these local_roles for self too
             self.__ac_local_roles_block__ = True
             self.manage_addLocalRoles(groupId, ('MeetingManager',))
-        self.manage_addLocalRoles(groupId, ('MeetingManager',))
+        return groupIds
 
     security.declarePrivate('createItemTemplateManagersGroup')
 
-    def createItemTemplateManagersGroup(self, force_update_access=False):
+    def createItemTemplateManagersGroup(self, force_update_access=False, only_group_ids=False):
         '''Creates a Plone group that will be used to store users able to manage item templates.'''
-        groupId, wasCreated = self._createOrUpdatePloneGroup(groupSuffix=ITEMTEMPLATESMANAGERS_GROUP_SUFFIX)
-        if wasCreated or force_update_access:
+        groupIds = []
+        groupId, wasCreated = self._createOrUpdatePloneGroup(groupSuffix=ITEMTEMPLATESMANAGERS_GROUP_SUFFIX,
+                                                             only_group_ids=only_group_ids)
+        groupIds.append(groupId)
+        if not only_group_ids and wasCreated or force_update_access:
             # now define local_roles on the tool so it is accessible by this group
             tool = api.portal.get_tool('portal_plonemeeting')
             tool.manage_addLocalRoles(groupId, (READER_USECASES[ITEMTEMPLATESMANAGERS_GROUP_SUFFIX],))
@@ -5212,17 +5879,28 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             portal.contacts.reindexObjectSecurity()
             # give 'Manager' local role to group in the itemtemplates folder
             self.itemtemplates.manage_addLocalRoles(groupId, ('Manager', ))
+        return groupIds
 
-    def _createOrUpdateAllPloneGroups(self, force_update_access=False):
-        """Create or update every linked Plone groups."""
-        # Create the corresponding group that will contain MeetingPowerObservers
-        self.createPowerObserversGroups(force_update_access=force_update_access)
-        # Create the corresponding group that will contain MeetingBudgetImpactEditors
-        self.createBudgetImpactEditorsGroup()
+    def _createOrUpdateAllPloneGroups(self, force_update_access=False, only_group_ids=False):
+        """Create or update every linked Plone groups.
+           If p_force_update_access this will force update of access given to created group.
+           If p_only_group_ids, this will not create groups but return group ids that would be created."""
+        group_ids = []
         # Create the corresponding group that will contain MeetingManagers
-        self.createMeetingManagersGroup(force_update_access=force_update_access)
+        group_ids += self.createMeetingManagersGroup(
+            force_update_access=force_update_access,
+            only_group_ids=only_group_ids)
         # Create the corresponding group that will contain item templates Managers
-        self.createItemTemplateManagersGroup(force_update_access=force_update_access)
+        group_ids += self.createItemTemplateManagersGroup(
+            force_update_access=force_update_access,
+            only_group_ids=only_group_ids)
+        # Create the corresponding group that will contain MeetingBudgetImpactEditors
+        group_ids += self.createBudgetImpactEditorsGroup(only_group_ids=only_group_ids)
+        # Create the corresponding group that will contain MeetingPowerObservers
+        group_ids += self.createPowerObserversGroups(
+            force_update_access=force_update_access,
+            only_group_ids=only_group_ids)
+        return group_ids
 
     def _set_default_faceted_search(self, collection_id='searchmyitems'):
         """ """
@@ -5305,7 +5983,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         """Return the default item template if it is active."""
         item_templates = self.get(TOOL_FOLDER_ITEM_TEMPLATES)
         default_template = item_templates.get(ITEM_DEFAULT_TEMPLATE_ID, None)
-        if default_template and ignore_inactive and default_template.queryState() == 'inactive':
+        if default_template and ignore_inactive and default_template.query_state() == 'inactive':
             default_template = None
         return default_template
 
@@ -5411,6 +6089,30 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     subFolder.processForm(values={'dummy': None})
                 subFolder.reindexObject()
 
+    security.declarePublic('getItemWorkflow')
+
+    def getItemWorkflow(self, theObject=False, type_name=None, **kwargs):
+        '''Overrides field 'itemWorkflow' accessor to be able to pass
+           the p_theObject parameter that will return portal_workflow WF object.'''
+        itemWorkflow = self.getField('itemWorkflow').get(self, **kwargs)
+        if theObject:
+            wfTool = api.portal.get_tool('portal_workflow')
+            type_name = type_name or self.getItemTypeName()
+            itemWorkflow = wfTool.getWorkflowsFor(type_name)[0]
+        return itemWorkflow
+
+    security.declarePublic('getMeetingWorkflow')
+
+    def getMeetingWorkflow(self, theObject=False, type_name=None, **kwargs):
+        '''Overrides field 'meetingWorkflow' accessor to be able to pass
+           the p_theObject parameter that will return portal_workflow WF object.'''
+        meetingWorkflow = self.getField('meetingWorkflow').get(self, **kwargs)
+        if theObject:
+            wfTool = api.portal.get_tool('portal_workflow')
+            type_name = type_name or self.getMeetingTypeName()
+            meetingWorkflow = wfTool.getWorkflowsFor(type_name)[0]
+        return meetingWorkflow
+
     security.declarePublic('getItemTypeName')
 
     def getItemTypeName(self, configType=None):
@@ -5442,13 +6144,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def userIsAReviewer(self):
         '''Is current user a reviewer?  So is current user among groups of reviewers?'''
         tool = api.portal.get_tool('portal_plonemeeting')
-        return bool(tool.get_orgs_for_user(suffixes=reviewersFor(self.getItemWorkflow()).keys(),
-                                           the_objects=False))
+        return bool(tool.get_orgs_for_user(suffixes=reviewersFor(self).keys()))
 
     def _highestReviewerLevel(self, groupIds):
         '''Return highest reviewer level found in given p_groupIds.'''
         groupIds = str(groupIds)
-        for reviewSuffix in reviewersFor(self.getItemWorkflow()).keys():
+        for reviewSuffix in reviewersFor(self).keys():
             if "_%s'" % reviewSuffix in groupIds:
                 return reviewSuffix
 
@@ -5607,8 +6308,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def listAllRichTextFields(self):
         '''Lists all rich-text fields belonging to classes MeetingItem and
            Meeting.'''
-        res = self._listRichTextFieldFor(MeetingItem) + self._listRichTextFieldFor(Meeting)
-        return DisplayList(tuple(res))
+        res = DisplayList(self._listRichTextFieldFor(MeetingItem)).sortedByValue() + get_dx_attrs(
+            portal_type=self.getMeetingTypeName(), richtext_only=True, prefixed_key=True).sortedByValue()
+        return res
 
     security.declarePublic('listItemRichTextFields')
 
@@ -5672,12 +6374,21 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             ("itemPresented", translate('event_item_presented',
                                         domain=d,
                                         context=self.REQUEST)),
+            ("itemPresentedOwner", translate('event_item_presented_owner',
+                                             domain=d,
+                                             context=self.REQUEST)),
             ("itemUnpresented", translate('event_item_unpresented',
                                           domain=d,
                                           context=self.REQUEST)),
+            ("itemUnpresentedOwner", translate('event_item_unpresented_owner',
+                                               domain=d,
+                                               context=self.REQUEST)),
             ("itemDelayed", translate('event_item_delayed',
                                       domain=d,
                                       context=self.REQUEST)),
+            ("itemDelayedOwner", translate('event_item_delayed_owner',
+                                           domain=d,
+                                           context=self.REQUEST)),
             ("itemPostponedNextMeeting", translate('event_item_postponed_next_meeting',
                                                    domain=d,
                                                    context=self.REQUEST)),
@@ -5715,6 +6426,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             ("returnedToProposingGroup", translate('event_item_returned_to_proposing_group',
                                                    domain=d,
                                                    context=self.REQUEST)),
+            ("returnedToProposingGroupOwner", translate(
+                'event_item_returned_to_proposing_group_owner',
+                domain=d,
+                context=self.REQUEST)),
             ("returnedToMeetingManagers", translate('event_item_returned_to_meeting_managers',
                                                     domain=d,
                                                     context=self.REQUEST)),
@@ -5789,42 +6504,50 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 signatures = listifySignatures(signatures)
         return signatures
 
+    security.declarePublic('getCommittees')
+
+    def getCommittees(self, only_enabled=False, **kwargs):
+        '''Overrides field 'committees' accessor to be able to pass
+           the p_only_enabled parameter that will return
+           committees for which enabled is '1'.'''
+        committees = self.getField('committees').get(self, **kwargs)
+        if only_enabled:
+            committees = [committee for committee in committees
+                          if committee['enabled'] == '1']
+        return committees
+
     security.declarePublic('getCategories')
 
-    def getCategories(self, classifiers=False, onlySelectable=True, userId=None, caching=True):
-        '''Returns the categories defined for this meeting config or the
-           classifiers if p_classifiers is True. If p_onlySelectable is True,
-           there will be a check to see if the category is available to the
-           current user, otherwise, we return every existing MeetingCategories.
-           If a p_userId is given, it will be used to be passed to isSelectable'''
+    def getCategories(self, catType='categories', onlySelectable=True, userId=None, caching=True):
+        '''Returns the categories defined for this meeting config.
+           If p_onlySelectable is True, there will be a check to see if the category
+           is available to the current user, otherwise, we return every existing categories.
+           If a p_userId is given, it will be used to be passed to isSelectable.
+           p_catType may be 'categories' (default), then returns categories, 'classifiers',
+           then returns classifiers or 'all', then return every categories and classifiers.'''
         data = None
         if caching:
-            key = "meeting-config-getcategories-%s-%s-%s-%s" % (self.getId(),
-                                                                str(classifiers),
-                                                                str(onlySelectable),
-                                                                str(userId))
+            key = "meeting-config-getcategories-%s-%s-%s-%s" % (
+                self.getId(), str(catType), str(onlySelectable), str(userId))
             cache = IAnnotations(self.REQUEST)
             data = cache.get(key, None)
         if data is None:
             data = []
-            if classifiers:
-                catFolder = self.classifiers
-            elif self.getUseGroupsAsCategories():
-                data = get_organizations()
-                if caching:
-                    cache[key] = data
-                return data
+            if catType == 'all':
+                categories = self.categories.objectValues() + self.classifiers.objectValues()
+            elif catType == 'classifiers':
+                categories = self.classifiers.objectValues()
             else:
-                catFolder = self.categories
-            res = []
+                categories = self.categories.objectValues()
+
             if onlySelectable:
-                for cat in catFolder.objectValues('MeetingCategory'):
-                    if cat.adapted().isSelectable(userId=userId):
-                        res.append(cat)
+                for cat in categories:
+                    if cat.is_selectable(userId=userId):
+                        data.append(cat)
             else:
-                res = catFolder.objectValues('MeetingCategory')
+                data = categories
             # be coherent as objectValues returns a LazyMap
-            data = list(res)
+            data = list(data)
             if caching:
                 cache[key] = data
         return data
@@ -5868,7 +6591,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('getSelf')
 
     def getSelf(self):
-        if self.__class__.__name__ != 'MeetingConfig':
+        if self.getTagName() != 'MeetingConfig':
             return self.context
         return self
 
@@ -5945,7 +6668,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         else:
             res = []
             for item in itemsFolder.objectValues('MeetingItem'):
-                if item.queryState() == 'active':
+                if item.query_state() == 'active':
                     res.append(item)
         return res
 
@@ -6158,6 +6881,20 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             raise Unauthorized
         return self.REQUEST.RESPONSE.redirect(self.absolute_url() + '/@@check-pod-templates')
 
+    def _get_all_meeting_folders(self):
+        """Return every meeting folders for this MeetingConfig."""
+        folders = []
+        portal = api.portal.get()
+        for userFolder in portal.Members.objectValues():
+            mymeetings = getattr(userFolder, 'mymeetings', None)
+            if not mymeetings:
+                continue
+            meetingFolder = getattr(mymeetings, self.getId(), None)
+            if not meetingFolder:
+                continue
+            folders.append(meetingFolder)
+        return folders
+
     def _synchSearches(self, folder=None):
         """Synchronize the searches for a givan meetingFolder p_folder, if it is not given,
            every user folder for this MeetingConfig will be synchronized.
@@ -6170,21 +6907,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
            - we will copy the facetednav annotation from the MeetingConfig.searches and
              MeetingConfig.searches_* folders to the corresponding folders in p_folder;
            - we will update the default for the collection widget."""
-        folders = []
         # synchronize only one folder
         if folder:
             folders = [folder, ]
         else:
-            # synchronize every user folders
-            portal = api.portal.get()
-            for userFolder in portal.Members.objectValues():
-                mymeetings = getattr(userFolder, 'mymeetings', None)
-                if not mymeetings:
-                    continue
-                meetingFolder = getattr(mymeetings, self.getId(), None)
-                if not meetingFolder:
-                    continue
-                folders.append(meetingFolder)
+            folders = self._get_all_meeting_folders()
 
         for folder in folders:
             logger.info("Synchronizing searches with folder at '{0}'".format('/'.join(folder.getPhysicalPath())))
@@ -6208,7 +6935,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 enableFacetedDashboardFor(subFolderObj,
                                           xmlpath=os.path.dirname(__file__) +
                                           '/faceted_conf/default_dashboard_widgets.xml')
-                alsoProvides(subFolderObj, IBatchActionsMarker)
+                if subFolderObj.getId() == "searches_items":
+                    # item related searches
+                    alsoProvides(subFolderObj, IMeetingItemDashboardBatchActionsMarker)
+                else:
+                    # meeting related searches
+                    alsoProvides(subFolderObj, IMeetingDashboardBatchActionsMarker)
                 subFolderObj.reindexObject()
 
     def getMeetingStatesAcceptingItems(self):
@@ -6217,7 +6949,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     def getMeetingsAcceptingItems_cachekey(method, self, review_states=('created', 'frozen'), inTheFuture=False):
         '''cachekey method for self.getMeetingsAcceptingItems.'''
-        return (self, str(self.REQUEST._debug), review_states, inTheFuture)
+        return (repr(self), str(self.REQUEST._debug), review_states, inTheFuture)
 
     def _getMeetingsAcceptingItemsQuery(self, review_states=('created', 'frozen'), inTheFuture=False):
         '''Compute the catalog query to get meeting accepting items.'''
@@ -6232,13 +6964,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
         query = {'portal_type': self.getMeetingTypeName(),
                  'review_state': review_states,
-                 'sort_on': 'getDate'}
+                 'sort_on': 'meeting_date'}
         # querying empty review_state will return nothing
         if not review_states:
             query.pop('review_state')
 
         if inTheFuture:
-            query['getDate'] = {'query': DateTime(), 'range': 'min'}
+            query['meeting_date'] = {'query': datetime.now(), 'range': 'min'}
 
         return query
 
@@ -6270,6 +7002,15 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             terms = [term for term in vocab._terms if '(*)' in term.title]
             vocab = SimpleVocabulary(terms)
         return vocab
+
+    def displayGroupsAndUsers(self):
+        """Display groups and users specific to this MeetingConfig (meetingmanagers, powerobservers, ...)."""
+        plone_group_ids = self._createOrUpdateAllPloneGroups(only_group_ids=True)
+        # include also group "Administrators"
+        plone_group_ids.append("Administrators")
+        portal = api.portal.get()
+        res = portal.restrictedTraverse('@@display-group-users')(group_ids=plone_group_ids, short=True)
+        return res
 
     def _optionalDelayAwareAdvisers(self, validity_date, item=None):
         '''Returns the 'delay-aware' advisers.
@@ -6316,13 +7057,63 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                         'row_id': customAdviserConfig['row_id']})
         return res
 
-    def _assembly_fields(self, field_name=True):
+    def _assembly_field_names(self):
         ''' '''
-        fields = [field for field in Meeting.schema.fields()
-                  if field.getName().startswith('assembly')]
-        if field_name:
-            fields = [field.getName() for field in fields]
+        meeting_schema = get_dx_schema(portal_type=self.getMeetingTypeName())
+        fields = [field_name for field_name in meeting_schema
+                  if field_name.startswith('assembly')]
         return fields
 
+    def get_item_corresponding_state_to_assign_local_roles(self, item_state):
+        '''See doc in interfaces.py.'''
+        cfg = self.getSelf()
+        corresponding_item_state = None
+        item_val_levels_states = cfg.getItemWFValidationLevels(data='state', only_enabled=True)
+        # return_to_proposing_group WFAdaptation
+        if item_state.startswith('returned_to_proposing_group'):
+            if item_state == 'returned_to_proposing_group':
+                corresponding_item_state = item_val_levels_states[0]
+            else:
+                corresponding_item_state = item_state.split('returned_to_proposing_group_')[1]
+        # waiting_advices WFAdaptation
+        elif item_state.endswith('_waiting_advices'):
+            corresponding_item_state = item_state.split('_waiting_advices')[0]
+        return corresponding_item_state
+
+    def get_item_custom_suffix_roles(self, item_state):
+        '''See doc in interfaces.py.'''
+        return True, []
+
+    def render_editform_errors(self, errors):
+        """Render errors in the edit form in case it comes from another fieldset."""
+        tool = api.portal.get_tool('portal_plonemeeting')
+        if not tool.isManager(self, realManagers=True):
+            return
+        error_pattern = u"<dl class=\"portalMessage error\"><dt>{0}</dt><dd>{1}</dd></dl>"
+        res = []
+        for error_field_id, error_msg in errors.items():
+            res.append(error_pattern.format(
+                translate(u"Error",
+                          domain="plone",
+                          context=self.REQUEST),
+                u"<strong>{0}</strong>: {1}".format(
+                    translate("PloneMeeting_label_" + error_field_id,
+                              domain="PloneMeeting",
+                              context=self.REQUEST),
+                    error_msg)))
+        return u'\n'.join(res)
+
+    security.declarePublic('show_meeting_manager_reserved_field')
+
+    def show_meeting_manager_reserved_field(self, name, meta_type='Meeting'):
+        '''When must field named p_name be shown?'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        # XXX check on optional field to be removed when item will be DX
+        if meta_type == 'Meeting':
+            used_attrs = self.getUsedMeetingAttributes()
+        else:
+            used_attrs = self.getUsedItemAttributes()
+        res = tool.isManager(self) and name in used_attrs
+        return res
 
 registerType(MeetingConfig, PROJECTNAME)

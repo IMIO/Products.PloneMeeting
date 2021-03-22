@@ -1,0 +1,35 @@
+<div id="content"
+     i18n:domain="PloneMeeting"
+     class="meeting_item_voters_tooltipster">
+  <tal:non_voted_items condition="not:view/show_voted_items">
+    <tal:defines define="items view/getNonVotedItems">
+      <h2 i18n:translate="Not completed votes"></h2>
+      <h4><span i18n:translate="">Votes are not completed for following <span i18n:name="number" tal:content="python: len(items['public'])">number</span> <span i18n:name="polltype" class="item_polltype_public">public</span> item(s)</span> :</h4>
+      <ul tal:repeat="item items/public">
+        <li><span tal:content="python: item.getItemNumber(for_display=True)" />. <span tal:content="structure item/getPrettyLink" /></li>
+      </ul>
+      <p class="discreet" tal:condition="not:items/public" i18n:translate="">Nothing to display.</p>
+      <h4><span i18n:translate="">Votes are not completed for following <span i18n:name="number" tal:content="python: len(items['secret'])">number</span>  <span i18n:name="polltype" class="item_polltype_secret">secret</span> item(s)</span> :</h4>
+      <ul tal:repeat="item items/secret">
+        <li><span tal:content="python: item.getItemNumber(for_display=True)" />. <span tal:content="structure item/getPrettyLink" /></li>
+      </ul>
+      <p class="discreet" tal:condition="not:items/secret" i18n:translate="">Nothing to display.</p>
+    </tal:defines>
+  </tal:non_voted_items>
+
+  <tal:voted_items condition="view/show_voted_items">
+    <tal:defines define="items view/getVotedItems">
+      <h2 i18n:translate="Completed votes"></h2>
+      <h4><span i18n:translate="">Votes are completed for following <span i18n:name="number" tal:content="python: len(items['public'])">number</span> <span i18n:name="polltype" class="item_polltype_public">public</span> item(s)</span> :</h4>
+      <ul tal:repeat="item items/public">
+        <li><span tal:content="python: item.getItemNumber(for_display=True)" />. <span tal:content="structure item/getPrettyLink" /></li>
+      </ul>
+      <p class="discreet" tal:condition="not:items/public" i18n:translate="">Nothing to display.</p>
+      <h4><span i18n:translate="">Votes are completed for following <span i18n:name="number" tal:content="python: len(items['secret'])">number</span>  <span i18n:name="polltype" class="item_polltype_secret">secret</span> item(s)</span> :</h4>
+      <ul tal:repeat="item items/secret">
+        <li><span tal:content="python: item.getItemNumber(for_display=True)" />. <span tal:content="structure item/getPrettyLink" /></li>
+      </ul>
+      <p class="discreet" tal:condition="not:items/secret" i18n:translate="">Nothing to display.</p>
+    </tal:defines>
+  </tal:voted_items>
+</div>

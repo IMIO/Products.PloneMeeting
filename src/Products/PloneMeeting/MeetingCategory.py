@@ -176,6 +176,7 @@ class MeetingCategory(BaseContent, BrowserDefaultMixin):
             recurring item or item template);
           - it can not be used in field 'categoryMappingsWhenCloningToOtherMC'
             of another MeetingCategory.'''
+        return
         # If we are trying to remove the whole Plone Site, bypass this hook.
         # bypass also if we are in the creation process
         if not item.meta_type == "Plone Site" and not item._at_creation_flag:
@@ -214,7 +215,7 @@ class MeetingCategory(BaseContent, BrowserDefaultMixin):
     security.declarePublic('getSelf')
 
     def getSelf(self):
-        if self.__class__.__name__ != 'MeetingCategory':
+        if self.getTagName() != 'MeetingCategory':
             return self.context
         return self
 

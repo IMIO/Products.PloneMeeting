@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
 
-from Acquisition import aq_base
 from AccessControl.Permission import Permission
+from Acquisition import aq_base
 from appy.shared.diff import HtmlDiff
 from bs4 import BeautifulSoup
+from collections import OrderedDict
 from collective.behavior.talcondition.utils import _evaluateExpression
+from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_own_organization
+from collective.contact.plonegroup.utils import get_plone_group
 from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.excelexport.exportables.dexterityfields import get_exportable_for_fieldname
-from collective.fingerpointing.config import AUDIT_MESSAGE
-from collective.fingerpointing.logger import log_info
-from collective.fingerpointing.utils import get_request_information
 from collective.iconifiedcategory.interfaces import IIconifiedInfos
 from DateTime import DateTime
 from datetime import datetime
@@ -19,28 +19,35 @@ from email import Encoders
 from email.MIMEBase import MIMEBase
 from email.MIMEMultipart import MIMEMultipart
 from email.MIMEText import MIMEText
+from imio.helpers.content import richtextval
+from imio.helpers.security import fplog
 from imio.helpers.xhtml import addClassToLastChildren
 from imio.helpers.xhtml import CLASS_TO_LAST_CHILDREN_NUMBER_OF_CHARS_DEFAULT
 from imio.helpers.xhtml import markEmptyTags
 from imio.helpers.xhtml import removeBlanks
 from imio.helpers.xhtml import storeImagesLocally
 from imio.helpers.xhtml import xhtmlContentIsEmpty
+from imio.history.utils import getLastWFAction
 from plone import api
 from plone.app.textfield import RichText
+from plone.app.textfield.value import RichTextValue
 from plone.app.uuid.utils import uuidToObject
+from plone.autoform.interfaces import WIDGETS_KEY
 from plone.autoform.interfaces import WRITE_PERMISSIONS_KEY
 from plone.dexterity.interfaces import IDexterityContent
+from plone.dexterity.utils import resolveDottedName
 from plone.i18n.normalizer.interfaces import IIDNormalizer
 from plone.locking.events import unlockAfterModification
+from plone.memoize import ram
+from plone.supermodel.utils import mergedTaggedValueDict
+from Products.Archetypes.atapi import DisplayList
 from Products.Archetypes.event import ObjectEditedEvent
-from Products.CMFCore.permissions import AccessContentsInformation
 from Products.CMFCore.permissions import AddPortalContent
-from Products.CMFCore.permissions import DeleteObjects
 from Products.CMFCore.permissions import ManageProperties
 from Products.CMFCore.permissions import ModifyPortalContent
-from Products.CMFCore.permissions import View
 from Products.CMFCore.utils import _checkPermission
 from Products.CMFCore.WorkflowCore import WorkflowException
+from Products.CMFPlone.utils import base_hasattr
 from Products.CMFPlone.utils import safe_unicode
 from Products.DCWorkflow.events import TransitionEvent
 from Products.MailHost.MailHost import MailHostError
@@ -61,16 +68,20 @@ from Products.PloneMeeting.interfaces import IItemDuplicatedFromConfigEvent
 from Products.PloneMeeting.interfaces import IItemDuplicatedToOtherMCEvent
 from Products.PloneMeeting.interfaces import IItemListTypeChangedEvent
 from Products.PloneMeeting.interfaces import IItemLocalRolesUpdatedEvent
+from Products.PloneMeeting.interfaces import IItemPollTypeChangedEvent
 from Products.PloneMeeting.interfaces import IMeetingAfterTransitionEvent
-from Products.PloneMeeting.interfaces import IMeetingCategoryCustom
 from Products.PloneMeeting.interfaces import IMeetingConfigCustom
 from Products.PloneMeeting.interfaces import IMeetingCustom
 from Products.PloneMeeting.interfaces import IMeetingGroupCustom
 from Products.PloneMeeting.interfaces import IMeetingItemCustom
 from Products.PloneMeeting.interfaces import IMeetingLocalRolesUpdatedEvent
 from Products.PloneMeeting.interfaces import IToolPloneMeetingCustom
+from z3c.form.interfaces import DISPLAY_MODE
+from z3c.form.interfaces import IContextAware
+from z3c.form.interfaces import IFieldWidget
 from zope.annotation import IAnnotations
 from zope.component import getAdapter
+from zope.component import getMultiAdapter
 from zope.component import getUtility
 from zope.component import queryUtility
 from zope.component.hooks import getSite
@@ -78,9 +89,13 @@ from zope.component.interfaces import ObjectEvent
 from zope.event import notify
 from zope.globalrequest import getRequest
 from zope.i18n import translate
+from zope.interface import alsoProvides
 from zope.interface import implements
+from zope.location import locate
+from zope.schema import getFieldsInOrder
 from zope.security.interfaces import IPermission
 
+import itertools
 import logging
 import os
 import os.path
@@ -108,17 +123,12 @@ monthsIds = {1: 'month_jan', 2: 'month_feb', 3: 'month_mar', 4: 'month_apr',
              5: 'month_may', 6: 'month_jun', 7: 'month_jul', 8: 'month_aug',
              9: 'month_sep', 10: 'month_oct', 11: 'month_nov', 12: 'month_dec'}
 
-weekdaysIds = {0: 'weekday_sun', 1: 'weekday_mon', 2: 'weekday_tue',
-               3: 'weekday_wed', 4: 'weekday_thu', 5: 'weekday_fri',
-               6: 'weekday_sat'}
-
 adaptables = {
     'MeetingItem': {'method': 'getItem', 'interface': IMeetingItemCustom},
     'Meeting': {'method': 'getMeeting', 'interface': IMeetingCustom},
     # No (condition or action) workflow-related adapters are defined for the
     # following content types; only a Custom adapter.
     'MeetingAdvice': {'method': 'getAdvice', 'interface': None},
-    'MeetingCategory': {'method': None, 'interface': IMeetingCategoryCustom},
     'MeetingConfig': {'method': None, 'interface': IMeetingConfigCustom},
     'MeetingGroup': {'method': None, 'interface': IMeetingGroupCustom},
     'ToolPloneMeeting': {'method': None, 'interface': IToolPloneMeetingCustom},
@@ -155,7 +165,7 @@ def getWorkflowAdapter(obj, conditions):
        (if p_condition is False).'''
     tool = api.portal.get_tool(TOOL_ID)
     cfg = tool.getMeetingConfig(obj)
-    interfaceMethod = adaptables[obj.__class__.__name__]['method']
+    interfaceMethod = adaptables[obj.getTagName()]['method']
     if conditions:
         interfaceMethod += 'Conditions'
     else:
@@ -172,7 +182,7 @@ def getCustomAdapter(obj):
     '''Tries to get the custom adapter for a PloneMeeting object. If no adapter
        is defined, returns the object.'''
     res = obj
-    theInterface = adaptables[obj.meta_type]['interface']
+    theInterface = adaptables[obj.getTagName()]['interface']
     try:
         res = theInterface(obj)
     except TypeError:
@@ -191,8 +201,7 @@ def getCurrentMeetingObject(context):
         return obj.context
     elif obj and \
             hasattr(obj, 'context') and \
-            hasattr(obj.context, 'meta_type') and \
-            obj.context.meta_type == 'Meeting':
+            obj.context.getTagName() == 'Meeting':
         return obj.context
 
     if not (className in ('Meeting', 'MeetingItem')):
@@ -218,23 +227,24 @@ def getCurrentMeetingObject(context):
                     referer = referer[referer.index('/Members/'):]
                 # Then, add the real portal as URL prefix.
                 referer = portal_path + referer
-            # take care that the Meeting may contains annexes
+            # take care that the Meeting may contain annexes
             catalog = api.portal.get_tool('portal_catalog')
-            res = catalog(path=referer, meta_type='Meeting')
+            from Products.PloneMeeting.content.meeting import IMeeting
+            res = catalog(path=referer, object_provides=IMeeting.__identifier__)
             if res:
                 obj = res[0].getObject()
         else:
             # Check the parent (if it has sense)
             if hasattr(obj, 'getParentNode'):
                 obj = obj.getParentNode()
-                if not (obj.__class__.__name__ in ('Meeting', 'MeetingItem')):
+                if not (obj.getTagName() in ('Meeting', 'MeetingItem')):
                     obj = None
             else:
                 # It can be a method with attribute im_class
                 obj = None
 
     toReturn = None
-    if obj and hasattr(obj, 'meta_type') and obj.meta_type == 'Meeting':
+    if obj and obj.__class__.__name__ == 'Meeting':
         toReturn = obj
     return toReturn
 
@@ -295,6 +305,35 @@ def fieldIsEmpty(name, obj, useParamValue=False, value=None):
         return value is None
     else:
         return not value
+
+
+def get_datagridfield_column_value(value, column):
+    """Returns every values of a datagridfield column."""
+    if not value:
+        return []
+    value = [row[column] for row in value
+             if row.get('orderindex_', None) != 'template_row_marker' and row[column]]
+    # merge lists and remove duplicates
+    if value and hasattr(value[0], "__iter__"):
+        value = set(list(itertools.chain.from_iterable(value)))
+    return value
+
+
+def field_is_empty(widget, column=None):
+    """ """
+    if isinstance(widget.value, RichTextValue):
+        value = widget.value.raw
+    elif hasattr(widget, "columns"):
+        # DataGridField
+        value = get_datagridfield_column_value(widget.value, column)
+    else:
+        value = widget.value
+    if isinstance(value, (str, unicode)):
+        value = value.strip()
+    is_empty = True
+    if value:
+        is_empty = False
+    return is_empty
 
 
 def cropHTML(html, length=400, ellipsis='...'):
@@ -415,70 +454,67 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
         'meetingTitle': '', 'meetingLongTitle': '', 'itemTitle': '', 'user': userName,
         'groups': userGroups, 'meetingConfigTitle': safe_unicode(cfg.Title()),
     })
-    if obj.meta_type == 'Meeting':
+    if obj.getTagName() == 'Meeting':
         translationMapping['meetingTitle'] = safe_unicode(obj.Title())
-        translationMapping['meetingLongTitle'] = tool.formatMeetingDate(obj, prefixed=True)
-        translationMapping['meetingState'] = translate(obj.queryState(),
+        translationMapping['meetingLongTitle'] = tool.format_date(obj.date, prefixed=True)
+        translationMapping['meetingState'] = translate(obj.query_state(),
                                                        domain='plone',
                                                        context=obj.REQUEST)
-    elif obj.meta_type == 'MeetingItem':
+    elif obj.getTagName() == 'MeetingItem':
         translationMapping['itemTitle'] = safe_unicode(obj.Title())
-        translationMapping['itemState'] = translate(obj.queryState(),
+        translationMapping['itemState'] = translate(obj.query_state(),
                                                     domain='plone',
                                                     context=obj.REQUEST)
         meeting = obj.getMeeting()
         if meeting:
             translationMapping['meetingTitle'] = safe_unicode(meeting.Title())
-            translationMapping['meetingLongTitle'] = tool.formatMeetingDate(meeting, prefixed=True)
+            translationMapping['meetingLongTitle'] = tool.format_date(meeting.date, prefixed=True)
             translationMapping['itemNumber'] = obj.getItemNumber(
                 relativeTo='meeting')
-    # Update the translationMapping with a sub-product-specific
-    # translationMapping, that may also define custom mail subject and body.
-    customRes = obj.adapted().getSpecificMailContext(event, translationMapping)
-    if customRes:
-        subject = safe_unicode(customRes[0])
-        body = safe_unicode(customRes[1])
-    else:
-        subjectLabel = u'%s_mail_subject' % event
+
+    # some event end with "Owner", we use same event without the "Owner" suffix
+    subjectLabel = u'%s_mail_subject' % event.replace("Owner", "")
+    subject = translate(subjectLabel,
+                        domain=d,
+                        mapping=translationMapping,
+                        context=obj.REQUEST)
+    # special case for translations of event concerning state change
+    # if we can not translate the specific translation msgid, we use a default msgid
+    # so for example if meeting_state_changed_decide_mail_subject could not be translated
+    # we will translate meeting_state_changed_default_mail_subject
+    if subject is subjectLabel and (subjectLabel.startswith('meeting_state_changed_') or
+                                    subjectLabel.startswith('item_state_changed_')):
+        if subjectLabel.startswith('meeting_state_changed_'):
+            subjectLabel = u'meeting_state_changed_default_mail_subject'
+        else:
+            subjectLabel = u'item_state_changed_default_mail_subject'
         subject = translate(subjectLabel,
                             domain=d,
                             mapping=translationMapping,
                             context=obj.REQUEST)
-        # special case for translations of event concerning state change
-        # if we can not translate the specific translation msgid, we use a default msgid
-        # so for example if meeting_state_changed_decide_mail_subject could not be translated
-        # we will translate meeting_state_changed_default_mail_subject
-        if subject is subjectLabel and (subjectLabel.startswith('meeting_state_changed_') or
-                                        subjectLabel.startswith('item_state_changed_')):
-            if subjectLabel.startswith('meeting_state_changed_'):
-                subjectLabel = u'meeting_state_changed_default_mail_subject'
-            else:
-                subjectLabel = u'item_state_changed_default_mail_subject'
-            subject = translate(subjectLabel,
-                                domain=d,
-                                mapping=translationMapping,
-                                context=obj.REQUEST)
-        subject = safe_unicode(subject)
-        bodyLabel = u'%s_mail_body' % event
+    subject = safe_unicode(subject)
+    # some event end with "Owner", we use same event without the "Owner" suffix
+    bodyLabel = u'%s_mail_body' % event.replace("Owner", "")
+    body = translate(bodyLabel,
+                     domain=d,
+                     mapping=translationMapping,
+                     context=obj.REQUEST)
+    # special case for translations of event concerning state change
+    # if we can not translate the specific translation msgid, we use a default msgid
+    # so for example if meeting_state_changed_decide_mail_body could not be translated
+    # we will translate meeting_state_changed_default_mail_body
+    if body is bodyLabel and (bodyLabel.startswith('meeting_state_changed_') or
+                              bodyLabel.startswith('item_state_changed_')):
+        if bodyLabel.startswith('meeting_state_changed_'):
+            bodyLabel = u'meeting_state_changed_default_mail_body'
+        else:
+            bodyLabel = u'item_state_changed_default_mail_body'
         body = translate(bodyLabel,
                          domain=d,
                          mapping=translationMapping,
                          context=obj.REQUEST)
-        # special case for translations of event concerning state change
-        # if we can not translate the specific translation msgid, we use a default msgid
-        # so for example if meeting_state_changed_decide_mail_body could not be translated
-        # we will translate meeting_state_changed_default_mail_body
-        if body is bodyLabel and (bodyLabel.startswith('meeting_state_changed_') or
-                                  bodyLabel.startswith('item_state_changed_')):
-            if bodyLabel.startswith('meeting_state_changed_'):
-                bodyLabel = u'meeting_state_changed_default_mail_body'
-            else:
-                bodyLabel = u'item_state_changed_default_mail_body'
-            body = translate(bodyLabel,
-                             domain=d,
-                             mapping=translationMapping,
-                             context=obj.REQUEST)
-        body = safe_unicode(body)
+    body = safe_unicode(body)
+
     adminFromAddress = _getEmailAddress(
         portal.getProperty('email_from_name'),
         safe_unicode(portal.getProperty('email_from_address')))
@@ -509,16 +545,23 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
                       attachments)
     except EmailError, ee:
         logger.warn(str(ee))
+    return subject, body
 
 
-def sendMailIfRelevant(obj, event, permissionOrRole, isRole=False,
-                       customEvent=False, mapping={}):
+def sendMailIfRelevant(obj, event, permissionOrSuffixOrRoleOrGroupIds,
+                       customEvent=False,
+                       mapping={},
+                       isSuffix=False,
+                       isRole=False,
+                       isGroupIds=False,
+                       isPermission=False,
+                       debug=False):
     '''An p_event just occurred on meeting or item p_obj. If the corresponding
        meeting config specifies that a mail needs to be sent, this function
        will send a mail. The mail subject and body are defined from i18n labels
-       that derive from the event name. if p_isRole is True, p_permissionOrRole
-       is a role, and the mail will be sent to every user having this role. If
-       p_isRole is False, p_permissionOrRole is a permission and the mail will
+       that derive from the event name. if p_isSuffix is True, p_permissionOrSuffixOrRole
+       is a suffix, and the mail will be sent to every members of this sufixed group (relevant for item).
+       If p_isSuffix is False, p_permissionOrSuffixOrRole is a permission and the mail will
        be sent to everyone having this permission.  Some mapping can be received
        and used afterward in mail subject and mail body translations.
 
@@ -528,6 +571,7 @@ def sendMailIfRelevant(obj, event, permissionOrRole, isRole=False,
        A plug-in may use this method for sending custom events that are not
        defined in the MeetingConfig. In this case, you must specify
        p_customEvent = True.'''
+    debug = debug or obj.REQUEST.get('debug_sendMailIfRelevant', False)
     tool = api.portal.get_tool(TOOL_ID)
     membershipTool = api.portal.get_tool('portal_membership')
     currentUser = membershipTool.getAuthenticatedMember()
@@ -541,12 +585,30 @@ def sendMailIfRelevant(obj, event, permissionOrRole, isRole=False,
         return
     # Ok, send a mail. Who are the recipients ?
     recipients = []
-    adap = obj.adapted()
-    if isRole and (permissionOrRole == 'Owner'):
-        userIds = [obj.Creator()]
+    userIds = []
+    if isSuffix:
+        org = obj.adapted()._getGroupManagingItem(obj.query_state())
+        plone_group = get_plone_group(org.UID(), permissionOrSuffixOrRoleOrGroupIds)
+        if not plone_group:
+            # maybe the suffix is a MeetingConfig related suffix, like _meetingmanagers
+            plone_group = get_plone_group(cfg.getId(), permissionOrSuffixOrRoleOrGroupIds)
+        if plone_group:
+            userIds = plone_group.getGroupMemberIds()
+    elif isRole:
+        if permissionOrSuffixOrRoleOrGroupIds == 'Owner':
+            userIds = [obj.Creator()]
+        else:
+            # Warning "_members" returns all users (even deleted users),
+            # the filter must do this afterwards.
+            userIds = api.portal.get_tool('portal_memberdata')._members
     else:
-        # Warning "_members" returns all users (even deleted users), the filter must do this afterwards.
-        userIds = api.portal.get_tool('portal_memberdata')._members
+        # isGroupIds
+        for plone_group_id in permissionOrSuffixOrRoleOrGroupIds:
+            plone_group = api.group.get(plone_group_id)
+            userIds += plone_group.getMemberIds()
+
+    # remove duplicate
+    userIds = list(set(userIds))
     for userId in userIds:
         user = membershipTool.getMemberById(userId)
         # do not warn user doing the action
@@ -554,76 +616,36 @@ def sendMailIfRelevant(obj, event, permissionOrRole, isRole=False,
             continue
         if not user.getProperty('email'):
             continue
-        # Does the user have the corresponding permission on p_obj ?
-        if isRole:
-            if not user.has_role(permissionOrRole, obj):
+        if isPermission:
+            # then "isPermission"
+            # Does the user have the corresponding permission on p_obj ?
+            # we do this here for performance reason as we have the "user" object
+            if not api.user.has_permission(permission=permissionOrSuffixOrRoleOrGroupIds,
+                                           obj=obj,
+                                           user=user):
                 continue
-        else:
-            if not api.user.has_permission(permission=permissionOrRole, obj=obj, user=user):
+        elif isRole:
+            if not user.has_role(permissionOrSuffixOrRoleOrGroupIds, obj):
                 continue
 
         recipient = tool.getMailRecipient(user)
-        # Must we avoid sending mail to this recipient for some custom reason?
-        if not adap.includeMailRecipient(event, userId):
-            continue
-        # Has the user unsubscribed to this event in his preferences ?
-        itemEvents = cfg.getMailItemEvents()
-        meetingEvents = cfg.getMailMeetingEvents()
-        if (event not in itemEvents) and (event not in meetingEvents):
-            continue
         # After all, we will add this guy to the list of recipients.
         recipients.append(recipient)
+    mail_subject = mail_body = None
     if recipients:
-        sendMail(recipients, obj, event, mapping=mapping)
+        # wipeout recipients to avoid sendind same email to several users
+        unique_emails = []
+        unique_email_recipients = []
+        for recipient in recipients:
+            username, email = recipient.split('<')
+            if email in unique_emails:
+                continue
+            unique_emails.append(email)
+            unique_email_recipients.append(recipient)
+        mail_subject, mail_body = sendMail(unique_email_recipients, obj, event, mapping=mapping)
+    if debug:
+        return recipients, mail_subject, mail_body
     return True
-
-
-def addRecurringItemsIfRelevant(meeting, transition):
-    '''Sees in the meeting config linked to p_meeting if the triggering of
-       p_transition must lead to the insertion of some recurring items in
-       p_meeting.'''
-    recItems = []
-    meetingConfig = meeting.portal_plonemeeting.getMeetingConfig(meeting)
-    for item in meetingConfig.getRecurringItems():
-        if item.getMeetingTransitionInsertingMe() == transition:
-            recItems.append(item)
-    if recItems:
-        meeting.addRecurringItems(recItems)
-
-
-# I wanted to put permission "ReviewPortalContent" among defaultPermissions,
-# but if I do this, it generates an error when calling "manage_permission" in
-# method "clonePermissions" (see below). I've noticed that in several
-# PloneMeeting standard workflows (meeting_workflow, meetingitem_workflow, etc),
-# although this permission is declared as a
-# managed permission, when you go in the ZMI to consult the actual
-# permissions that are set on objects governed by those workflows, the
-# permission "Review portal content" does not appear in the list at all.
-
-
-def clonePermissions(srcObj, destObj, permissions=(View,
-                                                   AccessContentsInformation,
-                                                   ModifyPortalContent,
-                                                   DeleteObjects)):
-    '''This method applies on p_destObj the same values for p_permissions
-       than those that apply for p_srcObj, according to workflow on
-       p_srcObj. p_srcObj may be an item or a meeting.'''
-    wfTool = api.portal.get_tool('portal_workflow')
-    srcWorkflows = wfTool.getWorkflowsFor(srcObj)
-    if not srcWorkflows:
-        return
-    srcWorkflow = srcWorkflows[0]
-    for permission in permissions:
-        if permission in srcWorkflow.permissions:
-            # Get the roles this permission is given to for srcObj in its
-            # current state.
-            srcStateDef = getattr(srcWorkflow.states, srcObj.queryState())
-            permissionInfo = srcStateDef.getPermissionInfo(permission)
-            destObj.manage_permission(permission,
-                                      permissionInfo['roles'],
-                                      acquire=permissionInfo['acquired'])
-    # Reindex object because permissions are catalogued.
-    destObj.reindexObject(idxs=['allowedRolesAndUsers'])
 
 
 def getCustomSchemaFields(baseSchema, completedSchema, cols):
@@ -661,53 +683,6 @@ def getCustomSchemaFields(baseSchema, completedSchema, cols):
     return res
 
 
-# ------------------------------------------------------------------------------
-def getDateFromRequest(day, month, year, start):
-    '''This method produces a DateTime instance from info coming from a request.
-       p_hour and p_month may be ommitted. p_start is a bool indicating if the
-       date will be used as start date or end date; this will allow us to know
-       how to fill p_hour and p_month if they are ommitted. If _year is
-       ommitted, we will return a date near the Big bang (if p_start is True)
-       or near the Apocalypse (if p_start is False). p_day, p_month and p_year
-       are required to be valid string representations of integers.'''
-    # Determine day
-    if not day.strip() or (day == '00'):
-        if start:
-            day = 1
-        else:
-            day = 30
-    else:
-        day = int(day)
-    # Determine month
-    if not month.strip() or (month == '00'):
-        if start:
-            month = 1
-        else:
-            month = 12
-    else:
-        month = int(month)
-    if (month == 2) and (day == 30):
-        day = 28
-    # Determine year
-    if not year.strip() or (year == '0000'):
-        if start:
-            year = 1980
-        else:
-            year = 3000
-    else:
-        year = int(year)
-    try:
-        res = DateTime('%d/%d/%d' % (month, day, year))
-    except DateTime.DateError:
-        # The date entered by the user is invalid. Take a default date.
-        if start:
-            res = DateTime('1980/01/01')
-        else:
-            res = DateTime('3000/12/31')
-    return res
-
-
-# ------------------------------------------------------------------------------
 def getDateFromDelta(aDate, delta):
     '''This function returns a DateTime instance, which is computed from a
        reference DateTime instance p_aDate to which a p_delta is applied.
@@ -723,18 +698,24 @@ def getDateFromDelta(aDate, delta):
     return DateTime('%s %s' % ((aDate + int(days)).strftime('%Y/%m/%d'), hour))
 
 
+def mark_empty_tags(obj, value):
+    """ """
+    if _checkPermission(ModifyPortalContent, obj):
+        value = markEmptyTags(
+            value,
+            tagTitle=translate('blank_line',
+                               domain='PloneMeeting',
+                               context=obj.REQUEST),
+            onlyAtTheEnd=True)
+    return value
+
+
 def getFieldVersion(obj, name, changes):
     '''Returns the content of field p_name on p_obj. If p_changes is True,
        historical modifications of field content are highlighted.'''
     lastVersion = obj.getField(name).getAccessor(obj)()
     # highlight blank lines at the end of the text if current user may edit the obj
-    if _checkPermission(ModifyPortalContent, obj):
-        lastVersion = markEmptyTags(lastVersion,
-                                    tagTitle=translate('blank_line',
-                                                       domain='PloneMeeting',
-                                                       context=obj.REQUEST),
-                                    onlyAtTheEnd=True)
-
+    lastVersion = mark_empty_tags(obj, lastVersion)
     if not changes:
         return lastVersion
     # Return cumulative diff between successive versions of field
@@ -769,19 +750,11 @@ def rememberPreviousData(obj, name=None):
        value. Result is a dict ~{s_fieldName: previousFieldValue}~'''
     res = {}
     cfg = obj.portal_plonemeeting.getMeetingConfig(obj)
-    isItem = obj.meta_type == 'MeetingItem'
     # Do nothing if the object is not in a state when historization is enabled.
-    if isItem:
-        meth = cfg.getRecordItemHistoryStates
-    else:
-        meth = cfg.getRecordMeetingHistoryStates
-    if obj.queryState() not in meth():
+    if obj.query_state() not in cfg.getRecordItemHistoryStates():
         return res
     # Store in res the values currently stored on p_obj.
-    if isItem:
-        historized = cfg.getHistorizedItemAttributes()
-    else:
-        historized = cfg.getHistorizedMeetingAttributes()
+    historized = cfg.getHistorizedItemAttributes()
     if name:
         if name in historized:
             res[name] = obj.getField(name).get(obj)
@@ -815,7 +788,7 @@ def addDataChange(obj, previousData=None):
     # Add an event in the history
     userId = obj.portal_membership.getAuthenticatedMember().getId()
     event = {'action': '_datachange_', 'actor': userId, 'time': DateTime(),
-             'comments': '', 'review_state': obj.queryState(),
+             'comments': '', 'review_state': obj.query_state(),
              'changes': previousData}
     if hasattr(obj, '_v_previousData'):
         del obj._v_previousData
@@ -877,38 +850,132 @@ def getHistoryTexts(obj, event):
     return res
 
 
-def setFieldFromAjax(obj, fieldName, newValue, remember=True, tranform=True, reindex=True, unlock=True):
+def get_dx_attrs(portal_type,
+                 optional_only=False,
+                 richtext_only=False,
+                 prefixed_key=False,
+                 as_display_list=True):
+    """ """
+    res = []
+    request = getRequest()
+    # schema fields
+    schema = get_dx_schema(portal_type=portal_type)
+    schema_fields = getFieldsInOrder(schema)
+    # FIELD_INFOS
+    portal_types = api.portal.get_tool('portal_types')
+    fti = portal_types[portal_type]
+    field_infos = resolveDottedName(fti.klass).FIELD_INFOS
+    for field_name, field in schema_fields:
+        if optional_only and \
+           (field_name not in field_infos or not field_infos[field_name]['optional']):
+            continue
+        if richtext_only and \
+           (field.__class__.__name__ != "RichText" or field.default_mime_type != 'text/html'):
+            continue
+        res.append(field_name)
+    if as_display_list:
+        display_list_tuples = []
+        for field_name in res:
+            key = field_name
+            if prefixed_key:
+                prefix = fti.klass.split(".")[-1]
+                key = "{0}.{1}".format(prefix, key)
+                display_list_tuples.append(
+                    (key,
+                     '%s -> %s' % (key,
+                                   translate("title_{0}".format(field_name),
+                                             domain="PloneMeeting",
+                                             context=request))
+                     ))
+            else:
+                display_list_tuples.append(
+                    (key,
+                     '%s (%s)' % (translate("title_{0}".format(field_name),
+                                            domain="PloneMeeting",
+                                            context=request),
+                                  field_name)
+                     ))
+
+        res = DisplayList(tuple(display_list_tuples))
+    return res
+
+
+def get_dx_schema(obj=None, portal_type=None):
+    """ """
+    portal_types = api.portal.get_tool('portal_types')
+    fti = portal_types[portal_type or obj.portal_type]
+    schema = fti.lookupSchema()
+    return schema
+
+
+def get_dx_field(obj, field_name):
+    """ """
+    schema = get_dx_schema(obj)
+    field = schema[field_name]
+    return field
+
+
+def get_dx_widget(obj, field_name, mode=DISPLAY_MODE):
+    """ """
+    field = get_dx_field(obj, field_name)
+    schema = get_dx_schema(obj)
+    autoform_widgets = mergedTaggedValueDict(schema, WIDGETS_KEY)
+    if field_name in autoform_widgets:
+        widget = autoform_widgets[field_name](field, obj.REQUEST)
+    else:
+        widget = getMultiAdapter((field, obj.REQUEST), IFieldWidget)
+    widget.context = obj
+    alsoProvides(widget, IContextAware)
+    widget.mode = mode
+    widget.update()
+    if hasattr(widget.field, "allowed_mime_types"):
+        widget.field.allowed_mime_types = ['text/html']
+    # this will set widget.__name__
+    locate(widget, None, field_name)
+    return widget
+
+
+def set_field_from_ajax(obj, field_name, new_value, remember=True, tranform=True, reindex=True, unlock=True):
     '''Sets on p_obj the content of a field whose name is p_fieldName and whose
        new value is p_fieldValue. This method is called by Ajax pages.'''
-    field = obj.getField(fieldName)
-    if remember:
-        # Keep old value, we might need to historize it.
-        previousData = rememberPreviousData(obj, fieldName)
-        field.getMutator(obj)(newValue, content_type='text/html')
-        # Potentially store it in object history
-        if previousData:
-            addDataChange(obj, previousData)
+
+    if IDexterityContent.providedBy(obj):
+        setattr(obj, field_name, richtextval(new_value))
     else:
-        field.getMutator(obj)(newValue, content_type='text/html')
+        field = obj.getField(field_name)
+        if remember:
+            # Keep old value, we might need to historize it.
+            previousData = rememberPreviousData(obj, field_name)
+            field.getMutator(obj)(new_value, content_type='text/html')
+            # Potentially store it in object history
+            if previousData:
+                addDataChange(obj, previousData)
+        else:
+            field.getMutator(obj)(new_value, content_type='text/html')
 
     if tranform:
         # Apply XHTML transforms when relevant
-        transformAllRichTextFields(obj, onlyField=fieldName)
+        transformAllRichTextFields(obj, onlyField=field_name)
+
     if reindex:
         # only reindex relevant indexes aka SearchableText + field specific index if exists
         index_names = api.portal.get_tool('portal_catalog').indexes()
         extra_idxs = ['SearchableText']
-        if fieldName in index_names:
-            extra_idxs.append(fieldName)
-        if field.accessor in index_names:
-            extra_idxs.append(field.accessor)
+        if field_name == 'description':
+            probable_index_name = 'Description'
+        else:
+            probable_index_name = 'get%s%s' % (field_name[0].upper(), field_name[1:])
+        if field_name in index_names:
+            extra_idxs.append(field_name)
+        if probable_index_name in index_names:
+            extra_idxs.append(probable_index_name)
         notifyModifiedAndReindex(obj, extra_idxs=extra_idxs)
     if unlock:
         # just unlock, do not call ObjectEditedEvent because it does too much
         unlockAfterModification(obj, event={})
     # add a fingerpointing log message
     extras = 'object={0} field_name={1}'.format(
-        repr(obj), fieldName)
+        repr(obj), field_name)
     fplog('quickedit_field', extras=extras)
 
 
@@ -929,13 +996,6 @@ def notifyModifiedAndReindex(obj, extra_idxs=[], notify_event=False):
         notify(ObjectEditedEvent(obj))
 
 
-def fplog(action, extras):
-    """collective.fingerpointing add log message."""
-    # add logging message to fingerpointing log
-    user, ip = get_request_information()
-    log_info(AUDIT_MESSAGE.format(user, ip, action, extras))
-
-
 def transformAllRichTextFields(obj, onlyField=None):
     '''Potentially, all richtext fields defined on an item (description,
        decision, etc) or a meeting (observations, ...) may be transformed via the method
@@ -947,31 +1007,45 @@ def transformAllRichTextFields(obj, onlyField=None):
     cfg = tool.getMeetingConfig(obj)
     fieldsToTransform = cfg.getXhtmlTransformFields()
     transformTypes = cfg.getXhtmlTransformTypes()
-    for field in obj.schema.fields():
-        if field.widget.getName() != 'RichWidget':
+    fields = {}
+    if IDexterityContent.providedBy(obj):
+        if onlyField:
+            field = get_dx_field(obj, onlyField)
+            fields[field.__name__] = getattr(obj, field.__name__).raw
+        else:
+            schema = get_dx_schema(obj)
+            write_permissions = schema.queryTaggedValue(WRITE_PERMISSIONS_KEY, {})
+            fields = {field_name: getattr(obj, field_name, None) is not None and getattr(obj, field_name).raw
+                      for field_name, field in getFieldsInOrder(schema)
+                      if field.__class__.__name__ == "RichText" and
+                      (write_permissions.get(field.__name__) and
+                       member.has_permission(write_permissions[field_name], obj) or True)}
+    else:
+        if onlyField:
+            field = obj.schema[onlyField]
+            fields[field.getName()] = field.getAccessor(obj)()
+        else:
+            fields = {field.getName(): field.getRaw(obj).strip() for field in obj.schema.fields()
+                      if field.widget.getName() == 'RichWidget' and
+                      member.has_permission(field.write_permission, obj)}
+
+    for field_name, field_raw_value in fields.items():
+        if not field_raw_value:
             continue
-        if onlyField and (field.getName() != onlyField):
-            continue
-        # What is the "write" permission for this field ?
-        writePermission = ModifyPortalContent
-        if hasattr(field, 'write_permission'):
-            writePermission = field.write_permission
-        if not member.has_permission(writePermission, obj):
-            continue
-        # make sure we do not loose resolveuid to images, use getRaw
-        raw_value = field.getRaw(obj).strip()
         # Apply mandatory transforms
-        fieldContent = storeImagesLocally(obj, raw_value)
+        fieldContent = storeImagesLocally(obj, field_raw_value)
         # Apply standard transformations as defined in the config
         # fieldsToTransform is like ('MeetingItem.description', 'MeetingItem.budgetInfos', )
-        if ("%s.%s" % (obj.meta_type, field.getName()) in fieldsToTransform) and \
-           not xhtmlContentIsEmpty(fieldContent):
+        if ("%s.%s" % (obj.getTagName(), field_name) in fieldsToTransform):
             if 'removeBlanks' in transformTypes:
                 fieldContent = removeBlanks(fieldContent)
-        # Apply custom transformations if defined
-        field.set(obj, obj.adapted().transformRichTextField(
-                  field.getName(), fieldContent))
-        field.setContentType(obj, field.default_content_type)
+        if IDexterityContent.providedBy(obj):
+            new_value = richtextval(fieldContent)
+            setattr(obj, field_name, new_value)
+        else:
+            field = obj.getField(field_name)
+            field.set(obj, fieldContent)
+            field.setContentType(obj, field.default_content_type)
 
 
 # ------------------------------------------------------------------------------
@@ -1006,9 +1080,9 @@ def applyOnTransitionFieldTransform(obj, transitionId):
     cfg = extra_expr_ctx['cfg']
     for transform in cfg.getOnTransitionFieldTransforms():
         tal_expr = transform['tal_expression'].strip()
-        if transform['transition'] == transitionId and \
-           transform['field_name'].split('.')[0] == obj.meta_type and \
-           tal_expr:
+        if tal_expr and \
+           transform['transition'] == transitionId and \
+           transform['field_name'].split('.')[0] == obj.getTagName():
             try:
                 extra_expr_ctx.update({'item': obj, })
                 res = _evaluateExpression(
@@ -1018,17 +1092,20 @@ def applyOnTransitionFieldTransform(obj, transitionId):
                     extra_expr_ctx=extra_expr_ctx,
                     empty_expr_is_true=False,
                     raise_on_error=True)
+                field = obj.getField(transform['field_name'].split('.')[1])
+                field.set(obj, res, mimetype='text/html')
+                idxs.append(field.accessor)
             except Exception, e:
                 plone_utils = api.portal.get_tool('plone_utils')
                 plone_utils.addPortalMessage(
-                    PloneMeetingError(ON_TRANSITION_TRANSFORM_TAL_EXPR_ERROR %
-                                      (transform['field_name'].split('.')[1], str(e))),
+                    ON_TRANSITION_TRANSFORM_TAL_EXPR_ERROR % (
+                        transform['field_name'].split('.')[1], str(e)),
                     type='warning')
                 return
-            field = obj.getField(transform['field_name'].split('.')[1])
-            field.set(obj, res, mimetype='text/html')
-            idxs.append(field.accessor)
-    obj.reindexObject(idxs=idxs)
+    # XXX do not reindex for now as full reindex is done after
+    # when moving to dexerity, will be able to reindex more efficiently
+    if False and idxs:
+        obj.reindexObject(idxs=idxs)
 
 
 # ------------------------------------------------------------------------------
@@ -1045,7 +1122,7 @@ def meetingExecuteActionOnLinkedItems(meeting, transitionId):
     for config in cfg.getOnMeetingTransitionItemActionToExecute():
         if config['meeting_transition'] == transitionId:
             is_transition = not config['tal_expression']
-            for item in meeting.getItems():
+            for item in meeting.get_items():
                 if is_transition:
                     # do not fail if a transition could not be triggered, just add an
                     # info message to the log so configuration can be adapted to avoid this
@@ -1150,29 +1227,39 @@ def updateCollectionCriterion(collection, i, v):
             break
 
 
-def toHTMLStrikedContent(plain_content):
+def toHTMLStrikedContent(html_content):
     """
       p_content is HTML having elements to strike between [[]].
       We will replace these [[]] by <strike> tags.
     """
-    plain_content = plain_content.replace('[[', '<strike>').replace(']]', '</strike>')
-    return plain_content
+    html_content = html_content.replace('[[', '<strike>').replace(']]', '</strike>')
+    return html_content
 
 
-def display_as_html(plain_content, obj):
+def translate_list(elements, domain="plone", as_list=False, separator=u', '):
+    """Translate the received elements."""
+    translated = []
+    request = getRequest()
+    for elt in elements:
+        translated.append(
+            translate(elt, domain=domain, context=request)
+        )
+    if not as_list:
+        translated = u', '.join(translated)
+    return translated
+
+
+def display_as_html(plain_content, obj, mark_empty_tags=False, striked=False):
     """Display p_plain_content as HTML, especially ending lines
        that are not displayed if empty."""
-    html_content = plain_content.replace('\n', '<br />')
-    if _checkPermission(ModifyPortalContent, obj):
-        # replace ending <br /> by empty tags
-        splitted = html_content.split('<br />')
-        res = []
-        for elt in splitted:
-            if not elt.strip():
-                res.append('<p>&nbsp;</p>')
-            else:
-                res.append('<p>' + elt + '</p>')
-        html_content = ''.join(res)
+    plain_content = plain_content or ''
+    portal_transforms = api.portal.get_tool('portal_transforms')
+    html_content = portal_transforms.convertTo('text/html', plain_content).getData()
+    html_content = html_content.replace('\r', '')
+    if striked:
+        html_content = toHTMLStrikedContent(html_content)
+    if mark_empty_tags and _checkPermission(ModifyPortalContent, obj):
+        # replace ending <p> by empty tags
         html_content = markEmptyTags(
             html_content,
             tagTitle=translate('blank_line',
@@ -1229,7 +1316,10 @@ def get_context_with_request(context):
         # sometimes, the DashboardCollection is the first parent in the REQUEST.PARENTS...
         portal = getSite()
         published = portal.REQUEST.get('PUBLISHED', None)
-        context = hasattr(published, 'context') and published.context or None
+        if base_hasattr(published, "getTagName"):
+            context = published
+        else:
+            context = base_hasattr(published, 'context') and published.context or None
         if not context or context == portal:
             # if not first parent, try to get it from HTTP_REFERER
             referer = portal.REQUEST['HTTP_REFERER'].replace(portal.absolute_url() + '/', '')
@@ -1371,9 +1461,7 @@ def _addManagedPermissions(obj):
         # get every RichText fields using a write_permission
         if IDexterityContent.providedBy(obj):
             # dexterity
-            portal_types = api.portal.get_tool('portal_types')
-            fti = portal_types[obj.portal_type]
-            schema = fti.lookupSchema()
+            schema = get_dx_schema(obj)
             write_permissions = schema.queryTaggedValue(WRITE_PERMISSIONS_KEY, {})
             for field_id, write_permission in write_permissions.items():
                 if isinstance(schema.get(field_id), RichText):
@@ -1507,6 +1595,7 @@ def updateAnnexesAccess(container):
             adapter.context = annex
             adapter.obj = aq_base(annex)
         v['visible_for_groups'] = adapter._visible_for_groups()
+        v['allowedRolesAndUsers'] = adapter._allowedRolesAndUsers
 
 
 def validate_item_assembly_value(value):
@@ -1565,15 +1654,69 @@ def main_item_data(item):
     return data
 
 
-def reviewersFor(workflow_id=None):
-    # import MEETINGREVIEWERS as it is often monkeypatched...
-    from Products.PloneMeeting.config import MEETINGREVIEWERS
-    if workflow_id and workflow_id in MEETINGREVIEWERS:
-        return MEETINGREVIEWERS.get(workflow_id)
-    return MEETINGREVIEWERS.get('*')
+def checkMayQuickEdit(obj,
+                      bypassWritePermissionCheck=False,
+                      permission=ModifyPortalContent,
+                      expression='',
+                      onlyForManagers=False):
+    """ """
+    from Products.PloneMeeting.content.meeting import Meeting
+    tool = api.portal.get_tool('portal_plonemeeting')
+    member = api.user.get_current()
+    res = False
+    meeting = obj.getTagName() == "Meeting" and obj or (obj.hasMeeting() and obj.getMeeting())
+    if (not onlyForManagers or (onlyForManagers and tool.isManager(obj))) and \
+       (bypassWritePermissionCheck or member.has_permission(permission, obj)) and \
+       (_evaluateExpression(obj, expression)) and \
+       (not (meeting and meeting.query_state() in Meeting.MEETINGCLOSEDSTATES) or
+            tool.isManager(obj, realManagers=True)):
+        res = True
+    return res
 
 
-def getStatesBefore(obj, review_state_id):
+def reviewersFor(cfg):
+    """Return an OrderedDict were key is the reviewer suffix and
+       value the corresponding item state, from highest level to lower level.
+       For example :
+       OrderedDict([('reviewers', ['prevalidated']), ('prereviewers', ['proposed'])])
+    """
+    suffixes = list(cfg.getItemWFValidationLevels(data='suffix', only_enabled=True))[1:]
+    # we need from highest level to lowest
+    suffixes.reverse()
+    states = list(cfg.getItemWFValidationLevels(data='state', only_enabled=True))[1:]
+    # we need from highest level to lowest
+    states.reverse()
+
+    # group suffix to state
+    tuples = zip(suffixes, states)
+
+    res = OrderedDict()
+    for suffix, state in tuples:
+        res[suffix] = [state]
+    return res
+
+
+def get_every_back_references(obj, relationship):
+    '''Loop recursievely thru every back reference of type p_relationship
+       for p_obj and return it.'''
+    def get_back_references(back_refs, res=[]):
+        for back_obj in back_refs:
+            res.append(back_obj)
+            get_back_references(back_obj.getBRefs(relationship), res)
+        return res
+    return get_back_references(obj.getBRefs(relationship))
+
+
+def get_states_before_cachekey(method, obj, review_state):
+    '''cachekey method for get_states_before.'''
+    # do only re-compute if cfg changed or params changed
+    tool = api.portal.get_tool('portal_plonemeeting')
+    cfg = tool.getMeetingConfig(obj)
+    return (cfg.getId(), cfg._p_mtime, review_state)
+
+
+@ram.cache(get_states_before_cachekey)
+def get_states_before(obj, review_state_id):
     """
       Returns states before the p_review_state_id state.
     """
@@ -1637,6 +1780,99 @@ def duplicate_portal_type(portalTypeName, duplicatedPortalTypeId):
     duplicatedPortalType.add_view_expr = duplicatedPortalType.add_view_expr.replace(
         portalTypeName, duplicatedPortalTypeId)
     return duplicatedPortalType
+
+
+def get_item_validation_wf_suffixes(cfg, org=None, only_enabled=True):
+    """Returns suffixes related to MeetingItem validation WF,
+       so the 'creators', 'observers' and suffixes managed by
+       MeetingConfig.itemWFValidationLevels.
+       If p_org is given, we only return available suffixes."""
+    base_suffixes = [u'creators', u'observers']
+    # we get the principal suffix from level['suffix'] then level['extra_suffixes']
+    # is containing suffixes that will also get Editor access in relevant state
+    config_suffix = cfg.getItemWFValidationLevels(
+        data='suffix', only_enabled=only_enabled)
+    config_extra_suffixes = cfg.getItemWFValidationLevels(
+        data='extra_suffixes', only_enabled=only_enabled)
+    config_suffixes = [config_suffix] + list(config_extra_suffixes)
+    config_suffixes = list(itertools.chain.from_iterable(config_suffixes))
+    suffixes = base_suffixes + config_suffixes
+    if org:
+        # only return suffixes that are available for p_org
+        available_suffixes = set(get_all_suffixes(org.UID()))
+        suffixes = list(available_suffixes.intersection(set(suffixes)))
+    return suffixes
+
+
+def compute_item_roles_to_assign_to_suffixes_cachekey(method, cfg, item_state, org=None):
+    '''cachekey method for compute_item_roles_to_assign_to_suffixes.'''
+    return cfg.getId(), cfg.modified(), item_state, org and org.UID()
+
+
+@ram.cache(compute_item_roles_to_assign_to_suffixes_cachekey)
+def compute_item_roles_to_assign_to_suffixes(cfg, item_state, org=None):
+    """ """
+    apply_meetingmanagers_access = True
+    suffix_roles = {}
+
+    # roles given to item_state are managed automatically
+    # it is possible to manage it manually for extra states (coming from wfAdaptations for example)
+    # try to find corresponding item state
+    corresponding_auto_item_state = cfg.adapted().get_item_corresponding_state_to_assign_local_roles(item_state)
+    if corresponding_auto_item_state:
+        item_state = corresponding_auto_item_state
+    else:
+        # if no corresponding item state, check if we manage state suffix roles manually
+        apply_meetingmanagers_access, suffix_roles = cfg.adapted().get_item_custom_suffix_roles(item_state)
+
+    # find suffix_roles if it was not managed manually
+    if suffix_roles:
+        return apply_meetingmanagers_access, suffix_roles
+
+    item_val_levels_states = cfg.getItemWFValidationLevels(data='state', only_enabled=True)
+
+    # by default, observers may View in every states as well as creators
+    # this way observers have access or it is never the case
+    # and creators have access when state "itemcreated" is disabled
+    suffix_roles = {'observers': ['Reader'],
+                    'creators': ['Reader']}
+
+    # MeetingConfig.itemWFValidationLevels
+    # states before validated
+    if item_state in item_val_levels_states:
+        # find Editor suffixes
+        # walk every defined validation levels so we give 'Reader'
+        # to levels already behind us
+        for level in cfg.getItemWFValidationLevels(only_enabled=True):
+            suffixes = [level['suffix']] + list(level['extra_suffixes'])
+            for suffix in suffixes:
+                if suffix not in suffix_roles:
+                    suffix_roles[suffix] = []
+                given_roles = ['Reader']
+                # we are on the current state
+                if level['state'] == item_state:
+                    given_roles.append('Editor')
+                    given_roles.append('Reviewer')
+                    given_roles.append('Contributor')
+                for role in given_roles:
+                    if role not in suffix_roles[suffix]:
+                        suffix_roles[suffix].append(role)
+            if level['state'] == item_state:
+                break
+
+    # states out of item validation (validated and following states)
+    else:
+        # every item validation suffixes get View access
+        # if item is in a decided state, we also give the Contributor
+        # role to every validation suffixes
+        item_is_decided = item_state in cfg.getItemDecidedStates()
+        for suffix in get_item_validation_wf_suffixes(cfg, org):
+            given_roles = ['Reader']
+            if item_is_decided and suffix != 'observers':
+                given_roles.append('Contributor')
+            suffix_roles[suffix] = given_roles
+
+    return apply_meetingmanagers_access, suffix_roles
 
 
 def org_id_to_uid(org_info, raise_on_error=True, ignore_underscore=False):
@@ -1705,7 +1941,7 @@ def normalize_id(id):
     return id
 
 
-def add_wf_history_action(obj, action_name, action_label, user_id=None):
+def add_wf_history_action(obj, action_name, action_label, user_id=None, insert_index=None):
     wfTool = api.portal.get_tool('portal_workflow')
     wfs = wfTool.getWorkflowsFor(obj)
     if not wfs:
@@ -1713,9 +1949,9 @@ def add_wf_history_action(obj, action_name, action_label, user_id=None):
     wf = wfs[0]
     wfName = wf.id
     # get review_state from last event if any
-    events = obj.workflow_history[wfName]
+    events = list(obj.workflow_history[wfName]) or []
     if events:
-        previousEvent = obj.workflow_history[wfName][-1]
+        previousEvent = events[-1]
         review_state_id = previousEvent['review_state']
     else:
         # use initial_state
@@ -1726,16 +1962,26 @@ def add_wf_history_action(obj, action_name, action_label, user_id=None):
     # action_name must be translated in the plone domain
     newEvent['action'] = action_name
     newEvent['actor'] = user_id or api.user.get_current().id
-    newEvent['time'] = DateTime()
-    newEvent['review_state'] = review_state_id
-    obj.workflow_history[wfName] = obj.workflow_history[wfName] + (newEvent, )
+    # if an insert_index is defined, use same 'time' as previous as
+    # events are sorted on 'time' and just add 1 millisecond
+    if insert_index is not None:
+        newEvent['time'] = events[insert_index]['time'] + 0.000000001
+        newEvent['review_state'] = events[insert_index]['review_state']
+        events.insert(insert_index, newEvent)
+    else:
+        newEvent['time'] = DateTime()
+        newEvent['review_state'] = review_state_id
+        events.insert(len(events), newEvent)
+    obj.workflow_history[wfName] = events
 
 
-def is_editing():
+def is_editing(cfg):
     """Return True if currently editing something."""
     request = getRequest()
     url = request.get('URL', '')
     edit_ends = ['/edit', '/base_edit', '/@@edit']
+    edit_ends.append('/++add++{0}'.format(cfg.getItemTypeName()))
+    edit_ends.append('/++add++{0}'.format(cfg.getMeetingTypeName()))
     res = False
     for edit_end in edit_ends:
         if url.endswith(edit_end):
@@ -1744,25 +1990,25 @@ def is_editing():
     return res
 
 
-def get_next_meeting(meetingDate, cfg, dateGap=0):
+def get_next_meeting(meeting_date, cfg, date_gap=0):
     '''Gets the next meeting based on meetingDate DateTime.
        p_cfg is used to know in which MeetingConfig to query next meeting.
        p_dateGap is the number of 'dead days' following the date of
        the current meeting in which we do not look for next meeting'''
     meetingTypeName = cfg.getMeetingTypeName()
     catalog = api.portal.get_tool('portal_catalog')
-    # find every meetings after self.getDate
-    meetingDate += dateGap
+    # find every meetings after meetingDate
+    meeting_date += timedelta(days=date_gap)
     brains = catalog(portal_type=meetingTypeName,
-                     getDate={'query': meetingDate, 'range': 'min'},
-                     sort_on='getDate')
+                     meeting_date={'query': meeting_date,
+                                   'range': 'min'},
+                     sort_on='meeting_date')
     res = None
     for brain in brains:
-        if brain.getDate > meetingDate:
-            res = brain
+        meeting = brain.getObject()
+        if meeting.date > meeting_date:
+            res = meeting
             break
-    if res:
-        res = res.getObject()
     return res
 
 
@@ -1770,11 +2016,63 @@ def _base_extra_expr_ctx(obj):
     """ """
     tool = api.portal.get_tool('portal_plonemeeting')
     cfg = tool.getMeetingConfig(obj)
+    # member, context and portal are managed by collective.behavior.talcondition
     data = {'tool': tool,
             'cfg': cfg,
             'pm_utils': SecureModuleImporter['Products.PloneMeeting.utils'],
             'imio_history_utils': SecureModuleImporter['imio.history.utils'], }
     return data
+
+
+def down_or_up_wf(obj):
+    """Return "", "down", or "up" depending on workflow history."""
+    # down the workflow, the last transition was a backTo... transition
+    wfTool = api.portal.get_tool('portal_workflow')
+    wf = wfTool.getWorkflowsFor(obj)[0]
+    backTransitionIds = [tr for tr in wf.transitions if tr.startswith('back')]
+    transitionIds = [tr for tr in wf.transitions if not tr.startswith('back')]
+    # get the last event that is a real workflow transition event
+    lastEvent = getLastWFAction(obj, transition=backTransitionIds + transitionIds)
+    res = ""
+    if lastEvent and lastEvent['action']:
+        if lastEvent['action'].startswith('back'):
+            res = "down"
+        # make sure it is a transition because we save other actions too in workflow_history
+        else:
+            # up the workflow for at least second times and not linked to a meeting
+            # check if last event was already made in item workflow_history
+            history = obj.workflow_history[wf.getId()]
+            i = 0
+            for event in history:
+                if event['action'] == lastEvent['action']:
+                    i = i + 1
+                    if i > 1:
+                        res = "up"
+                        break
+    return res
+
+
+def redirect(request, url):
+    """Manage when view is called by an ajax request and
+       must not return anything but reload the page or faceted (in JS)."""
+    # ajax request or overlay
+    if "_" in request or "ajax_load" in request:
+        request.RESPONSE.setStatus(204)
+        return ""
+    else:
+        return request.RESPONSE.redirect(url)
+
+
+def number_word(number):
+    """ """
+    request = getRequest()
+    suppl_word_msgid = number == 1 and "num_part_st" or "num_part_th"
+    suppl_word = translate(msgid=suppl_word_msgid,
+                           domain="PloneMeeting",
+                           mapping={'number': number},
+                           context=request,
+                           default=u"${number}st/th")
+    return suppl_word
 
 
 class AdvicesUpdatedEvent(ObjectEvent):
@@ -1851,6 +2149,14 @@ class ItemListTypeChangedEvent(ObjectEvent):
     def __init__(self, object, old_listType):
         self.object = object
         self.old_listType = old_listType
+
+
+class ItemPollTypeChangedEvent(ObjectEvent):
+    implements(IItemPollTypeChangedEvent)
+
+    def __init__(self, object, old_pollType):
+        self.object = object
+        self.old_pollType = old_pollType
 
 
 class ItemLocalRolesUpdatedEvent(ObjectEvent):

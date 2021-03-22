@@ -2,10 +2,6 @@
 #
 # File: ToolPloneMeeting.py
 #
-# Copyright (c) 2018 by Imio.be
-# Generator: ArchGenXML Version 2.7
-#            http://plone.org/products/archgenxml
-#
 # GNU General Public License (GPL)
 #
 
@@ -36,6 +32,7 @@ from imio.helpers.cache import cleanRamCache
 from imio.helpers.cache import cleanVocabularyCacheFor
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import invalidate_cachekey_volatile_for
+from imio.helpers.security import fplog
 from imio.prettylink.interfaces import IPrettyLink
 from OFS import CopySupport
 from persistent.mapping import PersistentMapping
@@ -73,16 +70,17 @@ from Products.PloneMeeting.config import PROJECTNAME
 from Products.PloneMeeting.config import PY_DATETIME_WEEKDAYS
 from Products.PloneMeeting.config import ROOT_FOLDER
 from Products.PloneMeeting.config import SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY
+from Products.PloneMeeting.content.meeting import IMeeting
+from Products.PloneMeeting.content.meeting import Meeting
+from Products.PloneMeeting.interfaces import IMeetingItem
 from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.profiles import PloneMeetingConfiguration
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import add_wf_history_action
-from Products.PloneMeeting.utils import fplog
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getCustomSchemaFields
 from Products.PloneMeeting.utils import monthsIds
-from Products.PloneMeeting.utils import weekdaysIds
 from Products.PloneMeeting.utils import workday
 from Products.ZCatalog.Catalog import AbstractCatalogBrain
 from ZODB.POSException import ConflictError
@@ -416,7 +414,11 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     def _users_groups_value_cachekey(method, self):
         """ """
-        return str(self.REQUEST._debug)
+        # async does not have a REQUEST
+        if hasattr(self, 'REQUEST'):
+            return str(self.REQUEST._debug)
+        else:
+            return None
 
     @ram.cache(_users_groups_value_cachekey)
     def _users_groups_value(self):
@@ -438,7 +440,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     @ram.cache(get_plone_groups_for_user_cachekey)
     def get_plone_groups_for_user(self, userId=None, org_uid=None):
-        """Just return user.getGroups but cached so it is only done once by REQUEST."""
+        """Just return user.getGroups but cached."""
         if api.user.is_anonymous():
             return []
         user = userId and api.user.get(userId) or api.user.get_current()
@@ -459,8 +461,10 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 suffix,
                 user_id)
 
+    # @ram.cache(group_is_not_empty_cachekey)
     def group_is_not_empty(self, org_uid, suffix, user_id=None):
-        '''Is there any user in the group?'''
+        '''Is there any user in the group?
+           Do not use ram.cache for this one, seems slower...'''
         portal = api.portal.get()
         plone_group_id = get_plone_group_id(org_uid, suffix)
         # for performance reasons, check directly in source_groups stored data
@@ -520,7 +524,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('get_selectable_orgs')
 
-    def get_selectable_orgs(self, cfg, only_selectable=True, user_id=None):
+    def get_selectable_orgs(self, cfg, only_selectable=True, user_id=None, the_objects=True):
         """
           Returns the selectable organizations for given p_user_id or currently connected user.
           If p_only_selectable is True, we will only return orgs for which current user is creator.
@@ -530,9 +534,11 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         if only_selectable:
             using_groups = cfg.getUsingGroups()
             res = self.get_orgs_for_user(
-                user_id=user_id, suffixes=['creators', ], using_groups=using_groups)
+                user_id=user_id, suffixes=['creators', ],
+                using_groups=using_groups,
+                the_objects=the_objects)
         else:
-            res = cfg.getUsingGroups(theObjects=True)
+            res = cfg.getUsingGroups(theObjects=the_objects)
         return res
 
     def userIsAmong_cachekey(method, self, suffixes, cfg=None):
@@ -551,25 +557,25 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         '''Check if the currently logged user is in at least one of p_suffixes-related Plone
            group.  p_suffixes is a list of suffixes.
            If cfg, we filter on cfg.usingGroups.'''
+        res = False
         # display a warning if suffixes is not a tuple/list
         if not isinstance(suffixes, (tuple, list)):
             logger.warn("ToolPloneMeeting.userIsAmong parameter 'suffixes' must be "
                         "a tuple or list of suffixes, but we received '{0}'".format(suffixes))
-
-        using_groups = cfg and cfg.getUsingGroups() or []
-        activeOrgUids = [org_uid for org_uid in get_organizations(
-            only_selected=True, the_objects=False, kept_org_uids=using_groups)]
-        res = False
-        for plone_group_id in self.get_plone_groups_for_user():
-            # check if the plone_group_id ends with a least one of the p_suffixes
-            has_kept_suffixes = [suffix for suffix in suffixes if plone_group_id.endswith('_%s' % suffix)]
-            if has_kept_suffixes:
-                org = get_organization(plone_group_id)
-                # if we can not find the org, it means that it is a suffix like 'powerobservers'
-                # if we find the org, we check that it is among activeOrgUids
-                if not org or org.UID() in activeOrgUids:
-                    res = True
-                    break
+        else:
+            using_groups = cfg and cfg.getUsingGroups() or []
+            activeOrgUids = [org_uid for org_uid in get_organizations(
+                only_selected=True, the_objects=False, kept_org_uids=using_groups)]
+            for plone_group_id in self.get_plone_groups_for_user():
+                # check if the plone_group_id ends with a least one of the p_suffixes
+                has_kept_suffixes = [suffix for suffix in suffixes if plone_group_id.endswith('_%s' % suffix)]
+                if has_kept_suffixes:
+                    org = get_organization(plone_group_id)
+                    # if we can not find the org, it means that it is a suffix like 'powerobservers'
+                    # if we find the org, we check that it is among activeOrgUids
+                    if not org or org.UID() in activeOrgUids:
+                        res = True
+                        break
         return res
 
     security.declarePublic('getPloneMeetingFolder')
@@ -652,7 +658,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         # is linked to only one MeetingConfig, it is the case for Meeting and MeetingItem
         # portal_types, but if we have a 'Topic' or a 'Folder', we can not determinate
         # in wich MeetingConfig it is, we can not do caching...
-        if caching and context.meta_type in ('Meeting', 'MeetingItem', ):
+        if caching and context.getTagName() in ('Meeting', 'MeetingItem', ):
             key = "tool-getmeetingconfig-%s" % context.portal_type
             # async does not have a REQUEST
             if hasattr(self, 'REQUEST'):
@@ -665,18 +671,19 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         if data is None:
             portalTypeName = context.getPortalTypeName()
             if portalTypeName in ('MeetingItem', 'Meeting'):
-                # Archetypes bug. When this method is called within a default_method
+                # When this method is called within a default_method
                 # (when displaying a edit form), the portal_type is not already
-                # correctly set (it is equal to the meta_type, which is not
+                # set (it is equal to the meta_type, which is not
                 # necessarily equal to the portal type). In this case we look for
                 # the correct portal type in the request.
-                portalTypeName = self.REQUEST.get('type_name', None)
-            # Find config based on portal type of current p_context
-            for config in self.objectValues('MeetingConfig'):
-                if (portalTypeName == config.getItemTypeName()) or \
-                   (portalTypeName == config.getMeetingTypeName()):
-                    data = config
-                    break
+                portalTypeName = self.REQUEST.get('type_name', portalTypeName)
+            if portalTypeName.startswith('Meeting'):
+                # Find config based on portal_type of current p_context
+                for config in self.objectValues('MeetingConfig'):
+                    if (portalTypeName == config.getItemTypeName()) or \
+                       (portalTypeName == config.getMeetingTypeName()):
+                        data = config
+                        break
             if not data:
                 # Get the property on the folder that indicates that this is the
                 # "official" folder of a meeting config.
@@ -721,7 +728,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
            the portal_catalog (not from the uid_catalog, because getObject()
            has been overridden in this tool and does an unrestrictedTraverse
            to the object.'''
-        klassName = value.__class__.__name__
+        klassName = value.getTagName()
         if klassName in ('MeetingItem', 'Meeting', 'MeetingConfig'):
             obj = value
         else:
@@ -731,9 +738,9 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     def isManager_cachekey(method, self, context, realManagers=False):
         '''cachekey method for self.isManager.'''
-        return (self._users_groups_value(),
-                api.user.get_current(),
-                context, realManagers)
+        return (self.get_plone_groups_for_user(),
+                repr(context),
+                realManagers)
 
     security.declarePublic('isManager')
 
@@ -750,9 +757,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     def isPowerObserverForCfg_cachekey(method, self, cfg, power_observer_type=None):
         '''cachekey method for self.isPowerObserverForCfg.'''
-        return (self._users_groups_value(),
-                api.user.get_current(),
-                cfg,
+        return (self.get_plone_groups_for_user(),
+                repr(cfg),
                 power_observer_type)
 
     security.declarePublic('isPowerObserverForCfg')
@@ -771,31 +777,10 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     return True
         return False
 
-    security.declarePublic('isInPloneMeeting')
-
-    def isInPloneMeeting(self, context, inTool=False):
-        '''Is the user 'in' PloneMeeting (ie somewhere in PloneMeeting-related
-           folders that are created within member folders)? If p_inTool is True,
-           we consider that the user is in PloneMeeting even if he is in the
-           config.'''
-        try:
-            context.aq_acquire(MEETING_CONFIG)
-            # Don't show portlet_plonemeeting in the configuration
-            if not inTool and '/portal_plonemeeting' in context.absolute_url():
-                res = False
-            else:
-                res = True
-        except AttributeError:
-            if inTool:
-                res = '/portal_plonemeeting' in context.absolute_url()
-            else:
-                res = False
-        return res
-
     def showPloneMeetingTab_cachekey(method, self, cfg):
         '''cachekey method for self.showPloneMeetingTab.'''
         # we only recompute if user groups changed or self changed
-        return (cfg._p_mtime, self.get_plone_groups_for_user(), cfg)
+        return (cfg._p_mtime, self.get_plone_groups_for_user(), repr(cfg))
 
     @ram.cache(showPloneMeetingTab_cachekey)
     def showPloneMeetingTab(self, cfg):
@@ -813,8 +798,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         '''Must we show the "Annexes" on given p_context ?'''
         if context.meta_type == 'MeetingItem' and \
            (context.isTemporary() or context.isDefinedInTool()):
-            return False
-        elif context.meta_type == 'Meeting' and context.isTemporary():
             return False
         else:
             return True
@@ -892,9 +875,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     def listWeekDays(self):
         '''Method returning list of week days used in vocabularies.'''
         res = DisplayList()
-        # we do not use utils.weekdaysIds because it is related
-        # to Zope DateTime where sunday weekday number is 0
-        # and python datetime where sunday weekday number is 6...
         for day in PY_DATETIME_WEEKDAYS:
             res.add(day,
                     translate('weekday_%s' % day,
@@ -1058,28 +1038,28 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             # Set fields not in the copyFields list to their default value
             # 'id' and  'proposingGroup' will be kept in anyway
             fieldsToKeep = ['id', 'proposingGroup', ] + copyFields
-            # remove 'category/classifier' from fieldsToKeep if it is disabled
+            # remove 'category' from fieldsToKeep if it is disabled
             if 'category' in fieldsToKeep:
                 category = copiedItem.getCategory(real=True, theObject=True)
-                if category and not category.isSelectable(userId=loggedUserId):
+                if category and not category.is_selectable(userId=loggedUserId):
                     fieldsToKeep.remove('category')
+            # remove 'classifier' from fieldsToKeep if it is disabled
             if 'classifier' in fieldsToKeep:
-                category = copiedItem.getClassifier()
-                if category and not category.isSelectable(userId=loggedUserId):
+                classifier = copiedItem.getClassifier(theObject=True)
+                if classifier and not classifier.is_selectable(userId=loggedUserId):
                     fieldsToKeep.remove('classifier')
 
+            newItem._at_creation_flag = True
             for field in newItem.Schema().filterFields(isMetadata=False):
                 if field.getName() not in fieldsToKeep:
                     # Set the field to its default value
-                    field.set(newItem, field.getDefault(newItem))
+                    field.getMutator(newItem)(field.getDefault(newItem))
+            newItem._at_creation_flag = False
 
             # Set some default values that could not be initialized properly
             if 'toDiscuss' in copyFields and destMeetingConfig.getToDiscussSetOnItemInsert():
                 toDiscussDefault = destMeetingConfig.getToDiscussDefault()
                 newItem.setToDiscuss(toDiscussDefault)
-            if 'classifier' in copyFields:
-                newItem.getField('classifier').set(
-                    newItem, copiedItem.getClassifier())
 
             # if we have left annexes, we manage it
             plone_utils = api.portal.get_tool('plone_utils')
@@ -1212,7 +1192,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('getSelf')
 
     def getSelf(self):
-        if self.__class__.__name__ != 'ToolPloneMeeting':
+        if self.getTagName() != 'ToolPloneMeeting':
             return self.context
         return self
 
@@ -1224,12 +1204,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     security.declareProtected(ModifyPortalContent, 'onEdit')
 
     def onEdit(self, isCreated):
-        '''See doc in interfaces.py.'''
-        pass
-
-    security.declarePublic('getSpecificMailContext')
-
-    def getSpecificMailContext(self, event, translationMapping):
         '''See doc in interfaces.py.'''
         pass
 
@@ -1253,65 +1227,32 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         res = name + u' <%s>' % userInfo.getProperty('email').decode(enc)
         return safe_unicode(res)
 
-    security.declarePublic('attributeIsUsed')
+    security.declarePublic('format_date')
 
-    def attributeIsUsed(self, objectType, attrName):
-        '''Returns True if attribute named p_attrName is used for at least
-           one meeting config for p_objectType.'''
-        configAttr = None
-        if objectType == 'item':
-            configAttr = 'getUsedItemAttributes'
-        elif objectType == 'meeting':
-            configAttr = 'getUsedMeetingAttributes'
-        for meetingConfig in self.objectValues('MeetingConfig'):
-            if attrName == 'category':
-                if not meetingConfig.getUseGroupsAsCategories() and \
-                   meetingConfig.categories.objectIds():
-                    return True
-            else:
-                if attrName in getattr(meetingConfig, configAttr)():
-                    if (attrName == 'classifier') and \
-                       (len(meetingConfig.classifiers.objectIds()) > 130):
-                        # The selection widget currently used is inadequate
-                        # for a large number of classifiers. In this case we
-                        # should use the popup for selecting classifiers. This
-                        # has not been implemented yet, so for the moment if
-                        # there are too much classifiers we do as if this field
-                        # was not used.
-                        return False
-                    return True
-        return False
-
-    security.declarePublic('formatMeetingDate')
-
-    def formatMeetingDate(self, meeting, lang=None, short=False,
-                          withHour=False, prefixed=False, withWeekDayName=False):
-        '''Returns p_meeting.getDate formatted.
+    def format_date(self, date, lang=None, short=False,
+                    with_hour=False, prefixed=False, prefix="meeting_of",
+                    with_week_day_name=False):
+        '''Returns p_meeting.date formatted.
            - If p_lang is specified, it translates translatable elements (if
              any), like day of week or month, in p_lang. Else, it translates it
              in the user language (see tool.getUserLanguage).
            - if p_short is True, is uses a special, shortened, format (ie, day
              of month is replaced with a number)
-           - If p_prefix is True, the translated prefix "Meeting of" is
+           - If p_prefix is True, the translated prefix is
              prepended to the result.'''
-        # Received meeting could be a brain or an object
-        if meeting.__class__.__name__ in ['mybrains', 'CatalogContentListingObject', 'PloneFlare']:
-            # It is a meeting brain, take the 'getDate' metadata
-            date = meeting.getDate
-        else:
-            # received meeting is a Meeting instance
-            date = meeting.getDate()
         # Get the format for the rendering of p_aDate
         if short:
             fmt = '%d/%m/%Y'
         else:
             fmt = '%d %mt %Y'
-        if withWeekDayName:
+        if with_week_day_name:
             fmt = fmt.replace('%d', '%A %d')
-            dow = translate(weekdaysIds[date.dow()], target_language=lang,
-                            domain='plonelocales', context=self.REQUEST)
-            fmt = fmt.replace('%A', dow)
-        if withHour and (date._hour or date._minute):
+            weekday = translate('weekday_%s' % PY_DATETIME_WEEKDAYS[date.weekday()],
+                                target_language=lang,
+                                domain='plonelocales',
+                                context=self.REQUEST)
+            fmt = fmt.replace('%A', weekday)
+        if with_hour and (date.hour or date.minute):
             fmt += ' (%H:%M)'
         # Apply p_fmt to p_aDate. Manage first special symbols corresponding to
         # translated names of days and months.
@@ -1320,15 +1261,22 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             lang = api.portal.get_tool('portal_languages').getDefaultLanguage()
 
         # Manage month
-        month = translate(monthsIds[date.month()], target_language=lang,
+        month = translate(monthsIds[date.month], target_language=lang,
                           domain='plonelocales', context=self.REQUEST)
         fmt = fmt.replace('%mt', month.lower())
         fmt = fmt.replace('%MT', month)
         # Resolve all other, standard, symbols
-        res = date.strftime(fmt)
-        # Finally, prefix the date with "Meeting of" when required.
+        # fmt can not be unicode
+        if isinstance(fmt, unicode):
+            fmt = fmt.encode('utf-8')
+        res = safe_unicode(date.strftime(fmt))
+        # Finally, prefix the date with p_prefix when required
         if prefixed:
-            res = translate('meeting_of', domain='PloneMeeting', context=self.REQUEST) + ' ' + res
+            res = u"{0} {1}".format(
+                translate(prefix,
+                          domain='PloneMeeting',
+                          context=self.REQUEST),
+                res)
         return res
 
     security.declareProtected(ModifyPortalContent, 'convertAnnexes')
@@ -1366,13 +1314,15 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declareProtected(ModifyPortalContent, 'removeAnnexesPreviews')
 
-    def removeAnnexesPreviews(self, query={'meta_type': 'Meeting',
-                                           'review_state': ('closed', ),
-                                           'sort_on': 'getDate'}):
+    def removeAnnexesPreviews(self, query={}):
         '''Remove every annexes previews of items presented to closed meetings.'''
         if not self.isManager(self, realManagers=True):
             raise Unauthorized
 
+        if not query:
+            query = {'object_provides': IMeeting.__identifier__,
+                     'review_state': Meeting.MEETINGCLOSEDSTATES,
+                     'sort_on': 'meeting_date'}
         catalog = api.portal.get_tool('portal_catalog')
         # remove annexes previews of items of closed Meetings
         brains = catalog(**query)
@@ -1386,7 +1336,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                          brain.portal_type,
                          '/'.join(meeting.getPhysicalPath())))
             i = i + 1
-            for item in meeting.getItems(ordered=True):
+            for item in meeting.get_items(ordered=True):
                 annexes = get_annexes(item)
                 for annex in annexes:
                     self._removeAnnexPreviewFor(item, annex)
@@ -1407,24 +1357,32 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         '''Does given p_context contains annexes of type p_portal_type?'''
         return bool(get_categorized_elements(context, portal_type=portal_type))
 
-    security.declareProtected(ModifyPortalContent, 'updateAllLocalRoles')
+    security.declareProtected(ModifyPortalContent, 'update_all_local_roles')
 
-    def updateAllLocalRoles(self, meta_type=('Meeting', 'MeetingItem'), portal_type=(), **kw):
+    def update_all_local_roles(self,
+                               meta_type=('Meeting', 'MeetingItem'),
+                               portal_type=(),
+                               log=True,
+                               **kw):
         '''Update local_roles on Meeting and MeetingItem,
            this is used to reflect configuration changes regarding access.'''
         startTime = time.time()
         catalog = api.portal.get_tool('portal_catalog')
-        query = {}
-        if meta_type:
-            query['meta_type'] = meta_type
+        # meta_type does not work in DX, use object_provides
+        query = {'object_provides': []}
+        if 'Meeting' in meta_type:
+            query['object_provides'].append(IMeeting.__identifier__)
+        if 'MeetingItem' in meta_type:
+            query['object_provides'].append(IMeetingItem.__identifier__)
         if portal_type:
             query['portal_type'] = portal_type
         query.update(kw)
         brains = catalog(**query)
         numberOfBrains = len(brains)
         i = 1
-        extras = 'number_of_elements={0}'.format(numberOfBrains)
-        fplog('update_all_localroles', extras=extras)
+        if log:
+            extras = 'number_of_elements={0}'.format(numberOfBrains)
+            fplog('update_all_localroles', extras=extras)
         for brain in brains:
             itemOrMeeting = brain.getObject()
             logger.info('%d/%d Updating local roles of %s at %s' %
@@ -1433,43 +1391,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                          brain.portal_type,
                          '/'.join(itemOrMeeting.getPhysicalPath())))
             i = i + 1
-            indexes_to_update = itemOrMeeting.updateLocalRoles(avoid_reindex=True)
-            # if auto rules regarding copyGroups or groupsInCharge changed
-            # we could have more or less copyGroups/groupsInCharge so reindex relevant indexes
-            if indexes_to_update:
-                itemOrMeeting.reindexObject(idxs=indexes_to_update)
-
-        seconds = time.time() - startTime
-        logger.info('updateAllLocalRoles finished in %.2f seconds(s) (about %d minute(s)), that is %d by second.' %
-                    (seconds, round(float(seconds) / 60.0), numberOfBrains / seconds))
-        api.portal.show_message('Done.', request=self.REQUEST)
-        return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
-
-    security.declareProtected(ModifyPortalContent, 'removeEveryPreviews')
-
-    def removeEveryPreviews(self, meta_type=('Meeting', 'MeetingItem'), portal_type=(), **kw):
-        '''Update local_roles on Meeting and MeetingItem,
-           this is used to reflect configuration changes regarding access.'''
-        startTime = time.time()
-        catalog = api.portal.get_tool('portal_catalog')
-        query = {}
-        if meta_type:
-            query['meta_type'] = meta_type
-        if portal_type:
-            query['portal_type'] = portal_type
-        query.update(kw)
-        brains = catalog(**query)
-        numberOfBrains = len(brains)
-        i = 1
-        for brain in brains:
-            itemOrMeeting = brain.getObject()
-            logger.info('%d/%d Updating local roles of %s at %s' %
-                        (i,
-                         numberOfBrains,
-                         brain.portal_type,
-                         '/'.join(itemOrMeeting.getPhysicalPath())))
-            i = i + 1
-            indexes_to_update = itemOrMeeting.updateLocalRoles(avoid_reindex=True)
+            indexes_to_update = itemOrMeeting.update_local_roles(avoid_reindex=True)
             # if auto rules regarding copyGroups or groupsInCharge changed
             # we could have more or less copyGroups/groupsInCharge so reindex relevant indexes
             if indexes_to_update:
@@ -1544,6 +1466,14 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     def performCustomWFAdaptations(self, meetingConfig, wfAdaptation, logger, itemWorkflow, meetingWorkflow):
         '''See doc in interfaces.py.'''
         return False
+
+    def performCustomAdviceWFAdaptations(self, meetingConfig, wfAdaptation, logger, advice_wf_id):
+        '''See doc in interfaces.py.'''
+        return False
+
+    def get_extra_adviser_infos(self):
+        '''See doc in interfaces.py.'''
+        return {}
 
     def getAdvicePortalTypes_cachekey(method, self, as_ids=False):
         '''cachekey method for self.getAdvicePortalTypes.'''

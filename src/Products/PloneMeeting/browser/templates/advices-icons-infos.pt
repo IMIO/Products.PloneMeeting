@@ -8,9 +8,10 @@
                  userAdviserOrgUids view/userAdviserOrgUids;">
   <tal:defines define="cfg python: view.cfg;
                        displayedAddIcon python: False;
+                       displayedReviewState python: False;
                        adviceStyle python: cfg.getAdviceStyle();
-                       displayAdviceConfidentiality python: cfg.getEnableAdviceConfidentiality() and view.tool.isManager(context);
-                       item_review_state context/queryState;">
+                       displayAdviceConfidentiality python: cfg.getEnableAdviceConfidentiality() and view.tool.isManager(cfg);
+                       item_review_state context/query_state;">
 
           <tal:comment replace="nothing">List of group names</tal:comment>
           <tal:loop repeat="advice python:advicesByType[adviceType]">
@@ -21,12 +22,14 @@
                                   obj_absolute_url python: obj and obj.absolute_url() or '';
                                   customMessageInfos python: context.adapted().getCustomAdviceMessageFor(advice);
                                   displayDefaultComplementaryMessage customMessageInfos/displayDefaultComplementaryMessage;
-                                  customAdviceMessage customMessageInfos/customAdviceMessage;">
+                                  displayAdviceReviewState customMessageInfos/displayAdviceReviewState;
+                                  customAdviceMessage customMessageInfos/customAdviceMessage;
+                                  mayView view/mayView">
                 <legend>
                   <div style="display: inline"
                        class="collapsible active"
                        tal:attributes="id string:comment_toggle_${advice/id};
-                                       onclick string:toggleDoc('comment_content_${advice/id}', toggle_parent_active=true, parent_elem=comment_toggle_${advice/id});">
+                                       onclick string:toggleDetails('comment_content_${advice/id}', toggle_parent_active=true, parent_tag=comment_toggle_${advice/id});">
                   </div>
                   <span tal:condition="advice/delay">
                      <tal:defines define="class_if_not_given string:advice_delay advice_delay_${advice/delay_infos/delay_status};">
@@ -87,7 +90,7 @@
                            style="display: inline-block; padding: 0"
                            href="#"
                            onclick="event.preventDefault();"
-                           tal:attributes="data-group_id string:${advice/id}_advisers;
+                           tal:attributes="data-group_ids string:${advice/id}_advisers;
                                            data-base_url string:${view/portal_url}">
                          <img src="group_users.png" tal:attributes="src string:${view/portal_url}/group_users.png"/>
                         </a>
@@ -137,7 +140,7 @@
                 </legend>
                 <div tal:attributes="id string:comment_content_${advice/id}">
 
-            <tal:notHiddenUnderRedactionOrManagable condition="python: view.mayView()">
+            <tal:notHiddenUnderRedactionOrManagable condition="mayView">
 
             <table class="no-style-table advices" cellpadding="2" cellspacing="2" width="100%">
               <tr>
@@ -227,7 +230,8 @@
 
                     <div class="viewlet_workflowstate" i18n:domain="plone" tal:condition="nocall:obj">
                       <span i18n:translate="label_state"></span>&nbsp;
-                      <span tal:define="advice_state_infos python: view.state_infos(obj)"
+                      <span tal:define="advice_state_infos python: view.state_infos(obj);
+                                        global displayedReviewState python: True"
                             tal:content="advice_state_infos/state_title"
                             tal:attributes="class string:state-${advice_state_infos/state_name}"></span>
                     </div>
@@ -266,7 +270,7 @@
                     align="right"
                     class="advice_annexes table_widget_value">
                     <tal:defines condition="adviceHolderIsViewable">
-                        <tal:annexes replace="structure python: obj.restrictedTraverse('categorized-childs')()" />
+                        <tal:annexes replace="structure python: obj.restrictedTraverse('@@categorized-childs')()" />
                     </tal:defines>
                 </td>
               </tr>
@@ -364,6 +368,16 @@
             </tal:complementaryInfoMessage>
             </tal:notHiddenUnderRedactionOrManagable>
 
+          <tal:displayAdviceReviewState condition="python: not displayedReviewState and displayAdviceReviewState and obj">
+            <tal:comment replace="nothing">This is a copy/paste of code here above, change both places when necessary...</tal:comment>
+            <div class="viewlet_workflowstate" i18n:domain="plone">
+              <span i18n:translate="label_state"></span>&nbsp;
+              <span tal:define="advice_state_infos python: view.state_infos(obj)"
+                    tal:content="advice_state_infos/state_title"
+                    tal:attributes="class string:state-${advice_state_infos/state_name}"></span>
+            </div>
+            <div style="clear: both;">&nbsp;</div>
+          </tal:displayAdviceReviewState>
 
             <tal:complementaryInfoMessage condition="displayDefaultComplementaryMessage">
             <tal:hiddenUnderRedaction condition="python: advice['advice_editable'] and adviceType == 'hidden_during_redaction'">
@@ -399,7 +413,7 @@
                <span> - <span i18n:translate="">Limit date <span i18n:name="advice_limit_date" tal:content="advice/delay_infos/limit_date_localized">2013/05/08</span></span></span>
               </tal:delayinfos>
             </div>
-                </div>
+            </div>
             </fieldset>
           </tal:loop>
 

@@ -2,36 +2,18 @@
 #
 # File: testFaceted.py
 #
-# Copyright (c) 2015 by Imio.be
-#
 # GNU General Public License (GPL)
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
-# 02110-1301, USA.
 #
 
 from AccessControl import Unauthorized
 from collective.contact.plonegroup.utils import get_organizations
-from DateTime import DateTime
+from datetime import datetime
 from eea.facetednavigation.interfaces import IFacetedLayout
+from imio.helpers.content import get_vocab
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
-from zope.component import queryUtility
 from zope.event import notify
 from zope.lifecycleevent import ObjectModifiedEvent
-from zope.schema.interfaces import IVocabularyFactory
 
 
 class testFaceted(PloneMeetingTestCase):
@@ -79,6 +61,75 @@ class testFaceted(PloneMeetingTestCase):
         self.assertFalse(self.request.RESPONSE.getHeader('location'))
         self.assertTrue(self.request.RESPONSE.getStatus() == 200)
 
+    def test_pm_RedirectToNextMeeting(self):
+        """When selected, some user profiles will be redirected to the next meeting if it exists
+           instead a dashboard displaying items (my items, ...)."""
+        cfg = self.meetingConfig
+        self.assertEqual(cfg.getRedirectToNextMeeting(), ())
+        cfgId = cfg.getId()
+        # get the pmCreator1 pmFolder
+        self.changeUser('pmCreator1')
+        self.request.RESPONSE.setHeader('location', '')
+        creatorPMFolder = self.tool.getPloneMeetingFolder(cfgId)
+        # access the pmFolder
+        creatorPMFolder.searches_items()
+        self.assertEqual(self.request.RESPONSE.getHeader('location'), '')
+        # redirect app user to next meeting
+        self.assertEqual(cfg.listRedirectToNextMeeting().keys(),
+                         ['app_users',
+                          'meeting_managers',
+                          'powerobserver__powerobservers',
+                          'powerobserver__restrictedpowerobservers'])
+        cfg.setRedirectToNextMeeting(('app_users', ))
+        # still searches_items as no meeting exist
+        creatorPMFolder.searches_items()
+        self.assertEqual(self.request.RESPONSE.getStatus(), 200)
+        self.assertEqual(self.request.RESPONSE.getHeader('location'), '')
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting')
+        meeting_url = meeting.absolute_url()
+        # freeze meeting so we are sure it is viewable (depends on WF)
+        self.freezeMeeting(meeting)
+        self.changeUser('pmCreator1')
+        creatorPMFolder.searches_items()
+        self.assertEqual(self.request.RESPONSE.getStatus(), 302)
+        self.assertEqual(self.request.RESPONSE.getHeader('location'), meeting_url)
+
+    def test_pm_RedirectToNextMeetingWhenMeetingNotViewable(self):
+        """If meeting not viewable, user not redirected."""
+        cfg = self.meetingConfig
+        cfgId = cfg.getId()
+        self._setPowerObserverStates(field_name='meeting_states',
+                                     states=('closed', ))
+        self.assertEqual(cfg.listRedirectToNextMeeting().keys(),
+                         ['app_users',
+                          'meeting_managers',
+                          'powerobserver__powerobservers',
+                          'powerobserver__restrictedpowerobservers'])
+        cfg.setRedirectToNextMeeting(('powerobserver__powerobservers', ))
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting')
+        meeting_url = meeting.absolute_url()
+        # not viewable for now
+        self.changeUser('powerobserver1')
+        pmFolder = self.tool.getPloneMeetingFolder(cfgId)
+        # access the pmFolder
+        pmFolder.searches_items()
+        self.assertEqual(self.request.RESPONSE.getStatus(), 200)
+        self.assertEqual(self.request.RESPONSE.getHeader('location'), '')
+        # make meeting viewable
+        self.closeMeeting(meeting, as_manager=True)
+        # when no_redirect in request, user is not redirected
+        self.assertEqual(self.request.get('no_redirect'), '1')
+        pmFolder.searches_items()
+        self.assertEqual(self.request.RESPONSE.getStatus(), 200)
+        self.assertEqual(self.request.RESPONSE.getHeader('location'), '')
+        # redirected
+        self.request.set('no_redirect', 0)
+        pmFolder.searches_items()
+        self.assertEqual(self.request.RESPONSE.getStatus(), 302)
+        self.assertEqual(self.request.RESPONSE.getHeader('location'), meeting_url)
+
     def test_pm_ItemCategoriesVocabulary(self):
         '''Test the "Products.PloneMeeting.vocabularies.categoriesvocabulary"
            vocabulary, especially because it is cached.'''
@@ -86,8 +137,9 @@ class testFaceted(PloneMeetingTestCase):
         pmFolder = self.getMeetingFolder()
         cfg = self.meetingConfig
         cfg.setUseGroupsAsCategories(False)
-        vocab = queryUtility(IVocabularyFactory,
-                             "Products.PloneMeeting.vocabularies.categoriesvocabulary")
+        vocab = get_vocab(cfg,
+                          "Products.PloneMeeting.vocabularies.categoriesvocabulary",
+                          only_factory=True)
         # once get, it is cached
         terms = vocab(pmFolder)
         # every existing categories are shown, no matter it is disabled
@@ -101,14 +153,14 @@ class testFaceted(PloneMeetingTestCase):
         self.assertNotEquals(terms.by_token['development'].title,
                              cfg.categories.development.title)
         # right correctly edit the category, the vocabulary is invalidated
-        dev.at_post_edit_script()
+        notify(ObjectModifiedEvent(dev))
         terms = vocab(pmFolder)
         self.assertEqual(terms.by_token['development'].title,
                          cfg.categories.development.title)
 
         # if we add/remove a category, then the cache is cleaned too
         # add a category
-        newCat = self.create('MeetingCategory',
+        newCat = self.create('meetingcategory',
                              id='new-category',
                              title='New category')
         # cache was cleaned, the new value is available
@@ -118,7 +170,7 @@ class testFaceted(PloneMeetingTestCase):
             [u'Events', u'New category', u'New title', u'Research topics'])
 
         # disable a category
-        self.do(newCat, 'deactivate')
+        self._disableObj(newCat)
         self.assertEqual(
             [term.title for term in vocab(pmFolder)],
             [u'Events', u'New title', u'Research topics', u'New category (Inactive)'])
@@ -141,53 +193,51 @@ class testFaceted(PloneMeetingTestCase):
         pmFolder = self.getMeetingFolder()
         cfg = self.meetingConfig
         cfg.setUseGroupsAsCategories(False)
-        vocab = queryUtility(IVocabularyFactory,
-                             "Products.PloneMeeting.vocabularies.classifiersvocabulary")
+        vocab = get_vocab(cfg,
+                          "Products.PloneMeeting.vocabularies.classifiersvocabulary",
+                          only_factory=True)
         # once get, it is cached
         terms = vocab(pmFolder)
         # every existing categories are shown, no matter it is disabled
-        nbOfCategories = len(cfg.getCategories(classifiers=True, onlySelectable=False, caching=False))
+        nbOfCategories = len(cfg.getCategories(catType='classifiers', onlySelectable=False, caching=False))
         self.assertEqual(len(terms), nbOfCategories)
         # here we make sure it is cached by changing a category title
         # manually without using the processForm way
         classifier1 = cfg.classifiers.classifier1
         classifier1.title = u'New title'
         terms = vocab(pmFolder)
-        classifier1_UID = classifier1.UID()
-        self.assertNotEquals(terms.by_token[classifier1_UID].title,
+        classifier1_id = classifier1.getId()
+        self.assertNotEquals(terms.by_token[classifier1_id].title,
                              cfg.categories.development.title)
         # right correctly edit the category, the vocabulary is invalidated
-        classifier1.at_post_edit_script()
+        notify(ObjectModifiedEvent(classifier1))
         terms = vocab(pmFolder)
-        self.assertEqual(terms.by_token[classifier1_UID].title,
+        self.assertEqual(terms.by_token[classifier1_id].title,
                          cfg.classifiers.classifier1.title)
 
         # if we add/remove a category, then the cache is cleaned too
         # add a classifier
-        newClassifier = self.create('MeetingCategory',
+        newClassifier = self.create('meetingcategory',
                                     id='newclassifier',
                                     title='New classifier',
-                                    isClassifier=True)
+                                    is_classifier=True)
         # cache was cleaned, the new value is available
         terms = vocab(pmFolder)
         self.assertEqual(
             [term.title for term in vocab(pmFolder)],
             [u'Classifier 2', u'Classifier 3', u'New classifier', u'New title'])
 
-        # disable a category
-        self.do(newClassifier, 'deactivate')
+        # disable a classifier
+        self._disableObj(newClassifier)
         self.assertEqual(
             [term.title for term in vocab(pmFolder)],
             [u'Classifier 2', u'Classifier 3', u'New title', u'New classifier (Inactive)'])
-        # term.value is the category id
+        # term.value is the classifier id
         self.assertEqual(
             [term.value for term in vocab(pmFolder)],
-            [cfg.classifiers.classifier2.UID(),
-             cfg.classifiers.classifier3.UID(),
-             cfg.classifiers.classifier1.UID(),
-             cfg.classifiers.newclassifier.UID()])
+            ['classifier2', 'classifier3', 'classifier1', 'newclassifier'])
 
-        # remove a category
+        # remove a classifier
         self.portal.restrictedTraverse('@@delete_givenuid')(newClassifier.UID())
         # cache was cleaned
         self.assertEqual(
@@ -201,8 +251,9 @@ class testFaceted(PloneMeetingTestCase):
         pmFolder = self.getMeetingFolder()
         cfg = self.meetingConfig
         cfg.setUseGroupsAsCategories(False)
-        vocab = queryUtility(IVocabularyFactory,
-                             "Products.PloneMeeting.vocabularies.categoriesvocabulary")
+        vocab = get_vocab(cfg,
+                          "Products.PloneMeeting.vocabularies.categoriesvocabulary",
+                          only_factory=True)
         terms_cfg1 = [term.token for term in vocab(pmFolder)]
         # now in cfg2
         cfg2 = self.meetingConfig2
@@ -219,9 +270,11 @@ class testFaceted(PloneMeetingTestCase):
         self.changeUser('pmManager')
         pmFolder = self.getMeetingFolder()
         # create a meeting
-        meeting = self.create('Meeting', date=DateTime('2015/05/05'))
+        meeting = self.create('Meeting', date=datetime(2015, 5, 5))
         meetingUID = meeting.UID()
-        vocab = queryUtility(IVocabularyFactory, "Products.PloneMeeting.vocabularies.meetingdatesvocabulary")
+        vocab = get_vocab(pmFolder,
+                          "Products.PloneMeeting.vocabularies.meetingdatesvocabulary",
+                          only_factory=True)
         # once get, it is cached
         vocab(pmFolder)
         self.assertEqual(
@@ -230,7 +283,7 @@ class testFaceted(PloneMeetingTestCase):
 
         # if we add/remove/edit a meeting, then the cache is cleaned
         # add a meeting
-        meeting2 = self.create('Meeting', date=DateTime('2015/06/06'))
+        meeting2 = self.create('Meeting', date=datetime(2015, 6, 6))
         meeting2UID = meeting2.UID()
         # cache was cleaned
         self.assertEqual(
@@ -238,7 +291,7 @@ class testFaceted(PloneMeetingTestCase):
             [ITEM_NO_PREFERRED_MEETING_VALUE, meeting2UID, meetingUID])
         # edit a meeting
         self.assertEqual(vocab(pmFolder).by_token[meetingUID].title, meeting.Title())
-        meeting.setDate(DateTime('2015/06/06'))
+        meeting.date = datetime(2015, 7, 7)
         meeting._update_after_edit()
         # cache was cleaned
         self.assertEqual(vocab(pmFolder).by_token[meetingUID].title, meeting.Title())
@@ -257,15 +310,16 @@ class testFaceted(PloneMeetingTestCase):
         cfg2 = self.meetingConfig2
         self.changeUser('pmManager')
         pmFolder = self.getMeetingFolder()
-        vocab = queryUtility(IVocabularyFactory,
-                             "Products.PloneMeeting.vocabularies.meetingdatesvocabulary")
+        vocab = get_vocab(pmFolder,
+                          "Products.PloneMeeting.vocabularies.meetingdatesvocabulary",
+                          only_factory=True)
         # create Meetings in cfg1
-        self.create('Meeting', date=DateTime('2015/05/05'))
-        self.create('Meeting', date=DateTime('2015/05/06'))
+        self.create('Meeting')
+        self.create('Meeting', date=datetime(2015, 5, 6))
         # create Meetings in cfg2
         self.setMeetingConfig(cfg2.getId())
-        self.create('Meeting', date=DateTime('2016/05/05'))
-        self.create('Meeting', date=DateTime('2016/05/06'))
+        self.create('Meeting')
+        self.create('Meeting', date=datetime(2016, 5, 6))
 
         self.setMeetingConfig(cfg.getId())
         pmFolder = self.getMeetingFolder()
@@ -279,15 +333,18 @@ class testFaceted(PloneMeetingTestCase):
         '''Test proposingGroup related cached vocabularies.'''
         self.changeUser('siteadmin')
         pmFolder = self.getMeetingFolder()
-        vocab1 = queryUtility(
-            IVocabularyFactory,
-            "Products.PloneMeeting.vocabularies.proposinggroupsvocabulary")
-        vocab2 = queryUtility(
-            IVocabularyFactory,
-            "Products.PloneMeeting.vocabularies.everyorganizationsacronymsvocabulary")
-        vocab3 = queryUtility(
-            IVocabularyFactory,
-            "Products.PloneMeeting.vocabularies.proposinggroupsforfacetedfiltervocabulary")
+        vocab1 = get_vocab(
+            pmFolder,
+            "Products.PloneMeeting.vocabularies.proposinggroupsvocabulary",
+            only_factory=True)
+        vocab2 = get_vocab(
+            pmFolder,
+            "Products.PloneMeeting.vocabularies.everyorganizationsacronymsvocabulary",
+            only_factory=True)
+        vocab3 = get_vocab(
+            pmFolder,
+            "Products.PloneMeeting.vocabularies.proposinggroupsforfacetedfiltervocabulary",
+            only_factory=True)
         # once get, it is cached
         self.assertEqual(len(vocab1(pmFolder)), 3)
         # contains My organization
@@ -351,9 +408,9 @@ class testFaceted(PloneMeetingTestCase):
         cfg = self.meetingConfig
         self.changeUser('siteadmin')
         pmFolder = self.getMeetingFolder()
-        vocab = queryUtility(
-            IVocabularyFactory,
-            "Products.PloneMeeting.vocabularies.proposinggroupsforfacetedfiltervocabulary")
+        vocab = get_vocab(pmFolder,
+                          "Products.PloneMeeting.vocabularies.proposinggroupsforfacetedfiltervocabulary",
+                          only_factory=True)
         # by default when MeetingConfig.groupsHiddenInDashboardFilter is empty, every groups are returned
         self.assertEqual(cfg.getGroupsHiddenInDashboardFilter(), ())
         self.assertEqual(
@@ -375,28 +432,33 @@ class testFaceted(PloneMeetingTestCase):
     def test_pm_GroupsInChargeVocabulary(self):
         '''Test the "Products.PloneMeeting.vocabularies.groupsinchargevocabulary"
            vocabulary, especially because it is cached.'''
+        cfg = self.meetingConfig
+        cfg.setUseGroupsAsCategories(False)
+        self._enableField('classifier')
         self.changeUser('siteadmin')
         org1 = self.create('organization', id='org1', title='Org 1', acronym='Org1')
-        org1uid = org1.UID()
+        org1_uid = org1.UID()
         org2 = self.create('organization', id='org2', title='Org 2', acronym='Org2')
-        org2uid = org2.UID()
+        org2_uid = org2.UID()
         org3 = self.create('organization', id='org3', title='Org 3', acronym='Org3')
-        org3uid = org3.UID()
-        vocab = queryUtility(IVocabularyFactory, "Products.PloneMeeting.vocabularies.groupsinchargevocabulary")
+        org3_uid = org3.UID()
+        vocab = get_vocab(org1,
+                          "Products.PloneMeeting.vocabularies.groupsinchargevocabulary",
+                          only_factory=True)
 
         # for now, no group in charge
         meetingFolder = self.getMeetingFolder()
         self.assertEqual(len(vocab(meetingFolder)), 0)
         # define some group in charge, vocabulary is invalidated when an org is modified
-        self.vendors.groups_in_charge = (org1uid,)
+        self.vendors.groups_in_charge = (org1_uid,)
         notify(ObjectModifiedEvent(self.vendors))
-        self.developers.groups_in_charge = (org2uid,)
+        self.developers.groups_in_charge = (org2_uid,)
         notify(ObjectModifiedEvent(self.developers))
         self.assertEqual([term.title for term in vocab(meetingFolder)], ['Org 1', 'Org 2'])
 
         # create an new org with a groupInCharge directly
         org4 = self.create('organization', id='org4', title='Org 4',
-                           acronym='Org4', groups_in_charge=(org3uid,))
+                           acronym='Org4', groups_in_charge=(org3_uid,))
         org4_uid = org4.UID()
         self._select_organization(org4_uid)
         self.assertEqual([term.title for term in vocab(meetingFolder)], ['Org 1', 'Org 2', 'Org 3'])
@@ -411,12 +473,38 @@ class testFaceted(PloneMeetingTestCase):
         notify(ObjectModifiedEvent(self.vendors))
         self.assertEqual([term.title for term in vocab(meetingFolder)], ['Org 2', 'Org 3'])
 
+        # category, creating an organization invalidates the vocabulary cache
+        org5 = self.create('organization', id='org5', title='Org 5', acronym='Org5')
+        org5_uid = org5.UID()
+        # an already used
+        cfg.categories.development.groups_in_charge = [org3_uid]
+        # already existing no more used
+        cfg.categories.research.groups_in_charge = [org4_uid]
+        # new
+        cfg.categories.events.groups_in_charge = [org5_uid]
+        self.assertEqual(
+            [term.title for term in vocab(meetingFolder)],
+            ['Org 2', 'Org 3', 'Org 4', 'Org 5'])
+
+        # classifier, creating an organization invalidates the vocabulary cache
+        org6 = self.create('organization', id='org6', title='Org 6', acronym='Org6')
+        org6_uid = org6.UID()
+        # already existing
+        cfg.classifiers.classifier1.groups_in_charge = [org5_uid]
+        # new
+        cfg.classifiers.classifier2.groups_in_charge = [org6_uid]
+        self.assertEqual(
+            [term.title for term in vocab(meetingFolder)],
+            ['Org 2', 'Org 3', 'Org 4', 'Org 5', 'Org 6'])
+
     def test_pm_CreatorsVocabulary(self):
         '''Test the "Products.PloneMeeting.vocabularies.creatorsvocabulary"
            vocabulary, especially because it is cached.'''
         self.changeUser('pmCreator1')
         pmFolder = self.getMeetingFolder()
-        vocab = queryUtility(IVocabularyFactory, "Products.PloneMeeting.vocabularies.creatorsvocabulary")
+        vocab = get_vocab(pmFolder,
+                          "Products.PloneMeeting.vocabularies.creatorsvocabulary",
+                          only_factory=True)
         # once get, it is cached
         self.assertEqual(len(vocab(pmFolder)), 3)
 
@@ -433,9 +521,10 @@ class testFaceted(PloneMeetingTestCase):
         cfg = self.meetingConfig
         self.changeUser('pmCreator1')
         pmFolder = self.getMeetingFolder()
-        vocab = queryUtility(
-            IVocabularyFactory,
-            "Products.PloneMeeting.vocabularies.creatorsforfacetedfiltervocabulary")
+        vocab = get_vocab(
+            pmFolder,
+            "Products.PloneMeeting.vocabularies.creatorsforfacetedfiltervocabulary",
+            only_factory=True)
         # once get, it is cached
         self.assertEqual(len(vocab(pmFolder)), 3)
 
@@ -487,7 +576,9 @@ class testFaceted(PloneMeetingTestCase):
                            'delay_label': ''}]
         cfg.setCustomAdvisers(customAdvisers)
         pmFolder = self.getMeetingFolder()
-        vocab = queryUtility(IVocabularyFactory, "Products.PloneMeeting.vocabularies.askedadvicesvocabulary")
+        vocab = get_vocab(pmFolder,
+                          "Products.PloneMeeting.vocabularies.askedadvicesvocabulary",
+                          only_factory=True)
         # we have 4 delay-aware advisers and 2 adviser groups selectable as optional
         delayAdvisers = [adviser for adviser in cfg.getCustomAdvisers() if adviser['delay']]
         self.assertEqual(len(delayAdvisers), 4)
@@ -550,9 +641,11 @@ class testFaceted(PloneMeetingTestCase):
            DashboardCollection edit.'''
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
-        meeting = self.create('Meeting', date=DateTime('2020/04/01'))
+        meeting = self.create('Meeting')
         cfg = self.meetingConfig
-        vocab = queryUtility(IVocabularyFactory, "Products.PloneMeeting.vocabularies.askedadvicesvocabulary")
+        vocab = get_vocab(cfg,
+                          "Products.PloneMeeting.vocabularies.askedadvicesvocabulary",
+                          only_factory=True)
         # working context
         pmFolder = self.getMeetingFolder()
         self.assertEqual(len(vocab(pmFolder)), 2)
@@ -563,6 +656,7 @@ class testFaceted(PloneMeetingTestCase):
         self.assertEqual(len(vocab(self.portal)), 0)
         self.assertEqual(len(vocab(self.portal.contacts)), 0)
         self.assertEqual(len(vocab(self.app)), 0)
+        self.request['PUBLISHED'] = None
         self.assertEqual(len(vocab(None)), 0)
 
     def test_pm_AskedAdvicesVocabularyMCAware(self):
@@ -604,7 +698,9 @@ class testFaceted(PloneMeetingTestCase):
                            'delay_label': ''}]
         cfg2.setCustomAdvisers(customAdvisers)
         pmFolder = self.getMeetingFolder()
-        vocab = queryUtility(IVocabularyFactory, "Products.PloneMeeting.vocabularies.askedadvicesvocabulary")
+        vocab = get_vocab(pmFolder,
+                          "Products.PloneMeeting.vocabularies.askedadvicesvocabulary",
+                          only_factory=True)
         terms_cfg1 = [term.token for term in vocab(pmFolder)]
         self.setMeetingConfig(cfg2.getId())
         pmFolder = self.getMeetingFolder()
@@ -618,7 +714,9 @@ class testFaceted(PloneMeetingTestCase):
         self.changeUser('siteadmin')
         cfg.setUsedAdviceTypes(('positive', 'negative'))
         pmFolder = self.getMeetingFolder()
-        vocab = queryUtility(IVocabularyFactory, "Products.PloneMeeting.vocabularies.advicetypesvocabulary")
+        vocab = get_vocab(pmFolder,
+                          "Products.PloneMeeting.vocabularies.advicetypesvocabulary",
+                          only_factory=True)
         # once get, it is cached
         self.assertEqual(len(vocab(pmFolder)), 5)
 
@@ -635,8 +733,9 @@ class testFaceted(PloneMeetingTestCase):
         self.changeUser('siteadmin')
         cfg.setUsedAdviceTypes(('positive', 'negative'))
         cfg2.setUsedAdviceTypes(('positive', ))
-        vocab = queryUtility(IVocabularyFactory, "Products.PloneMeeting.vocabularies.advicetypesvocabulary")
-
+        vocab = get_vocab(cfg,
+                          "Products.PloneMeeting.vocabularies.advicetypesvocabulary",
+                          only_factory=True)
         pmFolder = self.getMeetingFolder()
         terms_cfg1 = [term.token for term in vocab(pmFolder)]
         self.setMeetingConfig(cfg2.getId())
@@ -667,8 +766,9 @@ class testFaceted(PloneMeetingTestCase):
         # not redirected if on an meeting
         self.changeUser('pmManager')
         pmFolder = self.getMeetingFolder()
-        meeting = self.create('Meeting', date=DateTime('2018/05/23'))
-        meeting.restrictedTraverse('view')()
+        meeting = self.create('Meeting')
+        view = meeting.restrictedTraverse('@@meeting_view')
+        view()
         self.assertEqual(self.request.RESPONSE.status, 200)
 
     def test_pm_DisabledCollectionsAreIgnored(self):
@@ -679,14 +779,13 @@ class testFaceted(PloneMeetingTestCase):
         searchAllItems_path = searchAllItems.absolute_url_path()
         self.changeUser('pmCreator1')
         pmFolder = self.getMeetingFolder()
-        vocab = queryUtility(IVocabularyFactory,
-                             "Products.PloneMeeting.vocabularies.conditionawarecollectionvocabulary")
+        vocab = get_vocab(pmFolder,
+                          "Products.PloneMeeting.vocabularies.conditionawarecollectionvocabulary",
+                          only_factory=True)
         self.assertTrue(searchAllItems_path in vocab(searches, real_context=pmFolder))
         # disable it then test again
         self.changeUser('siteadmin')
-        searchAllItems.enabled = False
-        # invalidate vocabulary cache
-        notify(ObjectModifiedEvent(searchAllItems))
+        self._disableObj(searchAllItems, notify_event=True)
         self.changeUser('pmCreator1')
         self.assertFalse(searchAllItems_path in vocab(searches, real_context=pmFolder))
 

@@ -2,28 +2,12 @@
 #
 # File: testAnnexes.py
 #
-# Copyright (c) 2016 by Imio.be
-#
 # GNU General Public License (GPL)
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
-# 02110-1301, USA.
 #
 
 from AccessControl import Unauthorized
 from collective.contact.plonegroup.utils import get_plone_group
+from collective.iconifiedcategory.browser.tabview import CategorizedContent
 from collective.iconifiedcategory.event import IconifiedAttrChangedEvent
 from collective.iconifiedcategory.interfaces import IIconifiedPreview
 from collective.iconifiedcategory.utils import calculate_category_id
@@ -32,7 +16,6 @@ from collective.iconifiedcategory.utils import get_category_object
 from collective.iconifiedcategory.utils import get_config_root
 from collective.iconifiedcategory.utils import get_group
 from collective.iconifiedcategory.utils import update_all_categorized_elements
-from DateTime import DateTime
 from imio.actionspanel.interfaces import IContentDeletable
 from imio.annex.columns import ActionsColumn
 from plone import api
@@ -108,6 +91,7 @@ class testAnnexes(PloneMeetingTestCase):
         categorized_child = item.restrictedTraverse('@@categorized-childs-infos')
         annex_category = cfg.annexes_types.item_annexes.get('financial-analysis')
         categorized_child.category_uid = annex_category.UID()
+        categorized_child.filters = {}
 
         annexNotConfidential = self.addAnnex(item, annexTitle='Annex not confidential')
         annexConfidential = self.addAnnex(item, annexTitle='Annex confidential')
@@ -125,7 +109,7 @@ class testAnnexes(PloneMeetingTestCase):
         # give budget impact editors view on item
         cfg.setItemBudgetInfosStates([item_initial_state])
         cfg.setItemAnnexConfidentialVisibleFor(('configgroup_budgetimpacteditors', ))
-        item.updateLocalRoles()
+        item.update_local_roles()
         # give budget impact editors view on item
         # by default, budget impact editors local role will only give ability to edit budget infos, not to view item
         item.__ac_local_roles__['{0}_{1}'.format(cfg.getId(), BUDGETIMPACTEDITORS_GROUP_SUFFIX)] = ['Reader']
@@ -143,7 +127,7 @@ class testAnnexes(PloneMeetingTestCase):
 
         self._setPowerObserverStates(states=(item_initial_state, ))
         cfg.setItemAnnexConfidentialVisibleFor(('configgroup_powerobservers', ))
-        item.updateLocalRoles()
+        item.update_local_roles()
 
         self.changeUser('powerobserver1')
         self._checkElementConfidentialAnnexAccess(cfg, item, annexNotConfidential, annexConfidential,
@@ -158,7 +142,7 @@ class testAnnexes(PloneMeetingTestCase):
         self._setPowerObserverStates(observer_type='restrictedpowerobservers',
                                      states=(item_initial_state, ))
         cfg.setItemAnnexConfidentialVisibleFor(('configgroup_restrictedpowerobservers', ))
-        item.updateLocalRoles()
+        item.update_local_roles()
 
         self.changeUser('restrictedpowerobserver1')
         self._checkElementConfidentialAnnexAccess(cfg, item, annexNotConfidential, annexConfidential,
@@ -174,7 +158,7 @@ class testAnnexes(PloneMeetingTestCase):
         cfg.setItemAdviceEditStates((item_initial_state, ))
         cfg.setItemAnnexConfidentialVisibleFor(('reader_advices', ))
         item.setOptionalAdvisers((self.developers_uid, ))
-        item.updateLocalRoles()
+        item.update_local_roles()
 
         self.changeUser('pmAdviser1')
         self._checkElementConfidentialAnnexAccess(cfg, item, annexNotConfidential, annexConfidential,
@@ -190,7 +174,7 @@ class testAnnexes(PloneMeetingTestCase):
         cfg.setItemCopyGroupsStates((item_initial_state, ))
         cfg.setItemAnnexConfidentialVisibleFor(('reader_copy_groups', ))
         item.setCopyGroups((self.vendors_reviewers, ))
-        item.updateLocalRoles()
+        item.update_local_roles()
 
         self.changeUser('pmReviewer2')
         self._checkElementConfidentialAnnexAccess(cfg, item, annexNotConfidential, annexConfidential,
@@ -229,7 +213,7 @@ class testAnnexes(PloneMeetingTestCase):
 
         # validate the item so it is visible by every roles of the proposing group
         self.validateItem(item)
-        self.assertEqual(item.queryState(), 'validated')
+        self.assertEqual(item.query_state(), 'validated')
 
         proposingGroupSuffixes = [k for k in cfg.listItemAnnexConfidentialVisibleFor()
                                   if k.startswith(PROPOSINGGROUPPREFIX)]
@@ -304,8 +288,7 @@ class testAnnexes(PloneMeetingTestCase):
         """ """
         # current user may see every annexes
         self.assertEqual(set([elt['UID'] for elt in get_categorized_elements(obj)]),
-                         set((annexNotConfidential.UID(),
-                              annexConfidential.UID())))
+                         set((annexNotConfidential.UID(), annexConfidential.UID())))
         self.assertTrue('Annex not confidential' in annexes_table())
         self.assertTrue('Annex confidential' in annexes_table())
         categorized_child.update()
@@ -343,7 +326,7 @@ class testAnnexes(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         item.setOptionalAdvisers((self.vendors_uid, ))
-        item.updateLocalRoles()
+        item.update_local_roles()
         self.changeUser('pmReviewer2')
         advice = createContentInContainer(
             item,
@@ -359,6 +342,7 @@ class testAnnexes(PloneMeetingTestCase):
         annex_category = cfg.annexes_types.advice_annexes.get('advice-annex')
         categorized_child = advice.restrictedTraverse('@@categorized-childs-infos')
         categorized_child.category_uid = annex_category.UID()
+        categorized_child.filters = {}
 
         annexNotConfidential = self.addAnnex(advice, annexTitle='Annex not confidential')
         annexConfidential = self.addAnnex(advice, annexTitle='Annex confidential')
@@ -388,10 +372,11 @@ class testAnnexes(PloneMeetingTestCase):
 
         cfg.setItemBudgetInfosStates([item_initial_state])
         cfg.setAdviceAnnexConfidentialVisibleFor(('configgroup_budgetimpacteditors', ))
-        item.updateLocalRoles()
+        item.update_local_roles()
         # give budget impact editors view on item
         # by default, budget impact editors local role will only give ability to edit budget infos, not to view item
         item.__ac_local_roles__['{0}_{1}'.format(cfg.getId(), BUDGETIMPACTEDITORS_GROUP_SUFFIX)] = ['Reader']
+        item._propagateReaderAndMeetingManagerLocalRolesToSubObjects(cfg)
         item.reindexObjectSecurity()
 
         self.changeUser('budgetimpacteditor')
@@ -421,7 +406,7 @@ class testAnnexes(PloneMeetingTestCase):
         cfg.setItemCopyGroupsStates((item_initial_state, ))
         cfg.setAdviceAnnexConfidentialVisibleFor(('reader_copy_groups', ))
         item.setCopyGroups((self.vendors_reviewers, ))
-        item.updateLocalRoles()
+        item.update_local_roles()
 
         self.changeUser('pmReviewer2')
         self._checkElementConfidentialAnnexAccess(cfg, advice, annexNotConfidential, annexConfidential,
@@ -441,7 +426,7 @@ class testAnnexes(PloneMeetingTestCase):
         cfg.setAdviceAnnexConfidentialVisibleFor(('reader_groupsincharge', ))
         update_all_categorized_elements(item)
         self._setUpGroupsInCharge(item)
-        item.updateLocalRoles()
+        item.update_local_roles()
 
         self.changeUser('pmReviewer2')
         self._checkElementConfidentialAnnexAccess(cfg, advice, annexNotConfidential, annexConfidential,
@@ -455,7 +440,7 @@ class testAnnexes(PloneMeetingTestCase):
 
         self._setPowerObserverStates(states=(item_initial_state, ))
         cfg.setAdviceAnnexConfidentialVisibleFor(('configgroup_powerobservers', ))
-        item.updateLocalRoles()
+        item.update_local_roles()
 
         self.changeUser('powerobserver1')
         self._checkElementConfidentialAnnexAccess(cfg, advice, annexNotConfidential, annexConfidential,
@@ -470,7 +455,7 @@ class testAnnexes(PloneMeetingTestCase):
         self._setPowerObserverStates(observer_type='restrictedpowerobservers',
                                      states=(item_initial_state, ))
         cfg.setAdviceAnnexConfidentialVisibleFor(('configgroup_restrictedpowerobservers', ))
-        item.updateLocalRoles()
+        item.update_local_roles()
 
         self.changeUser('restrictedpowerobserver1')
         self._checkElementConfidentialAnnexAccess(cfg, advice, annexNotConfidential, annexConfidential,
@@ -484,7 +469,7 @@ class testAnnexes(PloneMeetingTestCase):
 
         # validate the item so it is visible by every roles of the proposing group
         self.validateItem(item)
-        self.assertEqual(item.queryState(), 'validated')
+        self.assertEqual(item.query_state(), 'validated')
 
         proposingGroupSuffixes = [k for k in cfg.listItemAnnexConfidentialVisibleFor()
                                   if k.startswith(PROPOSINGGROUPPREFIX)]
@@ -517,7 +502,7 @@ class testAnnexes(PloneMeetingTestCase):
         self._setPowerObserverStates(states=[])
 
         self.changeUser('pmManager')
-        meeting = self.create('Meeting', date=DateTime('2016/10/10'))
+        meeting = self.create('Meeting')
         annex_config = get_config_root(meeting)
         annex_group = get_group(annex_config, meeting)
         annex_group.confidentiality_activated = True
@@ -526,6 +511,7 @@ class testAnnexes(PloneMeetingTestCase):
         categorized_child = meeting.restrictedTraverse('@@categorized-childs-infos')
         annex_category = cfg.annexes_types.meeting_annexes.get('meeting-annex')
         categorized_child.category_uid = annex_category.UID()
+        categorized_child.filters = {}
 
         annexNotConfidential = self.addAnnex(meeting, annexTitle='Annex not confidential')
         annexConfidential = self.addAnnex(meeting, annexTitle='Annex confidential')
@@ -543,7 +529,7 @@ class testAnnexes(PloneMeetingTestCase):
         self._setPowerObserverStates(field_name='meeting_states',
                                      states=(meeting_initial_state, ))
         cfg.setMeetingAnnexConfidentialVisibleFor(('configgroup_powerobservers', ))
-        meeting.updateLocalRoles()
+        meeting.update_local_roles()
 
         self.changeUser('powerobserver1')
         self._checkElementConfidentialAnnexAccess(cfg, meeting, annexNotConfidential, annexConfidential,
@@ -559,7 +545,7 @@ class testAnnexes(PloneMeetingTestCase):
                                      field_name='meeting_states',
                                      states=(meeting_initial_state, ))
         cfg.setMeetingAnnexConfidentialVisibleFor(('configgroup_restrictedpowerobservers', ))
-        meeting.updateLocalRoles()
+        meeting.update_local_roles()
 
         self.changeUser('restrictedpowerobserver1')
         self._checkElementConfidentialAnnexAccess(cfg, meeting, annexNotConfidential, annexConfidential,
@@ -573,7 +559,7 @@ class testAnnexes(PloneMeetingTestCase):
 
         # freeze the meeting so it is visible by every profiles
         self.freezeMeeting(meeting)
-        self.assertEqual(meeting.queryState(), 'frozen')
+        self.assertEqual(meeting.query_state(), 'frozen')
 
         profileSuffixes = [k for k in cfg.listMeetingAnnexConfidentialVisibleFor()
                            if k.startswith(SUFFIXPROFILEPREFIX)]
@@ -773,7 +759,7 @@ class testAnnexes(PloneMeetingTestCase):
         '''Annexes title is indexed in the meeting SearchableText.'''
         ANNEX_TITLE = "SpecialAnnexTitle"
         self.changeUser('pmManager')
-        meeting = self.create('Meeting', date=DateTime('2019/12/19'))
+        meeting = self.create('Meeting')
         self.assertFalse(self.catalog(SearchableText=ANNEX_TITLE))
         # add an annex
         annex = self.addAnnex(meeting, annexTitle=ANNEX_TITLE)
@@ -815,7 +801,7 @@ class testAnnexes(PloneMeetingTestCase):
     def test_pm_MeetingAnnexesContentNotInAnnexSearchableText(self):
         '''Annexes content is not indexed in any SearchableText.'''
         self.changeUser('pmManager')
-        meeting = self.create('Meeting', date=DateTime('2019/12/19'))
+        meeting = self.create('Meeting')
         # add an annex
         annex = self.addAnnex(meeting, annexTitle="Big bad text.txt", annexFile=u'annex_not_to_index.txt')
         # ensure this annex is indexed
@@ -1004,7 +990,7 @@ class testAnnexes(PloneMeetingTestCase):
         self.assertEqual(item.objectValues(), [annex2, annex3, annex1])
         # only members able to add annexes are able to change position
         self.validateItem(item)
-        self.assertEqual(item.queryState(), 'validated')
+        self.assertEqual(item.query_state(), 'validated')
         self.assertFalse(self.hasPermission(AddAnnex, item))
         self.assertRaises(Unauthorized, item.folder_position_typeaware, position='up', id=annex1.getId())
 
@@ -1062,8 +1048,11 @@ class testAnnexes(PloneMeetingTestCase):
         # use the 'only_creator_may_delete' WF adaptation if available
         # in this case, it will ensure that when validated, the item may not be
         # deleted but annexes may be deleted by item editor
-        if 'only_creator_may_delete' in cfg.listWorkflowAdaptations():
-            cfg.setWorkflowAdaptations('only_creator_may_delete')
+        wfAdaptations = cfg.getWorkflowAdaptations()
+        if 'only_creator_may_delete' in cfg.listWorkflowAdaptations() and \
+           'only_creator_may_delete' not in wfAdaptations:
+            wfAdaptations = wfAdaptations + ('only_creator_may_delete', )
+            cfg.setWorkflowAdaptations(wfAdaptations)
             cfg.at_post_edit_script()
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
@@ -1127,11 +1116,11 @@ class testAnnexes(PloneMeetingTestCase):
         self.validateItem(item)
         # when an item is 'accepted', the MeetingMember may add annexDecision
         self.changeUser('pmManager')
-        meeting = self.create('Meeting', date=DateTime('2016/11/11'))
+        meeting = self.create('Meeting')
         self.presentItem(item)
         self.decideMeeting(meeting)
         self.do(item, 'accept')
-        self.assertEqual(item.queryState(), 'accepted')
+        self.assertEqual(item.query_state(), 'accepted')
         self.changeUser('pmCreator1')
         decisionAnnex1 = self.addAnnex(item, relatedTo='item_decision')
         self.assertTrue(decisionAnnex1 in item.objectValues())
@@ -1190,7 +1179,7 @@ class testAnnexes(PloneMeetingTestCase):
         cfg = self.meetingConfig
         cfgId = cfg.getId()
         self.changeUser('pmManager')
-        meeting = self.create('Meeting', date=DateTime())
+        meeting = self.create('Meeting')
 
         # check with form, context is the MeetingItem
         form_annex = meeting.restrictedTraverse('++add++annex')
@@ -1307,10 +1296,7 @@ class testAnnexes(PloneMeetingTestCase):
         # annexDecision section is shown if annexDecision are stored or if
         # annexDecision annex types are available (active), disable the annexDecision annex types
         for annex_type in cfg.annexes_types.item_decision_annexes.objectValues():
-            annex_type.enabled = False
-            # manage cache
-            notify(ObjectModifiedEvent(annex_type))
-            annex_type.reindexObject(idxs=['enabled'])
+            self._disableObj(annex_type, notify_event=True)
         view = item.restrictedTraverse('@@categorized-annexes')
         # showDecisionAnnexesSection still True because annexDecision exists
         self.assertTrue(view.showDecisionAnnexesSection())
@@ -1424,13 +1410,14 @@ class testAnnexes(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         annex = self.addAnnex(item)
-        annex_brain = self.catalog(UID=annex.UID())[0]
+        annex_infos = get_categorized_elements(item, uids=[annex.UID()])
+        annex_content = CategorizedContent(item, annex_infos[0])
         column = ActionsColumn(self.portal, self.request, self)
-        self.assertFalse('@@historyview' in column.renderCell(annex_brain))
+        self.assertFalse('@@historyview' in column.renderCell(annex_content))
         self.changeUser('pmManager')
-        self.assertFalse('@@historyview' in column.renderCell(annex_brain))
+        self.assertFalse('@@historyview' in column.renderCell(annex_content))
         self.changeUser('admin')
-        self.assertTrue('@@historyview' in column.renderCell(annex_brain))
+        self.assertTrue('@@historyview' in column.renderCell(annex_content))
 
     def test_pm_ParentModificationDateUpdatedWhenAnnexChanged(self):
         """When an annex is added/modified/removed, the parent modification date is updated."""
@@ -1471,7 +1458,7 @@ class testAnnexes(PloneMeetingTestCase):
 
         # on Meeting
         self.changeUser('pmManager')
-        meeting = self.create('Meeting', date=DateTime('2018/03/19'))
+        meeting = self.create('Meeting')
         parent_modified = meeting.modified()
         self.assertEqual(self.catalog(UID=meeting.UID())[0].modified, parent_modified)
         # add an annex
@@ -1533,9 +1520,9 @@ class testAnnexes(PloneMeetingTestCase):
         self.addAnnex(item, relatedTo='item_decision')
         _check_catalog()
         # Meeting
-        meeting = self.create('Meeting', date=DateTime('2020/04/23'))
+        meeting = self.create('Meeting')
         # meeting + 2 recurring items
-        self.assertEqual(len(meeting.getItems()), 2)
+        self.assertEqual(len(meeting.get_items()), 2)
         _check_catalog(step=3)
         meeting_annex = self.addAnnex(meeting)
         _check_catalog()
@@ -1565,7 +1552,7 @@ class testAnnexes(PloneMeetingTestCase):
         self.portal.restrictedTraverse('@@delete_givenuid')(meeting_annex.UID())
         _check_catalog(step=-1)
         # may only remove an empty meeting, remove 2 recurring items
-        for meeting_item in meeting.getItems():
+        for meeting_item in meeting.get_items():
             # set it back to 'itemcreated' in case item only deletable in 'itemcreated'
             self.backToState(meeting_item, 'itemcreated')
             self.portal.restrictedTraverse('@@delete_givenuid')(meeting_item.UID())

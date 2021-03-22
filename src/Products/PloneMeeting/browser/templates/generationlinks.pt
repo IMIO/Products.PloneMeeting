@@ -18,8 +18,8 @@
            tal:attributes="onclick string:event.preventDefault();;javascript:generatePodDocument('${infos/template_uid}','${infos/output_format}', this);
                            title infos/description"
            style="cursor: pointer">
-            <img src="#"
-             tal:attributes="src string:${view/portal_url}/++resource++collective.documentgenerator/${infos/output_format}.png" />
+            <img src="#" class="svg-icon"
+             tal:attributes="src string:${view/portal_url}/++resource++collective.documentgenerator/${infos/output_format}.svg" />
             <span tal:replace="infos/title">Template title</span>
         </a>
 

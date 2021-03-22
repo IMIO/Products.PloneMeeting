@@ -1,0 +1,57 @@
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:tal="http://xml.zope.org/namespaces/tal"
+      i18n:domain="PloneMeeting"
+      tal:omit-tag="">
+
+  <div tal:define="hookId python: 'hook_%s' % view.__name__;
+                   may_edit view/may_edit"
+       style="position: relative"
+       tal:attributes="id hookId;">
+
+  <script type='text/javascript'>
+   function refreshPageIfNeeded(){document.location.reload(true);}
+  </script>
+  
+   <fieldset>
+    <legend>
+      <div style="display: inline"
+           class="collapsible active"
+           tal:attributes="id string:${hookId}_toggle;
+                           onclick string:toggleDetails('${hookId}_content', toggle_parent_active=true, parent_tag=${hookId}_toggle);">
+        <span tal:content="view/label">Data</span>
+      </div>
+      <img style="cursor:pointer"
+           tal:condition="python: may_edit"
+           title="Edit this field"
+           i18n:attributes="title fastedit_edit"
+           tal:attributes="src string:${view/portal_url}/edit.png;
+                           onClick view/js_on_click;
+                           onload view/js_on_load"/>
+    </legend>
+  
+    <div tal:attributes="id string:${hookId}_content">
+      <div id=""
+           class=""
+           tal:attributes="id view/id;
+                           class view/klass;
+                           style view/style;
+                           title view/title;
+                           lang view/lang;
+                           onclick view/onclick;
+                           ondblclick view/ondblclick;
+                           onmousedown view/onmousedown;
+                           onmouseup view/onmouseup;
+                           onmouseover view/onmouseover;
+                           onmousemove view/onmousemove;
+                           onmouseout view/onmouseout;
+                           onkeypress view/onkeypress;
+                           onkeydown view/onkeydown;
+                           onkeyup view/onkeyup"><tal:block
+           define="value view/value"
+           condition="nocall:value"
+           content="structure python:view.display_value(value.output_relative_to(view.context))"/>
+      </div>
+    </div>
+   </fieldset>
+  </div>
+</html>

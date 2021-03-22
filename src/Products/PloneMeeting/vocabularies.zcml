@@ -17,6 +17,8 @@
            name="Products.PloneMeeting.vocabularies.everyorganizationsvocabulary" />
   <utility component=".vocabularies.EveryOrganizationsAcronymsVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.everyorganizationsacronymsvocabulary" />
+  <utility component=".vocabularies.PMSortedSelectedOrganizationsElephantVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.sortedselectedorganizationsvocabulary" />
   <utility component=".vocabularies.AssociatedGroupsVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.associatedgroupsvocabulary" />
   <utility component=".vocabularies.ItemAssociatedGroupsVocabularyFactory"
@@ -49,18 +51,16 @@
            name="Products.PloneMeeting.vocabularies.advicetypesvocabulary" />
   <utility component=".vocabularies.SentToInfosVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.senttoinfosvocabulary" />
-  <utility component=".vocabularies.SendToAuthorityVocabularyFactory"
-           name="Products.PloneMeeting.vocabularies.sendtoauthorityvocabulary" />
   <utility component=".vocabularies.BooleanForFacetedVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.booleanforfacetedvocabulary" />
-  <utility component=".vocabularies.HasAnnexesToPrintVocabularyFactory"
-           name="Products.PloneMeeting.vocabularies.hasannexestoprintvocabulary" />
-  <utility component=".vocabularies.HasAnnexesToSignVocabularyFactory"
-           name="Products.PloneMeeting.vocabularies.hasannexestosignvocabulary" />
+  <utility component=".vocabularies.FacetedAnnexesVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.faceted_annexes_vocabulary" />
   <utility component=".vocabularies.DownOrUpWorkflowAgainVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.downorupworkflowagainvocabulary" />
   <utility component=".vocabularies.ListTypesVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.listtypesvocabulary" />
+  <utility component=".vocabularies.UsedVoteValuesVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.usedvotevaluesvocabulary" />
   <utility component=".vocabularies.PrivaciesVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.privaciesvocabulary" />
   <utility component=".vocabularies.SelectablePrivaciesVocabularyFactory"
@@ -75,10 +75,24 @@
            name="Products.PloneMeeting.vocabularies.itemtemplatesstorableasannexvocabulary" />
   <utility component=".vocabularies.SelectableHeldPositionsVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.selectableheldpositionsvocabulary" />
+  <utility component=".vocabularies.SimplifiedSelectableHeldPositionsVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.simplified_selectable_heldpositions_vocabulary" />
+  <utility component=".vocabularies.SelectableCommitteeAttendeesVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.selectable_committee_attendees_vocabulary" />
+  <utility name="Products.PloneMeeting.vocabularies.selectable_committees_vocabulary"
+           component=".vocabularies.SelectableCommitteesVocabularyFactory" />
+  <utility name="Products.PloneMeeting.vocabularies.selectable_committees_acronyms_vocabulary"
+           component=".vocabularies.SelectableCommitteesAcronymsVocabularyFactory" />
+  <utility name="Products.PloneMeeting.vocabularies.item_selectable_committees_vocabulary"
+           component=".vocabularies.ItemSelectableCommitteesVocabularyFactory" />
+  <utility name="Products.PloneMeeting.vocabularies.meeting_selectable_committees_vocabulary"
+           component=".vocabularies.MeetingSelectableCommitteesVocabularyFactory" />
   <utility component=".vocabularies.SelectableAssemblyMembersVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.selectableassemblymembersvocabulary" />
   <utility component=".vocabularies.SelectableItemInitiatorsVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.selectableiteminitiatorsvocabulary" />
+  <utility component=".vocabularies.ItemVotersVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.itemvotersvocabulary" />
   <utility component=".vocabularies.PMDetailedEveryOrganizationsVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.detailedorganizationsvocabulary" />
   <utility component=".vocabularies.ItemNotPresentTypeVocabularyFactory"
@@ -87,20 +101,24 @@
            name="Products.PloneMeeting.vocabularies.annex_restrict_shown_and_editable_attributes_vocabulary" />
   <utility component=".vocabularies.PMUsersFactory"
            name="Products.PloneMeeting.Users" />
+  <utility name="PMPositionTypes"
+           component=".vocabularies.PMPositionTypesVocabularyFactory" />
 
   <!-- PMHeldPosition vocabularies -->
   <utility component=".vocabularies.HeldPositionUsagesVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.pmheldposition_usagesvocabulary" />
   <utility component=".vocabularies.HeldPositionDefaultsVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.pmheldposition_defaultsvocabulary" />
-  <utility component=".vocabularies.SignatureNumberVocabularyFactory"
-           name="Products.PloneMeeting.vocabularies.signaturenumbervocabulary" />
+  <utility component=".vocabularies.NumbersVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.numbersvocabulary" />
+  <utility component=".vocabularies.NumbersFromZeroVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.numbersfromzerovocabulary" />
 
   <!-- PMOrganization vocabularies -->
   <utility component=".vocabularies.ItemAllStatesVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.itemallstates" />
-  <utility component=".vocabularies.KeepAccessToItemWhenAdviceIsGivenVocabularyFactory"
-           name="Products.PloneMeeting.content.organization.keep_access_to_item_when_advice_is_given_vocabulary" />
+  <utility component=".vocabularies.KeepAccessToItemWhenAdviceVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.keep_access_to_item_when_advice_vocabulary" />
 
   <!-- Vocabulary used in collectionwidget and inheritating from the imio.dashboard vocabulary -->
   <utility component=".vocabularies.PMConditionAwareCollectionVocabularyFactory"

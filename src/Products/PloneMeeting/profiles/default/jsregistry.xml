@@ -1,5 +1,6 @@
 <?xml version="1.0"?>
-<object name="portal_javascripts" meta_type="JavaScripts Registry" purge="True">
+<object name="portal_javascripts" meta_type="JavaScripts Registry">
+
 <javascript id="++resource++plone.app.jquery.js" insert-after="" />
 
 <javascript id="collective.js.jqueryui.custom.min.js" insert-after="++resource++plone.app.jquery.js" />
@@ -204,7 +205,9 @@
 
 <javascript id="++resource++eea.facetednavigation.widgets.alphabets.view.js" insert-after="++resource++eea.facetednavigation.widgets.autocomplete.view.js" />
 
-<javascript id="++resource++eea.faceted-navigation-independent.js" insert-after="++resource++eea.facetednavigation.widgets.alphabets.view.js" />
+<javascript id="++resource++eea.facetednavigation.widgets.multiselect.view.js" insert-after="++resource++eea.facetednavigation.widgets.alphabets.view.js" />
+
+<javascript id="++resource++eea.faceted-navigation-independent.js" insert-after="++resource++eea.facetednavigation.widgets.multiselect.view.js" />
 
 <javascript id="++resource++eea.faceted-navigation-expand.js" insert-after="++resource++eea.faceted-navigation-independent.js" />
 
@@ -250,7 +253,9 @@
 
 <javascript id="++resource++eea.facetednavigation.widgets.alphabets.edit.js" insert-after="++resource++eea.facetednavigation.widgets.autocomplete.edit.js" />
 
-<javascript id="++resource++collective.eeafaceted.collectionwidget.widgets.edit.js" insert-after="++resource++eea.facetednavigation.widgets.alphabets.edit.js" />
+<javascript id="++resource++eea.facetednavigation.widgets.multiselect.edit.js" insert-after="++resource++eea.facetednavigation.widgets.alphabets.edit.js" />
+
+<javascript id="++resource++collective.eeafaceted.collectionwidget.widgets.edit.js" insert-after="++resource++eea.facetednavigation.widgets.multiselect.edit.js" />
 
 <javascript id="++resource++plone.formwidget.querystring.querywidget.js" insert-after="++resource++collective.eeafaceted.collectionwidget.widgets.edit.js" />
 

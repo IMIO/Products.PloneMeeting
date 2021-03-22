@@ -1,22 +1,7 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2015 by Imio.be
 #
 # GNU General Public License (GPL)
 #
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
-# 02110-1301, USA.
 
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from Products.PloneMeeting.config import DEFAULT_LIST_TYPES
@@ -110,16 +95,21 @@ class ItemTemplateDescriptor(Descriptor):
 
 
 class CategoryDescriptor(Descriptor):
-    multiSelectFields = ['usingGroups', ]
+    multiSelectFields = ['using_groups',
+                         'category_mapping_when_cloning_to_other_mc',
+                         'groups_in_charge']
 
-    def __init__(self, id, title, description='', categoryId='',
-                 usingGroups=[], active=True):
+    def __init__(self, id, title, description='', category_id='',
+                 using_groups=[], category_mapping_when_cloning_to_other_mc=[],
+                 groups_in_charge=[], enabled=True):
         self.id = id
         self.title = title
         self.description = description
-        self.categoryId = categoryId
-        self.usingGroups = usingGroups
-        self.active = active
+        self.category_id = category_id
+        self.using_groups = using_groups
+        self.category_mapping_when_cloning_to_other_mc = category_mapping_when_cloning_to_other_mc
+        self.groups_in_charge = groups_in_charge
+        self.enabled = enabled
 
 
 class AnnexTypeDescriptor(Descriptor):
@@ -273,6 +263,7 @@ class PodTemplateDescriptor(StyleTemplateDescriptor):
         self.roles_bypassing_talcondition = set()
         self.store_as_annex = None
         self.store_as_annex_title_expr = u''
+        self.store_as_annex_empty_file = False
         self.is_style = False
         self.merge_templates = []
         self.is_reusable = False
@@ -312,6 +303,7 @@ class PersonDescriptor(Descriptor):
         self.firstname = firstname
         self.person_title = person_title
         self.held_positions = held_positions
+        self.firstname_abbreviated = None
         self.photo = None
         self.website = None
         self.city = None
@@ -389,7 +381,7 @@ class OrgDescriptor(Descriptor):
         self.item_advice_states = []
         self.item_advice_edit_states = []
         self.item_advice_view_states = []
-        self.keep_access_to_item_when_advice_is_given = ''
+        self.keep_access_to_item_when_advice = 'use_meetingconfig_value'
         self.as_copy_group_on = as_copy_group_on
         self.certified_signatures = []
         self.groups_in_charge = groups_in_charge
@@ -417,34 +409,42 @@ class OrgDescriptor(Descriptor):
 class MeetingConfigDescriptor(Descriptor):
     multiSelectFields = ('certifiedSignatures', 'usedItemAttributes', 'historizedItemAttributes',
                          'recordItemHistoryStates', 'usedMeetingAttributes',
-                         'historizedMeetingAttributes', 'recordMeetingHistoryStates',
-                         'availableItemsListVisibleColumns', 'itemsListVisibleColumns', 'itemsListVisibleFields',
+                         'availableItemsListVisibleColumns', 'itemsListVisibleColumns',
+                         'itemsVisibleFields', 'itemsNotViewableVisibleFields', 'itemsListVisibleFields',
                          'itemColumns', 'itemActionsColumnConfig', 'meetingColumns',
-                         'displayAvailableItemsTo', 'toDoListSearches',
+                         'displayAvailableItemsTo', 'redirectToNextMeeting', 'toDoListSearches',
                          'dashboardItemsListingsFilters', 'dashboardMeetingAvailableItemsFilters',
                          'dashboardMeetingLinkedItemsFilters', 'groupsHiddenInDashboardFilter',
-                         'usersHiddenInDashboardFilter', 'workflowAdaptations', 'transitionsToConfirm',
+                         'usersHiddenInDashboardFilter', 'workflowAdaptations',
+                         'itemWFValidationLevels', 'transitionsToConfirm',
                          'transitionsForPresentingAnItem', 'onTransitionFieldTransforms',
                          'onMeetingTransitionItemActionToExecute', 'meetingPresentItemWhenNoCurrentMeetingStates',
                          'itemAutoSentToOtherMCStates', 'itemManualSentToOtherMCStates', 'advicesKeptOnSentToOtherMC',
                          'mailItemEvents', 'mailMeetingEvents',
                          'usedAdviceTypes', 'selectableAdvisers', 'itemAdviceStates',
-                         'itemDecidedStates', 'itemPositiveDecidedStates',
                          'itemAdviceEditStates', 'itemAdviceViewStates', 'itemBudgetInfosStates',
                          'powerAdvisersGroups', 'powerObservers',
-                         'meetingConfigsToCloneTo', 'itemAdviceInvalidateStates', 'transitionsReinitializingDelays',
+                         'meetingConfigsToCloneTo', 'itemAdviceInvalidateStates',
+                         'defaultAdviceHiddenDuringRedaction', 'transitionsReinitializingDelays',
                          'customAdvisers', 'selectableCopyGroups', 'itemCopyGroupsStates', 'votesEncoder',
                          'meetingTopicStates', 'decisionTopicStates', 'itemFieldsToKeepConfigSortingFor',
                          'listTypes', 'selectablePrivacies', 'xhtmlTransformFields', 'xhtmlTransformTypes',
-                         'usedVoteValues', 'insertingMethodsOnAddItem',
+                         'usedVoteValues', 'firstLinkedVoteUsedVoteValues', 'nextLinkedVotesUsedVoteValues',
+                         'usedPollTypes', 'insertingMethodsOnAddItem',
                          'annexRestrictShownAndEditableAttributes', 'itemAnnexConfidentialVisibleFor',
                          'adviceAnnexConfidentialVisibleFor', 'meetingAnnexConfidentialVisibleFor',
                          'enableAdviceConfidentiality', 'adviceConfidentialityDefault', 'adviceConfidentialFor',
                          'hideNotViewableLinkedItemsTo', 'inheritedAdviceRemoveableByAdviser', 'usingGroups',
-                         'hideHistoryTo')
-    excludedFields = ['maxDaysDecisions', 'meetingAppDefaultView',
-                      'addContactsCSV', 'orderedContacts', 'orderedItemInitiators',
-                      'disabled_collections', 'defaultLabels']
+                         'hideHistoryTo', 'orderedAssociatedOrganizations',
+                         'orderedGroupsInCharge', 'orderedItemInitiators',
+                         'orderedCommitteeContacts', 'committees')
+
+    excludedFields = ['addContactsCSV',
+                      'defaultLabels',
+                      'disabled_collections',
+                      'maxDaysDecisions',
+                      'meetingAppDefaultView',
+                      'meetingItemTemplatesToStoreAsAnnex']
 
     # The 'instance' static attribute stores an instance used for assigning
     # default values to a meeting config being created through-the-web.
@@ -506,11 +506,6 @@ class MeetingConfigDescriptor(Descriptor):
         # Item states into which item events will be stored in item's history.
         self.recordItemHistoryStates = ()
         self.usedMeetingAttributes = ['assembly', 'signatures']
-        # In the next field, you specify meeting fields for which you want to
-        # keep track of changes.
-        self.historizedMeetingAttributes = []
-        # Meeting states into which item events will be stored in item's history
-        self.recordMeetingHistoryStates = ()
         # Do you want to use Organizations as categories ? In this case, you
         # do not need to define categories anymore.
         self.useGroupsAsCategories = True
@@ -527,7 +522,7 @@ class MeetingConfigDescriptor(Descriptor):
         # What is the format of the item references ?
         # Default is Ref. MeetingDate/ItemNumberInMeeting
         self.itemReferenceFormat = "python: 'Ref. ' + (here.hasMeeting() and " \
-            "here.restrictedTraverse('pm_unrestricted_methods').getLinkedMeetingDate().strftime('%Y%m%d') or '') " \
+            "here.restrictedTraverse('@@pm_unrestricted_methods').getLinkedMeetingDate().strftime('%Y%m%d') or '') " \
             "+ '/' + str(here.getItemNumber(relativeTo='meeting', for_display=True))"
         self.enableLabels = False
         # labels are like :
@@ -550,17 +545,6 @@ class MeetingConfigDescriptor(Descriptor):
         self.xhtmlTransformFields = []
         # What kind(s) of transform(s) must be applied to these fields ?
         self.xhtmlTransformTypes = []
-        # The "publish" deadline, for a meeting, is the deadline for validating
-        # items that must be presented to this meeting. "5.9:30" means:
-        # "5 days before meeting date, at 9:30."
-        self.publishDeadlineDefault = '5.9:30'
-        # The "freeze" deadline, for a meeting, is the deadline for validating
-        # items that must be late-presented to this meeting.
-        self.freezeDeadlineDefault = '1.14:30'
-        # The date for the pre-meeting is computed from the meeting date to
-        # which a "delta" is applied as defined hereafter (same format as
-        # above fields).
-        self.preMeetingDateDefault = '4.08:30'
         # by default, annex attribute 'confidential' is restricted to MeetingManagers
         self.annexRestrictShownAndEditableAttributes = ('confidentiality_display', 'confidentiality_edit')
         # annex confidentiality, setting something in 3 attributes here
@@ -595,11 +579,84 @@ class MeetingConfigDescriptor(Descriptor):
                                           'IMeetingWorkflowConditions'
         self.meetingActionsInterface = 'Products.PloneMeeting.interfaces.' \
                                        'IMeetingWorkflowActions'
-        self.itemDecidedStates = []
-        self.itemPositiveDecidedStates = []
         # Workflow adaptations are sets of changes that can be applied to
         # default PloneMeeting workflows.
         self.workflowAdaptations = []
+        self.itemWFValidationLevels = (
+            {'leading_transition': '-',
+             'state_title': 'itemcreated',
+             'suffix': 'creators',
+             'enabled': '1',
+             'state': 'itemcreated',
+             'back_transition_title': 'backToItemCreated',
+             'back_transition': 'backToItemCreated',
+             'leading_transition_title': '-',
+             'extra_suffixes': []},
+            {'leading_transition': 'propose',
+             'state_title': 'proposed',
+             'suffix': 'reviewers',
+             'enabled': '1',
+             'state': 'proposed',
+             'back_transition_title': 'backToProposed',
+             'back_transition': 'backToProposed',
+             'leading_transition_title': 'propose',
+             'extra_suffixes': []},
+            {'leading_transition': 'prevalidate',
+             'state_title': 'prevalidated',
+             'suffix': 'reviewers',
+             'enabled': '0',
+             'state': 'prevalidated',
+             'back_transition_title': 'backToPrevalidated',
+             'back_transition': 'backToPrevalidated',
+             'leading_transition_title': 'prevalidate',
+             'extra_suffixes': []},
+            {'leading_transition': 'proposeToValidationLevel1',
+             'state_title': 'proposedToValidationLevel1',
+             'suffix': 'level1reviewers',
+             'enabled': '0',
+             'state': 'proposedToValidationLevel1',
+             'back_transition_title': 'backToProposedToValidationLevel1',
+             'back_transition': 'backToProposedToValidationLevel1',
+             'leading_transition_title': 'proposeToValidationLevel1',
+             'extra_suffixes': []},
+            {'leading_transition': 'proposeToValidationLevel2',
+             'state_title': 'proposedToValidationLevel2',
+             'suffix': 'level2reviewers',
+             'enabled': '0',
+             'state': 'proposedToValidationLevel2',
+             'back_transition_title': 'backToProposedToValidationLevel2',
+             'back_transition': 'backToProposedToValidationLevel2',
+             'leading_transition_title': 'proposeToValidationLevel2',
+             'extra_suffixes': []},
+            {'leading_transition': 'proposeToValidationLevel3',
+             'state_title': 'proposedToValidationLevel3',
+             'suffix': 'level3reviewers',
+             'enabled': '0',
+             'state': 'proposedToValidationLevel3',
+             'back_transition_title': 'backToProposedToValidationLevel3',
+             'back_transition': 'backToProposedToValidationLevel3',
+             'leading_transition_title': 'proposeToValidationLevel3',
+             'extra_suffixes': []},
+            {'leading_transition': 'proposeToValidationLevel4',
+             'state_title': 'proposedToValidationLevel4',
+             'suffix': 'level4reviewers',
+             'enabled': '0',
+             'state': 'proposedToValidationLevel4',
+             'back_transition_title': 'backToProposedToValidationLevel4',
+             'back_transition': 'backToProposedToValidationLevel4',
+             'leading_transition_title': 'proposeToValidationLevel4',
+             'extra_suffixes': []},
+            {'leading_transition': 'proposeToValidationLevel5',
+             'state_title': 'proposedToValidationLevel5',
+             'suffix': 'level5reviewers',
+             'enabled': '0',
+             'state': 'proposedToValidationLevel5',
+             'back_transition_title': 'backToProposedToValidationLevel5',
+             'back_transition': 'backToProposedToValidationLevel5',
+             'leading_transition_title': 'proposeToValidationLevel5',
+             'extra_suffixes': []},
+        )
+
         # "Transitions to confirm" are Meeting or Item-related transitions for
         # which, in the user interface, a click on the corresponding icon or
         # button will show a confirmation popup. In this popup, the user will
@@ -615,7 +672,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.advicesKeptOnSentToOtherMC = []
         self.useCopies = False
         self.selectableCopyGroups = []
-        self.itemCopyGroupsStates = ['accepted', 'delayed', ]
+        self.itemCopyGroupsStates = ['accepted']
         self.hideItemHistoryCommentsToUsersOutsideProposingGroup = False
         self.hideHistoryTo = ()
         self.restrictAccessToSecretItems = False
@@ -632,7 +689,7 @@ class MeetingConfigDescriptor(Descriptor):
         # In the "decisions" portlet, the "all decisions" portlet will only show
         # meetings having one of the states listed in decisionTopicStates.
         # this will be applied on the 'searchlastdecisions' DashboardCollection
-        self.decisionTopicStates = ['decided', 'closed', 'archived']
+        self.decisionTopicStates = ['decided', 'closed']
         # Maximum number of meetings or decisions shown in the meeting and
         # decision portlets. If overflow, a combo box is shown instead of a
         # list of links.
@@ -649,16 +706,21 @@ class MeetingConfigDescriptor(Descriptor):
             'Creator', 'CreationDate', 'getProposingGroup', 'actions']
         self.itemsListVisibleColumns = [
             'Creator', 'CreationDate', 'review_state', 'getProposingGroup', 'actions']
+        # what fields of the item will be displayed in the linked items
+        self.itemsVisibleFields = []
+        self.itemsNotViewableVisibleFields = []
+        self.itemsNotViewableVisibleFieldsTALExpr = ''
         # what fields of the item will be displayed in the items listings
         # while clicking on the show more infos action (glasses icon)
         self.itemsListVisibleFields = ['MeetingItem.description', 'MeetingItem.decision']
         # columns shown on items listings.  Order is important!
         self.itemColumns = ['Creator', 'CreationDate', 'review_state',
-                            'getProposingGroup', 'linkedMeetingDate', 'actions']
+                            'getProposingGroup', 'meeting_date', 'actions']
         self.itemActionsColumnConfig = ['delete', 'history']
         # columns shown on meetings listings.  Order is important!
         self.meetingColumns = ['Creator', 'CreationDate', 'review_state', 'actions']
         self.displayAvailableItemsTo = []
+        self.redirectToNextMeeting = []
         # searches display on portlet_todo
         self.toDoListSearches = []
         # advanced filters shown
@@ -739,27 +801,34 @@ class MeetingConfigDescriptor(Descriptor):
         self.defaultAdviceHiddenDuringRedaction = []
         self.transitionsReinitializingDelays = []
         self.historizeItemDataWhenAdviceIsGiven = True
-        self.keepAccessToItemWhenAdviceIsGiven = False
+        self.keepAccessToItemWhenAdvice = 'default'
         self.versionateAdviceIfGivenAndItemModified = True
         self.customAdvisers = []
 
-        # Votes parameters -----------------------------------------------------
-        self.usedPollTypes = ('freehand', 'no_vote', 'secret', 'secret_separated')
+        # Votes parameters ----------------------------------------------------
+        self.usedPollTypes = ('freehand',
+                              'no_vote',
+                              'secret',
+                              'secret_separated')
         self.defaultPollType = 'freehand'
         self.useVotes = False
-        self.votesEncoder = ('theVoterHimself',)
-        self.usedVoteValues = ('not_yet', 'yes', 'no', 'abstain')
-        self.defaultVoteValue = 'not_yet'
-        self.voteCondition = 'True'
+        self.votesEncoder = ('aMeetingManager',)
+        self.usedVoteValues = ('yes', 'no', 'abstain')
+        self.firstLinkedVoteUsedVoteValues = ('no', 'abstain')
+        self.nextLinkedVotesUsedVoteValues = ('yes', )
+        self.voteCondition = ''
+        # Committees parameters -----------------------------------------------
+        self.orderedCommitteeContacts = []
+        self.committees = []
 
-        # Contacts parameters -----------------------------------------------------
+        # Contacts parameters --------------------------------------------------
         # bulk import of contacts using CSV related files
         self.addContactsCSV = False
         self.orderedContacts = []
         self.orderedItemInitiators = []
 
         # Doc parameters -------------------------------------------------------
-        self.meetingItemTemplateToStoreAsAnnex = ''
+        self.meetingItemTemplatesToStoreAsAnnex = []
 
         # content_category_groups parameters -----------------------------------
         self.category_group_activated_attrs = {}
@@ -815,6 +884,19 @@ class PloneMeetingConfiguration(Descriptor):
             {'date': '2020/11/11', },
             {'date': '2020/11/15', },
             {'date': '2020/12/25', },
+
+            {'date': '2021/01/01', },  # 2021
+            {'date': '2021/04/05', },
+            {'date': '2021/05/01', },
+            {'date': '2021/05/13', },
+            {'date': '2021/05/24', },
+            {'date': '2021/07/21', },
+            {'date': '2021/08/15', },
+            {'date': '2021/09/27', },
+            {'date': '2021/11/01', },
+            {'date': '2021/11/11', },
+            {'date': '2021/11/15', },
+            {'date': '2021/12/25', },
         ]
         self.delayUnavailableEndDays = ()
         self.configGroups = ()

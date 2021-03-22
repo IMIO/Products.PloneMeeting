@@ -1,15 +1,16 @@
 <tal:defines define="brains python: view.brains;
                      cfg python: view.cfg;
                      nbOfMeetings python:len(brains);
-                     maxShownMeetings cfg/maxShownMeetings;"
+                     maxShownMeetings python: cfg.getMaxShownMeetings();"
              i18n:domain="PloneMeeting">
 
     <tal:comment replace="nothing">A few number of meetings, show a link by meeting</tal:comment>
     <ul class="fewMeetings" tal:condition="python: nbOfMeetings <= maxShownMeetings">
         <li tal:repeat="brain brains">
-            <div tal:define="meeting brain/getObject;
-                             meeting_url meeting/absolute_url" tal:attributes="class python: meeting_url[meeting_url.index('Members'):] in view.request.getURL() and 'portletSelected' or ''">
-               <tal:meetingPrettyLink replace="structure python: meeting.getPrettyLink(prefixed=False)" />
+            <div tal:define="meeting python: brain.getObject();
+                             meeting_url python: brain.getURL();"
+                 tal:attributes="class python: meeting_url[meeting_url.index('Members'):] + '/' in view.request.getURL() and 'portletSelected' or ''">
+                <tal:meetingPrettyLink replace="structure python: meeting.get_pretty_link(prefixed=False)" />
             </div>
         </li>
     </ul>

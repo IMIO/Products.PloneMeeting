@@ -79,7 +79,7 @@
       <a name="directory"></a>
       <fieldset tal:condition="isRealManager">
          <legend><span i18n:translate="meeting_organizations">Organizations</span>
-           <span class="fa fa-question-circle help-doc" onClick="toggleDoc('groupDoc', toggle_parent_active=false);"></span>
+           <span class="fa fa-question-circle help-doc" onClick="toggleDetails('groupDoc', toggle_parent_active=false);"></span>
          </legend>
          <h4>
            <img style="vertical-align: baseline;"
@@ -197,42 +197,37 @@
       <p class="discreet" style="color: red;" i18n:translate="pm_tool_updates_warning">
       Warning: take care that launching these updates may take time, depending on the number of existing elements!  Do not launch during period of hig use!
       </p>
-      <table class="configActions">
-        <tr valign="top">
-          <td width="33%">
-            <form name="convertAnnexesForm" action="convertAnnexes">
-            <input class="context" type="submit" name="convertAnnexes"
-                   onclick="event.preventDefault(); if (confirm(window.eval('are_you_sure'))) {this.form.submit();}"
-                   value="pm_convert_annexes" i18n:attributes="value"/>&nbsp;&nbsp;
-            </form>
-            <form name="removeAnnexesPreviewsForm" action="removeAnnexesPreviews">
-            <input class="context" type="submit" name="removeAnnexesPreviews"
-                   onclick="event.preventDefault(); if (confirm(window.eval('are_you_sure'))) {this.form.submit();}"
-                   value="pm_remove_annexes_previews" i18n:attributes="value"/>&nbsp;&nbsp;
-            </form>
-          </td>
-          <td width="33%">
-            <form name="updateAllLocalRolesForm" action="updateAllLocalRoles">
-            <input class="context" type="submit" name="updateAllLocalRoles"
-                   onclick="event.preventDefault(); if (confirm(window.eval('are_you_sure'))) {this.form.submit();}"
-                   value="pm_update_all_local_roles" i18n:attributes="value"/>&nbsp;&nbsp;
-            </form>
-            <p class="discreet" style="color: red;" i18n:translate="pm_update_all_local_roles_warning">
-                Warning: this will update every items and meetings of every configurations.  This action is also available per meeting configuration, if you only changed parameters in one meeting configuration, just execute the action on this meeting configuration!  Moreover, as an administrator, it is possible to update items and meetings from the dashboards.  To do this, select elements that need to be updated and use the \"Update from configuration\" batch action.
-            </p>
-          </td>
-          <td width="33%">
-            <form name="invalidateAllCacheForm" action="invalidateAllCache">
-            <input class="context" type="submit" name="invalidateAllCache"
-                   onclick="event.preventDefault(); if (confirm(window.eval('are_you_sure'))) {this.form.submit();}"
-                   value="pm_invalidate_all_cache" i18n:attributes="value"/>&nbsp;&nbsp;
-            </form>
-            <p class="discreet" style="color: red;" i18n:translate="pm_invalidate_all_cache_warning">
-                Warning: this will invalidate all cache used in the application, this could lead to application being slow for some minutes until cache is recomputed for currently connected users but is harmless and must be done when changes impacting application header (tabs) are made or if any weirdness occurs (no access to new tabs, ...).
-            </p>
-          </td>
-        </tr>
-      </table>
+      <div class="configActions">
+        <form name="invalidateAllCacheForm" action="invalidateAllCache">
+          <p class="discreet" style="color: red;" i18n:translate="pm_invalidate_all_cache_warning">
+              Warning: this will invalidate all cache used in the application, this could lead to application being slow for some minutes until cache is recomputed for currently connected users but is harmless and must be done when changes impacting application header (tabs) are made or if any weirdness occurs (no access to new tabs, ...).
+          </p>
+          <input class="context" type="submit" name="invalidateAllCache"
+                 onclick="event.preventDefault(); if (confirm(window.eval('are_you_sure'))) {this.form.submit();}"
+                 value="pm_invalidate_all_cache" i18n:attributes="value"/>&nbsp;&nbsp;
+        </form>
+
+        <form name="updateAllLocalRolesForm" action="update_all_local_roles">
+          <p class="discreet" style="color: red;" i18n:translate="pm_update_all_local_roles_warning">
+              Warning: this will update every items and meetings of every configurations.  This action is also available per meeting configuration, if you only changed parameters in one meeting configuration, just execute the action on this meeting configuration!  Moreover, as an administrator, it is possible to update items and meetings from the dashboards.  To do this, select elements that need to be updated and use the \"Update from configuration\" batch action.
+          </p>
+          <input class="context" type="submit" name="updateAllLocalRoles"
+                 onclick="event.preventDefault(); if (confirm(window.eval('are_you_sure'))) {this.form.submit();}"
+                 value="pm_update_all_local_roles" i18n:attributes="value"/>&nbsp;&nbsp;
+        </form>
+
+        <form name="convertAnnexesForm" action="convertAnnexes">
+        <input class="context" type="submit" name="convertAnnexes"
+               onclick="event.preventDefault(); if (confirm(window.eval('are_you_sure'))) {this.form.submit();}"
+               value="pm_convert_annexes" i18n:attributes="value"/>&nbsp;&nbsp;
+        </form>
+
+        <form name="removeAnnexesPreviewsForm" action="removeAnnexesPreviews">
+        <input class="context" type="submit" name="removeAnnexesPreviews"
+               onclick="event.preventDefault(); if (confirm(window.eval('are_you_sure'))) {this.form.submit();}"
+               value="pm_remove_annexes_previews" i18n:attributes="value"/>&nbsp;&nbsp;
+        </form>
+      </div>
     </fieldset>
 
     <div metal:define-macro="folderlisting"></div>

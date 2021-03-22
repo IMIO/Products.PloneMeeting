@@ -14,7 +14,9 @@
                        tool python: context.portal_plonemeeting;
                        portal context/portal_url/getPortalObject;
                        cfg python: tool.getMeetingConfig(context);
-                       usedAttrs cfg/getUsedItemAttributes;">
+                       usedAttrs cfg/getUsedItemAttributes;
+                       showClonableToOtherMCs context/showClonableToOtherMCs;
+                       showAdvancedClonableToOtherMCs python: context.adapted().showAdvancedClonableToOtherMCs(showClonableToOtherMCs);">
 
     <tal:showWarningWillInvalidateAdvices condition="context/willInvalidateAdvices">
     <dl class="portalMessage warning">
@@ -27,86 +29,45 @@
       <metal:f use-macro="context/@@pm-macros/editContentField"/>
     </tal:field>
 
+    <tal:comment replace="nothing">Proposing group, category, classifier, toDiscuss</tal:comment>
+    <metal:field use-macro="python:here.widget('proposingGroup', mode='edit')"/>
+    <metal:field use-macro="python:here.widget('proposingGroupWithGroupInCharge', mode='edit')"/>
+    <metal:field use-macro="python:here.widget('groupsInCharge', mode='edit')"/>
+    <metal:field use-macro="python:here.widget('associatedGroups', mode='edit')"/>
+    <metal:field use-macro="python:here.widget('category', mode='edit')"/>
+    <metal:field use-macro="python:here.widget('classifier', mode='edit')"/>
+    <metal:field use-macro="python:here.widget('committees', mode='edit')"/>
+    <metal:field use-macro="python:here.widget('optionalAdvisers', mode='edit')"/>
+    <metal:field use-macro="python:here.widget('copyGroups', mode='edit')"/>
+
+    <metal:field use-macro="python:here.widget('preferredMeeting', mode='edit')"/>
+    <metal:field use-macro="python:here.widget('sendToAuthority', mode='edit')"/>
+
+    <tal:comment replace="nothing">Clonable to other cfg when not using extra fields</tal:comment>
+    <tal:clonableToOtherMCsWithoutExtraFields
+        condition="python: showClonableToOtherMCs and not showAdvancedClonableToOtherMCs">
+        <metal:f use-macro="context/@@pm-macros/otherMeetingConfigsClonable"/>
+    </tal:clonableToOtherMCsWithoutExtraFields>
+
+    <metal:field use-macro="python:here.widget('toDiscuss', mode='edit')"/>
+    <metal:field use-macro="python:here.widget('pollType', mode='edit')"/>
+    <metal:field use-macro="python:here.widget('pollTypeObservations', mode='edit')"/>
+
+    <metal:field use-macro="python:here.widget('oralQuestion', mode='edit')"/>
+    <metal:field use-macro="python:here.widget('itemInitiator', mode='edit')"/>
+    <metal:field use-macro="python:here.widget('manuallyLinkedItems', mode='edit')"/>
+
+    <metal:field use-macro="python:here.widget('isAcceptableOutOfMeeting', mode='edit')"/>
+    <metal:field use-macro="python:here.widget('itemKeywords', mode='edit')"/>
+    <metal:field use-macro="python:here.widget('itemTags', mode='edit')"/>
+    <metal:field use-macro="python:here.widget('privacy', mode='edit')"/>
+
     <tal:field define="fieldName python: 'description'">
       <metal:f use-macro="context/@@pm-macros/editContentField"/>
     </tal:field>
     <tal:field define="fieldName python: 'detailedDescription';">
       <metal:f use-macro="context/@@pm-macros/editContentField"/>
     </tal:field>
-    <tal:comment replace="nothing">Proposing group, category, classifier, toDiscuss</tal:comment>
-    <metal:field use-macro="python:here.widget('proposingGroup', mode='edit')"/>
-    <metal:field use-macro="python:here.widget('proposingGroupWithGroupInCharge', mode='edit')"/>
-    <metal:field use-macro="python:here.widget('groupsInCharge', mode='edit')"/>
-    <metal:field use-macro="python:here.widget('category', mode='edit')"/>
-    <metal:field use-macro="python:here.widget('classifier', mode='edit')"/>
-
-    <metal:field use-macro="python:here.widget('toDiscuss', mode='edit')"/>
-    <metal:field use-macro="python:here.widget('pollType', mode='edit')"/>
-    <metal:field use-macro="python:here.widget('pollTypeObservations', mode='edit')"/>
-    <metal:field use-macro="python:here.widget('manuallyLinkedItems', mode='edit')"/>
-
-    <tal:comment replace="nothing">Associated groups, optional advisers and copyGroups</tal:comment>
-    <table cellpadding="0" cellspacing="0">
-      <tr valign="top">
-        <td tal:condition="python: 'associatedGroups' in usedAttrs"><metal:field use-macro="python:here.widget('associatedGroups', mode='edit')"/></td>
-        <td tal:condition="context/showOptionalAdvisers"><metal:field use-macro="python:here.widget('optionalAdvisers', mode='edit')"/></td>
-        <td tal:condition="context/isCopiesEnabled"><metal:field use-macro="python:here.widget('copyGroups', mode='edit')"/></td>
-      </tr>
-    </table>
-
-    <metal:field use-macro="python:here.widget('oralQuestion', mode='edit')"/>
-    <metal:field use-macro="python:here.widget('itemInitiator', mode='edit')"/>
-
-    <metal:field use-macro="python:here.widget('preferredMeeting', mode='edit')"/>
-    <metal:field use-macro="python:here.widget('sendToAuthority', mode='edit')"/>
-    <metal:field use-macro="python:here.widget('isAcceptableOutOfMeeting', mode='edit')"/>
-    <metal:field use-macro="python:here.widget('privacy', mode='edit')"/>
-    <metal:field use-macro="python:here.widget('itemKeywords', mode='edit')"/>
-
-    <div tal:define="showOtherMeetingConfigsClonableToSpecialFields python: cfg.getMeetingConfigsToCloneTo() and ('otherMeetingConfigsClonableToEmergency' in usedAttrs or 'otherMeetingConfigsClonableToPrivacy' in usedAttrs)"
-          tal:attributes="class python: showOtherMeetingConfigsClonableToSpecialFields and 'item-send-to-other-mc-multiple-fields item-send-to-other-mc' or 'item-send-to-other-mc'">
-        <metal:field use-macro="python:here.widget('otherMeetingConfigsClonableTo', mode='edit')"/>
-        <metal:field use-macro="python:here.widget('otherMeetingConfigsClonableToPrivacy', mode='edit')"/>
-        <metal:field use-macro="python:here.widget('otherMeetingConfigsClonableToEmergency', mode='edit', label=0)"/>
-        <tal:scriptForOtherMeetingConfigsClonableToSpecificFields condition="showOtherMeetingConfigsClonableToSpecialFields">
-        <script type="text/javascript">
-            $("input[id^='otherMeetingConfigsClonableTo_']").each(function()
-                {
-                 $(this).bind("click", function() {
-                    number = this.id.split('_')[1]
-                    otherMCEmergencyField = $('#otherMeetingConfigsClonableToEmergency_' + number);
-                    otherMCPrivacyField = $('#otherMeetingConfigsClonableToPrivacy_' + number);
-                    if (this.checked) {
-                        otherMCEmergencyField.attr('disabled', false);
-                        otherMCPrivacyField.attr('disabled', false);
-                    }
-                    else {
-                        otherMCEmergencyField.attr('checked', false);
-                        otherMCEmergencyField.attr('disabled', true);
-                        otherMCPrivacyField.attr('checked', false);
-                        otherMCPrivacyField.attr('disabled', true);
-                    };
-                    });
-                });
-
-            jQuery(document).ready(function($) {
-            $("input[id^='otherMeetingConfigsClonableTo_']").each(function()
-                {
-                if (!$(this).attr('checked')) {
-                    number = this.id.split('_')[1]
-                    otherMCEmergencyField = $('#otherMeetingConfigsClonableToEmergency_' + number);
-                    otherMCEmergencyField.attr('checked', false);
-                    otherMCEmergencyField.attr('disabled', true);
-                    otherMCPrivacyField = $('#otherMeetingConfigsClonableToPrivacy_' + number);
-                    otherMCPrivacyField.attr('checked', false);
-                    otherMCPrivacyField.attr('disabled', true);
-                    };
-                });
-            });
-        </script>
-        </tal:scriptForOtherMeetingConfigsClonableToSpecificFields>
-    </div>
-    <div style='clear: both'></div>
 
     <tal:comment replace="nothing">Budget-related information</tal:comment>
     <fieldset tal:condition="python: 'budgetInfos' in usedAttrs">
@@ -126,10 +87,25 @@
     <tal:field define="fieldName python: 'decisionSuite'">
       <metal:f use-macro="context/@@pm-macros/editContentField"/>
     </tal:field>
+    <tal:field define="fieldName python: 'decisionEnd'">
+      <metal:f use-macro="context/@@pm-macros/editContentField"/>
+    </tal:field>
+
+    <tal:comment replace="nothing">Clonable to other cfg when using extra fields</tal:comment>
+    <tal:clonableToOtherMCsWithExtraFields condition="showAdvancedClonableToOtherMCs">
+        <metal:f use-macro="context/@@pm-macros/otherMeetingConfigsClonable"/>
+    </tal:clonableToOtherMCsWithExtraFields>
+
     <tal:field define="fieldName python: 'inAndOutMoves'">
       <metal:f use-macro="context/@@pm-macros/editContentField"/>
     </tal:field>
     <tal:field define="fieldName python: 'notes'">
+      <metal:f use-macro="context/@@pm-macros/editContentField"/>
+    </tal:field>
+    <tal:field define="fieldName python: 'committeeObservations'">
+      <metal:f use-macro="context/@@pm-macros/editContentField"/>
+    </tal:field>
+    <tal:field define="fieldName python: 'votesObservations'">
       <metal:f use-macro="context/@@pm-macros/editContentField"/>
     </tal:field>
     <tal:field define="fieldName python: 'marginalNotes'">
@@ -141,19 +117,19 @@
     <tal:field define="fieldName python: 'meetingManagersNotes'">
       <metal:f use-macro="context/@@pm-macros/editContentField"/>
     </tal:field>
+    <tal:field define="fieldName python: 'meetingManagersNotesSuite'">
+      <metal:f use-macro="context/@@pm-macros/editContentField"/>
+    </tal:field>
+    <tal:field define="fieldName python: 'meetingManagersNotesEnd'">
+      <metal:f use-macro="context/@@pm-macros/editContentField"/>
+    </tal:field>
     <tal:field define="fieldName python: 'observations'">
       <metal:f use-macro="context/@@pm-macros/editContentField"/>
     </tal:field>
 
-    <metal:field use-macro="python:here.widget('itemTags', mode='edit')"/>
-    <table cellpadding="0" cellspacing="0" width="100%">
-      <tr valign="top">
-      </tr>
-      <tr valign="top">
-        <td><metal:field use-macro="python:here.widget('templateUsingGroups', mode='edit')"/></td>
-        <td><metal:field use-macro="python:here.widget('meetingTransitionInsertingMe', mode='edit')"/></td>
-      </tr>
-    </table>
+    <metal:field use-macro="python:here.widget('templateUsingGroups', mode='edit')"/>
+    <metal:field use-macro="python:here.widget('meetingTransitionInsertingMe', mode='edit')"/>
+
     <metal:field use-macro="python:here.widget('itemAssembly', mode='edit')"/>
     <metal:field use-macro="python:here.widget('itemAssemblyExcused', mode='edit')"/>
     <metal:field use-macro="python:here.widget('itemAssemblyAbsents', mode='edit')"/>

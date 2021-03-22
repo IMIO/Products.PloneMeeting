@@ -1,32 +1,23 @@
-<tal:defines define="mayChangeOrder view/mayChangeItemsOrder;
+<tal:defines define="may_change_order python: view.may_change_items_order;
                      itemNumber python: context.getItemNumber(for_display=True);"
              i18n:domain="PloneMeeting">
-  <table class="no-style-table" cellspacing="0" cellpadding="0"
-         tal:condition="mayChangeOrder">
-    <tr>
-      <tal:comment replace="nothing">In the following "td"s, keep all tags as is: if you add spaces
-         or carriage returns, the DOM tree created by Firefox will add additional nodes and some
-         Javascript expressions will fail.</tal:comment>
-      <td><input type="text" size="2" name="moveValue"
-                 tal:attributes="id string:value_moveAction_${itemNumber};
-                                 class python: view.is_integer(context.getItemNumber()) and 'number' or 'subnumber';
-                                 value itemNumber;
-                                 onFocus string:onImageButtonFocus('${itemNumber}');
-                                 onKeyPress string:if (event.keyCode==13) moveItem(baseUrl='${context/absolute_url}', moveType='number', $$(this));"/>
-      </td>
-      <td style="vertical-align: middle; padding: 0;">
-        <img
-           style="visibility: hidden;"
-           title="move_item_to_given_position" i18n:attributes="title" name="moveImageButton"
-           tal:attributes="id string:moveAction_${itemNumber};
-                           src string:${view/portal_url}/reorder.png;
-                           onClick string:moveItem(baseUrl='${context/absolute_url}', moveType='number', $('input#value_moveAction_${itemNumber}'));"/>
-      </td>
-    </tr>
-  </table>
+  <div class="change-item-order" tal:condition="may_change_order">
+    <input type="text" size="2" name="moveValue"
+           tal:attributes="id string:value_moveAction_${itemNumber};
+                           class python: view.is_integer(context.getItemNumber()) and 'number' or 'subnumber';
+                           value itemNumber;
+                           onFocus string:onImageButtonFocus('${itemNumber}');
+                           onKeyPress string:if (event.keyCode==13) moveItem(baseUrl='${context/absolute_url}', moveType='number', $$(this));"/>
+    <img style="visibility: hidden;"
+         title="move_item_to_given_position" i18n:attributes="title" name="moveImageButton"
+         tal:attributes="id string:moveAction_${itemNumber};
+                         src string:${view/portal_url}/save.gif;
+                         onClick string:moveItem(baseUrl='${context/absolute_url}', moveType='number', $('input#value_moveAction_${itemNumber}'));"/>
+  </div>
+
   <tal:comment replace="nothing">For the others</tal:comment>
   <span class="itemNumber"
         tal:attributes="class python: '.' in itemNumber and 'itemnumber subnumber' or 'itemnumber'"
-        tal:condition="not: mayChangeOrder"
+        tal:condition="not: may_change_order"
         tal:content="itemNumber"></span>
 </tal:defines>

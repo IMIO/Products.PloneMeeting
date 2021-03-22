@@ -608,6 +608,7 @@ class Migrate_To_4_1(Migrator):
                                     context=self.request)}
             adapted_function_orgs = [own_org.get(group_id).UID() for group_id in function['fct_orgs']]
             adapted_function['fct_orgs'] = adapted_function_orgs
+            adapted_function['enabled'] = function['enabled']
             adapted_functions.append(adapted_function)
         api.portal.set_registry_record(FUNCTIONS_REGISTRY, adapted_functions)
         # first set every organizations so every subgroups are created

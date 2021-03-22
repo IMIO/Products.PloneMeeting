@@ -2,24 +2,7 @@
 #
 # File: testToolPloneMeeting.py
 #
-# Copyright (c) 2015 by Imio.be
-#
 # GNU General Public License (GPL)
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
-# 02110-1301, USA.
 #
 
 from AccessControl import Unauthorized
@@ -30,6 +13,7 @@ from collective.iconifiedcategory.utils import get_categories
 from collective.iconifiedcategory.utils import get_categorized_elements
 from collective.iconifiedcategory.utils import get_category_object
 from DateTime import DateTime
+from datetime import datetime
 from imio.helpers.cache import cleanRamCacheFor
 from persistent.mapping import PersistentMapping
 from plone import api
@@ -43,11 +27,11 @@ from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.etags import _modified
 from Products.PloneMeeting.tests.PloneMeetingTestCase import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
-from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
 from Products.PloneMeeting.utils import get_annexes
 from zope.i18n import translate
 from zope.testing.testrunner.find import find_test_files
 
+import os
 import transaction
 
 
@@ -76,7 +60,6 @@ class testToolPloneMeeting(PloneMeetingTestCase):
                                 f.split('/')[-1].startswith('testCustom')]
         # get test files for PloneMeeting
         # find PloneMeeting package path
-        import os
         pm_path = None
         for path in os.sys.path:
             if 'Products.PloneMeeting' in path:
@@ -121,7 +104,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertEqual(self.tool.getMeetingConfig(item).getId(), cfgId)
         annex = self.addAnnex(item)
         self.assertEqual(self.tool.getMeetingConfig(annex).getId(), cfgId)
-        meeting = self.create('Meeting', date=DateTime('2012/05/05'))
+        meeting = self.create('Meeting')
         self.assertEqual(self.tool.getMeetingConfig(meeting).getId(), cfgId)
         # returns None if called with an element outside the application
         self.failIf(self.tool.getMeetingConfig(self.portal))
@@ -393,13 +376,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
                          res2.workflow_history[item_wf_id][0]['review_state'])
 
         # now test while using newPortalType and WF initial_state is different in new WF
-        if 'items_come_validated' not in cfg2.listWorkflowAdaptations():
-            pm_logger.info(
-                "Could not test ToolPloneMeeting.pasteItem for items using different WF initial_states, "
-                "because WF adaptation 'items_come_validated' is not available for meetingConfig2.")
-            return
-        cfg2.setWorkflowAdaptations(('items_come_validated', ))
-        cfg2.at_post_edit_script()
+        self._disableItemValidationLevel(cfg2)
         res3 = self.tool.pasteItem(destFolder, copiedData, newPortalType=cfg2.getItemTypeName())
         self.assertTrue(isinstance(res3.workflow_history, PersistentMapping))
         self.assertFalse(item_wf_id in res3.workflow_history)
@@ -660,9 +637,10 @@ class testToolPloneMeeting(PloneMeetingTestCase):
 
     def test_pm_UpdateContentCategoryAfterSentToOtherMeetingConfigRemovesElementsWithoutTypeCorrespondence(self):
         '''Test the ToolPloneMeeting._updateContentCategoryAfterSentToOtherMeetingConfig method.
-           When sending elements to another MC, if a annex_type has no correspondence and no annex_type exist
-           in destination MeetingConfig, the annex is not kept.
-           So if a annex_decision type has no correspondence and no annex_decision types exist at all in destination
+           When sending elements to another MC, if a annex_type has no correspondence and
+           no annex_type exist in destination MeetingConfig, the annex is not kept.
+           So if a annex_decision type has no correspondence and
+           no annex_decision types exist at all in destination
            configuration, the annex is not kept (it is deleted).
         '''
         cfg = self.meetingConfig
@@ -744,14 +722,14 @@ class testToolPloneMeeting(PloneMeetingTestCase):
                          [self.developers_uid, self.vendors_uid, ])
 
     def test_pm_UpdateCopyGroups(self):
-        """Test the updateAllLocalRoles method that update every items when configuration changed.
+        """Test the update_all_local_roles method that update every items when configuration changed.
            First set copy groups may view items in state 'itemcreated' then change to 'proposed'."""
         self.meetingConfig.setSelectableCopyGroups((self.developers_reviewers, self.vendors_reviewers))
         self.meetingConfig.setUseCopies(True)
         self.meetingConfig.setItemCopyGroupsStates(('itemcreated', ))
         # only available to 'Managers'
         self.changeUser('pmCreator1')
-        self.assertRaises(Unauthorized, self.tool.restrictedTraverse, 'updateAllLocalRoles')
+        self.assertRaises(Unauthorized, self.tool.restrictedTraverse, 'update_all_local_roles')
         item1 = self.create('MeetingItem')
         item1.setCopyGroups((self.vendors_reviewers,))
         item1._update_after_edit()
@@ -762,10 +740,10 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertTrue(self.vendors_reviewers in item1.__ac_local_roles__)
         self.assertFalse(self.vendors_reviewers in item2.__ac_local_roles__)
 
-        # change configuration, updateAllLocalRoles then check again
+        # change configuration, update_all_local_roles then check again
         self.changeUser('siteadmin')
         self.meetingConfig.setItemCopyGroupsStates((self._stateMappingFor('proposed'), ))
-        self.tool.restrictedTraverse('updateAllLocalRoles')()
+        self.tool.restrictedTraverse('update_all_local_roles')()
         self.assertFalse(self.vendors_reviewers in item1.__ac_local_roles__)
         self.assertTrue(self.vendors_reviewers in item2.__ac_local_roles__)
 
@@ -776,7 +754,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         cfg.setItemBudgetInfosStates(('itemcreated', ))
         # only available to 'Managers'
         self.changeUser('pmCreator1')
-        self.assertRaises(Unauthorized, self.tool.restrictedTraverse, 'updateAllLocalRoles')
+        self.assertRaises(Unauthorized, self.tool.restrictedTraverse, 'update_all_local_roles')
         item1 = self.create('MeetingItem')
         item1._update_after_edit()
         item2 = self.create('MeetingItem')
@@ -785,15 +763,15 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertTrue('%s_budgetimpacteditors' % cfg.getId() in item1.__ac_local_roles__)
         self.assertFalse('%s_budgetimpacteditors' % cfg.getId() in item2.__ac_local_roles__)
 
-        # change configuration, updateAllLocalRoles then check again
+        # change configuration, update_all_local_roles then check again
         self.changeUser('siteadmin')
         cfg.setItemBudgetInfosStates((self._stateMappingFor('proposed'), ))
-        self.tool.updateAllLocalRoles()
+        self.tool.update_all_local_roles()
         self.assertFalse('%s_budgetimpacteditors' % cfg.getId() in item1.__ac_local_roles__)
         self.assertTrue('%s_budgetimpacteditors' % cfg.getId() in item2.__ac_local_roles__)
 
     def test_pm_UpdatePowerObservers(self):
-        """Test the updateAllLocalRoles method that update every items when configuration changed.
+        """Test the update_all_local_roles method that update every items when configuration changed.
            First set (restricted) power observers may view in state 'itemcreated' then change to 'proposed'."""
         cfg = self.meetingConfig
         self._setPowerObserverStates(states=('itemcreated', ))
@@ -806,12 +784,12 @@ class testToolPloneMeeting(PloneMeetingTestCase):
                                      states=('closed', ))
         # only available to 'Managers'
         self.changeUser('pmManager')
-        self.assertRaises(Unauthorized, self.tool.restrictedTraverse, 'updateAllLocalRoles')
+        self.assertRaises(Unauthorized, self.tool.restrictedTraverse, 'update_all_local_roles')
         item1 = self.create('MeetingItem')
         item1._update_after_edit()
         item2 = self.create('MeetingItem')
         self.proposeItem(item2)
-        meeting = self.create('Meeting', date=DateTime('2015/05/05'))
+        meeting = self.create('Meeting')
         # powerObservers roles are correctly set
         self.assertTrue('%s_powerobservers' % cfg.getId() in item1.__ac_local_roles__)
         self.assertFalse('%s_powerobservers' % cfg.getId() in item2.__ac_local_roles__)
@@ -820,7 +798,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertTrue('%s_restrictedpowerobservers' % cfg.getId() in item2.__ac_local_roles__)
         self.assertFalse('%s_restrictedpowerobservers' % cfg.getId() in meeting.__ac_local_roles__)
 
-        # change configuration, updateAllLocalRoles then check again
+        # change configuration, update_all_local_roles then check again
         self.changeUser('siteadmin')
         self._setPowerObserverStates(states=(self._stateMappingFor('proposed'), ))
         self._setPowerObserverStates(field_name='meeting_states',
@@ -830,7 +808,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self._setPowerObserverStates(field_name='meeting_states',
                                      observer_type='restrictedpowerobservers',
                                      states=('created', ))
-        self.tool.updateAllLocalRoles()
+        self.tool.update_all_local_roles()
         # local roles and catalog are updated
         self.changeUser('powerobserver1')
         self.assertFalse('%s_powerobservers' % cfg.getId() in item1.__ac_local_roles__)
@@ -848,50 +826,59 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertTrue('%s_restrictedpowerobservers' % cfg.getId() in meeting.__ac_local_roles__)
         self.assertTrue(self.catalog(UID=meeting.UID()))
 
-    def test_pm_FormatMeetingDate(self):
-        """Test the formatMeetingDate method."""
+    def test_pm_Format_date(self):
+        """Test the format_date method."""
         self.changeUser('pmManager')
-        meeting = self.create('Meeting', date=DateTime('2015/05/05'))
+        meeting = self.create('Meeting', date=datetime(2015, 5, 5))
         self.portal.portal_languages.setDefaultLanguage('en')
-        self.assertEqual(self.tool.formatMeetingDate(meeting),
+        self.assertEqual(self.tool.format_date(meeting.date),
                          u'05 may 2015')
-        self.assertEqual(self.tool.formatMeetingDate(meeting, short=True),
+        self.assertEqual(self.tool.format_date(meeting.date, short=True),
                          u'05/05/2015')
         # hours are not shown if actually 0h00
-        self.assertEqual(self.tool.formatMeetingDate(meeting, short=True, withHour=True),
+        self.assertEqual(self.tool.format_date(meeting.date, short=True, with_hour=True),
                          u'05/05/2015')
-        self.assertEqual(self.tool.formatMeetingDate(meeting, short=True, withHour=True, prefixed=True),
+        self.assertEqual(self.tool.format_date(meeting.date, short=True, with_hour=True, prefixed=True),
                          u'Meeting of 05/05/2015')
 
         # add hours to the meeting date
-        meeting.setDate('2015/05/05 14:30')
-        self.assertEqual(self.tool.formatMeetingDate(meeting),
+        meeting.date = datetime(2015, 5, 5, 14, 30)
+        self.assertEqual(self.tool.format_date(meeting.date),
                          u'05 may 2015')
-        self.assertEqual(self.tool.formatMeetingDate(meeting, short=True),
+        self.assertEqual(self.tool.format_date(meeting.date, short=True),
                          u'05/05/2015')
-        self.assertEqual(self.tool.formatMeetingDate(meeting, short=True, withHour=True),
+        self.assertEqual(self.tool.format_date(meeting.date, short=True, with_hour=True),
                          u'05/05/2015 (14:30)')
-        self.assertEqual(self.tool.formatMeetingDate(meeting, short=True, withHour=True, prefixed=True),
+        self.assertEqual(self.tool.format_date(meeting.date,
+                                               short=True,
+                                               with_hour=True,
+                                               prefixed=True),
                          u'Meeting of 05/05/2015 (14:30)')
 
-        # withWeekDayName
-        self.assertEqual(self.tool.formatMeetingDate(meeting, withWeekDayName=True),
+        # with_week_day_name
+        self.assertEqual(self.tool.format_date(meeting.date,
+                                               with_week_day_name=True),
                          u'Tuesday 05 may 2015')
-        self.assertEqual(self.tool.formatMeetingDate(meeting, short=True, withWeekDayName=True),
+        self.assertEqual(self.tool.format_date(meeting.date,
+                                               short=True,
+                                               with_week_day_name=True),
                          u'Tuesday 05/05/2015')
-        self.assertEqual(self.tool.formatMeetingDate(meeting, short=True, withHour=True, withWeekDayName=True),
+        self.assertEqual(self.tool.format_date(meeting.date,
+                                               short=True,
+                                               with_hour=True,
+                                               with_week_day_name=True),
                          u'Tuesday 05/05/2015 (14:30)')
-        self.assertEqual(self.tool.formatMeetingDate(meeting,
-                                                     short=True,
-                                                     withHour=True,
-                                                     prefixed=True,
-                                                     withWeekDayName=True),
+        self.assertEqual(self.tool.format_date(meeting.date,
+                                               short=True,
+                                               with_hour=True,
+                                               prefixed=True,
+                                               with_week_day_name=True),
                          u'Meeting of Tuesday 05/05/2015 (14:30)')
-        self.assertEqual(self.tool.formatMeetingDate(meeting,
-                                                     short=False,
-                                                     withHour=True,
-                                                     prefixed=True,
-                                                     withWeekDayName=True),
+        self.assertEqual(self.tool.format_date(meeting.date,
+                                               short=False,
+                                               with_hour=True,
+                                               prefixed=True,
+                                               with_week_day_name=True),
                          u'Meeting of Tuesday 05 may 2015 (14:30)')
 
     def test_pm_ShowHolidaysWarning(self):
@@ -1003,11 +990,13 @@ class testToolPloneMeeting(PloneMeetingTestCase):
     def test_pm__users_groups_value(self):
         """Test that this cached method behaves normally."""
         # get pmManager groups
-        pmManagerGroups = [groups for groups, user in self.tool._users_groups_value() if user == 'pmManager'][0]
+        pmManagerGroups = [groups for groups, user in self.tool._users_groups_value()
+                           if user == 'pmManager'][0]
         self.assertTrue(self.developers_creators in pmManagerGroups)
         # remove pmManager from developers creators
-        self._removePrincipalFromGroup('pmManager', self.developers_creators)
-        pmManagerGroups = [groups for groups, user in self.tool._users_groups_value() if user == 'pmManager'][0]
+        self._removePrincipalFromGroups('pmManager', [self.developers_creators])
+        pmManagerGroups = [groups for groups, user in self.tool._users_groups_value()
+                           if user == 'pmManager'][0]
         self.assertFalse(self.developers_creators in pmManagerGroups)
 
     def test_pm_Get_plone_groups_for_user(self):
@@ -1089,19 +1078,28 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         cfg = self.meetingConfig
         self.changeUser('pmManager')
         self.assertFalse(self.tool.isPowerObserverForCfg(cfg))
-        self.assertFalse(self.tool.isPowerObserverForCfg(cfg, power_observer_type='powerobservers'))
-        self.assertFalse(self.tool.isPowerObserverForCfg(cfg, power_observer_type='restrictedpowerobservers'))
-        self.assertFalse(self.tool.isPowerObserverForCfg(cfg, power_observer_type='unknown'))
+        self.assertFalse(self.tool.isPowerObserverForCfg(cfg,
+                                                         power_observer_type='powerobservers'))
+        self.assertFalse(self.tool.isPowerObserverForCfg(cfg,
+                                                         power_observer_type='restrictedpowerobservers'))
+        self.assertFalse(self.tool.isPowerObserverForCfg(cfg,
+                                                         power_observer_type='unknown'))
         self.changeUser('powerobserver1')
         self.assertTrue(self.tool.isPowerObserverForCfg(cfg))
-        self.assertTrue(self.tool.isPowerObserverForCfg(cfg, power_observer_type='powerobservers'))
-        self.assertFalse(self.tool.isPowerObserverForCfg(cfg, power_observer_type='restrictedpowerobservers'))
-        self.assertFalse(self.tool.isPowerObserverForCfg(cfg, power_observer_type='unknown'))
+        self.assertTrue(self.tool.isPowerObserverForCfg(cfg,
+                                                        power_observer_type='powerobservers'))
+        self.assertFalse(self.tool.isPowerObserverForCfg(cfg,
+                                                         power_observer_type='restrictedpowerobservers'))
+        self.assertFalse(self.tool.isPowerObserverForCfg(cfg,
+                                                         power_observer_type='unknown'))
         self.changeUser('restrictedpowerobserver1')
         self.assertTrue(self.tool.isPowerObserverForCfg(cfg))
-        self.assertFalse(self.tool.isPowerObserverForCfg(cfg, power_observer_type='powerobservers'))
-        self.assertTrue(self.tool.isPowerObserverForCfg(cfg, power_observer_type='restrictedpowerobservers'))
-        self.assertFalse(self.tool.isPowerObserverForCfg(cfg, power_observer_type='unknown'))
+        self.assertFalse(self.tool.isPowerObserverForCfg(cfg,
+                                                         power_observer_type='powerobservers'))
+        self.assertTrue(self.tool.isPowerObserverForCfg(cfg,
+                                                        power_observer_type='restrictedpowerobservers'))
+        self.assertFalse(self.tool.isPowerObserverForCfg(cfg,
+                                                         power_observer_type='unknown'))
 
     def test_pm_ToolAccessibleByUsersWithoutGroups(self):
         """Whe a user without any group logs in, he may access methods on portal_plonemeeting,
@@ -1127,7 +1125,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         """Remove annexes previews of every items in closed meetings."""
         self._enableAutoConvert()
         self.changeUser('pmManager')
-        meeting = self.create('Meeting', date=DateTime('2020/03/31'))
+        meeting = self.create('Meeting')
         item = self.create('MeetingItem')
         annex = self.addAnnex(item)
         annex_decision = self.addAnnex(item, relatedTo='item_decision')
@@ -1136,7 +1134,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertEqual(infos[annex_decision.UID()]['preview_status'], 'converted')
         self.presentItem(item)
         # clean now and meeting not closed
-        self.assertNotEqual(meeting.queryState(), 'closed')
+        self.assertNotEqual(meeting.query_state(), 'closed')
         self.assertRaises(Unauthorized, self.tool.removeAnnexesPreviews)
         self.changeUser('siteadmin')
         self.tool.removeAnnexesPreviews()

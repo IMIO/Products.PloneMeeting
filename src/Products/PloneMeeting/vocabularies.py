@@ -1,10 +1,18 @@
-# encoding: utf-8
+# -*- coding: utf-8 -*-
+#
+# File: vocabularies.py
+#
+# GNU General Public License (GPL)
+#
 
+from collections import OrderedDict
 from collective.contact.plonegroup.browser.settings import EveryOrganizationsVocabulary
+from collective.contact.plonegroup.browser.settings import SortedSelectedOrganizationsElephantVocabulary
 from collective.contact.plonegroup.config import get_registry_organizations
 from collective.contact.plonegroup.utils import get_organization
 from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_own_organization
+from collective.contact.plonegroup.vocabularies import PositionTypesVocabulary
 from collective.documentgenerator.content.vocabulary import ExistingPODTemplateFactory
 from collective.documentgenerator.content.vocabulary import MergeTemplatesVocabularyFactory
 from collective.documentgenerator.content.vocabulary import PortalTypesVocabularyFactory
@@ -23,8 +31,8 @@ from DateTime import DateTime
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from imio.annex.content.annex import IAnnex
 from imio.helpers.cache import get_cachekey_volatile
-from imio.helpers.content import uuidsToObjects
 from imio.helpers.content import get_vocab
+from imio.helpers.content import uuidsToObjects
 from natsort import humansorted
 from operator import attrgetter
 from plone import api
@@ -32,17 +40,22 @@ from plone.app.vocabularies.users import UsersFactory
 from plone.memoize import ram
 from plone.uuid.interfaces import ATTRIBUTE_NAME
 from Products.CMFPlone.utils import safe_unicode
+from Products.PloneMeeting.browser.itemvotes import next_vote_is_linked
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import CONSIDERED_NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import EMPTY_STRING
 from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
+from Products.PloneMeeting.config import NO_COMMITTEE
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
+from Products.PloneMeeting.content.held_position import split_gender_and_number
 from Products.PloneMeeting.indexes import DELAYAWARE_ROW_ID_PATTERN
 from Products.PloneMeeting.indexes import REAL_ORG_UID_PATTERN
 from Products.PloneMeeting.interfaces import IMeetingConfig
 from Products.PloneMeeting.utils import decodeDelayAwareId
 from Products.PloneMeeting.utils import get_context_with_request
+from Products.PloneMeeting.utils import get_datagridfield_column_value
+from Products.PloneMeeting.utils import number_word
 from z3c.form.interfaces import NO_VALUE
 from zope.globalrequest import getRequest
 from zope.i18n import translate
@@ -50,6 +63,8 @@ from zope.interface import implements
 from zope.schema.interfaces import IVocabularyFactory
 from zope.schema.vocabulary import SimpleTerm
 from zope.schema.vocabulary import SimpleVocabulary
+
+import itertools
 
 
 class PMConditionAwareCollectionVocabulary(CachedCollectionVocabulary):
@@ -106,19 +121,20 @@ class ItemCategoriesVocabulary(object):
         date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.categoriesvocabulary')
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        return date, cfg, classifiers
+        return date, repr(cfg), classifiers
 
     @ram.cache(__call___cachekey)
     def __call__(self, context, classifiers=False):
         """ """
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        categories = cfg.getCategories(classifiers=classifiers, onlySelectable=False, caching=False)
-        activeCategories = [cat for cat in categories if api.content.get_state(cat) == 'active']
-        notActiveCategories = [cat for cat in categories if not api.content.get_state(cat) == 'active']
+        catType = classifiers and 'classifiers' or 'categories'
+        categories = cfg.getCategories(catType=catType, onlySelectable=False, caching=False)
+        activeCategories = [cat for cat in categories if cat.enabled]
+        notActiveCategories = [cat for cat in categories if not cat.enabled]
         res_active = []
         for category in activeCategories:
-            term_id = classifiers and category.UID() or category.getId()
+            term_id = category.getId()
             res_active.append(
                 SimpleTerm(term_id,
                            term_id,
@@ -129,7 +145,7 @@ class ItemCategoriesVocabulary(object):
 
         res_not_active = []
         for category in notActiveCategories:
-            term_id = classifiers and category.UID() or category.getId()
+            term_id = category.getId()
             res_not_active.append(
                 SimpleTerm(term_id,
                            term_id,
@@ -210,7 +226,7 @@ class ItemProposingGroupsForFacetedFilterVocabulary(object):
             'Products.PloneMeeting.vocabularies.proposinggroupsforfacetedfiltervocabulary')
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        return date, cfg
+        return date, repr(cfg)
 
     @ram.cache(__call___cachekey)
     def __call__(self, context):
@@ -263,14 +279,10 @@ class GroupsInChargeVocabulary(object):
         date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.groupsinchargevocabulary')
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        return date, cfg.getId(), only_selected, sort
+        return date, repr(cfg), only_selected, sort
 
-    @ram.cache(__call___cachekey)
-    def __call__(self, context, only_selected=True, sort=True):
-        """List groups in charge :
-           - if groupsInCharge in MeetingConfig.usedItemAttributes,
-             list MeetingConfig.orderedGroupsInCharge;
-           - else, list groups_in_charge selected on organizations."""
+    def _get_organizations(self, context, only_selected=True):
+        """This centralize logic of gettting associated groups."""
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         res = []
@@ -287,29 +299,43 @@ class GroupsInChargeVocabulary(object):
                         res.append(group_in_charge)
             # categories
             if not cfg.getUseGroupsAsCategories():
-                classifiers = 'classifier' in cfg.getUsedItemAttributes()
-                categories = cfg.getCategories(classifiers=classifiers, onlySelectable=False, caching=False)
+                categories = cfg.getCategories(onlySelectable=False, caching=False)
+                # add classifiers when using it
+                if 'classifier' in cfg.getUsedItemAttributes():
+                    categories += cfg.getCategories(catType='classifiers',
+                                                    onlySelectable=False,
+                                                    caching=False)
                 for cat in categories:
-                    for group_in_charge_uid in cat.getGroupsInCharge():
-                        group_in_charge = get_organization(group_in_charge_uid)
+                    for group_in_charge in cat.get_groups_in_charge(the_objects=True):
                         # manage duplicates
-                        if group_in_charge and group_in_charge not in res:
+                        if group_in_charge not in res:
                             res.append(group_in_charge)
         else:
             # groups in charge are selected on the items
             is_using_cfg_order = True
             kept_org_uids = cfg.getOrderedGroupsInCharge()
             res = get_organizations(only_selected=only_selected, kept_org_uids=kept_org_uids)
+        return is_using_cfg_order, res
 
-        res = [SimpleTerm(gic.UID(),
-                          gic.UID(),
-                          safe_unicode(gic.get_full_title(first_index=1)))
-               for gic in res]
+    @ram.cache(__call___cachekey)
+    def __call__(self, context, only_selected=True, sort=True):
+        """List groups in charge :
+           - if groupsInCharge in MeetingConfig.usedItemAttributes,
+             list MeetingConfig.orderedGroupsInCharge;
+           - else, list groups_in_charge selected on organizations."""
+        is_using_cfg_order, orgs = self._get_organizations(context, only_selected=only_selected)
+        terms = []
+        for org in orgs:
+            term_value = org.UID()
+            terms.append(
+                SimpleTerm(term_value,
+                           term_value,
+                           safe_unicode(org.get_full_title(first_index=1))))
 
         if sort or not is_using_cfg_order:
-            res = humansorted(res, key=attrgetter('title'))
+            terms = humansorted(terms, key=attrgetter('title'))
 
-        return SimpleVocabulary(res)
+        return SimpleVocabulary(terms)
 
 
 GroupsInChargeVocabularyFactory = GroupsInChargeVocabulary()
@@ -382,6 +408,23 @@ class EveryOrganizationsAcronymsVocabulary(EveryOrganizationsVocabulary):
 
 
 EveryOrganizationsAcronymsVocabularyFactory = EveryOrganizationsAcronymsVocabulary()
+
+
+class PMSortedSelectedOrganizationsElephantVocabulary(SortedSelectedOrganizationsElephantVocabulary):
+    """Vocabulary returning org objects, to be used with RelationList fields."""
+
+    def _term_value(self, orga):
+        """RelationList vocabulary must be objects."""
+        return orga
+
+    def __call__(self, context):
+        """Does not work with ElephantVocabulary when used as vocabulary
+           for a RelationList field, so unwrap it."""
+        wrapped_vocab = super(PMSortedSelectedOrganizationsElephantVocabulary, self).__call__(
+            context)
+        return wrapped_vocab.vocab
+
+PMSortedSelectedOrganizationsElephantVocabularyFactory = PMSortedSelectedOrganizationsElephantVocabulary()
 
 
 class MeetingReviewStatesVocabulary(object):
@@ -461,7 +504,7 @@ class CreatorsForFacetedFilterVocabulary(object):
         date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.creatorsforfacetedfiltervocabulary')
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        return date, cfg
+        return date, repr(cfg)
 
     @ram.cache(__call___cachekey)
     def __call__(self, context):
@@ -517,7 +560,7 @@ class MeetingDatesVocabulary(object):
         date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.meetingdatesvocabulary')
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        return date, cfg
+        return date, repr(cfg)
 
     @ram.cache(__call___cachekey)
     def __call__(self, context):
@@ -526,18 +569,18 @@ class MeetingDatesVocabulary(object):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         brains = catalog(portal_type=cfg.getMeetingTypeName(),
-                         sort_on='getDate',
+                         sort_on='meeting_date',
                          sort_order='reverse')
         res = [
             SimpleTerm(ITEM_NO_PREFERRED_MEETING_VALUE,
                        ITEM_NO_PREFERRED_MEETING_VALUE,
-                       translate('no_meeting_available',
+                       translate('(None)',
                                  domain='PloneMeeting',
                                  context=context.REQUEST))]
         for brain in brains:
             res.append(SimpleTerm(brain.UID,
                                   brain.UID,
-                                  tool.formatMeetingDate(brain, withHour=True))
+                                  tool.format_date(brain.meeting_date, with_hour=True))
                        )
         return SimpleVocabulary(res)
 
@@ -619,13 +662,13 @@ class AskedAdvicesVocabulary(object):
         # when creating new Plone Site, context may be the Zope Application...
         if hasattr(context, 'portal_type'):
             cfg = tool.getMeetingConfig(context)
-        return date, cfg
+        return date, repr(cfg)
 
     @ram.cache(__call___cachekey)
     def __call__(self, context):
         """ """
         res = []
-        context = get_context_with_request(context)
+        context = get_context_with_request(context) or context
 
         self.tool = api.portal.get_tool('portal_plonemeeting')
         try:
@@ -797,7 +840,7 @@ class AdviceTypesVocabulary(object):
         date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.advicetypesvocabulary')
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        return date, cfg
+        return date, repr(cfg)
 
     @ram.cache(__call___cachekey)
     def __call__(self, context):
@@ -874,98 +917,49 @@ class SentToInfosVocabulary(object):
 SentToInfosVocabularyFactory = SentToInfosVocabulary()
 
 
-class SendToAuthorityVocabulary(object):
+class FacetedAnnexesVocabulary(object):
     implements(IVocabularyFactory)
 
     def __call__(self, context):
         """ """
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        annexes_config = cfg.annexes_types.item_annexes
+        config = OrderedDict([
+            ('to_be_printed_activated', ("to_print", "not_to_print")),
+            ('confidentiality_activated', ("confidential", "not_confidential")),
+            ('publishable_activated', ("publishable", "not_publishable")),
+            ('signed_activated', ("to_sign", "not_to_sign", "signed"))])
         res = []
-        res.append(SimpleTerm('1',
-                              '1',
-                              safe_unicode(translate('to_be_send_to_authority_term',
-                                                     domain='PloneMeeting',
-                                                     context=context.REQUEST)))
-                   )
-        res.append(SimpleTerm('0',
-                              '0',
-                              safe_unicode(translate('not_to_be_send_to_authority_term',
-                                                     domain='PloneMeeting',
-                                                     context=context.REQUEST)))
-                   )
+        for k, values in config.items():
+            if getattr(annexes_config, k, False) is True:
+                for value in values:
+                    res.append(SimpleTerm(
+                        value,
+                        value,
+                        translate('annex_term_{0}'.format(value),
+                                  domain='PloneMeeting',
+                                  context=context.REQUEST)))
         return SimpleVocabulary(res)
 
 
-SendToAuthorityVocabularyFactory = SendToAuthorityVocabulary()
-
-
-class HasAnnexesToPrintVocabulary(object):
-    implements(IVocabularyFactory)
-
-    def __call__(self, context):
-        """ """
-        res = []
-        res.append(SimpleTerm('1',
-                              '1',
-                              safe_unicode(translate('annexes_to_print_term',
-                                                     domain='PloneMeeting',
-                                                     context=context.REQUEST)))
-                   )
-        res.append(SimpleTerm('0',
-                              '0',
-                              safe_unicode(translate('no_annexes_to_print_term',
-                                                     domain='PloneMeeting',
-                                                     context=context.REQUEST)))
-                   )
-        return SimpleVocabulary(res)
-
-
-HasAnnexesToPrintVocabularyFactory = HasAnnexesToPrintVocabulary()
-
-
-class HasAnnexesToSignVocabulary(object):
-    implements(IVocabularyFactory)
-
-    def __call__(self, context):
-        """ """
-        res = []
-        res.append(SimpleTerm('0',
-                              '0',
-                              safe_unicode(translate('annexes_to_sign_term',
-                                                     domain='PloneMeeting',
-                                                     context=context.REQUEST)))
-                   )
-        res.append(SimpleTerm('1',
-                              '1',
-                              safe_unicode(translate('annexes_signed_term',
-                                                     domain='PloneMeeting',
-                                                     context=context.REQUEST)))
-                   )
-        res.append(SimpleTerm('-1',
-                              '-1',
-                              safe_unicode(translate('no_annexes_to_sign_term',
-                                                     domain='PloneMeeting',
-                                                     context=context.REQUEST)))
-                   )
-        return SimpleVocabulary(res)
-
-
-HasAnnexesToSignVocabularyFactory = HasAnnexesToSignVocabulary()
+FacetedAnnexesVocabularyFactory = FacetedAnnexesVocabulary()
 
 
 class BooleanForFacetedVocabulary(object):
     implements(IVocabularyFactory)
 
-    def __call__(self, context):
+    def __call__(self, context, prefix=''):
         """ """
         res = []
-        res.append(SimpleTerm('0',
-                              '0',
+        res.append(SimpleTerm(prefix + '0',
+                              prefix + '0',
                               safe_unicode(translate('boolean_value_false',
                                                      domain='PloneMeeting',
                                                      context=context.REQUEST)))
                    )
-        res.append(SimpleTerm('1',
-                              '1',
+        res.append(SimpleTerm(prefix + '1',
+                              prefix + '1',
                               safe_unicode(translate('boolean_value_true',
                                                      domain='PloneMeeting',
                                                      context=context.REQUEST)))
@@ -1022,6 +1016,61 @@ class ListTypesVocabulary(object):
 ListTypesVocabularyFactory = ListTypesVocabulary()
 
 
+class UsedVoteValuesVocabulary(object):
+    implements(IVocabularyFactory)
+
+    def is_first_linked_vote(self, vote_number):
+        """ """
+        itemVotes = self.context.get_item_votes()
+        return next_vote_is_linked(itemVotes, vote_number)
+
+    def is_linked_vote(self):
+        """ """
+        return self.item_vote['linked_to_previous']
+
+    def __call___cachekey(method, self, context, vote_number=None):
+        '''cachekey method for self.__call__.'''
+        context = get_context_with_request(context)
+        request_debug = str(hasattr(context, 'REQUEST') and context.REQUEST._debug or None)
+        return request_debug, vote_number
+
+    @ram.cache(__call___cachekey)
+    def __call__(self, context, vote_number=None):
+        """ """
+        # as used in a datagridfield, context may vary...
+        self.context = get_context_with_request(context)
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
+        res = []
+        # get vote_number, as _voter_number when editing
+        # as form.widgets.vote_number when saving
+        if vote_number is None:
+            vote_number = int(self.context.REQUEST.form.get(
+                'vote_number',
+                self.context.REQUEST.form.get('form.widgets.vote_number')))
+        self.item_vote = self.context.get_item_votes(vote_number=vote_number)
+        used_values_attr = 'usedVoteValues'
+        if self.is_linked_vote():
+            used_values_attr = 'nextLinkedVotesUsedVoteValues'
+        elif self.is_first_linked_vote(vote_number):
+            used_values_attr = 'firstLinkedVoteUsedVoteValues'
+        for usedVoteValue in cfg.getUsedVoteValues(
+                used_values_attr=used_values_attr,
+                include_not_encoded=not self.context.get_votes_are_secret()):
+            res.append(
+                SimpleTerm(
+                    usedVoteValue,
+                    usedVoteValue,
+                    translate(
+                        'vote_value_{0}'.format(usedVoteValue),
+                        domain='PloneMeeting',
+                        context=self.context.REQUEST)))
+        return SimpleVocabulary(res)
+
+
+UsedVoteValuesVocabularyFactory = UsedVoteValuesVocabulary()
+
+
 class SelectablePrivaciesVocabulary(object):
     implements(IVocabularyFactory)
 
@@ -1073,7 +1122,12 @@ class PollTypesVocabulary(object):
         res = []
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        for usedPollType in cfg.getUsedPollTypes():
+        usedPollTypes = list(cfg.getUsedPollTypes())
+        # if on an item, include values not unselected in config
+        if context.meta_type == 'MeetingItem' and context.getPollType() not in usedPollTypes:
+            usedPollTypes.append(context.getPollType())
+
+        for usedPollType in usedPollTypes:
             res.append(SimpleTerm(usedPollType,
                                   usedPollType,
                                   safe_unicode(translate("polltype_{0}".format(usedPollType),
@@ -1191,15 +1245,12 @@ class ItemTemplatesStorableAsAnnexVocabulary(object):
 
     def __call__(self, context):
         """ """
-        res = [SimpleTerm(u'',
-                          u'',
-                          translate('make_a_choice',
-                                    domain='PloneMeeting',
-                                    context=context.REQUEST))]
+        res = []
         # get every POD templates that have a defined 'store_as_annex'
         catalog = api.portal.get_tool('portal_catalog')
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
+        meetingItemTemplatesToStoreAsAnnex = cfg.getMeetingItemTemplatesToStoreAsAnnex()
         for pod_template in cfg.podtemplates.objectValues():
             store_as_annex = getattr(pod_template, 'store_as_annex', None)
             if store_as_annex:
@@ -1208,6 +1259,11 @@ class ItemTemplatesStorableAsAnnexVocabulary(object):
                 for output_format in pod_template.pod_formats:
                     term_id = '{0}__output_format__{1}'.format(
                         pod_template.getId(), output_format)
+                    # when called on another context than MeetingConfig
+                    # only keep meetingItemTemplatesToStoreAsAnnex
+                    if context.portal_type != 'MeetingConfig' and \
+                       term_id not in meetingItemTemplatesToStoreAsAnnex:
+                        continue
                     res.append(SimpleTerm(
                         term_id,
                         term_id,
@@ -1332,8 +1388,10 @@ class PMCategoryVocabulary(CategoryVocabulary):
         annex_group = get_group(annex_config, context)
         # when a ContentCategory is added/edited/removed, the MeetingConfig is modified
         tool = api.portal.get_tool('portal_plonemeeting')
-        isManager = tool.isManager(context)
         cfg = tool.getMeetingConfig(context)
+        isManager = tool.isManager(cfg)
+        # in case called from dexterity types configuration panel, no cfg
+        cfg_modified = cfg and cfg.modified() or None
         # if context is an annex, cache on context.UID() + context.modified() to manage stored term
         context_uid = None
         context_modified = None
@@ -1345,7 +1403,7 @@ class PMCategoryVocabulary(CategoryVocabulary):
         # invalidate if user groups changed
         user_plone_groups = tool.get_plone_groups_for_user()
         return annex_group.getId(), \
-            isManager, cfg.modified(), use_category_uid_as_token, \
+            isManager, cfg_modified, use_category_uid_as_token, \
             context_uid, context_modified, user_plone_groups
 
     @ram.cache(__call___cachekey)
@@ -1424,6 +1482,8 @@ class HeldPositionDefaultsVocabulary(object):
         res = []
         res.append(
             SimpleTerm('present', 'present', _('present')))
+        res.append(
+            SimpleTerm('voter', 'voter', _('voter')))
         return SimpleVocabulary(res)
 
 
@@ -1449,19 +1509,31 @@ class ItemNotPresentTypeVocabulary(object):
 ItemNotPresentTypeVocabularyFactory = ItemNotPresentTypeVocabulary()
 
 
-class SignatureNumberVocabulary(object):
+class NumbersVocabulary(object):
     """ """
     implements(IVocabularyFactory)
 
-    def __call__(self, context):
+    def __call__(self, context, start=1, end=21):
         res = []
-        for signature_number in range(1, 11):
-            sign_num_str = str(signature_number)
-            res.append(SimpleTerm(sign_num_str, sign_num_str, sign_num_str))
+        for number in range(start, end):
+            # make number a str
+            num_str = str(number)
+            res.append(SimpleTerm(num_str, num_str, num_str))
         return SimpleVocabulary(res)
 
 
-SignatureNumberVocabularyFactory = SignatureNumberVocabulary()
+NumbersVocabularyFactory = NumbersVocabulary()
+
+
+class NumbersFromZeroVocabulary(NumbersVocabulary):
+    """ """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context, start=0, end=11):
+        return super(NumbersFromZeroVocabulary, self).__call__(
+            start, end)
+
+NumbersFromZeroVocabularyFactory = NumbersFromZeroVocabulary()
 
 
 class ItemAllStatesVocabulary(object):
@@ -1513,31 +1585,25 @@ class AnnexRestrictShownAndEditableAttributesVocabulary(object):
 AnnexRestrictShownAndEditableAttributesVocabularyFactory = AnnexRestrictShownAndEditableAttributesVocabulary()
 
 
-class KeepAccessToItemWhenAdviceIsGivenVocabulary(object):
+class KeepAccessToItemWhenAdviceVocabulary(object):
     """ """
     implements(IVocabularyFactory)
 
     def __call__(self, context):
         res = []
-        res.append(
-            SimpleTerm('', '', translate(
-                'use_meetingconfig_value',
-                domain='PloneMeeting',
-                context=context.REQUEST)))
-        res.append(
-            SimpleTerm('0', '0', translate(
-                'boolean_value_false',
-                domain='PloneMeeting',
-                context=context.REQUEST)))
-        res.append(
-            SimpleTerm('1', '1', translate(
-                'boolean_value_true',
-                domain='PloneMeeting',
-                context=context.REQUEST)))
+        values = ('default', 'was_giveable', 'is_given')
+        if context.portal_type != 'MeetingConfig':
+            values = ('use_meetingconfig_value', ) + values
+        for value in values:
+            res.append(
+                SimpleTerm(value, value, translate(
+                    'keep_access_to_item_when_advice_' + value,
+                    domain='PloneMeeting',
+                    context=context.REQUEST)))
         return SimpleVocabulary(res)
 
 
-KeepAccessToItemWhenAdviceIsGivenVocabularyFactory = KeepAccessToItemWhenAdviceIsGivenVocabulary()
+KeepAccessToItemWhenAdviceVocabularyFactory = KeepAccessToItemWhenAdviceVocabulary()
 
 
 class PMMergeTemplatesVocabulary(MergeTemplatesVocabularyFactory):
@@ -1615,7 +1681,7 @@ class SelectableHeldPositionsVocabulary(BaseHeldPositionsVocabulary):
     def __call___cachekey(method, self, context, usage=None, uids=[]):
         '''cachekey method for self.__call__.'''
         date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.selectableheldpositionsvocabulary')
-        return date, str(context), usage, uids
+        return date, repr(context), usage, uids
 
     @ram.cache(__call___cachekey)
     def __call__(self, context, usage=None, uids=[]):
@@ -1626,13 +1692,35 @@ class SelectableHeldPositionsVocabulary(BaseHeldPositionsVocabulary):
 SelectableHeldPositionsVocabularyFactory = SelectableHeldPositionsVocabulary()
 
 
+class SimplifiedSelectableHeldPositionsVocabulary(BaseHeldPositionsVocabulary):
+    """ """
+
+    def __call___cachekey(method, self, context, usage=None, uids=[]):
+        '''cachekey method for self.__call__.'''
+        date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.simplifiedselectableheldpositionsvocabulary')
+        return date, repr(context), usage, uids
+
+    @ram.cache(__call___cachekey)
+    def __call__(self, context, usage=None, uids=[]):
+        res = super(SimplifiedSelectableHeldPositionsVocabulary, self).__call__(
+            context,
+            usage=None,
+            include_usages=False,
+            include_defaults=False,
+            include_signature_number=False)
+        return res
+
+
+SimplifiedSelectableHeldPositionsVocabularyFactory = SimplifiedSelectableHeldPositionsVocabulary()
+
+
 class SelectableAssemblyMembersVocabulary(BaseHeldPositionsVocabulary):
     """ """
 
     def __call___cachekey(method, self, context, usage=None, uids=[]):
         '''cachekey method for self.__call__.'''
         date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.selectableassemblymembersvocabulary')
-        return date, str(context), usage, uids
+        return date, repr(context), usage, uids
 
     @ram.cache(__call___cachekey)
     def __call__(self, context, usage=None, uids=[]):
@@ -1674,7 +1762,7 @@ class SelectableItemInitiatorsVocabulary(BaseHeldPositionsVocabulary):
     def __call___cachekey(method, self, context, usage=None, uids=[]):
         '''cachekey method for self.__call__.'''
         date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.selectableiteminitiatorsvocabulary')
-        return date, str(context), usage, uids
+        return date, repr(context), usage, uids
 
     @ram.cache(__call___cachekey)
     def __call__(self, context):
@@ -1705,6 +1793,40 @@ class SelectableItemInitiatorsVocabulary(BaseHeldPositionsVocabulary):
 
 
 SelectableItemInitiatorsVocabularyFactory = SelectableItemInitiatorsVocabulary()
+
+
+class ItemVotersVocabulary(BaseHeldPositionsVocabulary):
+    """ """
+
+    def __call___cachekey(method, self, context):
+        '''cachekey method for self.__call__.'''
+        date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.itemvotersvocabulary')
+        # as used in a datagridfield, context may vary...
+        context = get_context_with_request(context)
+        return date, repr(context)
+
+    @ram.cache(__call___cachekey)
+    def __call__(self, context):
+        context = get_context_with_request(context)
+        item_voter_uids = context.get_item_voters()
+        terms = super(ItemVotersVocabulary, self).__call__(
+            context,
+            uids=item_voter_uids,
+            include_usages=False,
+            include_defaults=False,
+            include_signature_number=False,
+            review_state=[], )
+        # do not modify original terms
+        terms = list(terms._terms)
+
+        # keep order of item attendees
+        def getKey(term):
+            return item_voter_uids.index(term.token)
+        terms = sorted(terms, key=getKey)
+        return SimpleVocabulary(terms)
+
+
+ItemVotersVocabularyFactory = ItemVotersVocabulary()
 
 
 class PMDetailedEveryOrganizationsVocabulary(EveryOrganizationsVocabulary):
@@ -1743,26 +1865,30 @@ class AssociatedGroupsVocabulary(object):
         date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.associatedgroupsvocabulary')
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        return date, sort, cfg
+        return date, sort, repr(cfg)
 
-    @ram.cache(__call___cachekey)
-    def __call__(self, context, sort=True):
-        """ """
+    def _get_organizations(self, context, the_objects=True):
+        """This centralize logic of gettting associated groups."""
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         # selectable associated groups defined in MeetingConfig?
         is_using_cfg_order = False
         if cfg.getOrderedAssociatedOrganizations():
             is_using_cfg_order = True
-            orgs = list(cfg.getOrderedAssociatedOrganizations(theObjects=True))
+            orgs = list(cfg.getOrderedAssociatedOrganizations(theObjects=the_objects))
         else:
             # if not then every selected organizations of plonegroup
-            orgs = get_organizations(only_selected=True)
+            orgs = get_organizations(only_selected=True, the_objects=the_objects)
+        return is_using_cfg_order, orgs
 
+    @ram.cache(__call___cachekey)
+    def __call__(self, context, sort=True):
+        """ """
+        is_using_cfg_order, orgs = self._get_organizations(context)
         terms = []
         for org in orgs:
-            org_uid = org.UID()
-            terms.append(SimpleTerm(org_uid, org_uid, org.get_full_title()))
+            term_value = org.UID()
+            terms.append(SimpleTerm(term_value, term_value, org.get_full_title()))
 
         if sort or not is_using_cfg_order:
             terms = humansorted(terms, key=attrgetter('title'))
@@ -1813,7 +1939,7 @@ class CopyGroupsVocabulary(object):
         date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.copygroupsvocabulary')
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        return date, cfg
+        return date, repr(cfg)
 
     @ram.cache(__call___cachekey)
     def __call__(self, context):
@@ -1883,6 +2009,251 @@ class ItemCopyGroupsVocabulary(CopyGroupsVocabulary):
 
 
 ItemCopyGroupsVocabularyFactory = ItemCopyGroupsVocabulary()
+
+
+class SelectableCommitteeAttendeesVocabulary(object):
+    """ """
+
+    implements(IVocabularyFactory)
+
+    def __call___cachekey(method, self, context):
+        '''cachekey method for self.__call__.'''
+        date = get_cachekey_volatile(
+            'Products.PloneMeeting.vocabularies.selectable_committee_attendees_vocabulary')
+        return date, repr(context)
+
+    @ram.cache(__call___cachekey)
+    def __call__(self, context):
+        terms = []
+        # as vocabulary is used in a DataGridField
+        # context is often NO_VALUE...
+        if not hasattr(context, "getTagName"):
+            context = get_context_with_request(context)
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        # add missing terms
+        stored_term_uids = [row['default_attendees'] for row in cfg.getCommittees()]
+        # merge lists and remove duplicates
+        stored_term_uids = set(list(itertools.chain.from_iterable(stored_term_uids)))
+        missing_term_uids = [uid for uid in stored_term_uids
+                             if uid not in cfg.getOrderedCommitteeContacts()]
+        missing_terms = uuidsToObjects(missing_term_uids)
+        selectable_hps = uuidsToObjects(cfg.getOrderedCommitteeContacts(), ordered=True)
+        for hp in selectable_hps + missing_terms:
+            hp_uid = hp.UID()
+            term = SimpleTerm(hp_uid, hp_uid, hp.get_short_title())
+            terms.append(term)
+        return SimpleVocabulary(terms)
+
+
+SelectableCommitteeAttendeesVocabularyFactory = SelectableCommitteeAttendeesVocabulary()
+
+
+class SelectableCommitteesVocabulary(object):
+    implements(IVocabularyFactory)
+
+    def _get_stored_values(self):
+        """ """
+        return []
+
+    def _get_term_title(self, committee, term_title_attr):
+        """ """
+        term_title = committee[term_title_attr]
+        # manage when no term_title (no acronym defined)
+        term_title = term_title or translate("None",
+                                             domain="PloneMeeting",
+                                             context=self.context.REQUEST)
+        return safe_unicode(term_title)
+
+    def __call___cachekey(method,
+                          self,
+                          context,
+                          term_title_attr="label",
+                          include_suppl=True,
+                          check_is_manager_for_suppl=False,
+                          include_all_disabled=True,
+                          cfg_committees=None,
+                          add_no_committee_value=True,
+                          check_using_groups=False,
+                          include_empty_string=True):
+        '''cachekey method for self.__call__.'''
+        date = get_cachekey_volatile(
+            'Products.PloneMeeting.vocabularies.selectable_committees_vocabulary')
+        tool = api.portal.get_tool('portal_plonemeeting')
+        # as vocabulary is used in a DataGridField
+        # context is often NO_VALUE or the dict...
+        if not hasattr(context, "getTagName"):
+            context = get_context_with_request(context)
+        cfg = tool.getMeetingConfig(context)
+        # if current context is an item, cache by stored committees
+        # so we avoid cache by context
+        committees = []
+        if context.getTagName() == "MeetingItem":
+            committees = context.getCommittees()
+        user_plone_groups = tool.get_plone_groups_for_user()
+        return date, repr(cfg), committees, user_plone_groups, \
+            term_title_attr, include_suppl, \
+            check_is_manager_for_suppl, include_all_disabled, \
+            cfg_committees, add_no_committee_value, \
+            check_using_groups, include_empty_string
+
+    @ram.cache(__call___cachekey)
+    def __call__(self,
+                 context,
+                 term_title_attr="label",
+                 include_suppl=True,
+                 check_is_manager_for_suppl=False,
+                 include_all_disabled=True,
+                 cfg_committees=None,
+                 add_no_committee_value=True,
+                 check_using_groups=False,
+                 include_empty_string=True):
+        """ """
+        terms = []
+        if include_empty_string:
+            terms.append(
+                SimpleTerm(EMPTY_STRING,
+                           EMPTY_STRING,
+                           translate('(None)',
+                                     domain='PloneMeeting',
+                                     context=context.REQUEST)))
+
+        # as vocabulary is used in a DataGridField
+        # context is often NO_VALUE or the dict...
+        if not hasattr(context, "getTagName"):
+            context = get_context_with_request(context)
+        self.context = context
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        cfg_committees = cfg_committees or cfg.getCommittees()
+        is_manager = tool.isManager(cfg)
+
+        if add_no_committee_value:
+            no_committee_msgid = "no_committee_term_title_{0}".format(term_title_attr)
+            term_title = translate(
+                no_committee_msgid,
+                domain="PloneMeeting",
+                context=context.REQUEST,
+                default=u"No committee")
+            terms.append(SimpleTerm(NO_COMMITTEE, NO_COMMITTEE, term_title))
+
+        def _add_suppl(committee, enabled=True):
+            suppl_terms = []
+            suppl_ids = cfg.get_supplements_for_committee(committee=committee)
+            i = 1
+            for suppl_id in suppl_ids:
+                term_title = self._get_term_title(committee, term_title_attr)
+                if not enabled:
+                    term_title = translate(
+                        '${element_title} (Inactive)',
+                        domain='PloneMeeting',
+                        mapping={'element_title': term_title},
+                        context=context.REQUEST)
+                suppl_msgid = term_title_attr == "label" and \
+                    'committee_title_with_suppl' or 'committee_title_with_abbr_suppl'
+                term_title = translate(
+                    suppl_msgid,
+                    domain="PloneMeeting",
+                    mapping={'title': term_title, 'number': number_word(i)},
+                    context=context.REQUEST,
+                    default=u"${title} (${number}&nbsp;supplement)")
+                i += 1
+                suppl_terms.append(SimpleTerm(suppl_id,
+                                              suppl_id,
+                                              term_title))
+            return suppl_terms
+
+        stored_values = self._get_stored_values()
+        for committee in cfg_committees:
+            if committee['enabled'] == '1' or committee['row_id'] in stored_values:
+                if check_using_groups and not is_manager and committee['using_groups']:
+                    org_uids = tool.get_selectable_orgs(
+                        cfg, only_selectable=True, the_objects=False)
+                    if not set(org_uids).intersection(committee['using_groups']):
+                        continue
+                term_title = self._get_term_title(committee, term_title_attr)
+                terms.append(SimpleTerm(committee['row_id'],
+                                        committee['row_id'],
+                                        term_title))
+                # manage supplements
+                if include_suppl and (not check_is_manager_for_suppl or is_manager):
+                    terms += _add_suppl(committee)
+
+        if include_all_disabled:
+            for committee in cfg_committees:
+                if committee['enabled'] == '0':
+                    term_title = self._get_term_title(committee, term_title_attr)
+                    label = translate(
+                        '${element_title} (Inactive)',
+                        domain='PloneMeeting',
+                        mapping={'element_title': term_title},
+                        context=context.REQUEST)
+                    terms.append(SimpleTerm(committee['row_id'],
+                                            committee['row_id'],
+                                            label))
+                    # manage supplements
+                    if include_suppl:
+                        terms += _add_suppl(committee, enabled=False)
+        return SimpleVocabulary(terms)
+
+SelectableCommitteesVocabularyFactory = SelectableCommitteesVocabulary()
+
+
+class SelectableCommitteesAcronymsVocabulary(SelectableCommitteesVocabulary):
+    implements(IVocabularyFactory)
+
+    def __call__(self, context, term_title_attr="acronym"):
+        """ """
+        return super(SelectableCommitteesAcronymsVocabulary, self).__call__(
+            context, term_title_attr)
+
+SelectableCommitteesAcronymsVocabularyFactory = SelectableCommitteesAcronymsVocabulary()
+
+
+class ItemSelectableCommitteesVocabulary(SelectableCommitteesVocabulary):
+    implements(IVocabularyFactory)
+
+    def _get_stored_values(self):
+        """ """
+        stored_values = self.context.getCommittees()
+        return stored_values
+
+    def __call__(self, context):
+        """ """
+        res = super(ItemSelectableCommitteesVocabulary, self).__call__(
+            context,
+            check_is_manager_for_suppl=True,
+            include_all_disabled=False,
+            check_using_groups=True,
+            include_empty_string=False)
+        # characters &nbsp; are shown when editing an item...
+        for term in res._terms:
+            term.title = term.title.replace('&nbsp;', ' ')
+        return res
+
+ItemSelectableCommitteesVocabularyFactory = ItemSelectableCommitteesVocabulary()
+
+
+class MeetingSelectableCommitteesVocabulary(SelectableCommitteesVocabulary):
+    implements(IVocabularyFactory)
+
+    def _get_stored_values(self):
+        """ """
+        stored_values = []
+        if self.context.getTagName() == "Meeting":
+            stored_values = get_datagridfield_column_value(self.context.committees, "row_id")
+        return stored_values
+
+    def __call__(self, context):
+        """ """
+        return super(MeetingSelectableCommitteesVocabulary, self).__call__(
+            context,
+            include_suppl=False,
+            include_all_disabled=False,
+            add_no_committee_value=False,
+            include_empty_string=False)
+
+MeetingSelectableCommitteesVocabularyFactory = MeetingSelectableCommitteesVocabulary()
 
 
 class ContainedAnnexesVocabulary(object):
@@ -1970,12 +2341,54 @@ class PMUsers(UsersFactory):
         # manage duplicates, this can be the case when using LDAP and same userid in source_users
         userids = []
         for user in users:
-            if user['id'] not in userids:
-                userids.append(user['id'])
-                term_title = u'{0} ({1})'.format(safe_unicode(self._user_fullname(user['id'])), user['id'])
-                term = SimpleTerm(user['id'], user['id'], term_title)
+            user_id = user['id']
+            if user_id not in userids:
+                userids.append(user_id)
+                # bypass special characters, may happen when using LDAP
+                try:
+                    unicode(user_id)
+                except UnicodeDecodeError:
+                    continue
+                term_title = u'{0} ({1})'.format(safe_unicode(self._user_fullname(user_id)), user_id)
+                term = SimpleTerm(user_id, user_id, term_title)
                 terms.append(term)
         terms = humansorted(terms, key=attrgetter('title'))
         return SimpleVocabulary(terms)
 
 PMUsersFactory = PMUsers()
+
+
+class PMPositionTypesVocabulary(PositionTypesVocabulary):
+
+    def _get_person(self, context):
+        """ """
+        person = None
+        # adding a held_position
+        if context.portal_type == 'person':
+            person = context
+        # editing a held_position
+        elif context.portal_type == 'held_position':
+            person = context.get_person()
+        else:
+            # used in the RedefinedSignatoryForm
+            person_uid = context.REQUEST.get('person_uid', None)
+            if person_uid is not None:
+                catalog = api.portal.get_tool('portal_catalog')
+                hp = catalog(UID=person_uid)[0].getObject()
+                person = hp.get_person()
+        return person
+
+    def __call__(self, context):
+        res = super(PMPositionTypesVocabulary, self).__call__(context)
+        # patch term title if context is a held_position and so we know what to display
+        person = self._get_person(context)
+        if person is not None:
+            gender = person.gender or 'M'
+            terms = res._terms
+            for term in terms:
+                if term.token == 'default':
+                    continue
+                gender_and_numbers = split_gender_and_number(term.title)
+                term.title = gender_and_numbers['{0}S'.format(gender)]
+        return res
+PMPositionTypesVocabularyFactory = PMPositionTypesVocabulary()

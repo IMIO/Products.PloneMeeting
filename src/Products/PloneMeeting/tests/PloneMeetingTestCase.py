@@ -1,23 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2015 by Imio.be
-#
 # GNU General Public License (GPL)
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
-# 02110-1301, USA.
 #
 
 from AccessControl.SecurityManagement import getSecurityManager
@@ -30,7 +13,9 @@ from collective.documentviewer.settings import GlobalSettings
 from collective.iconifiedcategory.utils import calculate_category_id
 from collective.iconifiedcategory.utils import get_config_root
 from copy import deepcopy
+from datetime import datetime
 from imio.helpers.cache import cleanRamCacheFor
+from imio.helpers.content import object_values
 from imio.helpers.testing import testing_logger
 from plone import api
 from plone import namedfile
@@ -38,8 +23,13 @@ from plone.app.testing import login
 from plone.app.testing import logout
 from plone.app.testing.bbb import _createMemberarea
 from plone.app.testing.helpers import setRoles
+from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
+from Products.CMFPlone.utils import base_hasattr
 from Products.Five.browser import BrowserView
+from Products.PloneMeeting.browser.meeting import _get_default_attendees
+from Products.PloneMeeting.browser.meeting import _get_default_signatories
+from Products.PloneMeeting.browser.meeting import _get_default_voters
 from Products.PloneMeeting.config import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.config import ITEM_DEFAULT_TEMPLATE_ID
 from Products.PloneMeeting.config import TOOL_FOLDER_ANNEX_TYPES
@@ -52,6 +42,7 @@ from Products.PloneMeeting.utils import reviewersFor
 from z3c.form.testing import TestRequest as z3c_form_TestRequest
 from zope.component import getMultiAdapter
 from zope.event import notify
+from zope.lifecycleevent import ObjectModifiedEvent
 from zope.traversing.interfaces import BeforeTraverseEvent
 from zope.viewlet.interfaces import IViewletManager
 
@@ -90,6 +81,12 @@ class TestFile:
         self.headers = None
 
 
+class DefaultData(object):
+    """Class used to be passed to a default method."""
+    def __init__(self, context):
+        self.context = context
+
+
 class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
     '''Base class for defining PloneMeeting test cases.'''
 
@@ -113,14 +110,13 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
     external_image4 = "https://i.picsum.photos/id/1062/600/500.jpg?hmac=ZoUBWDuRcsyqDbBPOj5jEU1kHgJ5iGO1edk1-QYode8"
 
     def setUp(self):
+        # enable full diff in failing tests
+        self.maxDiff = None
         # Define some useful attributes
         self.app = self.layer['app']
         self.portal = self.layer['portal']
         self.request = self.layer['request']
         self.changeUser('admin')
-        # configure default workflows so Folder has a workflow
-        # make sure we have a default workflow
-        self.portal.portal_workflow.setDefaultChain('simple_publication_workflow')
         # setup manually the correct browserlayer, see:
         # https://dev.plone.org/ticket/11673
         notify(BeforeTraverseEvent(self.portal, self.request))
@@ -139,6 +135,16 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                 setattr(self,
                         '{0}_{1}'.format(org.getId(), suffix),
                         plone_group_id)
+        # make held_position easily available as well
+        i = 1
+        for person in object_values(self.portal.contacts, 'PMPerson'):
+            setattr(self,
+                    'hp{0}'.format(i),
+                    object_values(person, 'PMHeldPosition')[0])
+            setattr(self,
+                    'hp{0}_uid'.format(i),
+                    object_values(person, 'PMHeldPosition')[0].UID())
+            i += 1
 
         self.pmFolder = os.path.dirname(Products.PloneMeeting.__file__)
         # Disable notifications mechanism. This way, the test suite may be
@@ -160,7 +166,10 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         self.annexFileTypeAdvice = 'advice-annex'
         self.annexFileTypeMeeting = 'meeting-annex'
         # log current test module and method name
-        pm_logger.info('Executing {0}:{1}'.format(self.__class__.__name__, self._testMethodName))
+        test_num = self._resultForDoCleanups.testsRun
+        test_total = self._resultForDoCleanups.count
+        pm_logger.info('Executing [{0}/{1}] {2}:{3}'.format(
+            test_num, test_total, self.__class__.__name__, self._testMethodName))
 
     def tearDown(self):
         self._cleanExistingTmpAnnexFile()
@@ -242,17 +251,17 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                 i += 1
         return res
 
-    def getMeetingFolder(self, meetingConfig=None):
+    def getMeetingFolder(self, meetingConfig=None, userId=None):
         '''Get the meeting folder for the current meeting config.'''
         if not meetingConfig:
             meetingConfig = self.meetingConfig
-        return self.tool.getPloneMeetingFolder(meetingConfig.id)
+        return self.tool.getPloneMeetingFolder(meetingConfig.id, userId=userId)
 
     def create(self,
                objectType,
                folder=None,
                autoAddCategory=True,
-               isClassifier=False,
+               is_classifier=False,
                **attrs):
         '''Creates an instance of a meeting (if p_objectType is 'Meeting') or
            meeting item (if p_objectType is 'MeetingItem') and
@@ -273,18 +282,14 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             folder = self.tool
         elif objectType == 'organization':
             folder = self.own_org
-            if 'groups_in_charge' not in attrs:
-                attrs['groups_in_charge'] = []
-            if 'item_advice_states' not in attrs:
-                attrs['item_advice_states'] = []
-            if 'item_advice_edit_states' not in attrs:
-                attrs['item_advice_edit_states'] = []
-            if 'item_advice_view_states' not in attrs:
-                attrs['item_advice_view_states'] = []
-            if 'certified_signatures' not in attrs:
-                attrs['certified_signatures'] = []
-        elif objectType == 'MeetingCategory':
-            if isClassifier:
+        elif objectType == 'person':
+            folder = self.portal.contacts
+        elif objectType == 'held_position':
+            if folder is None:
+                raise Exception(
+                    'The "folder" parameter must be a person when creating a held_position!')
+        elif objectType == 'meetingcategory':
+            if is_classifier:
                 folder = cfg.classifiers
             else:
                 folder = cfg.categories
@@ -297,6 +302,8 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         idInAttrs = 'id' in attrs
         if not idInAttrs:
             attrs.update({'id': self._generateId(folder)})
+        if objectType == 'Meeting' and attrs.get('date', None) is None:
+            attrs.update({'date': datetime.now()})
         if objectType == 'MeetingItem':
             if 'proposingGroup' not in attrs.keys():
                 cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.get_orgs_for_user')
@@ -328,18 +335,31 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             obj.processForm()
             if idInAttrs:
                 obj._at_rename_after_creation = True
-            if objectType == 'Meeting':
-                # manage attendees if using it after processForm
-                usedMeetingAttrs = cfg.getUsedMeetingAttributes()
-                if 'attendees' in usedMeetingAttrs:
-                    obj._at_creation_flag = True
-                    default_attendees = obj.getDefaultAttendees()
-                    default_attendees = OrderedDict(((attendee, 'attendee') for attendee in default_attendees))
-                    signatories = []
-                    if 'signatories' in usedMeetingAttrs:
-                        signatories = obj.getDefaultSignatories()
-                    obj._at_creation_flag = False
-                    obj._doUpdateContacts(attendees=default_attendees, signatories=signatories)
+        if objectType == 'Meeting':
+            # manage attendees if using it
+            usedMeetingAttrs = cfg.getUsedMeetingAttributes()
+            if 'attendees' in usedMeetingAttrs:
+                default_attendees = _get_default_attendees(obj)
+                default_attendees = OrderedDict((
+                    (attendee, 'attendee') for attendee in default_attendees))
+                signatories = []
+                if 'signatories' in usedMeetingAttrs:
+                    signatories = _get_default_signatories(obj)
+                voters = []
+                if cfg.getUseVotes():
+                    voters = _get_default_voters(obj)
+                obj._do_update_contacts(attendees=default_attendees,
+                                        signatories=signatories,
+                                        voters=voters)
+            # manage default values
+            add_form = folder.restrictedTraverse('++add++{0}'.format(obj.portal_type))
+            add_form.update()
+            for field_name, widget in add_form.form_instance.w.items():
+                if widget.value and \
+                   not getattr(obj, field_name) and \
+                   isinstance(widget.value, (str, unicode)):
+                    setattr(obj, field_name, widget.field.fromUnicode(widget.value))
+
         # make sure we do not have permission check cache problems...
         self.cleanMemoize()
         return obj
@@ -369,20 +389,21 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                  confidential=False,
                  to_sign=False,
                  signed=False,
+                 publishable=False,
                  annexFile=None):
         '''Adds an annex to p_item.
            If no p_annexType is provided, self.annexFileType is used.
            If no p_annexTitle is specified, the predefined title of the annex type is used.'''
 
         if annexType is None:
-            if context.meta_type == 'MeetingItem':
+            if context.getTagName() == 'MeetingItem':
                 if not relatedTo:
                     annexType = self.annexFileType
                 elif relatedTo == 'item_decision':
                     annexType = self.annexFileTypeDecision
             elif context.portal_type.startswith('meetingadvice'):
                 annexType = self.annexFileTypeAdvice
-            elif context.meta_type == 'Meeting':
+            elif context.getTagName() == 'Meeting':
                 annexType = self.annexFileTypeMeeting
 
         # get complete annexType id that is like
@@ -407,7 +428,8 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             to_print=to_print,
             confidential=confidential,
             to_sign=to_sign,
-            signed=signed)
+            signed=signed,
+            publishable=publishable)
         # need to commit the transaction so the stored blob is correct
         # if not done, accessing the blob will raise 'BlobError: Uncommitted changes'
         transaction.commit()
@@ -445,6 +467,29 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             enabled=enabled
         )
         return annexType
+
+    def addAdvice(self,
+                  item,
+                  advice_group=None,
+                  advice_type=u"positive",
+                  advice_comment=u"My comment",
+                  advice_hide_during_redaction=False,
+                  advice_portal_type='meetingadvice'):
+        if not advice_group:
+            advice_group = self.vendors_uid
+        # manage MeetingConfig.defaultAdviceHiddenDuringRedaction
+        # as it only works while added ttw
+        if not advice_hide_during_redaction:
+            advice_hide_during_redaction = advice_portal_type in \
+                self.meetingConfig.getDefaultAdviceHiddenDuringRedaction()
+        advice = createContentInContainer(
+            item,
+            advice_portal_type,
+            **{'advice_group': advice_group,
+               'advice_type': advice_type,
+               'advice_hide_during_redaction': advice_hide_during_redaction,
+               'advice_comment': RichTextValue(advice_comment)})
+        return advice
 
     def deleteAsManager(self, uid):
         """When we want to remove an item the current user does not have permission to,
@@ -501,7 +546,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                 # can not remove the ITEM_DEFAULT_TEMPLATE_ID
                 if folderId == 'itemtemplates' and \
                    obj.getId() == ITEM_DEFAULT_TEMPLATE_ID:
-                    if obj.queryState() == 'active':
+                    if obj.query_state() == 'active':
                         # disable it instead removing it
                         api.content.transition(obj, 'deactivate')
                     continue
@@ -514,7 +559,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
           Helper method for adding a given p_member to every '_prereviewers' group
           corresponding to every '_reviewers' group he is in.
         """
-        reviewers = reviewersFor(self.meetingConfig.getItemWorkflow())
+        reviewers = reviewersFor(self.meetingConfig)
         groups = [group for group in member.getGroups() if group.endswith('_%s' % reviewers.keys()[0])]
         groups = [group.replace(reviewers.keys()[0], reviewers.keys()[-1]) for group in groups]
         for group in groups:
@@ -555,9 +600,10 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         self.changeUser(self.member.getId())
         cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
 
-    def _removePrincipalFromGroup(self, principal_id, group_id):
+    def _removePrincipalFromGroups(self, principal_id, group_ids):
         """We need to changeUser so getGroups is updated."""
-        self.portal.portal_groups.removePrincipalFromGroup(principal_id, group_id)
+        for group_id in group_ids:
+            self.portal.portal_groups.removePrincipalFromGroup(principal_id, group_id)
         self.changeUser(self.member.getId())
         cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
 
@@ -580,6 +626,21 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                     po_infos['meeting_access_on'] = access_on
         cfg.setPowerObservers(power_observers)
 
+    def _activate_wfas(self, wfas, cfg=None, keep_existing=False):
+        """Activate given p_wfas, we clean wfas, apply,
+           then set given p_wfas and apply again."""
+        currentUser = self.member.getId()
+        self.changeUser('siteadmin')
+        if cfg is None:
+            cfg = self.meetingConfig
+        if not keep_existing:
+            cfg.setWorkflowAdaptations(())
+            cfg.at_post_edit_script()
+        if wfas:
+            cfg.setWorkflowAdaptations(wfas)
+            cfg.at_post_edit_script()
+        self.changeUser(currentUser)
+
     def _enableAutoConvert(self, enable=True):
         """Enable collective.documentviewer auto_convert."""
         gsettings = GlobalSettings(self.portal)
@@ -587,16 +648,48 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         gsettings.auto_layout_file_types = CONVERTABLE_TYPES.keys()
         return gsettings
 
-    def _enableField(self, field_name, cfg=None, related_to='MeetingItem'):
+    def _enableField(self, field_names, cfg=None, related_to='MeetingItem', enable=True):
         """ """
+        if not hasattr(field_names, "__iter__"):
+            field_names = [field_names]
         cfg = cfg or self.meetingConfig
-        if related_to == 'MeetingItem':
-            usedItemAttrs = cfg.getUsedItemAttributes()
-            if field_name not in usedItemAttrs:
-                usedItemAttrs += (field_name, )
+        for field_name in field_names:
+            if related_to == 'MeetingItem':
+                usedItemAttrs = list(cfg.getUsedItemAttributes())
+                if enable and field_name not in usedItemAttrs:
+                    usedItemAttrs.append(field_name)
+                elif not enable and field_name in usedItemAttrs:
+                    usedItemAttrs = usedItemAttrs.remove(field_name)
                 cfg.setUsedItemAttributes(usedItemAttrs)
-        elif related_to == 'Meeting':
-            usedMeetingAttrs = cfg.getUsedMeetingAttributes()
-            if field_name not in usedMeetingAttrs:
-                usedMeetingAttrs += (field_name, )
-                cfg.setUsedMeetingAttributes(usedMeetingAttrs)
+            elif related_to == 'Meeting':
+                usedMeetingAttrs = list(cfg.getUsedMeetingAttributes())
+                if enable and field_name not in usedMeetingAttrs:
+                    usedMeetingAttrs.append(field_name)
+                elif not enable and field_name in usedMeetingAttrs:
+                    usedMeetingAttrs.remove(field_name)
+                cfg.setUsedMeetingAttributes(tuple(usedMeetingAttrs))
+
+    def _disableObj(self, obj, notify_event=True):
+        """ """
+        # using field 'enabled'
+        if base_hasattr(obj, 'enabled'):
+            obj.enabled = False
+            obj.reindexObject(idxs=['enabled'])
+        else:
+            # using workflow
+            self.do(obj, 'deactivate')
+        if notify_event:
+            # manage cache
+            notify(ObjectModifiedEvent(obj))
+        self.cleanMemoize()
+
+    def _check_wfa_available(self, wfas):
+        available = True
+        available_wfas = self.meetingConfig.listWorkflowAdaptations()
+        for wfa in wfas:
+            if wfa not in available_wfas:
+                available = False
+                pm_logger.info('Bypassing {0} because WFAdaptation {1} is not available!'.format(
+                    self._testMethodName, wfa))
+                break
+        return available
