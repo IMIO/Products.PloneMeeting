@@ -296,13 +296,6 @@
         class=".views.UpdateLocalRolesBatchActionForm"
         permission="cmf.ManagePortal" />
 
-    <browser:page
-      for="Products.PloneMeeting.interfaces.IMeetingConfig"
-      name="check-pod-templates"
-      template="templates/check_pod_templates.pt"
-      class=".views.CheckPodTemplatesView"
-      permission="cmf.ManagePortal" />
-
     <configure package="collective.contact.plonegroup.browser">
         <browser:page
           for="Products.PloneMeeting.interfaces.IMeetingContent"

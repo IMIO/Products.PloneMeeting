@@ -138,6 +138,9 @@ Changelog
   are sorted alphabetically to ease management.
   Vocabulary `organization_services` is no more used in PloneMeeting.
   [gbastien]
+- Removed the `@@check-pod-templates` view, we use the one from
+  `collective.documentgenerator` that does the same.
+  [gbastien]
 
 4.2b11 (2021-01-19)
 -------------------
