@@ -487,14 +487,12 @@ class Migrate_To_4200(Migrator):
         logger.info('Done.')
 
     def _migrateItemPredecessorReference(self):
-        '''MeetingItem.precessor ReferenceField is managed manually now.'''
-        logger.info("Migrating Meeting.precessor reference field...")
-        # update item classifier
-        # migrate references
+        '''MeetingItem.predecessor ReferenceField is managed manually now.'''
+        logger.info("Migrating MeetingItem.predecessor ReferenceField...")
         pghandler = ZLogHandler(steps=100)
         brains = self.portal.reference_catalog(relationship='ItemPredecessor')
-        pghandler.init('Migrating Meeting.precessor reference field...', len(brains))
-        pghandler.info('Migrating Meeting.precessor reference field...')
+        pghandler.init('Migrating MeetingItem.predecessor reference field...', len(brains))
+        pghandler.info('Migrating MeetingItem.predecessor reference field...')
         i = 0
         for brain in brains:
             i += 1
