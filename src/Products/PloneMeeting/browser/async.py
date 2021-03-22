@@ -4,6 +4,7 @@ from AccessControl import Unauthorized
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.content import get_vocab
 from plone import api
+from plone.app.uuid.utils import uuidToObject
 from plone.memoize import ram
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.utils import _checkPermission
@@ -304,7 +305,7 @@ class AsyncRenderSearchTerm(BrowserView):
         self.collection_uid = self.request.get('collection_uid')
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
-        self.collection = api.content.find(UID=self.collection_uid)[0].getObject()
+        self.collection = uuidToObject(self.collection_uid)
         self.brains = self.collection.results(batch=False, brains=True)
         rendered_term = ViewPageTemplateFile("templates/term_searchmeetings.pt")(self)
         return rendered_term

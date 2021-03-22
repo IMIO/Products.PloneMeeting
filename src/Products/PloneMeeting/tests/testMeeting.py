@@ -3761,6 +3761,29 @@ class testMeetingType(PloneMeetingTestCase):
             helper.print_signatures_by_position(committee_id="committee_1"),
             {0: u'Line 1,\r', 1: u'Line 2\r', 2: u'Line 3,\r', 3: u'Line 4'})
 
+    def test_pm_ImgSelectBox(self):
+        """Test the @@go_to_meeting_img_select_box view."""
+        cfg = self.meetingConfig
+        self._removeConfigObjectsFor(cfg)
+        self.changeUser('pmManager')
+        meeting1 = self.create('Meeting', date=datetime(2021, 3, 22))
+        meeting2 = self.create('Meeting', date=datetime(2021, 3, 29))
+        pmFolder = self.getMeetingFolder()
+        collection = cfg.searches.searches_meetings.searchnotdecidedmeetings
+        view = pmFolder.restrictedTraverse('@@go_to_meeting_img_select_box')
+        view.select_box_name_suffix = "dummy"
+        view.brains = collection.results(batch=False, brains=True)
+        res = view()
+        self.assertTrue(meeting1.absolute_url() in res)
+        self.assertTrue(meeting2.absolute_url() in res)
+        # meeting2 is the current published object
+        self.assertTrue("ploneMeetingSelectItem selected" in res)
+        self.assertEqual(self.request['PUBLISHED'], meeting2)
+        self.request['PUBLISHED'] = None
+        self.cleanMemoize()
+        res = view()
+        self.assertFalse("ploneMeetingSelectItem selected" in res)
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite
