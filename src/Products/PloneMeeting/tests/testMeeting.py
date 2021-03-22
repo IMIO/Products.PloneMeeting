@@ -3297,6 +3297,7 @@ class testMeetingType(PloneMeetingTestCase):
     def test_pm_MeetingInsertingMethodsHelpMsgView(self):
         '''Test the @@display-inserting-methods-helper-msg view.'''
         cfg = self.meetingConfig
+        cfg.setUseGroupsAsCategories(False)
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
         view = meeting.restrictedTraverse('@@display-inserting-methods-helper-msg')
@@ -3306,9 +3307,10 @@ class testMeetingType(PloneMeetingTestCase):
         inserting_methods = cfg.listInsertingMethods().keys()
         if 'at_the_end' in inserting_methods:
             inserting_methods.remove('at_the_end')
-        inserting_methods = [{'insertingMethod': 'on_proposing_groups', 'reverse': '0'}
+        inserting_methods = [{'insertingMethod': inserting_method, 'reverse': '0'}
                              for inserting_method in inserting_methods]
         cfg.setInsertingMethodsOnAddItem(inserting_methods)
+        self.assertTrue(view())
 
     def test_pm_Show_available_items(self):
         """Test when available items are displayed on the meeting_view."""
@@ -3640,6 +3642,9 @@ class testMeetingType(PloneMeetingTestCase):
         edit = meeting.restrictedTraverse('@@edit')
         edit.update()
         self.assertTrue(edit())
+        self.assertEqual(
+            [grp.__name__ for grp in edit.groups],
+            ['dates_and_data', 'assembly', 'committees', 'informations', 'parameters'])
         view = meeting.restrictedTraverse('@@meeting_view')
         self.assertTrue(view())
 

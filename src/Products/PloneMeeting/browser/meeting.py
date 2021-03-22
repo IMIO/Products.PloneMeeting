@@ -89,7 +89,7 @@ def manage_committees(the_form):
         if not the_form.show_datagrid_column(widget, "committees", optional_column):
             hidden_columns.append(optional_column)
 
-    # special behavior for assembl/attendees and signatures/signatories
+    # special behavior for assembly/attendees and signatures/signatories
     # in case config was switched if both fields are shown,
     # we keep the one not in the config
     if "assembly" not in hidden_columns and "attendees" not in hidden_columns:
@@ -132,7 +132,7 @@ def manage_field_attendees(the_form):
 def manage_groups(the_form):
     """Hide empty groups (fieldsets)."""
     groups = the_form.groups
-    groups = [group for group in the_form.groups if group.fields]
+    groups = [group for group in the_form.groups if group.widgets]
     the_form.groups = groups
 
 
