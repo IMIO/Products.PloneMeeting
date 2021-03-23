@@ -398,11 +398,10 @@ class Migrate_To_4200(Migrator):
                               if ref.relationship == 'MeetingItems']
             if reference_uids:
                 meeting.deleteReferences('MeetingItems')
-                meeting_uid = meeting.UID()
                 brains = self.catalog(UID=reference_uids)
                 for brain in brains:
                     item = brain.getObject()
-                    item._update_meeting_link(meeting_uid=meeting_uid)
+                    item._update_meeting_link(meeting)
         logger.info('Done.')
 
     def _updateItemPreferredMeetingLink(self):
@@ -500,7 +499,7 @@ class Migrate_To_4200(Migrator):
             relation = brain.getObject()
             item = relation.getSourceObject()
             predecessor = relation.getTargetObject()
-            item.set_predecessor(predecessor)
+            item._update_predecessor(predecessor)
         # deleteReferences in a second phase
         for brain in brains:
             relation = brain.getObject()

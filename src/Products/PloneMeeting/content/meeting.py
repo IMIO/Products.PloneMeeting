@@ -1574,7 +1574,7 @@ class Meeting(Container):
                 item.setItemNumber(100)
 
         # Add the item at the end of the items list
-        item._update_meeting_link(meeting_uid=self.UID())
+        item._update_meeting_link(self)
         self._finalize_item_insert(items_to_update=[item])
 
     def _finalize_item_insert(self, items_to_update=[]):
@@ -1608,7 +1608,7 @@ class Meeting(Container):
         item_number = item.getItemNumber()
         items = self.get_items()
         try:
-            item._update_meeting_link(meeting_uid=None)
+            item._update_meeting_link(None)
             items.remove(item)
             # set listType back to 'normal' if it was late
             # if it is another value (custom), we do not change it

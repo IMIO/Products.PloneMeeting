@@ -2888,21 +2888,67 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         cfg = tool.getMeetingConfig(self)
         return cfg.getDefaultPollType()
 
-    def _update_meeting_link(self, meeting_uid):
-        """ """
+    def _update_meeting_link(self, meeting):
+        """Store the linked meeting UID and path.
+           Storing the path is required for the indexation
+           because a clear_and_rebuild would not find the element by UID."""
         self.linked_meeting_uid = None
         self.linked_meeting_path = None
-        if meeting_uid is not None:
-            self.linked_meeting_uid = meeting_uid
-            meeting_brain = uuidToCatalogBrain(meeting_uid, unrestricted=True)
-            self.linked_meeting_path = meeting_brain.getPath()
+        if meeting is not None:
+            self.linked_meeting_uid = meeting.UID()
+            self.linked_meeting_path = "/".join(meeting.getPhysicalPath())
 
     def _update_preferred_meeting(self, preferred_meeting_uid):
-        """ """
+        """Store the preferred meeting UID and path.
+           Storing the path is required for the indexation
+           because a clear_and_rebuild would not find the element by UID."""
         self.preferred_meeting_path = None
         if preferred_meeting_uid != ITEM_NO_PREFERRED_MEETING_VALUE:
             meeting_brain = uuidToCatalogBrain(preferred_meeting_uid, unrestricted=True)
             self.preferred_meeting_path = meeting_brain.getPath()
+
+    def _update_predecessor(self, predecessor):
+        '''Only one predecessor possible but several successors.
+           If p_predecessor=None, we remove predecessor/successors attributes.
+           Storing the path is required for the indexation
+           because a clear_and_rebuild would not find the element by UID.'''
+        if predecessor is not None:
+            self.linked_predecessor_uid = predecessor.UID()
+            self.linked_predecessor_path = "/".join(predecessor.getPhysicalPath())
+            if not getattr(predecessor, 'linked_successor_uids', None):
+                predecessor.linked_successor_uids = PersistentList()
+            predecessor.linked_successor_uids.append(self.UID())
+        else:
+            safe_delattr(self, 'linked_predecessor_uid')
+            safe_delattr(self, 'linked_predecessor_path')
+            safe_delattr(self, 'linked_successor_uids')
+
+    def get_predecessor(self, the_object=True, unrestricted=True):
+        ''' '''
+        res = getattr(self, 'linked_predecessor_uid', None)
+        if res and the_object:
+            portal = api.portal.get()
+            predecessor_path = self.linked_predecessor_path
+            res = portal.unrestrictedTraverse(predecessor_path)
+        return res
+
+    def get_successors(self, the_objects=True, unrestricted=True):
+        ''' '''
+        res = getattr(self, 'linked_successor_uids', [])
+        if res and the_objects:
+            # res is a PersistentList, not working with catalog query
+            res = uuidsToObjects(uuids=tuple(res), unrestricted=unrestricted)
+        return res
+
+    def get_every_successors(obj):
+        '''Loop recursievely thru every successors of p_obj and return it.'''
+        def recurse_successors(successors, res=[]):
+            for successor in successors:
+                res.append(successor)
+                recurse_successors(successor.get_successors())
+            return res
+        res = recurse_successors(obj.get_successors())
+        return res
 
     def getMeeting(self, only_uid=False, caching=True):
         '''Returns the linked meeting if it exists.'''
@@ -6290,43 +6336,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                        for key, value in sibling.items()}
         return sibling.get(whichItem, sibling)
 
-    def set_predecessor(self, predecessor):
-        '''Only one predecessor possible but several successors.
-           If p_predecessor=None, we remove predecessor/successors attributes.'''
-        if predecessor:
-            self.linked_predecessor_uid = predecessor.UID()
-            if not getattr(predecessor, 'linked_successor_uids', None):
-                predecessor.linked_successor_uids = PersistentList()
-            predecessor.linked_successor_uids.append(self.UID())
-        else:
-            safe_delattr(self, 'linked_predecessor_uid')
-            safe_delattr(self, 'linked_successor_uids')
-
-    def get_predecessor(self, the_object=True, unrestricted=True):
-        ''' '''
-        res = getattr(self, 'linked_predecessor_uid', None)
-        if res and the_object:
-            res = uuidsToObjects(uuids=[res], unrestricted=unrestricted)[0]
-        return res
-
-    def get_successors(self, the_objects=True, unrestricted=True):
-        ''' '''
-        res = getattr(self, 'linked_successor_uids', [])
-        if res and the_objects:
-            # res is a PersistentList, not working with catalog query
-            res = uuidsToObjects(uuids=tuple(res), unrestricted=unrestricted)
-        return res
-
-    def get_every_successors(obj):
-        '''Loop recursievely thru every successors of p_obj and return it.'''
-        def recurse_successors(successors, res=[]):
-            for successor in successors:
-                res.append(successor)
-                recurse_successors(successor.get_successors())
-            return res
-        res = recurse_successors(obj.get_successors())
-        return res
-
     def showDuplicateItemAction_cachekey(method, self, brain=False):
         '''cachekey method for self.showDuplicateItemAction.'''
         return (repr(self), str(self.REQUEST._debug))
@@ -6473,7 +6482,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             if manualLinkToPredecessor:
                 newItem.setManuallyLinkedItems([self.UID()])
             else:
-                newItem.set_predecessor(self)
+                newItem._update_predecessor(self)
                 # manage inherited adviceIds
                 if inheritAdvices:
                     inheritedAdviserUids = [org_uid for org_uid in self.adviceIndex.keys()

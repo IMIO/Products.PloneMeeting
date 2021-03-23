@@ -6996,6 +6996,22 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertIsNone(newItem5.get_predecessor())
         self.assertEqual(newItem5.get_successors(), [])
 
+    def test_pm_ItemPredecessorMoved(self):
+        """As we use predecessor path to get it, when a predecessor is moved
+           the successor "linked_predecessor_path" attribute is updated."""
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        successor1 = item.clone(setCurrentAsPredecessor=True)
+        successor2 = item.clone(setCurrentAsPredecessor=True)
+        self.assertEqual(successor1.get_predecessor(), item)
+        self.assertEqual(successor2.get_predecessor(), item)
+        # rename item, change it's title, it will be renamed
+        item.setTitle('My new title b')
+        item.processForm()
+        self.assertEqual(item.getId(), 'my-new-title-b')
+        self.assertEqual(successor1.get_predecessor(), item)
+        self.assertEqual(successor2.get_predecessor(), item)
+
     def test_pm_DefaultItemTemplateNotMovable(self):
         """The default item template may not be moved to a subfolder."""
         cfg = self.meetingConfig
