@@ -141,9 +141,6 @@ Changelog
 - Removed the `@@check-pod-templates` view, we use the one from
   `collective.documentgenerator` that does the same.
   [gbastien]
-- Removed `MeetingItem.predecessor` `ReferenceField`, manage
- `predecessor/successors` manually, this will help migrating to DX.
- [gbastien]
 
 4.2b11 (2021-01-19)
 -------------------

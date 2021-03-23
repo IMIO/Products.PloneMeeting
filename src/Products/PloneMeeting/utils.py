@@ -1696,6 +1696,17 @@ def reviewersFor(cfg):
     return res
 
 
+def get_every_back_references(obj, relationship):
+    '''Loop recursievely thru every back reference of type p_relationship
+       for p_obj and return it.'''
+    def get_back_references(back_refs, res=[]):
+        for back_obj in back_refs:
+            res.append(back_obj)
+            get_back_references(back_obj.getBRefs(relationship), res)
+        return res
+    return get_back_references(obj.getBRefs(relationship))
+
+
 def get_states_before_cachekey(method, obj, review_state):
     '''cachekey method for get_states_before.'''
     # do only re-compute if cfg changed or params changed
