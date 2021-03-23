@@ -8,7 +8,6 @@
 from AccessControl import Unauthorized
 from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.contact.plonegroup.utils import get_plone_groups
-from collective.iconifiedcategory.event import IconifiedAttrChangedEvent
 from collective.iconifiedcategory.utils import calculate_category_id
 from collective.iconifiedcategory.utils import get_categories
 from collective.iconifiedcategory.utils import get_categorized_elements
@@ -441,7 +440,7 @@ class testMeetingItem(PloneMeetingTestCase):
         newUID = annotations[annotationKey]
         newItem = self.portal.uid_catalog(UID=newUID)[0].getObject()
         # the newItem is linked to the original
-        self.assertEqual(newItem.getPredecessor().UID(), item.UID())
+        self.assertEqual(newItem.get_predecessor(the_object=False), item.UID())
         # the newItem has a new portal_type
         self.assertNotEqual(newItem.portal_type, item.portal_type)
         self.assertEqual(newItem.portal_type, self.tool.getMeetingConfig(newItem).getItemTypeName())
@@ -1332,7 +1331,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # do this as 'Manager' in case 'MeetingManager' can not delete the item in used item workflow
         self.deleteAsManager(newItem.UID())
         originalItem.cloneToOtherMeetingConfig(self.meetingConfig2.getId())
-        newItem = originalItem.getBRefs('ItemPredecessor')[0]
+        newItem = originalItem.get_successors()[0]
         self.assertEqual(newItem.getCategory(), catIdOfMC2Mapped)
 
     def test_pm_SendItemToOtherMCManually(self):
@@ -1533,19 +1532,19 @@ class testMeetingItem(PloneMeetingTestCase):
 
         # no link
         itemWithNoLink = item.clone(setCurrentAsPredecessor=False)
-        self.assertFalse(itemWithNoLink.getPredecessor())
+        self.assertFalse(itemWithNoLink.get_predecessor())
         self.assertFalse(itemWithNoLink.getManuallyLinkedItems())
 
         # auto link
         itemWithAutoLink = item.clone(setCurrentAsPredecessor=True,
                                       manualLinkToPredecessor=False)
-        self.assertEqual(itemWithAutoLink.getPredecessor(), item)
+        self.assertEqual(itemWithAutoLink.get_predecessor(), item)
         self.assertFalse(itemWithAutoLink.getManuallyLinkedItems())
 
         # manual link
         itemWithManualLink = item.clone(setCurrentAsPredecessor=True,
                                         manualLinkToPredecessor=True)
-        self.assertFalse(itemWithManualLink.getPredecessor())
+        self.assertFalse(itemWithManualLink.get_predecessor())
         self.assertEqual(itemWithManualLink.getManuallyLinkedItems(),
                          [item])
         self.assertEqual(itemWithManualLink.getRawManuallyLinkedItems(),
@@ -4041,9 +4040,9 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(item2.getDecision(), delayedItemDecision)
         # if the item was duplicated (often the case when delaying an item), the duplicated
         # item keep the original decision
-        duplicatedItem = item2.getBRefs('ItemPredecessor')[0]
+        duplicatedItem = item2.get_successors()[0]
         # right duplicated item
-        self.assertEqual(duplicatedItem.getPredecessor(), item2)
+        self.assertEqual(duplicatedItem.get_predecessor(), item2)
         self.assertEqual(duplicatedItem.getDecision(), originalDecision)
         # this work also when triggering any other item or meeting transition with every rich fields
         item3 = items[2]
@@ -4944,7 +4943,7 @@ class testMeetingItem(PloneMeetingTestCase):
             'meetingTransitionInsertingMe', 'inAndOutMoves', 'notes',
             'meetingManagersNotes', 'meetingManagersNotesSuite', 'meetingManagersNotesEnd',
             'marginalNotes', 'observations', 'pollTypeObservations',
-            'predecessor', 'preferredMeeting', 'proposingGroup',
+            'preferredMeeting', 'proposingGroup',
             'takenOverBy', 'templateUsingGroups',
             'toDiscuss', 'committeeObservations', 'votesObservations',
             'otherMeetingConfigsClonableToEmergency',
@@ -5834,7 +5833,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(newItem2.getId(), 'copy_of_' + item.getId())
         notify(ObjectModifiedEvent(newItem2))
         self.assertEqual(newItem2.getId(), 'my-new-title-2')
-        self.assertEqual(newItem2.getPredecessor(), item)
+        self.assertEqual(newItem2.get_predecessor(), item)
 
     def test_pm_ItemRenamedUpdatesCategorizedElements(self):
         """As path is stored in the categorized_elements, make sure
@@ -6373,22 +6372,21 @@ class testMeetingItem(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         itemLinkedManually = self.create('MeetingItem')
         item.setManuallyLinkedItems([itemLinkedManually.UID()])
-        itemLinkedAuto = self.create('MeetingItem')
-        item.setPredecessor(itemLinkedAuto)
+        itemLinkedAuto = item.clone(setCurrentAsPredecessor=True)
         # items are viewable by powerobserver1 in the 'itemcreated' state
         self.changeUser('powerobserver1')
         self.assertEqual(item.getManuallyLinkedItems(), [itemLinkedManually])
         self.assertEqual(item.getManuallyLinkedItems(only_viewable=True), [itemLinkedManually])
-        self.assertEqual(item.getPredecessors(), [itemLinkedAuto])
-        self.assertEqual(item.getPredecessors(only_viewable=True), [itemLinkedAuto])
+        self.assertEqual(itemLinkedAuto.get_predecessors(), [item])
+        self.assertEqual(itemLinkedAuto.get_predecessors(only_viewable=True), [item])
         # make linked items no more viewable by powerobserver1
         self.proposeItem(itemLinkedManually)
-        self.proposeItem(itemLinkedAuto)
-        self.assertFalse(self.hasPermission(View, [itemLinkedManually, itemLinkedAuto]))
+        self.proposeItem(item)
+        self.assertFalse(self.hasPermission(View, [itemLinkedManually, item]))
         self.assertEqual(item.getManuallyLinkedItems(), [itemLinkedManually])
         self.assertEqual(item.getManuallyLinkedItems(only_viewable=True), [])
-        self.assertEqual(item.getPredecessors(), [itemLinkedAuto])
-        self.assertEqual(item.getPredecessors(only_viewable=True), [])
+        self.assertEqual(itemLinkedAuto.get_predecessors(), [item])
+        self.assertEqual(itemLinkedAuto.get_predecessors(only_viewable=True), [])
 
     def test_pm_GetLinkIsCached(self):
         """imio.prettylink getLink is cached."""
@@ -6936,6 +6934,67 @@ class testMeetingItem(PloneMeetingTestCase):
         # ... nor as item templates manager
         self.changeUser('templatemanager1')
         self.assertRaises(Redirect, api.content.delete, default_template)
+
+    def test_pm_ItemPredecessorLifecycle(self):
+        """As item predecessor is managed manually, check that it behaves correctly :
+           - correctly set;
+           - may have several successors;
+           - deleting an item in a chain update predecessor/successors correctly."""
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.assertIsNone(item.get_predecessor())
+        self.assertEqual(item.get_successors(), [])
+        # clone and set predecessor
+        newItem = item.clone(setCurrentAsPredecessor=True)
+        self.assertIsNone(item.get_predecessor())
+        self.assertEqual(item.get_successors(), [newItem])
+        self.assertEqual(newItem.get_predecessor(), item)
+        self.assertEqual(newItem.get_successors(), [])
+        # may have several successors
+        # practical usecase is when item delayed several times
+        newItem2 = item.clone(setCurrentAsPredecessor=True)
+        self.assertIsNone(item.get_predecessor())
+        self.assertEqual(item.get_successors(), [newItem, newItem2])
+        self.assertEqual(newItem.get_predecessor(), item)
+        self.assertEqual(newItem.get_successors(), [])
+        self.assertEqual(newItem2.get_predecessor(), item)
+        self.assertEqual(newItem2.get_successors(), [])
+        # removing a sucessor keeps other successor correct
+        self.deleteAsManager(newItem2.UID())
+        self.assertIsNone(item.get_predecessor())
+        self.assertEqual(item.get_successors(), [newItem])
+        self.assertEqual(item.get_successors(the_objects=False), [newItem.UID()])
+        self.assertEqual(newItem.get_predecessor(), item)
+        self.assertEqual(newItem.get_successors(), [])
+        # make a chain item/newItem/newItem3
+        newItem3 = newItem.clone(setCurrentAsPredecessor=True)
+        self.assertIsNone(item.get_predecessor())
+        self.assertEqual(item.get_successors(), [newItem])
+        self.assertEqual(newItem.get_predecessor(), item)
+        self.assertEqual(newItem.get_successors(), [newItem3])
+        self.assertEqual(newItem3.get_predecessor(), newItem)
+        self.assertEqual(newItem3.get_successors(), [])
+        # delete newItem, the chain is broken and everything is updated correctly
+        self.deleteAsManager(newItem.UID())
+        self.assertIsNone(item.get_predecessor())
+        self.assertEqual(item.get_successors(), [])
+        self.assertEqual(item.get_successors(the_objects=False), [])
+        self.assertIsNone(newItem3.get_predecessor())
+        self.assertIsNone(newItem3.get_predecessor(the_object=False))
+        self.assertEqual(newItem3.get_successors(), [])
+        # clone with predecessor then without predecessor
+        newItem4 = item.clone(setCurrentAsPredecessor=True)
+        self.assertIsNone(item.get_predecessor())
+        self.assertEqual(item.get_successors(), [newItem4])
+        self.assertEqual(newItem4.get_predecessor(), item)
+        self.assertEqual(newItem4.get_successors(), [])
+        newItem5 = newItem4.clone(setCurrentAsPredecessor=False)
+        self.assertIsNone(item.get_predecessor())
+        self.assertEqual(item.get_successors(), [newItem4])
+        self.assertEqual(newItem4.get_predecessor(), item)
+        self.assertEqual(newItem4.get_successors(), [])
+        self.assertIsNone(newItem5.get_predecessor())
+        self.assertEqual(newItem5.get_successors(), [])
 
     def test_pm_DefaultItemTemplateNotMovable(self):
         """The default item template may not be moved to a subfolder."""

@@ -572,6 +572,8 @@ def onItemCopied(item, event):
     for image_id in image_ids:
         item._delObject(image_id, suppress_events=True)
 
+    # remove predecessor infos
+    item.set_predecessor(None)
     # remove link with Meeting
     item._update_meeting_link(None)
 
@@ -969,6 +971,14 @@ def onItemWillBeRemoved(item, event):
     # If we are trying to remove the whole Plone Site or a MeetingConfig, bypass this hook.
     if event.object.meta_type in ['Plone Site', 'MeetingConfig']:
         return
+
+    # update item predecessor and successors
+    predecessor = item.get_predecessor()
+    if predecessor:
+        predecessor.linked_successor_uids.remove(item.UID())
+    successors = item.get_successors()
+    for successor in successors:
+        successor.linked_predecessor_uid = None
 
     return _redirect_if_default_item_template(item)
 

@@ -1,6 +1,6 @@
 <tal:defines i18n:domain="PloneMeeting"
              define="usedAttrs python: view.cfg.getUsedItemAttributes();
-                     predecessors python: context.adapted().getPredecessors(only_viewable=True);">
+                     predecessors python: context.adapted().get_predecessors(only_viewable=True);">
     <span class="item_attribute_label" i18n:translate="auto_linked_items">Automatically linked items</span>:&nbsp;&nbsp;
     <tal:predecessors define="linkedItems predecessors">
         <metal:linkedItems use-macro="here/@@pm-macros/linkedItems" />

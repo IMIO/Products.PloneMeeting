@@ -17,6 +17,7 @@ from imio.helpers.content import get_vocab
 from imio.helpers.content import validate_fields
 from OFS.ObjectManager import BeforeDeleteException
 from plone import api
+from plone.namedfile import NamedImage
 from Products.CMFCore.permissions import View
 from Products.PloneMeeting.browser.itemattendee import set_meeting_item_signatory
 from Products.PloneMeeting.content.directory import IPMDirectory
@@ -25,7 +26,6 @@ from Products.PloneMeeting.content.source import PMContactSourceBinder
 from Products.PloneMeeting.Extensions.imports import import_contacts
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.statusmessages.interfaces import IStatusMessage
-from plone.namedfile import NamedImage
 from z3c.relationfield.relation import RelationValue
 from zExceptions import Redirect
 from zope.component import getUtility
