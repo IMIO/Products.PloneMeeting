@@ -486,30 +486,6 @@ class Migrate_To_4200(Migrator):
                 field.set(cfg, sorted(keys))
         logger.info('Done.')
 
-    def _migrateItemPredecessorReference(self):
-        '''MeetingItem.predecessor ReferenceField is managed manually now.'''
-        logger.info("Migrating MeetingItem.predecessor ReferenceField...")
-        pghandler = ZLogHandler(steps=100)
-        brains = self.portal.reference_catalog(relationship='ItemPredecessor')
-        pghandler.init('Migrating MeetingItem.predecessor reference field...', len(brains))
-        pghandler.info('Migrating MeetingItem.predecessor reference field...')
-        i = 0
-        for brain in brains:
-            i += 1
-            pghandler.report(i)
-            relation = brain.getObject()
-            item = relation.getSourceObject()
-            predecessor = relation.getTargetObject()
-            item.set_predecessor(predecessor)
-        # deleteReferences in a second phase
-        for brain in brains:
-            relation = brain.getObject()
-            if relation:
-                item = relation.getSourceObject()
-                item.deleteReferences('ItemPredecessor')
-        pghandler.finish()
-        logger.info('Done.')
-
     def run(self, extra_omitted=[]):
         logger.info('Migrating to PloneMeeting 4200...')
 
@@ -520,8 +496,6 @@ class Migrate_To_4200(Migrator):
 
         # update preferred meeting path on items
         self._updateItemPreferredMeetingLink()
-
-        self._migrateItemPredecessorReference()
 
         # remove useless catalog indexes and columns, were renamed to snake case
         self.removeUnusedIndexes(
@@ -615,20 +589,18 @@ def migrate(context):
 
        1) Fix faceted filters;
        2) Update applied batch actions marker interface on every member folders;
-       3) Update preferredMeeting behavior;
-       4) Remove and migrate item predecessor;
-       5) Remove unused indexes and metadata;
-       6) Remove Meeting.items reference field;
-       7) Configure votes;
-       8) Update Meeting.itemSignatories to manage stored position_type;
-       9) Fix DX RichText mimetype;
-       10) Configure field MeetingConfig.itemWFValidationLevels depending on old wfAdaptations;
-       11) Migrate MeetingConfig.keepAccessToItemWhenAdviceIsGiven to
+       3) Remove unused indexes and metadata;
+       4) Remove Meeting.items reference field;
+       5) Configure votes;
+       6) Update Meeting.itemSignatories to manage stored position_type;
+       7) Fix DX RichText mimetype;
+       8) Configure field MeetingConfig.itemWFValidationLevels depending on old wfAdaptations;
+       9) Migrate MeetingConfig.keepAccessToItemWhenAdviceIsGiven to
           MeetingConfig.keepAccessToItemWhenAdvice;
-       12) Init otherMeetingConfigsClonableToFieldXXX new fields;
-       13) Update faceted filters;
-       14) Update holidays;
-       15) Refresh items local roles and recatalog.
+       10) Init otherMeetingConfigsClonableToFieldXXX new fields;
+       11) Update faceted filters;
+       12) Update holidays;
+       13) Refresh items local roles and recatalog.
     '''
     migrator = Migrate_To_4200(context)
     migrator.run()

@@ -19,7 +19,6 @@ from DateTime import DateTime
 from datetime import datetime
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.helpers.content import get_vocab
-from imio.helpers.content import safe_delattr
 from imio.helpers.content import uuidsToObjects
 from imio.helpers.content import uuidToCatalogBrain
 from imio.helpers.security import fplog
@@ -103,6 +102,7 @@ from Products.PloneMeeting.utils import decodeDelayAwareId
 from Products.PloneMeeting.utils import down_or_up_wf
 from Products.PloneMeeting.utils import fieldIsEmpty
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
+from Products.PloneMeeting.utils import get_every_back_references
 from Products.PloneMeeting.utils import get_states_before
 from Products.PloneMeeting.utils import getCurrentMeetingObject
 from Products.PloneMeeting.utils import getCustomAdapter
@@ -1611,6 +1611,17 @@ schema = Schema((
         default_output_type="text/x-html-safe",
         optional=True,
         write_permission="PloneMeeting: Write item MeetingManager reserved fields",
+    ),
+    ReferenceField(
+        name='predecessor',
+        widget=ReferenceBrowserWidget(
+            visible=False,
+            label='Predecessor',
+            label_msgid='PloneMeeting_label_predecessor',
+            i18n_domain='PloneMeeting',
+        ),
+        multiValued=False,
+        relationship="ItemPredecessor",
     ),
     ReferenceField(
         name='manuallyLinkedItems',
@@ -4523,7 +4534,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def getUnhandledInheritedAdvisersData(self, adviserUids, optional):
         """ """
-        predecessor = self.get_predecessor()
+        predecessor = self.getPredecessor()
         res = []
         for adviserUid in adviserUids:
             # adviserId could not exist if we removed an inherited initiative advice for example
@@ -4886,7 +4897,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            If p_checkIsInherited is True, it will check that current advice is actually inherited,
            otherwise, it will not check and return the potential inherited advice."""
         res = None
-        predecessor = self.get_predecessor()
+        predecessor = self.getPredecessor()
         if not predecessor:
             return res
 
@@ -4894,7 +4905,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         while (predecessor and
                predecessor.adviceIndex.get(adviserId) and
                predecessor.adviceIndex[adviserId]['inherited']):
-            predecessor = predecessor.get_predecessor()
+            predecessor = predecessor.getPredecessor()
             inheritedAdviceInfo = deepcopy(predecessor.adviceIndex.get(adviserId))
 
         res = inheritedAdviceInfo
@@ -5696,18 +5707,18 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         # update adviceIndex of every items for which I am the predecessor
         # this way inherited advices are correct if any
-        successors = self.get_every_successors()
-        for successor in successors:
+        back_objs = get_every_back_references(self, 'ItemPredecessor')
+        for back_obj in back_objs:
             # removed inherited advice uids are advice removed on original item
             # that were inherited on back references
             removedInheritedAdviserUids = [
-                adviceInfo['id'] for adviceInfo in successor.adviceIndex.values()
+                adviceInfo['id'] for adviceInfo in back_obj.adviceIndex.values()
                 if adviceInfo.get('inherited', False) and
                 adviceInfo['id'] not in self.adviceIndex]
             if removedInheritedAdviserUids:
                 for removedInheritedAdviserUid in removedInheritedAdviserUids:
-                    successor.adviceIndex[removedInheritedAdviserUid]['inherited'] = False
-                successor.update_local_roles()
+                    back_obj.adviceIndex[removedInheritedAdviserUid]['inherited'] = False
+                back_obj.update_local_roles()
 
         # notify that advices have been updated so subproducts
         # may interact if necessary
@@ -6290,43 +6301,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                        for key, value in sibling.items()}
         return sibling.get(whichItem, sibling)
 
-    def set_predecessor(self, predecessor):
-        '''Only one predecessor possible but several successors.
-           If p_predecessor=None, we remove predecessor/successors attributes.'''
-        if predecessor:
-            self.linked_predecessor_uid = predecessor.UID()
-            if not getattr(predecessor, 'linked_successor_uids', None):
-                predecessor.linked_successor_uids = PersistentList()
-            predecessor.linked_successor_uids.append(self.UID())
-        else:
-            safe_delattr(self, 'linked_predecessor_uid')
-            safe_delattr(self, 'linked_successor_uids')
-
-    def get_predecessor(self, the_object=True, unrestricted=True):
-        ''' '''
-        res = getattr(self, 'linked_predecessor_uid', None)
-        if res and the_object:
-            res = uuidsToObjects(uuids=[res], unrestricted=unrestricted)[0]
-        return res
-
-    def get_successors(self, the_objects=True, unrestricted=True):
-        ''' '''
-        res = getattr(self, 'linked_successor_uids', [])
-        if res and the_objects:
-            # res is a PersistentList, not working with catalog query
-            res = uuidsToObjects(uuids=tuple(res), unrestricted=unrestricted)
-        return res
-
-    def get_every_successors(obj):
-        '''Loop recursievely thru every successors of p_obj and return it.'''
-        def recurse_successors(successors, res=[]):
-            for successor in successors:
-                res.append(successor)
-                recurse_successors(successor.get_successors())
-            return res
-        res = recurse_successors(obj.get_successors())
-        return res
-
     def showDuplicateItemAction_cachekey(method, self, brain=False):
         '''cachekey method for self.showDuplicateItemAction.'''
         return (repr(self), str(self.REQUEST._debug))
@@ -6388,7 +6362,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            If p_setCurrentAsPredecessor, current item will be set as predecessor
            for the new item, concomitantly if p_manualLinkToPredecessor is True and
            optional field MeetingItem.manuallyLinkedItems is enabled, this will create
-           a manualLink to the predecessor, otherwise, the linked_predecessor_uid is used
+           a manualLink to the predecessor, otherwise, the 'ItemPredecessor' reference is used
            and the link is unbreakable (at least thru the UI).
            If p_inheritAdvices is True, advices will be inherited from predecessor,
            this also needs p_setCurrentAsPredecessor=True and p_manualLinkToPredecessor=False.
@@ -6473,7 +6447,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             if manualLinkToPredecessor:
                 newItem.setManuallyLinkedItems([self.UID()])
             else:
-                newItem.set_predecessor(self)
+                newItem.setPredecessor(self)
                 # manage inherited adviceIds
                 if inheritAdvices:
                     inheritedAdviserUids = [org_uid for org_uid in self.adviceIndex.keys()
@@ -6817,7 +6791,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if item.meta_type not in ['Plone Site', 'MeetingConfig'] and not item._at_creation_flag:
             # If the item has a predecessor in another meetingConfig we must remove
             # the annotation on the predecessor specifying it.
-            predecessor = self.get_predecessor()
+            predecessor = self.getPredecessor()
             if predecessor:
                 tool = api.portal.get_tool('portal_plonemeeting')
                 cfgId = tool.getMeetingConfig(self).getId()
@@ -6842,12 +6816,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def _cleanAdviceInheritance(self, item, adviceId):
         '''Clean advice inheritance for given p_adviceId on p_item.'''
-        successors = self.get_every_successors()
-        for successor in successors:
-            if successor.adviceIndex.get(adviceId, None) and \
-               successor.adviceIndex[adviceId]['inherited']:
-                successor.adviceIndex[adviceId]['inherited'] = False
-                successor.update_local_roles()
+        back_objs = get_every_back_references(self, 'ItemPredecessor')
+        for back_obj in back_objs:
+            if back_obj.adviceIndex.get(adviceId, None) and \
+               back_obj.adviceIndex[adviceId]['inherited']:
+                back_obj.adviceIndex[adviceId]['inherited'] = False
+                back_obj.update_local_roles()
 
     security.declarePublic('get_attendees')
 
@@ -6878,26 +6852,30 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 return False
         return True
 
-    security.declarePublic('get_predecessors')
+    security.declarePublic('getPredecessors')
 
-    def get_predecessors(self, only_viewable=False):
-        '''See doc in interfaces.py.'''
+    def getPredecessors(self, only_viewable=False):
+        '''Returns the list of dict that contains infos about a predecessor.
+           This method can be adapted.'''
         item = self.getSelf()
 
-        predecessor = item.get_predecessor()
+        predecessor = item.getPredecessor()
         predecessors = []
         # retrieve every predecessors
         while predecessor:
             if item._appendLinkedItem(predecessor, only_viewable=only_viewable):
                 predecessors.append(predecessor)
-            predecessor = predecessor.get_predecessor()
+            predecessor = predecessor.getPredecessor()
         # keep order
         predecessors.reverse()
-        # retrieve successors too
-        successors = item.get_every_successors()
-        successors = [successor for successor in successors
-                      if item._appendLinkedItem(successor, only_viewable)]
-        return predecessors + successors
+        # retrieve backrefs too
+        brefs = item.getBRefs('ItemPredecessor')
+        brefs = [bref for bref in brefs if item._appendLinkedItem(bref, only_viewable)]
+        while brefs:
+            predecessors = predecessors + brefs
+            brefs = brefs[0].getBRefs('ItemPredecessor')
+            brefs = [bref for bref in brefs if item._appendLinkedItem(bref, only_viewable)]
+        return predecessors
 
     security.declarePublic('displayLinkedItem')
 
@@ -7032,7 +7010,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('getAdviceRelatedIndexes')
 
     def getAdviceRelatedIndexes(self):
-        '''See doc in interfaces.py.'''
+        '''See doc in utils.py.'''
         return ['indexAdvisers']
 
     def _mayChangeAttendees(self):

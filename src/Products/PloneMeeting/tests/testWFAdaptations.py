@@ -1975,8 +1975,8 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.decideMeeting(meeting)
         self.do(item, 'postpone_next_meeting')
         # duplicated and duplicated item is validated
-        clonedItem = item.get_successors()[0]
-        self.assertEqual(clonedItem.get_predecessor(), item)
+        clonedItem = item.getBRefs('ItemPredecessor')[0]
+        self.assertEqual(clonedItem.getPredecessor(), item)
         self.assertEqual(clonedItem.query_state(), 'validated')
         # optional and automatic given advices were inherited
         self.assertTrue(clonedItem.adviceIsInherited(self.vendors_uid))
@@ -2004,8 +2004,8 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.decideMeeting(meeting)
         self.do(item, 'postpone_next_meeting')
         # duplicated and duplicated item is validated
-        clonedItem = item.get_successors()[0]
-        self.assertEqual(clonedItem.get_predecessor(), item)
+        clonedItem = item.getBRefs('ItemPredecessor')[0]
+        self.assertEqual(clonedItem.getPredecessor(), item)
         self.assertEqual(clonedItem.query_state(), 'validated')
 
     def _check_item_decision_state(self,
@@ -2055,10 +2055,10 @@ class testWFAdaptations(PloneMeetingTestCase):
 
         if not will_be_cloned:
             # no predecessor was set
-            self.assertEqual(item.get_successors(the_objects=False), [])
+            self.assertFalse(item.getBRefs('ItemPredecessor'))
         else:
             # item was duplicated and new item is in it's initial state
-            linked_item = item.get_successors()[0]
+            linked_item = item.getBRefs('ItemPredecessor')[0]
             self.assertEqual(linked_item.query_state(), self._initial_state(linked_item))
 
         if additional_wf_transitions:
@@ -2307,7 +2307,6 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertEqual(item.query_state(), 'accepted_out_of_meeting')
         # not duplicated
         self.assertFalse(item.getBRefs())
-        self.assertFalse(item.get_successors())
         # back transition
         self.do(item, 'backToValidatedFromAcceptedOutOfMeeting')
         self.assertEqual(item.query_state(), 'validated')
@@ -2320,8 +2319,8 @@ class testWFAdaptations(PloneMeetingTestCase):
             wfas.append('accepted_out_of_meeting_and_duplicated')
             self._activate_wfas(wfas)
             self.do(item, 'accept_out_of_meeting')
-            duplicated_item = item.get_successors()[0]
-            self.assertEqual(duplicated_item.get_predecessor(), item)
+            duplicated_item = item.getBRefs()[0]
+            self.assertEqual(duplicated_item.getPredecessor(), item)
             self.assertEqual(duplicated_item.query_state(), 'validated')
             # duplicated_item is not more isAcceptableOutOfMeeting
             self.assertFalse(duplicated_item.getIsAcceptableOutOfMeeting())
@@ -2373,7 +2372,6 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertEqual(item.query_state(), 'accepted_out_of_meeting_emergency')
         # not duplicated
         self.assertFalse(item.getBRefs())
-        self.assertEqual(item.get_successors(the_objects=False), [])
         # back transition
         self.do(item, 'backToValidatedFromAcceptedOutOfMeetingEmergency')
         self.assertEqual(item.query_state(), 'validated')
@@ -2386,8 +2384,8 @@ class testWFAdaptations(PloneMeetingTestCase):
             wfas.append('accepted_out_of_meeting_emergency_and_duplicated')
             self._activate_wfas(wfas)
             self.do(item, 'accept_out_of_meeting_emergency')
-            duplicated_item = item.get_successors()[0]
-            self.assertEqual(duplicated_item.get_predecessor(), item)
+            duplicated_item = item.getBRefs()[0]
+            self.assertEqual(duplicated_item.getPredecessor(), item)
             self.assertEqual(duplicated_item.query_state(), 'validated')
             # duplicated_item emergency is no more asked
             self.assertEqual(duplicated_item.getEmergency(), 'no_emergency')
