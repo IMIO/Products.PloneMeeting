@@ -93,15 +93,22 @@ class testSetup(PloneMeetingTestCase):
             tool = api.portal.get_tool('portal_plonemeeting')
             for cfg in tool.objectValues('MeetingConfig'):
                 view = cfg.restrictedTraverse('@@check-pod-templates')
-                messages = view.manageMessages()
-                self.assertEqual(messages['error'], [])
-                self.assertEqual(messages['no_pod_portal_types'], [])
+                view()
+                self.assertEqual(view.messages['check_pod_template_error'], [])
+                # ignore DashboardPODTemplate, it has a pod_portal_types attribute
+                # but it is omitted in the form
+                self.assertFalse(
+                    [pod_template for pod_template in view.messages[
+                        'check_pod_template_no_pod_portal_types']
+                     if pod_template.portal_type != 'DashboardPODTemplate'])
                 # check that there are no new keys in messages
-                self.assertEqual(messages.keys(),
-                                 ['error', 'no_obj_found',
-                                  'no_pod_portal_types', 'not_enabled',
-                                  'dashboard_templates_not_managed',
-                                  'style_templates_not_managed', 'clean'])
+                self.assertEqual(view.messages.keys(),
+                                 ['check_pod_template_error',
+                                  'check_pod_template_no_obj_found',
+                                  'check_pod_template_no_pod_portal_types',
+                                  'check_pod_template_not_enabled',
+                                  'check_pod_template_not_managed',
+                                  'check_pod_template_clean'])
                 # access application to check that not errors are raised,
                 # especially regarding the searches displayed in the collection portlet
                 # make sure extra searches are added
