@@ -2625,6 +2625,7 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg.setEnableItemDuplication(False)
 
         self.changeUser('pmCreator1')
+        pm_folder = self.getMeetingFolder()
         item = self.create('MeetingItem')
         # unable to duplicate as functionnality disabled
         form = item.restrictedTraverse('@@item_duplicate_form').form_instance
@@ -2639,15 +2640,21 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(item.showDuplicateItemAction())
         form.update()
         self.assertIsNone(form._check_auth())
+        self.assertTrue(form.render())
         # keep_link=False
-        data = {'keep_link': False, 'annex_ids': [], 'annex_decision_ids': []}
+        self.request['form.widgets.keep_link'] = ['false']
+        self.request['form.widgets.annex_ids'] = []
+        self.request['form.widgets.annex_decision_ids'] = []
         form.update()
-        newItem = form._doApply(data)
+        form.handleApply(form, None)
         self.assertFalse(item.getBRefs())
+        # get the new item
+        newItem = pm_folder.objectValues()[-1]
         # keep_link=True
-        data['keep_link'] = True
+        self.request['form.widgets.keep_link'] = ['true']
         form.update()
-        newItem = form._doApply(data)
+        form.handleApply(form, None)
+        newItem = pm_folder.objectValues()[-1]
         self.assertEqual(item.getBRefs(), [newItem])
         # clone with annexes
         annex1 = self.addAnnex(item)
@@ -2659,24 +2666,30 @@ class testMeetingItem(PloneMeetingTestCase):
         decision_annex2 = self.addAnnex(item, relatedTo='item_decision')
         decision_annex2_id = decision_annex2.getId()
         # define nothing, no annexes kept
-        newItem = form._doApply(data)
+        form.handleApply(form, None)
+        newItem = pm_folder.objectValues()[-1]
         self.assertEqual(get_annexes(newItem), [])
         # keep every annexes
-        data['annex_ids'] = [annex1_id, annex2_id]
-        data['annex_decision_ids'] = [decision_annex1_id, decision_annex2_id]
+        self.request['form.widgets.annex_ids'] = [annex1_id, annex2_id]
+        self.request['form.widgets.annex_decision_ids'] = [decision_annex1_id, decision_annex2_id]
         form.update()
-        newItem = form._doApply(data)
+        form.handleApply(form, None)
+        newItem = pm_folder.objectValues()[-1]
         self.assertEqual(
             [annex.getId() for annex in get_annexes(newItem)],
             [annex1_id, annex2_id, decision_annex1_id, decision_annex2_id])
         # keep some annexes
-        data['annex_ids'] = [annex2_id]
-        data['annex_decision_ids'] = [decision_annex1_id]
+        self.request['form.widgets.annex_ids'] = [annex2_id]
+        self.request['form.widgets.annex_decision_ids'] = [decision_annex1_id]
         form.update()
-        newItem = form._doApply(data)
+        form.handleApply(form, None)
+        newItem = pm_folder.objectValues()[-1]
         self.assertEqual(
             [annex.getId() for annex in get_annexes(newItem)],
             [annex2_id, decision_annex1_id])
+        # cancel
+        form.handleCancel(form, None)
+        self.assertFalse(form.render())
 
         # only creators may clone an item
         self.proposeItem(item)
