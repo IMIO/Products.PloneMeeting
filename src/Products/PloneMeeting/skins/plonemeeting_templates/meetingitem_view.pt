@@ -412,7 +412,7 @@
     </tal:assembly_and_signatures_no_meeting  >
 
     <tal:comment replace="nothing">Linked items</tal:comment>
-    <tal:defines define="predecessors python: context.adapted().getPredecessors(only_viewable=True);
+    <tal:defines define="predecessors python: context.adapted().get_predecessors(only_viewable=True);
                          linkedItems python: context.getManuallyLinkedItems(only_viewable=True);
                          showManuallyLinkedItems python: 'manuallyLinkedItems' in usedAttrs or linkedItems;
                          class_to_use python: (predecessors or linkedItems) and 'item_attribute_label highlightValue' or 'item_attribute_label';">

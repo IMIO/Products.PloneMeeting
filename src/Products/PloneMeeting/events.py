@@ -572,6 +572,8 @@ def onItemCopied(item, event):
     for image_id in image_ids:
         item._delObject(image_id, suppress_events=True)
 
+    # remove predecessor infos
+    item._update_predecessor(None)
     # remove link with Meeting
     item._update_meeting_link(None)
 
@@ -582,9 +584,11 @@ def onItemMoved(item, event):
     if IObjectRemovedEvent.providedBy(event):
         return
 
-    # update categorized_elements when renaming because path changed
+    # update elements depending on item path as it changed
     if item._at_creation_flag:
         update_all_categorized_elements(item)
+        for successor in item.get_successors():
+            successor._update_predecessor(item)
 
     # check if we are not pasting items from a MC to another
     _check_item_pasted_in_cfg(item)
@@ -970,6 +974,14 @@ def onItemWillBeRemoved(item, event):
     if event.object.meta_type in ['Plone Site', 'MeetingConfig']:
         return
 
+    # update item predecessor and successors
+    predecessor = item.get_predecessor()
+    if predecessor:
+        predecessor.linked_successor_uids.remove(item.UID())
+    successors = item.get_successors()
+    for successor in successors:
+        successor.linked_predecessor_uid = None
+
     return _redirect_if_default_item_template(item)
 
 
@@ -1090,13 +1102,13 @@ def onMeetingMoved(meeting, event):
         return
 
     # update linked_meeting_path on every items because path changed
-    meeting_uid = meeting.UID()
     for item in meeting.get_items():
-        item._update_meeting_link(meeting_uid)
+        item._update_meeting_link(meeting)
 
     # update preferred_meeting_path
     catalog = api.portal.get_tool('portal_catalog')
-    brains = catalog.unrestrictedSearchResults(preferred_meeting_uid=meeting.UID())
+    meeting_uid = meeting.UID()
+    brains = catalog.unrestrictedSearchResults(preferred_meeting_uid=meeting_uid)
     for brain in brains:
         item = brain._unrestrictedGetObject()
         item._update_preferred_meeting(meeting_uid)

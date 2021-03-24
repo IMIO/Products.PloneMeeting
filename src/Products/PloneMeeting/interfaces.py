@@ -173,11 +173,8 @@ class IMeetingItemDocumentation:
     def mustShowItemReference():
         '''When must I show the item reference ? In the default implementation,
            item references are shown as soon as a meeting is published.'''
-    def getPredecessors():
-        '''Return a list of dict containing informations we want to show about
-           the predecessors.  The dict will contains the 'title' to display,
-           the 'url' to link to, the 'tagtitle' that will be used as title for the
-           link HTML tag and a 'class' defining a css class name'''
+    def get_predecessors():
+        '''Returns the entire chain of predecessors and successors.'''
     def addRecurringItemToMeeting(meeting):
         '''This meeting item was just created (by copy/pasting a recurring item)
            in the folder that also contains the p_meeting into which it must
