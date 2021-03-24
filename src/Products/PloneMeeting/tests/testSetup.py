@@ -94,12 +94,12 @@ class testSetup(PloneMeetingTestCase):
             for cfg in tool.objectValues('MeetingConfig'):
                 view = cfg.restrictedTraverse('@@check-pod-templates')
                 view()
-                self.assertEqual(view.messages['check_pod_template_error'], [])
+                self.assertEqual(view.messages['check_pod_template_error'], {})
                 # ignore DashboardPODTemplate, it has a pod_portal_types attribute
                 # but it is omitted in the form
                 self.assertFalse(
-                    [pod_template for pod_template in view.messages[
-                        'check_pod_template_no_pod_portal_types']
+                    [pod_template for pod_template, dummy, dummy in
+                     view.no_pod_portal_types.values()[0]
                      if pod_template.portal_type != 'DashboardPODTemplate'])
                 # check that there are no new keys in messages
                 self.assertEqual(view.messages.keys(),
