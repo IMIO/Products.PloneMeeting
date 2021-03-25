@@ -29,6 +29,8 @@ from collective.iconifiedcategory.utils import calculate_category_id
 from collective.iconifiedcategory.utils import get_categories
 from collective.iconifiedcategory.utils import get_categorized_elements
 from collective.iconifiedcategory.utils import get_category_object
+from datetime import date
+from datetime import timedelta
 from DateTime import DateTime
 from imio.helpers.cache import cleanRamCacheFor
 from persistent.mapping import PersistentMapping
@@ -1149,6 +1151,64 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         infos = _categorized_elements(item)
         self.assertEqual(infos[annex.UID()]['preview_status'], 'not_converted')
         self.assertEqual(infos[annex_decision.UID()]['preview_status'], 'not_converted')
+
+    def test_pm_validate_holidays(self):
+        """Test the ToolPloneMeeting.holidays validator."""
+        cfg = self.meetingConfig
+        self.changeUser('siteadmin')
+        # check correct holidays
+        self.failIf(self.tool.validate_holidays(
+            ({'date': '2021/01/01'},
+             {'date': '2021/04/22'},
+             {'date': '2022/01/01'},
+             {'date': '2022/04/22'})))
+        # fails when dates not ordered
+        self.assertEqual(
+            self.tool.validate_holidays(
+                ({'date': '2022/01/01'},
+                 {'date': '2021/01/01'})),
+            u"holidays_date_not_ascending_error")
+        self.assertEqual(
+            self.tool.validate_holidays(
+                ({'date': '2022/01/01'},
+                 {'date': '2022/01/01'})),
+            u"holidays_date_not_ascending_error")
+        # date format must be YYYY/MM/DD
+        self.assertEqual(
+            self.tool.validate_holidays(
+                ({'date': '01/01/2021'},
+                 {'date': '01/01/2022'})),
+            u"holidays_wrong_date_format_error")
+        self.assertEqual(
+            self.tool.validate_holidays(
+                ({'date': '20/01/01'},
+                 {'date': '21/01/01'})),
+            u"holidays_wrong_date_format_error")
+        # fails when a removed date was in use, this is the case for delay advices
+        customAdvisers = [{'row_id': 'unique_id_123',
+                           'org': self.vendors_uid,
+                           'gives_auto_advice_on': 'python:True',
+                           'for_item_created_from': '2021/01/01',
+                           'for_item_created_until': '',
+                           'gives_auto_advice_on_help_message': '',
+                           'delay': '10',
+                           'delay_left_alert': '',
+                           'delay_label': '',
+                           'available_on': '',
+                           'is_linked_to_previous_row': '0', }, ]
+        cfg.setCustomAdvisers(customAdvisers)
+        # configure a holday for tomorrow
+        tomorrow = (date.today() + timedelta(days=1)).strftime('%Y/%m/%d')
+        self.tool.setHolidays(({'date': tomorrow}, ))
+        self.changeUser("pmManager")
+        item = self.create('MeetingItem')
+        # delay not started so holiday may be removed
+        self.assertFalse(item.adviceIndex[self.vendors_uid]['delay_started_on'])
+        self.failIf(self.tool.validate_holidays(()))
+        self.proposeItem(item)
+        self.assertEqual(self.tool.validate_holidays(()),
+                         u'You removed a date that is currently in use! '
+                         u'Check item at {0}'.format(item.absolute_url()))
 
 
 def test_suite():
