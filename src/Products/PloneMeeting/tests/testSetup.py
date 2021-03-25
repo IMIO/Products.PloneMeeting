@@ -97,10 +97,13 @@ class testSetup(PloneMeetingTestCase):
                 self.assertEqual(view.messages['check_pod_template_error'], {})
                 # ignore DashboardPODTemplate, it has a pod_portal_types attribute
                 # but it is omitted in the form
-                self.assertFalse(
-                    [pod_template for pod_template, dummy, dummy in
-                     view.no_pod_portal_types.values()[0]
-                     if pod_template.portal_type != 'DashboardPODTemplate'])
+                no_pod_portal_types = view.no_pod_portal_types.copy()
+                if no_pod_portal_types:
+                    no_pod_portal_types = [
+                        pod_template for pod_template, dummy, dummy in
+                        view.no_pod_portal_types.values()[0]
+                        if pod_template.portal_type != 'DashboardPODTemplate']
+                self.assertFalse(no_pod_portal_types)
                 # check that there are no new keys in messages
                 self.assertEqual(view.messages.keys(),
                                  ['check_pod_template_error',
