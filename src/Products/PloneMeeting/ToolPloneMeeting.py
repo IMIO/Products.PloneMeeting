@@ -72,6 +72,7 @@ from Products.PloneMeeting.config import ROOT_FOLDER
 from Products.PloneMeeting.config import SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY
 from Products.PloneMeeting.content.meeting import IMeeting
 from Products.PloneMeeting.content.meeting import Meeting
+from Products.PloneMeeting.indexes import DELAYAWARE_ROW_ID_PATTERN
 from Products.PloneMeeting.interfaces import IMeetingItem
 from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.profiles import PloneMeetingConfiguration
@@ -307,7 +308,9 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     def validate_holidays(self, values):
         '''Checks if encoded holidays are correct :
            - dates must respect format YYYY/MM/DD;
-           - dates must be encoded ascending (older to newer).'''
+           - dates must be encoded ascending (older to newer);
+           - a date in use (in computation of delay aware advice)
+             can not be removed.'''
         if values == [{'date': '', 'orderindex_': 'template_row_marker'}]:
             return
         # first try to see if format is correct
@@ -316,6 +319,10 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             if row.get('orderindex_', None) == 'template_row_marker':
                 continue
             try:
+                row_date = DateTime(row['date'])
+                # and check if given format respect wished one
+                if not row_date.strftime('%Y/%m/%d') == row['date']:
+                    raise Exception
                 year, month, day = row['date'].split('/')
                 dates.append(datetime(int(year), int(month), int(day)))
             except:
@@ -339,25 +346,32 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             # the rule is in use, check every items if the rule is used
             catalog = api.portal.get_tool('portal_catalog')
             cfgs = self.objectValues('MeetingConfig')
-            brains = catalog(portal_type=[cfg.getItemTypeName() for cfg in cfgs])
             year, month, day = date.split('/')
             date_as_datetime = datetime(int(year), int(month), int(day))
-            for brain in brains:
-                item = brain.getObject()
-                for adviser in item.adviceIndex.values():
-                    # if it is a delay aware advice, we check that the date
-                    # was not used while computing delay
-                    if adviser['delay'] and adviser['delay_started_on']:
-                        start_date = adviser['delay_started_on']
-                        if start_date > date_as_datetime:
-                            continue
-                        end_date = workday(start_date,
-                                           int(adviser['delay']),
-                                           holidays=holidays,
-                                           weekends=weekends,
-                                           unavailable_weekdays=unavailable_weekdays)
-                        if end_date > date_as_datetime:
-                            return item.absolute_url()
+            for cfg in cfgs:
+                # compute the indexAdvisers depending on delay aware customAdvisers
+                row_ids = [ca['row_id'] for ca in cfg.getCustomAdvisers()
+                           if ca['delay']]
+                indexAdvisers = [DELAYAWARE_ROW_ID_PATTERN.format(row_id)
+                                 for row_id in row_ids]
+                brains = catalog(portal_type=cfg.getItemTypeName(),
+                                 indexAdvisers=indexAdvisers)
+                for brain in brains:
+                    item = brain.getObject()
+                    for adviser in item.adviceIndex.values():
+                        # if it is a delay aware advice, we check that the date
+                        # was not used while computing delay
+                        if adviser['delay'] and adviser['delay_started_on']:
+                            start_date = adviser['delay_started_on']
+                            if start_date > date_as_datetime:
+                                continue
+                            end_date = workday(start_date,
+                                               int(adviser['delay']),
+                                               holidays=holidays,
+                                               weekends=weekends,
+                                               unavailable_weekdays=unavailable_weekdays)
+                            if end_date > date_as_datetime:
+                                return item.absolute_url()
 
         removed_dates = stored_dates.difference(dates_to_save)
         holidays = self.getHolidaysAs_datetime()
