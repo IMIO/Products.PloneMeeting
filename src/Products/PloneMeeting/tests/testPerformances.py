@@ -691,6 +691,20 @@ class testPerformances(PloneMeetingTestCase):
         for time in range(times):
             item.getMeeting(only_uid=False, caching=caching)
 
+    def test_pm_ToolGroupIsNotEmpty(self):
+        '''Test ToolPloneMeeting.group_is_not_empty method performances.
+           More performant without ram.cache'''
+        self.changeUser('pmManager')
+        # call group_is_not_empty 2000 times
+        self._tool_group_is_not_empty(self.vendors_uid, "creators", times=1000)
+
+    @timecall
+    def _tool_group_is_not_empty(self, org_uid, suffix, times=1):
+        ''' '''
+        pm_logger.info('Call {0} times'.format(times))
+        for time in range(times):
+            self.tool.group_is_not_empty(self.vendors_uid, "creators")
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

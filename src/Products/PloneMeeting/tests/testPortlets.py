@@ -89,11 +89,14 @@ class testPortlets(PloneMeetingTestCase):
 
         # viewable in portlet_plonemeeting
         self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        item_url = item.absolute_url()
         cleanRamCacheFor('Products.PloneMeeting.adapters.compute_criteria')
         self.assertTrue(searchAllItemsUID in self.portlet_pm_renderer.render())
         # and viewable in portlet_todo
         self.request.set('load_portlet_todo', True)
         self.assertTrue(searchAllItemsUID in self.portlet_todo_renderer.render())
+        self.assertTrue(item_url in self.portlet_todo_renderer.render())
 
         # set 'python: fromPortletTodo' as condition for a search, it will be displayed
         # in the portlet_todo but not in the portlet_plonemeeting
@@ -104,6 +107,7 @@ class testPortlets(PloneMeetingTestCase):
         self.assertFalse(searchAllItemsUID in self.portlet_pm_renderer.render())
         # but viewable in portlet_todo
         self.assertTrue(searchAllItemsUID in self.portlet_todo_renderer.render())
+        self.assertTrue(item_url in self.portlet_todo_renderer.render())
 
 
 def test_suite():
