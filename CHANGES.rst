@@ -5,8 +5,11 @@ Changelog
 4.1.28.21 (unreleased)
 ----------------------
 
-- Nothing changed yet.
+- Backport from 4.2.x:
 
+  - Fixed bug in `ToolPloneMeeting.validate_holidays` that was not catching a
+    wrong date format like `20/01/20`.
+    [gbastien]
 
 4.1.28.20 (2021-03-23)
 ----------------------
