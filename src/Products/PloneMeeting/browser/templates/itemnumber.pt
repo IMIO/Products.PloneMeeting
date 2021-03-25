@@ -6,13 +6,19 @@
            tal:attributes="id string:value_moveAction_${itemNumber};
                            class python: view.is_integer(context.getItemNumber()) and 'number' or 'subnumber';
                            value itemNumber;
-                           onFocus string:onImageButtonFocus('${itemNumber}');
+                           onFocus string:onChangeItemNumberFocus('${itemNumber}');
                            onKeyPress string:if (event.keyCode==13) moveItem(baseUrl='${context/absolute_url}', moveType='number', $$(this));"/>
     <img style="visibility: hidden;"
          title="move_item_to_given_position" i18n:attributes="title" name="moveImageButton"
          tal:attributes="id string:moveAction_${itemNumber};
                          src string:${view/portal_url}/save.gif;
                          onClick string:moveItem(baseUrl='${context/absolute_url}', moveType='number', $('input#value_moveAction_${itemNumber}'));"/>
+    <img style="visibility: hidden;"
+         title="cancel" i18n:attributes="title" name="moveImageButton"
+         tal:define="id string:moveAction_cancel_${itemNumber};"
+         tal:attributes="id id;
+                         src string:${view/portal_url}/cancel_edit.png;
+                         onClick string:onCancelChangeItemNumberClick('${itemNumber}');"/>
   </div>
 
   <tal:comment replace="nothing">For the others</tal:comment>

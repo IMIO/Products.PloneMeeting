@@ -206,10 +206,6 @@ div[id^='hook_'] > img {
    margin-top: 0.5em;
 }
 
-div.change-item-order {
-   width: 65px;
-}
-
 #content table.no-style-table.advices {
     margin-bottom: 0;
 }
@@ -747,17 +743,28 @@ input[readonly=""] {
 }
 
 /* controls displayed on add and edit forms */
-body.template-base_edit div.formControls,
-body.template-edit div.formControls,
-body.template-meeting div.formControls,
-div.overlay div.formControls {
+div.formControls,
+/* meetingadvice */
+body.template-view div#viewlet-below-content-body,
+body.template-meeting_view div#viewlet-below-content-body,
+body.template-meetingitem_view div#viewlet-below-content-body {
+    display: block;
     text-align: center;
-    position: sticky;
-    bottom: 10px;
     background-color: rgba(210,210,210,0.5);
     padding: 0.5em;
     border-radius: 3px;
     margin: 0em;
+}
+/* make control sticky for some elements */
+body.template-base_edit div.formControls,
+body.template-edit div.formControls,
+body.template-meeting div.formControls,
+div.overlay div.formControls,
+/* meetingadvice */
+body.template-view div#viewlet-below-content-body,
+body.template-meetingitem_view div#viewlet-below-content-body {
+    position: sticky;
+    bottom: 10px;
 }
 
 .ToDiscuss {
@@ -2114,7 +2121,7 @@ div.pm-global-actions {
    float: right;
    position: fixed;
    right: 20px;
-   bottom: 20px;
+   bottom: 60px;
    z-index: 10000;
    font-size: 140%;
    color: #666666;

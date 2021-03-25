@@ -124,6 +124,8 @@ Changelog
 - Use the classic `floppy disk save icon` to save item number value when
   changing it on the meeting view instead the `reorder icon` (arrow up and down)
   that was sometimes not clear enough for some users.
+  Moreover, added a `Cancel` icon that will hide the icons and set back original
+  value to the `itemNumber input`.
   [gbastien]
 - Improved `print_signatories_by_position` to be able to use a scanned signature
   and an abbreviated person firstname.
@@ -144,6 +146,9 @@ Changelog
 - Removed `MeetingItem.predecessor` `ReferenceField`, manage
  `predecessor/successors` manually, this will help migrating to DX.
  [gbastien]
+- Fixed bug in `ToolPloneMeeting.validate_holidays` that was not catching a
+  wrong date format like `20/01/20`.
+  [gbastien]
 
 4.2b11 (2021-01-19)
 -------------------

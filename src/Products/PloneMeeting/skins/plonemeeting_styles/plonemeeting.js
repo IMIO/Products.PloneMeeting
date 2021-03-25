@@ -510,10 +510,11 @@ function removeSelectedItems(baseUrl) {
 }
 
 // show/hide "move item to position" action icon button
-function onImageButtonFocus(itemNumber) {
+function onChangeItemNumberFocus(itemNumber) {
   var imageButtons = document.getElementsByName('moveImageButton');
   for (var i=0; i<imageButtons.length; i++) {
-      if (imageButtons[i].id != 'moveAction_' + itemNumber) {
+      if (!['moveAction_' + itemNumber, 'moveAction_cancel_' + itemNumber].includes(
+              imageButtons[i].id)) {
           imageButtons[i].style.visibility = 'hidden';
       }
       else {
@@ -523,6 +524,18 @@ function onImageButtonFocus(itemNumber) {
       }
   }
 }
+
+// hit on cancel button when changing item number
+function onCancelChangeItemNumberClick(itemNumber) {
+  // hide icons
+  saveButton = document.getElementById('moveAction_' + itemNumber);
+  saveButton.style.visibility = 'hidden';
+  document.getElementById('moveAction_cancel_' + itemNumber).style.visibility = 'hidden';
+  // set back original value in itemNumber input
+  inputTag = saveButton.previousElementSibling;
+  inputTag.value = inputTag.defaultValue;
+}
+
 
 // ajax call managing the @@change-item-order view
 function moveItem(baseUrl, moveType, tag) {
