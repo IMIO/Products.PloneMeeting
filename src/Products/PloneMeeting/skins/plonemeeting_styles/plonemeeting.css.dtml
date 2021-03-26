@@ -750,7 +750,7 @@ body.template-meeting_view div#viewlet-below-content-body,
 body.template-meetingitem_view div#viewlet-below-content-body {
     display: block;
     text-align: center;
-    background-color: rgba(210,210,210,0.5);
+    background-color: rgba(230,230,230,0.5);
     padding: 0.5em;
     border-radius: 3px;
     margin: 0em;
