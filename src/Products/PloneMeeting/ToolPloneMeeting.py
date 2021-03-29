@@ -56,6 +56,7 @@ from Products.CMFCore.utils import _checkPermission
 from Products.CMFCore.utils import UniqueObject
 from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 from Products.CMFPlone.utils import safe_unicode
+from Products.CPUtils.Extensions.utils import check_zope_admin
 from Products.CPUtils.Extensions.utils import remove_generated_previews
 from Products.DataGridField import DataGridField
 from Products.DataGridField.Column import Column
@@ -1549,5 +1550,11 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         else:
             return data
 
+    def show_add_config(self):
+        '''Show the add a MeetingConfig link?'''
+        res = True
+        if not check_zope_admin():
+            res = False
+        return res
 
 registerType(ToolPloneMeeting, PROJECTNAME)

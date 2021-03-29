@@ -149,6 +149,9 @@ Changelog
 - Fixed bug in `ToolPloneMeeting.validate_holidays` that was not catching a
   wrong date format like `20/01/20`.
   [gbastien]
+- Hide the `Add MeetingConfig` link on the `portal_plonemeeting` view to non
+  Zope admins, this avoid a `siteadmin` adding a `MeetingConfig`.
+  [gbastien]
 
 4.2b11 (2021-01-19)
 -------------------
