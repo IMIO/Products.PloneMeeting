@@ -1,0 +1,11 @@
+<configure
+    xmlns="http://namespaces.zope.org/zope"
+    xmlns:zcml="http://namespaces.zope.org/zcml"
+    xmlns:five="http://namespaces.zope.org/five"
+    xmlns:browser="http://namespaces.zope.org/browser">
+
+    <browser:resourceDirectory
+        name="cke_imagerotate"
+        directory="imagerotate" />
+
+</configure>

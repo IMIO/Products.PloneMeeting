@@ -40,6 +40,7 @@
   <include package="Products.cron4plone" />
   <include package="Products.DataGridField" />
   <include package=".browser" />
+  <include package=".ckeditor" />
   <include package=".content" />
   <include package=".documentgenerator" />
   <include package=".filters" />

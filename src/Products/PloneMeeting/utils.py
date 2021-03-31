@@ -882,12 +882,12 @@ def setFieldFromAjax(obj, fieldName, newValue, remember=True, tranform=True, rei
     if remember:
         # Keep old value, we might need to historize it.
         previousData = rememberPreviousData(obj, fieldName)
-        field.getMutator(obj)(newValue, content_type='text/html')
+        field.getMutator(obj)(newValue, mimetype='text/html')
         # Potentially store it in object history
         if previousData:
             addDataChange(obj, previousData)
     else:
-        field.getMutator(obj)(newValue, content_type='text/html')
+        field.getMutator(obj)(newValue, mimetype='text/html')
 
     if tranform:
         # Apply XHTML transforms when relevant
