@@ -152,6 +152,8 @@ Changelog
 - Hide the `Add MeetingConfig` link on the `portal_plonemeeting` view to non
   Zope admins, this avoid a `siteadmin` adding a `MeetingConfig`.
   [gbastien]
+- Integrated `CKeditor imagerotate` plugin to let rotate image when necessary.
+  [gbastien]
 
 4.2b11 (2021-01-19)
 -------------------
