@@ -45,6 +45,7 @@
   <property name="plugins" type="lines" purge="False">
    <element value="tableresize;/++resource++ckeditor/plugins/tableresize/plugin.js"/>
    <element value="nonbreaking;/++resource++cke_nonbreaking/plugin.js"/>
+   <element value="imagerotate;/++resource++cke_imagerotate/plugin.js"/>
   </property>
  </object>
 

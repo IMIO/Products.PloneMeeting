@@ -10,8 +10,7 @@
       title="PloneMeeting"
       directory="profiles/default"
       description="Extension profile for PloneMeeting."
-      provides="Products.GenericSetup.interfaces.EXTENSION"
-      />
+      provides="Products.GenericSetup.interfaces.EXTENSION" />
 
   <genericsetup:registerProfile
       name="testing"

@@ -6,9 +6,14 @@ from plone.api.exc import InvalidParameterError
 from plone.app.querystring import queryparser
 from plone.memoize import ram
 from Products.Archetypes.BaseObject import BaseObject
+from Products.Archetypes.Field import Field
 from Products.CMFPlone.CatalogTool import CatalogTool
 from Products.PloneMeeting import logger
 from Products.PortalTransforms.cache import Cache
+from Products.PortalTransforms.transforms import safe_html
+from Products.PortalTransforms.transforms.safe_html import CSS_COMMENT
+from Products.PortalTransforms.transforms.safe_html import decode_htmlentities
+from types import StringType
 
 
 def _patched_equal(context, row):
@@ -124,3 +129,37 @@ def _listAllowedRolesAndUsers(self, user):
 
 CatalogTool._listAllowedRolesAndUsers = _listAllowedRolesAndUsers
 logger.info("Monkey patching Products.CMFPlone.CatalogTool.CatalogTool (_listAllowedRolesAndUsers)")
+
+
+def hasScript(s):
+    """Override to keep data:image elements, turned 'data:' to 'data:text'
+    """
+    s = decode_htmlentities(s)
+    s = s.replace('\x00', '')
+    s = CSS_COMMENT.sub('', s)
+    s = ''.join(s.split()).lower()
+    for t in ('script:', 'expression:', 'expression(', 'data:text'):
+        if t in s:
+            return True
+    return False
+
+safe_html.hasScript = hasScript
+logger.info("Monkey patching Products.PortalTransforms.transforms.safe_html (hasScript)")
+
+
+Field.__old_pm_validate_content_types = Field.validate_content_types
+
+
+def validate_content_types(self, instance, value, errors):
+    """Avoid wrong validation error when html value is detected as text/plain,
+       this may occur when having a image data:base64 (when using imagerotate)."""
+    error = Field.__old_pm_validate_content_types(self, instance, value, errors)
+    if error and "text/plain" in error:
+        if isinstance(value, StringType) and \
+           value.startswith('<p>'):
+            errors.pop(self.getName())
+            error = None
+    return error
+
+Field.validate_content_types = validate_content_types
+logger.info("Monkey patching Products.Archetypes.Field.Field (validate_content_types)")

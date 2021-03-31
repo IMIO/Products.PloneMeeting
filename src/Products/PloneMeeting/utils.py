@@ -946,12 +946,12 @@ def set_field_from_ajax(obj, field_name, new_value, remember=True, tranform=True
         if remember:
             # Keep old value, we might need to historize it.
             previousData = rememberPreviousData(obj, field_name)
-            field.getMutator(obj)(new_value, content_type='text/html')
+            field.getMutator(obj)(new_value, mimetype='text/html')
             # Potentially store it in object history
             if previousData:
                 addDataChange(obj, previousData)
         else:
-            field.getMutator(obj)(new_value, content_type='text/html')
+            field.getMutator(obj)(new_value, mimetype='text/html')
 
     if tranform:
         # Apply XHTML transforms when relevant
