@@ -26,6 +26,12 @@ try:
 except pkg_resources.DistributionNotFound:
     HAS_SOLR = False
 
+HAS_RESTAPI = True
+try:
+    pkg_resources.get_distribution('plonemeeting.restapi')
+except pkg_resources.DistributionNotFound:
+    HAS_RESTAPI = False
+
 
 __author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
 <g.bastien@imio.be>, Stephan GEULETTE <s.geulette@imio.be>"""
