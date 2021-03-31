@@ -15,6 +15,8 @@ Changelog
     [gbastien]
   - Integrated `CKeditor imagerotate` plugin to let rotate image when necessary.
     [gbastien]
+  - Display `imio.pm.ws/plonemeeting.restapi` versions in `@@overview-controlpanel`.
+    [gbastien]
 
 4.1.28.20 (2021-03-23)
 ----------------------
