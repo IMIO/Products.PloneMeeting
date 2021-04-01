@@ -156,6 +156,11 @@ Changelog
   [gbastien]
 - Display `imio.pm.ws/plonemeeting.restapi` versions in `@@overview-controlpanel`.
   [gbastien]
+- Renamed `ItemDocumentGenerationHelperView.output_for_restapi` to
+  `ItemDocumentGenerationHelperView.deliberation_for_restapi`.
+  Also added parameter `deliberation_types` to the method to only get relevant
+  deliberation variants.
+  [gbastien]
 
 4.2b11 (2021-01-19)
 -------------------

@@ -1669,12 +1669,15 @@ class MeetingDocumentGenerationHelperView(FolderDocumentGenerationHelperView):
 class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV):
     """ """
 
-    def output_for_restapi(self):
-        ''' '''
+    def deliberation_for_restapi(self, deliberation_types=[]):
+        '''Return some formatted deliberation useful for external services.'''
         result = {}
-        result['deliberation'] = self.print_deliberation()
-        result['public_deliberation'] = self.print_public_deliberation()
-        result['public_deliberation_decided'] = self.print_public_deliberation_decided()
+        if not deliberation_types or "deliberation" in deliberation_types:
+            result['deliberation'] = self.print_deliberation()
+        if not deliberation_types or "public_deliberation" in deliberation_types:
+            result['public_deliberation'] = self.print_public_deliberation()
+        if not deliberation_types or "public_deliberation_decided" in deliberation_types:
+            result['public_deliberation_decided'] = self.print_public_deliberation_decided()
         return result
 
     def print_meeting_date(self, returnDateTime=False, noMeetingMarker='-', unrestricted=True):
