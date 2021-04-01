@@ -26,6 +26,7 @@ recursive-include src *.eml
 recursive-include src *.gif
 recursive-include src *.jpg
 recursive-include src *.js
+recursive-include src *.md
 recursive-include src *.metadata
 recursive-include src *.odt
 recursive-include src *.pdf
