@@ -149,7 +149,6 @@ class ToolInitializer:
                             continue
                         copied_suffix['fct_orgs'].append(fct_org.UID())
                     functions.append(copied_suffix)
-            set_registry_functions(functions)
             # 3) manage organizations, set every organizations so every Plone groups are created
             # then disable orgs that are not active
             already_active_orgs = get_registry_organizations()
@@ -157,6 +156,9 @@ class ToolInitializer:
             set_registry_organizations(org_uids)
             active_org_uids = [org.UID() for org in active_orgs]
             set_registry_organizations(already_active_orgs + active_org_uids)
+            # avoid problems in tests when settings several times functions
+            set_registry_functions([])
+            set_registry_functions(functions)
             # 4) add users to Plone groups
             self.addUsers(self.data.orgs)
             # 5) now that organizations are created, we add persons and held_positions
@@ -701,6 +703,7 @@ class ToolInitializer:
         plone_utils.addPortalMessage(msg, 'warning')
 
         own_org = get_own_organization()
+        plonegroup_org_uids = get_registry_organizations()
         for org_descr in org_descriptors:
             if org_descr.parent_path:
                 # find parent organization following parent path from container
@@ -717,13 +720,14 @@ class ToolInitializer:
                 self.addUser(userDescr)
             # Add users in the correct Plone groups.
             org_uid = org.UID()
-            for suffix in get_all_suffixes(org_uid):
-                plone_group = get_plone_group(org_uid, suffix)
-                group_members = plone_group.getMemberIds()
-                # protect in case we have suffixes only for some groups
-                for userDescr in getattr(org_descr, suffix, []):
-                    if userDescr.id not in group_members:
-                        api.group.add_user(group=plone_group, username=userDescr.id)
+            if org_uid in plonegroup_org_uids:
+                for suffix in get_all_suffixes(org_uid):
+                    plone_group = get_plone_group(org_uid, suffix)
+                    group_members = plone_group.getMemberIds()
+                    # protect in case we have suffixes only for some groups
+                    for userDescr in getattr(org_descr, suffix, []):
+                        if userDescr.id not in group_members:
+                            api.group.add_user(group=plone_group, username=userDescr.id)
 
     def addUser(self, userData):
         '''Adds a new Plone user from p_userData which is a UserDescriptor
