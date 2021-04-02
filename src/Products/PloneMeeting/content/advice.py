@@ -127,6 +127,10 @@ class MeetingAdvice(Container):
         # check that current user is not accessing to an advice that is confidential
         # to him but for which he knows the url to access to...
         parent = self.getParentNode()
+        # in some case with plone.restapi summary serialize,
+        # the parent is not found because self does not have acquisition
+        if not parent:
+            return ""
         if self.advice_group in parent.adviceIndex and parent.adviceIndex[self.advice_group]['isConfidential']:
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(self)
@@ -139,9 +143,9 @@ class MeetingAdvice(Container):
 
         # we can not return a translated msg using _ so translate it
         return translate("Advice given on item ${item_title}",
-                         mapping={'item_title': '"%s"' % unicode(self.getParentNode().Title(), 'utf-8')},
+                         mapping={'item_title': '"%s"' % unicode(parent.Title(), 'utf-8')},
                          domain="PloneMeeting",
-                         default='Advice given on item "%s"' % self.getParentNode().Title(),
+                         default='Advice given on item "%s"' % parent.Title(),
                          context=self.REQUEST)
 
     def title_or_id(self):
