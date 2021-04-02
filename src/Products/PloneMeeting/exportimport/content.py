@@ -156,12 +156,11 @@ class ToolInitializer:
             set_registry_organizations(org_uids)
             active_org_uids = [org.UID() for org in active_orgs]
             set_registry_organizations(already_active_orgs + active_org_uids)
-            # avoid problems in tests when settings several times functions
-            set_registry_functions([])
+            # 4) set functions after organizations as it may be used for fct_orgs
             set_registry_functions(functions)
-            # 4) add users to Plone groups
+            # 5) add users to Plone groups
             self.addUsers(self.data.orgs)
-            # 5) now that organizations are created, we add persons and held_positions
+            # 6) now that organizations are created, we add persons and held_positions
             self.addPersonsAndHeldPositions(self.data.persons, source=self.profilePath)
 
         created_cfgs = []
