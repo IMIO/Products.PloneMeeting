@@ -4,6 +4,8 @@ from collective.contact.plonegroup.config import get_registry_functions
 from collective.contact.plonegroup.config import get_registry_organizations
 from collective.contact.plonegroup.config import set_registry_functions
 from collective.contact.plonegroup.config import set_registry_organizations
+from collective.contact.plonegroup.browser.settings import invalidate_soev_cache
+from collective.contact.plonegroup.browser.settings import invalidate_ssoev_cache
 from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_own_organization
 from collective.contact.plonegroup.utils import get_plone_group
@@ -151,16 +153,17 @@ class ToolInitializer:
                     functions.append(copied_suffix)
             # 3) manage organizations, set every organizations so every Plone groups are created
             # then disable orgs that are not active
+            invalidate_soev_cache()
+            invalidate_ssoev_cache()
             already_active_orgs = get_registry_organizations()
             org_uids = [org.UID() for org in orgs]
             set_registry_organizations(org_uids)
+            set_registry_functions(functions)
             active_org_uids = [org.UID() for org in active_orgs]
             set_registry_organizations(already_active_orgs + active_org_uids)
-            # 4) set functions after organizations as it may be used for fct_orgs
-            set_registry_functions(functions)
-            # 5) add users to Plone groups
+            # 4) add users to Plone groups
             self.addUsers(self.data.orgs)
-            # 6) now that organizations are created, we add persons and held_positions
+            # 5) now that organizations are created, we add persons and held_positions
             self.addPersonsAndHeldPositions(self.data.persons, source=self.profilePath)
 
         created_cfgs = []
