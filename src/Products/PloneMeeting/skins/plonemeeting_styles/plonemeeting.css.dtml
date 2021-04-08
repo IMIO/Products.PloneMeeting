@@ -423,9 +423,12 @@ input#title,
 input#otherMeetingConfigsClonableToFieldTitle {
     width: 99%;
 }
-/* add right margin when field displayed in table so table cells are not sticked togheter */
+/* add right margin when field displayed in table so table cells are not sticked togheter,
+   moreover, especially on MeetingConfig view,
+   avoid too large values overflowing the screen horizontally */
 table td div.field {
    margin-right: 1em;
+   word-break: break-word;
 }
 #portal-column-one .visualPadding { padding: 2em 0 1em 1em; }
 #portal-languageselector { float:right; margin: 0; font-size: 95%; }

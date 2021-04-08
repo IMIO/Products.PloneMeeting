@@ -161,6 +161,9 @@ Changelog
   Also added parameter `deliberation_types` to the method to only get relevant
   deliberation variants.
   [gbastien]
+- Fixed CSS, avoid horizontal overflow with very large values,
+  use `word-break: break-word;`.
+  [gbastien]
 
 4.2b11 (2021-01-19)
 -------------------
