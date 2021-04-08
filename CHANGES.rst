@@ -6,6 +6,7 @@ Changelog
 ----------------------
 
 - Backport from 4.2.x:
+
   - Fixed `AskedAdvicesVocabulary` that was sometimes returning terms as being
     inactive because disabled in `MeetingConfig.customAdvisers` but that were
     actually still active because used in `MeetingConfig.selectableAdvisers`.
