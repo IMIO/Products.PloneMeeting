@@ -5,8 +5,11 @@ Changelog
 4.1.28.22 (unreleased)
 ----------------------
 
-- Nothing changed yet.
-
+- Backport from 4.2.x:
+  - Fixed `AskedAdvicesVocabulary` that was sometimes returning terms as being
+    inactive because disabled in `MeetingConfig.customAdvisers` but that were
+    actually still active because used in `MeetingConfig.selectableAdvisers`.
+    [gbastien]
 
 4.1.28.21 (2021-04-01)
 ----------------------

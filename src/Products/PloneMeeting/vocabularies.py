@@ -642,10 +642,9 @@ class AskedAdvicesVocabulary(object):
 
         self.context = context
         self.request = context.REQUEST
-        # remove duplicates, it can be the case when several custom advisers
-        # not delay aware are defined for the same group
-        not_active_advisers = self._getAdvisers(active=False)
-        active_advisers = [adv for adv in self._getAdvisers() if adv not in not_active_advisers]
+        active_advisers = self._getAdvisers(active=True)
+        not_active_advisers = [adv for adv in self._getAdvisers(active=False)
+                               if adv not in active_advisers]
         for adviser in active_advisers:
             termTitle = self.adviser_term_title(adviser)
             res.append(SimpleTerm(adviser,
