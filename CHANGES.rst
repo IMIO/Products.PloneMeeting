@@ -164,6 +164,10 @@ Changelog
 - Fixed CSS, avoid horizontal overflow with very large values,
   use `word-break: break-word;`.
   [gbastien]
+- Fixed `AskedAdvicesVocabulary` that was sometimes returning terms as being
+  inactive because disabled in `MeetingConfig.customAdvisers` but that were
+  actually still active because used in `MeetingConfig.selectableAdvisers`.
+  [gbastien]
 
 4.2b11 (2021-01-19)
 -------------------
