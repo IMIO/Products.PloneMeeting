@@ -2057,14 +2057,19 @@ class testContacts(PloneMeetingTestCase):
                 self.position_types = position_types
 
         self.changeUser('siteadmin')
-        position_types = self.portal.contacts.position_types
-        self.assertEqual(position_types, [{'token': 'default', 'name': u'D\xe9faut'}])
+        # create a new position_type and use it for hp1
+        original_position_types = list(self.portal.contacts.position_types)
+        position_types = original_position_types + [
+            {'token': 'default2', 'name': u'D\xe9faut2'},
+            {'token': 'default3', 'name': u'D\xe9faut3'}, ]
+        self.portal.contacts.position_types = position_types
+
         hp = self.portal.contacts.person1.held_pos1
-        self.assertEqual(hp.position_type, 'default')
+        hp.position_type = 'default2'
         invariant = IPMDirectory.getTaggedValue('invariants')[0]
 
         # can not remove used position_type
-        data = DummyData(self.portal.contacts, position_types=[])
+        data = DummyData(self.portal.contacts, position_types=original_position_types)
         with self.assertRaises(Invalid) as cm:
             invariant(data)
         error_msg = translate(
@@ -2076,7 +2081,7 @@ class testContacts(PloneMeetingTestCase):
         self.assertEqual(cm.exception.message, error_msg)
 
         # adding new value or removing an unused one is ok
-        position_types2 = position_types + [{'token': 'default2', 'name': u'D\xe9faut2'}]
+        position_types2 = position_types + [{'token': 'default4', 'name': u'D\xe9faut4'}]
         self.portal.contacts.position_types = position_types2
         data = DummyData(self.portal.contacts, position_types2)
         self.assertIsNone(invariant(data))
