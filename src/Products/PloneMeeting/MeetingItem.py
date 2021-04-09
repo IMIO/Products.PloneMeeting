@@ -2501,12 +2501,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            item.adviceIsInherited(advice.advice_group):
             return False
 
-        tool = api.portal.get_tool('portal_plonemeeting')
-        # 'asked_again' must be activated in the configuration
-        cfg = tool.getMeetingConfig(item)
-        if 'asked_again' not in cfg.getUsedAdviceTypes():
-            return False
-
         member = api.user.get_current()
         if member.has_permission(ModifyPortalContent, item):
             return True
@@ -5344,10 +5338,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             delay_infos = self.getDelayInfosForAdvice(groupId)
         else:
             delay_infos = self.adviceIndex[groupId]['delay_infos']
-        # status 'no_more_giveable' may be the case when an already given advice
-        # comes back to a state it is giveable but delay is exceeded
         return delay_infos['delay_status'] == 'timed_out' or \
-            delay_infos['delay_status'] == 'no_more_giveable' or \
             delay_infos['delay_status_when_stopped'] == 'stopped_timed_out'
 
     def _updateAdvices(self,
@@ -5432,11 +5423,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # 'delay_stopped_on'
         # 'delay_for_automatic_adviser_changed_manually'
         saved_stored_data = {}
+        reinit_delays_for = []
         for org_uid, adviceInfo in self.adviceIndex.iteritems():
             saved_stored_data[org_uid] = {}
             reinit_delay = self.adapted()._adviceDelayWillBeReinitialized(
                 org_uid, adviceInfo, isTransitionReinitializingDelays)
             if reinit_delay or org_uid in inheritedAdviserUids:
+                reinit_delays_for.append(org_uid)
                 saved_stored_data[org_uid]['delay_started_on'] = None
                 saved_stored_data[org_uid]['delay_stopped_on'] = None
             else:
@@ -5672,6 +5665,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 delayIsNotExceeded = not self._adviceDelayIsTimedOut(org_uid, computeNewDelayInfos=True)
                 if item_state in itemAdviceStates and \
                    not adviceObj and \
+                   org_uid not in reinit_delays_for and \
                    delayIsNotExceeded and \
                    self.adapted()._adviceIsAddable(org_uid):
                     # advisers must be able to add a 'meetingadvice', give
@@ -5686,6 +5680,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
                 # is advice still editable?
                 if item_state in itemAdviceEditStates and \
+                   org_uid not in reinit_delays_for and \
                    delayIsNotExceeded and \
                    adviceObj and \
                    self.adapted()._adviceIsEditable(org_uid):

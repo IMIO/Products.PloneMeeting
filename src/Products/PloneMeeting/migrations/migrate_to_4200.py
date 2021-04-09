@@ -509,6 +509,20 @@ class Migrate_To_4200(Migrator):
         pghandler.finish()
         logger.info('Done.')
 
+    def _updateConfigForAdviceAskedAgainNoMoreOptional(self):
+        '''Advice type "asked_again" is no more optional, fix MeetingConfigs.'''
+        logger.info('Updating every MeetingConfigs advice_type related parameters....')
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            usedAdviceTypes = list(cfg.getUsedAdviceTypes())
+            if "asked_again" in usedAdviceTypes:
+                usedAdviceTypes.remove("asked_again")
+                cfg.setUsedAdviceTypes(usedAdviceTypes)
+            defaultAdviceType = cfg.getDefaultAdviceType()
+            if defaultAdviceType == "asked_again":
+                defaultAdviceType = "positive"
+                cfg.setDefaultAdviceType(defaultAdviceType)
+        logger.info('Done.')
+
     def run(self, extra_omitted=[]):
         logger.info('Migrating to PloneMeeting 4200...')
 
@@ -519,8 +533,8 @@ class Migrate_To_4200(Migrator):
 
         # update preferred meeting path on items
         self._updateItemPreferredMeetingLink()
-
         self._migrateItemPredecessorReference()
+        self._updateConfigForAdviceAskedAgainNoMoreOptional()
 
         # remove useless catalog indexes and columns, were renamed to snake case
         self.removeUnusedIndexes(
@@ -616,18 +630,19 @@ def migrate(context):
        2) Update applied batch actions marker interface on every member folders;
        3) Update preferredMeeting behavior;
        4) Remove and migrate item predecessor;
-       5) Remove unused indexes and metadata;
-       6) Remove Meeting.items reference field;
-       7) Configure votes;
-       8) Update Meeting.itemSignatories to manage stored position_type;
-       9) Fix DX RichText mimetype;
-       10) Configure field MeetingConfig.itemWFValidationLevels depending on old wfAdaptations;
-       11) Migrate MeetingConfig.keepAccessToItemWhenAdviceIsGiven to
+       5) Update MeetingConfigs as advice type "asked_again" is no more optional;
+       6) Remove unused indexes and metadata;
+       7) Remove Meeting.items reference field;
+       8) Configure votes;
+       9) Update Meeting.itemSignatories to manage stored position_type;
+       10) Fix DX RichText mimetype;
+       11) Configure field MeetingConfig.itemWFValidationLevels depending on old wfAdaptations;
+       12) Migrate MeetingConfig.keepAccessToItemWhenAdviceIsGiven to
           MeetingConfig.keepAccessToItemWhenAdvice;
-       12) Init otherMeetingConfigsClonableToFieldXXX new fields;
-       13) Update faceted filters;
-       14) Update holidays;
-       15) Refresh items local roles and recatalog.
+       13) Init otherMeetingConfigsClonableToFieldXXX new fields;
+       14) Update faceted filters;
+       15) Update holidays;
+       16) Refresh items local roles and recatalog.
     '''
     migrator = Migrate_To_4200(context)
     migrator.run()

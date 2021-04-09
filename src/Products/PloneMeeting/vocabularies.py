@@ -854,6 +854,13 @@ class AdviceTypesVocabulary(object):
                                         domain='PloneMeeting',
                                         context=context.REQUEST))
                    )
+        # add the 'asked_again' advice_type
+        res.append(SimpleTerm("asked_again",
+                              "asked_again",
+                              translate("asked_again",
+                                        domain='PloneMeeting',
+                                        context=context.REQUEST))
+                   )
         for advice_type in cfg.getUsedAdviceTypes():
             res.append(SimpleTerm(advice_type,
                                   advice_type,
