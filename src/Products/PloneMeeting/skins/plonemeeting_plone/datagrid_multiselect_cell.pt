@@ -10,6 +10,7 @@
 <body>
     <!-- VIEW -->
     <metal:view_cell_macro define-macro="view_cell">
+      <tal:comment replace="nothing">XXX adapted to render with "structure"</tal:comment>
       <span tal:content="structure python:context.displayValue(column_definition.getVocabulary(context), cell_value, widget)"></span>
     </metal:view_cell_macro>
 
@@ -21,11 +22,13 @@
                             opt_val python:opt[0];
                             opt_label python:opt[1];
                             ">
+               <tal:comment replace="nothing">XXX fixed values of checkboxes lost upon validation error, get value from request</tal:comment>
                <input class="noborder" type="checkbox" value="1" id="" style="width: auto;"
-                      tal:attributes="name string:${fieldName}.${column}.${opt_val}.${repeat/rows/number};
+                      tal:define="name string:${fieldName}.${column}.${opt_val}.${repeat/rows/number};"
+                      tal:attributes="name name;
                                       id string:${fieldName}_${column}_${opt_val}_${repeat/rows/number}_${opt_index};
                                       title column_label|nothing;
-                                      checked python:opt_val in rows.get(column, []) and 'checked' or False;
+                                      checked python:(opt_val in rows.get(column, []) or '1' in request.get(name, [])) and 'checked' or False;
                                       "/>
                <label for="" tal:attributes="for string:${fieldName}_${column}_${opt_val}_${repeat/rows/number}_${opt_index}"
                              tal:content="opt_label"></label>

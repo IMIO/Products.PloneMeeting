@@ -11,6 +11,10 @@ Changelog
     inactive because disabled in `MeetingConfig.customAdvisers` but that were
     actually still active because used in `MeetingConfig.selectableAdvisers`.
     [gbastien]
+  - Fixed `DataGridField` data lost for fields using single checkbox and multi
+    checkboxes when validation failed.  This was impacting the `MeetingConfig`.
+    Needed to override relevant datagrid templates.
+    [gbastien]
 
 4.1.28.21 (2021-04-01)
 ----------------------
