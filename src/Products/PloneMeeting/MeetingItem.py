@@ -5344,7 +5344,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             delay_infos = self.getDelayInfosForAdvice(groupId)
         else:
             delay_infos = self.adviceIndex[groupId]['delay_infos']
+        # status 'no_more_giveable' may be the case when an already given advice
+        # comes back to a state it is giveable but delay is exceeded
         return delay_infos['delay_status'] == 'timed_out' or \
+            delay_infos['delay_status'] == 'no_more_giveable' or \
             delay_infos['delay_status_when_stopped'] == 'stopped_timed_out'
 
     def _updateAdvices(self,
@@ -5382,7 +5385,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         # check if the given p_triggered_by_transition transition name
         # is the transition that will restart delays
-        isTransitionReinitializingDelays = triggered_by_transition in cfg.getTransitionsReinitializingDelays()
+        isTransitionReinitializingDelays = triggered_by_transition in \
+            cfg.getTransitionsReinitializingDelays()
 
         # add a message for the user
         if isTransitionReinitializingDelays:
@@ -5430,7 +5434,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         saved_stored_data = {}
         for org_uid, adviceInfo in self.adviceIndex.iteritems():
             saved_stored_data[org_uid] = {}
-            if isTransitionReinitializingDelays or org_uid in inheritedAdviserUids:
+            reinit_delay = self.adapted()._adviceDelayWillBeReinitialized(
+                org_uid, adviceInfo, isTransitionReinitializingDelays)
+            if reinit_delay or org_uid in inheritedAdviserUids:
                 saved_stored_data[org_uid]['delay_started_on'] = None
                 saved_stored_data[org_uid]['delay_stopped_on'] = None
             else:
@@ -5788,6 +5794,17 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def _adviceDelayMayBeStarted(self, org_uid):
         '''See doc in interfaces.py.'''
         return True
+
+    def _adviceDelayWillBeReinitialized(self,
+                                        org_uid,
+                                        adviceInfo,
+                                        isTransitionReinitializingDelays):
+        '''See doc in interfaces.py.'''
+        item = self.getSelf()
+        reinit_delay = False
+        if isTransitionReinitializingDelays and not item._advice_is_given(org_uid):
+            reinit_delay = True
+        return reinit_delay
 
     security.declarePublic('getDelayInfosForAdvice')
 

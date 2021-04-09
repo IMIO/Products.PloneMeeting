@@ -12,6 +12,7 @@ from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.utils import _checkPermission
 from Products.Five import BrowserView
 from Products.PageTemplates.Expressions import SecureModuleImporter
+from Products.PloneMeeting.browser.advicechangedelay import _reinit_advice_delay
 from zope.event import notify
 from zope.lifecycleevent import ObjectModifiedEvent
 
@@ -239,6 +240,10 @@ class ChangeAdviceAskedAgainView(BrowserView):
             cfg = tool.getMeetingConfig(self.context)
             self.context.advice_hide_during_redaction = \
                 bool(self.context.portal_type in cfg.getDefaultAdviceHiddenDuringRedaction())
+            # reinitialize advice delay if relevant
+            advice_uid = self.context.advice_group
+            if parent.adviceIndex[advice_uid]['delay']:
+                _reinit_advice_delay(parent, advice_uid)
         else:
             pr = api.portal.get_tool('portal_repository')
             # we are about to set the advice back to original value
