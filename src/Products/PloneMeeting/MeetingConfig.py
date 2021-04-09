@@ -5119,9 +5119,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePrivate('listAdviceTypes')
 
-    def listAdviceTypes(self):
+    def listAdviceTypes(self, include_asked_again=False):
         d = "PloneMeeting"
-        res = [
+        res = []
+        if include_asked_again:
+            res.append(("asked_again", translate('asked_again', domain=d, context=self.REQUEST)))
+        res += [
             ("positive", translate('positive', domain=d, context=self.REQUEST)),
             ("positive_with_comments", translate('positive_with_comments', domain=d, context=self.REQUEST)),
             ("positive_with_remarks", translate('positive_with_remarks', domain=d, context=self.REQUEST)),

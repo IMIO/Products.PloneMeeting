@@ -2040,11 +2040,9 @@ class testAdvices(PloneMeetingTestCase):
                                              'advice_hide_during_redaction': False,
                                              'advice_comment': RichTextValue(u'My comment')})
         changeView = advice.restrictedTraverse('@@change-advice-asked-again')
-        # 'asked_again' must be in usedAdviceTypes so the functionnality is activated
-        self.assertTrue('asked_again' not in cfg.getUsedAdviceTypes())
+        # 'asked_again' is always enabled
+        self.assertFalse('asked_again' in cfg.getUsedAdviceTypes())
         self.changeUser('pmManager')
-        self.assertFalse(item.adapted().mayAskAdviceAgain(advice))
-        cfg.setUsedAdviceTypes(cfg.getUsedAdviceTypes() + ('asked_again', ))
         self.assertTrue(item.adapted().mayAskAdviceAgain(advice))
 
         # advice can not be asked_again if current user may not edit the item
