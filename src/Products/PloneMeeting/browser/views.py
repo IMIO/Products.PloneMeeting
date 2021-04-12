@@ -961,12 +961,21 @@ class BaseDGHV(object):
                                 gn = get_gender_and_number(contacts)
                                 hp = contacts[0]
                                 # manage when we have no position_type but a label
-                                if hp.position_type == u'default' and u'default' not in ignored_pos_type_ids:
-                                    position_type_value = hp.get_label()
+                                if position_type == u'default' and u'default' not in ignored_pos_type_ids:
+                                    if self.context.getTagName() == "MeetingItem":
+                                        position_type_value = meeting.get_attendee_position_for(
+                                            self.context.UID(), hp.UID())['position_type']
+                                    else:
+                                        position_type_value = hp.get_label()
                                     if escape_for_html:
                                         position_type_value = cgi.escape(position_type_value)
                                 else:
-                                    position_type_value = contacts[0].gender_and_number_from_position_type()[gn]
+                                    forced_position_type_value = None
+                                    if self.context.getTagName() == "MeetingItem":
+                                        forced_position_type_value = meeting.get_attendee_position_for(
+                                            self.context.UID(), hp.UID())['position_type']
+                                    position_type_value = contacts[0].gender_and_number_from_position_type(
+                                        forced_position_type_value=forced_position_type_value)[gn]
                             grouped_contacts_value = _buildContactsValue(meeting, contacts)
                             grouped_contacts_value = pos_attendee_separator.join(grouped_contacts_value)
                             if position_type_value:
@@ -1085,8 +1094,12 @@ class BaseDGHV(object):
                 for org, contacts in contact_infos.items():
                     by_pos_type_res = OrderedDict()
                     for contact in contacts:
-                        used_contact_position_type = contact.position_type
-                        if not contact.position_type or contact.position_type in ignored_pos_type_ids:
+                        if self.context.getTagName() == "MeetingItem":
+                            used_contact_position_type = meeting.get_attendee_position_for(
+                                self.context.UID(), contact.UID())['position_type']
+                        else:
+                            used_contact_position_type = contact.position_type
+                        if not used_contact_position_type or used_contact_position_type in ignored_pos_type_ids:
                             # in this case, we use the special value prefixed by __no_position_type__
                             # so contacts are still ordered
                             used_contact_position_type = '__no_position_type__{0}'.format(contact.UID())
@@ -1095,7 +1108,7 @@ class BaseDGHV(object):
                         if used_contact_position_type == u'default':
                             used_contact_position_type = contact.get_label()
                         # create entry on result if not already existing
-                        if contact.position_type not in by_pos_type_res:
+                        if used_contact_position_type not in by_pos_type_res:
                             by_pos_type_res[used_contact_position_type] = []
                         by_pos_type_res[used_contact_position_type].append(contact)
                     res[attendee_type][org] = by_pos_type_res
