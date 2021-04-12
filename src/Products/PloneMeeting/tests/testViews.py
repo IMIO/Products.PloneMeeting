@@ -491,7 +491,6 @@ class testViews(PloneMeetingTestCase):
         self.assertTrue(not self.catalog(**query))
         # back to proposed, add it
         self.backToState(itemWithDelayAwareAdvice, self._stateMappingFor('proposed'))
-        import ipdb; ipdb.set_trace()
         createContentInContainer(itemWithDelayAwareAdvice,
                                  'meetingadvice',
                                  **{'advice_group': self.vendors_uid,
