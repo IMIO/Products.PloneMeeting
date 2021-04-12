@@ -1,4 +1,8 @@
-<tal:renderViewlet replace="structure view/renderViewlet" />
+<div tal:condition="view/async" id="async_actions_panel" data-use-icons="false" data-show-edit="false">
+    <img tal:attributes="src string:${view/site_url}/spinner_small.gif" />
+</div>
+
+<tal:renderViewlet condition="not:view/async" replace='structure view/renderViewlet' />
 
 <div tal:condition="view/show" class="pm_back_to_tool_link" i18n:domain="PloneMeeting">
   &nbsp;<a tal:attributes="href python: view.getBackUrl();"

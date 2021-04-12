@@ -1275,6 +1275,33 @@ class Meeting(Container):
             res['position_type'] = position_type
         return res
 
+    def get_attendee_position_for(self,
+                                  item_uid,
+                                  hp_uid,
+                                  render_position_type=False,
+                                  prefix_position_type=False):
+        """Return the attendee position_type to use as label
+           for given p_item_uid and p_signatory_uid."""
+        # check if hp_uid is redefined on the item
+        data = {}
+        if item_uid in self.item_attendees_positions and \
+           hp_uid in self.item_attendees_positions[item_uid]:
+            data = self.item_attendees_positions[item_uid][hp_uid]
+        catalog = api.portal.get_tool('portal_catalog')
+        hp = catalog(UID=hp_uid)[0].getObject()
+        position_type = data.get('position_type', hp.position_type)
+        res = {}
+        res['position_type'] = position_type
+        if render_position_type:
+            if prefix_position_type:
+                res['position_type'] = hp.get_prefix_for_gender_and_number(
+                    include_value=True,
+                    forced_position_type_value=position_type)
+            else:
+                res['position_type'] = hp.get_label(
+                    forced_position_type_value=position_type)
+        return res
+
     security.declarePublic('get_item_votes')
 
     def get_item_votes(self):

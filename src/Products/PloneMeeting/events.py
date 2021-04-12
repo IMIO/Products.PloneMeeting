@@ -1037,6 +1037,8 @@ def onMeetingCreated(meeting, event):
     meeting.item_non_attendees = PersistentMapping()
     # place to store item signatories
     meeting.item_signatories = PersistentMapping()
+    # place to store item attendees changed position
+    meeting.item_attendees_positions = PersistentMapping()
     # place to store item votes
     meeting.item_votes = PersistentMapping()
     # place to store attendees when using contacts

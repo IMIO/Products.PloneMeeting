@@ -428,7 +428,7 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
         poll_type = self.context.getPollType()
         cache_date = self.request.get('cache_date', None)
         return (date,
-                self.context.UID(),
+                context_uid,
                 cfg_modified,
                 ordered_contacts,
                 redefined_item_attendees,
@@ -441,6 +441,7 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
     def _update(self):
         """ """
         self.error_msg = self.request.get('attendees_error_msg')
+        self.context_uid = self.context.UID()
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
         self.usedMeetingAttrs = self.cfg.getUsedMeetingAttributes()
@@ -476,6 +477,17 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
     def get_all_used_held_positions(self):
         """ """
         return get_all_used_held_positions(self.meeting)
+
+    def get_short_title_for(self, hp, hp_uid):
+        """ """
+        position_type = self.meeting.get_attendee_position_for(
+            self.context_uid, hp_uid)['position_type']
+        return hp.get_short_title(forced_position_type_value=position_type)
+
+    def is_attendee_position_redefined(self, hp_uid):
+        """ """
+        return self.context_uid in self.meeting.item_attendees_positions and \
+            hp_uid in self.meeting.item_attendees_positions[self.context_uid]
 
 
 class AsyncLoadMeetingAssemblyAndSignatures(BrowserView, BaseMeetingView):

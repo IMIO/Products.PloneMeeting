@@ -62,7 +62,7 @@
                       oddrow repeat/mUser/odd;
                       classOddEven python: oddrow and 'even' or 'odd';"
           tal:attributes="class classOddEven">
-        <td><b tal:content="mUser/get_short_title"></b></td>
+        <td><span class="attendee-title" tal:content="mUser/get_short_title"></span></td>
         <td align="center">
           <span tal:condition="python: aUid in attendees" class="fa people-checked"></span>
         </td>

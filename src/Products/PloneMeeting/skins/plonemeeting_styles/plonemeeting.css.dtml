@@ -747,8 +747,12 @@ input[readonly=""] {
 
 /* controls displayed on add and edit forms */
 div.formControls,
-/* meetingadvice */
-body.template-view div#viewlet-below-content-body,
+body[class^='template-view portaltype-content'] div#viewlet-below-content-body,
+body[class^='template-view portaltype-meetingadvice'] div#viewlet-below-content-body,
+body[class^='template-view portaltype-meetingcategory'] div#viewlet-below-content-body,
+/* MeetingConfig */
+body.template-documentviewer div#viewlet-below-content-body,
+body.template-base_view div#viewlet-below-content-body,
 body.template-meeting_view div#viewlet-below-content-body,
 body.template-meetingitem_view div#viewlet-below-content-body {
     display: block;
@@ -763,8 +767,7 @@ body.template-base_edit div.formControls,
 body.template-edit div.formControls,
 body.template-meeting div.formControls,
 div.overlay div.formControls,
-/* meetingadvice */
-body.template-view div#viewlet-below-content-body,
+body[class^='template-view portaltype-meetingadvice'] div#viewlet-below-content-body,
 body.template-meetingitem_view div#viewlet-below-content-body {
     position: sticky;
     bottom: 10px;
@@ -933,10 +936,8 @@ body[class*="itemtemplates"].template-manage-portlets a.link-parent {
 /* style for the 'Back' link displayed in the elements of the configuration next to the 'de/activate' button
    We use same height as .apButton height */
 .pm_back_to_tool_link {
-    height: 2em;
-    position: relative;
-    top: 0.5em;
-    float: left;
+   display: inline;
+   vertical-align: super;
 }
 
 /* hide metadata tab when editing tool */
@@ -1758,11 +1759,13 @@ table.listing tbody tr.even.dragging td {
     cursor: help;
 }
 #content span.people-edit-itemabsent,
+#content span.people-edit-element,
 #content span.people-edit-signatory {
     color: &dtml-linkColor;;
     opacity: 0.3;
 }
 #content span.people-edit-itemabsent:hover,
+#content span.people-edit-element:hover,
 #content span.people-edit-signatory:hover {
     opacity: 1;
 }
@@ -1799,6 +1802,7 @@ table.listing tbody tr.even.dragging td {
 }
 
 /* edit icon */
+#content span.people-edit-element:before,
 #content span.edit-element:before {
    content: "\f304";
 }
@@ -1861,8 +1865,7 @@ span.signatory-replacer {
    color: red;
 }
 
-#content span.people-remove-left:before,
-#content span.people-remove-redefined-signatory:before {
+#content span.people-remove-element:before {
     content: "\f00d";
     color: red;
     font-size: 120%;
