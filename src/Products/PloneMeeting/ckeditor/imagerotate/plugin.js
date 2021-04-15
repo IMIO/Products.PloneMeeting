@@ -68,25 +68,26 @@
     var element = selection.getStartElement();
     var imageElement = element.getAscendant('img', true);
     if (!imageElement) {
-      editor.showNotification("no image element?", "warning");
+      editor.showNotification(editor.lang.imagerotate.errorNoImage, "warning");
       return;
     }
     var domImageElement = imageElement.$;
     if (!domImageElement) {
-      editor.showNotification("no DOM image element?", "warning");
+      editor.showNotification(editor.lang.imagerotate.errorNoDOMImage, "warning");
       return;
     }
 
     if ('crossOrigin' in domImageElement) {
       // this will not work if image respond headers will not have Access-Control-Allow-Origin: *
-      domImageElement.setAttribute("crossOrigin", "anonymous");
+      // XXX PloneMeeting fix to work in Chrome
+      // domImageElement.setAttribute("crossOrigin", "anonymous");
     }
 
     try {
       rotateByAngle(domImageElement, angle);
     } catch (err) {
       if (err.code === 18) {
-        editor.showNotification("Image is from other domain and can't be rotated", "warning");
+        editor.showNotification(editor.lang.imagerotate.errorImageFromOtherDomain, "warning");
       }
     }
   }

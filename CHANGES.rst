@@ -5,8 +5,11 @@ Changelog
 4.1.28.23 (unreleased)
 ----------------------
 
-- Nothing changed yet.
+- Backport from 4.2.x:
 
+  - Fixed `CKeditor imagerotate` plugin that was not working on Chrome 85+,
+    display a clear message when CORS issue occurs.
+    [gbastien]
 
 4.1.28.22 (2021-04-12)
 ----------------------
