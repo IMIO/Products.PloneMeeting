@@ -79,7 +79,8 @@
 
     if ('crossOrigin' in domImageElement) {
       // this will not work if image respond headers will not have Access-Control-Allow-Origin: *
-      domImageElement.setAttribute("crossOrigin", "anonymous");
+      // XXX PloneMeeting fix to work in Chrome
+      // domImageElement.setAttribute("crossOrigin", "anonymous");
     }
 
     try {
