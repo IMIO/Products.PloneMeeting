@@ -195,17 +195,12 @@ class MeetingAdvice(Container):
 
     def get_advice_given_on(self):
         '''Return the date the advice was given on.
-           If advice is in another state than "advice_given", return modified, else
-           returns the smallest date between modified() and last event 'giveAdvice'.
+           Returns the smallest date between modified() and last event 'giveAdvice'.
            This manages case when advice is edited after it is given, for example
            when a MeetingManager corrects a typo, the advice_given_on date will be
            the 'giveAdvice' date.'''
-        modified = self.modified()
-        # not "advice_given"
-        if not self.query_state() == "advice_given":
-            return modified
-        # "advice_given"
         lastEvent = getLastWFAction(self, 'giveAdvice')
+        modified = self.modified()
         if not lastEvent:
             return modified
         else:

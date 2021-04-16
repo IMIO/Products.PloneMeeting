@@ -178,9 +178,7 @@ Changelog
 
   - Only reinitialize delay if advice was not given;
   - Optional functionnality `asked_again` is now no more optional;
-  - If a given advice must be reinitialized, it must be `asked_again`;
-  - Adapted `MeetingAdvice.get_advice_given_on` to return advice modified when
-    advice is in an editable state.
+  - If a given advice must be reinitialized, it must be `asked_again`.
 
   [gbastien]
 
