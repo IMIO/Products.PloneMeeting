@@ -11,7 +11,7 @@
                                             advicesToWarn python: view.advicesDelayToWarn();">
       <tal:comment replace="nothing">For history reasons, we use cfg.listAdviceTypes to be sure
                                      that a deactivated adviceType is still shown.</tal:comment>
-      <tal:menu repeat="adviceType python: ['not_given', 'hidden_during_redaction', 'considered_not_given_hidden_during_redaction'] + cfg.listAdviceTypes().keys()">
+      <tal:menu repeat="adviceType python: ['not_given', 'hidden_during_redaction', 'considered_not_given_hidden_during_redaction', 'asked_again'] + cfg.listAdviceTypes().keys()">
         <tal:defines tal:define="adviceToWarn python: advicesToWarn.get(adviceType, None);
                                  tooltipster_base_class string:tooltipster-advices-infos;">
           <tal:adviceType condition="python: adviceType in advicesByType">

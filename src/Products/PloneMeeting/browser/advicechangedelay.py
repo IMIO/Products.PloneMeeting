@@ -292,6 +292,13 @@ class AdviceChangeDelayHistoryView(BrowserView):
         return deepcopy(self.context.adviceIndex[advice_uid])
 
 
+def _reinit_advice_delay(item, advice_uid):
+    '''Reinitialize advice delay for given p_item p_advice_uid.'''
+    advice_infos = item.adviceIndex[advice_uid]
+    advice_infos['delay_started_on'] = None
+    advice_infos['delay_stopped_on'] = None
+
+
 class AdviceReinitializeDelayView(BrowserView):
     '''Reinitialize delay of given advice_uid.'''
 
@@ -306,15 +313,14 @@ class AdviceReinitializeDelayView(BrowserView):
         advice_uid = self.request.get('advice')
         if not delayChangesView._mayReinitializeDelay(advice_uid):
             raise Unauthorized
-        adviceInfos = self.context.adviceIndex[advice_uid]
-        adviceInfos['delay_started_on'] = None
-        adviceInfos['delay_stopped_on'] = None
-        # add a line to the item's adviceIndex advice delay_changes_history
+        # reinit delay and add a line to the item's adviceIndex advice delay_changes_history
+        _reinit_advice_delay(self.context, advice_uid)
         member = api.user.get_current()
         history_data = {'action': 'Reinitiatlize delay',
                         'actor': member.getId(),
                         'time': DateTime(),
                         'comments': None}
+        adviceInfos = self.context.adviceIndex[advice_uid]
         adviceInfos['delay_changes_history'].append(history_data)
         # update local roles that will update adviceIndex
         self.context.update_local_roles()
