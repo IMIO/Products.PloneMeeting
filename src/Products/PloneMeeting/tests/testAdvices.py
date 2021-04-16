@@ -485,7 +485,6 @@ class testAdvices(PloneMeetingTestCase):
               'for_item_created_from': '2016/08/08',
               'delay': '5',
               'delay_label': ''}, ])
-        cfg.setUsedAdviceTypes(cfg.getUsedAdviceTypes() + ('asked_again', ))
         # an advice can be given or edited when an item is 'proposed'
         cfg.setItemAdviceStates((self._stateMappingFor('proposed'), ))
         cfg.setItemAdviceEditStates((self._stateMappingFor('proposed'), ))
@@ -2126,7 +2125,6 @@ class testAdvices(PloneMeetingTestCase):
         cfg.setItemAdviceStates([self._stateMappingFor('itemcreated'), ])
         cfg.setItemAdviceEditStates([self._stateMappingFor('itemcreated'), ])
         cfg.setItemAdviceViewStates([self._stateMappingFor('itemcreated'), ])
-        cfg.setUsedAdviceTypes(cfg.getUsedAdviceTypes() + ('asked_again', ))
         self.changeUser('pmCreator1')
         # create an item and ask the advice of group 'vendors'
         data = {
@@ -3488,6 +3486,52 @@ class testAdvices(PloneMeetingTestCase):
             UID='%s__%s' % (item.UID(), advice.advice_group))
         item_modified_advice_confidential = item.modified()
         self.assertNotEqual(item_modified_advice_deleted, item_modified_advice_confidential)
+
+    def test_pm_AdviceDelayNotReinitializedWhenGiven(self):
+        """When a WF transition from MeetingConfig.transitionsReinitializingDelays
+           occurs, advice delay is only reinitialized if advice was not given."""
+        cfg = self.meetingConfig
+        cfg.setCustomAdvisers(
+            [{'row_id': 'unique_id_123',
+              'org': self.vendors_uid,
+              'gives_auto_advice_on': '',
+              'for_item_created_from': '2021/04/01',
+              'delay': '5',
+              'delay_label': ''},
+             {'row_id': 'unique_id_456',
+              'org': self.developers_uid,
+              'gives_auto_advice_on': '',
+              'for_item_created_from': '2021/04/01',
+              'delay': '5',
+              'delay_label': ''}, ])
+        # ask both advice but give only one
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        item.setOptionalAdvisers((
+            '{0}__rowid__unique_id_123'.format(self.vendors_uid),
+            '{0}__rowid__unique_id_456'.format(self.developers_uid), ))
+        item._update_after_edit()
+        self.proposeItem(item)
+        # delay started for both advices
+        self.assertTrue(item.adviceIndex[self.vendors_uid]['delay_started_on'])
+        self.assertTrue(item.adviceIndex[self.developers_uid]['delay_started_on'])
+        advice = createContentInContainer(
+            item,
+            'meetingadvice',
+            **{'advice_group': self.vendors_uid,
+               'advice_type': u'positive',
+               'advice_comment': RichTextValue(u'My comment')})
+        self.backToState(item, 'itemcreated')
+        # advice delay of not given advice was reinitialized
+        self.assertTrue(item._advice_is_given(self.vendors_uid))
+        self.assertTrue(item.adviceIndex[self.vendors_uid]['delay_started_on'])
+        self.assertFalse(item._advice_is_given(self.developers_uid))
+        self.assertIsNone(item.adviceIndex[self.developers_uid]['delay_started_on'])
+        # asking advice again will reinitialize delay
+        changeView = advice.restrictedTraverse('@@change-advice-asked-again')
+        changeView()
+        self.assertFalse(item._advice_is_given(self.vendors_uid))
+        self.assertIsNone(item.adviceIndex[self.vendors_uid]['delay_started_on'])
 
 
 def test_suite():
