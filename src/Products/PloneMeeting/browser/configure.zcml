@@ -206,13 +206,11 @@
       name="view"
       class="Products.PloneMeeting.browser.meeting.MeetingDefaultView"
       permission="zope2.View" />
-
     <browser:page
       for="Products.PloneMeeting.content.meeting.IMeeting"
       name="edit"
       class="Products.PloneMeeting.browser.meeting.MeetingEdit"
       permission="cmf.ModifyPortalContent" />
-
     <adapter
         for="Products.CMFCore.interfaces.IFolderish
              zope.publisher.interfaces.browser.IDefaultBrowserLayer
@@ -225,46 +223,39 @@
             permission="cmf.AddPortalContent"
             interface="zope.publisher.interfaces.browser.IBrowserPage" />
     </class>
-
     <browser:page
       for="Products.PloneMeeting.content.meeting.IMeeting"
       name="meeting_view"
       class="Products.PloneMeeting.browser.meeting.MeetingView"
       template="templates/meeting_view.pt"
       permission="zope2.View" />
-
     <browser:page
       for="Products.PloneMeeting.content.meeting.IMeeting"
       name="meeting_available_items_view"
       template="templates/meeting_available_items_view.pt"
       class=".meeting.MeetingView"
       permission="zope2.View" />
-
     <browser:page
       for="Products.PloneMeeting.content.meeting.IMeeting"
       name="display-inserting-methods-helper-msg"
       template="templates/meeting_inserting_methods_help_msg.pt"
       class=".meeting.MeetingInsertingMethodsHelpMsgView"
       permission="zope2.View" />
-
     <browser:view
       for="Products.PloneMeeting.content.meeting.IMeeting"
       name="update-item-references"
       class=".meeting.MeetingUpdateItemReferences"
       permission="cmf.ModifyPortalContent" />
-
     <browser:view
       for="Products.PloneMeeting.content.meeting.IMeeting"
       name="reorder-items"
       class=".meeting.MeetingReorderItems"
       permission="cmf.ModifyPortalContent" />
-
     <browser:view
       for="Products.PloneMeeting.content.meeting.IMeeting"
       name="present-several-items"
       class=".meeting.PresentSeveralItemsView"
       permission="zope2.View" />
-
     <browser:view
       for="Products.PloneMeeting.content.meeting.IMeeting"
       name="remove-several-items"
@@ -384,12 +375,17 @@
 
     <!-- Custom view for meetingadvice -->
     <browser:page
-        for="Products.PloneMeeting.content.advice.IMeetingAdvice"
-        name="view"
-        class="Products.PloneMeeting.browser.advices.AdviceView"
-        template="templates/meetingadvice.pt"
-        permission="zope2.View"
-        />
+      for="Products.PloneMeeting.content.advice.IMeetingAdvice"
+      name="view"
+      class="Products.PloneMeeting.browser.advices.AdviceView"
+      template="templates/meetingadvice.pt"
+      permission="zope2.View" />
+    <browser:page
+      for="Products.PloneMeeting.content.advice.IMeetingAdvice"
+      name="edit"
+      class="Products.PloneMeeting.browser.advices.AdviceEdit"
+      permission="cmf.ModifyPortalContent" />
+
     <!-- Override content-core view for advice to use itemcontencore.pt instead containercontentcore.pt
          or it breaks when viewing a version preview of a versionned advice -->
     <configure package="plone.dexterity">

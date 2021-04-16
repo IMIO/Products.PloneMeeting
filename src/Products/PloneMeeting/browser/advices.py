@@ -2,16 +2,20 @@
 
 from AccessControl import Unauthorized
 from collective.contact.plonegroup.utils import get_organization
+from collective.contact.plonegroup.utils import get_plone_group_id
 from imio.actionspanel.interfaces import IContentDeletable
 from imio.helpers.content import get_state_infos
 from imio.history.browser.views import IHVersionPreviewView
 from plone import api
+from plone.dexterity.browser.edit import DefaultEditForm
 from plone.dexterity.browser.view import DefaultView
 from plone.memoize import ram
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.utils import _checkPermission
 from Products.Five import BrowserView
 from Products.PageTemplates.Expressions import SecureModuleImporter
+from Products.PloneMeeting.browser.advicechangedelay import _reinit_advice_delay
+from Products.PloneMeeting.config import PMMessageFactory as _
 from zope.event import notify
 from zope.lifecycleevent import ObjectModifiedEvent
 
@@ -239,6 +243,10 @@ class ChangeAdviceAskedAgainView(BrowserView):
             cfg = tool.getMeetingConfig(self.context)
             self.context.advice_hide_during_redaction = \
                 bool(self.context.portal_type in cfg.getDefaultAdviceHiddenDuringRedaction())
+            # reinitialize advice delay if relevant
+            advice_uid = self.context.advice_group
+            if parent.adviceIndex[advice_uid]['delay']:
+                _reinit_advice_delay(parent, advice_uid)
         else:
             pr = api.portal.get_tool('portal_repository')
             # we are about to set the advice back to original value
@@ -280,6 +288,19 @@ class AdviceVersionPreviewView(IHVersionPreviewView):
         self.adviceStyle = cfg.getAdviceStyle()
 
 
+def _display_asked_again_warning(advice, parent):
+    """If advice is "asked_again" and current user is adviser
+       for advice_group display a message explaining to change the advice_type."""
+    if advice.advice_type == "asked_again":
+        advisers_group_id = get_plone_group_id(advice.advice_group, 'advisers')
+        if parent.adviceIndex[advice.advice_group]['advice_editable']:
+            tool = api.portal.get_tool('portal_plonemeeting')
+            if advisers_group_id in tool.get_plone_groups_for_user():
+                api.portal.show_message(
+                    _("warning_advice_asked_again_need_to_change_advice_type"),
+                    request=advice.REQUEST, type="warning")
+
+
 class AdviceView(DefaultView):
     """ """
 
@@ -292,4 +313,16 @@ class AdviceView(DefaultView):
         advice_icons_infos._initAdviceInfos(self.context.advice_group)
         if not advice_icons_infos.mayView():
             raise Unauthorized
+        _display_asked_again_warning(self.context, parent)
         return super(AdviceView, self).__call__()
+
+
+class AdviceEdit(DefaultEditForm):
+    """
+        Edit form redefinition to display message when advice "asked_again".
+    """
+
+    def update(self):
+        super(AdviceEdit, self).update()
+        if not self.actions.executedActions:
+            _display_asked_again_warning(self.context, self.context.aq_inner.aq_parent)

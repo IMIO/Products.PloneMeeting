@@ -68,12 +68,12 @@
     var element = selection.getStartElement();
     var imageElement = element.getAscendant('img', true);
     if (!imageElement) {
-      editor.showNotification("no image element?", "warning");
+      editor.showNotification(editor.lang.imagerotate.errorNoImage, "warning");
       return;
     }
     var domImageElement = imageElement.$;
     if (!domImageElement) {
-      editor.showNotification("no DOM image element?", "warning");
+      editor.showNotification(editor.lang.imagerotate.errorNoDOMImage, "warning");
       return;
     }
 
@@ -87,7 +87,7 @@
       rotateByAngle(domImageElement, angle);
     } catch (err) {
       if (err.code === 18) {
-        editor.showNotification("Image is from other domain and can't be rotated", "warning");
+        editor.showNotification(editor.lang.imagerotate.errorImageFromOtherDomain, "warning");
       }
     }
   }

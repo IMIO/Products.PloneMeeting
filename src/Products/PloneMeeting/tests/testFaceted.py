@@ -718,12 +718,32 @@ class testFaceted(PloneMeetingTestCase):
                           "Products.PloneMeeting.vocabularies.advicetypesvocabulary",
                           only_factory=True)
         # once get, it is cached
-        self.assertEqual(len(vocab(pmFolder)), 5)
+        self.assertEqual(sorted([term.token for term in vocab(pmFolder)]),
+                         ['asked_again',
+                          'considered_not_given_hidden_during_redaction',
+                          'hidden_during_redaction',
+                          'negative',
+                          'not_given',
+                          'positive'])
 
         # change the MeetingConfig.usedAdvicesTypes
         cfg.setUsedAdviceTypes(('positive', ))
+        # cached
+        self.assertEqual(sorted([term.token for term in vocab(pmFolder)]),
+                         ['asked_again',
+                          'considered_not_given_hidden_during_redaction',
+                          'hidden_during_redaction',
+                          'negative',
+                          'not_given',
+                          'positive'])
         cfg.at_post_edit_script()
-        self.assertEqual(len(vocab(pmFolder)), 4)
+        # cache invalidated
+        self.assertEqual(sorted([term.token for term in vocab(pmFolder)]),
+                         ['asked_again',
+                          'considered_not_given_hidden_during_redaction',
+                          'hidden_during_redaction',
+                          'not_given',
+                          'positive'])
 
     def test_pm_AdviceTypesVocabularyMCAware(self):
         '''Test the "Products.PloneMeeting.vocabularies.advicetypesvocabulary"

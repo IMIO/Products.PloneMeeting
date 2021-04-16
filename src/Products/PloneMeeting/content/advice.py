@@ -288,19 +288,16 @@ class AdviceTypeVocabulary(object):
             # now wipeout usedAdviceTypes depending on current meetingadvice portal_type
             itemObj = context.meta_type == 'MeetingItem' and context or context.getParentNode()
             current_portal_type = findMeetingAdvicePortalType(context)
-            usedAdviceTypes = [usedAdviceType for usedAdviceType in usedAdviceTypes
-                               if usedAdviceType in itemObj.adapted()._adviceTypesForAdviser(current_portal_type)]
+            usedAdviceTypes = [
+                usedAdviceType for usedAdviceType in usedAdviceTypes
+                if usedAdviceType in itemObj.adapted()._adviceTypesForAdviser(current_portal_type)]
 
-            # remove the 'asked_again' value, it can only be used if it is the current context.advice_type
-            # and it will be added here under if necessary
-            if 'asked_again' in usedAdviceTypes:
-                usedAdviceTypes.remove('asked_again', )
             # make sure if an adviceType was used for context and it is no more available, it
             # appears in the vocabulary and is so useable...
-            if context.portal_type in advicePortalTypeIds and context.advice_type not in usedAdviceTypes:
+            if context.portal_type in advicePortalTypeIds and \
+               context.advice_type not in usedAdviceTypes:
                 usedAdviceTypes.append(context.advice_type)
-            for advice_id, advice_title in cfg.listAdviceTypes().items():
+            for advice_id, advice_title in cfg.listAdviceTypes(include_asked_again=True).items():
                 if advice_id in usedAdviceTypes:
                     terms.append(SimpleTerm(advice_id, advice_id, advice_title))
-
         return SimpleVocabulary(terms)
