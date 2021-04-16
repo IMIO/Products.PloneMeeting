@@ -61,9 +61,21 @@ class BaseAttendeeForm(form.Form):
         self.fields['person_uid'].mode = 'hidden'
         form.Form.updateWidgets(self)
 
+    def _update_description(self):
+        """Display concerned person as description."""
+        person_uid = person_uid_default()
+        if person_uid:
+            hp = uuidToObject(person_uid)
+            meeting = self.context.getMeeting()
+            position_type = meeting.get_attendee_position_for(
+                self.context.UID(), person_uid)
+            self.description = hp.get_short_title(
+                forced_position_type_value=position_type)
+
     def update(self):
         """ """
         super(BaseAttendeeForm, self).update()
+        self._update_description()
         # after calling parent's update, self.actions are available
         self.actions.get('cancel').addClass('standalone')
         self.buttons = self.buttons.select('apply', 'cancel')

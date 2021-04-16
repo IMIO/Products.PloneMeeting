@@ -22,6 +22,7 @@ from plone.app.contenttypes.behaviors.collection import ICollection
 from plone.app.querystring.querybuilder import queryparser
 from plone.app.textfield import RichText
 from plone.app.uuid.utils import uuidToCatalogBrain
+from plone.app.uuid.utils import uuidToObject
 from plone.dexterity.content import Container
 from plone.dexterity.schema import DexteritySchemaPolicy
 from plone.directives import form
@@ -1252,8 +1253,7 @@ class Meeting(Container):
         data = self.get_item_signatories(by_signatories=False, include_position_type=True)
         data = {k: v['position_type'] for k, v in data[item_uid].items()
                 if v['hp_uid'] == signatory_uid}
-        catalog = api.portal.get_tool('portal_catalog')
-        hp = catalog(UID=signatory_uid)[0].getObject()
+        hp = uuidToObject(signatory_uid)
         if data:
             signature_number, position_type = data.items()[0]
         else:
@@ -1287,20 +1287,17 @@ class Meeting(Container):
         if item_uid in self.item_attendees_positions and \
            hp_uid in self.item_attendees_positions[item_uid]:
             data = self.item_attendees_positions[item_uid][hp_uid]
-        catalog = api.portal.get_tool('portal_catalog')
-        hp = catalog(UID=hp_uid)[0].getObject()
+        hp = uuidToObject(hp_uid)
         position_type = data.get('position_type', hp.position_type)
-        res = {}
-        res['position_type'] = position_type
         if render_position_type:
             if prefix_position_type:
-                res['position_type'] = hp.get_prefix_for_gender_and_number(
+                position_type = hp.get_prefix_for_gender_and_number(
                     include_value=True,
                     forced_position_type_value=position_type)
             else:
-                res['position_type'] = hp.get_label(
+                position_type = hp.get_label(
                     forced_position_type_value=position_type)
-        return res
+        return position_type
 
     security.declarePublic('get_item_votes')
 

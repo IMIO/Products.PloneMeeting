@@ -456,7 +456,9 @@ document.location.reload(true);
       tal:attributes="class python: isNonAttendee and classOddEven + ' item-non-attendee' or classOddEven">
      <td class="attendee-value attendee-title">
        <span tal:content="python: view.get_short_title_for(mUser, aUid)"
-          tal:attributes="class python: is_attendee_position_redefined and 'attendee-title highlightValue' or 'item-attendee-title'">
+             tal:attributes="class python: is_attendee_position_redefined and 'tooltipster-meeting-item-redefined-position link-help item-attendee-title highlightValue' or 'item-attendee-title';
+                             data-base_url string:${context/absolute_url};
+                             data-attendee_uid string:${aUid};">
         Attendee short title
        </span>
        <a href="#" class="link-overlay-pm-manage-attendees"

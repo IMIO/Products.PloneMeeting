@@ -481,7 +481,7 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
     def get_short_title_for(self, hp, hp_uid):
         """ """
         position_type = self.meeting.get_attendee_position_for(
-            self.context_uid, hp_uid)['position_type']
+            self.context_uid, hp_uid)
         return hp.get_short_title(forced_position_type_value=position_type)
 
     def is_attendee_position_redefined(self, hp_uid):

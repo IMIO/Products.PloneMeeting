@@ -354,6 +354,13 @@
 
     <browser:page
       for="Products.PloneMeeting.interfaces.IMeetingContent"
+      name="display-meeting-item-redefined-position"
+      template="templates/meeting_item_redefined_position.pt"
+      class=".views.DisplayMeetingItemRedefinedPosition"
+      permission="zope2.View" />
+
+    <browser:page
+      for="Products.PloneMeeting.interfaces.IMeetingContent"
       name="display-meeting-item-not-present"
       template="templates/meeting_item_not_present.pt"
       class=".views.DisplayMeetingItemNotPresent"

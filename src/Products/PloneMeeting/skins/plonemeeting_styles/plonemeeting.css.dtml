@@ -1722,6 +1722,10 @@ body.template-meeting_view #content table#faceted_table.listing tbody tr.odd:hov
    border-left: 3px solid grey;
 }
 
+table#meeting_users span.attendee-title,
+table#meeting_users span.item-attendee-title {
+    font-weight: bold;
+}
 table#meeting_users tr.item-non-attendee {
     color: gray;
 }
@@ -1780,6 +1784,10 @@ table.listing tbody tr.even.dragging td {
     border-bottom: 1px dotted;
     padding-bottom: 2px;
     cursor: help;
+}
+/* fix padding from 2px to px for attendee title when position redefined */
+#content span.tooltipster-meeting-item-redefined-position.link-help {
+    padding-bottom: 1px;
 }
 
 #content span.people-edit-signatory:before {
