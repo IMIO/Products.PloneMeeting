@@ -101,6 +101,7 @@ Changelog
   advice type correctly.
   [gbastien]
 - Completed the `DX quick edit RichText field` to manage :
+
   - `locking` (not being able to edit if another user is editing), hide the edit
     icon if context is locked, if user edit and content is locked in between,
     the page is reloaded;
@@ -108,6 +109,7 @@ Changelog
 
   [gbastien]
 - Added `Meeting.committees` management:
+
   - Committees are defined in `MeetingConfig.committees` datagridfield;
   - When an new meeting is created, `Meeting.committees` is filled using the
     `MeetingConfig.committees` defined values, it manages `date`, `convocation_date`,
@@ -144,8 +146,8 @@ Changelog
   `collective.documentgenerator` that does the same.
   [gbastien]
 - Removed `MeetingItem.predecessor` `ReferenceField`, manage
- `predecessor/successors` manually, this will help migrating to DX.
- [gbastien]
+  `predecessor/successors` manually, this will help migrating to DX.
+  [gbastien]
 - Fixed bug in `ToolPloneMeeting.validate_holidays` that was not catching a
   wrong date format like `20/01/20`.
   [gbastien]
@@ -171,6 +173,15 @@ Changelog
 - Fixed `DataGridField` data lost for fields using single checkbox and multi
   checkboxes when validation failed.  This was impacting the `MeetingConfig`.
   Needed to override relevant datagrid templates.
+  [gbastien]
+- Changed behavior of `MeetingConfig.transitionsReinitializingDelays`:
+
+  - Only reinitialize delay if advice was not given;
+  - Optional functionnality `asked_again` is now no more optional;
+  - If a given advice must be reinitialized, it must be `asked_again`;
+  - Adapted `MeetingAdvice.get_advice_given_on` to return advice modified when
+    advice is in an editable state.
+
   [gbastien]
 
 4.2b11 (2021-01-19)
