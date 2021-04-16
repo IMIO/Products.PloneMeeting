@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 
+from collective.contact.plonegroup.browser.settings import invalidate_soev_cache
+from collective.contact.plonegroup.browser.settings import invalidate_ssoev_cache
 from collective.contact.plonegroup.config import get_registry_functions
 from collective.contact.plonegroup.config import get_registry_organizations
 from collective.contact.plonegroup.config import set_registry_functions
 from collective.contact.plonegroup.config import set_registry_organizations
-from collective.contact.plonegroup.browser.settings import invalidate_soev_cache
-from collective.contact.plonegroup.browser.settings import invalidate_ssoev_cache
 from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_own_organization
 from collective.contact.plonegroup.utils import get_plone_group
