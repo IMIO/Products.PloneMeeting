@@ -15,6 +15,7 @@ from collective.eeafaceted.batchactions.browser.views import BaseBatchActionForm
 from collective.eeafaceted.batchactions.utils import listify_uids
 from eea.facetednavigation.interfaces import ICriteria
 from ftw.labels.interfaces import ILabeling
+from imio.helpers.content import uuidToObject
 from imio.helpers.xhtml import addClassToContent
 from imio.helpers.xhtml import CLASS_TO_LAST_CHILDREN_NUMBER_OF_CHARS_DEFAULT
 from imio.helpers.xhtml import imagesToPath
@@ -1596,7 +1597,7 @@ class FolderDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGH
         cfg = self.appy_renderer.originalContext['meetingConfig']
 
         for contact in cfg.getOrderedContacts():
-            position = api.content.uuidToObject(contact)
+            position = api.content.uuidToObject(contact, unrestricted=True)
             attendances[contact] = {'name': position.get_person_title(),
                                     'function': position.get_label(),
                                     'present': 0,
@@ -2081,11 +2082,16 @@ class DisplayMeetingItemRedefinedPosition(BrowserView):
         """ """
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.attendee_uid = attendee_uid
+        self.attendee = uuidToObject(attendee_uid, unrestricted=True)
         return self.index()
 
     def get_items_for_redefined_position(self):
         """Returns the list of items the attendee_uid position was redefined for."""
         item_uids = []
+        redefined_positions = self.meeting.get_item_redefined_positions()
+        for item_uid, infos in redefined_positions.items():
+            if self.attendee_uid in infos:
+                item_uids.append(item_uid)
         catalog = api.portal.get_tool('portal_catalog')
         brains = catalog(UID=item_uids, sort_on='getItemNumber')
         objs = [brain.getObject() for brain in brains]

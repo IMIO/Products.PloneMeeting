@@ -27,10 +27,10 @@ from ftw.labels.interfaces import ILabeling
 from imio.helpers.cache import cleanRamCache
 from imio.helpers.cache import cleanVocabularyCacheFor
 from imio.helpers.content import get_vocab
+from imio.helpers.content import uuidToObject
 from persistent.list import PersistentList
 from plone import api
 from plone.app.portlets.portlets import navigation
-from plone.app.uuid.utils import uuidToObject
 from plone.memoize import ram
 from plone.portlets.interfaces import IPortletAssignmentMapping
 from plone.portlets.interfaces import IPortletManager
@@ -3782,7 +3782,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         if diff_attendees or diff_signatories:
             all_diffs = list(diff_attendees) + list(diff_signatories)
             an_hp_uid = all_diffs[0]
-            hp = uuidToObject(an_hp_uid)
+            hp = uuidToObject(an_hp_uid, unrestricted=True)
             return _('error_value_removed_used_in_committees_field',
                      mapping={'hp_title': hp.get_short_title()},
                      default="Error used values is not selectable, check \"${hp_title}\"")

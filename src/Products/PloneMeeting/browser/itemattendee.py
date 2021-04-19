@@ -2,10 +2,11 @@
 
 from AccessControl import Unauthorized
 from imio.helpers.cache import invalidate_cachekey_volatile_for
+from imio.helpers.content import uuidToObject
 from imio.helpers.security import fplog
 from persistent.mapping import PersistentMapping
 from plone import api
-from plone.app.uuid.utils import uuidToObject
+from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.browser.itemassembly import _itemsToUpdate
 from Products.PloneMeeting.browser.itemassembly import validate_apply_until_item_number
 from Products.PloneMeeting.config import PMMessageFactory as _
@@ -22,6 +23,8 @@ from zope import schema
 from zope.component.hooks import getSite
 from zope.i18n import translate
 from zope.interface import Interface
+from zope.interface import provider
+from zope.schema._bootstrapinterfaces import IContextAwareDefaultFactory
 
 
 def person_uid_default():
@@ -33,6 +36,14 @@ def person_uid_default():
     return request.get('person_uid', u'')
 
 
+@provider(IContextAwareDefaultFactory)
+def apply_until_item_number_default(context):
+    """
+      Default value is the current item number.
+    """
+    return safe_unicode(context.getItemNumber(for_display=True))
+
+
 class IBaseAttendee(Interface):
 
     person_uid = schema.TextLine(
@@ -40,6 +51,14 @@ class IBaseAttendee(Interface):
         description=_(u""),
         defaultFactory=person_uid_default,
         required=False)
+
+    apply_until_item_number = schema.TextLine(
+        title=_(u"Apply until item number"),
+        description=_(u"Specify a number to which this will be applied. "
+                      u"Field default is current item number."),
+        required=False,
+        defaultFactory=apply_until_item_number_default,
+        constraint=validate_apply_until_item_number,)
 
 
 class BaseAttendeeForm(form.Form):
@@ -65,7 +84,7 @@ class BaseAttendeeForm(form.Form):
         """Display concerned person as description."""
         person_uid = person_uid_default()
         if person_uid:
-            hp = uuidToObject(person_uid)
+            hp = uuidToObject(person_uid, unrestricted=True)
             meeting = self.context.getMeeting()
             position_type = meeting.get_attendee_position_for(
                 self.context.UID(), person_uid)
@@ -141,14 +160,6 @@ class BaseAttendeeForm(form.Form):
 
 
 class IByeByeAttendee(IBaseAttendee):
-
-    apply_until_item_number = schema.TextLine(
-        title=_(u"Apply until item number"),
-        description=_(u"If you specify a number, this attendee will be defined as "
-                      u"absent from current item to entered item number. "
-                      u"Leave empty to only apply for current item."),
-        required=False,
-        constraint=validate_apply_until_item_number,)
 
     not_present_type = schema.Choice(
         title=_(u"Not present type"),
@@ -298,14 +309,7 @@ class ByeByeAttendeeForm(BaseAttendeeForm):
 
 
 class IWelcomeAttendee(IBaseAttendee):
-
-    apply_until_item_number = schema.TextLine(
-        title=_(u"Apply until item number"),
-        description=_(u"If you specify a number, this attendee will be defined as "
-                      u"back into the meeting from current item to entered item number. "
-                      u"Leave empty to only apply for current item."),
-        required=False,
-        constraint=validate_apply_until_item_number,)
+    """ """
 
 
 class WelcomeAttendeeForm(BaseAttendeeForm):
@@ -359,14 +363,7 @@ class WelcomeAttendeeForm(BaseAttendeeForm):
 
 
 class IByeByeNonAttendee(IBaseAttendee):
-
-    apply_until_item_number = schema.TextLine(
-        title=_(u"Apply until item number"),
-        description=_(u"If you specify a number, this attendee will be defined as "
-                      u"non attendee from current item to entered item number. "
-                      u"Leave empty to only apply for current item."),
-        required=False,
-        constraint=validate_apply_until_item_number,)
+    """ """
 
 
 class ByeByeNonAttendeeForm(ByeByeAttendeeForm):
@@ -384,14 +381,7 @@ class ByeByeNonAttendeeForm(ByeByeAttendeeForm):
 
 
 class IWelcomeNonAttendee(IBaseAttendee):
-
-    apply_until_item_number = schema.TextLine(
-        title=_(u"Apply until item number"),
-        description=_(u"If you specify a number, this attendee will be defined as "
-                      u"attendee for the meeting from current item to entered item number. "
-                      u"Leave empty to only apply for current item."),
-        required=False,
-        constraint=validate_apply_until_item_number,)
+    """ """
 
 
 class WelcomeNonAttendeeForm(WelcomeAttendeeForm):
@@ -414,20 +404,12 @@ class WelcomeNonAttendeeForm(WelcomeAttendeeForm):
 def position_type_default():
     """ """
     person_uid = person_uid_default()
-    hp = uuidToObject(person_uid)
+    hp = uuidToObject(person_uid, unrestricted=True)
     position_type = hp.secondary_position_type or hp.position_type
     return position_type
 
 
 class IRedefineSignatory(IBaseAttendee):
-
-    apply_until_item_number = schema.TextLine(
-        title=_(u"Apply until item number"),
-        description=_(u"If you specify a number, this attendee will be defined as "
-                      u"signatory from current item to entered item number. "
-                      u"Leave empty to only apply for current item."),
-        required=False,
-        constraint=validate_apply_until_item_number,)
 
     position_type = schema.Choice(
         title=_(u"Signature position type"),
@@ -509,14 +491,7 @@ class RedefineSignatoryForm(BaseAttendeeForm):
 
 
 class IRemoveRedefinedSignatory(IBaseAttendee):
-
-    apply_until_item_number = schema.TextLine(
-        title=_(u"Apply until item number"),
-        description=_(u"If you specify a number, this attendee will no longer be "
-                      u"considered item signatory from current item to entered item number. "
-                      u"Leave empty to only apply for current item."),
-        required=False,
-        constraint=validate_apply_until_item_number,)
+    """ """
 
 
 class RemoveRedefinedSignatoryForm(BaseAttendeeForm):
@@ -566,17 +541,9 @@ class RemoveRedefinedSignatoryForm(BaseAttendeeForm):
 
 class IRedefineAttendeePosition(IBaseAttendee):
 
-    apply_until_item_number = schema.TextLine(
-        title=_(u"Apply until item number"),
-        description=_(u"If you specify a number, this attendee position will be "
-                      u"redefined from current item to entered item number. "
-                      u"Leave empty to only apply for current item."),
-        required=False,
-        constraint=validate_apply_until_item_number,)
-
     position_type = schema.Choice(
-        title=_(u"Signature position type"),
-        description=_(u"Position type to use as label for the attendee."),
+        title=_(u"Position type to use"),
+        description=_(u"Position type to use for the attendee on this item."),
         defaultFactory=position_type_default,
         required=True,
         vocabulary="PMPositionTypes")
@@ -631,14 +598,7 @@ class RedefineAttendeePositionForm(BaseAttendeeForm):
 
 
 class IRemoveRedefinedAttendeePosition(IBaseAttendee):
-
-    apply_until_item_number = schema.TextLine(
-        title=_(u"Apply until item number"),
-        description=_(u"If you specify a number, this attendee position will "
-                      u"no longer be redefined from current item to entered item number. "
-                      u"Leave empty to only apply for current item."),
-        required=False,
-        constraint=validate_apply_until_item_number,)
+    """ """
 
 
 class RemoveRedefinedAttendeePositionForm(BaseAttendeeForm):

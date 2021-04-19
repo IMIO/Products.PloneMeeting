@@ -449,7 +449,7 @@ document.location.reload(true);
                   isMeetingSignatory python: aUid in meetingSignatories;
                   isRealItemSignatory python: aUid in realItemSignatories;
                   isVoter python: aUid in voters;
-                  is_attendee_position_redefined python: view.is_attendee_position_redefined(aUid);
+                  is_attendee_position_redefined python: view.meeting.is_attendee_position_redefined(aUid, view.context_uid);
                   isNonAttendee python: aUid in itemNonAttendees;
                   oddrow repeat/mUser/odd;
                   classOddEven python: oddrow and 'even' or 'odd';"

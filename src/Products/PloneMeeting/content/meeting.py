@@ -13,6 +13,7 @@ from datetime import datetime
 from datetime import timedelta
 from imio.helpers.cache import cleanRamCacheFor
 from imio.helpers.content import richtextval
+from imio.helpers.content import uuidToObject
 from imio.prettylink.interfaces import IPrettyLink
 from persistent.list import PersistentList
 from persistent.mapping import PersistentMapping
@@ -22,7 +23,6 @@ from plone.app.contenttypes.behaviors.collection import ICollection
 from plone.app.querystring.querybuilder import queryparser
 from plone.app.textfield import RichText
 from plone.app.uuid.utils import uuidToCatalogBrain
-from plone.app.uuid.utils import uuidToObject
 from plone.dexterity.content import Container
 from plone.dexterity.schema import DexteritySchemaPolicy
 from plone.directives import form
@@ -1242,6 +1242,24 @@ class Meeting(Container):
 
         return signatories
 
+    def get_item_redefined_positions(self):
+        """ """
+        return deepcopy(self.item_attendees_positions)
+
+    def is_attendee_position_redefined(self, hp_uid, item_uid=None):
+        """ """
+        redefined_positions = self.get_item_redefined_positions()
+        found = False
+        if item_uid:
+            found = item_uid in redefined_positions and \
+                hp_uid in redefined_positions[item_uid]
+        else:
+            for item_uid, infos in redefined_positions.items():
+                if hp_uid in infos:
+                    found = True
+                    break
+        return found
+
     def get_signature_infos_for(self,
                                 item_uid,
                                 signatory_uid,
@@ -1253,7 +1271,7 @@ class Meeting(Container):
         data = self.get_item_signatories(by_signatories=False, include_position_type=True)
         data = {k: v['position_type'] for k, v in data[item_uid].items()
                 if v['hp_uid'] == signatory_uid}
-        hp = uuidToObject(signatory_uid)
+        hp = uuidToObject(signatory_uid, unrestricted=True)
         if data:
             signature_number, position_type = data.items()[0]
         else:
@@ -1284,10 +1302,11 @@ class Meeting(Container):
            for given p_item_uid and p_signatory_uid."""
         # check if hp_uid is redefined on the item
         data = {}
-        if item_uid in self.item_attendees_positions and \
-           hp_uid in self.item_attendees_positions[item_uid]:
-            data = self.item_attendees_positions[item_uid][hp_uid]
-        hp = uuidToObject(hp_uid)
+        redefined_positions = self.get_item_redefined_positions()
+        if item_uid in redefined_positions and \
+           hp_uid in redefined_positions[item_uid]:
+            data = redefined_positions[item_uid][hp_uid]
+        hp = uuidToObject(hp_uid, unrestricted=True)
         position_type = data.get('position_type', hp.position_type)
         if render_position_type:
             if prefix_position_type:

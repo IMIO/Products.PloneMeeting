@@ -12,11 +12,11 @@ from collective.contact.plonegroup.utils import get_plone_group
 from collective.iconifiedcategory import CAT_SEPARATOR
 from copy import deepcopy
 from ftw.labels.interfaces import ILabelJar
+from imio.helpers.content import uuidToObject
 from imio.helpers.content import validate_fields
 from imio.helpers.security import generate_password
 from imio.helpers.security import is_develop_environment
 from plone import api
-from plone.app.uuid.utils import uuidToObject
 from plone.namedfile.file import NamedBlobFile
 from plone.namedfile.file import NamedBlobImage
 from plone.namedfile.file import NamedImage
@@ -202,7 +202,7 @@ class ToolInitializer:
             cfg.setMeetingConfigsToCloneTo(adapted_cfgsToCloneTo)
             cfg._updateCloneToOtherMCActions()
         for org_uid, values in savedOrgsData.items():
-            org = uuidToObject(org_uid)
+            org = uuidToObject(org_uid, unrestricted=True)
             # turn cfg1__state__itemcreated into meeting-config-id__state__itemcreated
             org.item_advice_states = self._correct_advice_states(values['item_advice_states'])
             org.item_advice_edit_states = self._correct_advice_states(values['item_advice_edit_states'])

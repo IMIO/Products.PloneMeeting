@@ -60,9 +60,16 @@
     <tal:loop repeat="mUser allUsers">
       <tr tal:define="aUid mUser/UID;
                       oddrow repeat/mUser/odd;
-                      classOddEven python: oddrow and 'even' or 'odd';"
+                      classOddEven python: oddrow and 'even' or 'odd';
+                      is_attendee_position_redefined python: context.is_attendee_position_redefined(aUid);"
           tal:attributes="class classOddEven">
-        <td><b tal:content="mUser/get_short_title"></b></td>
+        <td>
+          <span tal:content="python: mUser.get_short_title()"
+                tal:attributes="class python: is_attendee_position_redefined and 'tooltipster-meeting-item-redefined-position link-help item-attendee-title highlightValue' or 'item-attendee-title';
+                                data-base_url string:${context/absolute_url};
+                                data-attendee_uid string:${aUid};">
+           Attendee short title
+          </span>
         <td align="center">
           <span tal:condition="python: aUid in attendees" class="fa people-checked"></span>
         </td>

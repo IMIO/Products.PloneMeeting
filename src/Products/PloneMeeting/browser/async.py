@@ -3,8 +3,8 @@
 from AccessControl import Unauthorized
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.content import get_vocab
+from imio.helpers.content import uuidToObject
 from plone import api
-from plone.app.uuid.utils import uuidToObject
 from plone.memoize import ram
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.utils import _checkPermission
@@ -305,7 +305,7 @@ class AsyncRenderSearchTerm(BrowserView):
         self.collection_uid = self.request.get('collection_uid')
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
-        self.collection = uuidToObject(self.collection_uid)
+        self.collection = uuidToObject(self.collection_uid, unrestricted=True)
         self.brains = self.collection.results(batch=False, brains=True)
         rendered_term = ViewPageTemplateFile("templates/term_searchmeetings.pt")(self)
         return rendered_term
@@ -483,11 +483,6 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
         position_type = self.meeting.get_attendee_position_for(
             self.context_uid, hp_uid)
         return hp.get_short_title(forced_position_type_value=position_type)
-
-    def is_attendee_position_redefined(self, hp_uid):
-        """ """
-        return self.context_uid in self.meeting.item_attendees_positions and \
-            hp_uid in self.meeting.item_attendees_positions[self.context_uid]
 
 
 class AsyncLoadMeetingAssemblyAndSignatures(BrowserView, BaseMeetingView):
