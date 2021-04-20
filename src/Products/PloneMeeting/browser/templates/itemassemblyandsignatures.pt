@@ -12,16 +12,19 @@
           <tal:defines define="mayQuickEdit python: context.mayQuickEdit('itemAssembly', bypassWritePermissionCheck=True);
                                class_if_highlighted python: redefinedItemAssemblies and 'highlightValue' or '';
                                class_to_use python: mayQuickEdit and (class_if_highlighted and class_if_highlighted + ' item_attribute_label' or ' item_attribute_label') or class_if_highlighted + ' item_attribute_label'">
-            <div>
-                <tal:comment replace="nothing">Display a label 'Attendees' if we use item excused and absents,
-                                               if only using 'assembly', the entire information is in this single field
-                                               where absents are striked.</tal:comment>
-                <tal:displayAssemblyLabel condition="python: ('assembly_excused' in usedMeetingAttrs or 'assembly_excused' in redefinedItemAssemblies) or
+            <div tal:define="global displayed_assembly_label python: False">
+                <tal:displayPresentsLabel condition="python: ('assembly_excused' in usedMeetingAttrs or 'assembly_excused' in redefinedItemAssemblies) or
                                                              ('assembly_absents' in usedMeetingAttrs or 'assembly_absents' in redefinedItemAssemblies) or
                                                              ('assembly_guests' in usedMeetingAttrs or 'assembly_guests' in redefinedItemAssemblies)">
                     <span class="item_attribute_label"
+                          tal:define="global displayed_assembly_label python: True"
                           tal:attributes="class python: 'assembly' in redefinedItemAssemblies and 'item_attribute_label highlightValue' or 'item_attribute_label'"
                           i18n:translate="attendees_for_item"></span>:&nbsp;&nbsp;
+                </tal:displayPresentsLabel>
+                <tal:displayAssemblyLabel condition="python: not displayed_assembly_label">
+                    <span class="item_attribute_label"
+                          tal:attributes="class python: 'assembly' in redefinedItemAssemblies and 'item_attribute_label highlightValue' or 'item_attribute_label'"
+                          i18n:translate="item_assembly"></span>:&nbsp;&nbsp;
                 </tal:displayAssemblyLabel>
                 <span tal:replace="structure python: context.getItemAssembly(for_display=True) or '-'">Assembly</span>
             </div>

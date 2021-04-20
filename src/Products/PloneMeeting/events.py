@@ -1093,6 +1093,10 @@ def onMeetingModified(meeting, event):
         invalidate_cachekey_volatile_for(
             'Products.PloneMeeting.browser.async.AsyncLoadMeetingAssemblyAndSignatures',
             get_again=True)
+        # invalidate assembly async load on item
+        invalidate_cachekey_volatile_for(
+            'Products.PloneMeeting.browser.async.AsyncLoadItemAssemblyAndSignatures',
+            get_again=True)
         if need_reindex:
             meeting.reindexObject()
 
