@@ -4,10 +4,10 @@
        i18n:domain="PloneMeeting">
   <tal:defines define="get_all_used_held_positions python: modules['Products.PloneMeeting.browser.meeting'].get_all_used_held_positions;
                        allUsers python: get_all_used_held_positions(context);
-                       attendees context/get_attendees;
-                       excused context/get_excused;
-                       absents context/get_absents;
-                       signers context/get_signatories;
+                       attendees python: context.get_attendees();
+                       excused python: context.get_excused();
+                       absents python: context.get_absents();
+                       signers python: context.get_signatories();
                        applied_signers python: context.get_signatories(by_signature_number=True).values();
                        use_user_replacements python: 'replacements' in view.used_attrs;
                        itemNonAttendees python: context.get_item_non_attendees(by_persons=True);
@@ -15,9 +15,9 @@
                        showExcused python: 'excused' in view.used_attrs or excused;
                        showAbsents python: 'absents' in view.used_attrs or absents;
                        showSignatories python: 'signatories' in view.used_attrs or signers;
-                       showNonAttendees python: 'nonAttendees' in view.used_attrs or itemNonAttendees;
-                       showVoters view/showVoters;
-                       voters view/voters;
+                       showNonAttendees python: 'non_attendees' in view.used_attrs or itemNonAttendees;
+                       showVoters python: view.show_voters;
+                       voters python: view.voters;
                        itemAbsents python: context.get_item_absents(by_persons=True);
                        itemExcused python: context.get_item_excused(by_persons=True);
                        itemSignatories python: context.get_item_signatories(by_signatories=True);

@@ -351,7 +351,7 @@ document.location.reload(true);
                    showExcused python: 'excused' in usedMeetingAttributes or excused;
                    showAbsents python: 'absents' in usedMeetingAttributes or absents or itemAbsents;
                    showSignatories python: 'signatories' in usedMeetingAttributes or itemSignatories;
-                   showNonAttendees python: 'nonAttendees' in usedMeetingAttributes or itemNonAttendees;
+                   showNonAttendees python: 'non_attendees' in usedMeetingAttributes or itemNonAttendees;
                    voters python:view.voters;
                    voted_voters python:view.voted_voters;
                    mayChangeAttendees python: context._mayChangeAttendees();
@@ -381,7 +381,7 @@ document.location.reload(true);
     <th class="header-attendee-voter" tal:condition="show_votes" i18n:translate="is_voter">Voter?</th>
     <tal:vote repeat="vote_infos itemVotes" tal:condition="show_votes">
      <th class="header-attendee-vote" class="nosort">
-      <span tal:condition="vote_infos/linked_to_previous"
+      <span tal:condition="python: vote_infos['linked_to_previous']"
             title="This vote is linked to previous vote"
             i18n:attributes="title"
             class="fa vote-linked-to-previous leading-icon"></span>
@@ -407,7 +407,7 @@ document.location.reload(true);
            <span class="fa delete-element"></span>
        </a>
        <tal:last_vote_actions
-            define="next_vote_number view/next_vote_number;"
+            define="next_vote_number python: view.next_vote_number;"
             condition="python: vote_infos['vote_number'] + 1 == next_vote_number">
         <a tal:attributes="href string:${form_name}?vote_number:int=${next_vote_number}"
            title="Add new vote"
@@ -416,8 +416,7 @@ document.location.reload(true);
             <span class="fa add-element"></span>
         </a>
         <tal:linked_to_previous define="show_icon python: view.show_add_vote_linked_to_previous_icon(vote_infos['vote_number'])">
-         <a tal:define="next_vote_number view/next_vote_number"
-            tal:condition="show_icon"
+         <a tal:condition="show_icon"
             tal:attributes="href string:${form_name}?vote_number:int=${next_vote_number}&form.widgets.linked_to_previous:boolean=True"
             title="Add new linked vote"
             i18n:attributes="title"
@@ -816,7 +815,7 @@ This works for an AT and for a DX.</tal:comment>
     <tal:loop
         define="view python: obj.restrictedTraverse('@@view');
                 dummy python: view.update();
-                groups view/groups;
+                groups python: view.groups;
                 widgets python: [group.widgets.values() for group in groups];
                 dummy python: widgets.insert(0, view.widgets.values())"
         repeat="group_of_widgets widgets">

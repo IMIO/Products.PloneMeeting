@@ -526,7 +526,7 @@ class AsyncLoadMeetingAssemblyAndSignatures(BrowserView, BaseMeetingView):
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
         self.used_attrs = self.cfg.getUsedMeetingAttributes()
-        self.showVoters = self.cfg.getUseVotes()
+        self.show_voters = self.cfg.getUseVotes()
         self.voters = self.context.get_voters()
         view = self.context.restrictedTraverse('@@view')
         view.update()
