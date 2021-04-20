@@ -478,12 +478,6 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
         """ """
         return get_all_used_held_positions(self.meeting)
 
-    def get_short_title_for(self, hp, hp_uid):
-        """ """
-        position_type = self.meeting.get_attendee_position_for(
-            self.context_uid, hp_uid)
-        return hp.get_short_title(forced_position_type_value=position_type)
-
 
 class AsyncLoadMeetingAssemblyAndSignatures(BrowserView, BaseMeetingView):
     """ """

@@ -85,11 +85,7 @@ class BaseAttendeeForm(form.Form):
         person_uid = person_uid_default()
         if person_uid:
             hp = uuidToObject(person_uid, unrestricted=True)
-            meeting = self.context.getMeeting()
-            position_type = meeting.get_attendee_position_for(
-                self.context.UID(), person_uid)
-            self.description = hp.get_short_title(
-                forced_position_type_value=position_type)
+            self.description = self.context.get_attendee_short_title(hp)
 
     def update(self):
         """ """

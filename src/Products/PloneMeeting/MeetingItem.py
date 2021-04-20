@@ -6888,6 +6888,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         attendees = meeting._get_contacts(uids=attendees, the_objects=the_objects)
         return attendees
 
+    def get_attendee_short_title(self, hp, **kwargs):
+        '''Helper that return short title for given p_hp,
+           taking into account that p_hp position may be redefined for self.'''
+        meeting = self.getMeeting()
+        position_type = meeting.get_attendee_position_for(
+            self.UID(), hp.UID())
+        return hp.get_short_title(forced_position_type_value=position_type, **kwargs)
+
     def _appendLinkedItem(self, item, only_viewable):
         if not only_viewable or _checkPermission(View, item):
             return True
