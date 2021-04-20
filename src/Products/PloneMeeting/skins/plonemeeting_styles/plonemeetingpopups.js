@@ -128,6 +128,8 @@ function refresh_attendees(highlight=null, click_cancel=false) {
 function highlight_attendees(highlight_selector='') {
   $.when($("#collapsible-assembly-and-signatures table tr td" + highlight_selector).effect(
     'highlight', {}, 2000));
+  $.when($("#collapsible-assembly-and-signatures dl.portalMessage.warning").effect(
+    'bounce', {}, 1000));
 }
 
 function onsuccessManageAttendees(data) {
