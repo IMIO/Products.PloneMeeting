@@ -155,7 +155,7 @@ class BaseAttendeeForm(form.Form):
     def render(self):
         if self._finished:
             # make sure we return nothing, taken into account by ajax query
-            redirect(self.request, self.context.absolute_url())
+            return redirect(self.request, self.context.absolute_url())
         return super(BaseAttendeeForm, self).render()
 
 
@@ -208,9 +208,7 @@ class ByeByeAttendeeForm(BaseAttendeeForm):
                 error = True
             # item voter
             # if not a voter, continue
-            tool = api.portal.get_tool('portal_plonemeeting')
-            cfg = tool.getMeetingConfig(item_to_update)
-            if cfg.getUseVotes():
+            if self.context.show_votes():
                 voters = item_to_update.get_item_voters()
                 if self.person_uid in voters:
                     # secret
