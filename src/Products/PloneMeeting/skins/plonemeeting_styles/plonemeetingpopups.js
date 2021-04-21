@@ -128,6 +128,8 @@ function refresh_attendees(highlight=null, click_cancel=false) {
 function highlight_attendees(highlight_selector='') {
   $.when($("#collapsible-assembly-and-signatures table tr td" + highlight_selector).effect(
     'highlight', {}, 2000));
+  $.when($("#collapsible-assembly-and-signatures dl.portalMessage.warning").effect(
+    'bounce', {}, 1000));
 }
 
 function onsuccessManageAttendees(data) {
@@ -239,14 +241,18 @@ jQuery(document).ready(function($) {
 });
 
 function attendeesInfos() {
-    // item absents on meeting_view
+    // item absents on item/meeting
     tooltipster_helper(selector='.tooltipster-meeting-item-not-present',
                        view_name='@@display-meeting-item-not-present',
                        data_parameters=['not_present_uid', 'not_present_type']);
-    // item signatories on meeting_view
+    // item signatories on item/meeting
     tooltipster_helper(selector='.tooltipster-meeting-item-signatories',
                        view_name='@@display-meeting-item-signatories',
                        data_parameters=['signatory_uid']);
+    // item redefined position on item/meeting
+    tooltipster_helper(selector='.tooltipster-meeting-item-redefined-position',
+                       view_name='@@display-meeting-item-redefined-position',
+                       data_parameters=['attendee_uid']);
 }
 
 // prepare overlays and tooltipsters in dashboards

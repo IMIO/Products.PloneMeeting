@@ -137,7 +137,10 @@ class PMHeldPosition(HeldPosition):
                         include_sub_organizations=True,
                         include_person_title=True,
                         abbreviate_firstname=False,
-                        highlight=False):
+                        highlight=False,
+                        position_type_attr='position_type',
+                        fallback_position_type_attr='position_type',
+                        forced_position_type_value=None):
         """Returns short name for held position :
            - the label if defined on held_position object or position title;
            - if position is in a sub organization, we display also sub-organization titles;
@@ -159,11 +162,15 @@ class PMHeldPosition(HeldPosition):
         person_label = self.get_person_short_title(
             include_person_title=include_person_title,
             abbreviate_firstname=abbreviate_firstname)
-        held_position_label = self.get_label() or translate(
-            'No label defined on held position',
-            domain='PloneMeeting',
-            context=getRequest(),
-            default='No label defined on held position')
+        held_position_label = self.get_label(
+            position_type_attr=position_type_attr,
+            fallback_position_type_attr=fallback_position_type_attr,
+            forced_position_type_value=forced_position_type_value) or \
+            translate(
+                'No label defined on held position',
+                domain='PloneMeeting',
+                context=getRequest(),
+                default='No label defined on held position')
         if highlight:
             person_label = u'<b>{0}</b>'.format(person_label)
             held_position_label = u'<b>{0}</b>'.format(held_position_label)
@@ -191,7 +198,10 @@ class PMHeldPosition(HeldPosition):
     def get_person_short_title(self,
                                include_person_title=False,
                                abbreviate_firstname=False,
-                               include_held_position_label=False):
+                               include_held_position_label=False,
+                               position_type_attr='position_type',
+                               fallback_position_type_attr='position_type',
+                               forced_position_type_value=None):
         """ """
         person = self.get_person()
         firstname = person.firstname
@@ -202,7 +212,10 @@ class PMHeldPosition(HeldPosition):
             person_title = u'{0} '.format(person.person_title)
         person_held_position_label = u''
         if include_held_position_label:
-            held_position_label = self.get_label() or u''
+            held_position_label = self.get_label(
+                position_type_attr=position_type_attr,
+                fallback_position_type_attr=fallback_position_type_attr,
+                forced_position_type_value=forced_position_type_value) or u''
             person_held_position_label = u", {0}".format(held_position_label)
         return u'{0}{1} {2}{3}'.format(person_title, firstname, person.lastname, person_held_position_label)
 

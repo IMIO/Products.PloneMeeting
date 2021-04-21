@@ -12,7 +12,7 @@ from plone.restapi.deserializer import boolean_value
 from plone.z3cform.layout import wrap_form
 from Products.Five import BrowserView
 from Products.PloneMeeting.browser.itemattendee import BaseAttendeeForm
-from Products.PloneMeeting.browser.itemattendee import IBaseAttendee
+from Products.PloneMeeting.browser.itemattendee import person_uid_default
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
 from Products.PloneMeeting.config import NOT_VOTABLE_LINKED_TO_VALUE
@@ -143,7 +143,13 @@ class IVote(Interface):
         vocabulary="Products.PloneMeeting.vocabularies.usedvotevaluesvocabulary", )
 
 
-class IEncodeVotes(IBaseAttendee):
+class IEncodeVotes(Interface):
+
+    person_uid = schema.TextLine(
+        title=_(u"Person uid"),
+        description=_(u""),
+        defaultFactory=person_uid_default,
+        required=False)
 
     vote_number = schema.Int(
         title=_(u"Vote number"),
@@ -342,7 +348,13 @@ class ISecretVote(Interface):
         required=False)
 
 
-class IEncodeSecretVotes(IBaseAttendee):
+class IEncodeSecretVotes(Interface):
+
+    person_uid = schema.TextLine(
+        title=_(u"Person uid"),
+        description=_(u""),
+        defaultFactory=person_uid_default,
+        required=False)
 
     vote_number = schema.Int(
         title=_(u"Vote number"),

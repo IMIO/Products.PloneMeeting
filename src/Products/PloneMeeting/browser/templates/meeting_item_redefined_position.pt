@@ -1,0 +1,17 @@
+<div id="content"
+     i18n:domain="PloneMeeting"
+     class="meeting_item_redefined_position_tooltipster"
+     tal:define="items python: view.get_items_for_redefined_position()">
+  <h4><span i18n:translate="">The position of this attendee was changed for the <span i18n:name="number" tal:content="python: len(items)">number</span> following item(s)</span> :</h4>
+  <ul tal:repeat="item items">
+    <li><span tal:content="python: item.getItemNumber(for_display=True)"></span>.
+        <span tal:content="structure python: item.getPrettyLink()"></span>
+        <tal:position_infos define="position_type python: view.meeting.get_attendee_position_for(item.UID(), view.attendee_uid, render_position_type=True)">
+        [<strong i18n:translate="">Original position</strong>:
+         <span tal:content="python: view.attendee.get_label()">Original position value</span> -
+         <strong i18n:translate="">Redefined position</strong>:
+         <span tal:content="position_type">Redefined position value</span>]
+        </tal:position_infos>
+       </li>
+  </ul>
+</div>

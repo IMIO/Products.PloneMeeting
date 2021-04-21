@@ -15,6 +15,7 @@ from collective.eeafaceted.batchactions.browser.views import BaseBatchActionForm
 from collective.eeafaceted.batchactions.utils import listify_uids
 from eea.facetednavigation.interfaces import ICriteria
 from ftw.labels.interfaces import ILabeling
+from imio.helpers.content import uuidToObject
 from imio.helpers.xhtml import addClassToContent
 from imio.helpers.xhtml import CLASS_TO_LAST_CHILDREN_NUMBER_OF_CHARS_DEFAULT
 from imio.helpers.xhtml import imagesToPath
@@ -820,14 +821,20 @@ class BaseDGHV(object):
         # initial values
         meeting, attendees, item_absents, item_excused, item_non_attendees, \
             contacts, excused, absents, replaced = self._get_attendees(committee_id)
+        context_uid = self.context.UID()
 
         res = OrderedDict()
         for contact in contacts:
             contact_uid = contact.UID()
             if ignore_non_attendees and contact_uid in item_non_attendees:
                 continue
+            forced_position_type_value = None
+            if self.context.getTagName() == "MeetingItem":
+                forced_position_type_value = meeting.get_attendee_position_for(
+                    context_uid, contact_uid)
             contact_short_title = contact.get_short_title(include_sub_organizations=False,
-                                                          abbreviate_firstname=abbreviate_firstname)
+                                                          abbreviate_firstname=abbreviate_firstname,
+                                                          forced_position_type_value=forced_position_type_value)
             if escape_for_html:
                 contact_short_title = cgi.escape(contact_short_title)
             res[contact] = contact_short_title
@@ -921,17 +928,25 @@ class BaseDGHV(object):
                                 ignore_non_attendees=True,
                                 committee_id=None):
 
+        context_uid = self.context.UID()
+        is_item = self.context.getTagName() == "MeetingItem"
+
         def _buildContactsValue(meeting, contacts):
             """ """
             grouped_contacts_value = []
             for contact in contacts:
+                forced_position_type_value = None
+                contact_uid = contact.UID()
+                if is_item:
+                    forced_position_type_value = meeting.get_attendee_position_for(
+                        context_uid, contact_uid)
                 contact_value = contact.get_person_short_title(
                     include_person_title=include_person_title,
                     abbreviate_firstname=abbreviate_firstname,
-                    include_held_position_label=not group_position_type)
+                    include_held_position_label=not group_position_type,
+                    forced_position_type_value=forced_position_type_value)
                 if escape_for_html:
                     contact_value = cgi.escape(contact_value)
-                contact_uid = contact.UID()
                 if contact_uid in striked_contact_uids:
                     contact_value = striked_attendee_pattern.format(contact_value)
                 if contact_uid in replaced and show_replaced_by:
@@ -961,12 +976,22 @@ class BaseDGHV(object):
                                 gn = get_gender_and_number(contacts)
                                 hp = contacts[0]
                                 # manage when we have no position_type but a label
-                                if hp.position_type == u'default' and u'default' not in ignored_pos_type_ids:
-                                    position_type_value = hp.get_label()
+                                hp_uid = hp.UID()
+                                if position_type == u'default' and u'default' not in ignored_pos_type_ids:
+                                    if is_item:
+                                        position_type_value = meeting.get_attendee_position_for(
+                                            context_uid, hp_uid)
+                                    else:
+                                        position_type_value = hp.get_label()
                                     if escape_for_html:
                                         position_type_value = cgi.escape(position_type_value)
                                 else:
-                                    position_type_value = contacts[0].gender_and_number_from_position_type()[gn]
+                                    forced_position_type_value = None
+                                    if is_item:
+                                        forced_position_type_value = meeting.get_attendee_position_for(
+                                            context_uid, hp_uid)
+                                    position_type_value = contacts[0].gender_and_number_from_position_type(
+                                        forced_position_type_value=forced_position_type_value)[gn]
                             grouped_contacts_value = _buildContactsValue(meeting, contacts)
                             grouped_contacts_value = pos_attendee_separator.join(grouped_contacts_value)
                             if position_type_value:
@@ -1085,8 +1110,12 @@ class BaseDGHV(object):
                 for org, contacts in contact_infos.items():
                     by_pos_type_res = OrderedDict()
                     for contact in contacts:
-                        used_contact_position_type = contact.position_type
-                        if not contact.position_type or contact.position_type in ignored_pos_type_ids:
+                        if is_item:
+                            used_contact_position_type = meeting.get_attendee_position_for(
+                                context_uid, contact.UID())
+                        else:
+                            used_contact_position_type = contact.position_type
+                        if not used_contact_position_type or used_contact_position_type in ignored_pos_type_ids:
                             # in this case, we use the special value prefixed by __no_position_type__
                             # so contacts are still ordered
                             used_contact_position_type = '__no_position_type__{0}'.format(contact.UID())
@@ -1095,7 +1124,7 @@ class BaseDGHV(object):
                         if used_contact_position_type == u'default':
                             used_contact_position_type = contact.get_label()
                         # create entry on result if not already existing
-                        if contact.position_type not in by_pos_type_res:
+                        if used_contact_position_type not in by_pos_type_res:
                             by_pos_type_res[used_contact_position_type] = []
                         by_pos_type_res[used_contact_position_type].append(contact)
                     res[attendee_type][org] = by_pos_type_res
@@ -1329,15 +1358,21 @@ class BaseDGHV(object):
             voters = meeting._get_contacts(uids=voter_uids, the_objects=True)
             res = []
             for voter in voters:
+                forced_position_type_value = None
+                if self.context.getTagName() == "MeetingItem":
+                    forced_position_type_value = meeting.get_attendee_position_for(
+                        self.context.UID(), voter.UID())
                 if include_hp:
                     voter_short_title = voter.get_short_title(
                         include_sub_organizations=False,
                         include_person_title=include_person_title,
-                        abbreviate_firstname=abbreviate_firstname)
+                        abbreviate_firstname=abbreviate_firstname,
+                        forced_position_type_value=forced_position_type_value)
                 else:
                     voter_short_title = voter.get_person_short_title(
                         include_person_title=include_person_title,
-                        abbreviate_firstname=abbreviate_firstname)
+                        abbreviate_firstname=abbreviate_firstname,
+                        forced_position_type_value=forced_position_type_value)
                 if escape_for_html:
                     voter_short_title = cgi.escape(voter_short_title)
                 res.append(voter_pattern.format(voter_short_title))
@@ -1562,7 +1597,7 @@ class FolderDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGH
         cfg = self.appy_renderer.originalContext['meetingConfig']
 
         for contact in cfg.getOrderedContacts():
-            position = api.content.uuidToObject(contact)
+            position = api.content.uuidToObject(contact, unrestricted=True)
             attendances[contact] = {'name': position.get_person_title(),
                                     'function': position.get_label(),
                                     'present': 0,
@@ -1759,21 +1794,27 @@ class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV)
                     'attendee_again_after': u'{0} participe à la séance après la discussion du point.'}
         patterns.update(custom_patterns)
 
+        meeting = self.context.getMeeting()
+        context_uid = self.context.UID()
         in_and_out = self.context.get_in_and_out_attendees(
             ignore_before_first_item=ignore_before_first_item)
         person_res = {in_and_out_type: [] for in_and_out_type in in_and_out.keys()
                       if (not in_and_out_types or in_and_out_type in in_and_out_types)}
         for in_and_out_type, held_positions in in_and_out.items():
             for held_position in held_positions:
+                forced_position_type_value = meeting.get_attendee_position_for(
+                    context_uid, held_position.UID())
                 if include_hp:
                     person_short_title = held_position.get_short_title(
                         include_sub_organizations=False,
                         include_person_title=include_person_title,
-                        abbreviate_firstname=abbreviate_firstname)
+                        abbreviate_firstname=abbreviate_firstname,
+                        forced_position_type_value=forced_position_type_value)
                 else:
                     person_short_title = held_position.get_person_short_title(
                         include_person_title=include_person_title,
-                        abbreviate_firstname=abbreviate_firstname)
+                        abbreviate_firstname=abbreviate_firstname,
+                        forced_position_type_value=forced_position_type_value)
                 person_res[in_and_out_type].append(person_short_title)
 
         if render_as_html:
@@ -2027,8 +2068,39 @@ class DisplayMeetingConfigsOfConfigGroup(BrowserView):
         return res
 
 
+class DisplayMeetingItemRedefinedPosition(BrowserView):
+    """This view will display the items a given attendee position was redefined for."""
+
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+        # this view is called on meeting or item
+        self.meeting = IMeeting.providedBy(self.context) and \
+            self.context or self.context.getMeeting()
+
+    def __call__(self, attendee_uid):
+        """ """
+        self.tool = api.portal.get_tool('portal_plonemeeting')
+        self.attendee_uid = attendee_uid
+        self.attendee = uuidToObject(attendee_uid, unrestricted=True)
+        return self.index()
+
+    def get_items_for_redefined_position(self):
+        """Returns the list of items the attendee_uid position was redefined for."""
+        item_uids = []
+        redefined_positions = self.meeting.get_item_redefined_positions()
+        for item_uid, infos in redefined_positions.items():
+            if self.attendee_uid in infos:
+                item_uids.append(item_uid)
+        catalog = api.portal.get_tool('portal_catalog')
+        brains = catalog(UID=item_uids, sort_on='getItemNumber')
+        objs = [brain.getObject() for brain in brains]
+        return objs
+
+
 class DisplayMeetingItemNotPresent(BrowserView):
-    """This view will display the items a given attendee was defined as not present for (absent/excused)."""
+    """This view will display the items a given attendee was defined
+       as not present for (absent/excused)."""
 
     def __init__(self, context, request):
         self.context = context

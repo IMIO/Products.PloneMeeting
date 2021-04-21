@@ -3,8 +3,8 @@
 from AccessControl import Unauthorized
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.content import get_vocab
+from imio.helpers.content import uuidToObject
 from plone import api
-from plone.app.uuid.utils import uuidToObject
 from plone.memoize import ram
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.utils import _checkPermission
@@ -305,7 +305,7 @@ class AsyncRenderSearchTerm(BrowserView):
         self.collection_uid = self.request.get('collection_uid')
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
-        self.collection = uuidToObject(self.collection_uid)
+        self.collection = uuidToObject(self.collection_uid, unrestricted=True)
         self.brains = self.collection.results(batch=False, brains=True)
         rendered_term = ViewPageTemplateFile("templates/term_searchmeetings.pt")(self)
         return rendered_term
@@ -428,7 +428,7 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
         poll_type = self.context.getPollType()
         cache_date = self.request.get('cache_date', None)
         return (date,
-                self.context.UID(),
+                context_uid,
                 cfg_modified,
                 ordered_contacts,
                 redefined_item_attendees,
@@ -441,6 +441,7 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
     def _update(self):
         """ """
         self.error_msg = self.request.get('attendees_error_msg')
+        self.context_uid = self.context.UID()
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
         self.usedMeetingAttrs = self.cfg.getUsedMeetingAttributes()
@@ -519,7 +520,7 @@ class AsyncLoadMeetingAssemblyAndSignatures(BrowserView, BaseMeetingView):
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
         self.used_attrs = self.cfg.getUsedMeetingAttributes()
-        self.showVoters = self.cfg.getUseVotes()
+        self.show_voters = self.cfg.getUseVotes()
         self.voters = self.context.get_voters()
         view = self.context.restrictedTraverse('@@view')
         view.update()

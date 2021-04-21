@@ -1037,6 +1037,8 @@ def onMeetingCreated(meeting, event):
     meeting.item_non_attendees = PersistentMapping()
     # place to store item signatories
     meeting.item_signatories = PersistentMapping()
+    # place to store item attendees changed position
+    meeting.item_attendees_positions = PersistentMapping()
     # place to store item votes
     meeting.item_votes = PersistentMapping()
     # place to store attendees when using contacts
@@ -1090,6 +1092,10 @@ def onMeetingModified(meeting, event):
         # invalidate assembly async load on meeting
         invalidate_cachekey_volatile_for(
             'Products.PloneMeeting.browser.async.AsyncLoadMeetingAssemblyAndSignatures',
+            get_again=True)
+        # invalidate assembly async load on item
+        invalidate_cachekey_volatile_for(
+            'Products.PloneMeeting.browser.async.AsyncLoadItemAssemblyAndSignatures',
             get_again=True)
         if need_reindex:
             meeting.reindexObject()

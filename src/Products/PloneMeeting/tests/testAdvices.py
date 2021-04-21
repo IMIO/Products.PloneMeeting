@@ -2826,6 +2826,12 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue(item3.adviceIndex[self.developers_uid]['inherited'])
         self.assertTrue(item3.adviceIndex[self.vendors_uid]['inherited'])
         self.assertTrue(item3.adviceIndex[self.endUsers_uid]['inherited'])
+        # @@display-inherited-item-infos
+        display_view = item3.restrictedTraverse('@@display-inherited-item-infos')
+        item1_url = item1.absolute_url()
+        self.assertTrue(item1_url in display_view(self.developers_uid))
+        self.assertTrue(item1_url in display_view(self.vendors_uid))
+        self.assertTrue(item1_url in display_view(self.endUsers_uid))
         # after an additional _updateAdvices, infos are still correct
         item3.update_local_roles()
         self.assertEqual(len(item3.adviceIndex), 3)

@@ -171,6 +171,10 @@ class testContacts(PloneMeetingTestCase):
         welcome_form = item.restrictedTraverse('@@item_welcome_attendee_form')
         welcome_nonattendee_form = item.restrictedTraverse('@@item_welcome_nonattendee_form')
         remove_signatory_form = item.restrictedTraverse('@@item_remove_redefined_signatory_form')
+        redefine_form = item.restrictedTraverse(
+            '@@item_redefine_attendee_position_form')
+        remove_redefined_form = item.restrictedTraverse(
+            '@@item_remove_redefined_attendee_position_form')
 
         def _check(username, should=True):
             ''' '''
@@ -182,6 +186,8 @@ class testContacts(PloneMeetingTestCase):
                 self.assertTrue(welcome_form.mayChangeAttendees())
                 self.assertTrue(welcome_nonattendee_form.mayChangeAttendees())
                 self.assertTrue(remove_signatory_form.mayChangeAttendees())
+                self.assertTrue(redefine_form.mayChangeAttendees())
+                self.assertTrue(remove_redefined_form.mayChangeAttendees())
         # False for everybody when item not in a meeting
         _check('pmManager', should=False)
         _check('pmCreator1', should=False)
@@ -296,6 +302,23 @@ class testContacts(PloneMeetingTestCase):
         self.assertEqual(
             sorted(meeting.get_item_non_attendees(by_persons=True)[hp1_uid]),
             sorted([item1_uid, item2_uid]))
+        # @@display-meeting-item-not-present
+        # item and meeting reslults are the same
+        item_view = item1.restrictedTraverse('@@display-meeting-item-not-present')
+        meeting_view = meeting.restrictedTraverse('@@display-meeting-item-not-present')
+        for view in (item_view, meeting_view):
+            view.not_present_uid = hp1_uid
+            view.not_present_type = "absent"
+            self.assertTrue(view.index())
+            self.assertEqual(view.getItemsForNotPresent(), [item1, item2])
+            view.not_present_uid = hp2_uid
+            view.not_present_type = "excused"
+            self.assertTrue(view.index())
+            self.assertEqual(view.getItemsForNotPresent(), [item1])
+            view.not_present_uid = hp1_uid
+            view.not_present_type = "non_attendee"
+            self.assertTrue(view.index())
+            self.assertEqual(view.getItemsForNotPresent(), [item1, item2])
 
         # welcome hp1 on item2
         welcome_form = item2.restrictedTraverse('@@item_welcome_attendee_form')
@@ -419,6 +442,15 @@ class testContacts(PloneMeetingTestCase):
         meeting_item_signatories = meeting.get_item_signatories()
         self.assertTrue(item1_uid in meeting_item_signatories)
         self.assertTrue(item2_uid in meeting_item_signatories)
+
+        # @@display-meeting-item-signatories
+        # item and meeting have same results
+        item_view = item1.restrictedTraverse('@@display-meeting-item-signatories')
+        meeting_view = meeting.restrictedTraverse('@@display-meeting-item-signatories')
+        for view in (item_view, meeting_view):
+            view.signatory_uid = hp_uid
+            self.assertTrue(view.index())
+            self.assertEqual(view.get_items_for_signatory(), [item1, item2])
 
         # remove redefined signatory on item2
         remove_signatory_form = item2.restrictedTraverse('@@item_remove_redefined_signatory_form')
@@ -2180,6 +2212,64 @@ class testContacts(PloneMeetingTestCase):
         self.assertTrue(self.meetingConfig.absolute_url() in rendered)
         # used in meeting
         self.assertTrue(meeting.absolute_url() in rendered)
+
+    def test_pm_RedefineAttendeePositionForm(self):
+        """Test the @@item_redefine_attendee_position_form and
+           @@item_remove_redefined_attendee_position_form forms."""
+        position_types = self.portal.contacts.position_types + [
+            {"token": u"dg",
+             "name": u"Directeur Général|Directeurs Généraux|"
+                     u"Directrice Générale|Directrices Générales"},
+            {"token": u"super",
+             "name": u"Super-héro|Super-héros|"
+                     u"Super-héroine|Super-héroines"},
+        ]
+        self.portal.contacts.position_types = position_types
+        cfg = self.meetingConfig
+        # remove recurring items
+        self._removeConfigObjectsFor(cfg)
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting')
+        meeting_attendees = meeting.get_attendees()
+        hp1_uid = meeting_attendees[0]
+        self.assertTrue(meeting_attendees)
+        item1 = self.create('MeetingItem')
+        item2 = self.create('MeetingItem')
+        item1_uid = item1.UID()
+        item2_uid = item2.UID()
+        self.presentItem(item1)
+        self.presentItem(item2)
+        # hp1 is "default" for item1/item2
+        self.assertEqual(meeting.get_attendee_position_for(item1_uid, hp1_uid), u"default")
+        self.assertEqual(meeting.get_attendee_position_for(item2_uid, hp1_uid), u"default")
+        form = item1.restrictedTraverse('@@item_redefine_attendee_position_form')
+        form.person_uid = hp1_uid
+        form.position_type = u"dg"
+        form.apply_until_item_number = 200
+        form.meeting = meeting
+        form._doApply()
+        self.assertEqual(meeting.get_attendee_position_for(item1_uid, hp1_uid), u"dg")
+        self.assertEqual(meeting.get_attendee_position_for(item2_uid, hp1_uid), u"dg")
+        # test the @@display-meeting-item-redefined-position on item and meeting
+        # item
+        item_view = item1.restrictedTraverse('@@display-meeting-item-redefined-position')
+        item_view_rendered = item_view(hp1_uid)
+        self.assertTrue(unicode("Directeur Général", "utf-8") in item_view_rendered)
+        self.assertTrue(item1.absolute_url() in item_view_rendered)
+        self.assertTrue(item2.absolute_url() in item_view_rendered)
+        # meeting
+        meeting_view = meeting.restrictedTraverse('@@display-meeting-item-redefined-position')
+        meeting_view_rendered = meeting_view(hp1_uid)
+        self.assertEqual(item_view_rendered, meeting_view_rendered)
+        # remove redefined position
+        remove_form = item2.restrictedTraverse('@@item_remove_redefined_attendee_position_form')
+        remove_form.person_uid = hp1_uid
+        remove_form.apply_until_item_number = 200
+        remove_form.meeting = meeting
+        remove_form._doApply()
+        # still on item1, no more on item2
+        self.assertEqual(meeting.get_attendee_position_for(item1_uid, hp1_uid), u"dg")
+        self.assertEqual(meeting.get_attendee_position_for(item2_uid, hp1_uid), u"default")
 
 
 def test_suite():

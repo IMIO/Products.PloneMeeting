@@ -13,6 +13,7 @@ from datetime import datetime
 from datetime import timedelta
 from imio.helpers.cache import cleanRamCacheFor
 from imio.helpers.content import richtextval
+from imio.helpers.content import uuidToObject
 from imio.prettylink.interfaces import IPrettyLink
 from persistent.list import PersistentList
 from persistent.mapping import PersistentMapping
@@ -1241,6 +1242,24 @@ class Meeting(Container):
 
         return signatories
 
+    def get_item_redefined_positions(self):
+        """ """
+        return deepcopy(self.item_attendees_positions)
+
+    def is_attendee_position_redefined(self, hp_uid, item_uid=None):
+        """ """
+        redefined_positions = self.get_item_redefined_positions()
+        found = False
+        if item_uid:
+            found = item_uid in redefined_positions and \
+                hp_uid in redefined_positions[item_uid]
+        else:
+            for item_uid, infos in redefined_positions.items():
+                if hp_uid in infos:
+                    found = True
+                    break
+        return found
+
     def get_signature_infos_for(self,
                                 item_uid,
                                 signatory_uid,
@@ -1252,8 +1271,7 @@ class Meeting(Container):
         data = self.get_item_signatories(by_signatories=False, include_position_type=True)
         data = {k: v['position_type'] for k, v in data[item_uid].items()
                 if v['hp_uid'] == signatory_uid}
-        catalog = api.portal.get_tool('portal_catalog')
-        hp = catalog(UID=signatory_uid)[0].getObject()
+        hp = uuidToObject(signatory_uid, unrestricted=True)
         if data:
             signature_number, position_type = data.items()[0]
         else:
@@ -1274,6 +1292,31 @@ class Meeting(Container):
         else:
             res['position_type'] = position_type
         return res
+
+    def get_attendee_position_for(self,
+                                  item_uid,
+                                  hp_uid,
+                                  render_position_type=False,
+                                  prefix_position_type=False):
+        """Return the attendee position_type to use as label
+           for given p_item_uid and p_signatory_uid."""
+        # check if hp_uid is redefined on the item
+        data = {}
+        redefined_positions = self.get_item_redefined_positions()
+        if item_uid in redefined_positions and \
+           hp_uid in redefined_positions[item_uid]:
+            data = redefined_positions[item_uid][hp_uid]
+        hp = uuidToObject(hp_uid, unrestricted=True)
+        position_type = data.get('position_type', hp.position_type)
+        if render_position_type:
+            if prefix_position_type:
+                position_type = hp.get_prefix_for_gender_and_number(
+                    include_value=True,
+                    forced_position_type_value=position_type)
+            else:
+                position_type = hp.get_label(
+                    forced_position_type_value=position_type)
+        return position_type
 
     security.declarePublic('get_item_votes')
 

@@ -354,6 +354,13 @@
 
     <browser:page
       for="Products.PloneMeeting.interfaces.IMeetingContent"
+      name="display-meeting-item-redefined-position"
+      template="templates/meeting_item_redefined_position.pt"
+      class=".views.DisplayMeetingItemRedefinedPosition"
+      permission="zope2.View" />
+
+    <browser:page
+      for="Products.PloneMeeting.interfaces.IMeetingContent"
       name="display-meeting-item-not-present"
       template="templates/meeting_item_not_present.pt"
       class=".views.DisplayMeetingItemNotPresent"
@@ -434,13 +441,25 @@
        for="Products.PloneMeeting.interfaces.IMeetingItem"
        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
        name="item_redefine_signatory_form"
-       class=".itemattendee.RedefinedSignatoryForm"
+       class=".itemattendee.RedefineSignatoryForm"
        permission="zope2.View" />
      <browser:page
        for="Products.PloneMeeting.interfaces.IMeetingItem"
        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
        name="item_remove_redefined_signatory_form"
        class=".itemattendee.RemoveRedefinedSignatoryForm"
+       permission="zope2.View" />
+    <browser:page
+       for="Products.PloneMeeting.interfaces.IMeetingItem"
+       layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+       name="item_redefine_attendee_position_form"
+       class=".itemattendee.RedefineAttendeePositionForm"
+       permission="zope2.View" />
+     <browser:page
+       for="Products.PloneMeeting.interfaces.IMeetingItem"
+       layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+       name="item_remove_redefined_attendee_position_form"
+       class=".itemattendee.RemoveRedefinedAttendeePositionForm"
        permission="zope2.View" />
      <browser:page
        for="Products.PloneMeeting.interfaces.IMeetingItem"

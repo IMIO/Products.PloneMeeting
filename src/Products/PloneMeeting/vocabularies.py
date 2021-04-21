@@ -52,6 +52,7 @@ from Products.PloneMeeting.content.held_position import split_gender_and_number
 from Products.PloneMeeting.indexes import DELAYAWARE_ROW_ID_PATTERN
 from Products.PloneMeeting.indexes import REAL_ORG_UID_PATTERN
 from Products.PloneMeeting.interfaces import IMeetingConfig
+from Products.PloneMeeting.interfaces import IMeetingItem
 from Products.PloneMeeting.utils import decodeDelayAwareId
 from Products.PloneMeeting.utils import get_context_with_request
 from Products.PloneMeeting.utils import get_datagridfield_column_value
@@ -1660,14 +1661,26 @@ class BaseHeldPositionsVocabulary(object):
         brains = catalog(**query)
         res = []
         highlight = False
+        is_item = False
+        context_uid = None
+        meeting = None
         # highlight person_label in title when displayed in the MeetingConfig view
         if IMeetingConfig.providedBy(context) and 'base_edit' not in context.REQUEST.getURL():
             highlight = True
             if highlight_missing:
                 pattern = u"<span class='highlight-red'>{0}</span>".format(pattern)
+        elif IMeetingItem.providedBy(context) and context.hasMeeting():
+            is_item = True
+            context_uid = context.UID()
+            meeting = context.getMeeting()
+
+        forced_position_type_value = None
         for brain in brains:
             held_position = brain.getObject()
             if held_position.usages and (not usage or usage in held_position.usages):
+                if is_item:
+                    forced_position_type_value = meeting.get_attendee_position_for(
+                        context_uid, brain.UID)
                 res.append(
                     SimpleTerm(
                         brain.UID,
@@ -1677,7 +1690,8 @@ class BaseHeldPositionsVocabulary(object):
                                 include_usages=include_usages,
                                 include_defaults=include_defaults,
                                 include_signature_number=include_signature_number,
-                                highlight=highlight))))
+                                highlight=highlight,
+                                forced_position_type_value=forced_position_type_value))))
         return SimpleVocabulary(res)
 
 

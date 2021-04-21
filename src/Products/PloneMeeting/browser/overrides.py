@@ -216,7 +216,7 @@ class PMContentActionsPanelViewlet(ActionsPanelViewlet):
     async = True
 
 
-class PMConfigActionsPanelViewlet(ActionsPanelViewlet):
+class PMConfigActionsPanelViewlet(PMContentActionsPanelViewlet):
     """Render actionspanel viewlet differently for elements of the MeetingConfig."""
 
     backPages = {'categories': 'data',
@@ -236,14 +236,15 @@ class PMConfigActionsPanelViewlet(ActionsPanelViewlet):
             elif self.context.portal_type in ('organization', 'person', 'directory'):
                 showAddContent = True
                 showActions = False
-            return self.context.restrictedTraverse("@@actions_panel")(useIcons=False,
-                                                                      showTransitions=True,
-                                                                      appendTypeNameToTransitionLabel=True,
-                                                                      showArrows=False,
-                                                                      showEdit=False,
-                                                                      showDelete=False,
-                                                                      showActions=showActions,
-                                                                      showAddContent=showAddContent)
+            return self.context.restrictedTraverse("@@async_actions_panel")(
+                useIcons=False,
+                showTransitions=True,
+                appendTypeNameToTransitionLabel=True,
+                showArrows=False,
+                showEdit=False,
+                showDelete=False,
+                showActions=showActions,
+                showAddContent=showAddContent)
 
     def _findRootSubfolder(self, folder):
         '''Find the root subfolder in the MeetingConfig.

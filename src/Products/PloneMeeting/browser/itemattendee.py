@@ -2,10 +2,11 @@
 
 from AccessControl import Unauthorized
 from imio.helpers.cache import invalidate_cachekey_volatile_for
+from imio.helpers.content import uuidToObject
 from imio.helpers.security import fplog
 from persistent.mapping import PersistentMapping
 from plone import api
-from plone.app.uuid.utils import uuidToObject
+from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.browser.itemassembly import _itemsToUpdate
 from Products.PloneMeeting.browser.itemassembly import validate_apply_until_item_number
 from Products.PloneMeeting.config import PMMessageFactory as _
@@ -22,6 +23,8 @@ from zope import schema
 from zope.component.hooks import getSite
 from zope.i18n import translate
 from zope.interface import Interface
+from zope.interface import provider
+from zope.schema._bootstrapinterfaces import IContextAwareDefaultFactory
 
 
 def person_uid_default():
@@ -33,6 +36,14 @@ def person_uid_default():
     return request.get('person_uid', u'')
 
 
+@provider(IContextAwareDefaultFactory)
+def apply_until_item_number_default(context):
+    """
+      Default value is the current item number.
+    """
+    return safe_unicode(context.getItemNumber(for_display=True))
+
+
 class IBaseAttendee(Interface):
 
     person_uid = schema.TextLine(
@@ -40,6 +51,14 @@ class IBaseAttendee(Interface):
         description=_(u""),
         defaultFactory=person_uid_default,
         required=False)
+
+    apply_until_item_number = schema.TextLine(
+        title=_(u"Apply until item number"),
+        description=_(u"Specify a number to which this will be applied. "
+                      u"Field default is current item number."),
+        required=False,
+        defaultFactory=apply_until_item_number_default,
+        constraint=validate_apply_until_item_number,)
 
 
 class BaseAttendeeForm(form.Form):
@@ -61,9 +80,17 @@ class BaseAttendeeForm(form.Form):
         self.fields['person_uid'].mode = 'hidden'
         form.Form.updateWidgets(self)
 
+    def _update_description(self):
+        """Display concerned person as description."""
+        person_uid = person_uid_default()
+        if person_uid:
+            hp = uuidToObject(person_uid, unrestricted=True)
+            self.description = self.context.get_attendee_short_title(hp)
+
     def update(self):
         """ """
         super(BaseAttendeeForm, self).update()
+        self._update_description()
         # after calling parent's update, self.actions are available
         self.actions.get('cancel').addClass('standalone')
         self.buttons = self.buttons.select('apply', 'cancel')
@@ -124,19 +151,11 @@ class BaseAttendeeForm(form.Form):
     def render(self):
         if self._finished:
             # make sure we return nothing, taken into account by ajax query
-            redirect(self.request, self.context.absolute_url())
+            return redirect(self.request, self.context.absolute_url())
         return super(BaseAttendeeForm, self).render()
 
 
 class IByeByeAttendee(IBaseAttendee):
-
-    apply_until_item_number = schema.TextLine(
-        title=_(u"Apply until item number"),
-        description=_(u"If you specify a number, this attendee will be defined as "
-                      u"absent from current item to entered item number. "
-                      u"Leave empty to only apply for current item."),
-        required=False,
-        constraint=validate_apply_until_item_number,)
 
     not_present_type = schema.Choice(
         title=_(u"Not present type"),
@@ -185,9 +204,7 @@ class ByeByeAttendeeForm(BaseAttendeeForm):
                 error = True
             # item voter
             # if not a voter, continue
-            tool = api.portal.get_tool('portal_plonemeeting')
-            cfg = tool.getMeetingConfig(item_to_update)
-            if cfg.getUseVotes():
+            if self.context.show_votes():
                 voters = item_to_update.get_item_voters()
                 if self.person_uid in voters:
                     # secret
@@ -286,14 +303,7 @@ class ByeByeAttendeeForm(BaseAttendeeForm):
 
 
 class IWelcomeAttendee(IBaseAttendee):
-
-    apply_until_item_number = schema.TextLine(
-        title=_(u"Apply until item number"),
-        description=_(u"If you specify a number, this attendee will be defined as "
-                      u"back into the meeting from current item to entered item number. "
-                      u"Leave empty to only apply for current item."),
-        required=False,
-        constraint=validate_apply_until_item_number,)
+    """ """
 
 
 class WelcomeAttendeeForm(BaseAttendeeForm):
@@ -347,14 +357,7 @@ class WelcomeAttendeeForm(BaseAttendeeForm):
 
 
 class IByeByeNonAttendee(IBaseAttendee):
-
-    apply_until_item_number = schema.TextLine(
-        title=_(u"Apply until item number"),
-        description=_(u"If you specify a number, this attendee will be defined as "
-                      u"non attendee from current item to entered item number. "
-                      u"Leave empty to only apply for current item."),
-        required=False,
-        constraint=validate_apply_until_item_number,)
+    """ """
 
 
 class ByeByeNonAttendeeForm(ByeByeAttendeeForm):
@@ -372,14 +375,7 @@ class ByeByeNonAttendeeForm(ByeByeAttendeeForm):
 
 
 class IWelcomeNonAttendee(IBaseAttendee):
-
-    apply_until_item_number = schema.TextLine(
-        title=_(u"Apply until item number"),
-        description=_(u"If you specify a number, this attendee will be defined as "
-                      u"attendee for the meeting from current item to entered item number. "
-                      u"Leave empty to only apply for current item."),
-        required=False,
-        constraint=validate_apply_until_item_number,)
+    """ """
 
 
 class WelcomeNonAttendeeForm(WelcomeAttendeeForm):
@@ -402,20 +398,12 @@ class WelcomeNonAttendeeForm(WelcomeAttendeeForm):
 def position_type_default():
     """ """
     person_uid = person_uid_default()
-    hp = uuidToObject(person_uid)
+    hp = uuidToObject(person_uid, unrestricted=True)
     position_type = hp.secondary_position_type or hp.position_type
     return position_type
 
 
-class IRedefinedSignatory(IBaseAttendee):
-
-    apply_until_item_number = schema.TextLine(
-        title=_(u"Apply until item number"),
-        description=_(u"If you specify a number, this attendee will be defined as "
-                      u"signatory from current item to entered item number. "
-                      u"Leave empty to only apply for current item."),
-        required=False,
-        constraint=validate_apply_until_item_number,)
+class IRedefineSignatory(IBaseAttendee):
 
     position_type = schema.Choice(
         title=_(u"Signature position type"),
@@ -443,16 +431,16 @@ def set_meeting_item_signatory(meeting, item_uid, signature_number, hp_uid, posi
     return updated
 
 
-class RedefinedSignatoryForm(BaseAttendeeForm):
+class RedefineSignatoryForm(BaseAttendeeForm):
     """ """
 
     label = _(u'Define this attendee as signatory for this item')
-    schema = IRedefinedSignatory
-    fields = field.Fields(IRedefinedSignatory)
+    schema = IRedefineSignatory
+    fields = field.Fields(IRedefineSignatory)
 
     def mayChangeAttendees(self):
         """ """
-        res = super(RedefinedSignatoryForm, self).mayChangeAttendees()
+        res = super(RedefineSignatoryForm, self).mayChangeAttendees()
         if res:
             # check that person_uid :
             # - is not already a signatory;
@@ -497,14 +485,7 @@ class RedefinedSignatoryForm(BaseAttendeeForm):
 
 
 class IRemoveRedefinedSignatory(IBaseAttendee):
-
-    apply_until_item_number = schema.TextLine(
-        title=_(u"Apply until item number"),
-        description=_(u"If you specify a number, this attendee will no longer be "
-                      u"considered item signatory from current item to entered item number. "
-                      u"Leave empty to only apply for current item."),
-        required=False,
-        constraint=validate_apply_until_item_number,)
+    """ """
 
 
 class RemoveRedefinedSignatoryForm(BaseAttendeeForm):
@@ -550,3 +531,102 @@ class RemoveRedefinedSignatoryForm(BaseAttendeeForm):
 
 # do not wrap_form or it breaks the portal_messages displayed in xhr request
 # RemoveRedefinedSignatoryFormWrapper = wrap_form(RemoveRedefinedSignatoryForm)
+
+
+class IRedefineAttendeePosition(IBaseAttendee):
+
+    position_type = schema.Choice(
+        title=_(u"Position type to use"),
+        description=_(u"Position type to use for the attendee on this item."),
+        defaultFactory=position_type_default,
+        required=True,
+        vocabulary="PMPositionTypes")
+
+
+def set_meeting_item_attendee_position(meeting, item_uid, hp_uid, position_type):
+    """ """
+    updated = False
+    item_attendees_positions = meeting.item_attendees_positions.get(item_uid, PersistentMapping())
+    if hp_uid not in item_attendees_positions.values():
+        updated = True
+        item_attendees_positions[hp_uid] = PersistentMapping(
+            {'position_type': position_type})
+        meeting.item_attendees_positions[item_uid] = item_attendees_positions
+    return updated
+
+
+class RedefineAttendeePositionForm(BaseAttendeeForm):
+    """ """
+
+    label = _(u'Redefine position for this attendee for this item')
+    schema = IRedefineAttendeePosition
+    fields = field.Fields(IRedefineAttendeePosition)
+
+    def _doApply(self):
+        """ """
+        if not self.mayChangeAttendees():
+            raise Unauthorized
+
+        items_to_update = _itemsToUpdate(
+            from_item_number=self.context.getItemNumber(relativeTo='meeting'),
+            until_item_number=self.apply_until_item_number,
+            meeting=self.meeting)
+
+        # apply redefined position
+        for item_to_update in items_to_update:
+            item_to_update_uid = item_to_update.UID()
+            updated = set_meeting_item_attendee_position(
+                self.meeting,
+                item_to_update_uid,
+                self.person_uid,
+                self.position_type)
+            if updated:
+                notifyModifiedAndReindex(item_to_update)
+        first_item_number = items_to_update[0].getItemNumber(for_display=True)
+        last_item_number = items_to_update[-1].getItemNumber(for_display=True)
+        extras = 'item={0} hp={1} from_item_number={2} until_item_number={3}'.format(
+            repr(self.context), self.person_uid, first_item_number, last_item_number)
+        fplog('redefine_item_attendee_position', extras=extras)
+        api.portal.show_message(_("Attendee position has been redefined."), request=self.request)
+        self._finished = True
+
+
+class IRemoveRedefinedAttendeePosition(IBaseAttendee):
+    """ """
+
+
+class RemoveRedefinedAttendeePositionForm(BaseAttendeeForm):
+    """ """
+
+    label = _(u'Remove redefined attendee position for this item')
+    schema = IRemoveRedefinedAttendeePosition
+    fields = field.Fields(IRemoveRedefinedAttendeePosition)
+
+    def _doApply(self):
+        """ """
+        if not self.mayChangeAttendees():
+            raise Unauthorized
+
+        items_to_update = _itemsToUpdate(
+            from_item_number=self.context.getItemNumber(relativeTo='meeting'),
+            until_item_number=self.apply_until_item_number,
+            meeting=self.meeting)
+
+        # apply removal of redefined attendee position
+        for item_to_update in items_to_update:
+            item_to_update_uid = item_to_update.UID()
+            item_attendees_positions = self.meeting.item_attendees_positions.get(
+                item_to_update_uid, {})
+            if self.person_uid in item_attendees_positions:
+                del item_attendees_positions[self.person_uid]
+            if not item_attendees_positions:
+                del self.meeting.item_attendees_positions[item_to_update_uid]
+                notifyModifiedAndReindex(item_to_update)
+        first_item_number = items_to_update[0].getItemNumber(for_display=True)
+        last_item_number = items_to_update[-1].getItemNumber(for_display=True)
+        extras = 'item={0} hp={1} from_item_number={2} until_item_number={3}'.format(
+            repr(self.context), self.person_uid, first_item_number, last_item_number)
+        fplog('remove_redefined_item_attendee_position', extras=extras)
+        api.portal.show_message(_("Redefined attendee position was removed."),
+                                request=self.request)
+        self._finished = True
