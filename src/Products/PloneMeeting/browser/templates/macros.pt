@@ -906,8 +906,8 @@ The parameter "cFolder" is the folder containing categories.</tal:comment>
        class="tooltipster-group-users deactivated"
        style='display: inline-block; padding: 0'
        href='#'
-       tal:attributes="data-base_url context_url;
-                       data-group_ids string:${proposingGroup/UID}*;">
+       tal:attributes='data-base_url context_url;
+                       data-group_ids:json string:"${proposingGroup/UID}*";'>
       <img tal:attributes="src string:${portal_url}/group_users.png" />
     </a>
   </acronym>

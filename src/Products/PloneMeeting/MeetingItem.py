@@ -5115,7 +5115,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                   context=self.REQUEST))),
                 u"<acronym><a onclick='event.preventDefault()' class='tooltipster-group-users deactivated' "
                 u"style='display: inline-block; padding: 0'"
-                u"href='#' data-group_ids='{0}' data-base_url='{1}'><img src='{1}/group_users.png' /></a></acronym>"
+                u"href='#' data-group_ids:json='\"{0}\"' data-base_url='{1}'><img src='{1}/group_users.png' /></a></acronym>"
                 .format(real_group_id, portal_url)))
         return u', '.join(res)
 
@@ -5135,7 +5135,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 value = u"{0} <acronym><a onclick='event.preventDefault()' " \
                     u"class='tooltipster-group-users deactivated' " \
                     u"style='display: inline-block; padding: 0'" \
-                    u"href='#' data-group_ids='{1}' data-base_url='{2}'>" \
+                    u"href='#' data-group_ids:json='\"{1}\"' data-base_url='{2}'>" \
                     u"<img src='{2}/group_users.png' /></a></acronym>".format(
                         adviser['name'] + (not adviser['optional'] and auto_advice or u''),
                         get_plone_group_id(adviser['id'], 'advisers'),
