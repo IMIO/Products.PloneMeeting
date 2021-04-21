@@ -55,7 +55,7 @@
 
   <!-- advanced widgets -->
   <criterion name="c4" i18n:attributes="title">
-   <property name="widget">checkbox</property>
+   <property name="widget">multiselect</property>
    <property name="title">Review state</property>
    <property name="position">top</property>
    <property name="section">advanced</property>
@@ -71,6 +71,8 @@
    <property name="catalog"></property>
    <property name="maxitems">0</property>
    <property name="sortreversed">False</property>
+   <property name="closeonselect">False</property>
+   <property name="placeholder">Rechercher</property>
   </criterion>
 
   <criterion name="c5" i18n:attributes="title">
@@ -82,6 +84,8 @@
    <property name="index">meeting_date</property>
    <property name="default"></property>
    <property name="calYearRange">c-10:c+10</property>
+   <property name="placeholderStart">Date de début</property>
+   <property name="placeholderEnd">Date de fin</property>
   </criterion>
 
  </criteria>

@@ -581,7 +581,9 @@ class MeetingDatesVocabulary(object):
         for brain in brains:
             res.append(SimpleTerm(brain.UID,
                                   brain.UID,
-                                  tool.format_date(brain.meeting_date, with_hour=True))
+                                  tool.format_date(brain.meeting_date,
+                                                   with_hour=True,
+                                                   short=True))
                        )
         return SimpleVocabulary(res)
 

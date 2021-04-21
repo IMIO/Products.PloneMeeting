@@ -1651,6 +1651,42 @@ body.template-documentviewer.portaltype-styletemplate dl.portalMessage.info:last
     width: 400px;
 }
 
+/* select2 in faceted */
+div.faceted-form div.select2-container {
+   width: 210px;
+}
+#content div.faceted-form div.select2-container input {
+   padding-bottom: 2px;
+   font-size: 120%;
+   color: grey !important;
+}
+/* multiselect widget */
+/* width of advanced faceted filters */
+#content #faceted-form div#top-area fieldset.widget-fieldset {
+    width: 215px;
+}
+#content div#top---advanced---widgets .widget-fieldset > form {
+    height: 75px;
+}
+div.faceted-widget div.faceted-operator {
+    position: absolute;
+    margin-top: -102px;
+    margin-left: 105px
+}
+.faceted-multiselect-widget .select2-container-multi .select2-choices .select2-search-choice {
+    background-color: #e4e4e4;
+    border: 1px solid #aaa;
+}
+
+/* facete daterange widget, add margin between 2 inputs */
+div.faceted-daterange-widget form div:first-of-type {
+   margin-bottom: 0.5em;
+}
+div.faceted-daterange-widget form div input {
+   padding: 6px;
+   font-size: 100%;
+}
+
 /* labels displayed on the item view */
 #content div#viewlet-below-content-title div#labeling-viewlet {
    float: left;
