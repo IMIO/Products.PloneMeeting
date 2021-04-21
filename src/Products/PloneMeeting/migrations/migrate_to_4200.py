@@ -468,7 +468,7 @@ class Migrate_To_4200(Migrator):
                                'dashboardMeetingAvailableItemsFilters',
                                'dashboardMeetingLinkedItemsFilters'):
                 field = cfg.getField(field_name)
-                keys = field.get(cfg)
+                keys = list(field.get(cfg))
                 # created/modified
                 if 'c13' in keys and 'c14' in keys:
                     # nothing to do as both were already selected
