@@ -181,6 +181,8 @@ Changelog
   - If a given advice must be reinitialized, it must be `asked_again`.
 
   [gbastien]
+- Added possibility to redefine an attendee position on an item.
+  [gbastien]
 
 4.2b11 (2021-01-19)
 -------------------
