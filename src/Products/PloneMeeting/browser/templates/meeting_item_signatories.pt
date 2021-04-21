@@ -14,4 +14,7 @@
         </tal:signature_infos>
        </li>
   </ul>
+  <span tal:condition="not:items" i18n:translate="no_shown_items">
+    No visible item for now.
+  </span>
 </div>
