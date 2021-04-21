@@ -183,6 +183,10 @@ Changelog
   [gbastien]
 - Added possibility to redefine an attendee position on an item.
   [gbastien]
+- On advice popup, when hovering the `user icon`, display every group suffixes
+  related to the advice workflow, indeed there may be more than just the
+  `_advisers` suffixed group.
+  [gbastien]
 
 4.2b11 (2021-01-19)
 -------------------

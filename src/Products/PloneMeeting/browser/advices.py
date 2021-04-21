@@ -19,6 +19,8 @@ from Products.PloneMeeting.config import PMMessageFactory as _
 from zope.event import notify
 from zope.lifecycleevent import ObjectModifiedEvent
 
+import json
+
 
 def _delay_icon(memberIsAdviserForGroup, advice_info):
     """In case this is a delay aware advice, return a delay_icon
@@ -203,6 +205,22 @@ class AdvicesIconsInfos(BrowserView):
 
     def state_infos(self, advice):
         return get_state_infos(advice)
+
+    def get_adviser_group_ids(self, advice_id):
+        """Return list of Plone groups ids having a role in p_advice_id advice WF."""
+        advice_portal_type = self.context._advicePortalTypeForAdviser(advice_id)
+        suffixes = ["advisers"]
+        # for performance reason, if portal_type is the basic "meetingadvice"
+        # we only return the "_advisers" suffixed group
+        if advice_portal_type != "meetingadvice":
+            local_roles = self.portal.portal_types[advice_portal_type].localroles
+            # get every suffixes used by localroles
+            suffixes = []
+            for review_state, infos in local_roles['advice_group'].items():
+                for k, v in infos.items():
+                    if k not in suffixes:
+                        suffixes.append(k)
+        return json.dumps(["{0}_{1}".format(advice_id, suffix) for suffix in suffixes])
 
 
 class ChangeAdviceHiddenDuringRedactionView(BrowserView):

@@ -90,7 +90,7 @@
                            style="display: inline-block; padding: 0"
                            href="#"
                            onclick="event.preventDefault();"
-                           tal:attributes="data-group_ids string:${advice/id}_advisers;
+                           tal:attributes="data-group_ids:json python: view.get_adviser_group_ids(advice['id']);
                                            data-base_url string:${view/portal_url}">
                          <img src="group_users.png" tal:attributes="src string:${view/portal_url}/group_users.png"/>
                         </a>
