@@ -2,13 +2,16 @@
 /* <dtml-with imioapps_properties> */
 /* <dtml-call "REQUEST.set('portal_url', portal_url())"> */
 
-fieldset {line-height: 1em; margin: 0.5em 0; }
+fieldset {
+   line-height: 1em;
+   margin: 0.5em 0;
+}
 
 /* background of secret items when displayed on the meeting */
 table.listing tbody tr.odd.meeting_item_privacy_secret td {
     background-color: #fffacd;
 }
-table.listing tbody tr.even.meeting_item_privacy_secret td{
+table.listing tbody tr.even.meeting_item_privacy_secret td {
     background-color: #ffe37f;
 }
 table.listing tbody tr.odd.meeting_item_privacy_secret_heading td {
@@ -28,7 +31,8 @@ img.logical_meeting {
     cursor: help;
 }
 
-/* display lines of the table on the meeting_view 100% height so the 'listType' column is displayed correctly */
+/* display lines of the table on the meeting_view 100% height so
+   the 'listType' column is displayed correctly */
 table.faceted-table-results > tbody > tr {
     height: 1px;
 }
@@ -1657,7 +1661,6 @@ div.faceted-form div.select2-container {
 }
 #content div.faceted-form div.select2-container input {
    padding-bottom: 2px;
-   font-size: 120%;
    color: grey !important;
 }
 /* multiselect widget */
@@ -1668,10 +1671,14 @@ div.faceted-form div.select2-container {
 #content div#top---advanced---widgets .widget-fieldset > form {
     height: 75px;
 }
+#content fieldset.widget-fieldset ul {
+    margin-right: 0em;
+    padding-right: 0.2em;
+}
 div.faceted-widget div.faceted-operator {
     position: absolute;
     margin-top: -102px;
-    margin-left: 105px
+    margin-left: 132px
 }
 .faceted-multiselect-widget .select2-container-multi .select2-choices .select2-search-choice {
     background-color: #e4e4e4;
@@ -2006,55 +2013,55 @@ div.config_sub_categories table {
 h2.available-items,
 h2.presented-items,
 h2.pm-inserting-methods-helper-msg {
-   display: inline;
+    display: inline;
 }
 
 /* avoid select input to take to much place when editing certified signatures datagridfield */
 div#formfield-form-widgets-certified_signatures th {
-   width: 17%;   
+    width: 17%;   
 }
 div#formfield-form-widgets-certified_signatures td select.select-widget {
-   width: 100%;   
+    width: 100%;   
 }
 
 a.portlet_pm_dashboard_link:first-of-type {
-   margin-top: 1em;
+    margin-top: 1em;
 }
 a.portlet_pm_dashboard_link {
-   line-height: 2em;
+    line-height: 2em;
 }
 
 /* add some margin under fieldsets displayed in forms */
 body.template-base_edit #content fieldset,
 form#form fieldset {
-   margin-bottom: 0.5em;
+    margin-bottom: 0.5em;
 }
 
 ul.change_delay_actions {
-   list-style: none;
-   margin-left: 0em;
+    list-style: none;
+    margin-left: 0em;
 }
 ul.change_delay_actions li a span {
-   display: inline-block;
+    display: inline-block;
 }
 
 .fa-angle-double-right {
-   color: grey;
+    color: grey;
 }
 
 /* manage custom behaviors in annexes/advices fieldsets */
 fieldset.section_annex, fieldset.section_annexDecision, fieldset.section_advices {
-   min-height: 50px;
-   height: auto;
+    min-height: 50px;
+    height: auto;
 }
 
 div#held_position_back_refs {
-   padding-bottom: 0.5em;
+    padding-bottom: 0.5em;
 }
 
 /* hide link 'Add contact' on organization view */
 #content a.addnewcontactfromorganization.link-overlay {
-   display: none !important;
+    display: none !important;
 }
 
 /* manually linked items overlay */
@@ -2063,14 +2070,14 @@ div#held_position_back_refs {
 }
 
 div.itemtemplate-infos, div.recurringitem-infos {
-   padding-top: 1em;
+    padding-top: 1em;
 }
 
 /* space under paragraphs in rich text zones */
 #content div.pmMoreInfo div p,
 #content div[id^='hook_'] p,
 body#content.cke_editable div p {
-   line-height: 1.5em;
+    line-height: 1.5em;
 }
 
 /* hide the 'scan' tab on annex to every roles but Manager and MeetingManager */
