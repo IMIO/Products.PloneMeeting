@@ -24,7 +24,7 @@
    <property name="maxitems">0</property>
    <property name="sortreversed">False</property>
    <property name="closeonselect">True</property>
-   <property name="placeholder">Rechercher</property>
+   <property name="placeholder">Search</property>
   </criterion>
 
   <criterion purge="True" name="c5" i18n:attributes="title">
@@ -46,7 +46,7 @@
    <property name="maxitems">0</property>
    <property name="sortreversed">False</property>
    <property name="closeonselect">True</property>
-   <property name="placeholder">Rechercher</property>
+   <property name="placeholder">Search</property>
   </criterion>
 
   <criterion purge="True" name="c6" i18n:attributes="title">
@@ -68,7 +68,7 @@
    <property name="maxitems">0</property>
    <property name="sortreversed">False</property>
    <property name="closeonselect">False</property>
-   <property name="placeholder">Rechercher</property>
+   <property name="placeholder">Search</property>
   </criterion>
 
   <criterion purge="True" name="c7" i18n:attributes="title">
@@ -90,7 +90,7 @@
    <property name="maxitems">0</property>
    <property name="sortreversed">False</property>
    <property name="closeonselect">True</property>
-   <property name="placeholder">Rechercher</property>
+   <property name="placeholder">Search</property>
   </criterion>
 
   <criterion purge="True" name="c8" i18n:attributes="title">
@@ -112,7 +112,7 @@
    <property name="maxitems">0</property>
    <property name="sortreversed">False</property>
    <property name="closeonselect">True</property>
-   <property name="placeholder">Rechercher</property>
+   <property name="placeholder">Search</property>
   </criterion>
 
   <criterion purge="True" name="c9" i18n:attributes="title">
@@ -134,7 +134,7 @@
    <property name="maxitems">0</property>
    <property name="sortreversed">False</property>
    <property name="closeonselect">True</property>
-   <property name="placeholder">Rechercher</property>
+   <property name="placeholder">Search</property>
   </criterion>
 
   <criterion purge="True" name="c10" i18n:attributes="title">
@@ -156,7 +156,7 @@
    <property name="maxitems">0</property>
    <property name="sortreversed">False</property>
    <property name="closeonselect">True</property>
-   <property name="placeholder">Rechercher</property>
+   <property name="placeholder">Search</property>
   </criterion>
 
   <criterion purge="True" name="c11" i18n:attributes="title">
@@ -178,7 +178,7 @@
    <property name="maxitems">0</property>
    <property name="sortreversed">False</property>
    <property name="closeonselect">True</property>
-   <property name="placeholder">Rechercher</property>
+   <property name="placeholder">Search</property>
   </criterion>
 
   <criterion purge="True" name="c12" i18n:attributes="title">
@@ -200,7 +200,7 @@
    <property name="maxitems">0</property>
    <property name="sortreversed">False</property>
    <property name="closeonselect">True</property>
-   <property name="placeholder">Rechercher</property>
+   <property name="placeholder">Search</property>
   </criterion>
 
   <criterion purge="True" name="c13" i18n:attributes="title">
@@ -214,8 +214,8 @@
    <property name="calYearRange">c-10:c+10</property>
    <property name="labelStart"></property>
    <property name="labelEnd"></property>
-   <property name="placeholderStart">Date de début</property>
-   <property name="placeholderEnd">Date de fin</property>
+   <property name="placeholderStart">Start date</property>
+   <property name="placeholderEnd">End date</property>
   </criterion>
 
   <criterion purge="True" name="c14" i18n:attributes="title">
@@ -229,8 +229,8 @@
    <property name="calYearRange">c-10:c+10</property>
    <property name="labelStart"></property>
    <property name="labelEnd"></property>
-   <property name="placeholderStart">Date de début</property>
-   <property name="placeholderEnd">Date de fin</property>
+   <property name="placeholderStart">Start date</property>
+   <property name="placeholderEnd">End date</property>
   </criterion>
 
   <criterion purge="True" name="c15" i18n:attributes="title">
@@ -244,8 +244,8 @@
    <property name="calYearRange">c-10:c+10</property>
    <property name="labelStart"></property>
    <property name="labelEnd"></property>
-   <property name="placeholderStart">Date de début</property>
-   <property name="placeholderEnd">Date de fin</property>
+   <property name="placeholderStart">Start date</property>
+   <property name="placeholderEnd">End date</property>
   </criterion>
 
   <criterion purge="True" name="c16" i18n:attributes="title">
@@ -267,7 +267,7 @@
    <property name="maxitems">0</property>
    <property name="sortreversed">False</property>
    <property name="closeonselect">True</property>
-   <property name="placeholder">Rechercher</property>
+   <property name="placeholder">Search</property>
   </criterion>
 
   <criterion purge="True" name="c17" i18n:attributes="title">
@@ -346,7 +346,7 @@
    <property name="maxitems">0</property>
    <property name="sortreversed">False</property>
    <property name="closeonselect">True</property>
-   <property name="placeholder">Rechercher</property>
+   <property name="placeholder">Search</property>
   </criterion>
 
   <criterion purge="True" name="c21" i18n:attributes="title">
@@ -406,7 +406,7 @@
    <property name="maxitems">0</property>
    <property name="sortreversed">False</property>
    <property name="closeonselect">True</property>
-   <property name="placeholder">Rechercher</property>
+   <property name="placeholder">Search</property>
   </criterion>
 
   <criterion purge="True" name="c24" i18n:attributes="title">
@@ -428,7 +428,7 @@
    <property name="maxitems">0</property>
    <property name="sortreversed">False</property>
    <property name="closeonselect">True</property>
-   <property name="placeholder">Rechercher</property>
+   <property name="placeholder">Search</property>
   </criterion>
 
   <criterion purge="True" name="c26" i18n:attributes="title">
@@ -450,7 +450,7 @@
    <property name="maxitems">0</property>
    <property name="sortreversed">False</property>
    <property name="closeonselect">True</property>
-   <property name="placeholder">Rechercher</property>
+   <property name="placeholder">Search</property>
   </criterion>
 
   <criterion purge="True" name="c27" i18n:attributes="title">
@@ -472,7 +472,7 @@
    <property name="maxitems">0</property>
    <property name="sortreversed">False</property>
    <property name="closeonselect">True</property>
-   <property name="placeholder">Rechercher</property>
+   <property name="placeholder">Search</property>
   </criterion>
 
   <criterion purge="True" name="c28">
@@ -510,7 +510,7 @@
    <property name="maxitems">0</property>
    <property name="sortreversed">False</property>
    <property name="closeonselect">False</property>
-   <property name="placeholder">Rechercher</property>
+   <property name="placeholder">Search</property>
   </criterion>
 
   <criterion purge="True" name="c30">
@@ -548,7 +548,7 @@
    <property name="maxitems">0</property>
    <property name="sortreversed">False</property>
    <property name="closeonselect">True</property>
-   <property name="placeholder">Rechercher</property>
+   <property name="placeholder">Search</property>
   </criterion>
 
  </criteria>

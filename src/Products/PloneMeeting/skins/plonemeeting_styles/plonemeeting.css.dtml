@@ -253,10 +253,6 @@ strong.auto_info {
     vertical-align: baseline;
 }
 
-/* makes pm_workflowstate displays correctly on the right of byline */
-div#viewlet-below-content-title {
-    height: 1em;
-}
 div#plone-document-byline {
     float: left;
 }
@@ -1683,6 +1679,12 @@ div.faceted-widget div.faceted-operator {
 .faceted-multiselect-widget .select2-container-multi .select2-choices .select2-search-choice {
     background-color: #e4e4e4;
     border: 1px solid #aaa;
+}
+.faceted-multiselect-widget .select2-container-multi ul.select2-choices {
+    background-image: none;
+}
+fieldset.widget-fieldset .select2-container-multi .select2-choices .select2-search-field input {
+    font-family: &dtml-fontFamily;;
 }
 
 /* facete daterange widget, add margin between 2 inputs */
