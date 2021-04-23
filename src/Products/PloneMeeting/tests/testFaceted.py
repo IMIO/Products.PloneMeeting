@@ -290,11 +290,11 @@ class testFaceted(PloneMeetingTestCase):
             [term.token for term in vocab(pmFolder)._terms],
             [ITEM_NO_PREFERRED_MEETING_VALUE, meeting2UID, meetingUID])
         # edit a meeting
-        self.assertEqual(vocab(pmFolder).by_token[meetingUID].title, meeting.Title())
+        self.assertEqual(vocab(pmFolder).by_token[meetingUID].title, u'05/05/2015')
         meeting.date = datetime(2015, 7, 7)
         meeting._update_after_edit()
         # cache was cleaned
-        self.assertEqual(vocab(pmFolder).by_token[meetingUID].title, meeting.Title())
+        self.assertEqual(vocab(pmFolder).by_token[meetingUID].title, u'07/07/2015')
 
         # remove a meeting
         self.portal.restrictedTraverse('@@delete_givenuid')(meeting.UID())

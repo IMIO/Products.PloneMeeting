@@ -56,7 +56,7 @@
 
   <!-- advanced widgets -->
   <criterion name="c4" i18n:attributes="title">
-   <property name="widget">checkbox</property>
+   <property name="widget">multiselect</property>
    <property name="title">Group</property>
    <property name="position">top</property>
    <property name="section">advanced</property>
@@ -67,15 +67,18 @@
    <property name="index">getProposingGroup</property>
    <property name="operator">or</property>
    <property name="operator_visible">False</property>
+   <property name="multiple">True</property>
    <property
       name="vocabulary">Products.PloneMeeting.vocabularies.proposinggroupsforfacetedfiltervocabulary</property>
    <property name="catalog"></property>
    <property name="maxitems">0</property>
    <property name="sortreversed">False</property>
+   <property name="closeonselect">True</property>
+   <property name="placeholder">Rechercher</property>
   </criterion>
 
   <criterion name="c5" i18n:attributes="title">
-   <property name="widget">checkbox</property>
+   <property name="widget">multiselect</property>
    <property name="title">Category</property>
    <property name="position">top</property>
    <property name="section">advanced</property>
@@ -86,15 +89,18 @@
    <property name="index">getCategory</property>
    <property name="operator">or</property>
    <property name="operator_visible">False</property>
+   <property name="multiple">True</property>
    <property
       name="vocabulary">Products.PloneMeeting.vocabularies.categoriesvocabulary</property>
    <property name="catalog"></property>
    <property name="maxitems">0</property>
    <property name="sortreversed">False</property>
+   <property name="closeonselect">True</property>
+   <property name="placeholder">Rechercher</property>
   </criterion>
 
   <criterion name="c6" i18n:attributes="title">
-   <property name="widget">checkbox</property>
+   <property name="widget">multiselect</property>
    <property name="title">Review state</property>
    <property name="position">top</property>
    <property name="section">advanced</property>
@@ -105,15 +111,18 @@
    <property name="index">review_state</property>
    <property name="operator">or</property>
    <property name="operator_visible">False</property>
+   <property name="multiple">True</property>
    <property
       name="vocabulary">Products.PloneMeeting.vocabularies.itemreviewstatesvocabulary</property>
    <property name="catalog"></property>
    <property name="maxitems">0</property>
    <property name="sortreversed">False</property>
+   <property name="closeonselect">False</property>
+   <property name="placeholder">Rechercher</property>
   </criterion>
 
   <criterion name="c7" i18n:attributes="title">
-   <property name="widget">checkbox</property>
+   <property name="widget">multiselect</property>
    <property name="title">Advice</property>
    <property name="position">top</property>
    <property name="section">advanced</property>
@@ -124,15 +133,18 @@
    <property name="index">indexAdvisers</property>
    <property name="operator">or</property>
    <property name="operator_visible">True</property>
+   <property name="multiple">True</property>
    <property
       name="vocabulary">Products.PloneMeeting.vocabularies.askedadvicesvocabulary</property>
    <property name="catalog"></property>
    <property name="maxitems">0</property>
    <property name="sortreversed">False</property>
+   <property name="closeonselect">True</property>
+   <property name="placeholder">Rechercher</property>
   </criterion>
 
   <criterion name="c8" i18n:attributes="title">
-   <property name="widget">checkbox</property>
+   <property name="widget">multiselect</property>
    <property name="title">Advice type</property>
    <property name="position">top</property>
    <property name="section">advanced</property>
@@ -143,15 +155,18 @@
    <property name="index">combined__indexAdvisers</property>
    <property name="operator">or</property>
    <property name="operator_visible">False</property>
+   <property name="multiple">True</property>
    <property
       name="vocabulary">Products.PloneMeeting.vocabularies.advicetypesvocabulary</property>
    <property name="catalog"></property>
    <property name="maxitems">0</property>
    <property name="sortreversed">False</property>
+   <property name="closeonselect">True</property>
+   <property name="placeholder">Rechercher</property>
   </criterion>
 
   <criterion name="c9" i18n:attributes="title">
-   <property name="widget">checkbox</property>
+   <property name="widget">multiselect</property>
    <property name="title">Meeting</property>
    <property name="position">top</property>
    <property name="section">advanced</property>
@@ -162,15 +177,18 @@
    <property name="index">meeting_uid</property>
    <property name="operator">or</property>
    <property name="operator_visible">False</property>
+   <property name="multiple">True</property>
    <property
       name="vocabulary">Products.PloneMeeting.vocabularies.meetingdatesvocabulary</property>
    <property name="catalog"></property>
    <property name="maxitems">0</property>
    <property name="sortreversed">False</property>
+   <property name="closeonselect">True</property>
+   <property name="placeholder">Rechercher</property>
   </criterion>
 
   <criterion name="c10" i18n:attributes="title">
-   <property name="widget">checkbox</property>
+   <property name="widget">multiselect</property>
    <property name="title">Preferred meeting</property>
    <property name="position">top</property>
    <property name="section">advanced</property>
@@ -181,15 +199,18 @@
    <property name="index">preferred_meeting_uid</property>
    <property name="operator">or</property>
    <property name="operator_visible">False</property>
+   <property name="multiple">True</property>
    <property
       name="vocabulary">Products.PloneMeeting.vocabularies.meetingdatesvocabulary</property>
    <property name="catalog"></property>
    <property name="maxitems">0</property>
    <property name="sortreversed">False</property>
+   <property name="closeonselect">True</property>
+   <property name="placeholder">Rechercher</property>
   </criterion>
 
   <criterion name="c11" i18n:attributes="title">
-   <property name="widget">checkbox</property>
+   <property name="widget">multiselect</property>
    <property name="title">Creator</property>
    <property name="position">top</property>
    <property name="section">advanced</property>
@@ -200,15 +221,18 @@
    <property name="index">Creator</property>
    <property name="operator">or</property>
    <property name="operator_visible">False</property>
+   <property name="multiple">True</property>
    <property
       name="vocabulary">Products.PloneMeeting.vocabularies.creatorsforfacetedfiltervocabulary</property>
    <property name="catalog"></property>
    <property name="maxitems">0</property>
    <property name="sortreversed">False</property>
+   <property name="closeonselect">True</property>
+   <property name="placeholder">Rechercher</property>
   </criterion>
 
   <criterion name="c12" i18n:attributes="title">
-   <property name="widget">checkbox</property>
+   <property name="widget">multiselect</property>
    <property name="title">Taken over by</property>
    <property name="position">top</property>
    <property name="section">advanced</property>
@@ -219,11 +243,14 @@
    <property name="index">getTakenOverBy</property>
    <property name="operator">or</property>
    <property name="operator_visible">False</property>
+   <property name="multiple">True</property>
    <property
       name="vocabulary">Products.PloneMeeting.vocabularies.creatorsforfacetedfiltervocabulary</property>
    <property name="catalog"></property>
    <property name="maxitems">0</property>
    <property name="sortreversed">False</property>
+   <property name="closeonselect">True</property>
+   <property name="placeholder">Rechercher</property>
   </criterion>
 
   <criterion name="c13" i18n:attributes="title">
@@ -235,6 +262,10 @@
    <property name="index">created</property>
    <property name="default"></property>
    <property name="calYearRange">c-10:c+10</property>
+   <property name="labelStart"></property>
+   <property name="labelEnd"></property>
+   <property name="placeholderStart">Date de début</property>
+   <property name="placeholderEnd">Date de fin</property>
   </criterion>
 
   <criterion name="c14" i18n:attributes="title">
@@ -246,6 +277,10 @@
    <property name="index">Date</property>
    <property name="default"></property>
    <property name="calYearRange">c-10:c+10</property>
+   <property name="labelStart"></property>
+   <property name="labelEnd"></property>
+   <property name="placeholderStart">Date de début</property>
+   <property name="placeholderEnd">Date de fin</property>
   </criterion>
 
   <criterion name="c15" i18n:attributes="title">
@@ -257,10 +292,14 @@
    <property name="index">meeting_date</property>
    <property name="default"></property>
    <property name="calYearRange">c-10:c+10</property>
+   <property name="labelStart"></property>
+   <property name="labelEnd"></property>
+   <property name="placeholderStart">Date de début</property>
+   <property name="placeholderEnd">Date de fin</property>
   </criterion>
 
   <criterion name="c16" i18n:attributes="title">
-   <property name="widget">checkbox</property>
+   <property name="widget">multiselect</property>
    <property name="title">To send to</property>
    <property name="position">top</property>
    <property name="section">advanced</property>
@@ -271,11 +310,14 @@
    <property name="index">sentToInfos</property>
    <property name="operator">or</property>
    <property name="operator_visible">False</property>
+   <property name="multiple">True</property>
    <property
       name="vocabulary">Products.PloneMeeting.vocabularies.senttoinfosvocabulary</property>
    <property name="catalog"></property>
    <property name="maxitems">0</property>
    <property name="sortreversed">False</property>
+   <property name="closeonselect">True</property>
+   <property name="placeholder">Rechercher</property>
   </criterion>
 
   <criterion name="c17" i18n:attributes="title">
@@ -336,7 +378,7 @@
   </criterion>
 
   <criterion name="c20" i18n:attributes="title">
-   <property name="widget">checkbox</property>
+   <property name="widget">multiselect</property>
    <property name="title">Annexes</property>
    <property name="position">top</property>
    <property name="section">advanced</property>
@@ -347,11 +389,14 @@
    <property name="index">annexes_index</property>
    <property name="operator">and</property>
    <property name="operator_visible">False</property>
+   <property name="multiple">True</property>
    <property
       name="vocabulary">Products.PloneMeeting.vocabularies.faceted_annexes_vocabulary</property>
    <property name="catalog"></property>
    <property name="maxitems">0</property>
    <property name="sortreversed">False</property>
+   <property name="closeonselect">True</property>
+   <property name="placeholder">Rechercher</property>
   </criterion>
 
   <criterion name="c21" i18n:attributes="title">
@@ -393,7 +438,7 @@
   </criterion>
 
   <criterion name="c23" i18n:attributes="title">
-   <property name="widget">checkbox</property>
+   <property name="widget">multiselect</property>
    <property name="title">Groups in charge</property>
    <property name="position">top</property>
    <property name="section">advanced</property>
@@ -404,15 +449,18 @@
    <property name="index">getGroupsInCharge</property>
    <property name="operator">or</property>
    <property name="operator_visible">True</property>
+   <property name="multiple">True</property>
    <property
       name="vocabulary">Products.PloneMeeting.vocabularies.groupsinchargevocabulary</property>
    <property name="catalog"></property>
    <property name="maxitems">0</property>
    <property name="sortreversed">False</property>
+   <property name="closeonselect">True</property>
+   <property name="placeholder">Rechercher</property>
   </criterion>
 
   <criterion name="c24" i18n:attributes="title">
-   <property name="widget">checkbox</property>
+   <property name="widget">multiselect</property>
    <property name="title">Classifier</property>
    <property name="position">top</property>
    <property name="section">advanced</property>
@@ -423,15 +471,18 @@
    <property name="index">getRawClassifier</property>
    <property name="operator">or</property>
    <property name="operator_visible">False</property>
+   <property name="multiple">True</property>
    <property
       name="vocabulary">Products.PloneMeeting.vocabularies.classifiersvocabulary</property>
    <property name="catalog"></property>
    <property name="maxitems">0</property>
    <property name="sortreversed">False</property>
+   <property name="closeonselect">True</property>
+   <property name="placeholder">Rechercher</property>
   </criterion>
 
   <criterion name="c26" i18n:attributes="title">
-   <property name="widget">checkbox</property>
+   <property name="widget">multiselect</property>
    <property name="title">Labels</property>
    <property name="position">top</property>
    <property name="section">advanced</property>
@@ -442,15 +493,18 @@
    <property name="index">labels</property>
    <property name="operator">or</property>
    <property name="operator_visible">True</property>
+   <property name="multiple">True</property>
    <property
       name="vocabulary">Products.PloneMeeting.vocabularies.ftwlabelsforfacetedfiltervocabulary</property>
    <property name="catalog"></property>
    <property name="maxitems">0</property>
    <property name="sortreversed">False</property>
+   <property name="closeonselect">True</property>
+   <property name="placeholder">Rechercher</property>
   </criterion>
 
   <criterion name="c27" i18n:attributes="title">
-   <property name="widget">checkbox</property>
+   <property name="widget">multiselect</property>
    <property name="title">Associated groups</property>
    <property name="position">top</property>
    <property name="section">advanced</property>
@@ -461,11 +515,14 @@
    <property name="index">getAssociatedGroups</property>
    <property name="operator">or</property>
    <property name="operator_visible">True</property>
+   <property name="multiple">True</property>
    <property
       name="vocabulary">Products.PloneMeeting.vocabularies.associatedgroupsvocabulary</property>
    <property name="catalog"></property>
    <property name="maxitems">0</property>
    <property name="sortreversed">False</property>
+   <property name="closeonselect">True</property>
+   <property name="placeholder">Rechercher</property>
   </criterion>
 
   <criterion name="c28">
@@ -485,7 +542,7 @@
   </criterion>
 
   <criterion name="c29" i18n:attributes="title">
-   <property name="widget">checkbox</property>
+   <property name="widget">multiselect</property>
    <property name="title">Copy groups</property>
    <property name="position">top</property>
    <property name="section">advanced</property>
@@ -496,11 +553,14 @@
    <property name="index">getCopyGroups</property>
    <property name="operator">or</property>
    <property name="operator_visible">True</property>
+   <property name="multiple">True</property>
    <property
       name="vocabulary">Products.PloneMeeting.vocabularies.copygroupsvocabulary</property>
    <property name="catalog"></property>
    <property name="maxitems">0</property>
    <property name="sortreversed">False</property>
+   <property name="closeonselect">False</property>
+   <property name="placeholder">Rechercher</property>
   </criterion>
 
   <criterion name="c30">
@@ -520,7 +580,7 @@
   </criterion>
 
   <criterion name="c31" i18n:attributes="title">
-   <property name="widget">checkbox</property>
+   <property name="widget">multiselect</property>
    <property name="title">Committee</property>
    <property name="position">top</property>
    <property name="section">advanced</property>
@@ -531,11 +591,14 @@
    <property name="index">committees_index</property>
    <property name="operator">or</property>
    <property name="operator_visible">True</property>
+   <property name="multiple">True</property>
    <property
       name="vocabulary">Products.PloneMeeting.vocabularies.selectable_committees_vocabulary</property>
    <property name="catalog"></property>
    <property name="maxitems">0</property>
    <property name="sortreversed">False</property>
+   <property name="closeonselect">True</property>
+   <property name="placeholder">Rechercher</property>
   </criterion>
 
  </criteria>

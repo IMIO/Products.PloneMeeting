@@ -55,7 +55,7 @@
 
   <!-- advanced widgets -->
   <criterion name="c4" i18n:attributes="title">
-   <property name="widget">checkbox</property>
+   <property name="widget">multiselect</property>
    <property name="title">Review state</property>
    <property name="position">top</property>
    <property name="section">advanced</property>
@@ -66,11 +66,14 @@
    <property name="index">review_state</property>
    <property name="operator">or</property>
    <property name="operator_visible">False</property>
+   <property name="multiple">True</property>
    <property
       name="vocabulary">Products.PloneMeeting.vocabularies.meetingreviewstatesvocabulary</property>
    <property name="catalog"></property>
    <property name="maxitems">0</property>
    <property name="sortreversed">False</property>
+   <property name="closeonselect">False</property>
+   <property name="placeholder">Search</property>
   </criterion>
 
   <criterion name="c5" i18n:attributes="title">
@@ -82,6 +85,10 @@
    <property name="index">meeting_date</property>
    <property name="default"></property>
    <property name="calYearRange">c-10:c+10</property>
+   <property name="labelStart"></property>
+   <property name="labelEnd"></property>
+   <property name="placeholderStart">Start date</property>
+   <property name="placeholderEnd">End date</property>
   </criterion>
 
  </criteria>

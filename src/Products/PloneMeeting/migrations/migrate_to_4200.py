@@ -606,7 +606,7 @@ class Migrate_To_4200(Migrator):
         # init otherMeetingConfigsClonableToFieldXXX and XXXSuite/XXXEnd new fields
         self.initNewHTMLFields(query={'meta_type': ('MeetingItem')})
 
-        # update faceted filters
+        # reimport every advanced widgets (so except c0/c1/c2/c3)
         self.updateFacetedFilters(xml_filename='upgrade_step_4200_add_item_widgets.xml')
         self.updateFacetedFilters(
             xml_filename='upgrade_step_4200_update_meeting_widgets.xml',
