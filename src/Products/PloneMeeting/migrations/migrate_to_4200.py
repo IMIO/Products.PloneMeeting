@@ -615,7 +615,7 @@ class Migrate_To_4200(Migrator):
             xml_filename='upgrade_step_4200_update_meeting_widgets.xml',
             related_to="decisions")
         self.updateFacetedFilters(reorder=False, to_delete=['c25'])
-        return
+
         # update holidays
         self.updateHolidays()
 
