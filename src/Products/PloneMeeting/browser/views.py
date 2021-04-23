@@ -20,6 +20,7 @@ from imio.helpers.xhtml import addClassToContent
 from imio.helpers.xhtml import CLASS_TO_LAST_CHILDREN_NUMBER_OF_CHARS_DEFAULT
 from imio.helpers.xhtml import imagesToPath
 from imio.helpers.xhtml import separate_images
+from imio.zamqp.core.utils import scan_id_barcode
 from plone import api
 from plone.app.caching.operations.utils import getContext
 from plone.app.textfield.value import RichTextValue
@@ -58,6 +59,9 @@ from zope.i18n import translate
 import cgi
 import json
 import lxml
+
+SEVERAL_SAME_BARCODE_ERROR = \
+    'You can not generate several times same QR Code in same template!!!'
 
 
 class PloneMeetingAjaxView(BrowserView):
@@ -449,6 +453,9 @@ class PortletTodoUpdateView(BrowserView):
 class BaseDGHV(object):
     """ """
 
+    def __init__(self, context, request):
+        self.printed_scan_id_barcode = []
+
     def imageOrientation(self, image):
         """Compute image orientation, if orientation is landscape, we rotate
            the image from 90° so it is displayed on the full page.
@@ -692,6 +699,17 @@ class BaseDGHV(object):
         # make the 'item_scan_id' value available in the REQUEST
         self.request.set(ITEM_SCAN_ID_NAME, scan_id)
         return scan_id
+
+    def print_scan_id_barcode(self, **kwargs):
+        """Helper that will call scan_id_barcode from imio.zamqp.core
+           and that will make sure that it is not called several times."""
+        # this method may be only called one time by context
+        context_uid = self.context.UID()
+        if context_uid in self.printed_scan_id_barcode:
+            raise Exception(SEVERAL_SAME_BARCODE_ERROR)
+        self.printed_scan_id_barcode.append(context_uid)
+        barcode = scan_id_barcode(self.context, **kwargs)
+        return barcode
 
     def printFullname(self, user_id):
         """ """
