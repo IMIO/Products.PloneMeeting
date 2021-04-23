@@ -920,6 +920,8 @@ class testViews(PloneMeetingTestCase):
         # several xhtmlContent
         self.assertEqual(helper.printXhtml(item, [motivation, decision]),
                          motivation + decision)
+        # xhtmlContents is None
+        self.assertEqual(helper.printXhtml(item, None), '')
         # use 'separator'
         self.assertEqual(helper.printXhtml(item, [motivation, 'separator', decision]),
                          motivation + '<p>&nbsp;</p>' + decision)
