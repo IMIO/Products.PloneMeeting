@@ -187,6 +187,10 @@ Changelog
   related to the advice workflow, indeed there may be more than just the
   `_advisers` suffixed group.
   [gbastien]
+- Use multiselect widget faceted filters when necessary, handy for replacement
+  of checkbox widgets having too much values.  Also make the faceted meeting
+  dates display dates with short format (number of month instead name of month).
+  [gbastien]
 
 4.2b11 (2021-01-19)
 -------------------
