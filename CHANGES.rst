@@ -5,8 +5,10 @@ Changelog
 4.1.28.24 (unreleased)
 ----------------------
 
-- Nothing changed yet.
+- Backport from 4.2.x:
 
+  - Fixed `BaseDGHV.printXhtml` do not break when given `xhtmlContents` is None.
+    [gbastien]
 
 4.1.28.23 (2021-04-15)
 ----------------------
