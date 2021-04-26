@@ -17,7 +17,7 @@ from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFPlone.utils import safe_unicode
 from Products.Five import BrowserView
 from Products.PloneMeeting.config import PMMessageFactory as _
-from Products.PloneMeeting.config import ASSEMBLY_NUMBER_OF_LINES
+from Products.PloneMeeting.config import MEETING_ASSEMBLY_NUMBER_OF_LINES
 from Products.PloneMeeting.config import ITEM_INSERT_METHODS
 from Products.PloneMeeting.content.meeting import get_all_used_held_positions
 from Products.PloneMeeting.content.meeting import Meeting
@@ -492,7 +492,8 @@ class MeetingView(FacetedContainerView):
                 if u'1' not in signature_numbers or u'2' not in signature_numbers:
                     warn = True
             else:
-                if len(self.context.get_signatures().split('\n')) < 4 or \
+                if (len(self.context.get_signatures().split('\n')) <
+                    MEETING_ASSEMBLY_NUMBER_OF_LINES) or \
                    not self.context.get_assembly(for_display=False, striked=False):
                     warn = True
         return warn
