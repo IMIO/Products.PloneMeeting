@@ -2317,6 +2317,9 @@ class testViews(PloneMeetingTestCase):
         with self.assertRaises(Exception) as cm:
             helper.print_scan_id_barcode()
         self.assertEqual(cm.exception.message, SEVERAL_SAME_BARCODE_ERROR)
+        # new helper instanciation has empty printed_scan_id_barcode
+        helper = view.get_generation_context_helper()
+        self.assertEqual(helper.printed_scan_id_barcode, [])
 
 
 def test_suite():
