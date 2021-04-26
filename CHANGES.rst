@@ -191,6 +191,11 @@ Changelog
   of checkbox widgets having too much values.  Also make the faceted meeting
   dates display dates with short format (number of month instead name of month).
   [gbastien]
+- Added `BaseDGHV.print_scan_id_barcode` to print a barcode in a POD template,
+  moreover it will take care that a barcode is not generated more than one time
+  for a given context, this avoid cases where barcode is generated several
+  times by mistake, that makes the reimport process fail.
+  [gbastien]
 - Display a warning on the meeting view next to `Assembly and signatures` when
   a signatory is missing, this often leads to broken POD templates.
   [gbastien]

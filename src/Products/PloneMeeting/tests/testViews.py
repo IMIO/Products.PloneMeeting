@@ -27,6 +27,7 @@ from Products.CMFCore.ActionInformation import Action
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.Five import zcml
+from Products.PloneMeeting.browser.views import SEVERAL_SAME_BARCODE_ERROR
 from Products.PloneMeeting.config import ADVICE_STATES_ALIVE
 from Products.PloneMeeting.config import ITEM_DEFAULT_TEMPLATE_ID
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
@@ -2299,6 +2300,27 @@ class testViews(PloneMeetingTestCase):
         # unlock then editable
         lockable.unlock()
         self.assertTrue(widget.may_edit())
+
+    def test_pm_Print_scan_id_barcode(self):
+        """Test the print_scan_id_barcode that takes care of raising
+           an Exception in case QR code for same context is generated several times."""
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        view = item.restrictedTraverse('document-generation')
+        helper = view.get_generation_context_helper()
+        # may only be called one time
+        self.assertEqual(helper.printed_scan_id_barcode, [])
+        # kwargs are passed from print_scan_id_barcode to sub methods
+        barcode = helper.print_scan_id_barcode(barcode_options={'filetype': 'GIF'})
+        data = barcode.read()
+        self.assertTrue(data.startswith("GIF"), data)
+        self.assertEqual(helper.printed_scan_id_barcode, [item.UID()])
+        with self.assertRaises(Exception) as cm:
+            helper.print_scan_id_barcode(barcode_options={'filetype': 'GIF'})
+        self.assertEqual(cm.exception.message, SEVERAL_SAME_BARCODE_ERROR)
+        # new helper instanciation has empty printed_scan_id_barcode
+        helper = view.get_generation_context_helper()
+        self.assertEqual(helper.printed_scan_id_barcode, [])
 
 
 def test_suite():

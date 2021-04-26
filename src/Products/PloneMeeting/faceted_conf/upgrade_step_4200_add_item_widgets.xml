@@ -50,7 +50,7 @@
   </criterion>
 
   <criterion purge="True" name="c6" i18n:attributes="title">
-   <property name="widget">multiselect</property>
+   <property name="widget">checkbox</property>
    <property name="title">Review state</property>
    <property name="position">top</property>
    <property name="section">advanced</property>
@@ -61,14 +61,11 @@
    <property name="index">review_state</property>
    <property name="operator">or</property>
    <property name="operator_visible">False</property>
-   <property name="multiple">True</property>
    <property
       name="vocabulary">Products.PloneMeeting.vocabularies.itemreviewstatesvocabulary</property>
    <property name="catalog"></property>
    <property name="maxitems">0</property>
    <property name="sortreversed">False</property>
-   <property name="closeonselect">False</property>
-   <property name="placeholder">Search</property>
   </criterion>
 
   <criterion purge="True" name="c7" i18n:attributes="title">
@@ -249,7 +246,7 @@
   </criterion>
 
   <criterion purge="True" name="c16" i18n:attributes="title">
-   <property name="widget">multiselect</property>
+   <property name="widget">checkbox</property>
    <property name="title">To send to</property>
    <property name="position">top</property>
    <property name="section">advanced</property>
@@ -260,14 +257,11 @@
    <property name="index">sentToInfos</property>
    <property name="operator">or</property>
    <property name="operator_visible">False</property>
-   <property name="multiple">True</property>
    <property
       name="vocabulary">Products.PloneMeeting.vocabularies.senttoinfosvocabulary</property>
    <property name="catalog"></property>
    <property name="maxitems">0</property>
    <property name="sortreversed">False</property>
-   <property name="closeonselect">True</property>
-   <property name="placeholder">Search</property>
   </criterion>
 
   <criterion purge="True" name="c17" i18n:attributes="title">
@@ -328,7 +322,7 @@
   </criterion>
 
   <criterion purge="True" name="c20" i18n:attributes="title">
-   <property name="widget">multiselect</property>
+   <property name="widget">checkbox</property>
    <property name="title">Annexes</property>
    <property name="position">top</property>
    <property name="section">advanced</property>
@@ -339,14 +333,11 @@
    <property name="index">annexes_index</property>
    <property name="operator">and</property>
    <property name="operator_visible">False</property>
-   <property name="multiple">True</property>
    <property
       name="vocabulary">Products.PloneMeeting.vocabularies.faceted_annexes_vocabulary</property>
    <property name="catalog"></property>
    <property name="maxitems">0</property>
    <property name="sortreversed">False</property>
-   <property name="closeonselect">True</property>
-   <property name="placeholder">Search</property>
   </criterion>
 
   <criterion purge="True" name="c21" i18n:attributes="title">
