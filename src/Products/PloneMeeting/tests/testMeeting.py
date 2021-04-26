@@ -3784,6 +3784,44 @@ class testMeetingType(PloneMeetingTestCase):
         res = view()
         self.assertFalse("ploneMeetingSelectItem selected" in res)
 
+    def test_pm_Warn_assembly(self):
+        """Test the MeetingView.warn_assembly method."""
+        # now with contacts
+        self._setUpOrderedContacts()
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting')
+        view = meeting.restrictedTraverse('meeting_view')
+        view._init()
+
+        # attendees
+        # for now, no warning, signatories correctly defined
+        signatories = meeting.get_signatories(by_signature_number=True)
+        self.assertEqual(sorted(signatories.keys()), ['1', '2'])
+        self.assertFalse(view.warn_assembly(using_attendees=True))
+        self.assertTrue(view.warn_assembly(using_attendees=False))
+        # define signatory '2' as signatory '3'
+        meeting.ordered_contacts[signatories['2']]['signature_number'] = '3'
+        self.assertTrue(view.warn_assembly(using_attendees=True))
+        # remove first signatory
+        signatories = meeting.get_signatories(by_signature_number=True)
+        meeting.ordered_contacts[signatories['1']]['signature_number'] = None
+        meeting.ordered_contacts[signatories['1']]['signer'] = False
+        self.assertTrue(view.warn_assembly(using_attendees=True))
+        # remove last signatory
+        meeting.ordered_contacts[signatories['3']]['signature_number'] = None
+        meeting.ordered_contacts[signatories['3']]['signer'] = False
+        self.assertTrue(view.warn_assembly(using_attendees=True))
+        self.assertFalse(meeting.get_signatories())
+
+        # assembly/signatures
+        # fill assembly and signatures
+        meeting.assembly = RichTextValue("Person 1, Person 2")
+        meeting.signatures = RichTextValue("Person 1,\nFunction 1\nPerson 1,\nFunction 1")
+        self.assertFalse(view.warn_assembly(using_attendees=False))
+        # remove one line of signature
+        meeting.signatures = RichTextValue("Person 1,\nFunction 1\nPerson 1")
+        self.assertTrue(view.warn_assembly(using_attendees=False))
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

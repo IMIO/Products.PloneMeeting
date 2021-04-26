@@ -17,6 +17,7 @@ from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFPlone.utils import safe_unicode
 from Products.Five import BrowserView
 from Products.PloneMeeting.config import PMMessageFactory as _
+from Products.PloneMeeting.config import ASSEMBLY_NUMBER_OF_LINES
 from Products.PloneMeeting.config import ITEM_INSERT_METHODS
 from Products.PloneMeeting.content.meeting import get_all_used_held_positions
 from Products.PloneMeeting.content.meeting import Meeting
@@ -477,6 +478,24 @@ class MeetingView(FacetedContainerView):
             self.member.has_permission(ModifyPortalContent, self.context) or
             self._display_available_items_to()) and \
             self.context.wfConditions().may_accept_items()
+
+    def warn_assembly(self, using_attendees=False):
+        """Check if need to draw attention to the assembly fields to MeetingManagers.
+           Warn if :
+           - when using signatories, 2 first signatories must be defined;
+           - when using assembly/signatures, assembly must be encoded and
+             signatures must contain at least 4 lines of data."""
+        warn = False
+        if self.is_manager:
+            if using_attendees:
+                signature_numbers = self.context.get_signatories().values()
+                if u'1' not in signature_numbers or u'2' not in signature_numbers:
+                    warn = True
+            else:
+                if len(self.context.get_signatures().split('\n')) < 4 or \
+                   not self.context.get_assembly(for_display=False, striked=False):
+                    warn = True
+        return warn
 
 
 class MeetingInsertingMethodsHelpMsgView(BrowserView):

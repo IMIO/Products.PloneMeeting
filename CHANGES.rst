@@ -191,6 +191,9 @@ Changelog
   of checkbox widgets having too much values.  Also make the faceted meeting
   dates display dates with short format (number of month instead name of month).
   [gbastien]
+- Display a warning on the meeting view next to `Assembly and signatures` when
+  a signatory is missing, this often leads to broken POD templates.
+  [gbastien]
 
 4.2b11 (2021-01-19)
 -------------------
