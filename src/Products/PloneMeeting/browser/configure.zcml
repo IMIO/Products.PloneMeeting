@@ -269,6 +269,11 @@
         name="labels-batch-action"
         class=".overrides.PMLabelsBatchActionForm"
         permission="zope2.View" />
+    <browser:page
+        for="Products.PloneMeeting.interfaces.IMeetingItemDashboardBatchActionsMarker"
+        name="update-local-roles-batch-action"
+        class=".views.UpdateLocalRolesBatchActionForm"
+        permission="cmf.ManagePortal" />
     <!-- Batch actions Meeting -->
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingBatchActionsMarker"
@@ -280,12 +285,12 @@
         name="labels-batch-action"
         class=".overrides.PMLabelsBatchActionForm"
         permission="zope2.View" />
-    <!-- Batch actions everywhere -->
+    <!-- Batch actions MeetingItem -->
     <browser:page
-        for="collective.eeafaceted.batchactions.interfaces.IBatchActionsMarker"
-        name="update-local-roles-batch-action"
-        class=".views.UpdateLocalRolesBatchActionForm"
-        permission="cmf.ManagePortal" />
+        for="Products.PloneMeeting.interfaces.IMeetingItemBatchActionsMarker"
+        name="download-annexes-batch-action"
+        class=".views.DownloadAnnexesBatchActionForm"
+        permission="zope2.View" />
 
     <configure package="collective.contact.plonegroup.browser">
         <browser:page
@@ -1055,6 +1060,14 @@
           class="Products.PloneMeeting.browser.overrides.PMToPrintChangeView"
           permission="zope2.View" />
     </configure>
+
+    <!-- batchactions viewlet for categorized elements (annexes) -->
+    <browser:viewlet
+        name="collective.iconifiedcategory.belowcategorizedelements"
+        for="Products.PloneMeeting.interfaces.IMeetingItemBatchActionsMarker"
+        manager="collective.iconifiedcategory.interfaces.IBelowCategorizedElementsManager"
+        class=".viewlets.AnnexesBatchActionsViewlet"
+        permission="zope2.View" />
 
     <browser:page
         name="refbrowser_popup"

@@ -1443,11 +1443,13 @@ class PMTransitionBatchActionForm(TransitionBatchActionForm):
            and to non MeetingManagers on the meeting_view."""
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
-        return (self.context.__class__.__name__ == 'Meeting' and
-                _checkPermission(ModifyPortalContent, self.context)) or \
-               (not self.context.__class__.__name__ == 'Meeting' and
-                (tool.isManager(cfg) or
-                 bool(tool.userIsAmong(suffixes=get_all_suffixes(None), cfg=cfg))))
+        class_name = self.context.__class__.__name__
+        return class_name != 'MeetingItem' and \
+            ((class_name == 'Meeting' and
+                _checkPermission(ModifyPortalContent, self.context)) or
+             (not class_name == 'Meeting' and
+             (tool.isManager(cfg) or
+              bool(tool.userIsAmong(suffixes=get_all_suffixes(None), cfg=cfg)))))
 
 
 class PMContentHistoryView(IHContentHistoryView):

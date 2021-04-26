@@ -49,6 +49,13 @@ class PMMeetingBatchActionsViewlet(BatchActionsViewlet):
         return True
 
 
+class AnnexesBatchActionsViewlet(BatchActionsViewlet):
+    """ """
+    def available(self):
+        """ """
+        return True
+
+
 class HeldPositionBackRefs(ViewletBase):
     """Display elements using held_position."""
 

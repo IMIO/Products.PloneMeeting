@@ -355,6 +355,7 @@
   <class class="Products.PloneMeeting.MeetingItem.MeetingItem">
     <implements interface="collective.plonefinder.browser.interfaces.IFinderUploadCapable" />
     <implements interface="collective.quickupload.interfaces.IQuickUploadCapable" />
+    <implements interface="Products.PloneMeeting.interfaces.IMeetingItemBatchActionsMarker" />
   </class>
   <!-- makes the meetingadvice implements IFinderUploadCapable and IQuickUploadCapable
       so user may upload Images into it thru plonefinder -->
