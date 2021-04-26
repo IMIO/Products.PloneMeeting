@@ -253,10 +253,11 @@ strong.auto_info {
     vertical-align: baseline;
 }
 
-div#plone-document-byline {
-    float: left;
+#content div#plone-document-byline {
+  float: left;
+  display: contents;
 }
-div.pm_workflowstate {
+div.viewlet_workflowstate {
     float: right;
 }
 
@@ -588,6 +589,10 @@ p.highlightValue,
 span.highlightValue,
 dt.highlightValue span {
     color: red !important;
+}
+p.warningValue,
+span.warningValue {
+    color: darkOrange !important;
 }
 
 /* CKeditor styles */
@@ -1413,8 +1418,8 @@ div.advice_popup_actions {
 /* hide some elements on the versions_history_form */
 body.template-versions_history_form[class*="portaltype-meetingadvice"] table[summary="Content history"],
 body.template-versions_history_form[class*="portaltype-meetingadvice"] form[action$="saveasnewversion"],
-body.template-versions_history_form[class*="portaltype-meetingadvice"] #content div.documentByLine,
-body.template-versions_history_form[class*="portaltype-meetingadvice"] #content div.pm_workflowstate,
+body.template-versions_history_form[class*="portaltype-meetingadvice"] #content div#plone-document-byline,
+body.template-versions_history_form[class*="portaltype-meetingadvice"] #content div.viewlet_workflowstate,
 body.template-versions_history_form[class*="portaltype-meetingadvice"] #content fieldset#folder-listing {
     display: none;
 }
@@ -1887,6 +1892,10 @@ table.listing tbody tr.even.dragging td {
 }
 #content span.show-help:before {
    content: "\f059";
+}
+#content span.show-warning:before {
+   content: "\f071";
+   color: darkOrange;
 }
 
 /* icon colors */

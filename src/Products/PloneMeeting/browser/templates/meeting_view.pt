@@ -68,6 +68,7 @@
   <tal:comment replace="nothing">Assembly and signatures</tal:comment>
   <div id="assembly-and-signatures"
        tal:define="show_attendees_fields python: view.meeting_view.show_attendees_fields();
+                   warn_assembly python: view.warn_assembly(show_attendees_fields);
                    toggle_type python:show_attendees_fields and 'fade' or 'slide';"
       tal:attributes="onclick string:togglePersonsCookie();;toggleDetails('collapsible-assembly-and-signatures',
                               toggle_parent_active=true,
@@ -76,19 +77,22 @@
                               base_url=null,
                               toggle_type='${toggle_type}');"
       class="collapsible discreet not-auto-collapsible-activable">
-   <span class="meeting_attribute_label"
+   <span tal:attributes="class python: warn_assembly and 'meeting_attribute_label warningValue' or 'meeting_attribute_label'"
          tal:content="python:view.meeting_view.fieldsets['assembly'].label"
          tal:condition="python: not show_attendees_fields">
      Meeting assembly and signatures
    </span>
-   <span class="meeting_attribute_label"
+   <span tal:attributes="class python: warn_assembly and 'meeting_attribute_label warningValue' or 'meeting_attribute_label'"
          tal:condition="python: show_attendees_fields">
      <span i18n:translate="meeting_attendees_and_signatories">
       Meeting assembly (<span i18n:name="number_of_attendees"
         tal:content="python:str(len(context.get_attendees())) + '/' + str(len(context.ordered_contacts))"></span>) and signatures (<span i18n:name="number_of_signatories" tal:content="python:len(context.get_signatories())"></span>)
      </span>
    </span>
-
+   <span class="fa link-help show-warning"
+         title="warning_assembly_and_signatures"
+         i18n:attributes="title"
+         tal:condition="warn_assembly" />
   </div>
   <div id="collapsible-assembly-and-signatures"
        class="collapsible-content">

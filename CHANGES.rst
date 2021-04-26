@@ -196,6 +196,9 @@ Changelog
   for a given context, this avoid cases where barcode is generated several
   times by mistake, that makes the reimport process fail.
   [gbastien]
+- Display a warning on the meeting view next to `Assembly and signatures` when
+  a signatory is missing, this often leads to broken POD templates.
+  [gbastien]
 
 4.2b11 (2021-01-19)
 -------------------
