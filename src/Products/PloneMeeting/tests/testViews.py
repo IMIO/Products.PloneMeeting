@@ -2310,12 +2310,13 @@ class testViews(PloneMeetingTestCase):
         helper = view.get_generation_context_helper()
         # may only be called one time
         self.assertEqual(helper.printed_scan_id_barcode, [])
-        barcode = helper.print_scan_id_barcode()
+        # kwargs are passed from print_scan_id_barcode to sub methods
+        barcode = helper.print_scan_id_barcode(barcode_options={'filetype': 'GIF'})
         data = barcode.read()
-        self.assertTrue("PNG" in data, data)
+        self.assertTrue(data.startswith("GIF"), data)
         self.assertEqual(helper.printed_scan_id_barcode, [item.UID()])
         with self.assertRaises(Exception) as cm:
-            helper.print_scan_id_barcode()
+            helper.print_scan_id_barcode(barcode_options={'filetype': 'GIF'})
         self.assertEqual(cm.exception.message, SEVERAL_SAME_BARCODE_ERROR)
         # new helper instanciation has empty printed_scan_id_barcode
         helper = view.get_generation_context_helper()
