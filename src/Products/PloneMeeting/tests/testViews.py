@@ -2311,7 +2311,8 @@ class testViews(PloneMeetingTestCase):
         # may only be called one time
         self.assertEqual(helper.printed_scan_id_barcode, [])
         barcode = helper.print_scan_id_barcode()
-        self.assertTrue("PNG" in barcode.read())
+        data = barcode.read()
+        self.assertTrue("PNG" in data, data)
         self.assertEqual(helper.printed_scan_id_barcode, [item.UID()])
         with self.assertRaises(Exception) as cm:
             helper.print_scan_id_barcode()

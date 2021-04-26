@@ -703,7 +703,6 @@ class BaseDGHV(object):
     def print_scan_id_barcode(self, **kwargs):
         """Helper that will call scan_id_barcode from imio.zamqp.core
            and that will make sure that it is not called several times."""
-        # this method may be only called one time by context
         context_uid = self.context.UID()
         if context_uid in self.printed_scan_id_barcode:
             raise Exception(SEVERAL_SAME_BARCODE_ERROR)
