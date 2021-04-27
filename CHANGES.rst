@@ -199,6 +199,10 @@ Changelog
 - Display a warning on the meeting view next to `Assembly and signatures` when
   a signatory is missing, this often leads to broken POD templates.
   [gbastien]
+- Do not break in `MeetingItem.getGroupsInCharge` when `includeAuto=True`,
+  `MeetingConfig.includeGroupsInChargeDefinedOnProposingGroup=True` and no
+  `proposingGroup` is defined on the item, this may be the case on an item template.
+  [gbastien]
 
 4.2b11 (2021-01-19)
 -------------------
