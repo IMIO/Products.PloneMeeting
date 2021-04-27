@@ -2967,11 +2967,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if (not res and fromOrgIfEmpty) or \
            (includeAuto and cfg.getIncludeGroupsInChargeDefinedOnProposingGroup()):
             proposingGroup = self.getProposingGroup(theObject=True)
-            org_groups_in_charge = [
-                gic_uid for gic_uid in proposingGroup.get_groups_in_charge()
-                if gic_uid not in res]
-            if org_groups_in_charge:
-                res += list(org_groups_in_charge)
+            # maybe an item template defined in the MeetingConfig?
+            if proposingGroup:
+                org_groups_in_charge = [
+                    gic_uid for gic_uid in proposingGroup.get_groups_in_charge()
+                    if gic_uid not in res]
+                if org_groups_in_charge:
+                    res += list(org_groups_in_charge)
 
         if (not res and fromCatIfEmpty) or \
            (includeAuto and cfg.getIncludeGroupsInChargeDefinedOnCategory()):

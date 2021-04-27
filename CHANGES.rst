@@ -5,8 +5,12 @@ Changelog
 4.1.28.25 (unreleased)
 ----------------------
 
-- Nothing changed yet.
+- Backport from 4.2.x:
 
+  - Do not break in `MeetingItem.getGroupsInCharge` when `includeAuto=True`,
+    `MeetingConfig.includeGroupsInChargeDefinedOnProposingGroup=True` and no
+    `proposingGroup` is defined on the item, this may be the case on an item template.
+    [gbastien]
 
 4.1.28.24 (2021-04-23)
 ----------------------
