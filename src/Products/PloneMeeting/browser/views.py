@@ -545,7 +545,7 @@ class BaseDGHV(object):
 
         return xhtmlFinal
 
-    def printHistory(self):
+    def print_history(self):
         """Return the history view for templates. """
         historyView = self.context.restrictedTraverse('@@historyview')()
         historyViewRendered = lxml.html.fromstring(historyView)
@@ -596,13 +596,13 @@ class BaseDGHV(object):
                     hp.get_prefix_for_gender_and_number(include_value=True, use_to=True)
         return infos
 
-    def printAdvicesInfos(self,
-                          item,
-                          withAdvicesTitle=True,
-                          withDelay=False,
-                          withDelayLabel=True,
-                          withAuthor=True,
-                          ordered=True):
+    def print_advices_infos(self,
+                            item,
+                            withAdvicesTitle=True,
+                            withDelay=False,
+                            withDelayLabel=True,
+                            withAuthor=True,
+                            ordered=True):
         '''Helper method to have a printable version of advices.'''
         res = ""
         if withAdvicesTitle:
@@ -710,12 +710,12 @@ class BaseDGHV(object):
         barcode = scan_id_barcode(self.context, **kwargs)
         return barcode
 
-    def printFullname(self, user_id):
+    def print_fullname(self, user_id):
         """ """
         user = api.user.get(user_id)
         return user and user.getProperty('fullname') or user_id
 
-    def printAssembly(self, striked=True, use_print_attendees_by_type=True, **kwargs):
+    def print_assembly(self, striked=True, use_print_attendees_by_type=True, **kwargs):
         '''Returns the assembly for this meeting or item.
            If p_striked is True, return striked assembly.
            If use_print_attendees_by_type is True, we use print_attendees_by_type method instead of
@@ -1474,7 +1474,7 @@ class BaseDGHV(object):
         return render_as_html and (rendered or u"-") or vote_infos
 
 
-class FolderDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV):
+class FolderDocumentGenerationHelperView(DXDocumentGenerationHelperView, BaseDGHV):
     """ """
 
     def selected_indexAdvisers_data(self, brains):
@@ -1747,13 +1747,6 @@ class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV)
         if returnDateTime:
             return meeting.date
         return meeting.Title()
-
-    def printMeetingDate(self, returnDateTime=False, noMeetingMarker='-', unrestricted=True):
-        """
-        Allow backward compatibility with old PODTemplates.
-        See print_meeting_date for docstring.
-        """
-        return self.print_meeting_date(returnDateTime, noMeetingMarker, unrestricted)
 
     def print_preferred_meeting_date(self, returnDateTime=False, noMeetingMarker='-', unrestricted=True):
         """

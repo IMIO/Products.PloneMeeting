@@ -1119,8 +1119,8 @@ class testViews(PloneMeetingTestCase):
                          '<p>Text2</p>'
                          '<p><img src="http://plone/nohost/img3.png" /></p>')
 
-    def test_pm_PrintAdvicesInfos(self):
-        """Test the printAdvicesInfos method."""
+    def test_pm_print_advices_infos(self):
+        """Test the print_advices_infos method."""
         cfg = self.meetingConfig
         cfg.setSelectableAdvisers((self.developers_uid, self.vendors_uid))
         cfg.setItemAdviceStates((self._stateMappingFor('itemcreated'),))
@@ -1136,7 +1136,7 @@ class testViews(PloneMeetingTestCase):
 
         # advices not given
         self.assertEqual(
-            helper.printAdvicesInfos(item),
+            helper.print_advices_infos(item),
             "<p class='pmAdvices'><u><b>Advices :</b></u></p>"
             "<p class='pmAdvices'><u>Developers:</u><br /><u>Advice type :</u> "
             "<i>Not given yet</i></p><p class='pmAdvices'><u>Vendors:</u><br />"
@@ -1149,7 +1149,7 @@ class testViews(PloneMeetingTestCase):
                                     'advice_comment': RichTextValue(u'My comment')})
         # mixes advice given and not given
         self.assertEqual(
-            helper.printAdvicesInfos(item),
+            helper.print_advices_infos(item),
             "<p class='pmAdvices'><u><b>Advices :</b></u></p>"
             "<p class='pmAdvices'><u>Vendors:</u><br /><u>Advice type :</u> "
             "<i>Not given yet</i></p><p class='pmAdvices'><u>Developers:</u><br />"
@@ -1164,7 +1164,7 @@ class testViews(PloneMeetingTestCase):
                                     'advice_type': u'negative'})
         self.changeUser('pmCreator1')
         self.assertEqual(
-            helper.printAdvicesInfos(item),
+            helper.print_advices_infos(item),
             "<p class='pmAdvices'><u><b>Advices :</b></u></p><p class='pmAdvices'>"
             "<u>Vendors:</u><br /><u>Advice type :</u> <i>Negative</i><br />"
             "<u>Advice given by :</u> <i>M. PMReviewer Two</i><br />"
@@ -1172,7 +1172,7 @@ class testViews(PloneMeetingTestCase):
             "<u>Advice type :</u> <i>Positive</i><br /><u>Advice given by :</u> "
             "<i>M. PMAdviser One</i><br /><u>Advice comment :</u> My comment<p></p></p>")
 
-    def test_pm_PrintMeetingDate(self):
+    def test_pm_print_meeting_date(self):
         # Setup
         cfg = self.meetingConfig
         cfg.setPowerObservers([
