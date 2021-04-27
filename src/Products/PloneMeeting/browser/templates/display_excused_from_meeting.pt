@@ -1,5 +1,5 @@
 <tal:comment replace="nothing">Display meeting excused real value</tal:comment>
 <fieldset>
     <legend i18n:translate="assembly_excused_defined_on_meeting" i18n:domain="PloneMeeting">Excused stored on the linked meeting</legend>
-    <tal:block replace="structure view/getAssemblyExcused">Meeting excused</tal:block>
+    <tal:block replace="structure view/get_assembly_excused">Meeting excused</tal:block>
 </fieldset>

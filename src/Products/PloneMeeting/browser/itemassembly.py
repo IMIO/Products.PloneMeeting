@@ -165,7 +165,7 @@ class DisplayAssemblyFromMeetingProvider(ContentProviderBase):
                                                                  view)
         self.__parent__ = view
 
-    def getMeetingAssembly(self):
+    def get_meeting_assembly(self):
         """
           Return Meeting.assembly
         """
@@ -209,7 +209,7 @@ class DisplayExcusedFromMeetingProvider(ContentProviderBase):
                                                                 view)
         self.__parent__ = view
 
-    def getAssemblyExcused(self):
+    def get_assembly_excused(self):
         """
           Return Meeting.assembly_excused
         """
@@ -241,7 +241,7 @@ class DisplayAbsentsFromMeetingProvider(ContentProviderBase):
             context, request, view)
         self.__parent__ = view
 
-    def getAssemblyAbsents(self):
+    def get_assembly_absents(self):
         """
           Return Meeting.assembly_absents
         """

@@ -3833,7 +3833,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def getItemSignatures(self,
                           real=False,
                           for_display=False,
-                          striked=True,
+                          striked=False,
                           mark_empty_tags=False,
                           **kwargs):
         '''Gets the signatures for this item. If no signature is defined,
@@ -5113,9 +5113,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                         translate('This copy group was set automatically by the application',
                                   domain='PloneMeeting',
                                   context=self.REQUEST))),
-                u"<acronym><a onclick='event.preventDefault()' class='tooltipster-group-users deactivated' "
+                u"<acronym><a onclick='event.preventDefault()' "
+                u"class='tooltipster-group-users deactivated' "
                 u"style='display: inline-block; padding: 0'"
-                u"href='#' data-group_ids:json='\"{0}\"' data-base_url='{1}'><img src='{1}/group_users.png' /></a></acronym>"
+                u"href='#' data-group_ids:json='\"{0}\"' data-base_url='{1}'>"
+                u"<img src='{1}/group_users.png' /></a></acronym>"
                 .format(real_group_id, portal_url)))
         return u', '.join(res)
 

@@ -1,5 +1,5 @@
 <tal:comment replace="nothing">Display meeting absents real value</tal:comment>
 <fieldset>
     <legend i18n:translate="assembly_absents_defined_on_meeting" i18n:domain="PloneMeeting">Absents stored on the linked meeting</legend>
-    <tal:block replace="structure view/getAssemblyAbsents">Meeting absents</tal:block>
+    <tal:block replace="structure view/get_assembly_absents">Meeting absents</tal:block>
 </fieldset>
