@@ -1,13 +1,11 @@
 # -*- coding: utf-8 -*-
 
 from collective.contact.plonegroup.utils import get_organizations
-from collective.documentgenerator.search_replace.pod_template import SearchAndReplacePODTemplates
 from collective.eeafaceted.batchactions.interfaces import IBatchActionsMarker
 from copy import deepcopy
 from imio.helpers.catalog import addOrUpdateColumns
 from imio.helpers.catalog import addOrUpdateIndexes
 from imio.helpers.content import get_vocab
-from imio.helpers.content import object_values
 from imio.helpers.content import richtextval
 from imio.helpers.content import safe_delattr
 from imio.pyutils.utils import replace_in_list
@@ -527,7 +525,6 @@ class Migrate_To_4200(Migrator):
 
     def _fixPODTemplatesInstructions(self):
         '''Make some replace in POD templates to fit changes in code...'''
-        logger.info('Fixing POD templates instructions....')
         # for every POD templates
         replacements = {'listTypes': 'list_types',
                         '.getDate()': '.date',
@@ -550,46 +547,44 @@ class Migrate_To_4200(Migrator):
                         '.getItemSignatories(': '.get_item_signatories(',
                         '.queryState(': '.query_state(',
                         'zamqp_utils.scan_id_barcode(self,': 'view.print_scan_id_barcode(',
-                        '.printFinanceAdvice(': '.print_finance_advice(',
+                        '.printAdvicesInfos(': '.print_advices_infos(',
                         '.printAllAnnexes(': '.print_all_annexes(',
-                        '.printFormatedAdvice(': '.print_formated_advice(',
                         '.printAssembly(': '.print_assembly(',
+                        '.printFinanceAdvice(': '.print_finance_advice(',
+                        '.printFormatedAdvice(': '.print_formated_advice(',
                         '.printFullname(': '.print_fullname(',
                         '.printHistory(': '.print_history(',
                         '.printMeetingDate(': '.print_meeting_date(',
-                        '.printAdvicesInfos(': '.print_advices_infos(',
+                        'imageOrientation': 'image_orientation',
+                        'self.getStrikedAssembly(groupByDuty=True': 'view.print_assembly(',
+                        'self.getStrikedItemAssembly(groupByDuty=True': 'view.print_assembly(',
+                        'self.getStrikedAssembly(': 'view.print_assembly(',
+                        'self.getStrikedItemAssembly(': 'view.print_assembly(',
+                        '.isDecided(': '.is_decided(',
                         }
         # specific for Meeting POD Templates
-        meeting_replacements = {'self.getObservations()', "view.get_value('observations')",
+        meeting_replacements = {'self.getAuthorityNotice()': "view.get_value('authority_notice')",
+                                'self.getCommitteeObservations()': "view.get_value('committees_observations')",
+                                'self.getFirstItemNumber()': "self.first_item_number",
+                                'self.getInAndOutMoves()': "view.get_value('in_and_out_moves')",
+                                'self.getMeetingNumber()': "self.meeting_number",
+                                'self.getNotes()': "view.get_value('notes')",
+                                'self.getObservations()': "view.get_value('observations')",
+                                'self.getPreObservations()': "view.get_value('pre_observations')",
+                                'self.getPublicMeetingObservations()': "view.get_value('public_meeting_observations')",
+                                'self.getSecretMeetingObservations()': "view.get_value('secret_meeting_observations')",
+                                'self.getSignatures()': "self.get_signatures()",
                                 }
         # specific for MeetingItem POD Templates
         item_replacements = {}
-        results = []
-        for cfg in self.tool.objectValues('MeetingConfig'):
-            pod_templates = object_values(
-                cfg.podtemplates,
-                ['ConfigurablePODTemplate', 'DashboardPODTemplate'])
-            meeting_type_name = cfg.getMeetingTypeName()
-            item_type_name = cfg.getItemTypeName()
-            for pod_template in pod_templates:
-                with SearchAndReplacePODTemplates(pod_templates) as search_replace:
-                    for k, v in replacements.items():
-                        res = search_replace.replace(k, v, is_regex=False)
-                        results.append(res)
-                    if meeting_type_name in pod_template.pod_portal_types:
-                        for k, v in meeting_replacements.items():
-                            res = search_replace.replace(k, v, is_regex=False)
-                            results.append(res)
-                    if item_type_name in pod_template.pod_portal_types:
-                        for k, v in item_replacements.items():
-                            res = search_replace.replace(k, v, is_regex=False)
-                            results.append(res)
-        logger.info('Done.')
+
+        self.updatePODTemplatesCode(replacements, meeting_replacements, item_replacements)
 
     def run(self, extra_omitted=[]):
         logger.info('Migrating to PloneMeeting 4200...')
 
         self._fixPODTemplatesInstructions()
+        return
         self._fixFacetedFilters()
 
         # apply correct batch actions marker on searches_* folders

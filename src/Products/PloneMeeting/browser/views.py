@@ -456,7 +456,7 @@ class BaseDGHV(object):
     def __init__(self, context, request):
         self.printed_scan_id_barcode = []
 
-    def imageOrientation(self, image):
+    def image_orientation(self, image):
         """Compute image orientation, if orientation is landscape, we rotate
            the image from 90° so it is displayed on the full page.
            This is used by the appy.pod 'import from document' method
