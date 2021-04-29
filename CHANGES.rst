@@ -203,6 +203,12 @@ Changelog
   `MeetingConfig.includeGroupsInChargeDefinedOnProposingGroup=True` and no
   `proposingGroup` is defined on the item, this may be the case on an item template.
   [gbastien]
+- Use search&replace from collective.documentgenerator in migration to 4200:
+
+  - Added migration helper `Migrator.updatePODTemplatesCode`;
+  - Added helper `MeetingItem.get_representatives_in_charge` that returns
+    representatives in charge of an item;
+  - Fixed `actions_panel` on element of the configuration.
 
 4.2b11 (2021-01-19)
 -------------------

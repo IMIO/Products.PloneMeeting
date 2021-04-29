@@ -364,6 +364,9 @@
   </class>
   <!-- makes the annex ContentCategory and ContentSubcategory added in the configuration
        act like elements of the configuration... -->
+  <class class="collective.iconifiedcategory.content.categoryconfiguration.CategoryConfiguration">
+    <implements interface="Products.PloneMeeting.interfaces.IConfigElement" />
+  </class>
   <class class="collective.iconifiedcategory.content.categorygroup.CategoryGroup">
     <implements interface="Products.PloneMeeting.interfaces.IConfigElement" />
   </class>

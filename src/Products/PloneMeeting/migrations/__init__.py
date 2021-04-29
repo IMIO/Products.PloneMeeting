@@ -182,7 +182,11 @@ class Migrator(BaseMigrator):
         """Apply given p_replacements to every POD templates.
            p_meeting_replacements are for POD templates used on Meetings and
            p_item_replacements are for POD templates used on MeetingItems.
-           This let know what "self" is, a meeting or an item."""
+           This let know what "self" is, a meeting or an item.
+           WARNING, be defensive with replacements :
+           - try to start with "self", "." or "=" and end with "(" or "()",
+             never use single word, a single word may also be a
+             POD template context variable ("listTypes", "review_state", ...)."""
         logger.info('Fixing POD templates instructions....')
         results = []
         for cfg in self.tool.objectValues('MeetingConfig'):
@@ -227,13 +231,13 @@ class Migrator(BaseMigrator):
                 data[pt_path_and_title].append("--- " + info.pod_expr)
                 data[pt_path_and_title].append("+++ " + info.new_pod_expr)
         logger.info("REPLACEMENTS IN POD TEMPLATES")
-        logger.info("=============================")
         if not data:
+            logger.info("=============================")
             logger.info("No replacement was done.")
         else:
             # order data by pt_path
             ordered_data = OrderedDict(sorted(data.items()))
-            output = []
+            output = ["============================="]
             for pt_path_and_title, infos in ordered_data.items():
                 output.append("POD template " + pt_path_and_title)
                 output.append('-' * len("POD template " + pt_path_and_title))

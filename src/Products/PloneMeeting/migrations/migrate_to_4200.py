@@ -526,8 +526,14 @@ class Migrate_To_4200(Migrator):
     def _fixPODTemplatesInstructions(self):
         '''Make some replace in POD templates to fit changes in code...'''
         # for every POD templates
-        replacements = {'listTypes': 'list_types',
+        replacements = {'listTypes=': 'list_types=',
                         '.getDate()': '.date',
+                        '.getStartDate()': '.start_date',
+                        '.getMidDate()': '.mid_date',
+                        '.getEndDate()': '.end_date',
+                        '.getApprovalDate()': '.approval_date',
+                        '.getConvocationDate()': '.convocation_date',
+                        '.getPlace()': '.get_place()',
                         '.getAttendees(theObjects': '.get_attendees(the_objects',
                         '.getAttendees(': '.get_attendees(',
                         '.getAbsents(theObjects': '.get_absents(the_objects',
@@ -545,6 +551,11 @@ class Migrate_To_4200(Migrator):
                         '.getItems(': '.get_items(',
                         '.getItemSignatories(theObjects=': '.get_item_signatories(the_objects=',
                         '.getItemSignatories(': '.get_item_signatories(',
+                        '.getNextMeeting(cfgId=': '.get_next_meeting(cfg_id=',
+                        '.getNextMeeting(': '.get_next_meeting(',
+                        # get_next_meeting parameter
+                        'dateGap=': 'date_gap=',
+                        '.numberOfItems(': '.number_of_items(',
                         '.queryState(': '.query_state(',
                         'zamqp_utils.scan_id_barcode(self,': 'view.print_scan_id_barcode(',
                         '.printAdvicesInfos(': '.print_advices_infos(',
@@ -555,7 +566,7 @@ class Migrate_To_4200(Migrator):
                         '.printFullname(': '.print_fullname(',
                         '.printHistory(': '.print_history(',
                         '.printMeetingDate(': '.print_meeting_date(',
-                        'imageOrientation': 'image_orientation',
+                        '=imageOrientation': '=image_orientation',
                         'self.getStrikedAssembly(groupByDuty=True': 'view.print_assembly(',
                         'self.getStrikedItemAssembly(groupByDuty=True': 'view.print_assembly(',
                         'self.getStrikedAssembly(': 'view.print_assembly(',
@@ -584,7 +595,6 @@ class Migrate_To_4200(Migrator):
         logger.info('Migrating to PloneMeeting 4200...')
 
         self._fixPODTemplatesInstructions()
-        return
         self._fixFacetedFilters()
 
         # apply correct batch actions marker on searches_* folders

@@ -7103,5 +7103,21 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         else:
             return _('PloneMeeting_label_itemAssembly')
 
+    def get_representatives_in_charge(self):
+        '''Return the representative in charge of this item depending on
+           selected MeetingItem.groupsInCharge.'''
+        groups_in_charge = self.getGroupsInCharge(theObjects=True)
+        meeting = self.getMeeting()
+        attendees = self.get_attendees()
+
+        res = []
+        for gic in groups_in_charge:
+            repr_uids = [representative.UID() for representative in
+                         gic.get_representatives(at_date=meeting.date)]
+            intersection = [i for i in repr_uids if i in attendees]
+            if intersection:
+                res.append(gic)
+        return res
+
 
 registerType(MeetingItem, PROJECTNAME)

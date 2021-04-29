@@ -1474,7 +1474,7 @@ class BaseDGHV(object):
         return render_as_html and (rendered or u"-") or vote_infos
 
 
-class FolderDocumentGenerationHelperView(DXDocumentGenerationHelperView, BaseDGHV):
+class FolderDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV):
     """ """
 
     def selected_indexAdvisers_data(self, brains):
@@ -1714,7 +1714,7 @@ class FolderDocumentGenerationHelperView(DXDocumentGenerationHelperView, BaseDGH
         return res
 
 
-class MeetingDocumentGenerationHelperView(FolderDocumentGenerationHelperView):
+class MeetingDocumentGenerationHelperView(DXDocumentGenerationHelperView, FolderDocumentGenerationHelperView):
     """ """
 
 
