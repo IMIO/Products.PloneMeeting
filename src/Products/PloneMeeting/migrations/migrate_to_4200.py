@@ -497,6 +497,11 @@ class Migrate_To_4200(Migrator):
             i += 1
             pghandler.report(i)
             relation = brain.getObject()
+            if not relation:
+                self.warn(
+                    'In _migrateItemPredecessorReference, no relation found for "{0}"'.format(
+                        brain.UID))
+                continue
             item = relation.getSourceObject()
             predecessor = relation.getTargetObject()
             item._update_predecessor(predecessor)
