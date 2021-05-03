@@ -14,6 +14,8 @@ from Products.PortalTransforms.transforms import safe_html
 from Products.PortalTransforms.transforms.safe_html import CSS_COMMENT
 from Products.PortalTransforms.transforms.safe_html import decode_htmlentities
 from types import StringType
+from z3c.form.widget import SequenceWidget
+from z3c.form import interfaces
 
 
 def _patched_equal(context, row):
@@ -163,3 +165,31 @@ def validate_content_types(self, instance, value, errors):
 
 Field.validate_content_types = validate_content_types
 logger.info("Monkey patching Products.Archetypes.Field.Field (validate_content_types)")
+
+
+def extract(self, default=interfaces.NO_VALUE):
+    """See z3c.form.interfaces.IWidget."""
+
+    if (self.name not in self.request and
+            self.name + '-empty-marker' in self.request):
+        return []
+    value = self.request.get(self.name, default)
+    if value != default:
+        if not isinstance(value, (tuple, list)):
+            value = (value,)
+        # do some kind of validation, at least only use existing values
+        for token in value:
+            # XXX begin do not encode to utf-8 for MasterSelectWidget
+            if isinstance(token, unicode) and not self.__class__.__name__ == 'MasterSelectWidget':
+                token = token.encode('utf-8')
+            # XXX end
+            if token == self.noValueToken:
+                continue
+            try:
+                self.terms.getTermByToken(token)
+            except LookupError:
+                return default
+    return value
+
+SequenceWidget.extract = extract
+logger.info("Monkey patching z3c.form.widget.SequenceWidget (extract)")

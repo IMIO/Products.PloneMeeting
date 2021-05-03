@@ -203,6 +203,9 @@ Changelog
   `MeetingConfig.includeGroupsInChargeDefinedOnProposingGroup=True` and no
   `proposingGroup` is defined on the item, this may be the case on an item template.
   [gbastien]
+- Fixed `Meeting.place` MasterSelect widget when `MeetingConfig.places` contains
+  special characters.
+  [gbastien]
 
 4.2b11 (2021-01-19)
 -------------------
