@@ -4,6 +4,7 @@ from collective.eeafaceted.batchactions.interfaces import IBatchActionsMarker
 from collective.eeafaceted.collectionwidget.interfaces import ICollectiveEeafacetedCollectionwidgetLayer
 from collective.z3cform.datagridfield.interfaces import IDataGridFieldLayer
 from ftw.labels.interfaces import ILabelSupport
+from imio.actionspanel.interfaces import IActionsPanelLayer
 from plone.dexterity.interfaces import IDexterityContent
 from zope.component.interfaces import IObjectEvent
 from zope.interface import Interface
@@ -83,7 +84,7 @@ class IRedirect(Interface):
         """
 
 
-class IPloneMeetingLayer(ICollectiveEeafacetedCollectionwidgetLayer, IDataGridFieldLayer):
+class IPloneMeetingLayer(ICollectiveEeafacetedCollectionwidgetLayer, IDataGridFieldLayer, IActionsPanelLayer):
     """
       Define a layer so some elements are only added for it.
       We inherit from other packages layers we want to be able to override.

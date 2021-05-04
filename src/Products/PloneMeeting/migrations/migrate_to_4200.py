@@ -13,6 +13,7 @@ from persistent.mapping import PersistentMapping
 from plone.app.contenttypes.migration.migration import migrate as pac_migrate
 from plone.app.textfield.value import RichTextValue
 from Products.CMFPlone.utils import base_hasattr
+from Products.CMFPlone.utils import safe_unicode
 from Products.contentmigration.basemigrator.migrator import CMFFolderMigrator
 from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_NEW
 from Products.PloneMeeting.browser.itemattendee import position_type_default
@@ -82,7 +83,7 @@ class MeetingMigrator(CMFFolderMigrator):
             RichTextValue(self.old.getRawSignatures()) or None
         # place is moved to place/place_other
         if 'place' in self.used_meeting_attrs:
-            place = self.old.getPlace().strip()
+            place = safe_unicode(self.old.getPlace().strip())
             vocab = get_vocab(self.new,
                               "Products.PloneMeeting.content.meeting.places_vocabulary")
             if not place or place not in vocab:
@@ -90,7 +91,7 @@ class MeetingMigrator(CMFFolderMigrator):
                 self.new.place_other = place or None
             else:
                 self.new.place = place
-        self.new.pre_meeting_place = self.old.getPreMeetingPlace()
+        self.new.pre_meeting_place = safe_unicode(self.old.getPreMeetingPlace())
         pre_meeting_date = self.old.getPreMeetingDate()
         if pre_meeting_date:
             pre_meeting_date._timezone_naive = True

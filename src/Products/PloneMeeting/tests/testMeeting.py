@@ -3202,22 +3202,36 @@ class testMeetingType(PloneMeetingTestCase):
 
         # only done if used
         cfg.setUsedMeetingAttributes(('place', ))
+        # make sure does not break when configuration uses special characters
+        cfg.setPlaces('Place1\r\nPlace2\r\nPlace3\r\nSp\xc3\xa9cial place\r\n')
         meeting_type_name = cfg.getMeetingTypeName()
         add_form = pm_folder.restrictedTraverse('++add++{0}'.format(meeting_type_name))
         add_form.update()
         add_form_instance = add_form.form_instance
+        self.assertTrue(add_form.render())
+        self.assertTrue('place' in add_form_instance.w)
+        self.assertTrue('place_other' in add_form_instance.w)
         self.assertFalse('assembly' in add_form_instance.w)
         self.assertFalse('assembly_staves' in add_form_instance.w)
         self.assertFalse('signatures' in add_form_instance.w)
+        # test place widget as it use unicode values with MasterSelect widget
+        place_widget = add_form_instance.w['place']
+        self.assertEqual(place_widget.items[3]['value'], u'Sp\xe9cial place')
+        self.request.form['form.widgets.place'] = place_widget.items[3]['value']
+        # unicode is kept
+        self.assertEqual(place_widget.extract(), (u'Sp\xe9cial place',))
 
         # enable fields and test
         cfg.setUsedMeetingAttributes(('assembly', 'assembly_staves', 'signatures'))
         add_form = pm_folder.restrictedTraverse('++add++{0}'.format(meeting_type_name))
         add_form.update()
         add_form_instance = add_form.form_instance
+        self.assertTrue(add_form.render())
         self.assertEqual(add_form_instance.w['assembly'].value, u'Default assembly')
         self.assertEqual(add_form_instance.w['assembly_staves'].value, u'Default assembly staves')
         self.assertEqual(add_form_instance.w['signatures'].value, u'Default signatures')
+        self.assertFalse('place' in add_form_instance.w)
+        self.assertFalse('place_other' in add_form_instance.w)
 
     def test_pm_ItemReferenceInMeetingUpdatedWhenNecessary(self):
         '''Items references in a meeting are updated only when relevant,

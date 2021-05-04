@@ -67,13 +67,16 @@ from zope.component import adapts
 from zope.event import notify
 from zope.globalrequest import getRequest
 from zope.i18n import translate
+from zope.interface import directlyProvides
+from zope.interface import implementer
 from zope.interface import implements
 from zope.interface import Interface
 from zope.interface import Invalid
 from zope.interface import invariant
 from zope.schema import getFieldNamesInOrder
+from zope.schema.interfaces import ITitledTokenizedTerm
+from zope.schema.interfaces import ITokenizedTerm
 from zope.schema.interfaces import IVocabularyFactory
-from zope.schema.vocabulary import SimpleTerm
 from zope.schema.vocabulary import SimpleVocabulary
 
 import copy
@@ -2126,15 +2129,33 @@ class MeetingSearchableTextExtender(object):
         return res
 
 
+@implementer(ITokenizedTerm)
+class UnicodeSimpleTerm(object):
+    """Simple tokenized term used by SimpleVocabulary that may have unicode value."""
+
+    def __init__(self, value, token=None, title=None):
+        """ """
+        self.value = value
+        if token is None:
+            token = value
+        # XXX change with SimpleTerm, do not str(token)
+        self.token = token
+        self.title = title
+        if title is not None:
+            directlyProvides(self, ITitledTokenizedTerm)
+
+
 class PlacesVocabulary(object):
     implements(IVocabularyFactory)
 
     def __call__(self, context):
-        """ """
+        """XXX warning, we need unicode term value, so we use UnicodeSimpleTerm.
+           Indeed we store the plain value that may contain special characters."""
         terms = []
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        places = [place for place in cfg.getPlaces().strip().split('\r\n') if place]
+        # XXX with MeetingConfig AT, place is stored as utf-8, we need unicode
+        places = [safe_unicode(place) for place in cfg.getPlaces().strip().split('\r\n') if place]
         # history when context is a Meeting
         if context.getTagName() == "Meeting" and \
            context.place and \
@@ -2143,9 +2164,9 @@ class PlacesVocabulary(object):
             places.append(context.place)
 
         for place in places:
-            terms.append(SimpleTerm(place, place, place))
-        terms.append(SimpleTerm(u'other', u'other',
-                                translate('other_place',
+            terms.append(UnicodeSimpleTerm(place, place, place))
+        terms.append(UnicodeSimpleTerm(
+            u'other', u'other', translate('other_place',
                                           domain='PloneMeeting',
                                           context=context.REQUEST,
                                           default=u"Other")))
