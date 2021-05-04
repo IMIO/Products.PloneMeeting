@@ -2149,7 +2149,8 @@ class PlacesVocabulary(object):
     implements(IVocabularyFactory)
 
     def __call__(self, context):
-        """XXX warning, we need unicode term value, so we use UnicodeSimpleTerm."""
+        """XXX warning, we need unicode term value, so we use UnicodeSimpleTerm.
+           Indeed we store the plain value that may contain special characters."""
         terms = []
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)

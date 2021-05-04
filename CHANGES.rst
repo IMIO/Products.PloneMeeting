@@ -76,7 +76,7 @@ Changelog
     the `MeetingItem`, `getPreferredMeetingDate/preferred_meeting_date`,
     `getPreferredMeeting/preferred_meeting_uid`;
   - Display global action on the meeting_view (collapse all/top/bottom);
-  - Removed to `@@meeting-before-faceted-infos` and `meeting-after-faceted-infos`
+  - Removed `@@meeting-before-faceted-infos` and `@@meeting-after-faceted-infos`
     that are no more necessary now that the meeting view template should never
     by overrided anymore, everything is done using the schema and fieldsets
     definition.
