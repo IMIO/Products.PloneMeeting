@@ -203,6 +203,10 @@ Changelog
   `MeetingConfig.includeGroupsInChargeDefinedOnProposingGroup=True` and no
   `proposingGroup` is defined on the item, this may be the case on an item template.
   [gbastien]
+- Fixed `SelectableCommitteesVocabulary` that was failing when adding several new
+  `MeetingConfig.committees` (in this case, terms with token '' were generated
+  and it failed with `ValueError: term values must be unique: ''`).
+  [gbastien]
 
 4.2b11 (2021-01-19)
 -------------------

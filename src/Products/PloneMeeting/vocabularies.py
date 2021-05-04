@@ -2187,7 +2187,9 @@ class SelectableCommitteesVocabulary(object):
 
         stored_values = self._get_stored_values()
         for committee in cfg_committees:
-            if committee['enabled'] == '1' or committee['row_id'] in stored_values:
+            # bypass new value still not having a valid row_id
+            if (committee['enabled'] == '1' and committee['row_id']) or \
+               committee['row_id'] in stored_values:
                 if check_using_groups and not is_manager and committee['using_groups']:
                     org_uids = tool.get_selectable_orgs(
                         cfg, only_selectable=True, the_objects=False)
