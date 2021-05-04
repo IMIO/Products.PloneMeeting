@@ -40,6 +40,7 @@ from Products.PloneMeeting.tests.PloneMeetingTestCase import DEFAULT_USER_PASSWO
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import get_dx_widget
+from Products.PloneMeeting.utils import set_field_from_ajax
 from Products.statusmessages.interfaces import IStatusMessage
 from z3c.form.interfaces import DISPLAY_MODE
 from z3c.form.interfaces import INPUT_MODE
@@ -1208,7 +1209,7 @@ class testViews(PloneMeetingTestCase):
         # standard case, item in a meeting, no access restriction
         self.assertListEqual(
             [helper.print_meeting_date(), helper.print_meeting_date(returnDateTime=True)],
-            ['01 january 2019', meeting.date]
+            ['1 january 2019', meeting.date]
         )
         # powerobserver1 can't see the meeting so noMeetingMarker is expected when unrestricted=False
         self.assertListEqual(
@@ -1217,7 +1218,7 @@ class testViews(PloneMeetingTestCase):
             ['', None]
         )
 
-    def test_pm_PrintPreferredMeetingDate(self):
+    def test_pm_Print_preferred_meeting_date(self):
         cfg = self.meetingConfig
         cfg.setPowerObservers([
             {'item_access_on': '',
@@ -1249,7 +1250,7 @@ class testViews(PloneMeetingTestCase):
         item.setPreferredMeeting(meeting.UID())
         self.assertListEqual(  # standard case, a preferred meeting date is expected
             [helper.print_preferred_meeting_date(), helper.print_preferred_meeting_date(returnDateTime=True)],
-            ['01 january 2019', meeting.date]
+            ['1 january 2019', meeting.date]
         )
 
         self.changeUser('powerobserver1')
@@ -1259,6 +1260,42 @@ class testViews(PloneMeetingTestCase):
              helper.print_preferred_meeting_date(returnDateTime=True, unrestricted=False, noMeetingMarker=None)],
             ['', None],
         )
+
+    def test_pm_print_value(self):
+        """Test the BaseDGHV.print_value that will print almost everything...
+           For now, only working for DX elements (Meeting, MeetingAdvice)."""
+        cfg = self.meetingConfig
+        cfg.setPlaces('Place1\r\nPlace2\r\nPlace3\r\nSp\xc3\xa9cial place\r\n')
+        self._enableField(
+            ["convocation_date", "place", "notes", ],
+            related_to='Meeting')
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=datetime(2021, 5, 4))
+        view = meeting.restrictedTraverse('document-generation')
+        helper = view.get_generation_context_helper()
+        # Datetime
+        self.assertEqual(helper.print_value("date"), u'4 may 2021')
+        self.assertEqual(helper.print_value("date", target_language='fr'), u'4 mai 2021')
+        self.assertEqual(helper.print_value("convocation_date"), u'')
+        self.assertEqual(helper.print_value("convocation_date", empty_marker=u'???'), u'???')
+        # RichText
+        self.assertIsNone(meeting.observations)
+        self.assertEqual(helper.print_value("observations"), u'')
+        self.assertEqual(helper.print_value("observations", empty_marker=u'???'), u'???')
+        text = '<p>Observations <img src="%s" alt="22-400x400.jpg" title="22-400x400.jpg" />.</p>' \
+            % self.external_image1
+        set_field_from_ajax(meeting, "observations", text)
+        img_path = meeting.objectValues()[0].getFile().blob._p_blob_committed
+        # when using printXhtml, img url are turned to blob path
+        text = text.replace(self.external_image1, img_path)
+        self.assertEqual(helper.print_value("observations"), text)
+        # special case for place
+        self.assertEqual(helper.print_value("place"), u'')
+        meeting.place = u'Place1'
+        self.assertEqual(helper.print_value("place"), u'Place1')
+        meeting.place = u'other'
+        meeting.place_other = unicode('Spécial place', 'utf-8')
+        self.assertEqual(helper.print_value("place"), u'Sp\xe9cial place')
 
     def test_pm_MeetingUpdateItemReferences(self):
         """Test call to @@update-item-references from the meeting that will update

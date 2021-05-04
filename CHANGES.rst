@@ -215,6 +215,8 @@ Changelog
   - Added migration helper `Migrator.updatePODTemplatesCode`;
   - Added helper `MeetingItem.get_representatives_in_charge` that returns
     representatives in charge of an item;
+  - Added `BaseDGHV.print_value` to be able to render any stored field in
+    POD templates (`datetime`, `RichText`, `List/Choice` with `vocabulary`, ...);
   - Fixed `actions_panel` on element of the configuration.
 
   [gbastien]

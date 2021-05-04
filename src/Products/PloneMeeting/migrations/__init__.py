@@ -200,10 +200,7 @@ class Migrator(BaseMigrator):
             for pod_template in pod_templates:
                 logger.info('Checking POD template at %s...' % repr(pod_template))
                 with SearchAndReplacePODTemplates([pod_template]) as search_replace:
-                    for k, v in replacements.items():
-                        res = search_replace.replace(k, v, is_regex=False)
-                        if res:
-                            results.append(res)
+                    # apply first portal_type specific replacements (Meeting or Item)
                     if pod_template.pod_portal_types:
                         if meeting_type_name in pod_template.pod_portal_types:
                             for k, v in meeting_replacements.items():
@@ -215,6 +212,11 @@ class Migrator(BaseMigrator):
                                 res = search_replace.replace(k, v, is_regex=False)
                                 if res:
                                     results.append(res)
+                    # replacements compatible with any portal_types
+                    for k, v in replacements.items():
+                        res = search_replace.replace(k, v, is_regex=False)
+                        if res:
+                            results.append(res)
         # format results and dump it in the Zope log
         # as clean as possible so it can be used to know what changed
         data = {}

@@ -389,13 +389,13 @@ class IMeeting(IDXMeetingContent):
 
     meeting_number = schema.Int(
         title=_(u"title_meeting_number"),
-        description=_("descr_field_reserved_to_meeting_managers"),
+        description=_("descr_config_field_reserved_to_meeting_managers"),
         default=-1,
         required=False)
 
     first_item_number = schema.Int(
         title=_(u"title_first_item_number"),
-        description=_("descr_field_reserved_to_meeting_managers"),
+        description=_("descr_config_field_reserved_to_meeting_managers"),
         default=-1,
         required=False)
 

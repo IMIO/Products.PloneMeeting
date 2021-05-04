@@ -580,20 +580,25 @@ class Migrate_To_4200(Migrator):
                         '.isDecided(': '.is_decided(',
                         }
         # specific for Meeting POD Templates
-        meeting_replacements = {'self.getAuthorityNotice()': "view.get_value('authority_notice')",
-                                'self.getCommitteeObservations()': "view.get_value('committees_observations')",
-                                'self.getFirstItemNumber()': "self.first_item_number",
-                                'self.getInAndOutMoves()': "view.get_value('in_and_out_moves')",
-                                'self.getMeetingNumber()': "self.meeting_number",
-                                'self.getNotes()': "view.get_value('notes')",
-                                'self.getObservations()': "view.get_value('observations')",
-                                'self.getPreObservations()': "view.get_value('pre_observations')",
-                                'self.getPublicMeetingObservations()': "view.get_value('public_meeting_observations')",
-                                'self.getSecretMeetingObservations()': "view.get_value('secret_meeting_observations')",
-                                'self.getSignatures()': "self.get_signatures()",
-                                }
+        meeting_replacements = {
+            'self.getAuthorityNotice()': "view.print_value('authority_notice')",
+            'self.getCommitteeObservations()': "view.print_value('committees_observations')",
+            'self.getFirstItemNumber()': "self.first_item_number",
+            'self.getInAndOutMoves()': "view.print_value('in_and_out_moves')",
+            'self.getMeetingNumber()': "self.meeting_number",
+            'self.getNotes()': "view.print_value('notes')",
+            'self.getObservations()': "view.print_value('observations')",
+            'self.getPlace()': "view.print_value('place')",
+            'self.getPreObservations()': "view.print_value('pre_observations')",
+            'self.getPublicMeetingObservations()': "view.print_value('public_meeting_observations')",
+            'self.getSecretMeetingObservations()': "view.print_value('secret_meeting_observations')",
+            'self.getSignatures()': "self.get_signatures()",
+            'self.Title()': "view.print_value('date')",
+        }
         # specific for MeetingItem POD Templates
-        item_replacements = {}
+        item_replacements = {
+            'meeting.Title()': "view.getDGHV(meeting).print_value('date')",
+        }
 
         self.updatePODTemplatesCode(replacements, meeting_replacements, item_replacements)
 
@@ -601,6 +606,7 @@ class Migrate_To_4200(Migrator):
         logger.info('Migrating to PloneMeeting 4200...')
 
         self._fixPODTemplatesInstructions()
+        return
         self._fixFacetedFilters()
 
         # apply correct batch actions marker on searches_* folders
