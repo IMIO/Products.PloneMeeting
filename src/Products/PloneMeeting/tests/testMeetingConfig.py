@@ -2189,6 +2189,12 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.failIf(cfg.validate_committees([cfg_committees[1]]))
         # fails when used together
         self.failUnless(cfg_committees)
+        # adding new values
+        cfg.setCommittees([])
+        cfg_committees[0]['row_id'] = ''
+        cfg_committees[1]['row_id'] = ''
+        cfg_committees[0]['using_groups'] = []
+        cfg.validate_committees(cfg_committees)
 
     def test_pm_Validate_committees_orderedCommitteeContacts(self):
         """If a value in default_attendees/default_signatories is removed
