@@ -2350,17 +2350,21 @@ class PMUsers(UsersFactory):
 
     def _user_fullname(self, userid):
         """ """
-        storage = self.mutable_properties._storage
-        data = storage.get(userid, None)
-        if data is not None:
-            return data.get('fullname', '') or userid
-        else:
-            return userid
+        storages = [self.acl_users.mutable_properties._storage, ]
+        # if authentic is available check it first
+        if hasattr('authentic', self.acl_users):
+            storages.insert(0, self.acl_users.authentic._useridentities_by_userid)
+
+        for storage in storages:
+            data = storage.get(userid, None)
+            if data and data.get('fullname'):
+                return data.get('fullname')
+
+        return userid
 
     def __call__(self, context, query=''):
-        acl_users = api.portal.get_tool('acl_users')
-        self.mutable_properties = acl_users.mutable_properties
-        users = acl_users.searchUsers(sort_by='')
+        self.acl_users = api.portal.get_tool('acl_users')
+        users = self.acl_users.searchUsers(sort_by='')
         terms = []
         # manage duplicates, this can be the case when using LDAP and same userid in source_users
         userids = []
