@@ -857,7 +857,10 @@ class ConfigActionsPanelView(ActionsPanelView):
                 showActions = True
             elif self.context.portal_type in ('organization', 'person', 'directory'):
                 showAddContent = True
-                showActions = False
+        else:
+            # let add a new held_position from person dashboard
+            if self.context.portal_type in ('person', ):
+                showAddContent = True
 
         return super(ConfigActionsPanelView, self).\
             __call__(useIcons=useIcons,

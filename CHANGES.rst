@@ -234,6 +234,9 @@ Changelog
   - Fixed `actions_panel` on element of the configuration.
 
   [gbastien]
+- Let add a new `held_position` directly from the dashboard displaying persons
+  (display the `Add content` action in icons actions panel for `person`).
+  [gbastien]
 
 4.2b11 (2021-01-19)
 -------------------
