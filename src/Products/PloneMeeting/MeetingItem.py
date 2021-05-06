@@ -1553,7 +1553,7 @@ schema = Schema((
     StringField(
         name='pollType',
         widget=SelectionWidget(
-            condition="python: here.attributeIsUsed('pollType')",
+            condition="python: here.attributeIsUsed('pollType') or here.isVotesEnabled()",
             label='Polltype',
             label_msgid='PloneMeeting_label_pollType',
             i18n_domain='PloneMeeting',

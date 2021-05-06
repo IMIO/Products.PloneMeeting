@@ -215,6 +215,15 @@ Changelog
 - Change default period for faceted date widgets from
   `-10 years/+10 years` to `-30 years/+2 years`.
   [gbastien]
+- Minor fixes in votes :
+
+  - Display number of not encoded votes when using several linked secret votes
+    or it was necessary for now to compute it mentally...;
+  - Fixed bug in `@@display-meeting-item-voters` considering secret linked
+    votes as not complete when using more than 2 linked votes;
+  - Display `MeetingItem.pollType` field if enabled or when votes are enabled.
+
+  [gbastien]
 
 4.2b11 (2021-01-19)
 -------------------

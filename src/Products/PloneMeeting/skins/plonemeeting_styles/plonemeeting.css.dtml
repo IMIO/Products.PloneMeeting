@@ -2227,6 +2227,13 @@ span.item-not-voter {
    cursor: help;
 }
 
+/* integer field with +1/-1 control */
+input.int-field {
+  padding-left: 0.5em;
+  padding-top: 0.5em;
+  padding-bottom: 0.5em;
+}
+
 /* datagrid field for encoding votes */
 table#form-widgets-votes span.option {
    display: inline;
