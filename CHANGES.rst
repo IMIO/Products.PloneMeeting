@@ -210,6 +210,9 @@ Changelog
 - Fixed `Meeting.place` MasterSelect widget when `MeetingConfig.places` contains
   special characters.
   [gbastien]
+- Change default period for faceted date widgets from
+  `-10 years/+10 years` to `-30 years/+2 years`.
+  [gbastien]
 
 4.2b11 (2021-01-19)
 -------------------
