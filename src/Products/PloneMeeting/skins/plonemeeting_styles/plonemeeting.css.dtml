@@ -2020,6 +2020,10 @@ div.config_sub_categories table {
 #faceted-form fieldset.widget-fieldset label[title*="(Désactivé)"] {
     color: red;
 }
+/* fieldset legend when richtext field displayed in faceted dashboard (static element in Title column) */
+#faceted-form fieldset {
+    padding-left: 1em;
+}
 
 h2.available-items,
 h2.presented-items,

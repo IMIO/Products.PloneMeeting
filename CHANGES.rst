@@ -79,7 +79,9 @@ Changelog
   - Removed `@@meeting-before-faceted-infos` and `@@meeting-after-faceted-infos`
     that are no more necessary now that the meeting view template should never
     by overrided anymore, everything is done using the schema and fieldsets
-    definition.
+    definition;
+  - Most of `Meeting` data is displayable in dashboards displaying meetings as
+    static column in the Title column.
 
     [gbastien]
 - Highlight (bold) the default item template in the itemtemplates folder.

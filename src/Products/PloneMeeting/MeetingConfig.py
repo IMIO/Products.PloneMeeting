@@ -5040,9 +5040,27 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             ("static_end_date",
                 u"{0} (static_end_date)".format(
                     translate('end_date_column', domain=d, context=self.REQUEST))),
+            ("static_convocation_date",
+                u"{0} (static_convocation_date)".format(
+                    translate('convocation_date_column', domain=d, context=self.REQUEST))),
+            ("static_approval_date",
+                u"{0} (static_approval_date)".format(
+                    translate('approval_date_column', domain=d, context=self.REQUEST))),
             ("static_place",
                 u"{0} (static_place)".format(
                     translate('place_column', domain=d, context=self.REQUEST))),
+            ("static_place_other",
+                u"{0} (static_place_other)".format(
+                    translate('place_other_column', domain=d, context=self.REQUEST))),
+            ("static_authority_notice",
+                u"{0} (static_authority_notice)".format(
+                    translate('authority_notice_column', domain=d, context=self.REQUEST))),
+            ("static_meeting_number",
+                u"{0} (static_meeting_number)".format(
+                    translate('meeting_number_column', domain=d, context=self.REQUEST))),
+            ("static_first_item_number",
+                u"{0} (static_first_item_number)".format(
+                    translate('first_item_number_column', domain=d, context=self.REQUEST))),
             ("Creator",
                 u"{0} (Creator)".format(
                     translate('header_Creator', domain=d, context=self.REQUEST))),
