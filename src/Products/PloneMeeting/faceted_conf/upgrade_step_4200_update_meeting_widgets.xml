@@ -35,7 +35,7 @@
    <property name="hidden">False</property>
    <property name="index">meeting_date</property>
    <property name="default"></property>
-   <property name="calYearRange">c-10:c+10</property>
+   <property name="calYearRange">c-30:c+2</property>
    <property name="labelStart"></property>
    <property name="labelEnd"></property>
    <property name="placeholderStart">Start date</property>

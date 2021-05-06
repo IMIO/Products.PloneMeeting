@@ -699,7 +699,7 @@ class Migrate_To_4200(Migrator):
 
         # update holidays
         self.updateHolidays()
-
+        return
         self.tool.update_all_local_roles()
         self.refreshDatabase(workflows=True, catalogsToUpdate=[])
 

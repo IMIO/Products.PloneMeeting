@@ -79,7 +79,9 @@ Changelog
   - Removed `@@meeting-before-faceted-infos` and `@@meeting-after-faceted-infos`
     that are no more necessary now that the meeting view template should never
     by overrided anymore, everything is done using the schema and fieldsets
-    definition.
+    definition;
+  - Most of `Meeting` data is displayable in dashboards displaying meetings as
+    static column in the Title column.
 
     [gbastien]
 - Highlight (bold) the default item template in the itemtemplates folder.
@@ -209,6 +211,18 @@ Changelog
   [gbastien]
 - Fixed `Meeting.place` MasterSelect widget when `MeetingConfig.places` contains
   special characters.
+  [gbastien]
+- Change default period for faceted date widgets from
+  `-10 years/+10 years` to `-30 years/+2 years`.
+  [gbastien]
+- Minor fixes in votes :
+
+  - Display number of not encoded votes when using several linked secret votes
+    or it was necessary for now to compute it mentally...;
+  - Fixed bug in `@@display-meeting-item-voters` considering secret linked
+    votes as not complete when using more than 2 linked votes;
+  - Display `MeetingItem.pollType` field if enabled or when votes are enabled.
+
   [gbastien]
 - Use search&replace from collective.documentgenerator in migration to 4200:
 

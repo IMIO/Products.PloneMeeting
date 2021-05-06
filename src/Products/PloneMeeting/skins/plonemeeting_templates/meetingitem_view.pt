@@ -25,6 +25,7 @@
                                   usedAttrs meetingConfig/getUsedItemAttributes;
                                   usedMeetingAttrs meetingConfig/getUsedMeetingAttributes;
                                   context_url context/absolute_url;
+                                  isVotesEnabled python: context.isVotesEnabled();
                                   showAdvices python: context.adapted().showAdvices();
                                   showClonableToOtherMCs context/showClonableToOtherMCs;
                                   showAdvancedClonableToOtherMCs python: context.adapted().showAdvancedClonableToOtherMCs(showClonableToOtherMCs);">
@@ -271,7 +272,7 @@
             </div>
 
             <tal:comment replace="nothing">Poll type</tal:comment>
-            <div class="discreet" tal:condition="python: 'pollType' in usedAttrs">
+            <div class="discreet" tal:condition="python: 'pollType' in usedAttrs or isVotesEnabled">
                 <span class="item_attribute_label"
                       i18n:translate="PloneMeeting_label_pollType"></span>:&nbsp;&nbsp;
                 <span data-base_url="#"

@@ -2147,6 +2147,10 @@ class SelectableCommitteesVocabulary(object):
         self.context = context
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
+        if cfg is None:
+            # can happen while creating a new MeetingConfig TTW
+            return SimpleVocabulary(terms)
+
         cfg_committees = cfg_committees or cfg.getCommittees()
         is_manager = tool.isManager(cfg)
 

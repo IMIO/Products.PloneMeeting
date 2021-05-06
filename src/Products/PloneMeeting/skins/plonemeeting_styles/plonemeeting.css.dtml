@@ -2023,6 +2023,10 @@ div.config_sub_categories table {
 #faceted-form fieldset.widget-fieldset label[title*="(Désactivé)"] {
     color: red;
 }
+/* fieldset legend when richtext field displayed in faceted dashboard (static element in Title column) */
+#faceted-form fieldset {
+    padding-left: 1em;
+}
 
 h2.available-items,
 h2.presented-items,
@@ -2224,6 +2228,13 @@ div#doc-generation-view {
 span.vote-number span,
 span.item-not-voter {
    cursor: help;
+}
+
+/* integer field with +1/-1 control */
+input.int-field {
+  padding-left: 0.5em;
+  padding-top: 0.5em;
+  padding-bottom: 0.5em;
 }
 
 /* datagrid field for encoding votes */
