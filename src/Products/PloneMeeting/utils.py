@@ -193,6 +193,39 @@ def getCustomAdapter(obj):
 methodTypes = ('FSPythonScript', 'FSControllerPythonScript', 'instancemethod')
 
 
+def _referer_to_path(request):
+    """ """
+    # We are changing the state of an element. We must then check the referer
+    refererUrl = request.get('HTTP_REFERER')
+    referer = urlparse.urlparse(refererUrl)[2]
+    if referer.endswith('/view') or \
+       referer.endswith('/@@meeting_available_items_view') or \
+       referer.endswith('/edit') or \
+       referer.endswith('/search_form') or \
+       referer.endswith('/plonemeeting_topic_view'):
+        referer = os.path.dirname(referer)
+    # We add the portal path if necessary
+    # (in case Apache rewrites the uri for example)
+    portal_url = api.portal.get_tool('portal_url')
+    portal_path = portal_url.getPortalPath()
+    if not referer.startswith(portal_path):
+        # The rewrite rule has modified the URL. First, remove any
+        # added URL prefix.
+        if referer.find('/Members/') != -1:
+            referer = referer[referer.index('/Members/'):]
+        # Then, add the real portal as URL prefix.
+        referer = portal_path + referer
+    return referer
+
+
+def get_referer_obj(request):
+    """ """
+    referer_path = _referer_to_path(request)
+    catalog = api.portal.get_tool('portal_catalog')
+    brains = catalog(path=referer_path, depth=0)
+    return brains[0].getObject()
+
+
 def getCurrentMeetingObject(context):
     '''What is the object currently published by Plone ?'''
     obj = context.REQUEST.get('PUBLISHED')
@@ -207,32 +240,7 @@ def getCurrentMeetingObject(context):
     if not (className in ('Meeting', 'MeetingItem')):
         # check if we are on a Script or so or calling a BrowserView
         if className in methodTypes or 'SimpleViewClass' in className:
-            # We are changing the state of an element. We must then check the referer
-            refererUrl = context.REQUEST.get('HTTP_REFERER')
-            referer = urlparse.urlparse(refererUrl)[2]
-            if referer.endswith('/view') or \
-               referer.endswith('/@@meeting_available_items_view') or \
-               referer.endswith('/edit') or \
-               referer.endswith('/search_form') or \
-               referer.endswith('/plonemeeting_topic_view'):
-                referer = os.path.dirname(referer)
-            # We add the portal path if necessary
-            # (in case Apache rewrites the uri for example)
-            portal_url = api.portal.get_tool('portal_url')
-            portal_path = portal_url.getPortalPath()
-            if not referer.startswith(portal_path):
-                # The rewrite rule has modified the URL. First, remove any
-                # added URL prefix.
-                if referer.find('/Members/') != -1:
-                    referer = referer[referer.index('/Members/'):]
-                # Then, add the real portal as URL prefix.
-                referer = portal_path + referer
-            # take care that the Meeting may contain annexes
-            catalog = api.portal.get_tool('portal_catalog')
-            from Products.PloneMeeting.content.meeting import IMeeting
-            res = catalog(path=referer, object_provides=IMeeting.__identifier__)
-            if res:
-                obj = res[0].getObject()
+            obj = get_referer_obj(context.REQUEST)
         else:
             # Check the parent (if it has sense)
             if hasattr(obj, 'getParentNode'):

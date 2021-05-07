@@ -269,9 +269,7 @@
                 <td colspan="5"
                     align="right"
                     class="advice_annexes table_widget_value">
-                    <tal:defines condition="adviceHolderIsViewable">
-                        <tal:annexes replace="structure python: obj.restrictedTraverse('@@categorized-childs')()" />
-                    </tal:defines>
+                    <tal:annexes replace="structure python: obj.restrictedTraverse('@@categorized-childs')()" />
                 </td>
               </tr>
             </table>
