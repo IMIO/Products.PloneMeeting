@@ -1691,11 +1691,10 @@ class PMCategorizedObjectAdapter(CategorizedObjectAdapter):
             # check if displaying annexes on a not viewable item
             # if not viewable annexes are actually displayed,
             # check that current user has actually access to a backReferences item
-            back_items = self.context.getBackReferences(
-                ('ManuallyLinkedItem', 'ItemPredecessor'))
-            for back_item in back_items:
-                if _checkPermission(View, back_item):
-                    return True
+            if 'MeetingItem.annexes' in self.cfg.getItemsNotViewableVisibleFields() and \
+               (self.context.adapted().get_predecessors(only_viewable=True) or
+                    self.context.getManuallyLinkedItems(only_viewable=True)):
+                return True
         else:
             class_name = self.context.__class__.__name__
             # is the context a MeetingItem and privacy viewable?

@@ -114,7 +114,7 @@ class ItemMoreInfosView(BrowserView):
             extra_expr_ctx.update({'cfg': currentCfg})
             extra_expr_ctx.update({'item_cfg': self.cfg})
             res = _evaluateExpression(self.context,
-                                      expression=currentCfg.getItemsNotViewableVisibleFieldsTALExpr(),
+                                      expression=self.cfg.getItemsNotViewableVisibleFieldsTALExpr(),
                                       roles_bypassing_expression=[],
                                       extra_expr_ctx=extra_expr_ctx)
             if res:

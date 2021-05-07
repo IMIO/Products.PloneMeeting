@@ -4994,7 +4994,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                   ignored_field_ids=self.adapted()._ignoredVisibleFieldIds(),
                                   hide_not_visible=True)
         res.insert(0, ('MeetingItem.annexes',
-                       translate('existing_annexes',
+                       translate('not_confidential_annexes',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)))
         # not viewable advices can not be displayed for now

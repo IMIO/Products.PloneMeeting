@@ -199,7 +199,7 @@
                            style="cursor:help"/>
                   </td>
                 </tal:mayEdit>
-                <td align="right" width="20px" class="noPadding" tal:condition="nocall:obj">
+                <td align="right" width="20px" class="noPadding" tal:condition="python: obj and adviceHolderIsViewable">
                   <a href="view"
                      target='_parent'
                      tal:attributes="href string:${obj_absolute_url}/view">
