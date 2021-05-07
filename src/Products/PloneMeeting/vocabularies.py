@@ -31,7 +31,7 @@ from DateTime import DateTime
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from imio.annex.content.annex import IAnnex
 from imio.helpers.cache import get_cachekey_volatile
-from imio.helpers.content import get_vocab
+from imio.helpers.content import get_vocab, get_user_fullname
 from imio.helpers.content import uuidsToObjects
 from natsort import humansorted
 from operator import attrgetter
@@ -2347,21 +2347,6 @@ ContainedDecisionAnnexesVocabularyFactory = ContainedDecisionAnnexesVocabulary()
 
 class PMUsers(UsersFactory):
     """Append ' (userid)' to term title."""
-
-    def _user_fullname(self, userid):
-        """ """
-        storages = [self.acl_users.mutable_properties._storage, ]
-        # if authentic is available check it first
-        if hasattr('authentic', self.acl_users):
-            storages.insert(0, self.acl_users.authentic._useridentities_by_userid)
-
-        for storage in storages:
-            data = storage.get(userid, None)
-            if data and data.get('fullname'):
-                return data.get('fullname')
-
-        return userid
-
     def __call__(self, context, query=''):
         self.acl_users = api.portal.get_tool('acl_users')
         users = self.acl_users.searchUsers(sort_by='')
@@ -2377,7 +2362,7 @@ class PMUsers(UsersFactory):
                     unicode(user_id)
                 except UnicodeDecodeError:
                     continue
-                term_title = u'{0} ({1})'.format(safe_unicode(self._user_fullname(user_id)), user_id)
+                term_title = u'{0} ({1})'.format(safe_unicode(get_user_fullname(user_id)), user_id)
                 term = SimpleTerm(user_id, user_id, term_title)
                 terms.append(term)
         terms = humansorted(terms, key=attrgetter('title'))
