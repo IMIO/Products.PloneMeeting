@@ -228,6 +228,9 @@ Changelog
   by current user (for example when item sent from MeetingConfig A to B and user
   is power observer of MeetingConfig B, he does not have access to original
   item/advice/annex stored in MeetingConfig A).
+  As advice full preview is not available neither, implemented a
+  `Read more/Read less` functionnality to be able to see full `comment/observations`
+  in advice popup.
   [gbastien]
 
 4.2b11 (2021-01-19)

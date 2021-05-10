@@ -866,3 +866,65 @@ function onScrollMeetingView() {
     }
   }
 }
+
+
+function initReadmore() {
+
+/* first check if need to use readmorable or not, only if content > set CSS max-height + 50px */
+$("div.readmorable").each(function() {
+  $el = $(this);
+  /* CSS max-height need to be set in CSS for tooltipster to compute tooltip height correctly */
+  cssMaxHeight = parseInt(getComputedStyle(this).maxHeight);
+  this.style = "max-height: none";
+  if (this.offsetHeight > cssMaxHeight + 50) {
+    $el.addClass("shown");
+  }
+  else {
+    $el.addClass("hidden");
+  }
+  this.style = "";
+});
+
+var $el, $up;
+
+$("div.readmorable p.readmore").click(function() {
+
+  event.preventDefault();
+
+  $el = $(this);
+  $up  = $el.parent();
+  $up
+    .css({
+      "height": "auto",
+      "max-height": 99999
+    })
+    .animate({
+      "height": "auto"
+    });
+
+  $el.hide();
+  $("p.readless", $up).show();
+
+  return false;
+});
+
+$("div.readmorable p.readless").click(function() {
+
+  event.preventDefault();
+
+  $el = $(this);
+  $up = $el.parent();
+  $up
+    .css({
+      "max-height": "200px",
+    })
+    .animate({
+      "max-height": "200px"
+    });
+
+  $el.hide();
+  $("p.readmore", $up).show();
+
+  return false;
+});
+}

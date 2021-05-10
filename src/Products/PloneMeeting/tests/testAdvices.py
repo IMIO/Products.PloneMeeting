@@ -2839,8 +2839,8 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue(item3.adviceIndex[self.vendors_uid]['inherited'])
         self.assertTrue(item3.adviceIndex[self.endUsers_uid]['inherited'])
 
-    def test_pm_InheritedAdviceAccesses(self):
-        """While an advice is marked as 'inherited', it will show another advice
+    def test_pm_InheritedAdviceAdvisersAccesses(self):
+        """When an advice is marked as 'inherited', it will show another advice
            coming from another item, in this case, read access to current item are same as
            usual but advisers of the inherited advice will never be able to add/edit it."""
         item1, item2, vendors_advice, developers_advice = self._setupInheritedAdvice()
@@ -2868,6 +2868,28 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue(item2.adviceIndex[self.developers_uid]['delay'])
         # not started
         self.assertIsNone(item2.adviceIndex[self.developers_uid]['delay_started_on'])
+
+    def test_pm_InheritedAdviceViewerAccesses(self):
+        """When an advice is marked as 'inherited', it will show another advice
+           coming from another item, in this case, read access to current item are same as
+           usual but viewers of the inherited advice are able to see it and to download annexes."""
+        item1, item2, vendors_advice, developers_advice = self._setupInheritedAdvice()
+        # check with a power observer only able to see item2
+        self.changeUser('siteadmin')
+        self._setPowerObserverStates(states=(self._stateMappingFor('itemcreated'), ),
+                                     access_on="python: item.UID() == '{0}'".format(item2.UID()))
+        item1.update_local_roles()
+        item2.update_local_roles()
+        self.changeUser("powerobserver1")
+        self.assertFalse(self.hasPermission(View, item1))
+        self.assertTrue(self.hasPermission(View, item2))
+        # advice popup viewable
+        self.assertTrue(item2.restrictedTraverse('advices-icons')())
+        self.assertTrue(item2.restrictedTraverse('@@advices-icons-infos')(adviceType='positive'))
+        # advice annexes are downloadable
+        #infos = item2.restrictedTraverse('@@categorized-childs-infos')(category_uid=category_uid, filters={}).strip()
+        #self.assertTrue(infos)
+        #self.assertTrue(download_view())
 
     def test_pm_GetAdviceDataFor(self):
         '''Test the getAdviceDataFor method, essentially the fact that it needs the item
