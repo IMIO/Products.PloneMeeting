@@ -222,7 +222,7 @@ def get_referer_obj(request):
     """ """
     referer_path = _referer_to_path(request)
     catalog = api.portal.get_tool('portal_catalog')
-    brains = catalog(path=referer_path, depth=0)
+    brains = catalog(path={'query': referer_path, 'depth': 0})
     return brains[0].getObject()
 
 
