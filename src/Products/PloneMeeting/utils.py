@@ -1938,6 +1938,16 @@ def normalize_id(id):
     return id
 
 
+def _clear_local_roles(obj):
+    """ """
+    # remove every localRoles then recompute
+    old_local_roles = obj.__ac_local_roles__.copy()
+    obj.__ac_local_roles__.clear()
+    # add 'Owner' local role
+    obj.manage_addLocalRoles(obj.owner_info()['id'], ('Owner',))
+    return old_local_roles
+
+
 def add_wf_history_action(obj, action_name, action_label, user_id=None, insert_index=None):
     wfTool = api.portal.get_tool('portal_workflow')
     wfs = wfTool.getWorkflowsFor(obj)

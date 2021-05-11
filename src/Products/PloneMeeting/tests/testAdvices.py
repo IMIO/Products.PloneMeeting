@@ -8,6 +8,8 @@
 from AccessControl import Unauthorized
 from collective.contact.plonegroup.config import ORGANIZATIONS_REGISTRY
 from collective.iconifiedcategory.utils import get_categorized_elements
+from collective.iconifiedcategory.utils import get_config_root
+from collective.iconifiedcategory.utils import get_group
 from DateTime import DateTime
 from datetime import datetime
 from datetime import timedelta
@@ -2739,7 +2741,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertEqual(item.getAdviceObj(self.vendors_uid), vendors_advice)
         self.assertIsNone(item.getAdviceObj(self.developers_uid))
 
-    def _setupInheritedAdvice(self, addEndUsersAdvice=False):
+    def _setupInheritedAdvice(self, addEndUsersAdvice=False, addAnnexesToVendorsAdvice=False):
         """ """
         cfg = self.meetingConfig
         cfg.setCustomAdvisers(
@@ -2776,6 +2778,15 @@ class testAdvices(PloneMeetingTestCase):
                'advice_type': u'positive',
                'advice_hide_during_redaction': False,
                'advice_comment': RichTextValue(u'My comment')})
+        if addAnnexesToVendorsAdvice:
+            annex_config = get_config_root(vendors_advice)
+            annex_group = get_group(annex_config, vendors_advice)
+            annex_group.confidentiality_activated = True
+            annexNotConfidential = self.addAnnex(vendors_advice, annexTitle='Annex not confidential')
+            annexConfidential = self.addAnnex(vendors_advice, annexTitle='Annex confidential')
+            annexConfidential.confidential = True
+            notify(ObjectModifiedEvent(annexConfidential))
+
         self.changeUser('pmReviewer2')
         developers_advice = createContentInContainer(
             item1,
@@ -2784,6 +2795,7 @@ class testAdvices(PloneMeetingTestCase):
                'advice_type': u'positive',
                'advice_hide_during_redaction': False,
                'advice_comment': RichTextValue(u'My comment')})
+
         if addEndUsersAdvice:
             self._setupEndUsersPowerAdvisers()
             self.changeUser('pmAdviser1')
@@ -2801,7 +2813,9 @@ class testAdvices(PloneMeetingTestCase):
         item2 = item1.clone(setCurrentAsPredecessor=True, inheritAdvices=True)
         res = (item1, item2, vendors_advice, developers_advice)
         if addEndUsersAdvice:
-            res = res + (endusers_advice, )
+            res += (endusers_advice, )
+        if addAnnexesToVendorsAdvice:
+            res += (annexConfidential, annexNotConfidential)
         return res
 
     def _setupEndUsersPowerAdvisers(self):
@@ -2873,11 +2887,13 @@ class testAdvices(PloneMeetingTestCase):
         """When an advice is marked as 'inherited', it will show another advice
            coming from another item, in this case, read access to current item are same as
            usual but viewers of the inherited advice are able to see it and to download annexes."""
-        item1, item2, vendors_advice, developers_advice = self._setupInheritedAdvice()
+        item1, item2, vendors_advice, developers_advice, annexConfidential, annexNotConfidential = \
+            self._setupInheritedAdvice(addAnnexesToVendorsAdvice=True)
         # check with a power observer only able to see item2
         self.changeUser('siteadmin')
-        self._setPowerObserverStates(states=(self._stateMappingFor('itemcreated'), ),
-                                     access_on="python: item.UID() == '{0}'".format(item2.UID()))
+        self._setPowerObserverStates(
+            states=(self._stateMappingFor('itemcreated'), ),
+            access_on="python: item.UID() == '{0}'".format(item2.UID()))
         item1.update_local_roles()
         item2.update_local_roles()
         self.changeUser("powerobserver1")
@@ -2885,11 +2901,18 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue(self.hasPermission(View, item2))
         # advice popup viewable
         self.assertTrue(item2.restrictedTraverse('advices-icons')())
-        self.assertTrue(item2.restrictedTraverse('@@advices-icons-infos')(adviceType='positive'))
-        # advice annexes are downloadable
-        #infos = item2.restrictedTraverse('@@categorized-childs-infos')(category_uid=category_uid, filters={}).strip()
-        #self.assertTrue(infos)
-        #self.assertTrue(download_view())
+        self.assertTrue(item2.restrictedTraverse(
+            '@@advices-icons-infos')(adviceType='positive'))
+        # advice annexes are downloadable if not confidential
+        categorized_elements = get_categorized_elements(vendors_advice)
+        self.assertEqual(len(categorized_elements), 1)
+        self.assertEqual(categorized_elements[0]['UID'], annexNotConfidential.UID())
+        category_uid = categorized_elements[0]['category_uid']
+        infos = vendors_advice.restrictedTraverse(
+            '@@categorized-childs-infos')(category_uid=category_uid, filters={}).strip()
+        self.assertTrue(infos)
+        download_view = annexConfidential.restrictedTraverse('@@download')
+        self.assertTrue(download_view())
 
     def test_pm_GetAdviceDataFor(self):
         '''Test the getAdviceDataFor method, essentially the fact that it needs the item
