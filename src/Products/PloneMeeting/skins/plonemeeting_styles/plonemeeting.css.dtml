@@ -2349,25 +2349,25 @@ div.large-separator {
 
 /* readmore functionnality that show more/hide text to read */
 div.readmorable {
-    max-height: 200px;
+    max-height: 150px;
 }
-div.readmorable.hidden {
+div.readmorable.disabled {
     max-height: none;
 }
-div.readmorable.shown {
+div.readmorable.enabled {
     float: left;
     position: relative;
     overflow: hidden;
     width: 100%;
 }
-div.readmorable.hidden p.readmore,
-div.readmorable.hidden p.readless {
+div.readmorable.disabled p.readmore,
+div.readmorable.disabled p.readless {
     display: none;
 }
-#content div.readmorable.shown p {
+#content div.readmorable.enabled p {
     margin: 0 !important;
 }
-div.readmorable.shown p.readmore {
+div.readmorable.enabled p.readmore {
     position: absolute;
     bottom: 0; left: 0;
     margin: 0;
@@ -2376,13 +2376,17 @@ div.readmorable.shown p.readmore {
     background-image: -moz-linear-gradient(top, transparent, white);
     background-image: -webkit-gradient(linear,left top,left bottom,color-stop(0, transparent),color-stop(1, white));
 }
-div.readmorable.shown p.readmore,
-div.readmorable.shown p.readless {
+div.readmorable.enabled p.readmore,
+div.readmorable.enabled p.readless {
     font-size: 120%;
     text-align: right;
 }
-div.readmorable.shown p.readmore a {
+div.readmorable.enabled p.readmore a {
     background-color: white;
+}
+div.readmorable.enabled.opened {
+    height: auto;
+    max-height: none;
 }
 
 /* </dtml-with> */

@@ -870,22 +870,22 @@ function onScrollMeetingView() {
 
 function initReadmore() {
 
+var $el, $up;
+
 /* first check if need to use readmorable or not, only if content > set CSS max-height + 50px */
 $("div.readmorable").each(function() {
   $el = $(this);
-  /* CSS max-height need to be set in CSS for tooltipster to compute tooltip height correctly */
+  /* get max-height defined in CSS for div.readmorable {} */
   cssMaxHeight = parseInt(getComputedStyle(this).maxHeight);
   this.style = "max-height: none";
-  if (this.offsetHeight > cssMaxHeight + 50) {
-    $el.addClass("shown");
+  if (this.offsetHeight > cssMaxHeight + 100) {
+    $el.addClass("enabled");
   }
   else {
-    $el.addClass("hidden");
+    $el.addClass("disabled");
   }
   this.style = "";
 });
-
-var $el, $up;
 
 $("div.readmorable p.readmore").click(function() {
 
@@ -893,15 +893,7 @@ $("div.readmorable p.readmore").click(function() {
 
   $el = $(this);
   $up  = $el.parent();
-  $up
-    .css({
-      "height": "auto",
-      "max-height": 99999
-    })
-    .animate({
-      "height": "auto"
-    });
-
+  $up[0].classList.toggle("opened");
   $el.hide();
   $("p.readless", $up).show();
 
@@ -911,17 +903,9 @@ $("div.readmorable p.readmore").click(function() {
 $("div.readmorable p.readless").click(function() {
 
   event.preventDefault();
-
   $el = $(this);
   $up = $el.parent();
-  $up
-    .css({
-      "max-height": "200px",
-    })
-    .animate({
-      "max-height": "200px"
-    });
-
+  $up[0].classList.toggle("opened");
   $el.hide();
   $("p.readmore", $up).show();
 
