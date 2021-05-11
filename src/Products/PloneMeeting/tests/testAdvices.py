@@ -2900,6 +2900,8 @@ class testAdvices(PloneMeetingTestCase):
         self.assertFalse(self.hasPermission(View, item1))
         self.assertTrue(self.hasPermission(View, item2))
         # advice popup viewable
+        # in this case, PUBLISHED is the item
+        self.request['PUBLISHED'] = item2
         self.assertTrue(item2.restrictedTraverse('advices-icons')())
         self.assertTrue(item2.restrictedTraverse(
             '@@advices-icons-infos')(adviceType='positive'))
@@ -2908,6 +2910,9 @@ class testAdvices(PloneMeetingTestCase):
         self.assertEqual(len(categorized_elements), 1)
         self.assertEqual(categorized_elements[0]['UID'], annexNotConfidential.UID())
         category_uid = categorized_elements[0]['category_uid']
+        # in this case, PUBLISHED is the advice and the item is the referer
+        self.request['PUBLISHED'] = vendors_advice
+        self.request['HTTP_REFERER'] = item2.absolute_url()
         infos = vendors_advice.restrictedTraverse(
             '@@categorized-childs-infos')(category_uid=category_uid, filters={}).strip()
         self.assertTrue(infos)
