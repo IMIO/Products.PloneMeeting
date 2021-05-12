@@ -232,6 +232,23 @@ Changelog
   `Read more/Read less` functionnality to be able to see full `comment/observations`
   in advice popup.
   [gbastien]
+- Use search&replace from collective.documentgenerator in migration to 4200:
+
+  - Added migration helper `Migrator.updatePODTemplatesCode`;
+  - Added helper `MeetingItem.get_representatives_in_charge` that returns
+    representatives in charge of an item;
+  - Added `BaseDGHV.print_value` to be able to render any stored field in
+    POD templates (`datetime`, `RichText`, `List/Choice` with `vocabulary`, ...);
+  - Fixed `actions_panel` on element of the configuration.
+
+  [gbastien]
+- Let add a new `held_position` directly from the dashboard displaying persons
+  (display the `Add content` action in icons actions panel for `person`).
+  [gbastien]
+- Added `marginalNotes_column` to `MeetingConfig.listItemRelatedColumns` to be
+  able to display the `MeetingItem.marginalNotes` field as static info
+  (always visible in Title column) in the dashboards.
+  [gbastien]
 
 4.2b11 (2021-01-19)
 -------------------
