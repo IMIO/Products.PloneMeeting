@@ -1035,7 +1035,8 @@ div.discreet.advice_additional_infos {
     margin-right: -6px;
     font-weight: bold;
     display: inline-block;
-    z-index: 40;
+    /* make sure delay does not come over tooltipster overlay */
+    z-index: 0;
 }
 
 .advice_delay_never_giveable,
@@ -1407,6 +1408,9 @@ div.advice_popup_label {
     display: inline-block;
     vertical-align: middle;
     max-width: 500px;
+}
+div.advice_popup_label span.advice-label {
+    font-weight: normal;
 }
 div.advice_popup_actions {
     float: right;
@@ -1900,6 +1904,14 @@ table.listing tbody tr.even.dragging td {
    content: "\f071";
    color: darkOrange;
 }
+#content span.show-more:before {
+   content: "\f103";
+   color: &dtml-linkColor;;
+}
+#content span.show-less:before {
+   content: "\f102";
+   color: &dtml-linkColor;;
+}
 
 /* icon colors */
 #content span.fa.leading-icon {
@@ -2291,51 +2303,93 @@ a[href*="itemtemplates/default-empty-item-template/"] {
 
 /* committees datagridfield edit on meeting */
 table.datagridwidget-table-view-block label {
-   vertical-align: super;
+    vertical-align: super;
 }
 table.datagridwidget-table-view-block div.select-widget label,
 table.datagridwidget-table-view-block div.date-widget label,
 table.datagridwidget-table-view-block div.datetime-widget label {
-   vertical-align: sub;
+    vertical-align: sub;
 }
 .datagridwidget-table-view-block .datagridwidget-row {
     border-bottom: 5px solid lightgrey;
 }
 /* hide row_id label when editing */
 div.datagridwidget-widget-row_id label {
-   display: none;
+    display: none;
 }
 div.datagridwidget-widget-row_id select {
-   font-size: 130%;
+    font-size: 130%;
 }
 /* committees datagridfield edit/view on meeting,
    when TextArea is empty, an error is displayed */
 div#formfield-form-widgets-committees div.error,
 table#form-widgets-committees div.error {
-   display: none;
+    display: none;
 }
 /* width of committees table datagridfield display */
 table#form-widgets-committees th.column-date,
 table#form-widgets-committees th.column-convocation_date {
-   width: 130px;
+    width: 130px;
 }
 table#form-widgets-committees th.column-place {
-   width: 180px;
+    width: 180px;
 }
 /* hide Meeting.committees label on edit and view */
 div#formfield-form-widgets-committees label[for="form-widgets-committees"],
 body.template-meeting_view label[for="form-widgets-committees"] {
-   display: none;
+    display: none;
 }
 
 div.small-separator {
-   height: 5px;
+    height: 5px;
 }
 div.separator {
-   height: 10px;
+    height: 10px;
 }
 div.large-separator {
-   height: 15px;
+    height: 15px;
+}
+
+/* readmore functionnality that show more/hide text to read */
+div.readmorable {
+    max-height: 150px;
+}
+div.readmorable.disabled {
+    max-height: none;
+}
+div.readmorable.enabled {
+    float: left;
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+}
+div.readmorable.disabled p.readmore,
+div.readmorable.disabled p.readless {
+    display: none;
+}
+#content div.readmorable.enabled p {
+    margin: 0 !important;
+}
+div.readmorable.enabled p.readmore {
+    position: absolute;
+    bottom: 0; left: 0;
+    margin: 0;
+    padding: 60px 0 0px 0;
+    width: 100%;
+    background-image: -moz-linear-gradient(top, transparent, white);
+    background-image: -webkit-gradient(linear,left top,left bottom,color-stop(0, transparent),color-stop(1, white));
+}
+div.readmorable.enabled p.readmore,
+div.readmorable.enabled p.readless {
+    font-size: 120%;
+    text-align: right;
+}
+div.readmorable.enabled p.readmore a {
+    background-color: white;
+}
+div.readmorable.enabled.opened {
+    height: auto;
+    max-height: none;
 }
 
 /* </dtml-with> */

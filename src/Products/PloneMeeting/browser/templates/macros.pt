@@ -1016,3 +1016,23 @@ The parameter "cFolder" is the folder containing categories.</tal:comment>
         </tal:otherMeetingConfigsClonableToFields>
     </fieldset>
 </metal:otherMeetingConfigsClonable>
+
+<tal:comment replace="nothing">Macro used to manage the "Read more/Read less" links
+Need to receive element "readmore_text".</tal:comment>
+<metal:readmorable define-macro="readmorable" i18n:domain="PloneMeeting">
+ <div class="readmorable">
+   <tal:comment tal:replace="structure python: readmore_text" />
+   <p class="readmore">
+    <a href="#">
+      <span class="fa show-more"></span>
+      <span i18n:translate="read_more">Read more</span>
+    </a>
+   </p>
+   <p class="readless" style="display: none">
+    <a href="#">
+      <span class="fa show-less"></span>
+      <span i18n:translate="read_less">Read less</span>
+    </a>
+   </p>
+ </div>
+</metal:readmorable>

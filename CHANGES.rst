@@ -224,6 +224,14 @@ Changelog
   - Display `MeetingItem.pollType` field if enabled or when votes are enabled.
 
   [gbastien]
+- Fix access to annexes of inherited advice when original advice is not viewable
+  by current user (for example when item sent from MeetingConfig A to B and user
+  is power observer of MeetingConfig B, he does not have access to original
+  item/advice/annex stored in MeetingConfig A).
+  As advice full preview is not available neither, implemented a
+  `Read more/Read less` functionnality to be able to see full `comment/observations`
+  in advice popup.
+  [gbastien]
 - Use search&replace from collective.documentgenerator in migration to 4200:
 
   - Added migration helper `Migrator.updatePODTemplatesCode`;

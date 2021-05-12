@@ -964,14 +964,30 @@ class testViews(PloneMeetingTestCase):
         # not downloadable
         download_view = annex.restrictedTraverse('@@download')
         self.assertRaises(Unauthorized, download_view)
-        # link viewable item
-        item2 = self.create('MeetingItem')
-        item2.setManuallyLinkedItems([item.UID()])
+
+        # viewable when a linked item is viewable
+        # manuallyLinkedItem
+        manually_linked_item = self.create('MeetingItem')
+        manually_linked_item.setManuallyLinkedItems([item.UID()])
         infos = item.restrictedTraverse('@@categorized-childs-infos')(
             category_uid=category_uid, filters={}).strip()
         # viewable
         self.assertTrue(infos)
         # downloadable
+        self.assertTrue(download_view())
+        # predecessor
+        # remove manually linked item, no more viewable
+        self.deleteAsManager(manually_linked_item.UID())
+        infos = item.restrictedTraverse('@@categorized-childs-infos')(
+            category_uid=category_uid, filters={}).strip()
+        self.assertFalse(infos)
+        self.assertRaises(Unauthorized, download_view)
+        auto_linked_item = self.create('MeetingItem')
+        item._update_predecessor(auto_linked_item)
+        # with viewable precessor, annex is viewable
+        infos = item.restrictedTraverse('@@categorized-childs-infos')(
+            category_uid=category_uid, filters={}).strip()
+        self.assertTrue(infos)
         self.assertTrue(download_view())
 
     def test_pm_ItemMoreInfosNotViewableItemTALExpr(self):
