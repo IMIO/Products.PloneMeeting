@@ -6180,12 +6180,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def _propagateReaderAndMeetingManagerLocalRolesToSubObjects(self, cfg):
         """Propagate the 'Reader' and 'MeetingManager' local roles to
            sub objects that are blocking local roles inheritance."""
-        grp_reader_localroles = [
-            grp_id for grp_id in self.__ac_local_roles__
-            if 'Reader' in self.__ac_local_roles__[grp_id]]
-        meetingmanager_group_id = get_plone_group_id(cfg.getId(), MEETINGMANAGERS_GROUP_SUFFIX)
-        for obj in self.objectValues():
-            if getattr(obj, '__ac_local_roles_block__', False):
+        objs = [obj for obj in self.objectValues()
+                if getattr(obj, '__ac_local_roles_block__', False)]
+        if objs:
+            grp_reader_localroles = [
+                grp_id for grp_id in self.__ac_local_roles__
+                if 'Reader' in self.__ac_local_roles__[grp_id]]
+            meetingmanager_group_id = get_plone_group_id(cfg.getId(), MEETINGMANAGERS_GROUP_SUFFIX)
+            for obj in objs:
                 # clear local roles then recompute
                 # only Reader local roles are set, the Editor/Contributor
                 # local roles are set by borg.localroles
