@@ -75,9 +75,9 @@
                       </acronym>
                   </tal:inherited_advice>
                   <div class="advice_popup_label">
-                  <span tal:condition="advice/optional">(</span><b tal:content="structure advice/name"></b>
+                  <span tal:condition="advice/optional">(</span><span class="advice-name" tal:content="structure advice/name"></span>
                        <tal:showDelayLabel condition="python: advice['delay'] and advice['delay_label']">
-                            - <b tal:content="advice/delay_label"></b>
+                            - <span class="advice-label" tal:content="advice/delay_label"></span>
                        </tal:showDelayLabel><span tal:condition="advice/optional">)</span>
                   </div>
                   <div class="advice_popup_actions">
@@ -238,19 +238,17 @@
 
                     <fieldset class="advice_comment">
                          <legend i18n:translate="">Advice official comment</legend>
-                         <tal:comment tal:replace="structure python: needToCropComment and view.pm_utils.cropHTML(comment) or comment" />
-                         <p class="discreet"
-                           tal:condition="python: needToCropComment and adviceHolderIsViewable"
-                           i18n:translate="">This is an extract of the comment, access full comment if necessary...</p>
+                         <tal:comment define="readmore_text comment">
+                           <metal:readmorable use-macro='here/@@pm-macros/readmorable' />
+                         </tal:comment>
                     </fieldset>
 
                     <fieldset class="advice_observations">
                          <legend i18n:translate="">Advice observations</legend>
-                         <tal:observations tal:replace="structure python: needToCropObservations and view.pm_utils.cropHTML(observations) or observations" />
-                         <p class="discreet"
-                           tal:condition="python: needToCropObservations and adviceHolderIsViewable"
-                           i18n:translate="">This is an extract of the comment, access full comment if necessary...</p>
-                    </fieldset>
+                         <tal:observations define="readmore_text observations">
+                           <metal:readmorable use-macro='here/@@pm-macros/readmorable' />
+                         </tal:observations>
+                      </fieldset>
                     <br />
 
                 </td>
@@ -269,9 +267,7 @@
                 <td colspan="5"
                     align="right"
                     class="advice_annexes table_widget_value">
-                    <tal:defines condition="adviceHolderIsViewable">
-                        <tal:annexes replace="structure python: obj.restrictedTraverse('@@categorized-childs')()" />
-                    </tal:defines>
+                    <tal:annexes replace="structure python: obj.restrictedTraverse('@@categorized-childs')()" />
                 </td>
               </tr>
             </table>

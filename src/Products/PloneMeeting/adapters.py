@@ -53,8 +53,10 @@ from Products.PloneMeeting.MeetingConfig import SUFFIXPROFILEPREFIX
 from Products.PloneMeeting.utils import compute_item_roles_to_assign_to_suffixes
 from Products.PloneMeeting.utils import displaying_available_items
 from Products.PloneMeeting.utils import findNewValue
+from Products.PloneMeeting.utils import get_context_with_request
 from Products.PloneMeeting.utils import getCurrentMeetingObject
 from Products.PloneMeeting.utils import getHistoryTexts
+from Products.PloneMeeting.utils import get_referer_obj
 from Products.PloneMeeting.utils import reviewersFor
 from zope.annotation import IAnnotations
 from zope.i18n import translate
@@ -1687,16 +1689,33 @@ class PMCategorizedObjectAdapter(CategorizedObjectAdapter):
 
     def can_view(self):
         can_view = super(PMCategorizedObjectAdapter, self).can_view()
-        if not can_view:
+        infos = self.context.categorized_elements[self.categorized_obj.UID()]
+        class_name = self.context.__class__.__name__
+        # special management for not confidential annexes displayed on not viewable context
+        if not can_view and not infos['confidential']:
             # check if displaying annexes on a not viewable item
             # if not viewable annexes are actually displayed,
-            # check that current user has actually access to a backReferences item
-            if 'MeetingItem.annexes' in self.cfg.getItemsNotViewableVisibleFields() and \
+            # check that current user has access to a viewable linked item
+            if (class_name == 'MeetingItem' and
+                'MeetingItem.annexes' in self.cfg.getItemsNotViewableVisibleFields()) and \
                (self.context.adapted().get_predecessors(only_viewable=True) or
                     self.context.getManuallyLinkedItems(only_viewable=True)):
                 return True
+            # displaying annexes on an inheritated advice when
+            # original advice holder is not viewable
+            if class_name == 'MeetingAdvice':
+                # depending on called view, context will change :
+                # @@categorized-childs context is annex of original advice,
+                # we can get PUBLISHED object
+                # @@categorized-childs-infos or @@download context is an annex,
+                # we get current context using the referer
+                item = get_context_with_request(None)
+                if item.__class__.__name__ != 'MeetingItem':
+                    item = get_referer_obj(self.request)
+                if item.adviceIndex[self.context.advice_group]['inherited'] is True and \
+                   _checkPermission(View, item):
+                    return True
         else:
-            class_name = self.context.__class__.__name__
             # is the context a MeetingItem and privacy viewable?
             if class_name == 'MeetingItem' and \
                self.cfg.getRestrictAccessToSecretItems() and \
@@ -1704,7 +1723,6 @@ class PMCategorizedObjectAdapter(CategorizedObjectAdapter):
                 return False
 
             # bypass if not confidential
-            infos = self.context.categorized_elements[self.categorized_obj.UID()]
             if not infos['confidential']:
                 return True
 

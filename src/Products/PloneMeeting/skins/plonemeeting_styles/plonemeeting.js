@@ -866,3 +866,49 @@ function onScrollMeetingView() {
     }
   }
 }
+
+
+function initReadmore() {
+
+var $el, $up;
+
+/* first check if need to use readmorable or not, only if content > set CSS max-height + 50px */
+$("div.readmorable").each(function() {
+  $el = $(this);
+  /* get max-height defined in CSS for div.readmorable {} */
+  cssMaxHeight = parseInt(getComputedStyle(this).maxHeight);
+  this.style = "max-height: none";
+  if (this.offsetHeight > cssMaxHeight + 100) {
+    $el.addClass("enabled");
+  }
+  else {
+    $el.addClass("disabled");
+  }
+  this.style = "";
+});
+
+$("div.readmorable p.readmore").click(function() {
+
+  event.preventDefault();
+
+  $el = $(this);
+  $up  = $el.parent();
+  $up[0].classList.toggle("opened");
+  $el.hide();
+  $("p.readless", $up).show();
+
+  return false;
+});
+
+$("div.readmorable p.readless").click(function() {
+
+  event.preventDefault();
+  $el = $(this);
+  $up = $el.parent();
+  $up[0].classList.toggle("opened");
+  $el.hide();
+  $("p.readmore", $up).show();
+
+  return false;
+});
+}
