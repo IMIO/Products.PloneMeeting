@@ -4882,6 +4882,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 translate("labels_column", domain=d, context=self.REQUEST))),
             ("static_item_reference", u"{0} (static_item_reference)".format(
                 translate("item_reference_column", domain=d, context=self.REQUEST))),
+            ("static_marginalNotes", u"{0} (static_marginalNotes)".format(
+                translate("marginal_notes_column", domain=d, context=self.REQUEST))),
             ("static_budget_infos", u"{0} (static_budget_infos)".format(
                 translate("budget_infos_column", domain=d, context=self.REQUEST))),
             ("Creator", u"{0} (Creator)".format(

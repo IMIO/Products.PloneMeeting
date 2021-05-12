@@ -245,6 +245,10 @@ Changelog
 - Let add a new `held_position` directly from the dashboard displaying persons
   (display the `Add content` action in icons actions panel for `person`).
   [gbastien]
+- Added `marginalNotes_column` to `MeetingConfig.listItemRelatedColumns` to be
+  able to display the `MeetingItem.marginalNotes` field as static info
+  (always visible in Title column) in the dashboards.
+  [gbastien]
 
 4.2b11 (2021-01-19)
 -------------------
