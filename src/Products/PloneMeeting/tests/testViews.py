@@ -1625,12 +1625,11 @@ class testViews(PloneMeetingTestCase):
         self.assertFalse(powerobservers in item2.__ac_local_roles__)
         self.assertTrue(powerobservers in item3.__ac_local_roles__)
 
-        # not available on meeting
+        # only available for IMeetingItemDashboardBatchActionsMarker, not available on meeting
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
         self.changeUser('siteadmin')
-        form = meeting.restrictedTraverse('@@update-local-roles-batch-action')
-        self.assertFalse(form.available())
+        self.assertRaises(AttributeError, meeting.restrictedTraverse, '@@update-local-roles-batch-action')
 
     def test_pm_ftw_labels_viewlet_available(self):
         """Only available on items if enabled in MeetingConfig."""

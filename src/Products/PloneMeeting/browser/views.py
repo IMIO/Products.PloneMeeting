@@ -2033,9 +2033,8 @@ class UpdateLocalRolesBatchActionForm(BaseBatchActionForm):
         self.cfg = self.tool.getMeetingConfig(context)
 
     def available(self):
-        """Hide it on meetings as it uses IMeetingBatchActionsMarker."""
-        return _checkPermission(ManagePortal, self.context) and \
-            not IMeeting.providedBy(self.context)
+        """Only available to Managers."""
+        return _checkPermission(ManagePortal, self.context)
 
     def _apply(self, **data):
         """ """
