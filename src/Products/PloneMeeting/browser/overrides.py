@@ -24,6 +24,7 @@ from collective.iconifiedcategory.browser.actionview import ConfidentialChangeVi
 from collective.iconifiedcategory.browser.actionview import PublishableChangeView
 from collective.iconifiedcategory.browser.actionview import SignedChangeView
 from collective.iconifiedcategory.browser.actionview import ToPrintChangeView
+from collective.iconifiedcategory.browser.tabview import CategorizedTable
 from collective.iconifiedcategory.browser.tabview import CategorizedTabView
 from collective.iconifiedcategory.browser.views import CategorizedChildInfosView
 from collective.iconifiedcategory.browser.views import CategorizedChildView
@@ -1208,6 +1209,17 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
         plone_utils = api.portal.get_tool('plone_utils')
         plone_utils.addPortalMessage(msg)
         return self.request.RESPONSE.redirect(self.request['HTTP_REFERER'])
+
+
+class CategorizedAnnexesTable(CategorizedTable):
+    """ """
+
+    def initColumns(self):
+        """ """
+        super(CategorizedAnnexesTable, self).initColumns()
+        if self.portal_type == 'annexDecision':
+            column = self.columns[-1]
+            column.name = "select_item_annex_decision"
 
 
 class CategorizedAnnexesView(CategorizedTabView):

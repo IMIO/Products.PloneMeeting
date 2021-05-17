@@ -2052,6 +2052,7 @@ class DownloadAnnexesBatchActionForm(BaseBatchActionForm):
 
     label = _CEBA("Download annexes")
     button_with_icon = False
+    section = "annexes"
 
     def __init__(self, context, request):
         super(DownloadAnnexesBatchActionForm, self).__init__(context, request)

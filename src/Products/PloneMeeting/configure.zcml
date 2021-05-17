@@ -349,6 +349,7 @@
     <implements interface="collective.quickupload.interfaces.IQuickUploadCapable" />
     <implements interface="plone.app.contenttypes.interfaces.ICollection" />
     <implements interface="Products.PloneMeeting.interfaces.IMeetingBatchActionsMarker" />
+    <implements interface="Products.PloneMeeting.interfaces.IMeetingContentBatchActionsMarker" />
   </class>
   <!-- makes the MeetingItem implements IFinderUploadCapable and IQuickUploadCapable
       so user may upload Images into it thru plonefinder -->
@@ -356,12 +357,15 @@
     <implements interface="collective.plonefinder.browser.interfaces.IFinderUploadCapable" />
     <implements interface="collective.quickupload.interfaces.IQuickUploadCapable" />
     <implements interface="Products.PloneMeeting.interfaces.IMeetingItemBatchActionsMarker" />
+    <implements interface="Products.PloneMeeting.interfaces.IMeetingContentBatchActionsMarker" />
   </class>
   <!-- makes the meetingadvice implements IFinderUploadCapable and IQuickUploadCapable
       so user may upload Images into it thru plonefinder -->
   <class class="Products.PloneMeeting.content.advice.MeetingAdvice">
     <implements interface="collective.plonefinder.browser.interfaces.IFinderUploadCapable" />
     <implements interface="collective.quickupload.interfaces.IQuickUploadCapable" />
+    <implements interface="Products.PloneMeeting.interfaces.IMeetingAdviceBatchActionsMarker" />
+    <implements interface="Products.PloneMeeting.interfaces.IMeetingContentBatchActionsMarker" />
   </class>
   <!-- makes the annex ContentCategory and ContentSubcategory added in the configuration
        act like elements of the configuration... -->

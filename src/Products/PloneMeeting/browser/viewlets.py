@@ -51,6 +51,9 @@ class PMMeetingBatchActionsViewlet(BatchActionsViewlet):
 
 class AnnexesBatchActionsViewlet(BatchActionsViewlet):
     """ """
+
+    section = "annexes"
+
     def available(self):
         """ """
         return True

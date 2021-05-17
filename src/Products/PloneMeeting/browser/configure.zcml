@@ -287,7 +287,7 @@
         permission="zope2.View" />
     <!-- Batch actions MeetingItem -->
     <browser:page
-        for="Products.PloneMeeting.interfaces.IMeetingItemBatchActionsMarker"
+        for="Products.PloneMeeting.interfaces.IMeetingContentBatchActionsMarker"
         name="download-annexes-batch-action"
         class=".views.DownloadAnnexesBatchActionForm"
         permission="zope2.View" />
@@ -1059,12 +1059,18 @@
           layer="collective.iconifiedcategory.interfaces.ICollectiveIconifiedCategoryLayer"
           class="Products.PloneMeeting.browser.overrides.PMToPrintChangeView"
           permission="zope2.View" />
+        <browser:view
+          for="Products.PloneMeeting.interfaces.IMeetingContent"
+          name="iconifiedcategory_table"
+          layer="collective.iconifiedcategory.interfaces.ICollectiveIconifiedCategoryLayer"
+          class="Products.PloneMeeting.browser.overrides.CategorizedAnnexesTable"
+          permission="zope2.View" />
     </configure>
 
     <!-- batchactions viewlet for categorized elements (annexes) -->
     <browser:viewlet
         name="collective.iconifiedcategory.belowcategorizedelements"
-        for="Products.PloneMeeting.interfaces.IMeetingItemBatchActionsMarker"
+        for="Products.PloneMeeting.interfaces.IMeetingContent"
         manager="collective.iconifiedcategory.interfaces.IBelowCategorizedElementsManager"
         class=".viewlets.AnnexesBatchActionsViewlet"
         permission="zope2.View" />
