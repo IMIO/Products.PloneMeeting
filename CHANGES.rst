@@ -221,7 +221,12 @@ Changelog
     or it was necessary for now to compute it mentally...;
   - Fixed bug in `@@display-meeting-item-voters` considering secret linked
     votes as not complete when using more than 2 linked votes;
-  - Display `MeetingItem.pollType` field if enabled or when votes are enabled.
+  - Display `MeetingItem.pollType` field if enabled or when votes are enabled;
+  - Added validation for `MeetingConfig.defaultPollType`
+    (must be among MeetingConfig.usedPollTypes);
+  - Added validation for `MeetingConfig.firstLinkedVoteUsedVoteValues` and
+    `MeetingConfig.nextLinkedVotesUsedVoteValues`
+    (must be among `MeetingConfig.usedVoteValues`).
 
   [gbastien]
 - Fix access to annexes of inherited advice when original advice is not viewable
