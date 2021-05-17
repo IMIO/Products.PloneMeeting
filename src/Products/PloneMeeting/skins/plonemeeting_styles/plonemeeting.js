@@ -303,6 +303,8 @@ function askAjaxChunk(hook, mode, url, page, macro, params, beforeSend, onGet) {
       else if (window.ActiveXObject) { rq.xhr.send(); }
     }
   }
+  // show actions_panel viewlet
+  $("div#viewlet-below-content-body").show();
 }
 
 function askObjectHistory(hookId, objectUrl, maxPerPage, startNumber) {
@@ -412,6 +414,8 @@ function initRichTextField(rq, hook) {
   // enable UnlockHandler so element is correctly unlocked
   // if user choose to lost the changes in formUnload
   plone.UnlockHandler.init();
+  // hide the actions_panel viewlet
+  $("div#viewlet-below-content-body").hide();
 }
 
 function getRichTextContent(rq, params) {
@@ -629,7 +633,7 @@ function init_tooltipsters(event) {
 $(document).on('ckeditor_prepare_ajax_success', init_ckeditor);
 
 function init_ckeditor(event) {
-  initRichTextField(rq=null, hook=event['tag']);
+  initRichTextField(rq=null, hook=event.tag);
 }
 
 function saveCKeditor(field_name, base_url, async=true) {
@@ -660,6 +664,8 @@ function exitCKeditor(field_name, base_url) {
     tool.removeForms.apply(tool, $(document).find('form').get());
     tool.submitting = true;
   }
+  // show the actions_panel viewlet
+  $("div#viewlet-below-content-body").show();
 }
 
 function cancelCKeditor(field_name, base_url) {
@@ -865,4 +871,50 @@ function onScrollMeetingView() {
       }
     }
   }
+}
+
+
+function initReadmore() {
+
+var $el, $up;
+
+/* first check if need to use readmorable or not, only if content > set CSS max-height + 50px */
+$("div.readmorable").each(function() {
+  $el = $(this);
+  /* get max-height defined in CSS for div.readmorable {} */
+  cssMaxHeight = parseInt(getComputedStyle(this).maxHeight);
+  this.style = "max-height: none";
+  if (this.offsetHeight > cssMaxHeight + 100) {
+    $el.addClass("enabled");
+  }
+  else {
+    $el.addClass("disabled");
+  }
+  this.style = "";
+});
+
+$("div.readmorable p.readmore").click(function() {
+
+  event.preventDefault();
+
+  $el = $(this);
+  $up  = $el.parent();
+  $up[0].classList.toggle("opened");
+  $el.hide();
+  $("p.readless", $up).show();
+
+  return false;
+});
+
+$("div.readmorable p.readless").click(function() {
+
+  event.preventDefault();
+  $el = $(this);
+  $up = $el.parent();
+  $up[0].classList.toggle("opened");
+  $el.hide();
+  $("p.readmore", $up).show();
+
+  return false;
+});
 }

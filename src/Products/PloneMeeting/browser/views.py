@@ -114,7 +114,7 @@ class ItemMoreInfosView(BrowserView):
             extra_expr_ctx.update({'cfg': currentCfg})
             extra_expr_ctx.update({'item_cfg': self.cfg})
             res = _evaluateExpression(self.context,
-                                      expression=currentCfg.getItemsNotViewableVisibleFieldsTALExpr(),
+                                      expression=self.cfg.getItemsNotViewableVisibleFieldsTALExpr(),
                                       roles_bypassing_expression=[],
                                       extra_expr_ctx=extra_expr_ctx)
             if res:
@@ -2220,13 +2220,14 @@ class DisplayMeetingItemVoters(BrowserView):
                     i = vote_number
                     linked_numbers = _get_linked_item_vote_numbers(
                         item, self.context, vote_number=vote_number)
+                    # aggregate linked votes to original one
                     if linked_numbers:
-                        i = linked_numbers[0]
+                        i = min(linked_numbers)
                     if i not in data:
                         data[i] = 0
                     vote_count = item.getVoteCount('any_voted', vote_number=vote_number)
                     data[i] += vote_count
-                # now if we have a element in res < total_voters, we miss some votes
+                # now if we have an element in res < total_voters, we miss some votes
                 for count in data.values():
                     if count < total_voters:
                         res['secret'].append(item)

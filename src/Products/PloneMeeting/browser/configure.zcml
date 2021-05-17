@@ -1024,7 +1024,7 @@
         <browser:page
             for="Products.PloneMeeting.interfaces.IMeetingContent"
             name="categorized-childs"
-            permission="zope2.View"
+            permission="zope2.Public"
             class="Products.PloneMeeting.browser.overrides.PMCategorizedChildView"
             layer="collective.iconifiedcategory.interfaces.ICollectiveIconifiedCategoryLayer"
             template="browser/templates/categorized-childs.pt" />

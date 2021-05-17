@@ -92,6 +92,7 @@ from Products.PloneMeeting.interfaces import IMeetingItemWorkflowConditions
 from Products.PloneMeeting.model.adaptations import RETURN_TO_PROPOSING_GROUP_MAPPINGS
 from Products.PloneMeeting.utils import _addManagedPermissions
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
+from Products.PloneMeeting.utils import _clear_local_roles
 from Products.PloneMeeting.utils import _storedItemNumber_to_itemNumber
 from Products.PloneMeeting.utils import add_wf_history_action
 from Products.PloneMeeting.utils import addDataChange
@@ -1553,7 +1554,7 @@ schema = Schema((
     StringField(
         name='pollType',
         widget=SelectionWidget(
-            condition="python: here.attributeIsUsed('pollType')",
+            condition="python: here.attributeIsUsed('pollType') or here.isVotesEnabled()",
             label='Polltype',
             label_msgid='PloneMeeting_label_pollType',
             i18n_domain='PloneMeeting',
@@ -3514,11 +3515,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if (not res and fromOrgIfEmpty) or \
            (includeAuto and cfg.getIncludeGroupsInChargeDefinedOnProposingGroup()):
             proposingGroup = self.getProposingGroup(theObject=True)
-            org_groups_in_charge = [
-                gic_uid for gic_uid in proposingGroup.get_groups_in_charge()
-                if gic_uid not in res]
-            if org_groups_in_charge:
-                res += list(org_groups_in_charge)
+            # maybe an item template defined in the MeetingConfig?
+            if proposingGroup:
+                org_groups_in_charge = [
+                    gic_uid for gic_uid in proposingGroup.get_groups_in_charge()
+                    if gic_uid not in res]
+                if org_groups_in_charge:
+                    res += list(org_groups_in_charge)
 
         if (not res and fromCatIfEmpty) or \
            (includeAuto and cfg.getIncludeGroupsInChargeDefinedOnCategory()):
@@ -3833,7 +3836,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def getItemSignatures(self,
                           real=False,
                           for_display=False,
-                          striked=True,
+                          striked=False,
                           mark_empty_tags=False,
                           **kwargs):
         '''Gets the signatures for this item. If no signature is defined,
@@ -5113,9 +5116,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                         translate('This copy group was set automatically by the application',
                                   domain='PloneMeeting',
                                   context=self.REQUEST))),
-                u"<acronym><a onclick='event.preventDefault()' class='tooltipster-group-users deactivated' "
+                u"<acronym><a onclick='event.preventDefault()' "
+                u"class='tooltipster-group-users deactivated' "
                 u"style='display: inline-block; padding: 0'"
-                u"href='#' data-group_ids:json='\"{0}\"' data-base_url='{1}'><img src='{1}/group_users.png' /></a></acronym>"
+                u"href='#' data-group_ids:json='\"{0}\"' data-base_url='{1}'>"
+                u"<img src='{1}/group_users.png' /></a></acronym>"
                 .format(real_group_id, portal_url)))
         return u', '.join(res)
 
@@ -6114,10 +6119,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            - categorized elements (especially 'visible_for_groups');
            - then call a subscriber 'after local roles updated'.'''
         # remove every localRoles then recompute
-        old_local_roles = self.__ac_local_roles__.copy()
-        self.__ac_local_roles__.clear()
-        # add 'Owner' local role
-        self.manage_addLocalRoles(self.owner_info()['id'], ('Owner',))
+        old_local_roles = _clear_local_roles(self)
 
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
@@ -6178,12 +6180,18 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def _propagateReaderAndMeetingManagerLocalRolesToSubObjects(self, cfg):
         """Propagate the 'Reader' and 'MeetingManager' local roles to
            sub objects that are blocking local roles inheritance."""
-        grp_reader_localroles = [
-            grp_id for grp_id in self.__ac_local_roles__
-            if 'Reader' in self.__ac_local_roles__[grp_id]]
-        meetingmanager_group_id = get_plone_group_id(cfg.getId(), MEETINGMANAGERS_GROUP_SUFFIX)
-        for obj in self.objectValues():
-            if getattr(obj, '__ac_local_roles_block__', False):
+        objs = [obj for obj in self.objectValues()
+                if getattr(obj, '__ac_local_roles_block__', False)]
+        if objs:
+            grp_reader_localroles = [
+                grp_id for grp_id in self.__ac_local_roles__
+                if 'Reader' in self.__ac_local_roles__[grp_id]]
+            meetingmanager_group_id = get_plone_group_id(cfg.getId(), MEETINGMANAGERS_GROUP_SUFFIX)
+            for obj in objs:
+                # clear local roles then recompute
+                # only Reader local roles are set, the Editor/Contributor
+                # local roles are set by borg.localroles
+                _clear_local_roles(obj)
                 for grp_id in grp_reader_localroles:
                     obj.manage_addLocalRoles(grp_id, ['Reader'])
                 obj.manage_addLocalRoles(meetingmanager_group_id, ['MeetingManager'])

@@ -277,6 +277,7 @@ function initializeAdvicePopup(){
     contentHistory();
     // overlay for remove inherited advice
     pmCommonOverlays(selector_prefix='div.advice_infos_tooltipster ');
+    initReadmore();
 }
 
 function overOverlays(){

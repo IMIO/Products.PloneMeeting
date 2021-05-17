@@ -11,12 +11,11 @@ from Products.CMFCore.utils import _checkPermission
 from Products.Five import BrowserView
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from Products.PloneMeeting.browser.meeting import BaseMeetingView
+from Products.PloneMeeting.browser.itemvotes import _get_linked_item_vote_numbers
 from Products.PloneMeeting.config import NOT_VOTABLE_LINKED_TO_VALUE
 from Products.PloneMeeting.config import WriteBudgetInfos
 from Products.PloneMeeting.content.meeting import get_all_used_held_positions
-from Products.PloneMeeting.utils import display_as_html
 from Products.PloneMeeting.utils import sendMailIfRelevant
-from Products.PloneMeeting.utils import toHTMLStrikedContent
 from zope.i18n import translate
 
 
@@ -347,13 +346,39 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
             res = [u'<span title="{0}">{1}</span>'.format(
                 number_of_votes_msg,
                 total_votes)]
+            formated_total_votes = total_votes
+            pattern = u'<span class="vote_value_{0}" title="{1}">{2}</span>'
+
             # specify how much voted for this vote if secret
             if self.votesAreSecret:
                 voted = self.context.getVoteCount('any_voted', vote_number)
-                total_votes = "{0} / {1}".format(voted, total_votes)
-            sub_counts.append((number_of_votes_msg, total_votes, 'vote_value_number_of_voters'))
+                formated_total_votes = "{0} / {1}".format(voted, total_votes)
+            sub_counts.append((number_of_votes_msg,
+                               formated_total_votes,
+                               'vote_value_number_of_voters'))
 
-            pattern = u'<span class="vote_value_{0}" title="{1}">{2}</span>'
+            # compute votes not encoded for first secret vote
+            # taking into account linked votes
+            if self.votesAreSecret:
+                linked_vote_numbers = _get_linked_item_vote_numbers(
+                    self.context, self.meeting, vote_number)
+                if not linked_vote_numbers or vote_number == min(linked_vote_numbers):
+                    total_voted = 0
+                    for linked_vote_number in linked_vote_numbers:
+                        total_voted += self.context.getVoteCount('any_voted', linked_vote_number)
+                    translated_used_vote_value = translate(
+                        'vote_value_not_yet',
+                        domain='PloneMeeting',
+                        context=self.request)
+                    count = total_votes - total_voted
+                    res.append(pattern.format(
+                        "not_yet",
+                        translated_used_vote_value,
+                        count))
+                    sub_counts.append((translated_used_vote_value,
+                                       count,
+                                       'vote_value_not_yet'))
+
             used_vote_terms = get_vocab(
                 self.context,
                 "Products.PloneMeeting.vocabularies.usedvotevaluesvocabulary",
@@ -525,15 +550,6 @@ class AsyncLoadMeetingAssemblyAndSignatures(BrowserView, BaseMeetingView):
         view = self.context.restrictedTraverse('@@view')
         view.update()
         self.meeting_view = view
-
-    def display_striked_assembly(self):
-        """ """
-        return toHTMLStrikedContent(self.context.assembly.output)
-
-    def display_signatures(self):
-        """Display signatures as HTML, make sure lines added at end
-           of signatures are displayed on screen correctly."""
-        return display_as_html(self.context.signatures.output, self.context)
 
     @ram.cache(__call___cachekey)
     def __call__(self):

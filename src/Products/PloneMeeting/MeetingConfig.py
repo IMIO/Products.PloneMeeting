@@ -3787,6 +3787,36 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                      mapping={'hp_title': hp.get_short_title()},
                      default="Error used values is not selectable, check \"${hp_title}\"")
 
+    security.declarePrivate('validate_defaultPollType')
+
+    def validate_defaultPollType(self, value):
+        '''Validate the defaultPollType field.
+           Selected value must be among MeetingConfig.usedPollTypes.'''
+        usedPollTypes = self.REQUEST.get(
+            'usedPollTypes', self.getUsedPollTypes())
+        if value not in usedPollTypes:
+            return _('error_default_poll_type_must_be_among_used_poll_types')
+
+    security.declarePrivate('validate_firstLinkedVoteUsedVoteValues')
+
+    def validate_firstLinkedVoteUsedVoteValues(self, values):
+        '''Validate the firstLinkedVoteUsedVoteValues field.
+           Selected values must be among MeetingConfig.usedVoteValues.'''
+        usedVoteValues = self.REQUEST.get(
+            'usedVoteValues', self.getUsedVoteValues())
+        if set(values).difference(usedVoteValues):
+            return _('error_first_linked_vote_used_vote_values_must_be_among_used_vote_value')
+
+    security.declarePrivate('validate_nextLinkedVotesUsedVoteValues')
+
+    def validate_nextLinkedVotesUsedVoteValues(self, values):
+        '''Validate the nextLinkedVotesUsedVoteValues field.
+           Selected values must be among MeetingConfig.usedVoteValues.'''
+        usedVoteValues = self.REQUEST.get(
+            'usedVoteValues', self.getUsedVoteValues())
+        if set(values).difference(usedVoteValues):
+            return _('error_next_linked_votes_used_vote_values_must_be_among_used_vote_value')
+
     security.declarePrivate('validate_transitionsForPresentingAnItem')
 
     def validate_transitionsForPresentingAnItem(self, values):
@@ -4882,6 +4912,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 translate("labels_column", domain=d, context=self.REQUEST))),
             ("static_item_reference", u"{0} (static_item_reference)".format(
                 translate("item_reference_column", domain=d, context=self.REQUEST))),
+            ("static_marginalNotes", u"{0} (static_marginalNotes)".format(
+                translate("marginal_notes_column", domain=d, context=self.REQUEST))),
             ("static_budget_infos", u"{0} (static_budget_infos)".format(
                 translate("budget_infos_column", domain=d, context=self.REQUEST))),
             ("Creator", u"{0} (Creator)".format(
@@ -4994,7 +5026,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                   ignored_field_ids=self.adapted()._ignoredVisibleFieldIds(),
                                   hide_not_visible=True)
         res.insert(0, ('MeetingItem.annexes',
-                       translate('existing_annexes',
+                       translate('not_confidential_annexes',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)))
         # not viewable advices can not be displayed for now
@@ -5040,9 +5072,27 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             ("static_end_date",
                 u"{0} (static_end_date)".format(
                     translate('end_date_column', domain=d, context=self.REQUEST))),
+            ("static_convocation_date",
+                u"{0} (static_convocation_date)".format(
+                    translate('convocation_date_column', domain=d, context=self.REQUEST))),
+            ("static_approval_date",
+                u"{0} (static_approval_date)".format(
+                    translate('approval_date_column', domain=d, context=self.REQUEST))),
             ("static_place",
                 u"{0} (static_place)".format(
                     translate('place_column', domain=d, context=self.REQUEST))),
+            ("static_place_other",
+                u"{0} (static_place_other)".format(
+                    translate('place_other_column', domain=d, context=self.REQUEST))),
+            ("static_authority_notice",
+                u"{0} (static_authority_notice)".format(
+                    translate('authority_notice_column', domain=d, context=self.REQUEST))),
+            ("static_meeting_number",
+                u"{0} (static_meeting_number)".format(
+                    translate('meeting_number_column', domain=d, context=self.REQUEST))),
+            ("static_first_item_number",
+                u"{0} (static_first_item_number)".format(
+                    translate('first_item_number_column', domain=d, context=self.REQUEST))),
             ("Creator",
                 u"{0} (Creator)".format(
                     translate('header_Creator', domain=d, context=self.REQUEST))),

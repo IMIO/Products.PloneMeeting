@@ -2189,6 +2189,12 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.failIf(cfg.validate_committees([cfg_committees[1]]))
         # fails when used together
         self.failUnless(cfg_committees)
+        # adding new values
+        cfg.setCommittees([])
+        cfg_committees[0]['row_id'] = ''
+        cfg_committees[1]['row_id'] = ''
+        cfg_committees[0]['using_groups'] = []
+        cfg.validate_committees(cfg_committees)
 
     def test_pm_Validate_committees_orderedCommitteeContacts(self):
         """If a value in default_attendees/default_signatories is removed
@@ -2208,6 +2214,56 @@ class testMeetingConfig(PloneMeetingTestCase):
         # except if no more used
         cfg_committees[0]['default_attendees'] = []
         self.failIf(cfg.validate_committees(cfg_committees))
+
+    def test_pm_Validate_defaultPollType(self):
+        """Test the MeetingConfig.defaultPollType validator,
+           selected defaultPollType must be among MeetingConfig.usedPollTypes."""
+        cfg = self.meetingConfig
+        self.changeUser('siteadmin')
+        self.assertEqual(cfg.getUsedPollTypes(),
+                         ('freehand', 'no_vote', 'secret', 'secret_separated'))
+        self.failIf(cfg.validate_defaultPollType('secret_separated'))
+        self.assertEqual(cfg.validate_defaultPollType('out_loud'),
+                         u'error_default_poll_type_must_be_among_used_poll_types')
+        # case we are removing 'secret_separated' when editing MeetingConfig
+        self.request.set("usedPollTypes", ('freehand', 'no_vote', 'secret', ))
+        self.failIf(cfg.validate_defaultPollType('freehand'))
+        self.assertEqual(cfg.validate_defaultPollType('secret_separated'),
+                         u'error_default_poll_type_must_be_among_used_poll_types')
+
+    def test_pm_Validate_firstLinkedVoteUsedVoteValues(self):
+        """Test the MeetingConfig.firstLinkedVoteUsedVoteValues validator,
+           selected values must be among MeetingConfig.usedVoteValues."""
+        cfg = self.meetingConfig
+        self.changeUser('siteadmin')
+        self.assertEqual(cfg.getUsedVoteValues(), ('yes', 'no', 'abstain'))
+        self.failIf(cfg.validate_firstLinkedVoteUsedVoteValues(('no', 'abstain')))
+        self.assertEqual(
+            cfg.validate_firstLinkedVoteUsedVoteValues(('does_not_vote', )),
+            u'error_first_linked_vote_used_vote_values_must_be_among_used_vote_value')
+        # case we are removing 'abstain' when editing MeetingConfig
+        self.request.set("usedVoteValues", ('yes', 'no'))
+        self.failIf(cfg.validate_firstLinkedVoteUsedVoteValues(('no', )))
+        self.assertEqual(
+            cfg.validate_firstLinkedVoteUsedVoteValues(('no', 'abstain')),
+            u'error_first_linked_vote_used_vote_values_must_be_among_used_vote_value')
+
+    def test_pm_Validate_nextLinkedVotesUsedVoteValues(self):
+        """Test the MeetingConfig.nexttLinkedVotesUsedVoteValues validator,
+           selected values must be among MeetingConfig.usedVoteValues."""
+        cfg = self.meetingConfig
+        self.changeUser('siteadmin')
+        self.assertEqual(cfg.getUsedVoteValues(), ('yes', 'no', 'abstain'))
+        self.failIf(cfg.validate_nextLinkedVotesUsedVoteValues(('yes', )))
+        self.assertEqual(
+            cfg.validate_nextLinkedVotesUsedVoteValues(('does_not_vote', 'yes', )),
+            u'error_next_linked_votes_used_vote_values_must_be_among_used_vote_value')
+        # case we are removing 'abstain' when editing MeetingConfig
+        self.request.set("usedVoteValues", ('yes', 'no'))
+        self.failIf(cfg.validate_nextLinkedVotesUsedVoteValues(('yes', )))
+        self.assertEqual(
+            cfg.validate_nextLinkedVotesUsedVoteValues(('yes', 'abstain')),
+            u'error_next_linked_votes_used_vote_values_must_be_among_used_vote_value')
 
     def test_pm_ConfigEditAndView(self):
         """Just call the edit and view to check it is displayed correctly."""

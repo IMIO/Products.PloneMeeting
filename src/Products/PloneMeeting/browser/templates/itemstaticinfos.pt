@@ -33,7 +33,7 @@
         </span>
       </tal:display>
     </tal:budget>
-    <tal:other condition="python: field_name not in ('labels', 'item_reference', 'budget_infos')">
+    <tal:other condition="python: field_name not in ('labels', 'item_reference', 'budget_infos') and not context.fieldIsEmpty(field_name)">
       <span tal:define="field python: context.getField(field_name);
                         mode string:view;">
         <span metal:use-macro="context/widgets/field/macros/view" />

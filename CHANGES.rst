@@ -76,10 +76,12 @@ Changelog
     the `MeetingItem`, `getPreferredMeetingDate/preferred_meeting_date`,
     `getPreferredMeeting/preferred_meeting_uid`;
   - Display global action on the meeting_view (collapse all/top/bottom);
-  - Removed to `@@meeting-before-faceted-infos` and `meeting-after-faceted-infos`
+  - Removed `@@meeting-before-faceted-infos` and `@@meeting-after-faceted-infos`
     that are no more necessary now that the meeting view template should never
     by overrided anymore, everything is done using the schema and fieldsets
-    definition.
+    definition;
+  - Most of `Meeting` data is displayable in dashboards displaying meetings as
+    static column in the Title column.
 
     [gbastien]
 - Highlight (bold) the default item template in the itemtemplates folder.
@@ -105,7 +107,9 @@ Changelog
   - `locking` (not being able to edit if another user is editing), hide the edit
     icon if context is locked, if user edit and content is locked in between,
     the page is reloaded;
-  - `formUnload` (not losing changes during edition and clicking leaving current page).
+  - `formUnload` (not losing changes during edition and clicking leaving current page);
+  - when quick editing a RichText field, hide the `actions_panel` viewlet, on views
+    where it is sticky, it may be confusing and taken for save/cancel controls.
 
   [gbastien]
 - Added `Meeting.committees` management:
@@ -198,6 +202,59 @@ Changelog
   [gbastien]
 - Display a warning on the meeting view next to `Assembly and signatures` when
   a signatory is missing, this often leads to broken POD templates.
+  [gbastien]
+- Do not break in `MeetingItem.getGroupsInCharge` when `includeAuto=True`,
+  `MeetingConfig.includeGroupsInChargeDefinedOnProposingGroup=True` and no
+  `proposingGroup` is defined on the item, this may be the case on an item template.
+  [gbastien]
+- Fixed `SelectableCommitteesVocabulary` that was failing when adding several new
+  `MeetingConfig.committees` (in this case, terms with token '' were generated
+  and it failed with `ValueError: term values must be unique: ''`).
+  [gbastien]
+- Fixed `Meeting.place` MasterSelect widget when `MeetingConfig.places` contains
+  special characters.
+  [gbastien]
+- Change default period for faceted date widgets from
+  `-10 years/+10 years` to `-30 years/+2 years`.
+  [gbastien]
+- Minor fixes in votes :
+
+  - Display number of not encoded votes when using several linked secret votes
+    or it was necessary for now to compute it mentally...;
+  - Fixed bug in `@@display-meeting-item-voters` considering secret linked
+    votes as not complete when using more than 2 linked votes;
+  - Display `MeetingItem.pollType` field if enabled or when votes are enabled;
+  - Added validation for `MeetingConfig.defaultPollType`
+    (must be among MeetingConfig.usedPollTypes);
+  - Added validation for `MeetingConfig.firstLinkedVoteUsedVoteValues` and
+    `MeetingConfig.nextLinkedVotesUsedVoteValues`
+    (must be among `MeetingConfig.usedVoteValues`).
+
+  [gbastien]
+- Fix access to annexes of inherited advice when original advice is not viewable
+  by current user (for example when item sent from MeetingConfig A to B and user
+  is power observer of MeetingConfig B, he does not have access to original
+  item/advice/annex stored in MeetingConfig A).
+  As advice full preview is not available neither, implemented a
+  `Read more/Read less` functionnality to be able to see full `comment/observations`
+  in advice popup.
+  [gbastien]
+- Use search&replace from collective.documentgenerator in migration to 4200:
+
+  - Added migration helper `Migrator.updatePODTemplatesCode`;
+  - Added helper `MeetingItem.get_representatives_in_charge` that returns
+    representatives in charge of an item;
+  - Added `BaseDGHV.print_value` to be able to render any stored field in
+    POD templates (`datetime`, `RichText`, `List/Choice` with `vocabulary`, ...);
+  - Fixed `actions_panel` on element of the configuration.
+
+  [gbastien]
+- Let add a new `held_position` directly from the dashboard displaying persons
+  (display the `Add content` action in icons actions panel for `person`).
+  [gbastien]
+- Added `marginalNotes_column` to `MeetingConfig.listItemRelatedColumns` to be
+  able to display the `MeetingItem.marginalNotes` field as static info
+  (always visible in Title column) in the dashboards.
   [gbastien]
 
 4.2b11 (2021-01-19)

@@ -303,6 +303,10 @@ class testMeetingItem(PloneMeetingTestCase):
         item._update_after_edit()
         self.assertEqual(item.getGroupsInCharge(includeAuto=True), [self.vendors_uid])
         self.assertTrue(READER_USECASES['groupsincharge'] in item.__ac_local_roles__[self.vendors_observers])
+        # item view does not fail when no proposingGroup defined
+        # this may be the case on an item template
+        default_template = cfg.itemtemplates.get(ITEM_DEFAULT_TEMPLATE_ID)
+        self.assertTrue(default_template.restrictedTraverse('meetingitem_view')())
 
     def test_pm_GroupsInChargeFromCategory(self):
         '''Groups in charge defined on the item category is taken into
