@@ -107,7 +107,9 @@ Changelog
   - `locking` (not being able to edit if another user is editing), hide the edit
     icon if context is locked, if user edit and content is locked in between,
     the page is reloaded;
-  - `formUnload` (not losing changes during edition and clicking leaving current page).
+  - `formUnload` (not losing changes during edition and clicking leaving current page);
+  - when quick editing a RichText field, hide the `actions_panel` viewlet, on views
+    where it is sticky, it may be confusing and taken for save/cancel controls.
 
   [gbastien]
 - Added `Meeting.committees` management:

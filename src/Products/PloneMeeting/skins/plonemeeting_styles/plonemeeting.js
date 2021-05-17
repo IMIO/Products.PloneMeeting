@@ -303,6 +303,8 @@ function askAjaxChunk(hook, mode, url, page, macro, params, beforeSend, onGet) {
       else if (window.ActiveXObject) { rq.xhr.send(); }
     }
   }
+  // show actions_panel viewlet
+  $("div#viewlet-below-content-body").show();
 }
 
 function askObjectHistory(hookId, objectUrl, maxPerPage, startNumber) {
@@ -412,6 +414,8 @@ function initRichTextField(rq, hook) {
   // enable UnlockHandler so element is correctly unlocked
   // if user choose to lost the changes in formUnload
   plone.UnlockHandler.init();
+  // hide the actions_panel viewlet
+  $("div#viewlet-below-content-body").hide();
 }
 
 function getRichTextContent(rq, params) {
@@ -629,7 +633,7 @@ function init_tooltipsters(event) {
 $(document).on('ckeditor_prepare_ajax_success', init_ckeditor);
 
 function init_ckeditor(event) {
-  initRichTextField(rq=null, hook=event['tag']);
+  initRichTextField(rq=null, hook=event.tag);
 }
 
 function saveCKeditor(field_name, base_url, async=true) {
@@ -660,6 +664,8 @@ function exitCKeditor(field_name, base_url) {
     tool.removeForms.apply(tool, $(document).find('form').get());
     tool.submitting = true;
   }
+  // show the actions_panel viewlet
+  $("div#viewlet-below-content-body").show();
 }
 
 function cancelCKeditor(field_name, base_url) {
