@@ -55,6 +55,16 @@ class AnnexesBatchActionsViewlet(BatchActionsViewlet):
         """ """
         return True
 
+    @property
+    def select_item_name(self):
+        """ """
+        value = None
+        if self.request.get('categorized_tab').portal_type == 'annexDecision':
+            value = "select_item_annex_decision"
+        else:
+            value = super(AnnexesBatchActionsViewlet, self).select_item_name
+        return value
+
 
 class HeldPositionBackRefs(ViewletBase):
     """Display elements using held_position."""

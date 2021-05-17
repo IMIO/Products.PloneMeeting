@@ -36,6 +36,7 @@
         <div class="content" tal:content="structure python: view.table_render(portal_type='annex')"></div>
 
         <div id="viewlet-below-categorized-elements"
+             tal:define="dummy python: context.REQUEST.set('categorized_tab', view)"
              tal:content="structure provider:collective.iconifiedcategory.belowcategorizedelements" />
 
         <div id="preview_annexes" tal:condition="python: view.tool.hasAnnexes(context, portal_type='annex')">
@@ -69,6 +70,7 @@
         <div class="content" tal:content="structure python: view.table_render(portal_type='annexDecision')"></div>
 
         <div id="viewlet-below-categorized-elements"
+             tal:define="dummy python: context.REQUEST.set('categorized_tab', view)"
              tal:content="structure provider:collective.iconifiedcategory.belowcategorizedelements" />
 
         <div id="preview_annexes" tal:condition="python: view.tool.hasAnnexes(context, portal_type='annexDecision')">
