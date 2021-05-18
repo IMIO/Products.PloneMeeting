@@ -1679,6 +1679,7 @@ class testMeetingType(PloneMeetingTestCase):
            depending on categories."""
         self.changeUser('pmManager')
         cfg = self.meetingConfig
+        self._removeConfigObjectsFor(cfg, folders=['itemtemplates'])
         cfg.setUseGroupsAsCategories(False)
         cfg.setInsertingMethodsOnAddItem(
             ({'insertingMethod': 'on_categories',

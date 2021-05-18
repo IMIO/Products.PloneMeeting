@@ -3614,7 +3614,7 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg = self.meetingConfig
         cfg.setUseGroupsAsCategories(False)
         # create categories
-        self._removeConfigObjectsFor(cfg, folders=['categories'])
+        self._removeConfigObjectsFor(cfg, folders=['itemtemplates', 'categories'])
         data = {'cat2': '2. Category',
                 'cat21': '2.1 Category',
                 'cat22': '2.2 Category',
