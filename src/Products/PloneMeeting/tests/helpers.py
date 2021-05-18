@@ -287,7 +287,7 @@ class PloneMeetingTestingHelpers:
                 if (tr.startswith('back') or useDefinedWfPath) and tr in self.transitions(itemOrMeeting):
                     self.do(itemOrMeeting, tr)
                     break
-        if nb_attempts >= max_attempts:
+        if nb_attempts >= max_attempts or state != itemOrMeeting.queryState():
             raise ValueError('impossible to go back to {}'.format(state))
         if as_manager:
             self.changeUser(currentUser)
