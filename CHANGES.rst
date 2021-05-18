@@ -256,6 +256,11 @@ Changelog
   able to display the `MeetingItem.marginalNotes` field as static info
   (always visible in Title column) in the dashboards.
   [gbastien]
+- Fixed `MeetingItem._check_required_data` to check that `MeetingItem.groupsInCharge`
+  is set when using `MeetingItem.proposingGroupWithGroupInCharge`.
+  It may happen that `MeetingItem.proposingGroup` is set but not
+  `MeetingItem.groupsInCharge` when item is created using a WS call.
+  [gbastien]
 
 4.2b11 (2021-01-19)
 -------------------

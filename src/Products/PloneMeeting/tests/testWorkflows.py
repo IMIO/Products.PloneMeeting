@@ -808,7 +808,7 @@ class testWorkflows(PloneMeetingTestCase):
         # but not other fields
         self.assertFalse(obsField.writeable(item))
 
-    def test_pm_RequiredDataToPresentItem(self):
+    def test_pm_RequiredDataToPresentItemCategoryOrGroupsInCharge(self):
         """When MeetingItem.category or MeetingItem.groupsInCharge is used,
            it is required to present an item."""
         cfg = self.meetingConfig
@@ -829,6 +829,32 @@ class testWorkflows(PloneMeetingTestCase):
         self.assertFalse('present' in self.transitions(item))
         item.setCategory('development')
         self.assertTrue('present' in self.transitions(item))
+
+    def test_pm_RequiredDataToPresentItemClassifier(self):
+        """When used, classifier must be set on an item so it may be presented."""
+        self.developers.groups_in_charge = (self.vendors_uid, )
+        self._enableField("classifier")
+        self.changeUser('pmManager')
+        self.create('Meeting')
+        item = self.create('MeetingItem')
+        self.validateItem(item)
+        self.assertEqual(item.wfConditions().mayPresent().msg, u'required_classifier_ko')
+        item.setClassifier('classifier1')
+        self.assertTrue(item.wfConditions().mayPresent())
+
+    def test_pm_RequiredDataToPresentItemProposingGroupWithGroupInCharge(self):
+        """When using proposingGroupWithGroupInCharge, groupsInCharge
+           must be set on an item so it may be presented."""
+        self.developers.groups_in_charge = (self.vendors_uid, )
+        self._enableField("proposingGroupWithGroupInCharge")
+        self.changeUser('pmManager')
+        self.create('Meeting')
+        item = self.create('MeetingItem')
+        self.validateItem(item)
+        self.assertEqual(item.wfConditions().mayPresent().msg, u'required_groupsInCharge_ko')
+        item.setProposingGroupWithGroupInCharge('{0}__groupincharge__{1}'.format(
+            self.developers_uid, self.vendors_uid))
+        self.assertTrue(item.wfConditions().mayPresent())
 
 
 def test_suite():
