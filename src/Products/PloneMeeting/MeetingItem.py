@@ -213,7 +213,8 @@ class MeetingItemWorkflowConditions(object):
         if destination_state == 'presented' or \
            'imio.actionspanel_portal_cachekey' in self.context.REQUEST:
             usedItemAttrs = self.cfg.getUsedItemAttributes()
-            if not self.context.getCategory(theObject=True):
+            if not self.cfg.getUseGroupsAsCategories() and \
+               not self.context.getCategory(theObject=True):
                 msg = No(_('required_category_ko'))
             elif 'classifier' in usedItemAttrs and not self.context.getClassifier():
                 msg = No(_('required_classifier_ko'))
