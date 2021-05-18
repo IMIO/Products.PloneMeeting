@@ -206,7 +206,12 @@ class MeetingItemWorkflowConditions(object):
     def _check_required_data(self, destination_state):
         '''Make sure required data are encoded when necessary.'''
         msg = None
-        if destination_state == 'presented':
+        # 2 cases, either transitions are triggered automatically, it is the case
+        # when item created by WS or when sent to another MC and transitions triggered,
+        # in this case we only validate the 'present' transition
+        # or we are using the UI (actionspanel), in this case, we validate every transitions
+        if destination_state == 'presented' or \
+           'imio.actionspanel_portal_cachekey' in self.context.REQUEST:
             usedItemAttrs = self.cfg.getUsedItemAttributes()
             if not self.context.getCategory(theObject=True):
                 msg = No(_('required_category_ko'))
@@ -320,6 +325,11 @@ class MeetingItemWorkflowConditions(object):
            not self.tool.isManager(self.cfg):
             return False
 
+        # if item initial_state is "validated", an item could miss it's category
+        msg = self._check_required_data('presented')
+        if msg is not None:
+            return msg
+
         # We may present the item if Plone currently publishes a meeting.
         # Indeed, an item may only be presented within a meeting.
         # if we are not on a meeting, try to get the next meeting accepting items
@@ -327,11 +337,6 @@ class MeetingItemWorkflowConditions(object):
             meeting = self.context.getMeetingToInsertIntoWhenNoCurrentMeetingObject()
             if not meeting:
                 return No(_('not_able_to_find_meeting_to_present_item_into'))
-
-        # if item initial_state is "validated", an item could miss it's category
-        msg = self._check_required_data('presented')
-        if msg is not None:
-            return msg
 
         # here we are sure that we have a meeting that will accept the item
         # Verify if all automatic advices have been given on this item.
@@ -6684,6 +6689,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # do this as Manager to be sure that transitions may be triggered
             with api.env.adopt_roles(roles=['Manager']):
                 destCfgTitle = safe_unicode(destMeetingConfig.Title())
+                # we will warn user if some transitions may not be triggered and
+                # triggerUntil is not reached
+                need_to_warn = False
                 for tr in destMeetingConfig.getTransitionsForPresentingAnItem():
                     try:
                         # special handling for the 'present' transition
@@ -6697,20 +6705,25 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                     'warning')
                                 break
                             newItem.REQUEST['PUBLISHED'] = meeting
-
                         wfTool.doActionFor(newItem, tr, comment=wf_comment)
                     except WorkflowException:
                         # in case something goes wrong, only warn the user by adding a portal message
-                        plone_utils.addPortalMessage(
-                            translate('could_not_trigger_transition_for_cloned_item',
-                                      mapping={'meetingConfigTitle': destCfgTitle},
-                                      domain="PloneMeeting",
-                                      context=self.REQUEST),
-                            type='warning')
-                        break
+                        need_to_warn = True
+                        # we continue as transitions to present an item
+                        # may vary from a proposingGroup to another
+                        continue
                     # if we are on the triggerUntil transition, we will stop at next loop
                     if tr == triggerUntil:
+                        need_to_warn = False
                         break
+                # warn if triggerUntil was not reached
+                if need_to_warn:
+                    plone_utils.addPortalMessage(
+                        translate('could_not_trigger_transition_for_cloned_item',
+                                  mapping={'meetingConfigTitle': destCfgTitle},
+                                  domain="PloneMeeting",
+                                  context=self.REQUEST),
+                        type='warning')
             # set back originally PUBLISHED object
             self.REQUEST.set('PUBLISHED', originalPublishedObject)
 

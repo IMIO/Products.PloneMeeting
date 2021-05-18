@@ -261,6 +261,11 @@ Changelog
   It may happen that `MeetingItem.proposingGroup` is set but not
   `MeetingItem.groupsInCharge` when item is created using a WS call.
   [gbastien]
+- Adapted behavior of `MeetingItem._check_required_data`, when the transition is
+  computed for the actions_panel, every destination states are checked, if
+  transitions are triggered by code (WS call, item sent to another MC, ...)
+  then only the `presented` destination state is checked.
+  [gbastien]
 
 4.2b11 (2021-01-19)
 -------------------
