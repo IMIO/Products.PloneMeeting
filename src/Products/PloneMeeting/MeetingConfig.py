@@ -128,6 +128,7 @@ from zope.component import getMultiAdapter
 from zope.component import getUtility
 from zope.container.interfaces import INameChooser
 from zope.i18n import translate
+from zope.i18nmessageid.message import Message
 from zope.interface import alsoProvides
 from zope.interface import implements
 from zope.schema.interfaces import IVocabularyFactory
@@ -3805,7 +3806,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         usedVoteValues = self.REQUEST.get(
             'usedVoteValues', self.getUsedVoteValues())
         if set(values).difference(usedVoteValues):
-            return _('error_first_linked_vote_used_vote_values_must_be_among_used_vote_value')
+            return _('error_first_linked_vote_used_vote_values_must_be_among_used_vote_values')
 
     security.declarePrivate('validate_nextLinkedVotesUsedVoteValues')
 
@@ -3815,7 +3816,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         usedVoteValues = self.REQUEST.get(
             'usedVoteValues', self.getUsedVoteValues())
         if set(values).difference(usedVoteValues):
-            return _('error_next_linked_votes_used_vote_values_must_be_among_used_vote_value')
+            return _('error_next_linked_votes_used_vote_values_must_be_among_used_vote_values')
 
     security.declarePrivate('validate_transitionsForPresentingAnItem')
 
@@ -7144,6 +7145,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         error_pattern = u"<dl class=\"portalMessage error\"><dt>{0}</dt><dd>{1}</dd></dl>"
         res = []
         for error_field_id, error_msg in errors.items():
+            if isinstance(error_msg, Message):
+                error_msg = translate(error_msg, context=self.REQUEST)
             res.append(error_pattern.format(
                 translate(u"Error",
                           domain="plone",
