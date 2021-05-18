@@ -7363,6 +7363,36 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(item.getCommittees(), ())
         self.assertEqual(new_item.getCommittees(), ('committee_2',))
 
+    def test_pm_GetCategory(self):
+        """The proposingGroup/category magic was removed, test it."""
+        cfg = self.meetingConfig
+        cfg.setUseGroupsAsCategories(True)
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.assertEqual(item.getCategory(), '')
+        self.assertEqual(item.getCategory(theObject=True), '')
+        self.assertEqual(item.getProposingGroup(), self.developers_uid)
+        self.assertEqual(item.getProposingGroup(theObject=True), self.developers)
+        # set a category
+        item.setCategory('development')
+        self.assertEqual(item.getCategory(), 'development')
+        self.assertEqual(item.getCategory(theObject=True), cfg.categories.development)
+        self.assertEqual(item.getProposingGroup(), self.developers_uid)
+        self.assertEqual(item.getProposingGroup(theObject=True), self.developers)
+
+    def test_pm_GetClassifier(self):
+        """The MeetingItem.classifier accessor was overrided."""
+        cfg = self.meetingConfig
+        self._enableField('classifier')
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.assertEqual(item.getClassifier(), '')
+        self.assertEqual(item.getClassifier(theObject=True), '')
+        # set a classifier
+        item.setClassifier('classifier1')
+        self.assertEqual(item.getClassifier(), 'classifier1')
+        self.assertEqual(item.getClassifier(theObject=True), cfg.classifiers.classifier1)
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

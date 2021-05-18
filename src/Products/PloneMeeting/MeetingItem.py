@@ -3424,50 +3424,30 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getCategory')
 
-    def getCategory(self, theObject=False, real=False, **kwargs):
-        '''Returns the category of this item. When used by Archetypes,
-           this method returns the category Id; when used elsewhere in
-           the PloneMeeting code (with p_theObject=True), it returns
-           the true Category object (or Group object if groups are used
-           as categories).'''
+    def getCategory(self, theObject=False, **kwargs):
+        '''Overrided accessor to be able to handle parameter p_theObject=False.'''
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        try:
-            res = ''
-            if not real and cfg.getUseGroupsAsCategories():
-                res = self.getProposingGroup(theObject=theObject)
-            else:
-                cat_id = self.getField('category').get(self, **kwargs)
-                if theObject:
-                    # avoid problems with acquisition
-                    if cat_id in cfg.categories.objectIds():
-                        res = getattr(cfg.categories, cat_id)
-                else:
-                    res = cat_id
-        except AttributeError:
-            res = ''
+        cat_id = self.getField('category').get(self, **kwargs)
+        # avoid problems with acquisition
+        if theObject and cat_id in cfg.categories.objectIds():
+            res = getattr(cfg.categories, cat_id)
+        else:
+            res = cat_id
         return res
 
     security.declarePublic('getClassifier')
 
-    def getClassifier(self, theObject=False, real=False, **kwargs):
-        '''Returns the classifier of this item. When used by Archetypes,
-           this method returns the category Id; when used elsewhere in
-           the PloneMeeting code (with p_theObject=True), it returns
-           the true Category object.'''
+    def getClassifier(self, theObject=False, **kwargs):
+        '''Overrided accessor to be able to handle parameter p_theObject=False.'''
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        try:
-            res = ''
-            cat_id = self.getField('classifier').get(self, **kwargs)
-            if theObject:
-                # avoid problems with acquisition
-                if cat_id in cfg.classifiers.objectIds():
-                    res = getattr(cfg.classifiers, cat_id)
-            else:
-                res = cat_id
-        except AttributeError:
-            res = ''
+        classifier_id = self.getField('classifier').get(self, **kwargs)
+        # avoid problems with acquisition
+        if theObject and classifier_id in cfg.classifiers.objectIds():
+            res = getattr(cfg.classifiers, classifier_id)
+        else:
+            res = classifier_id
         return res
 
     security.declarePublic('getProposingGroup')
@@ -3532,7 +3512,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         if (not res and fromCatIfEmpty) or \
            (includeAuto and cfg.getIncludeGroupsInChargeDefinedOnCategory()):
-            category = self.getCategory(theObject=True, real=True)
+            category = self.getCategory(theObject=True)
             if category:
                 cat_groups_in_charge = [
                     gic_uid for gic_uid in category.get_groups_in_charge()

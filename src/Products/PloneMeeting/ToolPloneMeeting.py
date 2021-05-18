@@ -1055,7 +1055,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             fieldsToKeep = ['id', 'proposingGroup', ] + copyFields
             # remove 'category' from fieldsToKeep if it is disabled
             if 'category' in fieldsToKeep:
-                category = copiedItem.getCategory(real=True, theObject=True)
+                category = copiedItem.getCategory(theObject=True)
                 if category and not category.is_selectable(userId=loggedUserId):
                     fieldsToKeep.remove('category')
             # remove 'classifier' from fieldsToKeep if it is disabled

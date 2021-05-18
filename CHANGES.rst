@@ -269,6 +269,11 @@ Changelog
 - Fixed `AskedAdvicesVocabulary` that was not displaying advisers that were only
   defined as power advisers.
   [gbastien]
+- Removed the `MeetingItem category/proposingGroup` magic that was relying on
+  `MeetingConfig.useGroupsAsCategories`.
+  `MeetingItem.getCategory` does not care anymore about proposingGroup and will
+  return an empty string or the stored category id.
+  [gbastien]
 
 4.2b11 (2021-01-19)
 -------------------
