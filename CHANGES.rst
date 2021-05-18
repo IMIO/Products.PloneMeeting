@@ -266,6 +266,9 @@ Changelog
   transitions are triggered by code (WS call, item sent to another MC, ...)
   then only the `presented` destination state is checked.
   [gbastien]
+- Fixed `AskedAdvicesVocabulary` that was not displaying advisers that were only
+  defined as power advisers.
+  [gbastien]
 
 4.2b11 (2021-01-19)
 -------------------
