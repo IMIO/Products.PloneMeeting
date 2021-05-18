@@ -15,6 +15,9 @@ Changelog
   - Fixed `ToolPloneMeeting.pasteItem` that was not correctly removing `sent item
     to another MC` related annotations when item was sent to several other MCs.
     [gbastien]
+  - Fixed `AskedAdvicesVocabulary` that was not displaying advisers that were only
+    defined as power advisers.
+    [gbastien]
 - Do not raise if itemfreeze transition fails while presenting an item in a frozen meeting.
   [odelaere]
 
