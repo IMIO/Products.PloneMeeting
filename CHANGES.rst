@@ -5,8 +5,13 @@ Changelog
 4.1.28.26 (unreleased)
 ----------------------
 
-- Nothing changed yet.
+- Backport from 4.2.x:
 
+  - Fixed `MeetingItem._check_required_data` to check that `MeetingItem.groupsInCharge`
+    is set when using `MeetingItem.proposingGroupWithGroupInCharge`.
+    It may happen that `MeetingItem.proposingGroup` is set but not
+    `MeetingItem.groupsInCharge` when item is created using a WS call.
+    [gbastien]
 
 4.1.28.25 (2021-04-28)
 ----------------------

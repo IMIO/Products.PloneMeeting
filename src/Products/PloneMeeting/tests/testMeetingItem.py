@@ -4282,6 +4282,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.request['PUBLISHED'] = item
         self.validateItem(item)
         actions_panel._transitions = None
+        self.assertTrue(item.wfConditions().mayPresent())
         validatedItemCreatedMeeting_rendered_actions_panel = actions_panel()
         self.freezeMeeting(meeting)
         # here item is no more presentable
@@ -4289,8 +4290,8 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertFalse(item.wfConditions().mayPresent())
         actions_panel._transitions = None
         validatedItemFrozenMeeting_rendered_actions_panel = actions_panel()
-        self.assertTrue('present' in validatedItemCreatedMeeting_rendered_actions_panel)
-        self.assertFalse('present' in validatedItemFrozenMeeting_rendered_actions_panel)
+        self.assertTrue('transition=present' in validatedItemCreatedMeeting_rendered_actions_panel)
+        self.assertFalse('transition=present' in validatedItemFrozenMeeting_rendered_actions_panel)
 
     def test_pm_ItemActionsPanelCachingInvalidatedWhenLinkedMeetingIsEdited(self):
         """Actions panel cache is invalidated when the linked meeting is edited."""

@@ -176,11 +176,14 @@ class MeetingItemWorkflowConditions(object):
     def _check_required_data(self):
         ''' '''
         msg = None
+        usedItemAttrs = self.cfg.getUsedItemAttributes()
         if not self.context.getCategory(theObject=True):
             msg = No(_('required_category_ko'))
-        elif self.context.attributeIsUsed('classifier') and not self.context.getClassifier():
+        elif 'classifier' in usedItemAttrs and not self.context.getClassifier():
             msg = No(_('required_classifier_ko'))
-        elif self.context.attributeIsUsed('groupsInCharge') and not self.context.getGroupsInCharge():
+        elif ('proposingGroupWithGroupInCharge' in usedItemAttrs or
+              'groupsInCharge' in usedItemAttrs) and \
+                not self.context.getGroupsInCharge():
             msg = No(_('required_groupsInCharge_ko'))
         return msg
 
@@ -227,7 +230,8 @@ class MeetingItemWorkflowConditions(object):
         # if we are not on a meeting, try to get the next meeting accepting items
         if not self._publishedObjectIsMeeting():
             meeting = self.context.getMeetingToInsertIntoWhenNoCurrentMeetingObject()
-            return bool(meeting)
+            if not meeting:
+                return No(_('not_able_to_find_meeting_to_present_item_into'))
 
         # if WFAdaptation 'items_come_validated' is enabled, an item
         # could miss it's category
