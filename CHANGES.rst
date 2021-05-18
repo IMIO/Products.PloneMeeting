@@ -274,6 +274,9 @@ Changelog
   `MeetingItem.getCategory` does not care anymore about proposingGroup and will
   return an empty string or the stored category id.
   [gbastien]
+- Fixed `ToolPloneMeeting.pasteItem` that was not correctly removing `sent item
+  to another MC` related annotations when item was sent to several other MCs.
+  [gbastien]
 
 4.2b11 (2021-01-19)
 -------------------
