@@ -550,10 +550,13 @@ class MeetingItemWorkflowActions(object):
            By default, this will freeze the item."""
         wTool = api.portal.get_tool('portal_workflow')
         try:
+            wTool.doActionFor(self.context, 'itemfreeze')
+        except:
+            pass  # Maybe does state 'itemfreeze' not exist.
+        try:
             wTool.doActionFor(self.context, 'itempublish')
         except:
             pass  # Maybe does state 'itempublish' not exist.
-        wTool.doActionFor(self.context, 'itemfreeze')
 
     security.declarePrivate('doItemPublish')
 

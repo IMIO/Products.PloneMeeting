@@ -12,6 +12,8 @@ Changelog
     It may happen that `MeetingItem.proposingGroup` is set but not
     `MeetingItem.groupsInCharge` when item is created using a WS call.
     [gbastien]
+- Do not raise if itemfreeze transition fails while presenting an item in a frozen meeting.
+  [odelaere]
 
 4.1.28.25 (2021-04-28)
 ----------------------
