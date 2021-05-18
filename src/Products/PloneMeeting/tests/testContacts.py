@@ -128,6 +128,7 @@ class testContacts(PloneMeetingTestCase):
 
         # test that held positition cannot be delete if used for itemInitiator
         cfg.setOrderedItemInitiators((hp_uid,))
+        self.changeUser('pmManager')
         item = self.create('MeetingItem')
         self.presentItem(item)
         item.setItemInitiator((hp_uid,))
