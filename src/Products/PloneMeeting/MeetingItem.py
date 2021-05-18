@@ -549,14 +549,16 @@ class MeetingItemWorkflowActions(object):
            the entire doPresent.
            By default, this will freeze the item."""
         wTool = api.portal.get_tool('portal_workflow')
-        try:
-            wTool.doActionFor(self.context, 'itemfreeze')
-        except:
-            pass  # Maybe does state 'itemfreeze' not exist.
+        # in PloneMeeting 4.1.x, state is first itempublished then itemfrozen
+        # in PloneMeeting 4.2+, state is first itemfrozen then itempublished
         try:
             wTool.doActionFor(self.context, 'itempublish')
         except:
             pass  # Maybe does state 'itempublish' not exist.
+        try:
+            wTool.doActionFor(self.context, 'itemfreeze')
+        except:
+            pass  # Maybe does state 'itemfreeze' not exist.
 
     security.declarePrivate('doItemPublish')
 
