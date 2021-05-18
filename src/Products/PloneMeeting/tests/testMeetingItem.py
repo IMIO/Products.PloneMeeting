@@ -69,6 +69,7 @@ from Products.PloneMeeting.config import ITEM_DEFAULT_TEMPLATE_ID
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
 from Products.PloneMeeting.config import READER_USECASES
+from Products.PloneMeeting.config import SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY
 from Products.PloneMeeting.config import WriteBudgetInfos
 from Products.PloneMeeting.indexes import previous_review_state
 from Products.PloneMeeting.indexes import sentToInfos
@@ -294,6 +295,32 @@ class testMeetingItem(PloneMeetingTestCase):
                          ((developers_gic3, 'Developers (Org 3)'),
                           (vendors_gic2, 'Vendors (Org 2)'),
                           (vendors_gic3, 'Vendors (Org 3)'),))
+
+    def test_pm_CloneItemRemovesAnnotations(self):
+        '''Annotations relative to item sent to other MC are correctly cleaned.'''
+        # create a third meetingConfig with special characters in it's title
+        self.changeUser('siteadmin')
+        cfg = self.meetingConfig
+        cfg3 = self.create('MeetingConfig')
+        cfg3.setTitle('Meeting config three')
+        cfg3Id = cfg3.getId()
+        cfg2Id = self.meetingConfig2.getId()
+        cfg.setMeetingConfigsToCloneTo(
+            ({'meeting_config': '%s' % cfg2Id,
+              'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL},
+             {'meeting_config': '%s' % cfg3Id,
+              'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL}, ))
+        cfg.setItemManualSentToOtherMCStates((self._stateMappingFor('itemcreated'), ))
+        # create item and send it to cfg2 and cfg3
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        item.setOtherMeetingConfigsClonableTo((cfg2Id, cfg3Id))
+        item.cloneToOtherMeetingConfig(cfg2Id)
+        item.cloneToOtherMeetingConfig(cfg3Id)
+        # duplicate item
+        item2 = item.clone()
+        self.failIf([ann for ann in IAnnotations(item2)
+                     if ann.startswith(SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY)])
 
     def test_pm_GroupsInChargeFromProposingGroup(self):
         '''Groups in charge defined on the organization proposingGroup is taken into

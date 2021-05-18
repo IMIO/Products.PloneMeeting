@@ -12,6 +12,9 @@ Changelog
     It may happen that `MeetingItem.proposingGroup` is set but not
     `MeetingItem.groupsInCharge` when item is created using a WS call.
     [gbastien]
+  - Fixed `ToolPloneMeeting.pasteItem` that was not correctly removing `sent item
+    to another MC` related annotations when item was sent to several other MCs.
+    [gbastien]
 - Do not raise if itemfreeze transition fails while presenting an item in a frozen meeting.
   [odelaere]
 
