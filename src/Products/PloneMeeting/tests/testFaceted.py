@@ -634,6 +634,10 @@ class testFaceted(PloneMeetingTestCase):
         cfg.setCustomAdvisers(customAdvisers)
         cfg.at_post_edit_script()
         self.assertEqual(len(vocab(pmFolder)), 6)
+        # power advisers are taken into account by the vocabulary
+        cfg.setPowerAdvisersGroups([self.endUsers_uid])
+        cfg.at_post_edit_script()
+        self.assertEqual(len(vocab(pmFolder)), 7)
 
     def test_pm_AskedAdvicesVocabularyWithWrongContext(self):
         '''Test the "Products.PloneMeeting.vocabularies.askedadvicesvocabulary"
