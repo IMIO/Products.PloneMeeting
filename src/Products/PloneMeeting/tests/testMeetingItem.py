@@ -4291,24 +4291,22 @@ class testMeetingItem(PloneMeetingTestCase):
         """Actions panel cache is invalidated when an item is modified."""
         item, actions_panel, rendered_actions_panel = self._setupItemActionsPanelInvalidation()
         # invalidated when item edited
-        # an item can not be presented if no selected category
+        # an item can not be proposed if no selected category
         # remove selected category and notify edited
         originalCategory = item.getCategory()
         item.setCategory('')
         self.changeUser('pmManager')
-        self.create('Meeting')
-        self.validateItem(item)
-        self.assertFalse('present' in self.transitions(item))
+        self.assertFalse('propose' in self.transitions(item))
         actions_panel._transitions = None
         no_category_rendered_actions_panel = actions_panel()
         self.assertNotEqual(no_category_rendered_actions_panel, rendered_actions_panel)
         item.setCategory(originalCategory)
         item._update_after_edit()
-        self.assertTrue('present' in self.transitions(item))
-        # changed again
+        self.assertTrue('propose' in self.transitions(item))
+        # changed again, this time we get same result as originally
         actions_panel._transitions = None
-        rendered_actions_panel = actions_panel()
-        self.assertNotEqual(no_category_rendered_actions_panel, rendered_actions_panel)
+        category_rendered_actions_panel = actions_panel()
+        self.assertEqual(category_rendered_actions_panel, rendered_actions_panel)
 
     def test_pm_ItemActionsPanelCachingInvalidatedWhenItemStateChanged(self):
         """Actions panel cache is invalidated when an item state changed."""
