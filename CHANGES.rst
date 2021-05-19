@@ -81,7 +81,8 @@ Changelog
     by overrided anymore, everything is done using the schema and fieldsets
     definition;
   - Most of `Meeting` data is displayable in dashboards displaying meetings as
-    static column in the Title column.
+    static column in the Title column;
+  - Added field `Meeting.meetingmanagers_notes` like it exists for `MeetingItem`.
 
     [gbastien]
 - Highlight (bold) the default item template in the itemtemplates folder.
