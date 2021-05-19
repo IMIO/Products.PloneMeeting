@@ -3175,7 +3175,9 @@ class testMeetingType(PloneMeetingTestCase):
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
         self.freezeMeeting(meeting)
-        field_names = ['in_and_out_moves', 'notes', 'secret_meeting_observations', 'authority_notice']
+        field_names = ['in_and_out_moves', 'notes',
+                       'secret_meeting_observations', 'authority_notice'
+                       'meetingmanagers_notes']
         view = meeting.restrictedTraverse('view')
         for field_name in field_names:
             self._enableField(field_name, related_to='Meeting')
