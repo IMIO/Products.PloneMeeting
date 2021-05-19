@@ -387,6 +387,14 @@ class IMeeting(IDXMeetingContent):
         required=False,
         allowed_mime_types=(u"text/html", ))
 
+    searchable("meetingmanagers_notes")
+    form.widget('meetingmanagers_notes', PMRichTextFieldWidget)
+    meetingmanagers_notes = RichText(
+        title=_(u"title_meetingmanagers_notes"),
+        description=_("descr_field_reserved_to_meeting_managers"),
+        required=False,
+        allowed_mime_types=(u"text/html", ))
+
     meeting_number = schema.Int(
         title=_(u"title_meeting_number"),
         description=_("descr_config_field_reserved_to_meeting_managers"),
@@ -421,7 +429,8 @@ class IMeeting(IDXMeetingContent):
                    fields=['in_and_out_moves', 'notes', 'observations',
                            'pre_observations',
                            'votes_observations', 'public_meeting_observations',
-                           'secret_meeting_observations', 'authority_notice'])
+                           'secret_meeting_observations', 'authority_notice',
+                           'meetingmanagers_notes'])
 
     model.fieldset('parameters',
                    label=_(u"fieldset_parameters"),
@@ -843,6 +852,9 @@ class Meeting(Container):
         'authority_notice':
             {'optional': True,
              'condition': "python:cfg.show_meeting_manager_reserved_field('authority_notice')"},
+        'meetingmanagers_notes':
+            {'optional': True,
+             'condition': "python:cfg.show_meeting_manager_reserved_field('meetingmanagers_notes')"},
         'meeting_number':
             {'optional': False,
              'condition': "python:tool.isManager(cfg)"},
