@@ -53,6 +53,7 @@ from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import NO_COMMITTEE
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
 from Products.PloneMeeting.config import READER_USECASES
+from Products.PloneMeeting.config import SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY
 from Products.PloneMeeting.config import WriteBudgetInfos
 from Products.PloneMeeting.indexes import previous_review_state
 from Products.PloneMeeting.indexes import sentToInfos
@@ -281,6 +282,32 @@ class testMeetingItem(PloneMeetingTestCase):
                          ((developers_gic3, 'Developers (Org 3)'),
                           (vendors_gic2, 'Vendors (Org 2)'),
                           (vendors_gic3, 'Vendors (Org 3)'),))
+
+    def test_pm_CloneItemRemovesAnnotations(self):
+        '''Annotations relative to item sent to other MC are correctly cleaned.'''
+        # create a third meetingConfig with special characters in it's title
+        self.changeUser('siteadmin')
+        cfg = self.meetingConfig
+        cfg3 = self.create('MeetingConfig')
+        cfg3.setTitle('Meeting config three')
+        cfg3Id = cfg3.getId()
+        cfg2Id = self.meetingConfig2.getId()
+        cfg.setMeetingConfigsToCloneTo(
+            ({'meeting_config': '%s' % cfg2Id,
+              'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL},
+             {'meeting_config': '%s' % cfg3Id,
+              'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL}, ))
+        cfg.setItemManualSentToOtherMCStates((self._stateMappingFor('itemcreated'), ))
+        # create item and send it to cfg2 and cfg3
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        item.setOtherMeetingConfigsClonableTo((cfg2Id, cfg3Id))
+        item.cloneToOtherMeetingConfig(cfg2Id)
+        item.cloneToOtherMeetingConfig(cfg3Id)
+        # duplicate item
+        item2 = item.clone()
+        self.failIf([ann for ann in IAnnotations(item2)
+                     if ann.startswith(SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY)])
 
     def test_pm_GroupsInChargeFromProposingGroup(self):
         '''Groups in charge defined on the organization proposingGroup is taken into
@@ -3587,7 +3614,7 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg = self.meetingConfig
         cfg.setUseGroupsAsCategories(False)
         # create categories
-        self._removeConfigObjectsFor(cfg, folders=['categories'])
+        self._removeConfigObjectsFor(cfg, folders=['itemtemplates', 'categories'])
         data = {'cat2': '2. Category',
                 'cat21': '2.1 Category',
                 'cat22': '2.2 Category',
@@ -4291,24 +4318,22 @@ class testMeetingItem(PloneMeetingTestCase):
         """Actions panel cache is invalidated when an item is modified."""
         item, actions_panel, rendered_actions_panel = self._setupItemActionsPanelInvalidation()
         # invalidated when item edited
-        # an item can not be presented if no selected category
+        # an item can not be proposed if no selected category
         # remove selected category and notify edited
         originalCategory = item.getCategory()
         item.setCategory('')
         self.changeUser('pmManager')
-        self.create('Meeting')
-        self.validateItem(item)
-        self.assertFalse('present' in self.transitions(item))
+        self.assertFalse('propose' in self.transitions(item))
         actions_panel._transitions = None
         no_category_rendered_actions_panel = actions_panel()
         self.assertNotEqual(no_category_rendered_actions_panel, rendered_actions_panel)
         item.setCategory(originalCategory)
         item._update_after_edit()
-        self.assertTrue('present' in self.transitions(item))
-        # changed again
+        self.assertTrue('propose' in self.transitions(item))
+        # changed again, this time we get same result as originally
         actions_panel._transitions = None
-        rendered_actions_panel = actions_panel()
-        self.assertNotEqual(no_category_rendered_actions_panel, rendered_actions_panel)
+        category_rendered_actions_panel = actions_panel()
+        self.assertEqual(category_rendered_actions_panel, rendered_actions_panel)
 
     def test_pm_ItemActionsPanelCachingInvalidatedWhenItemStateChanged(self):
         """Actions panel cache is invalidated when an item state changed."""
@@ -4370,6 +4395,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.request['PUBLISHED'] = item
         self.validateItem(item)
         actions_panel._transitions = None
+        self.assertTrue(item.wfConditions().mayPresent())
         validatedItemCreatedMeeting_rendered_actions_panel = actions_panel()
         self.freezeMeeting(meeting)
         # here item is no more presentable
@@ -4377,8 +4403,8 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertFalse(item.wfConditions().mayPresent())
         actions_panel._transitions = None
         validatedItemFrozenMeeting_rendered_actions_panel = actions_panel()
-        self.assertTrue('present' in validatedItemCreatedMeeting_rendered_actions_panel)
-        self.assertFalse('present' in validatedItemFrozenMeeting_rendered_actions_panel)
+        self.assertTrue('transition=present' in validatedItemCreatedMeeting_rendered_actions_panel)
+        self.assertFalse('transition=present' in validatedItemFrozenMeeting_rendered_actions_panel)
 
     def test_pm_ItemActionsPanelCachingInvalidatedWhenLinkedMeetingIsEdited(self):
         """Actions panel cache is invalidated when the linked meeting is edited."""
@@ -7363,6 +7389,36 @@ class testMeetingItem(PloneMeetingTestCase):
         new_item = item.cloneToOtherMeetingConfig(cfg2_id)
         self.assertEqual(item.getCommittees(), ())
         self.assertEqual(new_item.getCommittees(), ('committee_2',))
+
+    def test_pm_GetCategory(self):
+        """The proposingGroup/category magic was removed, test it."""
+        cfg = self.meetingConfig
+        cfg.setUseGroupsAsCategories(True)
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.assertEqual(item.getCategory(), '')
+        self.assertEqual(item.getCategory(theObject=True), '')
+        self.assertEqual(item.getProposingGroup(), self.developers_uid)
+        self.assertEqual(item.getProposingGroup(theObject=True), self.developers)
+        # set a category
+        item.setCategory('development')
+        self.assertEqual(item.getCategory(), 'development')
+        self.assertEqual(item.getCategory(theObject=True), cfg.categories.development)
+        self.assertEqual(item.getProposingGroup(), self.developers_uid)
+        self.assertEqual(item.getProposingGroup(theObject=True), self.developers)
+
+    def test_pm_GetClassifier(self):
+        """The MeetingItem.classifier accessor was overrided."""
+        cfg = self.meetingConfig
+        self._enableField('classifier')
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.assertEqual(item.getClassifier(), '')
+        self.assertEqual(item.getClassifier(theObject=True), '')
+        # set a classifier
+        item.setClassifier('classifier1')
+        self.assertEqual(item.getClassifier(), 'classifier1')
+        self.assertEqual(item.getClassifier(theObject=True), cfg.classifiers.classifier1)
 
 
 def test_suite():

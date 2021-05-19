@@ -206,13 +206,20 @@ class MeetingItemWorkflowConditions(object):
     def _check_required_data(self, destination_state):
         '''Make sure required data are encoded when necessary.'''
         msg = None
-        if destination_state == 'presented':
-            if not self.context.getCategory(theObject=True):
+        # 2 cases, either transitions are triggered automatically, it is the case
+        # when item created by WS or when sent to another MC and transitions triggered,
+        # in this case we only validate the 'present' transition
+        # or we are using the UI (actionspanel), in this case, we validate every transitions
+        if destination_state == 'presented' or \
+           'imio.actionspanel_portal_cachekey' in self.context.REQUEST:
+            usedItemAttrs = self.cfg.getUsedItemAttributes()
+            if not self.cfg.getUseGroupsAsCategories() and \
+               not self.context.getCategory(theObject=True):
                 msg = No(_('required_category_ko'))
-            elif self.context.attributeIsUsed('classifier') and \
-                    not self.context.getClassifier():
+            elif 'classifier' in usedItemAttrs and not self.context.getClassifier():
                 msg = No(_('required_classifier_ko'))
-            elif self.context.attributeIsUsed('groupsInCharge') and \
+            elif ('proposingGroupWithGroupInCharge' in usedItemAttrs or
+                  'groupsInCharge' in usedItemAttrs) and \
                     not self.context.getGroupsInCharge():
                 msg = No(_('required_groupsInCharge_ko'))
         return msg
@@ -319,17 +326,18 @@ class MeetingItemWorkflowConditions(object):
            not self.tool.isManager(self.cfg):
             return False
 
+        # if item initial_state is "validated", an item could miss it's category
+        msg = self._check_required_data('presented')
+        if msg is not None:
+            return msg
+
         # We may present the item if Plone currently publishes a meeting.
         # Indeed, an item may only be presented within a meeting.
         # if we are not on a meeting, try to get the next meeting accepting items
         if not self._publishedObjectIsMeeting():
             meeting = self.context.getMeetingToInsertIntoWhenNoCurrentMeetingObject()
-            return bool(meeting)
-
-        # if item initial_state is "validated", an item could miss it's category
-        msg = self._check_required_data('presented')
-        if msg is not None:
-            return msg
+            if not meeting:
+                return No(_('not_able_to_find_meeting_to_present_item_into'))
 
         # here we are sure that we have a meeting that will accept the item
         # Verify if all automatic advices have been given on this item.
@@ -3417,50 +3425,30 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getCategory')
 
-    def getCategory(self, theObject=False, real=False, **kwargs):
-        '''Returns the category of this item. When used by Archetypes,
-           this method returns the category Id; when used elsewhere in
-           the PloneMeeting code (with p_theObject=True), it returns
-           the true Category object (or Group object if groups are used
-           as categories).'''
+    def getCategory(self, theObject=False, **kwargs):
+        '''Overrided accessor to be able to handle parameter p_theObject=False.'''
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        try:
-            res = ''
-            if not real and cfg.getUseGroupsAsCategories():
-                res = self.getProposingGroup(theObject=theObject)
-            else:
-                cat_id = self.getField('category').get(self, **kwargs)
-                if theObject:
-                    # avoid problems with acquisition
-                    if cat_id in cfg.categories.objectIds():
-                        res = getattr(cfg.categories, cat_id)
-                else:
-                    res = cat_id
-        except AttributeError:
-            res = ''
+        cat_id = self.getField('category').get(self, **kwargs)
+        # avoid problems with acquisition
+        if theObject and cat_id in cfg.categories.objectIds():
+            res = getattr(cfg.categories, cat_id)
+        else:
+            res = cat_id
         return res
 
     security.declarePublic('getClassifier')
 
-    def getClassifier(self, theObject=False, real=False, **kwargs):
-        '''Returns the classifier of this item. When used by Archetypes,
-           this method returns the category Id; when used elsewhere in
-           the PloneMeeting code (with p_theObject=True), it returns
-           the true Category object.'''
+    def getClassifier(self, theObject=False, **kwargs):
+        '''Overrided accessor to be able to handle parameter p_theObject=False.'''
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        try:
-            res = ''
-            cat_id = self.getField('classifier').get(self, **kwargs)
-            if theObject:
-                # avoid problems with acquisition
-                if cat_id in cfg.classifiers.objectIds():
-                    res = getattr(cfg.classifiers, cat_id)
-            else:
-                res = cat_id
-        except AttributeError:
-            res = ''
+        classifier_id = self.getField('classifier').get(self, **kwargs)
+        # avoid problems with acquisition
+        if theObject and classifier_id in cfg.classifiers.objectIds():
+            res = getattr(cfg.classifiers, classifier_id)
+        else:
+            res = classifier_id
         return res
 
     security.declarePublic('getProposingGroup')
@@ -3525,7 +3513,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         if (not res and fromCatIfEmpty) or \
            (includeAuto and cfg.getIncludeGroupsInChargeDefinedOnCategory()):
-            category = self.getCategory(theObject=True, real=True)
+            category = self.getCategory(theObject=True)
             if category:
                 cat_groups_in_charge = [
                     gic_uid for gic_uid in category.get_groups_in_charge()
@@ -6682,6 +6670,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # do this as Manager to be sure that transitions may be triggered
             with api.env.adopt_roles(roles=['Manager']):
                 destCfgTitle = safe_unicode(destMeetingConfig.Title())
+                # we will warn user if some transitions may not be triggered and
+                # triggerUntil is not reached
+                need_to_warn = False
                 for tr in destMeetingConfig.getTransitionsForPresentingAnItem():
                     try:
                         # special handling for the 'present' transition
@@ -6695,20 +6686,25 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                     'warning')
                                 break
                             newItem.REQUEST['PUBLISHED'] = meeting
-
                         wfTool.doActionFor(newItem, tr, comment=wf_comment)
                     except WorkflowException:
                         # in case something goes wrong, only warn the user by adding a portal message
-                        plone_utils.addPortalMessage(
-                            translate('could_not_trigger_transition_for_cloned_item',
-                                      mapping={'meetingConfigTitle': destCfgTitle},
-                                      domain="PloneMeeting",
-                                      context=self.REQUEST),
-                            type='warning')
-                        break
+                        need_to_warn = True
+                        # we continue as transitions to present an item
+                        # may vary from a proposingGroup to another
+                        continue
                     # if we are on the triggerUntil transition, we will stop at next loop
                     if tr == triggerUntil:
+                        need_to_warn = False
                         break
+                # warn if triggerUntil was not reached
+                if need_to_warn:
+                    plone_utils.addPortalMessage(
+                        translate('could_not_trigger_transition_for_cloned_item',
+                                  mapping={'meetingConfigTitle': destCfgTitle},
+                                  domain="PloneMeeting",
+                                  context=self.REQUEST),
+                        type='warning')
             # set back originally PUBLISHED object
             self.REQUEST.set('PUBLISHED', originalPublishedObject)
 

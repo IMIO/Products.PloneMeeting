@@ -254,11 +254,11 @@ recItem2 = RecurringItemDescriptor(
 # item templates
 template1 = ItemTemplateDescriptor(
     'template1', 'Template1',
-    '', category='developers', description='<p>This is template1.</p>',
+    '', category='development', description='<p>This is template1.</p>',
     decision='<p>Template1 decision</p>')
 template2 = ItemTemplateDescriptor(
     'template2', 'Template2',
-    'vendors', category='developers', description='<p>This is template2.</p>',
+    'vendors', category='development', description='<p>This is template2.</p>',
     decision='<p>Template1 decision</p>', templateUsingGroups=['vendors'])
 
 # Meeting configuration

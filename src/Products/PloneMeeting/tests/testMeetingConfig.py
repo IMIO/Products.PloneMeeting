@@ -2240,13 +2240,13 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.failIf(cfg.validate_firstLinkedVoteUsedVoteValues(('no', 'abstain')))
         self.assertEqual(
             cfg.validate_firstLinkedVoteUsedVoteValues(('does_not_vote', )),
-            u'error_first_linked_vote_used_vote_values_must_be_among_used_vote_value')
+            u'error_first_linked_vote_used_vote_values_must_be_among_used_vote_values')
         # case we are removing 'abstain' when editing MeetingConfig
         self.request.set("usedVoteValues", ('yes', 'no'))
         self.failIf(cfg.validate_firstLinkedVoteUsedVoteValues(('no', )))
         self.assertEqual(
             cfg.validate_firstLinkedVoteUsedVoteValues(('no', 'abstain')),
-            u'error_first_linked_vote_used_vote_values_must_be_among_used_vote_value')
+            u'error_first_linked_vote_used_vote_values_must_be_among_used_vote_values')
 
     def test_pm_Validate_nextLinkedVotesUsedVoteValues(self):
         """Test the MeetingConfig.nexttLinkedVotesUsedVoteValues validator,
@@ -2257,13 +2257,13 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.failIf(cfg.validate_nextLinkedVotesUsedVoteValues(('yes', )))
         self.assertEqual(
             cfg.validate_nextLinkedVotesUsedVoteValues(('does_not_vote', 'yes', )),
-            u'error_next_linked_votes_used_vote_values_must_be_among_used_vote_value')
+            u'error_next_linked_votes_used_vote_values_must_be_among_used_vote_values')
         # case we are removing 'abstain' when editing MeetingConfig
         self.request.set("usedVoteValues", ('yes', 'no'))
         self.failIf(cfg.validate_nextLinkedVotesUsedVoteValues(('yes', )))
         self.assertEqual(
             cfg.validate_nextLinkedVotesUsedVoteValues(('yes', 'abstain')),
-            u'error_next_linked_votes_used_vote_values_must_be_among_used_vote_value')
+            u'error_next_linked_votes_used_vote_values_must_be_among_used_vote_values')
 
     def test_pm_ConfigEditAndView(self):
         """Just call the edit and view to check it is displayed correctly."""

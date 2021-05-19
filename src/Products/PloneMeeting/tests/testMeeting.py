@@ -1679,6 +1679,7 @@ class testMeetingType(PloneMeetingTestCase):
            depending on categories."""
         self.changeUser('pmManager')
         cfg = self.meetingConfig
+        self._removeConfigObjectsFor(cfg, folders=['itemtemplates'])
         cfg.setUseGroupsAsCategories(False)
         cfg.setInsertingMethodsOnAddItem(
             ({'insertingMethod': 'on_categories',
@@ -2270,7 +2271,8 @@ class testMeetingType(PloneMeetingTestCase):
         item.REQUEST['PUBLISHED'] = item
         # as no current meeting and no meeting in the future, the item
         # may not be presented
-        self.assertFalse(item.wfConditions().mayPresent())
+        self.assertEqual(item.wfConditions().mayPresent().msg,
+                         u'not_able_to_find_meeting_to_present_item_into')
         # MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject returns nothing
         # as no meeting in the future
         self.assertIsNone(item.getMeetingToInsertIntoWhenNoCurrentMeetingObject())
@@ -3173,7 +3175,9 @@ class testMeetingType(PloneMeetingTestCase):
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
         self.freezeMeeting(meeting)
-        field_names = ['in_and_out_moves', 'notes', 'secret_meeting_observations', 'authority_notice']
+        field_names = ['in_and_out_moves', 'notes',
+                       'secret_meeting_observations', 'authority_notice'
+                       'meetingmanagers_notes']
         view = meeting.restrictedTraverse('view')
         for field_name in field_names:
             self._enableField(field_name, related_to='Meeting')

@@ -81,7 +81,8 @@ Changelog
     by overrided anymore, everything is done using the schema and fieldsets
     definition;
   - Most of `Meeting` data is displayable in dashboards displaying meetings as
-    static column in the Title column.
+    static column in the Title column;
+  - Added field `Meeting.meetingmanagers_notes` like it exists for `MeetingItem`.
 
     [gbastien]
 - Highlight (bold) the default item template in the itemtemplates folder.
@@ -255,6 +256,27 @@ Changelog
 - Added `marginalNotes_column` to `MeetingConfig.listItemRelatedColumns` to be
   able to display the `MeetingItem.marginalNotes` field as static info
   (always visible in Title column) in the dashboards.
+  [gbastien]
+- Fixed `MeetingItem._check_required_data` to check that `MeetingItem.groupsInCharge`
+  is set when using `MeetingItem.proposingGroupWithGroupInCharge`.
+  It may happen that `MeetingItem.proposingGroup` is set but not
+  `MeetingItem.groupsInCharge` when item is created using a WS call.
+  [gbastien]
+- Adapted behavior of `MeetingItem._check_required_data`, when the transition is
+  computed for the actions_panel, every destination states are checked, if
+  transitions are triggered by code (WS call, item sent to another MC, ...)
+  then only the `presented` destination state is checked.
+  [gbastien]
+- Fixed `AskedAdvicesVocabulary` that was not displaying advisers that were only
+  defined as power advisers.
+  [gbastien]
+- Removed the `MeetingItem category/proposingGroup` magic that was relying on
+  `MeetingConfig.useGroupsAsCategories`.
+  `MeetingItem.getCategory` does not care anymore about proposingGroup and will
+  return an empty string or the stored category id.
+  [gbastien]
+- Fixed `ToolPloneMeeting.pasteItem` that was not correctly removing `sent item
+  to another MC` related annotations when item was sent to several other MCs.
   [gbastien]
 
 4.2b11 (2021-01-19)

@@ -620,6 +620,12 @@ class AskedAdvicesVocabulary(object):
             formatted = REAL_ORG_UID_PATTERN.format(org_uid)
             res.append(formatted)
 
+        # power advisers
+        power_adviser_uids = self.cfg.getPowerAdvisersGroups()
+        for power_adviser_uid in power_adviser_uids:
+            formatted = REAL_ORG_UID_PATTERN.format(power_adviser_uid)
+            res.append(formatted)
+
         # remove duplicates
         res = list(set(res))
         return res
