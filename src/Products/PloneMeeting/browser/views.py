@@ -12,9 +12,11 @@ from collective.documentgenerator.helper.archetypes import ATDocumentGenerationH
 from collective.documentgenerator.helper.dexterity import DXDocumentGenerationHelperView
 from collective.eeafaceted.batchactions import _ as _CEBA
 from collective.eeafaceted.batchactions.browser.views import BaseBatchActionForm
+from collective.eeafaceted.batchactions.browser.views import DeleteBatchActionForm
 from collective.eeafaceted.batchactions.utils import listify_uids
 from eea.facetednavigation.interfaces import ICriteria
 from ftw.labels.interfaces import ILabeling
+from imio.actionspanel.interfaces import IContentDeletable
 from imio.helpers.content import uuidToObject
 from imio.helpers.xhtml import addClassToContent
 from imio.helpers.xhtml import CLASS_TO_LAST_CHILDREN_NUMBER_OF_CHARS_DEFAULT
@@ -2067,6 +2069,21 @@ class DownloadAnnexesBatchActionForm(BaseBatchActionForm):
         """ """
         # uids = listify_uids(data['uids'])
         api.portal.show_message("Done " + data['uids'], request=self.request)
+
+
+class PMDeleteBatchActionForm(DeleteBatchActionForm):
+
+    section = "annexes"
+
+    def available(self):
+        """ """
+        return _checkPermission(ModifyPortalContent, self.context)
+
+    def get_deletable_elements(self):
+        """ """
+        deletables = [brain for brain in self.brains
+                      if IContentDeletable(brain.getObject()).mayDelete()]
+        return deletables
 
 
 class DisplayMeetingConfigsOfConfigGroup(BrowserView):
