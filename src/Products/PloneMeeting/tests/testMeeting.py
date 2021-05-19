@@ -1679,6 +1679,7 @@ class testMeetingType(PloneMeetingTestCase):
            depending on categories."""
         self.changeUser('pmManager')
         cfg = self.meetingConfig
+        self._removeConfigObjectsFor(cfg, folders=['itemtemplates'])
         cfg.setUseGroupsAsCategories(False)
         cfg.setInsertingMethodsOnAddItem(
             ({'insertingMethod': 'on_categories',
@@ -2270,7 +2271,8 @@ class testMeetingType(PloneMeetingTestCase):
         item.REQUEST['PUBLISHED'] = item
         # as no current meeting and no meeting in the future, the item
         # may not be presented
-        self.assertFalse(item.wfConditions().mayPresent())
+        self.assertEqual(item.wfConditions().mayPresent().msg,
+                         u'not_able_to_find_meeting_to_present_item_into')
         # MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject returns nothing
         # as no meeting in the future
         self.assertIsNone(item.getMeetingToInsertIntoWhenNoCurrentMeetingObject())

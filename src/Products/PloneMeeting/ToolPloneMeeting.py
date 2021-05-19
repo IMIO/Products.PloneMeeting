@@ -1059,7 +1059,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             fieldsToKeep = ['id', 'proposingGroup', ] + copyFields
             # remove 'category' from fieldsToKeep if it is disabled
             if 'category' in fieldsToKeep:
-                category = copiedItem.getCategory(real=True, theObject=True)
+                category = copiedItem.getCategory(theObject=True)
                 if category and not category.is_selectable(userId=loggedUserId):
                     fieldsToKeep.remove('category')
             # remove 'classifier' from fieldsToKeep if it is disabled
@@ -1145,10 +1145,12 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                                   action_label=None,
                                   user_id=newOwnerId or newItem.Creator())
 
-            # The copy/paste has transferred annotations, we do not need them.
-            for ann in annotations:
-                if ann.startswith(SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY):
-                    del annotations[ann]
+            # The copy/paste has transferred annotations,
+            # remove ones related to item sent to other MC
+            anns_to_remove = [ann for ann in annotations
+                              if ann.startswith(SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY)]
+            for ann_to_remove in anns_to_remove:
+                del annotations[ann_to_remove]
 
             self.REQUEST.set('currentlyPastingItems', False)
         return newItem

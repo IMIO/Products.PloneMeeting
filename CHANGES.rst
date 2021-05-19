@@ -107,7 +107,9 @@ Changelog
   - `locking` (not being able to edit if another user is editing), hide the edit
     icon if context is locked, if user edit and content is locked in between,
     the page is reloaded;
-  - `formUnload` (not losing changes during edition and clicking leaving current page).
+  - `formUnload` (not losing changes during edition and clicking leaving current page);
+  - when quick editing a RichText field, hide the `actions_panel` viewlet, on views
+    where it is sticky, it may be confusing and taken for save/cancel controls.
 
   [gbastien]
 - Added `Meeting.committees` management:
@@ -221,7 +223,12 @@ Changelog
     or it was necessary for now to compute it mentally...;
   - Fixed bug in `@@display-meeting-item-voters` considering secret linked
     votes as not complete when using more than 2 linked votes;
-  - Display `MeetingItem.pollType` field if enabled or when votes are enabled.
+  - Display `MeetingItem.pollType` field if enabled or when votes are enabled;
+  - Added validation for `MeetingConfig.defaultPollType`
+    (must be among MeetingConfig.usedPollTypes);
+  - Added validation for `MeetingConfig.firstLinkedVoteUsedVoteValues` and
+    `MeetingConfig.nextLinkedVotesUsedVoteValues`
+    (must be among `MeetingConfig.usedVoteValues`).
 
   [gbastien]
 - Fix access to annexes of inherited advice when original advice is not viewable
@@ -248,6 +255,27 @@ Changelog
 - Added `marginalNotes_column` to `MeetingConfig.listItemRelatedColumns` to be
   able to display the `MeetingItem.marginalNotes` field as static info
   (always visible in Title column) in the dashboards.
+  [gbastien]
+- Fixed `MeetingItem._check_required_data` to check that `MeetingItem.groupsInCharge`
+  is set when using `MeetingItem.proposingGroupWithGroupInCharge`.
+  It may happen that `MeetingItem.proposingGroup` is set but not
+  `MeetingItem.groupsInCharge` when item is created using a WS call.
+  [gbastien]
+- Adapted behavior of `MeetingItem._check_required_data`, when the transition is
+  computed for the actions_panel, every destination states are checked, if
+  transitions are triggered by code (WS call, item sent to another MC, ...)
+  then only the `presented` destination state is checked.
+  [gbastien]
+- Fixed `AskedAdvicesVocabulary` that was not displaying advisers that were only
+  defined as power advisers.
+  [gbastien]
+- Removed the `MeetingItem category/proposingGroup` magic that was relying on
+  `MeetingConfig.useGroupsAsCategories`.
+  `MeetingItem.getCategory` does not care anymore about proposingGroup and will
+  return an empty string or the stored category id.
+  [gbastien]
+- Fixed `ToolPloneMeeting.pasteItem` that was not correctly removing `sent item
+  to another MC` related annotations when item was sent to several other MCs.
   [gbastien]
 
 4.2b11 (2021-01-19)

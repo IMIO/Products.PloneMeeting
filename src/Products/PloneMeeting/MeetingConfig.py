@@ -128,6 +128,7 @@ from zope.component import getMultiAdapter
 from zope.component import getUtility
 from zope.container.interfaces import INameChooser
 from zope.i18n import translate
+from zope.i18nmessageid.message import Message
 from zope.interface import alsoProvides
 from zope.interface import implements
 from zope.schema.interfaces import IVocabularyFactory
@@ -3787,6 +3788,36 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                      mapping={'hp_title': hp.get_short_title()},
                      default="Error used values is not selectable, check \"${hp_title}\"")
 
+    security.declarePrivate('validate_defaultPollType')
+
+    def validate_defaultPollType(self, value):
+        '''Validate the defaultPollType field.
+           Selected value must be among MeetingConfig.usedPollTypes.'''
+        usedPollTypes = self.REQUEST.get(
+            'usedPollTypes', self.getUsedPollTypes())
+        if value not in usedPollTypes:
+            return _('error_default_poll_type_must_be_among_used_poll_types')
+
+    security.declarePrivate('validate_firstLinkedVoteUsedVoteValues')
+
+    def validate_firstLinkedVoteUsedVoteValues(self, values):
+        '''Validate the firstLinkedVoteUsedVoteValues field.
+           Selected values must be among MeetingConfig.usedVoteValues.'''
+        usedVoteValues = self.REQUEST.get(
+            'usedVoteValues', self.getUsedVoteValues())
+        if set(values).difference(usedVoteValues):
+            return _('error_first_linked_vote_used_vote_values_must_be_among_used_vote_values')
+
+    security.declarePrivate('validate_nextLinkedVotesUsedVoteValues')
+
+    def validate_nextLinkedVotesUsedVoteValues(self, values):
+        '''Validate the nextLinkedVotesUsedVoteValues field.
+           Selected values must be among MeetingConfig.usedVoteValues.'''
+        usedVoteValues = self.REQUEST.get(
+            'usedVoteValues', self.getUsedVoteValues())
+        if set(values).difference(usedVoteValues):
+            return _('error_next_linked_votes_used_vote_values_must_be_among_used_vote_values')
+
     security.declarePrivate('validate_transitionsForPresentingAnItem')
 
     def validate_transitionsForPresentingAnItem(self, values):
@@ -7114,6 +7145,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         error_pattern = u"<dl class=\"portalMessage error\"><dt>{0}</dt><dd>{1}</dd></dl>"
         res = []
         for error_field_id, error_msg in errors.items():
+            if isinstance(error_msg, Message):
+                error_msg = translate(error_msg, context=self.REQUEST)
             res.append(error_pattern.format(
                 translate(u"Error",
                           domain="plone",

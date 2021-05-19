@@ -14,7 +14,7 @@
                          src string:${view/portal_url}/save.gif;
                          onClick string:moveItem(baseUrl='${context/absolute_url}', moveType='number', $('input#value_moveAction_${itemNumber}'));"/>
     <img style="visibility: hidden;"
-         title="cancel" i18n:attributes="title" name="moveImageButton"
+         title="Cancel" i18n:attributes="title" name="moveImageButton"
          tal:define="id string:moveAction_cancel_${itemNumber};"
          tal:attributes="id id;
                          src string:${view/portal_url}/cancel_edit.png;
