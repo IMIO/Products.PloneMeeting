@@ -2050,27 +2050,6 @@ class UpdateLocalRolesBatchActionForm(BaseBatchActionForm):
         api.portal.show_message(msg, request=self.request)
 
 
-class DownloadAnnexesBatchActionForm(BaseBatchActionForm):
-
-    label = _CEBA("Download annexes")
-    button_with_icon = False
-    section = "annexes"
-
-    def __init__(self, context, request):
-        super(DownloadAnnexesBatchActionForm, self).__init__(context, request)
-        self.tool = api.portal.get_tool('portal_plonemeeting')
-        self.cfg = self.tool.getMeetingConfig(context)
-
-    def available(self):
-        """ """
-        return True
-
-    def _apply(self, **data):
-        """ """
-        # uids = listify_uids(data['uids'])
-        api.portal.show_message("Done " + data['uids'], request=self.request)
-
-
 class PMDeleteBatchActionForm(DeleteBatchActionForm):
 
     section = "annexes"
