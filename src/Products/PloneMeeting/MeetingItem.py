@@ -225,6 +225,12 @@ class MeetingItemWorkflowConditions(object):
            not self.tool.isManager(self.context):
             return False
 
+        # if WFAdaptation 'items_come_validated' is enabled, an item
+        # could miss it's category
+        msg = self._check_required_data()
+        if msg is not None:
+            return msg
+
         # We may present the item if Plone currently publishes a meeting.
         # Indeed, an item may only be presented within a meeting.
         # if we are not on a meeting, try to get the next meeting accepting items
@@ -232,12 +238,6 @@ class MeetingItemWorkflowConditions(object):
             meeting = self.context.getMeetingToInsertIntoWhenNoCurrentMeetingObject()
             if not meeting:
                 return No(_('not_able_to_find_meeting_to_present_item_into'))
-
-        # if WFAdaptation 'items_come_validated' is enabled, an item
-        # could miss it's category
-        msg = self._check_required_data()
-        if msg is not None:
-            return msg
 
         # here we are sure that we have a meeting that will accept the item
         # Verify if all automatic advices have been given on this item.

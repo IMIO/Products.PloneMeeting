@@ -5,8 +5,12 @@ Changelog
 4.1.28.27 (unreleased)
 ----------------------
 
-- Nothing changed yet.
+- Backport from 4.2.x:
 
+  - In `MeetingItem.mayPresent`, call `MeetingItem._check_required_data` before
+    getting meeting to present into so `No` message about required data is
+    displayed before message about no meeting to present into.
+    [gbastien]
 
 4.1.28.26 (2021-05-20)
 ----------------------
