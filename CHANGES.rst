@@ -20,6 +20,9 @@ Changelog
     [gbastien]
 - Do not raise if itemfreeze transition fails while presenting an item in a frozen meeting.
   [odelaere]
+- Display groups in charge on item view when empty and field
+  `MeetingItem.groupsInCharge` is used, this may happen when item created thru WS.
+  [gbastien]
 
 4.1.28.25 (2021-04-28)
 ----------------------
