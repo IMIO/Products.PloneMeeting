@@ -50,6 +50,7 @@ from zope.component import getUtility
 from zope.i18n import translate
 from zope.intid.interfaces import IIntIds
 
+import magic
 import transaction
 
 
@@ -1630,6 +1631,70 @@ class testViews(PloneMeetingTestCase):
         meeting = self.create('Meeting')
         self.changeUser('siteadmin')
         self.assertRaises(AttributeError, meeting.restrictedTraverse, '@@update-local-roles-batch-action')
+
+    def test_pm_DownloadAnnexesActionForm(self):
+        """This batch action will download annexes as a zip file."""
+        cfg = self.meetingConfig
+        cfg.setEnabledAnnexesBatchActions([])
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        annex1 = self.addAnnex(item)
+        annex2 = self.addAnnex(item)
+        self.request['form.widgets.uids'] = u','.join([annex1.UID(), annex2.UID()])
+        self.request.form['form.widgets.uids'] = self.request['form.widgets.uids']
+        self.request.form['ajax_load'] = 'dummy'
+
+        # available when activated
+        form = item.restrictedTraverse('@@download-annexes-batch-action')
+        form.update()
+        self.assertFalse(form.available())
+        cfg.setEnabledAnnexesBatchActions(['download-annexes'])
+        self.assertTrue(form.available())
+        form.update()
+        data = form.handleApply(form, None)
+        # headers are set
+        self.assertEqual(self.request.response.getHeader('content-type'), 'application/zip')
+        self.assertEqual(self.request.response.getHeader('content-disposition'),
+                         'attachment;filename=o1.zip')
+        # we received a Zip file
+        m = magic.Magic()
+        self.assertEqual(m.from_buffer(data), 'Zip archive data, at least v2.0 to extract')
+        # annexes without a filename are ignored
+        annex1.file.filename = None
+        annex2.file.filename = None
+        data = form.handleApply(form, None)
+        self.assertEqual(m.from_buffer(data), 'Zip archive data (empty)')
+
+    def test_pm_DeleteAnnexesActionForm(self):
+        """This batch action will delete annexes."""
+        cfg = self.meetingConfig
+        cfg.setEnabledAnnexesBatchActions([])
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        annex1 = self.addAnnex(item)
+        annex2 = self.addAnnex(item)
+        # annex without a file name does not break
+        annex2.file.filename = None
+        self.request['form.widgets.uids'] = u','.join([annex1.UID(), annex2.UID()])
+        self.request.form['form.widgets.uids'] = self.request['form.widgets.uids']
+        self.request.form['ajax_load'] = 'dummy'
+
+        # available when activated
+        form = item.restrictedTraverse('@@delete-batch-action')
+        form.update()
+        self.assertFalse(form.available())
+        cfg.setEnabledAnnexesBatchActions(['delete'])
+        self.assertTrue(form.available())
+        # action not avilable when not able to edit item
+        self.changeUser('pmObserver1')
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertFalse(form.available())
+        # proceed, this will delete annexes
+        self.changeUser('pmCreator1')
+        form.update()
+        self.assertEqual(get_annexes(item), [annex1, annex2])
+        form.handleApply(form, None)
+        self.assertEqual(get_annexes(item), [])
 
     def test_pm_ftw_labels_viewlet_available(self):
         """Only available on items if enabled in MeetingConfig."""
