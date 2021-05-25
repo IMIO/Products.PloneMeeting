@@ -17,6 +17,7 @@ from collective.eeafaceted.batchactions.utils import listify_uids
 from eea.facetednavigation.interfaces import ICriteria
 from ftw.labels.interfaces import ILabeling
 from imio.actionspanel.interfaces import IContentDeletable
+from imio.annex.browser.views import DownloadAnnexesBatchActionForm
 from imio.helpers.content import uuidToObject
 from imio.helpers.xhtml import addClassToContent
 from imio.helpers.xhtml import CLASS_TO_LAST_CHILDREN_NUMBER_OF_CHARS_DEFAULT
@@ -2051,18 +2052,38 @@ class UpdateLocalRolesBatchActionForm(BaseBatchActionForm):
 
 
 class PMDeleteBatchActionForm(DeleteBatchActionForm):
+    """ """
 
     section = "annexes"
 
+    def __init__(self, context, request):
+        super(PMDeleteBatchActionForm, self).__init__(context, request)
+        self.tool = api.portal.get_tool('portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(context)
+
     def available(self):
         """ """
-        return _checkPermission(ModifyPortalContent, self.context)
+        return "delete" in self.cfg.getEnabledAnnexesBatchActions() and \
+               _checkPermission(ModifyPortalContent, self.context)
 
     def get_deletable_elements(self):
         """ """
         deletables = [brain for brain in self.brains
                       if IContentDeletable(brain.getObject()).mayDelete()]
         return deletables
+
+
+class PMDownloadAnnexesBatchActionForm(DownloadAnnexesBatchActionForm):
+    """ """
+
+    def __init__(self, context, request):
+        super(PMDownloadAnnexesBatchActionForm, self).__init__(context, request)
+        self.tool = api.portal.get_tool('portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(context)
+
+    def available(self):
+        """ """
+        return "download-annexes" in self.cfg.getEnabledAnnexesBatchActions()
 
 
 class DisplayMeetingConfigsOfConfigGroup(BrowserView):

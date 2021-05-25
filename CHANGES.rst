@@ -278,6 +278,13 @@ Changelog
 - Fixed `ToolPloneMeeting.pasteItem` that was not correctly removing `sent item
   to another MC` related annotations when item was sent to several other MCs.
   [gbastien]
+- Enabled batch actions on annexes:
+
+  - Batch actions `Delete` and `Download as Zip` are available;
+  - Added `MeetingConfig.enabledAnnexesBatchActions` attribute to be able enable
+    or disable batch actions, by default only the `Download` action is enabled.
+
+  [gbastien]
 
 4.2b11 (2021-01-19)
 -------------------

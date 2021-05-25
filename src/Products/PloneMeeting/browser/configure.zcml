@@ -289,7 +289,7 @@
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingContentBatchActionsMarker"
         name="download-annexes-batch-action"
-        class="imio.annex.browser.views.DownloadAnnexesBatchActionForm"
+        class=".views.PMDownloadAnnexesBatchActionForm"
         permission="zope2.View" />
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingContentBatchActionsMarker"
