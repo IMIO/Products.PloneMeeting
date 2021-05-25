@@ -1882,12 +1882,15 @@ def org_id_to_uid(org_info, raise_on_error=True, ignore_underscore=False):
        organizations were imported."""
     own_org = get_own_organization()
     try:
+        # use get or unrestrictedTraverse depending on fact that
+        # org_path is a path or a single str
+        getter = "/" in org_info and own_org.restrictedTraverse or own_org.get
         if '_' in org_info and not ignore_underscore:
             org_path, suffix = org_info.split('_')
-            org = own_org.restrictedTraverse(org_path.encode('utf-8'))
+            org = getter(org_path.encode('utf-8'))
             return get_plone_group_id(org.UID(), suffix)
         else:
-            org = own_org.restrictedTraverse(org_info.encode('utf-8'))
+            org = getter(org_info.encode('utf-8'))
             return org.UID()
     except Exception, exc:
         if raise_on_error:
