@@ -1891,7 +1891,8 @@ def org_id_to_uid(org_info, raise_on_error=True, ignore_underscore=False):
             return get_plone_group_id(org.UID(), suffix)
         else:
             org = getter(org_info.encode('utf-8'))
-            return org.UID()
+            if org:
+                return org.UID()
     except Exception, exc:
         if raise_on_error:
             raise(exc)

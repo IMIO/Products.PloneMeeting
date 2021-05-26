@@ -127,7 +127,7 @@ class testUtils(PloneMeetingTestCase):
         """Test the utils.org_id_to_uid function."""
         self.changeUser('pmManager')
         # org UID
-        self.assertEqual(org_id_to_uid(''), self.own_org.UID())
+        self.assertIsNone(org_id_to_uid(''))
         self.assertEqual(org_id_to_uid(self.developers.getId()), self.developers_uid)
         self.assertEqual(org_id_to_uid(self.vendors.getId()), self.vendors_uid)
         # org UID with suffix
