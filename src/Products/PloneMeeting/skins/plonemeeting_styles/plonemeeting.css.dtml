@@ -255,7 +255,6 @@ strong.auto_info {
 
 #content div#plone-document-byline {
   float: left;
-  display: contents;
 }
 div.viewlet_workflowstate {
     float: right;
@@ -1541,6 +1540,10 @@ body.template-meeting_available_items_view div#ajax-spinner {
 /* docgen icons on the item view */
 body.template-meetingitem_view div#doc-generation-view {
    float: right;
+   padding-top: 0.5em;
+}
+div#viewlet-above-content-body {
+   padding-top: 1em;
 }
 
 /* remove margin for fields itemWorkflow and meetingWorkflow on the meetingconfig_view

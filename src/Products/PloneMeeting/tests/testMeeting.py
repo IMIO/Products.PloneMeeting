@@ -2882,13 +2882,13 @@ class testMeetingType(PloneMeetingTestCase):
         helper = view.get_generation_context_helper()
 
         meeting.assembly = RichTextValue('Simple assembly')
-        self.assertEqual(helper.printAssembly(),
+        self.assertEqual(helper.print_assembly(),
                          '<p>Simple assembly</p>')
         meeting.assembly = RichTextValue('Assembly with [[striked]] part')
-        self.assertEqual(helper.printAssembly(),
+        self.assertEqual(helper.print_assembly(),
                          '<p>Assembly with <strike>striked</strike> part</p>')
         meeting.assembly = RichTextValue('Assembly with [[striked]] part1\r\nAssembly part2')
-        self.assertEqual(helper.printAssembly(),
+        self.assertEqual(helper.print_assembly(),
                          '<p>Assembly with <strike>striked</strike> part1<br />Assembly part2</p>')
 
     def test_pm_ChangingMeetingDateUpdateLinkedItemsMeetingDateMetadata(self):
@@ -3766,7 +3766,7 @@ class testMeetingType(PloneMeetingTestCase):
         meeting = self._setUpCommittees(attendees=False)
         view = meeting.restrictedTraverse('document-generation')
         helper = view.get_generation_context_helper()
-        self.assertEqual(helper.printAssembly(committee_id="committee_1"),
+        self.assertEqual(helper.print_assembly(committee_id="committee_1"),
                          u'<p>Default assembly</p>')
 
     def test_pm_print_signatures_by_position_committee_id(self):

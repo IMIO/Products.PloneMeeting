@@ -1247,9 +1247,9 @@ class testContacts(PloneMeetingTestCase):
             u'<strong><u>Pr\xe9sents&nbsp;:</u></strong><br />'
             u'Monsieur Person1FirstName Person1LastName, Assembly member 1, '
             u'Monsieur Person2FirstName Person2LastName, Assembly member 2;')
-        # same result when called from printAssembly
+        # same result when called from print_assembly
         self.assertEqual(
-            helper.printAssembly(committee_id="committee_1", group_position_type=False),
+            helper.print_assembly(committee_id="committee_1", group_position_type=False),
             u'<strong><u>Pr\xe9sents&nbsp;:</u></strong><br />'
             u'Monsieur Person1FirstName Person1LastName, Assembly member 1, '
             u'Monsieur Person2FirstName Person2LastName, Assembly member 2;')

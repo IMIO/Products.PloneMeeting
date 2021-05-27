@@ -48,6 +48,7 @@ from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import _itemNumber_to_storedItemNumber
 from Products.PloneMeeting.utils import _storedItemNumber_to_itemNumber
 from Products.PloneMeeting.utils import get_annexes
+from Products.PloneMeeting.utils import get_dx_field
 from Products.PloneMeeting.utils import get_dx_widget
 from Products.PloneMeeting.utils import get_person_from_userid
 from Products.PloneMeeting.utils import signatureNotAlone
@@ -456,7 +457,40 @@ class BaseDGHV(object):
     def __init__(self, context, request):
         self.printed_scan_id_barcode = []
 
-    def imageOrientation(self, image):
+    def _print_special_value(self, field_name, empty_marker=u'', **kwargs):
+        """Overridable method to manage some specific usecases for self.print_value."""
+        return None
+
+    def print_value(self, field_name, empty_marker=u'', **kwargs):
+        """Convenient method that print more or less everything."""
+        # special handling for some values
+        value = self._print_special_value(field_name, empty_marker, **kwargs)
+        if value is None:
+            # get attribute in schema
+            value = getattr(self.real_context, field_name)
+            field = get_dx_field(self.real_context, field_name)
+            class_name = field.__class__.__name__
+            # Datetime
+            if class_name == 'Datetime':
+                if 'custom_format' not in kwargs:
+                    kwargs['custom_format'] = '%-d %B %Y'
+                value = self.display_date(date=getattr(self.real_context, field_name), **kwargs)
+            # RichText
+            elif class_name == 'RichText':
+                value = value and value.output
+                if value:
+                    value = self.printXhtml(self.context, xhtmlContents=value, **kwargs)
+            # List/Choice
+            elif getattr(field, 'vocabulary', None):
+                value = self.display_voc(field_name, **kwargs)
+
+        # if a p_empty_marker is given and no value, use it
+        # it may be "???" or "xxx" for example
+        if not value:
+            value = empty_marker
+        return value
+
+    def image_orientation(self, image):
         """Compute image orientation, if orientation is landscape, we rotate
            the image from 90° so it is displayed on the full page.
            This is used by the appy.pod 'import from document' method
@@ -545,7 +579,7 @@ class BaseDGHV(object):
 
         return xhtmlFinal
 
-    def printHistory(self):
+    def print_history(self):
         """Return the history view for templates. """
         historyView = self.context.restrictedTraverse('@@historyview')()
         historyViewRendered = lxml.html.fromstring(historyView)
@@ -596,13 +630,13 @@ class BaseDGHV(object):
                     hp.get_prefix_for_gender_and_number(include_value=True, use_to=True)
         return infos
 
-    def printAdvicesInfos(self,
-                          item,
-                          withAdvicesTitle=True,
-                          withDelay=False,
-                          withDelayLabel=True,
-                          withAuthor=True,
-                          ordered=True):
+    def print_advices_infos(self,
+                            item,
+                            withAdvicesTitle=True,
+                            withDelay=False,
+                            withDelayLabel=True,
+                            withAuthor=True,
+                            ordered=True):
         '''Helper method to have a printable version of advices.'''
         res = ""
         if withAdvicesTitle:
@@ -710,12 +744,12 @@ class BaseDGHV(object):
         barcode = scan_id_barcode(self.context, **kwargs)
         return barcode
 
-    def printFullname(self, user_id):
+    def print_fullname(self, user_id):
         """ """
         user = api.user.get(user_id)
         return user and user.getProperty('fullname') or user_id
 
-    def printAssembly(self, striked=True, use_print_attendees_by_type=True, **kwargs):
+    def print_assembly(self, striked=True, use_print_attendees_by_type=True, **kwargs):
         '''Returns the assembly for this meeting or item.
            If p_striked is True, return striked assembly.
            If use_print_attendees_by_type is True, we use print_attendees_by_type method instead of
@@ -1714,8 +1748,14 @@ class FolderDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGH
         return res
 
 
-class MeetingDocumentGenerationHelperView(FolderDocumentGenerationHelperView):
+class MeetingDocumentGenerationHelperView(DXDocumentGenerationHelperView, FolderDocumentGenerationHelperView):
     """ """
+
+    def _print_special_value(self, field_name, empty_marker='', **kwargs):
+        """Manage 'place' manually."""
+        # 'place' may be stored in 'place' or 'place_other'
+        if field_name == 'place':
+            return self.real_context.get_place()
 
 
 class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV):
@@ -1732,7 +1772,7 @@ class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV)
             result['public_deliberation_decided'] = self.print_public_deliberation_decided()
         return result
 
-    def print_meeting_date(self, returnDateTime=False, noMeetingMarker='-', unrestricted=True):
+    def print_meeting_date(self, returnDateTime=False, noMeetingMarker='-', unrestricted=True, **kwargs):
         """Print meeting date, manage fact that item is not linked to a meeting,
            in this case p_noMeetingMarker is returned.
            If p_returnDateTime is True, it returns the meeting date DateTime,
@@ -1746,16 +1786,11 @@ class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV)
 
         if returnDateTime:
             return meeting.date
-        return meeting.Title()
+        else:
+            dghv = self.getDGHV(meeting)
+            return dghv.print_value("date", **kwargs)
 
-    def printMeetingDate(self, returnDateTime=False, noMeetingMarker='-', unrestricted=True):
-        """
-        Allow backward compatibility with old PODTemplates.
-        See print_meeting_date for docstring.
-        """
-        return self.print_meeting_date(returnDateTime, noMeetingMarker, unrestricted)
-
-    def print_preferred_meeting_date(self, returnDateTime=False, noMeetingMarker='-', unrestricted=True):
+    def print_preferred_meeting_date(self, returnDateTime=False, noMeetingMarker='-', unrestricted=True, **kwargs):
         """
         Print preferred meeting date, manage fact that item has no preferred meeting date
         :param returnDateTime if True, returns the preferred meeting date DateTime, otherwise it returns the
@@ -1771,7 +1806,9 @@ class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV)
 
         if returnDateTime:
             return preferred_meeting.date
-        return preferred_meeting.Title()
+        else:
+            dghv = self.getDGHV(preferred_meeting)
+            return dghv.print_value("date", **kwargs)
 
     def print_in_and_out_attendees(
             self,

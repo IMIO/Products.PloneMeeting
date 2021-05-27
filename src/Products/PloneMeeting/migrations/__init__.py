@@ -4,24 +4,18 @@
 # ------------------------------------------------------------------------------
 '''This module defines functions that allow to migrate to a given version of
    PloneMeeting for production sites that run older versions of PloneMeeting.
-   You must run every migration function in the right chronological order.
-   For example, if your production site runs a version of PloneMeeting as of
-   2008_04_01, and two migration functions named
-   migrateToPloneMeeting_2008_05_23 and migrateToPloneMeeting_2008_08_29 exist,
-   you need to execute migrateToPloneMeeting_2008_05_23 first AND
-   migrateToPloneMeeting_2008_08_29 then.
+   You must run every migration function in the right chronological order.'''
 
-   Migration functions must be run from portal_setup within your Plone site
-   through the ZMI. Every migration function corresponds to a import step in
-   portal_setup.'''
-
+from collections import OrderedDict
 from collective.behavior.talcondition.behavior import ITALCondition
+from collective.documentgenerator.search_replace.pod_template import SearchAndReplacePODTemplates
 from DateTime import DateTime
 from eea.facetednavigation.interfaces import ICriteria
 from imio.helpers.cache import cleanRamCacheFor
 from imio.helpers.catalog import addOrUpdateColumns
 from imio.helpers.catalog import addOrUpdateIndexes
 from imio.helpers.content import object_values
+from imio.helpers.content import uuidToObject
 from imio.migrator.migrator import Migrator as BaseMigrator
 from imio.pyutils.utils import replace_in_list
 from natsort import humansorted
@@ -179,6 +173,85 @@ class Migrator(BaseMigrator):
             if as_copy_group_on is not None:
                 as_copy_group_on = as_copy_group_on.replace(old_word, new_word)
                 org.as_copy_group_on = as_copy_group_on
+        logger.info('Done.')
+
+    def updatePODTemplatesCode(self,
+                               replacements={},
+                               meeting_replacements={},
+                               item_replacements={}):
+        """Apply given p_replacements to every POD templates.
+           p_meeting_replacements are for POD templates used on Meetings and
+           p_item_replacements are for POD templates used on MeetingItems.
+           This let know what "self" is, a meeting or an item.
+           WARNING, be defensive with replacements :
+           - try to start with "self", "." or "=" and end with "(" or "()",
+             never use single word, a single word may also be a
+             POD template context variable ("listTypes", "review_state", ...)."""
+        logger.info('Fixing POD templates instructions....')
+        results = []
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            pod_templates = object_values(
+                cfg.podtemplates,
+                ['ConfigurablePODTemplate', 'DashboardPODTemplate'])
+            # only keep POD templates having an odt_file
+            pod_templates = [pt for pt in pod_templates if pt.odt_file]
+            meeting_type_name = cfg.getMeetingTypeName()
+            item_type_name = cfg.getItemTypeName()
+            for pod_template in pod_templates:
+                logger.info('Checking POD template at %s...' % repr(pod_template))
+                with SearchAndReplacePODTemplates([pod_template]) as search_replace:
+                    # apply first portal_type specific replacements (Meeting or Item)
+                    if pod_template.pod_portal_types:
+                        if meeting_type_name in pod_template.pod_portal_types:
+                            for k, v in meeting_replacements.items():
+                                res = search_replace.replace(k, v, is_regex=False)
+                                if res:
+                                    results.append(res)
+                        if item_type_name in pod_template.pod_portal_types:
+                            for k, v in item_replacements.items():
+                                res = search_replace.replace(k, v, is_regex=False)
+                                if res:
+                                    results.append(res)
+                    # replacements compatible with any portal_types
+                    for k, v in replacements.items():
+                        res = search_replace.replace(k, v, is_regex=False)
+                        if res:
+                            results.append(res)
+        # format results and dump it in the Zope log
+        # as clean as possible so it can be used to know what changed
+        data = {}
+        for result in results:
+            pt_uid, infos = result.items()[0]
+            pt = uuidToObject(pt_uid, unrestricted=True)
+            pt_path_and_title = "{0} - {1}".format(
+                '/'.join(pt.getPhysicalPath()), pt.Title())
+            if pt_path_and_title not in data:
+                data[pt_path_and_title] = []
+                self.warnings.append('Replacements were done in POD template at %s'
+                                     % pt_path_and_title)
+            for info in infos:
+                data[pt_path_and_title].append("---- " + info.pod_expr)
+                data[pt_path_and_title].append("++++ " + info.new_pod_expr)
+        logger.info("REPLACEMENTS IN POD TEMPLATES")
+        if not data:
+            logger.info("=============================")
+            logger.info("No replacement was done.")
+        else:
+            # order data by pt_path
+            ordered_data = OrderedDict(sorted(data.items()))
+            output = ["============================="]
+            for pt_path_and_title, infos in ordered_data.items():
+                output.append("POD template " + pt_path_and_title)
+                output.append('-' * len("POD template " + pt_path_and_title))
+                for info in infos:
+                    output.append(info)
+            # make sure we do not mix unicode and utf-8
+            fixed_output = []
+            for line in output:
+                if isinstance(line, unicode):
+                    line = line.encode('utf8')
+                fixed_output.append(line)
+            logger.info('\n'.join(fixed_output))
         logger.info('Done.')
 
     def updateHolidays(self):
