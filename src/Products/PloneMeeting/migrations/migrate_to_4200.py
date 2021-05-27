@@ -606,7 +606,6 @@ class Migrate_To_4200(Migrator):
         logger.info('Migrating to PloneMeeting 4200...')
 
         self._fixPODTemplatesInstructions()
-        return
         self._fixFacetedFilters()
 
         # apply correct batch actions marker on searches_* folders
