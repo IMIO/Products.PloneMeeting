@@ -280,6 +280,8 @@ Changelog
   [gbastien]
 - Added parameter `image_src_to_data=False` to `BaseDGHV.printXhtml` to be able
   to turn images src to base64 data value using `imio.helpers.xhtml.imagesToData`.
+  Also added values `deliberation_motivation` and `deliberation_decision` to
+  possible values returned by `ItemDocumentGenerationHelperView.deliberation_for_restapi`.
   [gbastien]
 
 4.2b11 (2021-01-19)
