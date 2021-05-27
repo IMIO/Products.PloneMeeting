@@ -1016,7 +1016,7 @@ div#archetypes-fieldname-usingGroups {
 /* hide some options in the select showing optionalAdvisers */
 div#optionalAdvisers input[value="not_selectable_value_delay_aware_optional_advisers"],
 div#optionalAdvisers input[value="not_selectable_value_non_delay_aware_optional_advisers"] {
-    display: none;
+    visibility: hidden;
 }
 div#optionalAdvisers input[value="not_selectable_value_delay_aware_optional_advisers"] + label,
 div#optionalAdvisers input[value="not_selectable_value_non_delay_aware_optional_advisers"] + label {
