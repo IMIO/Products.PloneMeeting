@@ -37,6 +37,7 @@ from Products.PloneMeeting.etags import LinkedMeetingModified
 from Products.PloneMeeting.etags import ToolModified
 from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.tests.PloneMeetingTestCase import DEFAULT_USER_PASSWORD
+from Products.PloneMeeting.tests.PloneMeetingTestCase import IMG_BASE64_DATA
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import get_dx_widget
@@ -1090,6 +1091,28 @@ class testViews(PloneMeetingTestCase):
                          '<p class="ParaKWN">&#160;</p>'
                          '<p class="ParaKWN">Text with image <img src="{0}" /> and more text.</p>'
                          .format(img_blob_path))
+
+    def test_pm_PrintXhtmlImageSrcToData(self):
+        ''' '''
+        item, motivation, decision, helper = self._setupPrintXhtml()
+
+        # use image_src_to_data
+        file_path = path.join(path.dirname(__file__), 'dot.gif')
+        data = open(file_path, 'r')
+        img_id = item.invokeFactory('Image', id='img', title='Image', file=data.read())
+        img = getattr(item, img_id)
+        pattern = '<p>Text with image <img src="{0}" /> and more text.</p>'
+        text = pattern.format(img.absolute_url())
+        # in tests the monkeypatch for safe_html.hasScript does not seem to be applied...
+        # so disable remove_javascript from safe_html
+        self.portal.portal_transforms.safe_html._v_transform.config['remove_javascript'] = 0
+        self.assertEqual(helper.printXhtml(item,
+                                           text,
+                                           image_src_to_paths=False,
+                                           image_src_to_data=True,
+                                           use_safe_html=True),
+                         pattern.format(IMG_BASE64_DATA))
+        self.portal.portal_transforms.safe_html._v_transform.config['remove_javascript'] = 1
 
     def test_pm_PrintXhtmlAddCSSClass(self):
         ''' '''

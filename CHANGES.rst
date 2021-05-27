@@ -278,6 +278,9 @@ Changelog
 - Fixed `ToolPloneMeeting.pasteItem` that was not correctly removing `sent item
   to another MC` related annotations when item was sent to several other MCs.
   [gbastien]
+- Added parameter `image_src_to_data=False` to `BaseDGHV.printXhtml` to be able
+  to turn images src to base64 data value using `imio.helpers.xhtml.imagesToData`.
+  [gbastien]
 
 4.2b11 (2021-01-19)
 -------------------
