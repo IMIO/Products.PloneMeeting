@@ -19,6 +19,7 @@ from eea.facetednavigation.interfaces import ICriteria
 from ftw.labels.interfaces import ILabeling
 from imio.helpers.xhtml import addClassToContent
 from imio.helpers.xhtml import CLASS_TO_LAST_CHILDREN_NUMBER_OF_CHARS_DEFAULT
+from imio.helpers.xhtml import imagesToData
 from imio.helpers.xhtml import imagesToPath
 from imio.helpers.xhtml import separate_images
 from imio.history.utils import getLastWFAction
@@ -687,6 +688,7 @@ class BaseDGHV(object):
 
     def printXhtml(self, context, xhtmlContents,
                    image_src_to_paths=True,
+                   image_src_to_data=False,
                    separatorValue='<p>&nbsp;</p>',
                    keepWithNext=False,
                    keepWithNextNumberOfChars=CLASS_TO_LAST_CHILDREN_NUMBER_OF_CHARS_DEFAULT,
@@ -731,10 +733,13 @@ class BaseDGHV(object):
             else:
                 xhtmlFinal += xhtmlContent
 
-        # manage image_src_to_paths
+        # manage image_src_to_paths/image_src_to_data, exclusive parameters
         # turning http link to image to blob path will avoid unauthorized by appy.pod
         if image_src_to_paths:
             xhtmlFinal = imagesToPath(context, xhtmlFinal)
+        elif image_src_to_data:
+            # turning http link to image to data base64 value will make html "self-supporting"
+            xhtmlFinal = imagesToData(context, xhtmlFinal)
 
         # manage keepWithNext
         if keepWithNext:
@@ -1651,12 +1656,21 @@ class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV)
     def deliberation_for_restapi(self, deliberation_types=[]):
         '''Return some formatted deliberation useful for external services.'''
         result = {}
+        # motivation + decision
         if not deliberation_types or "deliberation" in deliberation_types:
             result['deliberation'] = self.print_deliberation()
         if not deliberation_types or "public_deliberation" in deliberation_types:
             result['public_deliberation'] = self.print_public_deliberation()
         if not deliberation_types or "public_deliberation_decided" in deliberation_types:
             result['public_deliberation_decided'] = self.print_public_deliberation_decided()
+        # motivation only
+        if not deliberation_types or "deliberation_motivation" in deliberation_types:
+            result['deliberation_motivation'] = \
+                self.print_deliberation(xhtmlContents=[self.context.getMotivation()])
+        # decision only
+        if not deliberation_types or "deliberation_decision" in deliberation_types:
+            result['deliberation_decision'] = \
+                self.print_deliberation(xhtmlContents=[self.context.getDecision()])
         return result
 
     def print_meeting_date(self, returnDateTime=False, noMeetingMarker='-', unrestricted=True):
@@ -1800,6 +1814,8 @@ class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV)
         return self.printXhtml(
             self.context,
             xhtmlContents,
+            image_src_to_paths=False,
+            image_src_to_data=True,
             **kwargs)
 
     def print_public_deliberation(self, xhtmlContents=[], **kwargs):
