@@ -110,6 +110,7 @@ from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getFieldVersion
 from Products.PloneMeeting.utils import getWorkflowAdapter
 from Products.PloneMeeting.utils import hasHistory
+from Products.PloneMeeting.utils import is_editing
 from Products.PloneMeeting.utils import ItemDuplicatedEvent
 from Products.PloneMeeting.utils import ItemDuplicatedToOtherMCEvent
 from Products.PloneMeeting.utils import ItemLocalRolesUpdatedEvent
@@ -1049,7 +1050,7 @@ schema = Schema((
     LinesField(
         name='groupsInCharge',
         widget=MultiSelectionWidget(
-            condition="python: here.attributeIsUsed('groupsInCharge')",
+            condition="python: here.show_groups_in_charge()",
             size=10,
             description="Groupsincharge",
             description_msgid="item_groups_in_charge_descr",
@@ -2163,21 +2164,54 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''See doc in interfaces.py.'''
         return True
 
-    security.declarePublic('show_committees')
+    security.declarePublic('show_groups_in_charge')
 
-    def show_committees(self):
-        '''See doc in interfaces.py.'''
+    def show_groups_in_charge(self):
+        '''When field 'groupsInCharge' is used, it is editable.
+           When using MeetingConfig.includeGroupsInChargeDefinedOnProposingGroup
+           or MeetingConfig.includeGroupsInChargeDefinedOnCategory
+           then it is editable by MeetingManagers.'''
         res = False
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        if "committees" in cfg.getUsedMeetingAttributes():
+        _is_editing = is_editing(cfg)
+        res = False
+        raw_groups_in_charge = getattr(self, 'groupsInCharge', ())
+        usedAttrs = cfg.getUsedMeetingAttributes()
+        # using field, viewable/editable
+        if "groupsInCharge" in usedAttrs:
             res = True
-            # when using "auto_from" in MeetingConfig.committees
-            # field is only shown to MeetingManagers
-            tool = api.portal.get_tool('portal_plonemeeting')
-            cfg = tool.getMeetingConfig(self)
-            if cfg.is_committees_using("auto_from") and not tool.isManager(cfg):
-                res = False
+        # viewable if not empty
+        elif not _is_editing and raw_groups_in_charge:
+            res = True
+        # editable when not empty and user is MeetingManager
+        # this may result from various functionnality like "MeetingConfig.include..."
+        # except when using "proposingGroupWithGroupInCharge"
+        elif "proposingGroupWithGroupInCharge" not in usedAttrs and \
+                _is_editing and \
+                raw_groups_in_charge and \
+                tool.isManager(cfg):
+            res = True
+        return res
+
+    security.declarePublic('show_committees')
+
+    def show_committees(self):
+        '''When field 'committees' is used, show it to editors if
+           not using "auto_from" or if user is a MeetingManager.'''
+        res = False
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        raw_committees = getattr(self, 'committees', ())
+        if "committees" in cfg.getUsedMeetingAttributes() or raw_committees:
+            res = True
+            if is_editing(self.cfg):
+                # when using "auto_from" in MeetingConfig.committees
+                # field is only shown to MeetingManagers
+                tool = api.portal.get_tool('portal_plonemeeting')
+                cfg = tool.getMeetingConfig(self)
+                if cfg.is_committees_using("auto_from") and not tool.isManager(cfg):
+                    res = False
         return res
 
     security.declarePublic('show_votesObservations')
@@ -3436,7 +3470,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         cat_id = self.getField('category').get(self, **kwargs)
         # avoid problems with acquisition
         if theObject:
-            res = None
+            res = ''
             if cat_id in cfg.categories.objectIds():
                 res = getattr(cfg.categories, cat_id)
         else:
@@ -3452,7 +3486,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         classifier_id = self.getField('classifier').get(self, **kwargs)
         # avoid problems with acquisition
         if theObject:
-            res = None
+            res = ''
             if classifier_id in cfg.classifiers.objectIds():
                 res = getattr(cfg.classifiers, classifier_id)
         else:
@@ -3530,12 +3564,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             if classifier:
                 categories.append(classifier)
             for cat in categories:
-                try:
-                    cat_groups_in_charge = [
-                        gic_uid for gic_uid in cat.get_groups_in_charge()
+                cat_groups_in_charge = [
+                    gic_uid for gic_uid in cat.get_groups_in_charge()
                     if gic_uid not in res]
-                except:
-                    import ipdb; ipdb.set_trace()
                 if cat_groups_in_charge:
                     res += list(cat_groups_in_charge)
 

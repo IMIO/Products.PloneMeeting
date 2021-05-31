@@ -55,7 +55,7 @@
                   <span tal:condition="not:nocall:proposingGroup">-</span>
               </div>
               <tal:comment replace="nothing">Groups in charge</tal:comment>
-              <div class="discreet" tal:condition="groupsInCharge"
+              <div class="discreet" tal:condition="python: context.show_groups_in_charge()"
                                     tal:define="groupsInCharge python: context.getGroupsInCharge(includeAuto=True);">
                   <span class="item_attribute_label"
                         i18n:translate="PloneMeeting_label_groupsInCharge"></span>:&nbsp;&nbsp;
