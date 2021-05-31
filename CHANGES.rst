@@ -283,6 +283,16 @@ Changelog
   Also added values `deliberation_motivation` and `deliberation_decision` to
   possible values returned by `ItemDocumentGenerationHelperView.deliberation_for_restapi`.
   [gbastien]
+- Changed behavior of `MeetingConfig.includeGroupsInChargeDefinedOnProposingGroup`
+  and `MeetingConfig.includeGroupsInChargeDefinedOnCategory`: before values were
+  evaluated when asked but this may break old items if `groupsInCharge` changed on
+  `proposingGroup` or `category`.
+  Now when using these parameters, the values will be stored on the item.
+  [gbastien]
+- Adapted `MeetingConfig.getItemTypeName` `configType=None` parameter that may
+  now accept a value `all`, in this case, all item related type are returned
+  (`normal`, `item template`, `recurring item`).
+  [gbastien]
 
 4.2b11 (2021-01-19)
 -------------------

@@ -2694,6 +2694,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             self.REQUEST.set('need_Meeting_update_item_references', True)
             # add a value in the REQUEST to specify that update_committees is needed
             self.REQUEST.set('need_MeetingItem_update_committees', True)
+            # add a value in the REQUEST to specify that update_groups_in_charge is needed
+            self.REQUEST.set('need_MeetingItem_update_groups_in_charge', True)
             field.set(self, value, **kwargs)
 
     security.declareProtected(ModifyPortalContent, 'setClassifier')
@@ -2722,6 +2724,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             self.REQUEST.set('need_Meeting_update_item_references', True)
             # add a value in the REQUEST to specify that update_committees is needed
             self.REQUEST.set('need_MeetingItem_update_committees', True)
+            # add a value in the REQUEST to specify that update_groups_in_charge is needed
+            self.REQUEST.set('need_MeetingItem_update_groups_in_charge', True)
             field.set(self, value, **kwargs)
 
     security.declareProtected(ModifyPortalContent, 'setProposingGroupWithGroupInCharge')
@@ -3431,8 +3435,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         cfg = tool.getMeetingConfig(self)
         cat_id = self.getField('category').get(self, **kwargs)
         # avoid problems with acquisition
-        if theObject and cat_id in cfg.categories.objectIds():
-            res = getattr(cfg.categories, cat_id)
+        if theObject:
+            res = None
+            if cat_id in cfg.categories.objectIds():
+                res = getattr(cfg.categories, cat_id)
         else:
             res = cat_id
         return res
@@ -3445,8 +3451,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         cfg = tool.getMeetingConfig(self)
         classifier_id = self.getField('classifier').get(self, **kwargs)
         # avoid problems with acquisition
-        if theObject and classifier_id in cfg.classifiers.objectIds():
-            res = getattr(cfg.classifiers, classifier_id)
+        if theObject:
+            res = None
+            if classifier_id in cfg.classifiers.objectIds():
+                res = getattr(cfg.classifiers, classifier_id)
         else:
             res = classifier_id
         return res
@@ -3513,11 +3521,21 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         if (not res and fromCatIfEmpty) or \
            (includeAuto and cfg.getIncludeGroupsInChargeDefinedOnCategory()):
+            # consider category and classifier
+            categories = []
             category = self.getCategory(theObject=True)
             if category:
-                cat_groups_in_charge = [
-                    gic_uid for gic_uid in category.get_groups_in_charge()
+                categories.append(category)
+            classifier = self.getClassifier(theObject=True)
+            if classifier:
+                categories.append(classifier)
+            for cat in categories:
+                try:
+                    cat_groups_in_charge = [
+                        gic_uid for gic_uid in cat.get_groups_in_charge()
                     if gic_uid not in res]
+                except:
+                    import ipdb; ipdb.set_trace()
                 if cat_groups_in_charge:
                     res += list(cat_groups_in_charge)
 
@@ -3651,6 +3669,22 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             self.setItemReference(res)
             self.reindexObject(idxs=['SearchableText'])
         return res
+
+    def update_groups_in_charge(self):
+        """When MeetingConfig.includeGroupsInChargeDefinedOnProposingGroup or
+           MeetingConfig.includeGroupsInChargeDefinedOnCategory is used,
+           if MeetingItem.groupsInCharge is empty of "need_MeetingItem_update_groups_in_charge"
+           is found in REQUEST, we will store corresponding groupsInCharge."""
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        if (cfg.getIncludeGroupsInChargeDefinedOnProposingGroup() or
+            cfg.getIncludeGroupsInChargeDefinedOnCategory()) and \
+           (not self.groupsInCharge or
+                self.REQUEST.get('need_MeetingItem_update_groups_in_charge')):
+            # empty the groups_in_charge before updating it
+            self.setGroupsInCharge([])
+            groups_in_charge = self.getGroupsInCharge(includeAuto=True)
+            self.setGroupsInCharge(groups_in_charge)
 
     def update_committees(self):
         """Update committees automatically?
@@ -5978,6 +6012,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         userId = api.user.get_current().getId()
         self.manage_delLocalRoles([userId])
         self.manage_addLocalRoles(userId, ('Owner',))
+        # update groupsInCharge before update_local_roles
+        self.update_groups_in_charge()
         self.update_local_roles(isCreated=True,
                                 inheritedAdviserUids=kwargs.get('inheritedAdviserUids', []))
         # clean borg.localroles caching
@@ -6009,6 +6045,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('at_post_edit_script')
 
     def at_post_edit_script(self):
+        # update groupsInCharge before update_local_roles
+        self.update_groups_in_charge()
         self.update_local_roles(invalidate=self.willInvalidateAdvices(),
                                 isCreated=False,
                                 avoid_reindex=True)

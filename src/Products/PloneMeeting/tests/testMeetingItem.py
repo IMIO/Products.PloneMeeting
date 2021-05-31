@@ -318,6 +318,7 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg.setIncludeGroupsInChargeDefinedOnProposingGroup(False)
         cfg.setItemGroupsInChargeStates((self._stateMappingFor('itemcreated'), ))
         self.developers.groups_in_charge = (self.vendors_uid, )
+        self.vendors.groups_in_charge = (self.developers_uid, )
 
         # create an item
         self.changeUser('pmCreator1')
@@ -329,7 +330,17 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg.setIncludeGroupsInChargeDefinedOnProposingGroup(True)
         item._update_after_edit()
         self.assertEqual(item.getGroupsInCharge(includeAuto=True), [self.vendors_uid])
-        self.assertTrue(READER_USECASES['groupsincharge'] in item.__ac_local_roles__[self.vendors_observers])
+        # groupsInCharge were stored on the item
+        self.assertEqual(item.groupsInCharge, (self.vendors_uid, ))
+        self.assertTrue(READER_USECASES['groupsincharge']
+                        in item.__ac_local_roles__[self.vendors_observers])
+        # groupsInCharge are updated when proposingGroup changed
+        item.setProposingGroup(self.vendors_uid)
+        item._update_after_edit()
+        self.assertEqual(item.groupsInCharge, (self.developers_uid, ))
+        self.assertTrue(READER_USECASES['groupsincharge']
+                        in item.__ac_local_roles__[self.developers_observers])
+
         # item view does not fail when no proposingGroup defined
         # this may be the case on an item template
         default_template = cfg.itemtemplates.get(ITEM_DEFAULT_TEMPLATE_ID)
@@ -345,6 +356,8 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg.setItemGroupsInChargeStates((self._stateMappingFor('itemcreated'), ))
         development = cfg.categories.development
         development.groups_in_charge = [self.vendors_uid]
+        events = cfg.categories.events
+        events.groups_in_charge = [self.developers_uid]
 
         # create an item
         self.changeUser('pmCreator1')
@@ -359,10 +372,18 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg.setIncludeGroupsInChargeDefinedOnCategory(True)
         item._update_after_edit()
         self.assertEqual(item.getGroupsInCharge(includeAuto=True), [self.vendors_uid])
-        self.assertTrue(READER_USECASES['groupsincharge'] in item.__ac_local_roles__[self.vendors_observers])
+        # groupsInCharge were stored on the item
+        self.assertEqual(item.groupsInCharge, (self.vendors_uid, ))
+        self.assertTrue(READER_USECASES['groupsincharge']
+                        in item.__ac_local_roles__[self.vendors_observers])
+        # groupsInCharge are updated when category changed
+        item.setCategory('events')
+        item._update_after_edit()
+        self.assertEqual(item.groupsInCharge, (self.developers_uid, ))
         # does not fail if no category
         item.setCategory('')
         item._update_after_edit()
+        self.assertEqual(item.groupsInCharge, ())
         self.assertEqual(item.getGroupsInCharge(includeAuto=True), [])
 
     def test_pm_GetAssociatedGroups(self):

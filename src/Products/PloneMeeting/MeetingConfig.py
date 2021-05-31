@@ -6172,6 +6172,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''Gets the name of the portal_type of the meeting item for this config.'''
         if not configType:
             return 'MeetingItem%s' % self.getShortName()
+        elif configType == 'all':
+            res = []
+            short_name = self.getShortName()
+            res.append('MeetingItem%s' % short_name)
+            res.append('MeetingItemTemplate%s' % short_name)
+            res.append('MeetingItemRecurring%s' % short_name)
+            return res
         else:
             return '{0}{1}'.format(configType, self.getShortName())
 

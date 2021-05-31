@@ -529,6 +529,28 @@ class Migrate_To_4200(Migrator):
                 cfg.setDefaultAdviceType(defaultAdviceType)
         logger.info('Done.')
 
+    def _updateItemGroupsInCharge(self):
+        '''When using MetingConfig.includeGroupsInChargeDefinedOnProposingGroup or
+           MeetingConfig.includeGroupsInChargeDefinedOnCategory, for history reason,
+           we store the resulting groupsInCharge if MeetingItem.groupsInCharge is empty.'''
+        logger.info("Updating MeetingItem.groupsInCharge...")
+        pghandler = ZLogHandler(steps=100)
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            if cfg.getIncludeGroupsInChargeDefinedOnProposingGroup() or \
+               cfg.getIncludeGroupsInChargeDefinedOnCategory():
+                i = 0
+                brains = self.catalog(portal_type=cfg.getItemTypeName(configType='all'))
+                msg = 'Updating items for MeetingConfig "{0}"...'.format(cfg.Title())
+                pghandler.init(msg, len(brains))
+                pghandler.info(msg)
+                for brain in brains:
+                    i += 1
+                    pghandler.report(i)
+                    item = brain.getObject()
+                    item.update_groups_in_charge()
+        pghandler.finish()
+        logger.info('Done.')
+
     def _fixPODTemplatesInstructions(self):
         '''Make some replace in POD templates to fit changes in code...'''
         # for every POD templates
@@ -615,6 +637,7 @@ class Migrate_To_4200(Migrator):
         self._updateItemPreferredMeetingLink()
         self._migrateItemPredecessorReference()
         self._updateConfigForAdviceAskedAgainNoMoreOptional()
+        self._updateItemGroupsInCharge()
 
         # remove useless catalog indexes and columns, were renamed to snake case
         self.removeUnusedIndexes(
@@ -698,7 +721,6 @@ class Migrate_To_4200(Migrator):
 
         # update holidays
         self.updateHolidays()
-        return
         self.tool.update_all_local_roles()
         self.refreshDatabase(workflows=True, catalogsToUpdate=[])
 
