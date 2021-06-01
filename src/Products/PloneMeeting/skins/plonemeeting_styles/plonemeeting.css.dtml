@@ -1011,7 +1011,6 @@ div#archetypes-fieldname-usingGroups {
     max-height: 500px;
     max-width: 500px;
     overflow-x: auto;
-    padding-bottom: 1em;
 }
 /* hide some options in the select showing optionalAdvisers */
 div#optionalAdvisers input[value="not_selectable_value_delay_aware_optional_advisers"],
