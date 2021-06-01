@@ -165,6 +165,15 @@
     provides="z3c.table.interfaces.IColumn"
     factory=".columns.PMAnnexActionsColumn" />
 
+  <!-- Select row column for the annexes table -->
+  <adapter
+     for="zope.interface.Interface
+         zope.interface.Interface
+         collective.iconifiedcategory.interfaces.ICategorizedTable"
+     factory="collective.eeafaceted.z3ctable.columns.CheckBoxColumn"
+     provides="collective.eeafaceted.z3ctable.interfaces.IFacetedColumn"
+     name="select_row" />
+
   <adapter
      for="zope.interface.Interface
           zope.publisher.interfaces.browser.IBrowserRequest

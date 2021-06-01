@@ -24,6 +24,7 @@ from collective.iconifiedcategory.browser.actionview import ConfidentialChangeVi
 from collective.iconifiedcategory.browser.actionview import PublishableChangeView
 from collective.iconifiedcategory.browser.actionview import SignedChangeView
 from collective.iconifiedcategory.browser.actionview import ToPrintChangeView
+from collective.iconifiedcategory.browser.tabview import CategorizedTable
 from collective.iconifiedcategory.browser.tabview import CategorizedTabView
 from collective.iconifiedcategory.browser.views import CategorizedChildInfosView
 from collective.iconifiedcategory.browser.views import CategorizedChildView
@@ -1229,6 +1230,20 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
         return self.request.RESPONSE.redirect(self.request['HTTP_REFERER'])
 
 
+class CategorizedAnnexesTable(CategorizedTable):
+    """ """
+
+    def initColumns(self):
+        """Change name of checkbox column for annex decisions,
+           because for batchaction, column name must be different than
+           checkbox column of normal annexes.
+           """
+        super(CategorizedAnnexesTable, self).initColumns()
+        if self.portal_type == 'annexDecision':
+            column = self.columnByName['select_row']
+            column.name = "select_item_annex_decision"
+
+
 class CategorizedAnnexesView(CategorizedTabView):
     """ """
 
@@ -1462,11 +1477,13 @@ class PMTransitionBatchActionForm(TransitionBatchActionForm):
            and to non MeetingManagers on the meeting_view."""
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
-        return (self.context.__class__.__name__ == 'Meeting' and
-                _checkPermission(ModifyPortalContent, self.context)) or \
-               (not self.context.__class__.__name__ == 'Meeting' and
-                (tool.isManager(cfg) or
-                 bool(tool.userIsAmong(suffixes=get_all_suffixes(None), cfg=cfg))))
+        class_name = self.context.__class__.__name__
+        return class_name != 'MeetingItem' and \
+            ((class_name == 'Meeting' and
+                _checkPermission(ModifyPortalContent, self.context)) or
+             (not class_name == 'Meeting' and
+             (tool.isManager(cfg) or
+              bool(tool.userIsAmong(suffixes=get_all_suffixes(None), cfg=cfg)))))
 
 
 class PMContentHistoryView(IHContentHistoryView):

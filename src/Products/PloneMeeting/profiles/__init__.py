@@ -493,6 +493,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.cssClassesToHide = 'highlight\nhighlight-red'
         self.hideCssClassesTo = ()
         self.enableItemDuplication = True
+        self.enabledAnnexesBatchActions = ['download-annexes']
 
         # Data-related parameters ----------------------------------------------
         # Some attributes on an item are optional. In the field

@@ -35,6 +35,11 @@
 
         <div class="content" tal:content="structure python: view.table_render(portal_type='annex')"></div>
 
+        <div id="viewlet-below-categorized-elements"
+             tal:condition="python: view.table.values"
+             tal:define="dummy python: context.REQUEST.set('categorized_tab', view)"
+             tal:content="structure provider:collective.iconifiedcategory.belowcategorizedelements" />
+
         <div id="preview_annexes" tal:condition="python: view.tool.hasAnnexes(context, portal_type='annex')">
           <br />
           <p class="discreet" style="float: left; padding-right: 0.5em;"><span i18n:translate="preview_grouped_annexes">Preview of decision annexes grouped by type</span> :</p>
@@ -64,6 +69,11 @@
         </legend>
 
         <div class="content" tal:content="structure python: view.table_render(portal_type='annexDecision')"></div>
+
+        <div id="viewlet-below-categorized-elements"
+             tal:condition="python: view.table.values"
+             tal:define="dummy python: context.REQUEST.set('categorized_tab', view)"
+             tal:content="structure provider:collective.iconifiedcategory.belowcategorizedelements" />
 
         <div id="preview_annexes" tal:condition="python: view.tool.hasAnnexes(context, portal_type='annexDecision')">
           <br />
