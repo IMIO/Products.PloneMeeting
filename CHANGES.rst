@@ -297,7 +297,7 @@ Changelog
   Now when using these parameters, the values will be stored on the item.
   [gbastien]
 - Adapted `MeetingConfig.getItemTypeName` `configType=None` parameter that may
-  now accept a value `all`, in this case, all item related type are returned
+  now accept a value `all`, in this case, all item related types are returned
   (`normal`, `item template`, `recurring item`).
   [gbastien]
 

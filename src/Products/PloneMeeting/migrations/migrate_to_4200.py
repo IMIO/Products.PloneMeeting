@@ -534,13 +534,13 @@ class Migrate_To_4200(Migrator):
            MeetingConfig.includeGroupsInChargeDefinedOnCategory, for history reason,
            we store the resulting groupsInCharge if MeetingItem.groupsInCharge is empty.'''
         logger.info("Updating MeetingItem.groupsInCharge...")
-        pghandler = ZLogHandler(steps=100)
         for cfg in self.tool.objectValues('MeetingConfig'):
             if cfg.getIncludeGroupsInChargeDefinedOnProposingGroup() or \
                cfg.getIncludeGroupsInChargeDefinedOnCategory():
                 i = 0
                 brains = self.catalog(portal_type=cfg.getItemTypeName(configType='all'))
                 msg = 'Updating items for MeetingConfig "{0}"...'.format(cfg.Title())
+                pghandler = ZLogHandler(steps=100)
                 pghandler.init(msg, len(brains))
                 pghandler.info(msg)
                 for brain in brains:
@@ -548,7 +548,7 @@ class Migrate_To_4200(Migrator):
                     pghandler.report(i)
                     item = brain.getObject()
                     item.update_groups_in_charge()
-        pghandler.finish()
+                pghandler.finish()
         logger.info('Done.')
 
     def _fixPODTemplatesInstructions(self):
