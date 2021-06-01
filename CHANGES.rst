@@ -278,6 +278,11 @@ Changelog
 - Fixed `ToolPloneMeeting.pasteItem` that was not correctly removing `sent item
   to another MC` related annotations when item was sent to several other MCs.
   [gbastien]
+- Added parameter `image_src_to_data=False` to `BaseDGHV.printXhtml` to be able
+  to turn images src to base64 data value using `imio.helpers.xhtml.imagesToData`.
+  Also added values `deliberation_motivation` and `deliberation_decision` to
+  possible values returned by `ItemDocumentGenerationHelperView.deliberation_for_restapi`.
+  [gbastien]
 - Enabled batch actions on annexes:
 
   - Batch actions `Delete` and `Download as Zip` are available;

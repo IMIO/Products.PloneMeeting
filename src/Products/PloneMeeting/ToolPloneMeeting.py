@@ -753,7 +753,11 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     def isManager_cachekey(method, self, context, realManagers=False):
         '''cachekey method for self.isManager.'''
+        # check also user id to avoid problems between Zope admin and anonymous
+        # as they have both no group when initializing portal, some requests
+        # (first time viewlet initialization?) have sometims anonymous as user
         return (self.get_plone_groups_for_user(),
+                api.user.get_current().id,
                 repr(context),
                 realManagers)
 

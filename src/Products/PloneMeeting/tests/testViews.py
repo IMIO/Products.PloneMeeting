@@ -37,9 +37,11 @@ from Products.PloneMeeting.etags import LinkedMeetingModified
 from Products.PloneMeeting.etags import ToolModified
 from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.tests.PloneMeetingTestCase import DEFAULT_USER_PASSWORD
+from Products.PloneMeeting.tests.PloneMeetingTestCase import IMG_BASE64_DATA
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import get_dx_widget
+from Products.PloneMeeting.utils import set_field_from_ajax
 from Products.statusmessages.interfaces import IStatusMessage
 from z3c.form.interfaces import DISPLAY_MODE
 from z3c.form.interfaces import INPUT_MODE
@@ -1092,6 +1094,28 @@ class testViews(PloneMeetingTestCase):
                          '<p class="ParaKWN">Text with image <img src="{0}" /> and more text.</p>'
                          .format(img_blob_path))
 
+    def test_pm_PrintXhtmlImageSrcToData(self):
+        ''' '''
+        item, motivation, decision, helper = self._setupPrintXhtml()
+
+        # use image_src_to_data
+        file_path = path.join(path.dirname(__file__), 'dot.gif')
+        data = open(file_path, 'r')
+        img_id = item.invokeFactory('Image', id='img', title='Image', file=data.read())
+        img = getattr(item, img_id)
+        pattern = '<p>Text with image <img src="{0}" /> and more text.</p>'
+        text = pattern.format(img.absolute_url())
+        # in tests the monkeypatch for safe_html.hasScript does not seem to be applied...
+        # so disable remove_javascript from safe_html
+        self.portal.portal_transforms.safe_html._v_transform.config['remove_javascript'] = 0
+        self.assertEqual(helper.printXhtml(item,
+                                           text,
+                                           image_src_to_paths=False,
+                                           image_src_to_data=True,
+                                           use_safe_html=True),
+                         pattern.format(IMG_BASE64_DATA))
+        self.portal.portal_transforms.safe_html._v_transform.config['remove_javascript'] = 1
+
     def test_pm_PrintXhtmlAddCSSClass(self):
         ''' '''
         item, motivation, decision, helper = self._setupPrintXhtml()
@@ -1136,8 +1160,8 @@ class testViews(PloneMeetingTestCase):
                          '<p>Text2</p>'
                          '<p><img src="http://plone/nohost/img3.png" /></p>')
 
-    def test_pm_PrintAdvicesInfos(self):
-        """Test the printAdvicesInfos method."""
+    def test_pm_print_advices_infos(self):
+        """Test the print_advices_infos method."""
         cfg = self.meetingConfig
         cfg.setSelectableAdvisers((self.developers_uid, self.vendors_uid))
         cfg.setItemAdviceStates((self._stateMappingFor('itemcreated'),))
@@ -1153,7 +1177,7 @@ class testViews(PloneMeetingTestCase):
 
         # advices not given
         self.assertEqual(
-            helper.printAdvicesInfos(item),
+            helper.print_advices_infos(item),
             "<p class='pmAdvices'><u><b>Advices :</b></u></p>"
             "<p class='pmAdvices'><u>Developers:</u><br /><u>Advice type :</u> "
             "<i>Not given yet</i></p><p class='pmAdvices'><u>Vendors:</u><br />"
@@ -1166,7 +1190,7 @@ class testViews(PloneMeetingTestCase):
                                     'advice_comment': RichTextValue(u'My comment')})
         # mixes advice given and not given
         self.assertEqual(
-            helper.printAdvicesInfos(item),
+            helper.print_advices_infos(item),
             "<p class='pmAdvices'><u><b>Advices :</b></u></p>"
             "<p class='pmAdvices'><u>Vendors:</u><br /><u>Advice type :</u> "
             "<i>Not given yet</i></p><p class='pmAdvices'><u>Developers:</u><br />"
@@ -1181,7 +1205,7 @@ class testViews(PloneMeetingTestCase):
                                     'advice_type': u'negative'})
         self.changeUser('pmCreator1')
         self.assertEqual(
-            helper.printAdvicesInfos(item),
+            helper.print_advices_infos(item),
             "<p class='pmAdvices'><u><b>Advices :</b></u></p><p class='pmAdvices'>"
             "<u>Vendors:</u><br /><u>Advice type :</u> <i>Negative</i><br />"
             "<u>Advice given by :</u> <i>M. PMReviewer Two</i><br />"
@@ -1189,7 +1213,7 @@ class testViews(PloneMeetingTestCase):
             "<u>Advice type :</u> <i>Positive</i><br /><u>Advice given by :</u> "
             "<i>M. PMAdviser One</i><br /><u>Advice comment :</u> My comment<p></p></p>")
 
-    def test_pm_PrintMeetingDate(self):
+    def test_pm_print_meeting_date(self):
         # Setup
         cfg = self.meetingConfig
         cfg.setPowerObservers([
@@ -1225,7 +1249,7 @@ class testViews(PloneMeetingTestCase):
         # standard case, item in a meeting, no access restriction
         self.assertListEqual(
             [helper.print_meeting_date(), helper.print_meeting_date(returnDateTime=True)],
-            ['01 january 2019', meeting.date]
+            ['1 january 2019', meeting.date]
         )
         # powerobserver1 can't see the meeting so noMeetingMarker is expected when unrestricted=False
         self.assertListEqual(
@@ -1234,7 +1258,7 @@ class testViews(PloneMeetingTestCase):
             ['', None]
         )
 
-    def test_pm_PrintPreferredMeetingDate(self):
+    def test_pm_Print_preferred_meeting_date(self):
         cfg = self.meetingConfig
         cfg.setPowerObservers([
             {'item_access_on': '',
@@ -1266,7 +1290,7 @@ class testViews(PloneMeetingTestCase):
         item.setPreferredMeeting(meeting.UID())
         self.assertListEqual(  # standard case, a preferred meeting date is expected
             [helper.print_preferred_meeting_date(), helper.print_preferred_meeting_date(returnDateTime=True)],
-            ['01 january 2019', meeting.date]
+            ['1 january 2019', meeting.date]
         )
 
         self.changeUser('powerobserver1')
@@ -1276,6 +1300,42 @@ class testViews(PloneMeetingTestCase):
              helper.print_preferred_meeting_date(returnDateTime=True, unrestricted=False, noMeetingMarker=None)],
             ['', None],
         )
+
+    def test_pm_print_value(self):
+        """Test the BaseDGHV.print_value that will print almost everything...
+           For now, only working for DX elements (Meeting, MeetingAdvice)."""
+        cfg = self.meetingConfig
+        cfg.setPlaces('Place1\r\nPlace2\r\nPlace3\r\nSp\xc3\xa9cial place\r\n')
+        self._enableField(
+            ["convocation_date", "place", "notes", ],
+            related_to='Meeting')
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=datetime(2021, 5, 4))
+        view = meeting.restrictedTraverse('document-generation')
+        helper = view.get_generation_context_helper()
+        # Datetime
+        self.assertEqual(helper.print_value("date"), u'4 may 2021')
+        self.assertEqual(helper.print_value("date", target_language='fr'), u'4 mai 2021')
+        self.assertEqual(helper.print_value("convocation_date"), u'')
+        self.assertEqual(helper.print_value("convocation_date", empty_marker=u'???'), u'???')
+        # RichText
+        self.assertIsNone(meeting.observations)
+        self.assertEqual(helper.print_value("observations"), u'')
+        self.assertEqual(helper.print_value("observations", empty_marker=u'???'), u'???')
+        text = '<p>Observations <img src="%s" alt="22-400x400.jpg" title="22-400x400.jpg" />.</p>' \
+            % self.external_image1
+        set_field_from_ajax(meeting, "observations", text)
+        img_path = meeting.objectValues()[0].getFile().blob._p_blob_committed
+        # when using printXhtml, img url are turned to blob path
+        text = text.replace(self.external_image1, img_path)
+        self.assertEqual(helper.print_value("observations"), text)
+        # special case for place
+        self.assertEqual(helper.print_value("place"), u'')
+        meeting.place = u'Place1'
+        self.assertEqual(helper.print_value("place"), u'Place1')
+        meeting.place = u'other'
+        meeting.place_other = unicode('Spécial place', 'utf-8')
+        self.assertEqual(helper.print_value("place"), u'Sp\xe9cial place')
 
     def test_pm_MeetingUpdateItemReferences(self):
         """Test call to @@update-item-references from the meeting that will update

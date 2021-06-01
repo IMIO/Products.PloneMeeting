@@ -498,6 +498,11 @@ class Migrate_To_4200(Migrator):
             i += 1
             pghandler.report(i)
             relation = brain.getObject()
+            if not relation:
+                self.warn(
+                    'In _migrateItemPredecessorReference, no relation found for "{0}"'.format(
+                        brain.UID))
+                continue
             item = relation.getSourceObject()
             predecessor = relation.getTargetObject()
             item._update_predecessor(predecessor)
@@ -524,9 +529,83 @@ class Migrate_To_4200(Migrator):
                 cfg.setDefaultAdviceType(defaultAdviceType)
         logger.info('Done.')
 
+    def _fixPODTemplatesInstructions(self):
+        '''Make some replace in POD templates to fit changes in code...'''
+        # for every POD templates
+        replacements = {'listTypes=': 'list_types=',
+                        '.getDate()': '.date',
+                        '.getStartDate()': '.start_date',
+                        '.getMidDate()': '.mid_date',
+                        '.getEndDate()': '.end_date',
+                        '.getApprovalDate()': '.approval_date',
+                        '.getConvocationDate()': '.convocation_date',
+                        '.getPlace()': '.get_place()',
+                        '.getAttendees(theObjects': '.get_attendees(the_objects',
+                        '.getAttendees(': '.get_attendees(',
+                        '.getAbsents(theObjects': '.get_absents(the_objects',
+                        '.getAbsents(': '.get_absents(',
+                        '.getExcused(theObjects': '.get_excused(the_objects',
+                        '.getExcused(': '.get_excused(',
+                        '.getAssembly(': '.get_assembly(',
+                        '.getAssemblyAbsents(': '.get_assembly_absents(',
+                        '.getAssemblyExcused(': '.get_assembly_excused(',
+                        '.getAssemblyGuests(': '.get_assembly_guests(',
+                        '.getAssemblyStaves(': '.get_assembly_staves(',
+                        '.getAssemblyProxies(': '.get_assembly_proxies(',
+                        '.getSignatories(theObjects=': '.get_signatories(the_objects=',
+                        '.getSignatories(': '.get_signatories(',
+                        '.getItems(': '.get_items(',
+                        '.getItemSignatories(theObjects=': '.get_item_signatories(the_objects=',
+                        '.getItemSignatories(': '.get_item_signatories(',
+                        '.getNextMeeting(cfgId=': '.get_next_meeting(cfg_id=',
+                        '.getNextMeeting(': '.get_next_meeting(',
+                        # get_next_meeting parameter
+                        'dateGap=': 'date_gap=',
+                        '.numberOfItems(': '.number_of_items(',
+                        '.queryState(': '.query_state(',
+                        'zamqp_utils.scan_id_barcode(self,': 'view.print_scan_id_barcode(',
+                        '.printAdvicesInfos(': '.print_advices_infos(',
+                        '.printAllAnnexes(': '.print_all_annexes(',
+                        '.printAssembly(': '.print_assembly(',
+                        '.printFinanceAdvice(': '.print_finance_advice(',
+                        '.printFormatedAdvice(': '.print_formated_advice(',
+                        '.printFullname(': '.print_fullname(',
+                        '.printHistory(': '.print_history(',
+                        '.printMeetingDate(': '.print_meeting_date(',
+                        '=imageOrientation': '=image_orientation',
+                        'self.getStrikedAssembly(groupByDuty=True': 'view.print_assembly(',
+                        'self.getStrikedItemAssembly(groupByDuty=True': 'view.print_assembly(',
+                        'self.getStrikedAssembly(': 'view.print_assembly(',
+                        'self.getStrikedItemAssembly(': 'view.print_assembly(',
+                        '.isDecided(': '.is_decided(',
+                        }
+        # specific for Meeting POD Templates
+        meeting_replacements = {
+            'self.getAuthorityNotice()': "view.print_value('authority_notice')",
+            'self.getCommitteeObservations()': "view.print_value('committees_observations')",
+            'self.getFirstItemNumber()': "self.first_item_number",
+            'self.getInAndOutMoves()': "view.print_value('in_and_out_moves')",
+            'self.getMeetingNumber()': "self.meeting_number",
+            'self.getNotes()': "view.print_value('notes')",
+            'self.getObservations()': "view.print_value('observations')",
+            'self.getPlace()': "view.print_value('place')",
+            'self.getPreObservations()': "view.print_value('pre_observations')",
+            'self.getPublicMeetingObservations()': "view.print_value('public_meeting_observations')",
+            'self.getSecretMeetingObservations()': "view.print_value('secret_meeting_observations')",
+            'self.getSignatures()': "self.get_signatures()",
+            'self.Title()': "view.print_value('date')",
+        }
+        # specific for MeetingItem POD Templates
+        item_replacements = {
+            'meeting.Title()': "view.getDGHV(meeting).print_value('date')",
+        }
+
+        self.updatePODTemplatesCode(replacements, meeting_replacements, item_replacements)
+
     def run(self, extra_omitted=[]):
         logger.info('Migrating to PloneMeeting 4200...')
 
+        self._fixPODTemplatesInstructions()
         self._fixFacetedFilters()
 
         # apply correct batch actions marker on searches_* folders

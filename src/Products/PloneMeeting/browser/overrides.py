@@ -218,34 +218,14 @@ class PMContentActionsPanelViewlet(ActionsPanelViewlet):
 
 
 class PMConfigActionsPanelViewlet(PMContentActionsPanelViewlet):
-    """Render actionspanel viewlet differently for elements of the MeetingConfig."""
+    """Render actionspanel viewlet differently for elements of the MeetingConfig.
+       Manage a "back" link."""
 
     backPages = {'categories': 'data',
                  'classifiers': 'data',
                  'itemtemplates': 'data',
                  'podtemplates': 'doc',
                  'recurringitems': 'data', }
-
-    def renderViewlet(self):
-        """ """
-        if self.show():
-            showAddContent = False
-            showActions = False
-            if 'ContentCategory' in self.context.portal_type:
-                showAddContent = True
-                showActions = True
-            elif self.context.portal_type in ('organization', 'person', 'directory'):
-                showAddContent = True
-                showActions = False
-            return self.context.restrictedTraverse("@@async_actions_panel")(
-                useIcons=False,
-                showTransitions=True,
-                appendTypeNameToTransitionLabel=True,
-                showArrows=False,
-                showEdit=False,
-                showDelete=False,
-                showActions=showActions,
-                showAddContent=showAddContent)
 
     def _findRootSubfolder(self, folder):
         '''Find the root subfolder in the MeetingConfig.
@@ -856,6 +836,45 @@ class ConfigActionsPanelView(ActionsPanelView):
 
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
+
+    def __call__(self,
+                 useIcons=True,
+                 showTransitions=True,
+                 appendTypeNameToTransitionLabel=True,
+                 showEdit=True,
+                 showOwnDelete=True,
+                 showActions=True,
+                 showAddContent=False,
+                 showHistory=False,
+                 showHistoryLastEventHasComments=True,
+                 showArrows=False,
+                 **kwargs):
+        """ """
+        if useIcons is False:
+            showAddContent = False
+            showActions = False
+            if 'ContentCategory' in self.context.portal_type:
+                showAddContent = True
+                showActions = True
+            elif self.context.portal_type in ('organization', 'person', 'directory'):
+                showAddContent = True
+        else:
+            # let add a new held_position from person dashboard
+            if self.context.portal_type in ('person', ):
+                showAddContent = True
+
+        return super(ConfigActionsPanelView, self).\
+            __call__(useIcons=useIcons,
+                     showTransitions=showTransitions,
+                     appendTypeNameToTransitionLabel=appendTypeNameToTransitionLabel,
+                     showEdit=showEdit,
+                     showOwnDelete=showOwnDelete,
+                     showActions=showActions,
+                     showAddContent=showAddContent,
+                     showHistory=showHistory,
+                     showHistoryLastEventHasComments=showHistoryLastEventHasComments,
+                     showArrows=showArrows,
+                     **kwargs)
 
     def _returnTo(self, ):
         """What URL should I return to after moving the element and page is refreshed."""

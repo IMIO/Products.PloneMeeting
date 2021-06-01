@@ -5743,14 +5743,14 @@ class testMeetingItem(PloneMeetingTestCase):
         view()
         helper = view.get_generation_context_helper()
         # No meeting case
-        self.assertEqual(helper.printAssembly(striked=True), '')
+        self.assertEqual(helper.print_assembly(striked=True), '')
         self.presentItem(item)
         item.setItemAssembly('Simple assembly')
-        self.assertEqual(helper.printAssembly(striked=True),
+        self.assertEqual(helper.print_assembly(striked=True),
                          '<p>Simple assembly</p>')
         # set a striked element
         item.setItemAssembly('Assembly with [[striked]] part')
-        self.assertEqual(helper.printAssembly(striked=True),
+        self.assertEqual(helper.print_assembly(striked=True),
                          '<p>Assembly with <strike>striked</strike> part</p>')
 
     def test_pm_PrintAssembly(self):
@@ -5769,11 +5769,11 @@ class testMeetingItem(PloneMeetingTestCase):
         view = item.restrictedTraverse('@@document-generation')
         view()
         helper = view.get_generation_context_helper()
-        # printAssembly shouldn't fail if the item is not in a meeting
-        self.assertEqual(helper.printAssembly(), '')
+        # print_assembly shouldn't fail if the item is not in a meeting
+        self.assertEqual(helper.print_assembly(), '')
         self.presentItem(item)
-        printed_assembly = helper.printAssembly(group_position_type=False)
-        # Every attendee firstname and lastname must be in view.printAssembly()
+        printed_assembly = helper.print_assembly(group_position_type=False)
+        # Every attendee firstname and lastname must be in view.print_assembly()
         for attendee in item.get_attendees(the_objects=True):
             self.assertIn(attendee.get_person().firstname, printed_assembly)
             self.assertIn(attendee.get_person().lastname, printed_assembly)
