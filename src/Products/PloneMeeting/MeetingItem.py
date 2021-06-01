@@ -2729,7 +2729,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # add a value in the REQUEST to specify that update_committees is needed
             self.REQUEST.set('need_MeetingItem_update_committees', True)
             # add a value in the REQUEST to specify that update_groups_in_charge is needed
-            self.REQUEST.set('need_MeetingItem_update_groups_in_charge', True)
+            self.REQUEST.set('need_MeetingItem_update_groups_in_charge_category', True)
             field.set(self, value, **kwargs)
 
     security.declareProtected(ModifyPortalContent, 'setClassifier')
@@ -2744,6 +2744,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             self.REQUEST.set('need_Meeting_update_item_references', True)
             # add a value in the REQUEST to specify that update_committees is needed
             self.REQUEST.set('need_MeetingItem_update_committees', True)
+            # add a value in the REQUEST to specify that update_groups_in_charge is needed
+            self.REQUEST.set('need_MeetingItem_update_groups_in_charge_classifier', True)
             field.set(self, value, **kwargs)
 
     security.declareProtected(ModifyPortalContent, 'setProposingGroup')
@@ -2759,7 +2761,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # add a value in the REQUEST to specify that update_committees is needed
             self.REQUEST.set('need_MeetingItem_update_committees', True)
             # add a value in the REQUEST to specify that update_groups_in_charge is needed
-            self.REQUEST.set('need_MeetingItem_update_groups_in_charge', True)
+            self.REQUEST.set('need_MeetingItem_update_groups_in_charge_proposing_group', True)
             field.set(self, value, **kwargs)
 
     security.declareProtected(ModifyPortalContent, 'setProposingGroupWithGroupInCharge')
@@ -3704,14 +3706,21 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def update_groups_in_charge(self):
         """When MeetingConfig.includeGroupsInChargeDefinedOnProposingGroup or
            MeetingConfig.includeGroupsInChargeDefinedOnCategory is used,
-           if MeetingItem.groupsInCharge is empty of "need_MeetingItem_update_groups_in_charge"
-           is found in REQUEST, we will store corresponding groupsInCharge."""
+           if MeetingItem.groupsInCharge is empty or
+           "need_MeetingItem_update_groups_in_charge_xxx" is found in REQUEST,
+           we will store corresponding groupsInCharge."""
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        if (cfg.getIncludeGroupsInChargeDefinedOnProposingGroup() or
-            cfg.getIncludeGroupsInChargeDefinedOnCategory()) and \
+        gic_from_cat = cfg.getIncludeGroupsInChargeDefinedOnCategory()
+        gic_from_pg = cfg.getIncludeGroupsInChargeDefinedOnProposingGroup()
+        if (gic_from_cat or gic_from_pg) and \
            (not self.groupsInCharge or
-                self.REQUEST.get('need_MeetingItem_update_groups_in_charge')):
+            (self.REQUEST.get('need_MeetingItem_update_groups_in_charge_category') and
+             gic_from_cat) or
+            (self.REQUEST.get('need_MeetingItem_update_groups_in_charge_classifier') and
+             gic_from_cat) or
+            (self.REQUEST.get('need_MeetingItem_update_groups_in_charge_proposing_group') and
+             gic_from_pg)):
             # empty the groups_in_charge before updating it
             self.setGroupsInCharge([])
             groups_in_charge = self.getGroupsInCharge(includeAuto=True)
