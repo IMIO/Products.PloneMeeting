@@ -7313,7 +7313,16 @@ class testMeetingItem(PloneMeetingTestCase):
         # as item.committees is empty and item not in a meeting
         # update_committee will update the committees
         item.update_committees()
+        # view
+        self.request.set('URL', item.absolute_url())
+        self.assertTrue(item.show_committees())
+        # edit
+        self.request.set('URL', item.absolute_url() + '/edit')
         self.assertFalse(item.show_committees())
+        # editable by MeetingManagers
+        self.changeUser('pmManager')
+        self.assertTrue(item.show_committees())
+        self.changeUser('pmCreator1')
         self.assertEqual(item.getCommittees(), ('committee_2',))
         # if changing the configuration, existing items are not impacted
         cfg_committees[0]['auto_from'] = ["category__development"]
