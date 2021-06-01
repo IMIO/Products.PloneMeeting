@@ -33,6 +33,7 @@ from imio.helpers.cache import cleanVocabularyCacheFor
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import invalidate_cachekey_volatile_for
 from imio.helpers.security import fplog
+from imio.migrator.utils import end_time
 from imio.prettylink.interfaces import IPrettyLink
 from OFS import CopySupport
 from persistent.mapping import PersistentMapping
@@ -1418,9 +1419,10 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             if indexes_to_update:
                 itemOrMeeting.reindexObject(idxs=indexes_to_update)
 
-        seconds = time.time() - startTime
-        logger.info('updateAllLocalRoles finished in %.2f seconds(s) (about %d minute(s)), that is %d by second.' %
-                    (seconds, round(float(seconds) / 60.0), numberOfBrains / seconds))
+        logger.info(end_time(
+            startTime,
+            base_msg="update_all_local_roles finished in ",
+            total_number=numberOfBrains))
         api.portal.show_message('Done.', request=self.REQUEST)
         return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
 
