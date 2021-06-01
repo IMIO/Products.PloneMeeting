@@ -1234,10 +1234,13 @@ class CategorizedAnnexesTable(CategorizedTable):
     """ """
 
     def initColumns(self):
-        """ """
+        """Change name of checkbox column for annex decisions,
+           because for batchaction, column name must be different than
+           checkbox column of normal annexes.
+           """
         super(CategorizedAnnexesTable, self).initColumns()
         if self.portal_type == 'annexDecision':
-            column = self.columns[-1]
+            column = self.columnByName['select_row']
             column.name = "select_item_annex_decision"
 
 

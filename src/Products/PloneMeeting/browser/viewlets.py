@@ -60,7 +60,9 @@ class AnnexesBatchActionsViewlet(BatchActionsViewlet):
 
     @property
     def select_item_name(self):
-        """ """
+        """Manage fact that in the annexes, there are 2 tables
+          (annexes and decision annexes) that use a different name
+          for the checkbox column."""
         value = None
         if self.request.get('categorized_tab').portal_type == 'annexDecision':
             value = "select_item_annex_decision"
