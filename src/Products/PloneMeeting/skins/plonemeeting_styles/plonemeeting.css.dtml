@@ -1791,6 +1791,10 @@ table.listing tbody tr.even.selected td,
 table.listing tbody tr.even.dragging td {
     background-color: #ffa;
 }
+/* category column in annexes table */
+table tbody tr td.td_cell_category-column {
+   max-width: 200px;
+}
 
 /* refresh attendees */
 #content span.refresh-attendees:before {

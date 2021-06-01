@@ -963,6 +963,23 @@ schema = Schema((
         schemata="data",
         write_permission="PloneMeeting: Write risky config",
     ),
+    LinesField(
+        name='enabledAnnexesBatchActions',
+        default=defValues.enabledAnnexesBatchActions,
+        widget=MultiSelectionWidget(
+            description="EnabledAnnexesBatchActions",
+            description_msgid="enabled_annexes_batch_actions_descr",
+            format="checkbox",
+            label='enabledannexesbatchactions',
+            label_msgid='PloneMeeting_label_enabledAnnexesBatchActions',
+            i18n_domain='PloneMeeting',
+        ),
+        multiValued=1,
+        vocabulary='listAnnexesBatchActions',
+        enforceVocabulary=True,
+        schemata="data",
+        write_permission="PloneMeeting: Write risky config",
+    ),
     StringField(
         name='itemWorkflow',
         widget=SelectionWidget(
@@ -3438,6 +3455,18 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 return res.index(item.UID())
             res = sorted(searches, key=getKey)
         return res
+
+    security.declarePrivate('listAnnexesBatchActions')
+
+    def listAnnexesBatchActions(self):
+        """Vocabulary for the MeetingConfig.enabledAnnexesBatchActions field."""
+        res = []
+        for annex_ba in ['delete', 'download-annexes']:
+            res.append((annex_ba,
+                        translate('{0}-batch-action-but'.format(annex_ba),
+                                  domain='collective.eeafaceted.batchactions',
+                                  context=self.REQUEST)))
+        return DisplayList(tuple(res)).sortedByValue()
 
     security.declarePrivate('listToDoListSearches')
 

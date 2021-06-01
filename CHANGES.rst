@@ -283,6 +283,13 @@ Changelog
   Also added values `deliberation_motivation` and `deliberation_decision` to
   possible values returned by `ItemDocumentGenerationHelperView.deliberation_for_restapi`.
   [gbastien]
+- Enabled batch actions on annexes:
+
+  - Batch actions `Delete` and `Download as Zip` are available;
+  - Added `MeetingConfig.enabledAnnexesBatchActions` attribute to be able enable
+    or disable batch actions, by default only the `Download` action is enabled.
+
+  [gbastien]
 - Changed behavior of `MeetingConfig.includeGroupsInChargeDefinedOnProposingGroup`
   and `MeetingConfig.includeGroupsInChargeDefinedOnCategory`: before values were
   evaluated when asked but this may break old items if `groupsInCharge` changed on
