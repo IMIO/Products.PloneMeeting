@@ -2205,7 +2205,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         raw_committees = getattr(self, 'committees', ())
         if "committees" in cfg.getUsedMeetingAttributes() or raw_committees:
             res = True
-            if is_editing(self.cfg):
+            if is_editing(cfg):
                 # when using "auto_from" in MeetingConfig.committees
                 # field is only shown to MeetingManagers
                 tool = api.portal.get_tool('portal_plonemeeting')
