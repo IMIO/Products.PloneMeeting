@@ -844,11 +844,19 @@ table.listing th.th_header_meeting_date,
 table.listing th.th_header_preferred_meeting_date,
 table.listing th.th_header_getCategory,
 table.listing th.th_header_ModificationDate,
-table.listing th.th_header_CreationDate {
+table.listing th.th_header_CreationDate,
+table.listing th.th_header_creation-date-column,
+table.listing th.th_header_last-modification-column {
     width: 90px;
 }
 table.listing th.th_header_privacy {
     width: 63px;
+}
+table.listing th.th_header_filesize-column {
+    width: 115px;
+}
+table.listing tbody td.td_cell_filesize-column {
+    text-align: right;
 }
 
 /* hide border between listType and itemNumber */
