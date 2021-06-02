@@ -674,7 +674,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                 if enable and field_name not in usedItemAttrs:
                     usedItemAttrs.append(field_name)
                 elif not enable and field_name in usedItemAttrs:
-                    usedItemAttrs = usedItemAttrs.remove(field_name)
+                    usedItemAttrs.remove(field_name)
                 cfg.setUsedItemAttributes(usedItemAttrs)
             elif related_to == 'Meeting':
                 usedMeetingAttrs = list(cfg.getUsedMeetingAttributes())

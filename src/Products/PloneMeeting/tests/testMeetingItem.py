@@ -2466,6 +2466,51 @@ class testMeetingItem(PloneMeetingTestCase):
         self.proposeItem(item)
         self.assertFalse(self.vendors_observers in item.__ac_local_roles__)
 
+    def test_pm_Show_groups_in_charge(self):
+        """Field MeetingItem.groupsInCharge may be shown on view or edit
+           depending on configuration."""
+        def _check(item, view=False, edit=False):
+            """ """
+            # view
+            self.request.set('URL', item.absolute_url())
+            if view:
+                self.assertTrue(item.show_groups_in_charge())
+            else:
+                self.assertFalse(item.show_groups_in_charge())
+            # edit
+            self.request.set('URL', item.absolute_url() + '/edit')
+            if edit:
+                self.assertTrue(item.show_groups_in_charge())
+            else:
+                self.assertFalse(item.show_groups_in_charge())
+        cfg = self.meetingConfig
+        self.assertFalse('groupsInCharge' in cfg.getUsedItemAttributes())
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.assertFalse(item.getRawGroupsInCharge())
+        _check(item)
+        self.changeUser('pmManager')
+        _check(item)
+        # now enable groupsInCharge
+        self._enableField('groupsInCharge')
+        self.changeUser('pmCreator1')
+        _check(item, view=True, edit=True)
+        self.changeUser('pmManager')
+        _check(item, view=True, edit=True)
+        # disable field but set a value
+        item.setGroupsInCharge((self.developers_uid, ))
+        self._enableField('groupsInCharge', enable=False)
+        self.changeUser('pmCreator1')
+        _check(item, view=True, edit=False)
+        self.changeUser('pmManager')
+        _check(item, view=True, edit=True)
+        # when using proposingGroupWithGroupInCharge nobody may edit
+        self._enableField('proposingGroupWithGroupInCharge')
+        self.changeUser('pmCreator1')
+        _check(item, view=True, edit=False)
+        self.changeUser('pmManager')
+        _check(item, view=True, edit=False)
+
     def test_pm_ItemIsSigned(self):
         '''Test the functionnality around MeetingItem.itemIsSigned field.
            Check also the @@toggle_item_is_signed view that do some unrestricted things...'''

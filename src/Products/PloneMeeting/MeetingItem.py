@@ -2176,8 +2176,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         cfg = tool.getMeetingConfig(self)
         _is_editing = is_editing(cfg)
         res = False
-        raw_groups_in_charge = getattr(self, 'groupsInCharge', ())
-        usedAttrs = cfg.getUsedMeetingAttributes()
+        raw_groups_in_charge = self.getRawGroupsInCharge()
+        usedAttrs = cfg.getUsedItemAttributes()
         # using field, viewable/editable
         if "groupsInCharge" in usedAttrs:
             res = True
