@@ -766,6 +766,13 @@ body.template-meetingitem_view div#viewlet-below-content-body {
     border-radius: 3px;
     margin: 0em;
 }
+
+/* try to hide viewlet when empty just working on FF for now... */
+div#viewlet-below-content-body:empty,
+div#viewlet-below-content-body:-moz-only-whitespace {
+   display: none !important;
+}
+
 /* make control sticky for some elements */
 body.template-base_edit div.formControls,
 body.template-edit div.formControls,
