@@ -300,6 +300,10 @@ Changelog
   now accept a value `all`, in this case, all item related types are returned
   (`normal`, `item template`, `recurring item`).
   [gbastien]
+- Fixed JS callback `onsuccessManageAttendees` called by `imio.helpers`
+  `submitFormHelper` JS function, now received data is an `arraybuffer`,
+  no more a `String`.
+  [gbastien]
 
 4.2b11 (2021-01-19)
 -------------------

@@ -133,8 +133,10 @@ function highlight_attendees(highlight_selector='') {
 }
 
 function onsuccessManageAttendees(data) {
-  if (data) {
-    $("div.pb-ajax div")[0].innerHTML = data;
+  if (data.byteLength) {
+    // data is an arraybuffer, convert it to str
+    data_str = new TextDecoder().decode(data);
+    $("div.pb-ajax div")[0].innerHTML = data_str;
   }
   else {
     refresh_attendees(highlight=null, click_cancel=true);
