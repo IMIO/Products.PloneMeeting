@@ -304,6 +304,8 @@ Changelog
   `submitFormHelper` JS function, now received data is an `arraybuffer`,
   no more a `String`.
   [gbastien]
+- Added back `Meeting.getSelf` method.
+  [gbastien]
 
 4.2b11 (2021-01-19)
 -------------------

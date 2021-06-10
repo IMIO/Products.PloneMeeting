@@ -758,7 +758,7 @@ class MeetingItemWorkflowActions(object):
         try:
             wTool.doActionFor(self.context, 'itemfreeze')
             wTool.doActionFor(self.context, 'itempublish')
-        except:
+        except WorkflowException:
             pass  # Maybe does state 'itempublish' not exist.
 
     security.declarePrivate('doItemPublish')
@@ -2426,7 +2426,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 with api.env.adopt_user(user=previousUser):
                     try:
                         mayTakeOver = item.adapted().mayTakeOver()
-                    except:
+                    except Exception:
                         logger.warning("An error occured in 'setHistorizedTakenOverBy' while evaluating 'mayTakeOver'")
             if not mayTakeOver:
                 item.setTakenOverBy('')

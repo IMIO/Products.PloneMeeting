@@ -893,6 +893,16 @@ class Meeting(Container):
         adapted.target = '_parent'
         return adapted.getLink()
 
+    security.declarePublic('getSelf')
+
+    def getSelf(self):
+        '''Similar to MeetingItem.getSelf. Check MeetingItem.py for more
+           info.'''
+        res = self
+        if self.getTagName() != 'Meeting':
+            res = self.context
+        return res
+
     def get_assembly(self, for_display=True, striked=True, mark_empty_tags=False):
         """ """
         return get_textarea_value(
@@ -2183,4 +2193,6 @@ class PlacesVocabulary(object):
                                           context=context.REQUEST,
                                           default=u"Other")))
         return SimpleVocabulary(terms)
+
+
 PlacesVocabularyFactory = PlacesVocabulary()
