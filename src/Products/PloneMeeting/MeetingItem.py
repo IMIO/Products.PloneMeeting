@@ -3721,7 +3721,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
              gic_from_cat) or
             (self.REQUEST.get('need_MeetingItem_update_groups_in_charge_proposing_group') and
              gic_from_pg)):
-            # empty the groups_in_charge before updating it
+            # empty the groups_in_charge before updating it because
+            # it is taken into account by getGroupsInCharge
             self.setGroupsInCharge([])
             groups_in_charge = self.getGroupsInCharge(includeAuto=True)
             self.setGroupsInCharge(groups_in_charge)
