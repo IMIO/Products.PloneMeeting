@@ -261,11 +261,11 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                 i += 1
         return res
 
-    def getMeetingFolder(self, meetingConfig=None):
+    def getMeetingFolder(self, meetingConfig=None, userId=None):
         '''Get the meeting folder for the current meeting config.'''
         if not meetingConfig:
             meetingConfig = self.meetingConfig
-        return self.tool.getPloneMeetingFolder(meetingConfig.id)
+        return self.tool.getPloneMeetingFolder(meetingConfig.getId(), userId=userId)
 
     def create(self,
                objectType,
