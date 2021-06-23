@@ -5,8 +5,15 @@ Changelog
 4.1.28.28 (unreleased)
 ----------------------
 
-- Nothing changed yet.
-
+- Backport from 4.2.x:
+  - Added parameter `userId=None` to `PloneMeetingTestCase.getMeetingFolder` to
+    be able to pass it to `ToolPloneMeeting.getPloneMeetingFolder`.
+    Used by `plonemeeting.restapi` tests.
+    [gbastien]
+- Fixed `MeetingItem.getMeeting_cachekey` regarding the way we get `_debug`
+  on the `REQUEST`, in some case like when using `plonemeeting.restapi`,
+  the `REQUEST` is actually a `<Special Object Used to Force Acquisition>`.
+  [gbastien]
 
 4.1.28.27 (2021-05-31)
 ----------------------
