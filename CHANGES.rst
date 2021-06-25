@@ -6,6 +6,7 @@ Changelog
 ----------------------
 
 - Backport from 4.2.x:
+
   - Added parameter `userId=None` to `PloneMeetingTestCase.getMeetingFolder` to
     be able to pass it to `ToolPloneMeeting.getPloneMeetingFolder`.
     Used by `plonemeeting.restapi` tests.
