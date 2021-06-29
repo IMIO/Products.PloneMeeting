@@ -306,6 +306,9 @@ Changelog
   [gbastien]
 - Added back `Meeting.getSelf` method.
   [gbastien]
+- Added helper `ToolPloneMeeting.user_is_in_org(org_id)` that will return `True`
+  if a user is in a Plone groups of the given organization id.
+  [gbastien]
 
 4.2b11 (2021-01-19)
 -------------------
