@@ -13,9 +13,9 @@ from plone.z3cform.layout import wrap_form
 from Products.Five import BrowserView
 from Products.PloneMeeting.browser.itemattendee import BaseAttendeeForm
 from Products.PloneMeeting.browser.itemattendee import person_uid_default
-from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
 from Products.PloneMeeting.config import NOT_VOTABLE_LINKED_TO_VALUE
+from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.utils import get_context_with_request
 from Products.PloneMeeting.widgets.pm_number import PMNumberFieldWidget
 from Products.PloneMeeting.widgets.pm_selectreadonly import PMSelectReadonlyWidget

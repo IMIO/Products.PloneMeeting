@@ -8,11 +8,11 @@
 from collective.contact.plonegroup.utils import get_plone_group
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.utils import duplicate_portal_type
+from Products.PloneMeeting.utils import escape
 from Products.PloneMeeting.utils import org_id_to_uid
 from Products.PloneMeeting.utils import sendMailIfRelevant
 from Products.PloneMeeting.utils import set_field_from_ajax
 from Products.PloneMeeting.utils import validate_item_assembly_value
-from Products.PloneMeeting.utils import escape
 
 
 ASSEMBLY_CORRECT_VALUE = u'[[Text]][[Text]]'
@@ -161,7 +161,8 @@ class testUtils(PloneMeetingTestCase):
 
 
 def test_suite():
-    from unittest import TestSuite, makeSuite
+    from unittest import makeSuite
+    from unittest import TestSuite
     suite = TestSuite()
     suite.addTest(makeSuite(testUtils, prefix='test_pm_'))
     return suite

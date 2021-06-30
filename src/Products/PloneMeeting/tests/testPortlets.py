@@ -111,7 +111,8 @@ class testPortlets(PloneMeetingTestCase):
 
 
 def test_suite():
-    from unittest import TestSuite, makeSuite
+    from unittest import makeSuite
+    from unittest import TestSuite
     suite = TestSuite()
     suite.addTest(makeSuite(testPortlets, prefix='test_pm_'))
     return suite

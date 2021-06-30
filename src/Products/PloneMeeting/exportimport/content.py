@@ -811,6 +811,7 @@ class ToolInitializer:
             logger.warn(
                 'Could not get binary at "{0}", trying to get it from the testing profile...'.format(path))
             import Products.PloneMeeting
+
             # get binary folder, last part of path (templates, images, ...)
             splitted_path = path.split('/')
             file_folder, filename = splitted_path[-2], splitted_path[-1]

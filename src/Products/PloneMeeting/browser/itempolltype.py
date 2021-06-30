@@ -3,8 +3,8 @@
 from AccessControl import Unauthorized
 from plone import api
 from Products.Five.browser import BrowserView
-from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import PloneMeetingError
+from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.utils import ItemPollTypeChangedEvent
 from Products.PloneMeeting.utils import notifyModifiedAndReindex
 from zope.component import queryUtility

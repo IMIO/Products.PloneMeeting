@@ -7,9 +7,9 @@
 
 from collective.compoundcriterion.interfaces import ICompoundCriterionFilter
 from collective.eeafaceted.collectionwidget.utils import getCollectionLinkCriterion
-from DateTime import DateTime
 from datetime import datetime
 from datetime import timedelta
+from DateTime import DateTime
 from ftw.labels.interfaces import ILabeling
 from imio.helpers.cache import cleanRamCacheFor
 from plone import api
@@ -1202,7 +1202,8 @@ class testSearches(PloneMeetingTestCase):
 
 
 def test_suite():
-    from unittest import TestSuite, makeSuite
+    from unittest import makeSuite
+    from unittest import TestSuite
     suite = TestSuite()
     suite.addTest(makeSuite(testSearches, prefix='test_pm_'))
     return suite

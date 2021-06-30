@@ -13,8 +13,8 @@ from collective.eeafaceted.dashboard.content.pod_template import IDashboardPODTe
 from collective.iconifiedcategory.adapter import CategorizedObjectAdapter
 from collective.iconifiedcategory.adapter import CategorizedObjectInfoAdapter
 from collective.iconifiedcategory.utils import get_categories
-from DateTime import DateTime
 from datetime import datetime
+from DateTime import DateTime
 from eea.facetednavigation.criteria.handler import Criteria as eeaCriteria
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from eea.facetednavigation.widgets.resultsperpage.widget import Widget as ResultsPerPageWidget
@@ -54,9 +54,9 @@ from Products.PloneMeeting.utils import compute_item_roles_to_assign_to_suffixes
 from Products.PloneMeeting.utils import displaying_available_items
 from Products.PloneMeeting.utils import findNewValue
 from Products.PloneMeeting.utils import get_context_with_request
+from Products.PloneMeeting.utils import get_referer_obj
 from Products.PloneMeeting.utils import getCurrentMeetingObject
 from Products.PloneMeeting.utils import getHistoryTexts
-from Products.PloneMeeting.utils import get_referer_obj
 from Products.PloneMeeting.utils import reviewersFor
 from zope.annotation import IAnnotations
 from zope.i18n import translate

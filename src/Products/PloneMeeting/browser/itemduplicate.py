@@ -9,14 +9,14 @@ from imio.helpers.content import get_vocab
 from plone import api
 from plone.directives import form
 from plone.z3cform.layout import wrap_form
-from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import DUPLICATE_AND_KEEP_LINK_EVENT_ACTION
 from Products.PloneMeeting.config import DUPLICATE_EVENT_ACTION
+from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import IRedirect
 from Products.PloneMeeting.widgets.pm_checkbox import PMCheckBoxFieldWidget
-from z3c.form import form as z3c_form
 from z3c.form import button
 from z3c.form import field
+from z3c.form import form as z3c_form
 from z3c.form.browser.radio import RadioFieldWidget
 from zope import schema
 from zope.component import queryUtility
