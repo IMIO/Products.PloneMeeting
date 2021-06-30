@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-import cgi
-
 from AccessControl.Permission import Permission
 from Acquisition import aq_base
 from appy.shared.diff import HtmlDiff
@@ -97,6 +95,7 @@ from zope.schema import getFieldsInOrder
 from zope.security.interfaces import IPermission
 
 import itertools
+import cgi
 import logging
 import os
 import os.path

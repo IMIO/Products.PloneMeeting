@@ -90,7 +90,6 @@ from zope.annotation.interfaces import IAnnotations
 from zope.i18n import translate
 from zope.interface import implements
 
-import cgi
 import interfaces
 import OFS.Moniker
 import time
