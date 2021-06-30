@@ -3127,6 +3127,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             allGroups += tuple(self.autoCopyGroups)
         return allGroups
 
+    def check_copy_groups_have_access(self):
+        """Return True if copyGroups have access in current review_state."""
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        return self.query_state() in cfg.getItemCopyGroupsStates()
+
     security.declarePublic('checkPrivacyViewable')
 
     def checkPrivacyViewable(self):

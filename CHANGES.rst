@@ -316,6 +316,9 @@ Changelog
   `natsort.realsorted` that behaves better with numbered categories
   (`1 Cat1`, `1.1 Cat1.1`, ...).
   [gbastien]
+- Display the `?` icon next to copy groups on the item view in green when copy
+  groups have actually access to the item, in classic grey color otherwise.
+  [gbastien]
 
 4.2b11 (2021-01-19)
 -------------------
