@@ -84,9 +84,8 @@ class testAnnexes(PloneMeetingTestCase):
 
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem', copyGroups=copyGroups)
-        annex_config = get_config_root(item)
-        annex_group = get_group(annex_config, item)
-        annex_group.confidentiality_activated = True
+        # enable confidentiality
+        self._enable_annex_config(item)
         annexes_table = item.restrictedTraverse('@@iconifiedcategory')
         categorized_child = item.restrictedTraverse('@@categorized-childs-infos')
         annex_category = cfg.annexes_types.item_annexes.get('financial-analysis')
@@ -334,10 +333,8 @@ class testAnnexes(PloneMeetingTestCase):
             **{'advice_group': self.vendors_uid,
                'advice_type': u'positive',
                'advice_comment': RichTextValue(u'My comment')})
-        annex_config = get_config_root(advice)
-        annex_group = get_group(annex_config, advice)
-        annex_group.confidentiality_activated = True
-
+        # enable confidentiality
+        self._enable_annex_config(advice)
         annexes_table = advice.restrictedTraverse('@@iconifiedcategory')
         annex_category = cfg.annexes_types.advice_annexes.get('advice-annex')
         categorized_child = advice.restrictedTraverse('@@categorized-childs-infos')
@@ -503,9 +500,8 @@ class testAnnexes(PloneMeetingTestCase):
 
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
-        annex_config = get_config_root(meeting)
-        annex_group = get_group(annex_config, meeting)
-        annex_group.confidentiality_activated = True
+        # enable confidentiality
+        self._enable_annex_config(meeting)
 
         annexes_table = meeting.restrictedTraverse('@@iconifiedcategory')
         categorized_child = meeting.restrictedTraverse('@@categorized-childs-infos')
@@ -917,14 +913,9 @@ class testAnnexes(PloneMeetingTestCase):
         """When conversion is enabled, either by 'auto_convert' or
            when MeetingConfig.annexToPrintMode is 'enabled_for_printing',
            if an annex is updated, it will be converted again onModified."""
-        cfg = self.meetingConfig
-        cfgId = cfg.getId()
         gsettings = self._enableAutoConvert()
-        default_category = get_category_object(
-            self.meetingConfig,
-            '{0}-annexes_types_-_item_annexes_-_financial-analysis'.format(cfgId))
-        default_category_group = default_category.get_category_group()
-        default_category_group.to_be_printed_activated = True
+        # enable to_be_printed
+        self._enable_annex_config(self.meetingConfig, param="to_be_printed")
 
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
@@ -1226,10 +1217,8 @@ class testAnnexes(PloneMeetingTestCase):
         # create item with annex
         item = self.create('MeetingItem')
         annex = self.addAnnex(item)
-        annex_config = get_config_root(annex)
-        annex_group = get_group(annex_config, annex)
         # enable confidentiality
-        annex_group.confidentiality_activated = True
+        self._enable_annex_config(item)
         annex.confidential = True
         notify(ObjectModifiedEvent(annex))
         category = get_category_object(annex, annex.content_category)
