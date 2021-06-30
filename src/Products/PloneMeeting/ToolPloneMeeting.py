@@ -1565,10 +1565,5 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             res = False
         return res
 
-    security.declarePublic('escape_html')
-
-    def escape(self, text):
-        return cgi.escape(safe_unicode(text), quote=True)
-
 
 registerType(ToolPloneMeeting, PROJECTNAME)

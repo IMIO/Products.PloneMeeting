@@ -12,6 +12,7 @@ from Products.PloneMeeting.utils import org_id_to_uid
 from Products.PloneMeeting.utils import sendMailIfRelevant
 from Products.PloneMeeting.utils import set_field_from_ajax
 from Products.PloneMeeting.utils import validate_item_assembly_value
+from Products.PloneMeeting.utils import escape
 
 
 ASSEMBLY_CORRECT_VALUE = u'[[Text]][[Text]]'
@@ -150,6 +151,13 @@ class testUtils(PloneMeetingTestCase):
         # there was a bug, categorized_elements from collective.iconifiedcategory
         # was computed on every IItem, and a portal_type is a IItem...
         self.assertFalse('categorized_elements' in new_portal_type.__dict__)
+
+    def test_pm_escape(self):
+        self.assertEqual(escape('Test < & > are replaced with HTML "entities"'),
+                         'Test &lt; &amp; &gt; are replaced with HTML &quot;entities&quot;')
+        self.assertEqual(escape('<h1>We have no respect for <em><strong>HTML tags</strong></em> either</h1>'),
+                         '&lt;h1&gt;We have no respect for &lt;em&gt;&lt;strong&gt;'
+                         'HTML tags&lt;/strong&gt;&lt;/em&gt; either&lt;/h1&gt;')
 
 
 def test_suite():

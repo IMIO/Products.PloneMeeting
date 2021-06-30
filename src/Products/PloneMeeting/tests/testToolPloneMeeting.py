@@ -1208,12 +1208,6 @@ class testToolPloneMeeting(PloneMeetingTestCase):
                          u'You removed a date that is currently in use! '
                          u'Check item at {0}'.format(item.absolute_url()))
 
-    def test_pm_escape(self):
-        self.assertEqual(self.tool.escape('Test < & > are replaced with HTML "entities"'),
-                         'Test &lt; &amp; &gt; are replaced with HTML &quot;entities&quot;')
-        self.assertEqual(self.tool.escape('<h1>We have no respect for <em><strong>HTML tags</strong></em> either</h1>'),
-                         '&lt;h1&gt;We have no respect for &lt;em&gt;&lt;strong&gt;HTML tags&lt;/strong&gt;&lt;/em&gt; either&lt;/h1&gt;')
-
 
 def test_suite():
     from unittest import TestSuite, makeSuite

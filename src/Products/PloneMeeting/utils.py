@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import cgi
 
 from AccessControl.Permission import Permission
 from Acquisition import aq_base
@@ -2084,6 +2085,10 @@ def number_word(number):
                            context=request,
                            default=u"${number}st/th")
     return suppl_word
+
+
+def escape(text):
+    return cgi.escape(safe_unicode(text), quote=True)
 
 
 class AdvicesUpdatedEvent(ObjectEvent):
