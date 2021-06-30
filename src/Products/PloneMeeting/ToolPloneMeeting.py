@@ -84,6 +84,7 @@ from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getCustomSchemaFields
 from Products.PloneMeeting.utils import monthsIds
+from Products.PloneMeeting.utils import org_id_to_uid
 from Products.PloneMeeting.utils import workday
 from Products.ZCatalog.Catalog import AbstractCatalogBrain
 from ZODB.POSException import ConflictError
@@ -593,6 +594,28 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                         res = True
                         break
         return res
+
+    def user_is_in_org(self,
+                       org_id=None,
+                       org_uid=None,
+                       user_id=None,
+                       only_selected=True,
+                       suffixes=[],
+                       omitted_suffixes=[],
+                       using_groups=[]):
+        """Check if user is member of one of the Plone groups linked
+           to given p_org_id or p_org_uid.  Parameters are exclusive.
+           Other parameters from p_user_id=None to p_the_objects=True
+           are default values passed to get_orgs_for_user."""
+        if not org_uid:
+            org_uid = org_id_to_uid(org_id)
+        return bool(org_uid in self.get_orgs_for_user(
+            user_id=user_id,
+            only_selected=only_selected,
+            suffixes=suffixes,
+            omitted_suffixes=omitted_suffixes,
+            using_groups=using_groups,
+            the_objects=False))
 
     security.declarePublic('getPloneMeetingFolder')
 

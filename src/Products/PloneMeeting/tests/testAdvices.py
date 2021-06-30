@@ -8,8 +8,6 @@
 from AccessControl import Unauthorized
 from collective.contact.plonegroup.config import ORGANIZATIONS_REGISTRY
 from collective.iconifiedcategory.utils import get_categorized_elements
-from collective.iconifiedcategory.utils import get_config_root
-from collective.iconifiedcategory.utils import get_group
 from DateTime import DateTime
 from datetime import datetime
 from datetime import timedelta
@@ -2779,9 +2777,7 @@ class testAdvices(PloneMeetingTestCase):
                'advice_hide_during_redaction': False,
                'advice_comment': RichTextValue(u'My comment')})
         if addAnnexesToVendorsAdvice:
-            annex_config = get_config_root(vendors_advice)
-            annex_group = get_group(annex_config, vendors_advice)
-            annex_group.confidentiality_activated = True
+            self._enable_annex_config(vendors_advice)
             annexNotConfidential = self.addAnnex(vendors_advice, annexTitle='Annex not confidential')
             annexConfidential = self.addAnnex(vendors_advice, annexTitle='Annex confidential')
             annexConfidential.confidential = True

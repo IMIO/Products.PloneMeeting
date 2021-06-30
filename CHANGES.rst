@@ -306,6 +306,16 @@ Changelog
   [gbastien]
 - Added back `Meeting.getSelf` method.
   [gbastien]
+- Added helper `ToolPloneMeeting.user_is_in_org(org_id)` that will return `True`
+  if a user is in a Plone groups of the given organization id.
+  [gbastien]
+- Added helper `PloneMeetingTestCase._enable_annex_config` to ease enabling an
+  annex related attribute (`confidentiality`, `publishable`, ...).
+  [gbastien]
+- In `MeetingItem.listCategorie`s, use `natsort.humansorted` instead
+  `natsort.realsorted` that behaves better with numbered categories
+  (`1 Cat1`, `1.1 Cat1.1`, ...).
+  [gbastien]
 
 4.2b11 (2021-01-19)
 -------------------

@@ -25,7 +25,7 @@ from imio.helpers.content import uuidToCatalogBrain
 from imio.helpers.security import fplog
 from imio.history.utils import get_all_history_attr
 from imio.prettylink.interfaces import IPrettyLink
-from natsort import realsorted
+from natsort import humansorted
 from OFS.ObjectManager import BeforeDeleteException
 from persistent.list import PersistentList
 from persistent.mapping import PersistentMapping
@@ -3448,7 +3448,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # natural sort, reverse tuple so we have value/key instead key/value
             # and realsorted may achieve his work
             res = [(elt[1], elt[0]) for elt in res]
-            res = realsorted(res)
+            res = humansorted(res)
             res = [(elt[1], elt[0]) for elt in res]
 
         res.insert(0, ('_none_', translate('make_a_choice',

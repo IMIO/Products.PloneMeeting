@@ -12,6 +12,7 @@ from collective.documentviewer.config import CONVERTABLE_TYPES
 from collective.documentviewer.settings import GlobalSettings
 from collective.iconifiedcategory.utils import calculate_category_id
 from collective.iconifiedcategory.utils import get_config_root
+from collective.iconifiedcategory.utils import get_group
 from copy import deepcopy
 from datetime import datetime
 from imio.helpers.cache import cleanRamCacheFor
@@ -683,6 +684,26 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                 elif not enable and field_name in usedMeetingAttrs:
                     usedMeetingAttrs.remove(field_name)
                 cfg.setUsedMeetingAttributes(tuple(usedMeetingAttrs))
+
+    def _enable_annex_config(self,
+                             obj,
+                             param="confidentiality",
+                             related_to=None,
+                             enable=True):
+        """p_fct possible values are :
+           - confidentiality (default);
+           - to_be_printed;
+           - signed;
+           - publishable."""
+        if related_to == 'item_decision':
+            self.request.set('force_use_item_decision_annexes_group', True)
+        annexes_config_root = get_config_root(obj)
+        if related_to == 'item_decision':
+            self.request.set('force_use_item_decision_annexes_group', False)
+
+        annex_group = get_group(annexes_config_root, obj)
+        attr_name = "{0}_activated".format(param)
+        setattr(annex_group, attr_name, enable)
 
     def _disableObj(self, obj, notify_event=True):
         """ """
