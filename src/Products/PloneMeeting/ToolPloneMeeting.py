@@ -4,6 +4,7 @@
 #
 # GNU General Public License (GPL)
 #
+import cgi
 
 from AccessControl import ClassSecurityInfo
 from AccessControl import Unauthorized
@@ -1564,5 +1565,11 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         if not check_zope_admin():
             res = False
         return res
+
+    security.declarePublic('escape_html')
+
+    def escape_html(self, html):
+        return cgi.escape(safe_unicode(html), quote=True)
+
 
 registerType(ToolPloneMeeting, PROJECTNAME)

@@ -306,6 +306,8 @@ Changelog
   [gbastien]
 - Added back `Meeting.getSelf` method.
   [gbastien]
+- Added escape_html utility function # PM-3462 .
+  [odelaere]
 
 4.2b11 (2021-01-19)
 -------------------
