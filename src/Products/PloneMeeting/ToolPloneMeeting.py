@@ -4,8 +4,6 @@
 #
 # GNU General Public License (GPL)
 #
-import cgi
-
 from AccessControl import ClassSecurityInfo
 from AccessControl import Unauthorized
 from Acquisition import aq_base
@@ -92,6 +90,7 @@ from zope.annotation.interfaces import IAnnotations
 from zope.i18n import translate
 from zope.interface import implements
 
+import cgi
 import interfaces
 import OFS.Moniker
 import time
@@ -1568,8 +1567,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('escape_html')
 
-    def escape_html(self, html):
-        return cgi.escape(safe_unicode(html), quote=True)
+    def escape(self, text):
+        return cgi.escape(safe_unicode(text), quote=True)
 
 
 registerType(ToolPloneMeeting, PROJECTNAME)
