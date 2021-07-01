@@ -22,11 +22,11 @@ from Products.CMFPlone.utils import base_hasattr
 from Products.CPUtils.Extensions.utils import configure_ckeditor
 from Products.cron4plone.browser.configlets.cron_configuration import ICronConfiguration
 from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_REAPPLY
-from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import CKEDITOR_MENUSTYLES_CUSTOMIZED_MSG
 from Products.PloneMeeting.config import HAS_SOLR
 from Products.PloneMeeting.config import HAS_ZAMQP
 from Products.PloneMeeting.config import ManageOwnOrganizationFields
+from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.utils import cleanMemoize
 from zope.component import queryUtility
 from zope.i18n import translate
@@ -361,7 +361,8 @@ def postInstall(context):
 def activate_solr_and_reindex_if_available(site):
     if HAS_SOLR:
         """ activate solr indexing and reindex the existing content """
-        from collective.solr.utils import activate, getConfig
+        from collective.solr.utils import activate
+        from collective.solr.utils import getConfig
         if not site.portal_quickinstaller.isProductInstalled('collective.solr'):
             site.portal_setup.runAllImportStepsFromProfile('profile-collective.solr:default')
 

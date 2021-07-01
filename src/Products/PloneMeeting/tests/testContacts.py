@@ -9,9 +9,9 @@ from AccessControl import Unauthorized
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from collective.contact.plonegroup.utils import get_own_organization
 from collective.contact.plonegroup.utils import get_plone_groups
-from DateTime import DateTime
 from datetime import date
 from datetime import datetime
+from DateTime import DateTime
 from imio.helpers.content import disable_link_integrity_checks
 from imio.helpers.content import get_vocab
 from imio.helpers.content import validate_fields
@@ -2274,7 +2274,8 @@ class testContacts(PloneMeetingTestCase):
 
 
 def test_suite():
-    from unittest import TestSuite, makeSuite
+    from unittest import makeSuite
+    from unittest import TestSuite
     suite = TestSuite()
     suite.addTest(makeSuite(testContacts, prefix='test_pm_'))
     return suite

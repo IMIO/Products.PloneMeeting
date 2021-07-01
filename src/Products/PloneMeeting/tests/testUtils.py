@@ -8,6 +8,7 @@
 from collective.contact.plonegroup.utils import get_plone_group
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.utils import duplicate_portal_type
+from Products.PloneMeeting.utils import escape
 from Products.PloneMeeting.utils import org_id_to_uid
 from Products.PloneMeeting.utils import sendMailIfRelevant
 from Products.PloneMeeting.utils import set_field_from_ajax
@@ -151,9 +152,17 @@ class testUtils(PloneMeetingTestCase):
         # was computed on every IItem, and a portal_type is a IItem...
         self.assertFalse('categorized_elements' in new_portal_type.__dict__)
 
+    def test_pm_escape(self):
+        self.assertEqual(escape('Test < & > are replaced with HTML "entities"'),
+                         'Test &lt; &amp; &gt; are replaced with HTML &quot;entities&quot;')
+        self.assertEqual(escape('<h1>We have no respect for <em><strong>HTML tags</strong></em> either</h1>'),
+                         '&lt;h1&gt;We have no respect for &lt;em&gt;&lt;strong&gt;'
+                         'HTML tags&lt;/strong&gt;&lt;/em&gt; either&lt;/h1&gt;')
+
 
 def test_suite():
-    from unittest import TestSuite, makeSuite
+    from unittest import makeSuite
+    from unittest import TestSuite
     suite = TestSuite()
     suite.addTest(makeSuite(testUtils, prefix='test_pm_'))
     return suite

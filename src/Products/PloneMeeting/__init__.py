@@ -11,8 +11,8 @@ from datetime import datetime
 from plone.registry.field import DisallowedProperty
 from Products.Archetypes import listTypes
 from Products.Archetypes.atapi import process_types
-from Products.CMFCore import utils as cmfutils
 from Products.CMFCore import DirectoryView
+from Products.CMFCore import utils as cmfutils
 from Products.CMFPlone.utils import ToolInit
 from Products.PloneMeeting.config import ADD_CONTENT_PERMISSIONS
 from Products.PloneMeeting.config import DEFAULT_ADD_CONTENT_PERMISSION
@@ -58,13 +58,14 @@ def initialize(context):
     """initialize product (called by zope)"""
 
     from Products.PloneMeeting import monkey
-    import MeetingItem
+
     import Meeting
-    import ToolPloneMeeting
     import MeetingCategory
     import MeetingConfig
     import MeetingGroup
+    import MeetingItem
     import MeetingUser
+    import ToolPloneMeeting
 
     # Initialize portal tools
     tools = [ToolPloneMeeting.ToolPloneMeeting]

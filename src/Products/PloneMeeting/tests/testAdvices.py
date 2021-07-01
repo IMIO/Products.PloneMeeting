@@ -8,9 +8,11 @@
 from AccessControl import Unauthorized
 from collective.contact.plonegroup.config import ORGANIZATIONS_REGISTRY
 from collective.iconifiedcategory.utils import get_categorized_elements
-from DateTime import DateTime
+from collective.iconifiedcategory.utils import get_config_root
+from collective.iconifiedcategory.utils import get_group
 from datetime import datetime
 from datetime import timedelta
+from DateTime import DateTime
 from imio.helpers.cache import cleanRamCacheFor
 from imio.history.utils import getLastWFAction
 from os import path
@@ -3587,7 +3589,8 @@ class testAdvices(PloneMeetingTestCase):
 
 
 def test_suite():
-    from unittest import TestSuite, makeSuite
+    from unittest import makeSuite
+    from unittest import TestSuite
     suite = TestSuite()
     suite.addTest(makeSuite(testAdvices, prefix='test_pm_'))
     return suite

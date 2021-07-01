@@ -14,8 +14,8 @@ from Products.PortalTransforms.transforms import safe_html
 from Products.PortalTransforms.transforms.safe_html import CSS_COMMENT
 from Products.PortalTransforms.transforms.safe_html import decode_htmlentities
 from types import StringType
-from z3c.form.widget import SequenceWidget
 from z3c.form import interfaces
+from z3c.form.widget import SequenceWidget
 
 
 def _patched_equal(context, row):

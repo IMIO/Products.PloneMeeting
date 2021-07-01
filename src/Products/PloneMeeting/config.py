@@ -385,8 +385,9 @@ def registerClasses():
     '''ArchGenXML generated code does not register Archetype classes at the
        right moment since model adaptations have been implemented. This method
        allows to perform class registration at the right moment.'''
-    import Products.Archetypes
     from Products.Archetypes.atapi import registerType
+
+    import Products.Archetypes
     global ADD_CONTENT_PERMISSIONS
     classNames = ADD_CONTENT_PERMISSIONS.keys()
     classNames.append('ToolPloneMeeting')

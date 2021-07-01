@@ -12,10 +12,10 @@ from collective.iconifiedcategory.utils import calculate_category_id
 from collective.iconifiedcategory.utils import get_categories
 from collective.iconifiedcategory.utils import get_categorized_elements
 from collective.iconifiedcategory.utils import get_category_object
-from DateTime import DateTime
 from datetime import date
 from datetime import datetime
 from datetime import timedelta
+from DateTime import DateTime
 from imio.helpers.cache import cleanRamCacheFor
 from persistent.mapping import PersistentMapping
 from plone import api
@@ -1231,7 +1231,8 @@ class testToolPloneMeeting(PloneMeetingTestCase):
 
 
 def test_suite():
-    from unittest import TestSuite, makeSuite
+    from unittest import makeSuite
+    from unittest import TestSuite
     suite = TestSuite()
     suite.addTest(makeSuite(testToolPloneMeeting, prefix='test_pm_'))
     return suite

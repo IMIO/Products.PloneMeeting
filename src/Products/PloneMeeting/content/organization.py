@@ -7,9 +7,9 @@ from collective.contact.plonegroup.interfaces import IPloneGroupContact
 from collective.contact.plonegroup.utils import get_organizations
 from collective.z3cform.datagridfield import DataGridFieldFactory
 from collective.z3cform.datagridfield import DictRow
-from DateTime import DateTime
 from datetime import date
 from datetime import datetime
+from DateTime import DateTime
 from imio.helpers.content import get_back_relations
 from imio.helpers.content import uuidsToObjects
 from plone.autoform import directives as form

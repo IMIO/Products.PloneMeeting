@@ -41,10 +41,10 @@ from Products.PloneMeeting import logger
 from Products.PloneMeeting.browser.itemchangeorder import _is_integer
 from Products.PloneMeeting.browser.itemvotes import _get_linked_item_vote_numbers
 from Products.PloneMeeting.columns import render_item_annexes
-from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import ADVICE_STATES_ALIVE
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
+from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.content.meeting import get_all_used_held_positions
 from Products.PloneMeeting.content.meeting import IMeeting
 from Products.PloneMeeting.indexes import _to_coded_adviser_index
@@ -64,6 +64,7 @@ from zope.i18n import translate
 import cgi
 import json
 import lxml
+
 
 SEVERAL_SAME_BARCODE_ERROR = \
     'You can not generate several times same QR Code in same template!!!'
@@ -431,10 +432,10 @@ class PortletTodoUpdateView(BrowserView):
 
     def __call__(self):
         """Render portlet_todo and return the entire HTML tree."""
-        from zope.component import getUtility
-        from zope.component import queryMultiAdapter
         from plone.portlets.interfaces import IPortletManager
         from plone.portlets.interfaces import IPortletManagerRenderer
+        from zope.component import getUtility
+        from zope.component import queryMultiAdapter
 
         # self.context is sometimes a view, like when editing a Collection
         context = getContext(self.context)
