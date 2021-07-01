@@ -139,19 +139,22 @@
             </div>
 
             <tal:comment replace="nothing">Copy groups for this item</tal:comment>
-            <div class="discreet" tal:condition="context/isCopiesEnabled"
-                                  tal:define="copyGroups context/getAllCopyGroups;">
-                <span class="item_attribute_label"
-                      i18n:translate="PloneMeeting_label_copyGroups"></span>
-                <span class='fa fa-question-circle help-doc pmHelp'
-                      i18n:attributes="title"
-                      tal:attributes="title python: context.getCopyGroupsHelpMsg(meetingConfig)">
-                </span>:&nbsp;&nbsp;
-                <tal:displayCopyGroups condition="copyGroups">
-                    <span tal:replace="structure context/displayCopyGroups">Copy groups</span>
-                </tal:displayCopyGroups>
-                <span tal:condition="not: copyGroups">-</span>
-            </div>
+            <tal:copyGroups condition="python: context.isCopiesEnabled()">
+                <div class="discreet" tal:define="copyGroups python: context.getAllCopyGroups();
+                                                  copy_groups_have_access python: context.check_copy_groups_have_access();">
+                    <span class="item_attribute_label"
+                          i18n:translate="PloneMeeting_label_copyGroups"></span>
+                    <span tal:define="css_class string:fa fa-question-circle help-doc pmHelp"
+                          i18n:attributes="title"
+                          tal:attributes="title python: context.getCopyGroupsHelpMsg(meetingConfig);
+                                          class python: css_class + (copy_groups_have_access and ' green-colored' or '');">
+                    </span>:&nbsp;&nbsp;
+                    <tal:displayCopyGroups condition="copyGroups">
+                        <span tal:replace="structure context/displayCopyGroups">Copy groups</span>
+                    </tal:displayCopyGroups>
+                    <span tal:condition="not: copyGroups">-</span>
+                </div>
+            </tal:copyGroups>
 
             <tal:comment replace="nothing">Item is signed?</tal:comment>
             <div class="discreet"
