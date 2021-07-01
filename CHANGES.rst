@@ -319,7 +319,7 @@ Changelog
 - Display the `?` icon next to copy groups on the item view in green when copy
   groups have actually access to the item, in classic grey color otherwise.
   [gbastien]
-- Added escape_html utility function # PM-3462 .
+- Added utils.escape utility function # PM-3462 .
   [odelaere]
 
 4.2b11 (2021-01-19)
