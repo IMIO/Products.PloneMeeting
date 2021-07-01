@@ -306,6 +306,19 @@ Changelog
   [gbastien]
 - Added back `Meeting.getSelf` method.
   [gbastien]
+- Added helper `ToolPloneMeeting.user_is_in_org(org_id)` that will return `True`
+  if a user is in a Plone groups of the given organization id.
+  [gbastien]
+- Added helper `PloneMeetingTestCase._enable_annex_config` to ease enabling an
+  annex related attribute (`confidentiality`, `publishable`, ...).
+  [gbastien]
+- In `MeetingItem.listCategorie`s, use `natsort.humansorted` instead
+  `natsort.realsorted` that behaves better with numbered categories
+  (`1 Cat1`, `1.1 Cat1.1`, ...).
+  [gbastien]
+- Display the `?` icon next to copy groups on the item view in green when copy
+  groups have actually access to the item, in classic grey color otherwise.
+  [gbastien]
 - Added escape_html utility function # PM-3462 .
   [odelaere]
 

@@ -25,7 +25,7 @@ from imio.helpers.content import uuidToCatalogBrain
 from imio.helpers.security import fplog
 from imio.history.utils import get_all_history_attr
 from imio.prettylink.interfaces import IPrettyLink
-from natsort import realsorted
+from natsort import humansorted
 from OFS.ObjectManager import BeforeDeleteException
 from persistent.list import PersistentList
 from persistent.mapping import PersistentMapping
@@ -3127,6 +3127,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             allGroups += tuple(self.autoCopyGroups)
         return allGroups
 
+    def check_copy_groups_have_access(self):
+        """Return True if copyGroups have access in current review_state."""
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        return self.query_state() in cfg.getItemCopyGroupsStates()
+
     security.declarePublic('checkPrivacyViewable')
 
     def checkPrivacyViewable(self):
@@ -3448,7 +3454,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # natural sort, reverse tuple so we have value/key instead key/value
             # and realsorted may achieve his work
             res = [(elt[1], elt[0]) for elt in res]
-            res = realsorted(res)
+            res = humansorted(res)
             res = [(elt[1], elt[0]) for elt in res]
 
         res.insert(0, ('_none_', translate('make_a_choice',
@@ -3721,7 +3727,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
              gic_from_cat) or
             (self.REQUEST.get('need_MeetingItem_update_groups_in_charge_proposing_group') and
              gic_from_pg)):
-            # empty the groups_in_charge before updating it
+            # empty the groups_in_charge before updating it because
+            # it is taken into account by getGroupsInCharge
             self.setGroupsInCharge([])
             groups_in_charge = self.getGroupsInCharge(includeAuto=True)
             self.setGroupsInCharge(groups_in_charge)

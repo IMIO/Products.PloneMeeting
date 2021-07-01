@@ -1208,6 +1208,27 @@ class testToolPloneMeeting(PloneMeetingTestCase):
                          u'You removed a date that is currently in use! '
                          u'Check item at {0}'.format(item.absolute_url()))
 
+    def test_pm_user_is_in_org(self):
+        """Test the ToolPloneMeeting.user_is_in_org method that will return
+           True if member is in one of the Plone groups linked to an organization."""
+        # org_id or org_uid
+        self.changeUser("pmManager")
+        self.assertTrue(self.tool.user_is_in_org(self.vendors.id))
+        self.assertTrue(self.tool.user_is_in_org(org_uid=self.vendors_uid))
+        self.assertTrue(self.tool.user_is_in_org(self.developers.id))
+        self.assertTrue(self.tool.user_is_in_org(org_uid=self.developers_uid))
+        self.changeUser("pmCreator1")
+        self.assertFalse(self.tool.user_is_in_org(self.vendors.id))
+        self.assertFalse(self.tool.user_is_in_org(org_uid=self.vendors_uid))
+        self.assertTrue(self.tool.user_is_in_org(self.developers.id))
+        self.assertTrue(self.tool.user_is_in_org(org_uid=self.developers_uid))
+        # suffixes
+        self.assertTrue(self.tool.user_is_in_org(self.developers.id, suffixes=["creators"]))
+        self.assertFalse(self.tool.user_is_in_org(self.developers.id, suffixes=["reviewers"]))
+        # omitted_suffixes
+        self.assertFalse(self.tool.user_is_in_org(self.developers.id, omitted_suffixes=["creators"]))
+        self.assertTrue(self.tool.user_is_in_org(self.developers.id, omitted_suffixes=["observers"]))
+
 
 def test_suite():
     from unittest import makeSuite
