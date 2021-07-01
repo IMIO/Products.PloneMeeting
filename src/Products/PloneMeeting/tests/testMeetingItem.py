@@ -3681,14 +3681,14 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg.setUseGroupsAsCategories(False)
         # create categories
         self._removeConfigObjectsFor(cfg, folders=['itemtemplates', 'categories'])
-        data = {'cat2': '2. Category',
-                'cat21': '2.1 Category',
-                'cat22': '2.2 Category',
-                'cat1': '1. Category',
-                'cat11': '1.1 Category',
-                'cat12': '1.2 Category',
-                'cat10': '10. Category',
-                'cat101': '10.1 Category'}
+        data = {'cat2': '1 One',
+                'cat21': '1.1 One dot one',
+                'cat22': '1.2 One dot two',
+                'cat1': '1.9 One dot nine',
+                'cat11': '1.10 One dot ten',
+                'cat12': '1.11 One dot eleven',
+                'cat10': '2 Two',
+                'cat101': '3.5 Three dot five'}
         for cat_id, cat_title in data.items():
             self.create('meetingcategory', id=cat_id, title=cat_title)
 
@@ -3697,9 +3697,14 @@ class testMeetingItem(PloneMeetingTestCase):
         # items are naturally sorted
         self.assertEqual(item.listCategories().values(),
                          [u'--- Make a choice ---',
-                          u'1. Category', u'1.1 Category', u'1.2 Category',
-                          u'2. Category', u'2.1 Category', u'2.2 Category',
-                          u'10. Category', u'10.1 Category'])
+                          u'1 One',
+                          u'1.1 One dot one',
+                          u'1.2 One dot two',
+                          u'1.9 One dot nine',
+                          u'1.10 One dot ten',
+                          u'1.11 One dot eleven',
+                          u'2 Two',
+                          u'3.5 Three dot five'])
 
     def test_pm_ListCategoriesKeepConfigSorting(self):
         """If 'category' selected in MeetingConfig.itemFieldsToKeepConfigSortingFor,
