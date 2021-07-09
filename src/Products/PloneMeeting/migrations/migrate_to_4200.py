@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
-
+from Products.PloneMeeting.utils import cleanMemoize
 from collective.contact.plonegroup.utils import get_organizations
 from collective.eeafaceted.batchactions.interfaces import IBatchActionsMarker
 from copy import deepcopy
+
+from eea.facetednavigation.criteria.interfaces import ICriteria
 from imio.helpers.catalog import addOrUpdateColumns
 from imio.helpers.catalog import addOrUpdateIndexes
 from imio.helpers.content import get_vocab
@@ -484,6 +486,13 @@ class Migrate_To_4200(Migrator):
                     if 'c20' not in keys:
                         keys.append('c20')
                 field.set(cfg, sorted(keys))
+
+        logger.info('Fixing orgs-searches active/inactive filters...')
+        orgs_searches_folder = self.portal.contacts.get('orgs-searches')
+        orgs_searches_folder_criteria = ICriteria(orgs_searches_folder)
+        active_org_criterion = orgs_searches_folder_criteria.get('c6')
+        active_org_criterion.hidden = True
+        cleanMemoize(self.portal, prefixes=['plonegroupl-utils-get_organizations-'])
         logger.info('Done.')
 
     def _migrateItemPredecessorReference(self):

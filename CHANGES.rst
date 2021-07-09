@@ -321,6 +321,8 @@ Changelog
   [gbastien]
 - Added utils.escape utility function # PM-3462 .
   [odelaere]
+- Disabled active filter on orgs-searches # PM-3228.
+  [odelaere]
 
 4.2b11 (2021-01-19)
 -------------------
