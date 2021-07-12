@@ -487,7 +487,7 @@ class Migrate_To_4200(Migrator):
                         keys.append('c20')
                 field.set(cfg, sorted(keys))
 
-        logger.info('Fixing orgs-searches active/inactive filters...')
+        logger.info('Fixing orgs-searches review_sate filters...')
         orgs_searches_folder = self.portal.contacts.get('orgs-searches')
         orgs_searches_folder_criteria = ICriteria(orgs_searches_folder)
         active_org_criterion = orgs_searches_folder_criteria.get('c6')
