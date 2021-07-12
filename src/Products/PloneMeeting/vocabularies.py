@@ -388,6 +388,7 @@ class PMEveryOrganizationsVocabulary(EveryOrganizationsVocabulary):
         # ignore parent_label
         return orga.title
 
+
 PMEveryOrganizationsVocabularyFactory = PMEveryOrganizationsVocabulary()
 
 
@@ -424,6 +425,7 @@ class PMSortedSelectedOrganizationsElephantVocabulary(SortedSelectedOrganization
         wrapped_vocab = super(PMSortedSelectedOrganizationsElephantVocabulary, self).__call__(
             context)
         return wrapped_vocab.vocab
+
 
 PMSortedSelectedOrganizationsElephantVocabularyFactory = PMSortedSelectedOrganizationsElephantVocabulary()
 
@@ -683,7 +685,7 @@ class AskedAdvicesVocabulary(object):
         try:
             # in some case, like Plone Site creation, context is the Zope app...
             self.cfg = self.tool.getMeetingConfig(context)
-        except:
+        except Exception:
             return SimpleVocabulary(res)
         if self.cfg is None:
             return SimpleVocabulary(res)
@@ -1548,6 +1550,7 @@ class NumbersFromZeroVocabulary(NumbersVocabulary):
         return super(NumbersFromZeroVocabulary, self).__call__(
             start, end)
 
+
 NumbersFromZeroVocabularyFactory = NumbersFromZeroVocabulary()
 
 
@@ -2230,6 +2233,7 @@ class SelectableCommitteesVocabulary(object):
                         terms += _add_suppl(committee, enabled=False)
         return SimpleVocabulary(terms)
 
+
 SelectableCommitteesVocabularyFactory = SelectableCommitteesVocabulary()
 
 
@@ -2240,6 +2244,7 @@ class SelectableCommitteesAcronymsVocabulary(SelectableCommitteesVocabulary):
         """ """
         return super(SelectableCommitteesAcronymsVocabulary, self).__call__(
             context, term_title_attr)
+
 
 SelectableCommitteesAcronymsVocabularyFactory = SelectableCommitteesAcronymsVocabulary()
 
@@ -2265,6 +2270,7 @@ class ItemSelectableCommitteesVocabulary(SelectableCommitteesVocabulary):
             term.title = term.title.replace('&nbsp;', ' ')
         return res
 
+
 ItemSelectableCommitteesVocabularyFactory = ItemSelectableCommitteesVocabulary()
 
 
@@ -2286,6 +2292,7 @@ class MeetingSelectableCommitteesVocabulary(SelectableCommitteesVocabulary):
             include_all_disabled=False,
             add_no_committee_value=False,
             include_empty_string=False)
+
 
 MeetingSelectableCommitteesVocabularyFactory = MeetingSelectableCommitteesVocabulary()
 
@@ -2337,6 +2344,7 @@ class ContainedAnnexesVocabulary(object):
                 terms.append(term)
         return SimpleVocabulary(terms)
 
+
 ContainedAnnexesVocabularyFactory = ContainedAnnexesVocabulary()
 
 
@@ -2351,6 +2359,7 @@ class ContainedDecisionAnnexesVocabulary(ContainedAnnexesVocabulary):
         terms = super(ContainedDecisionAnnexesVocabulary, self).__call__(context, portal_type=portal_type)
         context.REQUEST['force_use_item_decision_annexes_group'] = False
         return terms
+
 
 ContainedDecisionAnnexesVocabularyFactory = ContainedDecisionAnnexesVocabulary()
 
@@ -2389,6 +2398,7 @@ class PMUsers(UsersFactory):
         terms = humansorted(terms, key=attrgetter('title'))
         return SimpleVocabulary(terms)
 
+
 PMUsersFactory = PMUsers()
 
 
@@ -2425,4 +2435,6 @@ class PMPositionTypesVocabulary(PositionTypesVocabulary):
                 gender_and_numbers = split_gender_and_number(term.title)
                 term.title = gender_and_numbers['{0}S'.format(gender)]
         return res
+
+
 PMPositionTypesVocabularyFactory = PMPositionTypesVocabulary()
