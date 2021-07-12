@@ -3612,7 +3612,8 @@ class testAdvices(PloneMeetingTestCase):
         self.assertEqual(item.adviceIndex.keys(), [self.developers_uid])
         self.proposeItem(item)
         # vendors advice was asked
-        self.assertEqual(item.adviceIndex.keys(), [self.developers_uid, self.vendors_uid])
+        self.assertEqual(sorted(item.adviceIndex.keys()),
+                         sorted([self.developers_uid, self.vendors_uid]))
         new_item = item.clone()
         # clone does not break and developers advice was asked
         self.assertEqual(new_item.adviceIndex.keys(), [self.developers_uid])
