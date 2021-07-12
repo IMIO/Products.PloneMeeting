@@ -20,6 +20,9 @@
    <object name="accessibility" meta_type="CMF Action">
     <property name="visible">False</property>
    </object>
+   <object name="contact" meta_type="CMF Action">
+    <property name="visible">False</property>
+   </object>
   </object>
 
   <!-- Hide Plone action "change_state". -->
@@ -131,7 +134,8 @@
   </object>
 
   <!-- Manage the user preferences action, change the link to point to @@personal-information instead
-      of @@personal-preferences as we hide this tab to avoid user doing nasty things... -->
+      of @@personal-preferences as we hide this tab to avoid user doing nasty things...
+      And add link to documentation -->
   <object name="user" meta_type="CMF Action Category">
    <object name="preferences" meta_type="CMF Action">
     <property name="url_expr">string:${globals_view/navigationRootUrl}/@@personal-information</property>
@@ -140,6 +144,16 @@
    <object name="login" meta_type="CMF Action">
     <!-- Change link to login form to avoid overlay because it does not behave correctly with caching -->
     <property name="url_expr">string:${globals_view/navigationRootUrl}/login?</property>
+   </object>
+   <object name="documentation" meta_type="CMF Action" i18n:domain="PloneMeeting" insert-before="*">
+     <property name="title" i18n:translate="">Documentation iA.Delib</property>
+     <property name="url_expr">string:https://docs.imio.be/imio-doc/ia.delib/</property>
+     <property name="link_target">_blank</property>
+     <property name="available_expr"></property>
+     <property name="permissions">
+      <element value="List portal members"/>
+     </property>
+     <property name="visible">True</property>
    </object>
   </object>
 

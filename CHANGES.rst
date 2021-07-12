@@ -321,6 +321,8 @@ Changelog
   [gbastien]
 - Added utils.escape utility function # PM-3462 .
   [odelaere]
+- Hide Contact action and add action "Documentation iA.Delib" in user action.
+  [anuyens]
 
 4.2b11 (2021-01-19)
 -------------------
