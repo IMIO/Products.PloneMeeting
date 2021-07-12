@@ -3587,6 +3587,37 @@ class testAdvices(PloneMeetingTestCase):
         self.assertFalse(item._advice_is_given(self.vendors_uid))
         self.assertIsNone(item.adviceIndex[self.vendors_uid]['delay_started_on'])
 
+    def test_pm_AutoAdviceAfterClone(self):
+        '''Test that when an item is cloned and new item does not
+           get the automatic advice, it does not break.'''
+        cfg = self.meetingConfig
+        proposed_state_id = self._stateMappingFor('proposed')
+        cfg.setCustomAdvisers(
+            [{'row_id': 'unique_id_123',
+              'org': self.vendors_uid,
+              'gives_auto_advice_on': 'python: item.query_state() == "{0}"'.format(
+                proposed_state_id),
+              'for_item_created_from': '2021/07/12',
+              'delay': '',
+              'delay_label': ''},
+             {'row_id': 'unique_id_456',
+              'org': self.developers_uid,
+              'gives_auto_advice_on': 'python: True',
+              'for_item_created_from': '2016/07/12',
+              'delay': '',
+              'delay_label': ''}, ])
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        # developers advice was asked
+        self.assertEqual(item.adviceIndex.keys(), [self.developers_uid])
+        self.proposeItem(item)
+        # vendors advice was asked
+        self.assertEqual(sorted(item.adviceIndex.keys()),
+                         sorted([self.developers_uid, self.vendors_uid]))
+        new_item = item.clone()
+        # clone does not break and developers advice was asked
+        self.assertEqual(new_item.adviceIndex.keys(), [self.developers_uid])
+
 
 def test_suite():
     from unittest import makeSuite

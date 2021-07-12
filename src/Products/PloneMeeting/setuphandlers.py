@@ -342,6 +342,9 @@ def postInstall(context):
         own_org_criterion.position = 'center'
         own_org_criterion.hidden = False
         own_org_criterion.default = u'collective.contact.plonegroup.interfaces.IPloneGroupContact'
+        # hide active state criterion
+        active_org_criterion = orgs_searches_folder_criteria.get('c6')
+        active_org_criterion.hidden = True
         # redefine position, need to specify every criteria
         positions = {'top': ['c0', 'c1', 'c4', 'c6', 'c13', 'c14'], 'center': ['c2', 'c3', 'c5']}
         orgs_searches_folder_criteria.position(**positions)

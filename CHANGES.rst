@@ -321,6 +321,8 @@ Changelog
   [gbastien]
 - Added utils.escape utility function # PM-3462 .
   [odelaere]
+- Disabled review_sate filter on orgs-searches # PM-3228.
+  [odelaere]
 - Hide "Contact" action and add action "Documentation iA.Délib" in user action.
   [anuyens]
 
