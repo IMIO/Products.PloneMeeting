@@ -134,7 +134,8 @@
   </object>
 
   <!-- Manage the user preferences action, change the link to point to @@personal-information instead
-      of @@personal-preferences as we hide this tab to avoid user doing nasty things... -->
+      of @@personal-preferences as we hide this tab to avoid user doing nasty things...
+      And add link to documentation -->
   <object name="user" meta_type="CMF Action Category">
    <object name="preferences" meta_type="CMF Action">
     <property name="url_expr">string:${globals_view/navigationRootUrl}/@@personal-information</property>
