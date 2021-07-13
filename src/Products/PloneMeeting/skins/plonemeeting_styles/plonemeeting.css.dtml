@@ -1965,6 +1965,11 @@ span.signatory-replacer {
     color: red;
     font-size: 120%;
 }
+/* make the dotted bottom border displayed in red */
+#content span.people-remove-element.link-action {
+    color: red;
+}
+
 
 /* hide downloard vcard link on contacts */
 p#download_vcard {
@@ -2066,10 +2071,10 @@ h2.pm-inserting-methods-helper-msg {
 
 /* avoid select input to take to much place when editing certified signatures datagridfield */
 div#formfield-form-widgets-certified_signatures th {
-    width: 17%;   
+    width: 17%;
 }
 div#formfield-form-widgets-certified_signatures td select.select-widget {
-    width: 100%;   
+    width: 100%;
 }
 
 a.portlet_pm_dashboard_link:first-of-type {
