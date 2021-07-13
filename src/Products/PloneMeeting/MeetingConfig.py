@@ -415,6 +415,23 @@ schema = Schema((
         write_permission="PloneMeeting: Write harmless config",
     ),
     LinesField(
+        name='selectableRedefinedPositionTypes',
+        widget=MultiSelectionWidget(
+            description="SelectableRedefinedPositionTypes",
+            description_msgid="selectable_redefined_position_types_descr",
+            label='Selectableredefinedpositiontypes',
+            label_msgid='PloneMeeting_label_selectableRedefinedPositionTypes',
+            i18n_domain='PloneMeeting',
+            size=10,
+        ),
+        schemata="assembly_and_signatures",
+        multiValued=1,
+        vocabulary_factory='PMPositionTypes',
+        default=defValues.selectableRedefinedPositionTypes,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write harmless config",
+    ),
+    LinesField(
         name='usedItemAttributes',
         widget=MultiSelectionWidget(
             description="UsedItemAttributes",

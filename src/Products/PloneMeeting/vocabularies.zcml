@@ -103,6 +103,9 @@
            name="Products.PloneMeeting.Users" />
   <utility name="PMPositionTypes"
            component=".vocabularies.PMPositionTypesVocabularyFactory" />
+  <utility name="PMAttendeeRedefinePositionTypes"
+           component=".vocabularies.PMAttendeeRedefinePositionTypesVocabularyFactory" />
+
 
   <!-- PMHeldPosition vocabularies -->
   <utility component=".vocabularies.HeldPositionUsagesVocabularyFactory"

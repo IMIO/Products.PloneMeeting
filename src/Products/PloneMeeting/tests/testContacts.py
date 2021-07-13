@@ -2099,9 +2099,9 @@ class testContacts(PloneMeetingTestCase):
 
         hp = self.portal.contacts.person1.held_pos1
         hp.position_type = 'default2'
-        invariant = IPMDirectory.getTaggedValue('invariants')[0]
 
         # can not remove used position_type
+        invariant = IPMDirectory.getTaggedValue('invariants')[0]
         data = DummyData(self.portal.contacts, position_types=original_position_types)
         with self.assertRaises(Invalid) as cm:
             invariant(data)
@@ -2109,6 +2109,35 @@ class testContacts(PloneMeetingTestCase):
             msgid="removed_position_type_in_use_error",
             mapping={'removed_position_type': hp.position_type,
                      'hp_url': hp.absolute_url()},
+            domain='PloneMeeting',
+            context=self.request)
+        self.assertEqual(cm.exception.message, error_msg)
+        # set back a value present in original_position_types
+        hp.position_type = original_position_types[0]['token']
+
+        # can not remove a position_type used to redefine a position
+        # for an attendee on an item (using the @@item_redefine_attendee_position_form
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting')
+        meeting_attendees = meeting.get_attendees()
+        hp_uid = meeting_attendees[0]
+        item = self.create('MeetingItem')
+        item_uid = item.UID()
+        self.presentItem(item)
+        form = item.restrictedTraverse('@@item_redefine_attendee_position_form')
+        form.person_uid = hp_uid
+        form.position_type = u"default3"
+        form.apply_until_item_number = 100
+        form.meeting = meeting
+        form._doApply()
+        self.assertEqual(meeting.get_attendee_position_for(item_uid, hp_uid),
+                         u"default3")
+        with self.assertRaises(Invalid) as cm:
+            invariant(data)
+        error_msg = translate(
+            msgid="removed_redefined_position_type_in_use_error",
+            mapping={'removed_position_type': form.position_type,
+                     'item_url': item.absolute_url()},
             domain='PloneMeeting',
             context=self.request)
         self.assertEqual(cm.exception.message, error_msg)

@@ -1267,13 +1267,13 @@ class Meeting(Container):
 
         return signatories
 
-    def get_item_redefined_positions(self):
+    def _get_item_redefined_positions(self):
         """ """
         return deepcopy(self.item_attendees_positions)
 
     def is_attendee_position_redefined(self, hp_uid, item_uid=None):
         """ """
-        redefined_positions = self.get_item_redefined_positions()
+        redefined_positions = self._get_item_redefined_positions()
         found = False
         if item_uid:
             found = item_uid in redefined_positions and \
@@ -1327,7 +1327,7 @@ class Meeting(Container):
            for given p_item_uid and p_signatory_uid."""
         # check if hp_uid is redefined on the item
         data = {}
-        redefined_positions = self.get_item_redefined_positions()
+        redefined_positions = self._get_item_redefined_positions()
         if item_uid in redefined_positions and \
            hp_uid in redefined_positions[item_uid]:
             data = redefined_positions[item_uid][hp_uid]

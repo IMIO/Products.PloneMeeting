@@ -2413,18 +2413,14 @@ class PMPositionTypesVocabulary(PositionTypesVocabulary):
         # editing a held_position
         elif context.portal_type == 'held_position':
             person = context.get_person()
-        else:
-            # used in the RedefinedSignatoryForm
-            person_uid = context.REQUEST.get('person_uid', None)
-            if person_uid is not None:
-                catalog = api.portal.get_tool('portal_catalog')
-                hp = catalog(UID=person_uid)[0].getObject()
-                person = hp.get_person()
         return person
 
+    def _get_base_terms(self, context):
+        """ """
+        return super(PMPositionTypesVocabulary, self).__call__(context)
+
     def __call__(self, context):
-        res = super(PMPositionTypesVocabulary, self).__call__(context)
-        # patch term title if context is a held_position and so we know what to display
+        res = self._get_base_terms(context)
         person = self._get_person(context)
         if person is not None:
             gender = person.gender or 'M'
@@ -2438,3 +2434,32 @@ class PMPositionTypesVocabulary(PositionTypesVocabulary):
 
 
 PMPositionTypesVocabularyFactory = PMPositionTypesVocabulary()
+
+
+class PMAttendeeRedefinePositionTypesVocabulary(PMPositionTypesVocabulary):
+
+    def _get_person(self, context):
+        """ """
+        person_uid = context.REQUEST.get('person_uid', None)
+        if person_uid:
+            catalog = api.portal.get_tool('portal_catalog')
+            hp = catalog(UID=person_uid)[0].getObject()
+            person = hp.get_person()
+        else:
+            person = super(PMAttendeeRedefinePositionTypesVocabulary, self). \
+                _get_person(context)
+        return person
+
+    def _get_base_terms(self, context):
+        res = super(PMAttendeeRedefinePositionTypesVocabulary, self). \
+            _get_base_terms(context)
+        tool = api.portal.get_tool("portal_plonemeeting")
+        cfg = tool.getMeetingConfig(context)
+        selectableRedefinedPositionTypes = cfg.getSelectableRedefinedPositionTypes()
+        res._terms = [term for term in res._terms
+                      if not selectableRedefinedPositionTypes or
+                      term.token in selectableRedefinedPositionTypes]
+        return res
+
+
+PMAttendeeRedefinePositionTypesVocabularyFactory = PMAttendeeRedefinePositionTypesVocabulary()
