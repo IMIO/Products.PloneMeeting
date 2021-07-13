@@ -187,6 +187,9 @@ Changelog
 
   [gbastien]
 - Added possibility to redefine an attendee position on an item.
+  Added parameter `MeetingConfig.selectableRedefinedPositionTypes` to be able to
+  restrict selectable position_types, if nothing selected, every `position_types`
+  defined on the `Contacts` directory are selectable.
   [gbastien]
 - On advice popup, when hovering the `user icon`, display every group suffixes
   related to the advice workflow, indeed there may be more than just the

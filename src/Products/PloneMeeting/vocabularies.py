@@ -388,6 +388,7 @@ class PMEveryOrganizationsVocabulary(EveryOrganizationsVocabulary):
         # ignore parent_label
         return orga.title
 
+
 PMEveryOrganizationsVocabularyFactory = PMEveryOrganizationsVocabulary()
 
 
@@ -424,6 +425,7 @@ class PMSortedSelectedOrganizationsElephantVocabulary(SortedSelectedOrganization
         wrapped_vocab = super(PMSortedSelectedOrganizationsElephantVocabulary, self).__call__(
             context)
         return wrapped_vocab.vocab
+
 
 PMSortedSelectedOrganizationsElephantVocabularyFactory = PMSortedSelectedOrganizationsElephantVocabulary()
 
@@ -683,7 +685,7 @@ class AskedAdvicesVocabulary(object):
         try:
             # in some case, like Plone Site creation, context is the Zope app...
             self.cfg = self.tool.getMeetingConfig(context)
-        except:
+        except Exception:
             return SimpleVocabulary(res)
         if self.cfg is None:
             return SimpleVocabulary(res)
@@ -1548,6 +1550,7 @@ class NumbersFromZeroVocabulary(NumbersVocabulary):
         return super(NumbersFromZeroVocabulary, self).__call__(
             start, end)
 
+
 NumbersFromZeroVocabularyFactory = NumbersFromZeroVocabulary()
 
 
@@ -2230,6 +2233,7 @@ class SelectableCommitteesVocabulary(object):
                         terms += _add_suppl(committee, enabled=False)
         return SimpleVocabulary(terms)
 
+
 SelectableCommitteesVocabularyFactory = SelectableCommitteesVocabulary()
 
 
@@ -2240,6 +2244,7 @@ class SelectableCommitteesAcronymsVocabulary(SelectableCommitteesVocabulary):
         """ """
         return super(SelectableCommitteesAcronymsVocabulary, self).__call__(
             context, term_title_attr)
+
 
 SelectableCommitteesAcronymsVocabularyFactory = SelectableCommitteesAcronymsVocabulary()
 
@@ -2265,6 +2270,7 @@ class ItemSelectableCommitteesVocabulary(SelectableCommitteesVocabulary):
             term.title = term.title.replace('&nbsp;', ' ')
         return res
 
+
 ItemSelectableCommitteesVocabularyFactory = ItemSelectableCommitteesVocabulary()
 
 
@@ -2286,6 +2292,7 @@ class MeetingSelectableCommitteesVocabulary(SelectableCommitteesVocabulary):
             include_all_disabled=False,
             add_no_committee_value=False,
             include_empty_string=False)
+
 
 MeetingSelectableCommitteesVocabularyFactory = MeetingSelectableCommitteesVocabulary()
 
@@ -2337,6 +2344,7 @@ class ContainedAnnexesVocabulary(object):
                 terms.append(term)
         return SimpleVocabulary(terms)
 
+
 ContainedAnnexesVocabularyFactory = ContainedAnnexesVocabulary()
 
 
@@ -2351,6 +2359,7 @@ class ContainedDecisionAnnexesVocabulary(ContainedAnnexesVocabulary):
         terms = super(ContainedDecisionAnnexesVocabulary, self).__call__(context, portal_type=portal_type)
         context.REQUEST['force_use_item_decision_annexes_group'] = False
         return terms
+
 
 ContainedDecisionAnnexesVocabularyFactory = ContainedDecisionAnnexesVocabulary()
 
@@ -2389,6 +2398,7 @@ class PMUsers(UsersFactory):
         terms = humansorted(terms, key=attrgetter('title'))
         return SimpleVocabulary(terms)
 
+
 PMUsersFactory = PMUsers()
 
 
@@ -2403,18 +2413,14 @@ class PMPositionTypesVocabulary(PositionTypesVocabulary):
         # editing a held_position
         elif context.portal_type == 'held_position':
             person = context.get_person()
-        else:
-            # used in the RedefinedSignatoryForm
-            person_uid = context.REQUEST.get('person_uid', None)
-            if person_uid is not None:
-                catalog = api.portal.get_tool('portal_catalog')
-                hp = catalog(UID=person_uid)[0].getObject()
-                person = hp.get_person()
         return person
 
+    def _get_base_terms(self, context):
+        """ """
+        return super(PMPositionTypesVocabulary, self).__call__(context)
+
     def __call__(self, context):
-        res = super(PMPositionTypesVocabulary, self).__call__(context)
-        # patch term title if context is a held_position and so we know what to display
+        res = self._get_base_terms(context)
         person = self._get_person(context)
         if person is not None:
             gender = person.gender or 'M'
@@ -2425,4 +2431,35 @@ class PMPositionTypesVocabulary(PositionTypesVocabulary):
                 gender_and_numbers = split_gender_and_number(term.title)
                 term.title = gender_and_numbers['{0}S'.format(gender)]
         return res
+
+
 PMPositionTypesVocabularyFactory = PMPositionTypesVocabulary()
+
+
+class PMAttendeeRedefinePositionTypesVocabulary(PMPositionTypesVocabulary):
+
+    def _get_person(self, context):
+        """ """
+        person_uid = context.REQUEST.get('person_uid', None)
+        if person_uid:
+            catalog = api.portal.get_tool('portal_catalog')
+            hp = catalog(UID=person_uid)[0].getObject()
+            person = hp.get_person()
+        else:
+            person = super(PMAttendeeRedefinePositionTypesVocabulary, self). \
+                _get_person(context)
+        return person
+
+    def _get_base_terms(self, context):
+        res = super(PMAttendeeRedefinePositionTypesVocabulary, self). \
+            _get_base_terms(context)
+        tool = api.portal.get_tool("portal_plonemeeting")
+        cfg = tool.getMeetingConfig(context)
+        selectableRedefinedPositionTypes = cfg.getSelectableRedefinedPositionTypes()
+        res._terms = [term for term in res._terms
+                      if not selectableRedefinedPositionTypes or
+                      term.token in selectableRedefinedPositionTypes]
+        return res
+
+
+PMAttendeeRedefinePositionTypesVocabularyFactory = PMAttendeeRedefinePositionTypesVocabulary()
