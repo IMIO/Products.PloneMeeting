@@ -1878,9 +1878,10 @@ table tbody tr td.td_cell_category-column {
 .item-signatory-replacer-signature-number {
     font-family: &dtml-fontFamily;;
     font-weight: normal;
+    /* avoid extra padding bottom */
+    line-height: 0;
 }
 .tooltipster-meeting-item-signatories {
-   cursor: help;
    color: green;
 }
 
