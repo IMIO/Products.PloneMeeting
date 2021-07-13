@@ -304,6 +304,12 @@
           template="templates/display_group_users.pt"
           class="Products.PloneMeeting.browser.views.PMDisplayGroupUsersView"
           permission="zope2.View" />
+        <browser:page
+          for="OFS.interfaces.IItem"
+          name="manage-own-groups-users"
+          class="Products.PloneMeeting.browser.overrides.PMManageOwnGroupUsers"
+          permission="zope2.View"
+          attribute="available" />
     </configure>
 
     <browser:page
@@ -1154,4 +1160,3 @@
     </configure>
 
 </configure>
-

@@ -8,6 +8,8 @@ from collective.ckeditor.browser.ckeditorfinder import CKFinder
 from collective.ckeditor.browser.ckeditorview import AjaxSave
 from collective.contact.core import utils as contact_core_utils
 from collective.contact.plonegroup import utils as contact_plonegroup_utils
+from collective.contact.plonegroup.browser.views import ManageOwnGroupUsers
+from collective.contact.plonegroup.config import get_registry_groups_mgt
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_plone_group_id
@@ -648,17 +650,17 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
                 (isMeetingManager and 'meetingmanager_duplicate' in itemActionsColumnConfig) or
                 (isManager and 'manager_duplicate' in itemActionsColumnConfig) or
                     ('duplicate' in itemActionsColumnConfig)):
-                        self.IGNORABLE_ACTIONS += ('duplicate', )
+                self.IGNORABLE_ACTIONS += ('duplicate', )
             if not (
                 (isMeetingManager and 'meetingmanager_delete' in itemActionsColumnConfig) or
                 (isManager and 'manager_delete' in itemActionsColumnConfig) or
                     ('delete' in itemActionsColumnConfig)):
-                        self.SECTIONS_TO_RENDER.remove('renderOwnDelete')
+                self.SECTIONS_TO_RENDER.remove('renderOwnDelete')
             if not (
                 (isMeetingManager and 'meetingmanager_history' in itemActionsColumnConfig) or
                 (isManager and 'manager_history' in itemActionsColumnConfig) or
                     ('history' in itemActionsColumnConfig)):
-                        self.SECTIONS_TO_RENDER.remove('renderHistory')
+                self.SECTIONS_TO_RENDER.remove('renderHistory')
             self.SECTIONS_TO_RENDER = tuple(self.SECTIONS_TO_RENDER)
 
         return super(MeetingItemActionsPanelView, self).\
@@ -1672,3 +1674,22 @@ class PMAjaxSave(AjaxSave):
             tranform=True,
             reindex=True,
             unlock=False)
+
+
+class PMManageOwnGroupUsers(ManageOwnGroupUsers):
+    """ """
+
+    def _available_additional_condition(self):
+        """Display action if current user may manage his own groups."""
+        condition = False
+        tool = api.portal.get_tool('portal_plonemeeting')
+        # check if user among suffixes
+        for suffix in self.get_manageable_functions():
+            if tool.userIsAmong([suffix]):
+                condition = True
+                break
+        if not condition:
+            # check if user member of some global groups
+            if set(get_registry_groups_mgt()).intersection(tool.get_plone_groups_for_user()):
+                condition = True
+        return condition
