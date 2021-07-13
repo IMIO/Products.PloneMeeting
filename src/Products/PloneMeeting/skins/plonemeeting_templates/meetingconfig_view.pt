@@ -286,6 +286,12 @@
               <span metal:use-macro="here/widgets/field/macros/view" />
             </td>
           </tr>
+          <tr valign="top">
+            <td tal:define="field python:here.getField('selectableRedefinedPositionTypes')">
+              <span metal:use-macro="here/widgets/field/macros/view" />
+            </td>
+            <td></td>
+          </tr>
         </table>
       </fieldset>
     </tal:assembly_and_signatures>
@@ -480,7 +486,6 @@
                     <metal:addtionalInformations use-macro="here/@@pm-macros/additionalInformations" />
                   </tal:additionalInformations>
 
-                    
                 </th>
                 <th class="nosort" width="50px" i18n:translate="heading_is_active">Active?</th>
                 <th class="nosort" width="130px" i18n:translate="heading_actions">Actions</th>
@@ -694,7 +699,7 @@
       <p i18n:translate="warning_meetingconfig_edit_section_descr" style="color: red;">
         DO NOT CHANGE PARAMETERS DEFINED IN THIS SECTION UNLESS YOU ARE REALLY SURE WHAT YOU ARE DOING!
       </p><br />
-      
+
       <table width="100%" class="discreet" tal:define="wfTool python: context.portal_workflow">
         <tr valign="top">
           <td width="33%" tal:define="field python:here.getField('itemWorkflow')">

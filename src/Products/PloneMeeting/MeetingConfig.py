@@ -415,6 +415,24 @@ schema = Schema((
         write_permission="PloneMeeting: Write harmless config",
     ),
     LinesField(
+        name='selectableRedefinedPositionTypes',
+        widget=MultiSelectionWidget(
+            description="SelectableRedefinedPositionTypes",
+            description_msgid="selectable_redefined_position_types_descr",
+            size=10,
+            format="checkbox",
+            label='Selectableredefinedpositiontypes',
+            label_msgid='PloneMeeting_label_selectableRedefinedPositionTypes',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="assembly_and_signatures",
+        multiValued=1,
+        vocabulary_factory='PMPositionTypes',
+        default=defValues.selectableRedefinedPositionTypes,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write harmless config",
+    ),
+    LinesField(
         name='usedItemAttributes',
         widget=MultiSelectionWidget(
             description="UsedItemAttributes",
@@ -4033,7 +4051,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     if date_until.isPast() and (not storedData or
                                                 not storedData['for_item_created_until'] == created_until):
                         raise Exception
-            except:
+            except Exception:
                 return translate('custom_adviser_wrong_date_format',
                                  domain='PloneMeeting',
                                  mapping={'groupName': org.get_full_title(), },
@@ -7206,5 +7224,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             used_attrs = self.getUsedItemAttributes()
         res = tool.isManager(self) and name in used_attrs
         return res
+
 
 registerType(MeetingConfig, PROJECTNAME)

@@ -540,7 +540,7 @@ class IRedefineAttendeePosition(IBaseAttendee):
         description=_(u"Position type to use for the attendee on this item."),
         defaultFactory=position_type_default,
         required=True,
-        vocabulary="PMPositionTypes")
+        vocabulary="PMAttendeeRedefinePositionTypes")
 
 
 def set_meeting_item_attendee_position(meeting, item_uid, hp_uid, position_type):

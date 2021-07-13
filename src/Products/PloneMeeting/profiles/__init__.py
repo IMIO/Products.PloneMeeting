@@ -436,7 +436,7 @@ class MeetingConfigDescriptor(Descriptor):
                          'enableAdviceConfidentiality', 'adviceConfidentialityDefault', 'adviceConfidentialFor',
                          'hideNotViewableLinkedItemsTo', 'inheritedAdviceRemoveableByAdviser', 'usingGroups',
                          'hideHistoryTo', 'orderedAssociatedOrganizations',
-                         'orderedGroupsInCharge', 'orderedItemInitiators',
+                         'orderedGroupsInCharge', 'orderedItemInitiators', 'selectableRedefinedPositionTypes',
                          'orderedCommitteeContacts', 'committees')
 
     excludedFields = ['addContactsCSV',
@@ -827,6 +827,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.addContactsCSV = False
         self.orderedContacts = []
         self.orderedItemInitiators = []
+        self.selectableRedefinedPositionTypes = []
 
         # Doc parameters -------------------------------------------------------
         self.meetingItemTemplatesToStoreAsAnnex = []

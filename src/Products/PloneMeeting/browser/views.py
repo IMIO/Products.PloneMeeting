@@ -2196,7 +2196,7 @@ class DisplayMeetingItemRedefinedPosition(BrowserView):
     def get_items_for_redefined_position(self):
         """Returns the list of items the attendee_uid position was redefined for."""
         item_uids = []
-        redefined_positions = self.meeting.get_item_redefined_positions()
+        redefined_positions = self.meeting._get_item_redefined_positions()
         for item_uid, infos in redefined_positions.items():
             if self.attendee_uid in infos:
                 item_uids.append(item_uid)
