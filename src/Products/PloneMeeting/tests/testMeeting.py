@@ -3833,12 +3833,18 @@ class testMeetingType(PloneMeetingTestCase):
 
         # assembly/signatures
         # fill assembly and signatures
+        cfg = self.meetingConfig
+        four_lines_signatures = "Person 1,\nFunction 1\nPerson 1,\nFunction 1"
+        cfg.setSignatures(four_lines_signatures)
         meeting.assembly = RichTextValue("Person 1, Person 2")
-        meeting.signatures = RichTextValue("Person 1,\nFunction 1\nPerson 1,\nFunction 1")
+        meeting.signatures = RichTextValue(four_lines_signatures)
         self.assertFalse(view.warn_assembly(using_attendees=False))
         # remove one line of signature
-        meeting.signatures = RichTextValue("Person 1,\nFunction 1\nPerson 1")
+        three_lines_signatures = "Person 1,\nFunction 1\nPerson 1"
+        meeting.signatures = RichTextValue(three_lines_signatures)
         self.assertTrue(view.warn_assembly(using_attendees=False))
+        cfg.setSignatures(three_lines_signatures)
+        self.assertFalse(view.warn_assembly(using_attendees=False))
 
 
 def test_suite():

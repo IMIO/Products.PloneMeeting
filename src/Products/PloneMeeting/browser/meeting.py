@@ -17,7 +17,6 @@ from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFPlone.utils import safe_unicode
 from Products.Five import BrowserView
 from Products.PloneMeeting.config import ITEM_INSERT_METHODS
-from Products.PloneMeeting.config import MEETING_ASSEMBLY_NUMBER_OF_LINES
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.content.meeting import get_all_used_held_positions
 from Products.PloneMeeting.content.meeting import Meeting
@@ -482,18 +481,23 @@ class MeetingView(FacetedContainerView):
     def warn_assembly(self, using_attendees=False):
         """Check if need to draw attention to the assembly fields to MeetingManagers.
            Warn if :
-           - when using signatories, 2 first signatories must be defined;
+           - when using signatories, sufficient number of signatories must be defined;
            - when using assembly/signatures, assembly must be encoded and
-             signatures must contain at least 4 lines of data."""
+             signatures must contain at least relevant lines of data."""
         warn = False
         if self.is_manager:
             if using_attendees:
                 signature_numbers = self.context.get_signatories().values()
+                # if we do not have signatures '1' and '2' we go further
                 if u'1' not in signature_numbers or u'2' not in signature_numbers:
-                    warn = True
+                    # double check, maybe we are in a case
+                    # where we only have one signatory
+                    default_signatories = _get_default_signatories(self.cfg)
+                    if sorted(default_signatories.values()) != sorted(signature_numbers):
+                        warn = True
             else:
                 if (len(self.context.get_signatures().split('\n')) <
-                    MEETING_ASSEMBLY_NUMBER_OF_LINES) or \
+                    len(self.cfg.getSignatures().split('\n'))) or \
                    not self.context.get_assembly(for_display=False, striked=False):
                     warn = True
         return warn

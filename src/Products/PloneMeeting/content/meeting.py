@@ -14,6 +14,7 @@ from datetime import timedelta
 from imio.helpers.cache import cleanRamCacheFor
 from imio.helpers.content import richtextval
 from imio.helpers.content import uuidToObject
+from imio.helpers.content import uuidsToObjects
 from imio.prettylink.interfaces import IPrettyLink
 from persistent.list import PersistentList
 from persistent.mapping import PersistentMapping
@@ -711,16 +712,8 @@ def get_all_used_held_positions(obj, include_new=False, the_objects=True):
         contacts = contacts + new_selectable_contacts
 
     if the_objects:
-        # query held_positions
-        catalog = api.portal.get_tool('portal_catalog')
-        brains = catalog(UID=contacts)
+        contacts = uuidsToObjects(uuids=contacts, ordered=True)
 
-        # make sure we have correct order because query was not sorted
-        # we need to sort found brains according to uids
-        def get_key(item):
-            return contacts.index(item.UID)
-        brains = sorted(brains, key=get_key)
-        contacts = [brain.getObject() for brain in brains]
     return tuple(contacts)
 
 
