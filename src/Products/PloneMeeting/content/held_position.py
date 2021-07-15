@@ -178,7 +178,8 @@ class PMHeldPosition(HeldPosition):
         if sub_organizations:
             sub_organizations_label = u"{0}".format(u"🡒".join(
                 [sub_organization.title for sub_organization in sub_organizations]))
-            res = u"{0}, {1} ({2})".format(person_label, held_position_label, sub_organizations_label)
+            res = u"{0}, {1} ({2})".format(
+                person_label, held_position_label, sub_organizations_label)
         else:
             res = u"{0}, {1}".format(person_label, held_position_label)
         if include_usages:
@@ -189,10 +190,14 @@ class PMHeldPosition(HeldPosition):
             res = res + u" ({0}: {1})".format(
                 translate("Defaults", domain="PloneMeeting", context=self.REQUEST),
                 plain_render(self, 'defaults') or '-')
-        if include_defaults:
-            res = res + u" ({0}: {1})".format(
+        if include_signature_number:
+            pattern = u" ({0}: {1})"
+            signature_number = plain_render(self, 'signature_number')
+            if highlight and signature_number:
+                pattern = u" (<span class='highlightValue'>{0}: {1}</span>)"
+            res = res + pattern.format(
                 translate("Signature number", domain="PloneMeeting", context=self.REQUEST),
-                plain_render(self, 'signature_number') or '-')
+                signature_number or '-')
         return res
 
     def get_person_short_title(self,

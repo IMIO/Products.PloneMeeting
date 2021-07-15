@@ -377,9 +377,6 @@ NO_COMMITTEE = u"no_committee"
 # for performance reason we do not dynamically get the annexes criterion id
 FACETED_ANNEXES_CRITERION_ID = 'c20'
 
-# number of lines used in Meeting.signatures field
-MEETING_ASSEMBLY_NUMBER_OF_LINES = 4
-
 
 def registerClasses():
     '''ArchGenXML generated code does not register Archetype classes at the

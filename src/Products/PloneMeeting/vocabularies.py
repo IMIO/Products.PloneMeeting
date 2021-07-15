@@ -1652,6 +1652,12 @@ class BaseHeldPositionsVocabulary(object):
     """ """
     implements(IVocabularyFactory)
 
+    def _is_editing_config(self, context):
+        """Force highlight=True person_label in title
+           when displayed in the MeetingConfig view."""
+        return IMeetingConfig.providedBy(context) and \
+            'base_edit' not in context.REQUEST.getURL()
+
     def __call__(self,
                  context,
                  usage=None,
@@ -1675,8 +1681,7 @@ class BaseHeldPositionsVocabulary(object):
         is_item = False
         context_uid = None
         meeting = None
-        # highlight person_label in title when displayed in the MeetingConfig view
-        if IMeetingConfig.providedBy(context) and 'base_edit' not in context.REQUEST.getURL():
+        if self._is_editing_config(context):
             highlight = True
             if highlight_missing:
                 pattern = u"<span class='highlight-red'>{0}</span>".format(pattern)
@@ -1711,8 +1716,9 @@ class SelectableHeldPositionsVocabulary(BaseHeldPositionsVocabulary):
 
     def __call___cachekey(method, self, context, usage=None, uids=[]):
         '''cachekey method for self.__call__.'''
-        date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.selectableheldpositionsvocabulary')
-        return date, repr(context), usage, uids
+        date = get_cachekey_volatile(
+            'Products.PloneMeeting.vocabularies.selectableheldpositionsvocabulary')
+        return date, repr(context), usage, uids, self._is_editing_config(context)
 
     @ram.cache(__call___cachekey)
     def __call__(self, context, usage=None, uids=[]):
@@ -1728,8 +1734,9 @@ class SimplifiedSelectableHeldPositionsVocabulary(BaseHeldPositionsVocabulary):
 
     def __call___cachekey(method, self, context, usage=None, uids=[]):
         '''cachekey method for self.__call__.'''
-        date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.simplifiedselectableheldpositionsvocabulary')
-        return date, repr(context), usage, uids
+        date = get_cachekey_volatile(
+            'Products.PloneMeeting.vocabularies.simplifiedselectableheldpositionsvocabulary')
+        return date, repr(context), usage, uids, self._is_editing_config(context)
 
     @ram.cache(__call___cachekey)
     def __call__(self, context, usage=None, uids=[]):
@@ -1750,12 +1757,14 @@ class SelectableAssemblyMembersVocabulary(BaseHeldPositionsVocabulary):
 
     def __call___cachekey(method, self, context, usage=None, uids=[]):
         '''cachekey method for self.__call__.'''
-        date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.selectableassemblymembersvocabulary')
-        return date, repr(context), usage, uids
+        date = get_cachekey_volatile(
+            'Products.PloneMeeting.vocabularies.selectableassemblymembersvocabulary')
+        return date, repr(context), usage, uids, self._is_editing_config(context)
 
     @ram.cache(__call___cachekey)
     def __call__(self, context, usage=None, uids=[]):
-        terms = super(SelectableAssemblyMembersVocabulary, self).__call__(context, usage='assemblyMember')
+        terms = super(SelectableAssemblyMembersVocabulary, self).__call__(
+            context, usage='assemblyMember')
         stored_terms = []
         if IMeetingConfig.providedBy(context):
             stored_terms = context.getOrderedContacts()
@@ -1792,8 +1801,9 @@ class SelectableItemInitiatorsVocabulary(BaseHeldPositionsVocabulary):
 
     def __call___cachekey(method, self, context, usage=None, uids=[]):
         '''cachekey method for self.__call__.'''
-        date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.selectableiteminitiatorsvocabulary')
-        return date, repr(context), usage, uids
+        date = get_cachekey_volatile(
+            'Products.PloneMeeting.vocabularies.selectableiteminitiatorsvocabulary')
+        return date, repr(context), usage, uids, self._is_editing_config(context)
 
     @ram.cache(__call___cachekey)
     def __call__(self, context):
@@ -1834,7 +1844,7 @@ class ItemVotersVocabulary(BaseHeldPositionsVocabulary):
         date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.itemvotersvocabulary')
         # as used in a datagridfield, context may vary...
         context = get_context_with_request(context)
-        return date, repr(context)
+        return date, repr(context), self._is_editing_config(context)
 
     @ram.cache(__call___cachekey)
     def __call__(self, context):
