@@ -2084,6 +2084,9 @@ class testContacts(PloneMeetingTestCase):
         self.assertEqual(len(meeting_attendees), 4)
 
     def test_pm_Directory_position_types_invariant(self):
+        # remove recurring items
+        self._removeConfigObjectsFor(self.meetingConfig)
+
         class DummyData(object):
             def __init__(self, context, position_types):
                 self.__context__ = context
