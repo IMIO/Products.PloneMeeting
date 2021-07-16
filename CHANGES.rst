@@ -5,8 +5,14 @@ Changelog
 4.2b13 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- Fixed `PMDeleteBatchActionForm._get_deletable_elements`, that was not working
+  because `PMDeleteBatchActionForm.get_deletable_elements`
+  (with a missing leading `_`) was actually overrided...
+  [gbastien]
+- Fixed `DisplayAssemblyFromMeetingProvider` used in `ManageItemAssemblyForm`
+  to only display default `itemAssembly` if actually used.
+  Indeed the form may also be used when using attendees to manage item guests.
+  [gbastien]
 
 4.2b12 (2021-07-16)
 -------------------

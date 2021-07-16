@@ -192,7 +192,11 @@ class DisplayAssemblyFromMeetingProvider(ContentProviderBase):
             return 'display_meeting_assembly_legend'
 
     def render(self):
-        return self.template()
+        # field may not be used and form is used to manage guests
+        if self.context.is_assembly_field_used('itemAssembly'):
+            return self.template()
+        else:
+            return ''
 
 
 class DisplayExcusedFromMeetingProvider(ContentProviderBase):
