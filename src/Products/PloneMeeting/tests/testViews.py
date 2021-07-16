@@ -1756,6 +1756,21 @@ class testViews(PloneMeetingTestCase):
         form.handleApply(form, None)
         self.assertEqual(get_annexes(item), [])
 
+        # pmManager trying to delete an annex on a presented item
+        self.changeUser('pmCreator2')
+        item = self.create('MeetingItem')
+        annex = self.addAnnex(item)
+        self.validateItem(item)
+        self.changeUser('pmManager')
+        self.create('Meeting')
+        form = item.restrictedTraverse('@@delete-batch-action')
+        self.request['form.widgets.uids'] = u'{0}'.format(annex.UID())
+        self.request.form['form.widgets.uids'] = self.request['form.widgets.uids']
+        form.update()
+        self.assertEqual(get_annexes(item), [annex])
+        form.handleApply(form, None)
+        self.assertEqual(get_annexes(item), [])
+
     def test_pm_ftw_labels_viewlet_available(self):
         """Only available on items if enabled in MeetingConfig."""
         cfg = self.meetingConfig

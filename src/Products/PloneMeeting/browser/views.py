@@ -2120,10 +2120,10 @@ class PMDeleteBatchActionForm(DeleteBatchActionForm):
         return "delete" in self.cfg.getEnabledAnnexesBatchActions() and \
                _checkPermission(ModifyPortalContent, self.context)
 
-    def get_deletable_elements(self):
-        """ """
-        deletables = [brain for brain in self.brains
-                      if IContentDeletable(brain.getObject()).mayDelete()]
+    def _get_deletable_elements(self):
+        """Get deeltable elements using IContentDeletable."""
+        deletables = [obj for obj in self.objs
+                      if IContentDeletable(obj).mayDelete()]
         return deletables
 
 
