@@ -27,12 +27,14 @@ recursive-include src *.gif
 recursive-include src *.jpg
 recursive-include src *.js
 recursive-include src *.metadata
+recursive-include src *.md
 recursive-include src *.odt
 recursive-include src *.pdf
 recursive-include src *.png
 recursive-include src *.pt
 recursive-include src *.py
 recursive-include src *.robot
+recursive-include src *.rst
 recursive-include src *.sh
 recursive-include src *.txt
 recursive-include src *.vpy
