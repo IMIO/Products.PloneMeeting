@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2b12 (unreleased)
+4.2b12 (2021-07-16)
 -------------------
 
 - Adapted code regarding fact that icons used in `collective.documentgenerator`
