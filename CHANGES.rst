@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2b13 (unreleased)
+4.2b13 (2021-07-16)
 -------------------
 
 - Fixed `PMDeleteBatchActionForm._get_deletable_elements`, that was not working
