@@ -665,6 +665,14 @@ class Migrate_To_4200(Migrator):
                      'linkedMeetingUID',
                      'linkedMeetingDate'])
 
+        # reinstall workflows before updating workflowAdaptations
+        self.runProfileSteps('Products.PloneMeeting', steps=['workflow'], profile='default')
+        # make sure new portal_type Meeting is installed
+        self.removeUnusedPortalTypes(portal_types=['Meeting'])
+        self.ps.runImportStepFromProfile('profile-Products.PloneMeeting:default', 'typeinfo')
+        # configure wfAdaptations before reinstall
+        self._configureItemWFValidationLevels()
+
         # need to reindex new indexes before migrating Meeting to DX
         addOrUpdateIndexes(self.portal, indexInfos)
         addOrUpdateColumns(self.portal, columnInfos)
@@ -683,13 +691,6 @@ class Migrate_To_4200(Migrator):
             to_replace={'getPreferredMeetingDate': 'preferred_meeting_date',
                         'linkedMeetingDate': 'meeting_date'})
 
-        # reinstall workflows before updating workflowAdaptations
-        self.runProfileSteps('Products.PloneMeeting', steps=['workflow'], profile='default')
-        # make sure new portal_type Meeting is installed
-        self.removeUnusedPortalTypes(portal_types=['Meeting'])
-        self.ps.runImportStepFromProfile('profile-Products.PloneMeeting:default', 'typeinfo')
-        # configure wfAdaptations before reinstall
-        self._configureItemWFValidationLevels()
         self._migrateKeepAccessToItemWhenAdviceIsGiven()
 
         # MEETING TO DX
