@@ -579,10 +579,7 @@ def sendMailIfRelevant(obj, event, permissionOrSuffixOrRoleOrGroupIds,
        A plug-in may use this method for sending custom events that are not
        defined in the MeetingConfig. In this case, you must specify
        p_customEvent = True.'''
-    debug = debug or obj.REQUEST.get('debug_sendMailIfRelevant', False)
     tool = api.portal.get_tool(TOOL_ID)
-    membershipTool = api.portal.get_tool('portal_membership')
-    currentUser = membershipTool.getAuthenticatedMember()
     cfg = tool.getMeetingConfig(obj)
     # Do not send the mail if mail mode is "deactivated".
     if cfg.getMailMode() == 'deactivated':
@@ -616,6 +613,8 @@ def sendMailIfRelevant(obj, event, permissionOrSuffixOrRoleOrGroupIds,
             userIds += plone_group.getMemberIds()
 
     # remove duplicate
+    membershipTool = api.portal.get_tool('portal_membership')
+    currentUser = membershipTool.getAuthenticatedMember()
     userIds = list(set(userIds))
     for userId in userIds:
         user = membershipTool.getMemberById(userId)
@@ -651,6 +650,7 @@ def sendMailIfRelevant(obj, event, permissionOrSuffixOrRoleOrGroupIds,
             unique_emails.append(email)
             unique_email_recipients.append(recipient)
         mail_subject, mail_body = sendMail(unique_email_recipients, obj, event, mapping=mapping)
+    debug = debug or obj.REQUEST.get('debug_sendMailIfRelevant', False)
     if debug:
         return recipients, mail_subject, mail_body
     return True
