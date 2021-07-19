@@ -6,7 +6,6 @@
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from Products.PloneMeeting.config import DEFAULT_LIST_TYPES
 from Products.PloneMeeting.config import DEFAULT_USER_PASSWORD
-from Products.PloneMeeting.config import EXTRA_GROUP_SUFFIXES
 from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
 
 import copy
@@ -389,6 +388,7 @@ class OrgDescriptor(Descriptor):
         for suffix in suffixes:
             setattr(self, suffix['fct_id'], [])
         # add extra suffixes if relevant
+        from Products.PloneMeeting.config import EXTRA_GROUP_SUFFIXES
         for extra_suffix in EXTRA_GROUP_SUFFIXES:
             if id in extra_suffix['fct_orgs'] or not extra_suffix['fct_orgs']:
                 setattr(self, extra_suffix['fct_id'], [])
@@ -396,6 +396,7 @@ class OrgDescriptor(Descriptor):
 
     def getUsers(self):
         res = []
+        from Products.PloneMeeting.config import EXTRA_GROUP_SUFFIXES
         for suffix in MEETING_GROUP_SUFFIXES + EXTRA_GROUP_SUFFIXES:
             for user in getattr(self, suffix['fct_id'], []):
                 if user not in res:
