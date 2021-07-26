@@ -1277,6 +1277,23 @@ schema = Schema((
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
+        name='meetingSelectablePreferredMeetingStates',
+        widget=MultiSelectionWidget(
+            label='meetingSelectablePreferredMeetingStates',
+            label_msgid='meetingSelectablePreferredMeetingStates_label',
+            format="checkbox",
+            description="SelectablePreferredMeetingStates",
+            description_msgid="meetingSelectablePreferredMeetingStates_descr",
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="workflow",
+        multiValued=1,
+        vocabulary='listMeetingStates',
+        default=defValues.meetingSelectablePreferredMeetingStates,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    LinesField(
         name='itemColumns',
         widget=MultiSelectionWidget(
             description="ItemColumns",
