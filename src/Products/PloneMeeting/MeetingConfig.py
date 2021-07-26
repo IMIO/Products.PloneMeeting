@@ -7067,9 +7067,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     alsoProvides(subFolderObj, IMeetingDashboardBatchActionsMarker)
                 subFolderObj.reindexObject()
 
-    def getMeetingStatesAcceptingItems(self):
+    def getMeetingStatesAcceptingItemsForMeetingManagers(self):
         '''See doc in interfaces.py.'''
-        return ('created', 'frozen', 'published', 'decided', 'decisions_published')
+        return tuple([i for i in self.context.listMeetingStates() if i != 'closed'])
 
     def getMeetingsAcceptingItems_cachekey(method, self, review_states=('created', 'frozen'), inTheFuture=False):
         '''cachekey method for self.getMeetingsAcceptingItems.'''
@@ -7082,7 +7082,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # except if we specifically restricted given p_review_states.
         tool = api.portal.get_tool('portal_plonemeeting')
         if review_states == ('created', 'frozen') and tool.isManager(self):
-            review_states += self.adapted().getMeetingStatesAcceptingItems()
+            review_states += self.adapted().getMeetingStatesAcceptingItemsForMeetingManagers()
             # remove duplicates
             review_states = tuple(set(review_states))
 

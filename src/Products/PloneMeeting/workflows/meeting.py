@@ -96,7 +96,7 @@ class MeetingWorkflowConditions(object):
     security.declarePublic('may_accept_items')
 
     def may_accept_items(self):
-        if self.context.query_state() in self.cfg.adapted().getMeetingStatesAcceptingItems():
+        if self.context.query_state() in self.cfg.adapted().getMeetingStatesAcceptingItemsForMeetingManagers():
             return True
 
     security.declarePublic('may_change_items_order')

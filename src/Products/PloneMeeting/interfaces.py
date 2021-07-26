@@ -570,7 +570,7 @@ class IMeetingConfigDocumentation:
     def extraAdviceTypes(self):
         '''Method for defining extra advice types, needs to return a list of
            ids that will be used for id and translated for title.'''
-    def getMeetingStatesAcceptingItems(self):
+    def getMeetingStatesAcceptingItemsForMeetingManagers(self):
         '''In those states, the meeting accept items, normal or late.
            Must return a tuple of meeting review_states.'''
     def _updateMeetingAdvicePortalTypes(self):
