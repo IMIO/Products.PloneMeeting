@@ -1441,6 +1441,10 @@ div.advice_popup_actions {
     max-width: 150px;
     height: 18px;
 }
+div.advice_popup_actions span.pmHelp {
+    vertical-align: middle;
+    font-size: 110%;
+}
 
 /* hide some elements on the versions_history_form */
 body.template-versions_history_form[class*="portaltype-meetingadvice"] table[summary="Content history"],
@@ -1944,31 +1948,31 @@ table tbody tr td.td_cell_category-column {
 
 /* icon colors */
 #content span.fa.leading-icon {
-   color: &dtml-discreetColor;;
-   cursor: help;
+    color: &dtml-discreetColor;;
+    cursor: help;
 }
 #content span.fa.disabled {
-   color: lightgrey;
-   cursor: help;
+    color: lightgrey;
+    cursor: help;
 }
 #content span.fa.green-colored {
-   color: green;
+    color: green;
 }
 #content span.fa.red-colored {
-   color: red;
+    color: red;
 }
 #content span.pmHelp {
-   cursor: help;
+    cursor: help;
 }
 
 span.signatory-checked,
 span.signatory-replaced,
 span.signatory-replacer {
-   cursor: help;
+    cursor: help;
 }
 span.signatory-replaced,
 span.signatory-replacer {
-   color: red;
+    color: red;
 }
 
 #content span.people-remove-element:before {

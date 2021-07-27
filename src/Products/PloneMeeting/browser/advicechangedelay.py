@@ -220,7 +220,7 @@ class AdviceChangeDelayForm(form.EditForm):
             adviceObj.advice_row_id = newAdviceData['row_id']
         # if it is an optional advice, update the MeetingItem.optionalAdvisers
         if not isAutomatic:
-            optionalAdvisers = list(self.context.getOptionalAdvisers())
+            optionalAdvisers = list(self.context.getOptionalAdvisers(computed=True))
             # remove old value
             optionalAdvisers.remove('%s__rowid__%s' % (currentAdviceData['org'],
                                                        currentAdviceData['row_id']))

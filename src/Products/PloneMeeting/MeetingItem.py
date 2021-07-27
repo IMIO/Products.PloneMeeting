@@ -4654,6 +4654,25 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                  'delay_label': predecessor.adviceIndex[adviserUid]['delay_label'], })
         return res
 
+
+    security.declarePublic('getOptionalAdvisers')
+
+    def getOptionalAdvisers(self, computed=False, **kwargs):
+        '''Override MeetingItem.optionalAdvisers accessor
+           to handle p_computed parameters that will turn a "__userid__" value
+           to it's corresponding adviser value.'''
+        optionalAdvisers = self.getField('optionalAdvisers').get(self)
+        if computed:
+            res = []
+            for adviser in optionalAdvisers:
+                if "__userid__" in adviser:
+                    value, user_id = adviser.split("__userid__")
+                    res.append(value)
+                else:
+                    res.append(adviser)
+            optionalAdvisers = res
+        return optionalAdvisers
+
     security.declarePublic('getOptionalAdvisersData')
 
     def getOptionalAdvisersData(self):
@@ -4663,7 +4682,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         res = []
-        for adviser in self.getOptionalAdvisers():
+        for adviser in self.getOptionalAdvisers(computed=True):
             # if this is a delay-aware adviser, we have the data in the adviser id
             if '__rowid__' in adviser:
                 org_uid, row_id = decodeDelayAwareId(adviser)
