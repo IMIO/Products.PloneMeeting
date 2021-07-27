@@ -762,8 +762,9 @@ class ItemOptionalAdvicesVocabulary(object):
             term = SimpleTerm(term_value, term_value, term_title)
             term.sortable_title = term_title
             res.append(term)
-            if term_value in selectableAdviserUsers:
-                advisers_group = get_plone_group(term_value, "advisers")
+            org_uid = term_value.split('__rowid__')[0]
+            if org_uid in selectableAdviserUsers:
+                advisers_group = get_plone_group(org_uid, "advisers")
                 for user in advisers_group.getGroupMembers():
                     user_term_value = "{0}__userid__{1}".format(term_value, user.getId())
                     user_title = user.getProperty('fullname') or \
