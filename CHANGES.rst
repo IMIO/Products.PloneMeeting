@@ -5,7 +5,8 @@ Changelog
 4.2b14 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Fixed an issue in `_migrateItemPredecessorReference` when migrating to 4200.
+  [aduchene]
 
 
 4.2b13 (2021-07-16)

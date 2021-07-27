@@ -509,6 +509,7 @@ class Migrate_To_4200(Migrator):
             relation = brain.getObject()
             if not relation:
                 self.warn(
+                    logger,
                     'In _migrateItemPredecessorReference, no relation found for "{0}"'.format(
                         brain.UID))
                 continue
