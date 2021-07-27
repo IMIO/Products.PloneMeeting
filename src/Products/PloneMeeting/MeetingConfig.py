@@ -1729,6 +1729,24 @@ schema = Schema((
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
+        name='selectableAdviserUsers',
+        widget=MultiSelectionWidget(
+            description="SelectableAdviserUsers",
+            description_msgid="selectable_adviser_users_descr",
+            format="checkbox",
+            size=10,
+            label='Selectableadviserusers',
+            label_msgid='PloneMeeting_label_selectableAdviserUsers',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="advices",
+        multiValued=1,
+        vocabulary='listSelectableAdvisers',
+        default=defValues.selectableAdvisers,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    LinesField(
         name='itemAdviceStates',
         widget=MultiSelectionWidget(
             description="ItemAdviceStates",

@@ -1037,7 +1037,17 @@ div#optionalAdvisers input[value="not_selectable_value_non_delay_aware_optional_
     color: grey;
     font-style: italic;
 }
-
+div#optionalAdvisers input[value*="__userid__"] + label::before {
+    content: "⤷";
+    font-size: 150%;
+    vertical-align: sub;
+    color: &dtml-linkColor;;
+}
+/*
+#content input:hover + label {
+    background-color: &dtml-evenRowBackgroundColor;;
+}
+*/
 div.discreet.advice_additional_infos {
     margin-top: 0.75em;
 }
