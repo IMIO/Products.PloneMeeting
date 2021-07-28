@@ -2088,14 +2088,39 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # it can be a delay-aware advice and a simple advice
         # or 2 delay-aware advices for same group
         real_adviser_values = []
+        adviser_userid_values = []
+        adviser_rowid_userid_values = []
+        real_adviser_userid_values = []
         for adviser in values:
-            if '__rowid__' in adviser:
-                real_adviser_values.append(decodeDelayAwareId(adviser)[0])
-            elif '__userid__' in adviser:
-                real_adviser_values.append(adviser.split('__userid__')[0])
+            if '__userid__' not in adviser:
+                if '__rowid__' in adviser:
+                    real_adviser_values.append(decodeDelayAwareId(adviser)[0])
+                else:
+                    real_adviser_values.append(adviser)
             else:
-                real_adviser_values.append(adviser)
+                # '__userid__'
+                if '__rowid__' in adviser:
+                    adviser_rowid_userid_values.append(decodeDelayAwareId(adviser)[0])
+                    real_adviser_userid_values.append(decodeDelayAwareId(adviser)[0])
+                else:
+                    adviser_userid_values.append(adviser.split('__userid__')[0])
+                    real_adviser_userid_values.append(adviser.split('__userid__')[0])
+
         if len(set(real_adviser_values)) != len(real_adviser_values):
+            return translate('can_not_select_several_optional_advisers_same_group',
+                             domain='PloneMeeting',
+                             context=self.REQUEST)
+        # a value in real_adviser_values may not be in real_adviser_userid_values
+        # that would mean for example a delay-aware adviser selected
+        # and a userid for same not delay-aware advice
+        if set(real_adviser_values).intersection(real_adviser_userid_values):
+            return translate('can_not_select_several_optional_advisers_same_group',
+                             domain='PloneMeeting',
+                             context=self.REQUEST)
+
+        # check also that a userid is not selected for a rowid advice
+        # and another userid for the corresponding non rowid advice
+        if set(adviser_rowid_userid_values).intersection(adviser_userid_values):
             return translate('can_not_select_several_optional_advisers_same_group',
                              domain='PloneMeeting',
                              context=self.REQUEST)
@@ -2125,6 +2150,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if removedAdvisers:
             givenAdvices = self.getGivenAdvices()
             for removedAdviser in removedAdvisers:
+                orig_removedAdviser = removedAdviser
                 if '__rowid__' in removedAdviser:
                     removedAdviser, rowid = decodeDelayAwareId(removedAdviser)
                 elif '__userid__' in removedAdviser:
@@ -2134,10 +2160,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     vocab = self.getField('optionalAdvisers').Vocabulary(self)
                     return translate(
                         'can_not_unselect_already_given_advice',
-                        mapping={'removedAdviser': self.displayValue(vocab, removedAdviser)},
+                        mapping={'removedAdviser': self.displayValue(vocab, orig_removedAdviser)},
                         domain='PloneMeeting',
                         context=self.REQUEST)
-        return self.adapted().custom_validate_optionalAdvisers(values, storedOptionalAdvisers, removedAdvisers)
+        return self.adapted().custom_validate_optionalAdvisers(
+            values, storedOptionalAdvisers, removedAdvisers)
 
     def custom_validate_optionalAdvisers(self, value, storedOptionalAdvisers, removedAdvisers):
         '''See doc in interfaces.py.'''

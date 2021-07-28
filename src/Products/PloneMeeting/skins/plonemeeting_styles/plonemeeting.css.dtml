@@ -1037,11 +1037,11 @@ div#optionalAdvisers input[value="not_selectable_value_non_delay_aware_optional_
     color: grey;
     font-style: italic;
 }
-div#optionalAdvisers input[value*="__userid__"] + label::before {
-    content: "⤷";
-    font-size: 150%;
-    vertical-align: sub;
-    color: &dtml-linkColor;;
+div#optionalAdvisers input[value*="__userid__"] + label {
+    padding-left: 2em;
+    background-image: url("user.png");
+    background-repeat: no-repeat;
+    background-position: 0.75em;
 }
 /*
 #content input:hover + label {
