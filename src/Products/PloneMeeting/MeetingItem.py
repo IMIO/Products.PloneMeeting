@@ -2077,61 +2077,67 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePrivate('validate_optionalAdvisers')
 
-    def validate_optionalAdvisers(self, value):
+    def validate_optionalAdvisers(self, values):
         '''When selecting an optional adviser, make sure that 2 values regarding the same
            group are not selected, this could be the case when using delay-aware advisers.
            Moreover, make sure we can not unselect an adviser that already gave his advice.'''
         # remove empty strings and Nones
-        value = [v for v in value if v]
-        for adviser in value:
-            # if it is a delay-aware advice, check that the same 'normal'
-            # optional adviser has not be selected and that another delay-aware adviser
-            # for the same group is not selected too
-            # we know that it is a delay-aware adviser because we have '__rowid__' in it's key
+        values = [v for v in values if v]
+
+        # check that advice was not asked twice for same adviser
+        # it can be a delay-aware advice and a simple advice
+        # or 2 delay-aware advices for same group
+        real_adviser_values = []
+        for adviser in values:
+            if '__rowid__' in adviser:
+                real_adviser_values.append(decodeDelayAwareId(adviser)[0])
+            elif '__userid__' in adviser:
+                real_adviser_values.append(adviser.split('__userid__')[0])
+            else:
+                real_adviser_values.append(adviser)
+        if len(set(real_adviser_values)) != len(real_adviser_values):
+            return translate('can_not_select_several_optional_advisers_same_group',
+                             domain='PloneMeeting',
+                             context=self.REQUEST)
+
+        # when advices are inherited, we can not ask another one for same adviser
+        for adviser in values:
             rowid = ''
             if '__rowid__' in adviser:
                 adviser_real_uid, rowid = decodeDelayAwareId(adviser)
-                # check that the same 'non-delay-aware' adviser has not be selected
-                if adviser_real_uid in value:
-                    return translate('can_not_select_several_optional_advisers_same_group',
-                                     domain='PloneMeeting',
-                                     context=self.REQUEST)
-                # check that another delay-aware adviser of the same group
-                # is not selected at the same time, we could have 2 (or even more)
-                # delays for the same group
-                delayAdviserStartsWith = adviser_real_uid + '__rowid__'
-                for v in value:
-                    if v.startswith(delayAdviserStartsWith) and not v == adviser:
-                        return translate('can_not_select_several_optional_advisers_same_group',
-                                         domain='PloneMeeting',
-                                         context=self.REQUEST)
+            elif '__userid__' in adviser:
+                adviser_real_uid, userid = adviser.split('__userid__')
             else:
                 adviser_real_uid = adviser
-            # when advices are inherited, we can not ask another one for same adviser
             if adviser_real_uid in getattr(self, 'adviceIndex', {}) and \
                self.adviceIndex[adviser_real_uid]['inherited']:
-                # use getAdviceData for because we do not have every correct values
+                # use getAdviceDataFor because we do not have every correct values
                 # stored for an inherited advice, especially 'not_asked'
                 adviceInfo = self.getAdviceDataFor(self, adviser_real_uid)
                 if rowid != adviceInfo['row_id'] or adviceInfo['not_asked']:
                     return translate('can_not_select_optional_adviser_same_group_as_inherited',
                                      domain='PloneMeeting',
                                      context=self.REQUEST)
+
         # find unselected advices and check if it was not already given
         storedOptionalAdvisers = self.getOptionalAdvisers()
-        removedAdvisers = set(storedOptionalAdvisers).difference(set(value))
+        removedAdvisers = set(storedOptionalAdvisers).difference(set(values))
         if removedAdvisers:
             givenAdvices = self.getGivenAdvices()
             for removedAdviser in removedAdvisers:
                 if '__rowid__' in removedAdviser:
                     removedAdviser, rowid = decodeDelayAwareId(removedAdviser)
-                if removedAdviser in givenAdvices and givenAdvices[removedAdviser]['optional'] is True:
+                elif '__userid__' in removedAdviser:
+                    removedAdviser, userid = removedAdviser.split('__userid__')
+                if removedAdviser in givenAdvices and \
+                   givenAdvices[removedAdviser]['optional'] is True:
                     vocab = self.getField('optionalAdvisers').Vocabulary(self)
-                    return translate('can_not_unselect_already_given_advice',
-                                     mapping={'removedAdviser': self.displayValue(vocab, removedAdviser)},
-                                     domain='PloneMeeting',
-                                     context=self.REQUEST)
-        return self.adapted().custom_validate_optionalAdvisers(value, storedOptionalAdvisers, removedAdvisers)
+                    return translate(
+                        'can_not_unselect_already_given_advice',
+                        mapping={'removedAdviser': self.displayValue(vocab, removedAdviser)},
+                        domain='PloneMeeting',
+                        context=self.REQUEST)
+        return self.adapted().custom_validate_optionalAdvisers(values, storedOptionalAdvisers, removedAdvisers)
 
     def custom_validate_optionalAdvisers(self, value, storedOptionalAdvisers, removedAdvisers):
         '''See doc in interfaces.py.'''
@@ -4653,7 +4659,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                  'delay_left_alert': predecessor.adviceIndex[adviserUid]['delay_left_alert'],
                  'delay_label': predecessor.adviceIndex[adviserUid]['delay_label'], })
         return res
-
 
     security.declarePublic('getOptionalAdvisers')
 
