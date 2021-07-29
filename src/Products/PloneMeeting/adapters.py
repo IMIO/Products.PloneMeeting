@@ -38,6 +38,7 @@ from Products.CMFCore.permissions import View
 from Products.CMFCore.utils import _checkPermission
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.config import AddAnnexDecision
+from Products.PloneMeeting.config import ALL_ADVISERS_GROUP_VALUE
 from Products.PloneMeeting.config import DUPLICATE_AND_KEEP_LINK_EVENT_ACTION
 from Products.PloneMeeting.config import DUPLICATE_EVENT_ACTION
 from Products.PloneMeeting.config import EMPTY_STRING
@@ -1264,7 +1265,7 @@ class ItemsToCorrectAdapter(BaseItemsToCorrectAdapter):
 
 class ItemsToAdviceAdapter(CompoundCriterionBaseAdapter):
 
-    def _query(self, include_hidden_during_redaction=True):
+    def _query(self, include_hidden_during_redaction=True, only_for_current_user=False):
         '''Queries all items for which the current user must give an advice.'''
         if not self.cfg:
             return {}
@@ -1281,6 +1282,16 @@ class ItemsToAdviceAdapter(CompoundCriterionBaseAdapter):
                  for org_uid in org_uids] + \
                 ['delay__{0}_advice_{1}'.format(org_uid, HIDDEN_DURING_REDACTION_ADVICE_VALUE)
                  for org_uid in org_uids]
+        if only_for_current_user:
+            userid = api.user.get_current().getId()
+            tmp_indexAdvisers = list(indexAdvisers)
+            indexAdvisers = []
+            for v in tmp_indexAdvisers:
+                # value that will query element specifically asked to userid
+                indexAdvisers.append("{0}__userid__{1}".format(v, userid))
+                # query also elements for which advice is asked only to entire
+                # advisers groups, so for which no userid was selected
+                indexAdvisers.append("{0}__userid__{1}".format(v, ALL_ADVISERS_GROUP_VALUE))
         # Create query parameters
         return {'portal_type': {'query': self.cfg.getItemTypeName()},
                 # KeywordIndex 'indexAdvisers' use 'OR' by default
@@ -1304,6 +1315,28 @@ class ItemsToAdviceWithoutHiddenDuringRedactionAdapter(ItemsToAdviceAdapter):
 
     # we may not ram.cache methods in same file with same name...
     query = query_itemstoadvicewithouthiddenduringredaction
+
+
+class MyItemsToAdviceAdapter(ItemsToAdviceAdapter):
+
+    @property
+    @ram.cache(query_user_groups_cachekey)
+    def query_myitemstoadvice(self):
+        return self._query(only_for_current_user=True)
+
+    # we may not ram.cache methods in same file with same name...
+    query = query_myitemstoadvice
+
+
+class MyItemsToAdviceWithoutHiddenDuringRedactionAdapter(ItemsToAdviceAdapter):
+
+    @property
+    @ram.cache(query_user_groups_cachekey)
+    def query_myitemstoadvicewithouthiddenduringredaction(self):
+        return self._query(include_hidden_during_redaction=False, only_for_current_user=True)
+
+    # we may not ram.cache methods in same file with same name...
+    query = query_myitemstoadvicewithouthiddenduringredaction
 
 
 class ItemsToAdviceWithoutDelayAdapter(CompoundCriterionBaseAdapter):

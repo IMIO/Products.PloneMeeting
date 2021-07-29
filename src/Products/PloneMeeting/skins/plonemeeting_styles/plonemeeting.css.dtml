@@ -1961,6 +1961,7 @@ table tbody tr td.td_cell_category-column {
 #content span.fa.red-colored {
     color: red;
 }
+#content img.pmHelp,
 #content span.pmHelp {
     cursor: help;
 }

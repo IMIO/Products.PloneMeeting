@@ -765,10 +765,9 @@ class ItemOptionalAdvicesVocabulary(object):
             org_uid = term_value.split('__rowid__')[0]
             if org_uid in selectableAdviserUsers:
                 advisers_group = get_plone_group(org_uid, "advisers")
-                for user in advisers_group.getGroupMembers():
-                    user_term_value = "{0}__userid__{1}".format(term_value, user.getId())
-                    user_title = user.getProperty('fullname') or \
-                        user.getProperty('title') or user.getId()
+                for user_id in advisers_group.getGroupMemberIds():
+                    user_term_value = "{0}__userid__{1}".format(term_value, user_id)
+                    user_title = tool.getUserName(user_id)
                     user_term = SimpleTerm(user_term_value, user_term_value, user_title)
                     user_term.sortable_title = u"{0} ({1})".format(term_title, user_title)
                     res.append(user_term)

@@ -102,6 +102,7 @@ from Products.PloneMeeting.utils import cleanMemoize
 from Products.PloneMeeting.utils import compute_item_roles_to_assign_to_suffixes
 from Products.PloneMeeting.utils import decodeDelayAwareId
 from Products.PloneMeeting.utils import down_or_up_wf
+from Products.PloneMeeting.utils import escape
 from Products.PloneMeeting.utils import fieldIsEmpty
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
 from Products.PloneMeeting.utils import get_states_before
@@ -4684,7 +4685,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                  'row_id': predecessor.adviceIndex[adviserUid]['row_id'],
                  'delay': predecessor.adviceIndex[adviserUid]['delay'],
                  'delay_left_alert': predecessor.adviceIndex[adviserUid]['delay_left_alert'],
-                 'delay_label': predecessor.adviceIndex[adviserUid]['delay_label'], })
+                 'delay_label': predecessor.adviceIndex[adviserUid]['delay_label'],
+                 'userids': predecessor.adviceIndex[adviserUid].get('userids', [])})
         return res
 
     security.declarePublic('getOptionalAdvisers')
@@ -4714,6 +4716,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         res = []
+        optionalAdvisers = self.getOptionalAdvisers()
         for adviser in self.getOptionalAdvisers(computed=True):
             # if this is a delay-aware adviser, we have the data in the adviser id
             if '__rowid__' in adviser:
@@ -4725,13 +4728,19 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             else:
                 org_uid = adviser
                 row_id = delay = delay_left_alert = delay_label = ''
+            # manage userids
+            userids = [optionalAdviser.split('__userid__')[1]
+                       for optionalAdviser in optionalAdvisers
+                       if '__userid__' in optionalAdviser and
+                       optionalAdviser.startswith(adviser)]
             res.append({'org_uid': org_uid,
                         'org_title': get_organization(org_uid).get_full_title(),
                         'gives_auto_advice_on_help_message': '',
                         'row_id': row_id,
                         'delay': delay,
                         'delay_left_alert': delay_left_alert,
-                        'delay_label': delay_label, })
+                        'delay_label': delay_label,
+                        'userids': userids})
         return res
 
     security.declarePublic('getAutomaticAdvisersData')
@@ -4773,12 +4782,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 res.append({'org_uid': customAdviser['org'],
                             'org_title': org.get_full_title(),
                             'row_id': customAdviser['row_id'],
-                            'gives_auto_advice_on_help_message': customAdviser['gives_auto_advice_on_help_message'],
+                            'gives_auto_advice_on_help_message':
+                                customAdviser['gives_auto_advice_on_help_message'],
                             'delay': customAdviser['delay'],
                             'delay_left_alert': customAdviser['delay_left_alert'],
-                            'delay_label': customAdviser['delay_label'], })
+                            'delay_label': customAdviser['delay_label'],
+                            # userids is unhandled for automatic advisers
+                            'userids': []})
                 # check if the found automatic adviser is not already in the self.adviceIndex
-                # but with a manually changed delay, aka 'delay_for_automatic_adviser_changed_manually' is True
+                # but with a manually changed delay, aka
+                # 'delay_for_automatic_adviser_changed_manually' is True
                 storedCustomAdviser = self.adviceIndex.get(customAdviser['org'], {})
                 delay_for_automatic_adviser_changed_manually = \
                     'delay_for_automatic_adviser_changed_manually' in storedCustomAdviser and \
@@ -5248,7 +5261,26 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def displayAdvisers(self):
         '''Display advisers on the item view, especially the link showing users of a group.'''
+
         portal_url = api.portal.get().absolute_url()
+        tool = api.portal.get_tool('portal_plonemeeting')
+
+        def _get_adviser_name(adviser):
+            """Manage adviser name, will append selected __userid__ if any."""
+            name = adviser['name']
+            if adviser['userids']:
+                userid_pattern = u'<img class="pmHelp" title="{0}" src="{1}/user.png" />{2}'
+                rendered_users = []
+                help_msg = translate("adviser_userid_notified",
+                                     domain="PloneMeeting",
+                                     context=self.REQUEST)
+                for userid in adviser['userids']:
+                    rendered_users.append(
+                        userid_pattern.format(
+                            escape(help_msg), portal_url, tool.getUserName(userid)))
+                name += u" ({0})".format(u" ".join(rendered_users))
+            return name
+
         advisers_by_type = self.getAdvicesByType(include_not_asked=False)
         res = []
         auto_advice = u' <strong class="auto_info" title="{0}">[auto]</strong>'.format(
@@ -5257,12 +5289,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                       context=self.REQUEST))
         for advice_type, advisers in advisers_by_type.items():
             for adviser in advisers:
+                adviser_name = _get_adviser_name(adviser)
                 value = u"{0} <acronym><a onclick='event.preventDefault()' " \
                     u"class='tooltipster-group-users deactivated' " \
                     u"style='display: inline-block; padding: 0'" \
                     u"href='#' data-group_ids:json='\"{1}\"' data-base_url='{2}'>" \
                     u"<img src='{2}/group_users.png' /></a></acronym>".format(
-                        adviser['name'] + (not adviser['optional'] and auto_advice or u''),
+                        adviser_name + (not adviser['optional'] and auto_advice or u''),
                         get_plone_group_id(adviser['id'], 'advisers'),
                         portal_url)
                 res.append(value)
@@ -5669,6 +5702,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 d['item_viewable_by_advisers'] = False
                 d['advice_addable'] = False
                 d['advice_editable'] = False
+                # userids
+                d['userids'] = adviceInfo['userids']
 
         # now update self.adviceIndex with given advices
         for org_uid, adviceInfo in self.getGivenAdvices().iteritems():
@@ -5705,6 +5740,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 adviceInfo['advice_addable'] = False
                 adviceInfo['advice_editable'] = False
                 adviceInfo['inherited'] = False
+                adviceInfo['userids'] = []
             self.adviceIndex[org_uid].update(adviceInfo)
 
         # and remove specific permissions given to add advices
