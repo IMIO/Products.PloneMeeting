@@ -4544,7 +4544,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if plone_group_ids:
             params = {"obj": self,
                       "event": "adviceToGive",
-                      "permissionOrSuffixOrRoleOrGroupIds": plone_group_ids,
+                      "value": plone_group_ids,
                       "isGroupIds": True,
                       "debug": debug}
             return sendMailIfRelevant(**params)
