@@ -4,6 +4,7 @@
      tal:define="item_url context/absolute_url;
                  adviceType view/adviceType;
                  advicesByType view/advicesByType;
+                 advicesToAdd view/advicesToAdd;
                  advicesToEdit view/advicesToEdit;
                  userAdviserOrgUids view/userAdviserOrgUids;">
   <tal:defines define="cfg python: view.cfg;
@@ -24,7 +25,8 @@
                                   displayDefaultComplementaryMessage customMessageInfos/displayDefaultComplementaryMessage;
                                   displayAdviceReviewState customMessageInfos/displayAdviceReviewState;
                                   customAdviceMessage customMessageInfos/customAdviceMessage;
-                                  mayView view/mayView">
+                                  mayView view/mayView"
+                       tal:attributes="class python: (advice['id'] in advicesToAdd or advice['id'] in advicesToEdit) and 'advice-addable-editable' or ''">
                 <legend>
                   <div style="display: inline"
                        class="collapsible active"

@@ -136,7 +136,8 @@ class AdvicesIconsInfos(BrowserView):
         self.cfg = self.tool.getMeetingConfig(self.context)
         self.portal = api.portal.get()
         self.portal_url = self.portal.absolute_url()
-        self.advisableGroups = self.context.getAdvicesGroupsInfosForUser(compute_to_add=False)
+        self.advisableGroups = self.context.getAdvicesGroupsInfosForUser(compute_to_add=True)
+        self.advicesToAdd = [info[0] for info in self.advisableGroups[0]]
         self.advicesToEdit = [info[0] for info in self.advisableGroups[1]]
         self.advicesByType = self.context.getAdvicesByType()
         self.adviceType = adviceType

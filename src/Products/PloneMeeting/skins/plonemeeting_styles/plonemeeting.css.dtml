@@ -471,6 +471,10 @@ div.add_advice_icon {
     display: none;
 }
 
+div#content.advice_infos_tooltipster fieldset.advice-addable-editable {
+    border-right: 3px solid green;
+}
+
 /* manage very large advice label */
 div#content.advice_infos_tooltipster legend {
    height: auto;
