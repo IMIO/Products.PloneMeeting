@@ -399,10 +399,10 @@
             </tal:customAdviceMessage>
 
             <div class="discreet advice_additional_infos" style="text-align: right;">
-              <tal:userids condition="python: advice['userids']">
+              <div tal:condition="python: advice['userids']" class="advice-asked-to">
                 <span i18n:translate="">Advice asked to</span>:
                 <span tal:content="structure python: view.adviser_users(advice)">User ids</span>
-              </tal:userids>
+              </div>
 
               <tal:author condition="nocall:obj">
                 <tal:i18n i18n:domain="plone" i18n:translate="label_by_author">
