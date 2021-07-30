@@ -556,22 +556,29 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
     return subject, body
 
 
-def sendMailIfRelevant(obj, event, permissionOrSuffixOrRoleOrGroupIds,
+def sendMailIfRelevant(obj,
+                       event,
+                       value,
                        customEvent=False,
                        mapping={},
                        isSuffix=False,
                        isRole=False,
-                       isGroupIds=False,
                        isPermission=False,
+                       isGroupIds=False,
+                       isUserIds=False,
                        debug=False):
     '''An p_event just occurred on meeting or item p_obj. If the corresponding
        meeting config specifies that a mail needs to be sent, this function
        will send a mail. The mail subject and body are defined from i18n labels
-       that derive from the event name. if p_isSuffix is True, p_permissionOrSuffixOrRole
-       is a suffix, and the mail will be sent to every members of this sufixed group (relevant for item).
-       If p_isSuffix is False, p_permissionOrSuffixOrRole is a permission and the mail will
-       be sent to everyone having this permission.  Some mapping can be received
-       and used afterward in mail subject and mail body translations.
+       that derive from the event name.
+       p_value may vary depending on other parameters:
+       - when p_isSuffix, value is a group suffix;
+       - when p_isRole, value is a permission role;
+       - when p_isPermission, value is a permission;
+       - when p_isGroupIds, value is a list of Plone group ids;
+       - whhen p_isUserIds, value is a list of Plone user ids.
+
+       Some mapping can be received and used afterward in mail subject and mail body translations.
 
        If mail sending is activated (or in test mode) and enabled for this
        event, this method returns True.
@@ -579,6 +586,7 @@ def sendMailIfRelevant(obj, event, permissionOrSuffixOrRoleOrGroupIds,
        A plug-in may use this method for sending custom events that are not
        defined in the MeetingConfig. In this case, you must specify
        p_customEvent = True.'''
+
     tool = api.portal.get_tool(TOOL_ID)
     cfg = tool.getMeetingConfig(obj)
     # Do not send the mail if mail mode is "deactivated".
@@ -593,24 +601,27 @@ def sendMailIfRelevant(obj, event, permissionOrSuffixOrRoleOrGroupIds,
     userIds = []
     if isSuffix:
         org = obj.adapted()._getGroupManagingItem(obj.query_state())
-        plone_group = get_plone_group(org.UID(), permissionOrSuffixOrRoleOrGroupIds)
+        plone_group = get_plone_group(org.UID(), value)
         if not plone_group:
             # maybe the suffix is a MeetingConfig related suffix, like _meetingmanagers
-            plone_group = get_plone_group(cfg.getId(), permissionOrSuffixOrRoleOrGroupIds)
+            plone_group = get_plone_group(cfg.getId(), value)
         if plone_group:
             userIds = plone_group.getGroupMemberIds()
     elif isRole:
-        if permissionOrSuffixOrRoleOrGroupIds == 'Owner':
+        if value == 'Owner':
             userIds = [obj.Creator()]
         else:
             # Warning "_members" returns all users (even deleted users),
             # the filter must do this afterwards.
             userIds = api.portal.get_tool('portal_memberdata')._members
-    else:
+    elif isGroupIds:
         # isGroupIds
-        for plone_group_id in permissionOrSuffixOrRoleOrGroupIds:
+        for plone_group_id in value:
             plone_group = api.group.get(plone_group_id)
             userIds += plone_group.getMemberIds()
+    else:
+        # isUserIds
+        userIds = value
 
     # remove duplicate
     membershipTool = api.portal.get_tool('portal_membership')
@@ -627,12 +638,12 @@ def sendMailIfRelevant(obj, event, permissionOrSuffixOrRoleOrGroupIds,
             # then "isPermission"
             # Does the user have the corresponding permission on p_obj ?
             # we do this here for performance reason as we have the "user" object
-            if not api.user.has_permission(permission=permissionOrSuffixOrRoleOrGroupIds,
+            if not api.user.has_permission(permission=value,
                                            obj=obj,
                                            user=user):
                 continue
         elif isRole:
-            if not user.has_role(permissionOrSuffixOrRoleOrGroupIds, obj):
+            if not user.has_role(value, obj):
                 continue
 
         recipient = tool.getMailRecipient(user)
