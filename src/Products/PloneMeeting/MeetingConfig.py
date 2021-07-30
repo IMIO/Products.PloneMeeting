@@ -2883,6 +2883,25 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'tal_condition': "python: cfg.userIsAReviewer()",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
+                # My items to advice
+                ('searchmyitemstoadvice', {
+                    'subFolderId': 'searches_items',
+                    'active': True,
+                    'query':
+                    [
+                        {'i': 'CompoundCriterion',
+                         'o': 'plone.app.querystring.operation.compound.is',
+                         'v': 'my-items-to-advice'},
+                    ],
+                    'sort_on': u'modified',
+                    'sort_reversed': True,
+                    'showNumberOfItems': True,
+                    'tal_condition': "python: cfg.getUseAdvices() and "
+                        "tool.userIsAmong(['advisers'], "
+                        "cfg=cfg, "
+                        "using_groups=cfg.getSelectableAdviserUsers())",
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
                 # Items to advice
                 ('searchallitemstoadvice', {
                     'subFolderId': 'searches_items',
@@ -5815,13 +5834,17 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             subFolderId = collectionData['subFolderId']
             if subFolderId:
                 container = getattr(container, subFolderId)
+            # empty container
+            if not container.objectIds():
+                previous_collection_id = None
+
             if collectionId in container.objectIds():
                 logger.info("Trying to add an already existing collection with id '%s', skipping..." % collectionId)
+                previous_collection_id = collectionId
                 continue
             added_collections = True
             container.invokeFactory('DashboardCollection', collectionId, **collectionData)
             collection = getattr(container, collectionId)
-            collection.processForm(values={'dummy': None})
             # update query so it is stored correctly because we pass a dict
             # but it is actually stored as instances of ZPublisher.HTTPRequest.record
             collection.setQuery(collection.query)
@@ -5834,6 +5857,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             if not collectionData['active']:
                 collection.enabled = False
             collection.reindexObject()
+            if previous_collection_id is not None and \
+               previous_collection_id in container.objectIds():
+                previous_collection_id_pos = container.getObjectPosition(previous_collection_id)
+                container.moveObjectToPosition(collectionId, previous_collection_id_pos+1)
+            previous_collection_id = collectionId
         return added_collections
 
     def _getCloneToOtherMCActionId(self, destMeetingConfigId, meetingConfigId, emergency=False):

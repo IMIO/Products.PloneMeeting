@@ -200,8 +200,15 @@ class AdvicesIconsInfos(BrowserView):
         return _delay_icon(self.memberIsAdviserForGroup, advice_info)
 
     def authorname(self, advice):
-        author = api.user.get(advice.Creator())
-        return author and author.getProperty('fullname') or advice.Creator()
+        self.tool.getUserName(advice.Creator())
+
+    def adviser_users(self, advice_info):
+        """ """
+        res = u''
+        if advice_info['userids']:
+            res = self.context._displayAdviserUsers(
+                advice_info['userids'], self.portal_url, self.tool)
+        return res
 
     def state_infos(self, advice):
         return get_state_infos(advice)

@@ -2114,15 +2114,17 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # a value in real_adviser_values may not be in real_adviser_userid_values
         # that would mean for example a delay-aware adviser selected
         # and a userid for same not delay-aware advice
+        # or more current, an adviers group and some userids of same group
+        # we must either select group or user
         if set(real_adviser_values).intersection(real_adviser_userid_values):
-            return translate('can_not_select_several_optional_advisers_same_group',
+            return translate('can_not_select_advisers_group_and_userids',
                              domain='PloneMeeting',
                              context=self.REQUEST)
 
         # check also that a userid is not selected for a rowid advice
         # and another userid for the corresponding non rowid advice
         if set(adviser_rowid_userid_values).intersection(adviser_userid_values):
-            return translate('can_not_select_several_optional_advisers_same_group',
+            return translate('can_not_select_userids_for_same_advice_of_different_type',
                              domain='PloneMeeting',
                              context=self.REQUEST)
 
@@ -5257,6 +5259,20 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 .format(real_group_id, portal_url)))
         return u', '.join(res)
 
+    def _displayAdviserUsers(self, userids, portal_url, tool):
+        """ """
+        userid_pattern = u'<img class="pmHelp" title="{0}" src="{1}/user.png" />{2}'
+        rendered_users = []
+        help_msg = translate("adviser_userid_notified",
+                             domain="PloneMeeting",
+                             context=self.REQUEST)
+        for userid in userids:
+            rendered_users.append(
+                userid_pattern.format(
+                    escape(help_msg), portal_url, tool.getUserName(userid)))
+        res = u", ".join(rendered_users)
+        return res
+
     security.declarePublic('displayAdvisers')
 
     def displayAdvisers(self):
@@ -5269,16 +5285,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             """Manage adviser name, will append selected __userid__ if any."""
             name = adviser['name']
             if adviser['userids']:
-                userid_pattern = u'<img class="pmHelp" title="{0}" src="{1}/user.png" />{2}'
-                rendered_users = []
-                help_msg = translate("adviser_userid_notified",
-                                     domain="PloneMeeting",
-                                     context=self.REQUEST)
-                for userid in adviser['userids']:
-                    rendered_users.append(
-                        userid_pattern.format(
-                            escape(help_msg), portal_url, tool.getUserName(userid)))
-                name += u" ({0})".format(u" ".join(rendered_users))
+                name += u" ({0})".format(
+                    self._displayAdviserUsers(adviser['userids'], portal_url, tool))
             return name
 
         advisers_by_type = self.getAdvicesByType(include_not_asked=False)

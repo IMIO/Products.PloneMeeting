@@ -557,29 +557,36 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             res = cfg.getUsingGroups(theObjects=the_objects)
         return res
 
-    def userIsAmong_cachekey(method, self, suffixes, cfg=None):
+    def userIsAmong_cachekey(method, self, suffixes, cfg=None, using_groups=[]):
         '''cachekey method for self.userIsAmong.'''
         date = get_cachekey_volatile('Products.PloneMeeting.ToolPloneMeeting.userIsAmong')
         return (date,
                 self._users_groups_value(),
                 api.user.get_current(),
                 suffixes,
-                cfg and cfg.getId())
+                cfg and cfg.getId(),
+                using_groups)
 
     security.declarePublic('userIsAmong')
 
     @ram.cache(userIsAmong_cachekey)
-    def userIsAmong(self, suffixes, cfg=None):
+    def userIsAmong(self, suffixes, cfg=None, using_groups=[]):
         '''Check if the currently logged user is in at least one of p_suffixes-related Plone
            group.  p_suffixes is a list of suffixes.
-           If cfg, we filter on cfg.usingGroups.'''
+           If cfg, we filter on cfg.usingGroups, if p_using_groups are given, we use it also.
+           Parmater p_using_groups requires parameter p_cfg.'''
         res = False
         # display a warning if suffixes is not a tuple/list
         if not isinstance(suffixes, (tuple, list)):
             logger.warn("ToolPloneMeeting.userIsAmong parameter 'suffixes' must be "
                         "a tuple or list of suffixes, but we received '{0}'".format(suffixes))
         else:
-            using_groups = cfg and cfg.getUsingGroups() or []
+            cfg_using_groups = cfg and cfg.getUsingGroups() or []
+            if using_groups:
+                using_groups = [using_group for using_group in using_groups
+                                if not cfg_using_groups or using_group in cfg_using_groups]
+            else:
+                using_groups = cfg_using_groups
             activeOrgUids = [org_uid for org_uid in get_organizations(
                 only_selected=True, the_objects=False, kept_org_uids=using_groups)]
             for plone_group_id in self.get_plone_groups_for_user():
