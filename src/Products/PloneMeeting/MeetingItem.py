@@ -4574,34 +4574,39 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             if (new_review_state not in adviceStates or old_review_state in adviceStates) and \
                (not force_resend_if_in_advice_review_states or old_review_state not in adviceStates):
                 continue
+
             # do not consider groups that already gave their advice
             if adviceInfo['type'] not in ['not_given', 'asked_again']:
                 continue
-            if 'adviceToGiveByUser' not in cfg.getMailItemEvents() or \
-               not adviceInfo['userids']:
-                plone_group_id = get_plone_group_id(org_uid, 'advisers')
+
+            # notify entire advisers groups any time
+            plone_group_id = get_plone_group_id(org_uid, 'advisers')
+            if 'adviceToGive' in cfg.getMailItemEvents():
                 plone_group_ids.append(plone_group_id)
             else:
-                plone_user_ids += adviceInfo['userids']
+                # adviceToGiveByUser
+                # notify userids if any or the entire _advisers group
+                if adviceInfo['userids']:
+                    plone_user_ids += adviceInfo['userids']
+                else:
+                    plone_group = api.group.get(plone_group_id)
+                    plone_user_ids += plone_group.getMemberIds()
 
         # send mail
-        sent_to_group_ids = sent_to_user_ids = False
         if plone_group_ids:
             params = {"obj": self,
                       "event": "adviceToGive",
                       "value": plone_group_ids,
                       "isGroupIds": True,
                       "debug": debug}
-            sent_to_group_ids = sendMailIfRelevant(**params)
-        if plone_user_ids:
+            return sendMailIfRelevant(**params)
+        elif plone_user_ids:
             params = {"obj": self,
                       "event": "adviceToGiveByUser",
-                      "permissionOrSuffixOrRoleOrGroupIds": plone_user_ids,
+                      "value": plone_user_ids,
                       "isUserIds": True,
                       "debug": debug}
-            sent_to_user_ids = sendMailIfRelevant(**params)
-        return sent_to_group_ids or sent_to_user_ids
-
+            return sendMailIfRelevant(**params)
 
     def _sendAdviceToGiveToGroup(self, org_uid):
         """See docstring in interfaces.py"""

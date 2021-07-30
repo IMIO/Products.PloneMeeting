@@ -4697,9 +4697,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             values.remove('')
 
         # conflicts
-        msg = translate('mail_item_events_conflicts',
-                        domain='PloneMeeting', context=self.REQUEST)
         if 'adviceToGive' in values and 'adviceToGiveByUser' in values:
+            vocab = self.Vocabulary('mailItemEvents')[0]
+            conflicts = u", ".join(
+                [vocab.getValue('adviceToGive'), vocab.getValue('adviceToGiveByUser')])
+            msg = translate('mail_item_events_conflicts',
+                            mapping={"conflicting_notifications": conflicts},
+                            domain='PloneMeeting', context=self.REQUEST)
             return msg
 
     security.declarePrivate('validate_itemAdviceEditStates')
