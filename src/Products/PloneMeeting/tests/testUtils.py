@@ -90,14 +90,13 @@ class testUtils(PloneMeetingTestCase):
         cfg = self.meetingConfig
         cfg.setMailMode("deactivated")
         self.changeUser('pmManager')
-        self.create("Meeting")
         item = self.create("MeetingItem", title="My item")
-        self.presentItem(item)
         params = {"obj": item,
                   "event": "itemPresented",
-                  "permissionOrSuffixOrRoleOrGroupIds": "creators",
+                  "value": "creators",
                   "isSuffix": True,
                   "debug": True}
+
         # disabled
         self.assertIsNone(sendMailIfRelevant(**params))
         # enabled but not selected
@@ -105,7 +104,6 @@ class testUtils(PloneMeetingTestCase):
         self.assertIsNone(sendMailIfRelevant(**params))
         # enabled and selected
         cfg.setMailItemEvents(("itemPresented", ))
-        self.assertTrue(sendMailIfRelevant(**params))
         recipients, subject, body = sendMailIfRelevant(**params)
         dev_creators = get_plone_group(self.developers_uid, 'creators')
         self.assertEqual(dev_creators.getMemberIds(),
@@ -123,6 +121,52 @@ class testUtils(PloneMeetingTestCase):
             u"This meeting may still be under construction and is potentially inaccessible.  "
             u"The item is entitled \"My item\". You can access this item here: {0}.".format(
                 item.absolute_url()))
+
+    def test_pm_SendMailIfRelevantIsGroupIds(self):
+        """ """
+        cfg = self.meetingConfig
+        cfg.setMailMode("activated")
+        cfg.setMailItemEvents(("item_state_changed_validate", ))
+
+        self.changeUser('pmManager')
+        item = self.create("MeetingItem", title="My item")
+        params = {"obj": item,
+                  "event": "item_state_changed_validate",
+                  "value": [self.developers_creators, self.vendors_creators],
+                  "isGroupIds": True,
+                  "debug": True}
+
+        recipients, subject, body = sendMailIfRelevant(**params)
+        dev_creators = get_plone_group(self.developers_uid, 'creators')
+        self.assertEqual(dev_creators.getMemberIds(),
+                         ['pmCreator1', 'pmCreator1b', 'pmManager'])
+        vendors_creators = get_plone_group(self.vendors_uid, 'creators')
+        self.assertEqual(vendors_creators.getMemberIds(), ['pmCreator2'])
+        # not sent to action triggerer
+        self.assertEqual(recipients,
+                         [u'M. PMCreator One bee <pmcreator1b@plonemeeting.org>',
+                          u'M. PMCreator One <pmcreator1@plonemeeting.org>',
+                          u'M. PMCreator Two <pmcreator2@plonemeeting.org>'])
+
+    def test_pm_SendMailIfRelevantIsUserIds(self):
+        """ """
+        cfg = self.meetingConfig
+        cfg.setMailMode("activated")
+        cfg.setMailItemEvents(("item_state_changed_validate", ))
+
+        self.changeUser('pmManager')
+        item = self.create("MeetingItem", title="My item")
+        params = {"obj": item,
+                  "event": "item_state_changed_validate",
+                  "value": ['pmObserver1', 'pmManager', 'pmCreator2'],
+                  "isUserIds": True,
+                  "debug": True}
+
+        recipients, subject, body = sendMailIfRelevant(**params)
+        # not sent to action triggerer
+        self.assertEqual(recipients,
+                         [u'M. PMObserver One <pmobserver1@plonemeeting.org>',
+                          u'M. PMCreator Two <pmcreator2@plonemeeting.org>'])
 
     def test_pm_org_id_to_uid(self):
         """Test the utils.org_id_to_uid function."""

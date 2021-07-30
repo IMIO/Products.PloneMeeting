@@ -7,7 +7,10 @@ Changelog
 
 - Fixed an issue in `_migrateItemPredecessorReference` when migrating to 4200.
   [aduchene]
-
+- Added parameter `isUserIds` to `utils.sendMailIfRelevant` so it is possible
+  to send an e-mail to arbitrary users.
+  Renamed parameter `permissionOrSuffixOrRoleOrGroupIds` to `value`.
+  [gbastien]
 
 4.2b13 (2021-07-16)
 -------------------
