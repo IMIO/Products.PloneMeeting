@@ -472,7 +472,7 @@ div.add_advice_icon {
 }
 
 div#content.advice_infos_tooltipster fieldset.advice-addable-editable {
-    border-right: 3px solid green;
+    border-right: 2px solid green;
 }
 
 /* manage very large advice label */

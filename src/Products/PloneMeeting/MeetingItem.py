@@ -4553,9 +4553,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            advices need to be given, that had not to be given in the previous item state.'''
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        if 'adviceToGive' not in cfg.getMailItemEvents():
+        if 'adviceToGive' not in cfg.getMailItemEvents() and \
+           'adviceToGiveByUser' not in cfg.getMailItemEvents():
             return
         plone_group_ids = []
+        plone_user_ids = []
         for org_uid, adviceInfo in self.adviceIndex.iteritems():
             # call hook '_sendAdviceToGiveToGroup' to be able to bypass
             # send of this notification to some defined groups
@@ -4563,8 +4565,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 continue
             org = get_organization(org_uid)
             adviceStates = org.get_item_advice_states(cfg)
-            # If force_resend_if_in_review_states=True, check if current item review_state in adviceStates
-            # This is useful when asking advice again and item review_state does not change
+            # If force_resend_if_in_review_states=True,
+            # check if current item review_state in adviceStates
+            # This is useful when asking advice again and
+            # item review_state does not change
             # Ignore advices that must not be given in the current item state
             # Ignore advices that already needed to be given in the previous item state
             if (new_review_state not in adviceStates or old_review_state in adviceStates) and \
@@ -4573,17 +4577,31 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # do not consider groups that already gave their advice
             if adviceInfo['type'] not in ['not_given', 'asked_again']:
                 continue
-            plone_group_id = get_plone_group_id(org_uid, 'advisers')
-            plone_group_ids.append(plone_group_id)
+            if 'adviceToGiveByUser' not in cfg.getMailItemEvents() or \
+               not adviceInfo['userids']:
+                plone_group_id = get_plone_group_id(org_uid, 'advisers')
+                plone_group_ids.append(plone_group_id)
+            else:
+                plone_user_ids += adviceInfo['userids']
 
-        # send mail if plone_group_ids
+        # send mail
+        sent_to_group_ids = sent_to_user_ids = False
         if plone_group_ids:
             params = {"obj": self,
                       "event": "adviceToGive",
                       "value": plone_group_ids,
                       "isGroupIds": True,
                       "debug": debug}
-            return sendMailIfRelevant(**params)
+            sent_to_group_ids = sendMailIfRelevant(**params)
+        if plone_user_ids:
+            params = {"obj": self,
+                      "event": "adviceToGiveByUser",
+                      "permissionOrSuffixOrRoleOrGroupIds": plone_user_ids,
+                      "isUserIds": True,
+                      "debug": debug}
+            sent_to_user_ids = sendMailIfRelevant(**params)
+        return sent_to_group_ids or sent_to_user_ids
+
 
     def _sendAdviceToGiveToGroup(self, org_uid):
         """See docstring in interfaces.py"""

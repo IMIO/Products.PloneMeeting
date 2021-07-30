@@ -4684,6 +4684,24 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # some datagridfield attributes
         # powerObservers, meetingConfigsToCloneTo
 
+    security.declarePrivate('validate_mailItemEvents')
+
+    def validate_mailItemEvents(self, values):
+        '''Validates field mailItemEvents.'''
+
+        # inline validation sends a string instead of a tuple... bypass it!
+        if not hasattr(values, '__iter__'):
+            return
+
+        if '' in values:
+            values.remove('')
+
+        # conflicts
+        msg = translate('mail_item_events_conflicts',
+                        domain='PloneMeeting', context=self.REQUEST)
+        if 'adviceToGive' in values and 'adviceToGiveByUser' in values:
+            return msg
+
     security.declarePrivate('validate_itemAdviceEditStates')
 
     def validate_itemAdviceEditStates(self, values):
@@ -6552,6 +6570,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             ("adviceToGive", translate('event_advice_to_give',
                                        domain=d,
                                        context=self.REQUEST)),
+            ("adviceToGiveByUser", translate('event_advice_to_give_by_user',
+                                             domain=d,
+                                             context=self.REQUEST)),
             ("adviceEdited", translate('event_add_advice',
                                        domain=d,
                                        context=self.REQUEST)),
