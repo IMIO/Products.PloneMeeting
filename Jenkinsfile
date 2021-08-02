@@ -1,4 +1,4 @@
-pmDockerPipeline {
+pmDockerPipeline { 
   profileName = 'communes'
   testSuiteName = 'test'
   activateSolr = false
