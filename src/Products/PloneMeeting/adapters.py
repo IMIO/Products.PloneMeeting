@@ -318,14 +318,36 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
         usedItemAttributes = cfg.getUsedItemAttributes()
+        usedMeetingAttributes = cfg.getUsedMeetingAttributes()
 
         if displaying_available_items(self.context):
             meeting = getCurrentMeetingObject(self.context)
-            # late?
-            if meeting and self.context.wfConditions().isLateFor(meeting):
-                res.append(('late.png', translate('icon_help_late',
-                                                  domain="PloneMeeting",
-                                                  context=self.request)))
+        if displaying_available_items(self.context):
+            meeting = getCurrentMeetingObject(self.context)
+            # there could be no meeting if we opened an item from the available items view
+            if meeting:
+                # Item is in the list of available items, check if we
+                # must show a deadline- or late-related icon.
+                if self.context.wfConditions().isLateFor(meeting):
+                    # A late item, or worse: a late item not respecting the freeze deadline.
+                    if 'freeze_deadline' in usedMeetingAttributes and \
+                       not self.context.lastValidatedBefore(meeting.freeze_deadline):
+                        res.append(('deadlineKo.png',
+                                    translate('icon_help_freeze_deadline_ko',
+                                              domain="PloneMeeting",
+                                              context=self.request)))
+                    else:
+                        res.append(('late.png',
+                                    translate('icon_help_late',
+                                              domain="PloneMeeting",
+                                              context=self.request)))
+                elif meeting.query_state() == 'created' and \
+                        'validation_deadline' in usedMeetingAttributes and \
+                        not self.context.lastValidatedBefore(meeting.validation_deadline):
+                    res.append(('deadlineKo.png',
+                                translate('icon_help_validation_deadline_ko',
+                                          domain="PloneMeeting",
+                                          context=self.request)))
 
         itemState = self.context.query_state()
         # specifically manage states without leading icons to speed up things

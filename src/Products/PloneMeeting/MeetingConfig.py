@@ -779,6 +779,32 @@ schema = Schema((
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
+    StringField(
+        name='validationDeadlineDefault',
+        default=defValues.validationDeadlineDefault,
+        widget=StringField._properties['widget'](
+            description="ValidationDeadlineDefault",
+            description_msgid="validation_deadline_default_descr",
+            label='Validationdeadlinedefault',
+            label_msgid='PloneMeeting_label_validationDeadlineDefault',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="data",
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    StringField(
+        name='freezeDeadlineDefault',
+        default=defValues.freezeDeadlineDefault,
+        widget=StringField._properties['widget'](
+            description="FreezeDeadlineDefault",
+            description_msgid="freeze_deadline_default_descr",
+            label='Freezedeadlinedefault',
+            label_msgid='PloneMeeting_label_freezeadlineDefault',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="data",
+        write_permission="PloneMeeting: Write risky config",
+    ),
     LinesField(
         name='xhtmlTransformTypes',
         widget=MultiSelectionWidget(

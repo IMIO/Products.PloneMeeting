@@ -703,8 +703,8 @@ def getCustomSchemaFields(baseSchema, completedSchema, cols):
 
 
 def getDateFromDelta(aDate, delta):
-    '''This function returns a DateTime instance, which is computed from a
-       reference DateTime instance p_aDate to which a p_delta is applied.
+    '''This function returns a datetime instance, which is computed from a
+       reference datetime instance p_aDate to which a p_delta is applied.
        A p_delta is a string having the form '<deltaDays>-<hour>:<minutes>,
        where:
         - 'deltaDays' is a positive or negative integer indicating the number of
@@ -713,8 +713,11 @@ def getDateFromDelta(aDate, delta):
           computed date. It means that the hour and minutes of p_aDate are
           ignored.
     '''
-    days, hour = delta.split('.')
-    return DateTime('%s %s' % ((aDate + int(days)).strftime('%Y/%m/%d'), hour))
+    days, time_info = delta.split('.')
+    hour, minute = time_info.split(':')
+    new_date = aDate + timedelta(int(days))
+    new_date = new_date.replace(hour=int(hour), minute=int(minute))
+    return new_date
 
 
 def mark_empty_tags(obj, value):
