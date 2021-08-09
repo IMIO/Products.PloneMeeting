@@ -837,7 +837,7 @@ class ItemOptionalAdvicesVocabulary(object):
 
         # we add a special value at the beginning of the vocabulary
         # if we have delay-aware advisers
-        if delayAwareAdvisers:
+        if resDelayAwareAdvisers:
             delay_aware_optional_advisers_msg = translate('delay_aware_optional_advisers_term',
                                                           domain='PloneMeeting',
                                                           context=request)
@@ -848,10 +848,11 @@ class ItemOptionalAdvicesVocabulary(object):
 
             # if we have delay-aware advisers, we add another special value
             # that explain that under are 'normal' optional advisers
-            if selectableAdvisers:
-                non_delay_aware_optional_advisers_msg = translate('non_delay_aware_optional_advisers_term',
-                                                                  domain='PloneMeeting',
-                                                                  context=request)
+            if resNonDelayAwareAdvisers:
+                non_delay_aware_optional_advisers_msg = translate(
+                    'non_delay_aware_optional_advisers_term',
+                    domain='PloneMeeting',
+                    context=request)
                 resNonDelayAwareAdvisers.insert(
                     0, SimpleTerm('not_selectable_value_non_delay_aware_optional_advisers',
                                   'not_selectable_value_non_delay_aware_optional_advisers',

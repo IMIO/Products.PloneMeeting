@@ -2160,10 +2160,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     removedAdviser, userid = removedAdviser.split('__userid__')
                 if removedAdviser in givenAdvices and \
                    givenAdvices[removedAdviser]['optional'] is True:
-                    vocab = self.getField('optionalAdvisers').Vocabulary(self)
+                    vocab = get_vocab(self, self.getField('optionalAdvisers').vocabulary_factory)
+                    # use term.sortable_title that contains the adviser title
+                    # when removing an advice asked to a userid
                     return translate(
                         'can_not_unselect_already_given_advice',
-                        mapping={'removedAdviser': self.displayValue(vocab, orig_removedAdviser)},
+                        mapping={'removedAdviser':
+                            vocab.getTermByToken(orig_removedAdviser).sortable_title},
                         domain='PloneMeeting',
                         context=self.REQUEST)
         return self.adapted().custom_validate_optionalAdvisers(
