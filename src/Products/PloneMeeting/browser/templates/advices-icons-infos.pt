@@ -400,7 +400,7 @@
 
             <div class="discreet advice_additional_infos" style="text-align: right;">
               <div tal:condition="python: advice['userids']" class="advice-asked-to">
-                <span i18n:translate="">Advice asked to</span>:
+                <span i18n:translate="">Advice asked to</span>
                 <span tal:content="structure python: view.adviser_users(advice)">User ids</span>
               </div>
 
