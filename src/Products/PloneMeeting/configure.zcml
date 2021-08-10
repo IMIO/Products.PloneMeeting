@@ -159,6 +159,14 @@
            provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
            name="items-to-advice-without-hidden-during-redaction" />
   <adapter for="*"
+           factory="Products.PloneMeeting.adapters.MyItemsToAdviceAdapter"
+           provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
+           name="my-items-to-advice" />
+  <adapter for="*"
+           factory="Products.PloneMeeting.adapters.MyItemsToAdviceWithoutHiddenDuringRedactionAdapter"
+           provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
+           name="my-items-to-advice-without-hidden-during-redaction" />
+  <adapter for="*"
            factory="Products.PloneMeeting.adapters.ItemsToAdviceWithoutDelayAdapter"
            provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
            name="items-to-advice-without-delay" />
@@ -178,10 +186,12 @@
            factory="Products.PloneMeeting.adapters.AdvisedItemsWithDelayAdapter"
            provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
            name="advised-items-with-delay" />
+
   <adapter for="*"
            factory="Products.PloneMeeting.adapters.DecidedItemsAdapter"
            provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
            name="decided-items" />
+
   <adapter for="*"
            factory="Products.PloneMeeting.adapters.PersonalLabelsAdapter"
            provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
@@ -194,6 +204,7 @@
            factory="Products.PloneMeeting.adapters.NegativePreviousIndexValuesAdapter"
            provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
            name="items-with-negative-previous-index" />
+
   <adapter for="*"
            factory="Products.PloneMeeting.adapters.LastDecisionsAdapter"
            provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
@@ -341,7 +352,7 @@
     <implements interface="Products.Archetypes.interfaces.IMultiPageSchema" />
     <implements interface="ftw.labels.interfaces.ILabelRoot" />
   </class>
-  
+
   <!-- Make Meeting behave like a Collection to be faceted navigable -->
   <class class="Products.PloneMeeting.content.meeting.Meeting">
     <implements interface="eea.facetednavigation.interfaces.IPossibleFacetedNavigable" />

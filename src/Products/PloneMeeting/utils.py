@@ -624,9 +624,9 @@ def sendMailIfRelevant(obj,
         userIds = value
 
     # remove duplicate
+    userIds = list(set(userIds))
     membershipTool = api.portal.get_tool('portal_membership')
     currentUser = membershipTool.getAuthenticatedMember()
-    userIds = list(set(userIds))
     for userId in userIds:
         user = membershipTool.getMemberById(userId)
         # do not warn user doing the action
@@ -1946,6 +1946,8 @@ def decodeDelayAwareId(delayAwareId):
        'orgauid__rowid__myuniquerowid.20141215'.
        We return the org_uid and the row_id."""
     infos = delayAwareId.split('__rowid__')
+    if '__userid__' in infos[0]:
+        infos[0] = infos[0].split('__userid__')[0]
     return infos[0], infos[1]
 
 

@@ -422,8 +422,9 @@ class MeetingConfigDescriptor(Descriptor):
                          'onMeetingTransitionItemActionToExecute', 'meetingPresentItemWhenNoCurrentMeetingStates',
                          'itemAutoSentToOtherMCStates', 'itemManualSentToOtherMCStates', 'advicesKeptOnSentToOtherMC',
                          'mailItemEvents', 'mailMeetingEvents',
-                         'usedAdviceTypes', 'selectableAdvisers', 'itemAdviceStates',
-                         'itemAdviceEditStates', 'itemAdviceViewStates', 'itemBudgetInfosStates',
+                         'usedAdviceTypes', 'selectableAdvisers', 'selectableAdviserUsers',
+                         'itemAdviceStates', 'itemAdviceEditStates',
+                         'itemAdviceViewStates', 'itemBudgetInfosStates',
                          'powerAdvisersGroups', 'powerObservers',
                          'meetingConfigsToCloneTo', 'itemAdviceInvalidateStates',
                          'defaultAdviceHiddenDuringRedaction', 'transitionsReinitializingDelays',
@@ -797,6 +798,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.usedAdviceTypes = ('positive', 'positive_with_remarks', 'negative', 'nil')
         self.defaultAdviceType = 'positive'
         self.selectableAdvisers = []
+        self.selectableAdviserUsers = []
         # When advice mandatoriness is enabled, it is not possible to put an
         # item in a meeting while madatory advices are not all positive.
         self.enforceAdviceMandatoriness = False

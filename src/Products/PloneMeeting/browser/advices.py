@@ -136,7 +136,8 @@ class AdvicesIconsInfos(BrowserView):
         self.cfg = self.tool.getMeetingConfig(self.context)
         self.portal = api.portal.get()
         self.portal_url = self.portal.absolute_url()
-        self.advisableGroups = self.context.getAdvicesGroupsInfosForUser(compute_to_add=False)
+        self.advisableGroups = self.context.getAdvicesGroupsInfosForUser(compute_to_add=True)
+        self.advicesToAdd = [info[0] for info in self.advisableGroups[0]]
         self.advicesToEdit = [info[0] for info in self.advisableGroups[1]]
         self.advicesByType = self.context.getAdvicesByType()
         self.adviceType = adviceType
@@ -200,8 +201,15 @@ class AdvicesIconsInfos(BrowserView):
         return _delay_icon(self.memberIsAdviserForGroup, advice_info)
 
     def authorname(self, advice):
-        author = api.user.get(advice.Creator())
-        return author and author.getProperty('fullname') or advice.Creator()
+        return self.tool.getUserName(advice.Creator())
+
+    def adviser_users(self, advice_info):
+        """ """
+        res = u''
+        if advice_info['userids']:
+            res = self.context._displayAdviserUsers(
+                advice_info['userids'], self.portal_url, self.tool)
+        return res
 
     def state_infos(self, advice):
         return get_state_infos(advice)

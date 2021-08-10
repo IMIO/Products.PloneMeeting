@@ -91,13 +91,12 @@ class AdviceRemoveInheritanceForm(AutoExtensibleForm, form.EditForm):
         advice_asked_locally = False
         if data['inherited_advice_action'] == 'ask_locally':
             if self.context.showOptionalAdvisers():
-                optionalAdvisers = list(self.context.getOptionalAdvisers())
                 advisers_vocab = get_vocab(
                     self.context,
                     self.context.getField('optionalAdvisers').vocabulary_factory,
                     **{'include_selected': False, 'include_not_selectable_values': False})
                 if data['advice_uid'] in advisers_vocab:
-                    optionalAdvisers = list(self.context.getOptionalAdvisers())
+                    optionalAdvisers = list(self.context.getOptionalAdvisers(computed=True))
                     if data['advice_uid'] not in optionalAdvisers:
                         optionalAdvisers.append(data['advice_uid'])
                         self.context.setOptionalAdvisers(optionalAdvisers)

@@ -4,6 +4,7 @@
      tal:define="item_url context/absolute_url;
                  adviceType view/adviceType;
                  advicesByType view/advicesByType;
+                 advicesToAdd view/advicesToAdd;
                  advicesToEdit view/advicesToEdit;
                  userAdviserOrgUids view/userAdviserOrgUids;">
   <tal:defines define="cfg python: view.cfg;
@@ -24,7 +25,8 @@
                                   displayDefaultComplementaryMessage customMessageInfos/displayDefaultComplementaryMessage;
                                   displayAdviceReviewState customMessageInfos/displayAdviceReviewState;
                                   customAdviceMessage customMessageInfos/customAdviceMessage;
-                                  mayView view/mayView">
+                                  mayView view/mayView"
+                       tal:attributes="class python: (advice['id'] in advicesToAdd or advice['id'] in advicesToEdit) and 'advice-addable-editable' or ''">
                 <legend>
                   <div style="display: inline"
                        class="collapsible active"
@@ -75,7 +77,8 @@
                       </acronym>
                   </tal:inherited_advice>
                   <div class="advice_popup_label">
-                  <span tal:condition="advice/optional">(</span><span class="advice-name" tal:content="structure advice/name"></span>
+                  <span tal:condition="advice/optional">(</span>
+                  <span class="advice-name" tal:content="structure advice/name"></span>
                        <tal:showDelayLabel condition="python: advice['delay'] and advice['delay_label']">
                             - <span class="advice-label" tal:content="advice/delay_label"></span>
                        </tal:showDelayLabel><span tal:condition="advice/optional">)</span>
@@ -396,6 +399,11 @@
             </tal:customAdviceMessage>
 
             <div class="discreet advice_additional_infos" style="text-align: right;">
+              <div tal:condition="python: advice['userids']" class="advice-asked-to">
+                <span i18n:translate="">Advice asked to</span>
+                <span tal:content="structure python: view.adviser_users(advice)">User ids</span>
+              </div>
+
               <tal:author condition="nocall:obj">
                 <tal:i18n i18n:domain="plone" i18n:translate="label_by_author">
                 by

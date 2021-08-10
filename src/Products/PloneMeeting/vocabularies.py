@@ -12,6 +12,7 @@ from collective.contact.plonegroup.config import get_registry_organizations
 from collective.contact.plonegroup.utils import get_organization
 from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_own_organization
+from collective.contact.plonegroup.utils import get_plone_group
 from collective.contact.plonegroup.vocabularies import PositionTypesVocabulary
 from collective.documentgenerator.content.vocabulary import ExistingPODTemplateFactory
 from collective.documentgenerator.content.vocabulary import MergeTemplatesVocabularyFactory
@@ -754,6 +755,23 @@ class ItemOptionalAdvicesVocabulary(object):
 
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
+        selectableAdviserUsers = cfg.getSelectableAdviserUsers()
+
+        def _insert_term_and_users(res, term_value, term_title):
+            """ """
+            term = SimpleTerm(term_value, term_value, term_title)
+            term.sortable_title = term_title
+            res.append(term)
+            org_uid = term_value.split('__rowid__')[0]
+            if org_uid in selectableAdviserUsers:
+                advisers_group = get_plone_group(org_uid, "advisers")
+                for user_id in advisers_group.getGroupMemberIds():
+                    user_term_value = "{0}__userid__{1}".format(term_value, user_id)
+                    user_title = tool.getUserName(user_id)
+                    user_term = SimpleTerm(user_term_value, user_term_value, user_title)
+                    user_term.sortable_title = u"{0} ({1})".format(term_title, user_title)
+                    res.append(user_term)
+            return
 
         resDelayAwareAdvisers = []
         # add delay-aware optionalAdvisers
@@ -766,25 +784,24 @@ class ItemOptionalAdvicesVocabulary(object):
         else:
             validity_date = DateTime()
         delayAwareAdvisers = cfg._optionalDelayAwareAdvisers(validity_date, item)
-        if delayAwareAdvisers:
-            # a delay-aware adviser has a special id so we can handle it specifically after
-            for delayAwareAdviser in delayAwareAdvisers:
-                adviserId = "%s__rowid__%s" % \
-                            (delayAwareAdviser['org_uid'],
-                             delayAwareAdviser['row_id'])
-                delay = delayAwareAdviser['delay']
-                delay_label = delayAwareAdviser['delay_label']
-                group_name = delayAwareAdviser['org_title']
-                value_to_display = _displayDelayAwareValue(delay_label, group_name, delay)
-                resDelayAwareAdvisers.append(
-                    SimpleTerm(adviserId, adviserId, value_to_display))
+        # a delay-aware adviser has a special id so we can handle it specifically after
+        for delayAwareAdviser in delayAwareAdvisers:
+            adviserId = "%s__rowid__%s" % \
+                        (delayAwareAdviser['org_uid'],
+                         delayAwareAdviser['row_id'])
+            delay = delayAwareAdviser['delay']
+            delay_label = delayAwareAdviser['delay_label']
+            group_name = delayAwareAdviser['org_title']
+            value_to_display = _displayDelayAwareValue(delay_label, group_name, delay)
+            _insert_term_and_users(
+                resDelayAwareAdvisers, adviserId, value_to_display)
 
         resNonDelayAwareAdvisers = []
         selectableAdvisers = cfg.getSelectableAdvisers()
         for org_uid in selectableAdvisers:
             org = get_organization(org_uid)
-            resNonDelayAwareAdvisers.append(
-                SimpleTerm(org_uid, org_uid, org.get_full_title()))
+            _insert_term_and_users(
+                resNonDelayAwareAdvisers, org_uid, org.get_full_title())
 
         # make sure optionalAdvisers actually stored have their corresponding
         # term in the vocabulary, if not, add it
@@ -795,28 +812,32 @@ class ItemOptionalAdvicesVocabulary(object):
                                           [org_infos.token for org_infos in resDelayAwareAdvisers]
                 for optionalAdviser in optionalAdvisers:
                     if optionalAdviser not in optionalAdvisersInVocab:
-                        org = get_organization(optionalAdviser)
-                        if not org:
-                            continue
                         if '__rowid__' in optionalAdviser:
                             org_uid, row_id = decodeDelayAwareId(optionalAdviser)
                             delay = cfg._dataForCustomAdviserRowId(row_id)['delay']
                             delay_label = context.adviceIndex[org_uid]['delay_label']
+                            org = get_organization(org_uid)
+                            if not org:
+                                continue
                             org_title = org.get_full_title()
                             value_to_display = _displayDelayAwareValue(delay_label, org_title, delay)
-                            resDelayAwareAdvisers.append(
-                                SimpleTerm(optionalAdviser, optionalAdviser, value_to_display))
+                            _insert_term_and_users(
+                                resDelayAwareAdvisers, optionalAdviser, value_to_display)
                         else:
-                            resNonDelayAwareAdvisers.append(
-                                SimpleTerm(optionalAdviser, optionalAdviser, org.get_full_title()))
+                            org = get_organization(optionalAdviser)
+                            if not org:
+                                continue
+                            _insert_term_and_users(
+                                resNonDelayAwareAdvisers, optionalAdviser, org.get_full_title())
 
         # now create the listing
         # sort elements by value before potentially prepending a special value here under
         # for delay-aware advisers, the order is defined in the configuration, so we do not .sortedByValue()
-        resNonDelayAwareAdvisers = humansorted(resNonDelayAwareAdvisers, key=attrgetter('title'))
+        resNonDelayAwareAdvisers = humansorted(resNonDelayAwareAdvisers, key=attrgetter('sortable_title'))
+
         # we add a special value at the beginning of the vocabulary
         # if we have delay-aware advisers
-        if delayAwareAdvisers:
+        if resDelayAwareAdvisers:
             delay_aware_optional_advisers_msg = translate('delay_aware_optional_advisers_term',
                                                           domain='PloneMeeting',
                                                           context=request)
@@ -827,15 +848,15 @@ class ItemOptionalAdvicesVocabulary(object):
 
             # if we have delay-aware advisers, we add another special value
             # that explain that under are 'normal' optional advisers
-            if selectableAdvisers:
-                non_delay_aware_optional_advisers_msg = translate('non_delay_aware_optional_advisers_term',
-                                                                  domain='PloneMeeting',
-                                                                  context=request)
+            if resNonDelayAwareAdvisers:
+                non_delay_aware_optional_advisers_msg = translate(
+                    'non_delay_aware_optional_advisers_term',
+                    domain='PloneMeeting',
+                    context=request)
                 resNonDelayAwareAdvisers.insert(
                     0, SimpleTerm('not_selectable_value_non_delay_aware_optional_advisers',
                                   'not_selectable_value_non_delay_aware_optional_advisers',
                                   non_delay_aware_optional_advisers_msg))
-
         return SimpleVocabulary(resDelayAwareAdvisers + resNonDelayAwareAdvisers)
 
 
@@ -1176,7 +1197,7 @@ class OtherMCCorrespondenceVocabulary(object):
                     res.append(SimpleTerm(
                         cat.UID(),
                         cat.UID(),
-                        u'%s 🡒 %s 🡒 %s' % (
+                        u'%s ➔ %s ➔ %s' % (
                             safe_unicode(cfg.Title()),
                             translate('Item annexes',
                                       domain='PloneMeeting',
@@ -1186,7 +1207,7 @@ class OtherMCCorrespondenceVocabulary(object):
                         res.append(SimpleTerm(
                             subcat.UID(),
                             subcat.UID(),
-                            u'%s 🡒 %s 🡒 %s 🡒 %s' % (
+                            u'%s ➔ %s ➔ %s ➔ %s' % (
                                 safe_unicode(cfg.Title()),
                                 translate('Item annexes',
                                           domain='PloneMeeting',
@@ -1198,7 +1219,7 @@ class OtherMCCorrespondenceVocabulary(object):
                     res.append(SimpleTerm(
                         cat.UID(),
                         cat.UID(),
-                        u'%s 🡒 %s 🡒 %s' % (
+                        u'%s ➔ %s ➔ %s' % (
                             safe_unicode(cfg.Title()),
                             translate('Item decision annexes',
                                       domain='PloneMeeting',
@@ -1208,7 +1229,7 @@ class OtherMCCorrespondenceVocabulary(object):
                         res.append(SimpleTerm(
                             subcat.UID(),
                             subcat.UID(),
-                            u'%s 🡒 %s 🡒 %s 🡒 %s' % (
+                            u'%s ➔ %s ➔ %s ➔ %s' % (
                                 safe_unicode(cfg.Title()),
                                 translate('Item annexes',
                                           domain='PloneMeeting',
@@ -1240,14 +1261,14 @@ class StorePodTemplateAsAnnexVocabulary(object):
                 res.append(SimpleTerm(
                     cat.UID(),
                     cat.UID(),
-                    u'{0} 🡒 {1}'.format(
+                    u'{0} ➔ {1}'.format(
                         safe_unicode(annexes_group.Title()),
                         safe_unicode(cat.Title()))))
                 for subcat in cat.objectValues():
                     res.append(SimpleTerm(
                         subcat.UID(),
                         subcat.UID(),
-                        u'{0} 🡒 {1} 🡒 {2}'.format(
+                        u'{0} ➔ {1} ➔ {2}'.format(
                             safe_unicode(annexes_group.Title()),
                             safe_unicode(cat.Title()),
                             safe_unicode(subcat.Title()))))
@@ -1287,7 +1308,7 @@ class ItemTemplatesStorableAsAnnexVocabulary(object):
                         u'{0} ({1} / {2})'.format(
                             safe_unicode(pod_template.Title()),
                             output_format,
-                            u'{0} 🡒 {1}'.format(
+                            u'{0} ➔ {1}'.format(
                                 safe_unicode(annex_group_title),
                                 safe_unicode(annex_type.Title())))))
         return SimpleVocabulary(res)
@@ -1340,7 +1361,7 @@ class PMExistingPODTemplate(ExistingPODTemplateFactory):
     def _renderTermTitle(self, brain):
         template = brain.getObject()
         cfg = template.aq_inner.aq_parent.aq_parent
-        return u'{} 🡒 {} 🡒 {}'.format(
+        return u'{} ➔ {} ➔ {}'.format(
             safe_unicode(cfg.Title(include_config_group=True)),
             safe_unicode(template.Title()),
             safe_unicode(template.odt_file.filename))

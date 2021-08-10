@@ -121,6 +121,7 @@ class testSearches(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         item.setOptionalAdvisers(
             (self.developers_uid, '{0}__rowid__unique_id_123'.format(self.vendors_uid)))
+        item._update_after_edit()
         # as the item is "itemcreated", advices are not givable
         self.changeUser('pmAdviser1')
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstoadvice')
@@ -198,6 +199,100 @@ class testSearches(PloneMeetingTestCase):
                           '{0}_advice_asked_again'.format(self.developers_uid),
                           'delay__{0}_advice_asked_again'.format(self.developers_uid)]},
                 'portal_type': {'query': itemTypeName}})
+
+    def test_pm_SearchMyItemsToAdviceAdapter(self):
+        '''Test the 'search-my-items-to-advice' adapter that should return
+           a list of items a user has to give an advice for.
+           This will return only items for which advice is asked to entire group or
+           asked to current user.
+           Advice asked to another user will not be returned.'''
+        self.changeUser('admin')
+        cfg = self.meetingConfig
+        cfg.setUsedAdviceTypes(cfg.getUsedAdviceTypes() + ('asked_again', ))
+        originalCustomAdvisers = {'row_id': 'unique_id_123',
+                                  'org': self.vendors_uid,
+                                  'gives_auto_advice_on': '',
+                                  'for_item_created_from': '2012/01/01',
+                                  'for_item_created_until': '',
+                                  'gives_auto_advice_on_help_message': '',
+                                  'delay': '10',
+                                  'delay_left_alert': '',
+                                  'delay_label': 'Delay label', }
+        cfg.setCustomAdvisers([originalCustomAdvisers])
+        cfg.setSelectableAdviserUsers((self.vendors_uid, ))
+        cfg.setItemAdviceStates((self._stateMappingFor('itemcreated'), ))
+        cfg.setItemAdviceEditStates((self._stateMappingFor('itemcreated'), ))
+        cfg.setItemAdviceViewStates((self._stateMappingFor('itemcreated'), ))
+        itemTypeName = cfg.getItemTypeName()
+
+        # first test the generated query
+        adapter = getAdapter(cfg,
+                             ICompoundCriterionFilter,
+                             name='my-items-to-advice')
+        # admin is not adviser
+        self.assertEqual(adapter.query,
+                         {'indexAdvisers': {'query': []},
+                          'portal_type': {'query': itemTypeName}})
+        # as adviser, query is correct
+        self.changeUser('pmReviewer2')
+        self.assertEqual(
+            adapter.query,
+            {'indexAdvisers': {
+                'query': [
+                    '{0}_advice_not_given__userid__pmReviewer2'.format(
+                        self.vendors_uid),
+                    '{0}_advice_not_given__userid__entireadvisersgroup'.format(
+                        self.vendors_uid),
+                    'delay__{0}_advice_not_given__userid__pmReviewer2'.format(
+                        self.vendors_uid),
+                    'delay__{0}_advice_not_given__userid__entireadvisersgroup'.format(
+                        self.vendors_uid),
+                    '{0}_advice_asked_again__userid__pmReviewer2'.format(
+                        self.vendors_uid),
+                    '{0}_advice_asked_again__userid__entireadvisersgroup'.format(
+                        self.vendors_uid),
+                    'delay__{0}_advice_asked_again__userid__pmReviewer2'.format(
+                        self.vendors_uid),
+                    'delay__{0}_advice_asked_again__userid__entireadvisersgroup'.format(
+                        self.vendors_uid),
+                    '{0}_advice_hidden_during_redaction__userid__pmReviewer2'.format(
+                        self.vendors_uid),
+                    '{0}_advice_hidden_during_redaction__userid__entireadvisersgroup'.format(
+                        self.vendors_uid),
+                    'delay__{0}_advice_hidden_during_redaction__userid__pmReviewer2'.format(
+                        self.vendors_uid),
+                    'delay__{0}_advice_hidden_during_redaction__userid__entireadvisersgroup'.format(
+                        self.vendors_uid)]},
+                'portal_type': {'query': itemTypeName}})
+
+        # now do the query
+        # this adapter is used by the "searchmyitemstoadvice"
+        myitemstoadvice = cfg.searches.searches_items.searchmyitemstoadvice
+        itemstoadvice = cfg.searches.searches_items.searchallitemstoadvice
+        # by default, no item to advice...
+        self.failIf(myitemstoadvice.results())
+        self.failIf(itemstoadvice.results())
+
+        # create 3 items to advice
+        # one with advice asked to entire vendors advisers
+        # one with advice asked to pmAdviser1
+        # one with advice asked to another vendors adviser "pmManager"
+        self.changeUser('pmCreator1')
+        self.create(
+            'MeetingItem',
+            optionalAdvisers=(self.vendors_uid, ))
+        self.create(
+            'MeetingItem',
+            optionalAdvisers=('{0}__userid__pmReviewer2'.format(self.vendors_uid), ))
+        self.create(
+            'MeetingItem',
+            optionalAdvisers=('{0}__userid__pmManager'.format(self.vendors_uid), ))
+
+        # pmReviewer2 will only get item1/item2 in the "searchmyitemstoadvice" collection
+        # the "searchallitemstoadvice" collection will return the 3 items
+        self.changeUser('pmReviewer2')
+        self.assertEqual(len(myitemstoadvice.results()), 2)
+        self.assertEqual(len(itemstoadvice.results()), 3)
 
     def test_pm_SearchAdvisedItems(self):
         '''Test the 'search-advised-items' adapter.  This should return a list of items

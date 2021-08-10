@@ -1755,6 +1755,24 @@ schema = Schema((
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
+        name='selectableAdviserUsers',
+        widget=MultiSelectionWidget(
+            description="SelectableAdviserUsers",
+            description_msgid="selectable_adviser_users_descr",
+            format="checkbox",
+            size=10,
+            label='Selectableadviserusers',
+            label_msgid='PloneMeeting_label_selectableAdviserUsers',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="advices",
+        multiValued=1,
+        vocabulary='listSelectableAdvisers',
+        default=defValues.selectableAdvisers,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    LinesField(
         name='itemAdviceStates',
         widget=MultiSelectionWidget(
             description="ItemAdviceStates",
@@ -2889,6 +2907,25 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_reversed': True,
                     'showNumberOfItems': False,
                     'tal_condition': "python: cfg.userIsAReviewer()",
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
+                # My items to advice
+                ('searchmyitemstoadvice', {
+                    'subFolderId': 'searches_items',
+                    'active': True,
+                    'query':
+                    [
+                        {'i': 'CompoundCriterion',
+                         'o': 'plone.app.querystring.operation.compound.is',
+                         'v': 'my-items-to-advice'},
+                    ],
+                    'sort_on': u'modified',
+                    'sort_reversed': True,
+                    'showNumberOfItems': True,
+                    'tal_condition': "python: cfg.getUseAdvices() and "
+                        "tool.userIsAmong(['advisers'], "
+                        "cfg=cfg, "
+                        "using_groups=cfg.getSelectableAdviserUsers())",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Items to advice
@@ -4673,6 +4710,28 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # some datagridfield attributes
         # powerObservers, meetingConfigsToCloneTo
 
+    security.declarePrivate('validate_mailItemEvents')
+
+    def validate_mailItemEvents(self, values):
+        '''Validates field mailItemEvents.'''
+
+        # inline validation sends a string instead of a tuple... bypass it!
+        if not hasattr(values, '__iter__'):
+            return
+
+        if '' in values:
+            values.remove('')
+
+        # conflicts
+        if 'adviceToGive' in values and 'adviceToGiveByUser' in values:
+            vocab = self.Vocabulary('mailItemEvents')[0]
+            conflicts = u", ".join(
+                [vocab.getValue('adviceToGive'), vocab.getValue('adviceToGiveByUser')])
+            msg = translate('mail_item_events_conflicts',
+                            mapping={"conflicting_notifications": conflicts},
+                            domain='PloneMeeting', context=self.REQUEST)
+            return msg
+
     security.declarePrivate('validate_itemAdviceEditStates')
 
     def validate_itemAdviceEditStates(self, values):
@@ -5823,13 +5882,17 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             subFolderId = collectionData['subFolderId']
             if subFolderId:
                 container = getattr(container, subFolderId)
+            # empty container
+            if not container.objectIds():
+                previous_collection_id = None
+
             if collectionId in container.objectIds():
                 logger.info("Trying to add an already existing collection with id '%s', skipping..." % collectionId)
+                previous_collection_id = collectionId
                 continue
             added_collections = True
             container.invokeFactory('DashboardCollection', collectionId, **collectionData)
             collection = getattr(container, collectionId)
-            collection.processForm(values={'dummy': None})
             # update query so it is stored correctly because we pass a dict
             # but it is actually stored as instances of ZPublisher.HTTPRequest.record
             collection.setQuery(collection.query)
@@ -5842,6 +5905,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             if not collectionData['active']:
                 collection.enabled = False
             collection.reindexObject()
+            if previous_collection_id is not None and \
+               previous_collection_id in container.objectIds():
+                previous_collection_id_pos = container.getObjectPosition(previous_collection_id)
+                container.moveObjectToPosition(collectionId, previous_collection_id_pos+1)
+            previous_collection_id = collectionId
         return added_collections
 
     def _getCloneToOtherMCActionId(self, destMeetingConfigId, meetingConfigId, emergency=False):
@@ -6532,6 +6600,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             ("adviceToGive", translate('event_advice_to_give',
                                        domain=d,
                                        context=self.REQUEST)),
+            ("adviceToGiveByUser", translate('event_advice_to_give_by_user',
+                                             domain=d,
+                                             context=self.REQUEST)),
             ("adviceEdited", translate('event_add_advice',
                                        domain=d,
                                        context=self.REQUEST)),
