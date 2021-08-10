@@ -999,7 +999,6 @@ def onMeetingAdded(meeting, event):
        after the created and moved events.'''
     # while migrating to Meeting DX, we do not have a date
     # while creating the new meeting
-    import ipdb; ipdb.set_trace()
     if meeting.date:
         meeting.update_title()
         meeting.compute_dates()

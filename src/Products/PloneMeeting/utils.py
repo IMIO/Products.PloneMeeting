@@ -720,6 +720,20 @@ def getDateFromDelta(aDate, delta):
     return new_date
 
 
+def is_transition_before_date(obj, transition, date):
+    '''Returns True if this p_obj last p_transition was made before p_date.
+       p_date is a python datetime.datetime.'''
+    res = False
+    last_action = getLastWFAction(obj, transition=transition)
+    if last_action:
+        last_action_date = DateTime(last_action["time"])
+        last_action_date._timezone_naive = True
+        last_action_date = last_action_date.asdatetime()
+        if last_action_date < date:
+            res = True
+    return res
+
+
 def mark_empty_tags(obj, value):
     """ """
     if _checkPermission(ModifyPortalContent, obj):
@@ -1605,7 +1619,7 @@ def updateAnnexesAccess(container):
         # do not fail on 'Members', use unrestrictedTraverse
         try:
             annex = portal.unrestrictedTraverse(v['relative_url'])
-        except:
+        except Exception:
             # in case we are removing an annex, this could be called
             # before categorized_elements dict is updated
             v['visible_for_groups'] = []

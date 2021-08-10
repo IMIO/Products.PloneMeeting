@@ -57,6 +57,7 @@ from Products.PloneMeeting.utils import get_context_with_request
 from Products.PloneMeeting.utils import get_referer_obj
 from Products.PloneMeeting.utils import getCurrentMeetingObject
 from Products.PloneMeeting.utils import getHistoryTexts
+from Products.PloneMeeting.utils import is_transition_before_date
 from Products.PloneMeeting.utils import reviewersFor
 from zope.annotation import IAnnotations
 from zope.i18n import translate
@@ -330,8 +331,10 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
                 # must show a deadline- or late-related icon.
                 if self.context.wfConditions().isLateFor(meeting):
                     # A late item, or worse: a late item not respecting the freeze deadline.
-                    if 'freeze_deadline' in usedMeetingAttributes and \
-                       not self.context.lastValidatedBefore(meeting.freeze_deadline):
+                    if "freeze_deadline" in usedMeetingAttributes and \
+                       getattr(meeting, "freeze_deadline", None) is not None and \
+                       not is_transition_before_date(
+                            self.context, "validate", meeting.freeze_deadline):
                         res.append(('deadlineKo.png',
                                     translate('icon_help_freeze_deadline_ko',
                                               domain="PloneMeeting",
@@ -342,8 +345,10 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
                                               domain="PloneMeeting",
                                               context=self.request)))
                 elif meeting.query_state() == 'created' and \
-                        'validation_deadline' in usedMeetingAttributes and \
-                        not self.context.lastValidatedBefore(meeting.validation_deadline):
+                        "validation_deadline" in usedMeetingAttributes and \
+                        getattr(meeting, "validation_deadline", None) is not None and \
+                        not is_transition_before_date(
+                            self.context, "validate", meeting.validation_deadline):
                     res.append(('deadlineKo.png',
                                 translate('icon_help_validation_deadline_ko',
                                           domain="PloneMeeting",

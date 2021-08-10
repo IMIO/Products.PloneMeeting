@@ -1807,7 +1807,6 @@ class Meeting(Container):
         if 'end_date' in used_attrs and not self.end_date:
             self.end_date = self.date + timedelta(hours=2)
         # Compute the deadlines
-        import ipdb; ipdb.set_trace()
         if 'validation_deadline' in used_attrs and not getattr(self, 'validation_deadline', None):
             delta = cfg.getValidationDeadlineDefault()
             if not delta.strip() in ('', '0',):
