@@ -799,7 +799,7 @@ schema = Schema((
             description="FreezeDeadlineDefault",
             description_msgid="freeze_deadline_default_descr",
             label='Freezedeadlinedefault',
-            label_msgid='PloneMeeting_label_freezeadlineDefault',
+            label_msgid='PloneMeeting_label_freezeDeadlineDefault',
             i18n_domain='PloneMeeting',
         ),
         schemata="data",
