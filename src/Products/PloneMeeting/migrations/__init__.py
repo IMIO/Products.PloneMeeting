@@ -278,6 +278,7 @@ class Migrator(BaseMigrator):
         for cfg in self.tool.objectValues('MeetingConfig'):
             cfg._createSubFolders()
             cfg.createSearches(cfg._searchesInfo())
+            cfg.updateCollectionColumns()
         logger.info('Done.')
 
     def updateCollectionColumns(self):
@@ -423,7 +424,7 @@ class Migrator(BaseMigrator):
                         logger.info("Replaced \"{0}\" by \"{1}\" in query of \"{2}\"".format(
                             old_index_name, new_index_name, brain.getPath()))
                     adapted_query.append(adapted_line)
-                if dc.sort_on == old_index_name:
+                if base_hasattr(dc, 'sort_on') and dc.sort_on == old_index_name:
                     dc.sort_on = new_index_name
                     logger.info("Replaced \"{0}\" by \"{1}\" in sort_on of \"{2}\"".format(
                         old_index_name, new_index_name, brain.getPath()))

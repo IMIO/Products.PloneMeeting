@@ -471,6 +471,10 @@ div.add_advice_icon {
     display: none;
 }
 
+div#content.advice_infos_tooltipster fieldset.advice-addable-editable {
+    border-right: 2px solid green;
+}
+
 /* manage very large advice label */
 div#content.advice_infos_tooltipster legend {
    height: auto;
@@ -1037,7 +1041,17 @@ div#optionalAdvisers input[value="not_selectable_value_non_delay_aware_optional_
     color: grey;
     font-style: italic;
 }
-
+div#optionalAdvisers input[value*="__userid__"] + label {
+    padding-left: 2em;
+    background-image: url("user.png");
+    background-repeat: no-repeat;
+    background-position: 0.75em;
+}
+/*
+#content input:hover + label {
+    background-color: &dtml-evenRowBackgroundColor;;
+}
+*/
 div.discreet.advice_additional_infos {
     margin-top: 0.75em;
 }
@@ -1430,6 +1444,10 @@ div.advice_popup_actions {
     float: right;
     max-width: 150px;
     height: 18px;
+}
+div.advice_popup_actions span.pmHelp {
+    vertical-align: middle;
+    font-size: 110%;
 }
 
 /* hide some elements on the versions_history_form */
@@ -1934,31 +1952,32 @@ table tbody tr td.td_cell_category-column {
 
 /* icon colors */
 #content span.fa.leading-icon {
-   color: &dtml-discreetColor;;
-   cursor: help;
+    color: &dtml-discreetColor;;
+    cursor: help;
 }
 #content span.fa.disabled {
-   color: lightgrey;
-   cursor: help;
+    color: lightgrey;
+    cursor: help;
 }
 #content span.fa.green-colored {
-   color: green;
+    color: green;
 }
 #content span.fa.red-colored {
-   color: red;
+    color: red;
 }
+#content img.pmHelp,
 #content span.pmHelp {
-   cursor: help;
+    cursor: help;
 }
 
 span.signatory-checked,
 span.signatory-replaced,
 span.signatory-replacer {
-   cursor: help;
+    cursor: help;
 }
 span.signatory-replaced,
 span.signatory-replacer {
-   color: red;
+    color: red;
 }
 
 #content span.people-remove-element:before {

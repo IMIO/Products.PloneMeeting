@@ -732,6 +732,11 @@ class Migrate_To_4200(Migrator):
 
         # update holidays
         self.updateHolidays()
+
+        # add new collections, the "searchmyitemstoadvice" for example
+        self.addNewSearches()
+
+        # update local_roles, workflow mappings and catalogs
         self.tool.update_all_local_roles()
         self.refreshDatabase(workflows=True, catalogsToUpdate=[])
 

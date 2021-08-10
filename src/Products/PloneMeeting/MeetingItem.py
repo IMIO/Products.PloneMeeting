@@ -102,6 +102,7 @@ from Products.PloneMeeting.utils import cleanMemoize
 from Products.PloneMeeting.utils import compute_item_roles_to_assign_to_suffixes
 from Products.PloneMeeting.utils import decodeDelayAwareId
 from Products.PloneMeeting.utils import down_or_up_wf
+from Products.PloneMeeting.utils import escape
 from Products.PloneMeeting.utils import fieldIsEmpty
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
 from Products.PloneMeeting.utils import get_states_before
@@ -2077,61 +2078,99 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePrivate('validate_optionalAdvisers')
 
-    def validate_optionalAdvisers(self, value):
+    def validate_optionalAdvisers(self, values):
         '''When selecting an optional adviser, make sure that 2 values regarding the same
            group are not selected, this could be the case when using delay-aware advisers.
            Moreover, make sure we can not unselect an adviser that already gave his advice.'''
         # remove empty strings and Nones
-        value = [v for v in value if v]
-        for adviser in value:
-            # if it is a delay-aware advice, check that the same 'normal'
-            # optional adviser has not be selected and that another delay-aware adviser
-            # for the same group is not selected too
-            # we know that it is a delay-aware adviser because we have '__rowid__' in it's key
+        values = [v for v in values if v]
+
+        # check that advice was not asked twice for same adviser
+        # it can be a delay-aware advice and a simple advice
+        # or 2 delay-aware advices for same group
+        real_adviser_values = []
+        adviser_userid_values = []
+        adviser_rowid_userid_values = []
+        real_adviser_userid_values = []
+        for adviser in values:
+            if '__userid__' not in adviser:
+                if '__rowid__' in adviser:
+                    real_adviser_values.append(decodeDelayAwareId(adviser)[0])
+                else:
+                    real_adviser_values.append(adviser)
+            else:
+                # '__userid__'
+                if '__rowid__' in adviser:
+                    adviser_rowid_userid_values.append(decodeDelayAwareId(adviser)[0])
+                    real_adviser_userid_values.append(decodeDelayAwareId(adviser)[0])
+                else:
+                    adviser_userid_values.append(adviser.split('__userid__')[0])
+                    real_adviser_userid_values.append(adviser.split('__userid__')[0])
+
+        if len(set(real_adviser_values)) != len(real_adviser_values):
+            return translate('can_not_select_several_optional_advisers_same_group',
+                             domain='PloneMeeting',
+                             context=self.REQUEST)
+        # a value in real_adviser_values may not be in real_adviser_userid_values
+        # that would mean for example a delay-aware adviser selected
+        # and a userid for same not delay-aware advice
+        # or more current, an adviers group and some userids of same group
+        # we must either select group or user
+        if set(real_adviser_values).intersection(real_adviser_userid_values):
+            return translate('can_not_select_advisers_group_and_userids',
+                             domain='PloneMeeting',
+                             context=self.REQUEST)
+
+        # check also that a userid is not selected for a rowid advice
+        # and another userid for the corresponding non rowid advice
+        if set(adviser_rowid_userid_values).intersection(adviser_userid_values):
+            return translate('can_not_select_userids_for_same_advice_of_different_type',
+                             domain='PloneMeeting',
+                             context=self.REQUEST)
+
+        # when advices are inherited, we can not ask another one for same adviser
+        for adviser in values:
             rowid = ''
             if '__rowid__' in adviser:
                 adviser_real_uid, rowid = decodeDelayAwareId(adviser)
-                # check that the same 'non-delay-aware' adviser has not be selected
-                if adviser_real_uid in value:
-                    return translate('can_not_select_several_optional_advisers_same_group',
-                                     domain='PloneMeeting',
-                                     context=self.REQUEST)
-                # check that another delay-aware adviser of the same group
-                # is not selected at the same time, we could have 2 (or even more)
-                # delays for the same group
-                delayAdviserStartsWith = adviser_real_uid + '__rowid__'
-                for v in value:
-                    if v.startswith(delayAdviserStartsWith) and not v == adviser:
-                        return translate('can_not_select_several_optional_advisers_same_group',
-                                         domain='PloneMeeting',
-                                         context=self.REQUEST)
+            elif '__userid__' in adviser:
+                adviser_real_uid, userid = adviser.split('__userid__')
             else:
                 adviser_real_uid = adviser
-            # when advices are inherited, we can not ask another one for same adviser
             if adviser_real_uid in getattr(self, 'adviceIndex', {}) and \
                self.adviceIndex[adviser_real_uid]['inherited']:
-                # use getAdviceData for because we do not have every correct values
+                # use getAdviceDataFor because we do not have every correct values
                 # stored for an inherited advice, especially 'not_asked'
                 adviceInfo = self.getAdviceDataFor(self, adviser_real_uid)
                 if rowid != adviceInfo['row_id'] or adviceInfo['not_asked']:
                     return translate('can_not_select_optional_adviser_same_group_as_inherited',
                                      domain='PloneMeeting',
                                      context=self.REQUEST)
+
         # find unselected advices and check if it was not already given
         storedOptionalAdvisers = self.getOptionalAdvisers()
-        removedAdvisers = set(storedOptionalAdvisers).difference(set(value))
+        removedAdvisers = set(storedOptionalAdvisers).difference(set(values))
         if removedAdvisers:
             givenAdvices = self.getGivenAdvices()
             for removedAdviser in removedAdvisers:
+                orig_removedAdviser = removedAdviser
                 if '__rowid__' in removedAdviser:
                     removedAdviser, rowid = decodeDelayAwareId(removedAdviser)
-                if removedAdviser in givenAdvices and givenAdvices[removedAdviser]['optional'] is True:
-                    vocab = self.getField('optionalAdvisers').Vocabulary(self)
-                    return translate('can_not_unselect_already_given_advice',
-                                     mapping={'removedAdviser': self.displayValue(vocab, removedAdviser)},
-                                     domain='PloneMeeting',
-                                     context=self.REQUEST)
-        return self.adapted().custom_validate_optionalAdvisers(value, storedOptionalAdvisers, removedAdvisers)
+                elif '__userid__' in removedAdviser:
+                    removedAdviser, userid = removedAdviser.split('__userid__')
+                if removedAdviser in givenAdvices and \
+                   givenAdvices[removedAdviser]['optional'] is True:
+                    vocab = get_vocab(self, self.getField('optionalAdvisers').vocabulary_factory)
+                    # use term.sortable_title that contains the adviser title
+                    # when removing an advice asked to a userid
+                    return translate(
+                        'can_not_unselect_already_given_advice',
+                        mapping={'removedAdviser':
+                            vocab.getTermByToken(orig_removedAdviser).sortable_title},
+                        domain='PloneMeeting',
+                        context=self.REQUEST)
+        return self.adapted().custom_validate_optionalAdvisers(
+            values, storedOptionalAdvisers, removedAdvisers)
 
     def custom_validate_optionalAdvisers(self, value, storedOptionalAdvisers, removedAdvisers):
         '''See doc in interfaces.py.'''
@@ -4517,9 +4556,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            advices need to be given, that had not to be given in the previous item state.'''
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        if 'adviceToGive' not in cfg.getMailItemEvents():
+        if 'adviceToGive' not in cfg.getMailItemEvents() and \
+           'adviceToGiveByUser' not in cfg.getMailItemEvents():
             return
         plone_group_ids = []
+        plone_user_ids = []
         for org_uid, adviceInfo in self.adviceIndex.iteritems():
             # call hook '_sendAdviceToGiveToGroup' to be able to bypass
             # send of this notification to some defined groups
@@ -4527,25 +4568,46 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 continue
             org = get_organization(org_uid)
             adviceStates = org.get_item_advice_states(cfg)
-            # If force_resend_if_in_review_states=True, check if current item review_state in adviceStates
-            # This is useful when asking advice again and item review_state does not change
+            # If force_resend_if_in_review_states=True,
+            # check if current item review_state in adviceStates
+            # This is useful when asking advice again and
+            # item review_state does not change
             # Ignore advices that must not be given in the current item state
             # Ignore advices that already needed to be given in the previous item state
             if (new_review_state not in adviceStates or old_review_state in adviceStates) and \
                (not force_resend_if_in_advice_review_states or old_review_state not in adviceStates):
                 continue
+
             # do not consider groups that already gave their advice
             if adviceInfo['type'] not in ['not_given', 'asked_again']:
                 continue
-            plone_group_id = get_plone_group_id(org_uid, 'advisers')
-            plone_group_ids.append(plone_group_id)
 
-        # send mail if plone_group_ids
+            # notify entire advisers groups any time
+            plone_group_id = get_plone_group_id(org_uid, 'advisers')
+            if 'adviceToGive' in cfg.getMailItemEvents():
+                plone_group_ids.append(plone_group_id)
+            else:
+                # adviceToGiveByUser
+                # notify userids if any or the entire _advisers group
+                if adviceInfo['userids']:
+                    plone_user_ids += adviceInfo['userids']
+                else:
+                    plone_group = api.group.get(plone_group_id)
+                    plone_user_ids += plone_group.getMemberIds()
+
+        # send mail
         if plone_group_ids:
             params = {"obj": self,
                       "event": "adviceToGive",
                       "value": plone_group_ids,
                       "isGroupIds": True,
+                      "debug": debug}
+            return sendMailIfRelevant(**params)
+        elif plone_user_ids:
+            params = {"obj": self,
+                      "event": "adviceToGiveByUser",
+                      "value": plone_user_ids,
+                      "isUserIds": True,
                       "debug": debug}
             return sendMailIfRelevant(**params)
 
@@ -4651,8 +4713,27 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                  'row_id': predecessor.adviceIndex[adviserUid]['row_id'],
                  'delay': predecessor.adviceIndex[adviserUid]['delay'],
                  'delay_left_alert': predecessor.adviceIndex[adviserUid]['delay_left_alert'],
-                 'delay_label': predecessor.adviceIndex[adviserUid]['delay_label'], })
+                 'delay_label': predecessor.adviceIndex[adviserUid]['delay_label'],
+                 'userids': predecessor.adviceIndex[adviserUid].get('userids', [])})
         return res
+
+    security.declarePublic('getOptionalAdvisers')
+
+    def getOptionalAdvisers(self, computed=False, **kwargs):
+        '''Override MeetingItem.optionalAdvisers accessor
+           to handle p_computed parameters that will turn a "__userid__" value
+           to it's corresponding adviser value.'''
+        optionalAdvisers = self.getField('optionalAdvisers').get(self)
+        if computed:
+            res = []
+            for adviser in optionalAdvisers:
+                if "__userid__" in adviser:
+                    value, user_id = adviser.split("__userid__")
+                    res.append(value)
+                else:
+                    res.append(adviser)
+            optionalAdvisers = res
+        return optionalAdvisers
 
     security.declarePublic('getOptionalAdvisersData')
 
@@ -4663,7 +4744,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         res = []
-        for adviser in self.getOptionalAdvisers():
+        optionalAdvisers = self.getOptionalAdvisers()
+        for adviser in self.getOptionalAdvisers(computed=True):
             # if this is a delay-aware adviser, we have the data in the adviser id
             if '__rowid__' in adviser:
                 org_uid, row_id = decodeDelayAwareId(adviser)
@@ -4674,13 +4756,19 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             else:
                 org_uid = adviser
                 row_id = delay = delay_left_alert = delay_label = ''
+            # manage userids
+            userids = [optionalAdviser.split('__userid__')[1]
+                       for optionalAdviser in optionalAdvisers
+                       if '__userid__' in optionalAdviser and
+                       optionalAdviser.startswith(adviser)]
             res.append({'org_uid': org_uid,
                         'org_title': get_organization(org_uid).get_full_title(),
                         'gives_auto_advice_on_help_message': '',
                         'row_id': row_id,
                         'delay': delay,
                         'delay_left_alert': delay_left_alert,
-                        'delay_label': delay_label, })
+                        'delay_label': delay_label,
+                        'userids': userids})
         return res
 
     security.declarePublic('getAutomaticAdvisersData')
@@ -4722,12 +4810,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 res.append({'org_uid': customAdviser['org'],
                             'org_title': org.get_full_title(),
                             'row_id': customAdviser['row_id'],
-                            'gives_auto_advice_on_help_message': customAdviser['gives_auto_advice_on_help_message'],
+                            'gives_auto_advice_on_help_message':
+                                customAdviser['gives_auto_advice_on_help_message'],
                             'delay': customAdviser['delay'],
                             'delay_left_alert': customAdviser['delay_left_alert'],
-                            'delay_label': customAdviser['delay_label'], })
+                            'delay_label': customAdviser['delay_label'],
+                            # userids is unhandled for automatic advisers
+                            'userids': []})
                 # check if the found automatic adviser is not already in the self.adviceIndex
-                # but with a manually changed delay, aka 'delay_for_automatic_adviser_changed_manually' is True
+                # but with a manually changed delay, aka
+                # 'delay_for_automatic_adviser_changed_manually' is True
                 storedCustomAdviser = self.adviceIndex.get(customAdviser['org'], {})
                 delay_for_automatic_adviser_changed_manually = \
                     'delay_for_automatic_adviser_changed_manually' in storedCustomAdviser and \
@@ -5193,11 +5285,36 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 .format(real_group_id, portal_url)))
         return u', '.join(res)
 
+    def _displayAdviserUsers(self, userids, portal_url, tool):
+        """ """
+        userid_pattern = u'<img class="pmHelp" title="{0}" src="{1}/user.png" />{2}'
+        rendered_users = []
+        help_msg = translate("adviser_userid_notified",
+                             domain="PloneMeeting",
+                             context=self.REQUEST)
+        for userid in userids:
+            rendered_users.append(
+                userid_pattern.format(
+                    escape(help_msg), portal_url, tool.getUserName(userid)))
+        res = u", ".join(rendered_users)
+        return res
+
     security.declarePublic('displayAdvisers')
 
     def displayAdvisers(self):
         '''Display advisers on the item view, especially the link showing users of a group.'''
+
         portal_url = api.portal.get().absolute_url()
+        tool = api.portal.get_tool('portal_plonemeeting')
+
+        def _get_adviser_name(adviser):
+            """Manage adviser name, will append selected __userid__ if any."""
+            name = adviser['name']
+            if adviser['userids']:
+                name += u" ({0})".format(
+                    self._displayAdviserUsers(adviser['userids'], portal_url, tool))
+            return name
+
         advisers_by_type = self.getAdvicesByType(include_not_asked=False)
         res = []
         auto_advice = u' <strong class="auto_info" title="{0}">[auto]</strong>'.format(
@@ -5206,12 +5323,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                       context=self.REQUEST))
         for advice_type, advisers in advisers_by_type.items():
             for adviser in advisers:
+                adviser_name = _get_adviser_name(adviser)
                 value = u"{0} <acronym><a onclick='event.preventDefault()' " \
                     u"class='tooltipster-group-users deactivated' " \
                     u"style='display: inline-block; padding: 0'" \
                     u"href='#' data-group_ids:json='\"{1}\"' data-base_url='{2}'>" \
                     u"<img src='{2}/group_users.png' /></a></acronym>".format(
-                        adviser['name'] + (not adviser['optional'] and auto_advice or u''),
+                        adviser_name + (not adviser['optional'] and auto_advice or u''),
                         get_plone_group_id(adviser['id'], 'advisers'),
                         portal_url)
                 res.append(value)
@@ -5618,6 +5736,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 d['item_viewable_by_advisers'] = False
                 d['advice_addable'] = False
                 d['advice_editable'] = False
+                # userids
+                d['userids'] = adviceInfo['userids']
 
         # now update self.adviceIndex with given advices
         for org_uid, adviceInfo in self.getGivenAdvices().iteritems():
@@ -5654,6 +5774,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 adviceInfo['advice_addable'] = False
                 adviceInfo['advice_editable'] = False
                 adviceInfo['inherited'] = False
+                adviceInfo['userids'] = []
             self.adviceIndex[org_uid].update(adviceInfo)
 
         # and remove specific permissions given to add advices
