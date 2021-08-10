@@ -2277,6 +2277,22 @@ class testMeetingConfig(PloneMeetingTestCase):
             self.request.set('fieldset', fieldset)
             self.assertTrue(cfg.restrictedTraverse('base_edit')())
 
+    def test_pm_Validate_mailItemEvents(self):
+        """Some notifications may not be selected together."""
+        cfg = self.meetingConfig
+        self.failIf(cfg.validate_mailItemEvents(''))
+        self.failIf(cfg.validate_mailItemEvents(['']))
+        self.failIf(cfg.validate_mailItemEvents(
+            ["item_state_changed_validate", "itemPresentedOwner"]))
+        # conflict between "adviceToGive" and "adviceToGiveByUser"
+        self.assertEqual(cfg.validate_mailItemEvents(
+            ["adviceToGive", "adviceToGiveByUser"]),
+            u'Notifications "An advice needs to be given on an item '
+            u'(notify users able to add advice), An advice needs to '
+            u'be given on an item (notify users of advisers group '
+            u'selected on item or the users able to add advice)" '
+            u'may not be selected together.')
+
 
 def test_suite():
     from unittest import makeSuite

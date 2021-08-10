@@ -3830,6 +3830,23 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertFalse('{0}__rowid__unique_id_123'.format(self.developers_uid) in vocab_keys)
         self.assertTrue('{0}__rowid__unique_id_456'.format(self.developers_uid) in vocab_keys)
 
+        # while using MeetingConfig.selectableAdviserUsers
+        cfg.setSelectableAdvisers((self.vendors_uid, self.developers_uid))
+        cfg.setSelectableAdviserUsers((self.developers_uid, ))
+        vocab_keys = [term.token for term in vocab_factory(item, include_selected=False)._terms]
+        # __userid__ available for developers but not for vendors
+        self.assertEqual(
+            vocab_keys,
+            ['not_selectable_value_delay_aware_optional_advisers',
+             '{0}__rowid__unique_id_456'.format(self.developers_uid),
+             '{0}__rowid__unique_id_456__userid__pmAdviser1'.format(self.developers_uid),
+             '{0}__rowid__unique_id_456__userid__pmManager'.format(self.developers_uid),
+             'not_selectable_value_non_delay_aware_optional_advisers',
+             self.developers_uid,
+             '{0}__userid__pmAdviser1'.format(self.developers_uid),
+             '{0}__userid__pmManager'.format(self.developers_uid),
+             self.vendors_uid])
+
     def test_pm_OptionalAdvisersDelayAwareAdvisers(self):
         '''
           Test how the optionalAdvisers vocabulary behaves while
@@ -3999,6 +4016,10 @@ class testMeetingItem(PloneMeetingTestCase):
                'advice_type': u'positive',
                'advice_comment': RichTextValue(u'My comment')})
         # now we can not unselect the 'developers' anymore as advice was given
+        can_not_unselect_msg = translate('can_not_unselect_already_given_advice',
+                                         mapping={'removedAdviser': "Developers - 10 day(s) (Delay label)"},
+                                         domain='PloneMeeting',
+                                         context=self.portal.REQUEST)
         self.assertEqual(item.validate_optionalAdvisers(()), can_not_unselect_msg)
 
         # we can unselect an optional advice if the given advice is an automatic one

@@ -1037,7 +1037,8 @@
           <td tal:define="field python:here.getField('selectableAdvisers')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td>
+          <td tal:define="field python:here.getField('selectableAdviserUsers')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
           <td>
           </td>

@@ -312,7 +312,7 @@ class PMDocumentGeneratorLinksViewlet(DocumentGeneratorLinksViewlet, BaseGenerat
             annex_type_uid = template.store_as_annex
             res['store_as_annex_uid'] = annex_type_uid
             annex_type = api.content.find(UID=annex_type_uid)[0].getObject()
-            annex_type_title = '{0} 🡒 {1}'.format(
+            annex_type_title = '{0} ➔ {1}'.format(
                 annex_type.aq_parent.Title(),
                 annex_type.Title())
             res['store_as_annex_title'] = annex_type_title

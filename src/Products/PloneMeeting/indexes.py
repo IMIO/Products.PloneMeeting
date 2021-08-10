@@ -14,6 +14,7 @@ from imio.history.utils import getLastWFAction
 from OFS.interfaces import IItem
 from plone import api
 from plone.indexer import indexer
+from Products.PloneMeeting.config import ALL_ADVISERS_GROUP_VALUE
 from Products.PloneMeeting.config import EMPTY_STRING
 from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
@@ -371,6 +372,7 @@ def _to_coded_adviser_index(obj, org_uid, advice_infos):
     for suffix in suffixes:
         if isDelayAware:
             res.append('delay__' + org_uid + suffix)
+            res.append('delay__' + org_uid + suffix + '__' + advice_type)
             # 'delay_row_id_'
             delay_row_id = DELAYAWARE_ROW_ID_PATTERN.format(advice_infos['row_id'])
             res.append(delay_row_id)
@@ -378,11 +380,23 @@ def _to_coded_adviser_index(obj, org_uid, advice_infos):
             res.append(delay_row_id + '__' + advice_type)
         else:
             res.append(org_uid + suffix)
+            res.append(org_uid + suffix + '__' + advice_type)
             # 'real_org_uid_'
             real_org_uid = REAL_ORG_UID_PATTERN.format(org_uid)
             res.append(real_org_uid)
             # 'real_org_uid_' with suffixed advice_type
             res.append(real_org_uid + '__' + advice_type)
+    # userids
+    tmp_res = list(res)
+    if advice_infos['userids']:
+        for userid in advice_infos['userids']:
+            for elt in tmp_res:
+                res.append('{0}__userid__{1}'.format(elt, userid))
+    else:
+        # add a special value when advice only asked to entire advisers group
+        for elt in tmp_res:
+            res.append('{0}__userid__{1}'.format(elt, ALL_ADVISERS_GROUP_VALUE))
+
     # advice_type
     if advice_type not in res:
         res.append(advice_type)

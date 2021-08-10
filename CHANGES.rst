@@ -15,6 +15,19 @@ Changelog
   preferredMeeting states.
   Added a parameter to `MeetingConfig.listStates` to have only a list of state ids.
   [aduchene]
+- Added possibility to ask advice to specific advisers of a group:
+
+  - Advice is still asked to the entire group but a new search
+    `My items to advice` will return items for which current adviser
+    advice was asked;
+  - A new e-mail notification `You have an advice to give` is added so only
+    users to which advice is asked are notified;
+  - It is still possible for other advisers to give advice and all advices to
+    give are still returned by the `All advices to give` search.
+  [gbastien]
+- Adapted CSS now that link to enable faceted filters is a simple link,
+  no more icons.
+  [gbastien]
 
 4.2b13 (2021-07-16)
 -------------------
