@@ -7142,7 +7142,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     def getMeetingStatesAcceptingItemsForMeetingManagers(self):
         '''See doc in interfaces.py.'''
-        return self.listStates("Meeting", excepted='closed', with_state_title=False)
+        return tuple(self.listStates("Meeting", excepted='closed', with_state_title=False))
 
     def getMeetingsAcceptingItems_cachekey(method, self, review_states=('created', 'frozen'), inTheFuture=False):
         '''cachekey method for self.getMeetingsAcceptingItems.'''
