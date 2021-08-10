@@ -11,6 +11,10 @@ Changelog
   to send an e-mail to arbitrary users.
   Renamed parameter `permissionOrSuffixOrRoleOrGroupIds` to `value`.
   [gbastien]
+- Added a field `MeetingConfig.itemPreferredMeetingStates` that allows to set selectable
+  preferredMeeting states.
+  Added a parameter to `MeetingConfig.listStates` to have only a list of state ids.
+  [aduchene]
 
 4.2b13 (2021-07-16)
 -------------------
