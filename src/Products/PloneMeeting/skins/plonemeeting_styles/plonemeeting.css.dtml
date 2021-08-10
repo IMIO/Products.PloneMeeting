@@ -2435,6 +2435,17 @@ div.readmorable.enabled.opened {
     max-height: none;
 }
 
+/* position of "more filters" link when displayed in iframe */
+body.template-meeting_available_items_view div#content-core #faceted-form .faceted-sections-buttons {
+    top: 0px;
+}
+body.template-meeting_available_items_view div#content-core #faceted-form div#faceted-top-column {
+    padding-top: 20px;
+}
+body.template-facetednavigation_view div#viewlet-above-content-body {
+   padding-top: 0em;
+}
+
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */
