@@ -11,6 +11,16 @@ Changelog
   to send an e-mail to arbitrary users.
   Renamed parameter `permissionOrSuffixOrRoleOrGroupIds` to `value`.
   [gbastien]
+- Added possibility to ask advice to specific advisers of a group:
+
+  - Advice is still asked to the entire group but a new search
+    `My items to advice` will return items for which current adviser
+    advice was asked;
+  - A new e-mail notification `You have an advice to give` is added so only
+    users to which advice is asked are notified;
+  - It is still possible for other advisers to give advice and all advices to
+    give are still returned by the `All advices to give` search.
+  [gbastien]
 
 4.2b13 (2021-07-16)
 -------------------
