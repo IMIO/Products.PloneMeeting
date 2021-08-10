@@ -21,6 +21,9 @@ Changelog
   - It is still possible for other advisers to give advice and all advices to
     give are still returned by the `All advices to give` search.
   [gbastien]
+- Adapted CSS now that link to enable faceted filters is a simple link,
+  no more icons.
+  [gbastien]
 
 4.2b13 (2021-07-16)
 -------------------
