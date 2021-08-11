@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
-from Products.PloneMeeting.utils import cleanMemoize
 from collective.contact.plonegroup.utils import get_organizations
 from collective.eeafaceted.batchactions.interfaces import IBatchActionsMarker
 from copy import deepcopy
-
 from eea.facetednavigation.criteria.interfaces import ICriteria
 from imio.helpers.catalog import addOrUpdateColumns
 from imio.helpers.catalog import addOrUpdateIndexes
@@ -27,6 +25,7 @@ from Products.PloneMeeting.migrations import Migrator
 from Products.PloneMeeting.profiles import MeetingConfigDescriptor
 from Products.PloneMeeting.setuphandlers import columnInfos
 from Products.PloneMeeting.setuphandlers import indexInfos
+from Products.PloneMeeting.utils import cleanMemoize
 from Products.ZCatalog.ProgressHandler import ZLogHandler
 from zope.interface import alsoProvides
 from zope.interface import noLongerProvides
@@ -70,6 +69,14 @@ class MeetingMigrator(CMFFolderMigrator):
         if convocation_date:
             convocation_date._timezone_naive = True
             self.new.convocation_date = convocation_date.asdatetime()
+        deadline_publish = self.old.getDeadlinePublish()
+        if deadline_publish:
+            deadline_publish._timezone_naive = True
+            self.new.validation_deadline = deadline_publish.asdatetime()
+        deadline_freeze = self.old.getDeadlineFreeze()
+        if deadline_freeze:
+            deadline_freeze._timezone_naive = True
+            self.new.freeze_deadline = deadline_freeze.asdatetime()
         self.new.assembly = self.old.getRawAssembly() and RichTextValue(self.old.getRawAssembly()) or None
         self.new.assembly_excused = self.old.getRawAssemblyExcused() and \
             RichTextValue(self.old.getRawAssemblyExcused()) or None

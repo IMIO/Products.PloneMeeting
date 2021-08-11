@@ -324,8 +324,6 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
 
         if displaying_available_items(self.context):
             meeting = getCurrentMeetingObject(self.context)
-        if displaying_available_items(self.context):
-            meeting = getCurrentMeetingObject(self.context)
             # there could be no meeting if we opened an item from the available items view
             if meeting:
                 # Item is in the list of available items, check if we
