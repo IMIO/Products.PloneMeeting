@@ -4643,6 +4643,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         """See docstring in interfaces.py"""
         return True
 
+    def _sendHistoryAwareMailIfRelevant(self, old_review_state, new_review_state):
+        raise NotImplementedError
+
     security.declarePublic('sendAdviceDelayWarningMailIfRelevant')
 
     def sendAdviceDelayWarningMailIfRelevant(self, group_id, old_adviceIndex):

@@ -7310,6 +7310,21 @@ class testMeetingItem(PloneMeetingTestCase):
                          u'The item is entitled "My item". '
                          u'You can access this item here: {0}.'.format(item_url))
 
+    def test_pm__sendHistoryAwareMailIfRelevant(self):
+        """Check mail sent to users when they have access to item.
+           Mail is not sent twice to same email address."""
+        # make utils.sendMailIfRelevant return details
+        self.changeUser('siteadmin')
+        self.request['debug_sendMailIfRelevant'] = True
+        cfg = self.meetingConfig
+        cfg.setMailMode("activated")
+        cfg.setMailItemEvents(("", ))
+        self.changeUser('pmCreator1')
+        item = self.create("MeetingItem", title="My item")
+        # no notifications
+        self.assertIsNone(
+            item._sendHistoryAwareMailIfRelevant('itemcreated', 'validated', debug=True), [])
+
     def test_pm_ItemEditAndView(self):
         """Just call the edit and view to check it is displayed correctly."""
         cfg = self.meetingConfig
