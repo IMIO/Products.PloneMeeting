@@ -917,67 +917,74 @@ class Meeting(Container):
             res = self.context
         return res
 
-    def get_assembly(self, for_display=True, striked=True, mark_empty_tags=False):
+    def get_assembly(self, for_display=True, striked=True, mark_empty_tags=False, raw=True):
         """ """
         return get_textarea_value(
             self.assembly,
             self,
             for_display=for_display,
             striked=striked,
-            mark_empty_tags=mark_empty_tags)
+            mark_empty_tags=mark_empty_tags,
+            raw=raw)
 
-    def get_assembly_excused(self, for_display=True, striked=True, mark_empty_tags=False):
+    def get_assembly_excused(self, for_display=True, striked=True, mark_empty_tags=False, raw=True):
         """ """
         return get_textarea_value(
             self.assembly_excused,
             self,
             for_display=for_display,
             striked=striked,
-            mark_empty_tags=mark_empty_tags)
+            mark_empty_tags=mark_empty_tags,
+            raw=raw)
 
-    def get_assembly_absents(self, for_display=True, striked=True, mark_empty_tags=False):
+    def get_assembly_absents(self, for_display=True, striked=True, mark_empty_tags=False, raw=True):
         """ """
         return get_textarea_value(
             self.assembly_absents,
             self,
             for_display=for_display,
             striked=striked,
-            mark_empty_tags=mark_empty_tags)
+            mark_empty_tags=mark_empty_tags,
+            raw=raw)
 
-    def get_assembly_guests(self, for_display=True, striked=True, mark_empty_tags=False):
+    def get_assembly_guests(self, for_display=True, striked=True, mark_empty_tags=False, raw=True):
         """ """
         return get_textarea_value(
             self.assembly_guests,
             self,
             for_display=for_display,
             striked=striked,
-            mark_empty_tags=mark_empty_tags)
+            mark_empty_tags=mark_empty_tags,
+            raw=raw)
 
-    def get_assembly_staves(self, for_display=True, striked=True, mark_empty_tags=False):
+    def get_assembly_staves(self, for_display=True, striked=True, mark_empty_tags=False, raw=True):
         """ """
         return get_textarea_value(
             self.assembly_staves,
             self,
             for_display=for_display,
             striked=striked,
-            mark_empty_tags=mark_empty_tags)
+            mark_empty_tags=mark_empty_tags,
+            raw=raw)
 
-    def get_assembly_proxies(self, for_display=True, striked=True, mark_empty_tags=False):
+    def get_assembly_proxies(self, for_display=True, striked=True, mark_empty_tags=False, raw=True):
         """ """
         return get_textarea_value(
             self.assembly_proxies,
             self,
             for_display=for_display,
             striked=striked,
-            mark_empty_tags=mark_empty_tags)
+            mark_empty_tags=mark_empty_tags,
+            raw=raw)
 
-    def get_signatures(self, for_display=False, mark_empty_tags=False):
+    def get_signatures(self, for_display=False, mark_empty_tags=False, raw=True):
         """ """
         return get_textarea_value(
             self.signatures,
             self,
             for_display=for_display,
-            mark_empty_tags=mark_empty_tags)
+            mark_empty_tags=mark_empty_tags,
+            raw=raw)
 
     def get_place(self, real=False):
         """ """
@@ -1006,23 +1013,25 @@ class Meeting(Container):
         value = self.get_committee(row_id)["place"]
         return value
 
-    def get_committee_assembly(self, row_id, for_display=True, striked=True, mark_empty_tags=False):
+    def get_committee_assembly(self, row_id, for_display=True, striked=True, mark_empty_tags=False, raw=True):
         """Return "assembly" for given p_row_id committee."""
         value = self.get_committee(row_id)["assembly"]
         return get_textarea_value(
             value,
             self,
             for_display=for_display,
-            mark_empty_tags=mark_empty_tags)
+            mark_empty_tags=mark_empty_tags,
+            raw=raw)
 
-    def get_committee_signatures(self, row_id, for_display=False, striked=True, mark_empty_tags=False):
+    def get_committee_signatures(self, row_id, for_display=False, striked=True, mark_empty_tags=False, raw=True):
         """Return "signatures" for given p_row_id committee."""
         value = self.get_committee(row_id)["signatures"]
         return get_textarea_value(
             value,
             self,
             for_display=for_display,
-            mark_empty_tags=mark_empty_tags)
+            mark_empty_tags=mark_empty_tags,
+            raw=raw)
 
     def get_committee_attendees(self, row_id, the_objects=False):
         '''Returns the attendees for given p_row_id committee.'''
