@@ -703,8 +703,8 @@ def getCustomSchemaFields(baseSchema, completedSchema, cols):
 
 
 def getDateFromDelta(aDate, delta):
-    '''This function returns a DateTime instance, which is computed from a
-       reference DateTime instance p_aDate to which a p_delta is applied.
+    '''This function returns a datetime instance, which is computed from a
+       reference datetime instance p_aDate to which a p_delta is applied.
        A p_delta is a string having the form '<deltaDays>-<hour>:<minutes>,
        where:
         - 'deltaDays' is a positive or negative integer indicating the number of
@@ -713,8 +713,25 @@ def getDateFromDelta(aDate, delta):
           computed date. It means that the hour and minutes of p_aDate are
           ignored.
     '''
-    days, hour = delta.split('.')
-    return DateTime('%s %s' % ((aDate + int(days)).strftime('%Y/%m/%d'), hour))
+    days, time_info = delta.split('.')
+    hour, minute = time_info.split(':')
+    new_date = aDate + timedelta(int(days))
+    new_date = new_date.replace(hour=int(hour), minute=int(minute))
+    return new_date
+
+
+def is_transition_before_date(obj, transition, date):
+    '''Returns True if this p_obj last p_transition was made before p_date.
+       p_date is a python datetime.datetime.'''
+    res = False
+    last_action = getLastWFAction(obj, transition=transition)
+    if last_action:
+        last_action_date = DateTime(last_action["time"])
+        last_action_date._timezone_naive = True
+        last_action_date = last_action_date.asdatetime()
+        if last_action_date < date:
+            res = True
+    return res
 
 
 def mark_empty_tags(obj, value):
@@ -1602,7 +1619,7 @@ def updateAnnexesAccess(container):
         # do not fail on 'Members', use unrestrictedTraverse
         try:
             annex = portal.unrestrictedTraverse(v['relative_url'])
-        except:
+        except Exception:
             # in case we are removing an annex, this could be called
             # before categorized_elements dict is updated
             v['visible_for_groups'] = []

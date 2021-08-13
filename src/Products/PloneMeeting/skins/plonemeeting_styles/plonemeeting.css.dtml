@@ -2439,6 +2439,7 @@ div.readmorable.enabled.opened {
 body.template-meeting_available_items_view div#content-core #faceted-form .faceted-sections-buttons {
     top: 0px;
 }
+
 body.template-meeting_available_items_view div#content-core #faceted-form div#faceted-top-column {
     padding-top: 20px;
 }

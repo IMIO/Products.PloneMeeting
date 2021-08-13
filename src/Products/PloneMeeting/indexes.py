@@ -388,7 +388,8 @@ def _to_coded_adviser_index(obj, org_uid, advice_infos):
             res.append(real_org_uid + '__' + advice_type)
     # userids
     tmp_res = list(res)
-    if advice_infos['userids']:
+    # still need to check if key userids is there for older adviceIndex without userids
+    if advice_infos.get('userids', None):
         for userid in advice_infos['userids']:
             for elt in tmp_res:
                 res.append('{0}__userid__{1}'.format(elt, userid))

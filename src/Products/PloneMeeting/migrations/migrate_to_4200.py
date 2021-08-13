@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
-from Products.PloneMeeting.utils import cleanMemoize
 from collective.contact.plonegroup.utils import get_organizations
 from collective.eeafaceted.batchactions.interfaces import IBatchActionsMarker
 from copy import deepcopy
-
 from eea.facetednavigation.criteria.interfaces import ICriteria
 from imio.helpers.catalog import addOrUpdateColumns
 from imio.helpers.catalog import addOrUpdateIndexes
@@ -27,6 +25,7 @@ from Products.PloneMeeting.migrations import Migrator
 from Products.PloneMeeting.profiles import MeetingConfigDescriptor
 from Products.PloneMeeting.setuphandlers import columnInfos
 from Products.PloneMeeting.setuphandlers import indexInfos
+from Products.PloneMeeting.utils import cleanMemoize
 from Products.ZCatalog.ProgressHandler import ZLogHandler
 from zope.interface import alsoProvides
 from zope.interface import noLongerProvides
@@ -70,6 +69,14 @@ class MeetingMigrator(CMFFolderMigrator):
         if convocation_date:
             convocation_date._timezone_naive = True
             self.new.convocation_date = convocation_date.asdatetime()
+        deadline_publish = self.old.getDeadlinePublish()
+        if deadline_publish:
+            deadline_publish._timezone_naive = True
+            self.new.validation_deadline = deadline_publish.asdatetime()
+        deadline_freeze = self.old.getDeadlineFreeze()
+        if deadline_freeze:
+            deadline_freeze._timezone_naive = True
+            self.new.freeze_deadline = deadline_freeze.asdatetime()
         self.new.assembly = self.old.getRawAssembly() and RichTextValue(self.old.getRawAssembly()) or None
         self.new.assembly_excused = self.old.getRawAssemblyExcused() and \
             RichTextValue(self.old.getRawAssemblyExcused()) or None
@@ -181,14 +188,8 @@ class Migrate_To_4200(Migrator):
             used_attrs = replace_in_list(used_attrs, "meetingNumber", "meeting_number")
             used_attrs = replace_in_list(used_attrs, "firstItemNumber", "first_item_number")
             used_attrs = replace_in_list(used_attrs, "nonAttendees", "non_attendees")
-            try:
-                used_attrs.remove('deadlinePublish')
-            except ValueError:
-                pass
-            try:
-                used_attrs.remove('deadlineFreeze')
-            except ValueError:
-                pass
+            used_attrs = replace_in_list(used_attrs, "deadlinePublish", "validation_deadline")
+            used_attrs = replace_in_list(used_attrs, "deadlineFreeze", "freeze_deadline")
             cfg.setUsedMeetingAttributes(used_attrs)
             # xhtmlTransformFields
             fields = cfg.getXhtmlTransformFields()
@@ -216,11 +217,14 @@ class Migrate_To_4200(Migrator):
             MeetingMigrator.used_meeting_attrs = cfg.getUsedMeetingAttributes()
             pac_migrate(self.portal, MeetingMigrator)
 
+            # some parameters were renamed
+            if getattr(cfg, "publishDeadlineDefault", None):
+                cfg.setValidationDeadlineDefault(cfg.publishDeadlineDefault)
+
             # some attributes were removed from MeetingConfig
             safe_delattr(cfg, "historizedMeetingAttributes")
             safe_delattr(cfg, "recordMeetingHistoryStates")
             safe_delattr(cfg, "publishDeadlineDefault")
-            safe_delattr(cfg, "freezeDeadlineDefault")
             safe_delattr(cfg, "preMeetingDateDefault")
 
         self.request.set('currently_migrating_meeting_dx', False)
