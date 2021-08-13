@@ -1289,7 +1289,7 @@ schema = Schema((
         schemata="workflow",
         multiValued=1,
         vocabulary='listMeetingStates',
-        default=defValues.meetingSelectablePreferredMeetingStates,
+        default=defValues.itemPreferredMeetingStates,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
@@ -7141,8 +7141,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 subFolderObj.reindexObject()
 
     def getMeetingStatesAcceptingItemsForMeetingManagers(self):
-        '''See doc in interfaces.py.'''
-        return tuple([state for state in self.adapted().listStates("Meeting") if state != 'closed'])
+        '''In those states, the meeting accept items, normal or late.
+           It returns a tuple of meeting review_states.'''
+        return tuple([state for state in self.adapted().listStates("Meeting", with_state_title=False) if state != 'closed'])
 
     def getMeetingsAcceptingItems_cachekey(method, self, review_states=('created', 'frozen'), inTheFuture=False):
         '''cachekey method for self.getMeetingsAcceptingItems.'''
@@ -7154,11 +7155,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # he is able to add a meetingitem to a 'decided' meeting.
         # except if we specifically restricted given p_review_states.
         tool = api.portal.get_tool('portal_plonemeeting')
-        if review_states == ('created', 'frozen') and tool.isManager(self):
-            review_states += self.adapted().getMeetingStatesAcceptingItemsForMeetingManagers()
-            # remove duplicates
-            review_states = tuple(set(review_states))
-
         query = {'portal_type': self.getMeetingTypeName(),
                  'review_state': review_states,
                  'sort_on': 'meeting_date'}
@@ -7175,7 +7171,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def getMeetingsAcceptingItems(self, review_states=[], inTheFuture=False):
         '''Returns meetings accepting items.'''
         if not review_states:
-            review_states = self.getItemPreferredMeetingStates()
+            review_states = self.getMeetingStatesAcceptingItemsForMeetingManagers()
         catalog = api.portal.get_tool('portal_catalog')
         query = self._getMeetingsAcceptingItemsQuery(review_states, inTheFuture)
         return catalog.unrestrictedSearchResults(**query)
