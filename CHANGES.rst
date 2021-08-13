@@ -27,6 +27,8 @@ Changelog
 - Reimplement the meeting deadlines functionnalities, display an icon before
   the item title on meeting view if item was validated after a defined deadline.
   [gbastien]
+- Fixed `BaseDGHV.view_print_signatures_by_position` and added a test.
+  [aduchene]
 
 4.2b13 (2021-07-16)
 -------------------

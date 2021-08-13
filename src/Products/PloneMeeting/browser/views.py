@@ -1210,8 +1210,8 @@ class BaseDGHV(object):
         signatures = None
         if committee_id:
             signatures = self.context.get_committee_signatures(committee_id)
-        elif self.context.getTagName() == 'Meeting' and self.context.getSignatures():
-            signatures = self.context.getSignatures()
+        elif self.context.getTagName() == 'Meeting' and self.context.get_signatures():
+            signatures = self.context.get_signatures()
         elif self.context.getTagName() == 'MeetingItem' and self.context.getItemSignatures():
             signatures = self.context.getItemSignatures()
 
