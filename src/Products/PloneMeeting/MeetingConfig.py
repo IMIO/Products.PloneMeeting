@@ -7143,7 +7143,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def getMeetingStatesAcceptingItemsForMeetingManagers(self):
         '''In those states, the meeting accept items, normal or late.
            It returns a tuple of meeting review_states.'''
-        return tuple([state for state in self.adapted().listStates("Meeting", with_state_title=False) if state != 'closed'])
+        return tuple(self.listStates("Meeting", excepted='closed', with_state_title=False))
+
 
     def getMeetingsAcceptingItems_cachekey(method, self, review_states=('created', 'frozen'), inTheFuture=False):
         '''cachekey method for self.getMeetingsAcceptingItems.'''
