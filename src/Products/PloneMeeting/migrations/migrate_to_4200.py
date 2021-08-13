@@ -188,14 +188,8 @@ class Migrate_To_4200(Migrator):
             used_attrs = replace_in_list(used_attrs, "meetingNumber", "meeting_number")
             used_attrs = replace_in_list(used_attrs, "firstItemNumber", "first_item_number")
             used_attrs = replace_in_list(used_attrs, "nonAttendees", "non_attendees")
-            try:
-                used_attrs.remove('deadlinePublish')
-            except ValueError:
-                pass
-            try:
-                used_attrs.remove('deadlineFreeze')
-            except ValueError:
-                pass
+            used_attrs = replace_in_list(used_attrs, "deadlinePublish", "validation_deadline")
+            used_attrs = replace_in_list(used_attrs, "deadlineFreeze", "freeze_deadline")
             cfg.setUsedMeetingAttributes(used_attrs)
             # xhtmlTransformFields
             fields = cfg.getXhtmlTransformFields()
@@ -223,11 +217,14 @@ class Migrate_To_4200(Migrator):
             MeetingMigrator.used_meeting_attrs = cfg.getUsedMeetingAttributes()
             pac_migrate(self.portal, MeetingMigrator)
 
+            # some parameters were renamed
+            if getattr(cfg, "publishDeadlineDefault", None):
+                cfg.setValidationDeadlineDefault(cfg.publishDeadlineDefault)
+
             # some attributes were removed from MeetingConfig
             safe_delattr(cfg, "historizedMeetingAttributes")
             safe_delattr(cfg, "recordMeetingHistoryStates")
             safe_delattr(cfg, "publishDeadlineDefault")
-            safe_delattr(cfg, "freezeDeadlineDefault")
             safe_delattr(cfg, "preMeetingDateDefault")
 
         self.request.set('currently_migrating_meeting_dx', False)
