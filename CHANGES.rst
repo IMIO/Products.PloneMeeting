@@ -24,6 +24,8 @@ Changelog
 - Adapted CSS now that link to enable faceted filters is a simple link,
   no more icons.
   [gbastien]
+- Fixed `BaseDGHV.view_print_signatures_by_position` and added a test.
+  [aduchene]
 
 4.2b13 (2021-07-16)
 -------------------
