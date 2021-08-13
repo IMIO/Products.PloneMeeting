@@ -24,6 +24,9 @@ Changelog
 - Adapted CSS now that link to enable faceted filters is a simple link,
   no more icons.
   [gbastien]
+- Reimplement the meeting deadlines functionnalities, display an icon before
+  the item title on meeting view if item was validated after a defined deadline.
+  [gbastien]
 - Fixed `BaseDGHV.view_print_signatures_by_position` and added a test.
   [aduchene]
 
