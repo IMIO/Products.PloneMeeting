@@ -29,6 +29,10 @@ Changelog
   [gbastien]
 - Fixed `BaseDGHV.view_print_signatures_by_position` and added a test.
   [aduchene]
+- Added parameter `raw=True` to `pm_textarea.get_textarea_value` so it will
+  return the raw value by default instead the output that is treated by
+  `portal_transforms`, as the `PMTextAreaField` contains plain text, it is useless.
+  [gbastien]
 
 4.2b13 (2021-07-16)
 -------------------
@@ -1886,7 +1890,7 @@ Changelog
 - Added adaptable method MeetingItem.showObservations used in the widget condition of field MeetingItem.observations
 - Factorized PMDocumentGenerationHelperView(ATDocumentGenerationHelperView) to BaseDGHV(object) so we can
   use it for dexterity contenttypes.  Item, Meeting and Folder helper views now inherits from the BaseDGHV
-  + ATDocumentGenerationHelperView and the meetingadvice helper view inherits from BaseDGHV + 
+  + ATDocumentGenerationHelperView and the meetingadvice helper view inherits from BaseDGHV +
   DXDocumentGenerationHelperView
 - Fixed problem in CKeditor where toolbar was lost when maximizing a CKeditor containing a very long text
 - In content edited with CKeditor, force margin-bottom under tables to 0em because it is rendered this way
@@ -1944,7 +1948,7 @@ Changelog
 - Override vocabulary 'collective.documentgenerator.ExistingPODTemplate' to include MeetingConfig title in term
 - Adapted ToolPloneMeeting.getGroupedConfigs so it does not return MeetingConfig objects because the method
   is ram.cached and returning objects leads to problems where objects lose acquisition
-- Make sure access to meetingitem_view does not raise Unauthorized if current user does not have the 
+- Make sure access to meetingitem_view does not raise Unauthorized if current user does not have the
   "PloneMeeting: Read budget infos" permission
 
 4.1b5 (2018-02-23)
@@ -2143,7 +2147,7 @@ Changelog
 - In MeetingItem.sendAdviceToGiveMailIfRelevant, added an adaptable call to a method _sendAdviceToGiveToGroup
   that make it possible to check if the mail must be sent to a given groupId or not.  This makes it possible
   to bypass some groups when sending the 'advice to give' notification
-- A given advice is automatically versionned when necessary (the 'give_advice' transition is triggered, 
+- A given advice is automatically versionned when necessary (the 'give_advice' transition is triggered,
   the item is edited after the advice has been given or annex have been added/removed), we rely now on
   plone.app.versioningbehavior to display a historized version, moreover versioned advice is directly previewable
   in the @@historyview popup.  We make sure that the advice modification date is not changed so we can rely on it
@@ -2889,4 +2893,3 @@ Changelog
 ------------------
 - Do the meetingfolder_view work again in Plone3
 - Some CSS/Translations/JS fixes
-
