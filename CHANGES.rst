@@ -13,7 +13,8 @@ Changelog
   [gbastien]
 - Added a field `MeetingConfig.itemPreferredMeetingStates` that allows to set selectable
   preferredMeeting states.
-  Added a parameter to `MeetingConfig.listStates` to have only a list of state ids.
+- Added a helper method `MeetingConfig.listStateIds` to get all state ids
+  for a given objectType or WF.
   [aduchene]
 - Added possibility to ask advice to specific advisers of a group:
 

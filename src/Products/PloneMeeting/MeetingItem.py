@@ -3204,9 +3204,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         res = []
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        # save meetingUIDs, it will be necessary here under
 
-        meeting_states_accepting_items = None
         if tool.isManager(cfg):
             meeting_states_accepting_items = cfg.getMeetingStatesAcceptingItemsForMeetingManagers()
         else:

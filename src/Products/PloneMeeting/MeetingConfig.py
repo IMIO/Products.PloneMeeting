@@ -30,6 +30,8 @@ from imio.helpers.content import get_vocab
 from imio.helpers.content import uuidToObject
 from persistent.list import PersistentList
 from plone import api
+from plone.api.validation import at_least_one_of
+from plone.api.validation import mutually_exclusive_parameters
 from plone.app.portlets.portlets import navigation
 from plone.memoize import ram
 from plone.portlets.interfaces import IPortletAssignmentMapping
@@ -141,6 +143,7 @@ import os
 __author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
 <g.bastien@imio.be>, Stephan GEULETTE <s.geulette@imio.be>"""
 __docformat__ = 'plaintext'
+
 
 defValues = MeetingConfigDescriptor.get()
 # This way, I get the default values for some MeetingConfig fields,
@@ -6374,31 +6377,40 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 res.append((workflowName, workflowName))
         return DisplayList(tuple(res)).sortedByValue()
 
+    security.declarePublic('listStateIds')
+
+    @at_least_one_of('objectType', 'workflow')
+    @mutually_exclusive_parameters('objectType', 'workflow')
+    def listStateIds(self, objectType=None, workflow=None, excepted=None):
+        '''Lists the possible state ids for the p_objectType ("Item" or "Meeting")
+           used in this meeting config. State id specified in p_excepted will
+           be ommitted from the result.'''
+        if objectType:
+            if objectType == 'Meeting':
+                workflow = self.getMeetingWorkflow(True)
+            else:
+                workflow = self.getItemWorkflow(True)
+        return tuple(state.id for state in workflow.states.objectValues() if state.id != excepted)
+
     security.declarePublic('listStates')
 
-    def listStates(self, objectType, excepted=None, with_state_id=True, with_state_title=True):
+    def listStates(self, objectType, excepted=None, with_state_id=True):
         '''Lists the possible states for the p_objectType ("Item" or "Meeting")
            used in this meeting config. State name specified in p_excepted will
            be ommitted from the result.'''
-        res = []
-        workflow = None
         if objectType == 'Meeting':
             workflow = self.getMeetingWorkflow(True)
         else:
             workflow = self.getItemWorkflow(True)
 
-        for state in workflow.states.objectValues():
-            if excepted and (state.id == excepted):
-                continue
-
-            if with_state_title:
-                state_title = translate(state.title, domain="plone", context=self.REQUEST)
-                if with_state_id:
-                    state_title = u'{0} ({1})'.format(state_title, state.id)
-
-                res.append((state.id, state_title))
-            else:
-                res.append(state.id)
+        states_id = self.listStateIds(workflow=workflow, excepted=excepted)
+        res = []
+        for state_id in states_id:
+            state = workflow.states[state_id]
+            state_title = translate(state.title, domain="plone", context=self.REQUEST)
+            if with_state_id:
+                state_title = u'{0} ({1})'.format(state_title, state_id)
+            res.append((state_id, state_title))
 
         return res
 
@@ -7143,14 +7155,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def getMeetingStatesAcceptingItemsForMeetingManagers(self):
         '''In those states, the meeting accept items, normal or late.
            It returns a tuple of meeting review_states.'''
-        return tuple(self.listStates("Meeting", excepted='closed', with_state_title=False))
+        return tuple(self.listStateIds("Meeting", excepted='closed'))
 
-
-    def getMeetingsAcceptingItems_cachekey(method, self, review_states=('created', 'frozen'), inTheFuture=False):
+    def getMeetingsAcceptingItems_cachekey(method, self, review_states=[], inTheFuture=False):
         '''cachekey method for self.getMeetingsAcceptingItems.'''
         return (repr(self), str(self.REQUEST._debug), review_states, inTheFuture)
 
-    def _getMeetingsAcceptingItemsQuery(self, review_states=('created', 'frozen'), inTheFuture=False):
+    def _getMeetingsAcceptingItemsQuery(self, review_states=[], inTheFuture=False):
         '''Compute the catalog query to get meeting accepting items.'''
         # If the current user is a meetingManager (or a Manager),
         # he is able to add a meetingitem to a 'decided' meeting.
