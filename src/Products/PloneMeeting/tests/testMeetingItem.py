@@ -4114,14 +4114,8 @@ class testMeetingItem(PloneMeetingTestCase):
         # go to state 'closed'
         m4 = self.create('Meeting', date=datetime(2013, 2, 22, 8, 0))
         self.closeMeeting(m4)
-        # getMeetingsAcceptingItems should only return meetings
-        # that are 'created', 'frozen' or 'decided' for the meetingManager
+        # getMeetingsAcceptingItems should return all meetings excepted closed ones
         self.assertEqual([m.id for m in cfg.getMeetingsAcceptingItems()], [m1.id, m2.id, m3.id])
-        cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
-        # getMeetingsAcceptingItems should only return meetings
-        # that are 'created' or 'frozen' for the creators
-        self.changeUser('pmCreator1')
-        self.assertEqual([m.id for m in cfg.getMeetingsAcceptingItems()], [m1.id, m2.id])
 
     def test_pm_GetMeetingsAcceptingItemsWithPublishDecisionsWFAdaptation(self):
         """Test that MeetingConfig.getMeetingsAcceptingItems also return meetings in state
@@ -4143,10 +4137,6 @@ class testMeetingItem(PloneMeetingTestCase):
             [m.id for m in cfg.getMeetingsAcceptingItems()],
             [meeting.getId()])
         self.assertTrue(meeting.wfConditions().may_accept_items())
-        cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
-        # not for creators
-        self.changeUser('pmCreator1')
-        self.assertEqual([m.id for m in cfg.getMeetingsAcceptingItems()], [])
 
     def test_pm_OnTransitionFieldTransforms(self):
         '''On transition triggered, some transforms can be applied to item or meeting

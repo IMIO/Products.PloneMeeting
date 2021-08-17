@@ -7167,12 +7167,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # he is able to add a meetingitem to a 'decided' meeting.
         # except if we specifically restricted given p_review_states.
         tool = api.portal.get_tool('portal_plonemeeting')
+        if not review_states:
+            review_states = self.getMeetingStatesAcceptingItemsForMeetingManagers()
+
         query = {'portal_type': self.getMeetingTypeName(),
                  'review_state': review_states,
                  'sort_on': 'meeting_date'}
-        # querying empty review_state will return nothing
-        if not review_states:
-            query.pop('review_state')
 
         if inTheFuture:
             query['meeting_date'] = {'query': datetime.now(), 'range': 'min'}
@@ -7182,8 +7182,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     @ram.cache(getMeetingsAcceptingItems_cachekey)
     def getMeetingsAcceptingItems(self, review_states=[], inTheFuture=False):
         '''Returns meetings accepting items.'''
-        if not review_states:
-            review_states = self.getMeetingStatesAcceptingItemsForMeetingManagers()
         catalog = api.portal.get_tool('portal_catalog')
         query = self._getMeetingsAcceptingItemsQuery(review_states, inTheFuture)
         return catalog.unrestrictedSearchResults(**query)
