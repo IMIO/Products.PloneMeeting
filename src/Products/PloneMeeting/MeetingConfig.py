@@ -30,8 +30,6 @@ from imio.helpers.content import get_vocab
 from imio.helpers.content import uuidToObject
 from persistent.list import PersistentList
 from plone import api
-from plone.api.validation import at_least_one_of
-from plone.api.validation import mutually_exclusive_parameters
 from plone.app.portlets.portlets import navigation
 from plone.memoize import ram
 from plone.portlets.interfaces import IPortletAssignmentMapping
@@ -6379,17 +6377,14 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('listStateIds')
 
-    @at_least_one_of('objectType', 'workflow')
-    @mutually_exclusive_parameters('objectType', 'workflow')
-    def listStateIds(self, objectType=None, workflow=None, excepted=None):
+    def listStateIds(self, objectType, excepted=None):
         '''Lists the possible state ids for the p_objectType ("Item" or "Meeting")
            used in this meeting config. State id specified in p_excepted will
            be ommitted from the result.'''
-        if objectType:
-            if objectType == 'Meeting':
-                workflow = self.getMeetingWorkflow(True)
-            else:
-                workflow = self.getItemWorkflow(True)
+        if objectType == 'Meeting':
+            workflow = self.getMeetingWorkflow(True)
+        else:
+            workflow = self.getItemWorkflow(True)
         return tuple(state.id for state in workflow.states.objectValues() if state.id != excepted)
 
     security.declarePublic('listStates')
@@ -6403,14 +6398,16 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         else:
             workflow = self.getItemWorkflow(True)
 
-        states_id = self.listStateIds(workflow=workflow, excepted=excepted)
         res = []
-        for state_id in states_id:
-            state = workflow.states[state_id]
+        for state in workflow.states.objectValues():
+            if excepted and (state.id == excepted):
+                continue
+
             state_title = translate(state.title, domain="plone", context=self.REQUEST)
             if with_state_id:
-                state_title = u'{0} ({1})'.format(state_title, state_id)
-            res.append((state_id, state_title))
+                state_title = u'{0} ({1})'.format(state_title, state.id)
+
+            res.append((state.id, state_title))
 
         return res
 
