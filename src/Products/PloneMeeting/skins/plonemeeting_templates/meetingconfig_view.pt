@@ -681,7 +681,7 @@
                tal:attributes="src string:${portal_url}/manage.png;"/>
           <a href="itemtemplates" i18n:translate="">Manage item templates</a>
         </h4>
-        <p tal:define="default_template python:context.get_default_item_template(ignore_inactive=False);
+        <p tal:define="default_template python:context.get_default_item_template(only_active=False);
                        default_template_review_state default_template/query_state"
            i18n:translate="">The default item template <span i18n:name="default_template_title"><img tal:attributes="src default_template/getIconURL" />
           <a tal:attributes="href default_template/absolute_url;
