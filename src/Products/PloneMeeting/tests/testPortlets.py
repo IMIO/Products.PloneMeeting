@@ -10,6 +10,7 @@ from plone.portlets.interfaces import IPortletManager
 from plone.portlets.interfaces import IPortletRenderer
 from Products.PloneMeeting.browser import portlet_plonemeeting
 from Products.PloneMeeting.browser import portlet_todo
+from Products.PloneMeeting.config import ITEM_DEFAULT_TEMPLATE_ID
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from zope.component import getMultiAdapter
 from zope.component import getUtility
@@ -71,6 +72,30 @@ class testPortlets(PloneMeetingTestCase):
         self.assertTrue(itemsCategory.templateItems())
         # no matter actually there are no itemTemplates available for him...
         self.assertFalse(cfg.getItemTemplates(as_brains=True, onlyActive=True, filtered=True))
+
+    def test_pm_PortletPMRestrictCreateItemFromEmptyTemplate(self):
+        '''Test that the "Crate item from empty template" may be restricted
+           to some groups, this let's make the link "Create empty item" available
+           to only some groups.'''
+        cfg = self.meetingConfig
+        self.changeUser('siteadmin')
+        empty_item_template = cfg.itemtemplates.get(ITEM_DEFAULT_TEMPLATE_ID)
+        empty_item_template_uid = empty_item_template.UID()
+        empty_item_template.setTemplateUsingGroups([self.developers_uid])
+        empty_item_template.reindexObject(idxs=['templateUsingGroups', ])
+        # available for pmCreator1 that is member of developers
+        self.changeUser('pmCreator1')
+        pmFolder1 = self.getMeetingFolder()
+        itemsCategory = pmFolder1.restrictedTraverse('@@render_collection_widget_category')
+        itemsCategory(widget=None)
+        self.assertEqual(itemsCategory._get_default_item_template_UID(),
+                         empty_item_template_uid)
+        # not available for pmCreator2 that is not member of developers
+        self.changeUser('pmCreator2')
+        pmFolder2 = self.getMeetingFolder()
+        itemsCategory = pmFolder2.restrictedTraverse('@@render_collection_widget_category')
+        itemsCategory(widget=None)
+        self.assertIsNone(itemsCategory._get_default_item_template_UID())
 
     def test_pm_FromPortletTodo(self):
         """While getting searches in portlet_todo, the TAL condition for searches have
