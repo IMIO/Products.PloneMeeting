@@ -11,6 +11,11 @@ Changelog
   to send an e-mail to arbitrary users.
   Renamed parameter `permissionOrSuffixOrRoleOrGroupIds` to `value`.
   [gbastien]
+- Added a field `MeetingConfig.itemPreferredMeetingStates` that allows to set selectable
+  preferredMeeting states.
+- Added a helper method `MeetingConfig.listStateIds` to get all state ids
+  for a given objectType.
+  [aduchene]
 - Added possibility to ask advice to specific advisers of a group:
 
   - Advice is still asked to the entire group but a new search

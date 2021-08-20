@@ -856,6 +856,52 @@ class testWorkflows(PloneMeetingTestCase):
             self.developers_uid, self.vendors_uid))
         self.assertTrue(item.wfConditions().mayPresent())
 
+    def test_pm_ItemPreferredMeetingStates(self):
+        """When setting MeetingConfig.itemPreferredMeetingStates
+           it should change the selectable preferred meetings list accordingly."""
+        self.changeUser('pmManager')
+        created_meeting = self.create("Meeting")
+        frozen_meeting = self.create("Meeting")
+        self.freezeMeeting(frozen_meeting)
+        decided_meeting = self.create("Meeting")
+        self.decideMeeting(decided_meeting)
+        closed_meeting = self.create("Meeting")
+        self.closeMeeting(closed_meeting)
+
+        # Default behaviour, meetings in ('created', 'frozen') states are selectable for creators
+        # But pmManager car select all meetings than can accept items
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        item_selectable_preferred_meetings = item.listMeetingsAcceptingItems()
+        self.assertIn(created_meeting.UID(), item_selectable_preferred_meetings)
+        self.assertIn(frozen_meeting.UID(), item_selectable_preferred_meetings)
+        self.assertNotIn(decided_meeting.UID(), item_selectable_preferred_meetings)
+        self.assertNotIn(closed_meeting.UID(), item_selectable_preferred_meetings)
+
+        self.changeUser('pmManager')
+        item_selectable_preferred_meetings = item.listMeetingsAcceptingItems()
+        self.assertIn(created_meeting.UID(), item_selectable_preferred_meetings)
+        self.assertIn(frozen_meeting.UID(), item_selectable_preferred_meetings)
+        self.assertIn(decided_meeting.UID(), item_selectable_preferred_meetings)
+        self.assertNotIn(closed_meeting.UID(), item_selectable_preferred_meetings)
+
+        # Decided meetings can now be selected as preferred meeting for creators
+        self.meetingConfig.setItemPreferredMeetingStates((u"created", u"frozen", u"decided"))
+        cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
+        self.changeUser('pmCreator1')
+        item_selectable_preferred_meetings = item.listMeetingsAcceptingItems()
+        self.assertIn(created_meeting.UID(), item_selectable_preferred_meetings)
+        self.assertIn(frozen_meeting.UID(), item_selectable_preferred_meetings)
+        self.assertIn(decided_meeting.UID(), item_selectable_preferred_meetings)
+        self.assertNotIn(closed_meeting.UID(), item_selectable_preferred_meetings)
+
+        self.changeUser('pmManager')
+        item_selectable_preferred_meetings = item.listMeetingsAcceptingItems()
+        self.assertIn(created_meeting.UID(), item_selectable_preferred_meetings)
+        self.assertIn(frozen_meeting.UID(), item_selectable_preferred_meetings)
+        self.assertIn(decided_meeting.UID(), item_selectable_preferred_meetings)
+        self.assertNotIn(closed_meeting.UID(), item_selectable_preferred_meetings)
+
 
 def test_suite():
     from unittest import makeSuite

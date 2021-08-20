@@ -1090,7 +1090,7 @@ class Meeting(Container):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         meeting_state = self.query_state()
-        if meeting_state not in cfg.adapted().getMeetingStatesAcceptingItems():
+        if meeting_state not in cfg.getMeetingStatesAcceptingItemsForMeetingManagers():
             # make sure the query returns nothing, add a dummy parameter
             return [{'i': 'UID',
                      'o': 'plone.app.querystring.operation.selection.is',
