@@ -302,18 +302,39 @@ class ObjectGoToView(BrowserView):
           p_itemNumber is the number of the item we want to go to.  This item
           is in the same meeting than self.context.
         """
-        catalog = api.portal.get_tool('portal_catalog')
         meeting = self.context.getMeeting()
-        itemNumber = _itemNumber_to_storedItemNumber(itemNumber)
-        brains = catalog(meeting_uid=meeting.UID(), getItemNumber=itemNumber)
-        if not brains:
-            self.context.plone_utils.addPortalMessage(
-                translate(msgid='item_number_not_accessible',
-                          domain='PloneMeeting',
-                          context=self.request),
-                type='warning')
-            return self.request.RESPONSE.redirect(self.context.absolute_url())
+        # got to meeting view on relevant item?
+        if way == 'meeting':
+            item_uids = [brain.UID for brain
+                         in meeting.get_items(ordered=True, the_objects=False)]
+            # find on which page item will be displayed
+            tool = api.portal.get_tool('portal_plonemeeting')
+            cfg = tool.getMeetingConfig(self.context)
+            context_uid = self.context.UID()
+            item_pos = tuple(item_uids).index(context_uid) + 1
+            items_by_page = cfg.getMaxShownMeetingItems()
+            page_num = float(item_pos) / items_by_page
+            int_page_num = int(page_num)
+            if page_num > int_page_num:
+                int_page_num += 1
+            int_page_num = int_page_num - 1
+            url = "{0}#b_start={1}&scroll_to=row_{2}".format(
+                meeting.absolute_url(), int_page_num*items_by_page, context_uid)
+            return self.request.RESPONSE.redirect(url)
+
+        # navigate thru items
         else:
+            catalog = api.portal.get_tool('portal_catalog')
+            itemNumber = _itemNumber_to_storedItemNumber(itemNumber)
+            brains = catalog(meeting_uid=meeting.UID(), getItemNumber=itemNumber)
+            if not brains:
+                self.context.plone_utils.addPortalMessage(
+                    translate(msgid='item_number_not_accessible',
+                              domain='PloneMeeting',
+                              context=self.request),
+                    type='warning')
+                return self.request.RESPONSE.redirect(self.context.absolute_url())
+
             obj = brains[0].getObject()
             # check if obj isPrivacyViewable, if not, find the previous/next viewable item
             next_obj = None

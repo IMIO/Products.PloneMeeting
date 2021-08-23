@@ -2165,7 +2165,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     # when removing an advice asked to a userid
                     return translate(
                         'can_not_unselect_already_given_advice',
-                        mapping={'removedAdviser':
+                        mapping={
+                            'removedAdviser':
                             vocab.getTermByToken(orig_removedAdviser).sortable_title},
                         domain='PloneMeeting',
                         context=self.REQUEST)

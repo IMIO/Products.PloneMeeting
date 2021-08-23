@@ -733,6 +733,7 @@ $(document).ready(function () {
   }
   $(Faceted.Events).bind(Faceted.Events.AJAX_QUERY_SUCCESS, function() {
     updatePortletTodo();
+
   });
 });
 
@@ -740,15 +741,15 @@ $(document).ready(function () {
    otherwise, the double ajax call on the meeting (available and presented items)
    will display the same result... */
 if (/msie/.test(navigator.userAgent.toLowerCase())) {
-  $.ajaxSetup ({ 
-    cache: false }); 
+  $.ajaxSetup ({
+    cache: false });
 }
 
 /* make sure not_selectable inputs in MeetingItem.optionalAdvisers are not selectable ! */
 $(document).ready(function () {
     $("input[value^='not_selectable_value_'").each(function() {
         this.disabled = true;
-    }); 
+    });
 });
 
 /* make sure first line of MeetingConfig.itemWFValidationLevels can not be edited */
@@ -756,7 +757,7 @@ $(document).ready(function () {
     $("input[id$='_itemWFValidationLevels_1'").each(function() {
         this.readOnly = true;
     });
-    
+
 });
 
 function update_search_term(tag){
@@ -803,7 +804,7 @@ $('table.faceted-table-results').tableDnD({
              move_type = 'down';
          }
     } else {move_type = 'down';}
-    
+
     // now that we know the move, we can determinate number to use
     if (move_type == 'down') {
       new_value = parseInt(table.rows[row.rowIndex - 1].cells[2].dataset.item_number);
@@ -918,3 +919,46 @@ $("div.readmorable p.readless").click(function() {
   return false;
 });
 }
+
+function _scrollTo(el, yOffset = 0){
+  const y = el.getBoundingClientRect().top + window.pageYOffset + yOffset;
+  window.scrollTo({top: y, behavior: 'smooth'});
+}
+
+
+function scrollToRow() {
+    url = Faceted.URLHandler.get();
+    if ("scroll_to" in url) {
+        row_id = url.scroll_to[0];
+        row = $('#' + row_id);
+        if (row.length) {
+            // goto row
+            header_height = $("#portal-header").height();
+            _scrollTo(row[0], -50 -header_height);
+            // highlight row
+            tds = $('td', row);
+            tds.each(function(){
+                $(this).effect('highlight', {}, 5000);
+                }
+            );
+        }
+    }
+}
+
+const observer = new MutationObserver((mutations, obs) => {
+  url = Faceted.URLHandler.get();
+  if ("scroll_to" in url) {
+    const row_id = url.scroll_to[0];
+    row_id_tag = document.getElementById(row_id);
+    if (row_id_tag) {
+      scrollToRow();
+      obs.disconnect();
+      return;
+    }
+  }
+});
+
+observer.observe(document, {
+  childList: true,
+  subtree: true
+});
