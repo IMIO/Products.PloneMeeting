@@ -423,8 +423,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             if api.content.get_state(cfg) == 'active' and \
                self.checkMayView(cfg) and \
                (isManager or isPowerObserver or
-                    (check_using_groups and self.get_orgs_for_user(using_groups=cfg.getUsingGroups(),
-                                                                   the_objects=False))):
+                    (check_using_groups and self.get_orgs_for_user(
+                        using_groups=cfg.getUsingGroups(), the_objects=False))):
                 res.append(cfg)
         return res
 
