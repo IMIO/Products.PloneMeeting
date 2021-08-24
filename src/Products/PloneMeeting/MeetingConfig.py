@@ -2710,13 +2710,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'subFolderId': 'searches_items',
                     'active': True,
                     'query':
-                    [
-                        {'i': 'portal_type',
-                         'o': 'plone.app.querystring.operation.selection.is',
-                         'v': [itemType, ]},
-                        {'i': 'Creator',
-                         'o': 'plone.app.querystring.operation.string.currentUser'},
-                    ],
+                        [
+                            {'i': 'portal_type',
+                             'o': 'plone.app.querystring.operation.selection.is',
+                             'v': [itemType, ]},
+                            {'i': 'Creator',
+                             'o': 'plone.app.querystring.operation.string.currentUser'},
+                        ],
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
@@ -2728,11 +2728,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'subFolderId': 'searches_items',
                     'active': True,
                     'query':
-                    [
-                        {'i': 'CompoundCriterion',
-                         'o': 'plone.app.querystring.operation.compound.is',
-                         'v': 'items-of-my-groups'},
-                    ],
+                        [
+                            {'i': 'CompoundCriterion',
+                             'o': 'plone.app.querystring.operation.compound.is',
+                             'v': 'items-of-my-groups'},
+                        ],
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
@@ -2744,14 +2744,14 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'subFolderId': 'searches_items',
                     'active': True,
                     'query':
-                    [
-                        {'i': 'portal_type',
-                         'o': 'plone.app.querystring.operation.selection.is',
-                         'v': [itemType, ]},
-                        {'i': 'review_state',
-                         'o': 'plone.app.querystring.operation.selection.is',
-                         'v': livingItemStates}
-                    ],
+                        [
+                            {'i': 'portal_type',
+                             'o': 'plone.app.querystring.operation.selection.is',
+                             'v': [itemType, ]},
+                            {'i': 'review_state',
+                             'o': 'plone.app.querystring.operation.selection.is',
+                             'v': livingItemStates}
+                        ],
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
@@ -2763,11 +2763,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'subFolderId': 'searches_items',
                     'active': True,
                     'query':
-                    [
-                        {'i': 'CompoundCriterion',
-                         'o': 'plone.app.querystring.operation.compound.is',
-                         'v': 'my-items-taken-over'},
-                    ],
+                        [
+                            {'i': 'CompoundCriterion',
+                             'o': 'plone.app.querystring.operation.compound.is',
+                             'v': 'my-items-taken-over'},
+                        ],
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
@@ -2781,11 +2781,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'subFolderId': 'searches_items',
                     'active': True,
                     'query':
-                    [
-                        {'i': 'portal_type',
-                         'o': 'plone.app.querystring.operation.selection.is',
-                         'v': [itemType, ]},
-                    ],
+                        [
+                            {'i': 'portal_type',
+                             'o': 'plone.app.querystring.operation.selection.is',
+                             'v': [itemType, ]},
+                        ],
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
@@ -2797,11 +2797,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'subFolderId': 'searches_items',
                     'active': True,
                     'query':
-                    [
-                        {'i': 'CompoundCriterion',
-                         'o': 'plone.app.querystring.operation.compound.is',
-                         'v': 'items-in-copy'},
-                    ],
+                        [
+                            {'i': 'CompoundCriterion',
+                             'o': 'plone.app.querystring.operation.compound.is',
+                             'v': 'items-in-copy'},
+                        ],
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
@@ -2813,22 +2813,22 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'subFolderId': 'searches_items',
                     'active': True,
                     'query':
-                    [
-                        {u'i': u'CompoundCriterion',
-                         u'o': u'plone.app.querystring.operation.compound.is',
-                         u'v': [u'items-in-copy']},
-                        {u'i': u'labels',
-                         u'o': u'plone.app.querystring.operation.selection.is',
-                         u'v': [u'lu']},
-                        {'i': 'CompoundCriterion',
-                         'o': 'plone.app.querystring.operation.compound.is',
-                         'v': 'items-with-negative-personal-labels'},
-                    ],
+                        [
+                            {u'i': u'CompoundCriterion',
+                             u'o': u'plone.app.querystring.operation.compound.is',
+                             u'v': [u'items-in-copy']},
+                            {u'i': u'labels',
+                             u'o': u'plone.app.querystring.operation.selection.is',
+                             u'v': [u'lu']},
+                            {'i': 'CompoundCriterion',
+                             'o': 'plone.app.querystring.operation.compound.is',
+                             'v': 'items-with-negative-personal-labels'},
+                        ],
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
                     'tal_condition': "python: cfg.getEnableLabels() and cfg.getUseCopies() "
-                        "and tool.userIsAmong(['observers', 'reviewers']) ",
+                                     "and tool.userIsAmong(['observers', 'reviewers']) ",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Items to prevalidate
@@ -2836,14 +2836,14 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'subFolderId': 'searches_items',
                     'active': True,
                     'query':
-                    [
-                        {'i': u'CompoundCriterion',
-                         'o': u'plone.app.querystring.operation.compound.is',
-                         'v': u'items-to-validate-of-my-reviewer-groups'},
-                        {'i': u'review_state',
-                         'o': u'plone.app.querystring.operation.selection.is',
-                         'v': [u'proposed']},
-                    ],
+                        [
+                            {'i': u'CompoundCriterion',
+                             'o': u'plone.app.querystring.operation.compound.is',
+                             'v': u'items-to-validate-of-my-reviewer-groups'},
+                            {'i': u'review_state',
+                             'o': u'plone.app.querystring.operation.selection.is',
+                             'v': [u'proposed']},
+                        ],
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': True,
@@ -2856,11 +2856,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'subFolderId': 'searches_items',
                     'active': True,
                     'query':
-                    [
-                        {'i': 'CompoundCriterion',
-                         'o': 'plone.app.querystring.operation.compound.is',
-                         'v': 'items-to-validate-of-highest-hierarchic-level'},
-                    ],
+                        [
+                            {'i': 'CompoundCriterion',
+                             'o': 'plone.app.querystring.operation.compound.is',
+                             'v': 'items-to-validate-of-highest-hierarchic-level'},
+                        ],
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': True,
@@ -2872,11 +2872,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'subFolderId': 'searches_items',
                     'active': True,
                     'query':
-                    [
-                        {'i': 'CompoundCriterion',
-                         'o': 'plone.app.querystring.operation.compound.is',
-                         'v': 'items-to-validate-of-every-reviewer-levels-and-lower-levels'},
-                    ],
+                        [
+                            {'i': 'CompoundCriterion',
+                             'o': 'plone.app.querystring.operation.compound.is',
+                             'v': 'items-to-validate-of-every-reviewer-levels-and-lower-levels'},
+                        ],
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
@@ -2888,18 +2888,18 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'subFolderId': 'searches_items',
                     'active': True,
                     'query':
-                    [
-                        {'i': 'CompoundCriterion',
-                         'o': 'plone.app.querystring.operation.compound.is',
-                         'v': 'my-items-to-advice'},
-                    ],
+                        [
+                            {'i': 'CompoundCriterion',
+                             'o': 'plone.app.querystring.operation.compound.is',
+                             'v': 'my-items-to-advice'},
+                        ],
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': True,
                     'tal_condition': "python: cfg.getUseAdvices() and "
-                        "tool.userIsAmong(['advisers'], "
-                        "cfg=cfg, "
-                        "using_groups=cfg.getSelectableAdviserUsers())",
+                                     "tool.userIsAmong(['advisers'], "
+                                     "cfg=cfg, "
+                                     "using_groups=cfg.getSelectableAdviserUsers())",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Items to advice
@@ -2907,11 +2907,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'subFolderId': 'searches_items',
                     'active': True,
                     'query':
-                    [
-                        {'i': 'CompoundCriterion',
-                         'o': 'plone.app.querystring.operation.compound.is',
-                         'v': 'items-to-advice'},
-                    ],
+                        [
+                            {'i': 'CompoundCriterion',
+                             'o': 'plone.app.querystring.operation.compound.is',
+                             'v': 'items-to-advice'},
+                        ],
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': True,
@@ -2923,11 +2923,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'subFolderId': 'searches_items',
                     'active': True,
                     'query':
-                    [
-                        {'i': 'CompoundCriterion',
-                         'o': 'plone.app.querystring.operation.compound.is',
-                         'v': 'items-to-advice-without-delay'},
-                    ],
+                        [
+                            {'i': 'CompoundCriterion',
+                             'o': 'plone.app.querystring.operation.compound.is',
+                             'v': 'items-to-advice-without-delay'},
+                        ],
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': True,
@@ -2939,11 +2939,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'subFolderId': 'searches_items',
                     'active': True,
                     'query':
-                    [
-                        {'i': 'CompoundCriterion',
-                         'o': 'plone.app.querystring.operation.compound.is',
-                         'v': 'items-to-advice-with-delay'},
-                    ],
+                        [
+                            {'i': 'CompoundCriterion',
+                             'o': 'plone.app.querystring.operation.compound.is',
+                             'v': 'items-to-advice-with-delay'},
+                        ],
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': True,
@@ -2955,11 +2955,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'subFolderId': 'searches_items',
                     'active': True,
                     'query':
-                    [
-                        {'i': 'CompoundCriterion',
-                         'o': 'plone.app.querystring.operation.compound.is',
-                         'v': 'items-to-advice-with-exceeded-delay'},
-                    ],
+                        [
+                            {'i': 'CompoundCriterion',
+                             'o': 'plone.app.querystring.operation.compound.is',
+                             'v': 'items-to-advice-with-exceeded-delay'},
+                        ],
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
@@ -2971,11 +2971,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'subFolderId': 'searches_items',
                     'active': True,
                     'query':
-                    [
-                        {'i': 'CompoundCriterion',
-                         'o': 'plone.app.querystring.operation.compound.is',
-                         'v': 'advised-items'},
-                    ],
+                        [
+                            {'i': 'CompoundCriterion',
+                             'o': 'plone.app.querystring.operation.compound.is',
+                             'v': 'advised-items'},
+                        ],
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
@@ -2987,11 +2987,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'subFolderId': 'searches_items',
                     'active': True,
                     'query':
-                    [
-                        {'i': 'CompoundCriterion',
-                         'o': 'plone.app.querystring.operation.compound.is',
-                         'v': 'advised-items-with-delay'},
-                    ],
+                        [
+                            {'i': 'CompoundCriterion',
+                             'o': 'plone.app.querystring.operation.compound.is',
+                             'v': 'advised-items-with-delay'},
+                        ],
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
@@ -3003,11 +3003,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'subFolderId': 'searches_items',
                     'active': True,
                     'query':
-                    [
-                        {'i': 'CompoundCriterion',
-                         'o': 'plone.app.querystring.operation.compound.is',
-                         'v': 'items-to-correct'},
-                    ],
+                        [
+                            {'i': 'CompoundCriterion',
+                             'o': 'plone.app.querystring.operation.compound.is',
+                             'v': 'items-to-correct'},
+                        ],
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': True,
@@ -3024,11 +3024,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'subFolderId': 'searches_items',
                     'active': True,
                     'query':
-                    [
-                        {'i': 'CompoundCriterion',
-                         'o': 'plone.app.querystring.operation.compound.is',
-                         'v': 'items-to-correct-to-validate-of-highest-hierarchic-level'},
-                    ],
+                        [
+                            {'i': 'CompoundCriterion',
+                             'o': 'plone.app.querystring.operation.compound.is',
+                             'v': 'items-to-correct-to-validate-of-highest-hierarchic-level'},
+                        ],
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': True,
@@ -3044,11 +3044,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'subFolderId': 'searches_items',
                     'active': True,
                     'query':
-                    [
-                        {'i': 'CompoundCriterion',
-                         'o': 'plone.app.querystring.operation.compound.is',
-                         'v': 'items-to-correct-to-validate-of-every-reviewer-groups'},
-                    ],
+                        [
+                            {'i': 'CompoundCriterion',
+                             'o': 'plone.app.querystring.operation.compound.is',
+                             'v': 'items-to-correct-to-validate-of-every-reviewer-groups'},
+                        ],
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': True,
@@ -3062,14 +3062,14 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'subFolderId': 'searches_items',
                     'active': True,
                     'query':
-                    [
-                        {u'i': u'labels',
-                         u'o': u'plone.app.querystring.operation.selection.is',
-                         u'v': [u'lu']},
-                        {'i': 'CompoundCriterion',
-                         'o': 'plone.app.querystring.operation.compound.is',
-                         'v': 'items-with-negative-personal-labels'},
-                    ],
+                        [
+                            {u'i': u'labels',
+                             u'o': u'plone.app.querystring.operation.selection.is',
+                             u'v': [u'lu']},
+                            {'i': 'CompoundCriterion',
+                             'o': 'plone.app.querystring.operation.compound.is',
+                             'v': 'items-with-negative-personal-labels'},
+                        ],
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
@@ -3081,14 +3081,14 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'subFolderId': 'searches_items',
                     'active': True,
                     'query':
-                    [
-                        {u'i': u'labels',
-                         u'o': u'plone.app.querystring.operation.selection.is',
-                         u'v': [u'suivi']},
-                        {'i': 'CompoundCriterion',
-                         'o': 'plone.app.querystring.operation.compound.is',
-                         'v': 'items-with-personal-labels'},
-                    ],
+                        [
+                            {u'i': u'labels',
+                             u'o': u'plone.app.querystring.operation.selection.is',
+                             u'v': [u'suivi']},
+                            {'i': 'CompoundCriterion',
+                             'o': 'plone.app.querystring.operation.compound.is',
+                             'v': 'items-with-personal-labels'},
+                        ],
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
@@ -3100,14 +3100,14 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'subFolderId': 'searches_items',
                     'active': True,
                     'query':
-                    [
-                        {'i': 'portal_type',
-                         'o': 'plone.app.querystring.operation.selection.is',
-                         'v': [itemType, ]},
-                        {'i': 'previous_review_state',
-                         'o': 'plone.app.querystring.operation.selection.is',
-                         'v': ['returned_to_proposing_group']}
-                    ],
+                        [
+                            {'i': 'portal_type',
+                             'o': 'plone.app.querystring.operation.selection.is',
+                             'v': [itemType, ]},
+                            {'i': 'previous_review_state',
+                             'o': 'plone.app.querystring.operation.selection.is',
+                             'v': ['returned_to_proposing_group']}
+                        ],
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
@@ -3123,11 +3123,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'subFolderId': 'searches_items',
                     'active': True,
                     'query':
-                    [
-                        {'i': 'CompoundCriterion',
-                         'o': 'plone.app.querystring.operation.compound.is',
-                         'v': 'decided-items'},
-                    ],
+                        [
+                            {'i': 'CompoundCriterion',
+                             'o': 'plone.app.querystring.operation.compound.is',
+                             'v': 'decided-items'},
+                        ],
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
@@ -3139,17 +3139,17 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'subFolderId': 'searches_items',
                     'active': True,
                     'query':
-                    [
-                        {'i': 'CompoundCriterion',
-                         'o': 'plone.app.querystring.operation.compound.is',
-                         'v': 'decided-items'},
-                        {u'i': u'labels',
-                         u'o': u'plone.app.querystring.operation.selection.is',
-                         u'v': [u'lu']},
-                        {'i': 'CompoundCriterion',
-                         'o': 'plone.app.querystring.operation.compound.is',
-                         'v': 'items-with-negative-personal-labels'},
-                    ],
+                        [
+                            {'i': 'CompoundCriterion',
+                             'o': 'plone.app.querystring.operation.compound.is',
+                             'v': 'decided-items'},
+                            {u'i': u'labels',
+                             u'o': u'plone.app.querystring.operation.selection.is',
+                             u'v': [u'lu']},
+                            {'i': 'CompoundCriterion',
+                             'o': 'plone.app.querystring.operation.compound.is',
+                             'v': 'items-with-negative-personal-labels'},
+                        ],
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
@@ -3161,14 +3161,14 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'subFolderId': 'searches_meetings',
                     'active': True,
                     'query':
-                    [
-                        {'i': 'portal_type',
-                         'o': 'plone.app.querystring.operation.selection.is',
-                         'v': [meetingType, ]},
-                        {'i': 'review_state',
-                         'o': 'plone.app.querystring.operation.selection.is',
-                         'v': ['created', 'frozen', 'published']},
-                    ],
+                        [
+                            {'i': 'portal_type',
+                             'o': 'plone.app.querystring.operation.selection.is',
+                             'v': [meetingType, ]},
+                            {'i': 'review_state',
+                             'o': 'plone.app.querystring.operation.selection.is',
+                             'v': ['created', 'frozen', 'published']},
+                        ],
                     'sort_on': u'sortable_title',
                     'sort_reversed': False,
                     'showNumberOfItems': False,
@@ -3180,20 +3180,20 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'subFolderId': 'searches_decisions',
                     'active': True,
                     'query':
-                    [
-                        {'i': 'portal_type',
-                         'o': 'plone.app.querystring.operation.selection.is',
-                         'v': [meetingType, ]},
-                        {'i': 'review_state',
-                         'o': 'plone.app.querystring.operation.selection.is',
-                         'v': ['decided', 'closed']},
-                        {'i': 'meeting_date',
-                         'o': 'plone.app.querystring.operation.date.largerThanRelativeDate',
-                         'v': '60'},
-                        {'i': 'CompoundCriterion',
-                         'o': 'plone.app.querystring.operation.compound.is',
-                         'v': 'last-decisions'},
-                    ],
+                        [
+                            {'i': 'portal_type',
+                             'o': 'plone.app.querystring.operation.selection.is',
+                             'v': [meetingType, ]},
+                            {'i': 'review_state',
+                             'o': 'plone.app.querystring.operation.selection.is',
+                             'v': ['decided', 'closed']},
+                            {'i': 'meeting_date',
+                             'o': 'plone.app.querystring.operation.date.largerThanRelativeDate',
+                             'v': '60'},
+                            {'i': 'CompoundCriterion',
+                             'o': 'plone.app.querystring.operation.compound.is',
+                             'v': 'last-decisions'},
+                        ],
                     'sort_on': u'sortable_title',
                     'sort_reversed': False,
                     'showNumberOfItems': False,
@@ -3205,11 +3205,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'subFolderId': 'searches_decisions',
                     'active': True,
                     'query':
-                    [
-                        {'i': 'portal_type',
-                         'o': 'plone.app.querystring.operation.selection.is',
-                         'v': [meetingType, ]},
-                    ],
+                        [
+                            {'i': 'portal_type',
+                             'o': 'plone.app.querystring.operation.selection.is',
+                             'v': [meetingType, ]},
+                        ],
                     'sort_on': u'sortable_title',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
@@ -3812,7 +3812,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 return _('error_list_types_same_identifier')
             # wrong identifier format?
             if not identifier.lower() == identifier or \
-               not identifier.isalpha():
+                    not identifier.isalpha():
                 return _('error_list_types_wrong_identifier_format')
 
         # already used listType may not be removed
@@ -3849,7 +3849,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
         # columns using_groups and auto_from are exclusive
         if self.is_committees_using("auto_from", new_value) and \
-           self.is_committees_using("using_groups", new_value):
+                self.is_committees_using("using_groups", new_value):
             return _('error_committees_mutually_exclusive_auto_from_and_using_groups')
 
         # this part should be in a validator for orderedCommitteeContacts
@@ -3978,7 +3978,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # also in additional fields
             configgroup_value = '{0}{1}'.format(CONFIGGROUPPREFIX, removedRowId)
             additional_stored_values = self.getItemAnnexConfidentialVisibleFor() + \
-                self.getAdviceAnnexConfidentialVisibleFor() + self.getMeetingAnnexConfidentialVisibleFor()
+                                       self.getAdviceAnnexConfidentialVisibleFor() + self.getMeetingAnnexConfidentialVisibleFor()
             if configgroup_value in additional_stored_values:
                 return translate('power_observer_removed_used_in_fields',
                                  domain='PloneMeeting',
@@ -4209,12 +4209,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                             # 3) or if we disabled the 'is_linked_to_previous_row' of a used automatic adviser
                             # that is not permitted
                             if not (k == 'for_item_created_until' and not v) and \
-                               k not in ['gives_auto_advice_on_help_message',
-                                         'delay_left_alert',
-                                         'delay_label',
-                                         'available_on'] and \
-                               not (k == 'is_linked_to_previous_row' and
-                                    (v == '0' or not self._findLinkedRowsFor(customAdviser['row_id'])[0])):
+                                    k not in ['gives_auto_advice_on_help_message',
+                                              'delay_left_alert',
+                                              'delay_label',
+                                              'available_on'] and \
+                                    not (k == 'is_linked_to_previous_row' and
+                                         (v == '0' or not self._findLinkedRowsFor(customAdviser['row_id'])[0])):
                                 # we are setting another field, it is not permitted if
                                 # the rule is in use, check every items if the rule is used
                                 # _checkIfConfigIsUsed will return an item absolute_url using this configuration
@@ -4278,11 +4278,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             return translate('no_signatories_and_signatures', domain=pm, context=self.REQUEST)
         # Prevent use of "excused" or "absents" without "attendees"
         if (('excused' in newValue) or ('absents' in newValue)) and \
-           ('attendees' not in newValue):
+                ('attendees' not in newValue):
             return translate('attendees_required', domain=pm, context=self.REQUEST)
         # Prevent use of "assembly_excused" or "assembly_absents" without "assembly"
         if (('assembly_excused' in newValue) or ('assembly_absents' in newValue)) and \
-           ('assembly' not in newValue):
+                ('assembly' not in newValue):
             return translate('assembly_required', domain=pm, context=self.REQUEST)
 
         # Prevent combined use of "assembly" and "attendees"
@@ -4359,7 +4359,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 continue
             # first make sure the selected transition correspond to the selected meeting_config
             if not mctct['trigger_workflow_transitions_until'] == NO_TRIGGER_WF_TRANSITION_UNTIL and \
-               not mctct['trigger_workflow_transitions_until'].startswith(mctct['meeting_config']):
+                    not mctct['trigger_workflow_transitions_until'].startswith(mctct['meeting_config']):
                 return translate('transition_not_from_selected_meeting_config',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
@@ -4381,10 +4381,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         if 'removed' in values and 'removed_and_duplicated' in values:
             return msg
         if 'accepted_out_of_meeting' in values and \
-           'accepted_out_of_meeting_and_duplicated' in values:
+                'accepted_out_of_meeting_and_duplicated' in values:
             return msg
         if 'accepted_out_of_meeting_emergency' in values and \
-           'accepted_out_of_meeting_emergency_and_duplicated' in values:
+                'accepted_out_of_meeting_emergency_and_duplicated' in values:
             return msg
         # several 'return_to_proposing_group' values may not be selected together
         return_to_prop_group_wf_adaptations = [
@@ -4409,9 +4409,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                if v.startswith('presented_item_back_to_')]
         if not item_validation_states:
             if 'reviewers_take_back_validated_item' in values or \
-               'return_to_proposing_group_with_last_validation' in values or \
-               'return_to_proposing_group_with_all_validations' in values or \
-               back_from_presented:
+                    'return_to_proposing_group_with_last_validation' in values or \
+                    'return_to_proposing_group_with_all_validations' in values or \
+                    back_from_presented:
                 return msg
 
         # check that selected back_from_presented transitions
@@ -4434,7 +4434,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # this will remove the 'published' state for Meeting and 'itempublished' for MeetingItem
             # check that no more elements are in these states
             if catalog(portal_type=self.getItemTypeName(), review_state='itempublished') or \
-               catalog(portal_type=self.getMeetingTypeName(), review_state='published'):
+                    catalog(portal_type=self.getMeetingTypeName(), review_state='published'):
                 return translate('wa_added_no_publication_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
@@ -4457,8 +4457,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
         if ('return_to_proposing_group' in removed) and \
-            not (('return_to_proposing_group_with_last_validation' in added) or
-                 ('return_to_proposing_group_with_all_validations' in added)):
+                not (('return_to_proposing_group_with_last_validation' in added) or
+                     ('return_to_proposing_group_with_all_validations' in added)):
             # this will remove the 'returned_to_proposing_group' state for MeetingItem
             # check that no more items are in this state
             if catalog(portal_type=self.getItemTypeName(), review_state='returned_to_proposing_group'):
@@ -4467,7 +4467,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                  context=self.REQUEST)
         validation_returned_states = _getValidationReturnedStates(self)
         if ('return_to_proposing_group_with_last_validation' in removed) and \
-           not ('return_to_proposing_group_with_all_validations' in added):
+                not ('return_to_proposing_group_with_all_validations' in added):
             # this will remove the 'returned_to_proposing_group with last validation state'
             # for MeetingItem check that no more items are in this state
             if catalog(portal_type=self.getItemTypeName(), review_state=validation_returned_states):
@@ -4479,9 +4479,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # for MeetingItem check that no more items are in these states
             # not downgrade from all to last validation if one item is in intermediary state
             if (catalog(portal_type=self.getItemTypeName(), review_state=validation_returned_states)) or \
-               (('return_to_proposing_group' not in added) and
-                ('return_to_proposing_group_with_last_validation' not in added) and
-                    (catalog(portal_type=self.getItemTypeName(), review_state='returned_to_proposing_group'))):
+                    (('return_to_proposing_group' not in added) and
+                     ('return_to_proposing_group_with_last_validation' not in added) and
+                     (catalog(portal_type=self.getItemTypeName(), review_state='returned_to_proposing_group'))):
                 return translate('wa_removed_return_to_proposing_group_with_all_validations_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
@@ -4493,7 +4493,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
         if 'accepted_out_of_meeting' in removed or \
-           'accepted_out_of_meeting_and_duplicated' in removed:
+                'accepted_out_of_meeting_and_duplicated' in removed:
             # this will remove the 'accepted_out_of_meeting' state for Item
             # check that no more items are in this state
             if catalog(portal_type=self.getItemTypeName(), review_state='accepted_out_of_meeting'):
@@ -4501,7 +4501,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
         if 'accepted_out_of_meeting_emergency' in removed or \
-           'accepted_out_of_meeting_emergency_and_duplicated' in removed:
+                'accepted_out_of_meeting_emergency_and_duplicated' in removed:
             # this will remove the 'accepted_out_of_meeting_emergency' state for Item
             # check that no more items are in this state
             if catalog(portal_type=self.getItemTypeName(), review_state='accepted_out_of_meeting_emergency'):
@@ -4553,7 +4553,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # check if 'removed' is removed only if the other 'removed_and_duplicated' is not added
         # at the same time (switch from one to other)
         if ('removed' in removed and 'removed_and_duplicated' not in added) or \
-           ('removed_and_duplicated' in removed and 'removed' not in added):
+                ('removed_and_duplicated' in removed and 'removed' not in added):
             # this will remove the 'removed' state for Item
             # check that no more items are in this state
             if catalog(portal_type=self.getItemTypeName(), review_state='removed'):
@@ -4609,7 +4609,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         for removed_or_disabled_state in removed_or_disabled_states:
             for item_state in item_states:
                 if item_state.startswith(removed_or_disabled_state) or \
-                   "_%s" % removed_or_disabled_state in item_state:
+                        "_%s" % removed_or_disabled_state in item_state:
                     item_contained_states.append(item_state)
         item_contained_states += list(removed_or_disabled_states)
         if item_contained_states:
@@ -4819,7 +4819,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             if value.get('orderindex_', None) == "template_row_marker":
                 continue
             if value['item_action'] == EXECUTE_EXPR_VALUE and not value['tal_expression'] or \
-               value['item_action'] != EXECUTE_EXPR_VALUE and value['tal_expression']:
+                    value['item_action'] != EXECUTE_EXPR_VALUE and value['tal_expression']:
                 return _('on_meeting_transition_item_action_tal_expr_error')
 
     def _adviceConditionsInterfaceFor(self, advice_obj):
@@ -4863,7 +4863,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # if the current row is not linked to previous row or the next row
         # is not linked the current row, return nothing
         if not currentRowData['is_linked_to_previous_row'] == '1' and \
-           (currentRowIndex == len(self.getCustomAdvisers()) - 1 or not
+                (currentRowIndex == len(self.getCustomAdvisers()) - 1 or not
                 self.getCustomAdvisers()[currentRowIndex + 1]['is_linked_to_previous_row'] == '1'):
             return isAutomaticAdvice, res
         res.append(currentRowData)
@@ -5174,47 +5174,47 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # keys beginning with static_ are taken into account by the @@static-infos view
         res = [
             ("static_start_date",
-                u"{0} (static_start_date)".format(
-                    translate('start_date_column', domain=d, context=self.REQUEST))),
+             u"{0} (static_start_date)".format(
+                 translate('start_date_column', domain=d, context=self.REQUEST))),
             ("static_end_date",
-                u"{0} (static_end_date)".format(
-                    translate('end_date_column', domain=d, context=self.REQUEST))),
+             u"{0} (static_end_date)".format(
+                 translate('end_date_column', domain=d, context=self.REQUEST))),
             ("static_convocation_date",
-                u"{0} (static_convocation_date)".format(
-                    translate('convocation_date_column', domain=d, context=self.REQUEST))),
+             u"{0} (static_convocation_date)".format(
+                 translate('convocation_date_column', domain=d, context=self.REQUEST))),
             ("static_approval_date",
-                u"{0} (static_approval_date)".format(
-                    translate('approval_date_column', domain=d, context=self.REQUEST))),
+             u"{0} (static_approval_date)".format(
+                 translate('approval_date_column', domain=d, context=self.REQUEST))),
             ("static_place",
-                u"{0} (static_place)".format(
-                    translate('place_column', domain=d, context=self.REQUEST))),
+             u"{0} (static_place)".format(
+                 translate('place_column', domain=d, context=self.REQUEST))),
             ("static_place_other",
-                u"{0} (static_place_other)".format(
-                    translate('place_other_column', domain=d, context=self.REQUEST))),
+             u"{0} (static_place_other)".format(
+                 translate('place_other_column', domain=d, context=self.REQUEST))),
             ("static_authority_notice",
-                u"{0} (static_authority_notice)".format(
-                    translate('authority_notice_column', domain=d, context=self.REQUEST))),
+             u"{0} (static_authority_notice)".format(
+                 translate('authority_notice_column', domain=d, context=self.REQUEST))),
             ("static_meeting_number",
-                u"{0} (static_meeting_number)".format(
-                    translate('meeting_number_column', domain=d, context=self.REQUEST))),
+             u"{0} (static_meeting_number)".format(
+                 translate('meeting_number_column', domain=d, context=self.REQUEST))),
             ("static_first_item_number",
-                u"{0} (static_first_item_number)".format(
-                    translate('first_item_number_column', domain=d, context=self.REQUEST))),
+             u"{0} (static_first_item_number)".format(
+                 translate('first_item_number_column', domain=d, context=self.REQUEST))),
             ("Creator",
-                u"{0} (Creator)".format(
-                    translate('header_Creator', domain=d, context=self.REQUEST))),
+             u"{0} (Creator)".format(
+                 translate('header_Creator', domain=d, context=self.REQUEST))),
             ("CreationDate",
-                u"{0} (CreationDate)".format(
-                    translate('header_CreationDate', domain=d, context=self.REQUEST))),
+             u"{0} (CreationDate)".format(
+                 translate('header_CreationDate', domain=d, context=self.REQUEST))),
             ("ModificationDate",
-                u"{0} (ModificationDate)".format(
-                    translate('header_ModificationDate', domain=d, context=self.REQUEST))),
+             u"{0} (ModificationDate)".format(
+                 translate('header_ModificationDate', domain=d, context=self.REQUEST))),
             ("review_state",
-                u"{0} (review_state)".format(
-                    translate('header_review_state', domain=d, context=self.REQUEST))),
+             u"{0} (review_state)".format(
+                 translate('header_review_state', domain=d, context=self.REQUEST))),
             ("actions",
-                u"{0} (actions)".format(
-                    translate("header_actions", domain=d, context=self.REQUEST))),
+             u"{0} (actions)".format(
+                 translate("header_actions", domain=d, context=self.REQUEST))),
         ]
         res = res + self._extraMeetingRelatedColumns()
         return DisplayList(tuple(res))
@@ -5362,6 +5362,41 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # (ie "correct")
             res.append((t.id, name))
         return res
+
+    security.declarePrivate('listItemValidationTransitions')
+
+    def list_item_validation_transitions(self, meetingconfig=None):
+        '''Lists the possible transitions as defined in itemWFValidationLevels.'''
+        if not meetingconfig:
+            meetingconfig = self
+
+        item_wf_validation_transitions = []
+        for validation_level in meetingconfig.getItemWFValidationLevels():
+            if validation_level['enabled'] == "0":
+                continue
+            if validation_level['leading_transition'] != "-":
+                transition_name = translate(
+                    validation_level['leading_transition_title'],
+                    domain="plone",
+                    context=self.REQUEST
+                ) + ' (' + validation_level['leading_transition'] + ')'
+
+                item_wf_validation_transitions.append((
+                    validation_level['leading_transition'],
+                    transition_name
+                ))
+            if validation_level['back_transition'] != "-":
+                transition_name = translate(
+                    validation_level['back_transition'],
+                    domain="plone",
+                    context=self.REQUEST
+                ) + ' (' + validation_level['back_transition'] + ')'
+
+                item_wf_validation_transitions.append((
+                    validation_level['back_transition'],
+                    transition_name
+                ))
+        return item_wf_validation_transitions
 
     security.declarePrivate('listActiveOrgsForPowerAdvisers')
 
@@ -6633,8 +6668,44 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                        mapping={'state_info': item_transition_name},
                                        context=self.REQUEST)
             res_transitions.append(("item_state_changed_%s" % item_transition_id, translated_msg))
+        res = DisplayList(tuple(res)) + DisplayList(res_transitions).sortedByValue()
 
-        return DisplayList(tuple(res)) + DisplayList(res_transitions).sortedByValue()
+        item_wf_validation_transitions = self.list_item_validation_transitions()
+
+        res_transitions = []
+        for item_transition_id, item_transition_name in item_wf_validation_transitions:
+            id = "item_state_changed_%s__history_aware" % item_transition_id
+            translated_msg = translate('transition_event_history_aware',
+                                       domain="PloneMeeting",
+                                       mapping={'state_info': item_transition_name},
+                                       context=self.REQUEST)
+            res_transitions.append((id, translated_msg))
+        res = res + DisplayList(res_transitions).sortedByValue()
+
+        res_transitions = []
+        for item_transition_id, item_transition_name in item_wf_validation_transitions:
+            id = "item_state_changed_%s__notify_proposing_group_suffix" % item_transition_id
+            translated_msg = translate('transition_event_proposing_group_suffix',
+                                       domain="PloneMeeting",
+                                       mapping={'state_info': item_transition_name},
+                                       context=self.REQUEST)
+            res_transitions.append((id, translated_msg))
+        res = res + DisplayList(res_transitions).sortedByValue()
+
+        res_transitions = []
+        for item_transition_id, item_transition_name in item_wf_validation_transitions:
+            id = "item_state_changed_%s__notify_proposing_group_suffix_except_manager" % item_transition_id
+            translated_msg = translate('transition_event_proposing_group_except_manager',
+                                       domain="PloneMeeting",
+                                       mapping={'state_info': item_transition_name},
+                                       context=self.REQUEST)
+            res_transitions.append((id, translated_msg))
+        res = res + DisplayList(res_transitions).sortedByValue()
+
+        return res
+
+
+
 
     security.declarePublic('listMeetingEvents')
 

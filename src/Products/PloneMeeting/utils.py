@@ -586,7 +586,6 @@ def sendMailIfRelevant(obj,
        A plug-in may use this method for sending custom events that are not
        defined in the MeetingConfig. In this case, you must specify
        p_customEvent = True.'''
-
     tool = api.portal.get_tool(TOOL_ID)
     cfg = tool.getMeetingConfig(obj)
     # Do not send the mail if mail mode is "deactivated".
@@ -594,7 +593,7 @@ def sendMailIfRelevant(obj,
         return
     # Do not send mail if the (not custom) event is unknown.
     if not customEvent and event not in cfg.getMailItemEvents() and \
-       event not in cfg.getMailMeetingEvents():
+            event not in cfg.getMailMeetingEvents():
         return
     # Ok, send a mail. Who are the recipients ?
     recipients = []
@@ -661,6 +660,7 @@ def sendMailIfRelevant(obj,
             unique_emails.append(email)
             unique_email_recipients.append(recipient)
         mail_subject, mail_body = sendMail(unique_email_recipients, obj, event, mapping=mapping)
+        logger.info("Mail(s) sent to :" +  " ".join(recipients))
     debug = debug or obj.REQUEST.get('debug_sendMailIfRelevant', False)
     if debug:
         return recipients, mail_subject, mail_body
