@@ -4548,7 +4548,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         """Send notifications that depends on old/new review_state."""
         self._sendAdviceToGiveMailIfRelevant(old_review_state, new_review_state)
         self._sendCopyGroupsMailIfRelevant(old_review_state, new_review_state)
-        self._send_notify_proposing_group_if_relevant(old_review_state,transition_id, new_review_state)
+        self._send_proposing_group_suffix_if_relevant(old_review_state,transition_id, new_review_state)
         self._send_history_aware_mail_if_relevant(old_review_state, transition_id, new_review_state)
 
     def _sendAdviceToGiveMailIfRelevant(self,
@@ -4672,7 +4672,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     notified_user_ids.append(member.getId())
         return notified_user_ids
 
-    def _send_notify_proposing_group_if_relevant(self, old_review_state, transition_id,
+    def _send_proposing_group_suffix_if_relevant(self, old_review_state, transition_id,
                                             new_review_state):
         """
         Notify by mail the proposing group suffix that will take care of this item in 'new_review_state'
@@ -4680,7 +4680,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
 
-        mail_event_id = "item_state_changed_{}__notify_proposing_group_suffix".format(transition_id)
+        mail_event_id = "item_state_changed_{}__proposing_group_suffix".format(transition_id)
         is_notify_pg_suffix = mail_event_id in cfg.getMailItemEvents()
         mail_event_id_except_manager = mail_event_id + "_except_manager"
         is_notify_pg_suffix_excepted_manager = mail_event_id_except_manager in cfg.getMailItemEvents()
@@ -4713,15 +4713,15 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if mail_event_id not in cfg.getMailItemEvents():
             return
         wf_adapter = getAdapter(self, IImioHistory, 'workflow')
-        wf_history_desc = wf_adapter.getHistory()[::-1]
+        # Descending history and start at 1 to ignore current wf_action
+        wf_history_desc = wf_adapter.getHistory()[::-1][1:]
         wf_direction = down_or_up_wf(self)
 
         notified_user_ids = []
         if wf_direction == "up":
             # We are going up (again) so we will notify the user that made any transition
             # after the last p_transition_id
-            for i, wf_action in enumerate(wf_history_desc[1:]):
-                # Start at 1 to ignore current wf_action
+            for i, wf_action in enumerate(wf_history_desc):
                 if wf_action["action"] == transition_id:
                     notified_user_ids = [wf_history_desc[i - 1]["actor"]]
                     break
@@ -4730,8 +4730,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # to the 'old_review_state'
             wf_action_to_find = cfg.getItemWFValidationLevels(state=old_review_state)[
                 "leading_transition"]
-            for i, wf_action in enumerate(wf_history_desc[1:]):
-                # Start at 1 to ignore current wf_action
+            for i, wf_action in enumerate(wf_history_desc):
                 if wf_action["action"] == wf_action_to_find:
                     notified_user_ids = [wf_action["actor"]]
                     break
