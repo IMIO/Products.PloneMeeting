@@ -3206,8 +3206,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         res = []
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        # save meetingUIDs, it will be necessary here under
-        for meetingBrain in cfg.getMeetingsAcceptingItems():
+
+        if tool.isManager(cfg):
+            meeting_states_accepting_items = cfg.getMeetingStatesAcceptingItemsForMeetingManagers()
+        else:
+            meeting_states_accepting_items = cfg.getItemPreferredMeetingStates()
+
+        for meetingBrain in cfg.getMeetingsAcceptingItems(review_states=meeting_states_accepting_items):
             meetingDate = tool.format_date(meetingBrain.meeting_date, with_hour=True)
             meetingState = translate(meetingBrain.review_state,
                                      domain="plone",

@@ -2477,6 +2477,28 @@ class testViews(PloneMeetingTestCase):
         helper = view.get_generation_context_helper()
         self.assertEqual(helper.printed_scan_id_barcode, [])
 
+    def test_pm_print_signatures_by_position(self):
+        """
+        See testContacts.test_pm_print_signatories_by_position for
+        the contacts version
+        """
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting')
+        meeting.signatures = RichTextValue('my name\n'
+                                           'my signature')
+        view = meeting.restrictedTraverse("document-generation")
+        helper = view.get_generation_context_helper()
+
+        signatures = helper.print_signatures_by_position()
+        self.assertEqual(
+            signatures[0],
+            meeting.get_signatures().split("\n")[0]
+        )
+        self.assertEqual(
+            signatures[1],
+            meeting.get_signatures().split("\n")[1]
+        )
+
 
 def test_suite():
     from unittest import makeSuite

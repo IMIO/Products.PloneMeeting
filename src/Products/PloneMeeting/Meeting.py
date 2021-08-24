@@ -114,7 +114,7 @@ class MeetingWorkflowConditions(object):
     security.declarePublic('mayAcceptItems')
 
     def mayAcceptItems(self):
-        if self.context.query_state() in self.cfg.adapted().getMeetingStatesAcceptingItems():
+        if self.context.query_state() in self.cfg.getMeetingStatesAcceptingItemsForMeetingManagers():
             return True
 
     security.declarePublic('mayPublish')
@@ -783,7 +783,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         meeting = self.getSelf()
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(meeting)
-        if meeting.query_state() not in cfg.adapted().getMeetingStatesAcceptingItems():
+        if meeting.query_state() not in cfg.getMeetingStatesAcceptingItemsForMeetingManagers():
             # make sure the query returns nothing, add a dummy parameter
             return [{'i': 'UID',
                      'o': 'plone.app.querystring.operation.selection.is',

@@ -52,6 +52,7 @@ from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import get_next_meeting
 from Products.PloneMeeting.utils import get_states_before
 from Products.PloneMeeting.utils import getCustomAdapter
+from Products.PloneMeeting.utils import getDateFromDelta
 from Products.PloneMeeting.utils import getWorkflowAdapter
 from Products.PloneMeeting.utils import ItemDuplicatedFromConfigEvent
 from Products.PloneMeeting.utils import MeetingLocalRolesUpdatedEvent
@@ -193,6 +194,16 @@ class IMeeting(IDXMeetingContent):
     form.widget('convocation_date', DatetimeFieldWidget, show_today_link=True, show_time=True)
     convocation_date = schema.Datetime(
         title=_(u'title_convocation_date'),
+        required=False)
+
+    form.widget('validation_deadline', DatetimeFieldWidget, show_today_link=True, show_time=True)
+    validation_deadline = schema.Datetime(
+        title=_(u'title_validation_deadline'),
+        required=False)
+
+    form.widget('freeze_deadline', DatetimeFieldWidget, show_today_link=True, show_time=True)
+    freeze_deadline = schema.Datetime(
+        title=_(u'title_freeze_deadline'),
         required=False)
 
     searchable("place")
@@ -411,7 +422,9 @@ class IMeeting(IDXMeetingContent):
     model.fieldset('dates_and_data',
                    label=_(u"fieldset_dates_and_data"),
                    fields=['date', 'start_date', 'mid_date', 'end_date',
-                           'approval_date', 'convocation_date', 'place', 'place_other',
+                           'approval_date', 'convocation_date',
+                           'validation_deadline', 'freeze_deadline',
+                           'place', 'place_other',
                            'pre_meeting_date', 'pre_meeting_place',
                            'extraordinary_session'])
 
@@ -756,22 +769,30 @@ class Meeting(Container):
     FIELD_INFOS = {
         'date':
             {'optional': False,
-             'condition': ''},
+             'condition': ""},
         'start_date':
             {'optional': True,
-             'condition': ''},
+             'condition': ""},
         'mid_date':
             {'optional': True,
-             'condition': ''},
+             'condition': ""},
         'end_date':
             {'optional': True,
-             'condition': ''},
+             'condition': ""},
         'approval_date':
             {'optional': True,
-             'condition': ''},
+             'condition': ""},
         'convocation_date':
             {'optional': True,
-             'condition': ''},
+             'condition': ""},
+        'validation_deadline':
+            {'optional': True,
+             'condition': "python:context.getTagName() == 'Meeting' and context.date and "
+                "cfg.show_meeting_manager_reserved_field('validation_deadline')"},
+        'freeze_deadline':
+            {'optional': True,
+             'condition': "python:context.getTagName() == 'Meeting' and context.date and "
+                "cfg.show_meeting_manager_reserved_field('freeze_deadline')"},
         'place':
             {'optional': True,
              'condition': ""},
@@ -896,67 +917,74 @@ class Meeting(Container):
             res = self.context
         return res
 
-    def get_assembly(self, for_display=True, striked=True, mark_empty_tags=False):
+    def get_assembly(self, for_display=True, striked=True, mark_empty_tags=False, raw=True):
         """ """
         return get_textarea_value(
             self.assembly,
             self,
             for_display=for_display,
             striked=striked,
-            mark_empty_tags=mark_empty_tags)
+            mark_empty_tags=mark_empty_tags,
+            raw=raw)
 
-    def get_assembly_excused(self, for_display=True, striked=True, mark_empty_tags=False):
+    def get_assembly_excused(self, for_display=True, striked=True, mark_empty_tags=False, raw=True):
         """ """
         return get_textarea_value(
             self.assembly_excused,
             self,
             for_display=for_display,
             striked=striked,
-            mark_empty_tags=mark_empty_tags)
+            mark_empty_tags=mark_empty_tags,
+            raw=raw)
 
-    def get_assembly_absents(self, for_display=True, striked=True, mark_empty_tags=False):
+    def get_assembly_absents(self, for_display=True, striked=True, mark_empty_tags=False, raw=True):
         """ """
         return get_textarea_value(
             self.assembly_absents,
             self,
             for_display=for_display,
             striked=striked,
-            mark_empty_tags=mark_empty_tags)
+            mark_empty_tags=mark_empty_tags,
+            raw=raw)
 
-    def get_assembly_guests(self, for_display=True, striked=True, mark_empty_tags=False):
+    def get_assembly_guests(self, for_display=True, striked=True, mark_empty_tags=False, raw=True):
         """ """
         return get_textarea_value(
             self.assembly_guests,
             self,
             for_display=for_display,
             striked=striked,
-            mark_empty_tags=mark_empty_tags)
+            mark_empty_tags=mark_empty_tags,
+            raw=raw)
 
-    def get_assembly_staves(self, for_display=True, striked=True, mark_empty_tags=False):
+    def get_assembly_staves(self, for_display=True, striked=True, mark_empty_tags=False, raw=True):
         """ """
         return get_textarea_value(
             self.assembly_staves,
             self,
             for_display=for_display,
             striked=striked,
-            mark_empty_tags=mark_empty_tags)
+            mark_empty_tags=mark_empty_tags,
+            raw=raw)
 
-    def get_assembly_proxies(self, for_display=True, striked=True, mark_empty_tags=False):
+    def get_assembly_proxies(self, for_display=True, striked=True, mark_empty_tags=False, raw=True):
         """ """
         return get_textarea_value(
             self.assembly_proxies,
             self,
             for_display=for_display,
             striked=striked,
-            mark_empty_tags=mark_empty_tags)
+            mark_empty_tags=mark_empty_tags,
+            raw=raw)
 
-    def get_signatures(self, for_display=False, mark_empty_tags=False):
+    def get_signatures(self, for_display=False, mark_empty_tags=False, raw=True):
         """ """
         return get_textarea_value(
             self.signatures,
             self,
             for_display=for_display,
-            mark_empty_tags=mark_empty_tags)
+            mark_empty_tags=mark_empty_tags,
+            raw=raw)
 
     def get_place(self, real=False):
         """ """
@@ -985,23 +1013,25 @@ class Meeting(Container):
         value = self.get_committee(row_id)["place"]
         return value
 
-    def get_committee_assembly(self, row_id, for_display=True, striked=True, mark_empty_tags=False):
+    def get_committee_assembly(self, row_id, for_display=True, striked=True, mark_empty_tags=False, raw=True):
         """Return "assembly" for given p_row_id committee."""
         value = self.get_committee(row_id)["assembly"]
         return get_textarea_value(
             value,
             self,
             for_display=for_display,
-            mark_empty_tags=mark_empty_tags)
+            mark_empty_tags=mark_empty_tags,
+            raw=raw)
 
-    def get_committee_signatures(self, row_id, for_display=False, striked=True, mark_empty_tags=False):
+    def get_committee_signatures(self, row_id, for_display=False, striked=True, mark_empty_tags=False, raw=True):
         """Return "signatures" for given p_row_id committee."""
         value = self.get_committee(row_id)["signatures"]
         return get_textarea_value(
             value,
             self,
             for_display=for_display,
-            mark_empty_tags=mark_empty_tags)
+            mark_empty_tags=mark_empty_tags,
+            raw=raw)
 
     def get_committee_attendees(self, row_id, the_objects=False):
         '''Returns the attendees for given p_row_id committee.'''
@@ -1060,7 +1090,7 @@ class Meeting(Container):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         meeting_state = self.query_state()
-        if meeting_state not in cfg.adapted().getMeetingStatesAcceptingItems():
+        if meeting_state not in cfg.getMeetingStatesAcceptingItemsForMeetingManagers():
             # make sure the query returns nothing, add a dummy parameter
             return [{'i': 'UID',
                      'o': 'plone.app.querystring.operation.selection.is',
@@ -1785,6 +1815,15 @@ class Meeting(Container):
         # Set, by default, end date to start date + 2 hours.
         if 'end_date' in used_attrs and not self.end_date:
             self.end_date = self.date + timedelta(hours=2)
+        # Compute the deadlines
+        if 'validation_deadline' in used_attrs and not getattr(self, 'validation_deadline', None):
+            delta = cfg.getValidationDeadlineDefault()
+            if not delta.strip() in ('', '0',):
+                self.validation_deadline = getDateFromDelta(self.date, '-' + delta)
+        if 'freeze_deadline' in used_attrs and not getattr(self, 'freeze_deadline', None):
+            delta = cfg.getFreezeDeadlineDefault()
+            if not delta.strip() in ('', '0',):
+                self.freeze_deadline = getDateFromDelta(self.date, '-' + delta)
 
     security.declarePublic('get_user_replacements')
 

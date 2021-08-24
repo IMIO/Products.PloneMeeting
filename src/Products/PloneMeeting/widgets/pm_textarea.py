@@ -14,11 +14,14 @@ class IPMTextAreaWidget(ITextAreaWidget):
     """Marker interface for PM textarea widget"""
 
 
-def get_textarea_value(value, obj, for_display=True, striked=True, mark_empty_tags=False):
+def get_textarea_value(value, obj, for_display=True, striked=True, mark_empty_tags=False, raw=True):
     """ """
     res = ''
     if value is not None:
-        res = value.output
+        if raw:
+            res = value.raw
+        else:
+            res = value.output
     if res and for_display:
         res = render_textarea(res, obj, striked=striked, mark_empty_tags=mark_empty_tags)
     return res

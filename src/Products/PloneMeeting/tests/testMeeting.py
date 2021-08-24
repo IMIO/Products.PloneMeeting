@@ -2033,7 +2033,7 @@ class testMeetingType(PloneMeetingTestCase):
 
         # if a meeting is not in a state accepting items, it does not accept items anymore
         self.closeMeeting(m1)
-        self.assertTrue(m1.query_state() not in cfg.adapted().getMeetingStatesAcceptingItems())
+        self.assertTrue(m1.query_state() not in cfg.getMeetingStatesAcceptingItemsForMeetingManagers())
         m1_query = queryparser.parseFormquery(m1, m1._available_items_query())
         self.assertFalse(self.catalog(m1_query))
 
@@ -3845,6 +3845,20 @@ class testMeetingType(PloneMeetingTestCase):
         self.assertTrue(view.warn_assembly(using_attendees=False))
         cfg.setSignatures(three_lines_signatures)
         self.assertFalse(view.warn_assembly(using_attendees=False))
+
+    def test_pm_DeadlineFieldsInit(self):
+        """Test that field Meeting.validation_deadline and Meeting.freeze_deadline
+           are correctly initialized depending on configuration."""
+        cfg = self.meetingConfig
+        self._enableField(('validation_deadline', 'freeze_deadline'), related_to="Meeting")
+        # 5 days before, 9h30
+        self.assertEqual(cfg.getValidationDeadlineDefault(), '5.9:30')
+        # 1 day before, 14h30
+        self.assertEqual(cfg.getFreezeDeadlineDefault(), '1.14:30')
+        self.changeUser("pmManager")
+        meeting = self.create('Meeting', date=datetime(2021, 8, 10))
+        self.assertEqual(meeting.validation_deadline, datetime(2021, 8, 5, 9, 30))
+        self.assertEqual(meeting.freeze_deadline, datetime(2021, 8, 9, 14, 30))
 
 
 def test_suite():

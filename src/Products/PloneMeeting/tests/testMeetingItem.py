@@ -4114,14 +4114,8 @@ class testMeetingItem(PloneMeetingTestCase):
         # go to state 'closed'
         m4 = self.create('Meeting', date=datetime(2013, 2, 22, 8, 0))
         self.closeMeeting(m4)
-        # getMeetingsAcceptingItems should only return meetings
-        # that are 'created', 'frozen' or 'decided' for the meetingManager
+        # getMeetingsAcceptingItems should return all meetings excepted closed ones
         self.assertEqual([m.id for m in cfg.getMeetingsAcceptingItems()], [m1.id, m2.id, m3.id])
-        cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
-        # getMeetingsAcceptingItems should only return meetings
-        # that are 'created' or 'frozen' for the creators
-        self.changeUser('pmCreator1')
-        self.assertEqual([m.id for m in cfg.getMeetingsAcceptingItems()], [m1.id, m2.id])
 
     def test_pm_GetMeetingsAcceptingItemsWithPublishDecisionsWFAdaptation(self):
         """Test that MeetingConfig.getMeetingsAcceptingItems also return meetings in state
@@ -4143,10 +4137,6 @@ class testMeetingItem(PloneMeetingTestCase):
             [m.id for m in cfg.getMeetingsAcceptingItems()],
             [meeting.getId()])
         self.assertTrue(meeting.wfConditions().may_accept_items())
-        cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
-        # not for creators
-        self.changeUser('pmCreator1')
-        self.assertEqual([m.id for m in cfg.getMeetingsAcceptingItems()], [])
 
     def test_pm_OnTransitionFieldTransforms(self):
         '''On transition triggered, some transforms can be applied to item or meeting
@@ -6541,22 +6531,30 @@ class testMeetingItem(PloneMeetingTestCase):
            specific icons may be displayed."""
         # a late item will receive a particular icon when displayed
         # in the available items of a meeting
+        # we take use this test to check the validation_deadline icon
+        # that will disappear when meeting is frozen
+        self._enableField('validation_deadline', related_to='Meeting')
         self.changeUser('pmManager')
-        meeting = self.create('Meeting')
+        meeting = self.create('Meeting', date=datetime(2021, 8, 11))
         item = self.create('MeetingItem')
         item.setPreferredMeeting(meeting.UID())
         self.validateItem(item)
         self.assertFalse(item.wfConditions().isLateFor(meeting))
         late_icon_html = u"<img title='Late' src='http://nohost/plone/late.png' " \
             "style=\"width: 16px; height: 16px;\" />"
+        val_deadline_icon_html = u"<img title=\'icon_help_validation_deadline_ko\' " \
+            "src=\'http://nohost/plone/deadlineKo.png\' style=\"width: 16px; height: 16px;\" />"
         self.assertFalse(late_icon_html in IPrettyLink(item).getLink())
+        self.assertFalse(val_deadline_icon_html in IPrettyLink(item).getLink())
         # right now change current URL so displaying_available_items is True
         self.request['URL'] = meeting.absolute_url() + '/@@meeting_available_items_view'
         self.assertFalse(late_icon_html in IPrettyLink(item).getLink())
+        self.assertTrue(val_deadline_icon_html in IPrettyLink(item).getLink())
         # now freeze the meeting, the late_icon will show on the item
         self.freezeMeeting(meeting)
         self.assertTrue(item.wfConditions().isLateFor(meeting))
         self.assertTrue(late_icon_html in IPrettyLink(item).getLink())
+        self.assertFalse(val_deadline_icon_html in IPrettyLink(item).getLink())
 
     def test_pm_GetLinkCachingIsCorrectWithTakenOverByIcon(self):
         """The imio.prettylink getLink caching is overrided and it takes into account

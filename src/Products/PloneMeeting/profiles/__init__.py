@@ -548,8 +548,16 @@ class MeetingConfigDescriptor(Descriptor):
         self.xhtmlTransformFields = []
         # What kind(s) of transform(s) must be applied to these fields ?
         self.xhtmlTransformTypes = []
+        # The "validation" deadline, for a meeting, is the deadline for validating
+        # items that must be presented to this meeting. "5.9:30" means:
+        # "5 days before meeting date, at 9:30."
+        self.validationDeadlineDefault = '5.9:30'
+        # The "freeze" deadline, for a meeting, is the deadline for validating
+        # items that must be late-presented to this meeting.
+        self.freezeDeadlineDefault = '1.14:30'
         # by default, annex attribute 'confidential' is restricted to MeetingManagers
-        self.annexRestrictShownAndEditableAttributes = ('confidentiality_display', 'confidentiality_edit')
+        self.annexRestrictShownAndEditableAttributes = ('confidentiality_display',
+                                                        'confidentiality_edit')
         # annex confidentiality, setting something in 3 attributes here
         # under will automatically enable confidentiality on relevant CategoryGroup
         self.itemAnnexConfidentialVisibleFor = ()
@@ -669,6 +677,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.onTransitionFieldTransforms = []
         self.onMeetingTransitionItemActionToExecute = []
         self.meetingPresentItemWhenNoCurrentMeetingStates = []
+        self.itemPreferredMeetingStates = ['created', 'frozen']
         self.itemAutoSentToOtherMCStates = ['accepted', ]
         self.itemManualSentToOtherMCStates = []
         self.contentsKeptOnSentToOtherMC = ['annexes', 'decision_annexes']

@@ -142,6 +142,7 @@ __author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
 <g.bastien@imio.be>, Stephan GEULETTE <s.geulette@imio.be>"""
 __docformat__ = 'plaintext'
 
+
 defValues = MeetingConfigDescriptor.get()
 # This way, I get the default values for some MeetingConfig fields,
 # that are defined in a unique place: the MeetingConfigDescriptor class, used
@@ -779,6 +780,32 @@ schema = Schema((
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
+    StringField(
+        name='validationDeadlineDefault',
+        default=defValues.validationDeadlineDefault,
+        widget=StringField._properties['widget'](
+            description="ValidationDeadlineDefault",
+            description_msgid="validation_deadline_default_descr",
+            label='Validationdeadlinedefault',
+            label_msgid='PloneMeeting_label_validationDeadlineDefault',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="data",
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    StringField(
+        name='freezeDeadlineDefault',
+        default=defValues.freezeDeadlineDefault,
+        widget=StringField._properties['widget'](
+            description="FreezeDeadlineDefault",
+            description_msgid="freeze_deadline_default_descr",
+            label='Freezedeadlinedefault',
+            label_msgid='PloneMeeting_label_freezeDeadlineDefault',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="data",
+        write_permission="PloneMeeting: Write risky config",
+    ),
     LinesField(
         name='xhtmlTransformTypes',
         widget=MultiSelectionWidget(
@@ -1273,6 +1300,23 @@ schema = Schema((
         multiValued=1,
         vocabulary='listMeetingStates',
         default=defValues.meetingPresentItemWhenNoCurrentMeetingStates,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    LinesField(
+        name='itemPreferredMeetingStates',
+        widget=MultiSelectionWidget(
+            label='itemPreferredMeetingStates',
+            label_msgid='PloneMeeting_label_itemPreferredMeetingStates',
+            format="checkbox",
+            description="itemPreferredMeetingStates",
+            description_msgid="itemPreferredMeetingStates_descr",
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="workflow",
+        multiValued=1,
+        vocabulary='listMeetingStates',
+        default=defValues.itemPreferredMeetingStates,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
@@ -6392,20 +6436,30 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 res.append((workflowName, workflowName))
         return DisplayList(tuple(res)).sortedByValue()
 
+    security.declarePublic('listStateIds')
+
+    def listStateIds(self, objectType, excepted=None):
+        '''Lists the possible state ids for the p_objectType ("Item" or "Meeting")
+           used in this meeting config. State id specified in p_excepted will
+           be ommitted from the result.'''
+        if objectType == 'Meeting':
+            workflow = self.getMeetingWorkflow(True)
+        else:
+            workflow = self.getItemWorkflow(True)
+        return tuple(state.id for state in workflow.states.objectValues() if state.id != excepted)
+
     security.declarePublic('listStates')
 
     def listStates(self, objectType, excepted=None, with_state_id=True):
         '''Lists the possible states for the p_objectType ("Item" or "Meeting")
            used in this meeting config. State name specified in p_excepted will
            be ommitted from the result.'''
-        wfTool = api.portal.get_tool('portal_workflow')
-        res = []
-        workflow = None
         if objectType == 'Meeting':
-            workflow = wfTool.getWorkflowsFor(self.getMeetingTypeName())[0]
+            workflow = self.getMeetingWorkflow(True)
         else:
-            workflow = wfTool.getWorkflowsFor(self.getItemTypeName())[0]
+            workflow = self.getItemWorkflow(True)
 
+        res = []
         for state in workflow.states.objectValues():
             if excepted and (state.id == excepted):
                 continue
@@ -7190,31 +7244,27 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     alsoProvides(subFolderObj, IMeetingDashboardBatchActionsMarker)
                 subFolderObj.reindexObject()
 
-    def getMeetingStatesAcceptingItems(self):
-        '''See doc in interfaces.py.'''
-        return ('created', 'frozen', 'published', 'decided', 'decisions_published')
+    def getMeetingStatesAcceptingItemsForMeetingManagers(self):
+        '''In those states, the meeting accept items, normal or late.
+           It returns a tuple of meeting review_states.'''
+        return tuple(self.listStateIds("Meeting", excepted='closed'))
 
-    def getMeetingsAcceptingItems_cachekey(method, self, review_states=('created', 'frozen'), inTheFuture=False):
+    def getMeetingsAcceptingItems_cachekey(method, self, review_states=[], inTheFuture=False):
         '''cachekey method for self.getMeetingsAcceptingItems.'''
         return (repr(self), str(self.REQUEST._debug), review_states, inTheFuture)
 
-    def _getMeetingsAcceptingItemsQuery(self, review_states=('created', 'frozen'), inTheFuture=False):
+    def _getMeetingsAcceptingItemsQuery(self, review_states=[], inTheFuture=False):
         '''Compute the catalog query to get meeting accepting items.'''
         # If the current user is a meetingManager (or a Manager),
         # he is able to add a meetingitem to a 'decided' meeting.
         # except if we specifically restricted given p_review_states.
         tool = api.portal.get_tool('portal_plonemeeting')
-        if review_states == ('created', 'frozen') and tool.isManager(self):
-            review_states += self.adapted().getMeetingStatesAcceptingItems()
-            # remove duplicates
-            review_states = tuple(set(review_states))
+        if not review_states:
+            review_states = self.getMeetingStatesAcceptingItemsForMeetingManagers()
 
         query = {'portal_type': self.getMeetingTypeName(),
                  'review_state': review_states,
                  'sort_on': 'meeting_date'}
-        # querying empty review_state will return nothing
-        if not review_states:
-            query.pop('review_state')
 
         if inTheFuture:
             query['meeting_date'] = {'query': datetime.now(), 'range': 'min'}
@@ -7222,7 +7272,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return query
 
     @ram.cache(getMeetingsAcceptingItems_cachekey)
-    def getMeetingsAcceptingItems(self, review_states=('created', 'frozen'), inTheFuture=False):
+    def getMeetingsAcceptingItems(self, review_states=[], inTheFuture=False):
         '''Returns meetings accepting items.'''
         catalog = api.portal.get_tool('portal_catalog')
         query = self._getMeetingsAcceptingItemsQuery(review_states, inTheFuture)
