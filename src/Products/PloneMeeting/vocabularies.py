@@ -284,7 +284,7 @@ class GroupsInChargeVocabulary(object):
         return date, repr(cfg), only_selected, sort
 
     def _get_organizations(self, context, only_selected=True):
-        """This centralize logic of gettting associated groups."""
+        """This centralize logic of gettting groups in charge."""
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         res = []
