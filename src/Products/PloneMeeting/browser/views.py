@@ -308,18 +308,20 @@ class ObjectGoToView(BrowserView):
             item_uids = [brain.UID for brain
                          in meeting.get_items(ordered=True, the_objects=False)]
             # find on which page item will be displayed
+            # when displayed by 20, item number 10 is on page 1
+            # item number 20 is on page 1, item number 22 is on page 2
+            # but page 1 b_start is 0...
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(self.context)
             context_uid = self.context.UID()
-            item_pos = tuple(item_uids).index(context_uid) + 1
+            # use index position so element 20 index is 19 and is < 20
+            item_pos = tuple(item_uids).index(context_uid)
             items_by_page = cfg.getMaxShownMeetingItems()
             page_num = float(item_pos) / items_by_page
+            # round 0.85 to 0 or 1.05 to 1
             int_page_num = int(page_num)
-            if page_num > int_page_num:
-                int_page_num += 1
-            int_page_num = int_page_num - 1
-            url = "{0}#b_start={1}&scroll_to=row_{2}".format(
-                meeting.absolute_url(), int_page_num*items_by_page, context_uid)
+            url = "{0}#b_start={1}".format(
+                meeting.absolute_url(), int_page_num*items_by_page)
             return self.request.RESPONSE.redirect(url)
 
         # navigate thru items

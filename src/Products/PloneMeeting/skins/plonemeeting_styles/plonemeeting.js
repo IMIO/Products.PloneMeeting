@@ -566,20 +566,34 @@ function moveItem(baseUrl, moveType, tag) {
     });
 }
 
+function isMeeting() {
+    if ($("body.template-meeting_view")) {
+        return true;
+    }
+    return false;
+}
+
 // event subscriber when a transition is triggered
 $(document).on('ap_transition_triggered', synchronizeMeetingFaceteds);
 
 // synchronize faceted displayed on the meeting_view, available items and presented items
 function synchronizeMeetingFaceteds(infos) {
-    // refresh iframe 'available items' while removing an item
-    if ((infos.transition === 'backToValidated') && ((window.frames[0]) && (window.frames[0] != window))) {
-      window.frames[0].Faceted.URLHandler.hash_changed();
-      updateNumberOfItems();
-    }
-    // refresh main frame while presenting an item
-    if ((infos.transition === 'present') && (window != parent)) {
-      parent.Faceted.URLHandler.hash_changed();
-      updateNumberOfItems();
+
+    if (isMeeting) {
+
+        // refresh iframe 'available items' while removing an item
+        if ((infos.transition === 'backToValidated') && ((window.frames[0]) && (window.frames[0] != window))) {
+          window.frames[0].Faceted.URLHandler.hash_changed();
+          updateNumberOfItems();
+        } else if ((infos.transition === 'present') && (window != parent)) {
+          // refresh main frame while presenting an item
+          parent.Faceted.URLHandler.hash_changed();
+          updateNumberOfItems();
+        } else {
+            // set dashboardRowId if on meeting view
+            localStorage.setItem("dashboardRowId", $(infos.tag).parents("tr[id^='row_']")[0].id);
+            start_meeting_observer();
+        }
     }
 }
 
@@ -920,45 +934,59 @@ $("div.readmorable p.readless").click(function() {
 });
 }
 
+// utility method that will scroll to a position with an offset
 function _scrollTo(el, yOffset = 0){
   const y = el.getBoundingClientRect().top + window.pageYOffset + yOffset;
   window.scrollTo({top: y, behavior: 'smooth'});
 }
 
-
-function scrollToRow() {
-    url = Faceted.URLHandler.get();
-    if ("scroll_to" in url) {
-        row_id = url.scroll_to[0];
-        row = $('#' + row_id);
-        if (row.length) {
-            // goto row
-            header_height = $("#portal-header").height();
-            _scrollTo(row[0], -50 -header_height);
-            // highlight row
-            tds = $('td', row);
-            tds.each(function(){
-                $(this).effect('highlight', {}, 5000);
-                }
-            );
+// function that scroll to a row in a dashboard
+function scrollToRow(row) {
+    // goto row
+    header_height = $("#portal-header").height();
+    _scrollTo(row, -50 -header_height);
+    // highlight row
+    tds = $('td', row);
+    tds.each(function(){
+        $(this).effect('highlight', {}, 5000);
         }
-    }
+    );
 }
 
+// mutation observer necessary to scroll to a position in a dashboard
+// because when document is loaded, the faceted results are loaded by an ajax query
+// and scrollToRow need the element to be visible
 const observer = new MutationObserver((mutations, obs) => {
-  url = Faceted.URLHandler.get();
-  if ("scroll_to" in url) {
-    const row_id = url.scroll_to[0];
+  var row_id = null;
+  if (localStorage.getItem("dashboardRowId", null)) {
+    row_id = localStorage.getItem("dashboardRowId", null);
+  }
+  if (row_id) {
     row_id_tag = document.getElementById(row_id);
     if (row_id_tag) {
-      scrollToRow();
+      scrollToRow(row_id_tag);
       obs.disconnect();
+      localStorage.removeItem("dashboardRowId");
       return;
     }
   }
+  else {
+      obs.disconnect();
+      return;
+  }
+
 });
 
-observer.observe(document, {
-  childList: true,
-  subtree: true
+// start meeting observer when on meeting view
+function start_meeting_observer() {
+    if (isMeeting()) {
+        observer.observe(document, {
+          childList: true,
+          subtree: true
+        });
+    }
+}
+
+$(document).ready(function () {
+    start_meeting_observer();
 });
