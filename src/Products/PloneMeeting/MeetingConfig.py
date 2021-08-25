@@ -6191,11 +6191,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     title=item_template_title)
         return default_template
 
-    def get_default_item_template(self, ignore_inactive=True):
-        """Return the default item template if it is active."""
+    def get_default_item_template(self, only_active=True):
+        """Return the default item template, only the active one if p_only_active=True."""
         item_templates = self.get(TOOL_FOLDER_ITEM_TEMPLATES)
         default_template = item_templates.get(ITEM_DEFAULT_TEMPLATE_ID, None)
-        if default_template and ignore_inactive and default_template.query_state() == 'inactive':
+        if default_template and only_active and default_template.query_state() != 'active':
             default_template = None
         return default_template
 

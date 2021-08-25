@@ -514,7 +514,11 @@ class PMRenderCategoryView(IDRenderCategoryView):
     def _get_default_item_template_UID(self):
         """Return the default item template if it is active."""
         default_template = self.cfg.get_default_item_template()
-        return default_template and default_template.UID()
+        default_template_uid = None
+        if default_template and \
+           self.tool.get_orgs_for_user(using_groups=default_template.getTemplateUsingGroups()):
+            default_template_uid = default_template.UID()
+        return default_template_uid
 
     def __call__(self, widget):
         self.tool = api.portal.get_tool('portal_plonemeeting')
@@ -648,17 +652,17 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
                 (isMeetingManager and 'meetingmanager_duplicate' in itemActionsColumnConfig) or
                 (isManager and 'manager_duplicate' in itemActionsColumnConfig) or
                     ('duplicate' in itemActionsColumnConfig)):
-                        self.IGNORABLE_ACTIONS += ('duplicate', )
+                self.IGNORABLE_ACTIONS += ('duplicate', )
             if not (
                 (isMeetingManager and 'meetingmanager_delete' in itemActionsColumnConfig) or
                 (isManager and 'manager_delete' in itemActionsColumnConfig) or
                     ('delete' in itemActionsColumnConfig)):
-                        self.SECTIONS_TO_RENDER.remove('renderOwnDelete')
+                self.SECTIONS_TO_RENDER.remove('renderOwnDelete')
             if not (
                 (isMeetingManager and 'meetingmanager_history' in itemActionsColumnConfig) or
                 (isManager and 'manager_history' in itemActionsColumnConfig) or
                     ('history' in itemActionsColumnConfig)):
-                        self.SECTIONS_TO_RENDER.remove('renderHistory')
+                self.SECTIONS_TO_RENDER.remove('renderHistory')
             self.SECTIONS_TO_RENDER = tuple(self.SECTIONS_TO_RENDER)
 
         return super(MeetingItemActionsPanelView, self).\
