@@ -2499,6 +2499,28 @@ class testViews(PloneMeetingTestCase):
             meeting.get_signatures().split("\n")[1]
         )
 
+    def test_pm_show_history(self):
+        """Test the contenthistory.show_history() that will depend on
+           MeetingConfig.hideHistoryTo parameter."""
+        self._setPowerObserverStates(states=(self._stateMappingFor('itemcreated'),))
+        self.changeUser('pmCreator1')
+        item = self.create("MeetingItem")
+        contenthistory = getMultiAdapter(
+            (item, self.request), name='contenthistory')
+        self.assertTrue(contenthistory.show_history())
+        self.changeUser('powerobserver1')
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertTrue(contenthistory.show_history())
+
+        # now configure so powerobservers may not access history
+        self.meetingConfig.setHideHistoryTo(('powerobservers', ))
+        self.assertFalse(contenthistory.show_history())
+
+        # when power observer is also member of the item proposingGroup
+        # then he has access to the item history
+        self._addPrincipalToGroup(self.member.getId(), self.developers_creators)
+        self.assertTrue(contenthistory.show_history())
+
 
 def test_suite():
     from unittest import makeSuite
