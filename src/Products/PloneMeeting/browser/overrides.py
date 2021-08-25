@@ -1501,13 +1501,21 @@ class PMContentHistoryView(IHContentHistoryView):
         """Override to take MeetingConfig.hideHistoryTo into account."""
         res = super(PMContentHistoryView, self).show_history()
         if res:
+            # if history shown, check MeetingConfig.hideHistoryTo
+            # only if current user is not member of proposingGroup
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(self.context)
             hideHistoryTo = cfg.getHideHistoryTo()
-            for power_observer_type in hideHistoryTo:
-                if tool.isPowerObserverForCfg(cfg, power_observer_type=power_observer_type):
-                    res = False
-                    break
+            if hideHistoryTo:
+                item_review_state = self.context.query_state()
+                proposing_group = self.context._getGroupManagingItem(
+                    item_review_state, theObject=False)
+                if proposing_group not in tool.get_orgs_for_user(the_objects=False):
+                    for power_observer_type in hideHistoryTo:
+                        if tool.isPowerObserverForCfg(
+                           cfg, power_observer_type=power_observer_type):
+                            res = False
+                            break
         return res
 
 
