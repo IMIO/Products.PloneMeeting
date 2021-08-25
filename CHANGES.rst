@@ -38,6 +38,10 @@ Changelog
   return the raw value by default instead the output that is treated by
   `portal_transforms`, as the `PMTextAreaField` contains plain text, it is useless.
   [gbastien]
+- While hidding history link on item to the `powerobservers` (when using field
+  `MeetingConfig.hideHistoryTo`), do not hide history if current user is
+  `powerobserver` and member of the item proposing group.
+  [gbastien]
 
 4.2b13 (2021-07-16)
 -------------------
