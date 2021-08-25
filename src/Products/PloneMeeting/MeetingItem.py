@@ -5720,13 +5720,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # 'delay_stopped_on'
         # 'delay_for_automatic_adviser_changed_manually'
         saved_stored_data = {}
-        reinit_delays_for = []
         for org_uid, adviceInfo in self.adviceIndex.iteritems():
             saved_stored_data[org_uid] = {}
             reinit_delay = self.adapted()._adviceDelayWillBeReinitialized(
                 org_uid, adviceInfo, isTransitionReinitializingDelays)
             if reinit_delay or org_uid in inheritedAdviserUids:
-                reinit_delays_for.append(org_uid)
                 saved_stored_data[org_uid]['delay_started_on'] = None
                 saved_stored_data[org_uid]['delay_stopped_on'] = None
             else:
@@ -5961,11 +5959,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     self.adviceIndex[org_uid]['delay_started_on'] = datetime.now()
 
                 # check if user must be able to add an advice, if not already given
-                # check also if the delay is not exceeded, in this case the advice can not be given anymore
-                delayIsNotExceeded = not self._adviceDelayIsTimedOut(org_uid, computeNewDelayInfos=True)
+                # check also if the delay is not exceeded,
+                # in this case the advice can not be given anymore
+                delayIsNotExceeded = not self._adviceDelayIsTimedOut(
+                    org_uid, computeNewDelayInfos=True)
                 if item_state in itemAdviceStates and \
                    not adviceObj and \
-                   org_uid not in reinit_delays_for and \
                    delayIsNotExceeded and \
                    self.adapted()._adviceIsAddable(org_uid):
                     # advisers must be able to add a 'meetingadvice', give
@@ -5980,7 +5979,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
                 # is advice still editable?
                 if item_state in itemAdviceEditStates and \
-                   org_uid not in reinit_delays_for and \
                    delayIsNotExceeded and \
                    adviceObj and \
                    self.adapted()._adviceIsEditable(org_uid):
