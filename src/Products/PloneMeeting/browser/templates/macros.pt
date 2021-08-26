@@ -818,6 +818,44 @@ non metadata fields.  We receive 'obj' and 'excludedFields' that is a list of fi
 This works for an AT and for a DX.</tal:comment>
 <tal:defines define="isDexterity python: obj.getTypeInfo().meta_type == 'Dexterity FTI';">
   <tal:dx condition="isDexterity">
+    <tal:comment replace="nothing">Manage UID, id and description manually</tal:comment>
+    <tal:manual i18n:domain="plone">
+     <tal:id condition="python: 'id' not in excludedFields">
+       <div class="discreet">
+           <label class="horizontal"
+                  i18n:translate="label_short_name">Identifier</label>
+           <div>
+             <span class="text-widget textline-field" tal:content="python: context.getId()">
+                 identifier
+             </span>
+           </div>
+       </div>
+     </tal:id>
+     <tal:uid condition="python: 'UID' not in excludedFields and 'uid' not in excludedFields">
+       <div class="discreet">
+           <label class="horizontal"
+                  i18n:translate="label_uid">Uid</label>
+           <div>
+             <span class="text-widget textline-field" tal:content="python: context.UID()">
+                 UID
+             </span>
+           </div>
+       </div>
+     </tal:uid>
+     <tal:description condition="python: 'description' not in excludedFields and obj.Description().strip()">
+       <div class="discreet">
+           <label class="horizontal"
+                  i18n:translate="label_description">Description</label>
+           <div>
+             <span class="text-widget text-field" tal:content="structure python: context.Description().replace('\n', '<br>')">
+                 Description
+             </span>
+           </div>
+       </div>
+     </tal:description>
+
+    </tal:manual>
+
     <tal:loop
         define="view python: obj.restrictedTraverse('@@view');
                 dummy python: view.update();
@@ -878,10 +916,9 @@ The parameter "cFolder" is the folder containing categories.</tal:comment>
       tal:attributes="class python: not isActive and classOddEven+' state-inactive' or classOddEven">
     <td>
         <h5><a tal:attributes="href obj/absolute_url" tal:content="obj/Title"></a></h5>
-        <div class="discreet" tal:define="descr obj/Description" tal:condition="descr" tal:content="descr"></div>
         <tal:additionalInformations
             define="context python: obj;
-                    excludedFields python: ('id', 'description', 'title')">
+                    excludedFields python: ('title', 'category_id')">
             <metal:addtionalInformations use-macro="here/@@pm-macros/additionalInformations" />
         </tal:additionalInformations>
     </td>
