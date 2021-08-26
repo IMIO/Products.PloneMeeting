@@ -567,7 +567,7 @@ function moveItem(baseUrl, moveType, tag) {
 }
 
 function isMeeting() {
-    if ($("body.template-meeting_view")) {
+    if ($("body.template-meeting_view").length) {
         return true;
     }
     return false;
@@ -582,7 +582,8 @@ function synchronizeMeetingFaceteds(infos) {
     if (isMeeting) {
 
         // refresh iframe 'available items' while removing an item
-        if ((infos.transition === 'backToValidated') && ((window.frames[0]) && (window.frames[0] != window))) {
+        if ((infos.transition === 'backToValidated') &&
+            ((window.frames[0]) && (window.frames[0] != window))) {
           window.frames[0].Faceted.URLHandler.hash_changed();
           updateNumberOfItems();
         } else if ((infos.transition === 'present') && (window != parent)) {
@@ -893,7 +894,7 @@ function initReadmore() {
 
 var $el, $up;
 
-/* first check if need to use readmorable or not, only if content > set CSS max-height + 50px */
+/* first check if need to use readmorable or not, only if content > set CSS max-height + 100px */
 $("div.readmorable").each(function() {
   $el = $(this);
   /* get max-height defined in CSS for div.readmorable {} */
@@ -944,7 +945,7 @@ function _scrollTo(el, yOffset = 0){
 function scrollToRow(row) {
     // goto row
     header_height = $("#portal-header").height();
-    _scrollTo(row, -50 -header_height);
+    _scrollTo(row, - 200 -header_height);
     // highlight row
     tds = $('td', row);
     tds.each(function(){
