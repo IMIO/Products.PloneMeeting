@@ -354,7 +354,7 @@
                           i18n:translate="delay_exceeded_when_stopped"
                           tal:condition="python: advice['delay_infos']['delay_when_stopped'] <= 0 and advice['delay_started_on']"> at this moment, the delay exceeded
                          <span i18n:name="delay_when_stopped"
-                               tal:content="python: advice['delay_infos']['delay_when_stopped'] and -(advice['delay_infos']['delay_when_stopped']) or 0">
+                               tal:content="python: -(advice['delay_infos']['delay_when_stopped'])">
                               10
                          </span><img src="logo.png" /> day(s).
                     </span>
