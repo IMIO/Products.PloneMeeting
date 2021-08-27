@@ -48,6 +48,12 @@ Changelog
   [gbastien]
 - Fixed display of `Application parameters` fieldset when adding a new organization
   in an overlay when on `Own organization`, CSS was hidding it wrongly.
+  refreshed and the screen scrolls to the modified item.
+  [gbastien]
+- When going back to meeting from item, go to the correct faceted page and
+  scroll to item position. Same scrolling mechanism is now used when an item is
+  decided on a meeting, instead just refreshing the faceted, the faceted is
+  refreshed and the screen scrolls to the modified item.
   [gbastien]
 
 4.2b13 (2021-07-16)

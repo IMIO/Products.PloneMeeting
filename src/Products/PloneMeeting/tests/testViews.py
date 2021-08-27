@@ -2128,6 +2128,43 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(view('1', 'first'), secretItem1.absolute_url())
         self.assertEqual(view('5', 'last'), secretItem3.absolute_url())
 
+    def test_pm_goto_object_meeting(self):
+        """Test the item navigation widget when way='meeting'."""
+        cfg = self.meetingConfig
+        cfg.setMaxShownMeetingItems(2)
+        self._removeConfigObjectsFor(cfg)
+        cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'at_the_end',
+                                           'reverse': '0'},))
+        # create a meeting with 3 items and display
+        # items presented on meeting by batch of 2
+        self.changeUser('pmManager')
+        item1 = self.create('MeetingItem')
+        item2 = self.create('MeetingItem')
+        item3 = self.create('MeetingItem')
+        meeting = self.create('Meeting')
+        meeting_url = meeting.absolute_url()
+        self.presentItem(item1)
+        self.presentItem(item2)
+        self.presentItem(item3)
+        # from item1, page 1 of meeting
+        self.assertEqual(item1.getItemNumber(), 100)
+        view = item1.restrictedTraverse('@@object_goto')
+        view(itemNumber=None, way='meeting')
+        self.assertEqual(self.request.response.getHeader('location'),
+                         "{0}#b_start=0".format(meeting_url))
+        # from item2, page 1 of meeting
+        self.assertEqual(item2.getItemNumber(), 200)
+        view = item2.restrictedTraverse('@@object_goto')
+        view(itemNumber=None, way='meeting')
+        self.assertEqual(self.request.response.getHeader('location'),
+                         "{0}#b_start=0".format(meeting_url))
+        # from item3, page 2 of meeting
+        self.assertEqual(item3.getItemNumber(), 300)
+        view = item3.restrictedTraverse('@@object_goto')
+        view(itemNumber=None, way='meeting')
+        self.assertEqual(self.request.response.getHeader('location'),
+                         "{0}#b_start=2".format(meeting_url))
+
     def test_pm_ETags(self):
         """Test that correct ETags are used for :
            - dashboard (Folder);

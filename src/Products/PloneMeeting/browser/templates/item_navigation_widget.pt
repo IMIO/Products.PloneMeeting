@@ -14,7 +14,9 @@
                            lastItemNumberDisplay python: view.display_number(lastItemNumber);">
 
     <tal:comment replace="nothing">Go to the meeting</tal:comment>
-    <a href="#" tal:attributes="href string:${meeting/absolute_url}">
+    <a href="#"
+       tal:attributes="href string:${context_url}/@@object_goto?itemNumber=0&way=meeting;
+                       onclick string:localStorage.setItem('dashboardRowId', 'row_${context/UID}');">
         <img title="pm_goto_meeting" i18n:attributes="title" style="cursor:pointer"
              tal:attributes="src string:${view/portal_url}/gotoMeeting.png;"/>
     </a>
