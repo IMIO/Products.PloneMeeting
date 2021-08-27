@@ -29,21 +29,6 @@ Changelog
 - Adapted CSS now that link to enable faceted filters is a simple link,
   no more icons.
   [gbastien]
-- Added 3 new types of events related to items that will trigger a mail being sent:
-
-  - Item state changed, history aware : Notify by mail one specific user (if possible)
-    based on the item history.
-    For "up" transition, if the item has already been there we notify the user
-    that made the next transition at the time.
-    If it is the first time the item goes to 'new_review_state',
-    we notify the proposing group suffix (except manager) because we can't predict the future.
-    For "down" transition, we will notify the user that made the precedent 'leading_transition'
-    to 'old_review_state'.
-  - Item state changed, notify proposing group suffix : notify by mail the proposing group suffix
-    that will take care of this item in the new review state
-  - Item state changed, notify proposing group suffix except manager : Same as above except we don't
-    notify manager(s)
-  [aduchene]
 - Reimplement the meeting deadlines functionnalities, display an icon before
   the item title on meeting view if item was validated after a defined deadline.
   [gbastien]
@@ -64,6 +49,21 @@ Changelog
 - Fixed display of `Application parameters` fieldset when adding a new organization
   in an overlay when on `Own organization`, CSS was hidding it wrongly.
   [gbastien]
+- Added 3 new types of events related to items that will trigger a mail being sent:
+
+  - Item state changed, history aware : Notify by mail one specific user (if possible)
+    based on the item history.
+    For "up" transition, if the item has already been there we notify the user
+    that made the next transition at the time.
+    If it is the first time the item goes to 'new_review_state',
+    we notify the proposing group suffix (except manager) because we can't predict the future.
+    For "down" transition, we will notify the user that made the precedent 'leading_transition'
+    to 'old_review_state'.
+  - Item state changed, notify proposing group suffix : notify by mail the proposing group suffix
+    that will take care of this item in the new review state
+  - Item state changed, notify proposing group suffix except manager : Same as above except we don't
+    notify manager(s)
+  [aduchene]
 
 4.2b13 (2021-07-16)
 -------------------
