@@ -3435,6 +3435,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                   data=None,
                                   only_enabled=False,
                                   value=None,
+                                  translated_itemWFValidationLevels=False,
                                   **kwargs):
         '''Override the field 'itemWFValidationLevels' accessor to be able to handle some paramters :
            - state : return row relative to given p_state;
@@ -3454,7 +3455,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         if state:
             res = res and res[0] or res
         # when displayed, append translated values to elements title
-        if self.REQUEST.get('translated_itemWFValidationLevels') and not data:
+        if self.REQUEST.get('translated_itemWFValidationLevels',
+                            translated_itemWFValidationLevels) and not data:
             translated_res = deepcopy(res)
             translated_titles = ('state_title',
                                  'leading_transition_title',
@@ -3465,7 +3467,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                                  domain='plone',
                                                  context=self.REQUEST)
                     line[translated_title] = u"{0} ({1})".format(
-                        line[translated_title], translated_value)
+                        translated_value, line[translated_title])
             res = translated_res
         return res
 
