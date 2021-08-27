@@ -558,6 +558,8 @@ function moveItem(baseUrl, moveType, tag) {
     success: function(data) {
         // reload the faceted page
         Faceted.URLHandler.hash_changed();
+        // set dashboardRowId if on meeting view
+        // start_meeting_observer(tag);
     },
     error: function(jqXHR, textStatus, errorThrown) {
       /*console.log(textStatus);*/
@@ -592,8 +594,7 @@ function synchronizeMeetingFaceteds(infos) {
           updateNumberOfItems();
         } else {
             // set dashboardRowId if on meeting view
-            localStorage.setItem("dashboardRowId", $(infos.tag).parents("tr[id^='row_']")[0].id);
-            start_meeting_observer();
+            start_meeting_observer(infos.tag);
         }
     }
 }
@@ -979,8 +980,11 @@ const observer = new MutationObserver((mutations, obs) => {
 });
 
 // start meeting observer when on meeting view
-function start_meeting_observer() {
+function start_meeting_observer(tag=null) {
     if (isMeeting()) {
+        if (tag) {
+            localStorage.setItem("dashboardRowId", $(tag).parents("tr[id^='row_']")[0].id);
+        }
         observer.observe(document, {
           childList: true,
           subtree: true
