@@ -558,6 +558,8 @@ function moveItem(baseUrl, moveType, tag) {
     success: function(data) {
         // reload the faceted page
         Faceted.URLHandler.hash_changed();
+        // set dashboardRowId if on meeting view
+        // start_meeting_scroll_to_item_observer(tag);
     },
     error: function(jqXHR, textStatus, errorThrown) {
       /*console.log(textStatus);*/
@@ -566,20 +568,34 @@ function moveItem(baseUrl, moveType, tag) {
     });
 }
 
+function isMeeting() {
+    if ($("body.template-meeting_view").length) {
+        return true;
+    }
+    return false;
+}
+
 // event subscriber when a transition is triggered
 $(document).on('ap_transition_triggered', synchronizeMeetingFaceteds);
 
 // synchronize faceted displayed on the meeting_view, available items and presented items
 function synchronizeMeetingFaceteds(infos) {
-    // refresh iframe 'available items' while removing an item
-    if ((infos.transition === 'backToValidated') && ((window.frames[0]) && (window.frames[0] != window))) {
-      window.frames[0].Faceted.URLHandler.hash_changed();
-      updateNumberOfItems();
-    }
-    // refresh main frame while presenting an item
-    if ((infos.transition === 'present') && (window != parent)) {
-      parent.Faceted.URLHandler.hash_changed();
-      updateNumberOfItems();
+
+    if (isMeeting) {
+
+        // refresh iframe 'available items' while removing an item
+        if ((infos.transition === 'backToValidated') &&
+            ((window.frames[0]) && (window.frames[0] != window))) {
+          window.frames[0].Faceted.URLHandler.hash_changed();
+          updateNumberOfItems();
+        } else if ((infos.transition === 'present') && (window != parent)) {
+          // refresh main frame while presenting an item
+          parent.Faceted.URLHandler.hash_changed();
+          updateNumberOfItems();
+        } else {
+            // set dashboardRowId if on meeting view
+            start_meeting_scroll_to_item_observer(infos.tag);
+        }
     }
 }
 
@@ -733,6 +749,7 @@ $(document).ready(function () {
   }
   $(Faceted.Events).bind(Faceted.Events.AJAX_QUERY_SUCCESS, function() {
     updatePortletTodo();
+
   });
 });
 
@@ -740,15 +757,15 @@ $(document).ready(function () {
    otherwise, the double ajax call on the meeting (available and presented items)
    will display the same result... */
 if (/msie/.test(navigator.userAgent.toLowerCase())) {
-  $.ajaxSetup ({ 
-    cache: false }); 
+  $.ajaxSetup ({
+    cache: false });
 }
 
 /* make sure not_selectable inputs in MeetingItem.optionalAdvisers are not selectable ! */
 $(document).ready(function () {
     $("input[value^='not_selectable_value_'").each(function() {
         this.disabled = true;
-    }); 
+    });
 });
 
 /* make sure first line of MeetingConfig.itemWFValidationLevels can not be edited */
@@ -756,7 +773,7 @@ $(document).ready(function () {
     $("input[id$='_itemWFValidationLevels_1'").each(function() {
         this.readOnly = true;
     });
-    
+
 });
 
 function update_search_term(tag){
@@ -791,6 +808,7 @@ $(document).ready(function () {
 function initializeItemsDND(){
 $('table.faceted-table-results').tableDnD({
   onDrop: function(table, row) {
+    row_id = row.id;
     row_index = row.rowIndex;
     // id is like row_200
     row_item_number = parseInt(table.rows[row.rowIndex].cells[2].dataset.item_number);
@@ -803,7 +821,7 @@ $('table.faceted-table-results').tableDnD({
              move_type = 'down';
          }
     } else {move_type = 'down';}
-    
+
     // now that we know the move, we can determinate number to use
     if (move_type == 'down') {
       new_value = parseInt(table.rows[row.rowIndex - 1].cells[2].dataset.item_number);
@@ -819,6 +837,7 @@ $('table.faceted-table-results').tableDnD({
       cache: false,
       success: function(data) {
         Faceted.URLHandler.hash_changed();
+        start_meeting_scroll_to_item_observer(tag=null, row_id=row_id);
       },
       error: function(jqXHR, textStatus, errorThrown) {
         /*console.log(textStatus);*/
@@ -878,7 +897,7 @@ function initReadmore() {
 
 var $el, $up;
 
-/* first check if need to use readmorable or not, only if content > set CSS max-height + 50px */
+/* first check if need to use readmorable or not, only if content > set CSS max-height + 100px */
 $("div.readmorable").each(function() {
   $el = $(this);
   /* get max-height defined in CSS for div.readmorable {} */
@@ -918,3 +937,66 @@ $("div.readmorable p.readless").click(function() {
   return false;
 });
 }
+
+// utility method that will scroll to a position with an offset
+function _scrollTo(el, yOffset = 0){
+  const y = el.getBoundingClientRect().top + window.pageYOffset + yOffset;
+  window.scrollTo({top: y, behavior: 'smooth'});
+}
+
+// function that scroll to a row in a dashboard
+function scrollToRow(row) {
+    // goto row
+    header_height = $("#portal-header").height();
+    _scrollTo(row, - 200 -header_height);
+    // highlight row
+    tds = $('td', row);
+    tds.each(function(){
+        $(this).effect('highlight', {}, 5000);
+        }
+    );
+}
+
+// mutation observer necessary to scroll to a position in a dashboard
+// because when document is loaded, the faceted results are loaded by an ajax query
+// and scrollToRow need the element to be visible
+const observer = new MutationObserver((mutations, obs) => {
+  var row_id = null;
+  if (localStorage.getItem("dashboardRowId", null)) {
+    row_id = localStorage.getItem("dashboardRowId", null);
+  }
+  if (row_id) {
+    row_id_tag = document.getElementById(row_id);
+    if (row_id_tag) {
+      scrollToRow(row_id_tag);
+      obs.disconnect();
+      localStorage.removeItem("dashboardRowId");
+      return;
+    }
+  }
+  else {
+      obs.disconnect();
+      return;
+  }
+
+});
+
+// start meeting observer when on meeting view
+// it is used when needed to scroll to an item position when faceted is refreshed
+function start_meeting_scroll_to_item_observer(tag=null, row_id=null) {
+    if (isMeeting()) {
+        if (tag) {
+            localStorage.setItem("dashboardRowId", $(tag).parents("tr[id^='row_']")[0].id);
+        } else if (row_id) {
+            localStorage.setItem("dashboardRowId", row_id);
+        }
+        observer.observe(document, {
+          childList: true,
+          subtree: true
+        });
+    }
+}
+
+$(document).ready(function () {
+    start_meeting_scroll_to_item_observer();
+});

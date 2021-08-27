@@ -6542,8 +6542,9 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertFalse(item.wfConditions().isLateFor(meeting))
         late_icon_html = u"<img title='Late' src='http://nohost/plone/late.png' " \
             "style=\"width: 16px; height: 16px;\" />"
-        val_deadline_icon_html = u"<img title=\'icon_help_validation_deadline_ko\' " \
-            "src=\'http://nohost/plone/deadlineKo.png\' style=\"width: 16px; height: 16px;\" />"
+        val_deadline_icon_html = u"<img title=\'This item was validated after " \
+            u"the validation deadline defined on this meeting\' " \
+            u"src=\'http://nohost/plone/deadlineKo.png\' style=\"width: 16px; height: 16px;\" />"
         self.assertFalse(late_icon_html in IPrettyLink(item).getLink())
         self.assertFalse(val_deadline_icon_html in IPrettyLink(item).getLink())
         # right now change current URL so displaying_available_items is True
