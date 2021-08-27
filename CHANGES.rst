@@ -46,6 +46,10 @@ Changelog
   `MeetingConfig.hideHistoryTo`), do not hide history if current user is
   `powerobserver` and member of the item proposing group.
   [gbastien]
+- Fixed display of `Application parameters` fieldset when adding a new organization
+  in an overlay when on `Own organization`, CSS was hidding it wrongly.
+  refreshed and the screen scrolls to the modified item.
+  [gbastien]
 - When going back to meeting from item, go to the correct faceted page and
   scroll to item position. Same scrolling mechanism is now used when an item is
   decided on a meeting, instead just refreshing the faceted, the faceted is
