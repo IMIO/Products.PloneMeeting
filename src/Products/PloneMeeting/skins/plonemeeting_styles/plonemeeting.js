@@ -559,7 +559,7 @@ function moveItem(baseUrl, moveType, tag) {
         // reload the faceted page
         Faceted.URLHandler.hash_changed();
         // set dashboardRowId if on meeting view
-        // start_meeting_observer(tag);
+        // start_meeting_scroll_to_item_observer(tag);
     },
     error: function(jqXHR, textStatus, errorThrown) {
       /*console.log(textStatus);*/
@@ -594,7 +594,7 @@ function synchronizeMeetingFaceteds(infos) {
           updateNumberOfItems();
         } else {
             // set dashboardRowId if on meeting view
-            start_meeting_observer(infos.tag);
+            start_meeting_scroll_to_item_observer(infos.tag);
         }
     }
 }
@@ -808,6 +808,7 @@ $(document).ready(function () {
 function initializeItemsDND(){
 $('table.faceted-table-results').tableDnD({
   onDrop: function(table, row) {
+    row_id = row.id;
     row_index = row.rowIndex;
     // id is like row_200
     row_item_number = parseInt(table.rows[row.rowIndex].cells[2].dataset.item_number);
@@ -836,6 +837,7 @@ $('table.faceted-table-results').tableDnD({
       cache: false,
       success: function(data) {
         Faceted.URLHandler.hash_changed();
+        start_meeting_scroll_to_item_observer(tag=null, row_id=row_id);
       },
       error: function(jqXHR, textStatus, errorThrown) {
         /*console.log(textStatus);*/
@@ -980,10 +982,13 @@ const observer = new MutationObserver((mutations, obs) => {
 });
 
 // start meeting observer when on meeting view
-function start_meeting_observer(tag=null) {
+// it is used when needed to scroll to an item position when faceted is refreshed
+function start_meeting_scroll_to_item_observer(tag=null, row_id=null) {
     if (isMeeting()) {
         if (tag) {
             localStorage.setItem("dashboardRowId", $(tag).parents("tr[id^='row_']")[0].id);
+        } else if (row_id) {
+            localStorage.setItem("dashboardRowId", row_id);
         }
         observer.observe(document, {
           childList: true,
@@ -993,5 +998,5 @@ function start_meeting_observer(tag=null) {
 }
 
 $(document).ready(function () {
-    start_meeting_observer();
+    start_meeting_scroll_to_item_observer();
 });
