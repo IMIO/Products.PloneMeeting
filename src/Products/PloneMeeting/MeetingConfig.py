@@ -3441,7 +3441,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
            - state : return row relative to given p_state;
            - data : return every values defined for a given datagrid column name;
            - only_enabled : make sure to return rows having enabled '1'.'''
-        res = value or self.getField('itemWFValidationLevels').get(self, **kwargs)
+        res = value is None and self.getField('itemWFValidationLevels').get(self, **kwargs) or value
         enabled = ['0', '1']
         if only_enabled:
             enabled = ['1']
@@ -4628,6 +4628,14 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             res.append(value)
         values = res
 
+        itemcreated_values_state = self.getItemWFValidationLevels(
+            state='itemcreated',
+            value=values)
+        if not itemcreated_values_state:
+            return translate('item_wf_val_states_itemcreated_must_exist',
+                             domain='PloneMeeting',
+                             context=self.REQUEST)
+
         enabled_stored_states = self.getItemWFValidationLevels(
             data='state',
             only_enabled=True)
@@ -4639,8 +4647,33 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             set(enabled_values_states)))
 
         # if some states are enabled, then first state 'itemcreated' is mandatory
-        if enabled_values_states and 'itemcreated' not in enabled_values_states:
+        if enabled_values_states and not enabled_values_states[0] == "itemcreated":
             return translate('item_wf_val_states_itemcreated_mandatory',
+                             domain='PloneMeeting',
+                             context=self.REQUEST)
+
+        # the values of "back_transition" column must start with "back"
+        back_transition_values = self.getItemWFValidationLevels(
+            data='back_transition',
+            value=values)
+        if [btv for btv in back_transition_values if not btv.startswith("back")]:
+            return translate('item_wf_val_states_back_transition_must_start_with_back',
+                             domain='PloneMeeting',
+                             context=self.REQUEST)
+
+        # identifier columns (state, leading_transition, back_transition)
+        # must respect a valid format, no space, no special characters
+        state_values = self.getItemWFValidationLevels(data='state', value=values)
+        leading_transition_values = self.getItemWFValidationLevels(
+            data='leading_transition', value=values)
+        # ignore first leading_transition (itemcreated)
+        # that is ignored by the workflowAdaptation
+        # because leading_transition is "-"
+        leading_transition_values = leading_transition_values and leading_transition_values[1:]
+        if [sv for sv in state_values if not sv.isalnum()] or \
+           [ltv for ltv in leading_transition_values if not ltv.isalnum()] or \
+           [btv for btv in back_transition_values if not btv.isalnum()]:
+            return translate('item_wf_val_states_wrong_identifier_format',
                              domain='PloneMeeting',
                              context=self.REQUEST)
 
@@ -4660,7 +4693,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         item_contained_states += list(removed_or_disabled_states)
         if item_contained_states:
             catalog = api.portal.get_tool('portal_catalog')
-            brains = catalog(portal_type=self.getItemTypeName(), review_state=item_contained_states)
+            brains = catalog(portal_type=self.getItemTypeName(),
+                             review_state=item_contained_states)
             if brains:
                 aBrain = brains[0]
                 return translate('item_wf_val_states_can_not_be_removed_in_use',
@@ -7191,7 +7225,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # If the current user is a meetingManager (or a Manager),
         # he is able to add a meetingitem to a 'decided' meeting.
         # except if we specifically restricted given p_review_states.
-        tool = api.portal.get_tool('portal_plonemeeting')
         if not review_states:
             review_states = self.getMeetingStatesAcceptingItemsForMeetingManagers()
 

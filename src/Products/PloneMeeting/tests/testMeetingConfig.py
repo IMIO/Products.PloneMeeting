@@ -1951,11 +1951,11 @@ class testMeetingConfig(PloneMeetingTestCase):
             translate('item_wf_val_states_itemcreated_mandatory',
                       domain='PloneMeeting',
                       context=self.request)
-        # values_disabled_item_created
+        # values_disabled_itemcreated
         self._disableItemValidationLevel(cfg, level='itemcreated')
-        values_disabled_item_created = deepcopy(cfg.getItemWFValidationLevels())
+        values_disabled_itemcreated = deepcopy(cfg.getItemWFValidationLevels())
         self._enableItemValidationLevel(cfg, level='itemcreated')
-        self.assertEqual(cfg.validate_itemWFValidationLevels(values_disabled_item_created),
+        self.assertEqual(cfg.validate_itemWFValidationLevels(values_disabled_itemcreated),
                          level_itemcreated_error)
 
         # remove a state that is not in use
@@ -2058,6 +2058,60 @@ class testMeetingConfig(PloneMeetingTestCase):
         cfg.setItemAdviceEditStates(())
         cfg.setTransitionsToConfirm(())
         self.failIf(cfg.validate_itemWFValidationLevels(values_disabled_proposed))
+
+    def test_pm_Validate_itemWFValidationLevels_data_format(self):
+        """Test MeetingConfig.validate_itemWFValidationLevels data format:
+           - the "itemcreated" line must always be the first line,
+             can not be removed, may only be disabled;
+           - identifier columns (state, leading_transition, back_transition)
+             must respect alpha format (letters without accent/blank/number);
+           - the values in the "back_transition" column must always start with "back".
+        """
+        cfg = self.meetingConfig
+        # make sure not used in config
+        cfg.setItemAdviceStates(())
+        cfg.setItemAdviceEditStates(())
+
+        # the "itemcreated" row must exist as first row
+        # itemcreated level is mandatory
+        level_itemcreated_error = \
+            translate('item_wf_val_states_itemcreated_must_exist',
+                      domain='PloneMeeting',
+                      context=self.request)
+        self.assertEqual(cfg.validate_itemWFValidationLevels([]),
+                         level_itemcreated_error)
+
+        # every values in the "back_transition" column must start with "back"
+        back_transition_error = \
+            translate('item_wf_val_states_back_transition_must_start_with_back',
+                      domain='PloneMeeting',
+                      context=self.request)
+        orig_item_wf_val_levels = cfg.getItemWFValidationLevels()
+        back_tr_item_wf_val_levels = deepcopy(orig_item_wf_val_levels)
+        back_tr_item_wf_val_levels[1]['back_transition'] = "dummyTransitionId"
+        self.assertEqual(cfg.validate_itemWFValidationLevels(back_tr_item_wf_val_levels),
+                         back_transition_error)
+
+        # every identifier columns must respect alpha/num format
+        wrong_format_error = \
+            translate('item_wf_val_states_wrong_identifier_format',
+                      domain='PloneMeeting',
+                      context=self.request)
+        format_item_wf_val_levels = deepcopy(orig_item_wf_val_levels)
+        # state
+        format_item_wf_val_levels[1]['state'] = "prop osed"
+        self.assertEqual(cfg.validate_itemWFValidationLevels(format_item_wf_val_levels),
+                         wrong_format_error)
+        # leading_transition
+        format_item_wf_val_levels[1]['state'] = "proposed"
+        format_item_wf_val_levels[1]['leading_transition'] = "proposé"
+        self.assertEqual(cfg.validate_itemWFValidationLevels(format_item_wf_val_levels),
+                         wrong_format_error)
+        # back_transition
+        format_item_wf_val_levels[1]['leading_transition'] = "propose"
+        format_item_wf_val_levels[1]['back_transition'] = "backToProposé"
+        self.assertEqual(cfg.validate_itemWFValidationLevels(format_item_wf_val_levels),
+                         wrong_format_error)
 
     def test_pm_RemoveAnnexesPreviewsOnMeetingClosure(self):
         """When MeetingConfig.removeAnnexesPreviewsOnMeetingClosure is True,
