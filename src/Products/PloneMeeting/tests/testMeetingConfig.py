@@ -2112,6 +2112,8 @@ class testMeetingConfig(PloneMeetingTestCase):
         format_item_wf_val_levels[1]['back_transition'] = "backToProposé"
         self.assertEqual(cfg.validate_itemWFValidationLevels(format_item_wf_val_levels),
                          wrong_format_error)
+        format_item_wf_val_levels[1]['back_transition'] = "backToProposed"
+        self.failIf(cfg.validate_itemWFValidationLevels(format_item_wf_val_levels))
 
     def test_pm_RemoveAnnexesPreviewsOnMeetingClosure(self):
         """When MeetingConfig.removeAnnexesPreviewsOnMeetingClosure is True,

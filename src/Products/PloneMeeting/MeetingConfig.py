@@ -3463,11 +3463,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                  'back_transition_title')
             for line in translated_res:
                 for translated_title in translated_titles:
-                    translated_value = translate(line[translated_title],
+                    line_translated_title = safe_unicode(line[translated_title])
+                    translated_value = translate(line_translated_title,
                                                  domain='plone',
                                                  context=self.REQUEST)
                     line[translated_title] = u"{0} ({1})".format(
-                        translated_value, line[translated_title])
+                        translated_value, line_translated_title)
             res = translated_res
         return res
 
@@ -4987,7 +4988,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 for item_validation_level in self.getItemWFValidationLevels(only_enabled=True):
                     adaptation_id = 'presented_item_back_to_{0}'.format(item_validation_level['state'])
                     translated_item_validation_state = translate(
-                        item_validation_level['state_title'],
+                        safe_unicode(item_validation_level['state_title']),
                         domain='plone',
                         context=self.REQUEST)
                     title = translate(
@@ -5437,7 +5438,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # objectType == 'Meeting'
             workflow = wfTool.getWorkflowsFor(meetingConfig.getMeetingTypeName())[0]
         for t in workflow.transitions.objectValues():
-            name = translate(t.title, domain="plone", context=self.REQUEST) + ' (' + t.id + ')'
+            name = translate(
+                safe_unicode(t.title),
+                domain="plone",
+                context=self.REQUEST) + ' (' + t.id + ')'
             # Indeed several transitions can have the same translation
             # (ie "correct")
             res.append((t.id, name))
@@ -6465,7 +6469,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             if excepted and (state.id == excepted):
                 continue
 
-            state_title = translate(state.title, domain="plone", context=self.REQUEST)
+            state_title = translate(
+                safe_unicode(state.title), domain="plone", context=self.REQUEST)
             if with_state_id:
                 state_title = u'{0} ({1})'.format(state_title, state.id)
 

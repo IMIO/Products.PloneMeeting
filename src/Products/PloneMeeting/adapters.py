@@ -463,7 +463,7 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
                             translate('icon_help_{0}'.format(itemState),
                                       domain="PloneMeeting",
                                       context=self.request,
-                                      default=translate(level['state_title'],
+                                      default=translate(safe_unicode(level['state_title']),
                                                         domain='plone',
                                                         context=self.request))))
 
