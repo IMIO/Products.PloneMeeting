@@ -5411,36 +5411,20 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePrivate('list_item_validation_transitions')
 
-    def list_item_validation_transitions(self, meetingconfig=None):
+    def list_item_validation_transitions(self):
         '''Lists the possible transitions as defined in itemWFValidationLevels.'''
-        if not meetingconfig:
-            meetingconfig = self
-
         item_wf_validation_transitions = []
-        for validation_level in meetingconfig.getItemWFValidationLevels():
-            if validation_level['enabled'] == "0":
-                continue
+        for validation_level in self.getItemWFValidationLevels(only_enabled=True,
+                                                               translated_itemWFValidationLevels=True):
             if validation_level['leading_transition'] != "-":
-                transition_name = translate(
-                    validation_level['leading_transition_title'],
-                    domain="plone",
-                    context=self.REQUEST
-                ) + ' (' + validation_level['leading_transition'] + ')'
-
                 item_wf_validation_transitions.append((
                     validation_level['leading_transition'],
-                    transition_name
+                    validation_level['leading_transition_title']
                 ))
             if validation_level['back_transition'] != "-":
-                transition_name = translate(
-                    validation_level['back_transition'],
-                    domain="plone",
-                    context=self.REQUEST
-                ) + ' (' + validation_level['back_transition'] + ')'
-
                 item_wf_validation_transitions.append((
                     validation_level['back_transition'],
-                    transition_name
+                    validation_level['back_transition_title'],
                 ))
         return item_wf_validation_transitions
 

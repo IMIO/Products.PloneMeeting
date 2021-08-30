@@ -23,8 +23,8 @@ from imio.helpers.content import safe_delattr
 from imio.helpers.content import uuidsToObjects
 from imio.helpers.content import uuidToCatalogBrain
 from imio.helpers.security import fplog
-from imio.history.interfaces import IImioHistory
 from imio.history.utils import get_all_history_attr
+from imio.history.utils import getLastWFAction
 from imio.prettylink.interfaces import IPrettyLink
 from natsort import humansorted
 from OFS.ObjectManager import BeforeDeleteException
@@ -130,7 +130,6 @@ from Products.PloneMeeting.utils import validate_item_assembly_value
 from Products.PloneMeeting.utils import workday
 from Products.PloneMeeting.widgets.pm_textarea import render_textarea
 from zope.annotation.interfaces import IAnnotations
-from zope.component import getAdapter
 from zope.component import getMultiAdapter
 from zope.component import queryUtility
 from zope.event import notify
@@ -4706,8 +4705,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def _send_history_aware_mail_if_relevant(self, old_review_state, transition_id, new_review_state):
         """
         Notify by mail one specific user (if possible) based on the item history.
-        For "up" transition, if the item has already been there we notify the user
-        that made the next transition at the time.
+        For "up" transition, we will notify the user that made the precedent 'back_transition'
+        to 'old_review_state'.
         If it is the first time the item goes to 'new_review_state',
         we notify the proposing group suffix (except manager) because we can't predict the future.
         For "down" transition, we will notify the user that made the precedent 'leading_transition'
@@ -4718,28 +4717,23 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         mail_event_id = "item_state_changed_{}__history_aware".format(transition_id)
         if mail_event_id not in cfg.getMailItemEvents():
             return
-        wf_adapter = getAdapter(self, IImioHistory, 'workflow')
-        # Descending history and start at 1 to ignore current wf_action
-        wf_history_desc = wf_adapter.getHistory()[::-1][1:]
-        wf_direction = down_or_up_wf(self)
 
+        wf_direction = down_or_up_wf(self)
         notified_user_ids = []
         if wf_direction == "up":
             # We are going up (again) so we will notify the user that made any transition
             # after the last p_transition_id
-            for i, wf_action in enumerate(wf_history_desc):
-                if wf_action["action"] == transition_id:
-                    notified_user_ids = [wf_history_desc[i - 1]["actor"]]
-                    break
+            wf_action_to_find = cfg.getItemWFValidationLevels(state=old_review_state)[
+                "back_transition"]
+            wf_action = getLastWFAction(self, wf_action_to_find)
+            notified_user_ids = [wf_action["actor"]]
         elif wf_direction == "down":
             # We are going down so we will notify the user that made the precedent 'leading_transition'
             # to the 'old_review_state'
             wf_action_to_find = cfg.getItemWFValidationLevels(state=old_review_state)[
                 "leading_transition"]
-            for i, wf_action in enumerate(wf_history_desc):
-                if wf_action["action"] == wf_action_to_find:
-                    notified_user_ids = [wf_action["actor"]]
-                    break
+            wf_action = getLastWFAction(self, wf_action_to_find)
+            notified_user_ids = [wf_action["actor"]]
         else:
             # We can't predict who will take care of the item after the transition so we notify
             # the proposing group
