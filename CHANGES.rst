@@ -84,6 +84,8 @@ Changelog
   a given context. It is possible to get every labels, normal labels only or
   personal labels only.
   [gbastien]
+- Set `collective.documentgenerator` `column_modifier` parameter to `disabled` by default.
+  [gbastien]
 
 4.2b13 (2021-07-16)
 -------------------

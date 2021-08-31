@@ -303,7 +303,7 @@ def postInstall(context):
 
     # collective.documentgenerator : change some default values
     set_oo_server()
-    set_column_modifier('optimize')
+    set_column_modifier('disabled')
     set_raiseOnError_for_non_managers(True)
     set_use_stream(False)
 
