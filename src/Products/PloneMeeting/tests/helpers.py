@@ -456,33 +456,27 @@ class PloneMeetingTestingHelpers:
         cfg.at_post_edit_script()
         self.changeUser(currentUser)
 
-    def _enableItemValidationLevel(self, cfg, level=None, suffix=None):
-        """Enable one or every item validation levels."""
+    def _updateItemValidationLevel(self, cfg, level=None, suffix=None, enable=True):
+        """Utility method that enable/disable item validation levels."""
         currentUser = self.member.getId()
         self.changeUser('admin')
         itemValLevels = cfg.getItemWFValidationLevels()
         for itemValLevel in itemValLevels:
             if not level or itemValLevel['state'] == level:
-                itemValLevel['enabled'] = '1'
+                itemValLevel['enabled'] = enable and '1' or '0'
                 if suffix:
                     itemValLevel['suffix'] = suffix
         cfg.setItemWFValidationLevels(itemValLevels)
         cfg.at_post_edit_script()
         self.changeUser(currentUser)
 
+    def _enableItemValidationLevel(self, cfg, level=None, suffix=None):
+        """Enable one or every item validation levels."""
+        self._updateItemValidationLevel(cfg, level, suffix, enable=True)
+
     def _disableItemValidationLevel(self, cfg, level=None, suffix=None):
         """Disable one or every item validation levels."""
-        currentUser = self.member.getId()
-        self.changeUser('admin')
-        itemValLevels = cfg.getItemWFValidationLevels()
-        for itemValLevel in itemValLevels:
-            if not level or itemValLevel['state'] == level:
-                itemValLevel['enabled'] = '0'
-                if suffix:
-                    itemValLevel['suffix'] = suffix
-        cfg.setItemWFValidationLevels(itemValLevels)
-        cfg.at_post_edit_script()
-        self.changeUser(currentUser)
+        self._updateItemValidationLevel(cfg, level, suffix, enable=False)
 
     def _setUpOrderedContacts(self):
         """ """
